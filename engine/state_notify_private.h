@@ -40,7 +40,6 @@ struct ib_hook_t {
 
         ib_state_null_hook_fn_t     null;
         ib_state_conn_hook_fn_t     conn;
-        ib_state_conndata_hook_fn_t conndata;
         ib_state_tx_hook_fn_t       tx;
         ib_state_txdata_hook_fn_t   txdata;
         ib_state_header_data_fn_t   headerdata;

@@ -10,7 +10,6 @@ $:.unshift(File.dirname(__FILE__))
 require 'all-code'
 
 PATH_EXCEPTIONS = [
-  %r{^cli/},
   /rule_dev.c/,
   /ahocorasick/
 ]

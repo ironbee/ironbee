@@ -46,16 +46,16 @@ extern "C" {
 using namespace std;
 
 /**
- * @class IronBeeLuaModules test_ironbee_lua_modules.cpp test_ironbee_lua_modules.cpp
+ * @class IronBeeLuaModules test_ironbee_lua_modules.cpp
+ * test_ironbee_lua_modules.cpp
  *
  * Test the IronBee Lua Api.
  *
  * For Lua Rule testing see test_module_rules_lua.cc.
  */
-struct IronBeeLuaModules : public BaseFixture {
+struct IronBeeLuaModules : public BaseTransactionFixture
+{
 
-    ib_conn_t *ib_conn;
-    ib_tx_t *ib_tx;
     ib_module_t *mod_htp;
 
     static const char *c_ib_conf;
@@ -67,27 +67,21 @@ struct IronBeeLuaModules : public BaseFixture {
      */
     virtual void SetUp()
     {
-        BaseFixture::SetUp();
-
-        /* We need the ibmod_htp to initialize the ib_tx. */
+        BaseTransactionFixture::SetUp();
+        configureIronBee();
+        performTx();
+    }
+    void configureIronBee(void)
+    {
         configureIronBeeByString(c_ib_conf);
-
-        ib_conn = buildIronBeeConnection();
-
-        sendDataIn("GET / HTTP/1.1\r\nHost: UnitTest\r\n\r\n");
-        sendDataOut("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
-
-        /* Lib htp.c does this, so we do this here. */
-        assert(ib_conn->tx != NULL);
-        ib_tx = ib_conn->tx;
     }
-
-    void sendDataIn(const string& req) {
-        BaseFixture::sendDataIn(ib_conn, req);
+    void generateRequestHeader( )
+    {
+        addRequestHeader("Host", "UnitTest");
     }
-
-    void sendDataOut(const string& req) {
-        BaseFixture::sendDataOut(ib_conn, req);
+    void generateResponseHeader( )
+    {
+        addResponseHeader("Content-Type", "text/html");
     }
 
     /**

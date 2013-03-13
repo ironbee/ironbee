@@ -97,17 +97,14 @@ ibmod_persist_la_SOURCES = persist.c
 endif
 
 if BUILD_DEV_MODULES
-pkglib_LTLIBRARIES += ibmod_fields.la
-ibmod_fields_la_SOURCES = fields.c
-ibmod_fields_la_CFLAGS = ${AM_CFLAGS}
-ibmod_fields_la_LDFLAGS = $(AM_LDFLAGS)
-endif
-
-if BUILD_DEV_MODULES
-pkglib_LTLIBRARIES += ibmod_rule_dev.la
-ibmod_rule_dev_la_SOURCES = rule_dev.c
-ibmod_rule_dev_la_CFLAGS = ${AM_CFLAGS}
-ibmod_rule_dev_la_LDFLAGS = $(AM_LDFLAGS)
+pkglib_LTLIBRARIES += ibmod_devel.la
+ibmod_devel_la_SOURCES =  \
+	moddevel.c        \
+	moddevel_rules.c  \
+	moddevel_txdata.c \
+	moddevel_txdump.c
+ibmod_devel_la_CFLAGS = ${AM_CFLAGS}
+ibmod_devel_la_LDFLAGS = $(AM_LDFLAGS)
 endif
 
 ibmod_user_agent_la_SOURCES = user_agent.c \

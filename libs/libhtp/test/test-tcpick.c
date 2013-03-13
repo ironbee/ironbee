@@ -1,21 +1,23 @@
 /***************************************************************************
- * Copyright (c) 2009-2010, Open Information Security Foundation
- * Copyright (c) 2009-2012, Qualys, Inc.
+ * Copyright (c) 2009-2010 Open Information Security Foundation
+ * Copyright (c) 2010-2013 Qualys, Inc.
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- *
- * * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- * * Neither the name of the Qualys, Inc. nor the names of its
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
+ * 
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+
+ * - Neither the name of the Qualys, Inc. nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,6 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <ctype.h>
 #include <dirent.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -105,15 +108,14 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
     struct timeval tv;
     char buf[1025];
     int first = -1, current = -1;
-    char *remote_addr = NULL;
-    char *local_addr = NULL;
+    char *remote_addr, *local_addr;
 
-    unsigned char *request_last_chunk = NULL;
-    unsigned char *response_last_chunk = NULL;
+    char *request_last_chunk = NULL;
+    char *response_last_chunk = NULL;
     size_t request_offset, request_len;
-    size_t request_last_len = 0;
+    size_t request_last_offset = 0, request_last_len = 0;
     size_t response_offset, response_len;
-    size_t response_last_len = 0;
+    size_t response_last_offset = 0, response_last_len = 0;
 
     if (parse_filename(filename, &remote_addr, &local_addr) < 0) {
         printf("Failed to parse filename: %s\n", filename);
@@ -192,7 +194,7 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
             return -1;
         }
 
-        unsigned char *data = malloc(len);
+        char *data = malloc(len);
         if (data == NULL) {
             printf("Failed to allocate %i bytes\n", len);
             fclose(f);
@@ -219,6 +221,7 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
                 }
             }
 
+            request_last_offset = request_offset;
             request_last_len = request_len;
             if (request_last_chunk != NULL) {
                 free(request_last_chunk);
@@ -233,6 +236,7 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
                 }
             }
 
+            response_last_offset = response_offset;
             response_last_len = response_len;
             if (response_last_chunk != NULL) {
                 free(response_last_chunk);
@@ -250,8 +254,8 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
 
 static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
     char *request_line = bstr_util_strdup_to_c(tx->request_line);
-    htp_header_t *h_user_agent = table_get_c(tx->request_headers, "user-agent");
-    htp_header_t *h_referer = table_get_c(tx->request_headers, "referer");
+    htp_header_t *h_user_agent = htp_table_get_c(tx->request_headers, "user-agent");
+    htp_header_t *h_referer = htp_table_get_c(tx->request_headers, "referer");
     char *referer, *user_agent;
     char buf[256];
 
@@ -270,7 +274,7 @@ static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
         referer = bstr_util_strdup_to_c(h_referer->value);
     }
 
-    printf("%s - - [%s] \"%s\" %i %zu \"%s\" \"%s\"\n", connp->conn->remote_addr, buf,
+    printf("%s - - [%s] \"%s\" %i %zu \"%s\" \"%s\"\n", connp->conn->client_addr, buf,
         request_line, tx->response_status_number, tx->response_message_len,
         referer, user_agent);
 
@@ -280,7 +284,7 @@ static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
 }
 
 static int run_file(char *filename, htp_cfg_t *cfg) {
-    htp_connp_t *connp = NULL;
+    htp_connp_t *connp;
 
     fprintf(stdout, "Running file %s", filename);
 
@@ -299,11 +303,11 @@ static int run_file(char *filename, htp_cfg_t *cfg) {
             return -1;
         }
     } else {
-        printf(" -- %zu transaction(s)\n", list_size(connp->conn->transactions));
+        printf(" -- %zu transaction(s)\n", htp_list_size(connp->conn->transactions));
 
-        htp_tx_t *tx = NULL;
-        list_iterator_reset(connp->conn->transactions);
-        while ((tx = list_iterator_next(connp->conn->transactions)) != NULL) {
+        for (int i = 0, n = htp_list_size(connp->conn->transactions); i < n; i++) {
+            htp_tx_t *tx = htp_list_get(connp->conn->transactions, i);
+
             printf("    ");
             print_tx(connp, tx);
         }
@@ -344,13 +348,4 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
     closedir(d);
 
     return 1;
-}
-
-int main_xxx(int argc, char** argv) {
-    htp_cfg_t *cfg = htp_config_create();
-
-    //run_file("c:/http_traces/run1//tcpick_000015_192.168.1.67_66.249.80.118_www.both.dat", cfg);
-    run_directory("c:/http_traces/run1/", cfg);
-
-    return 0;
 }

@@ -1,21 +1,23 @@
 /***************************************************************************
- * Copyright (c) 2009-2010, Open Information Security Foundation
- * Copyright (c) 2009-2012, Qualys, Inc.
+ * Copyright (c) 2009-2010 Open Information Security Foundation
+ * Copyright (c) 2010-2013 Qualys, Inc.
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- *
- * * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- * * Neither the name of the Qualys, Inc. nor the names of its
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
+ * 
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+
+ * - Neither the name of the Qualys, Inc. nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -48,7 +50,7 @@
 /**
  * Destroys a test.
  *
- * @param test
+ * @param[in] test
  */
 static void test_destroy(test_t *test) {
     if (test->buf != NULL) {
@@ -60,8 +62,8 @@ static void test_destroy(test_t *test) {
 /**
  * Checks if there's a chunk boundary at the given position.
  *
- * @param test
- * @param pos
+ * @param[in] test
+ * @param[in] pos
  * @return Zero if there is no boundary, SERVER or CLIENT if a boundary
  *         was found, and a negative value on error (e.g., not enough data
  *         to determine if a boundary is present).
@@ -102,8 +104,8 @@ static int test_is_boundary(test_t *test, int pos) {
 /**
  * Initializes test by loading the entire data file into a memory block.
  *
- * @param test
- * @param filename
+ * @param[in] test
+ * @param[in] filename
  * @return Non-negative value on success, negative value on error.
  */
 static int test_init(test_t *test, const char *filename) {
@@ -122,7 +124,7 @@ static int test_init(test_t *test, const char *filename) {
     test->pos = 0;
 
     int bytes_read = 0;
-    while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {
+    while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {        
         test->len += bytes_read;
     }
 
@@ -131,7 +133,7 @@ static int test_init(test_t *test, const char *filename) {
         return -2;
     }
 
-    close(fd);
+    close(fd);   
 
     return 1;
 }
@@ -143,7 +145,7 @@ void test_start(test_t *test) {
 /**
  * Finds the next data chunk in the given test.
  *
- * @param test
+ * @param[in] test
  * @return One if a chunk is found or zero if there are no more chunks in the test. On
  *         success, test->chunk will point to the beginning of the chunk, while
  *         test->chunk_len will contain its length.
@@ -248,13 +250,13 @@ static int parse_filename(const char *filename, char **remote_addr, int *remote_
 /**
  * Runs a single test.
  *
- * @param filename
- * @param cfg
+ * @param[in] filename
+ * @param[in] cfg
  * @return A pointer to the instance of htp_connp_t created during
  *         the test, or NULL if the test failed for some reason.
  */
 int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp) {
-    char *filename = (char *)malloc(1025);
+    char filename[1025];
     test_t test;
     struct timeval tv_start, tv_end;
     int rc;
@@ -290,10 +292,8 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     // Does the filename contain connection metdata?
     if (strncmp(testname, "stream", 6) == 0) {
         // It does; use it
-        char *remote_addr = NULL;
-        char *local_addr = NULL;
-        int remote_port = 0;
-        int local_port = 0;
+        char *remote_addr, *local_addr;
+        int remote_port, local_port;
 
         parse_filename(testname, &remote_addr, &remote_port, &local_addr, &local_port);
         htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port, &tv_start);
@@ -306,14 +306,14 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
 
     // Find all chunks and feed them to the parser
     int in_data_other = 0;
-    unsigned char *in_data = NULL;
-    size_t in_data_len = 0;
-    size_t in_data_offset = 0;
+    char *in_data;
+    size_t in_data_len;
+    size_t in_data_offset;
 
     int out_data_other = 0;
-    unsigned char *out_data = NULL;
-    int out_data_len = 0;
-    int out_data_offset = 0;
+    char *out_data;
+    size_t out_data_len;
+    size_t out_data_offset;
 
     for (;;) {
         if (test_next_chunk(&test) <= 0) {
@@ -326,36 +326,36 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
                 fprintf(stderr, "Unable to buffer more than one inbound chunk.\n");
                 return -1;
             }
-
-            rc = htp_connp_req_data(*connp, &tv_start, test.chunk, test.chunk_len);
-            if (rc == STREAM_STATE_ERROR) {
+            
+            int rc = htp_connp_req_data(*connp, &tv_start, test.chunk, test.chunk_len);
+            if (rc == HTP_STREAM_ERROR) {
                 test_destroy(&test);
                 return -101;
             }
-            if (rc == STREAM_STATE_DATA_OTHER) {
+            if (rc == HTP_STREAM_DATA_OTHER) {
                 // Parser needs to see the outbound stream in order to continue
                 // parsing the inbound stream.
                 in_data_other = 1;
                 in_data = test.chunk;
                 in_data_len = test.chunk_len;
-                in_data_offset = htp_connp_req_data_consumed(*connp);
+                in_data_offset = htp_connp_req_data_consumed(*connp);                
             }
         } else {
             if (out_data_other) {
-                rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
-                if (rc == STREAM_STATE_ERROR) {
+                int rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
+                if (rc == HTP_STREAM_ERROR) {
                     test_destroy(&test);
                     return -104;
                 }
                 out_data_other = 0;
             }
 
-            rc = htp_connp_res_data(*connp, &tv_start, test.chunk, test.chunk_len);
-            if (rc == STREAM_STATE_ERROR) {
+            int rc = htp_connp_res_data(*connp, &tv_start, test.chunk, test.chunk_len);
+            if (rc == HTP_STREAM_ERROR) {
                 test_destroy(&test);
                 return -102;
             }
-            if (rc == STREAM_STATE_DATA_OTHER) {
+            if (rc == HTP_STREAM_DATA_OTHER) {
                 // Parser needs to see the outbound stream in order to continue
                 // parsing the inbound stream.
                 out_data_other = 1;
@@ -366,8 +366,8 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
             }
 
             if (in_data_other) {
-                rc = htp_connp_req_data(*connp, &tv_start, in_data + in_data_offset, in_data_len - in_data_offset);
-                if (rc == STREAM_STATE_ERROR) {
+                int rc = htp_connp_req_data(*connp, &tv_start, in_data + in_data_offset, in_data_len - in_data_offset);
+                if (rc == HTP_STREAM_ERROR) {
                     test_destroy(&test);
                     return -103;
                 }
@@ -377,8 +377,8 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     }
 
     if (out_data_other) {
-        rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
-        if (rc == STREAM_STATE_ERROR) {
+        int rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
+        if (rc == HTP_STREAM_ERROR) {
             test_destroy(&test);
             return -104;
         }
@@ -392,7 +392,6 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
 
     // Clean up
     test_destroy(&test);
-    free(filename);
 
     return 1;
 }

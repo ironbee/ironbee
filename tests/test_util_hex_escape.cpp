@@ -19,11 +19,10 @@
 #include <gtest/gtest.h>
 
 TEST(TestUtilHexEscape, basic) {
-    const char *S = "escape me: \01\02";
-    char *s = ib_util_hex_escape(S, strlen(S));
+    const uint8_t *S = (const uint8_t *)"escape me: \01\02";
+    char *s = ib_util_hex_escape(NULL, S, strlen((const char *)S));
 
     ASSERT_STREQ("escape me: 0x10x2", s);
-
     free(s);
 }
 
@@ -31,13 +30,13 @@ TEST(TestUtilHexEscape, corners)
 {
     char *s;
 
-    const char *S1 = "\x00";
-    s = ib_util_hex_escape(S1, 1);
+    const uint8_t *S1 = (const uint8_t *)"\x00";
+    s = ib_util_hex_escape(NULL, S1, 1);
     ASSERT_STREQ("0x0", s);
     free(s);
 
-    const char *S2 = "\x10\x11\x80\xff";
-    s = ib_util_hex_escape(S2, 4);
+    const uint8_t *S2 = (const uint8_t *)"\x10\x11\x80\xff";
+    s = ib_util_hex_escape(NULL, S2, 4);
     ASSERT_STREQ("0x100x110x800xff", s);
     free(s);
 }

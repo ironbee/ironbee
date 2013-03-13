@@ -25,7 +25,6 @@
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/connection.hpp>
-#include <ironbeepp/connection_data.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/transaction_data.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
@@ -75,7 +74,6 @@ protected:
         ParsedRequestLine     parsed_request_line;
         ParsedResponseLine    parsed_response_line;
         Connection            connection;
-        ConnectionData        connection_data;
         TransactionData       transaction_data;
     };
 
@@ -158,18 +156,6 @@ protected:
             m_info.engine = engine;
             m_info.event = event;
             m_info.connection = connection;
-        }
-
-        void operator()(
-            Engine engine,
-            Engine::state_event_e event,
-            ConnectionData connection_data
-        )
-        {
-            m_info.which = CB_CONNECTION_DATA;
-            m_info.engine = engine;
-            m_info.event = event;
-            m_info.connection_data = connection_data;
         }
 
         void operator()(
@@ -359,19 +345,6 @@ protected:
         );
     }
 
-    void test_connection_data(
-        Engine::state_event_e event,
-        handler_info_t&       info
-    )
-    {
-        test_notx_one_argument<ib_conndata_t>(
-            event,
-            info,
-            CB_CONNECTION_DATA,
-            &handler_info_t::connection_data
-        );
-    }
-
     void test_transaction(
         Engine::state_event_e event,
         handler_info_t&       info
@@ -426,10 +399,6 @@ TEST_F(TestHooks, Basic)
     test_connection(Engine::handle_connect, info);
     H.handle_disconnect(handler);
     test_connection(Engine::handle_disconnect, info);
-    H.connection_data_in(handler);
-    test_connection_data(Engine::connection_data_in, info);
-    H.connection_data_out(handler);
-    test_connection_data(Engine::connection_data_out, info);
     H.transaction_started(handler);
     test_transaction(Engine::transaction_started, info);
     H.transaction_process(handler);

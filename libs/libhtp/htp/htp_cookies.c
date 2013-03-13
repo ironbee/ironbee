@@ -1,21 +1,23 @@
 /***************************************************************************
- * Copyright (c) 2009-2010, Open Information Security Foundation
- * Copyright (c) 2009-2012, Qualys, Inc.
+ * Copyright (c) 2009-2010 Open Information Security Foundation
+ * Copyright (c) 2010-2013 Qualys, Inc.
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- *
- * * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- * * Neither the name of the Qualys, Inc. nor the names of its
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
+ * 
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+
+ * - Neither the name of the Qualys, Inc. nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,19 +36,21 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <ctype.h>
+
 #include "htp.h"
 
 /**
  * Parses a single v0 request cookie and places the results into tx->request_cookies.
  *
- * @param connp
- * @param data
- * @param len
+ * @param[in] connp
+ * @param[in] data
+ * @param[in] len
  * @return HTP_OK on success, HTP_ERROR on error.
  */
-int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len) {
+int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t len) {
     if (len == 0) return HTP_OK;
-
+    
     size_t pos = 0;
 
     // Look for '='
@@ -66,18 +70,12 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len) {
     }
 
     if (value == NULL) {
-        bstr_free(&name);
+        bstr_free(name);
         return HTP_ERROR;
     }
 
-    // Add cookie
-    if (connp->cfg->parameter_processor == NULL) {
-        // Add cookie directly
-        table_addn(connp->in_tx->request_cookies, name, value);
-    } else {
-        // Add cookie through parameter processor
-        connp->cfg->parameter_processor(connp->in_tx->request_cookies, name, value);
-    }
+    // Add cookie directly
+    htp_table_addn(connp->in_tx->request_cookies, name, value);
 
     return HTP_OK;
 }
@@ -85,19 +83,18 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len) {
 /**
  * Parses Cookie request header in v0 format.
  *
- * @param connp
+ * @param[in] connp
  * @return HTP_OK on success, HTP_ERROR on error
  */
 int htp_parse_cookies_v0(htp_connp_t *connp) {
-    htp_header_t *cookie_header = table_get_c(connp->in_tx->request_headers, "cookie");
+    htp_header_t *cookie_header = htp_table_get_c(connp->in_tx->request_headers, "cookie");
     if (cookie_header == NULL) return HTP_OK;
 
     // Create a new table to store cookies
-    connp->in_tx->request_cookies =
-        connp->cfg->create_table(4);
+    connp->in_tx->request_cookies = htp_table_create(4);
     if (connp->in_tx->request_cookies == NULL) return HTP_ERROR;
 
-    char *data = bstr_ptr(cookie_header->value);
+    unsigned char *data = bstr_ptr(cookie_header->value);
     size_t len = bstr_len(cookie_header->value);
     size_t pos = 0;
 

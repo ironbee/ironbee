@@ -41,6 +41,7 @@
 #include <ironbee/clock.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/escape.h>
+#include <ironbee/engine_types.h>
 #include <ironbee/field.h>
 #include <ironbee/json.h>
 #include <ironbee/logevent.h>
@@ -173,6 +174,28 @@ static ib_core_cfg_t core_global_cfg;
       IB_RULE_LOG_FLAG_ACTION |                              \
       IB_RULE_LOG_FLAG_EVENT |                               \
       IB_RULE_LOG_FLAG_AUDIT )
+
+
+/* Inspection Engine Options */
+#define IB_IEOPT_REQUEST_HEADER           IB_TX_FINSPECT_REQHDR
+#define IB_IEOPT_REQUEST_BODY             IB_TX_FINSPECT_REQBODY
+#define IB_IEOPT_RESPONSE_HEADER          IB_TX_FINSPECT_RSPHDR
+#define IB_IEOPT_RESPONSE_BODY            IB_TX_FINSPECT_RSPBODY
+
+/* NOTE: Make sure to add new options from above to any groups below. */
+#define IB_IEOPT_DEFAULT \
+    ( IB_IEOPT_REQUEST_HEADER )
+#define IB_IEOPT_ALL \
+    ( IB_IEOPT_REQUEST_HEADER | \
+      IB_IEOPT_REQUEST_BODY | \
+      IB_IEOPT_RESPONSE_HEADER | \
+      IB_IEOPT_RESPONSE_BODY )
+#define IB_IEOPT_REQUEST \
+    ( IB_IEOPT_REQUEST_HEADER | \
+      IB_IEOPT_REQUEST_BODY )
+#define IB_IEOPT_RESPONSE \
+    ( IB_IEOPT_RESPONSE_HEADER | \
+      IB_IEOPT_RESPONSE_BODY )
 
 
 /* -- Utilities -- */
@@ -2061,13 +2084,6 @@ static ib_status_t parser_register(ib_engine_t *ib,
         return IB_EINCOMPAT;
     }
 
-    /* Verify that required interface functions are implemented. */
-    if ((iface->conn_data_in == NULL) || (iface->conn_data_out == NULL)) {
-        ib_log_alert(ib, "The data in/out and generate interface functions "
-                     "MUST be implemented by a parser provider");
-        return IB_EINVAL;
-    }
-
     return IB_OK;
 }
 
@@ -2581,6 +2597,9 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
                         ib_status_to_string(rc));
         return rc;
     }
+
+    /* Set default inspection options. */
+    tx->flags |= corecfg->inspection_engine_options;
 
     /* Data Default Initialization */
     rc = data_default_init(ib, tx);
@@ -3974,10 +3993,47 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
     /* Merge the set flags with the previous value. */
     log_flags = (flags & fmask) | (log_flags & ~fmask);
 
-    ib_log_debug2(ib, "RULE ENGINE LOG FLAGS: 0x%08lu",
+    ib_log_debug2(ib, "RULE ENGINE LOG FLAGS: 0x%08lx",
                   (unsigned long)log_flags);
 
     rc = ib_context_set_num(ctx, "rule_log_flags", log_flags);
+    return rc;
+}
+
+/**
+ * Handle InspectionEngineOptions directive.
+ *
+ * @param cp Config parser
+ * @param name Directive name
+ * @param flags Flags
+ * @param fmask Flags mask (which bits were actually set)
+ * @param cbdata Callback data (from directive registration)
+ *
+ * @returns Status code
+ */
+static ib_status_t core_dir_inspection_engine_options(ib_cfgparser_t *cp,
+                                                      const char *name,
+                                                      ib_flags_t flags,
+                                                      ib_flags_t fmask,
+                                                      void *cbdata)
+{
+    ib_engine_t *ib = cp->ib;
+    ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    ib_num_t options = 0;
+    ib_status_t rc;
+
+    rc = ib_context_get(ctx, "inspection_engine_options",
+                        ib_ftype_num_out(&options), NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Merge the set flags with the previous value. */
+    options = (flags & fmask) | (options & ~fmask);
+
+    ib_log_debug2(ib, "INSPECTION_ENGINE_OPTIONS: 0x%08lx", (unsigned long)options);
+
+    rc = ib_context_set_num(ctx, "inspection_engine_options", options);
     return rc;
 }
 
@@ -4442,6 +4498,27 @@ static IB_STRVAL_MAP(core_rulelog_flags_map) = {
 };
 
 /**
+ * Mapping of valid inspection engine options
+ */
+static IB_STRVAL_MAP(core_inspection_engine_options_map) = {
+    /* Inspection Engine Options Groups */
+    IB_STRVAL_PAIR("none", 0),
+    IB_STRVAL_PAIR("all", IB_IEOPT_ALL),
+    IB_STRVAL_PAIR("default", IB_IEOPT_DEFAULT),
+    IB_STRVAL_PAIR("request", IB_IEOPT_REQUEST),
+    IB_STRVAL_PAIR("response", IB_IEOPT_RESPONSE),
+
+    /* Individual Inspection Engine Options */
+    IB_STRVAL_PAIR("requestheader", IB_IEOPT_REQUEST_HEADER),
+    IB_STRVAL_PAIR("requestbody", IB_IEOPT_REQUEST_BODY),
+    IB_STRVAL_PAIR("responseheader", IB_IEOPT_RESPONSE_HEADER),
+    IB_STRVAL_PAIR("responsebody", IB_IEOPT_RESPONSE_BODY),
+
+    /* End */
+    IB_STRVAL_PAIR_LAST
+};
+
+/**
  * Directive initialization structure.
  */
 static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
@@ -4543,6 +4620,12 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         "InspectionEngine",
         core_dir_param1,
         NULL
+    ),
+    IB_DIRMAP_INIT_OPFLAGS(
+        "InspectionEngineOptions",
+        core_dir_inspection_engine_options,
+        NULL,
+        core_inspection_engine_options_map
     ),
 
     /* Audit Engine */
@@ -4700,6 +4783,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->rule_debug_str       = "error";
     corecfg->rule_debug_level     = IB_RULE_DLOG_ERROR;
     corecfg->block_status         = 403;
+    corecfg->inspection_engine_options = IB_IEOPT_DEFAULT;
 
     /* Register logger functions. */
     ib_log_set_logger_fn(ib, core_vlogmsg, NULL);
@@ -5027,6 +5111,13 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NULSTR,
         ib_core_cfg_t,
         audit
+    ),
+
+    IB_CFGMAP_INIT_ENTRY(
+        "inspection_engine_options",
+        IB_FTYPE_NUM,
+        ib_core_cfg_t,
+        inspection_engine_options
     ),
 
     /* End */

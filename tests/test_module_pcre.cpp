@@ -37,11 +37,10 @@
 
 #include <string>
 
-class PcreModuleTest : public BaseModuleFixture {
+class PcreModuleTest : public BaseModuleFixture
+{
 public:
 
-    ib_conn_t *ib_conn;
-    ib_tx_t *ib_tx;
     ib_rule_exec_t rule_exec1;
     ib_rule_exec_t rule_exec2;
     ib_rule_t *rule1;
@@ -56,38 +55,19 @@ public:
     virtual void SetUp()
     {
         ib_status_t rc;
-        BaseModuleFixture::SetUp();
         const char *s1 = "string 1";
         const char *s2 = "string 2";
 
-        configureIronBee();
+        BaseModuleFixture::SetUp();
+        performTx();
 
-        ib_conn = buildIronBeeConnection();
-
-        // Create the transaction.
-        sendDataIn(ib_conn,
-                   "GET / HTTP/1.1\r\n"
-                   "Host: UnitTest\r\n"
-                   "X-MyHeader: header1\r\n"
-                   "X-MyHeader: header2\r\n"
-                   "\r\n");
-
-        sendDataOut(ib_conn,
-                    "HTTP/1.1 200 OK\r\n"
-                    "Content-Type: text/html\r\n"
-                    "X-MyHeader: header3\r\n"
-                    "X-MyHeader: header4\r\n"
-                    "\r\n");
-
-        assert(ib_conn->tx!=NULL);
-        ib_tx = ib_conn->tx;
-
-        char* str1 = (char *)ib_mpool_alloc(ib_engine_pool_main_get(ib_engine), (strlen(s1)+1));
+        ib_mpool_t *mp = ib_engine_pool_main_get(ib_engine);
+        char* str1 = (char *)ib_mpool_alloc(mp, (strlen(s1)+1));
         if (str1 == NULL) {
             throw std::runtime_error("Could not allocate string 1.");
         }
         strcpy(str1, s1);
-        char* str2 = (char *)ib_mpool_alloc(ib_engine_pool_main_get(ib_engine), (strlen(s2)+1));
+        char* str2 = (char *)ib_mpool_alloc(mp, (strlen(s2)+1));
         if (str1 == NULL) {
             throw std::runtime_error("Could not allocate string 2.");
         }
@@ -95,7 +75,7 @@ public:
 
         // Create field 1.
         rc = ib_field_create(&field1,
-                             ib_engine_pool_main_get(ib_engine),
+                             mp,
                              IB_FIELD_NAME("field1"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(str1));
@@ -105,7 +85,7 @@ public:
 
         // Create field 2.
         rc = ib_field_create(&field2,
-                             ib_engine_pool_main_get(ib_engine),
+                             mp,
                              IB_FIELD_NAME("field2"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(str2));
@@ -339,7 +319,7 @@ TEST_F(PcreModuleTest, test_match_capture)
     ASSERT_EQ(IB_OK, rc);
 
     /* Check that a value is over written correctly. */
-    ASSERT_EQ("header4", std::string(
+    ASSERT_EQ("4", std::string(
         reinterpret_cast<const char*>(ib_bytestr_const_ptr(ib_bytestr)),
         ib_bytestr_length(ib_bytestr)
     ));

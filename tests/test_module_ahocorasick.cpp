@@ -34,20 +34,15 @@
 // @todo Remove this once there is something like ib_engine_operator_get()
 #include "engine_private.h"
 
-class AhoCorasickModuleTest : public BaseFixture {
+class AhoCorasickModuleTest : public BaseModuleFixture
+{
 public:
-    ib_module_t *rules_mod;
-    ib_module_t *ac_mod;
-
-    AhoCorasickModuleTest() : BaseFixture()
+    AhoCorasickModuleTest() : BaseModuleFixture("ibmod_ac.so")
     {
     }
-
-    virtual void SetUp() {
-        BaseFixture::SetUp();
-        loadModule(&rules_mod, "ibmod_rules.so");
-        loadModule(&ac_mod, "ibmod_ac.so");
-        configureIronBee("AhoCorasickModuleTest.config");
+    virtual void SetUp()
+    {
+        BaseModuleFixture::SetUp();
     }
 };
 

@@ -42,7 +42,8 @@ namespace {
 /**
  * Test rules.
  */
-class TestIronBeeModuleRulesLua : public BaseFixture {
+class TestIronBeeModuleRulesLua : public BaseFixture
+{
     private:
 
     ib_module_t *m_module;

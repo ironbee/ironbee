@@ -30,16 +30,33 @@
 // @todo Remove once ib_engine_operator_get() is available.
 #include "engine_private.h"
 
-class EeOperModuleTest : public BaseModuleFixture {
+class EeOperModuleTest : public BaseModuleFixture
+{
 public:
     EeOperModuleTest() : BaseModuleFixture("ibmod_ee.so")
     {
     }
 
-    virtual void SetUp() {
+    void SetUp()
+    {
         BaseModuleFixture::SetUp();
-
-        configureIronBee("EeOperModuleTest.config");
+        performTx();
+    }
+    void configureIronBee(void)
+    {
+        BaseModuleFixture::configureIronBee("EeOperModuleTest.config");
+    }
+    void generateRequestHeader( )
+    {
+        addRequestHeader("Host", "UnitTest");
+        addRequestHeader("X-MyHeader", "header1");
+        addRequestHeader("X-MyHeader", "string_to_match");
+    }
+    void generateResponseHeader( )
+    {
+        addResponseHeader("Content-Type", "text/html");
+        addResponseHeader("X-MyHeader", "header2");
+        addResponseHeader("X-MyHeader", "puke");
     }
 };
 
@@ -54,32 +71,16 @@ TEST_F(EeOperModuleTest, test_load_module)
 
 TEST_F(EeOperModuleTest, test_ee_match_any_success)
 {
-    ib_conn_t *ib_conn;
     ib_operator_t op;
     ib_field_t *f;
     ib_num_t n;
-    ib_tx_t *ib_tx;
 
     // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, (void**)&op, "ee_match_any"));
-    ib_conn = buildIronBeeConnection();
+    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators,
+                                 (void**)&op,
+                                 "ee_match_any"));
 
-    // Create the transaction.
-    sendDataIn(ib_conn,
-               "GET / HTTP/1.1\r\n"
-               "Host: UnitTest\r\n"
-               "X-MyHeader: string_to_match\r\n"
-               "X-MyHeader: header2\r\n"
-               "\r\n");
-
-    sendDataOut(ib_conn,
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/html\r\n"
-                "X-MyHeader: puke\r\n"
-                "X-MyHeader: header4\r\n"
-                "\r\n");
-
-    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->data, "pattern1_matched", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "request_matched", &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     EXPECT_EQ(1, n);
@@ -104,32 +105,16 @@ TEST_F(EeOperModuleTest, test_ee_match_any_success)
 
 TEST_F(EeOperModuleTest, test_ee_match_any_fail)
 {
-    ib_conn_t *ib_conn;
     ib_operator_t op;
     ib_field_t *f;
     ib_num_t n;
 
     // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, (void**)&op,
+    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators,
+                                 (void**)&op,
                                  "ee_match_any"));
-    ib_conn = buildIronBeeConnection();
 
-    // Create the transaction.
-    sendDataIn(ib_conn,
-               "GET / HTTP/1.1\r\n"
-               "Host: UnitTest\r\n"
-               "X-MyHeader: one\r\n"
-               "X-MyHeader: header2\r\n"
-               "\r\n");
-
-    sendDataOut(ib_conn,
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/html\r\n"
-                "X-MyHeader: two\r\n"
-                "X-MyHeader: header4\r\n"
-                "\r\n");
-
-    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->data, "pattern1_matched", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "response_matched", &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     EXPECT_EQ(0, n);

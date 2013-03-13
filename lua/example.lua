@@ -262,18 +262,6 @@ ibmod:conn_closed_event(log_event)
 ibmod:handle_disconnect_event(log_event)
 
 -- ===============================================
--- This is called when there is incoming data for
--- the connection.
--- ===============================================
-ibmod:conn_data_in_event(log_event)
-
--- ===============================================
--- This is called when there is outgoing data for
--- the connection.
--- ===============================================
-ibmod:conn_data_out_event(log_event)
-
--- ===============================================
 -- This is called when the connection is finished.
 -- ===============================================
 ibmod:conn_finished_event(log_event)

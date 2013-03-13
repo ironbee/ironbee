@@ -1,21 +1,23 @@
 /***************************************************************************
- * Copyright (c) 2009-2010, Open Information Security Foundation
- * Copyright (c) 2009-2012, Qualys, Inc.
+ * Copyright (c) 2009-2010 Open Information Security Foundation
+ * Copyright (c) 2010-2013 Qualys, Inc.
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- *
- * * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- * * Neither the name of the Qualys, Inc. nor the names of its
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
+ * 
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+
+ * - Neither the name of the Qualys, Inc. nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -36,13 +38,13 @@
 
 /* Adapted from the libb64 project (http://sourceforge.net/projects/libb64), which is in public domain. */
 
-#include "htp_base64.h"
 #include "bstr.h"
+#include "htp_base64.h"
 
 /**
  * Decode single base64-encoded character.
  *
- * @param value_in
+ * @param[in] value_in
  * @return decoded character
  */
 int htp_base64_decode_single(char value_in) {
@@ -62,9 +64,9 @@ int htp_base64_decode_single(char value_in) {
 /**
  * Initialize base64 decoder.
  *
- * @param decoder
+ * @param[in] decoder
  */
-void htp_base64_decoder_init(htp_base64_decoder* decoder) {
+void htp_base64_decoder_init(htp_base64_decoder *decoder) {
     decoder->step = step_a;
     decoder->plainchar = 0;
 }
@@ -72,17 +74,18 @@ void htp_base64_decoder_init(htp_base64_decoder* decoder) {
 /**
  * Feed the supplied memory range to the decoder.
  *
- * @param decoder
- * @param code_in
- * @param length_in
- * @param plaintext_out
- * @param length_out
+ * @param[in] decoder
+ * @param[in] _code_in
+ * @param[in] length_in
+ * @param[in] _plaintext_out
+ * @param[in] length_out
  * @return how many bytes were placed into plaintext output
  */
-int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const int length_in,
-    char* plaintext_out, int length_out) {
-    const char* codechar = code_in;
-    char* plainchar = plaintext_out;
+int htp_base64_decode(htp_base64_decoder *decoder, const void *_code_in, int length_in, void *_plaintext_out, int length_out) {
+    const unsigned char *code_in = (const unsigned char *)_code_in;
+    unsigned char *plaintext_out = (unsigned char *)_plaintext_out;
+    const unsigned char *codechar = code_in;
+    unsigned char *plainchar = plaintext_out;
     char fragment;
 
     if (length_out <= 0) return 0;
@@ -112,7 +115,7 @@ int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const in
                     fragment = (char) htp_base64_decode_single(*codechar++);
                 } while (fragment < 0);
                 *plainchar++ |= (fragment & 0x030) >> 4;
-                *plainchar = (fragment & 0x00f) << 4;
+                *plainchar = (fragment & 0x00f) << 4;                
                 if (--length_out == 0) {
                     return plainchar - plaintext_out;
                 }
@@ -155,7 +158,7 @@ int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const in
 /**
  * Base64-decode input, given as bstring.
  *
- * @param input
+ * @param[in] input
  * @return new base64-decoded bstring
  */
 bstr *htp_base64_decode_bstr(bstr *input) {
@@ -165,17 +168,17 @@ bstr *htp_base64_decode_bstr(bstr *input) {
 /**
  * Base64-decode input, given as memory range.
  *
- * @param data
- * @param len
+ * @param[in] data
+ * @param[in] len
  * @return new base64-decoded bstring
  */
-bstr *htp_base64_decode_mem(const char *data, size_t len) {
+bstr *htp_base64_decode_mem(const void *data, size_t len) {
     htp_base64_decoder decoder;
     bstr *r = NULL;
 
     htp_base64_decoder_init(&decoder);
 
-    char *tmpstr = malloc(len);
+    unsigned char *tmpstr = malloc(len);
     if (tmpstr == NULL) return NULL;
 
     int resulting_len = htp_base64_decode(&decoder, data, len, tmpstr, len);

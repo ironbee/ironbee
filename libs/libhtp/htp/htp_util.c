@@ -1,21 +1,23 @@
 /***************************************************************************
- * Copyright (c) 2009-2010, Open Information Security Foundation
- * Copyright (c) 2009-2012, Qualys, Inc.
+ * Copyright (c) 2009-2010 Open Information Security Foundation
+ * Copyright (c) 2010-2013 Qualys, Inc.
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- *
- * * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- * * Neither the name of the Qualys, Inc. nor the names of its
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
+ * 
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+
+ * - Neither the name of the Qualys, Inc. nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,20 +36,25 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "htp.h"
-#include "utf8_decoder.h"
+#include <ctype.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
+
 #include <inttypes.h>
+#include <stdarg.h>
+
+#include "htp.h"
+#include "htp_private.h"
+#include "htp_utf8_decoder.h"
 
 /**
  * Is character a linear white space character?
  *
- * @param c
+ * @param[in] c
  * @return 0 or 1
  */
 int htp_is_lws(int c) {
@@ -58,7 +65,7 @@ int htp_is_lws(int c) {
 /**
  * Is character a separator character?
  *
- * @param c
+ * @param[in] c
  * @return 0 or 1
  */
 int htp_is_separator(int c) {
@@ -96,7 +103,7 @@ int htp_is_separator(int c) {
 /**
  * Is character a text character?
  *
- * @param c
+ * @param[in] c
  * @return 0 or 1
  */
 int htp_is_text(int c) {
@@ -108,7 +115,7 @@ int htp_is_text(int c) {
 /**
  * Is character a token character?
  *
- * @param c
+ * @param[in] c
  * @return 0 or 1
  */
 int htp_is_token(int c) {
@@ -152,7 +159,7 @@ int htp_chomp(unsigned char *data, size_t *len) {
 /**
  * Is character a white space character?
  *
- * @param c
+ * @param[in] c
  * @return 0 or 1
  */
 int htp_is_space(int c) {
@@ -172,51 +179,52 @@ int htp_is_space(int c) {
 /**
  * Converts request method, given as a string, into a number.
  *
- * @param method
+ * @param[in] method
  * @return Method number of M_UNKNOWN
  */
 int htp_convert_method_to_number(bstr *method) {
-    if (method == NULL) return M_UNKNOWN;
+    if (method == NULL) return HTP_M_UNKNOWN;
 
-    // TODO Optimize using parallel matching, or something similar
-    if (bstr_cmp_c(method, "GET") == 0) return M_GET;
-    if (bstr_cmp_c(method, "PUT") == 0) return M_PUT;
-    if (bstr_cmp_c(method, "POST") == 0) return M_POST;
-    if (bstr_cmp_c(method, "DELETE") == 0) return M_DELETE;
-    if (bstr_cmp_c(method, "CONNECT") == 0) return M_CONNECT;
-    if (bstr_cmp_c(method, "OPTIONS") == 0) return M_OPTIONS;
-    if (bstr_cmp_c(method, "TRACE") == 0) return M_TRACE;
-    if (bstr_cmp_c(method, "PATCH") == 0) return M_PATCH;
-    if (bstr_cmp_c(method, "PROPFIND") == 0) return M_PROPFIND;
-    if (bstr_cmp_c(method, "PROPPATCH") == 0) return M_PROPPATCH;
-    if (bstr_cmp_c(method, "MKCOL") == 0) return M_MKCOL;
-    if (bstr_cmp_c(method, "COPY") == 0) return M_COPY;
-    if (bstr_cmp_c(method, "MOVE") == 0) return M_MOVE;
-    if (bstr_cmp_c(method, "LOCK") == 0) return M_LOCK;
-    if (bstr_cmp_c(method, "UNLOCK") == 0) return M_UNLOCK;
-    if (bstr_cmp_c(method, "VERSION_CONTROL") == 0) return M_VERSION_CONTROL;
-    if (bstr_cmp_c(method, "CHECKOUT") == 0) return M_CHECKOUT;
-    if (bstr_cmp_c(method, "UNCHECKOUT") == 0) return M_UNCHECKOUT;
-    if (bstr_cmp_c(method, "CHECKIN") == 0) return M_CHECKIN;
-    if (bstr_cmp_c(method, "UPDATE") == 0) return M_UPDATE;
-    if (bstr_cmp_c(method, "LABEL") == 0) return M_LABEL;
-    if (bstr_cmp_c(method, "REPORT") == 0) return M_REPORT;
-    if (bstr_cmp_c(method, "MKWORKSPACE") == 0) return M_MKWORKSPACE;
-    if (bstr_cmp_c(method, "MKACTIVITY") == 0) return M_MKACTIVITY;
-    if (bstr_cmp_c(method, "BASELINE_CONTROL") == 0) return M_BASELINE_CONTROL;
-    if (bstr_cmp_c(method, "MERGE") == 0) return M_MERGE;
-    if (bstr_cmp_c(method, "INVALID") == 0) return M_INVALID;
-    if (bstr_cmp_c(method, "HEAD") == 0) return M_HEAD;
+    // TODO Optimize using parallel matching, or something similar.
 
-    return M_UNKNOWN;
+    if (bstr_cmp_c(method, "GET") == 0) return HTP_M_GET;
+    if (bstr_cmp_c(method, "PUT") == 0) return HTP_M_PUT;
+    if (bstr_cmp_c(method, "POST") == 0) return HTP_M_POST;
+    if (bstr_cmp_c(method, "DELETE") == 0) return HTP_M_DELETE;
+    if (bstr_cmp_c(method, "CONNECT") == 0) return HTP_M_CONNECT;
+    if (bstr_cmp_c(method, "OPTIONS") == 0) return HTP_M_OPTIONS;
+    if (bstr_cmp_c(method, "TRACE") == 0) return HTP_M_TRACE;
+    if (bstr_cmp_c(method, "PATCH") == 0) return HTP_M_PATCH;
+    if (bstr_cmp_c(method, "PROPFIND") == 0) return HTP_M_PROPFIND;
+    if (bstr_cmp_c(method, "PROPPATCH") == 0) return HTP_M_PROPPATCH;
+    if (bstr_cmp_c(method, "MKCOL") == 0) return HTP_M_MKCOL;
+    if (bstr_cmp_c(method, "COPY") == 0) return HTP_M_COPY;
+    if (bstr_cmp_c(method, "MOVE") == 0) return HTP_M_MOVE;
+    if (bstr_cmp_c(method, "LOCK") == 0) return HTP_M_LOCK;
+    if (bstr_cmp_c(method, "UNLOCK") == 0) return HTP_M_UNLOCK;
+    if (bstr_cmp_c(method, "VERSION_CONTROL") == 0) return HTP_M_VERSION_CONTROL;
+    if (bstr_cmp_c(method, "CHECKOUT") == 0) return HTP_M_CHECKOUT;
+    if (bstr_cmp_c(method, "UNCHECKOUT") == 0) return HTP_M_UNCHECKOUT;
+    if (bstr_cmp_c(method, "CHECKIN") == 0) return HTP_M_CHECKIN;
+    if (bstr_cmp_c(method, "UPDATE") == 0) return HTP_M_UPDATE;
+    if (bstr_cmp_c(method, "LABEL") == 0) return HTP_M_LABEL;
+    if (bstr_cmp_c(method, "REPORT") == 0) return HTP_M_REPORT;
+    if (bstr_cmp_c(method, "MKWORKSPACE") == 0) return HTP_M_MKWORKSPACE;
+    if (bstr_cmp_c(method, "MKACTIVITY") == 0) return HTP_M_MKACTIVITY;
+    if (bstr_cmp_c(method, "BASELINE_CONTROL") == 0) return HTP_M_BASELINE_CONTROL;
+    if (bstr_cmp_c(method, "MERGE") == 0) return HTP_M_MERGE;
+    if (bstr_cmp_c(method, "INVALID") == 0) return HTP_M_INVALID;
+    if (bstr_cmp_c(method, "HEAD") == 0) return HTP_M_HEAD;
+
+    return HTP_M_UNKNOWN;
 }
 
 /**
  * Is the given line empty? This function expects the line to have
  * a terminating LF.
  *
- * @param data
- * @param len
+ * @param[in] data
+ * @param[in] len
  * @return 0 or 1
  */
 int htp_is_line_empty(unsigned char *data, size_t len) {
@@ -229,9 +237,9 @@ int htp_is_line_empty(unsigned char *data, size_t len) {
 
 /**
  * Does line consist entirely of whitespace characters?
- *
- * @param data
- * @param len
+ * 
+ * @param[in] data
+ * @param[in] len
  * @return 0 or 1
  */
 int htp_is_line_whitespace(unsigned char *data, size_t len) {
@@ -250,10 +258,10 @@ int htp_is_line_whitespace(unsigned char *data, size_t len) {
  * Parses Content-Length string (positive decimal number).
  * White space is allowed before and after the number.
  *
- * @param b
+ * @param[in] b
  * @return Content-Length as a number, or -1 on error.
  */
-int htp_parse_content_length(bstr *b) {
+int64_t htp_parse_content_length(bstr *b) {
     return htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(b), bstr_len(b), 10);
 }
 
@@ -261,24 +269,29 @@ int htp_parse_content_length(bstr *b) {
  * Parses chunk length (positive hexadecimal number).
  * White space is allowed before and after the number.
  *
- * @param data
- * @param len
+ * @param[in] data
+ * @param[in] len
  * @return Chunk length, or -1 on error.
  */
-int htp_parse_chunked_length(unsigned char *data, size_t len) {
-    return htp_parse_positive_integer_whitespace(data, len, 16);
+int64_t htp_parse_chunked_length(unsigned char *data, size_t len) {
+    int64_t chunk_len = htp_parse_positive_integer_whitespace(data, len, 16);
+    if (chunk_len < 0) return chunk_len;
+    if (chunk_len > INT32_MAX) return -1;
+    return chunk_len;
 }
 
 /**
- * A forgiving parser for a positive integer in a given base.
- * White space is allowed before and after the number.
- *
- * @param data
- * @param len
- * @param base
- * @return The parsed number, or -1 on error.
+ * A somewhat forgiving parser for a positive integer in a given base.
+ * Only LWS is allowed before and after the number.
+ * 
+ * @param[in] data
+ * @param[in] len
+ * @param[in] base
+ * @return The parsed number on success; a negative number on error.
  */
-int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base) {
+int64_t htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base) {
+    if (len == 0) return -1003;
+
     size_t last_pos;
     size_t pos = 0;
 
@@ -286,10 +299,12 @@ int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int b
     while ((pos < len) && (htp_is_lws(data[pos]))) pos++;
     if (pos == len) return -1001;
 
-    int r = bstr_util_mem_to_pint((char *) data + pos, len - pos, base, &last_pos);
+    int64_t r = bstr_util_mem_to_pint(data + pos, len - pos, base, &last_pos);
     if (r < 0) return r;
 
+    // Move after the last digit
     pos += last_pos;
+
     // Ignore LWS after
     while (pos < len) {
         if (!htp_is_lws(data[pos])) {
@@ -305,7 +320,8 @@ int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int b
 /**
  * Prints one log message to stderr.
  *
- * @param log
+ * @param[in] stream
+ * @param[in] log
  */
 void htp_print_log(FILE *stream, htp_log_t *log) {
     if (log->code != 0) {
@@ -319,15 +335,17 @@ void htp_print_log(FILE *stream, htp_log_t *log) {
 
 /**
  * Records one log message.
- *
- * @param connp
- * @param file
- * @param line
- * @param level
- * @param code
- * @param fmt
+ * 
+ * @param[in] connp
+ * @param[in] file
+ * @param[in] line
+ * @param[in] level
+ * @param[in] code
+ * @param[in] fmt
  */
-void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code, const char *fmt, ...) {
+void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_t level, int code, const char *fmt, ...) {
+    if (connp == NULL) return;
+
     char buf[1024];
     va_list args;
 
@@ -343,7 +361,6 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
     va_end(args);
 
     if (r < 0) {
-        // TODO Will vsnprintf ever return an error?
         snprintf(buf, 1024, "[vnsprintf returned error %d]", r);
     }
 
@@ -364,44 +381,47 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
     log->code = code;
     log->msg = strdup(buf);
 
-    list_add(connp->conn->messages, log);
+    htp_list_add(connp->conn->messages, log);
 
     if (level == HTP_LOG_ERROR) {
         connp->last_error = log;
     }
 
-    hook_run_all(connp->cfg->hook_log, log);
+    #ifdef HTP_DEBUG
+    fprintf(stderr, "[LOG] %s\n", log->msg);
+    #endif
+
+    htp_hook_run_all(connp->cfg->hook_log, log);
 }
 
 /**
  * Determines if the given line is a continuation (of some previous line).
- *
- * @param connp
- * @param data
- * @param len
- * @return 0 or 1
+ * 
+ * @param[in] data
+ * @param[in] len
+ * @return 0 or 1 for false and true, respectively. Returns -1 on error (NULL pointer or length zero).
  */
 int htp_connp_is_line_folded(unsigned char *data, size_t len) {
-    // Is there a line?
-    if (len == 0) {
-        return -1;
-    }
+    if ((data == NULL) || (len == 0)) return -1;
+    return htp_is_folding_char(data[0]);
+}
 
-    if (htp_is_lws(data[0])) return 1;
+int htp_is_folding_char(int c) {
+    if (htp_is_lws(c)) return 1;
     else return 0;
 }
 
 /**
  * Determines if the given line is a request terminator.
  *
- * @param connp
- * @param data
- * @param len
+ * @param[in] connp
+ * @param[in] data
+ * @param[in] len
  * @return 0 or 1
  */
 int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len) {
     // Is this the end of request headers?
-    switch (connp->cfg->spersonality) {
+    switch (connp->cfg->server_personality) {
         case HTP_SERVER_IIS_5_1:
             // IIS 5 will accept a whitespace line as a terminator
             if (htp_is_line_whitespace(data, len)) {
@@ -423,9 +443,9 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t
 /**
  * Determines if the given line can be ignored when it appears before a request.
  *
- * @param connp
- * @param data
- * @param len
+ * @param[in] connp
+ * @param[in] data
+ * @param[in] len
  * @return 0 or 1
  */
 int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len) {
@@ -433,40 +453,76 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
 }
 
 /**
- * Parses request URI, making no attempt to validate the contents.
+ * Parses an authority string, which consists of a hostname with an optional port number; username
+ * and password are not allowed and will not be handled. On success, this function will allocate a
+ * new bstring, which the caller will need to manage. If the port information is not available or
+ * if it is invalid, the port variable will contain -1. The HTP_HOST_INVALID flag will be set if
+ * the authority is in the incorrect format.
  *
- * @param connp
- * @param authority
- * @param uri
- * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
+ * @param[in] hostport
+ * @param[out] hostname
+ * @param[out] port
+ * @param[out] invalid
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
-    int colon = bstr_chr(authority, ':');
-    if (colon == -1) {
-        // Hostname alone; no port
-        (*uri)->hostname = bstr_dup(authority);
-        if (((*uri)->hostname) == NULL) return HTP_ERROR;
-        htp_normalize_hostname_inplace((*uri)->hostname);
+htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int *invalid) {
+    if ((hostport == NULL) || (hostname == NULL) || (port == NULL) || (invalid == NULL)) return HTP_ERROR;
+
+    *invalid = 0;
+
+    unsigned char *data = bstr_ptr(hostport);
+    size_t len = bstr_len(hostport);
+
+    // Ignore whitespace at the beginning and the end.
+    bstr_util_mem_trim(&data, &len);
+
+    // Is there a colon?
+    unsigned char *colon = memchr(data, ':', len);
+    if (colon == NULL) {
+        // Hostname alone, no port.
+
+        *port = -1;
+
+        // Ignore one dot at the end.
+        if ((len > 0) && (data[len - 1] == '.')) len--;
+
+        *hostname = bstr_dup_mem(data, len);
+        if (*hostname == NULL) return HTP_ERROR;
+
+        bstr_to_lowercase(*hostname);
     } else {
-        // Hostname and port
+        // Hostname and port.
 
-        // Hostname
-        (*uri)->hostname = bstr_dup_ex(authority, 0, colon);
-        if (((*uri)->hostname) == NULL) return HTP_ERROR;
-        // TODO Handle whitespace around hostname
-        htp_normalize_hostname_inplace((*uri)->hostname);
+        // Ignore whitespace at the end of hostname.
+        unsigned char *hostend = colon;
+        while ((hostend > data) && (isspace(*(hostend - 1)))) hostend--;
 
-        // Port
-        int port = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(authority)
-                + colon + 1, bstr_len(authority) - colon - 1, 10);
-        if (port < 0) {
-            // Failed to parse port
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid server port information in request");
-        } else if ((port > 0) && (port < 65536)) {
-            // Valid port
-            (*uri)->port_number = port;
+        // Ignore one dot at the end.
+        if ((hostend > data) && (*(hostend - 1) == '.')) hostend--;
+
+        *hostname = bstr_dup_mem(data, hostend - data);
+        if (*hostname == NULL) return HTP_ERROR;
+
+        bstr_to_lowercase(*hostname);
+
+        // Parse the port.
+
+        unsigned char *portstart = colon + 1;
+        size_t portlen = len - (portstart - data);
+
+        int64_t port_parsed = htp_parse_positive_integer_whitespace(portstart, portlen, 10);
+
+        if (port_parsed < 0) {
+            // Failed to parse the port number.
+            *port = -1;
+            *invalid = 1;
+        } else if ((port_parsed > 0) && (port_parsed < 65536)) {
+            // Valid port number.
+            *port = port_parsed;
         } else {
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid authority port");
+            // Port number out of range.
+            *port = -1;
+            *invalid = 1;
         }
     }
 
@@ -474,16 +530,67 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
 }
 
 /**
- * Parses request URI, making no attempt to validate the contents.
+ * Parses hostport provided in the URI.
  *
- * @param input
- * @param uri
+ * @param[in] connp
+ * @param[in] hostport
+ * @param[in] uri
+ * @return HTP_OK on success or HTP_ERROR error.
+ */
+int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t *uri) {
+    int invalid;
+
+    htp_status_t rc = htp_parse_hostport(hostport, &(uri->hostname), &(uri->port_number), &invalid);
+    if (rc != HTP_OK) return rc;
+
+    if (invalid) {
+        connp->in_tx->flags |= HTP_HOSTU_INVALID;
+    }
+
+    if (htp_validate_hostname(uri->hostname) == 0) {
+        connp->in_tx->flags |= HTP_HOSTU_INVALID;
+    }
+
+    return HTP_OK;
+}
+
+/**
+ * Parses hostport provided in the Host header.
+ * 
+ * @param[in] hostport
+ * @param[out] hostname
+ * @param[out] port
+ * @param[out] flags
+ * @return HTP_OK on success or HTP_ERROR error.
+ */
+int htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
+    int invalid;
+
+    htp_status_t rc = htp_parse_hostport(hostport, hostname, port, &invalid);
+    if (rc != HTP_OK) return rc;
+
+    if (invalid) {
+        *flags |= HTP_HOSTH_INVALID;
+    }
+
+    if (htp_validate_hostname(*hostname) == 0) {
+        *flags |= HTP_HOSTH_INVALID;
+    }
+
+    return HTP_OK;
+}
+
+/**
+ * Parses request URI, making no attempt to validate the contents.
+ * 
+ * @param[in] input
+ * @param[in] uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
 int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     if (input == NULL) return HTP_ERROR;
 
-    char *data = bstr_ptr(input);
+    unsigned char *data = bstr_ptr(input);
     size_t len = bstr_len(input);
     size_t start, pos;
 
@@ -504,7 +611,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     // Scheme test: if it doesn't start with a forward slash character (which it must
     // for the contents to be a path or an authority, then it must be the scheme part
     if (data[0] != '/') {
-        // Parse scheme
+        // Parse scheme        
 
         // Find the colon, which marks the end of the scheme part
         start = pos;
@@ -538,14 +645,14 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
             // Authority ends with a question mark, forward slash or hash
             while ((pos < len) && (data[pos] != '?') && (data[pos] != '/') && (data[pos] != '#')) pos++;
 
-            char *hostname_start;
+            unsigned char *hostname_start;
             size_t hostname_len;
 
             // Are the credentials included in the authority?
-            char *m = memchr(data + start, '@', pos - start);
+            unsigned char *m = memchr(data + start, '@', pos - start);
             if (m != NULL) {
                 // Credentials present
-                char *credentials_start = data + start;
+                unsigned char *credentials_start = data + start;
                 size_t credentials_len = m - data - start;
 
                 // Figure out just the hostname part
@@ -630,7 +737,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
  * into a single byte by assuming the input consists of hexadecimal
  * characters. This function will happily convert invalid input.
  *
- * @param what
+ * @param[in] what
  * @return hex-decoded byte
  */
 static unsigned char x2c(unsigned char *what) {
@@ -647,11 +754,11 @@ static unsigned char x2c(unsigned char *what) {
  * Convert a Unicode codepoint into a single-byte, using best-fit
  * mapping (as specified in the provided configuration structure).
  *
- * @param cfg
- * @param codepoint
+ * @param[in] cfg
+ * @param[in] codepoint
  * @return converted single byte
  */
-static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
+static uint8_t bestfit_codepoint(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, uint32_t codepoint) {
     // Is it a single-byte codepoint?
     if (codepoint < 0x100) {
         return (uint8_t) codepoint;
@@ -659,23 +766,22 @@ static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
 
     // Our current implementation only converts the 2-byte codepoints
     if (codepoint > 0xffff) {
-        return cfg->bestfit_replacement_char;
+        return cfg->decoder_cfgs[ctx].bestfit_replacement_byte;
     }
 
-    uint8_t *p = cfg->bestfit_map;
+    uint8_t *p = cfg->decoder_cfgs[ctx].bestfit_map;
 
-    // TODO Optimize lookup
+    // TODO Optimize lookup.
 
     for (;;) {
         uint32_t x = (p[0] << 8) + p[1];
 
         if (x == 0) {
-            return cfg->bestfit_replacement_char;
+            return cfg->decoder_cfgs[ctx].bestfit_replacement_byte;
         }
 
         if (x == codepoint) {
             return p[2];
-            break;
         }
 
         // Move to the next triplet
@@ -688,9 +794,9 @@ static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
  * characters will be left as-is. Best-fit mapping will be used to convert
  * UTF-8 into a single-byte stream.
  *
- * @param cfg
- * @param tx
- * @param path
+ * @param[in] cfg
+ * @param[in] tx
+ * @param[in] path
  */
 void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     if (path == NULL) return;
@@ -738,12 +844,12 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     }
 
                     // Special flag for fullwidth form evasion
-                    if ((codepoint > 0xfeff) && (codepoint < 0x010000)) {
-                        tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+                    if ((codepoint >= 0xff00) && (codepoint <= 0xffef)) {
+                        tx->flags |= HTP_PATH_HALF_FULL_RANGE;
                     }
 
                     // Use best-fit mapping to convert to a single byte
-                    data[wpos++] = bestfit_codepoint(cfg, codepoint);
+                    data[wpos++] = bestfit_codepoint(cfg, HTP_DECODER_URL_PATH, codepoint);
                 }
 
                 // Advance over the consumed byte
@@ -760,8 +866,8 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
                 // Is the server expected to respond with 400?
-                if (cfg->path_invalid_utf8_handling == STATUS_400) {
-                    tx->response_status_expected_number = 400;
+                if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].utf8_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].utf8_invalid_unwanted;
                 }
 
                 // Override the state in the UTF-8 decoder because
@@ -796,15 +902,14 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
     // Adjust the length of the string, because
     // we're doing in-place decoding.
-    bstr_util_adjust_len(path, wpos);
+    bstr_adjust_len(path, wpos);
 }
 
 /**
  * Validate a path that is quite possibly UTF-8 encoded.
- *
- * @param cfg
- * @param tx
- * @param path
+ * 
+ * @param[in] tx
+ * @param[in] path
  */
 void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
     unsigned char *data = (unsigned char *) bstr_ptr(path);
@@ -849,7 +954,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
 
                 // Special flag for fullwidth form evasion
                 if ((codepoint > 0xfeff) && (codepoint < 0x010000)) {
-                    tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+                    tx->flags |= HTP_PATH_HALF_FULL_RANGE;
                 }
 
                 // Advance over the consumed byte
@@ -892,15 +997,15 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
 /**
  * Decode a %u-encoded character, using best-fit mapping as necessary. Path version.
  *
- * @param cfg
- * @param tx
- * @param data
+ * @param[in] cfg
+ * @param[in] tx
+ * @param[in] data
  * @return decoded byte
  */
 static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
     unsigned int c1 = x2c(data);
     unsigned int c2 = x2c(data + 2);
-    int r = cfg->bestfit_replacement_char;
+    int r = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].bestfit_replacement_byte;
 
     if (c1 == 0x00) {
         r = c2;
@@ -908,22 +1013,17 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
     } else {
         // Check for fullwidth form evasion
         if (c1 == 0xff) {
-            tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+            tx->flags |= HTP_PATH_HALF_FULL_RANGE;
         }
 
-        switch (cfg->path_unicode_mapping) {
-            case STATUS_400:
-                tx->response_status_expected_number = 400;
-                break;
-            case STATUS_404:
-                tx->response_status_expected_number = 404;
-                break;
+        if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+            tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_unwanted;
         }
 
         // Use best-fit mapping
-        unsigned char *p = cfg->bestfit_map;
+        unsigned char *p = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].bestfit_map;
 
-        // TODO Optimize lookup
+        // TODO Optimize lookup.
 
         for (;;) {
             // Have we reached the end of the map?
@@ -943,7 +1043,7 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
     }
 
     // Check for encoded path separators
-    if ((r == '/') || ((cfg->path_backslash_separators) && (r == '\\'))) {
+    if ((r == '/') || ((cfg->decoder_cfgs[HTP_DECODER_URL_PATH].backslash_convert_slashes) && (r == '\\'))) {
         tx->flags |= HTP_PATH_ENCODED_SEPARATOR;
     }
 
@@ -953,47 +1053,49 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
 /**
  * Decode a %u-encoded character, using best-fit mapping as necessary. Params version.
  *
- * @param cfg
- * @param tx
- * @param data
+ * @param[in] cfg
+ * @param[in] tx
+ * @param[in] data
  * @return decoded byte
  */
 static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
     unsigned int c1 = x2c(data);
     unsigned int c2 = x2c(data + 2);
-    int r = cfg->bestfit_replacement_char;
 
-    if (c1 == 0x00) {
-        r = c2;
-        // XXX
-        // tx->flags |= HTP_PATH_OVERLONG_U;
-    } else {
-        // Check for fullwidth form evasion
-        if (c1 == 0xff) {
-            // XXX
-            // tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+    // Check for overlong usage first.
+    if (c1 == 0) {
+        tx->flags |= HTP_URLEN_OVERLONG_U;
+
+        return c2;
+    }
+
+    // Both bytes were used.
+
+    // Detect half-width and full-width range.
+    if ((c1 == 0xff) && (c2 <= 0xef)) {
+        tx->flags |= HTP_URLEN_HALF_FULL_RANGE;
+    }
+
+    // Use best-fit mapping.
+    unsigned char *p = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].bestfit_map;
+    int r = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].bestfit_replacement_byte;
+
+    // TODO Optimize lookup.
+
+    for (;;) {
+        // Have we reached the end of the map?
+        if ((p[0] == 0) && (p[1] == 0)) {
+            break;
         }
 
-        // Use best-fit mapping
-        unsigned char *p = cfg->bestfit_map;
-
-        // TODO Optimize lookup
-
-        for (;;) {
-            // Have we reached the end of the map?
-            if ((p[0] == 0) && (p[1] == 0)) {
-                break;
-            }
-
-            // Have we found the mapping we're looking for?
-            if ((p[0] == c1) && (p[1] == c2)) {
-                r = p[2];
-                break;
-            }
-
-            // Move to the next triplet
-            p += 3;
+        // Have we found the mapping we're looking for?
+        if ((p[0] == c1) && (p[1] == c2)) {
+            r = p[2];
+            break;
         }
+
+        // Move to the next triplet
+        p += 3;
     }
 
     return r;
@@ -1003,9 +1105,9 @@ static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char 
  * Decode a request path according to the settings in the
  * provided configuration structure.
  *
- * @param cfg
- * @param tx
- * @param path
+ * @param[in] cfg
+ * @param[in] tx
+ * @param[in] path
  */
 int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     unsigned char *data = (unsigned char *) bstr_ptr(path);
@@ -1028,13 +1130,13 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
             if (rpos + 2 < len) {
                 int handled = 0;
 
-                if (cfg->path_decode_u_encoding) {
+                if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_decode) {
                     // Check for the %u encoding
                     if ((data[rpos + 1] == 'u') || (data[rpos + 1] == 'U')) {
                         handled = 1;
 
-                        if (cfg->path_decode_u_encoding == STATUS_400) {
-                            tx->response_status_expected_number = 400;
+                        if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                            tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_unwanted;
                         }
 
                         if (rpos + 5 < len) {
@@ -1047,44 +1149,33 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                 if (c == 0) {
                                     tx->flags |= HTP_PATH_ENCODED_NUL;
 
-                                    if (cfg->path_nul_encoded_handling == STATUS_400) {
-                                        tx->response_status_expected_number = 400;
-                                    } else if (cfg->path_nul_encoded_handling == STATUS_404) {
-                                        tx->response_status_expected_number = 404;
+                                    if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
+                                        tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].nul_encoded_unwanted;
                                     }
                                 }
                             } else {
                                 // Invalid %u encoding
                                 tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                                switch (cfg->path_invalid_encoding_handling) {
-                                    case URL_DECODER_REMOVE_PERCENT:
+                                if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_unwanted;
+                                }
+
+                                switch (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_handling) {
+                                    case HTP_URL_DECODE_REMOVE_PERCENT:
                                         // Do not place anything in output; eat
                                         // the percent character
                                         rpos++;
                                         continue;
                                         break;
-                                    case URL_DECODER_PRESERVE_PERCENT:
+                                    case HTP_URL_DECODE_PRESERVE_PERCENT:
                                         // Leave the percent character in output
                                         rpos++;
                                         break;
-                                    case URL_DECODER_DECODE_INVALID:
+                                    case HTP_URL_DECODE_PROCESS_INVALID:
                                         // Decode invalid %u encoding
                                         c = decode_u_encoding_path(cfg, tx, &data[rpos + 2]);
                                         rpos += 6;
-                                        break;
-                                    case URL_DECODER_STATUS_400:
-                                        // Set expected status to 400
-                                        tx->response_status_expected_number = 400;
-
-                                        // Decode invalid %u encoding
-                                        c = decode_u_encoding_path(cfg, tx, &data[rpos + 2]);
-                                        rpos += 6;
-                                        break;
-                                        break;
-                                    default:
-                                        // Unknown setting
-                                        return -1;
                                         break;
                                 }
                             }
@@ -1092,12 +1183,24 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                             // Invalid %u encoding (not enough data)
                             tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                            if (cfg->path_invalid_encoding_handling == URL_DECODER_REMOVE_PERCENT) {
-                                // Remove the percent character from output
-                                rpos++;
-                                continue;
-                            } else {
-                                rpos++;
+                            if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                                tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_unwanted;
+                            }
+
+                            switch (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_handling) {
+                                case HTP_URL_DECODE_REMOVE_PERCENT:
+                                    // Do not place anything in output; eat
+                                    // the percent character
+                                    rpos++;
+                                    continue;
+                                    break;
+                                case HTP_URL_DECODE_PRESERVE_PERCENT:
+                                    // Leave the percent character in output
+                                    rpos++;
+                                    break;
+                                case HTP_URL_DECODE_PROCESS_INVALID:
+                                    // Cannot decode, because there's not enough data.
+                                    break;
                             }
                         }
                     }
@@ -1111,36 +1214,30 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                         if (c == 0) {
                             tx->flags |= HTP_PATH_ENCODED_NUL;
 
-                            switch (cfg->path_nul_encoded_handling) {
-                                case TERMINATE:
-                                    bstr_util_adjust_len(path, wpos);
-                                    return 1;
-                                    break;
-                                case STATUS_400:
-                                    tx->response_status_expected_number = 400;
-                                    break;
-                                case STATUS_404:
-                                    tx->response_status_expected_number = 404;
-                                    break;
+                            if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
+                                tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].nul_encoded_unwanted;
+                            }
+
+                            if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].nul_encoded_terminates) {
+                                bstr_adjust_len(path, wpos);
+                                return 1;
                             }
                         }
 
-                        if ((c == '/') || ((cfg->path_backslash_separators) && (c == '\\'))) {
+                        if ((c == '/') || ((cfg->decoder_cfgs[HTP_DECODER_URL_PATH].backslash_convert_slashes) && (c == '\\'))) {
                             tx->flags |= HTP_PATH_ENCODED_SEPARATOR;
 
-                            switch (cfg->path_decode_separators) {
-                                case STATUS_404:
-                                    tx->response_status_expected_number = 404;
-                                    // Fall-through
-                                case NO:
-                                    // Leave encoded
-                                    c = '%';
-                                    rpos++;
-                                    break;
-                                case YES:
-                                    // Decode
-                                    rpos += 3;
-                                    break;
+                            if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].path_separators_encoded_unwanted != HTP_UNWANTED_IGNORE) {
+                                tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].path_separators_encoded_unwanted;
+                            }
+
+                            if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].path_separators_decode) {
+                                // Decode
+                                rpos += 3;
+                            } else {
+                                // Leave encoded
+                                c = '%';
+                                rpos++;
                             }
                         } else {
                             // Decode
@@ -1150,18 +1247,22 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                         // Invalid encoding
                         tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                        switch (cfg->path_invalid_encoding_handling) {
-                            case URL_DECODER_REMOVE_PERCENT:
+                        if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                            tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_unwanted;
+                        }
+
+                        switch (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_handling) {
+                            case HTP_URL_DECODE_REMOVE_PERCENT:
                                 // Do not place anything in output; eat
                                 // the percent character
                                 rpos++;
                                 continue;
                                 break;
-                            case URL_DECODER_PRESERVE_PERCENT:
+                            case HTP_URL_DECODE_PRESERVE_PERCENT:
                                 // Leave the percent character in output
                                 rpos++;
                                 break;
-                            case URL_DECODER_DECODE_INVALID:
+                            case HTP_URL_DECODE_PROCESS_INVALID:
                                 // Decode
                                 c = x2c(&data[rpos + 1]);
                                 rpos += 3;
@@ -1171,14 +1272,6 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                 //       Apache, who will also respond with 400 if invalid encoding
                                 //       is encountered. Thus no check for a separator here.
                                 break;
-                            case URL_DECODER_STATUS_400:
-                                // Backend will reject request with 400, which means
-                                // that it does not matter what we do.
-                                tx->response_status_expected_number = 400;
-
-                                // Preserve the percent character
-                                rpos++;
-                                break;
                             default:
                                 // Unknown setting
                                 return -1;
@@ -1187,15 +1280,27 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     }
                 }
             } else {
-                // Invalid encoding (not enough data)
+                // Invalid %u encoding (not enough data)
                 tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                if (cfg->path_invalid_encoding_handling == URL_DECODER_REMOVE_PERCENT) {
-                    // Do not place the percent character in output
-                    rpos++;
-                    continue;
-                } else {
-                    rpos++;
+                if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_unwanted;
+                }
+
+                switch (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].url_encoding_invalid_handling) {
+                    case HTP_URL_DECODE_REMOVE_PERCENT:
+                        // Do not place anything in output; eat
+                        // the percent character
+                        rpos++;
+                        continue;
+                        break;
+                    case HTP_URL_DECODE_PRESERVE_PERCENT:
+                        // Leave the percent character in output
+                        rpos++;
+                        break;
+                    case HTP_URL_DECODE_PROCESS_INVALID:
+                        // Cannot decode, because there's not enough data.
+                        break;
                 }
             }
         } else {
@@ -1203,20 +1308,15 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
             // Is it a NUL byte?
             if (c == 0) {
-                switch (cfg->path_nul_raw_handling) {
-                    case TERMINATE:
-                        // Terminate path with a raw NUL byte
-                        bstr_util_adjust_len(path, wpos);
-                        return 1;
-                        break;
-                    case STATUS_400:
-                        // Leave the NUL byte, but set the expected status
-                        tx->response_status_expected_number = 400;
-                        break;
-                    case STATUS_404:
-                        // Leave the NUL byte, but set the expected status
-                        tx->response_status_expected_number = 404;
-                        break;
+                if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].nul_raw_unwanted != HTP_UNWANTED_IGNORE) {
+                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].nul_raw_unwanted;
+                }
+
+                if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].nul_raw_terminates) {
+                    // Terminate path with a raw NUL byte
+                    bstr_adjust_len(path, wpos);
+                    return 1;
+                    break;
                 }
             }
 
@@ -1227,24 +1327,24 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
         // Check for control characters
         if (c < 0x20) {
-            if (cfg->path_control_char_handling == STATUS_400) {
-                tx->response_status_expected_number = 400;
+            if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].control_chars_unwanted != HTP_UNWANTED_IGNORE) {
+                tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].control_chars_unwanted;
             }
         }
 
         // Convert backslashes to forward slashes, if necessary
-        if ((c == '\\') && (cfg->path_backslash_separators)) {
+        if ((c == '\\') && (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].backslash_convert_slashes)) {
             c = '/';
         }
 
         // Lowercase characters, if necessary
-        if (cfg->path_case_insensitive) {
+        if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].convert_lowercase) {
             c = tolower(c);
         }
 
         // If we're compressing separators then we need
         // to track if the previous character was a separator
-        if (cfg->path_compress_separators) {
+        if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].path_separators_compress) {
             if (c == '/') {
                 if (!previous_was_separator) {
                     data[wpos++] = c;
@@ -1262,13 +1362,13 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
         }
     }
 
-    bstr_util_adjust_len(path, wpos);
+    bstr_adjust_len(path, wpos);
 
     return 1;
 }
 
 int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
-    unsigned char *data = (unsigned char *) bstr_ptr(input);
+    unsigned char *data = bstr_ptr(input);
     size_t len = bstr_len(input);
 
     // TODO I don't like this function, either.
@@ -1279,182 +1379,168 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
     while (rpos < len) {
         int c = data[rpos];
 
-        // Decode encoded characters
+        // Decode encoded characters.
         if (c == '%') {
             if (rpos + 2 < len) {
                 int handled = 0;
 
-                if (cfg->params_decode_u_encoding) {
-                    // Check for the %u encoding
+                if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_decode) {
+                    // Check for the %u encoding.
                     if ((data[rpos + 1] == 'u') || (data[rpos + 1] == 'U')) {
                         handled = 1;
 
-                        if (cfg->params_decode_u_encoding == STATUS_400) {
-                            tx->response_status_expected_number = 400;
+                        if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                            tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_unwanted;
                         }
 
                         if (rpos + 5 < len) {
                             if (isxdigit(data[rpos + 2]) && (isxdigit(data[rpos + 3]))
                                     && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
-                                // Decode a valid %u encoding
+                                // Decode a valid %u encoding.
                                 c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
                                 rpos += 6;
 
                                 if (c == 0) {
-                                    // XXX
-                                    // tx->flags |= HTP_PATH_ENCODED_NUL;
+                                    tx->flags |= HTP_URLEN_ENCODED_NUL;
 
-                                    if (cfg->params_nul_encoded_handling == STATUS_400) {
-                                        tx->response_status_expected_number = 400;
-                                    } else if (cfg->params_nul_encoded_handling == STATUS_404) {
-                                        tx->response_status_expected_number = 404;
+                                    if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
+                                        tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_encoded_unwanted;
                                     }
                                 }
                             } else {
-                                // XXX
-                                // Invalid %u encoding
-                                //tx->flags |= HTP_PATH_INVALID_ENCODING;
+                                // Invalid %u encoding.
+                                tx->flags |= HTP_URLEN_INVALID_ENCODING;
 
-                                switch (cfg->params_invalid_encoding_handling) {
-                                    case URL_DECODER_REMOVE_PERCENT:
-                                        // Do not place anything in output; eat
-                                        // the percent character
+                                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted;
+                                }
+
+                                switch (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_handling) {
+                                    case HTP_URL_DECODE_REMOVE_PERCENT:
+                                        // Do not place anything in output; consume the %.
                                         rpos++;
                                         continue;
                                         break;
-                                    case URL_DECODER_PRESERVE_PERCENT:
-                                        // Leave the percent character in output
+                                    case HTP_URL_DECODE_PRESERVE_PERCENT:
+                                        // Leave the % in output.
                                         rpos++;
                                         break;
-                                    case URL_DECODER_DECODE_INVALID:
-                                        // Decode invalid %u encoding
+                                    case HTP_URL_DECODE_PROCESS_INVALID:
+                                        // Decode invalid %u encoding.
                                         c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
                                         rpos += 6;
-                                        break;
-                                    case URL_DECODER_STATUS_400:
-                                        // Set expected status to 400
-                                        tx->response_status_expected_number = 400;
-
-                                        // Decode invalid %u encoding
-                                        c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
-                                        rpos += 6;
-                                        break;
-                                        break;
-                                    default:
-                                        // Unknown setting
-                                        return -1;
                                         break;
                                 }
                             }
                         } else {
-                            // XXX
-                            // Invalid %u encoding (not enough data)
-                            // tx->flags |= HTP_PATH_INVALID_ENCODING;
+                            // Invalid %u encoding; not enough data.
+                            tx->flags |= HTP_URLEN_INVALID_ENCODING;
 
-                            if (cfg->params_invalid_encoding_handling == URL_DECODER_REMOVE_PERCENT) {
-                                // Remove the percent character from output
-                                rpos++;
-                                continue;
-                            } else {
-                                rpos++;
+                            if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                                tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted;
+                            }
+
+                            switch (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_handling) {
+                                case HTP_URL_DECODE_REMOVE_PERCENT:
+                                    // Do not place anything in output; consume the %.
+                                    rpos++;
+                                    continue;
+                                    break;
+                                case HTP_URL_DECODE_PRESERVE_PERCENT:
+                                    // Leave the % in output.
+                                    rpos++;
+                                    break;
+                                case HTP_URL_DECODE_PROCESS_INVALID:
+                                    // Cannot decode; not enough data.
+                                    break;
                             }
                         }
                     }
                 }
 
-                // Handle standard URL encoding
+                // Handle standard URL encoding.
                 if (!handled) {
                     if ((isxdigit(data[rpos + 1])) && (isxdigit(data[rpos + 2]))) {
+                        // Decode a %HH encoding.
                         c = x2c(&data[rpos + 1]);
+                        rpos += 3;
 
                         if (c == 0) {
-                            // XXX
-                            // tx->flags |= HTP_PATH_ENCODED_NUL;
+                            tx->flags |= HTP_URLEN_ENCODED_NUL;
 
-                            switch (cfg->params_nul_encoded_handling) {
-                                case TERMINATE:
-                                    bstr_util_adjust_len(input, wpos);
-                                    return 1;
-                                    break;
-                                case STATUS_400:
-                                    tx->response_status_expected_number = 400;
-                                    break;
-                                case STATUS_404:
-                                    tx->response_status_expected_number = 404;
-                                    break;
+                            if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
+                                tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_encoded_unwanted;
+                            }
+
+                            if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_encoded_terminates) {
+                                bstr_adjust_len(input, wpos);
+                                return 1;
                             }
                         }
-
-                        // Decode
-                        rpos += 3;
                     } else {
-                        // XXX
-                        // Invalid encoding
-                        // tx->flags |= HTP_PATH_INVALID_ENCODING;
+                        // Invalid encoding.
+                        tx->flags |= HTP_URLEN_INVALID_ENCODING;
 
-                        switch (cfg->params_invalid_encoding_handling) {
-                            case URL_DECODER_REMOVE_PERCENT:
-                                // Do not place anything in output; eat
-                                // the percent character
+                        if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                            tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted;
+                        }
+
+                        switch (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_handling) {
+                            case HTP_URL_DECODE_REMOVE_PERCENT:
+                                // Do not place anything in output; consume the %.
                                 rpos++;
                                 continue;
                                 break;
-                            case URL_DECODER_PRESERVE_PERCENT:
-                                // Leave the percent character in output
+                            case HTP_URL_DECODE_PRESERVE_PERCENT:
+                                // Leave the % in output.
                                 rpos++;
                                 break;
-                            case URL_DECODER_DECODE_INVALID:
-                                // Decode
+                            case HTP_URL_DECODE_PROCESS_INVALID:
+                                // Decode.
                                 c = x2c(&data[rpos + 1]);
                                 rpos += 3;
-                                break;
-                            case URL_DECODER_STATUS_400:
-                                // Backend will reject request with 400, which means
-                                // that it does not matter what we do.
-                                tx->response_status_expected_number = 400;
-
-                                // Preserve the percent character
-                                rpos++;
-                                break;
-                            default:
-                                // Unknown setting
-                                return -1;
                                 break;
                         }
                     }
                 }
             } else {
-                // XXX
-                // Invalid encoding (not enough data)
-                // tx->flags |= HTP_PATH_INVALID_ENCODING;
+                // Invalid %u encoding; not enough data.
+                tx->flags |= HTP_URLEN_INVALID_ENCODING;
 
-                if (cfg->params_invalid_encoding_handling == URL_DECODER_REMOVE_PERCENT) {
-                    // Do not place the percent character in output
-                    rpos++;
-                    continue;
-                } else {
-                    rpos++;
+                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted;
+                }
+
+                switch (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_handling) {
+                    case HTP_URL_DECODE_REMOVE_PERCENT:
+                        // Do not place anything in output; consume the %.
+                        rpos++;
+                        continue;
+                        break;
+                    case HTP_URL_DECODE_PRESERVE_PERCENT:
+                        // Leave the % in output.
+                        rpos++;
+                        break;
+                    case HTP_URL_DECODE_PROCESS_INVALID:
+                        // Cannot decode; not enough data.
+                        break;
                 }
             }
         } else {
-            // One non-encoded character
+            // One non-encoded character.
 
             // Is it a NUL byte?
             if (c == 0) {
-                switch (cfg->params_nul_raw_handling) {
-                    case TERMINATE:
-                        // Terminate path with a raw NUL byte
-                        bstr_util_adjust_len(input, wpos);
-                        return 1;
-                        break;
-                    case STATUS_400:
-                        // Leave the NUL byte, but set the expected status
-                        tx->response_status_expected_number = 400;
-                        break;
-                    case STATUS_404:
-                        // Leave the NUL byte, but set the expected status
-                        tx->response_status_expected_number = 404;
-                        break;
+
+                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_raw_unwanted != HTP_UNWANTED_IGNORE) {
+                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_raw_unwanted;
+                }
+
+                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_raw_terminates) {
+                    // Terminate path with a raw NUL byte.
+                    bstr_adjust_len(input, wpos);
+                    return 1;
+                    break;
                 }
             } else if (c == '+') {
                 c = 0x20;
@@ -1463,11 +1549,11 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
             rpos++;
         }
 
-        // Place the character into output
+        // Place the character into output.
         data[wpos++] = c;
     }
 
-    bstr_util_adjust_len(input, wpos);
+    bstr_adjust_len(input, wpos);
 
     return 1;
 }
@@ -1475,55 +1561,65 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 /**
  * Normalize a previously-parsed request URI.
  *
- * @param connp
- * @param incomplete
- * @param normalized
+ * @param[in] connp
+ * @param[in] incomplete
+ * @param[in] normalized
  * @return HTP_OK or HTP_ERROR
  */
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_t *normalized) {
-    // Scheme
+    // Scheme.
     if (incomplete->scheme != NULL) {
-        // Duplicate and convert to lowercase
+        // Duplicate and convert to lowercase.
         normalized->scheme = bstr_dup_lower(incomplete->scheme);
         if (normalized->scheme == NULL) return HTP_ERROR;
     }
 
-    // Username
+    // Username.
     if (incomplete->username != NULL) {
         normalized->username = bstr_dup(incomplete->username);
         if (normalized->username == NULL) return HTP_ERROR;
         htp_uriencoding_normalize_inplace(normalized->username);
     }
 
-    // Password
+    // Password.
     if (incomplete->password != NULL) {
         normalized->password = bstr_dup(incomplete->password);
         if (normalized->password == NULL) return HTP_ERROR;
         htp_uriencoding_normalize_inplace(normalized->password);
     }
 
-    // Hostname
+    // Hostname.
     if (incomplete->hostname != NULL) {
         // We know that incomplete->hostname does not contain
-        // port information, so no need to check for it here
+        // port information, so no need to check for it here.
         normalized->hostname = bstr_dup(incomplete->hostname);
         if (normalized->hostname == NULL) return HTP_ERROR;
         htp_uriencoding_normalize_inplace(normalized->hostname);
         htp_normalize_hostname_inplace(normalized->hostname);
     }
 
-    // Port
+    // Port.
     if (incomplete->port != NULL) {
-        // Parse provided port
-        normalized->port_number = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(incomplete->port),
-                bstr_len(incomplete->port), 10);
-        // We do not report failed port parsing, but leave
-        // to upstream to detect and act upon it.
+        int64_t port_parsed = htp_parse_positive_integer_whitespace(
+                bstr_ptr(incomplete->port), bstr_len(incomplete->port), 10);
+
+        if (port_parsed < 0) {
+            // Failed to parse the port number.
+            normalized->port_number = -1;
+            connp->in_tx->flags |= HTP_HOSTU_INVALID;
+        } else if ((port_parsed > 0) && (port_parsed < 65536)) {
+            // Valid port number.
+            normalized->port_number = (int) port_parsed;
+        } else {
+            // Port number out of range.
+            normalized->port_number = -1;
+            connp->in_tx->flags |= HTP_HOSTU_INVALID;
+        }
     }
 
-    // Path
+    // Path.
     if (incomplete->path != NULL) {
-        // Make a copy of the path, on which we can work on
+        // Make a copy of the path, on which we can work on.
         normalized->path = bstr_dup(incomplete->path);
         if (normalized->path == NULL) return HTP_ERROR;
 
@@ -1531,20 +1627,20 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         // compress separators and convert backslashes.
         htp_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
 
-        // Handle UTF-8 in path
-        if (connp->cfg->path_convert_utf8) {
-            // Decode Unicode characters into a single-byte stream, using best-fit mapping
+        // Handle UTF-8 in path.
+        if (connp->cfg->decoder_cfgs[HTP_DECODER_URL_PATH].utf8_convert_bestfit) {
+            // Decode Unicode characters into a single-byte stream, using best-fit mapping.
             htp_utf8_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
         } else {
-            // Only validate path as a UTF-8 stream
+            // Only validate path as a UTF-8 stream.
             htp_utf8_validate_path(connp->in_tx, normalized->path);
         }
 
-        // RFC normalization
+        // RFC normalization.
         htp_normalize_uri_path_inplace(normalized->path);
     }
 
-    // Query
+    // Query string.
     if (incomplete->query != NULL) {
         // We cannot URL-decode the query string here; it needs to be
         // parsed into individual key-value pairs first.
@@ -1552,7 +1648,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         if (normalized->query == NULL) return HTP_ERROR;
     }
 
-    // Fragment
+    // Fragment.
     if (incomplete->fragment != NULL) {
         normalized->fragment = bstr_dup(incomplete->fragment);
         if (normalized->fragment == NULL) return HTP_ERROR;
@@ -1566,23 +1662,16 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
  * Normalize request hostname. Convert all characters to lowercase and
  * remove trailing dots from the end, if present.
  *
- * @param hostname
- * @return normalized hostnanme
+ * @param[in] hostname
+ * @return Normalized hostname.
  */
 bstr *htp_normalize_hostname_inplace(bstr *hostname) {
     if (hostname == NULL) return NULL;
 
     bstr_to_lowercase(hostname);
 
-    char *data = bstr_ptr(hostname);
-    size_t len = bstr_len(hostname);
-
-    while (len > 0) {
-        if (data[len - 1] != '.') return hostname;
-
-        bstr_chop(hostname);
-        len--;
-    }
+    // Remove dots from the end of the string.    
+    while (bstr_char_at_end(hostname, 0) == '.') bstr_chop(hostname);
 
     return hostname;
 }
@@ -1591,9 +1680,9 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
  * Replace the URI in the structure with the one provided as the parameter
  * to this function (which will typically be supplied in a Host header).
  *
- * @param connp
- * @param parsed_uri
- * @param hostname
+ * @param[in] connp
+ * @param[in] parsed_uri
+ * @param[in] hostname
  */
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname) {
     if (hostname == NULL) return;
@@ -1607,7 +1696,7 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         if (new_hostname == NULL) return;
         htp_normalize_hostname_inplace(new_hostname);
 
-        if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
+        if (parsed_uri->hostname != NULL) bstr_free(parsed_uri->hostname);
         parsed_uri->hostname = new_hostname;
     } else {
         // Hostname and port
@@ -1616,7 +1705,7 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         // TODO Handle whitespace around hostname
         htp_normalize_hostname_inplace(new_hostname);
 
-        if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
+        if (parsed_uri->hostname != NULL) bstr_free(parsed_uri->hostname);
         parsed_uri->hostname = new_hostname;
         parsed_uri->port_number = 0;
 
@@ -1628,9 +1717,9 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid server port information in request");
         } else if ((port > 0) && (port < 65536)) {
             // Valid port
-            if ((connp->conn->local_port != 0) && (port != connp->conn->local_port)) {
+            if ((connp->conn->server_port != 0) && (port != connp->conn->server_port)) {
                 // Port was specified in connection and is different from the TCP port
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request server port=%d number differs from the actual TCP port=%d", port, connp->conn->local_port);
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request server port=%d number differs from the actual TCP port=%d", port, connp->conn->server_port);
             } else {
                 parsed_uri->port_number = port;
             }
@@ -1641,7 +1730,7 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
 /**
  * Is URI character reserved?
  *
- * @param c
+ * @param[in] c
  * @return 1 if it is, 0 if it isn't
  */
 int htp_is_uri_unreserved(unsigned char c) {
@@ -1660,12 +1749,12 @@ int htp_is_uri_unreserved(unsigned char c) {
  * Decode a URL-encoded string, leaving the reserved
  * characters and invalid encodings alone.
  *
- * @param s
+ * @param[in] s
  */
 void htp_uriencoding_normalize_inplace(bstr *s) {
     if (s == NULL) return;
 
-    unsigned char *data = (unsigned char *) bstr_ptr(s);
+    unsigned char *data = bstr_ptr(s);
     size_t len = bstr_len(s);
 
     size_t rpos = 0;
@@ -1710,19 +1799,19 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
         }
     }
 
-    bstr_util_adjust_len(s, wpos);
+    bstr_adjust_len(s, wpos);
 }
 
 /**
  * Normalize URL path. This function implements the remove dot segments algorithm
  * specified in RFC 3986, section 5.2.4.
  *
- * @param s
+ * @param[in] s
  */
 void htp_normalize_uri_path_inplace(bstr *s) {
     if (s == NULL) return;
 
-    char *data = bstr_ptr(s);
+    unsigned char *data = bstr_ptr(s);
     size_t len = bstr_len(s);
 
     size_t rpos = 0;
@@ -1813,27 +1902,33 @@ void htp_normalize_uri_path_inplace(bstr *s) {
         c = -1;
     }
 
-    bstr_util_adjust_len(s, wpos);
+    bstr_adjust_len(s, wpos);
 }
 
 /**
  *
  */
 void fprint_bstr(FILE *stream, const char *name, bstr *b) {
+    if (b == NULL) {
+        fprint_raw_data_ex(stream, name, (unsigned char *) "(null)", 0, 6);
+        return;
+    }
+
     fprint_raw_data_ex(stream, name, (unsigned char *) bstr_ptr(b), 0, bstr_len(b));
 }
 
 /**
  *
  */
-void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t len) {
+void fprint_raw_data(FILE *stream, const char *name, const void *data, size_t len) {
     fprint_raw_data_ex(stream, name, data, 0, len);
 }
 
 /**
  *
  */
-void fprint_raw_data_ex(FILE *stream, const char *name, unsigned char *data, size_t offset, size_t printlen) {
+void fprint_raw_data_ex(FILE *stream, const char *name, const void *_data, size_t offset, size_t printlen) {
+    const unsigned char *data = (const unsigned char *) _data;
     char buf[160];
     size_t len = offset + printlen;
 
@@ -1903,17 +1998,18 @@ char *htp_connp_in_state_as_string(htp_connp_t *connp) {
     if (connp == NULL) return "NULL";
 
     if (connp->in_state == htp_connp_REQ_IDLE) return "REQ_IDLE";
-    if (connp->in_state == htp_connp_REQ_LINE) return "REQ_FIRST_LINE";
+    if (connp->in_state == htp_connp_REQ_LINE) return "REQ_LINE";
     if (connp->in_state == htp_connp_REQ_PROTOCOL) return "REQ_PROTOCOL";
     if (connp->in_state == htp_connp_REQ_HEADERS) return "REQ_HEADERS";
+    if (connp->in_state == htp_connp_REQ_CONNECT_CHECK) return "REQ_CONNECT_CHECK";
+    if (connp->in_state == htp_connp_REQ_CONNECT_WAIT_RESPONSE) return "REQ_CONNECT_WAIT_RESPONSE";
     if (connp->in_state == htp_connp_REQ_BODY_DETERMINE) return "REQ_BODY_DETERMINE";
     if (connp->in_state == htp_connp_REQ_BODY_IDENTITY) return "REQ_BODY_IDENTITY";
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_LENGTH) return "REQ_BODY_CHUNKED_LENGTH";
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA) return "REQ_BODY_CHUNKED_DATA";
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA_END) return "REQ_BODY_CHUNKED_DATA_END";
-
-    if (connp->in_state == htp_connp_REQ_CONNECT_CHECK) return "htp_connp_REQ_CONNECT_CHECK";
-    if (connp->in_state == htp_connp_REQ_CONNECT_WAIT_RESPONSE) return "htp_connp_REQ_CONNECT_WAIT_RESPONSE";
+    if (connp->in_state == htp_connp_REQ_FINALIZE) return "REQ_FINALIZE";
+    if (connp->in_state == htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9) return "REQ_IGNORE_DATA_AFTER_HTTP_0_9";
 
     return "UNKNOWN";
 }
@@ -1928,10 +2024,12 @@ char *htp_connp_out_state_as_string(htp_connp_t *connp) {
     if (connp->out_state == htp_connp_RES_LINE) return "RES_LINE";
     if (connp->out_state == htp_connp_RES_HEADERS) return "RES_HEADERS";
     if (connp->out_state == htp_connp_RES_BODY_DETERMINE) return "RES_BODY_DETERMINE";
-    if (connp->out_state == htp_connp_RES_BODY_IDENTITY) return "RES_BODY_IDENTITY";
+    if (connp->out_state == htp_connp_RES_BODY_IDENTITY_CL_KNOWN) return "RES_BODY_IDENTITY_CL_KNOWN";
+    if (connp->out_state == htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE) return "RES_BODY_IDENTITY_STREAM_CLOSE";
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_LENGTH) return "RES_BODY_CHUNKED_LENGTH";
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA) return "RES_BODY_CHUNKED_DATA";
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA_END) return "RES_BODY_CHUNKED_DATA_END";
+    if (connp->out_state == htp_connp_RES_FINALIZE) return "RES_BODY_FINALIZE";
 
     return "UNKNOWN";
 }
@@ -1943,27 +2041,27 @@ char *htp_tx_progress_as_string(htp_tx_t *tx) {
     if (tx == NULL) return "NULL";
 
     switch (tx->progress) {
-        case TX_PROGRESS_NEW:
+        case HTP_REQUEST_START:
             return "NEW";
-        case TX_PROGRESS_REQ_LINE:
+        case HTP_REQUEST_LINE:
             return "REQ_LINE";
-        case TX_PROGRESS_REQ_HEADERS:
+        case HTP_REQUEST_HEADERS:
             return "REQ_HEADERS";
-        case TX_PROGRESS_REQ_BODY:
+        case HTP_REQUEST_BODY:
             return "REQ_BODY";
-        case TX_PROGRESS_REQ_TRAILER:
+        case HTP_REQUEST_TRAILER:
             return "REQ_TRAILER";
-        case TX_PROGRESS_WAIT:
+        case HTP_REQUEST_COMPLETE:
             return "WAIT";
-        case TX_PROGRESS_RES_LINE:
+        case HTP_RESPONSE_LINE:
             return "RES_LINE";
-        case TX_PROGRESS_RES_HEADERS:
+        case HTP_RESPONSE_HEADERS:
             return "RES_HEADERS";
-        case TX_PROGRESS_RES_BODY:
+        case HTP_RESPONSE_BODY:
             return "RES_BODY";
-        case TX_PROGRESS_RES_TRAILER:
+        case HTP_RESPONSE_TRAILER:
             return "RES_TRAILER";
-        case TX_PROGRESS_DONE:
+        case HTP_RESPONSE_COMPLETE:
             return "DONE";
     }
 
@@ -2066,7 +2164,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
         htp_uriencoding_normalize_inplace(query);
         bstr_add_c_noex(r, "?");
         bstr_add_noex(r, query);
-        bstr_free(&query);
+        bstr_free(query);
     }
 
     if (uri->fragment != NULL) {
@@ -2083,181 +2181,47 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
  * line parsing. In most cases they will only look for the
  * words "http" at the beginning.
  *
- * @param tx
+ * @param[in] tx
  * @return 1 for good enough or 0 for not good enough
  */
-int htp_resembles_response_line(htp_tx_t *tx) {
-    // TODO This function should be replaced with several implementations,
-    //      one for every different browser handling. For example:
-    //
+int htp_treat_response_line_as_body(htp_tx_t *tx) {
+    // Browser behavior:
     //      Firefox 3.5.x: (?i)^\s*http
     //      IE: (?i)^\s*http\s*/
     //      Safari: ^HTTP/\d+\.\d+\s+\d{3}
 
-    if (tx->response_protocol == NULL) return 0;
-    if (bstr_len(tx->response_protocol) < 4) return 0;
+    if (tx->response_protocol == NULL) return 1;
+    if (bstr_len(tx->response_protocol) < 4) return 1;
 
-    char *data = bstr_ptr(tx->response_protocol);
+    unsigned char *data = bstr_ptr(tx->response_protocol);
 
-    if ((data[0] != 'H') && (data[0] != 'h')) return 0;
-    if ((data[1] != 'T') && (data[1] != 't')) return 0;
-    if ((data[2] != 'T') && (data[2] != 't')) return 0;
-    if ((data[3] != 'P') && (data[3] != 'p')) return 0;
+    if ((data[0] != 'H') && (data[0] != 'h')) return 1;
+    if ((data[1] != 'T') && (data[1] != 't')) return 1;
+    if ((data[2] != 'T') && (data[2] != 't')) return 1;
+    if ((data[3] != 'P') && (data[3] != 'p')) return 1;
 
-    return 1;
-}
-
-/**
- * Construct a bstr that contains the raw request headers.
- *
- * @param tx
- * @return
- */
-bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
-    bstr *request_headers_raw = NULL;
-    size_t i, len = 0;
-
-    for (i = 0; i < list_size(tx->request_header_lines); i++) {
-        htp_header_line_t *hl = list_get(tx->request_header_lines, i);
-        len += bstr_len(hl->line);
-    }
-
-    len += bstr_len(tx->request_headers_sep);
-
-    request_headers_raw = bstr_alloc(len);
-    if (request_headers_raw == NULL) {
-        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Failed to allocate bstring of %d bytes", len);
-        return NULL;
-    }
-
-    for (i = 0; i < list_size(tx->request_header_lines); i++) {
-        htp_header_line_t *hl = list_get(tx->request_header_lines, i);
-        bstr_add_noex(request_headers_raw, hl->line);
-    }
-
-    bstr_add_noex(request_headers_raw, tx->request_headers_sep);
-
-    return request_headers_raw;
-}
-
-/**
- * Get a bstr that contains the raw request headers. This method will always
- * return an up-to-date buffer, containing the last known headers. Thus, if
- * it is called once after REQUEST_HEADERS phase it will return one buffer, but
- * it may return a different buffer if called after REQUEST_TRAILERS phase (but
- * only if the request actually contains trailer headers). Do not retain the
- * bstr pointer, as the buffer may change. If there are no changes to the
- * request header structure, only one buffer will be constructed and used. (Multiple
- * invocations of this method will not cause multiple buffers to be created.)
- *
- * @param tx
- * @return
- */
-bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
-    // Check that we are not called too early
-    if (tx->progress < TX_PROGRESS_REQ_HEADERS) return NULL;
-
-    if (tx->request_headers_raw == NULL) {
-        tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
-        tx->request_headers_raw_lines = list_size(tx->request_header_lines);
-    } else {
-        // Check that the buffer we have is not obsolete
-        if (tx->request_headers_raw_lines < list_size(tx->request_header_lines)) {
-            // Rebuild raw buffer
-            bstr_free(&tx->request_headers_raw);
-            tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
-            tx->request_headers_raw_lines = list_size(tx->request_header_lines);
-        }
-    }
-
-    return tx->request_headers_raw;
-}
-
-/**
- * Construct a bstr that contains the raw response headers.
- *
- * @param tx
- * @return
- */
-bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx) {
-    bstr *response_headers_raw = NULL;
-    size_t i, len = 0;
-
-    for (i = 0; i < list_size(tx->response_header_lines); i++) {
-        htp_header_line_t *hl = list_get(tx->response_header_lines, i);
-        len += bstr_len(hl->line);
-    }
-
-    len += bstr_len(tx->response_headers_sep);
-
-    response_headers_raw = bstr_alloc(len);
-    if (response_headers_raw == NULL) {
-        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Failed to allocate bstring of %d bytes", len);
-        return NULL;
-    }
-
-    for (i = 0; i < list_size(tx->response_header_lines); i++) {
-        htp_header_line_t *hl = list_get(tx->response_header_lines, i);
-        bstr_add_noex(response_headers_raw, hl->line);
-    }
-
-    bstr_add_noex(response_headers_raw, tx->response_headers_sep);
-
-    return response_headers_raw;
-}
-
-/**
- * Get a bstr that contains the raw response headers. This method will always
- * return an up-to-date buffer, containing the last known headers. Thus, if
- * it is called once after RESPONSE_HEADERS phase it will return one buffer, but
- * it may return a different buffer if called after RESPONSE_TRAILERS phase (but
- * only if the response actually contains trailer headers). Do not retain the
- * bstr pointer, as the buffer may change. If there are no changes to the
- * response header structure, only one buffer will be constructed and used. (Multiple
- * invocations of this method will not cause multiple buffers to be created.)
- *
- * @param tx
- * @return
- */
-bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx) {
-    // Check that we are not called too early
-    if (tx->progress < TX_PROGRESS_RES_HEADERS) return NULL;
-
-    if (tx->response_headers_raw == NULL) {
-        tx->response_headers_raw = htp_tx_generate_response_headers_raw(tx);
-        tx->response_headers_raw_lines = list_size(tx->response_header_lines);
-    } else {
-        // Check that the buffer we have is not obsolete
-        if (tx->response_headers_raw_lines < list_size(tx->response_header_lines)) {
-            // Rebuild raw buffer
-            bstr_free(&tx->response_headers_raw);
-            tx->response_headers_raw = htp_tx_generate_response_headers_raw(tx);
-            tx->response_headers_raw_lines = list_size(tx->response_header_lines);
-        }
-    }
-
-    return tx->response_headers_raw;
+    return 0;
 }
 
 /**
  * Run the REQUEST_BODY_DATA hook.
  *
- * @param connp
- * @param d
+ * @param[in] connp
+ * @param[in] d
  */
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk
     if ((d->data != NULL) && (d->len == 0)) {
-        return HOOK_OK;
+        return HTP_OK;
     }
 
     // Run transaction hooks first
-    int rc = hook_run_all(connp->in_tx->hook_request_body_data, d);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(connp->in_tx->hook_request_body_data, d);
+    if (rc != HTP_OK) return rc;
 
     // Run configuration hooks second
-    rc = hook_run_all(connp->cfg->hook_request_body_data, d);
-    if (rc != HOOK_OK) return rc;
+    rc = htp_hook_run_all(connp->cfg->hook_request_body_data, d);
+    if (rc != HTP_OK) return rc;
 
     // On PUT requests, treat request body as file
     if (connp->put_file != NULL) {
@@ -2268,8 +2232,8 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
         file_data.file = connp->put_file;
         file_data.file->len += d->len;
 
-        hook_run_all(connp->cfg->hook_request_file_data, &file_data);
-        if (rc != HOOK_OK) return rc;
+        htp_hook_run_all(connp->cfg->hook_request_file_data, &file_data);
+        if (rc != HTP_OK) return rc;
     }
 
     return rc;
@@ -2278,27 +2242,27 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
 /**
  * Run the RESPONSE_BODY_DATA hook.
  *
- * @param connp
- * @param d
+ * @param[in] connp
+ * @param[in] d
  */
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk
     if ((d->data != NULL) && (d->len == 0)) {
-        return HOOK_OK;
+        return HTP_OK;
     }
 
     // Run transaction hooks first
-    int rc = hook_run_all(connp->out_tx->hook_response_body_data, d);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(connp->out_tx->hook_response_body_data, d);
+    if (rc != HTP_OK) return rc;
 
     // Run configuration hooks second
-    rc = hook_run_all(connp->cfg->hook_response_body_data, d);
-    if (rc != HOOK_OK) return rc;
+    rc = htp_hook_run_all(connp->cfg->hook_response_body_data, d);
+    if (rc != HTP_OK) return rc;
 
-    return HOOK_OK;
+    return HTP_OK;
 }
 
-bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffset) {
+bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t *endoffset) {
     size_t pos = 0;
     size_t escaped_chars = 0;
 
@@ -2332,7 +2296,7 @@ bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffse
     size_t outlen = pos - 1 - escaped_chars;
     bstr *result = bstr_alloc(outlen);
     if (result == NULL) return NULL;
-    char *outptr = bstr_ptr(result);
+    unsigned char *outptr = bstr_ptr(result);
     size_t outpos = 0;
 
     pos = 1;
@@ -2350,7 +2314,7 @@ bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffse
         outptr[outpos++] = data[pos++];
     }
 
-    bstr_util_adjust_len(result, outlen);
+    bstr_adjust_len(result, outlen);
 
     if (endoffset != NULL) {
         *endoffset = pos;
@@ -2359,3 +2323,68 @@ bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffse
     return result;
 }
 
+htp_status_t htp_parse_ct_header(bstr *header, bstr **ct) {
+    if ((header == NULL) || (ct == NULL)) return HTP_ERROR;
+
+    unsigned char *data = bstr_ptr(header);
+    size_t len = bstr_len(header);
+
+    // The assumption here is that the header value we receive
+    // here has been left-trimmed, which means the starting position
+    // is on the mediate type. On some platform that may not be the
+    // case, and we may need to do the left-trim ourselves.
+
+    // Find the end of the MIME type, using the same approach PHP 5.4.3 uses.
+    size_t pos = 0;
+    while ((pos < len) && (data[pos] != ';') && (data[pos] != ',') && (data[pos] != ' ')) pos++;
+
+    *ct = bstr_dup_ex(header, 0, pos);
+    if (*ct == NULL) return HTP_ERROR;
+
+    bstr_to_lowercase(*ct);
+
+    return HTP_OK;
+}
+
+/**
+ * Implements relaxed (not strictly RFC) hostname validation.
+ * 
+ * @param[in] hostname
+ * @return 1 if the supplied hostname is valid; 0 if it is not.
+ */
+int htp_validate_hostname(bstr *hostname) {
+    unsigned char *data = bstr_ptr(hostname);
+    size_t len = bstr_len(hostname);
+    size_t startpos = 0;
+    size_t pos = 0;
+
+    if ((len == 0) || (len > 255)) return 0;
+
+    while (pos < len) {
+        // Validate label characters.
+        startpos = pos;
+        while ((pos < len) && (data[pos] != '.')) {
+            unsigned char c = data[pos];
+            // According to the RFC, the underscore is not allowed in a label, but
+            // we allow it here because we think it's often seen in practice.
+            if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9')) || (c == '-'))) {
+                return 0;
+            }
+
+            pos++;
+        }
+
+        // Validate label length.
+        if ((pos - startpos == 0) || (pos - startpos > 63)) return 0;
+
+        if (pos >= len) return 1; // No more data after label.
+
+        // How many dots are there?
+        startpos = pos;
+        while ((pos < len) && (data[pos] == '.')) pos++;
+
+        if (pos - startpos != 1) return 0; // Exactly one dot expected.
+    }
+
+    return 1;
+}

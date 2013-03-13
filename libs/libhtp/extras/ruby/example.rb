@@ -1,22 +1,24 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2009-2010, Open Information Security Foundation
-# Copyright (c) 2009-2012, Qualys, Inc.
+# Copyright (c) 2009-2010 Open Information Security Foundation
+# Copyright (c) 2010-2013 Qualys, Inc.
 # All rights reserved.
-#
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-#
-# * Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
-# * Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
-# * Neither the name of the Qualys, Inc. nor the names of its
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-#
+# 
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+
+# - Neither the name of the Qualys, Inc. nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+# 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -49,20 +51,20 @@ cfg.parse_request_cookies = 1
 
 cfg.register_request do |connp|
   tx = connp.in_tx
-
+  
   puts "Parsed URI: "
   puts "  " + tx.parsed_uri
-
+  
   if tx.request_headers
     puts "Request Headers: "
     tx.request_headers.each {|h| puts "  " + h}
   end
-
+  
   if tx.request_cookies
     puts "Request Cookies: "
     tx.request_cookies.each {|k,v| puts "  #{k} = #{v}"}
   end
-
+  
   if tx.request_params_query
     puts "Request Params Query: "
     tx.request_params_query.each {|k,v| puts "  #{k} = #{v}"}
@@ -72,19 +74,19 @@ cfg.register_request do |connp|
     puts "Request Body Query: "
     tx.request_params_body.each {|k,v| puts "  #{k} = #{v}"}
   end
-
+  
   0
 end
 
 cfg.register_request_body_data do |tx,data|
   puts "Body Data: #{data}"
-
+  
   0
 end
 
 cfg.register_request_file_data do |tx,fileinfo,data|
   puts "File Data for #{fileinfo}: #{data}"
-
+  
   0
 end
 

@@ -25,7 +25,6 @@ RequestHeadersData
 bol
 vernum
 RuleEngineDebugLogLevel
-CLI
 CMD
 CCBA
 clk

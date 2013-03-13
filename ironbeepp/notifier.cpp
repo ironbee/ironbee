@@ -24,7 +24,6 @@
 
 #include <ironbeepp/notifier.hpp>
 #include <ironbeepp/connection.hpp>
-#include <ironbeepp/connection_data.hpp>
 #include <ironbeepp/transaction_data.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
@@ -43,28 +42,6 @@ Notifier Notifier::connection_opened(Connection connection)
         ib_state_notify_conn_opened(
             m_engine.ib(),
             connection.ib()
-        )
-    );
-    return *this;
-}
-
-Notifier Notifier::connection_data_in(ConnectionData connection_data)
-{
-    throw_if_error(
-        ib_state_notify_conn_data_in(
-            m_engine.ib(),
-            connection_data.ib()
-        )
-    );
-    return *this;
-}
-
-Notifier Notifier::connection_data_out(ConnectionData connection_data)
-{
-    throw_if_error(
-        ib_state_notify_conn_data_out(
-            m_engine.ib(),
-            connection_data.ib()
         )
     );
     return *this;

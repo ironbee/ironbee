@@ -200,7 +200,6 @@ public:
         flag_error                 = IB_TX_FERROR,
         flag_http09                = IB_TX_FHTTP09,
         flag_pipelined             = IB_TX_FPIPELINED,
-        flag_parsed_data           = IB_TX_FPARSED_DATA,
         flag_request_started       = IB_TX_FREQ_STARTED,
         flag_request_seen_header   = IB_TX_FREQ_SEENHEADER,
         flag_request_no_body       = IB_TX_FREQ_NOBODY,

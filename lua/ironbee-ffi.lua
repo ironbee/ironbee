@@ -663,10 +663,6 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
         l_arg = newTx(arg)
     elseif c_event == c.conn_opened_event then
         l_arg = newConn(arg)
-    elseif c_event == c.conn_data_in_event then
-        l_arg = newConnData(arg)
-    elseif c_event == c.conn_data_out_event then
-        l_arg = newConnData(arg)
     elseif c_event == c.conn_closed_event then
         l_arg = newConn(arg)
     elseif c_event == c.request_started_event then

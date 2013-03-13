@@ -40,7 +40,8 @@ bool ibtest_assert_memeq(const void *v1, const void *v2, size_t n)
 
 #include <list>
 
-class ParsedContentTest : public BaseFixture {
+class ParsedContentTest : public BaseFixture
+{
     protected:
     ib_mpool_t *tx_mpool;
 
@@ -59,7 +60,8 @@ class ParsedContentTest : public BaseFixture {
     virtual ~ParsedContentTest(){}
 };
 
-class ParsedContentHeaderTest : public ParsedContentTest {
+class ParsedContentHeaderTest : public ParsedContentTest
+{
     public:
 
     ParsedContentHeaderTest(){

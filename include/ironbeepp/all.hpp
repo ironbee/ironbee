@@ -33,7 +33,6 @@
 #include <ironbeepp/configuration_map.hpp>
 #include <ironbeepp/configuration_parser.hpp>
 #include <ironbeepp/connection.hpp>
-#include <ironbeepp/connection_data.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/c_trampoline.hpp>
 #include <ironbeepp/data.hpp>

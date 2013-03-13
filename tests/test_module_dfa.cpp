@@ -31,41 +31,10 @@
 #include <ironbee/field.h>
 #include <ironbee/bytestr.h>
 
-class DfaModuleTest : public BaseModuleFixture {
+class DfaModuleTest : public BaseFixture {
 public:
-
-    ib_conn_t *ib_conn;
-    ib_tx_t *ib_tx;
-
-    DfaModuleTest() : BaseModuleFixture("ibmod_pcre.so")
-    {
-    }
-
     virtual void SetUp() {
-        BaseModuleFixture::SetUp();
-
-        configureIronBee();
-
-        ib_conn = buildIronBeeConnection();
-
-        // Create the transaction.
-        sendDataIn(ib_conn,
-                   "GET / HTTP/1.1\r\n"
-                   "Host: UnitTest\r\n"
-                   "X-MyHeader: header1\r\n"
-                   "X-MyHeader: header2\r\n"
-                   "\r\n");
-
-        sendDataOut(ib_conn,
-                    "HTTP/1.1 200 OK\r\n"
-                    "Content-Type: text/html\r\n"
-                    "X-MyHeader: header3\r\n"
-                    "X-MyHeader: header4\r\n"
-                    "\r\n");
-
-        assert(ib_conn->tx!=NULL);
-        ib_tx = ib_conn->tx;
-
+        BaseFixture::SetUp();
     }
 };
 
@@ -73,5 +42,5 @@ TEST_F(DfaModuleTest, matches)
 {
     /* Not much more to check right now. */
     /* If we do not crash, we are generally OK. */
-    ASSERT_TRUE(ib_tx);
+    BaseFixture::configureIronBee();
 }

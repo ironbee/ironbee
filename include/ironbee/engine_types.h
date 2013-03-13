@@ -81,7 +81,6 @@ extern const ib_default_string_t ib_default_string;
 
 /* Public type declarations */
 typedef struct ib_conn_t ib_conn_t;
-typedef struct ib_conndata_t ib_conndata_t;
 typedef struct ib_txdata_t ib_txdata_t;
 typedef struct ib_tx_t ib_tx_t;
 typedef struct ib_tfn_t ib_tfn_t;
@@ -121,7 +120,6 @@ typedef enum {
 #define IB_TX_FERROR            (1 <<  0) /**< Transaction had an error */
 #define IB_TX_FHTTP09           (1 <<  1) /**< Transaction is HTTP/0.9 */
 #define IB_TX_FPIPELINED        (1 <<  2) /**< Transaction is pipelined */
-#define IB_TX_FPARSED_DATA      (1 <<  3) /**< Transaction with parsed data */
 #define IB_TX_FREQ_STARTED      (1 <<  6) /**< Request started */
 #define IB_TX_FREQ_SEENHEADER   (1 <<  7) /**< Request header seen */
 #define IB_TX_FREQ_NOBODY       (1 <<  8) /**< Request should not have body */
@@ -159,13 +157,6 @@ typedef enum {
     IB_CTYPE_LOCATION,
     IB_CTYPE_CUSTOM,
 } ib_ctype_t;
-
-/** Connection Data Structure */
-struct ib_conndata_t {
-    ib_conn_t          *conn;            /**< Connection */
-    size_t              dlen;            /**< Data buffer length */
-    uint8_t            *data;            /**< Data buffer */
-};
 
 /** Transaction Data Structure */
 struct ib_txdata_t {

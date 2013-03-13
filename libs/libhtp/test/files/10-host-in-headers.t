@@ -10,7 +10,7 @@ Content-Length: 12
 Hello World!
 >>>
 GET / HTTP/1.1
-Host: www.example.com...
+Host: www.example.com.
 
 
 <<<

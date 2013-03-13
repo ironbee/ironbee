@@ -1,21 +1,23 @@
 /***************************************************************************
- * Copyright (c) 2009-2010, Open Information Security Foundation
- * Copyright (c) 2009-2012, Qualys, Inc.
+ * Copyright (c) 2009-2010 Open Information Security Foundation
+ * Copyright (c) 2010-2013 Qualys, Inc.
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- *
- * * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- * * Neither the name of the Qualys, Inc. nor the names of its
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
+ * 
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+
+ * - Neither the name of the Qualys, Inc. nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,21 +39,22 @@
 #ifndef _HTP_URLENCODED_H
 #define	_HTP_URLENCODED_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct htp_urlenp_t htp_urlenp_t;
 typedef struct htp_urlen_param_t htp_urlen_param_t;
-
-#include "htp.h"
 
 #define HTP_URLENP_DEFAULT_PARAMS_SIZE  32
 
 #define HTP_URLENP_STATE_KEY            1
 #define HTP_URLENP_STATE_VALUE          2
 
+// The MIME type that triggers the parser. Must be lowercase.
 #define HTP_URLENCODED_MIME_TYPE        "application/x-www-form-urlencoded"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "htp_private.h"
 
 /**
  * This is the main URLENCODED parser structure. It is used to store
@@ -60,17 +63,17 @@ extern "C" {
 struct htp_urlenp_t {
     /** The transaction this parser belongs to. */
     htp_tx_t *tx;
-
+    
     /** The character used to separate parameters. Defaults to & and should
      *  not be changed without good reason.
      */
     unsigned char argument_separator;
 
     /** Whether to perform URL-decoding on parameters. */
-    int decode_url_encoding;
+    int decode_url_encoding;        
 
     /** This table contains the list of parameters, indexed by name. */
-    table_t *params;
+    htp_table_t *params;
 
     // Private fields; these are used during the parsing process only
     int _state;
@@ -85,23 +88,20 @@ struct htp_urlenp_t {
 struct htp_urlen_param_t {
     /** Parameter name. */
     bstr *name;
-
+    
     /** Parameter value. */
     bstr *value;
 };
 
 htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx);
-void htp_urlenp_destroy(htp_urlenp_t **urlenp);
+void htp_urlenp_destroy(htp_urlenp_t *urlenp);
 
-void htp_urlenp_set_argument_separator(htp_urlenp_t *urlenp, unsigned char argument_separator);
+void htp_urlenp_set_argument_separator(htp_urlenp_t *urlenp, unsigned char argument_separator);         
 void htp_urlenp_set_decode_url_encoding(htp_urlenp_t *urlenp, int decode_url_encoding);
-
-int  htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t len);
-int  htp_urlenp_parse_complete(htp_urlenp_t *urlenp, unsigned char *data, size_t len);
+         
+int  htp_urlenp_parse_partial(htp_urlenp_t *urlenp, const void *data, size_t len);
+int  htp_urlenp_parse_complete(htp_urlenp_t *urlenp, const void *data, size_t len);
 int  htp_urlenp_finalize(htp_urlenp_t *urlenp);
-
- int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
- int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
 
 #ifdef __cplusplus
 }

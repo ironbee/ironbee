@@ -38,7 +38,6 @@ namespace IronBee {
 class Transaction;
 class TransactionData;
 class Connection;
-class ConnectionData;
 class ParsedNameValue;
 class ParsedRequestLine;
 class ParsedResponseLine;
@@ -172,22 +171,6 @@ public:
     > connection_t;
 
     /**
-     * Call back type that takes Connection argument.
-     *
-     * Parameters are:
-     * - IronBee engine.
-     * - Which event triggered the callback.
-     * - Argument.
-     **/
-    typedef boost::function<
-        void(
-            Engine,
-            Engine::state_event_e,
-            ConnectionData
-        )
-    > connection_data_t;
-
-    /**
      * Call back type that takes a Transaction but no argument.
      *
      * Parameters are:
@@ -299,19 +282,6 @@ public:
     HooksRegistrar& connection(
         Engine::state_event_e event,
         connection_t          f
-     );
-
-    /**
-     * Register connection data callback.
-     *
-     * @param[in] event Event to register for.
-     * @param[in] f     Functional to register.
-     * @returns @c *this for call chaining.
-     * @throw einval if callback type is not appropriate for @a event.
-     **/
-    HooksRegistrar& connection_data(
-        Engine::state_event_e event,
-        connection_data_t     f
      );
 
     /**
@@ -474,28 +444,6 @@ public:
      * @throw IronBee++ exception on failure.
      **/
     HooksRegistrar& handle_disconnect(connection_t f);
-
-    /**
-     * Register callback for connection_data_in.
-     *
-     * @sa Engine::state_event_e
-     *
-     * @param[in] f Callback to register.
-     * @returns @c *this for call chaining.
-     * @throw IronBee++ exception on failure.
-     **/
-    HooksRegistrar& connection_data_in(connection_data_t f);
-
-    /**
-     * Register callback for connection_data_out.
-     *
-     * @sa Engine::state_event_e
-     *
-     * @param[in] f Callback to register.
-     * @returns @c *this for call chaining.
-     * @throw IronBee++ exception on failure.
-     **/
-    HooksRegistrar& connection_data_out(connection_data_t f);
 
     /**
      * Register callback for transaction_started.

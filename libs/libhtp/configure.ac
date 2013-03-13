@@ -14,7 +14,7 @@ dnl -----------------------------------------------
 GENERIC_LIBRARY_NAME=htp
 
 GENERIC_MAJOR_VERSION=0
-GENERIC_MINOR_VERSION=4
+GENERIC_MINOR_VERSION=5
 GENERIC_MICRO_VERSION=X
 
 # API version (often = GENERIC_MAJOR_VERSION.GENERIC_MINOR_VERSION)
@@ -56,11 +56,33 @@ AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AC_ARG_ENABLE(debug, [ --enable-debug  Enable debug output], [ enable_debug=yes ])
+AC_ARG_ENABLE(debug, [  --enable-debug  Enable debug mode], [ enable_debug=yes ])
 if test "$enable_debug" = "yes"; then
     CFLAGS="${CFLAGS} -DHTP_DEBUG"
     echo "Debug mode enabled"
 fi
+
+OLEVEL=2
+
+AC_ARG_ENABLE(devmode, [  --enable-devmode  Enable development mode], [ enable_devmode=yes ])
+if test "$enable_devmode" = "yes"; then
+    OLEVEL=0
+    CFLAGS="${CFLAGS} -Werror -Wfatal-errors"
+    CPPFLAGS="${CPPFLAGS} -Werror -Wfatal-errors"
+    echo "Development mode enabled"
+fi
+
+AC_ARG_ENABLE(gcov, [  --enable-gcov  Enable gcov support], [ enable_gcov=yes ])
+if test "$enable_gcov" = "yes"; then
+    OLEVEL=0
+    CFLAGS="${CFLAGS} --coverage -fprofile-arcs -ftest-coverage"
+    CPPFLAGS="${CPPFLAGS} --coverage -fprofile-arcs -ftest-coverage"
+    LDFLAGS="${LDFLAGS} -lgcov --coverage -fprofile-arcs"
+    echo "gcov support enabled"
+fi
+
+CFLAGS="${CFLAGS} -O${OLEVEL}"
+CPPFLAGS="${CPPFLAGS} -O${OLEVEL}"
 
 dnl -----------------------------------------------
 dnl Checks for programs.
@@ -88,9 +110,15 @@ fi
 AC_MSG_CHECKING([OS])
 OS=`uname -s`
 case "$OS" in
+        CYGWIN*)
+                AC_MSG_RESULT(Cygwin)
+                OS_CYGWIN="true"
+                NO_STACK_PROTECTOR="true"
+        ;;
         FreeBSD*)
                 AC_MSG_RESULT(FreeBSD)
                 OS_FREEBSD="true"
+                NO_STACK_PROTECTOR="true"
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
         ;;
@@ -119,14 +147,14 @@ dnl Check for GCC signed overflow warning support
 dnl -----------------------------------------------
 AC_MSG_CHECKING(for gcc support of -Wstrict-overflow=1)
 TMPCFLAGS="${CFLAGS}"
-CFLAGS="${CFLAGS} -Wstrict-overflow=1 -Wfatal-errors"
+CFLAGS="${CFLAGS} -Wstrict-overflow=1"
 AC_TRY_COMPILE(,,[gcc_have_strict_overflow=yes],[gcc_have_strict_overflow=no])
 AC_MSG_RESULT($gcc_have_strict_overflow)
 if test "$gcc_have_strict_overflow" != "yes"; then
     CFLAGS="${TMPCFLAGS}"
 fi
 
-if test "$OS_FREEBSD" != "true"; then
+if test "$NO_STACK_PROTECTOR" != "true"; then
 dnl -----------------------------------------------
 dnl Check for GCC stack smashing protection
 dnl -----------------------------------------------
@@ -136,7 +164,7 @@ CFLAGS="${CFLAGS} -fstack-protector"
 AC_TRY_COMPILE(,,[gcc_have_fstack_protector=yes],[gcc_have_fstack_protector=no])
 AC_MSG_RESULT($gcc_have_fstack_protector)
 if test "$gcc_have_fstack_protector" != "yes"; then
-    CFLAGS="${TMPCFLAGS}"
+    CFLAGS="${TMPCFLAGS}"  
 fi
 fi
 
@@ -178,21 +206,17 @@ else
 fi
 
 DOXYGEN=$doxygen
-
-dnl TODO: Use these to gen doxygen configs
-DOXYGEN_INPUT="htp extras test"
-DOXYGEN_FILES=`find $DOXYGEN_INPUT -type f -regex '.*\.\(h\|c\|cc\)$'`
-DOXYGEN_DEPS=""
-dnl Make deps into a single line with relative path from docs dir
-for f in $DOXYGEN_FILES; do
-    DOXYGEN_DEPS="$DOXYGEN_DEPS ../$f"
-done
 AC_SUBST(DOXYGEN)
-AC_SUBST(DOXYGEN_INPUT)
-AC_SUBST(DOXYGEN_DEPS)
 
 dnl -----------------------------------------------
-dnl Generates Makefile's, configuration files and scripts
+dnl Check for lcov
+dnl -----------------------------------------------
+AC_PATH_PROG(LCOV, lcov, [no])
+AC_SUBST(LCOV)
+
+
+dnl -----------------------------------------------
+dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
 
 AC_PREFIX_DEFAULT(/usr/local)

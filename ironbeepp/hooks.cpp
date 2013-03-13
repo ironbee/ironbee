@@ -1,6 +1,5 @@
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/connection.hpp>
-#include <ironbeepp/connection_data.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/transaction_data.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
@@ -184,40 +183,6 @@ ib_status_t connection(
             Engine(ib_engine),
             static_cast<Engine::state_event_e>(event),
             Connection(ib_connection)
-        );
-    }
-    catch (...) {
-        return convert_exception(ib_engine);
-    }
-    return IB_OK;
-}
-
-/**
- * Hooks handler for connection_data callbacks.
- *
- * @param[in] ib_engine          The IronBee engine.
- * @param[in] event              Which event happened.
- * @param[in] ib_connection_data Data of event.
- * @param[in] cbdata             Callback data: contains C++ functional to
- *                               forward to.
- * @returns Status code reflecting any exceptions thrown.
- **/
-ib_status_t connection_data(
-    ib_engine_t*          ib_engine,
-    ib_state_event_type_t event,
-    ib_conndata_t*        ib_connection_data,
-    void*                 cbdata
-)
-{
-    assert(ib_engine != NULL);
-    assert(ib_connection_data != NULL);
-    assert(cbdata != NULL);
-
-    try {
-        data_to_value<HooksRegistrar::connection_data_t>(cbdata)(
-            Engine(ib_engine),
-            static_cast<Engine::state_event_e>(event),
-            ConnectionData(ib_connection_data)
         );
     }
     catch (...) {
@@ -438,32 +403,6 @@ HooksRegistrar& HooksRegistrar::connection(
     return *this;
 }
 
-HooksRegistrar& HooksRegistrar::connection_data(
-    Engine::state_event_e event,
-    connection_data_t     f
-)
-{
-    if (f.empty()) {
-        BOOST_THROW_EXCEPTION(einval() << errinfo_what(
-            "Empty functional passed to hook registrarion."
-        ));
-    }
-
-    throw_if_error(
-        ib_hook_conndata_register(
-            m_engine.ib(),
-            static_cast<ib_state_event_type_t>(event),
-            &Internal::Hooks::connection_data,
-            value_to_data<connection_data_t>(
-                f,
-                m_engine.main_memory_pool().ib()
-            )
-        )
-    );
-
-    return *this;
-}
-
 HooksRegistrar& HooksRegistrar::transaction(
     Engine::state_event_e event,
     transaction_t         f
@@ -600,22 +539,6 @@ HooksRegistrar& HooksRegistrar::handle_disconnect(connection_t f)
 {
     return connection(
         Engine::handle_disconnect,
-        f
-    );
-}
-
-HooksRegistrar& HooksRegistrar::connection_data_in(connection_data_t f)
-{
-    return connection_data(
-        Engine::connection_data_in,
-        f
-    );
-}
-
-HooksRegistrar& HooksRegistrar::connection_data_out(connection_data_t f)
-{
-    return connection_data(
-        Engine::connection_data_out,
         f
     );
 }

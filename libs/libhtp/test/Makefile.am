@@ -1,24 +1,26 @@
-LDADD = $(top_builddir)/htp/.libs/libhtp.a -lz @LIBICONV@
-AM_CFLAGS = -g -O2
-AM_CPPFLAGS = -I$(top_srcdir)
-EXTRA_DIST = run-tests.sh files
-check_PROGRAMS = main test_bstr test_main test_utils
+LDADD = $(top_builddir)/htp/.libs/libhtp.a -lz @LIBICONV@ 
+AM_CFLAGS = -g -std=gnu99
+AM_CPPFLAGS = -I$(top_srcdir) -Wno-write-strings
+EXTRA_DIST = files
+check_PROGRAMS = test_all
+check_LIBRARIES = libgtest.a
 
-noinst_LTLIBRARIES=libgtest.la
+test_all_SOURCES = test_bstr.cpp test_gunzip.cpp test_hybrid.cpp test_main.cpp test_multipart.cpp test.c test.h test_utils.cpp
+test_all_LDADD = libgtest.a -lpthread $(LDADD)
 
-main_SOURCES = main.c test.c test.h	 test-tcpick.c
+libgtest_a_SOURCES = $(srcdir)/gtest/gtest-all.cc $(srcdir)/gtest/gtest_main.cc $(srcdir)/gtest/gtest.h
 
-test_bstr_SOURCES = test_bstr.cc
-test_bstr_LDADD = libgtest.la -lpthread $(LDADD)
+TESTS_ENVIRONMENT = srcdir=$(srcdir)/files
+TESTS = test_all
 
-test_main_SOURCES = test_main.cc test.c
-test_main_LDADD = libgtest.la -lpthread $(LDADD)
+test: check
+	@echo
 
-test_utils_SOURCES = test_utils.cc
-test_utils_LDADD = libgtest.la -lpthread $(LDADD)
+test-compile-only: all-am
+	$(MAKE) $(AM_MAKEFLAGS) $(check_LIBRARIES)
+	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 
-libgtest_la_SOURCES=$(srcdir)/gtest/gtest-all.cc $(srcdir)/gtest/gtest_main.cc $(srcdir)/gtest/gtest.h
-
-TESTS_ENVIRONMENT= srcdir=$(srcdir) TEST_HOME=$(srcdir)/files
-TESTS = run-tests.sh test_bstr test_main test_utils
+check-compile-only: all-am
+	$(MAKE) $(AM_MAKEFLAGS) $(check_LIBRARIES)
+	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 

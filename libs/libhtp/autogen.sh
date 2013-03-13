@@ -4,4 +4,4 @@
 rm -rf autom4te.cache
 
 # Generate
-autoreconf -i -f  -v
+autoreconf -i -f -v

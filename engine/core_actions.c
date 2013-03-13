@@ -949,20 +949,21 @@ static ib_status_t expand_data(
     if (setvar_data->type == IB_FTYPE_BYTESTR) {
 
         /* Pull the data out of the bytestr */
-        const char *bsdata =
-            (const char *)ib_bytestr_ptr(setvar_data->value.bstr);
+        const uint8_t *bsdata = ib_bytestr_ptr(setvar_data->value.bstr);
         size_t bslen = ib_bytestr_length(setvar_data->value.bstr);
 
         /* Expand the string */
         if (flags & IB_ACTINST_FLAG_EXPAND) {
 
             rc = ib_data_expand_str_ex(
-                tx->data, bsdata, bslen, false, false, expanded, exlen);
+                tx->data, (const char *)bsdata, bslen,
+                false, false, expanded, exlen);
             if (rc != IB_OK) {
                 ib_rule_log_debug(
                     rule_exec,
                     "%s: Failed to expand string \"%.*s\": %s",
-                    label, (int) bslen, bsdata, ib_status_to_string(rc));
+                    label, (int) bslen, (const char *)bsdata,
+                    ib_status_to_string(rc));
                 return rc;
             }
 
@@ -973,15 +974,14 @@ static ib_status_t expand_data(
                 setvar_data->name);
 
             if (ib_rule_dlog_level(tx->ctx) >= IB_RULE_DLOG_TRACE) {
-                const char* hex_coded = ib_util_hex_escape(bsdata, bslen);
-                if (hex_coded != NULL) {
+                const char *escaped = ib_util_hex_escape(tx->mp, bsdata, bslen);
+                if (escaped != NULL) {
                     ib_rule_log_debug(
                         rule_exec,
                         "%s: Field \"%s\" has value: %s",
                         label,
                         setvar_data->name,
-                        hex_coded);
-                    free((void *)hex_coded);
+                        escaped);
                 }
             }
         }
