@@ -36,11 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include <stdlib.h>
-
-#include "htp.h"
 #include "htp_private.h"
-#include "htp_transaction.h"
 
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->in_current_read_offset >= (X)->in_current_len) { \

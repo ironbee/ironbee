@@ -37,7 +37,6 @@
  */
 
 #include "htp_private.h"
-#include "htp_transaction.h"
 
 static bstr *copy_or_wrap_mem(const void *data, size_t len, enum htp_alloc_strategy_t alloc) {
     if (alloc == HTP_ALLOC_REUSE) {

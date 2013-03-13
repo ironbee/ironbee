@@ -48,6 +48,7 @@ extern "C" {
 #include "htp_core.h"
 
 #include "bstr.h"
+#include "htp_base64.h"
 #include "htp_config.h"
 #include "htp_connection_parser.h"
 #include "htp_decompressors.h"
@@ -57,6 +58,7 @@ extern "C" {
 #include "htp_table.h"
 #include "htp_transaction.h"
 #include "htp_urlencoded.h"
+#include "htp_utf8_decoder.h"
 
 /**
  * Represents a single TCP connection.
