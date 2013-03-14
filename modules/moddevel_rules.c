@@ -70,11 +70,12 @@ struct ib_moddevel_rules_config_t {
  *
  * @returns Status code
  */
-static ib_status_t op_true_execute(const ib_rule_exec_t *rule_exec,
-                                   void *data,
-                                   ib_flags_t flags,
-                                   ib_field_t *field,
-                                   ib_num_t *result)
+static ib_status_t op_true_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result)
 {
     *result = 1;
 
@@ -99,11 +100,12 @@ static ib_status_t op_true_execute(const ib_rule_exec_t *rule_exec,
  *
  * @returns Status code
  */
-static ib_status_t op_false_execute(const ib_rule_exec_t *rule_exec,
-                                    void *data,
-                                    ib_flags_t flags,
-                                    ib_field_t *field,
-                                    ib_num_t *result)
+static ib_status_t op_false_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result)
 {
     *result = 0;
     /* Don't check for capture, because we always return zero */
@@ -123,12 +125,13 @@ static ib_status_t op_false_execute(const ib_rule_exec_t *rule_exec,
  *
  * @returns Status code
  */
-static ib_status_t op_assert_create(ib_engine_t *ib,
-                                    ib_context_t *ctx,
-                                    const ib_rule_t *rule,
-                                    ib_mpool_t *mp,
-                                    const char *parameters,
-                                    ib_operator_inst_t *op_inst)
+static ib_status_t op_assert_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *mp,
+    const char         *parameters,
+    ib_operator_inst_t *op_inst)
 {
     ib_status_t rc;
     bool expand;
@@ -170,11 +173,12 @@ static ib_status_t op_assert_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_assert_execute(const ib_rule_exec_t *rule_exec,
-                                     void *data,
-                                     ib_flags_t flags,
-                                     ib_field_t *field,
-                                     ib_num_t *result)
+static ib_status_t op_assert_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result)
 {
     /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
@@ -210,11 +214,12 @@ static ib_status_t op_assert_execute(const ib_rule_exec_t *rule_exec,
  *
  * @returns Status code
  */
-static ib_status_t op_exists_execute(const ib_rule_exec_t *rule_exec,
-                                     void *data,
-                                     ib_flags_t flags,
-                                     ib_field_t *field,
-                                     ib_num_t *result)
+static ib_status_t op_exists_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result)
 {
     /* Return true of field is not NULL */
     *result = (field != NULL);
@@ -270,11 +275,12 @@ static istype_params_t istype_params[] = {
  *
  * @returns Status code
  */
-static ib_status_t op_istype_execute(const ib_rule_exec_t *rule_exec,
-                                     void *data,
-                                     ib_flags_t flags,
-                                     ib_field_t *field,
-                                     ib_num_t *result)
+static ib_status_t op_istype_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result)
 {
     assert(field != NULL);
 
@@ -295,7 +301,7 @@ static ib_status_t op_istype_execute(const ib_rule_exec_t *rule_exec,
 }
 
 /**
- * Create function for the log action.
+ * Create function for the DebugLog action.
  *
  * @param[in] ib IronBee engine (unused)
  * @param[in] ctx Current context.
@@ -306,12 +312,13 @@ static ib_status_t op_istype_execute(const ib_rule_exec_t *rule_exec,
  *
  * @returns Status code
  */
-static ib_status_t act_log_create(ib_engine_t *ib,
-                                  ib_context_t *ctx,
-                                  ib_mpool_t *mp,
-                                  const char *parameters,
-                                  ib_action_inst_t *inst,
-                                  void *cbdata)
+static ib_status_t action_debuglog_create(
+    ib_engine_t      *ib,
+    ib_context_t     *ctx,
+    ib_mpool_t       *mp,
+    const char       *parameters,
+    ib_action_inst_t *inst,
+    void             *cbdata)
 {
     ib_status_t rc;
     bool expand;
@@ -349,10 +356,11 @@ static ib_status_t act_log_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t act_debuglog_execute(const ib_rule_exec_t *rule_exec,
-                                        void *data,
-                                        ib_flags_t flags,
-                                        void *cbdata)
+static ib_status_t action_debuglog_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    void                 *cbdata)
 {
     /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
@@ -377,6 +385,89 @@ static ib_status_t act_debuglog_execute(const ib_rule_exec_t *rule_exec,
 }
 
 /**
+ * Create function for the 'print' action.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx Current IronBee context
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters from the rule definition
+ * @param[in,out] inst Action instance
+ * @param[in] cbdata Unused.
+ *
+ * @returns Status code
+ */
+static ib_status_t action_print_create(
+    ib_engine_t      *ib,
+    ib_context_t     *ctx,
+    ib_mpool_t       *mp,
+    const char       *parameters,
+    ib_action_inst_t *inst,
+    void             *cbdata)
+{
+    char *str;
+    ib_status_t rc;
+    bool expand;
+
+    if (parameters == NULL) {
+        return IB_EINVAL;
+    }
+
+    str = ib_mpool_strdup(mp, parameters);
+    if (str == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Do we need expansion? */
+    rc = ib_data_expand_test_str(str, &expand);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    else if (expand) {
+        inst->flags |= IB_ACTINST_FLAG_EXPAND;
+    }
+
+    inst->data = str;
+    return IB_OK;
+}
+
+/**
+ * Execute function for the "print" action
+ *
+ * @param[in] rule_exec The rule execution object
+ * @param[in] data C-style string to log
+ * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
+ *
+ * @returns Status code
+ */
+static ib_status_t action_print_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    void                 *cbdata)
+{
+    const char *cstr = (const char *)data;
+    char *expanded = NULL;
+    ib_status_t rc;
+
+    /* Expand the string */
+    if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
+        rc = ib_data_expand_str(rule_exec->tx->data, cstr, false, &expanded);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "print: Failed to expand string '%s': %d",
+                              cstr, rc);
+        }
+    }
+    else {
+        expanded = (char *)cstr;
+    }
+
+    printf( "Rule %s => %s\n", ib_rule_id(rule_exec->rule), expanded);
+    return IB_OK;
+}
+
+/**
  * Create function for the assert action.
  *
  * @param[in] ib IronBee engine (unused)
@@ -388,12 +479,13 @@ static ib_status_t act_debuglog_execute(const ib_rule_exec_t *rule_exec,
  *
  * @returns Status code
  */
-static ib_status_t act_assert_create(ib_engine_t *ib,
-                                     ib_context_t *ctx,
-                                     ib_mpool_t *mp,
-                                     const char *parameters,
-                                     ib_action_inst_t *inst,
-                                     void *cbdata)
+static ib_status_t action_assert_create(
+    ib_engine_t      *ib,
+    ib_context_t     *ctx,
+    ib_mpool_t       *mp,
+    const char       *parameters,
+    ib_action_inst_t *inst,
+    void             *cbdata)
 {
     ib_status_t rc;
     bool expand;
@@ -431,10 +523,11 @@ static ib_status_t act_assert_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
-                                      void *data,
-                                      ib_flags_t flags,
-                                      void *cbdata)
+static ib_status_t action_assert_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    void                 *cbdata)
 {
     /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
@@ -459,7 +552,7 @@ static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
 }
 
 /** Injection action functions & related declarations */
-static const char *act_inject_name = "inject";
+static const char *action_inject_name = "inject";
 
 /**
  * Create function for the inject action.
@@ -473,12 +566,13 @@ static const char *act_inject_name = "inject";
  *
  * @returns Status code
  */
-static ib_status_t act_inject_create_fn(ib_engine_t *ib,
-                                        ib_context_t *ctx,
-                                        ib_mpool_t *mp,
-                                        const char *parameters,
-                                        ib_action_inst_t *inst,
-                                        void *cbdata)
+static ib_status_t action_inject_create_fn(
+    ib_engine_t      *ib,
+    ib_context_t     *ctx,
+    ib_mpool_t       *mp,
+    const char       *parameters,
+    ib_action_inst_t *inst,
+    void             *cbdata)
 {
     inst->data = NULL;
     return IB_OK;
@@ -496,7 +590,7 @@ static ib_status_t act_inject_create_fn(ib_engine_t *ib,
  *   - IB_DECLINE Decline to manage rule
  *   - IB_Exx Other error
  */
-static ib_status_t act_inject_ownership_fn(
+static ib_status_t action_inject_ownership_fn(
     const ib_engine_t    *ib,
     const ib_rule_t      *rule,
     void                 *cbdata)
@@ -510,7 +604,7 @@ static ib_status_t act_inject_ownership_fn(
     ib_moddevel_rules_config_t *config = (ib_moddevel_rules_config_t *)cbdata;
 
     rc = ib_rule_search_action(ib, rule, RULE_ACTION_TRUE,
-                               act_inject_name,
+                               action_inject_name,
                                NULL, &count);
     if (rc != IB_OK) {
         return rc;
@@ -537,7 +631,7 @@ static ib_status_t act_inject_ownership_fn(
  *   - IB_OK All OK
  *   - IB_Exx Other error
  */
-static ib_status_t act_inject_injection_fn(
+static ib_status_t action_inject_injection_fn(
     const ib_engine_t    *ib,
     const ib_rule_exec_t *rule_exec,
     ib_list_t            *rule_list,
@@ -725,44 +819,53 @@ ib_status_t ib_moddevel_rules_init(
      * Debug logging actions
      */
 
-    /* Register the debuglog action */
+    /* Register the DebugLog action */
     rc = ib_action_register(ib,
-                            "debuglog",
+                            "DebugLog",
                             IB_ACT_FLAG_NONE,
-                            act_log_create, NULL,
+                            action_debuglog_create, NULL,
                             NULL, NULL, /* no destroy function */
-                            act_debuglog_execute, NULL);
+                            action_debuglog_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    /* dlog is an alias for debuglog */
+    /* Register the Print action */
     rc = ib_action_register(ib,
-                            "dlog",
+                            "Print",
                             IB_ACT_FLAG_NONE,
-                            act_log_create, NULL,
+                            action_print_create, NULL,
                             NULL, NULL, /* no destroy function */
-                            act_debuglog_execute, NULL);
+                            action_print_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }
+
+
+    /**
+     * Assert action
+     */
 
     /* Register the assert action */
     rc = ib_action_register(ib,
                             "assert",
                             IB_ACT_FLAG_NONE,
-                            act_assert_create, NULL,
+                            action_assert_create, NULL,
                             NULL, NULL, /* no destroy function */
-                            act_assert_execute, NULL);
+                            action_assert_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    /* Register the inject action and related rule engine callbacks */
+    /**
+     * Inject action and related rule engine callbacks
+     */
+
+    /* Register the inject action */
     rc = ib_action_register(ib,
-                            act_inject_name,
+                            action_inject_name,
                             IB_ACT_FLAG_NONE,
-                            act_inject_create_fn, config,
+                            action_inject_create_fn, config,
                             NULL, NULL, /* no destroy function */
                             NULL, NULL); /* no execute function */
     if (rc != IB_OK) {
@@ -770,17 +873,17 @@ ib_status_t ib_moddevel_rules_init(
     }
 
     /* Register the ownership function */
-    rc = ib_rule_register_ownership_fn(ib, act_inject_name,
-                                       act_inject_ownership_fn, config);
+    rc = ib_rule_register_ownership_fn(ib, action_inject_name,
+                                       action_inject_ownership_fn, config);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the injection function */
     for (phase = PHASE_NONE; phase < IB_RULE_PHASE_COUNT; ++phase) {
-        rc = ib_rule_register_injection_fn(ib, act_inject_name,
+        rc = ib_rule_register_injection_fn(ib, action_inject_name,
                                            phase,
-                                           act_inject_injection_fn, config);
+                                           action_inject_injection_fn, config);
         if (rc != IB_OK) {
             return rc;
         }
