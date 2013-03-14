@@ -633,9 +633,9 @@ static ib_status_t moddevel_txdump_tx(
         moddevel_txdump(tx, txdump, 2, "Connection");
         moddevel_txdump(tx, txdump, 4, "Created: %s", buf);
         moddevel_txdump(tx, txdump, 4, "Remote: %s:%d",
-                      tx->conn->remote_ipstr, tx->conn->remote_port);
+                        tx->conn->remote_ipstr, tx->conn->remote_port);
         moddevel_txdump(tx, txdump, 4, "Local: %s:%d",
-                      tx->conn->local_ipstr, tx->conn->local_port);
+                        tx->conn->local_ipstr, tx->conn->local_port);
     }
 
     /* Request Line */
@@ -646,13 +646,13 @@ static ib_status_t moddevel_txdump_tx(
         else {
             moddevel_txdump(tx, txdump, 2, "Request line:");
             moddevel_txdump_bs(tx, txdump, 4,
-                             "Raw", tx->request_line->raw, 256);
+                               "Raw", tx->request_line->raw, 256);
             moddevel_txdump_bs(tx, txdump, 4,
-                             "Method", tx->request_line->method, 32);
+                               "Method", tx->request_line->method, 32);
             moddevel_txdump_bs(tx, txdump, 4,
-                             "URI", tx->request_line->uri, 256);
+                               "URI", tx->request_line->uri, 256);
             moddevel_txdump_bs(tx, txdump, 4,
-                             "Protocol", tx->request_line->protocol, 32);
+                               "Protocol", tx->request_line->protocol, 32);
         }
     }
 
@@ -691,11 +691,12 @@ static ib_status_t moddevel_txdump_tx(
         const ib_strval_t *rec;
 
         moddevel_txdump(tx, txdump, 2,
-                      "Flags: %08lx", (unsigned long)tx->flags);
+                        "Flags: %08lx", (unsigned long)tx->flags);
         for (rec = tx_flags_map; rec->str != NULL; ++rec) {
             bool on = ib_tx_flags_isset(tx, rec->val);
             moddevel_txdump(tx, txdump, 4, "%08lx \"%s\": %s",
-                          (unsigned long)rec->val, rec->str, on ? "On" : "Off");
+                            (unsigned long)rec->val, rec->str,
+                            on ? "On" : "Off");
         }
     }
 

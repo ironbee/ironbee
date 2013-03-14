@@ -474,7 +474,7 @@ static const char *act_inject_name = "inject";
  * @returns Status code
  */
 static ib_status_t act_inject_create_fn(ib_engine_t *ib,
-                                       ib_context_t *ctx,
+                                        ib_context_t *ctx,
                                         ib_mpool_t *mp,
                                         const char *parameters,
                                         ib_action_inst_t *inst,

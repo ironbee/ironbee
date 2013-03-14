@@ -1253,7 +1253,7 @@ static int modhtp_htp_response_trailer(
 
     /* Check the parser status */
     irc = modhtp_check_parser(connp, true, "Response_trailer",
-                                 NULL, &tx, &itx);
+                              NULL, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
