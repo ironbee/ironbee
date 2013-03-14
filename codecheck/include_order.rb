@@ -70,6 +70,7 @@ CANONICAL_INCLUDE_ORDER = [
   '"user_agent_private.h"',
   '"lua/ironbee.h"',
   '"lua_common_private.h"',
+  '"moddevel_private.h"',
   '"kvstore_private.h"',
 
   # Automata

@@ -25,10 +25,10 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <ironbee/types.h>
-#include <ironbee/list.h>
 #include <ironbee/config.h>
 #include <ironbee/engine_types.h>
+#include <ironbee/list.h>
+#include <ironbee/types.h>
 
 /**
  * Development module configuration structures

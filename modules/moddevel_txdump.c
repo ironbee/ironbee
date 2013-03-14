@@ -27,6 +27,7 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/engine.h>
+#include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>
@@ -34,18 +35,17 @@
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
-#include <ironbee/escape.h>
 
 #include <assert.h>
 #include <ctype.h>
-#include <stdint.h>
+#include <errno.h>
 #include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <time.h>
-#include <errno.h>
 
 /**
  * Several max constants
