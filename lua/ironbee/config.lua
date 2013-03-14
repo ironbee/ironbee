@@ -188,19 +188,58 @@ local build_rule = function(ib, ctx, chain, db)
                 local severity = tonumber(arg)
                 if severity > 255 then
                     ib:logError("Severity exceeds max value: %d", severity)
+                elseif severity < 0 then
+                    ib:logError("Severity is less than 0: %d", severity)
                 else
                     prule[0].meta.severity = severity
                 end
             elseif name == "confidence" then
                 local confidence = tonumber(arg)
                 if confidence > 255 then
-                    ib:logError("Severity exceeds max value: %d", confidence)
+                    ib:logError("Confidence exceeds max value: %d", confidence)
+                elseif confidence < 0 then
+                    ib:logError("Confidence is less than 0: %d", severity)
                 else
                     prule[0].meta.confidence = confidence
                 end
-            end
 
-            -- FIXME actions
+            -- Handling of Actions
+            else
+
+                -- Detect inverted actions (actions starting with !)
+                local is_inverted = ffi.new("ib_rule_action_t")
+                if string.sub(name, 1, 1) == '!' then
+                    name = string.sub(name, 2)
+                    is_inverted = ffi.C.RULE_ACTION_FALSE
+                else
+                    is_inverted = ffi.C.RULE_ACTION_TRUE
+                end
+
+                -- Create the action instance.
+                local action_inst = ffi.new("ib_action_inst*[1]")
+                rc = ffi.C.ib_action_inst_create(
+                    ib.ib_engine,
+                    ctx,
+                    name,
+                    arg,
+                    0,
+                    action_inst)
+                if rc ~= ffi.C.IB_OK then
+                    ib:logError("Failed to create action instance for rule.")
+                    return rc
+                end
+
+                -- Add the action instance.
+                rc = ffi.C.ib_rule_add_action(
+                    ib.ib_engine,
+                    prule[0],
+                    action_inst[0],
+                    is_inverted)
+                if rc ~= ffi.C.IB_OK then
+                    ib:logError("Failed to add action instance to rule.")
+                    return rc
+                end
+            end
         end
 
         -- Set tags
