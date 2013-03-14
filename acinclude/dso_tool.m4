@@ -34,7 +34,7 @@ if test "${with_ngx_dso_tool}" != "no"; then
     if test "${HAVE_TENGINE}" = "yes"; then
         AC_MSG_NOTICE([Configuring dynamic ngx/tengine module with ${NGX_DSO_TOOL}])
     else
-        AC_ERROR([No dso_tool found: cannot configure for ngx/tengine module])
+        AC_MSG_NOTICE([No dso_tool found: cannot configure for ngx/tengine module])
     fi
 else
     AC_MSG_NOTICE([Not configuring dynamic ngx/tengine module])
