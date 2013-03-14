@@ -143,10 +143,10 @@ ostream& operator<<(ostream& out, const Node& node)
     return out;
 }
 
-StringLiteral::StringLiteral(const string& value) :
+String::String(const string& value) :
     m_value_as_s(value),
-    m_s("'" + StringLiteral::escape(value) + "'"),
-    m_pool("IronBee::Predicate::DAG::StringLiteral"),
+    m_s("'" + String::escape(value) + "'"),
+    m_pool("IronBee::Predicate::DAG::String"),
     m_value_as_field(
         IronBee::Field::create_byte_string(
             m_pool,
@@ -161,7 +161,7 @@ StringLiteral::StringLiteral(const string& value) :
     // nop
 }
 
-string StringLiteral::escape(const std::string& s)
+string String::escape(const std::string& s)
 {
     string escaped;
     size_t pos = 0;
@@ -179,7 +179,7 @@ string StringLiteral::escape(const std::string& s)
     return escaped;
 }
 
-Value StringLiteral::calculate(Context)
+Value String::calculate(Context)
 {
     return m_value_as_field;
 }

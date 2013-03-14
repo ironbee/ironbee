@@ -48,6 +48,29 @@ typedef IronBee::ConstTransaction Context;
 class Node;
 class Call;
 class Literal;
+class Null;
+class String;
+
+/// @cond Impl
+namespace Impl {
+
+/**
+ * Used to make certain classes unsubclassable.
+ *
+ * See C++ FAQ.
+ **/
+class Final
+{
+    // Classes to be final.
+    friend class Null;
+    friend class String;
+private:
+    //! Private constructor.
+    Final() {}
+};
+
+} // Impl
+/// @endcond
 
 /**
  * Shared pointer to Node.
@@ -88,10 +111,10 @@ typedef boost::shared_ptr<const Literal> literal_cp;
  * A node in the predicate DAG.
  *
  * Nodes make up the predicate DAG.  They also appear in the expressions trees
- * that are merged together to construct the DAG.  The base classes provides
- * for value and evaluation, edges (as child and parent lists).
- * Subclasses are responsible for defining how to calculate value as
- * well as a string representation.
+ * that are merged together to construct the DAG. This class is the top of
+ * the class hierarchy for nodes.  It can not be directly instantiated or
+ * subclassed.  For literal values, instantiate Null or String.  For
+ * call values, create and instantiate a subclass of Call.
  *
  * @sa Call
  * @sa Literal
@@ -99,9 +122,14 @@ typedef boost::shared_ptr<const Literal> literal_cp;
 class Node :
     public boost::enable_shared_from_this<Node>
 {
-public:
-    //! Constructor.
+    friend class Call;
+    friend class Literal;
+
+private:
+    //! Private Constructor.
     Node();
+
+public:
 
     //! Destructor.
     virtual ~Node();
@@ -203,11 +231,10 @@ std::ostream& operator<<(std::ostream& out, const Node& node);
  * All Call nodes must have a name.  Calls with the same name are considered
  * to implement the same function.
  *
- * Generally, specific call classes inherit from OrderedCall or UnorderedCall
- * instead of Call.
- *
- * @sa OrderedCall
- * @sa UnorderedCall
+ * This class is unique in the class hierarchy as being subclassable.  Users
+ * should create subclasses for specific functions.  Subclasses must implement
+ * name() and calculate().  Subclasses may also define add_child() and
+ * remove_child() but must call the parents methods within.
  **/
 class Call :
     public Node
@@ -248,10 +275,18 @@ private:
 
 /**
  * Literal node: no children and value independent of Context.
+ *
+ * This class may not be subclassed.
  **/
 class Literal :
     public Node
 {
+    friend class String;
+    friend class Null;
+
+private:
+    //! Private constructor to limit subclassing.
+    Literal() {}
 public:
     //! @throw IronBee::einval always.
     virtual void add_child(const node_p&);
@@ -266,16 +301,13 @@ public:
 };
 
 /**
- * DAG Node representing a string literal.
+ * String literal: Literal node representing a string.
  *
- * This class is a fully defined Node class and can be instantiated directly
- * to represent a Literal node.
- *
- * @warn Literal nodes should not be subclassed.
- * @warn Literal nodes are expected to have no children.
+ * This class may not be subclassed.
  **/
-class StringLiteral :
-    public Literal
+class String :
+    public Literal,
+    public virtual Impl::Final
 {
 public:
     /**
@@ -284,7 +316,7 @@ public:
      * @param[in] s Value of node.
      **/
     explicit
-    StringLiteral(const std::string& value);
+    String(const std::string& value);
 
     //! Value as string.
     std::string value_as_s() const
@@ -324,16 +356,13 @@ private:
 };
 
 /**
- * DAG Node representing a NULL value.
+ * Null literal: Literal node representing the null value.
  *
- * This class is a fully defined Node class and can be instantiated directly
- * to represent a Null node.
- *
- * @warn Null nodes should not be subclassed.
- * @warn Null nodes are expected to have no children.
+ * This class may not be subclassed.
  **/
 class Null :
-    public Literal
+    public Literal,
+    public virtual Impl::Final
 {
 public:
     //! S-expression: null

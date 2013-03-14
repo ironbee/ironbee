@@ -28,6 +28,7 @@
 #include "gtest/gtest.h"
 
 using namespace IronBee::Predicate;
+using namespace std;
 
 class TestDAG : public ::testing::Test, public IBPPTestFixture
 {
@@ -35,25 +36,10 @@ class TestDAG : public ::testing::Test, public IBPPTestFixture
 
 static const ib_field_t c_field = ib_field_t();
 
-class DummyNode : public DAG::Node
-{
-public:
-    virtual std::string to_s() const
-    {
-        return "dummy";
-    }
-
-protected:
-    virtual DAG::Value calculate(DAG::Context)
-    {
-        return IronBee::ConstField(&c_field);
-    }
-};
-
 class DummyCall : public DAG::Call
 {
 public:
-    virtual std::string name() const
+    virtual string name() const
     {
         return "dummy_call";
     }
@@ -67,9 +53,9 @@ protected:
 
 TEST_F(TestDAG, Node)
 {
-    DAG::node_p n(new DummyNode);
+    DAG::node_p n(new DummyCall);
 
-    EXPECT_EQ("dummy", n->to_s());
+    EXPECT_EQ("(dummy_call)", n->to_s());
     EXPECT_TRUE(n->children().empty());
     EXPECT_TRUE(n->parents().empty());
     EXPECT_FALSE(n->has_value());
@@ -81,7 +67,7 @@ TEST_F(TestDAG, Node)
     n->reset();
     EXPECT_FALSE(n->has_value());
 
-    DAG::node_p n2(new DummyNode);
+    DAG::node_p n2(new DummyCall);
     n->add_child(n2);
     EXPECT_EQ(1, n->children().size());
     EXPECT_EQ(n2, n->children().front());
@@ -89,9 +75,9 @@ TEST_F(TestDAG, Node)
     EXPECT_EQ(n, n2->parents().front().lock());
 }
 
-TEST_F(TestDAG, StringLiteral)
+TEST_F(TestDAG, String)
 {
-    DAG::StringLiteral n("node");
+    DAG::String n("node");
     EXPECT_EQ("'node'", n.to_s());
     EXPECT_EQ("node", n.value_as_s());
     EXPECT_TRUE(n.is_static());
@@ -101,25 +87,25 @@ TEST_F(TestDAG, StringLiteral)
     );
 }
 
-TEST_F(TestDAG, StringLiteralEscaping)
+TEST_F(TestDAG, StringEscaping)
 {
-    EXPECT_EQ("'\\''", DAG::StringLiteral("'").to_s());
-    EXPECT_EQ("'foo\\'bar'", DAG::StringLiteral("foo'bar").to_s());
-    EXPECT_EQ("'foo\\\\bar'", DAG::StringLiteral("foo\\bar").to_s());
-    EXPECT_EQ("'foo\\\\'", DAG::StringLiteral("foo\\").to_s());
+    EXPECT_EQ("'\\''", DAG::String("'").to_s());
+    EXPECT_EQ("'foo\\'bar'", DAG::String("foo'bar").to_s());
+    EXPECT_EQ("'foo\\\\bar'", DAG::String("foo\\bar").to_s());
+    EXPECT_EQ("'foo\\\\'", DAG::String("foo\\").to_s());
 }
 
 TEST_F(TestDAG, Call)
 {
-    DAG::node_p n(new DummyCall());
+    DAG::node_p n(new DummyCall);
 
     EXPECT_EQ("(dummy_call)", n->to_s());
     EXPECT_EQ(&c_field, n->eval(m_transaction).ib());
     EXPECT_TRUE(n->has_value());
 
-    DAG::node_p a1(new DummyCall());
+    DAG::node_p a1(new DummyCall);
     n->add_child(a1);
-    DAG::node_p a2(new DAG::StringLiteral("foo"));
+    DAG::node_p a2(new DAG::String("foo"));
     n->add_child(a2);
 
     EXPECT_EQ("(dummy_call (dummy_call) 'foo')", n->to_s());
@@ -127,11 +113,11 @@ TEST_F(TestDAG, Call)
 
 TEST_F(TestDAG, OutputOperator)
 {
-    std::stringstream s;
+    stringstream s;
 
-    s << DummyNode();
+    s << DummyCall();
 
-    EXPECT_EQ("dummy", s.str());
+    EXPECT_EQ("(dummy_call)", s.str());
 }
 
 TEST_F(TestDAG, Null)
@@ -144,10 +130,10 @@ TEST_F(TestDAG, Null)
 
 TEST_F(TestDAG, DeepCall)
 {
-    DAG::node_p n(new DummyCall());
-    DAG::node_p n2(new DummyCall());
-    DAG::node_p n3(new DummyCall());
-    DAG::node_p n4(new DummyCall());
+    DAG::node_p n(new DummyCall);
+    DAG::node_p n2(new DummyCall);
+    DAG::node_p n3(new DummyCall);
+    DAG::node_p n4(new DummyCall);
     n->add_child(n2);
     n2->add_child(n3);
     EXPECT_EQ("(dummy_call (dummy_call (dummy_call)))", n->to_s());

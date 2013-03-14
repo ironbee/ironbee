@@ -102,7 +102,7 @@ DAG::node_p parse_literal(
         }
         advance(i, length, "Unterminated literal");
     }
-    return DAG::node_p(new DAG::StringLiteral(value));
+    return DAG::node_p(new DAG::String(value));
 }
 
 // The following could be more cleanly implemented recursively, but would

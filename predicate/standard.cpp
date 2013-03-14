@@ -51,7 +51,7 @@ DAG::Value True::calculate(DAG::Context)
 {
     static DAG::node_p s_true_literal;
     if (! s_true_literal) {
-        s_true_literal = DAG::node_p(new DAG::StringLiteral(""));
+        s_true_literal = DAG::node_p(new DAG::String(""));
         s_true_literal->eval(DAG::Context());
     }
 
