@@ -2621,7 +2621,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
 }
 
 /**
- * Handle the transaction finish.
+ * Handle the tx logging event.
  *
  * @param ib Engine.
  * @param tx Transaction.
@@ -2630,12 +2630,12 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
  *
  * @returns Status code.
  */
-static ib_status_t core_hook_tx_finished(ib_engine_t *ib,
-                                         ib_tx_t *tx,
-                                         ib_state_event_type_t event,
-                                         void *cbdata)
+static ib_status_t core_hook_logging(ib_engine_t *ib,
+                                     ib_tx_t *tx,
+                                     ib_state_event_type_t event,
+                                     void *cbdata)
 {
-    assert(event == tx_finished_event);
+    assert(event == handle_logging_event);
     ib_status_t rc;
 
     rc = ib_managed_collection_persist_tx(ib, tx);
@@ -4839,7 +4839,7 @@ static ib_status_t core_init(ib_engine_t *ib,
                         core_hook_context_tx, NULL);
     ib_hook_conn_register(ib, conn_started_event, core_hook_conn_started, NULL);
     ib_hook_tx_register(ib, tx_started_event, core_hook_tx_started, NULL);
-    ib_hook_tx_register(ib, tx_finished_event, core_hook_tx_finished, NULL);
+    ib_hook_tx_register(ib, handle_logging_event, core_hook_logging, NULL);
     /*
      * @todo Need the parser to parse the header before context, but others
      * after context so that the personality can change based on the header
