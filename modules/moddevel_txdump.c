@@ -762,7 +762,7 @@ static ib_status_t moddevel_txdump_tx(
  * @param params List of directive parameters
  * @param cbdata Callback data (from directive registration)
  *
- * usage: TxDump &lt;event&gt; &lt;dest&gt; [&lt;enable&gt] 
+ * usage: TxDump &lt;event&gt; &lt;dest&gt; [&lt;enable&gt]
  * &lt;event&gt; is one of:
  *   "PostProcess", "RequestHeader", "Request", "ResponseHeader", "Response"
  * &lt;dest&gt; is of the form (stderr|stdout|ib|file://[+]&lt;path&gt;)
