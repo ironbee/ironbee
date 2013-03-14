@@ -184,9 +184,10 @@ Value String::calculate(Context)
     return m_value_as_field;
 }
 
-string Null::to_s() const
+const string& Null::to_s() const
 {
-    return "null";
+    static std::string s_null("null");
+    return s_null;
 }
 
 Value Null::calculate(Context)
@@ -201,7 +202,7 @@ Call::Call() :
     // nop
 }
 
-std::string Call::to_s() const
+const std::string& Call::to_s() const
 {
     if (! m_calculated_s) {
         // Only way we can get here is if no children were ever added/removed.

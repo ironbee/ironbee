@@ -140,8 +140,22 @@ public:
     //! Weak list of nodes.  See parents().
     typedef std::list<weak_node_p> weak_node_list_t;
 
-    //! S-expression.
-    virtual std::string to_s() const = 0;
+    /**
+     * S-Expression.
+     *
+     * An S-expression representation of the expression tree rooted at this
+     * node.  See parse.hpp for detailed grammar.
+     *
+     * This method returns a string reference, but this reference is not
+     * stable if this node or any children are changed.  It should be copied
+     * if needed beyond such operations.
+     *
+     * S-Expressions are calculated dynamically and cached, so calling this
+     * method is cheap.
+     *
+     * @return S-Expression of expression tree rooted at node.
+     **/
+    virtual const std::string& to_s() const = 0;
 
     //! True iff node can calculate value without context.
     virtual bool is_static() const
@@ -250,7 +264,7 @@ public:
     virtual void remove_child(const node_p& child);
 
     //! S-expression: (@c name children...)
-    virtual std::string to_s() const;
+    virtual const std::string& to_s() const;
 
     /**
      * Name accessor.
@@ -325,7 +339,7 @@ public:
     }
 
     //! S-expression: 'value'
-    virtual std::string to_s() const
+    virtual const std::string& to_s() const
     {
         return m_s;
     }
@@ -366,7 +380,7 @@ class Null :
 {
 public:
     //! S-expression: null
-    virtual std::string to_s() const;
+    virtual const std::string& to_s() const;
 
 protected:
     //! See Node::calculate()
