@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1881 
+personal_ws-1.1 en 1911 
 malloc'ed
 malloced
 libnet
@@ -126,6 +126,7 @@ strstr
 cfgs
 allocators
 ConfigurationParser
+moddevel
 indices
 idx
 Exx
@@ -164,6 +165,7 @@ secondlife
 jit
 htp
 argv
+irc
 Sosospider
 SubclassType
 cidr
@@ -171,6 +173,7 @@ STDIN
 Kew
 IPs
 ips
+htx
 RollOver
 kEy
 kEY
@@ -252,7 +255,7 @@ ENDONLY
 mpi
 getFieldList
 IsNum
-Lst
+lst
 ParsedResponseLine
 ConstField
 LTS
@@ -275,6 +278,7 @@ ACNode
 pfc
 setString
 msn
+flagbit
 submatches
 setname
 preprocessor
@@ -304,6 +308,7 @@ SensorId
 pmf
 onEventTxProcess
 typedef'ed
+piconn
 IronBeeUtilExpand
 mbolos
 IronBeeRule
@@ -337,6 +342,7 @@ unsuppressed
 complexPattern
 RequestBodyBufferLimitAction
 sep
+sha
 ptr
 conn
 qnx
@@ -389,6 +395,7 @@ STL
 IronBeeUtilStringEscape
 IronBeeLog
 txdata
+TxData
 str
 WAM
 ver
@@ -487,6 +494,7 @@ rawbits
 PcreMatchLimitRecursion
 cstr
 postprocess
+PostProcess
 IronBeeUtilHash
 fdup
 streq
@@ -812,6 +820,7 @@ cparts
 ConfigurationParsers
 modbinradix
 ConfigurationData
+LuaAPI
 doesnotexist
 nconfiguration
 strtrim
@@ -827,6 +836,8 @@ Wdelete
 AhoCorasickModuleTest
 IronBeeUtilTypes
 setflags
+txdump
+TxDump
 getnameinfo
 luaevents
 ruleRemoveById
@@ -908,6 +919,7 @@ ibuuid
 impl
 autoconf
 forEachEvent
+StdErr
 stderr
 ascii
 beforeModule
@@ -971,6 +983,7 @@ subclassed
 Preparsed
 stdlib
 RULENUM
+iter
 exprwith
 subclasses
 etype
@@ -982,6 +995,8 @@ ConstConnectionData
 timediff
 requestLine
 sdata
+reqline
+ReqLine
 IronBeeServer
 DBGFILTER
 IronBeeLuaModules
@@ -993,6 +1008,8 @@ tuple
 iostream
 reallyreallreallyreallyreallylongname
 chmod
+rspline
+RspLine
 xxxxxxxxxxxx
 facebook
 KLen
@@ -1050,7 +1067,8 @@ ConstLists
 IronBeeBufferFlushSize
 json
 TxField
-STDOUT
+StdOut
+URLEN
 IronBeeEngineState
 pcollection
 onEventHandleResponseHeader
@@ -1093,9 +1111,11 @@ FMODIFIED
 minlen
 abcabcabc
 Qualys
+psize
 IronBeeEngine
 IronBeeTests
 dolist
+pparsed
 proto
 abcdefxxx
 frule
@@ -1221,6 +1241,7 @@ RuleDisable
 ConstSite
 popcount
 AuditLogBaseDir
+pbuf
 obigo
 IronBeeHash
 lwpi
@@ -1296,6 +1317,7 @@ destructor
 timeval
 ftype
 SetUp
+nspaces
 IronBeeUtilStream
 ConnFinished
 benchmarker
@@ -1305,6 +1327,7 @@ ActivateModule
 extern
 endcond
 NTLM
+phtx
 onEventConnOpened
 nResponse
 fffffffffffffff
@@ -1314,6 +1337,7 @@ nsub
 typedefs
 uZardWeb
 filehandles
+pitx
 RuleEnable
 formatter
 NULs
@@ -1333,7 +1357,8 @@ Tracefile
 ploc
 setaside
 abcdefghij
-RSPHDR
+rsphdr
+RspHdr
 iphone
 whitespace
 PersonalityClearAll
@@ -1510,6 +1535,7 @@ inspectRequestBody
 istreq
 Javascript
 ResponseBodyBufferLimit
+InspectionEngineOptions
 istream
 AuditLogEngine
 tfns
@@ -1540,6 +1566,7 @@ rslt
 urlgrabber
 editResponseHeader
 nline
+HOSTx
 defbool
 ConstByteString
 getcwd
@@ -1632,7 +1659,8 @@ AppleWebKit
 podness
 nOutgoing
 logfile
-REQHDR
+ReqHdr
+reqhdr
 removeWhitespace
 interoperate
 trie
@@ -1683,6 +1711,7 @@ uncompiled
 pmatch
 fallthrough
 Functor
+pconfig
 onEventHandleRequestHeaders
 ourself
 InitCollection
@@ -1760,6 +1789,7 @@ vtag
 onEventHandlePostprocess
 DataType
 dorothy
+vptr
 abCd
 multipart
 kvstore
@@ -1845,6 +1875,7 @@ endif
 ScopedMemoryPool
 unescaped
 mpools
+flagname
 IronBeeUtilMemPool
 Baiduspider
 BaiDuSpider

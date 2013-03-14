@@ -410,7 +410,7 @@ static ib_status_t modhtp_table_iterator(
 }
 
 /**
- * Set a generic request / response item for libhpt by creating a
+ * Set a generic request / response item for libhtp by creating a
  * c-style (nul-terminated) string from @a bstr and then calling
  * @a fn with the new c string.
  *
@@ -446,13 +446,13 @@ static inline ib_status_t modhtp_set_data(
 }
 
 /**
- * Set a generic request / response item for libhpt by creating a
+ * Set a generic request / response item for libhtp by creating a
  * c-style (nul terminated) string from the non-terminated string @a data
  * of length @a dlen and then calling @a fn with the new c string.
  *
  * @param[in] itx IronBee transaction
  * @param[in] htx HTP transaction
- * @param[in] bstr Byestring to set
+ * @param[in] bstr ByteString to set
  * @param[in] fn libhtp function to call
  *
  * @returns Status code

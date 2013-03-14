@@ -155,7 +155,7 @@ static IB_STRVAL_MAP(tx_flags_map) = {
 };
 
 /**
- * Dump an item (varaiable args version)
+ * Dump an item (variable args version)
  *
  * @param[in] tx IronBee Transaction
  * @param[in] txdump Log parameters

@@ -688,7 +688,7 @@ public:
         BaseFixture::addHeader(ib_reqhdr, name, value);
     }
 
-    /* Response releated functions */
+    /* Response related functions */
     void sendResponse(void)
     {
         sendResponseLine();

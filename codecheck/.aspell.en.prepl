@@ -32,6 +32,7 @@ successfun successful
 otheres others
 bae base
 unsinged unsigned
+byestring ByteString
 seach Search
 redhat Red Hat
 coce code
@@ -90,3 +91,4 @@ verison version
 prepends prefixes
 addres address
 signalled signaled
+libhpt libhtp

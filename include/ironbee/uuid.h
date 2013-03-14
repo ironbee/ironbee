@@ -128,7 +128,7 @@ ib_status_t DLL_PUBLIC ib_uuid_create_v4(ib_uuid_t *uuid);
  *
  * @returns
  *   - IB_OK
- *   - IB_EOTHER if exporting the UUID or some other unexpected error occures.
+ *   - IB_EOTHER if exporting the UUID or some other unexpected error occurs.
  *   - IB_EALLOC if a uuid object cannot be made.
  */
 ib_status_t DLL_PUBLIC ib_uuid_create_v5_str(
