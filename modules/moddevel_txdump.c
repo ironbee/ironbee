@@ -33,6 +33,8 @@
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/state_notify.h>
+#include <ironbee/rule_engine.h>
+#include <ironbee/site.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
@@ -59,13 +61,14 @@ static const size_t max_path_element = 64;  /**< Max size of a path element */
 #define MODDEVEL_TXDUMP_ENABLED (1 <<  0) /**< Enabled? */
 #define MODDEVEL_TXDUMP_BASIC   (1 <<  1) /**< Dump basic TX info? */
 #define MODDEVEL_TXDUMP_CONN    (1 <<  2) /**< Dump connection info? */
-#define MODDEVEL_TXDUMP_REQLINE (1 <<  3) /**< Dump request line? */
-#define MODDEVEL_TXDUMP_REQHDR  (1 <<  4) /**< Dump request header? */
-#define MODDEVEL_TXDUMP_RSPLINE (1 <<  5) /**< Dump response line? */
-#define MODDEVEL_TXDUMP_RSPHDR  (1 <<  6) /**< Dump response header? */
-#define MODDEVEL_TXDUMP_FLAGS   (1 <<  7) /**< Dump TX flags? */
-#define MODDEVEL_TXDUMP_ARGS    (1 <<  8) /**< Dump request args? */
-#define MODDEVEL_TXDUMP_DATA    (1 <<  9) /**< Dump TX Data? */
+#define MODDEVEL_TXDUMP_CONTEXT (1 <<  3) /**< Dump context info? */
+#define MODDEVEL_TXDUMP_REQLINE (1 <<  4) /**< Dump request line? */
+#define MODDEVEL_TXDUMP_REQHDR  (1 <<  5) /**< Dump request header? */
+#define MODDEVEL_TXDUMP_RSPLINE (1 <<  6) /**< Dump response line? */
+#define MODDEVEL_TXDUMP_RSPHDR  (1 <<  7) /**< Dump response header? */
+#define MODDEVEL_TXDUMP_FLAGS   (1 <<  8) /**< Dump TX flags? */
+#define MODDEVEL_TXDUMP_ARGS    (1 <<  9) /**< Dump request args? */
+#define MODDEVEL_TXDUMP_DATA    (1 << 10) /**< Dump TX Data? */
 /** Default enable flags */
 #define MODDEVEL_TXDUMP_DEFAULT                      \
     (                                                \
@@ -89,6 +92,7 @@ static const size_t max_path_element = 64;  /**< Max size of a path element */
     (                                                \
         MODDEVEL_TXDUMP_ENABLED |                    \
         MODDEVEL_TXDUMP_BASIC   |                    \
+        MODDEVEL_TXDUMP_CONTEXT |                    \
         MODDEVEL_TXDUMP_CONN    |                    \
         MODDEVEL_TXDUMP_REQLINE |                    \
         MODDEVEL_TXDUMP_REQHDR  |                    \
@@ -99,15 +103,25 @@ static const size_t max_path_element = 64;  /**< Max size of a path element */
         MODDEVEL_TXDUMP_DATA                         \
     )
 
+/** Transaction block flags */
+#define TX_BLOCKED                                   \
+    (                                                \
+        IB_TX_BLOCK_ADVISORY |                       \
+        IB_TX_BLOCK_PHASE |                          \
+        IB_TX_BLOCK_IMMEDIATE                        \
+    )
+
 /**
  * Per-TxDump configuration
  */
 typedef struct {
     ib_state_event_type_t        event;  /**< Event type */
+    ib_state_hook_type_t         hook_type; /**< Hook type */
     const char                  *name;   /**< Event name */
     ib_flags_t                   flags;  /**< Flags defining what to txdump */
     ib_log_level_t               level;  /**< IB Log level */
     FILE                        *fp;     /**< File pointer (or NULL) */
+    const char                  *dest;   /**< Copy of the destination string */
     ib_moddevel_txdump_config_t *config; /**< TxDump configuration data */
 } ib_moddevel_txdump_t;
 
@@ -228,6 +242,27 @@ static void moddevel_txdump(
 }
 
 /**
+ * Flush the file stream
+ *
+ * @param[in] tx IronBee Transaction
+ * @param[in] txdump TxDump data
+ *
+ * @returns Status code
+ */
+static ib_status_t moddevel_txdump_flush(
+    const ib_tx_t              *tx,
+    const ib_moddevel_txdump_t *txdump)
+{
+    assert(tx != NULL);
+    assert(txdump != NULL);
+
+    if (txdump->fp != NULL) {
+        fflush(txdump->fp);
+    }
+    return IB_OK;
+}
+
+/**
  * Escape and format a bytestr
  *
  * @param[in] txdump Log data
@@ -238,6 +273,7 @@ static void moddevel_txdump(
  * @returns Formatted buffer
  */
 static const char *moddevel_format_bs(
+    const ib_tx_t              *tx,
     const ib_moddevel_txdump_t *txdump,
     const ib_bytestr_t         *bs,
     bool                        quotes,
@@ -266,7 +302,7 @@ static const char *moddevel_format_bs(
     }
 
     /* Escape the string */
-    rc = ib_util_hex_escape_alloc(txdump->config->mp,
+    rc = ib_util_hex_escape_alloc(tx->mp,
                                   ib_bytestr_length(bs), 5,
                                   &escaped, &size);
     if (rc != IB_OK) {
@@ -324,7 +360,7 @@ static void moddevel_txdump_bs(
 
     const char *buf;
 
-    buf = moddevel_format_bs(txdump, bs, true, maxlen);
+    buf = moddevel_format_bs(tx, txdump, bs, true, maxlen);
     if (buf != NULL) {
         moddevel_txdump(tx, txdump, nspaces, "%s = %s", label, buf);
     }
@@ -415,7 +451,8 @@ static void moddevel_txdump_field(
         break;
 
     default:
-        moddevel_txdump(tx, txdump, nspaces, "Unknown field type.");
+        moddevel_txdump(tx, txdump, nspaces,
+                        "Unknown field type (%d)", field->type);
     }
 }
 
@@ -450,8 +487,10 @@ static void moddevel_txdump_header(
 
     moddevel_txdump(tx, txdump, nspaces, "%s", label);
     for (node = header->head; node != NULL; node = node->next) {
-        const char *name  = moddevel_format_bs(txdump, node->name, false, 24);
-        const char *value = moddevel_format_bs(txdump, node->value, true, 64);
+        const char *name  = moddevel_format_bs(tx, txdump,
+                                               node->name, false, 24);
+        const char *value = moddevel_format_bs(tx, txdump,
+                                               node->value, true, 64);
         moddevel_txdump(tx, txdump, nspaces+2, "%s = %s", name, value);
     }
 }
@@ -520,9 +559,7 @@ static const char *moddevel_build_path(
 }
 
 /**
- * Log transaction details.
- *
- * Extract the address & ports from the transaction & log them.
+ * Dump a list
  *
  * @param[in] tx IronBee Transaction
  * @param[in] txdump TxDump data
@@ -581,49 +618,153 @@ static ib_status_t moddevel_txdump_list(
 }
 
 /**
+ * Dump a context
+ *
+ * @param[in] tx IronBee Transaction
+ * @param[in] txdump TxDump data
+ * @param[in] nspaces Number of leading spaces
+ * @param[in] context Context to dump
+ *
+ * @returns Status code
+ */
+static ib_status_t moddevel_txdump_context(
+    const ib_tx_t              *tx,
+    const ib_moddevel_txdump_t *txdump,
+    size_t                      nspaces,
+    const ib_context_t         *context)
+{
+    const ib_site_t          *site = NULL;
+    const ib_site_location_t *location = NULL;
+
+    moddevel_txdump(tx, txdump, nspaces, "Context");
+    moddevel_txdump(tx, txdump, nspaces+2, "Name = %s",
+                    ib_context_full_get(context) );
+
+    ib_context_site_get(context, &site);
+    if (site != NULL) {
+        moddevel_txdump(tx, txdump, nspaces+2, "Site name = %s", site->name);
+        moddevel_txdump(tx, txdump, nspaces+2, "Site ID = %s", site->id_str);
+    }
+    ib_context_location_get(context, &location);
+    if (location != NULL) {
+        moddevel_txdump(tx, txdump, nspaces+2, "Location path = %s",
+                        location->path);
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Dump a request line
+ *
+ * @param[in] tx IronBee Transaction
+ * @param[in] txdump TxDump data
+ * @param[in] nspaces Number of leading spaces
+ * @param[in] line Request line to dump
+ */
+static void moddevel_txdump_reqline(
+    const ib_tx_t              *tx,
+    const ib_moddevel_txdump_t *txdump,
+    size_t                      nspaces,
+    const ib_parsed_req_line_t *line)
+{
+    assert(tx != NULL);
+    assert(txdump != NULL);
+
+    if (line == NULL) {
+        moddevel_txdump(tx, txdump, nspaces, "Request line unavailable");
+        return;
+    }
+    moddevel_txdump(tx, txdump, nspaces, "Request line:");
+    moddevel_txdump_bs(tx, txdump, nspaces+2, "Raw", line->raw, 256);
+    moddevel_txdump_bs(tx, txdump, nspaces+2, "Method", line->method, 32);
+    moddevel_txdump_bs(tx, txdump, nspaces+2, "URI", line->uri, 256);
+    moddevel_txdump_bs(tx, txdump, nspaces+2, "Protocol", line->protocol, 32);
+}
+
+/**
+ * Dump a response line
+ *
+ * @param[in] tx IronBee Transaction
+ * @param[in] txdump TxDump data
+ * @param[in] nspaces Number of leading spaces
+ * @param[in] line Response line to dump
+ */
+static void moddevel_txdump_rspline(
+    const ib_tx_t               *tx,
+    const ib_moddevel_txdump_t  *txdump,
+    size_t                       nspaces,
+    const ib_parsed_resp_line_t *line)
+{
+    assert(tx != NULL);
+    assert(txdump != NULL);
+
+    if (line == NULL) {
+        moddevel_txdump(tx, txdump, nspaces, "Response line unavailable");
+        return;
+    }
+
+    moddevel_txdump(tx, txdump, nspaces, "Response line:");
+    moddevel_txdump_bs(tx, txdump, nspaces+2, "Raw", line->raw, 256);
+    moddevel_txdump_bs(tx, txdump, nspaces+2, "Protocol", line->protocol, 32);
+    moddevel_txdump_bs(tx, txdump, nspaces+2, "Status", line->status, 32);
+    moddevel_txdump_bs(tx, txdump, nspaces+2, "Message", line->msg, 256);
+}
+
+/**
  * Log transaction details.
  *
- * Extract the address & ports from the transaction & log them.
+ * Extract details from the transaction & dump them
  *
  * @param[in] ib IronBee object
  * @param[in] tx Transaction object
- * @param[in] event Event type
- * @param[in] cbdata Callback data (configuration data)
+ * @param[in] txdump TxDump object
  *
  * @returns Status code
  */
 static ib_status_t moddevel_txdump_tx(
-    ib_engine_t           *ib,
-    ib_tx_t               *tx,
-    ib_state_event_type_t  event,
-    void                  *cbdata)
+    const ib_engine_t          *ib,
+    const ib_tx_t              *tx,
+    const ib_moddevel_txdump_t *txdump)
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(cbdata != NULL);
+    assert(txdump != NULL);
 
-    const ib_moddevel_txdump_t *txdump = (const ib_moddevel_txdump_t *)cbdata;
-    assert(txdump->event == event);
     ib_status_t rc;
 
     /* No flags set: do nothing */
-    if (!ib_flags_any(txdump->flags, MODDEVEL_TXDUMP_ALL) ) {
+    if (!ib_flags_any(txdump->flags, MODDEVEL_TXDUMP_ENABLED) ) {
         return IB_OK;
     }
 
-    moddevel_txdump(tx, txdump, 0, "[TX %s @ %s]", tx->id, txdump->name);
-
     /* Basic */
     if (ib_flags_all(txdump->flags, MODDEVEL_TXDUMP_BASIC) ) {
-        char buf[30];
+        char         buf[30];
         ib_timeval_t tv;
         IB_CLOCK_TIMEVAL(tv, tx->t.started);
         ib_clock_timestamp(buf, &tv);
-        moddevel_txdump(tx, txdump, 2, "Started: %s", buf);
-        moddevel_txdump(tx, txdump, 2, "Hostname: %s", tx->hostname);
-        moddevel_txdump(tx, txdump, 2, "Effective IP: %s", tx->er_ipstr);
-        moddevel_txdump(tx, txdump, 2, "Path: %s", tx->path);
-        moddevel_txdump(tx, txdump, 2, "Block Status: %d", tx->block_status);
+        moddevel_txdump(tx, txdump, 2, "Started = %s", buf);
+        moddevel_txdump(tx, txdump, 2, "Hostname = %s", tx->hostname);
+        moddevel_txdump(tx, txdump, 2, "Effective IP = %s", tx->er_ipstr);
+        moddevel_txdump(tx, txdump, 2, "Path = %s", tx->path);
+        if (ib_tx_flags_isset(tx, TX_BLOCKED)) {
+            moddevel_txdump(tx, txdump, 2, "Block Code = %d", tx->block_status);
+            if (ib_tx_flags_isset(tx, IB_TX_BLOCK_ADVISORY) ) {
+                moddevel_txdump(tx, txdump, 2, "Block: Advisory");
+            }
+            if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE) ) {
+                moddevel_txdump(tx, txdump, 2, " Block: Phase");
+            }
+            if (ib_tx_flags_isset(tx, IB_TX_BLOCK_IMMEDIATE) ) {
+                moddevel_txdump(tx, txdump, 2, "Block: Immediate");
+            }
+        }
+    }
+
+    /* Context info */
+    if (ib_flags_all(txdump->flags, MODDEVEL_TXDUMP_CONTEXT) ) {
+        moddevel_txdump_context(tx, txdump, 2, tx->ctx);
     }
 
     /* Connection */
@@ -631,29 +772,19 @@ static ib_status_t moddevel_txdump_tx(
         char buf[30];
         ib_clock_timestamp(buf, &tx->conn->tv_created);
         moddevel_txdump(tx, txdump, 2, "Connection");
-        moddevel_txdump(tx, txdump, 4, "Created: %s", buf);
-        moddevel_txdump(tx, txdump, 4, "Remote: %s:%d",
+        moddevel_txdump(tx, txdump, 4, "Created = %s", buf);
+        moddevel_txdump(tx, txdump, 4, "Remote = %s:%d",
                         tx->conn->remote_ipstr, tx->conn->remote_port);
-        moddevel_txdump(tx, txdump, 4, "Local: %s:%d",
+        moddevel_txdump(tx, txdump, 4, "Local = %s:%d",
                         tx->conn->local_ipstr, tx->conn->local_port);
+        if (ib_flags_all(txdump->flags, MODDEVEL_TXDUMP_CONTEXT) ) {
+            moddevel_txdump_context(tx, txdump, 4, tx->conn->ctx);
+        }
     }
 
     /* Request Line */
     if (ib_flags_all(txdump->flags, MODDEVEL_TXDUMP_REQLINE) ) {
-        if (tx->request_line == NULL) {
-            moddevel_txdump(tx, txdump, 2, "Request line unavailable");
-        }
-        else {
-            moddevel_txdump(tx, txdump, 2, "Request line:");
-            moddevel_txdump_bs(tx, txdump, 4,
-                               "Raw", tx->request_line->raw, 256);
-            moddevel_txdump_bs(tx, txdump, 4,
-                               "Method", tx->request_line->method, 32);
-            moddevel_txdump_bs(tx, txdump, 4,
-                               "URI", tx->request_line->uri, 256);
-            moddevel_txdump_bs(tx, txdump, 4,
-                               "Protocol", tx->request_line->protocol, 32);
-        }
+        moddevel_txdump_reqline(tx, txdump, 2, tx->request_line);
     }
 
     /* Request Header */
@@ -664,20 +795,7 @@ static ib_status_t moddevel_txdump_tx(
 
     /* Response Line */
     if (ib_flags_all(txdump->flags, MODDEVEL_TXDUMP_RSPLINE) ) {
-        if (tx->response_line == NULL) {
-            moddevel_txdump(tx, txdump, 2, "Response line unavailable");
-        }
-        else {
-            moddevel_txdump(tx, txdump, 2, "Response line:");
-            moddevel_txdump_bs(tx, txdump, 4,
-                               "Raw", tx->response_line->raw, 256);
-            moddevel_txdump_bs(tx, txdump, 4,
-                               "Protocol", tx->response_line->protocol, 32);
-            moddevel_txdump_bs(tx, txdump, 4,
-                               "Status", tx->response_line->status, 32);
-            moddevel_txdump_bs(tx, txdump, 4,
-                               "Message", tx->response_line->msg, 256);
-        }
+        moddevel_txdump_rspline(tx, txdump, 2, tx->response_line);
     }
 
     /* Response Header */
@@ -691,10 +809,10 @@ static ib_status_t moddevel_txdump_tx(
         const ib_strval_t *rec;
 
         moddevel_txdump(tx, txdump, 2,
-                        "Flags: %08lx", (unsigned long)tx->flags);
+                        "Flags = %08lx", (unsigned long)tx->flags);
         for (rec = tx_flags_map; rec->str != NULL; ++rec) {
             bool on = ib_tx_flags_isset(tx, rec->val);
-            moddevel_txdump(tx, txdump, 4, "%08lx \"%s\": %s",
+            moddevel_txdump(tx, txdump, 4, "%08lx \"%s\" = %s",
                             (unsigned long)rec->val, rec->str,
                             on ? "On" : "Off");
         }
@@ -752,24 +870,383 @@ static ib_status_t moddevel_txdump_tx(
     }
 
     /* Done */
+    moddevel_txdump_flush(tx, txdump);
+    return IB_OK;
+}
+
+/**
+ * Handle a TX event for TxDump
+ *
+ * @param[in] ib IronBee object
+ * @param[in] tx Transaction object
+ * @param[in] event Event type
+ * @param[in] cbdata Callback data (TxDump object)
+ *
+ * @returns Status code
+ */
+static ib_status_t moddevel_txdump_tx_event(
+    ib_engine_t           *ib,
+    ib_tx_t               *tx,
+    ib_state_event_type_t  event,
+    void                  *cbdata)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(cbdata != NULL);
+
+    const ib_moddevel_txdump_t *txdump = (const ib_moddevel_txdump_t *)cbdata;
+    ib_status_t                 rc;
+
+    assert(txdump->event == event);
+
+    moddevel_txdump(tx, txdump, 0, "[TX %s @ %s]", tx->id, txdump->name);
+
+    rc = moddevel_txdump_tx(ib, tx, txdump);
+    moddevel_txdump_flush(tx, txdump);
+    return rc;
+}
+
+/**
+ * Handle a Request Line event for TxDump
+ *
+ * @param[in] ib IronBee object
+ * @param[in] tx Transaction object
+ * @param[in] event Event type
+ * @param[in] line Parsed request line
+ * @param[in] cbdata Callback data (TxDump object)
+ *
+ * @returns Status code
+ */
+static ib_status_t moddevel_txdump_reqline_event(
+    ib_engine_t           *ib,
+    ib_tx_t               *tx,
+    ib_state_event_type_t  event,
+    ib_parsed_req_line_t  *line,
+    void                  *cbdata)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(cbdata != NULL);
+
+    const ib_moddevel_txdump_t *txdump = (const ib_moddevel_txdump_t *)cbdata;
+
+    assert(txdump->event == event);
+
+    moddevel_txdump(tx, txdump, 0, "[TX %s @ %s]", tx->id, txdump->name);
+    moddevel_txdump_reqline(tx, txdump, 2, line);
+    moddevel_txdump_flush(tx, txdump);
+    return IB_OK;
+}
+
+/**
+ * Handle a TX event for TxDump
+ *
+ * @param[in] ib IronBee object
+ * @param[in] tx Transaction object
+ * @param[in] event Event type
+ * @param[in] line Parsed response line
+ * @param[in] cbdata Callback data (TxDump object)
+ *
+ * @returns Status code
+ */
+static ib_status_t moddevel_txdump_rspline_event(
+    ib_engine_t           *ib,
+    ib_tx_t               *tx,
+    ib_state_event_type_t  event,
+    ib_parsed_resp_line_t *line,
+    void                  *cbdata)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(cbdata != NULL);
+
+    const ib_moddevel_txdump_t *txdump = (const ib_moddevel_txdump_t *)cbdata;
+
+    assert(txdump->event == event);
+
+    moddevel_txdump(tx, txdump, 0, "[TX %s @ %s]", tx->id, txdump->name);
+    moddevel_txdump_rspline(tx, txdump, 2, line);
+    moddevel_txdump_flush(tx, txdump);
+    return IB_OK;
+}
+
+/**
+ * Execute function for the "TxDump" action
+ *
+ * @param[in] rule_exec The rule execution object
+ * @param[in] data C-style string to log
+ * @param[in] flags Action instance flags
+ * @param[in] cbdata Callback data (TxDump object)
+ *
+ * @returns Status code
+ */
+static ib_status_t moddevel_txdump_act_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    void                 *cbdata)
+{
+    const ib_moddevel_txdump_t *txdump = (const ib_moddevel_txdump_t *)data;
+    ib_status_t                 rc;
+    const ib_tx_t              *tx = rule_exec->tx;
+
+    moddevel_txdump(tx, txdump, 0, "[TX %s @ Rule %s]",
+                    tx->id, ib_rule_id(rule_exec->rule));
+
+    rc = moddevel_txdump_tx(rule_exec->ib, tx, txdump);
+    moddevel_txdump_flush(tx, txdump);
+    return rc;
+}
+
+/**
+ * Parse the event for a TxDump directive
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] label Label for logging
+ * @param[in] param Parameter string
+ * @param[in,out] txdump TxDump object to set the event in
+ *
+ * @returns: Status code
+ */
+static ib_status_t moddevel_txdump_parse_event(
+    ib_engine_t            *ib,
+    const char             *label,
+    const char             *param,
+    ib_moddevel_txdump_t   *txdump)
+{
+    assert(ib != NULL);
+    assert(label != NULL);
+    assert(param != NULL);
+    assert(txdump != NULL);
+
+    /* Default to TX hook */
+    txdump->hook_type = IB_STATE_HOOK_TX;
+
+    if (strcasecmp(param, "PostProcess") == 0) {
+        txdump->event = handle_postprocess_event;
+    }
+    else if (strcasecmp(param, "Logging") == 0) {
+        txdump->event = handle_logging_event;
+    }
+    else if (strcasecmp(param, "RequestStart") == 0) {
+        txdump->event = request_started_event;
+        txdump->hook_type = IB_STATE_HOOK_REQLINE;
+    }
+    else if (strcasecmp(param, "RequestHeader") == 0) {
+        txdump->event = handle_request_header_event;
+    }
+    else if (strcasecmp(param, "Request") == 0) {
+        txdump->event = handle_request_event;
+    }
+    else if (strcasecmp(param, "ResponseStart") == 0) {
+        txdump->event = response_started_event;
+        txdump->hook_type = IB_STATE_HOOK_RESPLINE;
+    }
+    else if (strcasecmp(param, "ResponseHeader") == 0) {
+        txdump->event = handle_response_header_event;
+    }
+    else if (strcasecmp(param, "TxStarted") == 0) {
+        txdump->event = tx_started_event;
+    }
+    else if (strcasecmp(param, "TxContext") == 0) {
+        txdump->event = handle_context_tx_event;
+    }
+    else if (strcasecmp(param, "TxProcess") == 0) {
+        txdump->event = tx_process_event;
+    }
+    else if (strcasecmp(param, "TxFinished") == 0) {
+        txdump->event = tx_finished_event;
+    }
+    else {
+        ib_log_error(ib, "Invalid event parameter \"%s\" for %s", param, label);
+        return IB_EINVAL;
+    }
+    txdump->name = ib_state_event_name(txdump->event);
+    return IB_OK;
+}
+
+/**
+ * Parse an enable flag for a TxDump directive or action
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] label Label for logging
+ * @param[in] param Parameter string
+ * @param[in,out] txdump TxDump object to set the event in
+ *
+ * @returns: Status code
+ */
+static ib_status_t moddevel_txdump_parse_enable(
+    ib_engine_t            *ib,
+    const char             *label,
+    const char             *param,
+    ib_moddevel_txdump_t   *txdump)
+{
+    assert(ib != NULL);
+    assert(label != NULL);
+    assert(param != NULL);
+    assert(txdump != NULL);
+
+    char mod = '\0';
+    ib_flags_t flag = 0;
+    
+    if ( (*param == '+') || (*param == '-') ) {
+        mod = *param;
+        ++param;
+    }
+    if (strcasecmp(param, "default") == 0) {
+        flag = MODDEVEL_TXDUMP_DEFAULT;
+    }
+    else if (strcasecmp(param, "basic") == 0) {
+        flag = MODDEVEL_TXDUMP_BASIC;
+    }
+    else if (strcasecmp(param, "context") == 0) {
+        flag = MODDEVEL_TXDUMP_CONTEXT;
+    }
+    else if (strcasecmp(param, "conn") == 0) {
+        flag = MODDEVEL_TXDUMP_CONN;
+    }
+    else if (strcasecmp(param, "reqline") == 0) {
+        flag = MODDEVEL_TXDUMP_REQLINE;
+    }
+    else if (strcasecmp(param, "reqhdr") == 0) {
+        flag = MODDEVEL_TXDUMP_REQHDR;
+    }
+    else if (strcasecmp(param, "rspline") == 0) {
+        flag = MODDEVEL_TXDUMP_RSPLINE;
+    }
+    else if (strcasecmp(param, "rsphdr") == 0) {
+        flag = MODDEVEL_TXDUMP_RSPHDR;
+    }
+    else if (strcasecmp(param, "headers") == 0) {
+        flag = MODDEVEL_TXDUMP_HEADERS;
+    }
+    else if (strcasecmp(param, "flags") == 0) {
+        flag = MODDEVEL_TXDUMP_FLAGS;
+    }
+    else if (strcasecmp(param, "args") == 0) {
+        flag = MODDEVEL_TXDUMP_ARGS;
+    }
+    else if (strcasecmp(param, "data") == 0) {
+        flag = MODDEVEL_TXDUMP_DATA;
+    }
+    else if (strcasecmp(param, "all") == 0 ) {
+        flag = MODDEVEL_TXDUMP_ALL;
+    }
+    else {
+        ib_log_error(ib, "Invalid enable \"%s\" for %s", param, label);
+        return IB_EINVAL;
+    }
+
+    switch(mod) {
+    case '+':
+        ib_flags_set(txdump->flags, flag);
+        break;
+    case '-':
+        ib_flags_clear(txdump->flags, flag);
+        break;
+    default:
+        txdump->flags = flag;
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Parse the destination for a TxDump directive or action
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] label Label for logging
+ * @param[in] param Parameter string
+ * @param[in,out] txdump TxDump object to set the event in
+ *
+ * @returns: Status code
+ */
+static ib_status_t moddevel_txdump_parse_dest(
+    ib_engine_t            *ib,
+    const char             *label,
+    const char             *param,
+    ib_moddevel_txdump_t   *txdump)
+{
+    assert(ib != NULL);
+    assert(label != NULL);
+    assert(param != NULL);
+    assert(txdump != NULL);
+
+    txdump->dest = ib_mpool_strdup(ib_engine_pool_main_get(ib), param);
+    if (strcasecmp(param, "StdOut") == 0) {
+        txdump->fp = ib_util_fdup(stdout, "a");
+        if (txdump->fp == NULL) {
+            return IB_EUNKNOWN;
+        }
+    }
+    else if (strcasecmp(param, "StdErr") == 0) {
+        txdump->fp = ib_util_fdup(stderr, "a");
+        if (txdump->fp == NULL) {
+            return IB_EUNKNOWN;
+        }
+    }
+    else if (strncasecmp(param, "file://", 7) == 0) {
+        const char *mode;
+        char       *fname;
+        char       *end;
+        size_t      len;
+
+        /* Make a copy of the file name */
+        fname = ib_mpool_strdup(txdump->config->mp, param + 7);
+        if (fname == NULL) {
+            return IB_EALLOC;
+        }
+        len = strlen(fname);
+        if (len <= 1) {
+            ib_log_error(ib, "Missing file name for %s", label);
+            return IB_EINVAL;
+        }
+
+        /* If the last character is a '+', open in append mode */
+        end = fname + len - 1;
+        if (*end == '+') {
+            mode = "a";
+            *end = '\0';
+        }
+        else {
+            mode = "w";
+        }
+        txdump->fp = fopen(fname, mode);
+        if (txdump->fp == NULL) {
+            ib_log_error(ib, "Failed to open \"%s\" for %s: %s",
+                         fname, label, strerror(errno));
+            return IB_EINVAL;
+        }
+    }
+    else if (strcasecmp(param, "ib") == 0) {
+        txdump->level = IB_LOG_DEBUG;
+    }
+    else {
+        ib_log_error(ib, "Invalid destination \"%s\" for %s", param, label);
+        return IB_EINVAL;
+    }
     return IB_OK;
 }
 
 /**
  * Handle the TxDump directive
  *
- * @param cp Config parser
- * @param directive Directive name
- * @param params List of directive parameters
- * @param cbdata Callback data (from directive registration)
+ * @param[in] cp Config parser
+ * @param[in] directive Directive name
+ * @param[in] params List of directive parameters
+ * @param[in] cbdata Callback data (from directive registration)
  *
  * usage: TxDump &lt;event&gt; &lt;dest&gt; [&lt;enable&gt]
  * &lt;event&gt; is one of:
- *   "PostProcess", "RequestHeader", "Request", "ResponseHeader", "Response"
- * &lt;dest&gt; is of the form (stderr|stdout|ib|file://[+]&lt;path&gt;)
+ *   "TxStarted", "TxProcess", "TxContext",
+ *   "RequestStart", "RequestHeader", "Request",
+ *   "ResponseStart", "ResponseHeader", "Response",
+ *   "TxFinished", "Logging", "PostProcess"
+ * &lt;dest&gt; is of the form (stderr|stdout|ib|file://&lt;path&gt;[+])
  * &lt;Enable is of the form &lt;flagname [[+-]&lt;flagname&gt;]&gt;
  * Valid flag names:
  *   Basic: Dump basic TX info
+ *   Context: Dump context info
  *   Connection: Dump connection info
  *   ReqLine: Dump request line
  *   ReqHdr: Dump request header
@@ -802,88 +1279,37 @@ static ib_status_t moddevel_txdump_handler(
     ib_moddevel_txdump_t        *ptxdump;
     const ib_list_node_t        *node;
     const char                  *param;
+    static const char           *label = "TxDump directive";
 
     /* Initialize the txdump object */
     memset(&txdump, 0, sizeof(txdump));
+    txdump.config = config;
 
     /* First parameter is event type */
     node = ib_list_first_const(params);
     if ( (node == NULL) || (node->data == NULL) ) {
         ib_cfg_log_error(cp,
-                         "Missing event type for \"%s\" directive", directive);
+                         "Missing event type for %s", label);
         return IB_EINVAL;
     }
     param = (const char *)node->data;
-    if (strcasecmp(param, "PostProcess") == 0) {
-        txdump.event = handle_postprocess_event;
+    rc = moddevel_txdump_parse_event(cp->ib, label, param, &txdump);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error parsing event for %s", label);
+        return rc;
     }
-    else if (strcasecmp(param, "RequestHeader") == 0) {
-        txdump.event = handle_request_header_event;
-    }
-    else if (strcasecmp(param, "Request") == 0) {
-        txdump.event = handle_request_event;
-    }
-    else if (strcasecmp(param, "ResponseHeader") == 0) {
-        txdump.event = handle_response_header_event;
-    }
-    else if (strcasecmp(param, "Response") == 0) {
-        txdump.event = handle_response_event;
-    }
-    else {
-        ib_cfg_log_error(cp, "Invalid parameter \"%s\" to \"%s\" directive",
-                         param, directive);
-        return IB_EINVAL;
-    }
-    txdump.name = ib_state_event_name(txdump.event);
 
     /* Second parameter is the destination */
     node = ib_list_node_next_const(node);
     if ( (node == NULL) || (node->data == NULL) ) {
-        ib_cfg_log_error(cp,
-                         "Missing destination for \"%s\" directive", directive);
+        ib_cfg_log_error(cp, "Missing destination for %s", label);
         return IB_EINVAL;
     }
     param = (const char *)node->data;
-    if (strcasecmp(param, "StdOut") == 0) {
-        txdump.fp = ib_util_fdup(stdout, "a");
-        if (txdump.fp == NULL) {
-            return IB_EUNKNOWN;
-        }
-    }
-    else if (strcasecmp(param, "StdErr") == 0) {
-        txdump.fp = ib_util_fdup(stderr, "a");
-        if (txdump.fp == NULL) {
-            return IB_EUNKNOWN;
-        }
-    }
-    else if (strncasecmp(param, "file://", 5) == 0) {
-        const char *fname = param+7;
-        const char *mode = "w";
-        if (*fname == '+') {
-            mode = "a";
-            ++fname;
-        }
-        if (*fname == '\0') {
-            ib_cfg_log_error(cp,
-                             "Missing file name for \"%s\" directive",
-                             directive);
-            return IB_EINVAL;
-        }
-        txdump.fp = fopen(fname, mode);
-        if (txdump.fp == NULL) {
-            ib_cfg_log_error(cp,
-                             "Failed to open \"%s\" for \"%s\" directive: %s",
-                             fname, directive, strerror(errno));
-            return IB_EINVAL;
-        }
-    }
-    else if (strcasecmp(param, "ib") == 0) {
-        txdump.level = IB_LOG_DEBUG;
-    }
-    else {
-        ib_cfg_log_error(cp, "Invalid destination \"%s\" for \"%s\" directive",
-                         param, directive);
-        return IB_EINVAL;
+    rc = moddevel_txdump_parse_dest(cp->ib, label, param, &txdump);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error parsing destination for %s", label);
+        return rc;
     }
 
     /* Parse the remainder of the parameters a enables / disables */
@@ -891,87 +1317,160 @@ static ib_status_t moddevel_txdump_handler(
     while( (node = ib_list_node_next_const(node)) != NULL) {
         assert(node->data != NULL);
         param = (const char *)node->data;
-        char mod = '\0';
-        ib_flags_t flag = 0;
-        if ( (*param == '+') || (*param == '-') ) {
-            mod = *param;
-            ++param;
-        }
-        if (strcasecmp(param, "default") == 0) {
-            flag = MODDEVEL_TXDUMP_DEFAULT;
-        }
-        else if (strcasecmp(param, "basic") == 0) {
-            flag = MODDEVEL_TXDUMP_BASIC;
-        }
-        else if (strcasecmp(param, "conn") == 0) {
-            flag = MODDEVEL_TXDUMP_CONN;
-        }
-        else if (strcasecmp(param, "reqline") == 0) {
-            flag = MODDEVEL_TXDUMP_REQLINE;
-        }
-        else if (strcasecmp(param, "reqhdr") == 0) {
-            flag = MODDEVEL_TXDUMP_REQHDR;
-        }
-        else if (strcasecmp(param, "rspline") == 0) {
-            flag = MODDEVEL_TXDUMP_RSPLINE;
-        }
-        else if (strcasecmp(param, "rsphdr") == 0) {
-            flag = MODDEVEL_TXDUMP_RSPHDR;
-        }
-        else if (strcasecmp(param, "headers") == 0) {
-            flag = MODDEVEL_TXDUMP_HEADERS;
-        }
-        else if (strcasecmp(param, "flags") == 0) {
-            flag = MODDEVEL_TXDUMP_FLAGS;
-        }
-        else if (strcasecmp(param, "args") == 0) {
-            flag = MODDEVEL_TXDUMP_ARGS;
-        }
-        else if (strcasecmp(param, "data") == 0) {
-            flag = MODDEVEL_TXDUMP_DATA;
-        }
-        else if (strcasecmp(param, "all") == 0 ) {
-            flag = MODDEVEL_TXDUMP_ALL;
-        }
-       else {
-            ib_cfg_log_error(cp, "Invalid enable \"%s\" for \"%s\" directive",
-                             param, directive);
-            return IB_EINVAL;
-        }
-        switch(mod) {
-        case '+':
-            ib_flags_set(txdump.flags, flag);
-            break;
-        case '-':
-            ib_flags_clear(txdump.flags, flag);
-            break;
-        default:
-            txdump.flags = flag;
+        rc = moddevel_txdump_parse_enable(cp->ib, label, param, &txdump);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp, "Error parsing enable for %s", label);
+            return rc;
         }
     }
+    txdump.flags |= MODDEVEL_TXDUMP_ENABLED;
 
     /* Create the txdump entry */
     ptxdump = ib_mpool_memdup(config->mp, &txdump, sizeof(txdump));
     if (ptxdump == NULL) {
+        ib_cfg_log_error(cp, "Error allocating TxDump object for %s", label);
         return IB_EALLOC;
     }
 
     /* Add it to the list */
-    ptxdump->config = config;
     rc = ib_list_push(config->txdump_list, ptxdump);
     if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error adding TxDump object to list for %s",
+                         label);
         return rc;
     }
 
     /* Finally, register the callback */
-    rc = ib_hook_tx_register(
-        cp->ib,
-        txdump.event,
-        moddevel_txdump_tx,
-        ptxdump
-    );
+    switch(txdump.hook_type) {
+    case IB_STATE_HOOK_TX:
+        rc = ib_hook_tx_register(
+            cp->ib,
+            txdump.event,
+            moddevel_txdump_tx_event,
+            ptxdump);
+        break;
+    case IB_STATE_HOOK_REQLINE:
+        rc = ib_hook_parsed_req_line_register(
+            cp->ib,
+            txdump.event,
+            moddevel_txdump_reqline_event,
+            ptxdump);
+        break;
+    case IB_STATE_HOOK_RESPLINE:
+        rc = ib_hook_parsed_resp_line_register(
+            cp->ib,
+            txdump.event,
+            moddevel_txdump_rspline_event,
+            ptxdump);
+        break;
+    default:
+        ib_cfg_log_error(cp, "No handler for hook type %d", txdump.hook_type);
+        return IB_EINVAL;
+    }
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to register handler for hook type %d",
+                         txdump.hook_type);
+    }
 
     return rc;
+}
+
+/**
+ * Create function for the TxDump action.
+ *
+ * @param[in] ib IronBee engine (unused)
+ * @param[in] ctx Current context.
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters from the rule definition
+ * @param[in,out] inst Action instance
+ * @param[in] cbdata Callback data (unused)
+ *
+ * usage: TxDump:&lt;dest&gt;,[&lt;enable&gt,...]
+ * &lt;dest&gt; is of the form (stderr|stdout|ib|file://[+]&lt;path&gt;)
+ * &lt;Enable is of the form &lt;flagname [[+-]&lt;flagname&gt;]&gt;
+ * Valid flag names:
+ *   Basic: Dump basic TX info
+ *   Context: Dump context info
+ *   Connection: Dump connection info
+ *   ReqLine: Dump request line
+ *   ReqHdr: Dump request header
+ *   RspLine: Dump response line
+ *   RspHdr: Dump response header
+ *   Flags: Dump TX flags
+ *   Args: Dump request args
+ *   Data: Dump TX Data
+ *   Default: Default flags (Basic, ReqLine, RspLine)
+ *   Headers: Header information (Basic, ReqLine, ReqHdr, RspLine, RspHdr)
+ *   All: Dump all TX information
+ *
+ * @returns Status code
+ */
+static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
+                                              ib_context_t *ctx,
+                                              ib_mpool_t *mp,
+                                              const char *parameters,
+                                              ib_action_inst_t *inst,
+                                              void *cbdata)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(mp != NULL);
+    assert(inst != NULL);
+
+    ib_status_t           rc;
+    ib_moddevel_txdump_t  txdump;
+    ib_moddevel_txdump_t *ptxdump;
+    char                 *pcopy;
+    char                 *param;
+    static const char    *label = "TxDump action";
+    
+    if (parameters == NULL) {
+        return IB_EINVAL;
+    }
+
+    /* Initialize the txdump object */
+    memset(&txdump, 0, sizeof(txdump));
+    txdump.name = "Action";
+
+    /* Make a copy of the parameters that we can use for strtok */
+    pcopy = ib_mpool_strdup(ib_engine_pool_temp_get(ib), parameters);
+    if (pcopy == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* First parameter is the destination */
+    param = strtok(pcopy, ",");
+    if (param == NULL) {
+        ib_log_error(ib, "Missing destination for %s", label);
+        return IB_EINVAL;
+    }
+    rc = moddevel_txdump_parse_dest(ib, label, param, &txdump);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Error parsing destination for %s", label);
+        return rc;
+    }
+
+    /* Parse the remainder of the parameters a enables / disables */
+    txdump.flags = MODDEVEL_TXDUMP_DEFAULT;
+    while ((param = strtok(NULL, ",")) != NULL) {
+        rc = moddevel_txdump_parse_enable(ib, label, param, &txdump);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Error parsing enable for %s", label);
+            return rc;
+        }
+    }
+    txdump.flags |= MODDEVEL_TXDUMP_ENABLED;
+
+    /* Create the txdump entry */
+    ptxdump = ib_mpool_memdup(mp, &txdump, sizeof(txdump));
+    if (ptxdump == NULL) {
+        ib_log_error(ib, "Error allocating TxDump object for %s", label);
+        return IB_EALLOC;
+    }
+
+    /* Done */
+    inst->data = ptxdump;
+    return IB_OK;
 }
 
 static ib_dirmap_init_t moddevel_txdump_directive_map[] = {
@@ -1016,6 +1515,17 @@ ib_status_t ib_moddevel_txdump_init(
         return rc;
     }
 
+    /* Register the TxDump action */
+    rc = ib_action_register(ib,
+                            "TxDump",
+                            IB_ACT_FLAG_NONE,
+                            moddevel_txdump_act_create, NULL,
+                            NULL, NULL, /* no destroy function */
+                            moddevel_txdump_act_execute, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     *pconfig = config;
     return IB_OK;
 }
@@ -1026,6 +1536,7 @@ ib_status_t ib_moddevel_txdump_fini(
     ib_moddevel_txdump_config_t *config)
 {
     ib_list_node_t *node;
+    ib_status_t     rc = IB_OK;
 
     IB_LIST_LOOP(config->txdump_list, node) {
         ib_moddevel_txdump_t *txdump = node->data;
@@ -1033,7 +1544,31 @@ ib_status_t ib_moddevel_txdump_fini(
             fclose(txdump->fp);
             txdump->fp = NULL;
         }
-        ib_hook_tx_unregister(ib, txdump->event, moddevel_txdump_tx);
+
+        switch(txdump->hook_type) {
+        case IB_STATE_HOOK_TX:
+            ib_hook_tx_unregister(
+                ib,
+                txdump->event,
+                moddevel_txdump_tx_event);
+            break;
+        case IB_STATE_HOOK_REQLINE:
+            ib_hook_parsed_req_line_unregister(
+                ib,
+                txdump->event,
+                moddevel_txdump_reqline_event);
+            break;
+        case IB_STATE_HOOK_RESPLINE:
+            ib_hook_parsed_resp_line_unregister(
+                ib,
+                txdump->event,
+                moddevel_txdump_rspline_event);
+            break;
+        default:
+            ib_log_error(ib,
+                         "Can't unregister hook type %d", txdump->hook_type);
+            rc = IB_EINVAL;
+        }
     }
-    return IB_OK;
+    return rc;
 }
