@@ -51,6 +51,15 @@ protected:
     }
 };
 
+class DummyCall2 : public DummyCall
+{
+public:
+    virtual string name() const
+    {
+        return "dummy_call2";
+    }
+};
+
 TEST_F(TestDAG, Node)
 {
     DAG::node_p n(new DummyCall);
@@ -140,4 +149,28 @@ TEST_F(TestDAG, DeepCall)
     n3->add_child(n4);
     // Note distance between n and n4.
     EXPECT_EQ("(dummy_call (dummy_call (dummy_call (dummy_call))))", n->to_s());
+}
+
+TEST_F(TestDAG, ModifyChildren)
+{
+    DAG::node_p p(new DummyCall);
+    DAG::node_p c1(new DummyCall);
+    DAG::node_p c2(new DummyCall2);
+
+    EXPECT_THROW(p->remove_child(c1), IronBee::enoent);
+    EXPECT_THROW(p->remove_child(DAG::node_p()), IronBee::einval);
+    EXPECT_THROW(p->add_child(DAG::node_p()), IronBee::einval);
+    ASSERT_NO_THROW(p->add_child(c1));
+    EXPECT_EQ("(dummy_call (dummy_call))", p->to_s());
+    ASSERT_NO_THROW(p->add_child(c2));
+    EXPECT_EQ("(dummy_call (dummy_call) (dummy_call2))", p->to_s());
+    ASSERT_NO_THROW(p->remove_child(c1));
+    EXPECT_EQ("(dummy_call (dummy_call2))", p->to_s());
+    EXPECT_THROW(p->replace_child(c1, c2), IronBee::enoent);
+    EXPECT_THROW(p->replace_child(c2, DAG::node_p()), IronBee::einval);
+    EXPECT_THROW(p->replace_child(DAG::node_p(), c2), IronBee::einval);
+    ASSERT_NO_THROW(p->add_child(c1));
+    EXPECT_EQ("(dummy_call (dummy_call2) (dummy_call))", p->to_s());
+    ASSERT_NO_THROW(p->replace_child(c2, c1));
+    EXPECT_EQ("(dummy_call (dummy_call) (dummy_call))", p->to_s());
 }

@@ -137,6 +137,36 @@ void Node::remove_child(const node_p& child)
     }
 }
 
+void Node::replace_child(const node_p& child, const node_p& with)
+{
+    if (! child) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't replace a singular child."
+            )
+        );
+    }
+    if (! with) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't replace with a singular child."
+            )
+        );
+    }
+
+    node_list_t::iterator i =
+        find(m_children.begin(), m_children.end(), child);
+    if (i == m_children.end()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::enoent() << errinfo_what(
+                "No such child."
+            )
+        );
+    }
+
+    *i = with;
+}
+
 ostream& operator<<(ostream& out, const Node& node)
 {
     out << node.to_s();
@@ -225,6 +255,12 @@ void Call::remove_child(const node_p& child)
     recalculate_s();
 }
 
+void Call::replace_child(const node_p& child, const node_p& with)
+{
+    Node::replace_child(child, with);
+    recalculate_s();
+}
+
 void Call::recalculate_s()
 {
     m_s.clear();
@@ -260,6 +296,15 @@ void Literal::add_child(const node_p&)
 }
 
 void Literal::remove_child(const node_p&)
+{
+    BOOST_THROW_EXCEPTION(
+        IronBee::einval() << errinfo_what(
+            "Literals can not have children."
+        )
+    );
+}
+
+void Literal::replace_child(const node_p& child, const node_p& with)
 {
     BOOST_THROW_EXCEPTION(
         IronBee::einval() << errinfo_what(

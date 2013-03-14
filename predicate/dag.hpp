@@ -191,6 +191,23 @@ public:
      **/
     virtual void remove_child(const node_p& child);
 
+    /**
+     * Replace a child.
+     *
+     * Replaces a child with another node.  This can be used to change
+     * a child without moving it to the end of the children as remove_child(),
+     * add_child() would.
+     *
+     * O(n) where n is size of children() of @c this or parents() of child.
+     *
+     * @param[in] child Child to replace.
+     * @param[in] with  Child to replace with.
+     * @throw IronBee::enoent if no such child.
+     * @throw IronBee::einval if not a parent of child.
+     * @throw IronBee::einval if ! @a child or ! @a with.
+     **/
+    virtual void replace_child(const node_p& child, const node_p& with);
+
     //! Children accessor -- const.
     const node_list_t& children() const
     {
@@ -247,8 +264,9 @@ std::ostream& operator<<(std::ostream& out, const Node& node);
  *
  * This class is unique in the class hierarchy as being subclassable.  Users
  * should create subclasses for specific functions.  Subclasses must implement
- * name() and calculate().  Subclasses may also define add_child() and
- * remove_child() but must call the parents methods within.
+ * name() and calculate().  Subclasses may also define add_child(),
+ * remove_child(), and replace_child() but must call the parents methods
+* within.
  **/
 class Call :
     public Node
@@ -262,6 +280,9 @@ public:
 
     //! See Node::remove_child().
     virtual void remove_child(const node_p& child);
+
+    //! See Node::replace_child().
+    virtual void replace_child(const node_p& child, const node_p& with);
 
     //! S-expression: (@c name children...)
     virtual const std::string& to_s() const;
@@ -306,6 +327,8 @@ public:
     virtual void add_child(const node_p&);
     //! @throw IronBee::einval always.
     virtual void remove_child(const node_p&);
+    //! @throw IronBee::einval always.
+    virtual void replace_child(const node_p& child, const node_p& with);
 
     //! Is static!
     virtual bool is_static() const
