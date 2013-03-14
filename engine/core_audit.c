@@ -670,7 +670,7 @@ ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log)
     /* Close the audit log. */
     if (cfg->fp != NULL) {
         fclose(cfg->fp);
-        //rename temp to real
+        // Rename temp to real
         sys_rc = rename(cfg->temp_path, cfg->full_path);
         if (sys_rc != 0) {
             sys_rc = errno;

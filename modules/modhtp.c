@@ -1864,7 +1864,6 @@ static ib_status_t modhtp_iface_response_line(
     assert(pi != NULL);
     assert(itx != NULL);
 
-    //ib_status_t       irc;
     htp_status_t      hrc;
     htp_tx_t         *htx;
 

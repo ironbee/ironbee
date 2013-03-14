@@ -4068,7 +4068,6 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
     bool                     new_collection = false;
     ib_list_t               *managers_debug = NULL;
 
-    //mp = ib_engine_pool_main_get(cp->ib);
     mp = ib_engine_pool_config_get(cp->ib);
 
     /* Get the configuration */
