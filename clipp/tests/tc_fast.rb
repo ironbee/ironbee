@@ -110,16 +110,4 @@ class TestFast < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: rmessage/
     assert_log_match /CLIPP ANNOUNCE: rheader/
   end
-
-  # Disabled until RNS-192 is fixed.
-  #def test_body
-  #  s = "POST /a HTTP/1.1\nContent-Type: application/x-www-form-urlencoded\nContent-Length: 19\n\nfoo=bar&hello=world\n"
-  #  clipp(
-  #    :input_hashes => [simple_hash(s)],
-  #    :config => CONFIG,
-  #    :default_site_config => "Include \"#{TESTDIR}/fast_rules.txt\""
-  #  )
-  #  assert_no_issues
-  #  assert_log_no_match /CLIPP ANNOUNCE: body/
-  #end
 end
