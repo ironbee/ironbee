@@ -149,6 +149,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/optimize
 %attr(0755,root,root) %{_bindir}/to_dot
 %attr(0755,root,root) %{_bindir}/trie_generator
+%attr(0755,root,root) %{_bindir}/ib_convert_modsec_rules.pl
 
 %attr(0644,root,root) %{_includedir}/ironbee/*
 %attr(0644,root,root) %{_includedir}/htp/*
