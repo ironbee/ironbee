@@ -1237,30 +1237,45 @@ static ib_status_t moddevel_txdump_parse_dest(
  * @param[in] params List of directive parameters
  * @param[in] cbdata Callback data (from directive registration)
  *
- * usage: TxDump &lt;event&gt; &lt;dest&gt; [&lt;enable&gt]
- * &lt;event&gt; is one of:
- *   "TxStarted", "TxProcess", "TxContext",
- *   "RequestStart", "RequestHeader", "Request",
- *   "ResponseStart", "ResponseHeader", "Response",
- *   "TxFinished", "Logging", "PostProcess"
- * &lt;dest&gt; is of the form (stderr|stdout|ib|file://&lt;path&gt;[+])
- * &lt;Enable is of the form &lt;flagname [[+-]&lt;flagname&gt;]&gt;
- * Valid flag names:
- *   Basic: Dump basic TX info
- *   Context: Dump context info
- *   Connection: Dump connection info
- *   ReqLine: Dump request line
- *   ReqHdr: Dump request header
- *   RspLine: Dump response line
- *   RspHdr: Dump response header
- *   Flags: Dump TX flags
- *   Args: Dump request args
- *   Data: Dump TX Data
- *   Default: Default flags (Basic, ReqLine, RspLine)
- *   Headers: Header information (Basic, ReqLine, ReqHdr, RspLine, RspHdr)
- *   All: Dump all TX information
- *
  * @returns Status code
+ *
+ * @par usage: TxDump @<event@> @<dest@> [@<enable@>]
+ * @par @<event@> is one of:
+ *  - <tt>TxStarted</tt>
+ *  - <tt>TxProcess</tt>
+ *  - <tt>TxContext</tt>
+ *  - <tt>RequestStart</tt>
+ *  - <tt>RequestHeader</tt>
+ *  - <tt>Request</tt>
+ *  - <tt>ResponseStart</tt>
+ *  - <tt>ResponseHeader</tt>
+ *  - <tt>Response</tt>
+ *  - <tt>TxFinished</tt>
+ *  - <tt>Logging</tt>
+ *  - <tt>PostProcess</tt>
+ * @par @<dest@> is of the form (stderr|stdout|ib|file://@<path@>[+])
+ *  - The '+' flag means append
+ * @par @<enable@> is of the form @<flag@> [[+-]@<flag@>]>
+ * @par @<flag@> is one of:
+ *  - <tt>Basic</tt>: Dump basic TX info
+ *  - <tt>Context</tt>: Dump context info
+ *  - <tt>Connection</tt>: Dump connection info
+ *  - <tt>ReqLine</tt>: Dump request line
+ *  - <tt>ReqHdr</tt>: Dump request header
+ *  - <tt>RspLine</tt>: Dump response line
+ *  - <tt>RspHdr</tt>: Dump response header
+ *  - <tt>Flags</tt>: Dump TX flags
+ *  - <tt>Args</tt>: Dump request args
+ *  - <tt>Data</tt>: Dump TX Data
+ *  - <tt>Default</tt>: Default flags (Basic, ReqLine, RspLine)
+ *  - <tt>Headers</tt>: All headers (Basic, ReqLine, ReqHdr, RspLine, RspHdr)
+ *  - <tt>All</tt>: Dump all TX information
+ *
+ * @par Examples:
+ *  - <tt>TxDump TxContext ib Basic +Context</tt>
+ *  - <tt>TxDump PostProcess file:///tmp/tx.txt All</tt>
+ *  - <tt>TxDump Logging file:///var/log/ib/all.txt+ All</tt>
+ *  - <tt>TxDump PostProcess StdOut All</tt>
  */
 static ib_status_t moddevel_txdump_handler(
     ib_cfgparser_t  *cp,
@@ -1386,25 +1401,32 @@ static ib_status_t moddevel_txdump_handler(
  * @param[in,out] inst Action instance
  * @param[in] cbdata Callback data (unused)
  *
- * usage: TxDump:&lt;dest&gt;,[&lt;enable&gt,...]
- * &lt;dest&gt; is of the form (stderr|stdout|ib|file://[+]&lt;path&gt;)
- * &lt;Enable is of the form &lt;flagname [[+-]&lt;flagname&gt;]&gt;
- * Valid flag names:
- *   Basic: Dump basic TX info
- *   Context: Dump context info
- *   Connection: Dump connection info
- *   ReqLine: Dump request line
- *   ReqHdr: Dump request header
- *   RspLine: Dump response line
- *   RspHdr: Dump response header
- *   Flags: Dump TX flags
- *   Args: Dump request args
- *   Data: Dump TX Data
- *   Default: Default flags (Basic, ReqLine, RspLine)
- *   Headers: Header information (Basic, ReqLine, ReqHdr, RspLine, RspHdr)
- *   All: Dump all TX information
- *
  * @returns Status code
+ *
+ * @par usage: TxDump:@<dest@>,[@<enable@>]
+ * @par @<dest@> is of the form (stderr|stdout|ib|file://@<path@>[+])
+ *  - The '+' flag means append
+ * @par @<enable@> is of the form @<flag@> [[+-]@<flag@>]>
+ * @par @<flag@> is one of:
+ *  - <tt>Basic</tt>: Dump basic TX info
+ *  - <tt>Context</tt>: Dump context info
+ *  - <tt>Connection</tt>: Dump connection info
+ *  - <tt>ReqLine</tt>: Dump request line
+ *  - <tt>ReqHdr</tt>: Dump request header
+ *  - <tt>RspLine</tt>: Dump response line
+ *  - <tt>RspHdr</tt>: Dump response header
+ *  - <tt>Flags</tt>: Dump TX flags
+ *  - <tt>Args</tt>: Dump request args
+ *  - <tt>Data</tt>: Dump TX Data
+ *  - <tt>Default</tt>: Default flags (Basic, ReqLine, RspLine)
+ *  - <tt>Headers</tt>: All headers (Basic, ReqLine, ReqHdr, RspLine, RspHdr)
+ *  - <tt>All</tt>: Dump all TX information
+ *
+ * @par Examples:
+ *  - <tt>TxDump:ib,Basic,+Context</tt>
+ *  - <tt>TxDump:file:///tmp/tx.txt,All</tt>
+ *  - <tt>TxDump:file:///var/log/ib/all.txt+,All</tt>
+ *  - <tt>TxDump:StdOut,All</tt>
  */
 static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
                                               ib_context_t *ctx,
