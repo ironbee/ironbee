@@ -180,4 +180,14 @@ Content-Length: 1234
     assert_no_issues
     assert_log_no_match /CLIPP ANNOUNCE: ipmatch6_11c/
   end
+  
+  def test_request_body_rule
+    s = "POST /a HTTP/1.1\nContent-Type: application/x-www-form-urlencoded\nContent-Length: 19\n\nfoo=bar&hello=world\n"
+    clipp(
+      :input_hashes => [simple_hash(s)],
+      :default_site_config => "Rule ARGS @rx hello id:8 phase:REQUEST clipp_announce:body"
+    )
+    assert_no_issues
+    assert_log_no_match /CLIPP ANNOUNCE: body/
+  end
 end
