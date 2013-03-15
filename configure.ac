@@ -432,7 +432,7 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="util engine servers automata fast modules etc docs tests packaging"
+TOPLEVEL_SUBDIRS="util engine servers automata fast modules tools etc docs tests packaging"
 LIBS_SUBDIRS="libhtp sqltfn"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver nginx"
 
@@ -572,6 +572,7 @@ AC_CONFIG_FILES([ironbeepp/tests/Makefile])
 fi
 
 AC_CONFIG_FILES([lua/Makefile])
+AC_CONFIG_FILES([tools/Makefile])
 AC_CONFIG_FILES([modules/Makefile])
 
 AC_CONFIG_FILES([etc/Makefile])
