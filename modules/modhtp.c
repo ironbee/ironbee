@@ -218,19 +218,19 @@ static int modhtp_callback_log(
         (modhtp_context_t *)htp_connp_get_user_data(log->connp);
     int level;
 
+    /* Parsing issues are unusual but not IronBee failures. */
     switch(log->level) {
-        /* Parsing issues are unusual but not IronBee failures. */
-        case HTP_LOG_ERROR:
-        case HTP_LOG_WARNING:
-        case HTP_LOG_NOTICE:
-        case HTP_LOG_INFO:
-            level = IB_LOG_INFO;
-            break;
-        case HTP_LOG_DEBUG:
-            level = IB_LOG_DEBUG;
-            break;
-        default:
-            level = IB_LOG_DEBUG3;
+    case HTP_LOG_ERROR:
+    case HTP_LOG_WARNING:
+    case HTP_LOG_NOTICE:
+    case HTP_LOG_INFO:
+        level = IB_LOG_INFO;
+        break;
+    case HTP_LOG_DEBUG:
+        level = IB_LOG_DEBUG;
+        break;
+    default:
+        level = IB_LOG_DEBUG3;
     }
 
     if (log->code != 0) {
@@ -703,6 +703,7 @@ static inline htp_tx_t *modhtp_get_htx(
  * @param[in] parser libhtp connection parser
  * @param[in] is_request True if this is a request, false if response
  * @param[in] label Label string (for logging)
+ * @param[out] parse_error Error reported by parser?
  * @param[out] piconn Pointer to IronBee connection / NULL
  * @param[out] phtx Pointer to libhtp transaction / NULL
  * @param[out] pitx Pointer to IronBee transaction / NULL
@@ -713,12 +714,14 @@ static inline ib_status_t modhtp_check_parser(
     const htp_connp_t *parser,
     bool               is_request,
     const char        *label,
+    bool              *parse_error,
     ib_conn_t        **piconn,
     htp_tx_t         **phtx,
     ib_tx_t          **pitx)
 {
     assert(parser != NULL);
     assert(label != NULL);
+    assert(parse_error != NULL);
 
     ib_conn_t               *iconn = NULL;
     htp_tx_t                *htx = NULL;
@@ -731,7 +734,10 @@ static inline ib_status_t modhtp_check_parser(
     status = (is_request ? parser->in_status : parser->out_status);
     if (status == HTP_STREAM_ERROR) {
         ib_log_error(modhtp_ib, "%s: HTP Parser Error", label);
-        rc = IB_EUNKNOWN;
+        *parse_error = true;
+    }
+    else {
+        *parse_error = false;
     }
 
     /* Get the current libhtp transaction */
@@ -971,10 +977,12 @@ static ib_status_t modhtp_set_parser_flags(
 static int modhtp_htp_request_start(
     htp_connp_t *connp)
 {
-    ib_status_t irc;
+    ib_status_t  irc;
+    bool         perror = false;
 
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, true, "Request_line", NULL, NULL, NULL);
+    irc = modhtp_check_parser(connp, true, "Request_line",
+                              &perror, NULL, NULL, NULL);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -987,14 +995,15 @@ static int modhtp_htp_request_line(
     unsigned char *line,
     size_t         len)
 {
-    htp_tx_t *tx;
-    ib_conn_t *iconn;
-    ib_tx_t *itx;
-    ib_status_t irc;
+    htp_tx_t    *tx;
+    ib_conn_t   *iconn;
+    ib_tx_t     *itx;
+    ib_status_t  irc;
+    bool         perror = false;
 
     /* Check the parser status */
     irc = modhtp_check_parser(connp, true, "Request_line",
-                              &iconn, &tx, &itx);
+                              &perror, &iconn, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -1047,14 +1056,15 @@ static int modhtp_htp_request_line(
 static int modhtp_htp_request_headers(
     htp_connp_t *connp)
 {
-    htp_tx_t *tx;
-    ib_conn_t *iconn;
-    ib_tx_t *itx;
-    ib_status_t irc;
+    htp_tx_t    *tx;
+    ib_conn_t   *iconn;
+    ib_tx_t     *itx;
+    ib_status_t  irc;
+    bool         perror;
 
     /* Check the parser status */
     irc = modhtp_check_parser(connp, true, "Request headers",
-                              &iconn, &tx, &itx);
+                              &perror, &iconn, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -1074,13 +1084,14 @@ static int modhtp_htp_request_headers(
 static int modhtp_htp_request_body_data(
     htp_tx_data_t *txdata)
 {
-    htp_tx_t *tx;
-    ib_tx_t *itx;
-    ib_status_t irc;
+    htp_tx_t    *tx;
+    ib_tx_t     *itx;
+    ib_status_t  irc;
+    bool         perror;
 
     /* Check the parser status */
     irc = modhtp_check_parser(txdata->tx->connp, true, "Request_body_data",
-                              NULL, &tx, &itx);
+                              &perror, NULL, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -1095,13 +1106,14 @@ static int modhtp_htp_request_body_data(
 static int modhtp_htp_request_trailer(
     htp_connp_t *connp)
 {
-    htp_tx_t *tx;
-    ib_tx_t *itx;
-    ib_status_t irc;
+    htp_tx_t    *tx;
+    ib_tx_t     *itx;
+    ib_status_t  irc;
+    bool         perror;
 
     /* Check the parser status */
     irc = modhtp_check_parser(connp, true, "Request_trailer",
-                              NULL, &tx, &itx);
+                              &perror, NULL, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -1116,13 +1128,14 @@ static int modhtp_htp_request_trailer(
 static int modhtp_htp_request_complete(
     htp_connp_t *connp)
 {
-    htp_tx_t *tx;
-    ib_tx_t *itx;
-    ib_status_t irc;
+    htp_tx_t    *tx;
+    ib_tx_t     *itx;
+    ib_status_t  irc;
+    bool         perror;
 
     /* Check the parser status */
     irc = modhtp_check_parser(connp, true, "Request_complete",
-                              NULL, &tx, &itx);
+                              &perror, NULL, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -1137,13 +1150,14 @@ static int modhtp_htp_request_complete(
 static int modhtp_htp_response_line(
     htp_connp_t *connp)
 {
-    htp_tx_t *tx;
-    ib_tx_t *itx;
-    ib_status_t irc;
+    htp_tx_t    *tx;
+    ib_tx_t     *itx;
+    ib_status_t  irc;
+    bool         perror;
 
     /* Check the parser status */
     irc = modhtp_check_parser(connp, true, "Response_line",
-                              NULL, &tx, &itx);
+                              &perror, NULL, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -1184,13 +1198,14 @@ static int modhtp_htp_response_line(
 static int modhtp_htp_response_headers(
     htp_connp_t *connp)
 {
-    htp_tx_t *tx;
-    ib_tx_t *itx;
-    ib_status_t irc;
+    htp_tx_t    *tx;
+    ib_tx_t     *itx;
+    ib_status_t  irc;
+    bool         perror;
 
     /* Check the parser status */
     irc = modhtp_check_parser(connp, true, "Response_headers",
-                              NULL, &tx, &itx);
+                              &perror, NULL, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -1205,13 +1220,14 @@ static int modhtp_htp_response_headers(
 static int modhtp_htp_response_body_data(
     htp_tx_data_t *txdata)
 {
-    htp_tx_t *tx;
-    ib_tx_t *itx;
-    ib_status_t irc;
+    htp_tx_t    *tx;
+    ib_tx_t     *itx;
+    ib_status_t  irc;
+    bool         perror;
 
     /* Check the parser status */
     irc = modhtp_check_parser(txdata->tx->connp, true, "Response_body_data",
-                              NULL, &tx, &itx);
+                              &perror, NULL, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -1226,13 +1242,14 @@ static int modhtp_htp_response_body_data(
 static int modhtp_htp_response_complete(
     htp_connp_t *connp)
 {
-    htp_tx_t *tx;
-    ib_tx_t *itx;
-    ib_status_t irc;
+    htp_tx_t    *tx;
+    ib_tx_t     *itx;
+    ib_status_t  irc;
+    bool         perror;
 
     /* Check the parser status */
     irc = modhtp_check_parser(connp, true, "Response_complete",
-                              NULL, &tx, &itx);
+                              &perror, NULL, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -1247,13 +1264,14 @@ static int modhtp_htp_response_complete(
 static int modhtp_htp_response_trailer(
     htp_connp_t *connp)
 {
-    htp_tx_t *tx;
-    ib_tx_t *itx;
-    ib_status_t irc;
+    htp_tx_t    *tx;
+    ib_tx_t     *itx;
+    ib_status_t  irc;
+    bool         perror;
 
     /* Check the parser status */
     irc = modhtp_check_parser(connp, true, "Response_trailer",
-                              NULL, &tx, &itx);
+                              &perror, NULL, &tx, &itx);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
