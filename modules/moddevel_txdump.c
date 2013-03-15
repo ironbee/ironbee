@@ -265,6 +265,7 @@ static ib_status_t moddevel_txdump_flush(
 /**
  * Escape and format a bytestr
  *
+ * @param[in] tx IronBee Transaction
  * @param[in] txdump Log data
  * @param[in] bs Byte string to log
  * @param[in] quotes Add surrounding quotes?

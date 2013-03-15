@@ -486,8 +486,8 @@ ib_status_t DLL_PUBLIC ib_rule_set_phase(
  * This is used when developers are trying to create and register a new rule
  * during configuration time.
  *
- * @param[in] phase 
- * @param[in] is_stream 1 if the phase is a stream phase, 0 if not.
+ * @param[in] phase Phase string
+ * @param[in] is_stream true if the phase is a stream phase, false if not.
  * @return
  *   - PHASE_INVALID when an error occures.
  *   - The appropriate phase number for the named phase if the given
@@ -495,7 +495,7 @@ ib_status_t DLL_PUBLIC ib_rule_set_phase(
  */
 ib_rule_phase_num_t DLL_PUBLIC ib_rule_lookup_phase(
     const char *phase,
-    int is_stream);
+    bool        is_stream);
 
 /**
  * Get the name associated with a phase number

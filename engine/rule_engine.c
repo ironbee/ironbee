@@ -285,17 +285,9 @@ static phase_lookup_t phase_lookup_table[] =
     { NULL,                      false, PHASE_INVALID },
 };
 
-/**
- * Lookup a phase name in the phase name table.
- *
- * @param[in] str phase name string to lookup
- * @param[in] is_stream true if this is a stream phase
- *
- * @returns 
- *   - phase_invalid if a phase cannot be found.
- *   - the appropriate phase numbe
- */
-ib_rule_phase_num_t ib_rule_lookup_phase(const char *str, int is_stream)
+ib_rule_phase_num_t ib_rule_lookup_phase(
+    const char *str,
+    bool        is_stream)
 {
     const phase_lookup_t *item;
 

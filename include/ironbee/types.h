@@ -97,7 +97,7 @@ ib_flags_t DLL_PUBLIC ib_set_flag(ib_flags_t flags, ib_flags_t mask);
  * @param[in] flags The flags we are going to modify and return.
  * @param[in] mask The flag mask we are going to AND with @a flags.
  *
- * @returns The result of ANDing @a flags with @mask.
+ * @returns The result of ANDing @a flags with @a mask.
  */
 ib_flags_t DLL_PUBLIC ib_get_flag(ib_flags_t flags, ib_flags_t mask);
 
@@ -107,9 +107,9 @@ ib_flags_t DLL_PUBLIC ib_get_flag(ib_flags_t flags, ib_flags_t mask);
  * This is to support FFIs into IronBee.
  *
  * @param[in] flags The flags we are going to modify and return.
- * @param[in] flag The flag mask we are going to NOT and then OR with @a flags.
+ * @param[in] mask The flag mask we are going to NOT and then OR with @a flags.
  *
- * @returns The result of @a flags @c | @c ! @a flag.
+ * @returns The result of @a flags @c | @c ! @a mask.
  */
 ib_flags_t DLL_PUBLIC ib_clr_flag(ib_flags_t flags, ib_flags_t mask);
 
