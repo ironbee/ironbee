@@ -60,5 +60,9 @@ else
   libibutil_la_LDFLAGS = $(LDFLAGS) @OSSP_UUID_LDFLAGS@
   libibutil_la_LIBADD = -ldl @OSSP_UUID_LIBS@
 endif
+if HAVE_LIBCURL
+  libibutil_la_LDFLAGS += $(LIBCURL_LDFLAGS)
+  libibutil_la_CFLAGS += $(LIBCURL_CFLAGS)
+endif
 libibutil_la_LDFLAGS += -version-info @LIBRARY_VERSION@ \
                         -release @MAJOR_VERSION@.@MINOR_VERSION@

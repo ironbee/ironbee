@@ -366,6 +366,7 @@ CHECK_MODP()
 CHECK_LIBCURL()
 CHECK_YAJL()
 
+AM_CONDITIONAL(HAVE_LIBCURL, [test "${HAVE_LIBCURL}" != no])
 if test "${HAVE_LIBCURL}" != "no" && test "${HAVE_YAJL}" != "no" ; then
     dnl # We use "BUILD" and not "HAVE" because we are not using any riak libs.
     dnl # If we import a riak client library, it should define "HAVE."
