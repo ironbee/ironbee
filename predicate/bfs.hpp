@@ -292,11 +292,10 @@ void bfs(
         node_cp n = todo.front();
         todo.pop_front();
 
-        if (visited.count(n)) {
+        if (! visited.insert(n).second) {
             continue;
         }
 
-        visited.insert(n);
         *out++ = n;
 
         bfs_append_list(todo, n, Direction());
