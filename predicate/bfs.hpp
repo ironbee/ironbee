@@ -70,6 +70,48 @@ template <typename OutputIterator>
 void bfs_up(const node_p& which, OutputIterator out);
 
 /**
+ * Breadth first search of all ancestors of @a which (mutable version).
+ *
+ * As previous, but @ref node_p's are output to @a out.
+ *
+ * A shared visited set, @a visited, can be used to do multiple bfs runs over
+ * a forest with shared nodes.
+ *
+ * @tparam OutputIterator Type of @a out.  Must be output iterator.
+ * @param[in] which        Base of ancestor tree.
+ * @param[in] out          Output iterator to write ancestors to.
+ * @param[in, out] visited Set of nodes that have been visited; updated.
+ * @throw IronBee::einval if @a which is singular.
+ **/
+template <typename OutputIterator>
+void bfs_up(
+    const node_p&      which,
+    OutputIterator     out,
+    std::set<node_cp>& visited
+);
+
+/**
+ * Breadth first search of all ancestors of @a which.
+ *
+ * As previous, but @ref node_p's are output to @a out.
+ *
+ * A shared visited set, @a visited, can be used to do multiple bfs runs over
+ * a forest with shared nodes.
+ *
+ * @tparam OutputIterator Type of @a out.  Must be output iterator.
+ * @param[in] which        Base of ancestor tree.
+ * @param[in] out          Output iterator to write ancestors to.
+ * @param[in, out] visited Set of nodes that have been visited; updated.
+ * @throw IronBee::einval if @a which is singular.
+ **/
+template <typename OutputIterator>
+void bfs_up(
+    const node_cp&     which,
+    OutputIterator     out,
+    std::set<node_cp>& visited
+);
+
+/**
  * Breadth first search of all descendants of @a which.
  *
  * As bfs_up() above, but searches children instead of ancestors.
@@ -95,6 +137,48 @@ void bfs_down(const node_cp& which, OutputIterator out);
 template <typename OutputIterator>
 void bfs_down(const node_p& which, OutputIterator out);
 
+/**
+ * Breadth first search of all descendants of @a which (mutable version).
+ *
+ * As previous, but @ref node_p's are output to @a out.
+ *
+ * A shared visited set, @a visited, can be used to do multiple bfs runs over
+ * a forest with shared nodes.
+ *
+ * @tparam OutputIterator Type of @a out.  Must be output iterator.
+ * @param[in] which        Base of ancestor tree.
+ * @param[in] out          Output iterator to write descendants to.
+ * @param[in, out] visited Set of nodes that have been visited; updated.
+ * @throw IronBee::einval if @a which is singular.
+ **/
+template <typename OutputIterator>
+void bfs_down(
+    const node_p&      which,
+    OutputIterator     out,
+    std::set<node_cp>& visited
+);
+
+/**
+ * Breadth first search of all descendants of @a which.
+ *
+ * As previous, but @ref node_p's are output to @a out.
+ *
+ * A shared visited set, @a visited, can be used to do multiple bfs runs over
+ * a forest with shared nodes.
+ *
+ * @tparam OutputIterator Type of @a out.  Must be output iterator.
+ * @param[in] which        Base of ancestor tree.
+ * @param[in] out          Output iterator to write descendants to.
+ * @param[in, out] visited Set of nodes that have been visited; updated.
+ * @throw IronBee::einval if @a which is singular.
+ **/
+template <typename OutputIterator>
+void bfs_down(
+    const node_cp&     which,
+    OutputIterator     out,
+    std::set<node_cp>& visited
+);
+
 // Implementation
 
 /// @cond Impl
@@ -116,9 +200,9 @@ class bfs_deconst
 {
 private:
     template <typename O>
-    friend void DAG::bfs_up(const node_p&, O);
+    friend void DAG::bfs_up(const node_p&, O, std::set<node_cp>&);
     template <typename O>
-    friend void DAG::bfs_down(const node_p&, O);
+    friend void DAG::bfs_down(const node_p&, O, std::set<node_cp>&);
 
     /**
      * Constructor.
@@ -183,10 +267,15 @@ void bfs_append_list(
  *                        @ref bfs_down_tag.
  * @param[in] which Node to start search at.
  * @param[in] out   Output iterator to write to.
+ * @param[in, out]  Set of which nodes have been visited to use/update.
  * @throw IronBee::einval if @a which is singular.
  **/
 template <typename Direction, typename OutputIterator>
-void bfs(const node_cp& which, OutputIterator out)
+void bfs(
+    const node_cp&     which,
+    OutputIterator     out,
+    std::set<node_cp>& visited
+)
 {
     if (! which) {
         BOOST_THROW_EXCEPTION(
@@ -196,7 +285,6 @@ void bfs(const node_cp& which, OutputIterator out)
         );
     }
 
-    std::set<node_cp> visited;
     std::list<node_cp> todo;
 
     todo.push_back(which);
@@ -221,33 +309,79 @@ void bfs(const node_cp& which, OutputIterator out)
 template <typename OutputIterator>
 void bfs_up(const node_cp& which, OutputIterator out)
 {
-    Impl::bfs<Impl::bfs_up_tag>(which, out);
+    std::set<node_cp> visited;
+    bfs_up(which, out, visited);
 }
 
 template <typename OutputIterator>
 void bfs_up(const node_p& which, OutputIterator out)
 {
+    std::set<node_cp> visited;
+    bfs_up(which, out, visited);
+}
+
+template <typename OutputIterator>
+void bfs_up(
+    const node_p&      which,
+    OutputIterator     out,
+    std::set<node_cp>& visited
+)
+{
     typedef Impl::bfs_deconst<OutputIterator> helper_t;
     bfs_up(
         node_cp(which),
-        boost::function_output_iterator<helper_t>(helper_t(out))
+        boost::function_output_iterator<helper_t>(helper_t(out)),
+        visited
     );
+}
+
+template <typename OutputIterator>
+void bfs_up(
+    const node_cp&     which,
+    OutputIterator     out,
+    std::set<node_cp>& visited
+)
+{
+    Impl::bfs<Impl::bfs_up_tag>(which, out, visited);
 }
 
 template <typename OutputIterator>
 void bfs_down(const node_cp& which, OutputIterator out)
 {
-    Impl::bfs<Impl::bfs_down_tag>(which, out);
+    std::set<node_cp> visited;
+    bfs_down(which, out, visited);
 }
 
 template <typename OutputIterator>
 void bfs_down(const node_p& which, OutputIterator out)
 {
+    std::set<node_cp> visited;
+    bfs_down(which, out, visited);
+}
+
+template <typename OutputIterator>
+void bfs_down(
+    const node_p&      which,
+    OutputIterator     out,
+    std::set<node_cp>& visited
+)
+{
     typedef Impl::bfs_deconst<OutputIterator> helper_t;
     bfs_down(
         node_cp(which),
-        boost::function_output_iterator<helper_t>(helper_t(out))
+        boost::function_output_iterator<helper_t>(helper_t(out)),
+        visited
     );
+}
+
+template <typename OutputIterator>
+void bfs_down(
+    const node_cp&     which,
+    OutputIterator     out,
+    std::set<node_cp>& visited
+)
+{
+    Impl::bfs<Impl::bfs_down_tag>(which, out, visited);
 }
 
 } // DAG
