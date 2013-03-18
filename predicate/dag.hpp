@@ -107,6 +107,12 @@ typedef boost::shared_ptr<Literal> literal_p;
  **/
 typedef boost::shared_ptr<const Literal> literal_cp;
 
+//! List of nodes.  See children().
+typedef std::list<node_p> node_list_t;
+
+//! Weak list of nodes.  See parents().
+typedef std::list<weak_node_p> weak_node_list_t;
+
 /**
  * A node in the predicate DAG.
  *
@@ -133,12 +139,6 @@ public:
 
     //! Destructor.
     virtual ~Node();
-
-    //! List of nodes.  See children().
-    typedef std::list<node_p> node_list_t;
-
-    //! Weak list of nodes.  See parents().
-    typedef std::list<weak_node_p> weak_node_list_t;
 
     /**
      * S-Expression.
