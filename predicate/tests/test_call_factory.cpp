@@ -88,7 +88,7 @@ public:
         // nop
     }
 
-    DAG::call_p operator()() const
+    DAG::call_p operator()(const std::string& name) const
     {
         return DAG::call_p(new CallDynamic(m_name));
     }

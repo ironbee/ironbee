@@ -47,7 +47,7 @@ class CallFactory
 {
 public:
     //! Generator function.
-    typedef boost::function<DAG::call_p()> generator_t;
+    typedef boost::function<DAG::call_p(const std::string&)> generator_t;
 
     /**
      * Add a DAG::Call subclass to factory.
@@ -100,7 +100,7 @@ private:
          * @return DAG::call_p pointing to new default constructed
          *   @a CallSubclass.
          **/
-        DAG::call_p operator()() const
+        DAG::call_p operator()(const std::string&) const
         {
             return DAG::call_p(new CallSubclass());
         }

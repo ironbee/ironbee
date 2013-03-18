@@ -45,15 +45,16 @@ DAG::call_p CallFactory::operator()(const std::string& name) const
             )
         );
     }
-    if (i->second()->name() != name) {
+    DAG::call_p call = i->second(name);
+    if (call->name() != name) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
                 "Name mismatch: Expected " + name + " but received " +
-                i->second()->name()
+                call->name()
             )
         );
     }
-    return i->second();
+    return call;
 }
 
 } // Predicate
