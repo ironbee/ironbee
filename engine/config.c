@@ -328,10 +328,14 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
     assert(cp != NULL);
     assert(buffer != NULL);
 
-    if (cp->cur_file != file) {
-        cp->cur_file = file;
+    if (
+        file == NULL || cp->cur_file == NULL ||
+        strcmp(cp->cur_file, file) != 0
+    ) {
         cp->cur_cwd = NULL;
+        cp->cur_file = NULL;
         if (file != NULL) {
+            cp->cur_file = (char *)ib_mpool_strdup(cp->mp, file);
             char *pathbuf = (char *)ib_mpool_strdup(cp->mp, file);
             if (pathbuf != NULL) {
                 cp->cur_cwd = dirname(pathbuf);
