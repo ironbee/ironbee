@@ -3575,22 +3575,6 @@ static ib_status_t chain_gen_rule_id(ib_engine_t *ib,
     return IB_OK;
 }
 
-bool ib_rule_should_capture(const ib_rule_exec_t *rule_exec,
-                            ib_num_t result)
-{
-    assert(rule_exec != NULL);
-
-    if ( (result != 0) &&
-         (rule_exec->rule != NULL) &&
-         (ib_flags_all(rule_exec->rule->flags, IB_RULE_FLAG_CAPTURE)) )
-    {
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
 ib_status_t ib_rule_create(ib_engine_t *ib,
                            ib_context_t *ctx,
                            const char *file,
@@ -4750,6 +4734,35 @@ ib_status_t ib_rule_search_action(const ib_engine_t *ib,
 
     if (pcount != NULL) {
         *pcount = count;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_rule_set_capture(
+    ib_engine_t *ib,
+    ib_rule_t   *rule,
+    const char  *capture_collection)
+{
+    if ( (ib == NULL) || (rule == NULL) ) {
+        return IB_EINVAL;
+    }
+
+    /* If the operator doesn't support capture, return an error */
+    if (! ib_flags_any(rule->opinst->op->flags, IB_OP_FLAG_CAPTURE)) {
+        return IB_ENOTIMPL;
+    }
+
+    /* Turn on the capture flag */
+    rule->flags |= IB_RULE_FLAG_CAPTURE;
+
+    /* Copy the collection name */
+    if ( (capture_collection != NULL) && (*capture_collection != '\0') ) {
+        rule->capture_collection =
+            ib_mpool_strdup(ib_rule_mpool(ib), capture_collection);
+        if (rule->capture_collection == NULL) {
+            return IB_EALLOC;
+        }
     }
 
     return IB_OK;

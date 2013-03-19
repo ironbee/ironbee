@@ -39,6 +39,7 @@
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
+#include <ironbee/rule_capture.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 
@@ -80,8 +81,8 @@ static ib_status_t op_true_execute(
     *result = 1;
 
     if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_capture_clear(rule_exec->tx);
-        ib_capture_set_item(rule_exec->tx, 0, field);
+        ib_rule_capture_clear(rule_exec);
+        ib_rule_capture_set_item(rule_exec, 0, field);
     }
     return IB_OK;
 }
@@ -225,8 +226,8 @@ static ib_status_t op_exists_execute(
     *result = (field != NULL);
 
     if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_capture_clear(rule_exec->tx);
-        ib_capture_set_item(rule_exec->tx, 0, field);
+        ib_rule_capture_clear(rule_exec);
+        ib_rule_capture_set_item(rule_exec, 0, field);
     }
 
     return IB_OK;

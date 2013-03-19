@@ -36,6 +36,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
 #include <ironbee/provider.h>
+#include <ironbee/rule_capture.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
@@ -789,7 +790,7 @@ static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
             const char *name;
             char *scopy;
 
-            ib_capture_clear(tx);
+            ib_rule_capture_clear(rule_exec);
             scopy = (char *)ib_mpool_alloc(tx->mp, subject_len);
             if (scopy != NULL) {
                 memcpy(scopy, subject, subject_len);
@@ -799,7 +800,7 @@ static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
                                                    (uint8_t *)scopy,
                                                    subject_len);
                 if (rc == IB_OK) {
-                    ib_capture_set_item(tx, 0, f);
+                    ib_rule_capture_set_item(rule_exec, 0, f);
                 }
             }
         }

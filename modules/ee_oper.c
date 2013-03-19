@@ -31,6 +31,7 @@
 #include <ironbee/module.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
+#include <ironbee/rule_capture.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
 
@@ -165,12 +166,12 @@ static ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
     assert(tx != NULL);
     assert(output != NULL);
 
-    if (ib_flags_all(rule_exec->rule->flags, IB_RULE_FLAG_CAPTURE)) {
+    if (ib_rule_should_capture(rule_exec, 1)) {
         if (output_length != sizeof(uint32_t)) {
             return IA_EUDOXUS_CMD_ERROR;
         }
         match_len = *(uint32_t *)(output);
-        rc = ib_capture_clear(tx);
+        rc = ib_rule_capture_clear(rule_exec);
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Error clearing captures: %s",
                             ib_status_to_string(rc));
@@ -184,13 +185,13 @@ static ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
-        name = ib_capture_name(0);
+        name = ib_rule_capture_name(rule_exec, 0);
         rc = ib_field_create(&field, tx->mp, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
-        rc = ib_capture_set_item(tx, 0, field);
+        rc = ib_rule_capture_set_item(rule_exec, 0, field);
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }

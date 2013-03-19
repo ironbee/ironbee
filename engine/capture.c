@@ -28,13 +28,14 @@
 #include <ironbee/capture.h>
 
 #include <assert.h>
+#include <stdio.h>
 
 static const int MAX_CAPTURE_NUM = 9;
 typedef struct {
     const char *full;
     const char *name;
-} capture_names_t;
-static const capture_names_t names[] =
+} default_capture_names_t;
+static const default_capture_names_t default_names[] =
 {
     { IB_TX_CAPTURE":0", "0" },
     { IB_TX_CAPTURE":1", "1" },
@@ -49,9 +50,47 @@ static const capture_names_t names[] =
 };
 
 /**
+ * Use the default capture collection?
+ *
+ * @param[in] collection_name The name of the capture collection or NULL
+ *
+ * @returns Boolean value:
+ *  - true if @a is NULL or matches the default collection,
+ *  - false if neither of the above is true
+ */
+static bool use_default_collection(
+    const char *collection_name)
+{
+    if (collection_name == NULL) {
+        return true;
+    }
+    if (strcasecmp(collection_name, IB_TX_CAPTURE) == 0) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Get capture collection name
+ *
+ * @param[in] collection_name The name of the capture collection or NULL
+ *
+ * @returns Collection name string
+ */
+static inline const char *get_collection_name(
+    const char *collection_name)
+{
+    if (collection_name == NULL) {
+        collection_name = IB_TX_CAPTURE;
+    }
+    return collection_name;
+}
+
+/**
  * Get the capture list, create if required.
  *
  * @param[in] tx Transaction
+ * @param[in] collection_name The name of the capture collection or NULL
  * @param[out] olist If not NULL, pointer to the capture item's list
  *
  * @returns IB_OK: All OK
@@ -63,8 +102,8 @@ static const capture_names_t names[] =
 static
 ib_status_t get_capture_list(
     ib_tx_t    *tx,
-    ib_list_t **olist
-)
+    const char *collection_name,
+    ib_list_t **olist)
 {
     ib_status_t rc;
     ib_field_t *field = NULL;
@@ -74,16 +113,17 @@ ib_status_t get_capture_list(
     assert(tx->data != NULL);
 
     /* Look up the capture list */
-    rc = ib_data_get(tx->data, IB_TX_CAPTURE, &field);
+    collection_name = get_collection_name(collection_name);
+    rc = ib_data_get(tx->data, collection_name, &field);
     if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(tx->data, IB_TX_CAPTURE, &field);
+        rc = ib_data_add_list(tx->data, collection_name, &field);
     }
     if (rc != IB_OK) {
         return rc;
     }
 
     if (field->type != IB_FTYPE_LIST) {
-        ib_data_remove(tx->data, IB_TX_CAPTURE, NULL);
+        ib_data_remove(tx->data, collection_name, NULL);
     }
     rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&list));
     if (rc != IB_OK) {
@@ -97,38 +137,65 @@ ib_status_t get_capture_list(
     return rc;
 }
 
-const char *ib_capture_name(int num)
+const char *ib_capture_name(
+    int         num)
 {
     assert(num >= 0);
 
     if (num <= MAX_CAPTURE_NUM) {
-        return names[num].name;
+        return default_names[num].name;
     }
     else {
         return "??";
     }
 }
 
-const char *ib_capture_fullname(int num)
+const char *ib_capture_fullname(
+    const ib_tx_t *tx,
+    const char    *collection_name,
+    int            num)
 {
+    assert(tx != NULL);
     assert(num >= 0);
+    size_t len;
+    char *buf;
 
+    /* Use the default collection? */
+    if (use_default_collection(collection_name)) {
+        if (num <= MAX_CAPTURE_NUM) {
+            return default_names[num].full;
+        }
+        else {
+            return IB_TX_CAPTURE":??";
+        }
+    }
+
+    /* Non-default, build the name dynamically */
+    len = strlen(collection_name) + 4; /* name + ':' + digit + '\0'*/
+    buf = ib_mpool_alloc(tx->mp, len);
+    if (buf == NULL) {
+        return NULL;
+    }
     if (num <= MAX_CAPTURE_NUM) {
-        return names[num].full;
+        snprintf(buf, len, "%s:%d", collection_name, num);
     }
     else {
-        return IB_TX_CAPTURE":??";
+        strcpy(buf, collection_name);
+        strcat(buf, ":??");
     }
+    return buf;
 }
 
-ib_status_t ib_capture_clear(ib_tx_t *tx)
+ib_status_t ib_capture_clear(
+    ib_tx_t    *tx,
+    const char *collection_name)
 {
     assert(tx != NULL);
 
     ib_status_t rc;
     ib_list_t *list;
 
-    rc = get_capture_list(tx, &list);
+    rc = get_capture_list(tx, collection_name, &list);
     if (rc != IB_OK) {
         return rc;
     }
@@ -138,9 +205,9 @@ ib_status_t ib_capture_clear(ib_tx_t *tx)
 
 ib_status_t ib_capture_set_item(
     ib_tx_t    *tx,
+    const char *collection_name,
     int         num,
-    ib_field_t *in_field
-)
+    ib_field_t *in_field)
 {
     assert(tx != NULL);
     assert(num >= 0);
@@ -158,7 +225,7 @@ ib_status_t ib_capture_set_item(
 
     name = ib_capture_name(num);
 
-    rc = get_capture_list(tx, &list);
+    rc = get_capture_list(tx, collection_name, &list);
     if (rc != IB_OK) {
         return rc;
     }
@@ -197,15 +264,15 @@ ib_status_t ib_capture_set_item(
 
 ib_status_t ib_capture_add_item(
     ib_tx_t    *tx,
-    ib_field_t *in_field
-)
+    const char *collection_name,
+    ib_field_t *in_field)
 {
     assert(tx != NULL);
 
     ib_status_t rc;
     ib_list_t *list;
 
-    rc = get_capture_list(tx, &list);
+    rc = get_capture_list(tx, collection_name, &list);
     if (rc != IB_OK) {
         return rc;
     }

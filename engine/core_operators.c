@@ -35,6 +35,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/rule_capture.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
@@ -434,8 +435,8 @@ static ib_status_t op_streq_execute(const ib_rule_exec_t *rule_exec,
     }
 
     if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_capture_clear(rule_exec->tx);
-        ib_capture_set_item(rule_exec->tx, 0, field);
+        ib_rule_capture_clear(rule_exec);
+        ib_rule_capture_set_item(rule_exec, 0, field);
     }
 
     return IB_OK;
@@ -520,14 +521,14 @@ static ib_status_t op_contains_execute(const ib_rule_exec_t *rule_exec,
         ib_field_t *f;
         const char *name;
 
-        ib_capture_clear(rule_exec->tx);
+        ib_rule_capture_clear(rule_exec);
 
-        name = ib_capture_name(0);
+        name = ib_rule_capture_name(rule_exec, 0);
         rc = ib_field_create_bytestr_alias(&f, rule_exec->tx->mp,
                                            name, strlen(name),
                                            (uint8_t *)expanded,
                                            strlen(expanded));
-        ib_capture_set_item(rule_exec->tx, 0, f);
+        ib_rule_capture_set_item(rule_exec, 0, f);
     }
 
     return rc;
@@ -906,8 +907,8 @@ ib_status_t op_ipmatch_execute(
     else if (rc == IB_OK) {
         *result = 1;
         if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_capture_clear(rule_exec->tx);
-            ib_capture_set_item(rule_exec->tx, 0, field);
+            ib_rule_capture_clear(rule_exec);
+            ib_rule_capture_set_item(rule_exec, 0, field);
         }
     }
     else {
@@ -1116,8 +1117,8 @@ ib_status_t op_ipmatch6_execute(
     else if (rc == IB_OK) {
         *result = 1;
         if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_capture_clear(tx);
-            ib_capture_set_item(tx, 0, field);
+            ib_rule_capture_clear(rule_exec);
+            ib_rule_capture_set_item(rule_exec, 0, field);
         }
     }
     else {
@@ -1241,7 +1242,7 @@ static ib_status_t capture_float(const ib_rule_exec_t *rule_exec,
     const char *name;
     const char *str;
 
-    name = ib_capture_name(capture);
+    name = ib_rule_capture_name(rule_exec, capture);
 
     str = ib_float_to_string(rule_exec->tx->mp, value);
     if (str == NULL) {
@@ -1253,7 +1254,7 @@ static ib_status_t capture_float(const ib_rule_exec_t *rule_exec,
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_capture_set_item(rule_exec->tx, 0, field);
+    rc = ib_rule_capture_set_item(rule_exec, 0, field);
     return rc;
 }
 
@@ -1275,7 +1276,7 @@ static ib_status_t capture_num(const ib_rule_exec_t *rule_exec,
     const char *name;
     const char *str;
 
-    name = ib_capture_name(capture);
+    name = ib_rule_capture_name(rule_exec, capture);
 
     str = ib_num_to_string(rule_exec->tx->mp, value);
     if (str == NULL) {
@@ -1287,7 +1288,7 @@ static ib_status_t capture_num(const ib_rule_exec_t *rule_exec,
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_capture_set_item(rule_exec->tx, 0, field);
+    rc = ib_rule_capture_set_item(rule_exec, 0, field);
     return rc;
 }
 
@@ -1502,7 +1503,7 @@ static ib_status_t execute_compare(
             return rc;
         }
         if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_capture_clear(rule_exec->tx);
+            ib_rule_capture_clear(rule_exec);
             rc = capture_num(rule_exec, 0, value);
             if (rc != IB_OK) {
                 ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
@@ -1532,7 +1533,7 @@ static ib_status_t execute_compare(
             return rc;
         }
         if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_capture_clear(rule_exec->tx);
+            ib_rule_capture_clear(rule_exec);
             rc = capture_float(rule_exec, 0, value);
             if (rc != IB_OK) {
                 ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
@@ -1864,8 +1865,8 @@ static ib_status_t op_nop_execute(const ib_rule_exec_t *rule_exec,
     *result = 1;
 
     if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_capture_clear(rule_exec->tx);
-        ib_capture_set_item(rule_exec->tx, 0, field);
+        ib_rule_capture_clear(rule_exec);
+        ib_rule_capture_set_item(rule_exec, 0, field);
     }
     return IB_OK;
 }

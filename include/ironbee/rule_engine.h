@@ -85,6 +85,7 @@ struct ib_rule_t {
     ib_context_t          *ctx;             /**< Parent context */
     ib_rule_t             *chained_rule;    /**< Next rule in the chain */
     ib_rule_t             *chained_from;    /**< Ptr to rule chained from */
+    const char            *capture_collection; /**< Capture collection name */
     ib_flags_t             flags;           /**< External, etc. */
 };
 
@@ -751,6 +752,23 @@ ib_status_t DLL_PUBLIC ib_rule_search_action(const ib_engine_t *ib,
                                              size_t *pcount);
 
 /**
+ * Enable capture for a rule, and optionally set the capture collection
+ *
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule The rule to operate on
+ * @param[in] capture_collection Name of the capture collection (or NULL)
+ *
+ * @returns Status code:
+ *  - IB_EINVAL: Invalid input (@a ib or @a rule is NULL)
+ *  - IB_ENOTIMPL: Capture not supported by @a rule's operator
+ *  - IB_EALLOC: Allocation error
+ */
+ib_status_t DLL_PUBLIC ib_rule_set_capture(
+    ib_engine_t *ib,
+    ib_rule_t   *rule,
+    const char  *collection_name);
+
+/**
  * Register a rule.
  *
  * Register a rule for the rule engine.
@@ -789,18 +807,6 @@ ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(
  */
 ib_mpool_t DLL_PUBLIC *ib_rule_mpool(
     ib_engine_t                *ib);
-
-/**
- * Determine of operator results should be captured
- *
- * @param[in] rule_exec Rule execution object
- * @param[in] result Operator result value
- *
- * @returns true if the results should be captured, false otherwise
- */
-bool DLL_PUBLIC ib_rule_should_capture(
-    const ib_rule_exec_t       *rule_exec,
-    ib_num_t                    result);
 
 /**
  * Perform logging of a rule's execution

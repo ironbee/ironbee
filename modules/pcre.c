@@ -34,6 +34,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/provider.h>
+#include <ironbee/rule_capture.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
 
@@ -685,7 +686,7 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
     ib_tx_t *tx = rule_exec->tx;
     int i;
 
-    rc = ib_capture_clear(tx);
+    rc = ib_rule_capture_clear(rule_exec);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error clearing captures: %s",
                         ib_status_to_string(rc));
@@ -724,7 +725,7 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
         }
 
         /* Create a field to hold the byte-string */
-        name = ib_capture_name(i);
+        name = ib_rule_capture_name(rule_exec, i);
         rc = ib_field_create(&field, tx->mp, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
@@ -732,7 +733,7 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
         }
 
         /* Add it to the capture collection */
-        rc = ib_capture_set_item(tx, i, field);
+        rc = ib_rule_capture_set_item(rule_exec, i, field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -790,7 +791,7 @@ static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
         }
 
         /* Create a field to hold the byte-string */
-        name = ib_capture_name(0);
+        name = ib_rule_capture_name(rule_exec, 0);
         rc = ib_field_create(&field, tx->mp, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
@@ -798,7 +799,7 @@ static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
         }
 
         /* Add it to the capture collection */
-        rc = ib_capture_add_item(tx, field);
+        rc = ib_rule_capture_add_item(rule_exec, field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -942,7 +943,7 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
 #endif
 
     if (matches > 0) {
-        if (ib_flags_all(rule_exec->rule->flags, IB_RULE_FLAG_CAPTURE)) {
+        if (ib_rule_should_capture(rule_exec, 1) ) {
             pcre_set_matches(rule_exec, ovector, matches, subject);
         }
         ib_rc = IB_OK;
@@ -1291,7 +1292,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
     dfa_workspace_t *dfa_workspace;
     const char *id = ib_rule_id(rule_exec->rule);
     int options; /* dfa exec options. */
-    int capture;
+    bool capture;
     int start_offset;
     int match_count;
 
@@ -1347,7 +1348,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
     ib_rc = get_dfa_tx_data(tx, id, &dfa_workspace);
     if (ib_rc == IB_ENOENT) {
         /* First time we are called, clear the captures. */
-        ib_rc = ib_capture_clear(tx);
+        ib_rc = ib_rule_capture_clear(rule_exec);
         if (ib_rc != IB_OK) {
             ib_log_error_tx(tx, "Error clearing captures: %s",
                             ib_status_to_string(ib_rc));
@@ -1383,7 +1384,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
     /* Perform the match.
      * If capturing is specified, then find all matches.
      */
-    capture = ib_flags_all(rule_exec->rule->flags, IB_RULE_FLAG_CAPTURE);
+    capture = ib_rule_should_capture(rule_exec, 1);
     start_offset = 0;
     match_count = 0;
     do {
@@ -1412,11 +1413,11 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
                 pcre_dfa_set_match(rule_exec, ovector, 1, subject);
             }
         }
-    } while ((capture != 0) && (matches > 0));
+    } while (capture && (matches > 0));
 
     if (match_count > 0) {
-            ib_rc = IB_OK;
-            *result = 1;
+        ib_rc = IB_OK;
+        *result = 1;
     }
     else if ((matches == 0) || (matches == PCRE_ERROR_NOMATCH)) {
         if (ib_log_get_level(rule_exec->ib) >= 7) {

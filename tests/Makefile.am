@@ -120,6 +120,7 @@ TEST_EXTRAS = \
        PcreModuleTest.test_pcre_operator.config \
        PcreModuleTest.test_match_basic.config \
        PcreModuleTest.test_match_capture.config \
+       PcreModuleTest.test_match_capture_named.config \
        TestIronBeeModuleRulesLua.operator_test.config \
        CoreActionTest.setVarMult.config \
        CoreActionTest.setVarAdd.config \

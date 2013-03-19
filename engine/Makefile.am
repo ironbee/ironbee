@@ -34,6 +34,7 @@ libironbee_la_SOURCES = engine.c provider.c parser.c data.c \
                         logevent.c \
                         rule_logger.c \
                         rule_engine.c \
+                        rule_capture.c \
                         state_notify.c \
                         config-parser.h \
                         $(top_builddir)/lua/ironbee.h

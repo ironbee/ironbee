@@ -314,7 +314,7 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     }
 
     /* Initialize CAPTURE */
-    rc = ib_capture_clear(tx);
+    rc = ib_capture_clear(tx, NULL);
     if (rc != IB_OK) {
         return rc;
     }
