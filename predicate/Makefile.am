@@ -11,5 +11,6 @@ libpredicate_la_SOURCES = \
     dag.cpp \
     call_factory.cpp \
     parse.cpp \
-    standard.cpp
+    standard.cpp \
+    dot.cpp
 
