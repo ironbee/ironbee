@@ -36,12 +36,19 @@
 #include <math.h>
 #include <pthread.h>
 
+#if defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define THREAD_SANITIZER
+#endif
+#endif
+
 /* -- Tests -- */
 typedef void *(* thread_start_fn)(void *thread_data);
 
 class Thread
 {
 public:
+    explicit
     Thread(int num) :
         m_handle(0),
         m_num(num),
@@ -266,6 +273,9 @@ public:
                     break;
                 }
             }
+            // This code is an intentional race condition if m_lock_enabled is
+            // false.  It is possible for it to fail to cause errors, but, at
+            // least in common environments, that is very unlikely.
             if (++m_shared != 1) {
                 thread->Error();
             }
@@ -273,6 +283,7 @@ public:
             if (--m_shared != 0) {
                 thread->Error();
             }
+
             if (m_lock_enabled) {
                 rc = UnlockLock( );
                 if (rc != IB_OK) {
@@ -343,6 +354,9 @@ TEST_F(TestIBUtilLock, test_create)
     ASSERT_EQ(IB_OK, rc);
 }
 
+// The following test is a true positive for a thread race condition.
+// Disable it for thread sanitizer.
+#ifndef THREAD_SANITIZER
 TEST_F(TestIBUtilLock, test_lock_disabled)
 {
     ib_status_t rc;
@@ -361,6 +375,7 @@ TEST_F(TestIBUtilLock, test_lock_disabled)
     rc = DestroyLock( );
     ASSERT_EQ(IB_OK, rc);
 }
+#endif
 
 TEST_F(TestIBUtilLock, test_short)
 {
@@ -381,6 +396,8 @@ TEST_F(TestIBUtilLock, test_short)
     ASSERT_EQ(IB_OK, rc);
 }
 
+// This test is too intense for the thread sanitizer.
+#ifndef THREAD_SANITIZER
 TEST_F(TestIBUtilLock, test_long)
 {
     ib_status_t rc;
@@ -399,3 +416,4 @@ TEST_F(TestIBUtilLock, test_long)
     rc = DestroyLock( );
     ASSERT_EQ(IB_OK, rc);
 }
+#endif
