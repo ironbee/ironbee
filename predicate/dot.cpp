@@ -60,11 +60,11 @@ dot_node_outputer::dot_node_outputer(
 
 void dot_node_outputer::operator()(const node_cp& node) const
 {
-    m_out << "  \'" << node << "\'"
-         << "[" << m_node_decorator(node) << "];" << endl;
+    m_out << "  \"" << node << "\""
+         << " [" << m_node_decorator(node) << "];" << endl;
 
     BOOST_FOREACH(const node_p& child, node->children()) {
-        m_out << "  \'" << node << "\' -> \'" << child << "\';"
+        m_out << "  \"" << node << "\" -> \"" << child << "\";"
              << endl;
     }
 }

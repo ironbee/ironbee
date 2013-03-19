@@ -114,7 +114,7 @@ void to_dot(
 
     out << "digraph G {" << std::endl;
     for (Iterator i = begin; i != end; ++i) {
-        bfs_down(i, out_iter, visited);
+        bfs_down(*i, out_iter, visited);
     }
     out << "}" << std::endl;
 }
