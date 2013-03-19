@@ -19,7 +19,8 @@ check_PROGRAMS = \
     test_call_factory \
     test_parse \
     test_standard \
-    test_bfs
+    test_bfs \
+    test_merge_graph
 
 TESTS=$(check_PROGRAMS)
 CLEANFILES=*.xml *.log
@@ -29,3 +30,4 @@ test_standard_SOURCES = test_standard.cpp $(top_srcdir)/ironbeepp/tests/fixture.
 test_call_factory_SOURCES = test_call_factory.cpp
 test_parse_SOURCES = test_parse.cpp
 test_bfs_SOURCES = test_bfs.cpp
+test_merge_graph_SOURCES = test_merge_graph.cpp

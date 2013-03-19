@@ -13,5 +13,5 @@ libpredicate_la_SOURCES = \
     parse.cpp \
     standard.cpp \
     dot.cpp \
-    bfs.cpp
-
+    bfs.cpp \
+    merge_graph.cpp
