@@ -1,12 +1,10 @@
 include $(top_srcdir)/build/tests.mk
 
-LIBUTIL_LDADD = $(top_builddir)/util/libibutil.la
-
 AM_LDFLAGS += $(BOOST_LDFLAGS) -L$(top_builddir)/tests -L$(builddir)/.. \
     -lironautomata -liaeudoxus -lprotobuf
 CPPFLAGS += $(BOOST_CPPFLAGS) -I$(top_srcdir)/tests \
     -I$(srcdir)/../include -I$(builddir)/../include
-LDADD = $(LIBUTIL_LDADD) \
+LDADD = \
     $(top_builddir)/tests/libgtest.a \
     $(top_builddir)/tests/gtest_main.o
 
