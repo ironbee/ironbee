@@ -24,70 +24,18 @@
 
 #include "../bfs.hpp"
 #include "../parse.hpp"
-#include "../../ironbeepp/tests/fixture.hpp"
+#include "parse_fixture.hpp"
 
 #include "gtest/gtest.h"
 
 using namespace IronBee::Predicate;
 using namespace std;
 
-class NamedCall : public DAG::Call
-{
-public:
-    explicit
-    NamedCall(const string& name) :
-        m_name(name)
-    {
-        // nop
-    }
-
-    virtual string name() const
-    {
-        return m_name;
-    }
-
-protected:
-    virtual DAG::Value calculate(DAG::Context)
-    {
-        return IronBee::ConstField();
-    }
-
-private:
-    string m_name;
-};
-
 class TestBFS :
-    public ::testing::Test
+    public ::testing::Test,
+    public ParseFixture
 {
 protected:
-    static DAG::call_p create(const std::string& name)
-    {
-        return DAG::call_p(new NamedCall(name));
-    }
-
-    DAG::node_p parse(const std::string& s) const
-    {
-        size_t i = 0;
-        DAG::node_p node = parse_call(s, i, m_factory);
-        if (! node) {
-            BOOST_THROW_EXCEPTION(
-                IronBee::einval() << IronBee::errinfo_what(
-                    "Parse failed."
-                )
-            );
-        }
-        if (i != s.length() - 1) {
-            BOOST_THROW_EXCEPTION(
-                IronBee::einval() << IronBee::errinfo_what(
-                    "Parse did not consume all input."
-                )
-            );
-
-        }
-
-        return node;
-    }
-
     virtual void SetUp()
     {
         m_factory
@@ -96,9 +44,6 @@ protected:
             .add("C", &create)
             ;
     }
-
-private:
-    CallFactory m_factory;
 };
 
 //! Vector of nodes.
