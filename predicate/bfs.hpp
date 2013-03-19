@@ -237,25 +237,14 @@ void bfs_append_list(
     std::list<node_cp>& list,
     const node_cp&      which,
     bfs_up_tag
-)
-{
-    BOOST_FOREACH(const DAG::weak_node_p& weak_parent, which->parents()) {
-        list.push_back(weak_parent.lock());
-    }
-}
+);
 
 //! Append @c node_cp's to children of @a which to @a list.
 void bfs_append_list(
     std::list<node_cp>& list,
     const node_cp&      which,
     bfs_down_tag
-)
-{
-    std::copy(
-        which->children().begin(), which->children().end(),
-        std::back_inserter(list)
-    );
-}
+);
 
 /**
  * Generic breadth first search routine.
