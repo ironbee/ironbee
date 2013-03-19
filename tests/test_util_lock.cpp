@@ -82,12 +82,13 @@ public:
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
+        m_started = true;
         status = pthread_create(&handle, &attr, fn, this);
         if (status) {
+            m_started = false;
             return IB_EUNKNOWN;
         }
 
-        m_started = true;
         m_handle = handle;
         return IB_OK;
     }
@@ -136,7 +137,6 @@ public:
         m_max_threads(0),
         m_threads(NULL),
         m_lock_enabled(true),
-        m_lock_errors(0),
         m_shared(0)
     {
         TestIBUtilLock::m_self = this;
@@ -262,7 +262,7 @@ public:
             if (m_lock_enabled) {
                 rc = LockLock( );
                 if (rc != IB_OK) {
-                    ++m_lock_errors;
+                    thread->Error();
                     break;
                 }
             }
@@ -276,7 +276,7 @@ public:
             if (m_lock_enabled) {
                 rc = UnlockLock( );
                 if (rc != IB_OK) {
-                    ++m_lock_errors;
+                    thread->Error();
                     break;
                 }
             }
@@ -301,15 +301,12 @@ public:
         return rc;
     }
 
-    int LockErrors(void) const { return m_lock_errors; };
-
 private:
     static TestIBUtilLock *m_self;
     size_t                 m_max_threads;
     Thread                *m_threads;
     ib_lock_t              m_lock;
     bool                   m_lock_enabled;
-    int                    m_lock_errors;
     int                    m_loops;
     double                 m_sleeptime;
     volatile int           m_shared;
@@ -359,7 +356,6 @@ TEST_F(TestIBUtilLock, test_lock_disabled)
 
     rc = WaitForThreads( &errors );
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(0, LockErrors());
     ASSERT_NE(0LU, errors);
 
     rc = DestroyLock( );
@@ -379,7 +375,6 @@ TEST_F(TestIBUtilLock, test_short)
 
     rc = WaitForThreads( &errors );
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(0, LockErrors());
     ASSERT_EQ(0LU, errors);
 
     rc = DestroyLock( );
@@ -399,7 +394,6 @@ TEST_F(TestIBUtilLock, test_long)
 
     rc = WaitForThreads( &errors );
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(0, LockErrors());
     ASSERT_EQ(0LU, errors);
 
     rc = DestroyLock( );
