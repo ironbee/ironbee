@@ -766,7 +766,7 @@ ib_status_t DLL_PUBLIC ib_rule_search_action(const ib_engine_t *ib,
 ib_status_t DLL_PUBLIC ib_rule_set_capture(
     ib_engine_t *ib,
     ib_rule_t   *rule,
-    const char  *collection_name);
+    const char  *capture_collection);
 
 /**
  * Register a rule.
