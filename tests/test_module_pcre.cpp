@@ -30,6 +30,7 @@
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>
+#include <ironbee/capture.h>
 #include <ironbee/bytestr.h>
 
 // @todo Remove once ib_engine_operator_get() is available.
@@ -326,6 +327,70 @@ TEST_F(PcreModuleTest, test_match_capture)
 
     ASSERT_EQ(IB_OK,
               ib_data_get(ib_tx->data, IB_TX_CAPTURE":3", &ib_field));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
+    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
+    ASSERT_EQ(0U, IB_LIST_ELEMENTS(ib_list));
+}
+
+TEST_F(PcreModuleTest, test_match_capture_named)
+{
+    ib_field_t *ib_field;
+    const ib_list_t *ib_list;
+    const char *capname;
+
+    const ib_bytestr_t *ib_bytestr;
+    ib_status_t rc;
+
+    /* Check :0 */
+    capname = ib_capture_fullname(ib_tx, "captest", 0);
+    ASSERT_STREQ(capname, "captest:0");
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, capname, &ib_field));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
+    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
+    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
+    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
+
+    /* Check :1 */
+    capname = ib_capture_fullname(ib_tx, "captest", 1);
+    ASSERT_STREQ(capname, "captest:1");
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, capname, &ib_field));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
+    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
+    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
+    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
+
+    /* Check :2 */
+    capname = ib_capture_fullname(ib_tx, "captest", 2);
+    ASSERT_STREQ(capname, "captest:2");
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, capname, &ib_field));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
+    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
+    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
+    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
+
+    rc = ib_field_value(ib_field, ib_ftype_bytestr_out(&ib_bytestr));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Check that a value is over written correctly. */
+    ASSERT_EQ("4", std::string(
+        reinterpret_cast<const char*>(ib_bytestr_const_ptr(ib_bytestr)),
+        ib_bytestr_length(ib_bytestr)
+    ));
+
+    capname = ib_capture_fullname(ib_tx, "captest", 3);
+    ASSERT_STREQ(capname, "captest:3");
+    ASSERT_EQ(IB_OK,
+              ib_data_get(ib_tx->data, capname, &ib_field));
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
