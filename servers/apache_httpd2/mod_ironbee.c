@@ -71,6 +71,7 @@ module AP_MODULE_DECLARE_DATA ironbee_module;
 #define NOTIFY_REQ_END     0x200
 #define NOTIFY_RESP_START  0x400
 #define NOTIFY_RESP_END    0x800
+#define INTERNAL_ERRORDOC  0x10000
 
 typedef enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } iobuf_t;
 typedef struct ironbee_req_ctx {
@@ -512,10 +513,12 @@ static int ironbee_headers_in(request_rec *r)
 
         apr_table_do(ironbee_sethdr, ibhdrs, r->headers_in, NULL);
 
-        rc = ib_state_notify_request_header_data(ironbee, ctx->tx, ibhdrs);
-        if (rc != IB_OK) {
-            rc_what = "ib_state_notify_request_header_data";
-            goto finished;
+        if (ibhdrs->size > 0) {
+            rc = ib_state_notify_request_header_data(ironbee, ctx->tx, ibhdrs);
+            if (rc != IB_OK) {
+                rc_what = "ib_state_notify_request_header_data";
+                goto finished;
+            }
         }
 
         rc = ib_state_notify_request_header_finished(ironbee, ctx->tx);
@@ -561,6 +564,7 @@ finished:
      * to divert into the appropriate errordocument.
      */
     if (STATUS_IS_ERROR(ctx->status)) {
+        ctx->state |= INTERNAL_ERRORDOC;
         return ctx->status;
     }
 
@@ -636,10 +640,12 @@ static apr_status_t ironbee_header_filter(ap_filter_t *f,
     }
     apr_table_do(ironbee_sethdr, ibhdrs, f->r->headers_out, NULL);
     apr_table_do(ironbee_sethdr, ibhdrs, f->r->err_headers_out, NULL);
-    rc = ib_state_notify_response_header_data(ironbee, ctx->tx, ibhdrs);
-    if (rc != IB_OK) {
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
-                      "ib_state_notify_response_header_data failed with %d", rc);
+    if (ibhdrs->size > 0) {
+        rc = ib_state_notify_response_header_data(ironbee, ctx->tx, ibhdrs);
+        if (rc != IB_OK) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                          "ib_state_notify_response_header_data failed with %d", rc);
+        }
     }
     rc = ib_state_notify_response_header_finished(ironbee, ctx->tx);
     if (rc != IB_OK) {
@@ -725,18 +731,24 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
         f->ctx = ctx = apr_pcalloc(f->r->pool, sizeof(ironbee_filter_ctx));
         ctx->buffer = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
 
-        /* Determine whether we're configured to buffer */
-        rc = ib_context_get(rctx->tx->ctx, "buffer_res",
-                            ib_ftype_num_out(&num), NULL);
-        if (rc != IB_OK)
-            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
-                          "Can't determine output buffer configuration!");
-        if (num == 0) {
+        /* We trust our internally-generated errordocument */
+        if (rctx->state & INTERNAL_ERRORDOC) {
             rctx->output_buffering = IOBUF_NOBUF;
         }
+        /* Determine whether we're configured to buffer */
         else {
-            /* If we're buffering, initialise the buffer */
-            rctx->output_buffering = IOBUF_BUFFER;
+            rc = ib_context_get(rctx->tx->ctx, "buffer_res",
+                                ib_ftype_num_out(&num), NULL);
+            if (rc != IB_OK)
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                              "Can't determine output buffer configuration!");
+            if (num == 0) {
+                rctx->output_buffering = IOBUF_NOBUF;
+            }
+            else {
+                /* If we're buffering, initialise the buffer */
+                rctx->output_buffering = IOBUF_BUFFER;
+            }
         }
 
         /* First send a flush down the chain to trigger
@@ -778,8 +790,12 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
         /* If Ironbee just signalled an error, switch to discard data mode,
          * dump anything we already have buffered,
          * and pass EOS down the chain immediately.
+         *
+         * We need to check INTERNAL_ERRORDOC explicitly as that otherwise
+         * gives a false positive and swallows our own errordoc.
          */
         if ( (STATUS_IS_ERROR(rctx->status)) &&
+             !(rctx->state & INTERNAL_ERRORDOC) &&
              (rctx->output_buffering != IOBUF_DISCARD) ) {
             if (rctx->output_buffering == IOBUF_BUFFER) {
                 apr_brigade_cleanup(ctx->buffer);
@@ -920,6 +936,7 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
                  (rctx->input_buffering != IOBUF_DISCARD) ) {
                 apr_brigade_cleanup(ctx->buffer);
                 rctx->input_buffering = IOBUF_DISCARD;
+                rctx->state |= INTERNAL_ERRORDOC;
                 f->r->status = rctx->status;
                 ap_send_error_response(f->r, rctx->status);
             }
@@ -953,6 +970,7 @@ setaside_input:
          (rctx->input_buffering != IOBUF_DISCARD) ) {
         apr_brigade_cleanup(ctx->buffer);
         rctx->input_buffering = IOBUF_DISCARD;
+        rctx->state |= INTERNAL_ERRORDOC;
         f->r->status = rctx->status;
         ap_send_error_response(f->r, rctx->status);
     }
@@ -1282,6 +1300,9 @@ static void ironbee_hooks(apr_pool_t *pool)
      * And after even mod_headers, so we record anything it sets too.
      */
     ap_hook_insert_filter(ironbee_filter_insert, mod_headers, NULL, APR_HOOK_LAST);
+
+    /* We want to notify Ironbee of error docs, too */
+    ap_hook_insert_error_filter(ironbee_filter_insert, mod_headers, NULL, APR_HOOK_LAST);
 }
 
 /******************** CONFIG STUFF *******************************/
