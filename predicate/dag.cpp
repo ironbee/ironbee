@@ -70,28 +70,6 @@ void Node::reset()
     m_has_value = 0;
 }
 
-namespace {
-
-class points_to
-{
-public:
-    points_to(const Node* which) :
-        m_which(which)
-    {
-        // nop
-    }
-
-    bool operator()(const weak_node_p& node) const
-    {
-        return ! node.expired() && node.lock().get() == m_which;
-    }
-
-private:
-    const Node* m_which;
-};
-
-}
-
 void Node::add_child(const node_p& child)
 {
     if (! child) {
@@ -104,6 +82,29 @@ void Node::add_child(const node_p& child)
 
     m_children.push_back(child);
     child->m_parents.push_back(shared_from_this());
+}
+
+void Node::unlink_from_child(const node_p& child) const
+{
+    bool found_parent = false;
+    for (
+        weak_node_list_t::iterator i = child->m_parents.begin();
+        i != child->m_parents.end();
+        ++i
+    ) {
+        if (i->lock().get() == this) {
+            found_parent = true;
+            child->m_parents.erase(i);
+            break;
+        }
+    }
+    if (! found_parent) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Not a parent of child."
+            )
+        );
+    }
 }
 
 void Node::remove_child(const node_p& child)
@@ -126,15 +127,7 @@ void Node::remove_child(const node_p& child)
         );
     }
 
-    size_t parent_size = child->m_parents.size();
-    child->m_parents.remove_if(points_to(this));
-    if (child->m_parents.size() == parent_size) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "Not a parent of child."
-            )
-        );
-    }
+    unlink_from_child(child);
 }
 
 void Node::replace_child(const node_p& child, const node_p& with)
@@ -163,6 +156,10 @@ void Node::replace_child(const node_p& child, const node_p& with)
             )
         );
     }
+
+    unlink_from_child(child);
+
+    with->m_parents.push_back(shared_from_this());
 
     *i = with;
 }

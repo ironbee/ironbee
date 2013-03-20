@@ -173,4 +173,8 @@ TEST_F(TestDAG, ModifyChildren)
     EXPECT_EQ("(dummy_call (dummy_call2) (dummy_call))", p->to_s());
     ASSERT_NO_THROW(p->replace_child(c2, c1));
     EXPECT_EQ("(dummy_call (dummy_call) (dummy_call))", p->to_s());
+    EXPECT_EQ(2UL, c1->parents().size());
+    EXPECT_EQ(p, c1->parents().front().lock());
+    EXPECT_EQ(p, boost::next(c1->parents().begin())->lock());
+    EXPECT_TRUE(c2->parents().empty());
 }

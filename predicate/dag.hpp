@@ -247,6 +247,14 @@ protected:
     virtual Value calculate(Context context) = 0;
 
 private:
+    /**
+     * Remove this from parents of @a child.
+     *
+     * @param[in] child Child to unlink from.
+     * @throw IronBee::einval if not in @a child's parent list.
+     **/
+    void unlink_from_child(const node_p& child) const;
+
     bool             m_has_value;
     Value            m_value;
     weak_node_list_t m_parents;
