@@ -56,7 +56,7 @@ TEST_F(TestMergeGraph, Easy)
 {
     DAG::node_p n = parse("(A (B (C)))");
     DAG::MergeGraph g;
-    size_t n_i;
+    size_t n_i = 0;
 
     EXPECT_TRUE(g.empty());
     EXPECT_NO_THROW(n_i = g.add_root(n));
@@ -69,22 +69,22 @@ TEST_F(TestMergeGraph, Basic)
 {
     DAG::node_p n = parse("(A (B (C)) (B (C)))");
     DAG::MergeGraph g;
-    size_t n_i;
+    size_t n_i = 0;
 
     EXPECT_NO_THROW(n_i = g.add_root(n));
     EXPECT_EQ(n, g.root(n_i));
     EXPECT_EQ(n_i, g.root_index(n));
 
-    EXPECT_EQ(3, num_descendants(n));
+    EXPECT_EQ(3UL, num_descendants(n));
 }
 
 TEST_F(TestMergeGraph, MultipleRoots)
 {
     DAG::MergeGraph g;
     DAG::node_p n = parse("(A (B (C)) (B (C)))");
-    size_t n_i;
+    size_t n_i = 0;
     DAG::node_p m = parse("(C (B (C)))");
-    size_t m_i;
+    size_t m_i = 0;
 
     EXPECT_NO_THROW(n_i = g.add_root(n));
     EXPECT_NO_THROW(m_i = g.add_root(m));
