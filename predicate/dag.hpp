@@ -62,8 +62,8 @@ namespace Impl {
 class Final
 {
     // Classes to be final.
-    friend class Null;
-    friend class String;
+    friend class DAG::Null;
+    friend class DAG::String;
 private:
     //! Private constructor.
     Final() {}

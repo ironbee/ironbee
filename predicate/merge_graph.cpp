@@ -288,7 +288,7 @@ string debug_node_decorator(const node_cp& node)
 void MergeGraph::write_debug_report(std::ostream& out)
 {
     out << "node_by_sexpr: " << endl;
-    BOOST_FOREACH(node_by_sexpr_t::const_reference& v, m_node_by_sexpr) {
+    BOOST_FOREACH(node_by_sexpr_t::const_reference v, m_node_by_sexpr) {
         out << v.first << " -> " << v.second->to_s() << " @ " << v.second << endl;
         if (v.first != v.second->to_s()) {
             out << "  ERROR: Mismatch." << endl;
@@ -296,7 +296,7 @@ void MergeGraph::write_debug_report(std::ostream& out)
     }
 
     out << "root_indices: " << endl;
-    BOOST_FOREACH(root_indices_t::const_reference& v, m_root_indices) {
+    BOOST_FOREACH(root_indices_t::const_reference v, m_root_indices) {
         out << v.first->to_s() << " @ " << v.first << " -> " << v.second << endl;
     }
 
