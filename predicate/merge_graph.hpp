@@ -157,8 +157,9 @@ public:
      * @warning See add_root() and MergeGraph for ownership issues regarding
      *          @a child.
      *
-     * @param[in] parent Parent to add child to.  Equivalent must be in graph.
-     * @param[in] child  Child to add.
+     * @param[in]     parent Parent to add child to.  Equivalent must be in
+     *                       graph.
+     * @param[in,out] child  Child to add.  Updated to graph node.
      * @throw IronBee::enoent if @a parent has no equivalent node in graph.
      * @throw IronBee::einval if @a parent or @a child is singular.
      **/
@@ -182,7 +183,7 @@ public:
     * @throw IronBee::einval if @a parent or @a child is singular or @a child
     *                        is not a child of @a parent.
     **/
-    void remove(const node_cp& parent, node_cp& child);
+    void remove(const node_cp& parent, const node_cp& child);
 
     //! Iterate through all root nodes.
     root_iterators roots() const

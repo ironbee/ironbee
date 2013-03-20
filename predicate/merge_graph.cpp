@@ -271,6 +271,46 @@ void MergeGraph::add(const node_cp& parent, node_p& child)
     );
 }
 
+void MergeGraph::remove(const node_cp& parent, const node_cp& child)
+{
+    node_p known_parent = known(parent);
+    if (! known_parent) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::enoent() << errinfo_what(
+                "No such subexpression."
+            )
+        );
+    }
+
+    node_p known_child = known(child);
+    if (! known_child) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::enoent() << errinfo_what(
+                "No such child subexpression."
+            )
+        );
+    }
+
+    // Unlearn all subexpressions of parent and ancestors.
+    bfs_up(
+        known_parent,
+        boost::make_function_output_iterator(
+            boost::bind(&MergeGraph::unlearn, this, _1)
+        )
+    );
+
+    // Remove child.
+    known_parent->remove_child(known_child);
+
+    // Learn all new ancestor sexprs.
+    bfs_up(
+        known_parent,
+        boost::make_function_output_iterator(
+            boost::bind(&MergeGraph::learn, this, _1)
+        )
+    );
+}
+
 void MergeGraph::merge_tree(node_p& which)
 {
     if (! which) {

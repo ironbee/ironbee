@@ -194,3 +194,29 @@ TEST_F(TestMergeGraph, AddLoop)
 
     EXPECT_TRUE(g.write_validation_report(cerr));
 }
+
+TEST_F(TestMergeGraph, Remove)
+{
+    DAG::MergeGraph g;
+    DAG::node_p n = parse("(A (B (C)))");
+    DAG::node_p m = parse("(B (C))");
+    size_t n_i = 0;
+    size_t m_i = 0;
+
+    EXPECT_NO_THROW(n_i = g.add_root(n));
+    EXPECT_NO_THROW(m_i = g.add_root(m));
+
+    DAG::node_p to_remove = parse("(C)");
+    EXPECT_NO_THROW(g.remove(m, to_remove));
+    EXPECT_EQ("(A (B))", g.root(n_i)->to_s());
+    EXPECT_EQ("(B)",    g.root(m_i)->to_s());
+
+    EXPECT_TRUE(g.write_validation_report(cerr));
+
+    EXPECT_NO_THROW(g.remove(n, m));
+    EXPECT_EQ(2UL, g.size());
+    EXPECT_EQ("(A)", g.root(n_i)->to_s());
+    EXPECT_EQ("(B)", g.root(m_i)->to_s());
+
+    EXPECT_TRUE(g.write_validation_report(cerr));
+}
