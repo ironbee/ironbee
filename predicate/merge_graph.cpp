@@ -160,7 +160,7 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
         );
     }
 
-    // Unlearn all subexpressions of known_which and parents.
+    // Unlearn all subexpressions of known_which and ancestors.
     bfs_up(
         known_which,
         boost::make_function_output_iterator(
@@ -234,6 +234,41 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
     // are gone, its shared count will go to 0 and it will be freed, reducing
     // any childrens shared count, and so forth, until it and all children
     // not still part of the graph are freed.
+}
+
+void MergeGraph::add(const node_cp& parent, node_p& child)
+{
+    node_p known_parent = known(parent);
+    if (! known_parent) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::enoent() << errinfo_what(
+                "No such subexpression."
+            )
+        );
+    }
+
+    // Unlearn all subexpressions of parent and ancestors.
+    bfs_up(
+        known_parent,
+        boost::make_function_output_iterator(
+            boost::bind(&MergeGraph::unlearn, this, _1)
+        )
+    );
+
+    // If child is known, this will change child to point to it.  Otherwise,
+    // this will merge in the tree based at with.
+    merge_tree(child);
+
+    // Add child.
+    known_parent->add_child(child);
+
+    // Learn all new ancestor sexprs.
+    bfs_up(
+        known_parent,
+        boost::make_function_output_iterator(
+            boost::bind(&MergeGraph::learn, this, _1)
+        )
+    );
 }
 
 void MergeGraph::merge_tree(node_p& which)
