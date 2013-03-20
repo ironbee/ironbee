@@ -160,10 +160,6 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
         );
     }
 
-    // If with is known, this will change with to point to it.  Otherwise,
-    // this will merge in the tree based at with.
-    merge_tree(with);
-
     // Unlearn all subexpressions of known_which and parents.
     bfs_up(
         known_which,
@@ -172,12 +168,18 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
         )
     );
 
+    // If with is known, this will change with to point to it.  Otherwise,
+    // this will merge in the tree based at with.
+    merge_tree(with);
+
     // Replace known_which with with in all parents of known_which.
     // Doing so will update the sexprs of all ancestors of with.
     // As we are holding a node_p to known_which, it and its descendants
     // will stay around long enough for us to unlearn them as necessary
     // later on.
-    BOOST_FOREACH(const weak_node_p& weak_parent, known_which->parents()) {
+    // Make copy as parents of these children will mutate.
+    weak_node_list_t parents = known_which->parents();
+    BOOST_FOREACH(const weak_node_p& weak_parent, parents) {
         weak_parent.lock()->replace_child(known_which, with);
     }
 
@@ -205,7 +207,8 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
     while (! todo.empty()) {
         node_p parent = todo.front();
         todo.pop_front();
-        BOOST_FOREACH(const node_p& child, parent->children()) {
+        node_list_t children = parent->children();
+        BOOST_FOREACH(const node_p& child, children) {
             if (child->parents().size() == 1) {
                 unlearn(child);
                 todo.push_back(child);

@@ -114,4 +114,45 @@ TEST_F(TestMergeGraph, KnownRoot)
     EXPECT_NO_THROW(g.add_root(n));
     EXPECT_NO_THROW(g.add_root(m));
     EXPECT_NE(backup_m, m);
+
+    EXPECT_TRUE(g.write_validation_report(cerr));
+}
+
+TEST_F(TestMergeGraph, Replace)
+{
+    DAG::MergeGraph g;
+    DAG::node_p n = parse("(A (B (C)))");
+    DAG::node_p m = parse("(B (C))");
+    DAG::node_p m2 = parse("(A)");
+    size_t n_i = 0;
+    size_t m_i = 0;
+
+    EXPECT_NO_THROW(n_i = g.add_root(n));
+    EXPECT_NO_THROW(m_i = g.add_root(m));
+
+    EXPECT_NO_THROW(g.replace(m, m2));
+    EXPECT_EQ("(A (A))", g.root(n_i)->to_s());
+    EXPECT_EQ("(A)",     g.root(m_i)->to_s());
+
+    EXPECT_TRUE(g.write_validation_report(cerr));
+}
+
+TEST_F(TestMergeGraph, ReplaceLoop)
+{
+    DAG::MergeGraph g;
+    DAG::node_p n = parse("(A (B (C)))");
+    DAG::node_p m = parse("(B (C))");
+    DAG::node_p m2 = parse("(A (B (C)))");
+    size_t n_i = 0;
+    size_t m_i = 0;
+
+    EXPECT_NO_THROW(n_i = g.add_root(n));
+    EXPECT_NO_THROW(m_i = g.add_root(m));
+
+    EXPECT_TRUE(g.write_validation_report(cerr));
+    EXPECT_NO_THROW(g.replace(m, m2));
+    EXPECT_EQ("(A (A (B (C))))", g.root(n_i)->to_s());
+    EXPECT_EQ("(A (B (C)))",     g.root(m_i)->to_s());
+
+    EXPECT_TRUE(g.write_validation_report(cerr));
 }

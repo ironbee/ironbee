@@ -203,6 +203,20 @@ public:
     }
 
     /**
+     * Look for known subexpression equivalent to @a node.
+     *
+     * @note In the current implementation, common subexpressions are found
+     *       via Node::to_s().  This approach is suboptimal in performance
+     *       but is simple to code and understand.
+     *
+     * @param[in] node Root of subexpression to search for.
+     * @return root of known equivalent subexpression if known and @c node_p()
+     *         otherwise.
+     * @throw IronBee::einval() if @a node is singular.
+     **/
+    node_p known(const node_cp& node) const;
+
+    /**
      * Write debug report to @a out.
      *
      * This routine writes the sexpr to node map (validating it as well),
@@ -234,20 +248,6 @@ private:
      * @throw IroNe:einval if @a which is singular.
      **/
     void merge_tree(node_p& which);
-
-    /**
-     * Look for known subexpression equivalent to @a node.
-     *
-     * @note In the current implementation, common subexpressions are found
-     *       via Node::to_s().  This approach is suboptimal in performance
-     *       but is simple to code and understand.
-     *
-     * @param[in] node Root of subexpression to search for.
-     * @return root of known equivalent subexpression if known and @c node_p()
-     *         otherwise.
-     * @throw IronBee::einval() if @a node is singular.
-     **/
-    node_p known(const node_cp& node) const;
 
     /**
      * Add a new subexpression to known subexpressions.
