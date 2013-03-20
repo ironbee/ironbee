@@ -58,14 +58,14 @@ TEST_F(TestBFS, DownEasy)
     {
         node_vec_t r;
         ASSERT_NO_THROW(bfs_down(n, back_inserter(r)));
-        ASSERT_EQ(1, r.size());
+        ASSERT_EQ(1UL, r.size());
         EXPECT_EQ("(A)", r[0]->to_s());
     }
 
     {
         node_cvec_t r;
         ASSERT_NO_THROW(bfs_down(DAG::node_cp(n), back_inserter(r)));
-        ASSERT_EQ(1, r.size());
+        ASSERT_EQ(1UL, r.size());
         EXPECT_EQ("(A)", r[0]->to_s());
     }
 }
@@ -75,7 +75,7 @@ TEST_F(TestBFS, Down)
     DAG::node_p n = parse("(A (B (C) (C)) (C (B) (B)))");
     node_vec_t r;
     ASSERT_NO_THROW(bfs_down(n, back_inserter(r)));
-    ASSERT_EQ(7, r.size());
+    ASSERT_EQ(7UL, r.size());
     EXPECT_EQ("(A (B (C) (C)) (C (B) (B)))", r[0]->to_s());
     EXPECT_EQ("(B (C) (C))",                 r[1]->to_s());
     EXPECT_EQ("(C (B) (B))",                 r[2]->to_s());
@@ -92,12 +92,12 @@ TEST_F(TestBFS, DownVisited)
     visited.insert(n->children().front());
     node_vec_t r;
     ASSERT_NO_THROW(bfs_down(n, back_inserter(r), visited));
-    ASSERT_EQ(4, r.size());
+    ASSERT_EQ(4UL, r.size());
     EXPECT_EQ("(A (B (C) (C)) (C (B) (B)))", r[0]->to_s());
     EXPECT_EQ("(C (B) (B))",                 r[1]->to_s());
     EXPECT_EQ("(B)",                         r[2]->to_s());
     EXPECT_EQ("(B)",                         r[3]->to_s());
-    EXPECT_EQ(5, visited.size());
+    EXPECT_EQ(5UL, visited.size());
 }
 
 TEST_F(TestBFS, DownWithDups)
@@ -113,7 +113,7 @@ TEST_F(TestBFS, DownWithDups)
 
     node_vec_t r;
     ASSERT_NO_THROW(bfs_down(n, back_inserter(r)));
-    ASSERT_EQ(5, r.size());
+    ASSERT_EQ(5UL, r.size());
     EXPECT_EQ("(A (B (C) (C)) (C (B)) (B (C) (C)))", r[0]->to_s());
     EXPECT_EQ("(B (C) (C))",                         r[1]->to_s());
     EXPECT_EQ("(C (B))",                             r[2]->to_s());
@@ -134,14 +134,14 @@ TEST_F(TestBFS, UpEasy)
     {
         node_vec_t r;
         ASSERT_NO_THROW(bfs_up(n, back_inserter(r)));
-        ASSERT_EQ(1, r.size());
+        ASSERT_EQ(1UL, r.size());
         EXPECT_EQ("(A)", r[0]->to_s());
     }
 
     {
         node_cvec_t r;
         ASSERT_NO_THROW(bfs_up(DAG::node_cp(n), back_inserter(r)));
-        ASSERT_EQ(1, r.size());
+        ASSERT_EQ(1UL, r.size());
         EXPECT_EQ("(A)", r[0]->to_s());
     }
 }
@@ -156,7 +156,7 @@ TEST_F(TestBFS, Up)
     EXPECT_EQ("(C (C))", n->to_s());
     node_vec_t r;
     ASSERT_NO_THROW(bfs_up(a_b_c, back_inserter(r)));
-    EXPECT_EQ(4, r.size());
+    EXPECT_EQ(4UL, r.size());
     EXPECT_EQ("(C)",         r[0]->to_s());
     EXPECT_EQ("(B (C))",     r[1]->to_s());
     EXPECT_EQ("(C (C))",     r[2]->to_s());
@@ -176,11 +176,11 @@ TEST_F(TestBFS, UpVisited)
     EXPECT_EQ("(C (C))", n->to_s());
     node_vec_t r;
     ASSERT_NO_THROW(bfs_up(a_b_c, back_inserter(r), visited));
-    EXPECT_EQ(3, r.size());
+    EXPECT_EQ(3UL, r.size());
     EXPECT_EQ("(C)",         r[0]->to_s());
     EXPECT_EQ("(B (C))",     r[1]->to_s());
     EXPECT_EQ("(C (C))",     r[2]->to_s());
-    EXPECT_EQ(4, visited.size());
+    EXPECT_EQ(4UL, visited.size());
 }
 
 TEST_F(TestBFS, UpWithDups)
@@ -195,7 +195,7 @@ TEST_F(TestBFS, UpWithDups)
 
     node_vec_t r;
     ASSERT_NO_THROW(bfs_up(a_b_c, back_inserter(r)));
-    EXPECT_EQ(3, r.size());
+    EXPECT_EQ(3UL, r.size());
     EXPECT_EQ("(C)",         r[0]->to_s());
     EXPECT_EQ("(B (C))",     r[1]->to_s());
     EXPECT_EQ("(A (B (C)) (B (C)))", r[2]->to_s());

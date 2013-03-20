@@ -78,9 +78,9 @@ TEST_F(TestDAG, Node)
 
     DAG::node_p n2(new DummyCall);
     n->add_child(n2);
-    EXPECT_EQ(1, n->children().size());
+    EXPECT_EQ(1UL, n->children().size());
     EXPECT_EQ(n2, n->children().front());
-    EXPECT_EQ(1, n2->parents().size());
+    EXPECT_EQ(1UL, n2->parents().size());
     EXPECT_EQ(n, n2->parents().front().lock());
 }
 
