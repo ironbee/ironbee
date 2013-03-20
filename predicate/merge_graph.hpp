@@ -212,6 +212,17 @@ public:
      **/
     void write_debug_report(std::ostream& out);
 
+    /**
+     * Write validation report to @a out.
+     *
+     * This routine performs a variety of validation checks, writes failures
+     * to @a out and returns true if no failures occurred.
+     *
+     * @param[in] out Ostream to write to.
+     * @return true if no error occurred.
+     **/
+    bool write_validation_report(std::ostream& out);
+
 private:
     /**
      * Merge @a which into graph, merging subexpressions as needed.

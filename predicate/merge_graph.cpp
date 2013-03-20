@@ -31,6 +31,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/function_output_iterator.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 
@@ -302,6 +303,122 @@ void MergeGraph::write_debug_report(std::ostream& out)
 
     out << endl << "Graph: " << endl;
     to_dot(out, m_roots.begin(), m_roots.end(), debug_node_decorator);
+}
+
+namespace {
+
+class validate_node
+{
+public:
+    validate_node(const MergeGraph& g, ostream& out, bool& has_no_error) :
+        m_g(g),
+        m_out(out),
+        m_has_no_error(has_no_error)
+    {
+        // nop
+    }
+
+    void operator()(const node_cp& node)
+    {
+        if (! node) {
+            error(node, "singular");
+            return;
+        }
+
+        BOOST_FOREACH(const weak_node_p& weak_parent, node->parents()) {
+            node_cp parent = weak_parent.lock();
+            check_is_known(parent);
+            node_list_t::const_iterator i =
+                find(
+                    parent->children().begin(), parent->children().end(),
+                    node
+                );
+            if (i == parent->children().end()) {
+                error(node,
+                    "not child of parent " +
+                    boost::lexical_cast<string>(parent)
+                );
+            }
+        }
+    }
+
+private:
+    void check_is_known(const node_cp& node)
+    {
+        node_cp known_node = m_g.known(node);
+        if (known_node != node) {
+            error(node,
+                "known node " +
+                boost::lexical_cast<string>(known_node) + " != node " +
+                boost::lexical_cast<string>(node)
+            );
+        }
+    }
+    void error(const node_cp& node, const string& msg)
+    {
+        m_has_no_error = false;
+        m_out << "ERROR[node=" << node << "]: " << msg << endl;
+    }
+
+    const MergeGraph& m_g;
+    ostream& m_out;
+    bool&    m_has_no_error;
+};
+
+}
+
+bool MergeGraph::write_validation_report(std::ostream& out)
+{
+    set<node_cp> visited;
+    bool has_no_error = true;
+
+    BOOST_FOREACH(const node_cp root, m_roots) {
+        bfs_down(
+            root,
+            boost::make_function_output_iterator(
+                validate_node(*this, out, has_no_error)
+            ),
+            visited
+        );
+
+        root_indices_t::const_iterator i = m_root_indices.find(root);
+        if (i == m_root_indices.end()) {
+            out << "ERROR: Root " << root->to_s() << " @ " << root
+                << " not in indices." << endl;
+            has_no_error = false;
+        }
+        else if (m_roots[i->second] != root) {
+            out << "ERROR: Root " << root->to_s() << " @ " << root
+                << " has index " << i->second << " which is root "
+                << m_roots[i->second]->to_s() << " @ " << m_roots[i->second]
+                << endl;
+            has_no_error = false;
+        }
+    }
+
+    BOOST_FOREACH(node_by_sexpr_t::const_reference v, m_node_by_sexpr) {
+        if (! v.second) {
+            out << "ERROR: singular node for sexpr " << v.first << endl;
+            has_no_error = false;
+        }
+        else if (v.first != v.second->to_s()) {
+            out << "ERROR: sexpr " << v.first
+                << " does not match sexpr of node " << v.second->to_s()
+                << " @ " << v.second << endl;
+            has_no_error = false;
+        }
+    }
+
+    BOOST_FOREACH(root_indices_t::const_reference v, m_root_indices) {
+        if (m_roots[v.second] != v.first) {
+            out << "ERROR: Root index " << v.second << " should be "
+                << v.first->to_s() << " @ " << v.first
+                << " but is " << m_roots[v.second]->to_s() << " @ "
+                << m_roots[v.second] << endl;
+        }
+    }
+
+    return has_no_error;
 }
 
 } // DAG

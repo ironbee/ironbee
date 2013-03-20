@@ -63,6 +63,8 @@ TEST_F(TestMergeGraph, Easy)
     EXPECT_EQ(n, g.root(n_i));
     EXPECT_EQ(n_i, g.root_index(n));
     EXPECT_FALSE(g.empty());
+
+    EXPECT_TRUE(g.write_validation_report(cerr));
 }
 
 TEST_F(TestMergeGraph, Basic)
@@ -76,6 +78,8 @@ TEST_F(TestMergeGraph, Basic)
     EXPECT_EQ(n_i, g.root_index(n));
 
     EXPECT_EQ(3UL, num_descendants(n));
+
+    EXPECT_TRUE(g.write_validation_report(cerr));
 }
 
 TEST_F(TestMergeGraph, MultipleRoots)
@@ -96,6 +100,8 @@ TEST_F(TestMergeGraph, MultipleRoots)
     EXPECT_EQ(2UL, g.size());
     EXPECT_EQ(n, *g.roots().first);
     EXPECT_EQ(m, *boost::next(g.roots().first));
+
+    EXPECT_TRUE(g.write_validation_report(cerr));
 }
 
 TEST_F(TestMergeGraph, KnownRoot)
