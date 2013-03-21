@@ -325,12 +325,12 @@ local build_rule = function(ib, ctx, chain, db)
             ctx,
             prule[0],
             op_inst_create_stream_flags,
-            rule.data.op,
+            op,
             rule.data.op_arg,
             op_inst_create_inv_flag,
             opinst)
         if rc ~= ffi.C.IB_OK then
-            ib:logError("Failed to create operator instance.")
+            ib:logError("Failed to create operator instance for %s.", op)
             return rc
         end
 
