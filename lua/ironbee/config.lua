@@ -214,8 +214,11 @@ local build_rule = function(ib, ctx, chain, db)
                 local is_inverted = ffi.new("ib_rule_action_t")
                 if string.sub(name, 1, 1) == '!' then
                     name = string.sub(name, 2)
+
+                    -- fire false actions.
                     is_inverted = ffi.C.RULE_ACTION_FALSE
                 else
+                    -- fire true actions.
                     is_inverted = ffi.C.RULE_ACTION_TRUE
                 end
 
@@ -229,7 +232,8 @@ local build_rule = function(ib, ctx, chain, db)
                     0,
                     action_inst)
                 if rc ~= ffi.C.IB_OK then
-                    ib:logError("Failed to create action instance for rule.")
+                    ib:logError(
+                        "Failed to create action %s instance for rule.", name)
                     return rc
                 end
 
