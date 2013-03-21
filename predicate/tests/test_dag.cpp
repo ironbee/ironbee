@@ -36,7 +36,7 @@ class TestDAG : public ::testing::Test, public IBPPTestFixture
 
 static const ib_field_t c_field = ib_field_t();
 
-class DummyCall : public DAG::Call
+class DummyCall : public Call
 {
 public:
     virtual string name() const
@@ -45,7 +45,7 @@ public:
     }
 
 protected:
-    virtual DAG::Value calculate(DAG::Context)
+    virtual Value calculate(Context)
     {
         return IronBee::ConstField(&c_field);
     }
@@ -62,7 +62,7 @@ public:
 
 TEST_F(TestDAG, Node)
 {
-    DAG::node_p n(new DummyCall);
+    node_p n(new DummyCall);
 
     EXPECT_EQ("(dummy_call)", n->to_s());
     EXPECT_TRUE(n->children().empty());
@@ -76,7 +76,7 @@ TEST_F(TestDAG, Node)
     n->reset();
     EXPECT_FALSE(n->has_value());
 
-    DAG::node_p n2(new DummyCall);
+    node_p n2(new DummyCall);
     n->add_child(n2);
     EXPECT_EQ(1UL, n->children().size());
     EXPECT_EQ(n2, n->children().front());
@@ -86,35 +86,35 @@ TEST_F(TestDAG, Node)
 
 TEST_F(TestDAG, String)
 {
-    DAG::String n("node");
+    String n("node");
     EXPECT_EQ("'node'", n.to_s());
     EXPECT_EQ("node", n.value_as_s());
     EXPECT_TRUE(n.is_static());
     EXPECT_EQ(
         "node",
-        n.eval(DAG::Context()).value_as_byte_string().to_s()
+        n.eval(Context()).value_as_byte_string().to_s()
     );
 }
 
 TEST_F(TestDAG, StringEscaping)
 {
-    EXPECT_EQ("'\\''", DAG::String("'").to_s());
-    EXPECT_EQ("'foo\\'bar'", DAG::String("foo'bar").to_s());
-    EXPECT_EQ("'foo\\\\bar'", DAG::String("foo\\bar").to_s());
-    EXPECT_EQ("'foo\\\\'", DAG::String("foo\\").to_s());
+    EXPECT_EQ("'\\''", String("'").to_s());
+    EXPECT_EQ("'foo\\'bar'", String("foo'bar").to_s());
+    EXPECT_EQ("'foo\\\\bar'", String("foo\\bar").to_s());
+    EXPECT_EQ("'foo\\\\'", String("foo\\").to_s());
 }
 
 TEST_F(TestDAG, Call)
 {
-    DAG::node_p n(new DummyCall);
+    node_p n(new DummyCall);
 
     EXPECT_EQ("(dummy_call)", n->to_s());
     EXPECT_EQ(&c_field, n->eval(m_transaction).ib());
     EXPECT_TRUE(n->has_value());
 
-    DAG::node_p a1(new DummyCall);
+    node_p a1(new DummyCall);
     n->add_child(a1);
-    DAG::node_p a2(new DAG::String("foo"));
+    node_p a2(new String("foo"));
     n->add_child(a2);
 
     EXPECT_EQ("(dummy_call (dummy_call) 'foo')", n->to_s());
@@ -131,18 +131,18 @@ TEST_F(TestDAG, OutputOperator)
 
 TEST_F(TestDAG, Null)
 {
-    DAG::Null n;
+    Null n;
     EXPECT_EQ("null", n.to_s());
     EXPECT_TRUE(n.is_static());
-    EXPECT_FALSE(n.eval(DAG::Context()));
+    EXPECT_FALSE(n.eval(Context()));
 }
 
 TEST_F(TestDAG, DeepCall)
 {
-    DAG::node_p n(new DummyCall);
-    DAG::node_p n2(new DummyCall);
-    DAG::node_p n3(new DummyCall);
-    DAG::node_p n4(new DummyCall);
+    node_p n(new DummyCall);
+    node_p n2(new DummyCall);
+    node_p n3(new DummyCall);
+    node_p n4(new DummyCall);
     n->add_child(n2);
     n2->add_child(n3);
     EXPECT_EQ("(dummy_call (dummy_call (dummy_call)))", n->to_s());
@@ -153,13 +153,13 @@ TEST_F(TestDAG, DeepCall)
 
 TEST_F(TestDAG, ModifyChildren)
 {
-    DAG::node_p p(new DummyCall);
-    DAG::node_p c1(new DummyCall);
-    DAG::node_p c2(new DummyCall2);
+    node_p p(new DummyCall);
+    node_p c1(new DummyCall);
+    node_p c2(new DummyCall2);
 
     EXPECT_THROW(p->remove_child(c1), IronBee::enoent);
-    EXPECT_THROW(p->remove_child(DAG::node_p()), IronBee::einval);
-    EXPECT_THROW(p->add_child(DAG::node_p()), IronBee::einval);
+    EXPECT_THROW(p->remove_child(node_p()), IronBee::einval);
+    EXPECT_THROW(p->add_child(node_p()), IronBee::einval);
     ASSERT_NO_THROW(p->add_child(c1));
     EXPECT_EQ("(dummy_call (dummy_call))", p->to_s());
     ASSERT_NO_THROW(p->add_child(c2));
@@ -167,8 +167,8 @@ TEST_F(TestDAG, ModifyChildren)
     ASSERT_NO_THROW(p->remove_child(c1));
     EXPECT_EQ("(dummy_call (dummy_call2))", p->to_s());
     EXPECT_THROW(p->replace_child(c1, c2), IronBee::enoent);
-    EXPECT_THROW(p->replace_child(c2, DAG::node_p()), IronBee::einval);
-    EXPECT_THROW(p->replace_child(DAG::node_p(), c2), IronBee::einval);
+    EXPECT_THROW(p->replace_child(c2, node_p()), IronBee::einval);
+    EXPECT_THROW(p->replace_child(node_p(), c2), IronBee::einval);
     ASSERT_NO_THROW(p->add_child(c1));
     EXPECT_EQ("(dummy_call (dummy_call2) (dummy_call))", p->to_s());
     ASSERT_NO_THROW(p->replace_child(c2, c1));

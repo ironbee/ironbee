@@ -19,7 +19,7 @@
  * @file
  * @brief Predicate --- CallFactory
  *
- * Factory for DAG::Call nodes.
+ * Factory for Call nodes.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -38,19 +38,19 @@ namespace IronBee {
 namespace Predicate {
 
 /**
- * Generate DAG::Call nodes given a name.
+ * Generate Call nodes given a name.
  *
- * Use add() to add subclasses of DAG::Call and operator()() to create an
+ * Use add() to add subclasses of Call and operator()() to create an
  * instance by name.
  **/
 class CallFactory
 {
 public:
     //! Generator function.
-    typedef boost::function<DAG::call_p(const std::string&)> generator_t;
+    typedef boost::function<call_p(const std::string&)> generator_t;
 
     /**
-     * Add a DAG::Call subclass to factory.
+     * Add a Call subclass to factory.
      *
      * @tparam CallSubclass Subclass to add.
      * @return *this
@@ -59,7 +59,7 @@ public:
     CallFactory& add();
 
     /**
-     * Add a DAG::Call subclass to factory.
+     * Add a Call subclass to factory.
      *
      * @param[in] name      Name to use.
      * @param[in] generator Generator function.  Return must have same name
@@ -72,12 +72,12 @@ public:
      * Construct instance of subclass named @a name.
      *
      * @param[in] name Name of subclass to instantiate.
-     * @return DAG::call_p pointing to new default constructed subclass of
+     * @return call_p pointing to new default constructed subclass of
      *   name @a name.
      * @throw IronBee::enoent if no class registered with name @a name.
      * @throw IronBee::einval if result has different name than @a name.
      **/
-    DAG::call_p operator()(const std::string& name) const;
+    call_p operator()(const std::string& name) const;
 
 private:
     //! Type of map of name to generator.
@@ -97,12 +97,12 @@ private:
         /**
          * Default construct @a CallSubclass.
          *
-         * @return DAG::call_p pointing to new default constructed
+         * @return call_p pointing to new default constructed
          *   @a CallSubclass.
          **/
-        DAG::call_p operator()(const std::string&) const
+        call_p operator()(const std::string&) const
         {
-            return DAG::call_p(new CallSubclass());
+            return call_p(new CallSubclass());
         }
     };
 };

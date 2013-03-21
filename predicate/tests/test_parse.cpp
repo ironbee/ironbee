@@ -29,7 +29,7 @@
 using namespace IronBee::Predicate;
 using namespace std;
 
-class CallBase : public DAG::Call
+class CallBase : public Call
 {
 public:
     virtual size_t hash() const
@@ -38,9 +38,9 @@ public:
     }
 
 protected:
-    virtual DAG::Value calculate(DAG::Context)
+    virtual Value calculate(Context)
     {
-        return DAG::Value();
+        return Value();
     }
 };
 
@@ -66,7 +66,7 @@ TEST(TestParse, ValidLiteral)
 {
     size_t i;
     string expr;
-    DAG::node_p r;
+    node_p r;
 
     expr = "'foo'";
     i = 0;
@@ -136,7 +136,7 @@ TEST(TestParse, ValidCall)
     f.add<CallB>();
 
     string expr;
-    DAG::node_p r;
+    node_p r;
     expr = "(CallA)";
     i = 0;
     ASSERT_NO_THROW(r = parse_call(expr, i, f));

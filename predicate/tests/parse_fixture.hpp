@@ -28,7 +28,7 @@
 #ifndef __PREDICATE__TEST_PARSE_FIXTURE__
 #define __PREDICATE__TEST_PARSE_FIXTURE__
 
-class NamedCall : public IronBee::Predicate::DAG::Call
+class NamedCall : public IronBee::Predicate::Call
 {
 public:
     explicit
@@ -44,8 +44,8 @@ public:
     }
 
 protected:
-    virtual IronBee::Predicate::DAG::Value calculate(
-        IronBee::Predicate::DAG::Context
+    virtual IronBee::Predicate::Value calculate(
+        IronBee::Predicate::Context
     )
     {
         return IronBee::ConstField();
@@ -59,17 +59,17 @@ class ParseFixture
 {
 protected:
     static
-    IronBee::Predicate::DAG::call_p create(
+    IronBee::Predicate::call_p create(
         const std::string& name
     )
     {
-        return IronBee::Predicate::DAG::call_p(new NamedCall(name));
+        return IronBee::Predicate::call_p(new NamedCall(name));
     }
 
-    IronBee::Predicate::DAG::node_p parse(const std::string& s) const
+    IronBee::Predicate::node_p parse(const std::string& s) const
     {
         size_t i = 0;
-        IronBee::Predicate::DAG::node_p node = parse_call(s, i, m_factory);
+        IronBee::Predicate::node_p node = parse_call(s, i, m_factory);
         if (! node) {
             BOOST_THROW_EXCEPTION(
                 IronBee::einval() << IronBee::errinfo_what(

@@ -39,7 +39,7 @@ protected:
         Standard::load(m_factory);
     }
 
-    DAG::Value eval(const std::string& text)
+    Value eval(const std::string& text)
     {
         size_t i = 0;
         return parse_call(text, i, m_factory)->eval(m_transaction);

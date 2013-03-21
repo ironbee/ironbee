@@ -28,13 +28,11 @@ using namespace std;
 
 namespace IronBee {
 namespace Predicate {
-namespace DAG {
-
 
 string DefaultNodeDecorator::operator()(const node_cp& node) const
 {
 
-    DAG::call_cp as_call = boost::dynamic_pointer_cast<const DAG::Call>(node);
+    call_cp as_call = boost::dynamic_pointer_cast<const Call>(node);
     if (as_call) {
         return "label=\"" + as_call->name() + "\"";
     }
@@ -71,7 +69,5 @@ void dot_node_outputer::operator()(const node_cp& node) const
 
 } // Impl
 
-
-} // DAG
 } // Predicate
 } // IronBee

@@ -37,9 +37,9 @@ string False::name() const
     return "false";
 }
 
-DAG::Value False::calculate(DAG::Context)
+Value False::calculate(Context)
 {
-    return DAG::Value();
+    return Value();
 }
 
 string True::name() const
@@ -47,12 +47,12 @@ string True::name() const
     return "true";
 }
 
-DAG::Value True::calculate(DAG::Context)
+Value True::calculate(Context)
 {
-    static DAG::node_p s_true_literal;
+    static node_p s_true_literal;
     if (! s_true_literal) {
-        s_true_literal = DAG::node_p(new DAG::String(""));
-        s_true_literal->eval(DAG::Context());
+        s_true_literal = node_p(new String(""));
+        s_true_literal->eval(Context());
     }
 
     return s_true_literal->value();
@@ -63,7 +63,7 @@ string Or::name() const
     return "or";
 }
 
-DAG::Value Or::calculate(DAG::Context context)
+Value Or::calculate(Context context)
 {
     if (children().size() < 2) {
         BOOST_THROW_EXCEPTION(
@@ -72,7 +72,7 @@ DAG::Value Or::calculate(DAG::Context context)
             )
         );
     }
-    BOOST_FOREACH(const DAG::node_p& child, children()) {
+    BOOST_FOREACH(const node_p& child, children()) {
         if (child->eval(context)) {
             // We are true.
             return True().eval(context);
@@ -86,7 +86,7 @@ string And::name() const
     return "and";
 }
 
-DAG::Value And::calculate(DAG::Context context)
+Value And::calculate(Context context)
 {
     if (children().size() < 2) {
         BOOST_THROW_EXCEPTION(
@@ -95,7 +95,7 @@ DAG::Value And::calculate(DAG::Context context)
             )
         );
     }
-    BOOST_FOREACH(const DAG::node_p& child, children()) {
+    BOOST_FOREACH(const node_p& child, children()) {
         if (! child->eval(context)) {
             // We are false.
             return False().eval(context);
@@ -109,7 +109,7 @@ string Not::name() const
     return "not";
 }
 
-DAG::Value Not::calculate(DAG::Context context)
+Value Not::calculate(Context context)
 {
     if (children().size() != 1) {
         BOOST_THROW_EXCEPTION(

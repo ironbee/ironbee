@@ -30,7 +30,6 @@ using namespace std;
 
 namespace IronBee {
 namespace Predicate {
-namespace DAG {
 
 Node::Node() :
     m_has_value(false)
@@ -173,7 +172,7 @@ ostream& operator<<(ostream& out, const Node& node)
 String::String(const string& value) :
     m_value_as_s(value),
     m_s("'" + String::escape(value) + "'"),
-    m_pool("IronBee::Predicate::DAG::String"),
+    m_pool("IronBee::Predicate::String"),
     m_value_as_field(
         IronBee::Field::create_byte_string(
             m_pool,
@@ -310,6 +309,5 @@ void Literal::replace_child(const node_p& child, const node_p& with)
     );
 }
 
-} // DAG
 } // Predicate
 } // IronBee

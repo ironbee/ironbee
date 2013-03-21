@@ -34,72 +34,72 @@ namespace Standard {
  * Falsy value, null.
  **/
 class False :
-    public DAG::Call
+    public Call
 {
 public:
-    //! See DAG::Call::name()
+    //! See Call::name()
     virtual std::string name() const;
 
 protected:
-    //! See DAG::Node::calculate()
-    virtual DAG::Value calculate(DAG::Context);
+    //! See Node::calculate()
+    virtual Value calculate(Context);
 };
 
 /**
  * Truthy value, ''.
  **/
 class True :
-    public DAG::Call
+    public Call
 {
 public:
-    //! See DAG::Call::name()
+    //! See Call::name()
     virtual std::string name() const;
 
 protected:
-    //! See DAG::Node::calculate()
-    virtual DAG::Value calculate(DAG::Context);
+    //! See Node::calculate()
+    virtual Value calculate(Context);
 };
 
 /**
  * True iff any children are truthy.
  **/
 class Or :
-    public DAG::Call
+    public Call
 {
 public:
-    //! See DAG::Call::name()
+    //! See Call::name()
     virtual std::string name() const;
 
 protected:
-    virtual DAG::Value calculate(DAG::Context context);
+    virtual Value calculate(Context context);
 };
 
 /**
  * True iff all children are truthy.
  **/
 class And :
-    public DAG::Call
+    public Call
 {
 public:
-    //! See DAG::Call::name()
+    //! See Call::name()
     virtual std::string name() const;
 
 protected:
-    virtual DAG::Value calculate(DAG::Context context);
+    virtual Value calculate(Context context);
 };
 
 /**
  * True iff child is falsy.
  **/
 class Not :
-    public DAG::Call
+    public Call
 {
 public:
-    //! See DAG::Call::name()
+    //! See Call::name()
     virtual std::string name() const;
 
 protected:
-    virtual DAG::Value calculate(DAG::Context context);
+    virtual Value calculate(Context context);
 };
 
 /**

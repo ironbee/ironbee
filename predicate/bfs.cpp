@@ -26,7 +26,7 @@
 
 namespace IronBee {
 namespace Predicate {
-namespace DAG {
+
 namespace Impl {
 
 void bfs_append_list(
@@ -35,7 +35,7 @@ void bfs_append_list(
     bfs_up_tag
 )
 {
-    BOOST_FOREACH(const DAG::weak_node_p& weak_parent, which->parents()) {
+    BOOST_FOREACH(const weak_node_p& weak_parent, which->parents()) {
         list.push_back(weak_parent.lock());
     }
 }
@@ -53,6 +53,6 @@ void bfs_append_list(
 }
 
 } // Impl
-} // DAG
+
 } // Predicate
 } // IronBee

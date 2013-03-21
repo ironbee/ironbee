@@ -44,18 +44,18 @@ protected:
             ;
     }
 
-    size_t num_descendants(const DAG::node_cp& node) const
+    size_t num_descendants(const node_cp& node) const
     {
-        vector<DAG::node_cp> r;
-        DAG::bfs_down(node, back_inserter(r));
+        vector<node_cp> r;
+        bfs_down(node, back_inserter(r));
         return r.size();
     }
 };
 
 TEST_F(TestMergeGraph, Easy)
 {
-    DAG::node_p n = parse("(A (B (C)))");
-    DAG::MergeGraph g;
+    node_p n = parse("(A (B (C)))");
+    MergeGraph g;
     size_t n_i = 0;
 
     EXPECT_TRUE(g.empty());
@@ -69,8 +69,8 @@ TEST_F(TestMergeGraph, Easy)
 
 TEST_F(TestMergeGraph, Basic)
 {
-    DAG::node_p n = parse("(A (B (C)) (B (C)))");
-    DAG::MergeGraph g;
+    node_p n = parse("(A (B (C)) (B (C)))");
+    MergeGraph g;
     size_t n_i = 0;
 
     EXPECT_NO_THROW(n_i = g.add_root(n));
@@ -84,10 +84,10 @@ TEST_F(TestMergeGraph, Basic)
 
 TEST_F(TestMergeGraph, MultipleRoots)
 {
-    DAG::MergeGraph g;
-    DAG::node_p n = parse("(A (B (C)) (B (C)))");
+    MergeGraph g;
+    node_p n = parse("(A (B (C)) (B (C)))");
     size_t n_i = 0;
-    DAG::node_p m = parse("(C (B (C)))");
+    node_p m = parse("(C (B (C)))");
     size_t m_i = 0;
 
     EXPECT_NO_THROW(n_i = g.add_root(n));
@@ -106,10 +106,10 @@ TEST_F(TestMergeGraph, MultipleRoots)
 
 TEST_F(TestMergeGraph, KnownRoot)
 {
-    DAG::MergeGraph g;
-    DAG::node_p n = parse("(A (B (C)) (B (C)))");
-    DAG::node_p m = parse("(B (C))");
-    DAG::node_p backup_m = m;
+    MergeGraph g;
+    node_p n = parse("(A (B (C)) (B (C)))");
+    node_p m = parse("(B (C))");
+    node_p backup_m = m;
 
     EXPECT_NO_THROW(g.add_root(n));
     EXPECT_NO_THROW(g.add_root(m));
@@ -120,10 +120,10 @@ TEST_F(TestMergeGraph, KnownRoot)
 
 TEST_F(TestMergeGraph, Replace)
 {
-    DAG::MergeGraph g;
-    DAG::node_p n = parse("(A (B (C)))");
-    DAG::node_p m = parse("(B (C))");
-    DAG::node_p m2 = parse("(A)");
+    MergeGraph g;
+    node_p n = parse("(A (B (C)))");
+    node_p m = parse("(B (C))");
+    node_p m2 = parse("(A)");
     size_t n_i = 0;
     size_t m_i = 0;
 
@@ -139,10 +139,10 @@ TEST_F(TestMergeGraph, Replace)
 
 TEST_F(TestMergeGraph, ReplaceLoop)
 {
-    DAG::MergeGraph g;
-    DAG::node_p n = parse("(A (B (C)))");
-    DAG::node_p m = parse("(B (C))");
-    DAG::node_p m2 = parse("(A (B (C)))");
+    MergeGraph g;
+    node_p n = parse("(A (B (C)))");
+    node_p m = parse("(B (C))");
+    node_p m2 = parse("(A (B (C)))");
     size_t n_i = 0;
     size_t m_i = 0;
 
@@ -159,10 +159,10 @@ TEST_F(TestMergeGraph, ReplaceLoop)
 
 TEST_F(TestMergeGraph, Add)
 {
-    DAG::MergeGraph g;
-    DAG::node_p n = parse("(A (B (C)))");
-    DAG::node_p m = parse("(B (C))");
-    DAG::node_p o = parse("(A)");
+    MergeGraph g;
+    node_p n = parse("(A (B (C)))");
+    node_p m = parse("(B (C))");
+    node_p o = parse("(A)");
     size_t n_i = 0;
     size_t m_i = 0;
 
@@ -178,10 +178,10 @@ TEST_F(TestMergeGraph, Add)
 
 TEST_F(TestMergeGraph, AddLoop)
 {
-    DAG::MergeGraph g;
-    DAG::node_p n = parse("(A (B (C)))");
-    DAG::node_p m = parse("(B (C))");
-    DAG::node_p o = parse("(B (C))");
+    MergeGraph g;
+    node_p n = parse("(A (B (C)))");
+    node_p m = parse("(B (C))");
+    node_p o = parse("(B (C))");
     size_t n_i = 0;
     size_t m_i = 0;
 
@@ -197,16 +197,16 @@ TEST_F(TestMergeGraph, AddLoop)
 
 TEST_F(TestMergeGraph, Remove)
 {
-    DAG::MergeGraph g;
-    DAG::node_p n = parse("(A (B (C)))");
-    DAG::node_p m = parse("(B (C))");
+    MergeGraph g;
+    node_p n = parse("(A (B (C)))");
+    node_p m = parse("(B (C))");
     size_t n_i = 0;
     size_t m_i = 0;
 
     EXPECT_NO_THROW(n_i = g.add_root(n));
     EXPECT_NO_THROW(m_i = g.add_root(m));
 
-    DAG::node_p to_remove = parse("(C)");
+    node_p to_remove = parse("(C)");
     EXPECT_NO_THROW(g.remove(m, to_remove));
     EXPECT_EQ("(A (B))", g.root(n_i)->to_s());
     EXPECT_EQ("(B)",    g.root(m_i)->to_s());

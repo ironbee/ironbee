@@ -75,7 +75,7 @@ bool name_char(char c)
 
 }
 
-DAG::node_p parse_literal(
+node_p parse_literal(
     const std::string& text,
     size_t&            i
 )
@@ -86,7 +86,7 @@ DAG::node_p parse_literal(
 
     if (text.substr(i, 4) == "null") {
         i += 3;
-        return DAG::node_p(new DAG::Null());
+        return node_p(new Null());
     }
     if (text[i] != '\'') {
         error(i, "Expected '");
@@ -102,24 +102,24 @@ DAG::node_p parse_literal(
         }
         advance(i, length, "Unterminated literal");
     }
-    return DAG::node_p(new DAG::String(value));
+    return node_p(new String(value));
 }
 
 // The following could be more cleanly implemented recursively, but would
 // limit stack depth.
-DAG::node_p parse_call(
+node_p parse_call(
     const std::string& text,
     size_t&            i,
     const CallFactory& factory
 )
 {
-    DAG::node_p current;
-    DAG::node_p top;
+    node_p current;
+    node_p top;
     size_t length = text.length();
     bool done = false;
 
     if (length == 0) {
-        return DAG::node_p();
+        return node_p();
     }
 
     while (i < length && ! done) {
@@ -137,7 +137,7 @@ DAG::node_p parse_call(
             if (op.empty()) {
                 error(i, "Missing operation");
             }
-            DAG::node_p n = factory(op);
+            node_p n = factory(op);
             if (! top) {
                 // Very importat to keep all our nodes in memory.
                 top = n;

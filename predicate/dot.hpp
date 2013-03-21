@@ -31,7 +31,6 @@
 
 namespace IronBee {
 namespace Predicate {
-namespace DAG {
 
 /**
  * Default node decorator for to_dot().
@@ -119,7 +118,6 @@ void to_dot(
     out << "}" << std::endl;
 }
 
-} // DAG
 } // Predicate
 } // IronBee
 

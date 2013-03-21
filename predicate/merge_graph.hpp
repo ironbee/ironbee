@@ -35,7 +35,6 @@
 
 namespace IronBee {
 namespace Predicate {
-namespace DAG {
 
 /**
  * A graph of multiple expression trees with common subexpressions merged.
@@ -281,7 +280,6 @@ private:
     root_indices_t m_root_indices;
 };
 
-} // DAG
 } // Predicate
 } // IronBee
 

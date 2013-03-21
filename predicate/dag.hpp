@@ -40,7 +40,6 @@
 
 namespace IronBee {
 namespace Predicate {
-namespace DAG {
 
 typedef IronBee::ConstField Value;
 typedef IronBee::ConstTransaction Context;
@@ -62,8 +61,8 @@ namespace Impl {
 class Final
 {
     // Classes to be final.
-    friend class DAG::Null;
-    friend class DAG::String;
+    friend class Null;
+    friend class String;
 private:
     //! Private constructor.
     Final() {}
@@ -418,7 +417,6 @@ protected:
     virtual Value calculate(Context context);
 };
 
-} // DAG
 } // Predicate
 } // IronBee
 

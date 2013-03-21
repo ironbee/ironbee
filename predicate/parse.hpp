@@ -44,10 +44,10 @@ namespace Predicate {
  * @param [in, out] i    Index of first character to parse; will be updated
  *                       to index of last character parsed.  Will be
  *                       length - 1 on complete parse.
- * @return DAG::node_p corresponding to parsed @a call.
+ * @return node_p corresponding to parsed @a call.
  * @throw IronBee::einval on parse error.
  **/
-DAG::node_p parse_literal(
+node_p parse_literal(
     const std::string& text,
     size_t&            i
 );
@@ -68,11 +68,11 @@ DAG::node_p parse_literal(
  *                       to index of last character parsed.  Will be
  *                       length - 1 on complete parse.
  * @param [in]           factory CallFactory to use to generate call nodes.
- * @return DAG::node_p corresponding to parsed @a call.
+ * @return node_p corresponding to parsed @a call.
  * @throw IronBee::enoent if contains a name not in @a factory.
  * @throw IronBee::einval on parse error.
  **/
-DAG::node_p parse_call(
+node_p parse_call(
     const std::string& text,
     size_t&            i,
     const CallFactory& factory

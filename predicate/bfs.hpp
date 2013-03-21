@@ -37,7 +37,6 @@
 
 namespace IronBee {
 namespace Predicate {
-namespace DAG {
 
 /**
  * Breadth first search of all ancestors of @a which.
@@ -200,9 +199,9 @@ class bfs_deconst
 {
 private:
     template <typename O>
-    friend void DAG::bfs_up(const node_p&, O, std::set<node_cp>&);
+    friend void Predicate::bfs_up(const node_p&, O, std::set<node_cp>&);
     template <typename O>
-    friend void DAG::bfs_down(const node_p&, O, std::set<node_cp>&);
+    friend void Predicate::bfs_down(const node_p&, O, std::set<node_cp>&);
 
     /**
      * Constructor.
@@ -372,7 +371,6 @@ void bfs_down(
     Impl::bfs<Impl::bfs_down_tag>(which, out, visited);
 }
 
-} // DAG
 } // Predicate
 } // IronBee
 

@@ -28,7 +28,7 @@
 
 using namespace IronBee::Predicate;
 
-class CallBase : public DAG::Call
+class CallBase : public Call
 {
 public:
     virtual size_t hash() const
@@ -37,9 +37,9 @@ public:
     }
 
 protected:
-    virtual DAG::Value calculate(DAG::Context)
+    virtual Value calculate(Context)
     {
-        return DAG::Value();
+        return Value();
     }
 };
 
@@ -88,9 +88,9 @@ public:
         // nop
     }
 
-    DAG::call_p operator()(const std::string& name) const
+    call_p operator()(const std::string& name) const
     {
-        return DAG::call_p(new CallDynamic(m_name));
+        return call_p(new CallDynamic(m_name));
     }
 
 private:
@@ -103,10 +103,10 @@ TEST(TestCallFactory, Basic)
     f.add<CallA>();
     f.add<CallB>();
 
-    DAG::node_p a = f("CallA");
+    node_p a = f("CallA");
     EXPECT_TRUE(a);
     EXPECT_EQ("(CallA)", a->to_s());
-    DAG::node_p b = f("CallB");
+    node_p b = f("CallB");
     EXPECT_TRUE(b);
     EXPECT_EQ("(CallB)", b->to_s());
 
@@ -119,9 +119,9 @@ TEST(TestCallFactory, Generator)
     f.add("foo", CallDynamicGenerator("foo"));
     f.add("bar", CallDynamicGenerator("bar"));
 
-    DAG::node_p foo = f("foo");
+    node_p foo = f("foo");
     EXPECT_EQ("(foo)", foo->to_s());
-    DAG::node_p bar = f("bar");
+    node_p bar = f("bar");
     EXPECT_EQ("(bar)", bar->to_s());
 
     EXPECT_THROW(f("a"), IronBee::enoent);

@@ -47,13 +47,13 @@ protected:
 };
 
 //! Vector of nodes.
-typedef vector<DAG::node_p> node_vec_t;
+typedef vector<node_p> node_vec_t;
 //! Vector of const nodes.
-typedef vector<DAG::node_cp> node_cvec_t;
+typedef vector<node_cp> node_cvec_t;
 
 TEST_F(TestBFS, DownEasy)
 {
-    DAG::node_p n = parse("(A)");
+    node_p n = parse("(A)");
 
     {
         node_vec_t r;
@@ -64,7 +64,7 @@ TEST_F(TestBFS, DownEasy)
 
     {
         node_cvec_t r;
-        ASSERT_NO_THROW(bfs_down(DAG::node_cp(n), back_inserter(r)));
+        ASSERT_NO_THROW(bfs_down(node_cp(n), back_inserter(r)));
         ASSERT_EQ(1UL, r.size());
         EXPECT_EQ("(A)", r[0]->to_s());
     }
@@ -72,7 +72,7 @@ TEST_F(TestBFS, DownEasy)
 
 TEST_F(TestBFS, Down)
 {
-    DAG::node_p n = parse("(A (B (C) (C)) (C (B) (B)))");
+    node_p n = parse("(A (B (C) (C)) (C (B) (B)))");
     node_vec_t r;
     ASSERT_NO_THROW(bfs_down(n, back_inserter(r)));
     ASSERT_EQ(7UL, r.size());
@@ -87,8 +87,8 @@ TEST_F(TestBFS, Down)
 
 TEST_F(TestBFS, DownVisited)
 {
-    DAG::node_p n = parse("(A (B (C) (C)) (C (B) (B)))");
-    set<DAG::node_cp> visited;
+    node_p n = parse("(A (B (C) (C)) (C (B) (B)))");
+    set<node_cp> visited;
     visited.insert(n->children().front());
     node_vec_t r;
     ASSERT_NO_THROW(bfs_down(n, back_inserter(r), visited));
@@ -102,8 +102,8 @@ TEST_F(TestBFS, DownVisited)
 
 TEST_F(TestBFS, DownWithDups)
 {
-    DAG::node_p n = parse("(A (B (C)) (C (B)))");
-    DAG::node_p a_b = n->children().front();
+    node_p n = parse("(A (B (C)) (C (B)))");
+    node_p a_b = n->children().front();
     a_b->add_child(a_b->children().front());
     n->add_child(a_b);
 
@@ -124,12 +124,12 @@ TEST_F(TestBFS, DownWithDups)
 TEST_F(TestBFS, DownError)
 {
     node_cvec_t r;
-    EXPECT_THROW(bfs_down(DAG::node_cp(), back_inserter(r)), IronBee::einval);
+    EXPECT_THROW(bfs_down(node_cp(), back_inserter(r)), IronBee::einval);
 }
 
 TEST_F(TestBFS, UpEasy)
 {
-    DAG::node_p n = parse("(A)");
+    node_p n = parse("(A)");
 
     {
         node_vec_t r;
@@ -140,7 +140,7 @@ TEST_F(TestBFS, UpEasy)
 
     {
         node_cvec_t r;
-        ASSERT_NO_THROW(bfs_up(DAG::node_cp(n), back_inserter(r)));
+        ASSERT_NO_THROW(bfs_up(node_cp(n), back_inserter(r)));
         ASSERT_EQ(1UL, r.size());
         EXPECT_EQ("(A)", r[0]->to_s());
     }
@@ -148,9 +148,9 @@ TEST_F(TestBFS, UpEasy)
 
 TEST_F(TestBFS, Up)
 {
-    DAG::node_p a = parse("(A (B (C)))");
-    DAG::node_p a_b_c = a->children().front()->children().front();
-    DAG::node_p n = parse("(C)");
+    node_p a = parse("(A (B (C)))");
+    node_p a_b_c = a->children().front()->children().front();
+    node_p n = parse("(C)");
     n->add_child(a_b_c);
 
     EXPECT_EQ("(C (C))", n->to_s());
@@ -165,12 +165,12 @@ TEST_F(TestBFS, Up)
 
 TEST_F(TestBFS, UpVisited)
 {
-    DAG::node_p a = parse("(A (B (C)))");
-    DAG::node_p a_b_c = a->children().front()->children().front();
-    DAG::node_p n = parse("(C)");
+    node_p a = parse("(A (B (C)))");
+    node_p a_b_c = a->children().front()->children().front();
+    node_p n = parse("(C)");
     n->add_child(a_b_c);
 
-    set<DAG::node_cp> visited;
+    set<node_cp> visited;
     visited.insert(a);
 
     EXPECT_EQ("(C (C))", n->to_s());
@@ -185,8 +185,8 @@ TEST_F(TestBFS, UpVisited)
 
 TEST_F(TestBFS, UpWithDups)
 {
-    DAG::node_p a = parse("(A (B (C)))");
-    DAG::node_p a_b_c = a->children().front()->children().front();
+    node_p a = parse("(A (B (C)))");
+    node_p a_b_c = a->children().front()->children().front();
     a->add_child(a->children().front());
     EXPECT_EQ("(A (B (C)) (B (C)))", a->to_s());
     // (A (B (C)) (B (C)))

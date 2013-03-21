@@ -37,7 +37,6 @@ using namespace std;
 
 namespace IronBee {
 namespace Predicate {
-namespace DAG {
 
 size_t MergeGraph::add_root(node_p& root)
 {
@@ -499,6 +498,5 @@ bool MergeGraph::write_validation_report(std::ostream& out)
     return has_no_error;
 }
 
-} // DAG
 } // Predicate
 } // IronBee

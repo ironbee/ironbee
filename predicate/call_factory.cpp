@@ -35,7 +35,7 @@ CallFactory& CallFactory::add(const std::string& name, generator_t generator)
     return *this;
 }
 
-DAG::call_p CallFactory::operator()(const std::string& name) const
+call_p CallFactory::operator()(const std::string& name) const
 {
     classes_t::const_iterator i = m_classes.find(name);
     if (i == m_classes.end()) {
@@ -45,7 +45,7 @@ DAG::call_p CallFactory::operator()(const std::string& name) const
             )
         );
     }
-    DAG::call_p call = i->second(name);
+    call_p call = i->second(name);
     if (call->name() != name) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
