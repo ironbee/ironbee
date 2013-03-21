@@ -171,7 +171,7 @@ local build_rule = function(ib, ctx, chain, db)
             local name, arg = action.name, action.argument
     
             if name == "logdata" then
-                local expand = ffi.new("int[1]")
+                local expand = ffi.new("bool[1]")
 
                 prule[0].meta.data = 
                     ffi.C.ib_mpool_memdup(
@@ -326,7 +326,7 @@ local build_rule = function(ib, ctx, chain, db)
             prule[0],
             op_inst_create_stream_flags,
             op,
-            rule.data.op_arg,
+            tostring(rule.data.op_arg),
             op_inst_create_inv_flag,
             opinst)
         if rc ~= ffi.C.IB_OK then
