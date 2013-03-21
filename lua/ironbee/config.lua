@@ -12,6 +12,10 @@ _M._VERSION = "1.0"
 
 local Waggle = require('ironbee/waggle')
 
+-- Pair of #defines from C code imported here.
+local IB_RULEMD_FLAG_EXPAND_MSG = 1
+local IB_RULEMD_FLAG_EXPAND_DATA = 2
+
 -- Setup the configuration DLS, run the function provided, tear down the DSL.
 --
 -- param[in] f Function to run after the DSL is installed in _G.
@@ -182,7 +186,7 @@ local build_rule = function(ib, ctx, chain, db)
                 if expand[0] ~= 0 then
                     prule[0].meta.flags = ffi.C.ib_set_flag(
                         prule[0].meta.flags,
-                        ffi.C.IB_RULEMD_FLAG_EXPAND_DATA)
+                        IB_RULEMD_FLAG_EXPAND_DATA)
                 end
             elseif name == "severity" then
                 local severity = tonumber(arg)
@@ -270,7 +274,7 @@ local build_rule = function(ib, ctx, chain, db)
             if expand[0] then
                 prule[0].meta.flags = ffi.C.ib_set_flag(
                     prule[0].meta.flags,
-                    ffi.C.IB_RULEMD_FLAG_EXPAND_MSG)
+                    IB_RULEMD_FLAG_EXPAND_MSG)
             end
         end
 
