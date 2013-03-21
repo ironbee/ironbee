@@ -220,7 +220,7 @@ local build_rule = function(ib, ctx, chain, db)
                 end
 
                 -- Create the action instance.
-                local action_inst = ffi.new("ib_action_inst*[1]")
+                local action_inst = ffi.new("ib_action_inst_t*[1]")
                 rc = ffi.C.ib_action_inst_create(
                     ib.ib_engine,
                     ctx,
