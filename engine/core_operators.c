@@ -613,8 +613,6 @@ ib_status_t op_match_create(
                 n = end;
             }
 
-            /* XXX */
-            printf("MATCH SET: %*s\n", (int)(n - p), p);
             rc = ib_hash_set_ex(set, p, n - p, (void *)1);
             if (rc != IB_OK) {
                 assert(rc == IB_EALLOC); /* Guaranteed by hash. */

@@ -437,7 +437,6 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
         }
     }
 
-    ib_log_debug(ib, "FLAGS CREATED");
     return IB_OK;
 }
 
