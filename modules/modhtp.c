@@ -1749,7 +1749,6 @@ static ib_status_t modhtp_iface_request_header_data(
     assert(itx != NULL);
     assert(header != NULL);
 
-    htp_status_t  hrc;
     ib_status_t   irc;
     htp_tx_t     *htx;
 
@@ -1774,12 +1773,6 @@ static ib_status_t modhtp_iface_request_header_data(
         return irc;
     }
 
-    /* Update the state */
-    hrc = htp_tx_state_request_headers(htx);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
-    }
-
     return IB_OK;
 }
 
@@ -1792,10 +1785,17 @@ static ib_status_t modhtp_iface_request_header_finished(
 
     ib_status_t irc;
     htp_tx_t *htx;
+    htp_status_t  hrc;
 
     /* Get the libhtp transaction */
     htx = modhtp_get_htx(itx);
     if (htx == NULL) {
+        return IB_EUNKNOWN;
+    }
+
+    /* Update the state */
+    hrc = htp_tx_state_request_headers(htx);
+    if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
     }
 
@@ -1939,7 +1939,6 @@ static ib_status_t modhtp_iface_response_header_data(
     assert(itx != NULL);
     assert(header != NULL);
 
-    htp_status_t hrc;
     ib_status_t  irc;
     htp_tx_t    *htx;
 
@@ -1964,12 +1963,6 @@ static ib_status_t modhtp_iface_response_header_data(
         return irc;
     }
 
-    /* Update the state */
-    hrc = htp_tx_state_response_headers(htx);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
-    }
-
     return IB_OK;
 }
 
@@ -1980,12 +1973,19 @@ static ib_status_t modhtp_iface_response_header_finished(
     assert(pi != NULL);
     assert(itx != NULL);
 
+    htp_status_t hrc;
     ib_status_t irc;
     htp_tx_t *htx;
 
     /* Get the libhtp transaction */
     htx = modhtp_get_htx(itx);
     if (htx == NULL) {
+        return IB_EUNKNOWN;
+    }
+
+    /* Update the state */
+    hrc = htp_tx_state_response_headers(htx);
+    if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
     }
 
