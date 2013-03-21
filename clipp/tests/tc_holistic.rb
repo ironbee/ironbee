@@ -234,7 +234,7 @@ class TestHolistic < Test::Unit::TestCase
     assert_no_issues
   end
 
-  def test_single_multithreaded
+  def test_multi_threaded
     clipp(
       :input => INPUT,
       :consumer => 'ironbee_threaded:IRONBEE_CONFIG:4'
