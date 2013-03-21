@@ -28,5 +28,5 @@
     <xi:include href="ap-configuration-examples.xml"/>
     <xi:include href="ap-todo.xml"/>
     <xi:include href="ch-extending-ironbee.xml"/>
-    <xi:include href="ap-differences-from-modsecurity.xml"/>
+    <xi:include href="ap-comparison-with-modsecurity.xml"/>
 </book>

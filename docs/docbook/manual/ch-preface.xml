@@ -13,8 +13,8 @@
         ModSecurity is now run by the TrustWave SpiderLabs team and in no way associated with
         IronBee. Because of the authors' previous work on ModSecurity, there are some similarities
         in IronBee concepts, however IronBee was built with an entirely different set of goals. More
-        on the difference between ModSecurity and IronBee can be found in <xref
-            linkend="differences-from-modsecurity"/>.</para>
+        on the similarities and difference between ModSecurity and IronBee can be found in <xref
+            linkend="comparison-with-modsecurity"/>.</para>
     <para>IronBee started in July 2010 through the generous support of Qualys, Inc (<link
             xlink:href="https://www.qualys.com/">www.qualys.com</link>). The idea was to build a
         highly portable web application security framework for the community with a license that was

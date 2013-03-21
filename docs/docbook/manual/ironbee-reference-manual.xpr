@@ -459,7 +459,7 @@
     </meta>
     <projectTree name="ironbee-reference-manual.xpr">
         <file name="ap-configuration-examples.xml"/>
-        <file name="ap-differences-from-modsecurity.xml"/>
+        <file name="ap-comparison-with-modsecurity.xml"/>
         <file name="ap-todo.xml"/>
         <file name="ch-extending-ironbee.xml"/>
         <file name="ch-installation-guide.xml"/>
