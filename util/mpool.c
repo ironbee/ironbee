@@ -1420,26 +1420,29 @@ ib_status_t ib_mpool_create_ex(
         }
     }
 
-    if (
-        parent != NULL &&
-        parent->free_children != NULL &&
-        parent->free_children->pagesize  == pagesize &&
-        parent->free_children->malloc_fn == malloc_fn &&
-        parent->free_children->free_fn   == free_fn
-    ) {
+    bool reacquired = false;
+    if (parent != NULL) {
         rc = ib_lock_lock(&(parent->lock));
         if (rc != IB_OK) {
             goto failure;
         }
-        mp = parent->free_children;
-        parent->free_children = mp->next;
-        ib_lock_unlock(&(parent->lock));
+        if (
+            parent->free_children != NULL &&
+            parent->free_children->pagesize  == pagesize &&
+            parent->free_children->malloc_fn == malloc_fn &&
+            parent->free_children->free_fn   == free_fn
+        ) {
+            mp = parent->free_children;
+            parent->free_children = mp->next;
 
-        mp->next = NULL;
-        assert(mp->inuse                  == 0);
-        assert(mp->large_allocation_inuse == 0);
+            mp->next = NULL;
+            reacquired = true;
+            assert(mp->inuse                  == 0);
+            assert(mp->large_allocation_inuse == 0);
+        }
+        ib_lock_unlock(&(parent->lock));
     }
-    else {
+    if (! reacquired) {
         mp = (ib_mpool_t *)malloc_fn(sizeof(**pmp));
         if (mp == NULL) {
             return IB_EALLOC;
