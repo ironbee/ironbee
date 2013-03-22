@@ -1089,7 +1089,7 @@ static ib_status_t moddevel_txdump_parse_enable(
 
     char mod = '\0';
     ib_flags_t flag = 0;
-    
+
     if ( (*param == '+') || (*param == '-') ) {
         mod = *param;
         ++param;
@@ -1446,7 +1446,7 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     char                 *pcopy;
     char                 *param;
     static const char    *label = "TxDump action";
-    
+
     if (parameters == NULL) {
         return IB_EINVAL;
     }

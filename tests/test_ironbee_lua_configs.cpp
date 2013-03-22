@@ -106,4 +106,3 @@ const char * IronBeeLuaConfigs::c_ib_conf =
 
 TEST_F(IronBeeLuaConfigs, include){
 }
-

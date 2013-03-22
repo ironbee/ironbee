@@ -97,7 +97,7 @@ ib_status_t ib_rule_capture_set_item(
  * Add a single capture field item.
  *
  * This will add a, possibly additional, item.
- * 
+ *
  * @param[in] rule_exec Rule execution object
  * @param[in] in_field Field to add.
  *

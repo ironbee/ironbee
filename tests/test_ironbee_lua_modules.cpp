@@ -112,4 +112,3 @@ const char * IronBeeLuaModules::c_ib_conf =
 
 TEST_F(IronBeeLuaModules, load){
 }
-
