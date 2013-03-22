@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project version="14.1">
+<project version="14.2">
     <meta>
         <filters directoryPatterns="" filePatterns="" positiveFilePatterns="" showHiddenFiles="false"/>
         <options>
-            <serialized version="14.1" xml:space="preserve">
+            <serialized version="14.2" xml:space="preserve">
                 <map>
                     <entry>
                         <String>scenario.associations</String>
@@ -461,6 +461,7 @@
         <file name="ap-configuration-examples.xml"/>
         <file name="ap-comparison-with-modsecurity.xml"/>
         <file name="ap-todo.xml"/>
+        <file name="ch-diagnostics-devel-tools.xml"/>
         <file name="ch-extending-ironbee.xml"/>
         <file name="ch-installation-guide.xml"/>
         <file name="ch-introduction.xml"/>

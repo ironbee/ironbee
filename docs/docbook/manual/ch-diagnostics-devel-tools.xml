@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml" xml:id="diagnostics-devel-tools">
+    <title>IronBee Diagnostics and Developer Tools</title>
+        <para>IronBee comes with a number of tools for diagnostics and development of both modules
+        and rules.</para>
+    <section>
+        <title>Rule Engine Logging and Diagnostics</title>
+        <para>IronBee has a separate logging facility for rule engine which is meant to make rule
+            diagnostics easier. Rule engine logging is controlled through two directives. There is
+            also a variable that can be set to enable internal tracing of the rule execution engine,
+            which is generally only useful for developers.</para>
+        <para>Typically rule execution logging is enabled as
+            follows:<programlisting>### Rule Engine Logging
+# Control what data is logged
+RuleEngineLogData default
+# Control at which log level data is logged
+RuleEngineLogLevel info</programlisting>Full
+            logging, which will generate a lot of data, can be enabled by setting
+                <literal>RuleEngineLogData</literal> to <literal>all</literal>, however there is
+            quite a bit of control over what is logged. See the <literal>RuleEngineLogData</literal>
+            in the <xref linkend="ironbee-configuration"/> documentation for details. An example of
+            full rule engine logging is
+            below.<programlisting>### Rule Engine Logging
+RuleEngineLogData all
+RuleEngineLogLevel info
+
+### Match "dirty" or "attack" in the request
+Rule REQUEST_URI REQUET_HEADERS ARGS @rx "dirty|attack" \
+    id:test/1 phase:REQUEST \
+    severity:60 confidence:50 \
+    "msg:Matched %{CAPTURE:0}" \
+    capture \
+    event block
+
+### Perform an actual block action at the end of the phase
+### if marked to block
+Rule FLAGS:block.count() @gt 0 \
+    id:block/1 phase:REQUEST \
+    "msg:Blocking request" \
+    status:403 \
+    block:phase</programlisting>
+            The above will produce rule engine logging similar to below.
+            <programlisting>[] PHASE REQUEST_HEADER_STREAM 
+[] TX_START 1.2.3.4:52980 waf-test.example.com
+[] REQ_LINE GET /?a=1&amp;b=dirty&amp;c=attack&amp;d=4 HTTP/1.1
+[] REQ_HEADER Host: waf-test.example.com
+[] REQ_HEADER User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:18.0) Gecko/20100101 Firefox/18.0
+[] REQ_HEADER Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+[] REQ_HEADER Accept-Language: en-US,en;q=0.5
+[] REQ_HEADER Connection: keep-alive
+[] PHASE REQUEST_HEADER      
+[] PHASE REQUEST_BODY
+[rule:"site/.../test/1" rev:1] RULE_START PHASE
+[rule:"site/.../test/1" rev:1] TARGET "REQUEST_URI" BYTESTR "request_uri" "\/?a=1&amp;b=dirty&amp;c=attack&amp;d=4"[rule:"site/.../test/1" rev:1] OP rx("dirty|attack") TRUE
+[rule:"site/.../test/1" rev:1] ACTION event("") 
+[rule:"site/.../test/1" rev:1] ACTION block("") 
+[rule:"site/.../test/1" rev:1] EVENT site/.../test/1 Observation Block [50/60] [] "Matched dirty" 
+[rule:"site/.../test/1" rev:1] TARGET REQUET_HEADERS NOT_FOUND[rule:"site/.../test/1" rev:1] TARGET "ARGS" BYTESTR "ARGS:a" "1"
+[rule:"site/.../test/1" rev:1] OP rx("dirty|attack") FALSE
+[rule:"site/.../test/1" rev:1] TARGET "ARGS" BYTESTR "ARGS:b" "dirty"
+[rule:"site/.../test/1" rev:1] OP rx("dirty|attack") TRUE
+[rule:"site/.../test/1" rev:1] ACTION event("") 
+[rule:"site/.../test/1" rev:1] ACTION block("") 
+[rule:"site/.../test/1" rev:1] EVENT site/.../test/1 Observation Block [50/60] [] "Matched dirty" 
+[rule:"site/.../test/1" rev:1] TARGET "ARGS" BYTESTR "ARGS:c" "attack" 
+[rule:"site/.../test/1" rev:1] OP rx("dirty|attack") TRUE[rule:"site/.../test/1" rev:1] ACTION event("") 
+[rule:"site/.../test/1" rev:1] ACTION block("") 
+[rule:"site/.../test/1" rev:1] EVENT site/.../test/1 Observation Block [50/60] [] "Matched attack"
+[rule:"site/.../test/1" rev:1] TARGET "ARGS" BYTESTR "ARGS:d" "4"
+[rule:"site/.../test/1" rev:1] OP rx("dirty|attack") FALSE
+[rule:"site/.../test/1" rev:1] RULE_END[rule:"site/.../block/1" rev:1] RULE_START PHASE
+[rule:"site/.../block/1" rev:1] TFN count() LIST "FLAGS" 1 
+[rule:"site/.../block/1" rev:1] TARGET "FLAGS:block.count()" NUM "FLAGS:FLAGS" 1
+[rule:"site/.../block/1" rev:1] OP gt(0) TRUE
+[rule:"site/.../block/1" rev:1] ACTION status(403) 
+[rule:"site/.../block/1" rev:1] ACTION block("phase") 
+[rule:"site/.../block/1" rev:1] RULE_END
+[] PHASE RESPONSE_HEADER_STREAM
+[] RES_LINE HTTP/1.1 403 Forbidden
+[] RES_HEADER Date: Fri, 22 Mar 2013 15:36:27 GMT
+[] RES_HEADER Connection: close
+[] RES_HEADER Server: ATS/3.2.2
+[] PHASE RESPONSE_HEADER     
+[] PHASE RESPONSE_BODY_STREAM
+[] PHASE POST_PROCESS
+[] PHASE LOGGING
+[] AUDIT /var/log/ironbee/events/118d9ea6-933d-400e-b980-cdad773dceee_9e8d34a4-1431-4a90-a79a-de9fe88fb111.log
+[] TX_END</programlisting></para>
+        <para>For a production system, something like this may be suitable, which will only log
+            events that are generated and audit log files that are
+            written:<programlisting>### Log only events and audit log information
+RuleEngineLogData event audit
+RuleEngineLogLevel notice</programlisting>
+            If you need further tracing through rule execution, then you can set the rule engine
+            debug log level. This will potentially log a lot of data, but will allow for debugging
+            issues that may not be exposed by the normal rule engine logging facility. The following
+            will enable full trace mode in the rule
+            engine:<programlisting>Set RuleEngineDebugLogLevel trace</programlisting></para>
+    </section>
+    <section>
+        <title>Command Line Tool (clipp)</title>
+        <para>IronBee includes a full featured command line tool named <literal>clipp</literal>
+            (pronounced clippy) that can be used to run transactions through IronBee from various
+            data sources such as its own native protobuf format, raw HTTP files, pcap network
+            captures, audit logs and others. Clipp can also translate between the various formats.
+            The interface to clipp was inspired by the brilliant socat utility (<link
+                xlink:href="http://www.dest-unreach.org/socat/"
+                >http://www.dest-unreach.org/socat/</link>). Clipp is best explained through
+            examples, but in general, clipp take one or more inputs, optional modifiers and a single
+            consumer. The input data passes through modifiers into the consumer.</para>
+        <para>The following will take <literal>raw</literal> HTTP input files
+                (<literal>request.http</literal> and <literal>response.http</literal>), instantiate
+            an <literal>ironbee</literal> consumer with the specified configuration
+                (<literal>ironbee.conf</literal>) and then push the data through the IronBee engine
+            in the same way IronBee embedded in a webserver or proxy. Using clipp, you can test
+            IronBee configuration files prior to moving them to a webserver or proxy. With clipp, if
+            you specified a LogFile in the configuration, then the logs will go there, otherwise it
+            will go to
+            stderr.<programlisting>$ clipp raw:request.http,response.http ironbee:ironbee.conf</programlisting></para>
+        <para>Multiple transactions are also supported, including in multiple
+            formats:<programlisting>$ clipp \
+raw:request1.http,response1.http \
+raw:request2.http,response2.http \
+ironbee:ironbee.conf</programlisting></para>
+        <para>Modifiers are also supported, such as changing the IP/port
+            used:<programlisting>$ clipp \
+raw:request1.http,response1.http \
+@set_local_ip:1.2.3.4 \
+@set_local_port:8080 \
+raw:request2.http,response2.http \
+@set_local_ip:5.6.7.8 \
+@set_local_port:80 \
+ironbee:ironbee.conf</programlisting></para>
+        <para>With many parameters, the command line can get tedious, so clipp also supports a
+            configuration file
+            format:<programlisting>### clipp.conf
+
+# Transaction 1
+raw:request1.http,response1.http
+  @set_local_ip:1.2.3.4
+  @set_local_port:8080
+
+# Transaction 2
+raw:request2.http,response2.http
+  @set_local_ip:5.6.7.8
+  @set_local_port:80
+
+# IronBee Consumer
+ironbee:ironbee.conf</programlisting><programlisting>$ clipp -c clipp.conf</programlisting></para>
+        <para>Clipp's native protobuf format can encapsulate all input, including modifiers, into a
+            single compact format. This format is produced by using the writepb
+            consumer:<programlisting>$ clipp \
+raw:request1.http,response1.http \
+raw:request2.http,response2.http \
+writepb:input.pb</programlisting></para>
+        <para>Full documentation on clipp is in Markdown format in the source tree: <link
+                xlink:href="https://github.com/ironbee/ironbee/blob/master/clipp/clipp.md"
+                >https://github.com/ironbee/ironbee/blob/master/clipp/clipp.md</link></para>
+    </section>
+    <section>
+        <title>Developer Module</title>
+        <para/>
+    </section>
+</chapter>
