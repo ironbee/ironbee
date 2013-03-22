@@ -36,6 +36,7 @@ EXTRA_DIST = ironbee-ffi-h.lua \
              example.lua \
              threat_level.lua \
              event_processor.lua \
+             $(WAGGLE_FILES) \
              qa.lua
 
 lua_DATA   = ironbee-ffi-h.lua \
