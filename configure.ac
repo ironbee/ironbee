@@ -583,6 +583,7 @@ AC_CONFIG_FILES([servers/Makefile])
 AC_CONFIG_FILES([servers/apache_httpd2/Makefile])
 AC_CONFIG_FILES([servers/trafficserver/Makefile])
 AC_CONFIG_FILES([servers/nginx/Makefile])
+AC_CONFIG_FILES([servers/nginx/config.tengine])
 
 if test "$cpp_code" != 0; then
 AC_CONFIG_FILES([clipp/Makefile])

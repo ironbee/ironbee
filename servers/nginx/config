@@ -1,0 +1,6 @@
+if [ ! -r "${NGINXIB_CONFIG_FILE}" ]; then
+    echo "ERROR: Could not find config file: NGINXIB_CONFIG_FILE=${NGINXIB_CONFIG_FILE}"
+    exit 1
+fi
+
+. ${NGINXIB_CONFIG_FILE}

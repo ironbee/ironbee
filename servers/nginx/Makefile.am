@@ -14,6 +14,7 @@ NGINX_TARBALL = $(NGINX_NAME).tar.gz
 NGINX_URL = http://nginx.org/download/$(NGINX_TARBALL)
 
 NGXIB_SRCDIR = $(abs_top_srcdir)/servers/nginx
+NGXIB_BUILDDIR = $(abs_top_builddir)/servers/nginx
 NGXIB_FILES =	$(NGXIB_SRCDIR)/ngx_ironbee.h		\
 		$(NGXIB_SRCDIR)/ngx_ironbee.c		\
 		$(NGXIB_SRCDIR)/ngx_ironbee_conn.c	\
@@ -43,9 +44,8 @@ $(NGINX_DIR): $(NGINX_TARBALL)
 	&& patch -p0 < $(NGXIB_SRCDIR)/nginx.patch
 
 $(NGINX_DIR)/Makefile: $(NGINX_DIR) Makefile config.nginx
-	cp config.nginx config \
-	&& cd $(NGINX_DIR) \
-	&& ./configure --with-debug \
+	cd $(NGINX_DIR) \
+	&& NGINXIB_CONFIG_FILE=$(NGXIB_SRCDIR)/config.nginx ./configure --with-debug \
 	   --prefix=$(NGXIB_PREFIX) \
 	   --with-cc-opt="$(NGXIB_COPTS)" \
 	   --with-ld-opt="$(NGXIB_LDOPTS)" \
@@ -62,6 +62,8 @@ nginx-install: nginx
 	cd $(NGINX_DIR) && make install
 
 tengine-install:	config.tengine.in Makefile
-	sed 's#IB_COPTS#$(prefix)/include#' < config.tengine.in \
-	| sed 's#IB_LDOPTS#-L$(prefix)/lib -lhtp -libutil -lironbee#' > config \
-	&& $(NGX_DSO_TOOL) --add-module=$(NGXIB_SRCDIR) --dst=$(prefix)/lib
+	if [ -z "$(NGX_DSO_TOOL)" ]; then \
+		echo "ERROR: NGX_DSO_TOOL not found"; \
+		exit 1; \
+	fi; \
+	NGINXIB_CONFIG_FILE=$(NGXIB_BUILDDIR)/config.tengine $(NGX_DSO_TOOL) --add-module=$(NGXIB_SRCDIR) --dst=$(prefix)/lib
