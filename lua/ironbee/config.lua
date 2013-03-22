@@ -16,6 +16,13 @@ local Waggle = require('ironbee/waggle')
 local IB_RULEMD_FLAG_EXPAND_MSG = 1
 local IB_RULEMD_FLAG_EXPAND_DATA = 2
 
+-- Pair of #defines from C code imported here.
+local IB_OP_FLAG_PHASE = 2
+local IB_OP_FLAG_STREAM = 4
+
+local IB_OPINST_FLAG_INVERT = 1
+local IB_OPINST_FLAG_EXPAND = 2
+
 -- Setup the configuration DLS, run the function provided, tear down the DSL.
 --
 -- param[in] f Function to run after the DSL is installed in _G.
@@ -315,15 +322,15 @@ local build_rule = function(ib, ctx, chain, db)
 
         -- Set the flag values.
         if rule.is_streaming() then
-            op_inst_create_stream_flags = 4
+            op_inst_create_stream_flags = IB_OP_FLAG_STREAM
         else
-            op_inst_create_stream_flags = 2
+            op_inst_create_stream_flags = IB_OP_FLAG_PHASE
         end
 
         -- Handle inverted operator.
         if string.sub(rule.data.op, 1, 1) == '!' then
             op = string.sub(rule.data.op, 2)
-            op_inst_create_inv_flag = 1
+            op_inst_create_inv_flag = IB_OPINST_FLAG_INVERT
         else
             op = rule.data.op
             op_inst_create_inv_flag = 0
