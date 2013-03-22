@@ -23,6 +23,8 @@
  */
 
 #include "dag.hpp"
+#include "reporter.hpp"
+#include "merge_graph.hpp"
 
 #include <ironbeepp/engine.hpp>
 
@@ -161,6 +163,24 @@ void Node::replace_child(const node_p& child, const node_p& with)
     with->m_parents.push_back(shared_from_this());
 
     *i = with;
+}
+
+void Node::pre_transform(NodeReporter& reporter) const
+{
+    // nop
+}
+
+bool Node::transform(
+    NodeReporter& reporter,
+    MergeGraph&   merge_graph
+)
+{
+    return false;
+}
+
+void Node::post_transform(NodeReporter& reporter) const
+{
+    // nop
 }
 
 ostream& operator<<(ostream& out, const Node& node)

@@ -50,6 +50,11 @@ class Literal;
 class Null;
 class String;
 
+// Defined in reporter.hpp
+class NodeReporter;
+// Defined in merge_graph.hpp
+class MergeGraph;
+
 /// @cond Impl
 namespace Impl {
 
@@ -232,6 +237,55 @@ public:
 
     //! Reset to valueless.
     void reset();
+
+    /**
+     * Perform pre-transformation validations.
+     *
+     * This method may be overridden by a child.  Default behavior is to do
+     * nothing.
+     *
+     * @note Exceptions will not be immediately caught so should only be used
+     *       if it is appropriate to abort the entire predicate system, e.g.,
+     *       on an insanity error.
+     *
+     * @param[in] reporter Reporter to use for errors or warnings.
+     **/
+    virtual void pre_transform(NodeReporter& reporter) const;
+
+    /**
+     * Perform transformations.
+     *
+     * This method may be overridden by a child.  Default behavior is to
+     * do nothing and return false.
+     *
+     * This method is called for every Node during the transformation phase.
+     * If any such call returns true, the whole process is repeated.
+     *
+     * Transformations should not be done directly, but rather through
+     * @a merge_graph(), i.e., do not use add_child(), remove_child(), or
+     * replace_child(); instead use MergeGraph::add(), MergeGraph::remove(),
+     * or MergeGraph::replace().  Note that your method can fetch a
+     * @ref node_p for itself via shared_from_this().
+     *
+     * Note: Reporting errors will allow the current transformation loop to
+     * continue for other nodes, but will then end the transformation phase.
+     *
+     * @param[in] reporter    Reporter to use for errors or warnings.
+     * @param[in] merge_graph MergeGraph used to change the DAG.
+     * @return true iff any changes were made.
+     **/
+    virtual bool transform(
+        NodeReporter& reporter,
+        MergeGraph&   merge_graph
+    );
+
+    /**
+     * Perform post-transformation validations.
+     *
+     * See pre_transform() for additional discussion.
+     * @param[in] reporter Reporter to use for errors or warnings.
+     **/
+    virtual void post_transform(NodeReporter& reporter) const;
 
 protected:
     /**
