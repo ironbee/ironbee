@@ -256,8 +256,13 @@ local build_rule = function(ib, ctx, chain, db)
 
         -- Set tags
         for _, tag in ipairs(rule.data.tags) do
+            local tagcpy = 
+                ffi.C.ib_mpool_memdup(
+                    ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+                    tag,
+                    #tag + 1)
             ib:logDebug("Setting tag %s on rule.", tag)
-            rc = ffi.C.ib_list_push(prule[0].meta.tags, tag)
+            rc = ffi.C.ib_list_push(prule[0].meta.tags, tagcpy)
             if rc == ffi.C.IB_OK then
                 ib:logError("Setting tag %s failed: %d", tag, rc)
             end
