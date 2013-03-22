@@ -57,6 +57,10 @@ end
 _M.include = function(cp, file)
     local ib = ibapi.engineapi:new(ffi.cast("ib_cfgparser_t*", cp).ib)
 
+    -- Not an absolute path, it is a candidate for searching.
+    if string.sub(file, 1, 1) ~= '/' then
+    end
+
     DoInDSL(function()
         ib:logInfo("Loading file %s", file)
         dofile(file)

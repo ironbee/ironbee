@@ -27,6 +27,7 @@ local ffi = require("ffi")
 local ibapi = require("ironbee-api")
 local debug = require("debug")
 local string = require("string")
+local ibutil = require('ironbee/util')
 
 -- The module to define.
 local M = {}
@@ -635,7 +636,7 @@ M.modlua_config_cb_list = function(ib, modidx, ctxlst, name, list)
     -- Parameter list passed to callback.
     local plist = {}
 
-    ibapi.each_list_node(
+    ibutil.each_list_node(
         ffi.cast("ib_list_t*", list),
         function(s)
             table.insert(plist, v)
