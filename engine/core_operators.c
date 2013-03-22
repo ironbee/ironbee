@@ -34,8 +34,8 @@
 #include <ironbee/ipset.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
-#include <ironbee/rule_engine.h>
 #include <ironbee/rule_capture.h>
+#include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 

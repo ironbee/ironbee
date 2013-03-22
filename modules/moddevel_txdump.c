@@ -32,9 +32,9 @@
 #include <ironbee/list.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
-#include <ironbee/state_notify.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/site.h>
+#include <ironbee/state_notify.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
