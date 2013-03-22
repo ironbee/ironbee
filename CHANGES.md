@@ -6,7 +6,7 @@ IronBee v0.7.0
 
 **Deprecations**
 
-* The ac module is deprecated.  It will emit a warning if loaded.
+* The `ac` module is deprecated.  It will emit a warning if loaded.
 
 **Documentation**
 
@@ -18,32 +18,33 @@ IronBee v0.7.0
 
 * libhtp is now configured as part of configure stage rather than build
   stage.  In addition, libhtp will make use of any configure options.  Use
-  ./configure --help=recursive to see libhtp specific configure options.
+  ``./configure --help=recursive`` to see libhtp specific configure options.
 
-* Extensive cleanup regarding use of CFLAGS, CXXFLAGS, etc.  Those variables
-  are now respected and may be specified at configure or make time.  Several
-  configure options used to control those variables have been removed in favor
-  of directly setting them.
+* Extensive cleanup regarding use of `CFLAGS`, `CXXFLAGS`, etc.  Those
+  variables are now respected and may be specified at configure or make time.
+  Several configure options used to control those variables have been removed
+  in favor of directly setting them.
 
-* Warning settings changed to -Wall -Wextra.  -Werror will be enabled on
+* Warning settings changed to `-Wall -Wextra`.  `-Werror` will be enabled on
   newer compilers (any clang or gcc 4.6 or later).
 
 * Build system now compatible with automake 1.13.  In addition, IronBee will
   take advantage of the new parallel test harness if automake 1.13 is used.
 
-* Configure now checks for ruby, gem, and ruby_protobuf gem if C++ code is
-  enabled.
+* Configure now checks for `ruby`, `gem`, and `ruby_protobuf` gem if C++ code
+  is enabled.
 
-* Configure now checks for libcurl and yajl and only enabled RIAK support if
-  present.
+* Configure now checks for `libcurl` and `yajl` and only enabled RIAK support
+  if present.
 
-* Several uneeded checks removed.
+* Several unneeded checks removed.
 
 **Configuration**
 
-* Added InspectionEngineOptions to set the defaults for the inspection engine.
+* Added `InspectionEngineOptions` to set the defaults for the inspection
+  engine.
 
-* Added IncludeIfExists directive to include a file only if it exists and is
+* Added `IncludeIfExists` directive to include a file only if it exists and is
   accessible.  This allows for inclusion of optional files.
 
 **Engine**
@@ -85,7 +86,7 @@ IronBee v0.7.0
   will automatically populate a collection from the content of the file.
   Optionally, the collection can persist to the collection, as well.
 
-* Removed backward compatibility support for the "ip=" and "port=" parameters
+* Removed backward compatibility support for the `ip=` and `port=` parameters
   to the Hostname directive.
 
 * Removed backward compatibility support for `=+` to the `SetVar` action.
@@ -103,8 +104,8 @@ IronBee v0.7.0
 * LogEvents has been refactored to use a direct API rather than a provider.
 
 * Added utility functions that wrap YAJL, using it to decode JSON into an
-  ib_list_t of ib_field_t pointers, and to encode an ib_list_t of ib_field_t
-  pointers into JSON.
+  `ib_list_t` of `ib_field_t` pointers, and to encode an `ib_list_t` of
+  `ib_field_t` pointers into JSON.
 
 * Added `@match` and `@imatch` operators to do string-in-set calculations.
 
@@ -112,44 +113,44 @@ IronBee v0.7.0
 
 * Support for unparsed data has been removed from IronBee.
 
-  * The ib_conndata_t type has been removed.
-  * ib_conn_data_create() has been removed.
-  * The ib_state_conndata_hook_fn_t function typedef has been removed.
-  * The ib_hook_conndata_register() and ib_hook_conndata_unregister()
-    functions have been removed.
-  * The ib_state_notify_conn_data_in() and ib_state_notify_conn_data_out()
-    functions have been removed.
+  * The `ib_conndata_t` type has been removed.
+  * `ib_conn_data_create()` has been removed.
+  * The `ib_state_conndata_hook_fn_t` function typedef has been removed.
+  * The `ib_hook_conndata_register()` and `ib_hook_conndata_unregister()
+`    functions have been removed.
+  * The `ib_state_notify_conn_data_in()` and `ib_state_notify_conn_data_out()
+`    functions have been removed.
 
 * The libhtp library has been updated to 0.5.
 
 **Modules**
 
-* The pcre module has been updated to use the new tx data API.
+* The `pcre` module has been updated to use the new transaction data API.
 
-* The pcre module dfa operator now supports captures.
+* The `pcre` module `dfa` operator now supports captures.
 
 * Added a 'persist' module, which implements a collection manager that can
   populate and persist a collection using a file-system kvstore.
 
 * Added a 'fast' module which supports rapid selection of rules to evaluate
-  based on Aho-Corasick patterns.  See below and fast/fast.html.
+  based on Aho-Corasick patterns.  See below and `fast/fast.html`.
 
 * Added a module implementing libinjection functionality to aid in detecting
-  SQL injection. This module exposes the "normalizeSqli" and the
-  "normalizeSqliFold" transformations as well as the "is_sqli" operator.
+  SQL injection. This module exposes the `normalizeSqli` and the
+  `normalizeSqliFold` transformations as well as the `is_sqli` operator.
 
 * Added a module implementing Ivan Ristic's sqltfn library for normalizing
   SQL to aid in detecting SQL injection. This module exposes the
-  "normalizeSqlPg" transformation.
+  `normalizeSqlPg` transformation.
 
-* The htp module has been vastly reworked to work properly with libhtp 0.5.
+* The `htp` module has been vastly reworked to work properly with libhtp 0.5.
 
 **Fast**
 
 * Added a variety of support for the fast rule system (the fast module
   described above is the runtime component).  Support includes utilities to
   suggest fast patterns for rules and for easy generation of the fast automata
-  needed by the fast module.  See above and fast/fast.html.
+  needed by the fast module.  See above and `fast/fast.html`.
 
 **IronBee++**
 
@@ -157,7 +158,7 @@ IronBee v0.7.0
   routines are not needed if you only use IronBee++ APIs but are very useful
   when accessing the IronBee C API from C++.
 
-* Fixed bug with adding to List<T> where T was a ConstX IronBee++ class.
+* Fixed bug with adding to `List<T>` where `T` was a `ConstX` IronBee++ class.
 
 **Automata**
 
@@ -178,12 +179,13 @@ IronBee v0.7.0
 
 * Added '\$' to Aho Corasick patterns which matches CR or NL.
 
-* Added union support to Aho Corasick patterns, e.g., [A-Q0-5].
+* Added union support to Aho Corasick patterns, e.g., `[A-Q0-5]`.
 
 **Clipp**
 
-* All generators except pb now produced parsed events.  Use @unparse to get
-  the previous behavior.
+* All generators except `pb` now produced parsed events.  Use `@unparse` to
+  get the previous behavior.  But note that IronBee no longer supports
+  unparsed events.
 
 **Other**
 
