@@ -2146,7 +2146,7 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
  *   - IB_OK
  *   - IB_EOTHER on Rule adding errors. See log file.
  */
-static ib_status_t modlua_commit_configuration(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t modlua_commit_configuration(ib_engine_t *ib)
 {
     ib_status_t rc;
     int lua_rc;
@@ -2167,8 +2167,7 @@ static ib_status_t modlua_commit_configuration(ib_engine_t *ib, ib_module_t *m)
     }
 
     lua_pushlightuserdata(L, ib);
-    lua_pushlightuserdata(L, m);
-    lua_rc = lua_pcall(L, 2, 1, 0);
+    lua_rc = lua_pcall(L, 1, 1, 0);
     if (lua_rc == LUA_ERRFILE) {
         ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
         lua_pop(L, lua_gettop(L));
@@ -2642,7 +2641,7 @@ static ib_status_t modlua_context_close(ib_engine_t  *ib,
         }
 
         /* Commit any pending configuration items. */
-        rc = modlua_commit_configuration(ib, m);
+        rc = modlua_commit_configuration(ib);
         if (rc != IB_OK) {
             return rc;
         }
@@ -2651,6 +2650,14 @@ static ib_status_t modlua_context_close(ib_engine_t  *ib,
     return IB_OK;
 }
 
+static ib_status_t modlua_dir_commit_rules(
+    ib_cfgparser_t *cp,
+    const char *name,
+    const ib_list_t *list,
+    void *cbdata)
+{
+    return modlua_commit_configuration(cp->ib);
+}
 
 /* -- Module Configuration -- */
 
@@ -2901,6 +2908,11 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "LuaInclude",
         modlua_dir_lua_include,
+        NULL
+    ),
+    IB_DIRMAP_INIT_LIST(
+        "LuaCommitRules",
+        modlua_dir_commit_rules,
         NULL
     ),
 

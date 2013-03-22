@@ -372,9 +372,8 @@ end
 -- 
 -- Build and add all rules configured to the engine.
 -- param[in] ib_ptr IronBee engine ib_engine_t*.
--- param[in] module The IronBee ib_module_t*.
 --
-_M.build_rules = function(ib_ptr, module)
+_M.build_rules = function(ib_ptr)
     local ib = ibapi.engineapi:new(ffi.cast("ib_engine_t*", ib_ptr))
 
     -- Get the main context. All rules are added to the main context.
