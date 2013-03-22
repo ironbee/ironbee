@@ -490,9 +490,9 @@ ib_status_t DLL_PUBLIC ib_rule_set_phase(
  * @param[in] phase Phase string
  * @param[in] is_stream true if the phase is a stream phase, false if not.
  * @return
- *   - PHASE_INVALID when an error occures.
+ *   - PHASE_INVALID when an error occurs.
  *   - The appropriate phase number for the named phase if the given
- *     stream value is approprikate.
+ *     stream value is appropriate.
  */
 ib_rule_phase_num_t DLL_PUBLIC ib_rule_lookup_phase(
     const char *phase,

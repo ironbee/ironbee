@@ -1455,7 +1455,7 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     memset(&txdump, 0, sizeof(txdump));
     txdump.name = "Action";
 
-    /* Make a copy of the parameters that we can use for strtok */
+    /* Make a copy of the parameters that we can use for strtok() */
     pcopy = ib_mpool_strdup(ib_engine_pool_temp_get(ib), parameters);
     if (pcopy == NULL) {
         return IB_EALLOC;
