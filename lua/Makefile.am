@@ -27,28 +27,24 @@ AM_LDFLAGS += -no-undefined -static-libtool-libs
 endif
 
 WAGGLE_FILES=ironbee/waggle.lua \
-	     $(shell find ironbee/waggle -name \*lua)
+             $(shell find ironbee/waggle -name \*lua)
 
 EXTRA_DIST = ironbee-ffi-h.lua \
              ironbee-ffi.lua \
              ironbee-api.lua \
-             ironbee/config.lua \
              ironbee-modlua.lua \
              example.lua \
              threat_level.lua \
              event_processor.lua \
-	     $(WAGGLE_FILES) \
              qa.lua
 
 lua_DATA   = ironbee-ffi-h.lua \
              ironbee-ffi.lua \
              ironbee-api.lua \
-             ironbee/config.lua \
              ironbee-modlua.lua \
              example.lua \
              threat_level.lua \
              event_processor.lua \
-	     $(WAGGLE_FILES) \
              qa.lua
 
 noinst_LTLIBRARIES = libironbee-lua.la
@@ -88,3 +84,10 @@ test_lua_LDFLAGS  = $(LDFLAGS) \
 test_lua_LDADD    = -lluajit-ironbee
 
 CLEANFILES = ironbee-ffi.h ironbee-ffi-h.lua
+
+install-data-hook:
+	cd $(top_srcdir)/lua && tar cf - ironbee | tar xf - -C $(DESTDIR)$(libdir)
+
+uninstall-hook:
+	rm -fr $(DESTDIR)$(libdir)/ironbee
+
