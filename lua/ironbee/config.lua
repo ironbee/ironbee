@@ -263,8 +263,8 @@ local build_rule = function(ib, ctx, chain, db)
                     #tag + 1)
             ib:logDebug("Setting tag %s on rule.", tag)
             rc = ffi.C.ib_list_push(prule[0].meta.tags, tagcpy)
-            if rc == ffi.C.IB_OK then
-                ib:logError("Setting tag %s failed: %d", tag, rc)
+            if rc ~= ffi.C.IB_OK then
+                ib:logError("Setting tag %s failed.", tag)
             end
         end
 
