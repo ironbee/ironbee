@@ -256,6 +256,7 @@ local build_rule = function(ib, ctx, chain, db)
 
         -- Set tags
         for _, tag in ipairs(rule.data.tags) do
+            ib:logDebug("Setting tag %s on rule.", tag)
             rc = ffi.C.ib_list_push(prule[0].meta.tags, tag)
             if rc == ffi.C.IB_OK then
                 ib:logError("Setting tag %s failed: %d", tag, rc)
