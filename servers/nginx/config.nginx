@@ -1,0 +1,6 @@
+ngx_addon_name=ngx_ironbee_module
+#HTTP_MODULES="$HTTP_MODULES ngx_ironbee_module"
+HTTP_AUX_FILTER_MODULES="$HTTP_AUX_FILTER_MODULES ngx_ironbee_module"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/ngx_ironbee.c $ngx_addon_dir/ngx_ironbee_conn.c $ngx_addon_dir/ngx_ironbee_plugin.c $ngx_addon_dir/ngx_ironbee_logger.c $ngx_addon_dir/ngx_ironbee_in.c"
+NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_addon_dir/ngx_ironbee.h"
+

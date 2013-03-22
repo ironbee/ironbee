@@ -13,16 +13,23 @@ NGINX_DIR = $(NGINX_NAME)
 NGINX_TARBALL = $(NGINX_NAME).tar.gz
 NGINX_URL = http://nginx.org/download/$(NGINX_TARBALL)
 
-NGXIB_SRC = $(abs_top_srcdir)/servers/nginx
+NGXIB_SRCDIR = $(abs_top_srcdir)/servers/nginx
+NGXIB_FILES =	$(NGXIB_SRCDIR)/ngx_ironbee.h		\
+		$(NGXIB_SRCDIR)/ngx_ironbee.c		\
+		$(NGXIB_SRCDIR)/ngx_ironbee_conn.c	\
+		$(NGXIB_SRCDIR)/ngx_ironbee_in.c	\
+		$(NGXIB_SRCDIR)/ngx_ironbee_logger.c	\
+		$(NGXIB_SRCDIR)/ngx_ironbee_plugin.c
 NGXIB_PREFIX = $(prefix)/nginx
-NGXIB_COPTS = $(CFLAGS) $(PCRE_CFLAGS) -D_GNU_SOURCE -I$(prefix)/include
+#NGXIB_COPTS = $(CFLAGS) $(PCRE_CFLAGS) -D_GNU_SOURCE -I$(prefix)/include
+NGXIB_COPTS = -O0 -I$(prefix)/include -I.
 NGXIB_LDOPTS = $(PCRE_LDFLAGS) $(PCRE_LDADD) -L$(prefix)/lib -lhtp -libutil -lironbee
 
 nginx: $(NGINX_DIR)/objs/nginx
 
-config: config.in Makefile
-	sed 's#IB_COPTS#$(prefix)/include#' < config.in \
-	| sed 's#IB_LDOPTS#-L$(prefix)/lib -lhtp -libutil -lironbee#' > config
+#config: config.in Makefile
+#	sed 's#IB_COPTS#$(prefix)/include#' < config.in \
+#	| sed 's#IB_LDOPTS#-L$(prefix)/lib -lhtp -libutil -lironbee#' > config
 
 # FIXME: maybe hack up an m4 to detect a downloader?
 $(NGINX_TARBALL):
@@ -33,17 +40,18 @@ $(NGINX_TARBALL):
 $(NGINX_DIR): $(NGINX_TARBALL)
 	tar xzf $(NGINX_TARBALL) \
 	&& cd $(NGINX_DIR) \
-	&& patch -p0 < $(NGXIB_SRC)/nginx.patch
+	&& patch -p0 < $(NGXIB_SRCDIR)/nginx.patch
 
-$(NGINX_DIR)/Makefile: $(NGINX_DIR) Makefile
-	cd $(NGINX_DIR) \
+$(NGINX_DIR)/Makefile: $(NGINX_DIR) Makefile config.nginx
+	cp config.nginx config \
+	&& cd $(NGINX_DIR) \
 	&& ./configure --with-debug \
 	   --prefix=$(NGXIB_PREFIX) \
 	   --with-cc-opt="$(NGXIB_COPTS)" \
 	   --with-ld-opt="$(NGXIB_LDOPTS)" \
-	   --add-module=$(NGXIB_SRC)
+	   --add-module=$(NGXIB_SRCDIR)
 
-$(NGINX_DIR)/objs/nginx: $(NGINX_DIR)/Makefile $(prefix)/lib/libironbee.la
+$(NGINX_DIR)/objs/nginx: $(NGINX_DIR)/Makefile $(NGXIB_FILES) $(prefix)/lib/libironbee.la
 	cd $(NGINX_DIR) && make
 
 $(prefix)/lib/libironbee.la: ../../engine/libironbee.la
@@ -53,5 +61,7 @@ $(prefix)/lib/libironbee.la: ../../engine/libironbee.la
 nginx-install: nginx
 	cd $(NGINX_DIR) && make install
 
-tengine-install:	config
-	$(NGX_DSO_TOOL) --add-module=$(NGXIB_SRC) --dst=$(prefix)/lib
+tengine-install:	config.tengine.in Makefile
+	sed 's#IB_COPTS#$(prefix)/include#' < config.tengine.in \
+	| sed 's#IB_LDOPTS#-L$(prefix)/lib -lhtp -libutil -lironbee#' > config \
+	&& $(NGX_DSO_TOOL) --add-module=$(NGXIB_SRCDIR) --dst=$(prefix)/lib

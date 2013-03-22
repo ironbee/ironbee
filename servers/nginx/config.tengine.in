@@ -5,5 +5,5 @@ NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/ngx_ironbee.c $ngx_addon_dir/ngx_
 NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_addon_dir/ngx_ironbee.h"
 
 #for building with tengine's dso_tool
-CORE_INCS="IB_COPTS"
-CORE_LIBS="IB_LDOPTS"
+CORE_INCS="$(CORE_INCS) IB_COPTS"
+CORE_LIBS="$(CORE_LIBS) IB_LDOPTS"

@@ -23,15 +23,16 @@ manual:
 luajit:
 	@(cd libs && $(MAKE) )
 
-nginx:  servers/nginx/nginx-1.3.10/objs/nginx
+nginx:
+	@(cd servers/nginx && $(MAKE) nginx )
 
-servers/nginx/nginx-1.3.10/objs/nginx:	engine/libironbee.la
-	@(cd servers/nginx && $(MAKE) nginx)
-
-nginx-install: nginx
+nginx-install:	nginx
 	@(cd servers/nginx && $(MAKE) nginx-install)
 
-.PHONY: doxygen doxygen-pdf manual luajit
+tengine-install:
+	@(cd servers/nginx && $(MAKE) tengine-install)
+
+.PHONY: doxygen doxygen-pdf manual luajit nginx
 
 rpm_topdir=$(abs_top_builddir)/packaging/rpm
 rpm-package: dist
