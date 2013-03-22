@@ -37,6 +37,11 @@ IronBee v0.7.0
 * Configure now checks for `libcurl` and `yajl` and only enabled RIAK support
   if present.
 
+* The Clang Thread Sanitizer is now supported.  However, a few tests cause
+  false positives or break the thread sanitizer.  Pass
+  `--enable-thread-sanitizer-workaround` to `configure` to disable these
+  tests.  See the thread sanitizer documentation for how to enable it.
+
 * Several unneeded checks removed.
 
 **Configuration**
@@ -186,6 +191,9 @@ IronBee v0.7.0
 * All generators except `pb` now produced parsed events.  Use `@unparse` to
   get the previous behavior.  But note that IronBee no longer supports
   unparsed events.
+
+* Several tests have been added, including a randomized test of IronBee in
+  both single and multithreaded mode (`test_holistic`).
 
 **Other**
 
