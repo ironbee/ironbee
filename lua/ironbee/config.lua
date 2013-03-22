@@ -255,7 +255,7 @@ local build_rule = function(ib, ctx, chain, db)
         end
 
         -- Set tags
-        for _, tag in ipairs(rule.data.tags) do
+        for tag, _ in pairs(rule.data.tags) do
             local tagcpy = 
                 ffi.C.ib_mpool_memdup(
                     ffi.C.ib_engine_pool_main_get(ib.ib_engine),
