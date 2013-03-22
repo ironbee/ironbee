@@ -36,11 +36,7 @@
 #include <math.h>
 #include <pthread.h>
 
-#if defined(__has_feature)
-#if __has_feature(thread_sanitizer)
-#define THREAD_SANITIZER
-#endif
-#endif
+using namespace std;
 
 /* -- Tests -- */
 typedef void *(* thread_start_fn)(void *thread_data);
@@ -356,9 +352,12 @@ TEST_F(TestIBUtilLock, test_create)
 
 // The following test is a true positive for a thread race condition.
 // Disable it for thread sanitizer.
-#ifndef THREAD_SANITIZER
 TEST_F(TestIBUtilLock, test_lock_disabled)
 {
+#ifdef IB_THREAD_SANITIZER_WORKAROUND
+    cout << "Test skipped due to thread sanitizer." << endl;
+    return;
+#else
     ib_status_t rc;
     uint64_t    errors;
 
@@ -374,8 +373,8 @@ TEST_F(TestIBUtilLock, test_lock_disabled)
 
     rc = DestroyLock( );
     ASSERT_EQ(IB_OK, rc);
-}
 #endif
+}
 
 TEST_F(TestIBUtilLock, test_short)
 {
@@ -397,9 +396,12 @@ TEST_F(TestIBUtilLock, test_short)
 }
 
 // This test is too intense for the thread sanitizer.
-#ifndef THREAD_SANITIZER
 TEST_F(TestIBUtilLock, test_long)
 {
+#ifdef IB_THREAD_SANITIZER_WORKAROUND
+    cout << "Test skipped due to thread sanitizer." << endl;
+    return;
+#else
     ib_status_t rc;
     uint64_t    errors;
 
@@ -415,5 +417,5 @@ TEST_F(TestIBUtilLock, test_long)
 
     rc = DestroyLock( );
     ASSERT_EQ(IB_OK, rc);
-}
 #endif
+}

@@ -79,8 +79,8 @@ if test "$GCC" = "yes"; then
                 [ AC_MSG_RESULT([yes]); cc_is_clang=yes ], [AC_MSG_RESULT([no]); cc_is_clang=no]
                 )
     if test "$cc_is_clang" == "yes"; then
-        CFLAGS="${CFLAGS} -fPIC" 
-        CXXFLAGS="${CXXFLAGS} -fPIC" 
+        CFLAGS="${CFLAGS} -fPIC"
+        CXXFLAGS="${CXXFLAGS} -fPIC"
     else
         CFLAGS="${CFLAGS} -std=c99"
     fi
@@ -113,13 +113,13 @@ AC_CHECK_HEADERS(arpa/inet.h netinet/in.h)
 AC_MSG_CHECKING([OS])
 case "$OS" in
         FreeBSD*)
-                AC_MSG_RESULT(FreeBSD) 
+                AC_MSG_RESULT(FreeBSD)
                 OS_FREEBSD="true"
                 AM_CPPFLAGS="${AM_CPPFLAGS} -I/usr/local/include"
                 AM_LDFLAGS="${AM_LDFLAGS} -L/usr/local/lib"
         ;;
         Darwin*)
-                AC_MSG_RESULT(Darwin) 
+                AC_MSG_RESULT(Darwin)
                 OS_DARWIN="true"
                 AC_DEFINE(_POSIX_C_SOURCE, [1], [Enable POSIX C source feature test macro])
                 AC_DEFINE(_DARWIN_C_SOURCE, [1], [Enable full C features on OSX])
@@ -161,6 +161,24 @@ AC_ARG_ENABLE(verbose-output,
 [
   verbose_output=0
 ])
+
+### ThreadSanitizer
+AC_ARG_ENABLE(thread-sanitizer-workaround,
+              AS_HELP_STRING([--enable-thread-sanitizer-workaround],
+                             [Disable or otherwise workaround thread sanitizer issues for certain tests.]),
+[
+  if test "$enableval" != "no"; then
+    thread_sanitizer_workaround="yes"
+    AC_DEFINE([IB_THREAD_SANITIZER_WORKAROUND], [1], [Workaround thread sanitizer issues.])
+  else
+    thread_sanitizer_workaround="no"
+  fi
+],
+[
+  thread_sanitizer_workaround="no"
+])
+AM_CONDITIONAL([THREAD_SANITIZER_WORKAROUND], [test "$thread_sanitizer_workaround" == "no"])
+
 
 ### Development-only features
 AC_ARG_ENABLE(devel,
@@ -321,10 +339,10 @@ sinclude(acinclude/protobuf.m4)
 # Required libs
 CHECK_PCRE()
 AX_BOOST_BASE(1.40,
-              [have_boost_low=yes], 
+              [have_boost_low=yes],
               [have_boost_low=no])
 AX_BOOST_BASE(1.46,
-              [have_boost=yes], 
+              [have_boost=yes],
               [have_boost=no])
 if test "$have_boost_low" = "no"; then
     AC_MSG_WARN("Boost required for testing.")
@@ -456,20 +474,20 @@ dnl Make sure abs_top_builddir is available
 AC_MSG_CHECKING([abs_top_builddir is available])
 if test -z "$abs_top_builddir"; then
     abs_top_builddir=`(cd "$top_builddir" && pwd)`
-    AC_MSG_RESULT([no, using $abs_top_builddir]) 
+    AC_MSG_RESULT([no, using $abs_top_builddir])
     AC_SUBST(abs_top_builddir)
 else
-    AC_MSG_RESULT([yes, $abs_top_builddir]) 
+    AC_MSG_RESULT([yes, $abs_top_builddir])
 fi
 
 dnl Make sure abs_top_srcdir is available
 AC_MSG_CHECKING([abs_top_srcdir is available])
 if test -z "$abs_top_srcdir"; then
     abs_top_srcdir=`(cd "$top_srcdir" && pwd)`
-    AC_MSG_RESULT([no, using $abs_top_srcdir]) 
+    AC_MSG_RESULT([no, using $abs_top_srcdir])
     AC_SUBST(abs_top_srcdir)
 else
-    AC_MSG_RESULT([yes, $abs_top_srcdir]) 
+    AC_MSG_RESULT([yes, $abs_top_srcdir])
 fi
 
 dnl Check for out of tree builds
@@ -490,7 +508,7 @@ AC_RPM_CHECK
 AC_SUBST(HAVE_RPM)
 
 # Check for -Wunused-but-set-variable
-AC_MSG_CHECKING(for -Wunused-but-set-variable)    
+AC_MSG_CHECKING(for -Wunused-but-set-variable)
 save_CPPFLAGS="${CPPFLAGS}"
 CPPFLAGS="${CPPFLAGS} -Werror -Wunused-but-set-variable"
 AC_TRY_COMPILE(,,
@@ -504,7 +522,7 @@ fi
 AM_CONDITIONAL([HAVE_NO_UNUSED_BUT_SET_VARIABLE], [test "$have_no_unused_but_set_variable" = "yes"])
 
 # Check for -Wunused-private-field
-AC_MSG_CHECKING(for -Wno-unused-private-field)    
+AC_MSG_CHECKING(for -Wno-unused-private-field)
 save_CPPFLAGS="${CPPFLAGS}"
 CPPFLAGS="${CPPFLAGS} -Werror -Wno-unused-private-field"
 AC_TRY_COMPILE(,,
@@ -516,9 +534,9 @@ else
   AC_MSG_RESULT(no)
 fi
 AM_CONDITIONAL([HAVE_NO_UNUSED_PRIVATE_FIELD], [test "$have_no_unused_private_field" = "yes"])
-	
+
 dnl Done testing, turn on errors.
-dnl Make sure this is after any autoconf tests, which tend not to be 
+dnl Make sure this is after any autoconf tests, which tend not to be
 dnl warningless.
 if test "$MODERN_COMPILER" == "yes"; then
 	AC_MSG_NOTICE([Modern compiler detected; turning on warnings and errors.])

@@ -1,6 +1,16 @@
 $:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
 require 'clipp_test'
 
+CONFIG_AUTO = File.expand_path(
+  ENV['abs_builddir'] + "/../ironbee_config_auto_gen.h"
+)
+$thread_sanitizer_workaround = false
+File.open(CONFIG_AUTO, 'r') do |fp|
+  if fp.find {|x| x =~ /define IB_THREAD_SANITIZER_WORKAROUND 1/}
+    $thread_sanitizer_workaround = true
+  end
+end
+
 # Very dumb random HTTP traffic generator.
 module CLIPPTestHolistic
 
@@ -235,10 +245,14 @@ class TestHolistic < Test::Unit::TestCase
   end
 
   def test_multi_threaded
-    clipp(
-      :input => INPUT,
-      :consumer => 'ironbee_threaded:IRONBEE_CONFIG:4'
-    )
-    assert_no_issues
+    if $thread_sanitizer_workaround
+      puts "Skipping due to thread sanitizer."
+    else
+      clipp(
+        :input => INPUT,
+        :consumer => 'ironbee_threaded:IRONBEE_CONFIG:4'
+      )
+      assert_no_issues
+    end
   end
 end
