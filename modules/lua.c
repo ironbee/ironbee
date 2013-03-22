@@ -2177,7 +2177,8 @@ static ib_status_t modlua_commit_configuration(ib_engine_t *ib)
         ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
         lua_pop(L, lua_gettop(L));
         return IB_EOTHER;
-    } else if (lua_tonumber(L, -1) != IB_OK) {
+    }
+    else if (lua_tonumber(L, -1) != IB_OK) {
         rc = lua_tonumber(L, -1);
         lua_pop(L, lua_gettop(L));
         ib_log_error(
@@ -2697,7 +2698,7 @@ static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
  *   - IB_OK on success.
  *   - IB_EALLOC if an allocation cannot be performed, such as a Lua Stack.
  *   - IB_EOTHER if any other error is encountered.
- *   - IB_EINVAL if there is a Lua interpretation problem. This 
+ *   - IB_EINVAL if there is a Lua interpretation problem. This
  *               will almost always indicate a problem with the user's code
  *               and the user should examine their script.
  */
@@ -2748,7 +2749,8 @@ static ib_status_t modlua_dir_lua_include(ib_cfgparser_t *cp,
         ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
         lua_pop(L, lua_gettop(L));
         return IB_EOTHER;
-    } else if (lua_tonumber(L, -1) != IB_OK) {
+    }
+    else if (lua_tonumber(L, -1) != IB_OK) {
         rc = lua_tonumber(L, -1);
         lua_pop(L, lua_gettop(L));
         ib_log_error(
