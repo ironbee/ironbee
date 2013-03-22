@@ -120,25 +120,37 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
     if (!ctx->output_filter_init) {
         ctx->output_filter_init = 1;
 
-        /* Determine whether we're configured to buffer */
-        rc = ib_context_get(ctx->tx->ctx, "buffer_res",
-                            ib_ftype_num_out(&num), NULL);
-        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: buffer_res is %d", num);
-        if (rc != IB_OK)
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          "Can't determine output buffer configuration!");
-        if (num == 0) {
-            ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: NOBUF");
+        if (ctx->internal_errordoc) {
+            /* If it's our own errordoc, pass it straight through */
+            /* Should we log anything here?  The error will already
+             * have been logged.
+             */
             ctx->output_buffering = IOBUF_NOBUF;
             ctx->response_buf = NULL;
+            ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
+                          "ironbee_body_out: in internal error document");
         }
         else {
-            /* If we're buffering, initialise the buffer */
+            /* Determine whether we're configured to buffer */
+            rc = ib_context_get(ctx->tx->ctx, "buffer_res",
+                                ib_ftype_num_out(&num), NULL);
             ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: BUFFER");
-            ctx->output_buffering = IOBUF_BUFFER;
+                          "ironbee_body_out: buffer_res is %d", num);
+            if (rc != IB_OK)
+                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                              "Can't determine output buffer configuration!");
+            if (num == 0) {
+                ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
+                              "ironbee_body_out: NOBUF");
+                ctx->output_buffering = IOBUF_NOBUF;
+                ctx->response_buf = NULL;
+            }
+            else {
+                /* If we're buffering, initialise the buffer */
+                ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
+                              "ironbee_body_out: BUFFER");
+                ctx->output_buffering = IOBUF_BUFFER;
+            }
         }
     }
 
@@ -159,6 +171,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
          * and dump anything we already have buffered,
          */
         if ( (STATUS_IS_ERROR(ctx->status)) &&
+             !ctx->internal_errordoc &&
              (ctx->output_buffering != IOBUF_DISCARD) ) {
             ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                           "ironbee_body_out: error %d", ctx->status);
@@ -420,7 +433,16 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
     if (rc != IB_OK)
         cleanup_return(prev_log) NGX_ERROR;
 
+    if (!ngxib_has_request_body(r, ctx)) {
+        rc = ib_state_notify_request_finished(ironbee, ctx->tx);
+        if (rc != IB_OK)
+            cleanup_return(prev_log) NGX_ERROR;
+    }
     ctx->hdrs_in = 1;
+    if (STATUS_IS_ERROR(ctx->status)) {
+        ctx->internal_errordoc = 1;
+        cleanup_return(prev_log) ctx->status;
+    }
 
     cleanup_return(prev_log) NGX_DECLINED;
 }

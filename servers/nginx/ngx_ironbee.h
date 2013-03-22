@@ -61,6 +61,7 @@ typedef struct ngxib_req_ctx {
     int hdrs_in:1;                /* State flags */
     int hdrs_out:1;               /* State flags */
     int start_response:1;         /* State flags */
+    int internal_errordoc:1;      /* State flags */
 } ngxib_req_ctx;
 
 /* Determine whether a connection is known to Ironbee.  If yes, retrieve it;
@@ -86,6 +87,9 @@ ib_log_level_t ngxib_loglevel(const ib_engine_t *ib, void *cbdata);
  * pointer in ironbee logger API.
  */
 ngx_log_t *ngxib_log(ngx_log_t *log);
+
+int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx);
+
 
 
 /* Misc symbols that need visibility across source files */

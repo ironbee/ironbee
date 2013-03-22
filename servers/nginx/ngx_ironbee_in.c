@@ -55,7 +55,7 @@ static void ngxib_post_handler(ngx_http_request_t *r)
  * @param[in] ctx the ngx request ctx for the ironbee module
  * @return    0 for no body, -1 for chunked body, or content-length
  */
-static int has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
+int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
 {
     if (r->headers_in.content_length_n > 0)
         return r->headers_in.content_length_n;
@@ -101,7 +101,10 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
     if (ctx->body_done)
         return rv;
 
-    if (!has_request_body(r, ctx))
+    /* We already completed handling of no-body requests
+     * when we looked at headers
+     */
+    if (!ngxib_has_request_body(r, ctx))
         return rv;
 
     prev_log = ngxib_log(r->connection->log);
@@ -170,6 +173,7 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
     /* If Ironbee signalled an error, we can return it */
     if (STATUS_IS_ERROR(ctx->status)) {
         rv = ctx->status;
+        ctx->internal_errordoc = 1;
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                       "Ironbee set %d reading request body", rv);
     }
