@@ -23,6 +23,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/flags.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>

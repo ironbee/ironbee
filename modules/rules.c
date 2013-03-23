@@ -24,6 +24,7 @@
 #include <ironbee/config.h>
 #include <ironbee/core.h>
 #include <ironbee/engine.h>
+#include <ironbee/flags.h>
 #include <ironbee/list.h>
 #include <ironbee/lock.h>
 #include <ironbee/module.h>

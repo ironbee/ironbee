@@ -37,6 +37,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
+#include <ironbee/flags.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_logger.h>

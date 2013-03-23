@@ -27,6 +27,7 @@
 #include <ironbee/rule_capture.h>
 
 #include <ironbee/capture.h>
+#include <ironbee/flags.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
 

@@ -33,6 +33,7 @@
 #include <ironbee/core.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
+#include <ironbee/flags.h>
 #include <ironbee/logevent.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>

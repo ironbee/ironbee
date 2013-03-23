@@ -25,6 +25,7 @@
 
 #include <ironbee/escape.h>
 
+#include <ironbee/flags.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>

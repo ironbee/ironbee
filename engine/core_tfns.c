@@ -30,6 +30,7 @@
 #include <ironbee/decode.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
+#include <ironbee/flags.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
