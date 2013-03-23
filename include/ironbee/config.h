@@ -29,6 +29,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/engine.h>
 #include <ironbee/log.h>
+#include <ironbee/strval.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus
@@ -45,7 +46,6 @@ extern "C" {
  */
 
 typedef struct ib_dirmap_init_t ib_dirmap_init_t;
-typedef struct ib_strval_t ib_strval_t;
 
 /// @todo Should probably be private structure
 struct ib_cfgparser_t {
@@ -75,16 +75,6 @@ typedef enum {
     IB_DIRTYPE_OPFLAGS,                  /**< Option flags directive */
     IB_DIRTYPE_SBLK1,                    /**< One param subblock directive */
 } ib_dirtype_t;
-
-/** String key/numeric value pair */
-struct ib_strval_t {
-    const char             *str;         /**< String "key" */
-    ib_num_t                val;         /**< Numeric value */
-};
-
-#define IB_STRVAL_MAP(name) ib_strval_t name[]
-#define IB_STRVAL_PAIR(str, val) { str, val }
-#define IB_STRVAL_PAIR_LAST { NULL, 0 }
 
 /** Callback for ending (processing) a block */
 typedef ib_status_t (*ib_config_cb_blkend_fn_t)(ib_cfgparser_t *cp,

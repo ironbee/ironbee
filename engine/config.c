@@ -30,6 +30,7 @@
 #include "engine_private.h"
 
 #include <ironbee/mpool.h>
+#include <ironbee/strval.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -58,30 +59,6 @@ struct cfgp_blk_t {
     ib_list_t                *params;   /**< Block parameters */
     ib_list_t                *dirs;     /**< Block directives */
 };
-
-/* Get an option value from a name/mapping. */
-static ib_status_t cfgp_opval(const char *opname,
-                              const ib_strval_t *map,
-                              ib_num_t *pval)
-{
-    assert(opname != NULL);
-    assert(map != NULL);
-    assert(pval != NULL);
-
-    ib_strval_t *rec = (ib_strval_t *)map;
-
-    while (rec->str != NULL) {
-        if (strcasecmp(opname, rec->str) == 0) {
-            *pval = rec->val;
-            return IB_OK;
-        }
-        ++rec;
-    }
-
-    *pval = 0;
-    return IB_EINVAL;
-}
-
 
 
 /* -- Configuration Parser Routines -- */
@@ -815,18 +792,13 @@ ib_status_t ib_config_strval_pair_lookup(const char *str,
     assert(map != NULL);
     assert(pval != NULL);
 
-    ib_strval_t *rec = (ib_strval_t *)map;
+    ib_status_t rc;
+    uint64_t    value;
 
-    while (rec->str != NULL) {
-        if (strcasecmp(str, rec->str) == 0) {
-            *pval = rec->val;
-            return IB_OK;
-        }
-        ++rec;
-    }
+    rc = ib_strval_lookup(map, str, &value);
+    *pval = value;
 
-    *pval = 0;
-    return IB_EINVAL;
+    return rc;
 }
 
 

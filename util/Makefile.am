@@ -34,6 +34,7 @@ libibutil_la_SOURCES = ahocorasick.c \
                        string.c \
                        strlower.c \
                        strtrim.c \
+                       strval.c \
                        strwspc.c \
                        types.c \
                        util.c \

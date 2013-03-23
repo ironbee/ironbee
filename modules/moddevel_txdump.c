@@ -36,6 +36,7 @@
 #include <ironbee/site.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
+#include <ironbee/strval.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
