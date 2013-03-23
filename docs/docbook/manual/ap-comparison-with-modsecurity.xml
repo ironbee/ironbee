@@ -186,13 +186,8 @@ SecAction actions</programlisting>Targets
         <title>Rules</title>
         <itemizedlist>
             <listitem>
-                <para>The main rule directive is shortened, to just <literal>Rule</literal>. All
-                    other supported directives from ModSecurity also have the <literal>Sec</literal>
-                    prefix removed.</para>
-            </listitem>
-            <listitem>
-                <para>In chained rules, instructions (known as disruptive actions in ModSecurity)
-                    are specified on the last rule in the chain, not on the first; the rule metadata
+                <para>In chained rules, actions (known as disruptive actions in ModSecurity) are
+                    specified on the last rule in the chain, not on the first; the rule metadata
                     remains with the first rule in the chain.</para>
             </listitem>
             <listitem>
@@ -201,7 +196,7 @@ SecAction actions</programlisting>Targets
             </listitem>
             <listitem>
                 <para>The <literal>SecRuleScript</literal> functionality is now handled by
-                        <literal>RuleRunExt</literal>, which works as an interface between the rule
+                        <literal>RuleExt</literal>, which works as an interface between the rule
                     language and externally-implemented security logic (for example, Lua rules,
                     rules implemented natively, etc). </para>
             </listitem>
@@ -214,9 +209,9 @@ SecAction actions</programlisting>Targets
             </listitem>
             <listitem>
                 <para>Changing rule flow at run-time is not supported at this time. This means that
-                    the functionality of <literal>skip</literal>, <literal>skipAfter</literal>, and
-                        <literal>SecMarker</literal> is not supported. Neither is that of
-                        <literal>SecAction</literal>, which is commonly used with skipping.</para>
+                    the functionality of <literal>skip</literal>, <literal>skipAfter</literal> is
+                    not supported. This is not a likely feature to be implemented. Instead you are
+                    encouraged to use Lua.</para>
             </listitem>
             <listitem>
                 <para>IronBee uses a simplified configuration model in which site configuration
@@ -245,11 +240,6 @@ SecAction actions</programlisting>Targets
                     <para>The audit log format has been redesigned to support new features.</para>
                 </listitem>
                 <listitem>
-                    <para><literal>SecArgumentSeparator</literal> is implemented as a personality
-                        parameter (see <literal>PersonalityParam</literal> for more
-                        information).</para>
-                </listitem>
-                <listitem>
                     <para>In IronBee, request and response body inspection is not tied to buffering.
                         Disabling buffering will generally not affect inspection; it will only
                         affect the ability to block attacks reliably.</para>
@@ -274,9 +264,6 @@ SecAction actions</programlisting>Targets
             </listitem>
             <listitem>
                 <para>XML support - will be added in the future</para>
-            </listitem>
-            <listitem>
-                <para>Persistent storage - will be added in the future (with high priority)</para>
             </listitem>
             <listitem>
                 <para>Chroot support - will not implement this <filename>httpd</filename>&#8211;specific
