@@ -48,6 +48,11 @@ typedef struct {
     ib_site_location_t   *cur_location;   /**< Current location */
 } ib_core_module_data_t;
 
+/** Core module transaction data */
+typedef struct {
+    ib_num_t              auditlog_parts; /**< Audit log parts */
+} ib_core_module_tx_data_t;
+
 /**
  * Initialize the core fields.
  *
@@ -82,6 +87,17 @@ ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
  * @returns Pointer to array of ib_tx_flag_map_t
  */
 const ib_tx_flag_map_t *ib_core_fields_tx_flags( void );
+
+/**
+ * Get the core audit log parts string/value configuration map
+ *
+ * @param[out] pmap Pointer to the configuration map
+ *
+ * @returns Status code (IB_OK)
+ */
+ib_status_t ib_core_auditlog_parts_map(
+    const ib_strval_t   **pmap);
+
 
 /**
  * Get the core mode and data
@@ -127,7 +143,10 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib,
 ib_status_t ib_core_actions_init(ib_engine_t *ib,
                                  ib_module_t *mod);
 
-/** Core site selection functions */
+
+/**
+ * Core site selection functions
+ */
 
 
 /**

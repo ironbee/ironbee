@@ -709,13 +709,13 @@ ib_status_t DLL_PUBLIC ib_tx_create(ib_tx_t **ptx,
  *
  * @param[in]  tx Transaction.
  * @param[in]  module Module.
- * @param[out] data Data.
+ * @param[out] pdata Address which data is written
  * @returns Status code.
  */
 ib_status_t DLL_PUBLIC ib_tx_get_module_data(
     const ib_tx_t *tx,
     const ib_module_t *module,
-    void **data
+    void  *pdata
 );
 
 /**

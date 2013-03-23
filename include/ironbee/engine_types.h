@@ -228,6 +228,7 @@ struct ib_tx_t {
     const char         *er_ipstr;        /**< Effective remote IP as string */
     const char         *path;            /**< Path used in the request */
     ib_flags_t          flags;           /**< Transaction flags */
+    ib_flags_t          auditlog_parts;  /**< Audit log parts */
     int                 block_status;    /**< TX specific block status to use.*/
     ib_rule_phase_num_t allow_phase;     /**< Phase to allow (skip) */
     ib_rule_exec_t     *rule_exec;       /**< Rule engine execution object */

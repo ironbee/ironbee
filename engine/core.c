@@ -1909,6 +1909,7 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
 
     ib_auditlog_t *log;
     ib_core_cfg_t *corecfg;
+    ib_core_module_tx_data_t *core_txdata;
     core_audit_cfg_t *cfg;
     ib_provider_inst_t *audit;
     ib_list_t *events;
@@ -1919,6 +1920,12 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
     /* If there's not events, do nothing */
     if (tx->logevents == NULL) {
         return IB_OK;
+    }
+
+    /* Get core tx module data. */
+    rc = ib_tx_get_module_data(tx, ib_core_module(), &core_txdata);
+    if (rc != IB_OK) {
+        return rc;
     }
 
     rc = ib_context_module_config(tx->ctx, ib_core_module(),
@@ -1982,28 +1989,28 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
 
 
     /* Add all the parts to the log. */
-    if (corecfg->auditlog_parts & IB_ALPART_HEADER) {
+    if (tx->auditlog_parts & IB_ALPART_HEADER) {
         ib_auditlog_add_part_header(log);
     }
-    if (corecfg->auditlog_parts & IB_ALPART_EVENTS) {
+    if (tx->auditlog_parts & IB_ALPART_EVENTS) {
         ib_auditlog_add_part_events(log);
     }
-    if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_METADATA) {
+    if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_METADATA) {
         ib_auditlog_add_part_http_request_meta(log);
     }
-    if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_METADATA) {
+    if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_METADATA) {
         ib_auditlog_add_part_http_response_meta(log);
     }
-    if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_HEADER) {
+    if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_HEADER) {
         ib_auditlog_add_part_http_request_head(log);
     }
-    if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY) {
+    if (tx->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY) {
         ib_auditlog_add_part_http_request_body(log);
     }
-    if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_HEADER) {
+    if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_HEADER) {
         ib_auditlog_add_part_http_response_head(log);
     }
-    if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY) {
+    if (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY) {
         ib_auditlog_add_part_http_response_body(log);
     }
 
@@ -2588,6 +2595,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     assert(event == tx_started_event);
 
     ib_core_cfg_t *corecfg;
+    ib_core_module_tx_data_t *core_txdata;
     ib_status_t rc;
 
     rc = ib_context_module_config(tx->ctx, ib_core_module(),
@@ -2601,6 +2609,19 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
 
     /* Set default inspection options. */
     tx->flags |= corecfg->inspection_engine_options;
+
+    /* Copy config to transaction for potential runtime changes. */
+    core_txdata =
+        (ib_core_module_tx_data_t *)ib_mpool_alloc(tx->mp,
+                                                   sizeof(*core_txdata));
+    if (core_txdata == NULL) {
+        return IB_EALLOC;
+    }
+    core_txdata->auditlog_parts = corecfg->auditlog_parts;
+    rc = ib_tx_set_module_data(tx, ib_core_module(), core_txdata);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Data Default Initialization */
     rc = data_default_init(ib, tx);
@@ -2652,24 +2673,10 @@ static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
 
-    ib_core_cfg_t *corecfg;
     void *data_copy;
     ib_status_t rc;
 
     if (txdata == NULL) {
-        return IB_OK;
-    }
-
-    /* Get the current context config. */
-    rc = ib_context_module_config(tx->ctx, ib_core_module(), (void *)&corecfg);
-    if (rc != IB_OK) {
-        ib_log_alert(ib,
-                     "Failed to fetch core module context config: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    if (! (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY)) {
         return IB_OK;
     }
 
@@ -2693,7 +2700,6 @@ static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
 
-    ib_core_cfg_t *corecfg;
     void *data_copy;
     ib_status_t rc;
 
@@ -2701,16 +2707,7 @@ static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
         return IB_OK;
     }
 
-    /* Get the current context config. */
-    rc = ib_context_module_config(tx->ctx, ib_core_module(), (void *)&corecfg);
-    if (rc != IB_OK) {
-        ib_log_alert(ib,
-                     "Failed to fetch core module context config: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    if (! (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY)) {
+    if (! (tx->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY)) {
         return IB_OK;
     }
 
@@ -5128,6 +5125,14 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
 ib_module_t *ib_core_module(void)
 {
     return IB_MODULE_STRUCT_PTR;
+}
+
+ib_status_t ib_core_auditlog_parts_map(
+    const ib_strval_t   **pmap)
+{
+    assert(pmap != NULL);
+    *pmap = core_auditlog_parts_map;
+    return IB_OK;
 }
 
 /**

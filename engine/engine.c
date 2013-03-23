@@ -921,6 +921,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     tx->er_ipstr = conn->remote_ipstr;
     tx->hostname = IB_DSTR_EMPTY;
     tx->path = IB_DSTR_URI_ROOT_PATH;
+    tx->auditlog_parts = corecfg->auditlog_parts;
     tx->block_status = corecfg->block_status;
 
     ++conn->tx_count;
@@ -1011,14 +1012,14 @@ failed:
 ib_status_t ib_tx_get_module_data(
     const ib_tx_t *tx,
     const ib_module_t *m,
-    void **data
+    void *pdata
 )
 {
   assert(tx != NULL);
   assert(m != NULL);
-  assert(data != NULL);
+  assert(pdata != NULL);
 
-  ib_status_t rc = ib_array_get(tx->module_data, m->idx, data);
+  ib_status_t rc = ib_array_get(tx->module_data, m->idx, pdata);
   return rc;
 }
 

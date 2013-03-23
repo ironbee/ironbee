@@ -31,6 +31,7 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
+#include <ironbee/flags.h>
 #include <ironbee/logevent.h>
 #include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
@@ -42,6 +43,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <inttypes.h>
 
 /**
  * Data types for the setvar action.
@@ -2322,6 +2324,113 @@ static ib_status_t act_allow_execute(
     return IB_OK;
 }
 
+/**
+ * Audit log parts action data
+ */
+typedef struct {
+    const ib_list_t   *oplist;   /**< Flags operation list */
+} act_auditlog_parts_t;
+
+/**
+ * Create function for the AuditLogParts action
+ *
+ * @param[in] ib IronBee engine (unused)
+ * @param[in] ctx Current context.
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Con=d10-h10stant parameters from the rule definition
+ * @param[in,out] inst Action instance
+ * @param[in] cbdata Unused.
+ *
+ * @returns Status code
+ */
+static ib_status_t act_auditlogparts_create(
+    ib_engine_t      *ib,
+    ib_context_t     *ctx,
+    ib_mpool_t       *mp,
+    const char       *parameters,
+    ib_action_inst_t *inst,
+    void             *cbdata)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(mp != NULL);
+    assert(inst != NULL);
+
+    ib_status_t           rc;
+    act_auditlog_parts_t *idata;
+    ib_list_t            *oplist;
+    const ib_strval_t    *map;
+
+    /* Create the list */
+    rc = ib_list_create(&oplist, mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Get the auditlog parts map */
+    rc = ib_core_auditlog_parts_map(&map);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Parse the parameter string */
+    rc = ib_flags_oplist_parse(map, mp, parameters, ",", oplist);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Create and populate the instance data */
+    idata = ib_mpool_alloc(mp, sizeof(*idata));
+    if (idata == NULL) {
+        return IB_EALLOC;
+    }
+    idata->oplist = oplist;
+
+    inst->data = idata;
+    return IB_OK;
+}
+
+/**
+ * Execution function for the AuditLogParts action
+ *
+ * @param[in] rule_exec The rule execution object
+ * @param[in] data Instance data
+ * @param[in] flags Flags. Unused.
+ * @param[in] cbdata Unused.
+ */
+static ib_status_t act_auditlogparts_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    void                 *cbdata)
+{
+    assert(data != NULL);
+    assert(rule_exec != NULL);
+    assert(rule_exec->tx != NULL);
+
+    const act_auditlog_parts_t *idata = (const act_auditlog_parts_t *)data;
+    ib_tx_t    *tx = rule_exec->tx;
+    ib_flags_t  parts = tx->auditlog_parts;
+    ib_flags_t  parts_flags = 0;
+    ib_flags_t  parts_mask = 0;
+    ib_status_t rc;
+
+    rc = ib_flags_oplist_apply(idata->oplist, &parts_flags, &parts_mask);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Merge the set flags with the previous value. */
+    parts = ( (parts_flags & parts_mask) | (parts & ~parts_mask) );
+
+    ib_rule_log_debug(rule_exec, "Updating auditlog parts from "
+                      "0x%08"PRIx64" to 0x%08"PRIx64,
+                      (uint64_t)tx->auditlog_parts, (uint64_t)parts);
+    tx->auditlog_parts = parts;
+
+    return IB_OK;
+}
+
 ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
 {
     ib_status_t  rc;
@@ -2377,6 +2486,17 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             act_allow_create, NULL,
                             NULL, NULL,
                             act_allow_execute, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Register the AuditLogParts action. */
+    rc = ib_action_register(ib,
+                            "AuditLogParts",
+                            IB_ACT_FLAG_NONE,
+                            act_auditlogparts_create, NULL,
+                            NULL, NULL,
+                            act_auditlogparts_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }
