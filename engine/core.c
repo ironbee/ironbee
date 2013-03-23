@@ -43,6 +43,7 @@
 #include <ironbee/engine_types.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
+#include <ironbee/flags.h>
 #include <ironbee/json.h>
 #include <ironbee/logevent.h>
 #include <ironbee/collection_manager.h>
@@ -3953,9 +3954,9 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
     }
 
     /* Merge the set flags with the previous value. */
-    parts = (flags & fmask) | (parts & ~fmask);
+    parts = ib_flags_merge(parts, flags, fmask);
 
-    ib_log_debug2(ib, "AUDITLOG PARTS: 0x%08lu", (unsigned long)parts);
+    ib_log_debug2(ib, "AUDITLOG PARTS: 0x%08lx", (unsigned long)parts);
 
     rc = ib_context_set_num(ctx, "auditlog_parts", parts);
     return rc;
@@ -3991,7 +3992,7 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
     log_flags = tmp;
 
     /* Merge the set flags with the previous value. */
-    log_flags = (flags & fmask) | (log_flags & ~fmask);
+    log_flags = ib_flags_merge(log_flags, flags, fmask);
 
     ib_log_debug2(ib, "RULE ENGINE LOG FLAGS: 0x%08lx",
                   (unsigned long)log_flags);
@@ -4029,9 +4030,10 @@ static ib_status_t core_dir_inspection_engine_options(ib_cfgparser_t *cp,
     }
 
     /* Merge the set flags with the previous value. */
-    options = (flags & fmask) | (options & ~fmask);
+    options = ib_flags_merge(options, flags, fmask);
 
-    ib_log_debug2(ib, "INSPECTION_ENGINE_OPTIONS: 0x%08lx", (unsigned long)options);
+    ib_log_debug2(ib, "INSPECTION_ENGINE_OPTIONS: 0x%08lx",
+                  (unsigned long)options);
 
     rc = ib_context_set_num(ctx, "inspection_engine_options", options);
     return rc;

@@ -29,6 +29,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
+#include <ironbee/flags.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
@@ -116,7 +117,7 @@ static const size_t max_path_element = 64;  /**< Max size of a path element */
  * Per-TxDump configuration
  */
 typedef struct {
-    ib_state_event_type_t        event;  /**< Event type */
+    ib_state_event_type_t        event;     /**< Event type */
     ib_state_hook_type_t         hook_type; /**< Hook type */
     const char                  *name;   /**< Event name */
     ib_flags_t                   flags;  /**< Flags defining what to txdump */
@@ -1001,6 +1002,60 @@ static ib_status_t moddevel_txdump_act_execute(
 }
 
 /**
+ * TxDump event data
+ */
+typedef struct {
+    ib_state_event_type_t event;      /**< Event type */
+    ib_state_hook_type_t  hook_type;  /**< Hook type */
+} txdump_event_t;
+
+/**
+ * TxDump event parsing mapping data
+ */
+typedef struct {
+    const char           *str;        /** String< "key" */
+    const txdump_event_t  data;       /** Data portion */
+} txdump_strval_event_t;
+
+static IB_STRVAL_DATA_MAP(txdump_strval_event_t, event_map) = {
+    IB_STRVAL_DATA_PAIR("PostProcess",
+                        handle_postprocess_event,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("Logging",
+                        handle_logging_event,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("RequestStart",
+                        request_started_event,
+                        IB_STATE_HOOK_REQLINE),
+    IB_STRVAL_DATA_PAIR("RequestHeader",
+                        handle_request_header_event,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("Request",
+                        handle_request_event,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("ResponseStart",
+                        response_started_event,
+                        IB_STATE_HOOK_RESPLINE),
+    IB_STRVAL_DATA_PAIR("ResponseHeader",
+                        handle_response_header_event,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("TxStarted",
+                        tx_started_event,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("TxContext",
+                        handle_context_tx_event,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("TxProcess",
+                        tx_process_event,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR("TxFinished",
+                        tx_finished_event,
+                        IB_STATE_HOOK_TX),
+    IB_STRVAL_DATA_PAIR_LAST((ib_state_event_type_t)-1,
+                             (ib_state_hook_type_t)-1),
+};
+
+/**
  * Parse the event for a TxDump directive
  *
  * @param[in] ib IronBee engine
@@ -1021,135 +1076,18 @@ static ib_status_t moddevel_txdump_parse_event(
     assert(param != NULL);
     assert(txdump != NULL);
 
-    /* Default to TX hook */
-    txdump->hook_type = IB_STATE_HOOK_TX;
+    ib_status_t           rc;
+    const txdump_event_t *value;
 
-    if (strcasecmp(param, "PostProcess") == 0) {
-        txdump->event = handle_postprocess_event;
-    }
-    else if (strcasecmp(param, "Logging") == 0) {
-        txdump->event = handle_logging_event;
-    }
-    else if (strcasecmp(param, "RequestStart") == 0) {
-        txdump->event = request_started_event;
-        txdump->hook_type = IB_STATE_HOOK_REQLINE;
-    }
-    else if (strcasecmp(param, "RequestHeader") == 0) {
-        txdump->event = handle_request_header_event;
-    }
-    else if (strcasecmp(param, "Request") == 0) {
-        txdump->event = handle_request_event;
-    }
-    else if (strcasecmp(param, "ResponseStart") == 0) {
-        txdump->event = response_started_event;
-        txdump->hook_type = IB_STATE_HOOK_RESPLINE;
-    }
-    else if (strcasecmp(param, "ResponseHeader") == 0) {
-        txdump->event = handle_response_header_event;
-    }
-    else if (strcasecmp(param, "TxStarted") == 0) {
-        txdump->event = tx_started_event;
-    }
-    else if (strcasecmp(param, "TxContext") == 0) {
-        txdump->event = handle_context_tx_event;
-    }
-    else if (strcasecmp(param, "TxProcess") == 0) {
-        txdump->event = tx_process_event;
-    }
-    else if (strcasecmp(param, "TxFinished") == 0) {
-        txdump->event = tx_finished_event;
-    }
-    else {
+    rc = IB_STRVAL_DATA_LOOKUP(event_map, txdump_strval_event_t, param, &value);
+    if (rc != IB_OK) {
         ib_log_error(ib, "Invalid event parameter \"%s\" for %s", param, label);
-        return IB_EINVAL;
+        return rc;
     }
+
+    txdump->event = value->event;
+    txdump->hook_type = value->hook_type;
     txdump->name = ib_state_event_name(txdump->event);
-    return IB_OK;
-}
-
-/**
- * Parse an enable flag for a TxDump directive or action
- *
- * @param[in] ib IronBee engine
- * @param[in] label Label for logging
- * @param[in] param Parameter string
- * @param[in,out] txdump TxDump object to set the event in
- *
- * @returns: Status code
- */
-static ib_status_t moddevel_txdump_parse_enable(
-    ib_engine_t            *ib,
-    const char             *label,
-    const char             *param,
-    ib_moddevel_txdump_t   *txdump)
-{
-    assert(ib != NULL);
-    assert(label != NULL);
-    assert(param != NULL);
-    assert(txdump != NULL);
-
-    char mod = '\0';
-    ib_flags_t flag = 0;
-
-    if ( (*param == '+') || (*param == '-') ) {
-        mod = *param;
-        ++param;
-    }
-    if (strcasecmp(param, "default") == 0) {
-        flag = MODDEVEL_TXDUMP_DEFAULT;
-    }
-    else if (strcasecmp(param, "basic") == 0) {
-        flag = MODDEVEL_TXDUMP_BASIC;
-    }
-    else if (strcasecmp(param, "context") == 0) {
-        flag = MODDEVEL_TXDUMP_CONTEXT;
-    }
-    else if (strcasecmp(param, "conn") == 0) {
-        flag = MODDEVEL_TXDUMP_CONN;
-    }
-    else if (strcasecmp(param, "reqline") == 0) {
-        flag = MODDEVEL_TXDUMP_REQLINE;
-    }
-    else if (strcasecmp(param, "reqhdr") == 0) {
-        flag = MODDEVEL_TXDUMP_REQHDR;
-    }
-    else if (strcasecmp(param, "rspline") == 0) {
-        flag = MODDEVEL_TXDUMP_RSPLINE;
-    }
-    else if (strcasecmp(param, "rsphdr") == 0) {
-        flag = MODDEVEL_TXDUMP_RSPHDR;
-    }
-    else if (strcasecmp(param, "headers") == 0) {
-        flag = MODDEVEL_TXDUMP_HEADERS;
-    }
-    else if (strcasecmp(param, "flags") == 0) {
-        flag = MODDEVEL_TXDUMP_FLAGS;
-    }
-    else if (strcasecmp(param, "args") == 0) {
-        flag = MODDEVEL_TXDUMP_ARGS;
-    }
-    else if (strcasecmp(param, "data") == 0) {
-        flag = MODDEVEL_TXDUMP_DATA;
-    }
-    else if (strcasecmp(param, "all") == 0 ) {
-        flag = MODDEVEL_TXDUMP_ALL;
-    }
-    else {
-        ib_log_error(ib, "Invalid enable \"%s\" for %s", param, label);
-        return IB_EINVAL;
-    }
-
-    switch(mod) {
-    case '+':
-        ib_flags_set(txdump->flags, flag);
-        break;
-    case '-':
-        ib_flags_clear(txdump->flags, flag);
-        break;
-    default:
-        txdump->flags = flag;
-    }
-
     return IB_OK;
 }
 
@@ -1230,6 +1168,23 @@ static ib_status_t moddevel_txdump_parse_dest(
     return IB_OK;
 }
 
+static IB_STRVAL_MAP(flags_map) = {
+    IB_STRVAL_PAIR("default", MODDEVEL_TXDUMP_DEFAULT),
+    IB_STRVAL_PAIR("basic", MODDEVEL_TXDUMP_BASIC),
+    IB_STRVAL_PAIR("context", MODDEVEL_TXDUMP_CONTEXT),
+    IB_STRVAL_PAIR("conn", MODDEVEL_TXDUMP_CONN),
+    IB_STRVAL_PAIR("reqline", MODDEVEL_TXDUMP_REQLINE),
+    IB_STRVAL_PAIR("reqhdr", MODDEVEL_TXDUMP_REQHDR),
+    IB_STRVAL_PAIR("rspline", MODDEVEL_TXDUMP_RSPLINE),
+    IB_STRVAL_PAIR("rsphdr", MODDEVEL_TXDUMP_RSPHDR),
+    IB_STRVAL_PAIR("headers", MODDEVEL_TXDUMP_HEADERS),
+    IB_STRVAL_PAIR("flags", MODDEVEL_TXDUMP_FLAGS),
+    IB_STRVAL_PAIR("args", MODDEVEL_TXDUMP_ARGS),
+    IB_STRVAL_PAIR("data", MODDEVEL_TXDUMP_DATA),
+    IB_STRVAL_PAIR("all", MODDEVEL_TXDUMP_ALL),
+    IB_STRVAL_PAIR_LAST,
+};
+
 /**
  * Handle the TxDump directive
  *
@@ -1297,6 +1252,9 @@ static ib_status_t moddevel_txdump_handler(
     const ib_list_node_t        *node;
     const char                  *param;
     static const char           *label = "TxDump directive";
+    int                          flagno = 0;
+    ib_flags_t                   flags = 0;
+    ib_flags_t                   mask = 0;
 
     /* Initialize the txdump object */
     memset(&txdump, 0, sizeof(txdump));
@@ -1330,17 +1288,16 @@ static ib_status_t moddevel_txdump_handler(
     }
 
     /* Parse the remainder of the parameters a enables / disables */
-    txdump.flags = MODDEVEL_TXDUMP_DEFAULT;
     while( (node = ib_list_node_next_const(node)) != NULL) {
         assert(node->data != NULL);
         param = (const char *)node->data;
-        rc = moddevel_txdump_parse_enable(cp->ib, label, param, &txdump);
+        rc = ib_flags_string(flags_map, param, flagno++, &flags, &mask);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Error parsing enable for %s", label);
             return rc;
         }
     }
-    txdump.flags |= MODDEVEL_TXDUMP_ENABLED;
+    txdump.flags = ib_flags_merge(MODDEVEL_TXDUMP_DEFAULT, flags, mask);
 
     /* Create the txdump entry */
     ptxdump = ib_mpool_memdup(config->mp, &txdump, sizeof(txdump));
@@ -1447,7 +1404,10 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     char                 *pcopy;
     char                 *param;
     static const char    *label = "TxDump action";
-
+    int                   flagno = 0;
+    ib_flags_t            flags = 0;
+    ib_flags_t            mask = 0;
+    
     if (parameters == NULL) {
         return IB_EINVAL;
     }
@@ -1475,15 +1435,14 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     }
 
     /* Parse the remainder of the parameters a enables / disables */
-    txdump.flags = MODDEVEL_TXDUMP_DEFAULT;
     while ((param = strtok(NULL, ",")) != NULL) {
-        rc = moddevel_txdump_parse_enable(ib, label, param, &txdump);
+        rc = ib_flags_string(flags_map, param, flagno++, &flags, &mask);
         if (rc != IB_OK) {
             ib_log_error(ib, "Error parsing enable for %s", label);
             return rc;
         }
     }
-    txdump.flags |= MODDEVEL_TXDUMP_ENABLED;
+    txdump.flags = ib_flags_merge(MODDEVEL_TXDUMP_DEFAULT, flags, mask);
 
     /* Create the txdump entry */
     ptxdump = ib_mpool_memdup(mp, &txdump, sizeof(txdump));

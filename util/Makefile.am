@@ -18,6 +18,7 @@ libibutil_la_SOURCES = ahocorasick.c \
                        escape.c \
                        expand.c \
                        field.c \
+                       flags.c \
                        hash.c \
                        ip.c \
                        ipset.c \

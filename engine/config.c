@@ -29,6 +29,7 @@
 #include "config-parser.h"
 #include "engine_private.h"
 
+#include <ironbee/flags.h>
 #include <ironbee/mpool.h>
 #include <ironbee/strval.h>
 
@@ -600,14 +601,10 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
 
     ib_engine_t *ib = cp->ib;
     ib_dirmap_init_t *rec;
-    ib_list_node_t *node;
     size_t nargs = ib_list_elements(args);
     const char *p1;
     const char *p2;
-    ib_flags_t flags;
-    ib_flags_t fmask;
     ib_status_t rc;
-    int i;
 
     rc = ib_hash_get(ib->dirmap, &rec, name);
     if (rc != IB_OK) {
@@ -664,58 +661,19 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             rc = rec->cb.fn_list(cp, name, args, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_OPFLAGS:
-            i = 0;
-            flags = 0;
-            fmask = 0;
+        {
+            ib_flags_t  flags = 0;
+            ib_flags_t  mask = 0;
+            const char *error;
 
-            IB_LIST_LOOP(args, node) {
-                const char *opname = (const char *)ib_list_node_data(node);
-                int oper = (*opname == '-') ? -1 : ((*opname == '+') ? 1 : 0);
-                ib_num_t val;
-
-                /* If the first option does not use an operator, then
-                 * this is setting all flags so set all the mask bits.
-                 */
-                if ((i == 0) && (oper == 0)) {
-                    fmask = ~0;
-                }
-
-                ib_cfg_log_debug3(cp,
-                    "Processing %s option: %s", name, opname
-                );
-
-                /* Remove the operator from the name if required.
-                 * and determine the numeric value of the option
-                 * by using the value map.
-                 */
-                if (oper != 0) {
-                    ++opname;
-                }
-
-                rc = cfgp_opval(opname, rec->valmap, &val);
-                if (rc != IB_OK) {
-                    ib_cfg_log_error(cp,
-                        "Invalid %s option: %s", name, opname
-                    );
-                    return rc;
-                }
-
-                /* Mark which bit(s) we are setting. */
-                fmask |= val;
-
-                /* Set/Unset the appropriate bits. */
-                if (oper == -1) {
-                    flags = flags & ~val;
-                }
-                else {
-                    flags |= val;
-                }
-
-                ++i;
+            rc = ib_flags_strlist(rec->valmap, args, &flags, &mask, &error);
+            if (rc != IB_OK) {
+                ib_cfg_log_error(cp, "Invalid %s option: \"%s\"", name, error);
             }
 
-            rc = rec->cb.fn_opflags(cp, name, flags, fmask, rec->cbdata_cb);
+            rc = rec->cb.fn_opflags(cp, name, flags, mask, rec->cbdata_cb);
             break;
+        }
         case IB_DIRTYPE_SBLK1:
             if (nargs != 1) {
                 ib_cfg_log_error(cp,
