@@ -251,10 +251,7 @@ Call::Call() :
 const std::string& Call::to_s() const
 {
     if (! m_calculated_s) {
-        // Only way we can get here is if no children were ever added/removed.
-        assert(children().empty());
-        m_s = '(' + name() + ')';
-        m_calculated_s = true;
+        recalculate_s();
     }
     return m_s;
 }
@@ -262,22 +259,22 @@ const std::string& Call::to_s() const
 void Call::add_child(const node_p& child)
 {
     Node::add_child(child);
-    recalculate_s();
+    reset_s();
 }
 
 void Call::remove_child(const node_p& child)
 {
     Node::remove_child(child);
-    recalculate_s();
+    reset_s();
 }
 
 void Call::replace_child(const node_p& child, const node_p& with)
 {
     Node::replace_child(child, with);
-    recalculate_s();
+    reset_s();
 }
 
-void Call::recalculate_s()
+void Call::recalculate_s() const
 {
     m_s.clear();
     m_s = "(" + name();
@@ -297,9 +294,27 @@ void Call::recalculate_s()
                 )
             );
         }
-        parent->recalculate_s();
+        parent->reset_s();
     }
     m_calculated_s = true;
+}
+
+void Call::reset_s() const
+{
+    BOOST_FOREACH(const weak_node_p& weak_parent, parents()) {
+        call_p parent = boost::dynamic_pointer_cast<Call>(
+            weak_parent.lock()
+        );
+        if (! parent) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << errinfo_what(
+                    "Have non-Call parent."
+                )
+            );
+        }
+        parent->reset_s();
+    }
+    m_calculated_s = false;
 }
 
 void Literal::add_child(const node_p&)

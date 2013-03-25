@@ -348,8 +348,11 @@ public:
     virtual std::string name() const = 0;
 
 private:
+    //! Mark m_s as in need of recalculation.
+    void reset_s() const;
+
     //! Recalculate m_s.
-    void recalculate_s();
+    void recalculate_s() const;
 
     // Because name() is pure, Call::Call() can not calculate m_s.  I.e., we
     // need to fully construct the class before setting m_s.  So we have
