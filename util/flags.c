@@ -42,7 +42,7 @@
  *
  * @returns Status code:
  *  - IB_OK: All OK,
- *  - IB_ENOENT: @a string not found in @a map
+ *  - IB_ENOENT: @a str not found in @a map
  */
 static ib_status_t parse_single(
     const ib_strval_t    *map,
@@ -90,8 +90,7 @@ static ib_status_t parse_single(
  * @param[out] pmask Pointer to flag mask
  *
  * @returns Status code:
- *  - IB_OK: All OK,
- *  - IB_ENOENT: @a string not found in @a map
+ *  - IB_OK: All OK
  */
 static ib_status_t apply_operation(
     ib_flags_op_t  oper,

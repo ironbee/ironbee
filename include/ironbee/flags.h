@@ -189,7 +189,7 @@ ib_flags_t IB_FLAGS_MERGE(
  *
  * @returns Status code:
  *  - IB_OK: All OK,
- *  - IB_ENOENT: @a string not found in @a map
+ *  - IB_ENOENT: @a str not found in @a map
  *  - IB_EINVAL: One or more of the pointer parameters is NULL
  */
 ib_status_t ib_flags_string(
@@ -213,7 +213,6 @@ ib_status_t ib_flags_string(
  *
  * @returns Status code:
  *  - IB_OK: All OK,
- *  - IB_ENOENT: @a string not found in @a map
  *  - IB_EINVAL: One or more of the pointer parameters is NULL
  */
 ib_status_t DLL_PUBLIC ib_flags_strlist(
@@ -243,7 +242,7 @@ ib_status_t DLL_PUBLIC ib_flags_strlist(
  *
  * @returns Status code:
  *  - IB_OK: All OK,
- *  - IB_ENOENT: @a string not found in @a map
+ *  - IB_ENOENT: @a str not found in @a map
  *  - IB_EINVAL: One or more of the pointer parameters is NULL
  */
 ib_status_t DLL_PUBLIC ib_flags_strtok(
@@ -271,7 +270,7 @@ ib_status_t DLL_PUBLIC ib_flags_strtok(
  *
  * @returns Status code:
  *  - IB_OK: All OK,
- *  - IB_ENOENT: @a string not found in @a map
+ *  - IB_ENOENT: @a str not found in @a map
  *  - IB_EINVAL: One or more of the pointer parameters is NULL
  */
 ib_status_t DLL_PUBLIC ib_flags_oplist_parse(

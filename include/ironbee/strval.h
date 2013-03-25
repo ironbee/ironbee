@@ -85,7 +85,7 @@ typedef struct ib_strval_data_t ib_strval_data_t;
  *
  * @returns Status code:
  *  - IB_OK: All OK,
- *  - IB_ENOENT: @a string not found in @a map
+ *  - IB_ENOENT: @a str not found in @a map
  *  - IB_EINVAL: One or more of the pointer parameters is NULL
  */
 ib_status_t DLL_PUBLIC ib_strval_lookup(
@@ -102,7 +102,7 @@ ib_status_t DLL_PUBLIC ib_strval_lookup(
  *
  * @returns Status code:
  *  - IB_OK: All OK,
- *  - IB_ENOENT: @a string not found in @a map
+ *  - IB_ENOENT: @a str not found in @a map
  *  - IB_EINVAL: One or more of the pointer parameters is NULL
  */
 ib_status_t DLL_PUBLIC ib_strval_ptr_lookup(
@@ -120,7 +120,7 @@ ib_status_t DLL_PUBLIC ib_strval_ptr_lookup(
  *
  * @returns Status code:
  *  - IB_OK: All OK,
- *  - IB_ENOENT: @a string not found in @a map
+ *  - IB_ENOENT: @a str not found in @a map
  *  - IB_EINVAL: One or more of the pointer parameters is NULL
  */
 ib_status_t DLL_PUBLIC ib_strval_data_lookup(
@@ -139,7 +139,7 @@ ib_status_t DLL_PUBLIC ib_strval_data_lookup(
  *
  * @returns Status code:
  *  - IB_OK: All OK,
- *  - IB_ENOENT: @a string not found in @a map
+ *  - IB_ENOENT: @a str not found in @a map
  *  - IB_EINVAL: One or more of the pointer parameters is NULL
  */
 #define IB_STRVAL_DATA_LOOKUP(map, type, str, pptr)       \
