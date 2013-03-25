@@ -16,14 +16,15 @@
  ****************************************************************************/
 
 /**
- * @file 
+ * @file
+ *
  * @brief IronBee Lua --- Top level API documentation.
  *
  * This file contains no code, only API documentations.  It functions as the
  * main page of the API documentation.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
- **/
+ */
 
 /**
  * @page LuaAPI Lua API
@@ -39,6 +40,9 @@
  *                       will not include this directly.
  * - @c ironbee/engine - An engine object. This is the API wrapper to
  *                       ib_engine_t pointers.
+ * - @c ironbee/logevent - This class should not be required directly.
+ *                         It contains the wrapper for ib_logevent_t
+ *                         objects.
  * - @c ironbee/module - This is the module code. Like @c config.lua, you will
  *                       not typically use this directly.
  * - @c ironbee/rules - Another file that will not be immediately used
@@ -53,60 +57,56 @@
  *
  * @subsection IronBeeLuaEngineApi The Engine API
  *
- * @fn add(name, value)
- * @param[in] name The name of the value to add to the DPI.
- * @param[in] value The value to add to the DPI.
- * Add a string, number or table.
+ * - @c ib:addEvent([msg], options) - Add a new event.
+ * - @c ib:appendToList(list_name, name, value) - append a value to a list.
+ * - @c ib:get(name) - return a string, number or table.
+ * - @c ib:getFieldList() - Return a list of defined fields.
+ * - @c ib:getNames(field) - Returns a list of names in this field.
+ * - @c ib:getValues(field) - Returns a list of values in this field.
+ * - @c ib:set(name, value) - set a string, number or table.
+ * - @c ib:forEachEvent(function(event)...) - Call the given function on each
+ *                                            event.
+ *                                            See Event Manipulation.
+ * - @c ib:events() - Returns a next function, an empty table, and nil, used for
+ *                    iteration. for index,event in ib:events() do ... end.
  *
--- addEvent([msg], options) - Add a new event.
--- appendToList(list_name, name, value) - append a value to a list.
--- get(name) - return a string, number or table.
--- getFieldList() - Return a list of defined fields.
--- getNames(field) - Returns a list of names in this field.
--- getValues(field) - Returns a list of values in this field.
--- set(name, value) - set a string, number or table.
--- forEachEvent(function(event)...) - Call the given function on each event.
---                                    See the Event Manipulation section.
--- events() - Returns a next function, an empty table, and nil, used for
---            iteration. for index,event in ib:events() do ... end.
---
--- Event Manipulation
--- An event object, such as one passed to a callback function by
--- forEachEvent is a special wrapper object.
---
--- event.raw - The raw C struct representing the current event.
--- event:getSeverity() - Return the number representing the severity.
--- event:getAction() - Return the integer representing the action.
--- event:getConfidence() - Return the number representing the confidence.
--- event:getRuleId() - Return the string representing the rule id.
--- event:getMsg() - Return the string representing the message.
--- event:getType() - Return the string showing the suppression value.
---                       The returned values will be unknown,
---                       observation, or alert
---                       replaced, incomplete, partial, or other.
--- event:setType(value) - Set the type value. This is one of the
---                        very few values that may be changed in an event.
---                        Events are mostly immutable things.
---                        Allowed values are unknown, observation, or alert.
--- event:getSuppress() - Return the string showing the suppression value.
---                       The returned values will be none, false_positive,
---                       replaced, incomplete, partial, or other.
--- event:setSuppress(value) - Set the suppression value. This is one of the
---                            very few values that may be changed in an event.
---                            Events are mostly immutable things.
---                            Allowed values are false_positive, replaced,
---                            incomplete, partial, or other.
--- event:forEachField(function(tag)...) - Pass each field, as a string, to the callback function.
--- event:forEachTag(function(tag)...) - Pass each tag, as a string, to the callback function.
---
--- Logging
---
--- logError(format, ...) - Log an error message.
--- logInfo(format, ...) - Log an info message.
--- logDebug(format, ...)- Log a debug message.
--- 
- * @section Rules
+ * @subsection IronBeeLuaLogEvents Event Manipulation
  *
- * A section about rules.
+ * An event object, such as one passed to a callback function by
+ * forEachEvent is a special wrapper object.
+ *
+ * - @c event.raw - The raw C struct representing the current event.
+ * - @c event:getSeverity() - Return the number representing the severity.
+ * - @c event:getAction() - Return the integer representing the action.
+ * - @c event:getConfidence() - Return the number representing the confidence.
+ * - @c event:getRuleId() - Return the string representing the rule id.
+ * - @c event:getMsg() - Return the string representing the message.
+ * - @c event:getType() - Return the string showing the suppression value.
+ *                        The returned values will be unknown,
+ *                        observation, or alert
+ *                        replaced, incomplete, partial, or other.
+ * - @c event:setType(value) - Set the type value. This is one of the
+ *                             very few values that may be changed in an event.
+ *                             Events are mostly immutable things.
+ *                             Allowed values are unknown, observation, or
+ *                             alert.
+ * - @c event:getSuppress() - Return the string showing the suppression value.
+ *                            The returned values will be none, false_positive,
+ *                            replaced, incomplete, partial, or other.
+ * - @c event:setSuppress(value) - Set the suppression value. This is one of the
+ *                                 very few values that may be changed in an
+ *                                 event. Events are mostly immutable things.
+ *                                 Allowed values are false_positive, replaced,
+ *                                 incomplete, partial, or other.
+ * - @c event:forEachField(function(tag)...) - Pass each field, as a string,
+ *                                             to the callback function.
+ * - @c event:forEachTag(function(tag)...) - Pass each tag, as a string, to
+ *                                           the callback function.
+ *
+ * @subsection IronBeeLuaApiLogging Logging
+ * 
+ * - @c ib:logError(format, ...) - Log an error message.
+ * - @c ib:logInfo(format, ...) - Log an info message.
+ * - @c ib:logDebug(format, ...) - Log a debug message.
  */
 
