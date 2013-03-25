@@ -202,14 +202,14 @@ ib_status_t ib_flags_string(
 /**
  * Parse and apply each node in a flag string list (list of flag strings).
  *
- * This is equivilent to calling @a ib_flags_string() for each
+ * This is equivalent to calling @a ib_flags_string() for each
  * element of @a strlist with an incrementing num (starting at zero).
  *
  * @param[in] map String / value mapping
  * @param[in] strlist List of strings to lookup in @a map
  * @param[in,out] pflags Pointer to flags
  * @param[in,out] pmask Pointer to flag mask
- * @param[out] perror Poiner to offending string in case of an error (or NULL).
+ * @param[out] perror Pointer to offending string in case of an error (or NULL).
  *
  * @returns Status code:
  *  - IB_OK: All OK,
@@ -227,7 +227,7 @@ ib_status_t DLL_PUBLIC ib_flags_strlist(
  * Parse and apply a tokenized string as flags from a name/value pair mapping.
  *
  * This function will make a copy of @a str (using @a mp for allocation), and
- * then use strtok() to tokenize the copy (using @a sep as the delimitter
+ * then use strtok() to tokenize the copy (using @a sep as the delimiter
  * passed to strtok().  Each individual item will then be looked up in @a map,
  * and then applied.
  *

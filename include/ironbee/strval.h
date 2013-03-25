@@ -35,7 +35,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeUtilStingValue String/Value mapping functions
+ * @defgroup IronBeeUtilStringValue String/Value mapping functions
  * @ingroup IronBeeUtil
  *
  * Code related to parsing and interpreting string / value pairs
@@ -132,7 +132,7 @@ ib_status_t DLL_PUBLIC ib_strval_data_lookup(
 /**
  * Lookup a name/data pair mapping -- macro version
  *
- * @param[in] map String / data mapping (casted to const ib_strval_data_t *)
+ * @param[in] map String / data mapping (cast to const ib_strval_data_t *)
  * @param[in] type Type of the @a map records
  * @param[in] str String to lookup in @a map
  * @param[out] pptr Pointer to data portion

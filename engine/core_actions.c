@@ -2337,7 +2337,7 @@ typedef struct {
  * @param[in] ib IronBee engine (unused)
  * @param[in] ctx Current context.
  * @param[in] mp Memory pool to use for allocation
- * @param[in] parameters Con=d10-h10stant parameters from the rule definition
+ * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Unused.
  *

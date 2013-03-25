@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1922 
+personal_ws-1.1 en 1935 
 malloced
 malloc'ed
 libnet
@@ -113,6 +113,7 @@ libnids
 datapoints
 returnedFalseOnly
 subcontext
+strtok
 bintree
 strtol
 dbar
@@ -451,6 +452,7 @@ NULLs
 xdb
 deallocations
 xdc
+pmask
 wildcards
 uri
 xdd
@@ -896,6 +898,7 @@ cdynf
 modsec
 InitVars
 erroffset
+poper
 urllib
 cstring
 hostnames
@@ -927,6 +930,7 @@ forEachEvent
 StdErr
 stderr
 ascii
+tokenized
 beforeModule
 luajit
 LuaJIT
@@ -1329,6 +1333,7 @@ nspaces
 IronBeeUtilStream
 ConnFinished
 benchmarker
+oper
 ConstEngine
 xfilename
 ActivateModule
@@ -1344,6 +1349,7 @@ google
 nsub
 typedefs
 uZardWeb
+pmap
 filehandles
 pitx
 RuleEnable
@@ -1376,6 +1382,7 @@ dirname
 calloc
 constructable
 kvset
+IronBeeUtilStringValue
 rbuf
 ababc
 pcpdata
@@ -1440,6 +1447,7 @@ eventp
 ftrace
 createn
 priv
+pptr
 tunable
 FINPLACE
 MemoryPools
@@ -1653,6 +1661,7 @@ tVConn
 dmode
 IronBeeUtilDecode
 xname
+IronBeeUtilFlags
 elementtype
 hashequal
 infos
@@ -1688,6 +1697,7 @@ TxFinished
 NULLed
 IronBeeUtilUUID
 ResponseHeadersData
+oplist
 setflag
 dpath
 allocs
@@ -1784,6 +1794,7 @@ inspectResponseHeader
 aabc
 httpd's
 HTTPD's
+tokenizing
 xHEX
 x'HEX
 nomem
@@ -1801,6 +1812,7 @@ onEventHandlePostprocess
 DataType
 dorothy
 vptr
+strlist
 abCd
 multipart
 kvstore
@@ -1826,6 +1838,7 @@ referants
 endian
 trimLeft
 invis
+perror
 IronBeeEngineLog
 DelegateType
 nfilters
