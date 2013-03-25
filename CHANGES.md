@@ -101,7 +101,7 @@ IronBee v0.7.0
   * For servers, use `ib_log_set_logger` and `ib_log_set_loglevel` to setup
     custom loggers.  Provider interface is gone.
   * For configuration writers, use `Log` and `LogLevel`; `DebugLog` and
-    `DebugLogLevel` are gone`.  `LogHandler` is also gone.
+    `DebugLogLevel` are gone.  `LogHandler` is also gone.
   * For module writers, use `ib_log_vex` instead of `ib_log_vex_ex`.  Include
     `log.h` for logging routines.
   * For engine developers, logging code is now in `log.c` and `log.h`.
@@ -179,7 +179,7 @@ IronBee v0.7.0
 * Added `ia_eudoxus_all_outputs()` to iterate through every output in an
   automata.  `ee -L` can be used to do this from the command line.
 
-* Added '\iX' to Aho Corasick patterns which matches upper case of X and
+* Added '\\iX' to Aho Corasick patterns which matches upper case of X and
   lower case of X for any X in A-Za-z.
 
 * Added '\$' to Aho Corasick patterns which matches CR or NL.
