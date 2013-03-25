@@ -41,9 +41,9 @@
 #include <ironbee/util.h>
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <strings.h>
-#include <inttypes.h>
 
 /**
  * Data types for the setvar action.

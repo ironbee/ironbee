@@ -21,9 +21,10 @@
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
-#include <ironbee/flags.h>
 
 #include "ironbee_config_auto.h"
+
+#include <ironbee/flags.h>
 
 #include <ironbee/list.h>
 #include <ironbee/strval.h>

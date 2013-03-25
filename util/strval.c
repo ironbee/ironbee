@@ -22,9 +22,10 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Nick LeRoy <nleroy@qualys.com>
  */
-#include <ironbee/strval.h>
 
 #include "ironbee_config_auto.h"
+
+#include <ironbee/strval.h>
 
 #include <ironbee/list.h>
 
