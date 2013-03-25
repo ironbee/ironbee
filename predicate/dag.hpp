@@ -161,12 +161,6 @@ public:
      **/
     virtual const std::string& to_s() const = 0;
 
-    //! True iff node can calculate value without context.
-    virtual bool is_static() const
-    {
-        return false;
-    }
-
     /**
      * Add a child.
      *
@@ -390,12 +384,6 @@ public:
     virtual void remove_child(const node_p&);
     //! @throw IronBee::einval always.
     virtual void replace_child(const node_p& child, const node_p& with);
-
-    //! Is static!
-    virtual bool is_static() const
-    {
-        return true;
-    }
 };
 
 /**

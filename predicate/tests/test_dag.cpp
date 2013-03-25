@@ -89,7 +89,6 @@ TEST_F(TestDAG, String)
     String n("node");
     EXPECT_EQ("'node'", n.to_s());
     EXPECT_EQ("node", n.value_as_s());
-    EXPECT_TRUE(n.is_static());
     EXPECT_EQ(
         "node",
         n.eval(Context()).value_as_byte_string().to_s()
@@ -133,7 +132,6 @@ TEST_F(TestDAG, Null)
 {
     Null n;
     EXPECT_EQ("null", n.to_s());
-    EXPECT_TRUE(n.is_static());
     EXPECT_FALSE(n.eval(Context()));
 }
 
