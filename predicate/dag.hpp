@@ -223,6 +223,9 @@ public:
         return m_has_value;
     }
 
+    //! True iff node is a literal, in which case eval(Context()) is valid.
+    bool is_literal() const;
+
     //! Return value, calculating if needed.
     Value eval(Context context);
 

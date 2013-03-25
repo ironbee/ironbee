@@ -93,6 +93,7 @@ TEST_F(TestDAG, String)
         "node",
         n.eval(Context()).value_as_byte_string().to_s()
     );
+    EXPECT_TRUE(n.is_literal());
 }
 
 TEST_F(TestDAG, StringEscaping)
@@ -117,6 +118,7 @@ TEST_F(TestDAG, Call)
     n->add_child(a2);
 
     EXPECT_EQ("(dummy_call (dummy_call) 'foo')", n->to_s());
+    EXPECT_FALSE(n->is_literal());
 }
 
 TEST_F(TestDAG, OutputOperator)
@@ -133,6 +135,7 @@ TEST_F(TestDAG, Null)
     Null n;
     EXPECT_EQ("null", n.to_s());
     EXPECT_FALSE(n.eval(Context()));
+    EXPECT_TRUE(n.is_literal());
 }
 
 TEST_F(TestDAG, DeepCall)

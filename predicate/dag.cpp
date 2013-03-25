@@ -183,6 +183,11 @@ void Node::post_transform(NodeReporter reporter) const
     // nop
 }
 
+bool Node::is_literal() const
+{
+    return dynamic_cast<const Literal*>(this);
+}
+
 ostream& operator<<(ostream& out, const Node& node)
 {
     out << node.to_s();
