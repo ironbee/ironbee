@@ -41,11 +41,13 @@ Reporter::Reporter() :
 void Reporter::error(const string& message)
 {
     m_messages.push_back("ERROR: " + message);
+    ++m_num_errors;
 }
 
 void Reporter::warn(const string& message)
 {
     m_messages.push_back("WARNING: " + message);
+    ++m_num_warnings;
 }
 
 void Reporter::write_report(ostream& out) const
