@@ -24,19 +24,25 @@
 
 #include "../standard.hpp"
 #include "../parse.hpp"
+#include "../merge_graph.hpp"
 #include "../../ironbeepp/tests/fixture.hpp"
+#include "parse_fixture.hpp"
 
 #include "gtest/gtest.h"
 
 using namespace IronBee::Predicate;
 using namespace std;
 
-class TestStandard : public ::testing::Test, public IBPPTestFixture
+class TestStandard :
+    public ::testing::Test,
+    public IBPPTestFixture,
+    public ParseFixture
 {
 protected:
     void SetUp()
     {
         Standard::load(m_factory);
+        m_factory.add("A", &create);
     }
 
     Value eval(const std::string& text)
@@ -45,20 +51,37 @@ protected:
         return parse_call(text, i, m_factory)->eval(m_transaction);
     }
 
-    CallFactory m_factory;
+    node_cp transform(node_p n) const
+    {
+        MergeGraph G;
+        Reporter r;
+        size_t i = G.add_root(n);
+        n->transform(NodeReporter(r, n), G);
+        if (r.num_warnings() || r.num_errors()) {
+            throw runtime_error("Warnings/Errors during transform.");
+        }
+        return G.root(i);
+    }
+
+    string transform(const string& s) const
+    {
+        return transform(parse(s))->to_s();
+    }
 };
 
-TEST_F(TestStandard, true)
+TEST_F(TestStandard, True)
 {
     EXPECT_TRUE(eval("(true)"));
+    EXPECT_EQ("''", transform("(true)"));
 }
 
-TEST_F(TestStandard, false)
+TEST_F(TestStandard, False)
 {
     EXPECT_FALSE(eval("(false)"));
+    EXPECT_EQ("null", transform("(false)"));
 }
 
-TEST_F(TestStandard, not)
+TEST_F(TestStandard, Not)
 {
     EXPECT_TRUE(eval("(not (false))"));
     EXPECT_FALSE(eval("(not (true))"));
@@ -66,6 +89,9 @@ TEST_F(TestStandard, not)
     EXPECT_FALSE(eval("(not 'foo')"));
     EXPECT_THROW(eval("(not)"), IronBee::einval);
     EXPECT_THROW(eval("(not 'a' 'b')"), IronBee::einval);
+    EXPECT_EQ("null", transform("(not '')"));
+    EXPECT_EQ("''", transform("(not null)"));
+    EXPECT_EQ("(not (A))", transform("(not (A))"));
 }
 
 TEST_F(TestStandard, Or)

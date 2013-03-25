@@ -45,6 +45,16 @@ public:
     //! See Call::name()
     virtual std::string name() const;
 
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with Null.
+    **/
+   virtual bool transform(
+       NodeReporter reporter,
+       MergeGraph&  merge_graph
+   );
+
 protected:
     //! See Node::calculate()
     virtual Value calculate(Context);
@@ -60,6 +70,16 @@ class True :
 public:
     //! See Call::name()
     virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with ''.
+    **/
+   virtual bool transform(
+       NodeReporter reporter,
+       MergeGraph&  merge_graph
+   );
 
 protected:
     //! See Node::calculate()
@@ -106,6 +126,16 @@ class Not :
 public:
     //! See Call::name()
     virtual std::string name() const;
+
+    /**
+     * See Node::transform().
+     *
+     * Will replace self with a true or false value if child is a literal.
+     **/
+    virtual bool transform(
+        NodeReporter reporter,
+        MergeGraph&  merge_graph
+    );
 
 protected:
     virtual Value calculate(Context context);

@@ -23,6 +23,7 @@
  */
 
 #include "standard.hpp"
+#include "merge_graph.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -37,6 +38,19 @@ string False::name() const
     return "false";
 }
 
+bool False::transform(
+    NodeReporter reporter,
+    MergeGraph&  merge_graph
+)
+{
+    node_p me = shared_from_this();
+    node_p replacement(new Null());
+
+    merge_graph.replace(me, replacement);
+
+    return true;
+}
+
 Value False::calculate(Context)
 {
     return Value();
@@ -45,6 +59,19 @@ Value False::calculate(Context)
 string True::name() const
 {
     return "true";
+}
+
+bool True::transform(
+    NodeReporter reporter,
+    MergeGraph&  merge_graph
+)
+{
+    node_p me = shared_from_this();
+    node_p replacement(new String(""));
+
+    merge_graph.replace(me, replacement);
+
+    return true;
 }
 
 Value True::calculate(Context)
@@ -123,6 +150,31 @@ Value Not::calculate(Context context)
     }
     else {
         return True().eval(context);
+    }
+}
+
+bool Not::transform(
+    NodeReporter reporter,
+    MergeGraph&  merge_graph
+)
+{
+    assert(children().size() == 1);
+    const node_p& child = children().front();
+    const node_cp& me = shared_from_this();
+
+    if (child->is_literal()) {
+        node_p replacement;
+        if (child->eval(Context())) {
+            replacement.reset(new Null());
+        }
+        else {
+            replacement.reset(new String(""));
+        }
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
