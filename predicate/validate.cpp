@@ -33,7 +33,36 @@ namespace IronBee {
 namespace Predicate {
 namespace Validate {
 
-void validate_n_children(NodeReporter& reporter, size_t n)
+namespace  {
+
+node_cp nth_child(
+    NodeReporter&  reporter,
+    size_t         n
+)
+{
+    size_t num_children = reporter.node()->children().size();
+
+    if (reporter.node()->children().size() <= n) {
+        reporter.error(
+            "Wanted " + boost::lexical_cast<string>(n+1) +
+            "th child.  But there are only " +
+            boost::lexical_cast<string>(num_children) + " children."
+        );
+        return node_cp();
+    }
+
+    return *boost::next(reporter.node()->children().begin(), n);
+}
+
+template <typename BaseClass>
+bool is_a(const node_cp& node)
+{
+    return boost::dynamic_pointer_cast<const BaseClass>(node);
+}
+
+}
+
+void n_children(NodeReporter& reporter, size_t n)
 {
     size_t actual_children = reporter.node()->children().size();
     if (actual_children != n) {
@@ -42,6 +71,79 @@ void validate_n_children(NodeReporter& reporter, size_t n)
             " but have " + boost::lexical_cast<string>(actual_children) +
             "."
         );
+    }
+}
+
+void n_or_more_children(NodeReporter& reporter, size_t n)
+{
+    size_t actual_children = reporter.node()->children().size();
+    if (actual_children != n) {
+        reporter.error(
+            "Expected at least " + boost::lexical_cast<string>(n) +
+            " children  but have " +
+            boost::lexical_cast<string>(actual_children) + "."
+        );
+    }
+}
+
+void n_or_fewer_children(NodeReporter& reporter, size_t n)
+{
+    size_t actual_children = reporter.node()->children().size();
+    if (actual_children != n) {
+        reporter.error(
+            "Expected at most " + boost::lexical_cast<string>(n) +
+            " children but have " +
+            boost::lexical_cast<string>(actual_children) + "."
+        );
+    }
+}
+
+void nth_child_is_string_literal(NodeReporter& reporter, size_t n)
+{
+    node_cp child = nth_child(reporter, n);
+    if (child && ! is_a<String>(child)) {
+        reporter.error(
+            "Child " + boost::lexical_cast<string>(n+1) + " must be a "
+            "string literal."
+        );
+    }
+}
+
+void nth_child_is_null(NodeReporter& reporter, size_t n)
+{
+    node_cp child = nth_child(reporter, n);
+    if (child && ! is_a<Null>(child)) {
+        reporter.error(
+            "Child " + boost::lexical_cast<string>(n+1) + " must be a null."
+        );
+    }
+}
+
+void no_child_is_literal(NodeReporter& reporter)
+{
+    size_t i = 0;
+    BOOST_FOREACH(const node_cp& child, reporter.node()->children()) {
+        if (is_a<Literal>(child)) {
+            reporter.error(
+                "Child " + boost::lexical_cast<string>(i+1) + " must  not be"
+                "literal."
+            );
+        }
+        ++i;
+    }
+}
+
+void no_child_is_null(NodeReporter& reporter)
+{
+    size_t i = 0;
+    BOOST_FOREACH(const node_cp& child, reporter.node()->children()) {
+        if (is_a<Null>(child)) {
+            reporter.error(
+                "Child " + boost::lexical_cast<string>(i+1) + " must  not be"
+                "null."
+            );
+        }
+        ++i;
     }
 }
 

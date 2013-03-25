@@ -92,7 +92,7 @@ namespace Predicate {
  * How to write a new validator:
  *
  * - If possible, write the validator logic is a function (see, e.g.,
- *   validate_n_children()).  Recall that the node to be validated is
+ *   n_children()).  Recall that the node to be validated is
  *   available via NodeReporter::node().
  * - Write a template that calls your function.  You can use typed template
  *   parameters to parameterize your validator, i.e., pass additional
@@ -160,30 +160,170 @@ public:
 };
 
 /**
+ * Metafunction to construct a validator from a function taking a size_t.
+ *
+ * @tparam F Function of @c NodeReporter& and @c size_t to call.
+ **/
+template <void (*F)(NodeReporter&, size_t)>
+struct make_validator_size
+{
+    //! Value; a validator.
+    template <size_t N, class Chain = Validate::Base>
+    struct value : public Chain
+    {
+        //! See Base::validate() and Predicate::Validate.
+        virtual void validate(NodeReporter& reporter) const
+        {
+            F(reporter, N);
+            Chain::validate(reporter);
+        }
+    };
+};
+
+/**
+ * Metafunction to construct a validator from a function taking nothing.
+ *
+ * @tparam F Function of @c NodeReporter& to call.
+ **/
+template <void (*F)(NodeReporter&)>
+struct make_validator
+{
+    //! Value; a validator.
+    template <class Chain = Validate::Base>
+    struct value : public Chain
+    {
+        //! See Base::validate() and Predicate::Validate.
+        virtual void validate(NodeReporter& reporter) const
+        {
+            F(reporter);
+            Chain::validate(reporter);
+        }
+    };
+};
+
+/**
  * Report error if not exactly @a n children.
  *
  * @param[in] reporter Reporter to use.
  * @param[in] n        How many children expected.
  **/
-void validate_n_children(NodeReporter& reporter, size_t n);
+void n_children(NodeReporter& reporter, size_t n);
 
 /**
- * Validation: validate_n_children()
+ * Report error if not @a n or more children.
  *
- * @tparam N     How may children should have.
- * @tparam Chain Next validation; see Predicate::Validate.
+ * @param[in] reporter Reporter to use.
+ * @param[in] n        Minimum number of children expected.
+ **/
+void n_or_more_children(NodeReporter& reporter, size_t n);
+
+/**
+ * Report error if not @a n or fewer children.
+ *
+ * @param[in] reporter Reporter to use.
+ * @param[in] n        Maximum number of children expected.
+ **/
+void n_or_fewer_children(NodeReporter& reporter, size_t n);
+
+/**
+ * Report error if @a nth child is not string literal.
+ *
+ * @param[in] reporter Reporter to use.
+ * @param[in] n        Which child should be a string literal.
+ **/
+void nth_child_is_string_literal(NodeReporter& reporter, size_t n);
+
+/**
+ * Report error if @a nth child is not a null.
+ *
+ * @param[in] reporter Reporter to use.
+ * @param[in] n        Which child should be a null.
+ **/
+void nth_child_is_null(NodeReporter& reporter, size_t n);
+
+/**
+ * Report error if any child is literal.
+ *
+ * @param[in] reporter Reporter to use.
+ **/
+void no_child_is_literal(NodeReporter& reporter);
+
+/**
+ * Report error if any child is null.
+ *
+ * @param[in] reporter Reporter to use.
+ **/
+void no_child_is_null(NodeReporter& reporter);
+
+/**
+ * Validator: n_children()
  **/
 template <size_t N, class Chain = Base>
 struct NChildren :
-    public Chain
-{
-    //! See Base::validate() and Predicate::Validate.
-    virtual void validate(NodeReporter& reporter) const
-    {
-        validate_n_children(reporter, N);
-        Chain::validate(reporter);
-    }
-};
+    public make_validator_size<
+        &n_children
+    >::value<N, Chain>
+{};
+
+/**
+ * Validator: n_or_more_children()
+ **/
+template <size_t N, class Chain = Base>
+struct NOrMoreChildren :
+    public make_validator_size<
+        &n_or_more_children
+    >::value<N, Chain>
+{};
+
+/**
+ * Validator: n_or_fewer_children()
+ **/
+template <size_t N, class Chain = Base>
+struct NOrFewerChildren :
+    public make_validator_size<
+        &n_or_fewer_children
+    >::value<N, Chain>
+{};
+
+/**
+ * Validator: nth_child_is_string_literal()
+ **/
+template <size_t N, class Chain = Base>
+struct NthChildIsStringLiteral :
+    public make_validator_size<
+        &nth_child_is_string_literal
+    >::value<N, Chain>
+{};
+
+/**
+ * Validator: nth_child_is_null()
+ **/
+template <size_t N, class Chain = Base>
+struct NthChildIsNull :
+    public make_validator_size<
+        &nth_child_is_null
+    >::value<N, Chain>
+{};
+
+/**
+ * Validator: no_child_is_literal()
+ **/
+template <class Chain = Base>
+struct NoChildIsLiteral :
+    public make_validator<
+        &no_child_is_literal
+    >::value<Chain>
+{};
+
+/**
+ * Validator: no_child_is_null()
+ **/
+template <class Chain = Base>
+struct NoChildIsNull :
+    public make_validator<
+        &no_child_is_null
+    >::value<Chain>
+{};
 
 } // Validate
 } // Predicate
