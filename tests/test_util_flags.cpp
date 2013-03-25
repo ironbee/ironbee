@@ -75,7 +75,7 @@ static IB_STRVAL_MAP(flag_map) = {
     IB_STRVAL_PAIR("flag-set-01", FLAG_SET_01),
     IB_STRVAL_PAIR("flag-set-02", FLAG_SET_02),
     IB_STRVAL_PAIR_LAST
-}; 
+};
 
 TEST(TestFlags, test_flags)
 {

@@ -77,7 +77,7 @@ static IB_STRVAL_MAP(value_map) = {
     IB_STRVAL_PAIR("value-18", VALUE_18),
     IB_STRVAL_PAIR("value-19", VALUE_19),
     IB_STRVAL_PAIR_LAST
-}; 
+};
 
 TEST(TestStrVal, test_lookup)
 {
@@ -123,7 +123,7 @@ static IB_STRVAL_PTR_MAP(ptr_map) = {
     IB_STRVAL_PAIR("value-18", "18"),
     IB_STRVAL_PAIR("value-19", "19"),
     IB_STRVAL_PAIR_LAST
-}; 
+};
 
 TEST(TestStrVal, test_ptr_lookup)
 {
@@ -177,7 +177,7 @@ static IB_STRVAL_DATA_MAP(test_strval_data_t, data_map) = {
     IB_STRVAL_DATA_PAIR("value-18", VALUE_18, "18"),
     IB_STRVAL_DATA_PAIR("value-19", VALUE_19, "19"),
     IB_STRVAL_DATA_PAIR_LAST((test_values_t)0, NULL)
-}; 
+};
 
 TEST(TestStrVal, test_data_lookup)
 {

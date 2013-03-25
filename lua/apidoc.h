@@ -104,7 +104,7 @@
  *                                           the callback function.
  *
  * @subsection IronBeeLuaApiLogging Logging
- * 
+ *
  * - @c ib:logError(format, ...) - Log an error message.
  * - @c ib:logInfo(format, ...) - Log an info message.
  * - @c ib:logDebug(format, ...) - Log a debug message.

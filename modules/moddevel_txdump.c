@@ -1407,7 +1407,7 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     int                   flagno = 0;
     ib_flags_t            flags = 0;
     ib_flags_t            mask = 0;
-    
+
     if (parameters == NULL) {
         return IB_EINVAL;
     }
