@@ -27,3 +27,14 @@ _M.__index = _M
 _M._COPYRIGHT = "Copyright (C) 2010-2013 Qualys, Inc."
 _M._DESCRIPTION = "IronBee Lua API Base Class"
 _M._VERSION = "1.0"
+
+-- Expose the Engine object.
+_M.engineapi = require('ironbee/engine')
+
+-- Expose the Tx object. This inherits from Engine.
+_M.txapi = require('ironbee/tx')
+
+-- Expose the Rule object. This inherits from Tx.
+_M.ruleapi = require('ironbee/rules')
+
+return _M

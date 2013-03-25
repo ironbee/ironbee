@@ -838,7 +838,7 @@ static int modlua_config_register_directive(lua_State *L)
     ib_module_t *module;
 
     /* We choose assert here because if this value is incorrect,
-     * then the lua module code (lua.c and ironbee-modlua.lua) are
+     * then the lua module code (lua.c and ironbee/module.lua) are
      * inconsistent with each other. */
     assert(args==3 || args==4);
 
@@ -2101,8 +2101,8 @@ static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
  *   - waggle  = require("ironbee/waggle")
  *   - ffi     = require("ffi")
  *   - ironbee = require("ironbee-ffi")
- *   - ibapi   = require("ironbee-api")
- *   - modlua  = require("ironbee-modlua")
+ *   - ibapi   = require("ironbee/api")
+ *   - modlua  = require("ironbee/module")
  *
  * @param[in] ib IronBee engine. Used to find load paths from the
  *            core module.
@@ -2117,8 +2117,8 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
                                       { "ffi", "ffi" },
                                       { "ffi", "ffi" },
                                       { "ironbee", "ironbee-ffi" },
-                                      { "ibapi", "ironbee-api" },
-                                      { "modlua", "ironbee-modlua" },
+                                      { "ibapi", "ironbee/api" },
+                                      { "modlua", "ironbee/module" },
                                       { NULL, NULL } };
 
     for (int i = 0; lua_preloads[i][0] != NULL; ++i)

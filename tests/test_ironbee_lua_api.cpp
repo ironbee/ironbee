@@ -57,7 +57,7 @@ public:
 
     /**
      * Calls BaseFixture::SetUp(), then creates a new Lua State,
-     * loads ffi, ironbee-ffi, and ironbee-api, and then sets ib_engine
+     * loads ffi, ironbee-ffi, and ironbee/api, and then sets ib_engine
      * to a copy of the ironbee engine.
      */
     virtual void SetUp()
@@ -93,7 +93,7 @@ public:
 
         require("ffi", "ffi");
         require("ironbee", "ironbee-ffi");
-        require("ibapi", "ironbee-api");
+        require("ibapi", "ironbee/api");
 
         lua_pushlightuserdata(L, &ib_rule_exec);
         lua_setglobal(L, "ib_rule_exec");

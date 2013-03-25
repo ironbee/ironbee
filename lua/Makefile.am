@@ -31,8 +31,8 @@ WAGGLE_FILES=ironbee/waggle.lua \
 
 EXTRA_DIST = ironbee-ffi-h.lua \
              ironbee-ffi.lua \
-             ironbee-api.lua \
-             ironbee-modlua.lua \
+             ironbee/api.lua \
+             ironbee/module.lua \
              example.lua \
              threat_level.lua \
              event_processor.lua \
@@ -41,8 +41,8 @@ EXTRA_DIST = ironbee-ffi-h.lua \
 
 lua_DATA   = ironbee-ffi-h.lua \
              ironbee-ffi.lua \
-             ironbee-api.lua \
-             ironbee-modlua.lua \
+             ironbee/api.lua \
+             ironbee/module.lua \
              example.lua \
              threat_level.lua \
              event_processor.lua \

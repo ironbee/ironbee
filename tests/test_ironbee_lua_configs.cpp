@@ -63,7 +63,7 @@ class IronBeeLuaConfigs : public BaseTransactionFixture {
 
     /**
      * Calls BaseFixture::SetUp(), then creates a new Lua State,
-     * loads ffi, ironbee-ffi, and ironbee-api, and then sets ib_engine
+     * loads ffi, ironbee-ffi, and ironbee/api, and then sets ib_engine
      * to a copy of the ironbee engine.
      */
     void SetUp()

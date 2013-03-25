@@ -90,7 +90,7 @@ TEST_F(TestIronBeeModuleRulesLua, load_eval)
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
     ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ffi", "ffi"));
     ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ironbee", "ironbee-ffi"));
-    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ibapi", "ironbee-api"));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ibapi", "ironbee/api"));
     ASSERT_EQ(IB_OK, ib_lua_load_eval(ib_engine, L, luafile));
 
 }
@@ -114,7 +114,7 @@ TEST_F(TestIronBeeModuleRulesLua, load_func_eval)
     setSearchPath(L);
     ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ffi", "ffi"));
     ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ironbee", "ironbee-ffi"));
-    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ibapi", "ironbee-api"));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ibapi", "ironbee/api"));
     ASSERT_EQ(IB_OK, ib_lua_load_func(ib_engine, L, luafile, "f1"));
     ASSERT_EQ(IB_OK, ib_lua_func_eval_int(&rule_exec, ib_engine, &tx, L, "f1", &res));
     ASSERT_EQ(5, res);
@@ -138,7 +138,7 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
     setSearchPath(L);
     ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ffi", "ffi"));
     ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ironbee", "ironbee-ffi"));
-    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ibapi", "ironbee-api"));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ibapi", "ironbee/api"));
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
 
     lua_State *L2;

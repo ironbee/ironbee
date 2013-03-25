@@ -24,10 +24,11 @@
 -- =========================================================================
 
 local ffi = require("ffi")
-local ibapi = require("ironbee-api")
 local debug = require("debug")
 local string = require("string")
 local ibutil = require('ironbee/util')
+local ibengine = require("ironbee/engine")
+local ibtx = require("ironbee/tx")
 
 -- The module to define.
 local M = {}
@@ -131,12 +132,12 @@ end
 -- API passed to user code building a module.
 local moduleapi = {}
 moduleapi.__index = moduleapi
-setmetatable(moduleapi, ibapi.engineapi)
+setmetatable(moduleapi, ibengine)
 
 -- Make a new moduleapi.
 -- @param[in] self The class table.
 -- @param[in] ib The IronBee engine. Because
---            a moduleapi object is a descendent of ibapi.engineapi
+--            a moduleapi object is a descendent of ibengine
 --            it needs to run that constructor which takes an ib_engine_t.
 -- @param[in] name The module name. While not required, this is
 --            currently always the Lua module file name.
@@ -145,7 +146,7 @@ setmetatable(moduleapi, ibapi.engineapi)
 --            do the work in C to register a directive with the IronBee 
 --            engine.
 moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
-    local t = ibapi.engineapi:new(ib)
+    local t = ibengine:new(ib)
 
     -- The module name.
     t.name = name
@@ -430,11 +431,11 @@ M.get_callback = function(ib, module_index, event)
     local  t = lua_modules[module_index]
 
     -- Since we only use the ib argument for logging, we defer 
-    -- creating an ibapi.engineapi table until we detect an error to log.
+    -- creating an ibengine table until we detect an error to log.
 
     if t == nil then
-        local engineapi = ibapi.engineapi:new(ib)
-        engineapi:logError("No module for module index %d", module_index)
+        local ibe = ibengine:new(ib)
+        ibe:logError("No module for module index %d", module_index)
         return nil
     end
 
@@ -512,7 +513,7 @@ M.get_configuration = function(ib, module_index, ctxlst)
     -- most precise configuration table we can for our user.
     local i = #ctxlst
 
-    local ibe = ibapi.engineapi:new(ib)
+    local ibe = ibengine:new(ib)
 
     while (i > 0) do
         local t = lua_module_configs[module_index][tostring(ctxlst[i])]
@@ -552,9 +553,9 @@ M.dispatch_module = function(
     local args
 
     if ib_tx == nil then
-        args = ibapi.engineapi:new(ib_engine)
+        args = ibengine:new(ib_engine)
     else
-        args = ibapi.txapi:new(ib_engine, ib_tx)
+        args = ibtx:new(ib_engine, ib_tx)
     end
 
     -- Event type.
