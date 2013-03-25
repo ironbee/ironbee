@@ -244,7 +244,7 @@ public:
      *
      * @param[in] reporter Reporter to use for errors or warnings.
      **/
-    virtual void pre_transform(NodeReporter& reporter) const;
+    virtual void pre_transform(NodeReporter reporter) const;
 
     /**
      * Perform transformations.
@@ -269,8 +269,8 @@ public:
      * @return true iff any changes were made.
      **/
     virtual bool transform(
-        NodeReporter& reporter,
-        MergeGraph&   merge_graph
+        NodeReporter reporter,
+        MergeGraph&  merge_graph
     );
 
     /**
@@ -279,7 +279,7 @@ public:
      * See pre_transform() for additional discussion.
      * @param[in] reporter Reporter to use for errors or warnings.
      **/
-    virtual void post_transform(NodeReporter& reporter) const;
+    virtual void post_transform(NodeReporter reporter) const;
 
 protected:
     /**

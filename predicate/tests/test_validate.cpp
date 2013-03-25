@@ -32,7 +32,7 @@ using namespace std;
 template <size_t N, class Chain = Validate::Base>
 struct WarnNTimes : public Chain
 {
-    virtual void validate(NodeReporter& node_reporter) const
+    virtual void validate(NodeReporter node_reporter) const
     {
         for (size_t i = 0; i < N; ++i) {
             node_reporter.warn("warning");
@@ -62,13 +62,13 @@ struct SimpleTest :
         return "simple_test";
     }
 
-    virtual void pre_transform(NodeReporter& reporter) const
+    virtual void pre_transform(NodeReporter reporter) const
     {
         pre_transform_called = true;
         parent::pre_transform(reporter);
     }
 
-    virtual void post_transform(NodeReporter& reporter) const
+    virtual void post_transform(NodeReporter reporter) const
     {
         post_transform_called = true;
         parent::post_transform(reporter);

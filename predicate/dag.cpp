@@ -165,20 +165,20 @@ void Node::replace_child(const node_p& child, const node_p& with)
     *i = with;
 }
 
-void Node::pre_transform(NodeReporter& reporter) const
+void Node::pre_transform(NodeReporter reporter) const
 {
     // nop
 }
 
 bool Node::transform(
-    NodeReporter& reporter,
-    MergeGraph&   merge_graph
+    NodeReporter reporter,
+    MergeGraph&  merge_graph
 )
 {
     return false;
 }
 
-void Node::post_transform(NodeReporter& reporter) const
+void Node::post_transform(NodeReporter reporter) const
 {
     // nop
 }

@@ -61,7 +61,7 @@ namespace Predicate {
  *   passed in as the last template argument.  The final element of the chain
  *   omits the last template argument or uses the default, Validate::Base.
  *   The validation chain will add the method
- *   `virtual void validate(NodeReporter&) const` to the class that performs
+ *   `virtual void validate(NodeReporter) const` to the class that performs
  *   all the validations in the chain.
  *
  * How it works: Validate::Call::pre_transform() (similar for
@@ -82,7 +82,7 @@ namespace Predicate {
  * used via:
  *
  * @code
- * virtual void pre_transform(NodeReporter& reporter) const
+ * virtual void pre_transform(NodeReporter reporter) const
  * {
  *    Validate::Call<MyCustomCallClass>::pre_transform(reporter);
  *    // Custom pre_transform code.
@@ -103,7 +103,7 @@ namespace Predicate {
  * template <size_t arg1, class Chain = Validate::Base>
  * struct MyCustomValidator : public Chain
  * {
- *     virtual void validate(NodeReporter& reporter) const
+ *     virtual void validate(NodeReporter reporter) const
  *     {
  *         my_custom_validator(reporter, arg1);
  *         Chain::validate(reporter);
@@ -127,7 +127,7 @@ class Call :
 {
 public:
     //! Dynamic cast to @a Subclass and call Base::validate().
-    virtual void pre_transform(NodeReporter& reporter) const
+    virtual void pre_transform(NodeReporter reporter) const
     {
         assert(reporter.node().get() == this);
         Predicate::Call::pre_transform(reporter);
@@ -135,7 +135,7 @@ public:
     }
 
     //! Dynamic cast to @a Subclass and call Base::validate().
-    virtual void post_transform(NodeReporter& reporter) const
+    virtual void post_transform(NodeReporter reporter) const
     {
         assert(reporter.node().get() == this);
         Predicate::Call::post_transform(reporter);
@@ -153,7 +153,7 @@ class Base
 {
 public:
     //! Validate this node.  Currently nop.
-    virtual void validate(NodeReporter&) const
+    virtual void validate(NodeReporter) const
     {
         // nop
     }
@@ -162,9 +162,9 @@ public:
 /**
  * Metafunction to construct a validator from a function taking a size_t.
  *
- * @tparam F Function of @c NodeReporter& and @c size_t to call.
+ * @tparam F Function of @c NodeReporter and @c size_t to call.
  **/
-template <void (*F)(NodeReporter&, size_t)>
+template <void (*F)(NodeReporter, size_t)>
 struct make_validator_size
 {
     //! Value; a validator.
@@ -172,7 +172,7 @@ struct make_validator_size
     struct value : public Chain
     {
         //! See Base::validate() and Predicate::Validate.
-        virtual void validate(NodeReporter& reporter) const
+        virtual void validate(NodeReporter reporter) const
         {
             F(reporter, N);
             Chain::validate(reporter);
@@ -183,9 +183,9 @@ struct make_validator_size
 /**
  * Metafunction to construct a validator from a function taking nothing.
  *
- * @tparam F Function of @c NodeReporter& to call.
+ * @tparam F Function of @c NodeReporter to call.
  **/
-template <void (*F)(NodeReporter&)>
+template <void (*F)(NodeReporter)>
 struct make_validator
 {
     //! Value; a validator.
@@ -193,7 +193,7 @@ struct make_validator
     struct value : public Chain
     {
         //! See Base::validate() and Predicate::Validate.
-        virtual void validate(NodeReporter& reporter) const
+        virtual void validate(NodeReporter reporter) const
         {
             F(reporter);
             Chain::validate(reporter);
@@ -207,7 +207,7 @@ struct make_validator
  * @param[in] reporter Reporter to use.
  * @param[in] n        How many children expected.
  **/
-void n_children(NodeReporter& reporter, size_t n);
+void n_children(NodeReporter reporter, size_t n);
 
 /**
  * Report error if not @a n or more children.
@@ -215,7 +215,7 @@ void n_children(NodeReporter& reporter, size_t n);
  * @param[in] reporter Reporter to use.
  * @param[in] n        Minimum number of children expected.
  **/
-void n_or_more_children(NodeReporter& reporter, size_t n);
+void n_or_more_children(NodeReporter reporter, size_t n);
 
 /**
  * Report error if not @a n or fewer children.
@@ -223,7 +223,7 @@ void n_or_more_children(NodeReporter& reporter, size_t n);
  * @param[in] reporter Reporter to use.
  * @param[in] n        Maximum number of children expected.
  **/
-void n_or_fewer_children(NodeReporter& reporter, size_t n);
+void n_or_fewer_children(NodeReporter reporter, size_t n);
 
 /**
  * Report error if @a nth child is not string literal.
@@ -231,7 +231,7 @@ void n_or_fewer_children(NodeReporter& reporter, size_t n);
  * @param[in] reporter Reporter to use.
  * @param[in] n        Which child should be a string literal.
  **/
-void nth_child_is_string_literal(NodeReporter& reporter, size_t n);
+void nth_child_is_string_literal(NodeReporter reporter, size_t n);
 
 /**
  * Report error if @a nth child is not a null.
@@ -239,21 +239,21 @@ void nth_child_is_string_literal(NodeReporter& reporter, size_t n);
  * @param[in] reporter Reporter to use.
  * @param[in] n        Which child should be a null.
  **/
-void nth_child_is_null(NodeReporter& reporter, size_t n);
+void nth_child_is_null(NodeReporter reporter, size_t n);
 
 /**
  * Report error if any child is literal.
  *
  * @param[in] reporter Reporter to use.
  **/
-void no_child_is_literal(NodeReporter& reporter);
+void no_child_is_literal(NodeReporter reporter);
 
 /**
  * Report error if any child is null.
  *
  * @param[in] reporter Reporter to use.
  **/
-void no_child_is_null(NodeReporter& reporter);
+void no_child_is_null(NodeReporter reporter);
 
 /**
  * Validator: n_children()
