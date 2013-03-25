@@ -2140,7 +2140,6 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
  * Commit any pending configuration items, such as rules.
  *
  * @param[in] ib IronBee engine.
- * @param[in] m The module object.
  *
  * @returns
  *   - IB_OK
