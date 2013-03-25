@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief Predicate --- Standar Tests
+ * @brief Predicate --- Standard Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

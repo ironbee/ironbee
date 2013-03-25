@@ -22,7 +22,11 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#ifndef __PREDICATE__STANDARD__
+#define __PREDICATE__STANDARD__
+
 #include "dag.hpp"
+#include "validate.hpp"
 
 #include "call_factory.hpp"
 
@@ -34,7 +38,8 @@ namespace Standard {
  * Falsy value, null.
  **/
 class False :
-    public Call
+    public Validate::Call<False>,
+    public Validate::NChildren<0>
 {
 public:
     //! See Call::name()
@@ -49,7 +54,8 @@ protected:
  * Truthy value, ''.
  **/
 class True :
-    public Call
+    public Validate::Call<True>,
+    public Validate::NChildren<0>
 {
 public:
     //! See Call::name()
@@ -64,7 +70,8 @@ protected:
  * True iff any children are truthy.
  **/
 class Or :
-    public Call
+    public Validate::Call<Or>,
+    public Validate::NOrMoreChildren<2>
 {
 public:
     //! See Call::name()
@@ -78,7 +85,8 @@ protected:
  * True iff all children are truthy.
  **/
 class And :
-    public Call
+    public Validate::Call<And>,
+    public Validate::NOrMoreChildren<2>
 {
 public:
     //! See Call::name()
@@ -92,7 +100,8 @@ protected:
  * True iff child is falsy.
  **/
 class Not :
-    public Call
+    public Validate::Call<Not>,
+    public Validate::NChildren<1>
 {
 public:
     //! See Call::name()
@@ -112,3 +121,5 @@ void load(CallFactory& to);
 } // Standard
 } // Predicate
 } // IronBee
+
+#endif
