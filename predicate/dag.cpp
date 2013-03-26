@@ -118,15 +118,17 @@ void Node::remove_child(const node_p& child)
         );
     }
 
-    size_t children_size = m_children.size();
-    m_children.remove(child);
-    if (m_children.size() == children_size) {
+    // Want to only remove first child.
+    node_list_t::iterator i =
+        find(m_children.begin(), m_children.end(), child);
+    if (i == m_children.end()) {
         BOOST_THROW_EXCEPTION(
             IronBee::enoent() << errinfo_what(
                 "No such child."
             )
         );
     }
+    m_children.erase(i);
 
     unlink_from_child(child);
 }
