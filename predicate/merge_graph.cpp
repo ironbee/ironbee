@@ -339,7 +339,6 @@ void MergeGraph::merge_tree(node_p& which)
                 node_p known_child;
                 boost::tie(new_child, known_child) = learn(child);
                 if (! new_child) {
-                    assert(child != known_child);
                     parent->replace_child(child, known_child);
                 }
                 else {

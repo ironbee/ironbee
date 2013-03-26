@@ -255,8 +255,7 @@ private:
      *
      * @param[in] which Subexpression to add.
      * @return true iff a new entry is created and the root of
-     *         the added subexpression.  Note that the returned root will
-     *         equal @a which only if a new entry is added.
+     *         the added subexpression.
      * @throw IronBee::einval if @a which is singular.
      **/
     std::pair<bool, node_p> learn(const node_p& which);
