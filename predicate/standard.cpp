@@ -33,6 +33,13 @@ namespace IronBee {
 namespace Predicate {
 namespace Standard {
 
+namespace  {
+
+static const node_p c_true(new String(""));
+static const node_p c_false(new Null());
+
+}
+
 string False::name() const
 {
     return "false";
@@ -45,8 +52,7 @@ bool False::transform(
 )
 {
     node_p me = shared_from_this();
-    node_p replacement(new Null());
-
+    node_p replacement = c_false;
     merge_graph.replace(me, replacement);
 
     return true;
@@ -69,8 +75,7 @@ bool True::transform(
 )
 {
     node_p me = shared_from_this();
-    node_p replacement(new String(""));
-
+    node_p replacement = c_true;
     merge_graph.replace(me, replacement);
 
     return true;
@@ -180,6 +185,24 @@ Value Or::calculate(Context context)
     return False().eval(context);
 }
 
+bool Or::transform(
+    NodeReporter       reporter,
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory
+)
+{
+    BOOST_FOREACH(const node_p& child, children()) {
+        if (child->is_literal() && child->eval(Context())) {
+            node_p me = shared_from_this();
+            node_p replacement = c_true;
+            merge_graph.replace(me, replacement);
+            return true;
+        }
+    }
+
+    return AbelianCall::transform(reporter, merge_graph, call_factory);
+}
+
 string And::name() const
 {
     return "and";
@@ -201,6 +224,24 @@ Value And::calculate(Context context)
         }
     }
     return True().eval(context);
+}
+
+bool And::transform(
+    NodeReporter       reporter,
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory
+)
+{
+    BOOST_FOREACH(const node_p& child, children()) {
+        if (child->is_literal() && ! child->eval(Context())) {
+            node_p me = shared_from_this();
+            node_p replacement = c_false;
+            merge_graph.replace(me, replacement);
+            return true;
+        }
+    }
+
+    return AbelianCall::transform(reporter, merge_graph, call_factory);
 }
 
 string Not::name() const

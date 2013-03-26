@@ -131,6 +131,18 @@ public:
     //! See Call::name()
     virtual std::string name() const;
 
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with '' if any child is true.
+    * Will order children canonically.
+    **/
+   virtual bool transform(
+       NodeReporter        reporter,
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory
+   );
+
 protected:
     virtual Value calculate(Context context);
 };
@@ -145,6 +157,17 @@ public:
     //! See Call::name()
     virtual std::string name() const;
 
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with null if any child is false.
+    * Will order children canonically.
+    **/
+   virtual bool transform(
+       NodeReporter        reporter,
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory
+   );
 protected:
     virtual Value calculate(Context context);
 };

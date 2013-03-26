@@ -43,6 +43,7 @@ protected:
     {
         Standard::load(m_factory);
         m_factory.add("A", &create);
+        m_factory.add("B", &create);
     }
 
     Value eval(const std::string& text)
@@ -101,8 +102,9 @@ TEST_F(TestStandard, Or)
     EXPECT_FALSE(eval("(or (false) (false))"));
     EXPECT_THROW(eval("(or)"), IronBee::einval);
     EXPECT_THROW(eval("(or (true))"), IronBee::einval);
-    EXPECT_EQ("(or 'a' 'b')", transform("(or 'a' 'b')"));
-    EXPECT_EQ("(or 'a' 'b')", transform("(or 'b' 'a')"));
+    EXPECT_EQ("(or (A) (B))", transform("(or (A) (B))"));
+    EXPECT_EQ("(or (A) (B))", transform("(or (B) (A))"));
+    EXPECT_EQ("''", transform("(or (A) 'a')"));
 }
 
 TEST_F(TestStandard, And)
@@ -113,8 +115,9 @@ TEST_F(TestStandard, And)
     EXPECT_TRUE(eval("(and (true) (true) (true))"));
     EXPECT_THROW(eval("(and)"), IronBee::einval);
     EXPECT_THROW(eval("(and (true))"), IronBee::einval);
-    EXPECT_EQ("(and 'a' 'b')", transform("(and 'a' 'b')"));
-    EXPECT_EQ("(and 'a' 'b')", transform("(and 'b' 'a')"));
+    EXPECT_EQ("(and (A) (B))", transform("(and (A) (B))"));
+    EXPECT_EQ("(and (A) (B))", transform("(and (B) (A))"));
+    EXPECT_EQ("null", transform("(and (B) null)"));
 }
 
 TEST_F(TestStandard, DeMorgan)
