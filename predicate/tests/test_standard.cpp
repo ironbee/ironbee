@@ -56,7 +56,7 @@ protected:
         MergeGraph G;
         Reporter r;
         size_t i = G.add_root(n);
-        n->transform(NodeReporter(r, n), G);
+        n->transform(NodeReporter(r, n), G, m_factory);
         if (r.num_warnings() || r.num_errors()) {
             throw runtime_error("Warnings/Errors during transform.");
         }

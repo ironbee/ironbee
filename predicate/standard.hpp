@@ -51,8 +51,9 @@ public:
     * Will replace self with Null.
     **/
    virtual bool transform(
-       NodeReporter reporter,
-       MergeGraph&  merge_graph
+       NodeReporter        reporter,
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory
    );
 
 protected:
@@ -77,8 +78,9 @@ public:
     * Will replace self with ''.
     **/
    virtual bool transform(
-       NodeReporter reporter,
-       MergeGraph&  merge_graph
+       NodeReporter        reporter,
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory
    );
 
 protected:
@@ -133,8 +135,9 @@ public:
      * Will replace self with a true or false value if child is a literal.
      **/
     virtual bool transform(
-        NodeReporter reporter,
-        MergeGraph&  merge_graph
+        NodeReporter       reporter,
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory
     );
 
 protected:

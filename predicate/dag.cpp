@@ -171,8 +171,9 @@ void Node::pre_transform(NodeReporter reporter) const
 }
 
 bool Node::transform(
-    NodeReporter reporter,
-    MergeGraph&  merge_graph
+    NodeReporter,
+    MergeGraph&,
+    const CallFactory&
 )
 {
     return false;

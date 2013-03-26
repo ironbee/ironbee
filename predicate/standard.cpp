@@ -39,8 +39,9 @@ string False::name() const
 }
 
 bool False::transform(
-    NodeReporter reporter,
-    MergeGraph&  merge_graph
+    NodeReporter       reporter,
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory
 )
 {
     node_p me = shared_from_this();
@@ -62,8 +63,9 @@ string True::name() const
 }
 
 bool True::transform(
-    NodeReporter reporter,
-    MergeGraph&  merge_graph
+    NodeReporter       reporter,
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory
 )
 {
     node_p me = shared_from_this();
@@ -154,8 +156,9 @@ Value Not::calculate(Context context)
 }
 
 bool Not::transform(
-    NodeReporter reporter,
-    MergeGraph&  merge_graph
+    NodeReporter       reporter,
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory
 )
 {
     assert(children().size() == 1);

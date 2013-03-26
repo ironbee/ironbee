@@ -54,6 +54,8 @@ class String;
 class NodeReporter;
 // Defined in merge_graph.hpp
 class MergeGraph;
+// Defined in call_factory.hpp
+class CallFactory;
 
 /// @cond Impl
 namespace Impl {
@@ -267,13 +269,15 @@ public:
      * Note: Reporting errors will allow the current transformation loop to
      * continue for other nodes, but will then end the transformation phase.
      *
-     * @param[in] reporter    Reporter to use for errors or warnings.
-     * @param[in] merge_graph MergeGraph used to change the DAG.
+     * @param[in] reporter     Reporter to use for errors or warnings.
+     * @param[in] merge_graph  MergeGraph used to change the DAG.
+     * @param[in] call_factory CallFactory to create new nodes with.
      * @return true iff any changes were made.
      **/
     virtual bool transform(
-        NodeReporter reporter,
-        MergeGraph&  merge_graph
+        NodeReporter       reporter,
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory
     );
 
     /**
