@@ -38,9 +38,7 @@
 
 #include <iostream>
 #include <gtest/gtest.h>
-#include <htp/htp.h>
-#include <htp/htp_transaction.h>
-#include <htp/htp_base64.h>
+#include <htp/htp_private.h>
 #include "test.h"
 
 class HybridParsing : public testing::Test {
@@ -215,8 +213,7 @@ TEST_F(HybridParsing, GetTest) {
     // Request line data
     htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_COPY);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
-    htp_tx_req_set_query_string(tx, "p=1&q=2", 7, HTP_ALLOC_COPY);
+    htp_tx_req_set_uri(tx, "/?p=1&q=2", 9, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
@@ -226,11 +223,19 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(1, user_data.callback_REQUEST_LINE_invoked);
 
     // Check request line data
+    ASSERT_TRUE(tx->request_method != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
-    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/"));
+    ASSERT_TRUE(tx->request_uri != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=1&q=2"));
+    ASSERT_TRUE(tx->request_protocol != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_protocol, "HTTP/1.1"));
 
     ASSERT_TRUE(tx->parsed_uri != NULL);
+    
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/"));
+
+    ASSERT_TRUE(tx->parsed_uri->query != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->query, "p=1&q=2"));
 
     // Check parameters
@@ -355,6 +360,9 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
+    // Request line complete
+    htp_tx_state_request_line(tx);
+
     // Configure headers to trigger the URLENCODED parser
     htp_tx_req_set_header(tx, "Content-Type", 12, HTP_URLENCODED_MIME_TYPE,
             strlen(HTP_URLENCODED_MIME_TYPE), HTP_ALLOC_COPY);
@@ -413,12 +421,12 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
 
     htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_REUSE);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
-    htp_tx_req_set_query_string(tx, "p=1&q=2", 7, HTP_ALLOC_REUSE);
+    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);    
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_REUSE);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
+    htp_tx_state_request_line(tx);
     htp_tx_state_request_headers(tx);
     htp_tx_state_request_complete(tx);
 
@@ -531,8 +539,7 @@ TEST_F(HybridParsing, ParamCaseSensitivity) {
     // Request line data
     htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_COPY);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
-    htp_tx_req_set_query_string(tx, "p=1&Q=2", 7, HTP_ALLOC_COPY);
+    htp_tx_req_set_uri(tx, "/?p=1&Q=2", 9, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
@@ -582,6 +589,7 @@ TEST_F(HybridParsing, PostUrlecodedChunked) {
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
+    htp_tx_state_request_line(tx);
 
     // Configure headers to trigger the URLENCODED parser.
     htp_tx_req_set_header(tx, "Content-Type", 12, HTP_URLENCODED_MIME_TYPE,
@@ -641,10 +649,10 @@ TEST_F(HybridParsing, RequestLineParsing1) {
     ASSERT_EQ(0, bstr_cmp_c(param_q->value, "2"));
 }
 
-TEST_F(HybridParsing, RequestLineParsing2) {    
+TEST_F(HybridParsing, RequestLineParsing2) {
     htp_tx_t *tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
-    
+
     // Feed data to the parser.
 
     htp_tx_state_request_start(tx);
@@ -656,6 +664,35 @@ TEST_F(HybridParsing, RequestLineParsing2) {
     ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
     ASSERT_EQ(1, tx->is_protocol_0_9);
     ASSERT_EQ(HTP_PROTOCOL_0_9, tx->request_protocol_number);
-    ASSERT_TRUE(tx->request_protocol == NULL);        
+    ASSERT_TRUE(tx->request_protocol == NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/"));
 }
+
+TEST_F(HybridParsing, ParsedUriSupplied) {
+    htp_tx_t *tx = htp_connp_tx_create(connp);
+    ASSERT_TRUE(tx != NULL);
+
+    // Feed data to the parser.
+
+    htp_tx_state_request_start(tx);
+    htp_tx_req_set_line(tx, "GET /?p=1&q=2 HTTP/1.0", 22, HTP_ALLOC_COPY);
+
+    htp_uri_t *u = htp_uri_alloc();
+    u->path = bstr_dup_c("/123");
+    htp_tx_req_set_parsed_uri(tx, u);
+
+    htp_tx_state_request_line(tx);
+
+    // Check the results now.
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
+    ASSERT_TRUE(tx->request_protocol != NULL);
+    ASSERT_EQ(HTP_PROTOCOL_1_0, tx->request_protocol_number);
+    ASSERT_TRUE(tx->request_uri != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=1&q=2"));
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/123"));
+}
+
