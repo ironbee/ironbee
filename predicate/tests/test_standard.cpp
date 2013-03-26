@@ -105,6 +105,9 @@ TEST_F(TestStandard, Or)
     EXPECT_EQ("(or (A) (B))", transform("(or (A) (B))"));
     EXPECT_EQ("(or (A) (B))", transform("(or (B) (A))"));
     EXPECT_EQ("''", transform("(or (A) 'a')"));
+    EXPECT_EQ("(or (A) (B))", transform("(or (A) (B) null)"));
+    EXPECT_EQ("(A)", transform("(or (A) null)"));
+    EXPECT_EQ("null", transform("(or null null)"));
 }
 
 TEST_F(TestStandard, And)
@@ -118,6 +121,9 @@ TEST_F(TestStandard, And)
     EXPECT_EQ("(and (A) (B))", transform("(and (A) (B))"));
     EXPECT_EQ("(and (A) (B))", transform("(and (B) (A))"));
     EXPECT_EQ("null", transform("(and (B) null)"));
+    EXPECT_EQ("(and (A) (B))", transform("(and (A) (B) 'foo')"));
+    EXPECT_EQ("(A)", transform("(and (A) 'foo')"));
+    EXPECT_EQ("''", transform("(and 'foo' 'bar')"));
 }
 
 TEST_F(TestStandard, DeMorgan)

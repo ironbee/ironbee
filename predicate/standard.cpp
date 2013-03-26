@@ -191,16 +191,44 @@ bool Or::transform(
     const CallFactory& call_factory
 )
 {
+    node_p me = shared_from_this();
+    bool result = false;
+
+    node_list_t to_remove;
     BOOST_FOREACH(const node_p& child, children()) {
-        if (child->is_literal() && child->eval(Context())) {
-            node_p me = shared_from_this();
-            node_p replacement = c_true;
-            merge_graph.replace(me, replacement);
-            return true;
+        if (child->is_literal()) {
+            if (child->eval(Context())) {
+                node_p replacement = c_true;
+                merge_graph.replace(me, replacement);
+                return true;
+            }
+            else {
+                to_remove.push_back(child);
+            }
         }
     }
 
-    return AbelianCall::transform(reporter, merge_graph, call_factory);
+    BOOST_FOREACH(const node_p& child, to_remove) {
+        result = true;
+        merge_graph.remove(me, child);
+    }
+
+    if (children().size() == 1) {
+        node_p replacement = children().front();
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    if (children().size() == 0) {
+        node_p replacement = c_false;
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    return
+        AbelianCall::transform(reporter, merge_graph, call_factory) ||
+        result;
+
 }
 
 string And::name() const
@@ -232,16 +260,43 @@ bool And::transform(
     const CallFactory& call_factory
 )
 {
+    node_p me = shared_from_this();
+    bool result = false;
+
+    node_list_t to_remove;
     BOOST_FOREACH(const node_p& child, children()) {
-        if (child->is_literal() && ! child->eval(Context())) {
-            node_p me = shared_from_this();
-            node_p replacement = c_false;
-            merge_graph.replace(me, replacement);
-            return true;
+        if (child->is_literal()) {
+            if (! child->eval(Context())) {
+                node_p replacement = c_false;
+                merge_graph.replace(me, replacement);
+                return true;
+            }
+            else {
+                to_remove.push_back(child);
+            }
         }
     }
 
-    return AbelianCall::transform(reporter, merge_graph, call_factory);
+    BOOST_FOREACH(const node_p& child, to_remove) {
+        result = true;
+        merge_graph.remove(me, child);
+    }
+
+    if (children().size() == 1) {
+        node_p replacement = children().front();
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    if (children().size() == 0) {
+        node_p replacement = c_true;
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    return
+        AbelianCall::transform(reporter, merge_graph, call_factory) ||
+        result;
 }
 
 string Not::name() const
