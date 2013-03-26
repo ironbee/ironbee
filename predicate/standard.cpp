@@ -87,6 +87,76 @@ Value True::calculate(Context)
     return s_true_literal->value();
 }
 
+AbelianCall::AbelianCall() :
+    m_ordered(false)
+{
+    // nop
+}
+
+void AbelianCall::add_child(const node_p& child)
+{
+    if (
+        m_ordered &&
+        ! less_sexpr()(children().back()->to_s(), child->to_s())
+    ) {
+        m_ordered = false;
+    }
+    parent_t::add_child(child);
+}
+
+void AbelianCall::replace_child(const node_p& child, const node_p& with)
+{
+    parent_t::replace_child(child, with);
+}
+
+bool AbelianCall::transform(
+    NodeReporter       reporter,
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory
+)
+{
+    bool parent_result =
+        parent_t::transform(reporter, merge_graph, call_factory);
+
+    if (m_ordered) {
+        return parent_result;
+    }
+
+    vector<node_p> new_children(children().begin(), children().end());
+    sort(new_children.begin(), new_children.end(), less_node_by_sexpr());
+    assert(new_children.size() == children().size());
+    if (
+        equal(
+            new_children.begin(), new_children.end(),
+            children().begin()
+        )
+    ) {
+        m_ordered = true;
+        return parent_result;
+    }
+
+    node_p replacement = call_factory(name());
+    boost::shared_ptr<AbelianCall> replacement_as_ac =
+        boost::dynamic_pointer_cast<AbelianCall>(replacement);
+    if (! replacement_as_ac) {
+        // Insanity error so throw exception.
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "CallFactory produced a node of unexpected lineage."
+            )
+        );
+    }
+    BOOST_FOREACH(const node_p& child, new_children) {
+        replacement->add_child(child);
+    }
+    replacement_as_ac->m_ordered = true;
+
+    node_p me = shared_from_this();
+    merge_graph.replace(me, replacement);
+
+    return true;
+}
+
 string Or::name() const
 {
     return "or";

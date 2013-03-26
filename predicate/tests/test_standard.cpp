@@ -101,6 +101,8 @@ TEST_F(TestStandard, Or)
     EXPECT_FALSE(eval("(or (false) (false))"));
     EXPECT_THROW(eval("(or)"), IronBee::einval);
     EXPECT_THROW(eval("(or (true))"), IronBee::einval);
+    EXPECT_EQ("(or 'a' 'b')", transform("(or 'a' 'b')"));
+    EXPECT_EQ("(or 'a' 'b')", transform("(or 'b' 'a')"));
 }
 
 TEST_F(TestStandard, And)
@@ -111,6 +113,8 @@ TEST_F(TestStandard, And)
     EXPECT_TRUE(eval("(and (true) (true) (true))"));
     EXPECT_THROW(eval("(and)"), IronBee::einval);
     EXPECT_THROW(eval("(and (true))"), IronBee::einval);
+    EXPECT_EQ("(and 'a' 'b')", transform("(and 'a' 'b')"));
+    EXPECT_EQ("(and 'a' 'b')", transform("(and 'b' 'a')"));
 }
 
 TEST_F(TestStandard, DeMorgan)

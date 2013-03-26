@@ -89,11 +89,43 @@ protected:
 };
 
 /**
+ * Base class for calls that want children in canonical order.
+ **/
+class AbelianCall :
+    public Validate::Call<AbelianCall>,
+    public Validate::NOrMoreChildren<2>
+{
+public:
+    //! Constructor.
+    AbelianCall();
+
+    // The three routines below simply mark this node as unordered.
+    //! See Node::add_child().
+    virtual void add_child(const node_p& child);
+    //! See Node::replace_child().
+    virtual void replace_child(const node_p& child, const node_p& with);
+
+    /**
+     * See Node::transform().
+     *
+     * Will order children canonically.
+     **/
+    virtual bool transform(
+        NodeReporter       reporter,
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory
+    );
+
+private:
+    typedef Validate::Call<AbelianCall> parent_t;
+    bool m_ordered;
+};
+
+/**
  * True iff any children are truthy.
  **/
 class Or :
-    public Validate::Call<Or>,
-    public Validate::NOrMoreChildren<2>
+    public AbelianCall
 {
 public:
     //! See Call::name()
@@ -107,8 +139,7 @@ protected:
  * True iff all children are truthy.
  **/
 class And :
-    public Validate::Call<And>,
-    public Validate::NOrMoreChildren<2>
+    public AbelianCall
 {
 public:
     //! See Call::name()
