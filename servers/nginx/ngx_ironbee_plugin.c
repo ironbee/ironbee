@@ -178,8 +178,7 @@ static ib_status_t list_edit(ngx_list_t *list, const char *entry,
     /* Check we were passed something valid */
     if (rx == NULL) {
         if (rx = ib_rx_compile(tx->mp, val), rx == NULL) {
-            ngx_log_error(NGX_LOG_ERR, ctx->r->connection->log, 0,
-                          "Failed to compile %s as regexp", val);
+            ib_log_error_tx(ctx->tx, "Failed to compile %s as regexp", val);
             cleanup_return(prev_log) IB_EINVAL;
         }
     }

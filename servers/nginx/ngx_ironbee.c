@@ -46,6 +46,8 @@ ib_engine_t *ngxib_engine(void)
 
 typedef struct ironbee_proc_t {
     ngx_str_t config_file;
+    ngx_uint_t loglevel;
+    ngx_flag_t use_ngxib_logger;
 } ironbee_proc_t;
 
 static ngx_command_t  ngx_ironbee_commands[] = {
@@ -54,6 +56,18 @@ static ngx_command_t  ngx_ironbee_commands[] = {
       ngx_conf_set_str_slot,
       NGX_HTTP_MAIN_CONF_OFFSET,
       offsetof(ironbee_proc_t, config_file),
+      NULL },
+    { ngx_string("ironbee_logger"),
+      NGX_HTTP_MAIN_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_MAIN_CONF_OFFSET,
+      offsetof(ironbee_proc_t, use_ngxib_logger),
+      NULL },
+    { ngx_string("ironbee_loglevel"),
+      NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_num_slot,
+      NGX_HTTP_MAIN_CONF_OFFSET,
+      offsetof(ironbee_proc_t, loglevel),
       NULL },
 
       ngx_null_command
@@ -101,21 +115,22 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
     if (r->internal)
         return ngx_http_next_body_filter(r, in);
 
-    ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out");
+    prev_log = ngxib_log(r->connection->log);
+
+    ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
+    assert((ctx != NULL) && (ctx->tx != NULL));
+    ib_log_debug_tx(ctx->tx, "ironbee_body_out");
     if (in == NULL) {
         /* FIXME: could this happen in circumstances when we should
          * notify Ironbee of end-of-response ?
          */
-        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: input was null");
-        return ngx_http_next_body_filter(r, in);
+        ib_log_debug_tx(ctx->tx, "ironbee_body_out: input was null");
+        cleanup_return(prev_log) ngx_http_next_body_filter(r, in);
     }
     ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
     if (ctx->output_filter_done) {
-        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: already done");
-        return ngx_http_next_body_filter(r, in);
+        ib_log_debug_tx(ctx->tx, "ironbee_body_out: already done");
+        cleanup_return(prev_log) ngx_http_next_body_filter(r, in);
     }
     if (!ctx->output_filter_init) {
         ctx->output_filter_init = 1;
@@ -127,42 +142,36 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
              */
             ctx->output_buffering = IOBUF_NOBUF;
             ctx->response_buf = NULL;
-            ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: in internal error document");
+            ib_log_debug_tx(ctx->tx, "ironbee_body_out: in internal errordoc");
         }
         else {
             /* Determine whether we're configured to buffer */
             rc = ib_context_get(ctx->tx->ctx, "buffer_res",
                                 ib_ftype_num_out(&num), NULL);
-            ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: buffer_res is %d", num);
+            ib_log_debug_tx(ctx->tx, "ironbee_body_out: buffer_res is %d", (int)num);
             if (rc != IB_OK)
-                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                              "Can't determine output buffer configuration!");
+                ib_log_error_tx(ctx->tx,
+                                "Can't determine output buffer configuration!");
             if (num == 0) {
-                ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                              "ironbee_body_out: NOBUF");
+                ib_log_debug_tx(ctx->tx, "ironbee_body_out: NOBUF");
                 ctx->output_buffering = IOBUF_NOBUF;
                 ctx->response_buf = NULL;
             }
             else {
                 /* If we're buffering, initialise the buffer */
-                ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                              "ironbee_body_out: BUFFER");
+                ib_log_debug_tx(ctx->tx, "ironbee_body_out: BUFFER");
                 ctx->output_buffering = IOBUF_BUFFER;
             }
         }
     }
 
-    prev_log = ngxib_log(r->connection->log);
     ngx_regex_malloc_init(r->pool);
 
     for (link = in; link != NULL; link = link->next) {
         /* Feed the data to ironbee */
         itxdata.data = link->buf->pos;
         itxdata.dlen = link->buf->last - link->buf->pos;
-            ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: %d bytes", itxdata.dlen);
+            ib_log_debug_tx(ctx->tx, "ironbee_body_out: %d bytes", (int)itxdata.dlen);
         if (itxdata.dlen > 0) {
             ib_state_notify_response_body_data(ironbee, ctx->tx, &itxdata);
         }
@@ -173,8 +182,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         if ( (STATUS_IS_ERROR(ctx->status)) &&
              !ctx->internal_errordoc &&
              (ctx->output_buffering != IOBUF_DISCARD) ) {
-            ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: error %d", ctx->status);
+            ib_log_debug_tx(ctx->tx, "ironbee_body_out: error %d", ctx->status);
             free_chain(r->pool, ctx->response_buf);
             ctx->response_buf = NULL;
             ctx->output_buffering = IOBUF_DISCARD;
@@ -206,33 +214,28 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         }
 
         if (link->buf->last_buf) {
-            ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: last_buf");
+            ib_log_debug_tx(ctx->tx, "ironbee_body_out: last_buf");
             ctx->output_filter_done = 1;
         }
     }
 
     if (ctx->output_buffering == IOBUF_NOBUF) {
         /* Normal operation - pass it down the chain */
-        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                      "ironbee_body_out: passing on");
+        ib_log_debug_tx(ctx->tx, "ironbee_body_out: passing on");
         ctx->start_response = 1;
         rv = ngx_http_next_body_filter(r, in);
     }
     else if (ctx->output_buffering == IOBUF_BUFFER) {
-        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                      "ironbee_body_out: buffering");
+        ib_log_debug_tx(ctx->tx, "ironbee_body_out: buffering");
         if (ctx->output_filter_done) {
             /* We can pass on the buffered data all at once */
-            ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: passing buffer");
+            ib_log_debug_tx(ctx->tx, "ironbee_body_out: passing buffer");
             ctx->start_response = 1;
             rv = ngx_http_next_body_filter(r, ctx->response_buf);
         }
     }
     else if (ctx->output_buffering == IOBUF_DISCARD) {
-        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                      "ironbee_body_out: discarding");
+        ib_log_debug_tx(ctx->tx, "ironbee_body_out: discarding");
         if (ctx->output_filter_done) {
             /* Pass a last bucket with no data */
             //ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
@@ -246,8 +249,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         }
     }
     if (ctx->output_filter_done) {
-        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "ironbee_body_out: notify_postprocess");
+        ib_log_debug_tx(ctx->tx, "ironbee_body_out: notify_postprocess");
         rc = ib_state_notify_postprocess(ironbee, ctx->tx);
         if ((rv == NGX_OK) && (rc != IB_OK)) {
             rv = NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -287,6 +289,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
         return ngx_http_next_header_filter(r);
 
     ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
+    assert((ctx != NULL) && (ctx->tx != NULL));
 
     prev_log = ngxib_log(r->connection->log);
     ngx_regex_malloc_init(r->pool);
@@ -310,9 +313,8 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
         reason_len = 0;
     }
     else {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                      "Ironbee: bogus response status %d",
-                      r->headers_out.status);
+        ib_log_error_tx(ctx->tx, "Ironbee: bogus response status %d",
+                        (int)r->headers_out.status);
         cleanup_return(prev_log) NGX_ERROR;
     }
     rc = ib_parsed_resp_line_create(ctx->tx, &rline, NULL, 0,
@@ -462,22 +464,27 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     ironbee_proc_t *proc;
     ib_status_t rc, rc1;
 
-    ngx_log_error(NGX_LOG_NOTICE, cf->log, 0, "ironbee_init %d", getpid());
-    proc = ngx_http_conf_get_module_main_conf(cf, ngx_ironbee_module);
-
     prev_log = ngxib_log(cf->log);
     ngx_regex_malloc_init(cf->pool);
+
+    ngx_log_error(NGX_LOG_NOTICE, cf->log, 0, "ironbee_init %d", getpid());
+
+    proc = ngx_http_conf_get_module_main_conf(cf, ngx_ironbee_module);
+    if (proc->loglevel == NGX_CONF_UNSET_UINT)
+        proc->loglevel = 4; /* default */
+
     rc = ib_initialize();
     if (rc != IB_OK)
         cleanup_return(prev_log) IB2NG(rc);
 
-    ib_util_log_level(4);
+    ib_util_log_level(proc->loglevel);
 
     rc = ib_engine_create(&ironbee, ngxib_server());
     if (rc != IB_OK)
         cleanup_return(prev_log) IB2NG(rc);
 
-    ib_log_set_logger_fn(ironbee, ngxib_logger, NULL);
+    if (proc->use_ngxib_logger)
+        ib_log_set_logger_fn(ironbee, ngxib_logger, NULL);
     /* Using default log level function. */
 
     rc = ib_engine_init(ironbee);
@@ -499,7 +506,7 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
 
     /* Get the main context, set some defaults */
     ctx = ib_context_main(ironbee);
-    ib_context_set_num(ctx, "logger.log_level", 4);
+    ib_context_set_num(ctx, "logger.log_level", proc->loglevel);
 
     /* FIXME - use the temp pool operation for this */
     char *buf = strndup((char*)proc->config_file.data, proc->config_file.len);
@@ -539,7 +546,6 @@ static ngx_int_t ngxib_post_conf(ngx_conf_t *cf)
     req_handler = ngx_array_push(&main_cf->phases[NGX_HTTP_POST_READ_PHASE].handlers);
     *req_handler = ironbee_post_read_request;
 
-#if 1
     /* Register dummy handler to pull input */
     /* Don't use content phase.  That's "special", and often gets overridden
      * (it's always overridden when proxying).  The last phase we can insert
@@ -551,7 +557,6 @@ static ngx_int_t ngxib_post_conf(ngx_conf_t *cf)
     //req_handler = ngx_array_push(&main_cf->phases[NGX_HTTP_CONTENT_PHASE].handlers);
     req_handler = ngx_array_push(&main_cf->phases[NGX_HTTP_PREACCESS_PHASE].handlers);
     *req_handler = ngxib_handler;
-#endif
 
     /* Insert headers_out filter */
     ngx_http_next_header_filter = ngx_http_top_header_filter;
@@ -573,6 +578,8 @@ static ngx_int_t ngxib_post_conf(ngx_conf_t *cf)
 static void *create_main_conf(ngx_conf_t *cf)
 {
     ironbee_proc_t *conf = ngx_pcalloc(cf->pool, sizeof(ironbee_proc_t));
+    conf->loglevel = NGX_CONF_UNSET_UINT;
+    conf->use_ngxib_logger = NGX_CONF_UNSET;
     return conf;
 }
 #define init_main_conf NULL

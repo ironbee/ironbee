@@ -40,8 +40,9 @@ static void ngxib_post_handler(ngx_http_request_t *r)
 {
     ngxib_req_ctx *ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
     if (ctx->body_wait) {
-        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                      "Waiting for more input body data");
+        ngx_log_t *prev_log = ngxib_log(r->connection->log);
+        ib_log_debug_tx(ctx->tx, "Waiting for more input body data");
+        ngxib_log(prev_log);
         ctx->body_wait = 0;
         ngx_http_core_run_phases(r);
     }
@@ -126,43 +127,39 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
     /* We now have the request body.  Feed it to ironbee */
     rb = r->request_body;
     if (!rb) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                      "Error reading request body");
+        ib_log_error_tx(ctx->tx, "Error reading request body");
         cleanup_return(prev_log) NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
     if (!rb->bufs) {
         /* I think this shouldn't happen */
         /* But rethink if this turns up in logs when all is fine */
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                      "Probable error reading request body");
+        ib_log_error_tx(ctx->tx, "Probable error reading request body");
     }
 
     if (rb->temp_file && (rb->temp_file->file.fd != NGX_INVALID_FILE)) {
         /* Reader has put request body in temp file */
         off_t count = 0;
         u_char buf[BUFSIZE];
-        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                      "Reading request body in temp file");
+        ib_log_debug_tx(ctx->tx, "Reading request body in temp file");
         while (itxdata.dlen = ngx_read_file(&rb->temp_file->file,
                                             buf, BUFSIZE, count),
                (int)itxdata.dlen > 0) {
             itxdata.data = buf;
-            ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                          "Feeding %d bytes request data to ironbee", itxdata.dlen);
+            ib_log_debug_tx(ctx->tx, "Feeding %d bytes request data to ironbee",
+                            (int)itxdata.dlen);
             ib_state_notify_request_body_data(ngxib_engine(), ctx->tx, &itxdata);
             count += itxdata.dlen;
         }
         if ((int)itxdata.dlen == NGX_ERROR) {
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          "Error reading request body in temp file");
+            ib_log_error_tx(ctx->tx, "Error reading request body in temp file");
         }
     }
 
     for (link = rb->bufs; link != NULL; link = link->next) {
         itxdata.data = link->buf->pos;
         itxdata.dlen = (link->buf->last - link->buf->pos);
-        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
-                      "Feeding %d bytes request data to ironbee", itxdata.dlen);
+        ib_log_debug_tx(ctx->tx, "Feeding %d bytes request data to ironbee",
+                        (int)itxdata.dlen);
         if (itxdata.dlen > 0) {
             ib_state_notify_request_body_data(ngxib_engine(), ctx->tx, &itxdata);
         }
@@ -174,8 +171,7 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
     if (STATUS_IS_ERROR(ctx->status)) {
         rv = ctx->status;
         ctx->internal_errordoc = 1;
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                      "Ironbee set %d reading request body", rv);
+        ib_log_error_tx(ctx->tx, "Ironbee set %d reading request body", (int)rv);
     }
 
     cleanup_return(prev_log) rv;
