@@ -324,7 +324,6 @@ void MergeGraph::merge_tree(node_p& which)
     boost::tie(new_which, known_which) = learn(which);
 
     if (! new_which) {
-        assert(which != known_which);
         which = known_which;
     }
     else {
