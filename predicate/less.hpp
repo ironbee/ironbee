@@ -25,6 +25,8 @@
 #ifndef __PREDICATE__LESS__
 #define __PREDICATE__LESS__
 
+#include "dag.hpp"
+
 #include <string>
 
 namespace IronBee {
@@ -50,7 +52,7 @@ struct less_sexpr {
      * @param[in] b Second string to compare.
      * @return true iff a < b in the order described above.
      **/
-    inline bool operator()(const std::string& a, const std::string& b) const
+    bool operator()(const std::string& a, const std::string& b) const
     {
         size_t a_length = a.length();
         size_t b_length = b.length();
@@ -80,6 +82,26 @@ struct less_sexpr {
         }
 
         return false;
+    }
+};
+
+/**
+ * Order node_p or node_cp by less_sexpr on sexpr.
+ **/
+struct less_node_by_sexpr {
+    // Intentionally inline.
+    // The use of two overloads allows for pass-by-reference saving on
+    // a large number of shared_ptr increment and decrements.
+    //! See less_sexpr::operator()().
+    bool operator()(const node_p& a, const node_p& b) const
+    {
+        return less_sexpr()(a->to_s(), b->to_s());
+    }
+
+    //! See less_sexpr::operator()().
+    bool operator()(const node_cp& a, const node_cp& b) const
+    {
+        return less_sexpr()(a->to_s(), b->to_s());
     }
 };
 
