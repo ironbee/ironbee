@@ -21,7 +21,8 @@ check_PROGRAMS = \
     test_standard \
     test_bfs \
     test_merge_graph \
-    test_validate
+    test_validate \
+    test_less
 
 TESTS=$(check_PROGRAMS)
 CLEANFILES=*.xml *.log
@@ -33,3 +34,4 @@ test_parse_SOURCES = test_parse.cpp
 test_bfs_SOURCES = test_bfs.cpp
 test_merge_graph_SOURCES = test_merge_graph.cpp
 test_validate_SOURCES = test_validate.cpp
+test_less_SOURCES = test_less.cpp

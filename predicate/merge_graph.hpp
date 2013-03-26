@@ -25,10 +25,11 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __PREDICATE__GRAPH__
-#define __PREDICATE__GRAPH__
+#ifndef __PREDICATE__MERGE_GRAPH__
+#define __PREDICATE__MERGE_GRAPH__
 
 #include "dag.hpp"
+#include "less.hpp"
 
 #include <map>
 #include <vector>
@@ -63,7 +64,7 @@ namespace Predicate {
 class MergeGraph
 {
 private:
-    typedef std::map<std::string, node_p> node_by_sexpr_t;
+    typedef std::map<std::string, node_p, less_sexpr> node_by_sexpr_t;
     typedef std::vector<node_p> roots_t;
 
 public:
