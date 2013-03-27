@@ -85,21 +85,6 @@ TEST_F(TestBFS, Down)
     EXPECT_EQ("(B)",                         r[6]->to_s());
 }
 
-TEST_F(TestBFS, DownVisited)
-{
-    node_p n = parse("(A (B (C) (C)) (C (B) (B)))");
-    set<node_cp> visited;
-    visited.insert(n->children().front());
-    node_vec_t r;
-    ASSERT_NO_THROW(bfs_down(n, back_inserter(r), visited));
-    ASSERT_EQ(4UL, r.size());
-    EXPECT_EQ("(A (B (C) (C)) (C (B) (B)))", r[0]->to_s());
-    EXPECT_EQ("(C (B) (B))",                 r[1]->to_s());
-    EXPECT_EQ("(B)",                         r[2]->to_s());
-    EXPECT_EQ("(B)",                         r[3]->to_s());
-    EXPECT_EQ(5UL, visited.size());
-}
-
 TEST_F(TestBFS, DownWithDups)
 {
     node_p n = parse("(A (B (C)) (C (B)))");
@@ -161,26 +146,6 @@ TEST_F(TestBFS, Up)
     EXPECT_EQ("(B (C))",     r[1]->to_s());
     EXPECT_EQ("(C (C))",     r[2]->to_s());
     EXPECT_EQ("(A (B (C)))", r[3]->to_s());
-}
-
-TEST_F(TestBFS, UpVisited)
-{
-    node_p a = parse("(A (B (C)))");
-    node_p a_b_c = a->children().front()->children().front();
-    node_p n = parse("(C)");
-    n->add_child(a_b_c);
-
-    set<node_cp> visited;
-    visited.insert(a);
-
-    EXPECT_EQ("(C (C))", n->to_s());
-    node_vec_t r;
-    ASSERT_NO_THROW(bfs_up(a_b_c, back_inserter(r), visited));
-    EXPECT_EQ(3UL, r.size());
-    EXPECT_EQ("(C)",         r[0]->to_s());
-    EXPECT_EQ("(B (C))",     r[1]->to_s());
-    EXPECT_EQ("(C (C))",     r[2]->to_s());
-    EXPECT_EQ(4UL, visited.size());
 }
 
 TEST_F(TestBFS, UpWithDups)

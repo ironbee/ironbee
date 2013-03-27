@@ -444,18 +444,16 @@ private:
 
 bool MergeGraph::write_validation_report(std::ostream& out)
 {
-    set<node_cp> visited;
     bool has_no_error = true;
 
-    BOOST_FOREACH(const node_cp root, m_roots) {
-        bfs_down(
-            root,
-            boost::make_function_output_iterator(
-                validate_node(*this, out, has_no_error)
-            ),
-            visited
-        );
+    bfs_down(
+        m_roots.begin(), m_roots.end(),
+        boost::make_function_output_iterator(
+            validate_node(*this, out, has_no_error)
+        )
+    );
 
+    BOOST_FOREACH(const node_cp root, m_roots) {
         root_indices_t::const_iterator i = m_root_indices.find(root);
         if (i == m_root_indices.end()) {
             out << "ERROR: Root " << root->to_s() << " @ " << root

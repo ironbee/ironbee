@@ -107,14 +107,11 @@ void to_dot(
     dot_node_decorator_t node_decorator
 )
 {
-    std::set<node_cp> visited;
     boost::function_output_iterator<Impl::dot_node_outputer>
         out_iter(Impl::dot_node_outputer(out, node_decorator));
 
     out << "digraph G {" << std::endl;
-    for (Iterator i = begin; i != end; ++i) {
-        bfs_down(*i, out_iter, visited);
-    }
+    bfs_down(begin, end, out_iter);
     out << "}" << std::endl;
 }
 

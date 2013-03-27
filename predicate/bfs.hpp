@@ -32,8 +32,10 @@
 
 #include <list>
 #include <set>
+#include <vector>
 
 #include <boost/function_output_iterator.hpp>
+#include <boost/type_traits/is_const.hpp>
 
 namespace IronBee {
 namespace Predicate {
@@ -69,45 +71,23 @@ template <typename OutputIterator>
 void bfs_up(const node_p& which, OutputIterator out);
 
 /**
- * Breadth first search of all ancestors of @a which (mutable version).
+ * Breadth first search of all ancestors of a set of nodes.
  *
- * As previous, but @ref node_p's are output to @a out.
+ * If iterator has a @ref node_cp value_type then, @ref node_cp's will be
+ * written to the output iterator, otherwise, @ref node_p's will be.
  *
- * A shared visited set, @a visited, can be used to do multiple bfs runs over
- * a forest with shared nodes.
- *
+ * @tparam InputIterator  Type of @a begin and @a in.  Must be input iterator.
  * @tparam OutputIterator Type of @a out.  Must be output iterator.
- * @param[in] which        Base of ancestor tree.
- * @param[in] out          Output iterator to write ancestors to.
- * @param[in, out] visited Set of nodes that have been visited; updated.
- * @throw IronBee::einval if @a which is singular.
+ * @param[in] begin Beginning of input sequence.
+ * @param[in] end   End of input sequence.
+ * @param[in] out   Output iterator to write ancestors to.
+ * @throw IronBee::einval if any node is singular.
  **/
-template <typename OutputIterator>
+template <typename InputIterator, typename OutputIterator>
 void bfs_up(
-    const node_p&      which,
-    OutputIterator     out,
-    std::set<node_cp>& visited
-);
-
-/**
- * Breadth first search of all ancestors of @a which.
- *
- * As previous, but @ref node_p's are output to @a out.
- *
- * A shared visited set, @a visited, can be used to do multiple bfs runs over
- * a forest with shared nodes.
- *
- * @tparam OutputIterator Type of @a out.  Must be output iterator.
- * @param[in] which        Base of ancestor tree.
- * @param[in] out          Output iterator to write ancestors to.
- * @param[in, out] visited Set of nodes that have been visited; updated.
- * @throw IronBee::einval if @a which is singular.
- **/
-template <typename OutputIterator>
-void bfs_up(
-    const node_cp&     which,
-    OutputIterator     out,
-    std::set<node_cp>& visited
+    InputIterator  begin,
+    InputIterator  end,
+    OutputIterator out
 );
 
 /**
@@ -137,51 +117,73 @@ template <typename OutputIterator>
 void bfs_down(const node_p& which, OutputIterator out);
 
 /**
- * Breadth first search of all descendants of @a which (mutable version).
+ * Breadth first search of all children of a set of nodes.
  *
- * As previous, but @ref node_p's are output to @a out.
+ * If iterator has a @ref node_cp value_type then, @ref node_cp's will be
+ * written to the output iterator, otherwise, @ref node_p's will be.
  *
- * A shared visited set, @a visited, can be used to do multiple bfs runs over
- * a forest with shared nodes.
- *
+ * @tparam InputIterator  Type of @a begin and @a in.  Must be input iterator.
  * @tparam OutputIterator Type of @a out.  Must be output iterator.
- * @param[in] which        Base of ancestor tree.
- * @param[in] out          Output iterator to write descendants to.
- * @param[in, out] visited Set of nodes that have been visited; updated.
- * @throw IronBee::einval if @a which is singular.
+ * @param[in] begin Beginning of input sequence.
+ * @param[in] end   End of input sequence.
+ * @param[in] out   Output iterator to write children to.
+ * @throw IronBee::einval if any node is singular.
  **/
-template <typename OutputIterator>
+template <typename InputIterator, typename OutputIterator>
 void bfs_down(
-    const node_p&      which,
-    OutputIterator     out,
-    std::set<node_cp>& visited
-);
-
-/**
- * Breadth first search of all descendants of @a which.
- *
- * As previous, but @ref node_p's are output to @a out.
- *
- * A shared visited set, @a visited, can be used to do multiple bfs runs over
- * a forest with shared nodes.
- *
- * @tparam OutputIterator Type of @a out.  Must be output iterator.
- * @param[in] which        Base of ancestor tree.
- * @param[in] out          Output iterator to write descendants to.
- * @param[in, out] visited Set of nodes that have been visited; updated.
- * @throw IronBee::einval if @a which is singular.
- **/
-template <typename OutputIterator>
-void bfs_down(
-    const node_cp&     which,
-    OutputIterator     out,
-    std::set<node_cp>& visited
+    InputIterator  begin,
+    InputIterator  end,
+    OutputIterator out
 );
 
 // Implementation
 
 /// @cond Impl
 namespace Impl {
+
+/**
+ * Write a @ref node_cp to an output iterator as a @ref node_p if needed.
+ *
+ * bfs() only needs @ref node_cp's until it actually writes them to the
+ * iterator.  To handle the mutable versions of bfs_up() and bfs_down(), the
+ * non-mutable versions are used, passing the result through this helper to
+ * remove the const.  To preserve const correctness, only the mutable
+ * versions of bfs_up() and bfs_down() are allowed to instantiate this class.
+ *
+ * @tparam NeedDeconst if true, remove const, otherwise pass through.
+ * @tparam OutputIterator Type of output iterator to write @ref node_p to.
+ **/
+template <bool NeedDeconst, typename OutputIterator>
+class bfs_deconst
+{
+private:
+    template <typename I, typename O>
+    friend void Predicate::bfs_up(I, I, O);
+    template <typename I, typename O>
+    friend void Predicate::bfs_down(I, I, O);
+
+    /**
+     * Constructor.
+     *
+     * @param[in] out Output iterator to write to.
+     **/
+    explicit
+    bfs_deconst(OutputIterator out) : m_out(out) {}
+
+    //! Iterator to write to.
+    OutputIterator m_out;
+
+public:
+    /**
+     * Pass through.
+     *
+     * @tparam[in] node Node to write to output iterator.
+     **/
+    void operator()(const node_cp& node)
+    {
+        *m_out++ = node;
+    }
+};
 
 /**
  * Write a @ref node_cp to an output iterator as a @ref node_p.
@@ -195,13 +197,13 @@ namespace Impl {
  * @tparam OutputIterator Type of output iterator to write @ref node_p to.
  **/
 template <typename OutputIterator>
-class bfs_deconst
+class bfs_deconst<true, OutputIterator>
 {
 private:
-    template <typename O>
-    friend void Predicate::bfs_up(const node_p&, O, std::set<node_cp>&);
-    template <typename O>
-    friend void Predicate::bfs_down(const node_p&, O, std::set<node_cp>&);
+    template <typename I, typename O>
+    friend void Predicate::bfs_up(I, I, O);
+    template <typename I, typename O>
+    friend void Predicate::bfs_down(I, I, O);
 
     /**
      * Constructor.
@@ -210,6 +212,9 @@ private:
      **/
     explicit
     bfs_deconst(OutputIterator out) : m_out(out) {}
+
+    //! Iterator to write to.
+    OutputIterator m_out;
 
 public:
     /**
@@ -221,9 +226,6 @@ public:
     {
         *m_out++ = boost::const_pointer_cast<Node>(node);
     }
-
-    //! Iterator to write to.
-    OutputIterator m_out;
 };
 
 //! Tag indicating use of Node::parents().
@@ -256,29 +258,28 @@ void bfs_append_list(
  * @param[in] which Node to start search at.
  * @param[in] out   Output iterator to write to.
  * @param[in, out]  Set of which nodes have been visited to use/update.
- * @throw IronBee::einval if @a which is singular.
+ * @throw IronBee::einval if any node is singular.
  **/
-template <typename Direction, typename OutputIterator>
+template <typename Direction, typename InputIterator, typename OutputIterator>
 void bfs(
-    const node_cp&     which,
-    OutputIterator     out,
-    std::set<node_cp>& visited
+    InputIterator  begin,
+    InputIterator  end,
+    OutputIterator out
 )
 {
-    if (! which) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "Cannot do breadth first search on singular node."
-            )
-        );
-    }
-
-    std::list<node_cp> todo;
-
-    todo.push_back(which);
+    std::set<node_cp>  visited;
+    std::list<node_cp> todo(begin, end);
     while (! todo.empty()) {
         node_cp n = todo.front();
         todo.pop_front();
+
+        if (! n) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << errinfo_what(
+                    "Cannot do breadth first search on singular node."
+                )
+            );
+        }
 
         if (! visited.insert(n).second) {
             continue;
@@ -296,79 +297,71 @@ void bfs(
 template <typename OutputIterator>
 void bfs_up(const node_cp& which, OutputIterator out)
 {
-    std::set<node_cp> visited;
-    bfs_up(which, out, visited);
+    std::vector<node_cp> input;
+    input.push_back(which);
+    bfs_up(input.begin(), input.end(), out);
 }
 
 template <typename OutputIterator>
 void bfs_up(const node_p& which, OutputIterator out)
 {
-    std::set<node_cp> visited;
-    bfs_up(which, out, visited);
+    std::vector<node_p> input;
+    input.push_back(which);
+    bfs_up(input.begin(), input.end(), out);
 }
 
-template <typename OutputIterator>
+template <typename InputIterator, typename OutputIterator>
 void bfs_up(
-    const node_p&      which,
-    OutputIterator     out,
-    std::set<node_cp>& visited
+    InputIterator  begin,
+    InputIterator  end,
+    OutputIterator out
 )
 {
-    typedef Impl::bfs_deconst<OutputIterator> helper_t;
-    bfs_up(
-        node_cp(which),
-        boost::function_output_iterator<helper_t>(helper_t(out)),
-        visited
+    typedef Impl::bfs_deconst<
+        ! boost::is_const<
+            typename InputIterator::value_type::element_type
+        >::value,
+        OutputIterator
+    > helper_t;
+    Impl::bfs<Impl::bfs_up_tag>(
+        begin, end,
+        boost::function_output_iterator<helper_t>(helper_t(out))
     );
-}
-
-template <typename OutputIterator>
-void bfs_up(
-    const node_cp&     which,
-    OutputIterator     out,
-    std::set<node_cp>& visited
-)
-{
-    Impl::bfs<Impl::bfs_up_tag>(which, out, visited);
 }
 
 template <typename OutputIterator>
 void bfs_down(const node_cp& which, OutputIterator out)
 {
-    std::set<node_cp> visited;
-    bfs_down(which, out, visited);
+    std::vector<node_cp> input;
+    input.push_back(which);
+    bfs_down(input.begin(), input.end(), out);
 }
 
 template <typename OutputIterator>
 void bfs_down(const node_p& which, OutputIterator out)
 {
-    std::set<node_cp> visited;
-    bfs_down(which, out, visited);
+    std::vector<node_p> input;
+    input.push_back(which);
+    bfs_down(input.begin(), input.end(), out);
 }
 
-template <typename OutputIterator>
+template <typename InputIterator, typename OutputIterator>
 void bfs_down(
-    const node_p&      which,
-    OutputIterator     out,
-    std::set<node_cp>& visited
+    InputIterator  begin,
+    InputIterator  end,
+    OutputIterator out
 )
 {
-    typedef Impl::bfs_deconst<OutputIterator> helper_t;
-    bfs_down(
-        node_cp(which),
-        boost::function_output_iterator<helper_t>(helper_t(out)),
-        visited
+    typedef Impl::bfs_deconst<
+        ! boost::is_const<
+            typename InputIterator::value_type::element_type
+        >::value,
+        OutputIterator
+    > helper_t;
+    Impl::bfs<Impl::bfs_down_tag>(
+        begin, end,
+        boost::function_output_iterator<helper_t>(helper_t(out))
     );
-}
-
-template <typename OutputIterator>
-void bfs_down(
-    const node_cp&     which,
-    OutputIterator     out,
-    std::set<node_cp>& visited
-)
-{
-    Impl::bfs<Impl::bfs_down_tag>(which, out, visited);
 }
 
 } // Predicate
