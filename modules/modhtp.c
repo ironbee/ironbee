@@ -1056,7 +1056,7 @@ static int modhtp_htp_req_start(
 {
     ib_status_t      irc;
     modhtp_txdata_t *txdata;
-    
+
     /* Check the parser status */
     irc = modhtp_check_parser(connp, "Request Start", &txdata);
     if (irc != IB_OK) {
