@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1935 
+personal_ws-1.1 en 1938 
 malloced
 malloc'ed
 libnet
@@ -154,6 +154,7 @@ AuditLogPart
 STRRSPBODY
 FieldType
 fieldtype
+ing
 any's
 hte
 regcomp
@@ -1182,6 +1183,7 @@ onEventRequestHeader
 cplusplus
 preprocessing
 tparam
+ptxdata
 obuf
 bufsize
 IronBeeRuleLogger
@@ -1881,6 +1883,7 @@ multi
 basetype
 LibHTP
 libhtp
+pcontext
 httpd
 aaa
 hookName

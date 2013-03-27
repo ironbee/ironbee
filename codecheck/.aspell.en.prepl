@@ -64,6 +64,7 @@ interator iterator
 failes fails
 orign origin
 choped chopped
+staus Status
 backwars backwards
 contet context
 enotent ENOENT
@@ -93,4 +94,5 @@ verison version
 prepends prefixes
 addres address
 signalled signaled
+trailser Trailer
 libhpt libhtp

@@ -1304,7 +1304,7 @@ static int modhtp_htp_rsp_trailer(
     ib_status_t      irc;
 
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, "Response Trailser", &txdata);
+    irc = modhtp_check_parser(connp, "Response Trailer", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -1484,7 +1484,7 @@ static ib_status_t modhtp_gen_response_fields(
  * @param[in] mod_config modhtp configuration structure
  * @param[out] pcontext Pointer to module context object
  *
- * @returns Staus code
+ * @returns Status code
  */
 static ib_status_t modhtp_build_context (
     const ib_engine_t      *ib,
