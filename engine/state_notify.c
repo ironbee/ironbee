@@ -451,6 +451,14 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
         }
     }
 
+    /* Notify the parser to cleanup the connection. */
+    if (iface->conn_cleanup != NULL) {
+        rc = iface->conn_cleanup(pi, conn);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     return IB_OK;
 }
 
