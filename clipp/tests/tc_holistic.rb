@@ -226,7 +226,7 @@ class TestHolistic < Test::Unit::TestCase
     puts "Generating #{n} samples request/response pairs."
     now = Time.now
     input_hashes = CLIPPTestHolistic::generate_http_data()
-    to = File.join(Dir::tmpdir, "clipp_test_#{rand(10000)}.pb")
+    to = File.join(BUILDDIR, "clipp_test_#{rand(10000)}.pb")
     File.open(to, 'w') do |fp|
       input_hashes.each do |h|
         fp.print IronBee::CLIPP::HashToPB::hash_to_pb(h)

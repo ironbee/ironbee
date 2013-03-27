@@ -2,7 +2,8 @@ $:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
 require 'set'
 
 module AutomataTest
-  BINDIR = File.expand_path(File.join(ENV['abs_builddir'], "..", "bin"))
+  BUILDDIR = ENV['abs_builddir']
+  BINDIR = File.expand_path(File.join(BUILDDIR, "..", "bin"))
   EE = File.join(BINDIR, "ee")
   EC = File.join(BINDIR, "ec")
   ACGEN = File.join(BINDIR, "ac_generator")
@@ -90,7 +91,7 @@ module AutomataTest
   end
 
   def automata_test(words, generator, prefix = "automata_test", optimize = false)
-    dir = "/tmp/automata_test_#{prefix}#{$$}.#{rand(100000)}"
+    dir = File.join(BUILDDIR, "automata_test_#{prefix}#{$$}.#{rand(100000)}")
     Dir.mkdir(dir)
     puts "Test files are in #{dir}"
 

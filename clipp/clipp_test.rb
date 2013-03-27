@@ -13,7 +13,6 @@
 
 require 'rubygems'
 require 'test/unit'
-require 'tmpdir'
 require 'erb'
 
 $:.unshift(File.dirname(__FILE__))
@@ -159,7 +158,7 @@ private
   # path.  name_template will have RAND replaced with a random number.
   def write_temp_file(name_template, contents)
     to = File.join(
-      Dir::tmpdir,
+      BUILDDIR,
       name_template.gsub('RAND') {rand(10000)}
     )
     File.open(to, 'w') {|fp| fp.print contents}
