@@ -42,6 +42,7 @@
 #pragma clang diagnostic ignored "-Wundef"
 #endif
 #include <htp.h>
+#include <htp_private.h>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -64,42 +65,66 @@
 IB_MODULE_DECLARE();
 
 /* Pre-declare types */
-typedef struct modhtp_context_t modhtp_context_t;
-typedef struct modhtp_cfg_t modhtp_cfg_t;
-typedef struct modhtp_nameval_t modhtp_nameval_t;
-
 typedef enum htp_data_source_t modhtp_param_source_t;
+typedef struct modhtp_context_t modhtp_context_t;
+
+/**
+ * Module Configuration Structure
+ */
+struct modhtp_config_t {
+    const char                *personality;  /**< libhtp personality */
+    const modhtp_context_t    *context;      /**< Module context data */
+};
+typedef struct modhtp_config_t modhtp_config_t;
 
 /**
  * Module Context Structure
  */
 struct modhtp_context_t {
-    ib_engine_t    *ib;           /**< Engine handle */
-    ib_conn_t      *iconn;        /**< Connection structure */
-    modhtp_cfg_t   *modcfg;       /**< Module config structure */
-    htp_cfg_t      *htp_cfg;      /**< Parser config handle */
-    htp_connp_t    *htp;          /**< Parser handle */
+    const ib_engine_t         *ib;           /**< Engine handle */
+    const modhtp_config_t     *mod_config;   /**< Module config structure */
+    const htp_cfg_t           *htp_config;   /**< Parser config handle */
 };
+typedef struct modhtp_context_t modhtp_context_t;
+
+/**
+ * HTP Connection parser data
+ */
+struct modhtp_parser_data_t {
+    const modhtp_context_t    *context;      /**< The module context data */
+    htp_connp_t               *parser;       /**< HTP connection parser */
+    ib_conn_t                 *iconn;        /**< IronBee connection */
+    htp_time_t                 open_time;    /**< HTP connection start time */
+    htp_time_t                 close_time;   /**< HTP connection close time */
+};
+typedef struct modhtp_parser_data_t modhtp_parser_data_t;
+
+/**
+ * HTP transaction data
+ */
+struct modhtp_txdata_t {
+    const ib_engine_t          *ib;          /**< IronBee engine */
+    htp_tx_t                   *htx;         /**< The HTP transaction */
+    ib_tx_t                    *itx;         /**< The IronBee transaction */
+    const modhtp_parser_data_t *parser_data; /**< Connection parser data */
+    int                         error_code;  /**< Error code from parser */
+    const char                 *error_msg;   /**< Error message from parser */
+};
+typedef struct modhtp_txdata_t modhtp_txdata_t;
 
 /**
  * Callback data for the param iterator callback
  */
 typedef struct {
-    ib_field_t	          *field_list;   /**< Field list to populate */
-    modhtp_param_source_t  source;       /**< Desired source */
-    size_t                 count;        /**< Count of matches */
+    ib_field_t	              *field_list;   /**< Field list to populate */
+    modhtp_param_source_t      source;       /**< Desired source */
+    size_t                     count;        /**< Count of matches */
 } modhtp_param_iter_data_t;
 
-/**
- * Module Configuration Structure
- */
-struct modhtp_cfg_t {
-    const char     *personality;  /**< libhtp personality */
-};
-
 /* Instantiate a module global configuration. */
-static modhtp_cfg_t modhtp_global_cfg = {
-    "generic" /* personality */
+static modhtp_config_t modhtp_global_config = {
+    "generic", /* personality */
+    NULL
 };
 
 static ib_engine_t *modhtp_ib = NULL;
@@ -123,7 +148,7 @@ typedef ib_status_t (* modhtp_table_iterator_callback_fn_t)(
     void                      *data);
 
 /**
- * Function used as a callback to modhtp_set_generic()
+ * Function used as a callback to modhtp_set_data()
  *
  * This matches the signature of many htp_tx_{req,res}_set_xxx_c() functions
  * from htp_transaction.h
@@ -164,14 +189,12 @@ typedef htp_status_t (* modhtp_set_header_fn_t)(
     size_t                     value_len,
     enum htp_alloc_strategy_t  alloc);
 
-
-/* -- libhtp Routines -- */
-
 /* Define a name/val lookup record. */
 struct modhtp_nameval_t {
     const char *name;
     int         val;
 };
+typedef struct modhtp_nameval_t modhtp_nameval_t;
 
 /* Text versions of personalities */
 static const modhtp_nameval_t modhtp_personalities[] = {
@@ -188,6 +211,9 @@ static const modhtp_nameval_t modhtp_personalities[] = {
     { "apache_2",   HTP_SERVER_APACHE_2 },
     { NULL, 0 }
 };
+
+/* -- libhtp utility functions -- */
+
 
 /* Lookup a numeric personality from a name. */
 static int modhtp_personality(
@@ -655,173 +681,220 @@ static inline ib_status_t modhtp_set_nulstr(
 }
 
 /**
- * Get the modhtp context for an IronBee transaction
+ * Get the transaction data for an IronBee transaction
  *
  * @param[in] itx IronBee transaction
  *
- * @returns modhtp context
+ * @returns Pointer to the transaction data
  */
-static inline modhtp_context_t *modhtp_get_itx_context(
-    const ib_tx_t *itx)
+static modhtp_txdata_t *modhtp_get_txdata_ibtx(
+    const ib_tx_t    *itx)
 {
     assert(itx != NULL);
     assert(itx->conn != NULL);
-    modhtp_context_t *ctx;
+    modhtp_txdata_t *txdata;
+    ib_status_t rc;
 
-    ctx = (modhtp_context_t *)ib_conn_parser_context_get(itx->conn);
-    assert(ctx != NULL);
-    return ctx;
+    rc = ib_tx_get_module_data(itx, IB_MODULE_STRUCT_PTR, &txdata);
+    assert(rc == IB_OK);
+    assert(txdata != NULL);
+    assert(txdata->itx == itx);
+
+    return txdata;
 }
 
 /**
- * Get the modhtp transaction for an IronBee transaction
+ * Get the transaction data for a libhtp transaction
  *
- * @param[in] itx IronBee transaction
+ * @param[in] htx libhtp transaction
  *
- * @returns modhtp transaction
+ * @returns Pointer to the transaction data
  */
-static inline htp_tx_t *modhtp_get_htx(
-    const ib_tx_t *itx)
+static modhtp_txdata_t *modhtp_get_txdata_htptx(
+    const htp_tx_t   *htx)
 {
-    assert(itx != NULL);
-    assert(itx->conn != NULL);
+    assert(htx != NULL);
+    modhtp_txdata_t *txdata;
 
-    ib_status_t irc;
-    htp_tx_t *htx;
+    txdata = (modhtp_txdata_t *)htp_tx_get_user_data(htx);
+    assert(txdata != NULL);
+    assert(txdata->htx == htx);
 
-    irc = ib_tx_get_module_data(itx, IB_MODULE_STRUCT_PTR, (void **)&htx);
-    if (irc != IB_OK) {
-        return NULL;
-    }
+    return txdata;
+}
 
-    return htx;
+/**
+ * Get the transaction data for a libhtp connection parser
+ *
+ * @param[in] parser libhtp connection parser
+ *
+ * @returns Pointer to the transaction data
+ */
+static modhtp_txdata_t* modhtp_get_txdata_parser(
+    const htp_connp_t  *parser)
+{
+    assert(parser != NULL);
+    modhtp_txdata_t      *txdata;
+    modhtp_parser_data_t *parser_data;
+
+    parser_data = htp_connp_get_user_data(parser);
+    assert(parser_data->parser == parser);
+
+    txdata = htp_tx_get_user_data(parser->in_tx);
+    assert(txdata != NULL);
+    assert(txdata->parser_data != NULL);
+    assert(txdata->parser_data == parser_data);
+
+    return txdata;
 }
 
 /**
  * Check the modhtp connection parser status, get the related transactions
  *
  * @param[in] parser libhtp connection parser
- * @param[in] is_request True if this is a request, false if response
  * @param[in] label Label string (for logging)
- * @param[out] parse_error Error reported by parser?
- * @param[out] piconn Pointer to IronBee connection / NULL
- * @param[out] phtx Pointer to libhtp transaction / NULL
- * @param[out] pitx Pointer to IronBee transaction / NULL
+ * @param[out] ptxdata Pointer to transaction data
  *
  * @returns libhtp status code
  */
 static inline ib_status_t modhtp_check_parser(
-    const htp_connp_t *parser,
-    bool               is_request,
-    const char        *label,
-    bool              *parse_error,
-    ib_conn_t        **piconn,
-    htp_tx_t         **phtx,
-    ib_tx_t          **pitx)
+    htp_connp_t      *parser,
+    const char       *label,
+    modhtp_txdata_t **ptxdata)
 {
     assert(parser != NULL);
     assert(label != NULL);
-    assert(parse_error != NULL);
+    assert(ptxdata != NULL);
 
-    ib_conn_t               *iconn = NULL;
-    htp_tx_t                *htx = NULL;
-    ib_tx_t                 *itx = NULL;
-    enum htp_stream_state_t  status;
-    modhtp_context_t        *context = NULL;
-    ib_status_t              rc = IB_OK;
+    htp_log_t       *log;
+    modhtp_txdata_t *txdata;
+
+    /* Get the transaction data */
+    txdata = modhtp_get_txdata_parser(parser);
+    *ptxdata = txdata;
+
+    /* Sanity checks */
+    if ( (txdata->htx == NULL) || (txdata->itx == NULL) ) {
+        ib_log_error(txdata->ib, "modhtp/%s: No transaction", label);
+        return IB_EUNKNOWN;
+    }
 
     /* Check the connection parser status */
-    status = (is_request ? parser->in_status : parser->out_status);
-    if (status == HTP_STREAM_ERROR) {
-        ib_log_error(modhtp_ib, "%s: HTP Parser Error", label);
-        *parse_error = true;
-    }
-    else {
-        *parse_error = false;
+    log = htp_connp_get_last_error(parser);
+    if (log == NULL) {
+        txdata->error_code = 0;
+        txdata->error_msg = NULL;
+        return IB_OK;
     }
 
-    /* Get the current libhtp transaction */
-    htx = (is_request ? parser->in_tx : parser->out_tx);
-    if (htx == NULL) {
-        ib_log_error(modhtp_ib, "%s: No HTP transaction", label);
-        rc = (rc == IB_OK) ? IB_EINVAL : rc;
+    ib_log_warning_tx(txdata->itx,
+                      "modhtp/%s: Parser error %d \"%s\"",
+                      label,
+                      log->code,
+                      (log->msg == NULL) ? "UNKNOWN" : log->msg);
+    txdata->error_code = log->code;
+    if (log->msg == NULL) {
+        txdata->error_msg = "UNKNOWN";
     }
-    else {
-        itx = htp_tx_get_user_data(htx);
-        if (itx == NULL) {
-            rc = (rc == IB_OK) ? IB_ENOENT : rc;
+    else  {
+        txdata->error_msg = ib_mpool_strdup(txdata->itx->mp, log->msg);
+        if (txdata->error_msg == NULL) {
+            ib_log_error_tx(txdata->itx,
+                            "modhtp/%s: Error strdup()ing error message \"%s\"",
+                            label, log->msg);
+            txdata->error_msg = "ib_mpool_strdup() failed!";
+            return IB_EALLOC;
         }
     }
 
-    /* Verify that the context is valid */
-    context = htp_connp_get_user_data(parser);
-    if (context == NULL) {
-        ib_log_error(modhtp_ib, "%s:  to get connection context", label);
-        rc = (rc == IB_OK) ? IB_EINVAL : rc;
-    }
-    else {
-        iconn = context->iconn;
-        if (iconn == NULL) {
-            ib_log_error(modhtp_ib, "%s: No IronBee connection", label);
-            rc = (rc == IB_OK) ? IB_ENOENT : rc;
-        }
-    }
-
-    if (piconn != NULL) {
-        *piconn = iconn;
-    }
-    if (pitx != NULL) {
-        *pitx = itx;
-    }
-    if (phtx != NULL) {
-        *phtx = htx;
-    }
-
-    return rc;
+    return IB_OK;
 }
 
 /* -- Field Generation Routines -- */
 
 
+/**
+ * Generate an IB bytestring field from a libhtp bstr
+ *
+ * @param[in] tx IronBee transaction
+ * @param[in] name Field name
+ * @param[in] bs libhtp byte string
+ * @param[in] copy true to copy the bstr, else use pointer to the data
+ * @param[out] pf Pointer to the output field (or NULL)
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_field_gen_bytestr(
-    ib_data_t   *data,
+    ib_tx_t     *tx,
     const char  *name,
     bstr        *bs,
+    bool         copy,
     ib_field_t **pf)
 {
+    assert(tx != NULL);
+    assert(name != NULL);
+
     ib_field_t   *f;
     ib_bytestr_t *ibs;
     ib_status_t   rc;
+    uint8_t      *dptr;
 
+    /* Initialize the field pointer */
+    if (pf != NULL) {
+        *pf = NULL;
+    }
+
+    /* If bs is NULL, do return ENOENT */
     if (bs == NULL) {
-        if (pf != NULL) {
-            *pf = NULL;
+        ib_log_debug2_tx(tx, "HTP bytestr for for \"%s\" is NULL", name);
+        return IB_ENOENT;
+    }
+
+    /* Make a copy of the bstr if need be */
+    if (copy) {
+        dptr = ib_mpool_memdup(tx->mp, (uint8_t *)bstr_ptr(bs), bstr_len(bs));
+        if (dptr == NULL) {
+            return IB_EALLOC;
         }
-        return IB_EINVAL;
+    }
+    else {
+        dptr = (uint8_t *)bstr_ptr(bs);
     }
 
     /* First lookup the field to see if there is already one
      * that needs the value set.
      */
-    rc = ib_data_get(data, name, &f);
+    rc = ib_data_get(tx->data, name, &f);
     if (rc == IB_OK) {
         rc = ib_field_mutable_value(f, ib_ftype_bytestr_mutable_out(&ibs));
         if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to get field value for \"%s\": %s",
+                            name, ib_status_to_string(rc));
             return rc;
         }
 
-        rc = ib_bytestr_setv_const(ibs,
-                                   (const uint8_t *)bstr_ptr(bs),
-                                   bstr_len(bs));
-
-        return rc;
+        rc = ib_bytestr_setv_const(ibs, dptr, bstr_len(bs));
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to set field value for \"%s\": %s",
+                            name, ib_status_to_string(rc));
+            return rc;
+        }
+    }
+    else {
+        /* If no field exists, then create one. */
+        rc = ib_data_add_bytestr_ex(tx->data, name, strlen(name),
+                                    dptr, bstr_len(bs), &f);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed add bytestring field for \"%s\": %s",
+                            name, ib_status_to_string(rc));
+            return rc;
+        }
     }
 
-    /* If no field exists, then create one. */
-    rc = ib_data_add_bytestr_ex(data, name, strlen(name),
-                                (uint8_t *)bstr_ptr(bs),
-                                bstr_len(bs), pf);
-    return rc;
+    if (pf != NULL) {
+        *pf = f;
+    }
+    return IB_OK;
 }
 
 #define modhtp_field_gen_list(data, name, pf) \
@@ -911,11 +984,16 @@ static void modhtp_parser_flag(
 }
 
 static ib_status_t modhtp_set_parser_flags(
-    ib_tx_t       *itx,
-    const char    *collection,
-    uint64_t       flags)
+    modhtp_txdata_t  *txdata,
+    const char       *collection)
 {
-    ib_status_t rc = IB_OK;
+    ib_status_t  rc = IB_OK;
+    uint64_t     flags = txdata->htx->flags;
+    ib_tx_t     *itx = txdata->itx;
+
+    if (flags == 0) {
+        return IB_OK;
+    }
 
     /* FILED_xxxx */
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, FIELD_UNPARSEABLE);
@@ -974,15 +1052,14 @@ static ib_status_t modhtp_set_parser_flags(
 
 /* -- LibHTP Callbacks -- */
 
-static int modhtp_htp_request_start(
+static int modhtp_htp_req_start(
     htp_connp_t *connp)
 {
-    ib_status_t  irc;
-    bool         perror = false;
-
+    ib_status_t      irc;
+    modhtp_txdata_t *txdata;
+    
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, true, "Request_line",
-                              &perror, NULL, NULL, NULL);
+    irc = modhtp_check_parser(connp, "Request Start", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -990,23 +1067,23 @@ static int modhtp_htp_request_start(
     return HTP_OK;
 }
 
-static int modhtp_htp_request_line(
+static int modhtp_htp_req_line(
     htp_connp_t   *connp,
     unsigned char *line,
     size_t         len)
 {
-    htp_tx_t    *tx;
-    ib_conn_t   *iconn;
-    ib_tx_t     *itx;
-    ib_status_t  irc;
-    bool         perror = false;
+    modhtp_txdata_t *txdata;
+    ib_tx_t         *itx;
+    htp_tx_t        *htx;
+    ib_status_t      irc;
 
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, true, "Request_line",
-                              &perror, &iconn, &tx, &itx);
+    irc = modhtp_check_parser(connp, "Request Line", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    itx = txdata->itx;
+    htx = txdata->htx;
 
     /* Store the request line if required */
     if ( (itx->request_line->raw == NULL) ||
@@ -1020,7 +1097,7 @@ static int modhtp_htp_request_line(
 
     /* Store the request method */
     irc = modhtp_set_bytestr(itx, "Request method", false,
-                             tx->request_method, NULL,
+                             htx->request_method, NULL,
                              &(itx->request_line->method));
     if (irc != IB_OK) {
         return HTP_ERROR;
@@ -1028,7 +1105,7 @@ static int modhtp_htp_request_line(
 
     /* Store the request URI */
     irc = modhtp_set_bytestr(itx, "Request URI", false,
-                             tx->request_uri, NULL,
+                             htx->request_uri, NULL,
                              &(itx->request_line->uri));
     if (irc != IB_OK) {
         return HTP_ERROR;
@@ -1036,7 +1113,7 @@ static int modhtp_htp_request_line(
 
     /* Store the request protocol */
     irc = modhtp_set_bytestr(itx, "Request protocol", false,
-                             tx->request_protocol, NULL,
+                             htx->request_protocol, NULL,
                              &(itx->request_line->protocol));
     if (irc != IB_OK) {
         return HTP_ERROR;
@@ -1044,127 +1121,111 @@ static int modhtp_htp_request_line(
 
     /* Store the transaction URI path. */
     irc = modhtp_set_nulstr(itx, "URI Path", false,
-                            tx->parsed_uri->path, "/",
+                            htx->parsed_uri->path, "/",
                             &(itx->path));
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
 
+    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
+
     return HTP_OK;
 }
 
-static int modhtp_htp_request_headers(
-    htp_connp_t *connp)
+static int modhtp_htp_req_headers(
+    htp_connp_t    *connp)
 {
-    htp_tx_t    *tx;
-    ib_conn_t   *iconn;
-    ib_tx_t     *itx;
-    ib_status_t  irc;
-    bool         perror;
+    modhtp_txdata_t *txdata;
+    ib_status_t      irc;
+    ib_tx_t         *itx;
 
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, true, "Request headers",
-                              &perror, &iconn, &tx, &itx);
+    irc = modhtp_check_parser(connp, "Request Headers", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    itx = txdata->itx;
 
     /* Update the hostname that may have changed with headers. */
     irc = modhtp_set_nulstr(itx, "Hostname", true,
-                            tx->parsed_uri->hostname,
-                            iconn->local_ipstr,
+                            txdata->htx->parsed_uri->hostname,
+                            itx->conn->local_ipstr,
                             &(itx->hostname));
     if (irc != IB_OK) {
         return irc;
     }
 
+    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
+
     return HTP_OK;
 }
 
-static int modhtp_htp_request_body_data(
-    htp_tx_data_t *txdata)
+static int modhtp_htp_req_body_data(
+    htp_tx_data_t    *htp_tx_data)
 {
-    htp_tx_t    *tx;
-    ib_tx_t     *itx;
-    ib_status_t  irc;
-    bool         perror;
+    assert(htp_tx_data != NULL);
 
-    /* Check the parser status */
-    irc = modhtp_check_parser(txdata->tx->connp, true, "Request_body_data",
-                              &perror, NULL, &tx, &itx);
-    if (irc != IB_OK) {
-        return HTP_ERROR;
-    }
+    modhtp_txdata_t *txdata;
 
-    if (tx->flags) {
-        modhtp_set_parser_flags(itx, "HTP_REQUEST_FLAGS", tx->flags);
-    }
+    /* Get the txdata */
+    txdata = modhtp_get_txdata_htptx(htp_tx_data->tx);
+    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
 
     return HTP_OK;
 }
 
-static int modhtp_htp_request_trailer(
+static int modhtp_htp_req_trailer(
     htp_connp_t *connp)
 {
-    htp_tx_t    *tx;
-    ib_tx_t     *itx;
-    ib_status_t  irc;
-    bool         perror;
+    modhtp_txdata_t *txdata;
+    ib_status_t      irc;
 
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, true, "Request_trailer",
-                              &perror, NULL, &tx, &itx);
+    irc = modhtp_check_parser(connp, "Request Trailer", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
 
-    if (tx->flags) {
-        modhtp_set_parser_flags(itx, "HTP_REQUEST_FLAGS", tx->flags);
-    }
+    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
 
     return HTP_OK;
 }
 
-static int modhtp_htp_request_complete(
+static int modhtp_htp_req_complete(
     htp_connp_t *connp)
 {
-    htp_tx_t    *tx;
-    ib_tx_t     *itx;
-    ib_status_t  irc;
-    bool         perror;
+    modhtp_txdata_t *txdata;
+    ib_status_t      irc;
 
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, true, "Request_complete",
-                              &perror, NULL, &tx, &itx);
+    irc = modhtp_check_parser(connp, "Request Complete", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
 
-    if (tx->flags) {
-        modhtp_set_parser_flags(itx, "HTP_REQUEST_FLAGS", tx->flags);
-    }
-
+    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
     return HTP_OK;
 }
 
-static int modhtp_htp_response_line(
+static int modhtp_htp_rsp_line(
     htp_connp_t *connp)
 {
-    htp_tx_t    *tx;
-    ib_tx_t     *itx;
-    ib_status_t  irc;
-    bool         perror;
+    modhtp_txdata_t *txdata;
+    ib_tx_t         *itx;
+    htp_tx_t        *htx;
+    ib_status_t      irc;
 
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, true, "Response_line",
-                              &perror, NULL, &tx, &itx);
+    irc = modhtp_check_parser(connp, "Response Line", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    itx = txdata->itx;
+    htx = txdata->htx;
 
     /* Store the response protocol */
     irc = modhtp_set_bytestr(itx, "Response protocol", false,
-                             tx->response_protocol, NULL,
+                             htx->response_protocol, NULL,
                              &itx->response_line->protocol);
     if (irc != IB_OK) {
         return HTP_ERROR;
@@ -1172,7 +1233,7 @@ static int modhtp_htp_response_line(
 
     /* Store the response status */
     irc = modhtp_set_bytestr(itx, "Response status", false,
-                             tx->response_status, NULL,
+                             htx->response_status, NULL,
                              &itx->response_line->status);
     if (irc != IB_OK) {
         return HTP_ERROR;
@@ -1180,105 +1241,76 @@ static int modhtp_htp_response_line(
 
     /* Store the request URI */
     irc = modhtp_set_bytestr(itx, "Response message", false,
-                             tx->response_message, NULL,
+                             htx->response_message, NULL,
                              &itx->response_line->msg);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
 
-
-    if (tx->flags) {
-        modhtp_set_parser_flags(itx, "HTP_RESPONSE_FLAGS", tx->flags);
-    }
-
+    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
     return HTP_OK;
 }
 
-static int modhtp_htp_response_headers(
+static int modhtp_htp_rsp_headers(
     htp_connp_t *connp)
 {
-    htp_tx_t    *tx;
-    ib_tx_t     *itx;
-    ib_status_t  irc;
-    bool         perror;
+    modhtp_txdata_t *txdata;
+    ib_status_t      irc;
 
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, true, "Response_headers",
-                              &perror, NULL, &tx, &itx);
+    irc = modhtp_check_parser(connp, "Response Headers", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
 
-    if (tx->flags) {
-        modhtp_set_parser_flags(itx, "HTP_RESPONSE_FLAGS", tx->flags);
-    }
+    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
     return HTP_OK;
 }
 
-static int modhtp_htp_response_body_data(
-    htp_tx_data_t *txdata)
+static int modhtp_htp_rsp_body_data(
+    htp_tx_data_t *htp_tx_data)
 {
-    htp_tx_t    *tx;
-    ib_tx_t     *itx;
-    ib_status_t  irc;
-    bool         perror;
+    modhtp_txdata_t *txdata;
 
-    /* Check the parser status */
-    irc = modhtp_check_parser(txdata->tx->connp, true, "Response_body_data",
-                              &perror, NULL, &tx, &itx);
-    if (irc != IB_OK) {
-        return HTP_ERROR;
-    }
-
-    if (tx->flags) {
-        modhtp_set_parser_flags(itx, "HTP_RESPONSE_FLAGS", tx->flags);
-    }
+    /* Get the txdata */
+    txdata = modhtp_get_txdata_htptx(htp_tx_data->tx);
+    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
     return HTP_OK;
 }
 
-static int modhtp_htp_response_complete(
+static int modhtp_htp_rsp_complete(
     htp_connp_t *connp)
 {
-    htp_tx_t    *tx;
-    ib_tx_t     *itx;
-    ib_status_t  irc;
-    bool         perror;
+    modhtp_txdata_t *txdata;
+    ib_status_t      irc;
 
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, true, "Response_complete",
-                              &perror, NULL, &tx, &itx);
+    irc = modhtp_check_parser(connp, "Response Complete", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
 
-    if (tx->flags) {
-        modhtp_set_parser_flags(itx, "HTP_RESPONSE_FLAGS", tx->flags);
-    }
+    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
     return HTP_OK;
 }
 
-static int modhtp_htp_response_trailer(
-    htp_connp_t *connp)
+static int modhtp_htp_rsp_trailer(
+    htp_connp_t      *connp)
 {
-    htp_tx_t    *tx;
-    ib_tx_t     *itx;
-    ib_status_t  irc;
-    bool         perror;
+    modhtp_txdata_t *txdata;
+    ib_status_t      irc;
 
     /* Check the parser status */
-    irc = modhtp_check_parser(connp, true, "Response_trailer",
-                              &perror, NULL, &tx, &itx);
+    irc = modhtp_check_parser(connp, "Response Trailser", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
 
-    if (tx->flags) {
-        modhtp_set_parser_flags(itx, "HTP_RESPONSE_FLAGS", tx->flags);
-    }
+    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
     return HTP_OK;
 }
@@ -1287,84 +1319,62 @@ static int modhtp_htp_response_trailer(
 /**
  * Generate IronBee request header fields
  *
- * @param[in] htx libhtp transaction (NULL if not known)
- * @param[in,out] itx IronBee transaction
+ * @param[in] txdata Transaction data
  *
  * @returns IronBee status code
  */
 static ib_status_t modhtp_gen_request_header_fields(
-    const htp_tx_t  *htx,
-    ib_tx_t         *itx)
+    const modhtp_txdata_t *txdata)
 {
-    ib_field_t *f;
-    size_t param_count = 0;
-    ib_status_t rc;
+    assert(txdata != NULL);
+    assert(txdata->itx != NULL);
+    assert(txdata->htx != NULL);
 
-    /* If no libhtp transaction provided, get it from the context */
-    if (htx == NULL) {
-        modhtp_context_t *modctx;
-        modctx = modhtp_get_itx_context(itx);
-        htx = modctx->htp->in_tx;
-        if (htx == NULL) {
-            return IB_EINVAL;
-        }
-        htp_tx_set_user_data((htp_tx_t *)htx, itx);
+    ib_field_t  *f;
+    size_t       param_count = 0;
+    ib_status_t  rc;
+    ib_tx_t     *itx = txdata->itx;
+    htp_tx_t    *htx = txdata->htx;
+    bstr        *uri;
+
+    modhtp_field_gen_bytestr(itx, "request_line",
+                             htx->request_line, false, NULL);
+
+    uri = htp_unparse_uri_noencode(htx->parsed_uri);
+    if (uri == NULL) {
+        ib_log_error_tx(itx, "Failed to generate normalized URI");
+    }
+    else {
+        modhtp_field_gen_bytestr(itx, "request_uri", uri, true, NULL);
+        bstr_free(uri);
     }
 
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_line",
-                             htx->request_line,
-                             NULL);
+    modhtp_field_gen_bytestr(itx, "request_uri_scheme",
+                             htx->parsed_uri->scheme, false, NULL);
 
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_uri",
-                             htx->request_uri_normalized,
-                             NULL);
+    modhtp_field_gen_bytestr(itx, "request_uri_username",
+                             htx->parsed_uri->username, false, NULL);
 
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_uri_scheme",
-                             htx->parsed_uri->scheme,
-                             NULL);
+    modhtp_field_gen_bytestr(itx, "request_uri_password",
+                             htx->parsed_uri->password, false, NULL);
 
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_uri_username",
-                             htx->parsed_uri->username,
-                             NULL);
+    modhtp_field_gen_bytestr(itx, "request_uri_host",
+                             htx->parsed_uri->hostname, false, NULL);
 
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_uri_password",
-                             htx->parsed_uri->password,
-                             NULL);
+    modhtp_field_gen_bytestr(itx, "request_host",
+                             htx->parsed_uri->hostname, false, NULL);
 
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_uri_host",
-                             htx->parsed_uri->hostname,
-                             NULL);
+    modhtp_field_gen_bytestr(itx, "request_uri_port",
+                             htx->parsed_uri->port, false, NULL);
 
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_host",
-                             htx->parsed_uri->hostname,
-                             NULL);
+    modhtp_field_gen_bytestr(itx, "request_uri_path",
+                             htx->parsed_uri->path, false, NULL);
 
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_uri_port",
-                             htx->parsed_uri->port,
-                             NULL);
+    modhtp_field_gen_bytestr(itx, "request_uri_query",
+                             htx->parsed_uri->query, false, NULL);
 
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_uri_path",
-                             htx->parsed_uri->path,
-                             NULL);
-
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_uri_query",
-                             htx->parsed_uri->query,
-                             NULL);
-
-    modhtp_field_gen_bytestr(itx->data,
-                             "request_uri_fragment",
-                             htx->parsed_uri->fragment,
-                             NULL);
+    modhtp_field_gen_bytestr(itx, "request_uri_fragment",
+                             htx->parsed_uri->fragment, false, NULL);
 
     rc = ib_data_add_list(itx->data, "request_cookies", &f);
     if ( (htx->request_cookies != NULL) &&
@@ -1467,127 +1477,190 @@ static ib_status_t modhtp_gen_response_fields(
 
 /* -- Parser Provider Interface Implementation -- */
 
+/**
+ * Create and populate a module configuration context object
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] mod_config modhtp configuration structure
+ * @param[out] pcontext Pointer to module context object
+ *
+ * @returns Staus code
+ */
+static ib_status_t modhtp_build_context (
+    const ib_engine_t      *ib,
+    ib_mpool_t             *mp,
+    const modhtp_config_t  *mod_config,
+    modhtp_context_t      **pcontext)
+{
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(mod_config != NULL);
+    assert(pcontext != NULL);
+
+    int               personality;
+    modhtp_context_t *context;
+    htp_cfg_t        *htp_config;
+
+    /* Figure out the personality to use. */
+    personality = modhtp_personality(mod_config->personality);
+    if (personality == -1) {
+        personality = HTP_SERVER_APACHE_2;
+    }
+
+    /* Create a context. */
+    context = ib_mpool_calloc(mp, 1, sizeof(*context));
+    if (context == NULL) {
+        return IB_EALLOC;
+    }
+    context->ib = ib;
+    context->mod_config = mod_config;
+
+    /* Create a parser configuration. */
+    htp_config = htp_config_create();
+    if (htp_config == NULL) {
+        return IB_EALLOC;
+    }
+    context->htp_config = htp_config;
+
+    /* Fill in the configuration */
+    htp_config_set_server_personality(htp_config, personality);
+
+    /* @todo Make all these configurable??? */
+    htp_config->log_level = HTP_LOG_DEBUG2;
+    htp_config_set_tx_auto_destroy(htp_config, 0);
+    htp_config_set_generate_request_uri_normalized(htp_config, 1);
+
+    htp_config_register_urlencoded_parser(htp_config);
+    htp_config_register_multipart_parser(htp_config);
+    htp_config_register_log(htp_config, modhtp_callback_log);
+
+    /* Cookies */
+    htp_config->parse_request_cookies = 1;
+
+    /* Register callbacks. */
+    htp_config_register_request_start(htp_config, modhtp_htp_req_start);
+    htp_config_register_request_line(htp_config, modhtp_htp_req_line);
+    htp_config_register_request_headers(htp_config, modhtp_htp_req_headers);
+    htp_config_register_request_body_data(htp_config, modhtp_htp_req_body_data);
+    htp_config_register_request_trailer(htp_config, modhtp_htp_req_trailer);
+    htp_config_register_request_complete(htp_config, modhtp_htp_req_complete);
+    htp_config_register_response_line(htp_config, modhtp_htp_rsp_line);
+    htp_config_register_response_headers(htp_config, modhtp_htp_rsp_headers);
+    htp_config_register_response_body_data(htp_config,modhtp_htp_rsp_body_data);
+    htp_config_register_response_trailer(htp_config, modhtp_htp_rsp_trailer);
+    htp_config_register_response_complete(htp_config, modhtp_htp_rsp_complete);
+
+    *pcontext = context;
+    return IB_OK;
+}
+
 /*****************************************************************************
- * Dragons be here.
  *
- * The parser interface is called indirectly by the server in one of two modes:
+ * The server will call the parsed versions of the ib_state_notify_*()
+ * functions directly with the parsed HTTP data. Because of limitations in
+ * libhtp, the parsed functions implemented here will reconstruct a normalized
+ * raw HTTP stream and call the data_in/data_out functions as if it was
+ * receiving a raw stream.
  *
- * 1) The server will call the data_in/data_out functions to feed
- *    in raw HTTP data. This data is then parsed and the appropriate
- *    parsed versions of the ib_state_notify_*() functions are called
- *    by the parser.
- *
- * 2) The server will call the parsed versions of the ib_state_notify_*()
- *    functions directly with the parsed HTTP data. Because of limitations
- *    in libhtp, the parsed functions implemented here will reconstruct
- *    a normalized raw HTTP stream and call the data_in/data_out functions
- *    as if it was receiving a raw stream.
- *
- * The interfaces for the two modes are cyclic (raw data functions call
- * the parsed versions and vice versa) and some care is taken to detect
- * which mode is in use so that calls do not endlessly recurse. However,
- * no effort was taken to prevent an incorrectly written server from
- * causing problems and infinite recursion.
- *
- * TODO: Fix libhtp to have an interface that accepts pre-parsed HTTP
- *       data so that reconstructing the raw HTTP is not required. This
- *       will greatly simplify the interface.
  ****************************************************************************/
 
-static ib_status_t modhtp_iface_init(
+static ib_status_t modhtp_iface_conn_init(
     ib_provider_inst_t *pi,
     ib_conn_t          *iconn)
 {
-    ib_engine_t *ib = iconn->ib;
-    ib_context_t *ctx = iconn->ctx;
-    modhtp_cfg_t *modcfg;
-    modhtp_context_t *modctx;
-    htp_time_t htv;
-    ib_status_t rc;
-    int personality;
+    ib_engine_t            *ib = iconn->ib;
+    ib_context_t           *ctx = iconn->ctx;
+    ib_status_t             rc;
+    modhtp_config_t        *config;
+    const modhtp_context_t *context;
+    modhtp_parser_data_t   *parser_data;
+    htp_connp_t            *parser;
 
     /* Get the module config. */
-    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
+    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&config);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
 
+    /* If no context, create one */
+    context = config->context;
+    if (context == NULL) {
+        modhtp_context_t *new;
+        rc = modhtp_build_context (ib, iconn->mp, config, &new);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Failed to create a configuration context");
+        }
+        context = new;
+        config->context = context;
+    }
+
+    /* Create the connection parser */
     ib_log_debug3(ib, "Creating LibHTP parser");
-
-    /* Create a context. */
-    modctx = ib_mpool_calloc(iconn->mp, 1, sizeof(*modctx));
-    if (modctx == NULL) {
+    parser = htp_connp_create((htp_cfg_t *)context->htp_config);
+    if (parser == NULL) {
         return IB_EALLOC;
     }
 
-    /* Figure out the personality to use. */
-    personality = modhtp_personality(modcfg->personality);
-    if (personality == -1) {
-        personality = HTP_SERVER_APACHE_2;
-    }
-
-    /* Configure parser. */
-    modctx->htp_cfg = htp_config_create();
-    if (modctx->htp_cfg == NULL) {
+    /* Create the modhtp connection parser data struct */
+    parser_data = ib_mpool_alloc(iconn->mp, sizeof(*parser_data));
+    if (parser_data == NULL) {
         return IB_EALLOC;
     }
-    htp_config_set_server_personality(modctx->htp_cfg, personality);
-    /// @todo Make all these configurable???
-    modctx->htp_cfg->log_level = HTP_LOG_DEBUG2;
-    htp_config_set_tx_auto_destroy(modctx->htp_cfg, 0);
-    htp_config_set_generate_request_uri_normalized(modctx->htp_cfg, 1);
+    parser_data->context = context;
+    parser_data->parser  = parser;
+    parser_data->iconn   = iconn;
+    parser_data->parser  = parser;
 
-    htp_config_register_urlencoded_parser(modctx->htp_cfg);
-    htp_config_register_multipart_parser(modctx->htp_cfg);
-    htp_config_register_log(modctx->htp_cfg, modhtp_callback_log);
+    /* Store the parser data for access from callbacks. */
+    ib_conn_parser_context_set(iconn, parser_data);
+    htp_connp_set_user_data(parser, parser_data);
 
-    /* Cookies */
-    modctx->htp_cfg->parse_request_cookies = 1;
+    return IB_OK;
+}
 
-    /* Setup context and create the parser. */
-    modctx->ib = ib;
-    modctx->iconn = iconn;
-    modctx->modcfg = modcfg;
-    modctx->htp = htp_connp_create(modctx->htp_cfg);
-    if (modctx->htp == NULL) {
-        return IB_EALLOC;
+static ib_status_t modhtp_iface_conn_cleanup(
+    ib_provider_inst_t *pi,
+    ib_conn_t          *iconn)
+{
+    modhtp_parser_data_t   *parser_data;
+
+    /* Get the parser data */
+    parser_data = ib_conn_parser_context_get(iconn);
+    if (parser_data == NULL) {
+        ib_log_error(iconn->ib,
+                     "Failed to get connection parser data from IB connection");
+        return IB_EUNKNOWN;
+    }
+
+    /* Destroy the parser on disconnect. */
+    ib_log_debug3(iconn->ib, "Destroying LibHTP parser");
+    htp_connp_destroy_all(parser_data->parser);
+
+    return IB_OK;
+}
+
+static ib_status_t modhtp_iface_connect(
+    ib_provider_inst_t *pi,
+    ib_conn_t          *iconn)
+{
+    modhtp_parser_data_t *parser_data;
+
+    /* Get the parser data */
+    parser_data = ib_conn_parser_context_get(iconn);
+    if (parser_data == NULL) {
+        ib_log_error(iconn->ib,
+                     "Failed to get connection parser data from IB connection");
+        return IB_EUNKNOWN;
     }
 
     /* Open the connection */
-    htp_connp_open(modctx->htp,
+    htp_connp_open(parser_data->parser,
                    iconn->remote_ipstr, iconn->remote_port,
                    iconn->local_ipstr, iconn->local_port,
-                   &htv);
-
-    /* Store the context. */
-    ib_conn_parser_context_set(iconn, modctx);
-    htp_connp_set_user_data(modctx->htp, modctx);
-
-    /* Register callbacks. */
-    htp_config_register_request_start(modctx->htp_cfg,
-                                      modhtp_htp_request_start);
-    htp_config_register_request_line(modctx->htp_cfg,
-                                     modhtp_htp_request_line);
-    htp_config_register_request_headers(modctx->htp_cfg,
-                                        modhtp_htp_request_headers);
-    htp_config_register_request_body_data(modctx->htp_cfg,
-                                          modhtp_htp_request_body_data);
-    htp_config_register_request_trailer(modctx->htp_cfg,
-                                        modhtp_htp_request_trailer);
-    htp_config_register_request_complete(modctx->htp_cfg,
-                                         modhtp_htp_request_complete);
-    htp_config_register_response_line(modctx->htp_cfg,
-                                      modhtp_htp_response_line);
-    htp_config_register_response_headers(modctx->htp_cfg,
-                                         modhtp_htp_response_headers);
-    htp_config_register_response_body_data(modctx->htp_cfg,
-                                           modhtp_htp_response_body_data);
-    htp_config_register_response_trailer(modctx->htp_cfg,
-                                         modhtp_htp_response_trailer);
-    htp_config_register_response_complete(modctx->htp_cfg,
-                                          modhtp_htp_response_complete);
+                   &parser_data->open_time);
 
     return IB_OK;
 }
@@ -1596,20 +1669,22 @@ static ib_status_t modhtp_iface_disconnect(
     ib_provider_inst_t *pi,
     ib_conn_t          *iconn)
 {
-    ib_engine_t *ib = iconn->ib;
-    modhtp_context_t *modctx;
+    modhtp_parser_data_t *parser_data;
 
-    /* Fetch context from the connection. */
-    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
+    /* Get the parser data */
+    parser_data = (modhtp_parser_data_t *)ib_conn_parser_context_get(iconn);
+    if (parser_data == NULL) {
+        ib_log_error(iconn->ib,
+                     "Failed to get connection parser data from IB connection");
+        return IB_EUNKNOWN;
+    }
 
-    ib_log_debug3(ib, "Destroying LibHTP parser");
-
-    /* Destroy the parser on disconnect. */
-    htp_connp_destroy_all(modctx->htp);
-
-    /* Destroy the configuration. */
-    htp_config_destroy(modctx->htp_cfg);
-
+    /*
+     * @todo This seems to cause libhtp to go into an infinite loop in
+     * the luajit test.
+     *
+     * htp_connp_close(parser_data->parser, &parser_data->close_time);
+    */
     return IB_OK;
 }
 
@@ -1617,6 +1692,42 @@ static ib_status_t modhtp_iface_tx_init(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
 {
+    modhtp_txdata_t      *txdata;
+    modhtp_parser_data_t *parser_data;
+    htp_tx_t             *htx;
+    ib_status_t           irc;
+
+    /* Get the parser data from the transaction */
+    parser_data = ib_conn_parser_context_get(itx->conn);
+    if (parser_data == NULL) {
+        ib_log_error_tx(itx, "Failed to get parser data for connection");
+    }
+
+    /* Create the transaction data */
+    txdata = ib_mpool_calloc(itx->mp, sizeof(*txdata), 1);
+    if (txdata == NULL) {
+        ib_log_error_tx(itx, "Failed to allocate transaction data");
+        return IB_EALLOC;
+    }
+    txdata->ib = itx->ib;
+    txdata->itx = itx;
+    txdata->parser_data = parser_data;
+
+    /* Create the transaction */
+    htx = htp_connp_tx_create(parser_data->parser);
+    if (htx == NULL) {
+        ib_log_error_tx(itx, "Failed to create HTP transaction");
+        return IB_EALLOC;
+    }
+    txdata->htx = htx;
+
+    /* Point both transactions at the transaction data */
+    htp_tx_set_user_data(htx, txdata);
+    irc = ib_tx_set_module_data(itx, IB_MODULE_STRUCT_PTR, txdata);
+    if (irc != IB_OK) {
+        return irc;
+    }
+
     return IB_OK;
 }
 
@@ -1624,54 +1735,20 @@ static ib_status_t modhtp_iface_tx_cleanup(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
 {
-    modhtp_context_t *modctx;
-    htp_tx_t *in_tx;
-    htp_tx_t *out_tx;
-
     assert(itx != NULL);
     assert(itx->conn != NULL);
 
-    /* Fetch context from the connection. */
-    modctx = modhtp_get_itx_context(itx);
+    modhtp_txdata_t *txdata;
 
-    /* Use the current parser transaction to generate fields. */
-    out_tx = modctx->htp->out_tx;
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Reset libhtp connection parser. */
-    if (out_tx != NULL) {
-        ib_tx_t *tx_itx = htp_tx_get_user_data(out_tx);
-        if (tx_itx == itx) {
-            ib_log_debug_tx(itx,
-                            "Destroying LibHTP outbound transaction=%p id=%s",
-                            out_tx, itx->id);
-            modctx->htp->out_status = HTP_STREAM_OPEN;
-            modctx->htp->out_state = htp_connp_RES_IDLE;
-            htp_tx_destroy(out_tx);
-            modctx->htp->out_tx = NULL;
-            if (out_tx == modctx->htp->in_tx) {
-                modctx->htp->in_tx = NULL;
-            }
-        }
-    }
+    ib_log_debug_tx(itx, "Destroying LibHTP transaction (%p)", txdata->htx);
+    htp_tx_destroy(txdata->htx);
+    txdata->htx = NULL;
 
-    in_tx = modctx->htp->in_tx;
-    if (in_tx != NULL) {
-        ib_tx_t *tx_itx = htp_tx_get_user_data(in_tx);
-        if (tx_itx == itx) {
-            ib_log_debug_tx(itx,
-                            "Destroying LibHTP inbound transaction=%p id=%s",
-                            in_tx, itx->id);
-            modctx->htp->in_status = HTP_STREAM_OPEN;
-            htp_tx_destroy(in_tx);
-            modctx->htp->in_tx = NULL;
-            modctx->htp->in_state = htp_connp_REQ_IDLE;
-            if (in_tx == modctx->htp->out_tx) {
-                modctx->htp->out_tx = NULL;
-            }
-        }
-    }
-
-    htp_connp_clear_error(modctx->htp);
+    htp_connp_clear_error(txdata->parser_data->parser);
     return IB_OK;
 }
 
@@ -1684,46 +1761,23 @@ static ib_status_t modhtp_iface_request_line(
     assert(itx != NULL);
     assert(line != NULL);
 
-    modhtp_context_t *modctx;
-    htp_connp_t      *htp;
-    htp_tx_t         *htx;
-    ib_status_t       irc;
-    htp_status_t      hrc;
+    const modhtp_txdata_t *txdata;
+    htp_status_t           hrc;
 
-    /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        return IB_OK;
-    }
-    if ( (line->method == NULL) || (line->uri == NULL) ) {
-        return IB_EINVAL;
-    }
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
 
     ib_log_debug_tx(itx,
                     "SEND REQUEST LINE TO LIBHTP: modhtp_iface_request_line");
 
-    /* Fetch context from the connection */
-    modctx = modhtp_get_itx_context(itx);
-    htp = modctx->htp;
-
-    /* Create the transaction */
-    htx = htp_connp_tx_create(htp);
-    if ( (htx == NULL) || (htp->in_tx != htx) ) {
-        return IB_EUNKNOWN;
-    }
-    htp_tx_set_user_data(htx, itx);
-    irc = ib_tx_set_module_data(itx, IB_MODULE_STRUCT_PTR, htx);
-    if (irc != IB_OK) {
-        return irc;
-    }
-
     /* Start the request */
-    hrc = htp_tx_state_request_start(htp->in_tx);
+    hrc = htp_tx_state_request_start(txdata->htx);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
     }
 
     /* Hand the whole request line to libhtp */
-    hrc = htp_tx_req_set_line(htp->in_tx,
+    hrc = htp_tx_req_set_line(txdata->htx,
                               (const char *)ib_bytestr_const_ptr(line->raw),
                               ib_bytestr_length(line->raw),
                               HTP_ALLOC_COPY);
@@ -1732,7 +1786,7 @@ static ib_status_t modhtp_iface_request_line(
     }
 
     /* Update the state */
-    hrc = htp_tx_state_request_line(htx);
+    hrc = htp_tx_state_request_line(txdata->htx);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
     }
@@ -1749,26 +1803,18 @@ static ib_status_t modhtp_iface_request_header_data(
     assert(itx != NULL);
     assert(header != NULL);
 
-    ib_status_t   irc;
-    htp_tx_t     *htx;
+    const modhtp_txdata_t *txdata;
+    ib_status_t            irc;
 
-    /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        return IB_OK;
-    }
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
 
     ib_log_debug_tx(itx,
                     "SEND REQUEST HEADER DATA TO LIBHTP: "
                     "modhtp_iface_request_header_data");
 
-    /* Get the libhtp transaction */
-    htx = modhtp_get_htx(itx);
-    if (htx == NULL) {
-        return IB_EUNKNOWN;
-    }
-
     /* Hand the headers off to libhtp */
-    irc = modhtp_set_header(itx, htx, header, htp_tx_req_set_header);
+    irc = modhtp_set_header(itx, txdata->htx, header, htp_tx_req_set_header);
     if (irc != IB_OK) {
         return irc;
     }
@@ -1783,31 +1829,23 @@ static ib_status_t modhtp_iface_request_header_finished(
     assert(pi != NULL);
     assert(itx != NULL);
 
-    ib_status_t irc;
-    htp_tx_t *htx;
-    htp_status_t  hrc;
+    const modhtp_txdata_t *txdata;
+    ib_status_t            irc;
+    htp_status_t           hrc;
 
-    /* Get the libhtp transaction */
-    htx = modhtp_get_htx(itx);
-    if (htx == NULL) {
-        return IB_EUNKNOWN;
-    }
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Update the state */
-    hrc = htp_tx_state_request_headers(htx);
+    hrc = htp_tx_state_request_headers(txdata->htx);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
     }
 
     /* Generate header fields. */
-    irc = modhtp_gen_request_header_fields(htx, itx);
+    irc = modhtp_gen_request_header_fields(txdata);
     if (irc != IB_OK) {
         return irc;
-    }
-
-    /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        return IB_OK;
     }
 
     ib_log_debug_tx(itx,
@@ -1820,32 +1858,25 @@ static ib_status_t modhtp_iface_request_header_finished(
 static ib_status_t modhtp_iface_request_body_data(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx,
-    ib_txdata_t        *txdata)
+    ib_txdata_t        *ib_txdata)
 {
     assert(pi != NULL);
     assert(itx != NULL);
-    assert(txdata != NULL);
+    assert(ib_txdata != NULL);
 
-    htp_status_t hrc;
-    htp_tx_t *htx;
+    const modhtp_txdata_t *txdata;
+    htp_status_t           hrc;
 
-    /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        return IB_OK;
-    }
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
 
     ib_log_debug_tx(itx,
                     "SEND REQUEST BODY DATA TO LIBHTP: "
                     "modhtp_iface_request_body_data");
 
-    /* Get the libhtp transaction */
-    htx = modhtp_get_htx(itx);
-    if (htx == NULL) {
-        return IB_EUNKNOWN;
-    }
-
     /* Hand the request body data to libhtp. */
-    hrc = htp_tx_req_process_body_data(htx, txdata->data, txdata->dlen);
+    hrc = htp_tx_req_process_body_data(txdata->htx,
+                                       ib_txdata->data, ib_txdata->dlen);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
     }
@@ -1860,17 +1891,14 @@ static ib_status_t modhtp_iface_request_finished(
     assert(pi != NULL);
     assert(itx != NULL);
 
-    ib_status_t irc;
-    htp_tx_t *htx;
+    const modhtp_txdata_t *txdata;
+    ib_status_t            irc;
 
-    /* Get the libhtp transaction */
-    htx = modhtp_get_htx(itx);
-    if (htx == NULL) {
-        return IB_EUNKNOWN;
-    }
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Generate fields. */
-    irc = modhtp_gen_request_fields(htx, itx);
+    irc = modhtp_gen_request_fields(txdata->htx, itx);
     return irc;
 }
 
@@ -1882,28 +1910,22 @@ static ib_status_t modhtp_iface_response_line(
     assert(pi != NULL);
     assert(itx != NULL);
 
-    htp_status_t      hrc;
-    htp_tx_t         *htx;
+    const modhtp_txdata_t *txdata;
+    htp_tx_t              *htx;
+    htp_status_t           hrc;
 
     /* This is not valid for HTTP/0.9 requests. */
     if (line == NULL) {
         return IB_OK;
     }
 
-    /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        return IB_OK;
-    }
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
+    htx = txdata->htx;
 
     ib_log_debug_tx(itx,
                     "SEND RESPONSE LINE TO LIBHTP: "
                     "modhtp_iface_response_line");
-
-    /* Get the libhtp transaction */
-    htx = modhtp_get_htx(itx);
-    if (htx == NULL) {
-        return IB_EUNKNOWN;
-    }
 
     /* Start the response transaction */
     hrc = htp_tx_state_response_start(htx);
@@ -1939,8 +1961,11 @@ static ib_status_t modhtp_iface_response_header_data(
     assert(itx != NULL);
     assert(header != NULL);
 
-    ib_status_t  irc;
-    htp_tx_t    *htx;
+    const modhtp_txdata_t *txdata;
+    ib_status_t            irc;
+
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
@@ -1951,14 +1976,8 @@ static ib_status_t modhtp_iface_response_header_data(
                     "SEND RESPONSE HEADER DATA TO LIBHTP: "
                     "modhtp_iface_response_header_data");
 
-    /* Get the libhtp transaction */
-    htx = modhtp_get_htx(itx);
-    if (htx == NULL) {
-        return IB_EUNKNOWN;
-    }
-
     /* Hand the response headers off to libhtp */
-    irc = modhtp_set_header(itx, htx, header, htp_tx_res_set_header);
+    irc = modhtp_set_header(itx, txdata->htx, header, htp_tx_res_set_header);
     if (irc != IB_OK) {
         return irc;
     }
@@ -1973,24 +1992,21 @@ static ib_status_t modhtp_iface_response_header_finished(
     assert(pi != NULL);
     assert(itx != NULL);
 
-    htp_status_t hrc;
-    ib_status_t irc;
-    htp_tx_t *htx;
+    const modhtp_txdata_t *txdata;
+    ib_status_t            irc;
+    htp_status_t           hrc;
 
-    /* Get the libhtp transaction */
-    htx = modhtp_get_htx(itx);
-    if (htx == NULL) {
-        return IB_EUNKNOWN;
-    }
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Update the state */
-    hrc = htp_tx_state_response_headers(htx);
+    hrc = htp_tx_state_response_headers(txdata->htx);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
     }
 
     /* Generate header fields. */
-    irc = modhtp_gen_response_header_fields(htx, itx);
+    irc = modhtp_gen_response_header_fields(txdata->htx, itx);
     if (irc != IB_OK) {
         return irc;
     }
@@ -2007,33 +2023,27 @@ static ib_status_t modhtp_iface_response_header_finished(
     return IB_OK;
 }
 
-static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
-                                                   ib_tx_t *itx,
-                                                   ib_txdata_t *txdata)
+static ib_status_t modhtp_iface_response_body_data(
+    ib_provider_inst_t *pi,
+    ib_tx_t            *itx,
+    ib_txdata_t        *ib_txdata)
 {
     assert(pi != NULL);
     assert(itx != NULL);
-    assert(txdata != NULL);
+    assert(ib_txdata != NULL);
 
-    htp_tx_t *htx;
-    htp_status_t hrc;
+    const modhtp_txdata_t *txdata;
+    htp_status_t           hrc;
 
-    /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        return IB_OK;
-    }
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
 
     ib_log_debug_tx(itx,
                     "SEND RESPONSE BODY DATA TO LIBHTP: "
                     "modhtp_iface_response_body_data");
 
-    /* Get the libhtp transaction */
-    htx = modhtp_get_htx(itx);
-    if (htx == NULL) {
-        return IB_EUNKNOWN;
-    }
-
-    hrc = htp_tx_res_process_body_data(htx, txdata->data, txdata->dlen);
+    hrc = htp_tx_res_process_body_data(txdata->htx,
+                                       ib_txdata->data, ib_txdata->dlen);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
     }
@@ -2041,21 +2051,21 @@ static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
     return IB_OK;
 }
 
-static ib_status_t modhtp_iface_response_finished(ib_provider_inst_t *pi,
-                                                  ib_tx_t *itx)
+static ib_status_t modhtp_iface_response_finished(
+    ib_provider_inst_t *pi,
+    ib_tx_t            *itx)
 {
     assert(pi != NULL);
     assert(itx != NULL);
 
-    ib_status_t irc;
-    htp_tx_t *htx = modhtp_get_htx(itx);
+    const modhtp_txdata_t *txdata;
+    ib_status_t            irc;
 
-    if (htx == NULL) {
-        return IB_EUNKNOWN;
-    }
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Generate fields. */
-    irc = modhtp_gen_response_fields(htx, itx);
+    irc = modhtp_gen_response_fields(txdata->htx, itx);
 
     return irc;
 }
@@ -2064,11 +2074,11 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
     IB_PROVIDER_IFACE_HEADER_DEFAULTS,
 
     /* Connection Init/Cleanup */
-    modhtp_iface_init,
-    NULL,
+    modhtp_iface_conn_init,
+    modhtp_iface_conn_cleanup,
 
     /* Connect/Disconnect */
-    NULL,
+    modhtp_iface_connect,
     modhtp_iface_disconnect,
 
     /* Transaction Init/Cleanup */
@@ -2115,13 +2125,16 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     return IB_OK;
 }
 
-static ib_status_t modhtp_context_close(ib_engine_t *ib,
-                                        ib_module_t *m,
-                                        ib_context_t *ctx,
-                                        void *cbdata)
+static ib_status_t modhtp_context_close(
+    ib_engine_t  *ib,
+    ib_module_t  *m,
+    ib_context_t *ctx,
+    void         *cbdata)
 {
-    ib_status_t rc;
+    ib_status_t         rc;
     ib_provider_inst_t *pi;
+    modhtp_config_t    *config;
+    modhtp_context_t   *modctx;
 
     /* If there is not a parser set, then use this parser. */
     pi = ib_parser_provider_get_instance(ctx);
@@ -2148,6 +2161,23 @@ static ib_status_t modhtp_context_close(ib_engine_t *ib,
         pi = ib_parser_provider_get_instance(ctx);
     }
 
+    /* Get the module config. */
+    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&config);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Build a context */
+    rc = modhtp_build_context(ib, ib_engine_pool_main_get(ib), config, &modctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to create a module context for %s: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
+        return rc;
+    }
+    config->context = modctx;
+
     return IB_OK;
 }
 
@@ -2155,7 +2185,7 @@ static IB_CFGMAP_INIT_STRUCTURE(modhtp_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".personality",
         IB_FTYPE_NULSTR,
-        modhtp_cfg_t,
+        modhtp_config_t,
         personality
     ),
     IB_CFGMAP_INIT_LAST
@@ -2167,19 +2197,19 @@ static IB_CFGMAP_INIT_STRUCTURE(modhtp_config_map) = {
  * This structure defines some metadata, config data and various functions.
  */
 IB_MODULE_INIT(
-    IB_MODULE_HEADER_DEFAULTS,           /**< Default metadata */
-    MODULE_NAME_STR,                     /**< Module name */
-    IB_MODULE_CONFIG(&modhtp_global_cfg),/**< Global config data */
-    modhtp_config_map,                   /**< Configuration field map */
-    NULL,                                /**< Config directive map */
-    modhtp_init,                         /**< Initialize function */
-    NULL,                                /**< Callback data */
-    NULL,                                /**< Finish function */
-    NULL,                                /**< Callback data */
-    NULL,                                /**< Context open function */
-    NULL,                                /**< Callback data */
-    modhtp_context_close,                /**< Context close function */
-    NULL,                                /**< Callback data */
-    NULL,                                /**< Context destroy function */
-    NULL                                 /**< Callback data */
+    IB_MODULE_HEADER_DEFAULTS,               /**< Default metadata */
+    MODULE_NAME_STR,                         /**< Module name */
+    IB_MODULE_CONFIG(&modhtp_global_config), /**< Global config data */
+    modhtp_config_map,                       /**< Configuration field map */
+    NULL,                                    /**< Config directive map */
+    modhtp_init,                             /**< Initialize function */
+    NULL,                                    /**< Callback data */
+    NULL,                                    /**< Finish function */
+    NULL,                                    /**< Callback data */
+    NULL,                                    /**< Context open function */
+    NULL,                                    /**< Callback data */
+    modhtp_context_close,                    /**< Context close function */
+    NULL,                                    /**< Callback data */
+    NULL,                                    /**< Context destroy function */
+    NULL                                     /**< Callback data */
 );
