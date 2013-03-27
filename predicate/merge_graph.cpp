@@ -350,12 +350,24 @@ void MergeGraph::merge_tree(node_p& which)
 
 namespace {
 
-string debug_node_decorator(const node_cp& node)
+string debug_node_decorator(const MergeGraph& g, const node_cp& node)
 {
     stringstream r;
-    r << "label=\"" << node << "\\n"
-      << node->to_s()
-      << "\"";
+    bool isroot = true;
+    size_t index;
+    try {
+        index = g.root_index(node);
+    }
+    catch (IronBee::enoent) {
+        isroot = false;
+    }
+    if (isroot) {
+        r << "shape=box,label=\"root " << index << "\\n";
+    }
+    else {
+        r << "label=\"";
+    }
+    r << node << "\\n" << node->to_s() << "\"";
     return r.str();
 }
 
@@ -377,7 +389,11 @@ void MergeGraph::write_debug_report(std::ostream& out)
     }
 
     out << endl << "Graph: " << endl;
-    to_dot(out, m_roots.begin(), m_roots.end(), debug_node_decorator);
+    to_dot(
+        out,
+        m_roots.begin(), m_roots.end(),
+        boost::bind(debug_node_decorator, boost::ref(*this), _1)
+    );
 }
 
 namespace {
