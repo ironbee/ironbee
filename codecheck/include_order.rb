@@ -194,6 +194,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<dslib.h>',
   '<GeoIP.h>',
   '<htp.h>',
+  '<htp_private.h>',
   '<lauxlib.h>',
   '<lua.h>',
   '<lualib.h>',
