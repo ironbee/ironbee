@@ -82,6 +82,10 @@ http {
     # Bootstrap the IronBee library
     ironbee_config_file /usr/local/ironbee/etc/ironbee-httpd.conf;
 
+    # Setup logging
+    ironbee_logger On;
+    ironbee_loglevel 4;
+
     ...
 }</programlisting></para>
         <para>From here, you can configure nginx.</para>
@@ -90,6 +94,25 @@ http {
             <para><emphasis role="bold">Description:</emphasis> Location of the main IronBee configuration file.</para>
             <para><emphasis role="bold">Syntax:</emphasis>
                 <literal>ironbee_config_file <replaceable>/path/to/ironbee.conf</replaceable>;</literal></para>
+            <para><emphasis role="bold">Default:</emphasis>
+                <literal>none</literal></para>
+            <para>This needs to go in the nginx "http" block.</para>
+        </section>
+        <section>
+            <title>ironbee_logger</title>
+            <para><emphasis role="bold">Description:</emphasis> Enable the ironbee logger.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>ironbee_logger "On"|"Off";</literal></para>
+            <para><emphasis role="bold">Default:</emphasis>
+                <literal>none</literal></para>
+            <para>This needs to go in the nginx "http" block.</para>
+        </section>
+        <section>
+            <title>ironbee_loglevel</title>
+            <para><emphasis role="bold">Description:</emphasis> Set the (numeric) ironbee log level.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>ironbee_loglevel
+                <replaceable>numeric-level_0-10</replaceable>;</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
             <para>This needs to go in the nginx "http" block.</para>

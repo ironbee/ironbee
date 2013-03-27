@@ -685,41 +685,43 @@ Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block
             <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
-            <para>The following log levels are supported:</para>
+            <para>The following log levels are supported (either numeric or text):</para>
             <itemizedlist>
                 <listitem>
-                    <para><literal>emergency</literal> - system unusable</para>
+                    <para><literal> 0 - emergency</literal> - system unusable</para>
                 </listitem>
                 <listitem>
-                    <para><literal>alert</literal> - crisis happened</para>
+                    <para><literal> 1 - alert</literal> - crisis happened</para>
                 </listitem>
                 <listitem>
-                    <para><literal>critical</literal> - crisis coming</para>
+                    <para><literal> 2 - critical</literal> - crisis coming</para>
                 </listitem>
                 <listitem>
-                    <para><literal>error</literal> - error occured</para>
+                    <para><literal> 3 - error</literal> - error occurred</para>
                 </listitem>
                 <listitem>
-                    <para><literal>warning</literal> - error lieky to occur</para>
+                    <para><literal> 4 - warning</literal> - error likely to occur</para>
                 </listitem>
                 <listitem>
-                    <para><literal>notice</literal> - something unusual happened</para>
+                    <para><literal> 5 - notice</literal> - something unusual happened</para>
                 </listitem>
                 <listitem>
-                    <para><literal>info</literal> - informational messages</para>
+                    <para><literal> 6 - info</literal> - informational messages</para>
                 </listitem>
                 <listitem>
-                    <para><literal>debug</literal> - debugging: transaction state changes</para>
+                    <para><literal> 7 - debug</literal> - debugging: transaction state
+                    changes</para>
                 </listitem>
                 <listitem>
-                    <para><literal>debug2</literal> - debugging: log of activities carried
-                        out</para>
+                    <para><literal> 8 - debug2</literal> - debugging: log of activities carried
+                    out</para>
                 </listitem>
                 <listitem>
-                    <para><literal>debug3</literal> - debugging: activities, with more detail</para>
+                    <para><literal> 9 - debug3</literal> - debugging: activities, with more
+                    detail</para>
                 </listitem>
                 <listitem>
-                    <para><literal>trace</literal> - debugging: developer log messages</para>
+                    <para><literal>10 - trace</literal> - debugging: developer log messages</para>
                 </listitem>
             </itemizedlist>
         </section>
