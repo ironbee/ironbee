@@ -80,3 +80,11 @@ TEST(TestLess, InteriorOdd)
     EXPECT_FALSE( less_sexpr()(a, b) );
     EXPECT_TRUE(  less_sexpr()(b, a) );
 }
+
+TEST(TestLess, RegressionOffByOne)
+{
+    string a("(A 'B')");
+    string b("(A 'C')");
+    EXPECT_TRUE(  less_sexpr()(a, b) );
+    EXPECT_FALSE( less_sexpr()(b, a) );
+}

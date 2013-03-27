@@ -70,10 +70,10 @@ struct less_sexpr {
             if (a[i] > b[i]) {
                 return false;
             }
-            if (a[a_length-i] < b[a_length-i]) {
+            if (a[a_length-i-1] < b[a_length-i-1]) {
                 return true;
             }
-            if (a[a_length-i] > b[a_length-i]) {
+            if (a[a_length-i-1] > b[a_length-i-1]) {
                 return false;
             }
         }
