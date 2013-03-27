@@ -43,12 +43,28 @@
 extern "C" {
 #endif
 
+#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
+/* C99 requires that inttypes.h only exposes PRI* macros
+ * for C++ implementations if this is defined: */
+#define __STDC_FORMAT_MACROS
+#endif
+
+#include <ctype.h>
+#include <errno.h>
 #include <iconv.h>
+#include <inttypes.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "htp.h"
 #include "htp_config_private.h"
-#include "htp_connection_private.h"
 #include "htp_connection_parser_private.h"
+#include "htp_connection_private.h"
+#include "htp_list_private.h"
+#include "htp_multipart_private.h"
+#include "htp_table_private.h"
 
 #ifndef CR
 #define CR '\r'
