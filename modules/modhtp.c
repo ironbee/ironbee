@@ -235,45 +235,6 @@ static int modhtp_personality(
     return -1;
 }
 
-/* Log htp data via ironbee logging. */
-static int modhtp_callback_log(
-    htp_log_t *log)
-{
-    modhtp_context_t *modctx =
-        (modhtp_context_t *)htp_connp_get_user_data(log->connp);
-    int level;
-
-    /* Parsing issues are unusual but not IronBee failures. */
-    switch(log->level) {
-    case HTP_LOG_ERROR:
-    case HTP_LOG_WARNING:
-    case HTP_LOG_NOTICE:
-    case HTP_LOG_INFO:
-        level = IB_LOG_INFO;
-        break;
-    case HTP_LOG_DEBUG:
-        level = IB_LOG_DEBUG;
-        break;
-    default:
-        level = IB_LOG_DEBUG3;
-    }
-
-    if (log->code != 0) {
-        ib_log_ex(modctx->ib, level,
-                  log->file, log->line,
-                  "LibHTP [error %d] %s",
-                  log->code, log->msg);
-    }
-    else {
-        ib_log_ex(modctx->ib, level,
-                  log->file, log->line,
-                  "LibHTP %s",
-                  log->msg);
-    }
-
-    return 0;
-}
-
 /* -- Table iterator functions -- */
 
 /**
@@ -1051,6 +1012,47 @@ static ib_status_t modhtp_set_parser_flags(
 
 /* -- LibHTP Callbacks -- */
 
+/* Log htp data via ironbee logging. */
+static int modhtp_htp_log(
+    htp_log_t     *log)
+{
+    modhtp_txdata_t *txdata;
+    int              level;
+
+    /* Get the transaction data */
+    txdata = modhtp_get_txdata_parser(log->connp);
+
+    /* Parsing issues are unusual but not IronBee failures. */
+    switch(log->level) {
+    case HTP_LOG_ERROR:
+    case HTP_LOG_WARNING:
+    case HTP_LOG_NOTICE:
+    case HTP_LOG_INFO:
+        level = IB_LOG_INFO;
+        break;
+    case HTP_LOG_DEBUG:
+        level = IB_LOG_DEBUG;
+        break;
+    default:
+        level = IB_LOG_DEBUG3;
+    }
+
+    if (log->code != 0) {
+        ib_log_ex(txdata->ib, level,
+                  log->file, log->line,
+                  "LibHTP [error %d] %s",
+                  log->code, log->msg);
+    }
+    else {
+        ib_log_ex(txdata->ib, level,
+                  log->file, log->line,
+                  "LibHTP %s",
+                  log->msg);
+    }
+
+    return 0;
+}
+
 static int modhtp_htp_req_start(
     htp_connp_t *connp)
 {
@@ -1532,7 +1534,7 @@ static ib_status_t modhtp_build_context (
 
     htp_config_register_urlencoded_parser(htp_config);
     htp_config_register_multipart_parser(htp_config);
-    htp_config_register_log(htp_config, modhtp_callback_log);
+    htp_config_register_log(htp_config, modhtp_htp_log);
 
     /* Cookies */
     htp_config->parse_request_cookies = 1;
