@@ -85,7 +85,6 @@ struct modhtp_context_t {
     const modhtp_config_t     *mod_config;   /**< Module config structure */
     const htp_cfg_t           *htp_config;   /**< Parser config handle */
 };
-typedef struct modhtp_context_t modhtp_context_t;
 
 /**
  * HTP Connection parser data
