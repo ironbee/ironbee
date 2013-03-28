@@ -120,7 +120,7 @@ local adjust_threat_level = function(ib)
     for i,evt in ib:events() do
         local s = evt:getSeverity()
 
-        if s > 0 and evt:getSuppress() == "none" then
+        if s > 0 then
             local c = evt:getConfidence()
 
             if c >= min_confidence then
@@ -130,7 +130,7 @@ local adjust_threat_level = function(ib)
                 ib:logDebug("Ignoring low confidence event: %s", evt:getMsg())
             end
         else
-            ib:logDebug("Ignoring suppressed event: %s", evt:getMsg())
+            ib:logDebug("Ignoring no-severity event: %s", evt:getMsg())
         end
     end
     if num_events > 0 then
