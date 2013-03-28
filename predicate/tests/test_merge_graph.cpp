@@ -135,6 +135,36 @@ TEST_F(TestMergeGraph, Replace)
     EXPECT_EQ("(A)",     g.root(m_i)->to_s());
 
     EXPECT_TRUE(g.write_validation_report(cerr));
+
+    EXPECT_EQ(m2, g.find_transform(m));
+    g.clear_transform_record();
+    EXPECT_THROW(g.find_transform(m), IronBee::enoent);
+}
+
+TEST_F(TestMergeGraph, DoubleReplace)
+{
+    MergeGraph g;
+    node_p n = parse("(A (B (C)))");
+    node_p m = parse("(B (C))");
+    node_p m2 = parse("(A)");
+    node_p m3 = parse("(B)");
+    size_t n_i = 0;
+    size_t m_i = 0;
+
+    EXPECT_NO_THROW(n_i = g.add_root(n));
+    EXPECT_NO_THROW(m_i = g.add_root(m));
+
+    EXPECT_NO_THROW(g.replace(m, m2));
+    EXPECT_NO_THROW(g.replace(m2, m3));
+
+    EXPECT_EQ("(A (B))", g.root(n_i)->to_s());
+    EXPECT_EQ("(B)",     g.root(m_i)->to_s());
+
+    EXPECT_TRUE(g.write_validation_report(cerr));
+
+    EXPECT_EQ(m3, g.find_transform(m));
+    g.clear_transform_record();
+    EXPECT_THROW(g.find_transform(m), IronBee::enoent);
 }
 
 TEST_F(TestMergeGraph, ReplaceLoop)
@@ -155,6 +185,7 @@ TEST_F(TestMergeGraph, ReplaceLoop)
     EXPECT_EQ("(A (B (C)))",     g.root(m_i)->to_s());
 
     EXPECT_TRUE(g.write_validation_report(cerr));
+    EXPECT_EQ(m2, g.find_transform(m));
 }
 
 TEST_F(TestMergeGraph, Add)
@@ -219,4 +250,6 @@ TEST_F(TestMergeGraph, Remove)
     EXPECT_EQ("(B)", g.root(m_i)->to_s());
 
     EXPECT_TRUE(g.write_validation_report(cerr));
+
+    EXPECT_FALSE(g.find_transform(to_remove));
 }

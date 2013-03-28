@@ -249,6 +249,40 @@ public:
      **/
     bool write_validation_report(std::ostream& out);
 
+    /**
+     * Find node that @a source transformed into.
+     *
+     * This routine can be used when you have retained a node from the
+     * graph, transformed the graph, and now want to know what happened to
+     * your retainen .  It will not work for nodes that were not in the graph,
+     * even if they are equivalent (use known() to find an equivalent
+     * in-graph node).  It will also not work across a
+     * clear_transform_record() call.
+     *
+     * This routine will work across multiple transforms.  E.g., if A is was
+     * replaced with B and B replaced with C, then this routine will return
+     * C for a @a source of A.
+     *
+     * @note There is no support for finding nodes that have been recently
+     *       added.
+     *
+     * @param[in] source Node to find target of.
+     * @return
+     * - Singular node if @a source was removed.
+     * - Node replaced with if @a source was replaced.
+     * @throw IronBee::enoent if @a source is not known about.
+     **/
+    node_p find_transform(const node_cp& source) const;
+
+    /**
+     * Clear transform record.
+     *
+     * This clears the transform record used by find_transform().  Doing so
+     * frees up memory of the record itself and allows nodes that have been
+     * removed or replaced to be freed (if their shared_ptr use goes to 0).
+     **/
+    void clear_transform_record();
+
 private:
     /**
      * Merge @a which into graph, merging subexpressions as needed.
@@ -257,9 +291,19 @@ private:
      * add(), and remove().
      *
      * @param[in, out] which Node to merge in.
-     * @throw IroNe:einval if @a which is singular.
+     * @throw IronBee::einval if @a which is singular.
      **/
     void merge_tree(node_p& which);
+
+    /**
+     * Remove all descendants of @a which that are not shared.
+     *
+     * @warn @a which is not removed.
+     *
+     * @param[in] which Node to remove descendants of.
+     * @throw if @a which is singular.
+     **/
+    void remove_tree(const node_p& which);
 
     /**
      * Add a new subexpression to known subexpressions.
@@ -279,7 +323,11 @@ private:
      **/
     bool unlearn(const node_cp& which);
 
+    //! Type of m_root_indices.
     typedef std::map<node_cp, size_t> root_indices_t;
+
+    //! Type of m_transform_record.
+    typedef std::map<node_cp, node_p> transform_record_t;
 
     //! Map of subexpression string to node.
     node_by_sexpr_t m_node_by_sexpr;
@@ -289,6 +337,9 @@ private:
 
     //! Map of root node to index.
     root_indices_t m_root_indices;
+
+    //! Map of node to replacement or node_p().
+    transform_record_t m_transform_record;
 };
 
 } // Predicate

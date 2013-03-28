@@ -160,6 +160,49 @@ node_p MergeGraph::known(const node_cp& node) const
     }
 }
 
+void MergeGraph::remove_tree(const node_p& which)
+{
+    if (! which) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Singular which."
+            )
+        );
+    }
+
+    // Follow descendants of which so long as single parent.
+    // When we hit a multiple parent child, we need to remove it from the
+    // parent we came from (the desendant of which), but should not
+    // unlearn its sexpr (it's still in the graph from another parent)
+    // and can stop our descent.
+    // When which has know common subexpressions with other parts of
+    // the graph, this is equivalent to unlearning all children.
+    // Note that we do not check for multiple visits.  It is important, if a
+    // child is reached via multiple paths, to handle all such paths.  E.g.,
+    // a child with two paths will, the first time, be removed from one of its
+    // parents and the second time unlearn (as it now has a single parent).
+    list<node_p> todo;
+    todo.push_back(which);
+    while (! todo.empty()) {
+        node_p parent = todo.front();
+        todo.pop_front();
+        node_list_t children = parent->children();
+        BOOST_FOREACH(const node_p& child, children) {
+            if (child->parents().size() == 1) {
+                todo.push_back(child);
+                if (! is_root(child)) {
+                    unlearn(child);
+                    m_transform_record.insert(make_pair(child, node_p()));
+                }
+            }
+            else {
+                parent->remove_child(child);
+            }
+        }
+    }
+}
+
+
 void MergeGraph::replace(const node_cp& which, node_p& with)
 {
     node_p known_which = known(which);
@@ -202,33 +245,8 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
         )
     );
 
-    // Follow descendants of known_which so long as single parent.
-    // When we hit a multiple parent child, we need to remove it from the
-    // parent we came from (the desendant of known_which), but should not
-    // unlearn its sexpr (it's still in the graph from another parent)
-    // and can stop our descent.
-    // When known_which has know common subexpressions with other parts of
-    // the graph, this is equivalent to unlearning all children.
-    // Note that we do not check for multiple visits.  It is important, if a
-    // child is reached via multiple paths, to handle all such paths.  E.g.,
-    // a child with two paths will, the first time, be removed from one of its
-    // parents and the second time unlearn (as it now has a single parent).
-    list<node_p> todo;
-    todo.push_back(known_which);
-    while (! todo.empty()) {
-        node_p parent = todo.front();
-        todo.pop_front();
-        node_list_t children = parent->children();
-        BOOST_FOREACH(const node_p& child, children) {
-            if (child->parents().size() == 1) {
-                unlearn(child);
-                todo.push_back(child);
-            }
-            else {
-                parent->remove_child(child);
-            }
-        }
-    }
+    // Remove known_which and unshared children.
+    remove_tree(known_which);
 
     // If replacing a root, need to update root datastructures, preserving
     // existing index.
@@ -240,6 +258,9 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
         m_roots[index] = with;
         m_root_indices[with] = index;
     }
+
+    // Update transform record.
+    m_transform_record.insert(make_pair(which, with));
 
     // At this point, we're done.  Once any external references to known_which
     // are gone, its shared count will go to 0 and it will be freed, reducing
@@ -310,8 +331,20 @@ void MergeGraph::remove(const node_cp& parent, const node_cp& child)
         )
     );
 
-    // Remove child.
+    // Fully remove child if no longer in DAG.
+    if (
+        known_child->parents().size() == 1 &&
+        ! is_root(known_child)
+    ) {
+        unlearn(known_child);
+        m_transform_record.insert(make_pair(child, node_p()));
+    }
+
+    // Remove child from parent.
     known_parent->remove_child(known_child);
+
+    // Remove appropriate descendants.
+    remove_tree(known_child);
 
     // Learn all new ancestor sexprs.
     bfs_up(
@@ -520,6 +553,33 @@ bool MergeGraph::write_validation_report(std::ostream& out)
     }
 
     return has_no_error;
+}
+
+node_p MergeGraph::find_transform(const node_cp& source) const
+{
+    transform_record_t::const_iterator i;
+    node_p result;
+
+    i = m_transform_record.find(source);
+    if (i == m_transform_record.end()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::enoent() << errinfo_what(
+                "Unknown node."
+            )
+        );
+    }
+
+    while (i != m_transform_record.end() && i->second) {
+        result = i->second;
+        i = m_transform_record.find(result);
+    }
+
+    return result;
+}
+
+void MergeGraph::clear_transform_record()
+{
+    m_transform_record.clear();
 }
 
 } // Predicate
