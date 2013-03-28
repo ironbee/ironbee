@@ -77,7 +77,7 @@ void n_children(NodeReporter reporter, size_t n)
 void n_or_more_children(NodeReporter reporter, size_t n)
 {
     size_t actual_children = reporter.node()->children().size();
-    if (actual_children != n) {
+    if (actual_children < n) {
         reporter.error(
             "Expected at least " + boost::lexical_cast<string>(n) +
             " children  but have " +
@@ -89,7 +89,7 @@ void n_or_more_children(NodeReporter reporter, size_t n)
 void n_or_fewer_children(NodeReporter reporter, size_t n)
 {
     size_t actual_children = reporter.node()->children().size();
-    if (actual_children != n) {
+    if (actual_children > n) {
         reporter.error(
             "Expected at most " + boost::lexical_cast<string>(n) +
             " children but have " +
