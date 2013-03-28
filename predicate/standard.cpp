@@ -408,6 +408,33 @@ bool If::transform(
     }
 }
 
+string Field::name() const
+{
+    return "field";
+}
+
+Value Field::calculate(Context context)
+{
+    Value key_field = children().front()->eval(context);
+    IronBee::ConstByteString key = key_field.value_as_byte_string();
+    ib_field_t* data_field;
+    ib_status_t rc;
+
+    rc = ib_data_get_ex(
+        context.ib()->data,
+        key.const_data(), key.size(),
+        &data_field
+    );
+    if (rc == IB_ENOENT) {
+        return Value();
+    }
+    else {
+        IronBee::throw_if_error(rc);
+    }
+
+    return Value(data_field);
+}
+
 void load(CallFactory& to)
 {
     to
@@ -417,6 +444,7 @@ void load(CallFactory& to)
         .add<And>()
         .add<Not>()
         .add<If>()
+        .add<Field>()
     ;
 }
 

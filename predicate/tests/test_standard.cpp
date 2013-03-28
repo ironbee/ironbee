@@ -155,3 +155,17 @@ TEST_F(TestStandard, If)
     EXPECT_EQ("'foo'", transform("(if '' 'foo' 'bar')"));
     EXPECT_EQ("'bar'", transform("(if null 'foo' 'bar')"));
 }
+
+TEST_F(TestStandard, Field)
+{
+    uint8_t data[4] = {'t', 'e', 's', 't'};
+    ib_status_t rc = ib_data_add_bytestr(
+        m_transaction.ib()->data,
+        "TestStandard.Field",
+        data, 4,
+        NULL
+    );
+    EXPECT_EQ(IB_OK, rc);
+
+    EXPECT_EQ("test", eval_s("(field 'TestStandard.Field')"));
+}

@@ -225,6 +225,23 @@ protected:
 };
 
 /**
+ * Returns data field with name given by only argument.
+ **/
+class Field :
+    public Validate::Call<Field>,
+    public Validate::NChildren<1,
+           Validate::NthChildIsStringLiteral<0
+           > >
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+protected:
+    virtual Value calculate(Context context);
+};
+
+/**
  * Load all standard calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.
