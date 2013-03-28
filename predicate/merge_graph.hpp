@@ -124,6 +124,17 @@ public:
     size_t root_index(const node_cp& root) const;
 
     /**
+     * True iff @a node is a root.
+     *
+     * @warn @a node must be a node in the graph.  Use known() first if
+     *       looking at an equivalent node.
+     *
+     * @return true iff @a node is a root.
+     * @throw IronBee::einval if @a node is singular.
+     **/
+    bool is_root(const node_cp& node) const;
+
+    /**
      * Replace a node in the forest with another node.
      *
      * This method is semantically similar to:

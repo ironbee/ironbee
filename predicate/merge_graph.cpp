@@ -102,6 +102,18 @@ size_t MergeGraph::root_index(const node_cp& root) const
     return i->second;
 }
 
+bool MergeGraph::is_root(const node_cp& node) const
+{
+    if (! node) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Cannot search for singular node."
+            )
+        );
+    }
+    return m_root_indices.find(node) != m_root_indices.end();
+}
+
 pair<bool, node_p> MergeGraph::learn(const node_p& which)
 {
     if (! which) {
