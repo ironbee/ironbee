@@ -231,7 +231,7 @@ void n_or_fewer_children(NodeReporter reporter, size_t n);
  * @param[in] reporter Reporter to use.
  * @param[in] n        Which child should be a string literal.
  **/
-void nth_child_is_string_literal(NodeReporter reporter, size_t n);
+void nth_child_is_string(NodeReporter reporter, size_t n);
 
 /**
  * Report error if @a nth child is not a null.
@@ -286,12 +286,12 @@ struct NOrFewerChildren :
 {};
 
 /**
- * Validator: nth_child_is_string_literal()
+ * Validator: nth_child_is_string()
  **/
 template <size_t N, class Chain = Base>
-struct NthChildIsStringLiteral :
+struct NthChildIsString :
     public make_validator_size<
-        &nth_child_is_string_literal
+        &nth_child_is_string
     >::value<N, Chain>
 {};
 

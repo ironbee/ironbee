@@ -98,7 +98,7 @@ void n_or_fewer_children(NodeReporter reporter, size_t n)
     }
 }
 
-void nth_child_is_string_literal(NodeReporter reporter, size_t n)
+void nth_child_is_string(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
     if (child && ! is_a<String>(child)) {
