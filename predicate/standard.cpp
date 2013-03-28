@@ -169,13 +169,7 @@ string Or::name() const
 
 Value Or::calculate(Context context)
 {
-    if (children().size() < 2) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "or requires two or more arguments."
-            )
-        );
-    }
+    assert(children().size() >= 2);
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->eval(context)) {
             // We are true.
@@ -238,13 +232,7 @@ string And::name() const
 
 Value And::calculate(Context context)
 {
-    if (children().size() < 2) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "or requires two or more arguments."
-            )
-        );
-    }
+    assert(children().size() >= 2);
     BOOST_FOREACH(const node_p& child, children()) {
         if (! child->eval(context)) {
             // We are false.
@@ -306,13 +294,7 @@ string Not::name() const
 
 Value Not::calculate(Context context)
 {
-    if (children().size() != 1) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "not requires exactly one argument."
-            )
-        );
-    }
+    assert(children().size() == 1);
     if (children().front()->eval(context)) {
         return False().eval(context);
     }
@@ -354,13 +336,7 @@ string If::name() const
 
 Value If::calculate(Context context)
 {
-    if (children().size() != 3) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "if requires exactly three arguments."
-            )
-        );
-    }
+    assert(children().size() == 3);
     node_list_t::const_iterator i;
     i = children().begin();
     const node_p& pred = *i;

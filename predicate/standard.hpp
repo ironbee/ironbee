@@ -230,7 +230,7 @@ protected:
 class Field :
     public Validate::Call<Field>,
     public Validate::NChildren<1,
-           Validate::NthChildIsStringLiteral<0
+           Validate::NthChildIsString<0
            > >
 {
 public:

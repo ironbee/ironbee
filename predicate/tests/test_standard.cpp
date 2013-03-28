@@ -46,15 +46,40 @@ protected:
         m_factory.add("B", &create);
     }
 
-    Value eval(const std::string& text)
+    node_p parse(const std::string& text) const
     {
         size_t i = 0;
-        return parse_call(text, i, m_factory)->eval(m_transaction);
+        return parse_call(text, i, m_factory);
     }
 
-    string eval_s(const std::string& text)
+    Value eval(const node_p& n)
     {
-        IronBee::ConstField v(eval(text));
+        Reporter r;
+        NodeReporter nr(r, n);
+        n->pre_transform(nr);
+        if (r.num_errors() > 0 || r.num_warnings() > 0) {
+            r.write_report(cout);
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << IronBee::errinfo_what(
+                    "pre_transform() failed."
+                )
+            );
+        }
+        return n->eval(m_transaction);
+    }
+
+    // The following copy the value out and thus are safe to use text
+    // as there is no need to keep the expression tree around.
+    bool eval_bool(const string& text)
+    {
+        node_p n = parse(text);
+        return !! eval(n);
+    }
+
+    string eval_s(const string& text)
+    {
+        node_p n = parse(text);
+        IronBee::ConstField v(eval(n));
         if (! v) {
             throw runtime_error("null is not a string.");
         }
@@ -82,24 +107,24 @@ protected:
 
 TEST_F(TestStandard, True)
 {
-    EXPECT_TRUE(eval("(true)"));
+    EXPECT_TRUE(eval_bool("(true)"));
     EXPECT_EQ("''", transform("(true)"));
 }
 
 TEST_F(TestStandard, False)
 {
-    EXPECT_FALSE(eval("(false)"));
+    EXPECT_FALSE(eval_bool("(false)"));
     EXPECT_EQ("null", transform("(false)"));
 }
 
 TEST_F(TestStandard, Not)
 {
-    EXPECT_TRUE(eval("(not (false))"));
-    EXPECT_FALSE(eval("(not (true))"));
-    EXPECT_FALSE(eval("(not '')"));
-    EXPECT_FALSE(eval("(not 'foo')"));
-    EXPECT_THROW(eval("(not)"), IronBee::einval);
-    EXPECT_THROW(eval("(not 'a' 'b')"), IronBee::einval);
+    EXPECT_TRUE(eval_bool("(not (false))"));
+    EXPECT_FALSE(eval_bool("(not (true))"));
+    EXPECT_FALSE(eval_bool("(not '')"));
+    EXPECT_FALSE(eval_bool("(not 'foo')"));
+    EXPECT_THROW(eval_bool("(not)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(not 'a' 'b')"), IronBee::einval);
     EXPECT_EQ("null", transform("(not '')"));
     EXPECT_EQ("''", transform("(not null)"));
     EXPECT_EQ("(not (A))", transform("(not (A))"));
@@ -107,11 +132,11 @@ TEST_F(TestStandard, Not)
 
 TEST_F(TestStandard, Or)
 {
-    EXPECT_TRUE(eval("(or (true) (false))"));
-    EXPECT_TRUE(eval("(or (true) (false) (false))"));
-    EXPECT_FALSE(eval("(or (false) (false))"));
-    EXPECT_THROW(eval("(or)"), IronBee::einval);
-    EXPECT_THROW(eval("(or (true))"), IronBee::einval);
+    EXPECT_TRUE(eval_bool("(or (true) (false))"));
+    EXPECT_TRUE(eval_bool("(or (true) (false) (false))"));
+    EXPECT_FALSE(eval_bool("(or (false) (false))"));
+    EXPECT_THROW(eval_bool("(or)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(or (true))"), IronBee::einval);
     EXPECT_EQ("(or (A) (B))", transform("(or (A) (B))"));
     EXPECT_EQ("(or (A) (B))", transform("(or (B) (A))"));
     EXPECT_EQ("''", transform("(or (A) 'a')"));
@@ -122,12 +147,12 @@ TEST_F(TestStandard, Or)
 
 TEST_F(TestStandard, And)
 {
-    EXPECT_FALSE(eval("(and (true) (false))"));
-    EXPECT_FALSE(eval("(and (true) (false) (true))"));
-    EXPECT_TRUE(eval("(and (true) (true))"));
-    EXPECT_TRUE(eval("(and (true) (true) (true))"));
-    EXPECT_THROW(eval("(and)"), IronBee::einval);
-    EXPECT_THROW(eval("(and (true))"), IronBee::einval);
+    EXPECT_FALSE(eval_bool("(and (true) (false))"));
+    EXPECT_FALSE(eval_bool("(and (true) (false) (true))"));
+    EXPECT_TRUE(eval_bool("(and (true) (true))"));
+    EXPECT_TRUE(eval_bool("(and (true) (true) (true))"));
+    EXPECT_THROW(eval_bool("(and)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(and (true))"), IronBee::einval);
     EXPECT_EQ("(and (A) (B))", transform("(and (A) (B))"));
     EXPECT_EQ("(and (A) (B))", transform("(and (B) (A))"));
     EXPECT_EQ("null", transform("(and (B) null)"));
@@ -139,8 +164,8 @@ TEST_F(TestStandard, And)
 TEST_F(TestStandard, DeMorgan)
 {
     EXPECT_EQ(
-        eval("(and (true) (true))"),
-        eval("(not (or (not (true)) (not (true))))")
+        eval_bool("(and (true) (true))"),
+        eval_bool("(not (or (not (true)) (not (true))))")
     );
 }
 
@@ -148,10 +173,10 @@ TEST_F(TestStandard, If)
 {
     EXPECT_EQ("foo", eval_s("(if (true) 'foo' 'bar')"));
     EXPECT_EQ("bar", eval_s("(if (false) 'foo' 'bar')"));
-    EXPECT_THROW(eval("(if (true) 'foo')"), IronBee::einval);
-    EXPECT_THROW(eval("(if (true))"), IronBee::einval);
-    EXPECT_THROW(eval("(if)"), IronBee::einval);
-    EXPECT_THROW(eval("(if 'a' 'b' 'c' 'd')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(if (true) 'foo')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(if (true))"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(if)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(if 'a' 'b' 'c' 'd')"), IronBee::einval);
     EXPECT_EQ("'foo'", transform("(if '' 'foo' 'bar')"));
     EXPECT_EQ("'bar'", transform("(if null 'foo' 'bar')"));
 }
