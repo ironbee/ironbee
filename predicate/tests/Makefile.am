@@ -23,7 +23,8 @@ check_PROGRAMS = \
     test_merge_graph \
     test_validate \
     test_less \
-    test_leaves
+    test_leaves \
+    test_transform_graph
 
 TESTS=$(check_PROGRAMS)
 CLEANFILES=*.xml *.log
@@ -37,3 +38,4 @@ test_merge_graph_SOURCES = test_merge_graph.cpp
 test_validate_SOURCES = test_validate.cpp
 test_less_SOURCES = test_less.cpp
 test_leaves_SOURCES = test_leaves.cpp
+test_transform_graph_SOURCES = test_transform_graph.cpp

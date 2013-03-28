@@ -16,4 +16,5 @@ libpredicate_la_SOURCES = \
     bfs.cpp \
     merge_graph.cpp \
     reporter.cpp \
-    validate.cpp
+    validate.cpp \
+    transform_graph.cpp
