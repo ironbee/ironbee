@@ -446,7 +446,9 @@ private:
     //! S-expression.
     const std::string         m_s;
     //! Memory pool to create field value from.  Alias of m_value_as_s.
-    IronBee::ScopedMemoryPool m_pool;
+    boost::shared_ptr<
+        IronBee::ScopedMemoryPool
+    > m_pool;
     //! Value returned by calculate().
     IronBee::ConstField       m_value_as_field;
 };

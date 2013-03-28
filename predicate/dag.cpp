@@ -200,13 +200,13 @@ ostream& operator<<(ostream& out, const Node& node)
 String::String(const string& value) :
     m_value_as_s(value),
     m_s("'" + String::escape(value) + "'"),
-    m_pool("IronBee::Predicate::String"),
+    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::String")),
     m_value_as_field(
         IronBee::Field::create_byte_string(
-            m_pool,
+            *m_pool,
             "", 0,
             IronBee::ByteString::create_alias(
-                m_pool,
+                *m_pool,
                 m_value_as_s
             )
         )
