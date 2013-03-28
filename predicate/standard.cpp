@@ -347,6 +347,67 @@ bool Not::transform(
     }
 }
 
+string If::name() const
+{
+    return "if";
+}
+
+Value If::calculate(Context context)
+{
+    if (children().size() != 3) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "if requires exactly three arguments."
+            )
+        );
+    }
+    node_list_t::const_iterator i;
+    i = children().begin();
+    const node_p& pred = *i;
+    ++i;
+    const node_p& true_value = *i;
+    ++i;
+    const node_p& false_value = *i;
+    if (pred->eval(context)) {
+        return true_value->eval(context);
+    }
+    else {
+        return false_value->eval(context);
+    }
+}
+
+bool If::transform(
+    NodeReporter       reporter,
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory
+)
+{
+    assert(children().size() == 3);
+    const node_cp& me = shared_from_this();
+    node_list_t::const_iterator i;
+    i = children().begin();
+    const node_p& pred = *i;
+    ++i;
+    const node_p& true_value = *i;
+    ++i;
+    const node_p& false_value = *i;
+
+    if (pred->is_literal()) {
+        node_p replacement;
+        if (pred->eval(Context())) {
+            replacement = true_value;
+        }
+        else {
+            replacement = false_value;
+        }
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 void load(CallFactory& to)
 {
     to
@@ -355,6 +416,7 @@ void load(CallFactory& to)
         .add<Or>()
         .add<And>()
         .add<Not>()
+        .add<If>()
     ;
 }
 

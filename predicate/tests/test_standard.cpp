@@ -52,6 +52,16 @@ protected:
         return parse_call(text, i, m_factory)->eval(m_transaction);
     }
 
+    string eval_s(const std::string& text)
+    {
+        IronBee::ConstField v(eval(text));
+        if (! v) {
+            throw runtime_error("null is not a string.");
+        }
+        IronBee::ConstByteString bs = v.value_as_byte_string();
+        return bs.to_s();
+    }
+
     node_cp transform(node_p n) const
     {
         MergeGraph G;
@@ -132,4 +142,16 @@ TEST_F(TestStandard, DeMorgan)
         eval("(and (true) (true))"),
         eval("(not (or (not (true)) (not (true))))")
     );
+}
+
+TEST_F(TestStandard, If)
+{
+    EXPECT_EQ("foo", eval_s("(if (true) 'foo' 'bar')"));
+    EXPECT_EQ("bar", eval_s("(if (false) 'foo' 'bar')"));
+    EXPECT_THROW(eval("(if (true) 'foo')"), IronBee::einval);
+    EXPECT_THROW(eval("(if (true))"), IronBee::einval);
+    EXPECT_THROW(eval("(if)"), IronBee::einval);
+    EXPECT_THROW(eval("(if 'a' 'b' 'c' 'd')"), IronBee::einval);
+    EXPECT_EQ("'foo'", transform("(if '' 'foo' 'bar')"));
+    EXPECT_EQ("'bar'", transform("(if null 'foo' 'bar')"));
 }

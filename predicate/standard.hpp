@@ -199,6 +199,32 @@ protected:
 };
 
 /**
+ * If first child is true, second child, else third child.
+ **/
+class If :
+    public Validate::Call<If>,
+    public Validate::NChildren<3>
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+    /**
+     * See Node::transform().
+     *
+     * Will replace self with appropriate child if first child is literal.
+     **/
+    virtual bool transform(
+        NodeReporter       reporter,
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory
+    );
+
+protected:
+    virtual Value calculate(Context context);
+};
+
+/**
  * Load all standard calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.
