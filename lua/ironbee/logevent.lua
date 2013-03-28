@@ -89,6 +89,7 @@ _M.setSuppress = function(self, value)
         self.raw.suppress = _M.suppressMap[string.lower(value)] or 0
     end
 end
+
 _M.getType = function(self)
     return _M.typeRmap[tonumber(self.raw.type)]
 end

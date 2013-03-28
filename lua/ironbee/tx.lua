@@ -254,42 +254,76 @@ _M.forEachEvent = function(self, func)
         "ib_logevent_t*")
 end
 
--- Returns next function, table, and nil.
-_M.events = function(self)
-    local nextFn = function(t, idx)
-    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+-- Private event next function. This is used to build iteration
+-- functions like all_events and events.
+--
+-- The table t must have a function skip_node defined that
+-- takes a list node and returns true if it is should be skipped.
+--
+-- The table t must have a c pointer to ib_tx_t to retrieve the initial 
+-- list of events.
+--
+-- Skipped nodes do not increment the index.
+local event_next_fn = function(t, idx)
+    -- Iterate 1 step.
+    if idx == nil then
+        local list = ffi.new("ib_list_t*[1]")
+        ffi.C.ib_logevent_get_all(t.tx, list)
 
-        -- Iterate
-        if idx == nil then
-            local list = ffi.new("ib_list_t*[1]")
-            ffi.C.ib_logevent_get_all(tx, list)
-
-            if (list[0] == nil) then
-                return nil, nil
-            end
-
-            t.i = 0
-            t.node = ffi.cast("ib_list_node_t*", ffi.C.ib_list_first(list[0]))
-        else
-            t.i = idx + 1
-            t.node = ffi.C.ib_list_node_next(t.node)
-        end
-
-        -- End of list.
-        if t.node == nil then
+        if (list[0] == nil) then
             return nil, nil
         end
 
-        -- Get event and convert it to lua.
-        local event = 
-            ib_logevent:new(ffi.cast("ib_logevent_t*",
-                ffi.C.ib_list_node_data(t.node)))
-
-        -- Return.
-        return t.i, event
+        t.i = 0
+        t.node = ffi.cast("ib_list_node_t*", ffi.C.ib_list_first(list[0]))
+    else
+        t.i = idx + 1
+        t.node = ffi.C.ib_list_node_next(t.node)
     end
 
-    return nextFn, {}, nil
+    -- Conditionally skip nodes in the list we don't want to iterate over.
+    while t.node ~= nil and t.skip_node(t.node) do
+        t.node = ffi.C.ib_list_node_next(t.node)
+    end
+
+    -- End of list.
+    if t.node == nil then
+        return nil, nil
+    end
+
+    -- Get event and convert it to lua.
+    local event = 
+        ib_logevent:new(ffi.cast("ib_logevent_t*",
+            ffi.C.ib_list_node_data(t.node)))
+
+    -- Return.
+    return t.i, event
+end
+
+-- Returns next function, table, and nil.
+_M.events = function(self)
+    return event_next_fn,
+           {
+               skip_node = function(node)
+                   local event = ffi.cast("ib_logevent_t*",
+                       ffi.C.ib_list_node_data(node))
+                   -- Skip any suppressed events.
+                   return event.suppress ~= ffi.C.IB_LEVENT_SUPPRESS_NONE
+               end,
+               tx = ffi.cast("ib_tx_t *", self.ib_tx)
+           },
+           nil
+end
+
+_M.all_events = function(self)
+    return event_next_fn,
+           {
+             skip_node = function()
+                 return false
+             end,
+             tx = ffi.cast("ib_tx_t *", self.ib_tx)
+           },
+           nil
 end
 
 -- Append a value to the end of the name list. This may be a string

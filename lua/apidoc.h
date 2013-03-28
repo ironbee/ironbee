@@ -74,8 +74,10 @@
  * - @c tx:forEachEvent(function(event)...) - Call the given function on each
  *                                            event.
  *                                            See Event Manipulation.
- * - @c tx:events() - Returns a next function, an empty table, and nil, used for
+ * - @c tx:events() - Used to iterate over unsuppressed events.
+ *                    Returns a next function, an empty table, and nil, used for
  *                    iteration. for index,event in ib:events() do ... end.
+ * - @c tx:all_events() - Like events() but iterates over all events.
  *
  * @subsection IronBeeLuaLogEvents Event Manipulation
  *
