@@ -28,5 +28,8 @@ TESTS = $(check_PROGRAMS)
 
 CLEANFILES = *.xml *.log
 
+clean-local:
+	rm -rf automata_test_*.*
+
 check-local:
 	(cd $(srcdir); abs_builddir=$(abs_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))

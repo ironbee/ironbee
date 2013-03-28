@@ -56,6 +56,13 @@ AM_CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
               -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
               $(BOOST_CPPFLAGS)
 
+clean-local:
+	rm -rf ironbee_gtest.conf_*
+	rm -rf TestKVStore.d
+	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
+	  rm -rf *.config *.patterns *.e *.lua gtest_executor.sh; \
+	fi
+
 check_PROGRAMS = test_gtest \
                  test_util_types \
                  test_util_mpool \

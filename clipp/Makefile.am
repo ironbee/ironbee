@@ -129,6 +129,9 @@ clipp_LDADD = \
     $(top_builddir)/libs/libhtp/htp/libhtp.la \
     $(top_builddir)/automata/libiaeudoxus.la
 
+clean-local:
+	rm -f clipp_test_*.pb clipp_test_*.config clipp_test_*.clipp
+
 CLEANFILES=clipp.pb.cc clipp.pb.h
 
 $(builddir)/clipp.pb.cc $(builddir)/clipp.pb.h: $(srcdir)/clipp.proto
