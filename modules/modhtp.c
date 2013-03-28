@@ -35,8 +35,24 @@
 #include <ironbee/provider.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
+#include <ironbee/strval.h>
 #include <ironbee/util.h>
 
+/**
+ * @todo Note that below we include htp_private.h; a private include file.
+ * Until a fix is made to libhtp (hopefully soon) we need access to things
+ * that used to be public:
+ *
+ * 1. The connection parser structure (htp_connp_t) definition has been moved
+ * to private, and there is no current API to get the current transaction from
+ * the parser, so we rely on pulling it directly from the structure.
+ * A public API needs to be added to libhtp to provide this fuctionality.
+ *
+ * 2. The normalized request URI is no longer available in the libhtp
+ * transaction.  We use the private htp_unparse_uri_noencode() function to
+ * assemble a normalized URI from the parsed uri in the transaction.  Again,
+ * a public API needs to be added to libhtp to provide this fuctionality.
+ */
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundef"
@@ -105,6 +121,7 @@ struct modhtp_txdata_t {
     const ib_engine_t          *ib;          /**< IronBee engine */
     htp_tx_t                   *htx;         /**< The HTP transaction */
     ib_tx_t                    *itx;         /**< The IronBee transaction */
+    const modhtp_context_t     *context;     /**< The module context data */
     const modhtp_parser_data_t *parser_data; /**< Connection parser data */
     int                         error_code;  /**< Error code from parser */
     const char                 *error_msg;   /**< Error message from parser */
@@ -188,27 +205,22 @@ typedef htp_status_t (* modhtp_set_header_fn_t)(
     size_t                     value_len,
     enum htp_alloc_strategy_t  alloc);
 
-/* Define a name/val lookup record. */
-struct modhtp_nameval_t {
-    const char *name;
-    int         val;
-};
-typedef struct modhtp_nameval_t modhtp_nameval_t;
-
-/* Text versions of personalities */
-static const modhtp_nameval_t modhtp_personalities[] = {
-    { "",           HTP_SERVER_IDS },
-    { "minimal",    HTP_SERVER_MINIMAL },
-    { "generic",    HTP_SERVER_GENERIC },
-    { "ids",        HTP_SERVER_IDS },
-    { "iis_4_0",    HTP_SERVER_IIS_4_0 },
-    { "iis_5_0",    HTP_SERVER_IIS_5_0 },
-    { "iis_5_1",    HTP_SERVER_IIS_5_1 },
-    { "iis_6_0",    HTP_SERVER_IIS_6_0 },
-    { "iis_7_0",    HTP_SERVER_IIS_7_0 },
-    { "iis_7_5",    HTP_SERVER_IIS_7_5 },
-    { "apache_2",   HTP_SERVER_APACHE_2 },
-    { NULL, 0 }
+/**
+ * Mapping of personality names to HTP_SERVER personality constants
+ */
+static const IB_STRVAL_MAP(modhtp_personality_map) = {
+    IB_STRVAL_PAIR("minimal",  HTP_SERVER_MINIMAL),
+    IB_STRVAL_PAIR("generic",  HTP_SERVER_GENERIC),
+    IB_STRVAL_PAIR("ids",      HTP_SERVER_IDS),
+    IB_STRVAL_PAIR("iis_4_0",  HTP_SERVER_IIS_4_0),
+    IB_STRVAL_PAIR("iis_5_0",  HTP_SERVER_IIS_5_0),
+    IB_STRVAL_PAIR("iis_5_1",  HTP_SERVER_IIS_5_1),
+    IB_STRVAL_PAIR("iis_6_0",  HTP_SERVER_IIS_6_0),
+    IB_STRVAL_PAIR("iis_7_0",  HTP_SERVER_IIS_7_0),
+    IB_STRVAL_PAIR("iis_7_5",  HTP_SERVER_IIS_7_5),
+    IB_STRVAL_PAIR("apache_2", HTP_SERVER_APACHE_2),
+    IB_STRVAL_PAIR("",         HTP_SERVER_GENERIC),
+    IB_STRVAL_PAIR_LAST
 };
 
 /* -- libhtp utility functions -- */
@@ -218,21 +230,16 @@ static const modhtp_nameval_t modhtp_personalities[] = {
 static int modhtp_personality(
     const char *name)
 {
-    const modhtp_nameval_t *rec = modhtp_personalities;
+    uint64_t    value;
+    ib_status_t rc;
 
-    if (name == NULL) {
-        return -1;
+    rc = ib_strval_lookup(modhtp_personality_map, name, &value);
+    if (rc == IB_OK) {
+        return (int)value;
     }
-
-    while (rec->name != NULL) {
-        if (strcasecmp(name, rec->name) == 0) {
-            return rec->val;
-        }
-
-        ++rec;
+    else {
+        return HTP_SERVER_GENERIC;
     }
-
-    return -1;
 }
 
 /* -- Table iterator functions -- */
@@ -449,6 +456,11 @@ static inline ib_status_t modhtp_set_bstr(
     const ib_bytestr_t *bstr,
     modhtp_set_fn_t     fn)
 {
+    assert(itx != NULL);
+    assert(htx != NULL);
+    assert(bstr != NULL);
+    assert(fn != NULL);
+
     ib_status_t rc;
     const char *ptr;
 
@@ -698,6 +710,7 @@ static modhtp_txdata_t* modhtp_get_txdata_parser(
     modhtp_parser_data_t *parser_data;
 
     parser_data = htp_connp_get_user_data(parser);
+    assert(parser_data != NULL);
     assert(parser_data->parser == parser);
 
     txdata = htp_tx_get_user_data(parser->in_tx);
@@ -947,6 +960,9 @@ static ib_status_t modhtp_set_parser_flags(
     modhtp_txdata_t  *txdata,
     const char       *collection)
 {
+    assert(txdata != NULL);
+    assert(collection != NULL);
+
     ib_status_t  rc = IB_OK;
     uint64_t     flags = txdata->htx->flags;
     ib_tx_t     *itx = txdata->itx;
@@ -1016,6 +1032,8 @@ static ib_status_t modhtp_set_parser_flags(
 static int modhtp_htp_log(
     htp_log_t     *log)
 {
+    assert(log != NULL);
+
     modhtp_txdata_t *txdata;
     int              level;
 
@@ -1073,6 +1091,9 @@ static int modhtp_htp_req_line(
     unsigned char *line,
     size_t         len)
 {
+    assert(connp != NULL);
+    /* @todo: assert(line != NULL); after fix to libhtp? */
+
     modhtp_txdata_t *txdata;
     ib_tx_t         *itx;
     htp_tx_t        *htx;
@@ -1178,6 +1199,8 @@ static int modhtp_htp_req_body_data(
 static int modhtp_htp_req_trailer(
     htp_connp_t *connp)
 {
+    assert(connp != NULL);
+
     modhtp_txdata_t *txdata;
     ib_status_t      irc;
 
@@ -1195,6 +1218,8 @@ static int modhtp_htp_req_trailer(
 static int modhtp_htp_req_complete(
     htp_connp_t *connp)
 {
+    assert(connp != NULL);
+
     modhtp_txdata_t *txdata;
     ib_status_t      irc;
 
@@ -1211,6 +1236,8 @@ static int modhtp_htp_req_complete(
 static int modhtp_htp_rsp_line(
     htp_connp_t *connp)
 {
+    assert(connp != NULL);
+
     modhtp_txdata_t *txdata;
     ib_tx_t         *itx;
     htp_tx_t        *htx;
@@ -1256,6 +1283,8 @@ static int modhtp_htp_rsp_line(
 static int modhtp_htp_rsp_headers(
     htp_connp_t *connp)
 {
+    assert(connp != NULL);
+
     modhtp_txdata_t *txdata;
     ib_status_t      irc;
 
@@ -1273,6 +1302,8 @@ static int modhtp_htp_rsp_headers(
 static int modhtp_htp_rsp_body_data(
     htp_tx_data_t *htp_tx_data)
 {
+    assert(htp_tx_data != NULL);
+
     modhtp_txdata_t *txdata;
 
     /* Get the txdata */
@@ -1285,6 +1316,8 @@ static int modhtp_htp_rsp_body_data(
 static int modhtp_htp_rsp_complete(
     htp_connp_t *connp)
 {
+    assert(connp != NULL);
+
     modhtp_txdata_t *txdata;
     ib_status_t      irc;
 
@@ -1302,6 +1335,8 @@ static int modhtp_htp_rsp_complete(
 static int modhtp_htp_rsp_trailer(
     htp_connp_t      *connp)
 {
+    assert(connp != NULL);
+
     modhtp_txdata_t *txdata;
     ib_status_t      irc;
 
@@ -1341,6 +1376,7 @@ static ib_status_t modhtp_gen_request_header_fields(
     modhtp_field_gen_bytestr(itx, "request_line",
                              htx->request_line, false, NULL);
 
+    /* @todo: htp_unparse_uri_noencode() is private */
     uri = htp_unparse_uri_noencode(htx->parsed_uri);
     if (uri == NULL) {
         ib_log_error_tx(itx, "Failed to generate normalized URI");
@@ -1505,9 +1541,6 @@ static ib_status_t modhtp_build_context (
 
     /* Figure out the personality to use. */
     personality = modhtp_personality(mod_config->personality);
-    if (personality == -1) {
-        personality = HTP_SERVER_APACHE_2;
-    }
 
     /* Create a context. */
     context = ib_mpool_calloc(mp, 1, sizeof(*context));
@@ -1570,6 +1603,9 @@ static ib_status_t modhtp_iface_conn_init(
     ib_provider_inst_t *pi,
     ib_conn_t          *iconn)
 {
+    assert(pi != NULL);
+    assert(iconn != NULL);
+
     ib_engine_t            *ib = iconn->ib;
     ib_context_t           *ctx = iconn->ctx;
     ib_status_t             rc;
@@ -1585,18 +1621,8 @@ static ib_status_t modhtp_iface_conn_init(
                      MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
-
-    /* If no context, create one */
+    assert( (config != NULL) && (config->context != NULL) );
     context = config->context;
-    if (context == NULL) {
-        modhtp_context_t *new;
-        rc = modhtp_build_context (ib, iconn->mp, config, &new);
-        if (rc != IB_OK) {
-            ib_log_error(ib, "Failed to create a configuration context");
-        }
-        context = new;
-        config->context = context;
-    }
 
     /* Create the connection parser */
     ib_log_debug3(ib, "Creating LibHTP parser");
@@ -1626,6 +1652,9 @@ static ib_status_t modhtp_iface_conn_cleanup(
     ib_provider_inst_t *pi,
     ib_conn_t          *iconn)
 {
+    assert(pi != NULL);
+    assert(iconn != NULL);
+
     modhtp_parser_data_t   *parser_data;
 
     /* Get the parser data */
@@ -1685,7 +1714,7 @@ static ib_status_t modhtp_iface_disconnect(
      * the luajit test.
      *
      * htp_connp_close(parser_data->parser, &parser_data->close_time);
-    */
+     */
     return IB_OK;
 }
 
@@ -1693,8 +1722,12 @@ static ib_status_t modhtp_iface_tx_init(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
 {
+    assert(pi != NULL);
+    assert(itx != NULL);
+
     modhtp_txdata_t      *txdata;
     modhtp_parser_data_t *parser_data;
+    modhtp_config_t      *config;
     htp_tx_t             *htx;
     ib_status_t           irc;
 
@@ -1702,6 +1735,14 @@ static ib_status_t modhtp_iface_tx_init(
     parser_data = ib_conn_parser_context_get(itx->conn);
     if (parser_data == NULL) {
         ib_log_error_tx(itx, "Failed to get parser data for connection");
+    }
+
+    /* Get the module's configuration for the context */
+    irc = ib_context_module_config(itx->ctx, IB_MODULE_STRUCT_PTR, &config);
+    if (irc != IB_OK) {
+        ib_log_alert(itx->ib, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(irc));
+        return irc;
     }
 
     /* Create the transaction data */
@@ -1713,6 +1754,7 @@ static ib_status_t modhtp_iface_tx_init(
     txdata->ib = itx->ib;
     txdata->itx = itx;
     txdata->parser_data = parser_data;
+    txdata->context = config->context;
 
     /* Create the transaction */
     htx = htp_connp_tx_create(parser_data->parser);
@@ -1736,8 +1778,8 @@ static ib_status_t modhtp_iface_tx_cleanup(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
 {
+    assert(pi != NULL);
     assert(itx != NULL);
-    assert(itx->conn != NULL);
 
     modhtp_txdata_t *txdata;
 
@@ -2108,6 +2150,9 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
                                ib_module_t *m,
                                void        *cbdata)
 {
+    assert(ib != NULL);
+    assert(m != NULL);
+
     ib_status_t rc;
 
     /* Register as a parser provider. */
@@ -2132,6 +2177,10 @@ static ib_status_t modhtp_context_close(
     ib_context_t *ctx,
     void         *cbdata)
 {
+    assert(ib != NULL);
+    assert(m != NULL);
+    assert(ctx != NULL);
+
     ib_status_t         rc;
     ib_provider_inst_t *pi;
     modhtp_config_t    *config;
