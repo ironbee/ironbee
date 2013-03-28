@@ -57,17 +57,24 @@
  *
  * @subsection IronBeeLuaEngineApi The Engine API
  *
- * - @c ib:addEvent([msg], options) - Add a new event.
- * - @c ib:appendToList(list_name, name, value) - append a value to a list.
- * - @c ib:get(name) - return a string, number or table.
- * - @c ib:getFieldList() - Return a list of defined fields.
- * - @c ib:getNames(field) - Returns a list of names in this field.
- * - @c ib:getValues(field) - Returns a list of values in this field.
- * - @c ib:set(name, value) - set a string, number or table.
- * - @c ib:forEachEvent(function(event)...) - Call the given function on each
+ * - @c ib:logError(msg, ...)
+ * - @c ib:logWarn(msg, ...)
+ * - @c ib:logInfo(msg, ...)
+ * - @c ib:logDebug(msg, ...)
+ *
+ * @subsection IronBeeLuaTxApi The Transaction API
+ *
+ * - @c tx:addEvent([msg], options) - Add a new event.
+ * - @c tx:appendToList(list_name, name, value) - append a value to a list.
+ * - @c tx:get(name) - return a string, number or table.
+ * - @c tx:getFieldList() - Return a list of defined fields.
+ * - @c tx:getNames(field) - Returns a list of names in this field.
+ * - @c tx:getValues(field) - Returns a list of values in this field.
+ * - @c tx:set(name, value) - set a string, number or table.
+ * - @c tx:forEachEvent(function(event)...) - Call the given function on each
  *                                            event.
  *                                            See Event Manipulation.
- * - @c ib:events() - Returns a next function, an empty table, and nil, used for
+ * - @c tx:events() - Returns a next function, an empty table, and nil, used for
  *                    iteration. for index,event in ib:events() do ... end.
  *
  * @subsection IronBeeLuaLogEvents Event Manipulation
