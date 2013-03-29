@@ -550,25 +550,6 @@ TEST(TestMpool, TestCleanupClear)
     ASSERT_EQ(g_malloc_bytes, g_free_bytes);
 }
 
-TEST(TestMpool, TestEINVAL)
-{
-    ib_mpool_t* mp;
-
-    ASSERT_EQ(IB_OK, ib_mpool_create(&mp, NULL, NULL));
-    ASSERT_TRUE(mp);
-
-    EXPECT_EQ(IB_EINVAL, ib_mpool_create(NULL, NULL, NULL));
-    EXPECT_EQ(IB_EINVAL, ib_mpool_create_ex(NULL, NULL, NULL, 0, NULL, NULL));
-    EXPECT_EQ(IB_EINVAL, ib_mpool_setname(NULL, NULL));
-    EXPECT_EQ(IB_EINVAL, ib_mpool_cleanup_register(NULL, test_cleanup, NULL));
-    EXPECT_EQ(IB_EINVAL, ib_mpool_cleanup_register(mp, NULL, NULL));
-
-    char* message;
-
-    EXPECT_EQ(IB_EINVAL, ib_mpool_validate(NULL, &message));
-    EXPECT_EQ(IB_EINVAL, ib_mpool_validate(mp, NULL));
-}
-
 namespace {
 
 void muck_with_parent(ib_mpool_t* parent)

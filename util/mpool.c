@@ -1358,9 +1358,7 @@ ib_status_t ib_mpool_create(
 {
     ib_status_t rc;
 
-    if (pmp == NULL) {
-        return IB_EINVAL;
-    }
+    assert(pmp != NULL);
 
     rc = ib_mpool_create_ex(
         pmp,
@@ -1386,9 +1384,7 @@ ib_status_t ib_mpool_create_ex(
     ib_status_t rc;
     ib_mpool_t *mp = NULL;
 
-    if (pmp == NULL) {
-        return IB_EINVAL;
-    }
+    assert(pmp != NULL);
 
     if (pagesize == 0) {
         if (parent != NULL) {
@@ -1504,9 +1500,7 @@ ib_status_t ib_mpool_setname(
     const char *name
 )
 {
-    if (mp == NULL) {
-        return IB_EINVAL;
-    }
+    assert(mp != NULL);
 
     if (mp->name != NULL) {
         mp->free_fn(mp->name);
@@ -1530,9 +1524,7 @@ const char *ib_mpool_name(
     const ib_mpool_t* mp
 )
 {
-    if (mp == NULL) {
-        return NULL;
-    }
+    assert(mp != NULL);
 
     return mp->name;
 }
@@ -1555,9 +1547,7 @@ void *ib_mpool_alloc(
 {
     void *ptr = NULL;
 
-    if (mp == NULL) {
-        return NULL;
-    }
+    assert(mp != NULL);
 
     if (size == 0) {
         return &s_zero_length_buffer;
@@ -1823,9 +1813,8 @@ ib_status_t ib_mpool_cleanup_register(
     void                  *function_data
 )
 {
-    if (mp == NULL || cleanup_function == NULL) {
-        return IB_EINVAL;
-    }
+    assert(mp != NULL);
+    assert(cleanup_function != NULL);
 
     ib_mpool_cleanup_t *cleanup = ib_mpool_acquire_cleanup(mp);
 
@@ -1914,9 +1903,8 @@ ib_status_t ib_mpool_validate(
 
     static const size_t c_message_size = 1024;
 
-    if (mp == NULL || message == NULL) {
-        return IB_EINVAL;
-    }
+    assert(mp != NULL);
+    assert(message != NULL);
 
     char *error_message = NULL;
 
@@ -2181,9 +2169,7 @@ char *ib_mpool_analyze(
     const ib_mpool_t *mp
 )
 {
-    if (mp == NULL) {
-        return NULL;
-    }
+    assert(mp != NULL);
 
     ib_mpool_report_t report;
     char *report_text = NULL;
@@ -2204,9 +2190,7 @@ char *ib_mpool_debug_report(
     const ib_mpool_t *mp
 )
 {
-    if (mp == NULL) {
-        return NULL;
-    }
+    assert(mp != NULL);
 
     ib_mpool_report_t report;
     char *report_text = NULL;
@@ -2233,14 +2217,11 @@ void *ib_mpool_calloc(
     size_t      size
 )
 {
-    if (mp == NULL) {
-        return NULL;
-    }
+    assert(mp != NULL);
 
     if (nelem == 0 || size == 0) {
         return &s_zero_length_buffer;
     }
-
 
     void *ptr = ib_mpool_alloc(mp, nelem * size);
 

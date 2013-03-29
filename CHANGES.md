@@ -128,6 +128,9 @@ IronBee v0.7.0
 
 * The libhtp library has been updated to 0.5.
 
+* All memory pool routines now assert fail instead of returning `EINVAL` when
+  passed NULLs for require arguments.
+
 **Modules**
 
 * The `pcre` module has been updated to use the new transaction data API.

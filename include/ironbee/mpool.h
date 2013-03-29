@@ -130,7 +130,6 @@ typedef void (*ib_mpool_free_fn_t)(void *ptr);
  *
  * @returns
  * - IB_OK     -- Success.
- * - IB_EINVAL -- @a pmp is NULL.
  * - IB_EALLOC -- Allocation error.
  * - Other     -- Locking failure, see ib_lock_lock().
  */
@@ -163,7 +162,6 @@ ib_status_t DLL_PUBLIC ib_mpool_create(
  *
  * @returns
  * - IB_OK     -- Success.
- * - IB_EINVAL -- @a pmp is NULL.
  * - IB_EALLOC -- Allocation error.
  * - Other     -- Locking failure, see ib_lock_lock().
  */
@@ -183,7 +181,6 @@ ib_status_t DLL_PUBLIC ib_mpool_create_ex(
  * @param[in] name New name; copied.
  * @returns
  * - IB_OK     -- Success.
- * - IB_EINVAL -- @a mp is NULL.
  * - IB_EALLOC -- Allocation error.
  */
 ib_status_t DLL_PUBLIC ib_mpool_setname(
@@ -360,7 +357,6 @@ void DLL_PUBLIC ib_mpool_release(
  *
  * @returns
  * - IB_OK     -- Success.
- * - IB_EINVAL -- @a mp or @a cleanup is NULL.
  * - IB_EALLOC -- Allocation error.
  */
 ib_status_t DLL_PUBLIC ib_mpool_cleanup_register(
@@ -396,7 +392,6 @@ char DLL_PUBLIC *ib_mpool_path(
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
- * - IB_EINVAL if @a mp or @a message is NULL.
  * - IB_EOTHER on failure -- please report as bug.
  */
 ib_status_t DLL_PUBLIC ib_mpool_validate(
