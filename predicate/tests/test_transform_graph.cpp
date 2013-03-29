@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief Predicate --- Standard Tests
+ * @brief Predicate --- Transform Graph Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
