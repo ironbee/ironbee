@@ -44,7 +44,7 @@ bool DLL_PUBLIC ib_rule_should_capture(
     ib_num_t                    result);
 
 /**
- * Get the name of a capture item (i.e. "0")
+ * Get the name of a capture item (e.g., "0")
  *
  * @param[in] rule_exec Rule execution object
  * @param[in] num Capture item number
@@ -56,7 +56,7 @@ const char *ib_rule_capture_name(
     int                         num);
 
 /**
- * Get the full name of a capture item (i.e. "CAPTURE:0")
+ * Get the full name of a capture item (e.g., "CAPTURE:0")
  *
  * @param[in] rule_exec Rule execution object
  * @param[in] num Capture item number

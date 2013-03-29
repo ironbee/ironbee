@@ -854,9 +854,6 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   start [label="start",style=bold,shape=plaintext]
  *   finish [label="finish",style=bold,shape=plaintext]
  *
- *   request [label="HTTP (parsed)\nRequest\nData",style=solid,shape=box]
- *   response [label="HTTP (parsed)\nResponse\nData",style=solid,shape=box]
- *
  *   context_conn_selected [label="At this point the connection context is\nselected. Events that follow will use the context\nselected here, which may impose a different\nconfiguration than previous events. Anything\nused in the context selection process must\nbe generated in a previous event handler.",style=bold,shape=note,URL="\ref handle_context_conn_event"]
  *   context_tx_selected [label="At this point the transaction context is\nselected. Events that follow will use the context\nselected here, which may impose a different\nconfiguration than previous events. Anything\nused in the context selection process must\nbe generated in a previous event handler.\nAdditionally, any transaction data filters will\nnot be called until after this point so that\nfilters will be called with a single context.",style=filled,fillcolor="#e6e6e6",shape=note,URL="\ref handle_context_tx_event"]
  *
