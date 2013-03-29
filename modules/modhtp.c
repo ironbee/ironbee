@@ -1795,6 +1795,29 @@ static ib_status_t modhtp_iface_tx_cleanup(
     return IB_OK;
 }
 
+static ib_status_t modhtp_iface_request_started(
+    ib_provider_inst_t *pi,
+    ib_tx_t            *itx)
+{
+    assert(pi != NULL);
+    assert(itx != NULL);
+
+    const modhtp_txdata_t *txdata;
+    htp_status_t           hrc;
+
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
+
+    /* Start the request */
+    hrc = htp_tx_state_request_start(txdata->htx);
+    if (hrc != HTP_OK) {
+        return IB_EUNKNOWN;
+    }
+
+    return IB_OK;
+}
+
+
 static ib_status_t modhtp_iface_request_line(
     ib_provider_inst_t   *pi,
     ib_tx_t              *itx,
@@ -1812,12 +1835,6 @@ static ib_status_t modhtp_iface_request_line(
 
     ib_log_debug_tx(itx,
                     "SEND REQUEST LINE TO LIBHTP: modhtp_iface_request_line");
-
-    /* Start the request */
-    hrc = htp_tx_state_request_start(txdata->htx);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
-    }
 
     /* Hand the whole request line to libhtp */
     hrc = htp_tx_req_set_line(txdata->htx,
@@ -1945,6 +1962,29 @@ static ib_status_t modhtp_iface_request_finished(
     return irc;
 }
 
+static ib_status_t modhtp_iface_response_started(
+    ib_provider_inst_t *pi,
+    ib_tx_t            *itx)
+{
+    assert(pi != NULL);
+    assert(itx != NULL);
+
+    const modhtp_txdata_t *txdata;
+    htp_status_t           hrc;
+
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
+
+    /* Start the response transaction */
+    hrc = htp_tx_state_response_start(txdata->htx);
+    if (hrc != HTP_OK) {
+        return IB_EUNKNOWN;
+    }
+
+    /* Done */
+    return IB_OK;
+}
+
 static ib_status_t modhtp_iface_response_line(
     ib_provider_inst_t    *pi,
     ib_tx_t               *itx,
@@ -1957,24 +1997,18 @@ static ib_status_t modhtp_iface_response_line(
     htp_tx_t              *htx;
     htp_status_t           hrc;
 
-    /* This is not valid for HTTP/0.9 requests. */
+    /* For HTTP/0.9 requests, we're done. */
     if (line == NULL) {
         return IB_OK;
     }
-
-    /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
-    htx = txdata->htx;
 
     ib_log_debug_tx(itx,
                     "SEND RESPONSE LINE TO LIBHTP: "
                     "modhtp_iface_response_line");
 
-    /* Start the response transaction */
-    hrc = htp_tx_state_response_start(htx);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
-    }
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(itx);
+    htx = txdata->htx;
 
     /* Hand off the status line */
     hrc = htp_tx_res_set_status_line(
@@ -2129,6 +2163,7 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
     modhtp_iface_tx_cleanup,
 
     /* Request */
+    modhtp_iface_request_started,
     modhtp_iface_request_line,
     modhtp_iface_request_header_data,
     modhtp_iface_request_header_finished,
@@ -2136,6 +2171,7 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
     modhtp_iface_request_finished,
 
     /* Response */
+    modhtp_iface_response_started,
     modhtp_iface_response_line,
     modhtp_iface_response_header_data,
     modhtp_iface_response_header_finished,

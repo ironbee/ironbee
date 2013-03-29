@@ -341,6 +341,11 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
     /* Preparsed Request Data Functions */
     IB_PROVIDER_FUNC(
         ib_status_t,
+        request_started,
+        (ib_provider_inst_t *pi, ib_tx_t *tx)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
         request_line,
         (ib_provider_inst_t *pi, ib_tx_t *tx, ib_parsed_req_line_t *line)
     );
@@ -366,6 +371,11 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
     );
 
     /* Preparsed Response Data Functions */
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        response_started,
+        (ib_provider_inst_t *pi, ib_tx_t *tx)
+    );
     IB_PROVIDER_FUNC(
         ib_status_t,
         response_line,

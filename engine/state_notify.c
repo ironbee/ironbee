@@ -257,7 +257,6 @@ ib_status_t ib_state_notify_request_started(
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(line != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
 
@@ -289,15 +288,33 @@ ib_status_t ib_state_notify_request_started(
         }
     }
 
+    /* Notify the parser that the request started. */
+    if (iface->request_started != NULL) {
+        rc = iface->request_started(pi, tx);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     /* Notify everybody */
     rc = ib_state_notify_tx(ib, tx_started_event, tx);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_req_line(ib, tx, request_started_event, line);
+    /* Notify the request line if it's present */
+    if (line == NULL) {
+        ib_log_error_tx(tx, "Request started with no line");
+    }
+    else {
+        rc = ib_state_notify_req_line(ib, tx, request_started_event, line);
+        if (rc != IB_OK) {
+            return rc;
+        }
+        ib_tx_flags_set(tx, IB_TX_FREQ_SEENLINE);
+    }
 
-    return rc;
+    return IB_OK;
 }
 
 ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
@@ -602,16 +619,12 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     }
 
     if (!ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
-        if (tx->request_line == NULL) {
-            ib_log_notice_tx(tx,
-                             "Attempted to notify request header finished"
-                             " before request started.");
-            return IB_EINVAL;
-        }
         ib_log_debug_tx(tx, "Automatically triggering %s",
                         ib_state_event_name(request_started_event));
-
-        ib_state_notify_request_started(ib, tx, tx->request_line);
+        rc = ib_state_notify_request_started(ib, tx, tx->request_line);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     /* Mark the time. */
@@ -669,6 +682,10 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
         return IB_EUNKNOWN;
+    }
+
+    /* Generate the request line event if it hasn't been seen */
+    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_SEENLINE)) {
     }
 
     /* Validate. */
@@ -781,6 +798,9 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
+    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     tx->t.response_started = ib_clock_get_time();
@@ -806,9 +826,24 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FRES_STARTED);
 
-    rc = ib_state_notify_resp_line(ib, tx, response_started_event, line);
+    /* Notify the parser that the response started. */
+    if (iface->response_started != NULL) {
+        rc = iface->response_started(pi, tx);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
 
-    return rc;
+    /* If there's a line, notify the world about it */
+    if (line != NULL) {
+        rc = ib_state_notify_resp_line(ib, tx, response_started_event, line);
+        if (rc != IB_OK) {
+            return rc;
+        }
+        ib_tx_flags_set(tx, IB_TX_FRES_SEENLINE);
+    }
+
+    return IB_OK;
 }
 
 ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
@@ -875,6 +910,20 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
         return IB_EUNKNOWN;
+    }
+
+    /* Generate the response line event if it hasn't been seen */
+    if (! ib_tx_flags_isset(tx, IB_TX_FRES_SEENLINE)) {
+        /* For HTTP/0.9 there is no response line, so this is normal, but
+         * for others this is not normal and should be logged. */
+        if (!ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
+            ib_log_warning_tx(tx, "Automatically triggering %s",
+                              ib_state_event_name(response_started_event));
+        }
+        rc = ib_state_notify_response_started(ib, tx, NULL);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     /* Validate. */
