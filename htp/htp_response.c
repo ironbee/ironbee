@@ -147,7 +147,7 @@ static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
     if (connp->out_state_previous == connp->out_state) return HTP_OK;
 
     if (connp->out_state == htp_connp_RES_HEADERS) {
-        htp_status_t rc;
+        htp_status_t rc = HTP_OK;
 
         switch (connp->out_tx->progress) {
             case HTP_RESPONSE_HEADERS:
