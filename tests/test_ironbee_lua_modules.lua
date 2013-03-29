@@ -16,6 +16,7 @@ local eventsTable = {
     "handle_response_event",
     "handle_disconnect_event",
     "handle_postprocess_event",
+    "handle_logging_event",
     "conn_opened_event",
     "conn_closed_event",
     "request_started_event",
@@ -28,6 +29,7 @@ local eventsTable = {
     "response_header_finished_event",
     "response_body_data_event",
     "response_finished_event",
+    "handle_logevent_event",
 }
 
 -- Register EVERY callback we can with a pretty simple function.

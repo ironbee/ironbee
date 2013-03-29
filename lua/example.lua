@@ -245,6 +245,12 @@ ibmod:response_finished_event(log_event)
 ibmod:handle_postprocess_event(log_event)
 
 -- ===============================================
+-- This is called after postprocess is complete,
+-- to allow for any post-transaction logging.
+-- ===============================================
+ibmod:handle_logging_event(log_event)
+
+-- ===============================================
 -- This is called when the transaction is
 -- finished.
 -- ===============================================
@@ -265,6 +271,12 @@ ibmod:handle_disconnect_event(log_event)
 -- This is called when the connection is finished.
 -- ===============================================
 ibmod:conn_finished_event(log_event)
+
+-- ===============================================
+-- This is called when a logevent event has
+-- occurred.
+-- ===============================================
+ibmod:handle_logevent_event(log_event)
 
 -- Report success.
 ibmod:logInfo("Module loaded!")

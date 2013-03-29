@@ -109,7 +109,14 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
     }
 
     /* Normalize the incoming value for the tokenizer (toupper). */
-    buf_in = (char *)ib_mpool_memdup(mp, ib_bytestr_const_ptr(bs_in), ib_bytestr_length(bs_in));
+    if (ib_bytestr_length(bs_in) == 0) {
+        buf_in = (char *)ib_mpool_calloc(mp, 1, 1);
+    }
+    else {
+        buf_in = (char *)ib_mpool_memdup(mp,
+                                         ib_bytestr_const_ptr(bs_in),
+                                         ib_bytestr_length(bs_in));
+    }
     if (buf_in == NULL) {
         return IB_EALLOC;
     }
