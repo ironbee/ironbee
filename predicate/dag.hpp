@@ -41,9 +41,25 @@
 namespace IronBee {
 namespace Predicate {
 
+/*
+ * The following typedefs are the primary parameters for tying the public
+ * API to IronBee.  If this code was to be used in a different system, much
+ * of the implementation, especially of standard.hpp, would need to change,
+ * but changing these typedefs should suffice for adapating the
+ * public API.
+ */
+
+/**
+ * Value of a node.
+ **/
 typedef IronBee::ConstField Value;
+
+/**
+ * Context a node is evaluated in.
+ **/
 typedef IronBee::ConstTransaction Context;
 
+// Defined below.
 class Node;
 class Call;
 class Literal;
@@ -309,10 +325,14 @@ private:
      **/
     void unlink_from_child(const node_p& child) const;
 
-    bool             m_has_value;
-    Value            m_value;
+    //! True if a value has been set.
+    bool m_has_value;
+    //! What value has been set; may be singular to indicate null/false.
+    Value m_value;
+    //! List of parents (note weak pointers).
     weak_node_list_t m_parents;
-    node_list_t      m_children;
+    //! List of children.
+    node_list_t m_children;
 };
 
 //! Ostream output operator.
@@ -442,15 +462,13 @@ protected:
 
 private:
     //! Value as a C++ string.
-    const std::string         m_value_as_s;
+    const std::string m_value_as_s;
     //! S-expression.
-    const std::string         m_s;
+    const std::string m_s;
     //! Memory pool to create field value from.  Alias of m_value_as_s.
-    boost::shared_ptr<
-        IronBee::ScopedMemoryPool
-    > m_pool;
+    boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
     //! Value returned by calculate().
-    IronBee::ConstField       m_value_as_field;
+    IronBee::ConstField m_value_as_field;
 };
 
 /**
