@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://docbook.org/xml/5.0/rng/docbook.rng" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="http://docbook.org/xml/5.0/rng/docbook.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<chapter xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0"
+    xml:id="rule-writing">
+     <title>Inspection</title>
+    <para>The whole point of IronBee is to allow for inspecting data. This chapter covers the basics
+        of doing just that. Inspecting data is performed through rules and modules. Rules are
+        encapsulated logic executed at well define points in the transaction lifecycle. Modules, in
+        general, extend IronBee functionality and can provide extensive logic, however modules can
+        also be used for inspection when you need more control and flexibility.</para>
+    <section>
+        <title>Data</title>
+        <para>IronBee exposes data in two forms. Data can be in defined as a field or as a stream.
+            In addition to inspection, fields are the primary means of exposing and exchanging data
+            between rules and modules. A full list of the defined data fields are discussed in <xref
+                linkend="rule-reference"/>, however IronBee allows for the creation and modification
+            of arbitrary fields. New variable fields can be defined, initialized in various ways
+            within the IronBee configuration as well as in rules and modules. This section discusses
+            defining and initializing rules via the configuration, leaving further discussion for
+            the Rules section.</para>
+        <para>Variable fields, or just variables for short, are defined and initialized in the the
+            configuration through two primary directives. The scope of these variables is defined
+            through the context. Variables can be defined in the main (global) scope, within a site
+            scope or within a location scope based on where the directives are used in the
+            configuration.</para>
+        <section>
+            <title>Defining and Initializing Scalar Variables with
+                <literal>InitVar</literal></title>
+            <para>A simple scalar variable is both defined and initialized with the
+                    <literal>InitVar</literal>
+                directive.<programlisting>InitVar MY_VAR "my value"</programlisting></para>
+            <para>In addition to simple scalar variables, you can also use
+                    <literal>InitVar</literal> to define scalar variables within a collection. If
+                the collection does not previously exist, then it is
+                created.<programlisting>InitVar MY_COLLECTION:MY_VAR "my value"</programlisting></para>
+            <para>The variable will then be available as a normal field to all rules and modules
+                active in the same configuration context (scope). See the full documentation for the
+                    <literal>InitVar</literal> directive for more details.</para>
+        </section>
+        <section>
+            <title>Defining and Initializing Collections with
+                <literal>InitCollection</literal></title>
+            <para>Similar to the <literal>InitVar</literal> directive, you can also define and
+                initialize collections with the <literal>InitCollection</literal>
+                directive.<programlisting>InitCollection MY_COLLECTION</programlisting></para>
+            <para>The above will define the <literal>MY_COLLECTION</literal> collection, however, it
+                will be empty. To both define and initialize a collection, you can utilize a number
+                of additional <literal>InitCollection</literal> features. The most basic form allows
+                specifying key/value pairs with the
+                collection.<programlisting>InitCollection MY_COLLECTION vars: \
+    key1=value1 \
+    key2=value2 \
+    key3=value3</programlisting></para>
+            <para>In addition to initializing the key values within the configuration file, you may
+                also initialize the collection via an external JSON formatted file, allowing for
+                controlling the data withing the collection outside of
+                IronBee.<programlisting>InitCollection MY_COLLECTION json-file:///path/to/persisted/data/mycollection.json</programlisting></para>
+            <para>The JSON is formatted as simple name/value
+                pairs.<programlisting>{
+    "key1": "value1",
+    "key2": "value2",
+    "key3": "value3"
+}</programlisting></para>
+            <para>See the full documentation for <literal>InitCollection</literal> directive for
+                more details. </para>
+        </section>
+        <section>
+            <title>Persisting Data with <literal>InitCollection</literal></title>
+            <para>In addition to defining and initializing collections with static data, IronBee
+                also allows for persisting collections which have been manipulated in IronBee. This
+                is accomplished in a few different ways, depending on your needs. If you need to
+                persist a single instance of a collection, then you can just add the persist option
+                to the InitCollection
+                directive.<programlisting>InitCollection MY_COLLECTION json-file:///path/to/persisted/data/mycollection.json persist</programlisting></para>
+            <para>With the addition of the persist option, any data within the collection will be
+                written out to the JSON file at the end of the transaction. The next transaction
+                will then be initialized with the manipulated data. Often, though, you do not want
+                to share the same collection for all transactions. Instead you need to be able to
+                save different instances of the collection based on some other field or set of
+                fields as a key. To do this, you need to load the persist module to gain some
+                additional
+                functionality.<programlisting>LoadModule ibmod_persist.so</programlisting></para>
+            <para>The persist module allows you to store different instances of a collection based
+                on a key. For example, you may want to store an instance of the collection based on
+                the IP address or session ID. This is not any more difficult, just a slightly
+                different syntax. The key can be specified using any string, which may include field
+                expansion, such as the IP address or session
+                ID.<programlisting>InitCollection IP_DATA persist-fs:///path/to/persisted/data key=%{REMOTE_ADDR}
+InitCollection SESS_DATA persist-fs:///path/to/persisted/data key=%{REQUEST_COOKIES:jsessionid}</programlisting></para>
+            <para>Any data contained in these collections will be read from a file based on the key
+                and stored in the named collection. At the end of the transaction, the data is
+                written out to the same file. Since this data may accumulated, you will probably
+                want to specify an expiration time. This is done by using the expire option, which
+                takes an expiration time in seconds. If more than the number of seconds elapses
+                between the collection being written out and read back in, the data is purged and
+                the collection will be
+                empty.<programlisting>InitCollection IP_DATA persist-fs:///path/to/persisted/data key=%{REMOTE_ADDR} expire=300</programlisting></para>
+            <para>Since the data is only purged when it is attempted to be read back in after
+                expiring, the data may still accumulate on the filesystem. It may be required to run
+                a periodic cleanup process to purge any expired files. In the future IronBee will
+                provide a utility for this, but for now the expiration date is encoded in the
+                filename.<programlisting># Format: uuid/expiration-tempname
+0de114da-8ada-55ad-a6de-e68a1263412a/001364624257-0004d91e578bc99f.json.dXFR9d</programlisting></para>
+            <para>Periodic purging could be accomplished with a cron job to check that the current
+                apoch based date is greater than that encoded in the
+                file.<programlisting>#!/bin/sh
+
+# Specify the persist-fs: base directory
+PERSIST_FS_BASEDIR="/tmp/ironbee/persist/fs"
+
+# Current epoch based date
+DSTAMP=`date "+%s"`
+
+# Iterate through files
+for file in `find $PERSIST_FS_BASEDIR -type f -name '*.json.*'`; do
+    # Extract the epoch based expiration from the filename
+    expires=`echo $file | sed 's%.*/0*\([0-9]*\)-.*%\1%'`
+
+    # Check if the expires was extracted and the current date
+    # is greater than the expiration, removing the file.
+    if [ -n "$expires" -a "$DSTAMP" -gt "$expires" ]; then
+        echo "PURGE: $file expired=`date -j -r $expires`"
+        rm $file
+    fi
+done</programlisting></para>
+        </section>
+    </section>
+    <section>
+        <title>Rules</title>
+        <para>Rules are the primary form of inspection in IronBee. IronBee rule execution is
+            decoupled from any rule language. Because of this, IronBee can provide multiple rule
+            languages. Each language has a different use case. Currently the following rule
+            languages are defined:<itemizedlist>
+                <listitem>
+                    <para>IronBee Rule Language, which is part of the IronBee Configuration
+                        Language.</para>
+                </listitem>
+                <listitem>
+                    <para>Lua rule definitions, available in Lua modules and Lua configuration
+                        files.</para>
+                </listitem>
+                <listitem>
+                    <para>External Lua rule scripts.</para>
+                </listitem>
+            </itemizedlist></para>
+        <section>
+            <title>IronBee Rule Language</title>
+            <para>The IronBee rule language is relatively simplistic. The language is designed to
+                create signature based rules with minimal logic. If you need more logic, then you
+                should consider other options.</para>
+            <para>The rule language allows for inspecting fields and performing actions. There are
+                three forms of rules:<itemizedlist>
+                    <listitem>
+                        <para>Field based inspection rules which execute actions based on inspecting
+                            a set of fields.</para>
+                    </listitem>
+                    <listitem>
+                        <para>Stream based inspection rules which execute actions based on
+                            inspecting a stream of data.</para>
+                    </listitem>
+                    <listitem>
+                        <para>Actions based rules, which just execute actions and allow for some
+                            basic logic and setup.</para>
+                    </listitem>
+                </itemizedlist></para>
+            <section>
+                <title>Inspecting Fields with the <literal>Rule</literal></title>
+                <para>The Rule directive allows inspecting a set of fields and optionally executing
+                    an action. For example, you can specify a list of request methods that you wish
+                    to
+                    block.<programlisting>Rule REQUEST_METHOD @imatch "TRACE TRACK" \
+    id:test/methods/1 \
+    phase:REQUEST_HEADER \
+    "msg:Invalid method: %{REQUEST_METHOD}" \
+    event:alert \
+    block:phase</programlisting></para>
+                <para>The example above inspects the <literal>REQUEST_METHOD</literal> field using
+                    the <literal>@imatch</literal> operator. The <literal>@imatch</literal> operator
+                    matches case insensitively against a list of values. In this case the match is a
+                    success if the <literal>REQUEST_METHOD</literal> completely matches any of the
+                    specified methods. If the match is a success, then the event and block actions
+                    will be executed, logging an alert with the given message and blocking the
+                    request at the end of the phase. There are a few additional modifiers. The id
+                    and phase modifiers are required. The id modifier must be a unique string and
+                    the phase modifier specifies when the rule will execute. In this case the rule
+                    will execute just after the HTTP request headers are available.</para>
+                <para>As an alternate to the above, you could instead whitelist what methods you
+                    wish to allow with a similar rule. In this case you would just negate the
+                    operator and specify a list of methods that are allowed. If the method is not on
+                    the list, then the actions will
+                    execute.<programlisting>Rule REQUEST_METHOD <emphasis role="bold">!@imatch "GET HEAD POST"</emphasis> \
+    id:test/methods/1 \
+    phase:REQUEST_HEADER \
+    "msg:Invalid method: %{REQUEST_METHOD}" \
+    event:alert \
+    block:phase</programlisting></para>
+                <para>More than one field can be specified. If so, then each value will be run
+                    through the operator, triggering actions for each match. In addition, the field
+                    values can be transformed, such as trimming off any
+                    whitespace.<programlisting>Rule REQUEST_METHOD<emphasis role="bold">.trim()</emphasis> !@imatch "GET HEAD POST" \
+    id:test/methods/1 \
+    phase:REQUEST_HEADER \
+    "msg:Invalid method: %{REQUEST_METHOD}" \
+    event:alert \
+    block:phase</programlisting></para>
+                <para>Transformations can be specified per-field, or to all fields, using, for
+                    example, the <literal>t:trim</literal> rule modifier. Multiple transformations
+                    can be chained together.</para>
+                <para>See the <literal>Rule</literal> documentation for more details.</para>
+            </section>
+            <section>
+                <title>Inspecting Streams with <literal>StreamInspect</literal></title>
+                <para>TODO</para>
+                <para>See the <literal>StreamInspect</literal> documentation for more
+                    details.</para>
+            </section>
+            <section>
+                <title>Executing actions with <literal>Action</literal></title>
+                <para>TODO</para>
+                <para>See the <literal>Action</literal> documentation for more details.</para>
+            </section>
+        </section>
+        <section>
+            <title>Lua Signature Definitions</title>
+            <para>TODO</para>
+        </section>
+        <section>
+            <title>External Lua Rule Scripts</title>
+            <para>TODO</para>
+        </section>
+    </section>
+    <section>
+        <title>Modules</title>
+        <para>When full control is required, then an IronBee module may be required. Modules provide
+            the ability to hook directly into the IronBee state machine for fine grained control
+            over execution, Currently modules can be written in three languages. Each has a
+            different use case which is described below.<itemizedlist>
+                <listitem>
+                    <para>Lua is the simplest language to develop modules as it hides many of the
+                        details. While Lua allows for rapid development, it does not perform as well
+                        as other languages for many tasks. Lua is the recommended language for
+                        prototyping and most higher level module needs - where Lua rules are not
+                        adequate. Lua modules also have the added benefit of being able to be
+                        distributed as rules, since they are not in a binary form.</para>
+                </listitem>
+                <listitem>
+                    <para>C++ allows near full control over IronBee via the C++ wrappers. C++
+                        provides much higher level access to IronBee in a fairly strict environment.
+                        However, the C++ wrappers do not cover all functionality of IronBee and you
+                        may need to fall back to the C API. Because of the added strictness in C++
+                        and near equal performance to the native C API, it is the recommended
+                        language if Lua will not satisfy performance or functionality
+                        requirements.</para>
+                </listitem>
+                <listitem>
+                    <para>C is the lowest level language for writing modules. While C provides full
+                        functionality, it does not provide as much protection as C++ or Lua.</para>
+                </listitem>
+            </itemizedlist>See <xref linkend="extending-ironbee"/> for more information on writing
+            IronBee modules.</para>
+    </section>
+</chapter>

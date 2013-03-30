@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<chapter version="5.0" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml" xml:id="rule-reference">
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml"
+    xml:id="rule-reference">
     <title>Rule Reference</title>
     <para>...</para>
     <section>
@@ -1467,7 +1473,7 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
             <para><emphasis role="bold">Description:</emphasis> Decodes HTML entities in the
                 data.</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet.</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.6</para>
             <para>The following forms are supported:</para>
             <itemizedlist>
                 <listitem>
