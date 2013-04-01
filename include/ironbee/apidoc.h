@@ -37,6 +37,7 @@
  * - @ref README
  * - @ref CHANGES
  * - @ref DEVELOPMENT
+ * - @ref CODESTYLE
  *
  * Of particular interest:
  * - Module writers: module.h, module_sym.h
