@@ -208,27 +208,305 @@ done</programlisting></para>
                 <para>Transformations can be specified per-field, or to all fields, using, for
                     example, the <literal>t:trim</literal> rule modifier. Multiple transformations
                     can be chained together.</para>
-                <para>See the <literal>Rule</literal> documentation for more details.</para>
+                <para>See the <literal>Rule</literal> directive documentation for more
+                    details.</para>
             </section>
             <section>
                 <title>Inspecting Streams with <literal>StreamInspect</literal></title>
-                <para>TODO</para>
+                <para>Potentially large fields, such as the request and response body, pose problems
+                    when they need to be inspected as a whole. To alleviate problems with requiring
+                    large amounts of memory for inspection, the request and response bodies are only
+                    available as streams. The <literal>StreamInspect</literal> directive is used to
+                    write stream based data. This directive differs slightly from the Rule directive.<itemizedlist>
+                        <listitem>
+                            <para><literal>StreamInspect</literal> rules run as data is received,
+                                which is before phase rules execute on the request/response bodies.
+                                Any setup with phase based rules should be done in the associated
+                                header phase to ensure they are executed before stream based rules.
+                                Depending on the size of the data and the server's buffer size, the
+                                data may come in chunks. Because of this, a
+                                    <literal>StreamInspect</literal> rule may execute multiple times
+                                - once per chunk of data received.</para>
+                        </listitem>
+                        <listitem>
+                            <para><literal>StreamInspect</literal> rules have a limited set of
+                                operators that support streaming inspection. Currently this is
+                                limited to the <literal>dfa</literal> operator, but may expand in
+                                the future. The <literal>dfa</literal> operator uses the PCRE syntax
+                                similar to <literal>rx</literal>, but does not allow backtracking.
+                                Additionally, the <literal>dfa</literal> operator can capture ALL
+                                matches, instead of just the first as <literal>rx</literal> does.
+                                This allows capturing all matching patterns from the stream. Note
+                                that the <literal>dfa</literal> operator is fully streaming aware
+                                and will match across chunk boundaries.</para>
+                        </listitem>
+                        <listitem>
+                            <para><literal>StreamInspect</literal> rules allow only a single stream
+                                as input, however you can use multiple rules.</para>
+                        </listitem>
+                        <listitem>
+                            <para><literal>StreamInspect</literal> rules currently do not support
+                                transformations.</para>
+                        </listitem>
+                    </itemizedlist></para>
                 <para>See the <literal>StreamInspect</literal> documentation for more
                     details.</para>
             </section>
             <section>
                 <title>Executing actions with <literal>Action</literal></title>
-                <para>TODO</para>
+                <para>Rule actions may need to be triggered unconditionally. While not often
+                    required, this is possible with the <literal>Action</literal> directive.
+                    Typically this is used to execute <literal>setvar</literal>,
+                        <literal>setflag</literal> or similar
+                    actions.<programlisting>Action id:init/1 phase:REQUEST_HEADER setvar:MY_VAR=1234</programlisting></para>
                 <para>See the <literal>Action</literal> documentation for more details.</para>
             </section>
         </section>
         <section>
             <title>Lua Signature Definitions</title>
-            <para>TODO</para>
+            <para>Often you may need more functionality in configuring rules than is offered by the
+                configuration language. This is possible by using Lua to provide signature
+                definitions. Using the <literal>LuaInclude</literal> directive, you can include a
+                lua script into the configuration. The Lua script can define rules as an alternate
+                signature definition language. Note that Lua is only being used as the configuration
+                language. This means that Lua is only executed at configuration time and not
+                required to execute the rules. The rules defined in the lua script are identical to
+                those added via the Rule directive, but just use an alternative configuration
+                language. This really shows off IronBee's separation of the rules from the language
+                in which they are
+                defined.<programlisting># Load the Lua module to add Lua functionality into IronBee.
+LoadModule ibmod_lua.so
+
+# Include rules via a lua script and commit.
+LuaInclude rules.lua
+LuaCommitRules</programlisting></para>
+            <para>Including a lua script at configuration using <literal>LuaInclude</literal> allows
+                the full power of Lua to configure the rules. The included Lua script is executed at
+                config time, providing a vast amount of power over rule configuration. Within Lua,
+                you can use the <literal>Sig(id,rev)</literal> function to define signature rules.
+                The Sig() function returns a signature object, which allows you to then specify
+                attributes, such as fields, an operator, actions, etc. The following is a simple
+                rule using the Rule directive, which will serve as an example to be converted using
+                the Lua
+                configuration.<programlisting>Rule ARGS REQUEST_HEADERS \
+     @rx "some-attack-regex" \
+     id:test/lua/1 rev:1 \
+     severity:50 confidence:75 \
+     event:alert block:phase \
+     "msg:Some message text." </programlisting></para>
+            <para>This is converted into Lua's Sig() function below. Note that this is an extremely
+                verbose version for clarity. Later, this will be shortened to a much more manageable
+                form.</para>
+            <para>
+                <programlisting>-- Create a signature with: id="test/lua/1" rev=1
+local sig = Sig("test/lua/1", 1)
+
+-- Specify what fields to inspect.
+sig:fields("ARGS", "REQUEST_HEADERS")
+
+-- Specify the phase.
+sig:phase("REQUEST")
+
+-- Specify the operator
+sig:op("rx", [[some-attack-regex]])
+
+-- Specify other meta-data.
+sig:action("severity:50")
+sig:action("confidence:75")
+
+-- Specify the actions.
+sig:action("event:alert")
+sig:action("block:phase")
+sig:message("Some message text.")</programlisting>
+            </para>
+            <para>The Sig() function returns a signature object, but so do all the attribute
+                functions. This allows us to chain attributes via the colon operator resulting in
+                something much more compact and
+                "rule-like".<programlisting>Sig("test/lua/1", 1):
+  fields("ARGS", "REQUEST_HEADERS"):
+  phase("REQUEST"):
+  op("rx", [[some-attack-regex]]):
+  action("severity:50"):
+  action("confidence:75"):
+  action("event:alert"):
+  action("block:phase"):
+  message("Some message text.")</programlisting></para>
+            <para>Even this, however, is a bit more verbose than desired. In practice many rules
+                will follow the same form and it will quickly become tedious to write signatures in
+                such a verbose format. To reduce this verbosity, the power of Lua is utilized, which
+                allows customizing how rules are written by defining wrapper functions around the
+                default Sig()
+                function.<programlisting>--[[ ----------------------------------------------------
+---- Define a function to reduce verbosity:
+---- RequestRegex(id, regex [,severity [,confidence]])
+--]] ----------------------------------------------------
+local RequestRegex = function(id,regex,severity,confidence)
+  if severity == nil then
+    severity = 50
+  end
+  if confidence == nil then
+    confidence = 75
+  end
+  return Sig("test/lua/" .. id,1):
+           op("rx", regex):
+           phase("REQUEST"):
+           action("severity:" .. severity):
+           action("confidence:" .. confidence):
+           action("event:alert"):
+           action("block:phase")
+end
+
+--[[ ----------------------------------------------------
+---- Define a list of common attack fields
+--]] ----------------------------------------------------
+local ATTACK_FIELDS = { "ARGS", "REQUEST_HEADERS" }
+
+-- Rules using the above wrappers
+RequestRegex(1,[[some-attack-regex]]):
+  fields(ATTACK_FIELDS):
+  message("Some message text.")</programlisting></para>
+            <para>As you can see, this can substantially reduce the verbosity of the rules, however,
+                it does require writing some wrapper functions. As IronBee matures, it will expose
+                some builtin wrappers in a separate library. Separating the wrappers into a library,
+                would then reduce this into a file that load the library and the rules
+                themselves.</para>
+            <para>
+                <programlisting>-- Load the Wrappers
+require rule-wrappers
+
+-- Rules
+RequestRegex(1,[[some-attack-regex]]):
+  fields(ATTACK_FIELDS):
+  message("Some message text.")
+RequestRegex(2,[[some-other-attack-regex]]):
+  fields(ATTACK_FIELDS):
+  message("Some other message text.")</programlisting>
+            </para>
+            <para>Rule execution order is different when specified in Lua. In Lua, no order is
+                guaranteed unless specified. Order is specified in a number of ways. The first
+                method is via the <literal>before()</literal> or <literal>after()</literal>
+                attributes, which control rule execution order. Note that
+                    <literal>before()</literal> and <literal>after()</literal> are not rule chaining
+                and do not require the previous rule to
+                match.<programlisting>Sig("lua/1",1):
+  before("lua/2")
+Sig("lua/2",1):
+Sig("lua/3",1):
+  after("lua/2")</programlisting></para>
+            <para>While this is powerful, it is tedious to maintain. As most cases where you need
+                rule order are in grouping rules to form a sort of recipe, there is a
+                    <literal>Recipe(tag)</literal> function defined which does the following:<itemizedlist>
+                    <listitem>
+                        <para>Adds the supplied recipe tag to all rules within the recipe.</para>
+                    </listitem>
+                    <listitem>
+                        <para>Forces rule execution order within the recipe.</para>
+                    </listitem>
+                </itemizedlist><programlisting>Recipe("recipe/1") {
+  Sig("lua/1",1),
+  Sig("lua/2",1),
+  Sig("lua/3",1)
+}</programlisting></para>
+            <para>Each rule in the recipe will contain the recipe tag and therefore the entire
+                recipe can be enabled via <literal>RuleEnable tag:recipe/1</literal> or
+                similar.</para>
+            <para>The <literal>Rule</literal> directive supports chaining rules via the
+                    <literal>chain</literal> rule modifier. Chaining allows rules to be logically
+                ANDed together so that later rules only execute if previous rules match. Chained
+                rules are slightly different when specified in Lua. Lua uses the
+                    <literal>follows()</literal> attribute to specify a rule ID to follow in
+                execution IF that rule matches. This is essentially reversed from the
+                    <literal>Rule</literal> directive which specifies the <literal>chain</literal>
+                modifier on the previous rule verses specifying the <literal>follows()</literal>
+                attribute on the later
+                rule.<programlisting># Define a "lua/1" rule
+Sig("lua/1",1)
+
+# Define a "lua/2" rule that will run only if "lua/1" matches
+Sig("lua/2",1):follows("lua/1")
+
+# Define a "lua/3" rule that will run only if "lua/2" matches
+Sig("lua/3",1):follows("lua/2")</programlisting></para>
+            <para>The following is defined for use in defining rules within Lua.<itemizedlist>
+                    <listitem>
+                        <para>Sig(id,rev): Create a new signature based rule.<itemizedlist>
+                                <listitem>
+                                    <para>field(name): Specify a single field name added to the list
+                                        of fields to inspect.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>fields(list): Specify a list of field names to be added to
+                                        the list of fields to inspect.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>op(name,value): Specify an operator to use for the
+                                        rule.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>phase(name): Specify the phase name to execute
+                                        within.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>message(text): Specify a message for the rule.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>tag(name): Specify a tag name to add to the list of
+                                        tags.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>tags(list): Specify a list of tag names to be added to the
+                                        list of tags.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>comment(text): Arbitrary comment text to associate with
+                                        the rule.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>action(text): Specify any additional rule action or
+                                        modifier in "name:parameter" format.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>before(rule-id): Specify the rule ID which this should
+                                        execute before.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>after(rule-id): Specify the rule ID which this should
+                                        execute after.</para>
+                                </listitem>
+                                <listitem>
+                                    <para>follows(rule-id): Specify the rule ID that this should
+                                        follow IF that rule matched.</para>
+                                </listitem>
+                            </itemizedlist></para>
+                    </listitem>
+                    <listitem>
+                        <para>Action(id,rev): Similar to the Action directive, this is the same as
+                            Sig(), but disallows field()/fields()/op() attributes.</para>
+                    </listitem>
+                    <listitem>
+                        <para>ExtSig(id,rev): Similar to the RuleExt directive, this is the same as
+                            Sig(), but allows specifying a script to execute as the rule logic.<itemizedlist>
+                                <listitem>
+                                    <para>script(name): Name of script to execute.</para>
+                                </listitem>
+                            </itemizedlist></para>
+                    </listitem>
+                    <listitem>
+                        <para>Recipe(tag, rule-list): Group a list of rules, adding tag to all rules
+                            and maintaining rule execution order.</para>
+                    </listitem>
+                </itemizedlist></para>
         </section>
         <section>
             <title>External Lua Rule Scripts</title>
-            <para>TODO</para>
+            <para>While Lua signature definitions are very powerful, they are still limited to
+                signature like operations. To allow for complex logic you can use Lua at rule
+                execution time yielding the full power of Lua as an inspection language. This is
+                accomplished by using either the <literal>RuleExt</literal> directive withing a
+                configuration file or <literal>ExtSig()</literal> within a Lua configuration
+                file.</para>
+            <para>See the documentation for the <literal>RuleExt</literal> directive for more
+                details.</para>
         </section>
     </section>
     <section>
