@@ -60,6 +60,7 @@ typedef struct ib_operator_inst_t ib_operator_inst_t;
  * @param[in] parameters Unparsed string with the parameters to
  *                       initialize the operator instance.
  * @param[in,out] op_inst Pointer to the operator instance to be initialized.
+ * @param[in] cbdata Callback data.
  *
  * @returns IB_OK if successful.
  */
@@ -69,7 +70,8 @@ typedef ib_status_t (* ib_operator_create_fn_t)(
     const ib_rule_t    *rule,
     ib_mpool_t         *pool,
     const char         *parameters,
-    ib_operator_inst_t *op_inst
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
 );
 
 /**
@@ -78,12 +80,14 @@ typedef ib_status_t (* ib_operator_create_fn_t)(
  * This frees any resources allocated to the instance but does not free
  * the instance itself.
  *
- * @param op_inst Operator Instance to be destroyed.
+ * @param[in] op_inst Operator Instance to be destroyed.
+ * @param[in] cbdata Callback data.
  *
  * @returns IB_OK if successful.
  */
 typedef ib_status_t (* ib_operator_destroy_fn_t)(
-    ib_operator_inst_t *op_inst
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
 );
 
 /**
@@ -94,6 +98,7 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(
  * @param[in] flags Operator instance flags.
  * @param[in] field The field to operate on.
  * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data.
  *
  * @returns IB_OK if successful.
  */
@@ -102,21 +107,22 @@ typedef ib_status_t (* ib_operator_execute_fn_t)(
     void                 *data,
     ib_flags_t            flags,
     ib_field_t           *field,
-    ib_num_t             *result
+    ib_num_t             *result,
+    void                 *cbdata
 );
 
 /** Operator Structure */
 typedef struct ib_operator_t ib_operator_t;
 
 struct ib_operator_t {
-    char                    *name;       /**< Name of the operator. */
-    ib_flags_t               flags;      /**< Operator flags */
-    void                    *cd_create;  /**< Create callback data. */
-    void                    *cd_destroy; /**< Destroy callback data. */
-    void                    *cd_execute; /**< Execute callback data. */
-    ib_operator_create_fn_t  fn_create;  /**< Instance creation function. */
-    ib_operator_destroy_fn_t fn_destroy; /**< Instance destroy function. */
+    char                     *name; /**< Name of the operator. */
+    ib_flags_t                flags; /**< Operator flags */
+    ib_operator_create_fn_t   fn_create; /**< Instance creation function. */
+    void                     *cbdata_create; /**< Create callback data. */
+    ib_operator_destroy_fn_t  fn_destroy; /**< Instance destroy function. */
+    void                     *cbdata_destroy; /**< Destroy callback data. */
     ib_operator_execute_fn_t fn_execute; /**< Instance execution function. */
+    void                     *cbdata_execute; /**< Execute callback data. */
 };
 
 /** Operator flags */
@@ -152,13 +158,13 @@ struct ib_operator_inst_t {
  * @param[in] flags Operator flags.
  * @param[in] fn_create A pointer to the instance creation function.
  *                      (May be NULL)
- * @param[in] cd_create Callback data passed to @a fn_create.
+ * @param[in] cbdata_create Callback data passed to @a fn_create.
  * @param[in] fn_destroy A pointer to the instance destruction function.
  *                       (May be NULL)
- * @param[in] cd_destroy Callback data passed to @a fn_destroy.
+ * @param[in] cbdata_destroy Callback data passed to @a fn_destroy.
  * @param[in] fn_execute A pointer to the operator function.
  *                       If NULL the operator will always return 1 (true).
- * @param[in] cd_execute Callback data passed to @a fn_execute.
+ * @param[in] cbdata_execute Callback data passed to @a fn_execute.
  *
  * @returns IB_OK on success, IB_EINVAL if the name is not unique.
  */
@@ -167,11 +173,11 @@ ib_status_t DLL_PUBLIC ib_operator_register(
     const char               *name,
     ib_flags_t                flags,
     ib_operator_create_fn_t   fn_create,
-    void                     *cd_create,
+    void                     *cbdata_create,
     ib_operator_destroy_fn_t  fn_destroy,
-    void                     *cd_destroy,
+    void                     *cbdata_destroy,
     ib_operator_execute_fn_t  fn_execute,
-    void                     *cd_execute
+    void                     *cbdata_execute
 );
 
 /**

@@ -212,13 +212,18 @@ static ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
  * @param[in] automata_name The name of the automata to use.
  *                          Defined via the LoadEudoxus directive.
  * @param[in,out] op_inst The operator instance being created.
+ * @param[in] cbdata Callback data.
  */
-static ib_status_t ee_match_any_operator_create(ib_engine_t *ib,
-                                                ib_context_t *ctx,
-                                                const ib_rule_t *rule,
-                                                ib_mpool_t *pool,
-                                                const char *automata_name,
-                                                ib_operator_inst_t *op_inst)
+static
+ib_status_t ee_match_any_operator_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *pool,
+    const char         *automata_name,
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
 
     ib_status_t rc;
@@ -261,13 +266,17 @@ static ib_status_t ee_match_any_operator_create(ib_engine_t *ib,
  * @param[in] flags
  * @param[in] field The field to match.
  * @param[out] result Set to 1 if a match is found 0 otherwise.
+ * @param[in] cbdata Callback data.
  */
-static ib_status_t ee_match_any_operator_execute(
+static
+ib_status_t ee_match_any_operator_execute(
     const ib_rule_exec_t *rule_exec,
-    void *data,
-    ib_flags_t flags,
-    ib_field_t *field,
-    ib_num_t *result)
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     ib_status_t rc;
     ia_eudoxus_result_t ia_rc;
@@ -327,7 +336,11 @@ static ib_status_t ee_match_any_operator_execute(
  * Noop.  No resources that need to be released are allocated when the
  * operator is created.
  */
-static ib_status_t ee_match_any_operator_destroy(ib_operator_inst_t *op_inst)
+static
+ib_status_t ee_match_any_operator_destroy(
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     return IB_OK;
 }

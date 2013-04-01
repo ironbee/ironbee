@@ -512,12 +512,16 @@ static ib_status_t readfile(const ib_engine_t *ib,
     return IB_OK;
 }
 
-static ib_status_t pmf_operator_create(ib_engine_t *ib,
-                                       ib_context_t *ctx,
-                                       const ib_rule_t *rule,
-                                       ib_mpool_t *pool,
-                                       const char *pattern_file,
-                                       ib_operator_inst_t *op_inst)
+static
+ib_status_t pmf_operator_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *pool,
+    const char         *pattern_file,
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     ib_status_t rc;
 
@@ -619,12 +623,16 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
     return IB_OK;
 }
 
-static ib_status_t pm_operator_create(ib_engine_t *ib,
-                                      ib_context_t *ctx,
-                                      const ib_rule_t *rule,
-                                      ib_mpool_t *pool,
-                                      const char *pattern,
-                                      ib_operator_inst_t *op_inst)
+static
+ib_status_t pm_operator_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *pool,
+    const char         *pattern,
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     ib_status_t rc;
 
@@ -731,11 +739,15 @@ static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
     return IB_OK;
 }
 
-static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
-                                       void *data,
-                                       ib_flags_t flags,
-                                       ib_field_t *field,
-                                       ib_num_t *result)
+static
+ib_status_t pm_operator_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     assert(rule_exec);
     assert(data);
@@ -811,7 +823,11 @@ static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
     return rc;
 }
 
-static ib_status_t pm_operator_destroy(ib_operator_inst_t *op_inst)
+static
+ib_status_t pm_operator_destroy(
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     /* Nop. */
 

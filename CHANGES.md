@@ -1,6 +1,13 @@
 IronBee Changes                                                   {#CHANGES}
 ===============
 
+IronBee v0.8.0
+--------------
+
+**Engine**
+
+* Operators are now passed their callback data as their last argument.
+
 IronBee v0.7.0
 --------------
 

@@ -34,11 +34,11 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
                                  const char *name,
                                  ib_flags_t flags,
                                  ib_operator_create_fn_t fn_create,
-                                 void *cd_create,
+                                 void *cbdata_create,
                                  ib_operator_destroy_fn_t fn_destroy,
-                                 void *cd_destroy,
+                                 void *cbdata_destroy,
                                  ib_operator_execute_fn_t fn_execute,
-                                 void *cd_execute)
+                                 void *cbdata_execute)
 {
     ib_hash_t *operator_hash = ib->operators;
     ib_mpool_t *pool = ib_engine_pool_main_get(ib);
@@ -68,12 +68,12 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
     }
     op->name = name_copy;
     op->flags = flags;
-    op->cd_create = cd_create;
-    op->cd_destroy = cd_destroy;
-    op->cd_execute = cd_execute;
     op->fn_create = fn_create;
+    op->cbdata_create = cbdata_create;
     op->fn_destroy = fn_destroy;
+    op->cbdata_destroy = cbdata_destroy;
     op->fn_execute = fn_execute;
+    op->cbdata_execute = cbdata_execute;
 
     rc = ib_hash_set(operator_hash, name_copy, op);
 
@@ -117,7 +117,15 @@ ib_status_t ib_operator_inst_create_ex(
     (*op_inst)->fparam = NULL;
 
     if (op->fn_create != NULL) {
-        rc = op->fn_create(ib, ctx, rule, mpool, parameters, *op_inst);
+        rc = op->fn_create(
+            ib,
+            ctx,
+            rule,
+            mpool,
+            parameters,
+            *op_inst,
+            op->cbdata_create
+        );
         if (rc != IB_OK) {
             return rc;
         }
@@ -163,9 +171,11 @@ ib_status_t ib_operator_inst_destroy(ib_operator_inst_t *op_inst)
 {
     ib_status_t rc;
 
-    if ((op_inst != NULL) && (op_inst->op != NULL)
-        && (op_inst->op->fn_destroy != NULL)) {
-        rc = op_inst->op->fn_destroy(op_inst);
+    if (
+        (op_inst != NULL) && (op_inst->op != NULL)
+        && (op_inst->op->fn_destroy != NULL)
+    ) {
+        rc = op_inst->op->fn_destroy(op_inst, op_inst->op->cbdata_destroy);
     }
     else {
         rc = IB_OK;
@@ -181,11 +191,18 @@ ib_status_t ib_operator_execute(const ib_rule_exec_t *rule_exec,
 {
     ib_status_t rc;
 
-    if ((op_inst != NULL) && (op_inst->op != NULL)
-        && (op_inst->op->fn_execute != NULL))
-    {
+    if (
+        (op_inst != NULL) && (op_inst->op != NULL)
+        && (op_inst->op->fn_execute != NULL)
+    ) {
         rc = op_inst->op->fn_execute(
-            rule_exec, op_inst->data, op_inst->flags, field, result);
+            rule_exec,
+            op_inst->data,
+            op_inst->flags,
+            field,
+            result,
+            op_inst->op->cbdata_execute
+        );
     }
     else {
         *result = 1;

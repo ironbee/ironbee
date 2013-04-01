@@ -574,15 +574,20 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
  * @param[in] pattern The regular expression to be built.
  * @param[out] op_inst The operator instance that will be populated by
  *             parsing @a pattern.
+ * @param[in] cbdata Callback data.
  *
  * @returns IB_OK on success or IB_EALLOC on any other type of error.
  */
-static ib_status_t pcre_operator_create(ib_engine_t *ib,
-                                        ib_context_t *ctx,
-                                        const ib_rule_t *rule,
-                                        ib_mpool_t *pool,
-                                        const char *pattern,
-                                        ib_operator_inst_t *op_inst)
+static
+ib_status_t pcre_operator_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *pool,
+    const char         *pattern,
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
@@ -653,9 +658,14 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
  *                Operator data is allocated out of the memory pool for
  *                IronBee so we do not destroy the operator here.
  *                pool for IronBee and need not be freed by us.
+ * @param[in] cbdata Callback data.
  * @returns IB_OK always.
  */
-static ib_status_t pcre_operator_destroy(ib_operator_inst_t *op_inst)
+static
+ib_status_t pcre_operator_destroy(
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     assert(op_inst != NULL);
     /* Nop */
@@ -816,14 +826,19 @@ static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
  * @param[out] result The result.
+ * @param[in] cbdata Callback data.
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
-static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
-                                         void *data,
-                                         ib_flags_t flags,
-                                         ib_field_t *field,
-                                         ib_num_t *result)
+static
+ib_status_t pcre_operator_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     assert(rule_exec != NULL);
     assert(rule_exec->ib != NULL);
@@ -1036,15 +1051,20 @@ static ib_status_t dfa_id_set(const ib_rule_t *rule,
  * @param[in] pattern The regular expression to be built.
  * @param[out] op_inst The operator instance that will be populated by
  *             parsing @a pattern.
+ * @param[in] cbdata Callback data.
  *
  * @returns IB_OK on success or IB_EALLOC on any other type of error.
  */
-static ib_status_t dfa_operator_create(ib_engine_t *ib,
-                                       ib_context_t *ctx,
-                                       const ib_rule_t *rule,
-                                       ib_mpool_t *pool,
-                                       const char *pattern,
-                                       ib_operator_inst_t *op_inst)
+static
+ib_status_t dfa_operator_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *pool,
+    const char         *pattern,
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
@@ -1265,20 +1285,24 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
  * @param[out] result The result.
+ * @param[in] cbdata Callback data.
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
-static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
-                                        void *data,
-                                        ib_flags_t flags,
-                                        ib_field_t *field,
-                                        ib_num_t *result)
+static
+ib_status_t dfa_operator_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     assert(rule_exec);
     assert(rule_exec->tx != NULL);
     assert(rule_exec->ib != NULL);
     assert(data);
-
 
     ib_tx_t *tx = rule_exec->tx;
     int matches;
@@ -1458,10 +1482,15 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
  * @brief Destroy the dfa operator
  *
  * @param[in,out] op_inst The operator instance
+ * @param[in] cbdata Callback data.
  *
  * @returns IB_OK
  */
-static ib_status_t dfa_operator_destroy(ib_operator_inst_t *op_inst)
+static
+ib_status_t dfa_operator_destroy(
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     assert(op_inst != NULL);
 

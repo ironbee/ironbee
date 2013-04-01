@@ -215,12 +215,15 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
  *********************************/
 
 static
-ib_status_t sqli_op_create(ib_engine_t *ib,
-                           ib_context_t *ctx,
-                           const ib_rule_t *rule,
-                           ib_mpool_t *mp,
-                           const char *parameters,
-                           ib_operator_inst_t *op_inst)
+ib_status_t sqli_op_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *mp,
+    const char         *parameters,
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
 
     if (parameters == NULL) {
@@ -241,11 +244,13 @@ ib_status_t sqli_op_create(ib_engine_t *ib,
 }
 
 static
-ib_status_t sqli_op_execute(const ib_rule_exec_t *rule_exec,
-                            void *data,
-                            ib_flags_t flags,
-                            ib_field_t *field,
-                            ib_num_t *result
+ib_status_t sqli_op_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
 )
 {
     assert(rule_exec != NULL);

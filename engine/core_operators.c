@@ -299,15 +299,20 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters
  * @param[in,out] op_inst Instance operator
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
-static ib_status_t strop_create(ib_engine_t *ib,
-                                ib_context_t *ctx,
-                                const ib_rule_t *rule,
-                                ib_mpool_t *mp,
-                                const char *parameters,
-                                ib_operator_inst_t *op_inst)
+static
+ib_status_t strop_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *mp,
+    const char         *parameters,
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     ib_status_t rc;
     bool expand;
@@ -340,19 +345,24 @@ static ib_status_t strop_create(ib_engine_t *ib,
 /**
  * Execute function for the "streq" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data C-style string to compare to
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
+ * @param[in]  rule_exec Rule execution object
+ * @param[in]  data C-style string to compare to
+ * @param[in]  flags Operator instance flags
+ * @param[in]  field Field value
  * @param[out] result Pointer to number in which to store the result
+ * @param[in]  cbdata Callback data; determines case sensitivity.
  *
  * @returns Status code
  */
-static ib_status_t op_streq_execute(const ib_rule_exec_t *rule_exec,
-                                    void *data,
-                                    ib_flags_t flags,
-                                    ib_field_t *field,
-                                    ib_num_t *result)
+static
+ib_status_t op_streq_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     assert(rule_exec != NULL);
     assert(data != NULL);
@@ -370,7 +380,7 @@ static ib_status_t op_streq_execute(const ib_rule_exec_t *rule_exec,
     ib_tx_t     *tx = rule_exec->tx;
     bool         case_insensitive;
 
-    case_insensitive = (rule_exec->rule->opinst->op->cd_execute != NULL);
+    case_insensitive = (cbdata != NULL);
 
     /* Expand the string */
     if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
@@ -450,14 +460,19 @@ static ib_status_t op_streq_execute(const ib_rule_exec_t *rule_exec,
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
-static ib_status_t op_contains_execute(const ib_rule_exec_t *rule_exec,
-                                       void *data,
-                                       ib_flags_t flags,
-                                       ib_field_t *field,
-                                       ib_num_t *result)
+static
+ib_status_t op_contains_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     assert(rule_exec != NULL);
     assert(data != NULL);
@@ -544,6 +559,7 @@ static ib_status_t op_contains_execute(const ib_rule_exec_t *rule_exec,
  * @param[in] mp         Memory pool to use for allocation.
  * @param[in] parameters Parameters (IPv4 address or networks)
  * @param[in] op_inst    Instance operator.
+ * @param[in] cbdata    Callback data.
  *
  * @returns
  * - IB_OK if no failure.
@@ -557,7 +573,8 @@ ib_status_t op_match_create(
     const ib_rule_t    *rule,
     ib_mpool_t         *mp,
     const char         *parameters,
-    ib_operator_inst_t *op_inst
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
 )
 {
     assert(ib      != NULL);
@@ -576,7 +593,7 @@ ib_status_t op_match_create(
         return IB_EINVAL;
     }
 
-    case_insensitive = (op_inst->op->cd_create != NULL);
+    case_insensitive = (op_inst->op->cbdata_create != NULL);
 
     /* Make a copy of the parameters to operate on. */
     rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
@@ -637,6 +654,7 @@ ib_status_t op_match_create(
  * @param[in] flags     Operator instance flags.
  * @param[in] field     Field value.
  * @param[out] result   Pointer to number in which to store the result.
+ * @param[in] cbdata Callback data.
  *
  * @returns
  * - IB_OK if no failure, regardless of match status.
@@ -650,7 +668,8 @@ ib_status_t op_match_execute(
     void                 *data,
     ib_flags_t            flags,
     ib_field_t           *field,
-    ib_num_t             *result
+    ib_num_t             *result,
+    void                 *cbdata
 )
 {
     assert(rule_exec != NULL);
@@ -719,6 +738,7 @@ ib_status_t op_match_execute(
  * @param[in] mp         Memory pool to use for allocation.
  * @param[in] parameters Parameters (IPv4 address or networks)
  * @param[in] op_inst    Instance operator.
+ * @param[in] cbdata Callback data.
  *
  * @returns
  * - IB_OK if no failure.
@@ -732,7 +752,8 @@ ib_status_t op_ipmatch_create(
     const ib_rule_t    *rule,
     ib_mpool_t         *mp,
     const char         *parameters,
-    ib_operator_inst_t *op_inst
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
 )
 {
     assert(ib      != NULL);
@@ -830,6 +851,7 @@ ib_status_t op_ipmatch_create(
  * @param[in] flags     Operator instance flags.
  * @param[in] field     Field value.
  * @param[out] result   Pointer to number in which to store the result.
+ * @param[in] cbdata Callback data.
  *
  * @returns
  * - IB_OK if no failure, regardless of match status.
@@ -842,7 +864,8 @@ ib_status_t op_ipmatch_execute(
     void                 *data,
     ib_flags_t            flags,
     ib_field_t           *field,
-    ib_num_t             *result
+    ib_num_t             *result,
+    void                 *cbdata
 )
 {
     assert(rule_exec != NULL);
@@ -929,6 +952,7 @@ ib_status_t op_ipmatch_execute(
  * @param[in] mp         Memory pool to use for allocation.
  * @param[in] parameters Parameters (IPv6 address or networks)
  * @param[in] op_inst    Instance operator.
+ * @param[in] cbdata     Callback data.
  *
  * @returns
  * - IB_OK if no failure.
@@ -942,7 +966,8 @@ ib_status_t op_ipmatch6_create(
     const ib_rule_t    *rule,
     ib_mpool_t         *mp,
     const char         *parameters,
-    ib_operator_inst_t *op_inst
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
 )
 {
     assert(ib      != NULL);
@@ -1040,6 +1065,7 @@ ib_status_t op_ipmatch6_create(
  * @param[in] flags     Operator instance flags.
  * @param[in] field     Field value.
  * @param[out] result   Pointer to number in which to store the result.
+ * @param[in] cbdata Callback data.
  *
  * @returns
  * - IB_OK if no failure, regardless of match status.
@@ -1052,7 +1078,8 @@ ib_status_t op_ipmatch6_execute(
     void                 *data,
     ib_flags_t            flags,
     ib_field_t           *field,
-    ib_num_t             *result
+    ib_num_t             *result,
+    void                 *cbdata
 )
 {
     assert(rule_exec != NULL);
@@ -1554,17 +1581,22 @@ static ib_status_t execute_compare(
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
+ * @param[in] cbdata Callback data.
  *
  * @returns
  *   - IB_OK Success.
  *   - IB_EINVAL Invalid conversion, such as float, or invalid input field.
  *   - IB_EOTHER Unexpected internal error.
  */
-static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
-                                 void *data,
-                                 ib_flags_t flags,
-                                 ib_field_t *field,
-                                 ib_num_t *result)
+static
+ib_status_t op_eq_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     ib_status_t rc;
 
@@ -1588,14 +1620,19 @@ static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
-static ib_status_t op_ne_execute(const ib_rule_exec_t *rule_exec,
-                                 void *data,
-                                 ib_flags_t flags,
-                                 ib_field_t *field,
-                                 ib_num_t *result)
+static
+ib_status_t op_ne_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     ib_status_t rc;
 
@@ -1619,14 +1656,19 @@ static ib_status_t op_ne_execute(const ib_rule_exec_t *rule_exec,
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
-static ib_status_t op_gt_execute(const ib_rule_exec_t *rule_exec,
-                                 void *data,
-                                 ib_flags_t flags,
-                                 ib_field_t *field,
-                                 ib_num_t *result)
+static
+ib_status_t op_gt_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     ib_status_t rc;
 
@@ -1650,14 +1692,19 @@ static ib_status_t op_gt_execute(const ib_rule_exec_t *rule_exec,
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
-static ib_status_t op_lt_execute(const ib_rule_exec_t *rule_exec,
-                                 void *data,
-                                 ib_flags_t flags,
-                                 ib_field_t *field,
-                                 ib_num_t *result)
+static
+ib_status_t op_lt_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     ib_status_t rc;
 
@@ -1681,14 +1728,19 @@ static ib_status_t op_lt_execute(const ib_rule_exec_t *rule_exec,
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
-static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
-                                 void *data,
-                                 ib_flags_t flags,
-                                 ib_field_t *field,
-                                 ib_num_t *result)
+static
+ib_status_t op_ge_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     ib_status_t rc;
 
@@ -1712,14 +1764,19 @@ static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
-static ib_status_t op_le_execute(const ib_rule_exec_t *rule_exec,
-                                 void *data,
-                                 ib_flags_t flags,
-                                 ib_field_t *field,
-                                 ib_num_t *result)
+static
+ib_status_t op_le_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     ib_status_t rc;
 
@@ -1744,15 +1801,20 @@ static ib_status_t op_le_execute(const ib_rule_exec_t *rule_exec,
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] params Constant parameters
  * @param[in,out] op_inst Instance operator
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
-static ib_status_t op_numcmp_create(ib_engine_t *ib,
-                                    ib_context_t *ctx,
-                                    const ib_rule_t *rule,
-                                    ib_mpool_t *mp,
-                                    const char *params,
-                                    ib_operator_inst_t *op_inst)
+static
+ib_status_t op_numcmp_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *mp,
+    const char         *params,
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     ib_field_t *f;
     ib_status_t rc;
@@ -1851,14 +1913,19 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
  * @param[out] result Pointer to number in which to store the result
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code (IB_OK)
  */
-static ib_status_t op_nop_execute(const ib_rule_exec_t *rule_exec,
-                                  void *data,
-                                  ib_flags_t flags,
-                                  ib_field_t *field,
-                                  ib_num_t *result)
+static
+ib_status_t op_nop_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     *result = 1;
 

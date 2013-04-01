@@ -121,14 +121,14 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        &rule_exec, op_inst->data, op_inst->flags, field1, &result));
+        &rule_exec, op_inst->data, op_inst->flags, field1, &result, NULL));
 
     // We should fail.
     ASSERT_FALSE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        &rule_exec, op_inst->data, op_inst->flags, field2, &result));
+        &rule_exec, op_inst->data, op_inst->flags, field2, &result, NULL));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
@@ -208,14 +208,14 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        &rule_exec, op_inst->data, op_inst->flags, field1, &result));
+        &rule_exec, op_inst->data, op_inst->flags, field1, &result, NULL));
 
     // We should fail.
     ASSERT_TRUE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        &rule_exec, op_inst->data, op_inst->flags, field2, &result));
+        &rule_exec, op_inst->data, op_inst->flags, field2, &result, NULL));
 
     // This time we should succeed.
     ASSERT_TRUE(result);

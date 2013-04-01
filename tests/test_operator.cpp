@@ -32,12 +32,15 @@
 #include "gtest/gtest.h"
 
 
-ib_status_t test_create_fn(ib_engine_t *ib,
-                           ib_context_t *ctx,
-                           const ib_rule_t *rule,
-                           ib_mpool_t *pool,
-                           const char *data,
-                           ib_operator_inst_t *op_inst)
+ib_status_t test_create_fn(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *pool,
+    const char         *data,
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     char *str;
 
@@ -54,16 +57,22 @@ ib_status_t test_create_fn(ib_engine_t *ib,
     return IB_OK;
 }
 
-ib_status_t test_destroy_fn(ib_operator_inst_t *op_inst)
+ib_status_t test_destroy_fn(
+    ib_operator_inst_t *op_inst,
+    void               *cbdata
+)
 {
     return IB_OK;
 }
 
-ib_status_t test_execute_fn(const ib_rule_exec_t *rule_exec,
-                            void *data,
-                            ib_flags_t flags,
-                            ib_field_t *field,
-                            ib_num_t *result)
+ib_status_t test_execute_fn(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result,
+    void                 *cbdata
+)
 {
     char *searchstr = (char *)data;
     const char* s;

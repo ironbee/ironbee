@@ -171,7 +171,8 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                                              op_inst->data,
                                              op_inst->flags,
                                              field1,
-                                             &result));
+                                             &result,
+                                             NULL));
 
     // We should fail.
     ASSERT_FALSE(result);
@@ -181,7 +182,8 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                                              op_inst->data,
                                              op_inst->flags,
                                              field2,
-                                             &result));
+                                             &result,
+                                             NULL));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
@@ -210,7 +212,8 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                                              op_inst->data,
                                              op_inst->flags,
                                              field1,
-                                             &result));
+                                             &result,
+                                             NULL));
 
     // We should fail.
     ASSERT_FALSE(result);
@@ -220,7 +223,8 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                                              op_inst->data,
                                              op_inst->flags,
                                              field2,
-                                             &result));
+                                             &result,
+                                             NULL));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
@@ -250,7 +254,8 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                                       op_inst->data,
                                       op_inst->flags,
                                       field2,
-                                      &result));
+                                      &result,
+                                      NULL));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
