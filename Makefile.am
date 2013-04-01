@@ -6,6 +6,7 @@ EXTRA_DIST = include \
              ironbee_config_auto.h \
              README.md \
              CHANGES.md \
+             CODESTYLE.md \
              DEVELOPMENT.md
 
 RPM_RELEASE ?= 1

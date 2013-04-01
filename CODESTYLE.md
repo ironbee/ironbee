@@ -1,4 +1,4 @@
-IronBee Coding Style Guide
+IronBee Coding Style Guide                                     {#CODESTYLE}
 ==========================
 
 This document describes the coding style used in IronBee. This guide is
