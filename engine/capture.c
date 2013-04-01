@@ -26,6 +26,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/capture.h>
+#include <ironbee/log.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -91,6 +92,7 @@ static inline const char *get_collection_name(
  *
  * @param[in] tx Transaction
  * @param[in] collection_name The name of the capture collection or NULL
+ * @param[in] recursion Recursion limit -- Don't recurse if recursion is zero
  * @param[out] olist If not NULL, pointer to the capture item's list
  *
  * @returns IB_OK: All OK
@@ -103,6 +105,7 @@ static
 ib_status_t get_capture_list(
     ib_tx_t    *tx,
     const char *collection_name,
+    int         recursion,
     ib_list_t **olist)
 {
     ib_status_t rc;
@@ -111,6 +114,12 @@ ib_status_t get_capture_list(
 
     assert(tx != NULL);
     assert(tx->data != NULL);
+
+    /* Limit recursion in case something really bad happens */
+    if (recursion-- <= 0) {
+        ib_log_error_tx(tx, "Capture list recursion detected!");
+        return IB_EOTHER;
+    }
 
     /* Look up the capture list */
     collection_name = get_collection_name(collection_name);
@@ -124,6 +133,7 @@ ib_status_t get_capture_list(
 
     if (field->type != IB_FTYPE_LIST) {
         ib_data_remove(tx->data, collection_name, NULL);
+        return get_capture_list(tx, collection_name, recursion, olist);
     }
     rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&list));
     if (rc != IB_OK) {
@@ -195,7 +205,7 @@ ib_status_t ib_capture_clear(
     ib_status_t rc;
     ib_list_t *list;
 
-    rc = get_capture_list(tx, collection_name, &list);
+    rc = get_capture_list(tx, collection_name, 1, &list);
     if (rc != IB_OK) {
         return rc;
     }
@@ -225,7 +235,7 @@ ib_status_t ib_capture_set_item(
 
     name = ib_capture_name(num);
 
-    rc = get_capture_list(tx, collection_name, &list);
+    rc = get_capture_list(tx, collection_name, 1, &list);
     if (rc != IB_OK) {
         return rc;
     }
@@ -272,7 +282,7 @@ ib_status_t ib_capture_add_item(
     ib_status_t rc;
     ib_list_t *list;
 
-    rc = get_capture_list(tx, collection_name, &list);
+    rc = get_capture_list(tx, collection_name, 1, &list);
     if (rc != IB_OK) {
         return rc;
     }
