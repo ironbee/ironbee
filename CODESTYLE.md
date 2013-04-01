@@ -8,7 +8,7 @@ rules. However, if there is doubt this guide is authoritative.
 Generally the IronBee project follows the Apache Httpd coding style. This
 style is located here:
 
-http://httpd.apache.org/dev/styleguide.html
+    http://httpd.apache.org/dev/styleguide.html
 
 Note that this guide is generally for C source, but should also be used
 where applicable for C++ and other languages.
@@ -65,49 +65,49 @@ directly related to code formatting.
 
 * All source files must have a license/copyright banner such as follows:
 
-/*****************************************************************************
- * Licensed to Qualys, Inc. (QUALYS) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * QUALYS licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ****************************************************************************/
+    /*****************************************************************************
+     * Licensed to Qualys, Inc. (QUALYS) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * QUALYS licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     ****************************************************************************/
 
 * All source files MUST have a doxygen block such as follows:
 
-/**
- * @file
- * @brief IronBee --- SubTitle
- * 
- * Some description here.
- *
- * @author Author One <author1@company.com>
- * @author Author Two <author2@company.com>
- */
+    /**
+     * @file
+     * @brief IronBee --- SubTitle
+     * 
+     * Some description here.
+     *
+     * @author Author One <author1@company.com>
+     * @author Author Two <author2@company.com>
+     */
 
 * All public functions MUST include doxygen documentation such as follows. 
   This documentation MUST be in the public header file.
 
-/**
- * Some brief description.
- *
- * Some more detailed description.
- *
- * @param[in] p1 Parameter 1 description
- * @param[in] p1 Parameter 2 description
- * @param[out] p3 Address which blah is written
- *
- * @returns Status code
- */
+    /**
+     * Some brief description.
+     *
+     * Some more detailed description.
+     *
+     * @param[in] p1 Parameter 1 description
+     * @param[in] p1 Parameter 2 description
+     * @param[out] p3 Address which blah is written
+     *
+     * @returns Status code
+     */
 
 * All private functions SHOULD have doxygen documentation such as above.  Any
   doxygen documentation in .c or _private.h files is automatically treated as

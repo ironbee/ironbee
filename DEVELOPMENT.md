@@ -88,7 +88,7 @@ Then you can merge in the upstream source with:
 Coding Style
 ------------
 
-Please read and understand the coding style from the guide, "CODESTYLE".
+Please read and understand the coding style from the guide, "CODESTYLE.md".
 
 Realize that any code submitted MUST abide by this guide or it will be
 rejected.
