@@ -24,7 +24,7 @@
                     </listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term>Plugin</term>
+                    <term>Server Plugin</term>
                     <listitem>
                         <para>Server native code for embedding the engine into another software base
                             (e.g. the Apache httpd server). The plugin is responsible for
@@ -57,47 +57,6 @@
                     </listitem>
                 </varlistentry>
             </variablelist>
-            <variablelist>
-                <varlistentry>
-                    <term>Provider Definition</term>
-                    <listitem>
-                        <para>An abstract interface, optionally defining an API, which can be used
-                            to extend functionality of the engine. There are a number of providers
-                            defined by the core module for parsing, logging, data manipulation,
-                            matching, etc. Each definition includes a unique type, which must be
-                            implemented by a provider. The provider definition essentially describes
-                            the methods that must be implemented to extend the engine with the given
-                            type of functionality.</para>
-                    </listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term>Provider</term>
-                    <listitem>
-                        <para>Code (normally a module) implementing an abstract interface described
-                            by the provider definition. This code is then registered with the
-                            provider definition type and a unique key for later lookup. For example,
-                            the core module defines a provider of type "matcher" which must have a
-                            set of methods implemented. The "pcre" module implements these methods
-                            and registers a PCRE matcher, which can then be used by other modules to
-                            perform PCRE based matches.</para>
-                    </listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term>Provider Instance</term>
-                    <listitem>
-                        <para>Some providers may require multiple instances to be instantiated with
-                            differing scope or configurations. A provider instance is such an
-                            instantiation, which is associated with both a provider and a
-                            configuration. As an example, the data provider must manage data in
-                            various scopes (e.g. connection data, session data and transaction
-                            data). The core module creates a provider instance handling this data
-                            for each of the different scopes. Another example is the logger provider
-                            which must allow the same file based logger (a provider) to be
-                            configured differently per configuration context (e.g. log to different
-                            log files). </para>
-                    </listitem>
-                </varlistentry>
-            </variablelist>
         </section>
         <section>
             <title><?oxy_comment_start author="brectanus" timestamp="20110128T233116-0800" comment="This section needs to be updated as it is a bit outdated."?>Flow<?oxy_comment_end?></title>
@@ -111,11 +70,8 @@
                             <para>Server starts and instantiates/starts the plugin.</para>
                         </listitem>
                         <listitem>
-                            <para>Plugin is configured with native plugin configuration, which
-                                includes the location of the engine configuration.</para>
-                        </listitem>
-                        <listitem>
-                            <para>Utility libraries are initialized.</para>
+                            <para>Server Plugin is configured with native plugin configuration,
+                                which includes the location of the engine configuration.</para>
                         </listitem>
                         <listitem>
                             <para>Engine is instantiated.</para>
@@ -124,13 +80,12 @@
                                     <para>An engine configuration context is created.</para>
                                 </listitem>
                                 <listitem>
-                                    <para>Static core module is loaded which defines builtin
-                                        provider APIs.</para>
+                                    <para>Static core module is loaded.</para>
                                 </listitem>
                             </orderedlist>
                         </listitem>
                         <listitem>
-                            <para>Plugin registers a native logging provider.</para>
+                            <para>Server Plugin registers a native logging provider.</para>
                         </listitem>
                         <listitem>
                             <para>Engine configuration stage is initiated based on initial plugin
@@ -159,11 +114,11 @@
                                 </listitem>
                                 <listitem>
                                     <para>Module "init" function is called just after it is loaded
-                                        to initialize any global module configuration.</para>
+                                        to initialize any module configuration.</para>
                                 </listitem>
                                 <listitem>
-                                    <para>Modules may hook into the engine globally by registering
-                                        to be called when certain events occur.</para>
+                                    <para>Modules may hook into the engine by registering to be
+                                        called when certain events occur.</para>
                                 </listitem>
                                 <listitem>
                                     <para>If successfully initialized, a module is registered with
@@ -172,9 +127,7 @@
                             </orderedlist></para>
                     </listitem>
                     <listitem>
-                        <para>Configuration contexts are created and registered along with a
-                            function which will be executed to determine if the context will be
-                            chosen at runtime.</para>
+                        <para>Configuration contexts are created and registered.</para>
                     </listitem>
                     <listitem>
                         <para>Modules register themselves with a configuration context if they are
@@ -198,14 +151,16 @@
                     <title>Runtime Stage</title>
                     <para>During runtime all of the configuration has been finalized and the engine
                         will now handle data passed to it by the plugin. Data is handled by the
-                        state machine which essentially follows a four step process. First, a
+                        state machine which essentially follows a five step process. First, a
                         configuration context is chosen. Second, the request is handled. Third the
-                        response is handled. And finally any post processing is performed. Below is
-                        an outline of the flow.</para>
+                        response is handled. Forth, any post processing is performed. And finally,
+                        logging is performed. Below is an outline of the flow.</para>
+                    <para>TODO: Below is no longer true. Rewrite based on removal of unparsed data
+                        interface.</para>
                     <orderedlist>
                         <listitem>
-                            <para>Raw connection HTTP data is received by the plugin and passed to
-                                the engine.</para>
+                            <para>Raw connection HTTP data is received by the server plugin and
+                                passed to the engine.</para>
                         </listitem>
                         <listitem>
                             <para>[Need to add connection context here. Events could be: conn open,
@@ -250,16 +205,6 @@
                         </listitem>
                     </orderedlist>
                 </section>
-                <section>
-                    <title>Reconfiguration Stage</title>
-                    <para>During a reconfiguration, the engine has been notified that configuration
-                        changes are available and should be reloaded. This is very similar to
-                        startup, except that instead of the plugin initiating the configuration
-                        stage, the engine is initiating the configuration stage. During this time
-                        and current data being processed will continue to use the old
-                        configuration.</para>
-                    <para> TODO</para>
-                </section>
             </section>
         </section>
     </section>
@@ -275,21 +220,6 @@
             be loaded into the executable. And last, since modules are shared libraries, it makes
             for easier upgrades as the engine only needs to unload the old code and reload the
             new.</para>
-        <para>Modules can interact with the engine in quite a few different ways. However, there are
-            two primary module types: provider and standalone. The simplest is the provider module,
-            which implements one of the many predefined (or even custom) provider definitions. As an
-            example, a provider module can be used to extend logging capabilities, add a different
-            type of pattern matcher or provide a different way of storing/accessing data. The
-            provider module typically will define a configuration and set of functions implementing
-            a provider's well defined interface, then register these functions with the engine. A
-            standalone module will typically be more involved. Standalone modules can hook into any
-            part of the engine and typically used to implement a new detection technique or provide
-            some sort of filtering. To do this, the standalone module defines a configuration and
-            registers functions with various hooks in the engine. While this is similar to a
-            provider module, there is no well defined set of functions to implement in a standalone
-            module.</para>
-        <section>
-            <title>Standalone Modules</title>
             <para>Modules have three essential duties. A module must export a known symbol so that
                 it can be loaded. A set of configuration parameters may be set. And common module
                 functions must be registered which will be called at various initialization and
@@ -302,68 +232,11 @@
                 configuration parameters, numeric and string. Along with configuration parameter
                 definitions can be defined default values.</para>
             <para>The eventual goal of a module is to register functions to be called by the engine.
-                Typically in  a standalone module, this is done by registering functions to be
-                called with hooks. Hooks allow executing at defined points in the
-                connection/transaction lifecycle, which is documented with the state machine in the
-                API documentation.</para>
+            This is done by registering callback functions to be called with hooks. Hooks allow
+            executing at defined points in the connection/transaction lifecycle, which is documented
+            with the state machine in the API documentation.</para>
             <para>TODO: Need more on what a basic module will look like without going into language
                 details.</para>
-        </section>
-        <section>
-            <title>Provider Modules</title>
-            <para>A provider module typically implements the core provider APIs -- allowing
-                different methods of debug logging, matching, etc. -- but a provider module can also
-                extend the core by adding its own custom interface. Providers are defined with a set
-                of module configuration parameters, an API to allow calling the provider and an
-                abstract interface which must be implemented by other modules. This abstract
-                interface is what most provider modules will be implementing.</para>
-            <para>The <literal>provider API</literal> is the interface in which the consumer will
-                call to use the service. This is essentially the public calling interface. Typically
-                this is already defined by the core provider definitions and is only used to define
-                custom providers. As an example, the core logger API defines two functions to
-                perform logging. The first is a vprintf like function with a va_list argument and
-                the second a printf like function with a variable argument list.</para>
-            <para>The <literal>provider interface</literal> is what is called by the API to do the
-                real work. This is a private interface in which any module implementing this
-                provider will need to implement. In the case of the logger provider, there is a
-                single function named "logger" of type "qi_log_logger_fn_t". Both of the functions
-                defined in the API will just call this function to do the actual logging. Note, as
-                in this case, the public API does not have to match the private interface.</para>
-            <para>To implement a defined provider interface, a module needs to register any required
-                interface functions with the engine with a unique key. At this point the provider's
-                register function is called. This function is defined with the provider and is
-                typically used to validate the registered interface, allowing version checking as
-                well as any initial setup (the "version" field is defined by the default interface
-                header).</para>
-            <para/>
-            <section>
-                <title>Core Provider Interfaces</title>
-                <para>The engine core defines a number of standard provider interfaces which a
-                    module can implement. Each interface is implemented using the same concepts as
-                    above, however each has a different API.</para>
-                <section>
-                    <title>Logging Interface</title>
-                    <para>...</para>
-                    
-                </section>
-                <section>
-                    <title>Event Interface</title>
-                    <para>...</para>
-                </section>
-                <section>
-                    <title>HTTP Parser Interface</title>
-                    <para>...</para>
-                </section>
-                <section>
-                    <title>Matcher Interface</title>
-                    <para>...</para>
-                </section>
-                <section>
-                    <title>Data Interface</title>
-                    <para>...</para>
-                </section>
-            </section>
-        </section>
     </section>
     <section>
         <title>Writing Modules in C</title>
@@ -395,6 +268,7 @@
         </section>
         <section>
             <title>A Simple C Module Example</title>
+            <para>TODO: This example is outdated and needs to be updated/replaced.</para>
             <para>To better illustrate writing a C module we need a simple task to accomplish. Here
                 we will define a minimalistic signature language. To keep things simple, the module
                 will stick to IronBee built-in features and ignore any performance concerns. The
@@ -532,204 +406,7 @@
         <title>Writing Modules in Lua</title>
         <para>Lua modules are designed to be much easier to develop than a C equivalent. A Lua
             IronBee module is built like any other Lua module. Really all you need to do is to
-            implement handlers which are executed when an event is triggered. These event handlers
-            (prefixed with "onEvent") are automatically registered with the engine on load. Simply
-            put the code you want executed in the appropriate handler and that is about it.</para>
-        <programlisting><![CDATA[-- ===============================================
--- Define local aliases of any globals to be used.
--- ===============================================
-local base = _G
-local ironbee = require("ironbee-ffi")
-
--- ===============================================
--- Declare the rest of the file as a module and
--- register the module table with ironbee.
--- ===============================================
-module(...)
-_COPYRIGHT = "Copyright (C) 2010-2011 Qualys, Inc."
-_DESCRIPTION = "IronBee example Lua module"
-_VERSION = "0.1"
-
--- ===============================================
--- This is called to handle the
--- LuaExampleDirective directive.
---
--- ib: IronBee engine handle
--- cbdata: Callback data (from registration)
--- ...: Any arguments
--- ===============================================
-function onDirectiveLuaExampleDirective(ib, cbdata, ...)
-    ironbee.ib_log_debug(ib, 4, "%s.onDirectiveLuaExampleDirective ib=%p",
-                       _NAME, ib.cvalue())
-    return 0
-end
-
--- ===============================================
--- This is called when the module loads
---
--- ib: IronBee engine handle
--- ===============================================
-function onModuleLoad(ib)
-    ironbee.ib_log_debug(ib, 4, "%s.onModuleLoad ib=%p",
-                       _NAME, ib.cvalue())
-
-    -- Register to handle a configuration directive
-    ironbee.ib_config_register_directive(
-        -- Engine handle
-        ib,
-        -- Directive
-        "LuaExampleDirective",
-        -- Directive Type (currently it MUST be 0 for directive or 1 for block)
-        0,
-        -- Full name of handler: modulename.funcname
-        _NAME .. ".onDirectiveLuaExampleDirective",
-        -- Block end function
-        nil,
-        -- Callback data (should be number, string or other C compat type)
-        nil
-    )
-
-    return 0
-end
-
--- ===============================================
--- ===============================================
--- Event Handlers
---
--- Normally only the onEventHandle* functions are
--- used for detection, but they are all listed
--- here.
---
--- NOTE: As a best practice, you should avoid
--- using the "onEvent" prefix in any public
--- functions that are NOT to be used as event
--- handlers as these may be treated specially
--- by the engine.
--- ===============================================
--- ===============================================
-
--- ===============================================
--- This is called when a connection context was
--- chosen and is ready to be handled.
---
--- ib: IronBee engine handle
--- conn: IronBee connection handle
--- ===============================================
-function onEventHandleContextConn(ib, conn)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleContextConn ib=%p conn=%p",
-                       _NAME, ib.cvalue(), conn.cvalue())
-
-    -- Create a pcre matcher for later use
-    if pcre == nil then
-        pcre = ironbee.ib_matcher_create(ib, conn.mp(), "pcre")
-        ironbee.ib_log_debug(ib, 4, "Created PCRE matcher=%p", pcre)
-    end
-
-    return 0
-end
-
--- ===============================================
--- This is called when the request headers are
--- available to inspect.
---
--- ib: IronBee engine handle
--- tx: IronBee transaction handle
--- ===============================================
-function onEventHandleRequestHeaders(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleRequestHeaders ib=%p tx=%s",
-                       _NAME, ib.cvalue(), tx.id())
-
-    -- Request line is a scalar value (a field object type)
-    local req_line = ironbee.ib_data_get(tx.dpi(), "request_line")
-    ironbee.ib_log_debug(ib, 4, "Request line is a field type: %d", req_line.type())
-
-    -- The cvalue ("C" Value) is a pointer to the field structure, which is
-    -- not very useful in Lua, but shows that you do have a direct access
-    -- to the "C" inner workings:
-    ironbee.ib_log_debug(ib, 4, "Request Line cvalue: %p", req_line.cvalue())
-
-    -- The value is a Lua value (string) which can be used with other
-    -- Lua functions. Be aware, however, that calling value() makes a
-    -- copy of the underlying "C" representation to create the Lua version
-    -- and you may not want the overhead of doing thisi (see PCRE matcher
-    -- below for another option).
-    ironbee.ib_log_debug(ib, 4, "Request Line value: %s", req_line.value())
-
-    -- You can also request a transformed value
-    local req_line_lower = ironbee.ib_data_tfn_get(tx.dpi(), "request_line", "lowercase")
-    ironbee.ib_log_debug(ib, 4, "Lower case request line is a field type: %d", req_line_lower.type())
-    ironbee.ib_log_debug(ib, 4, "Lower case Request Line value: %s", req_line_lower.value())
-
-    -- Request headers are a collection (table of field objects)
-    local req_headers = ironbee.ib_data_get(tx.dpi(), "request_headers")
-    ironbee.ib_log_debug(ib, 4, "Request Headers is a field type: %d", req_headers.type())
-    if req_headers.type() == ironbee.IB_FTYPE_LIST then
-        for k,f in base.pairs(req_headers.value()) do
-            if f.type() == ironbee.IB_FTYPE_LIST then
-                ironbee.ib_log_debug(ib, 4, "Request Header value: %s=<list>", k)
-            else
-                ironbee.ib_log_debug(ib, 4, "Request Header value: %s=%s", k, f.value())
-            end
-        end
-    end
-    -- Or you can access individual subfields within collections directly
-    -- via "name.subname" syntax:
-    local http_host_header = ironbee.ib_data_get(tx.dpi(), "request_headers.host")
-    ironbee.ib_log_debug(ib, 4, "HTTP Host Header is a field type: %d", http_host_header.type())
-    ironbee.ib_log_debug(ib, 4, "HTTP Host Header value: %s", http_host_header.value())
-
-
-    -- Request URI params are a collection (table of field objects)
-    local req_uri_params = ironbee.ib_data_get(tx.dpi(), "request_uri_params")
-    ironbee.ib_log_debug(ib, 4, "Request URI Params is a field type: %d", req_uri_params.type())
-    if req_uri_params.type() == ironbee.IB_FTYPE_LIST then
-        for k,f in base.pairs(req_uri_params.value()) do
-            if f.type() == ironbee.IB_FTYPE_LIST then
-                ironbee.ib_log_debug(ib, 4, "Request URI Param value: %s=<list>", k)
-            else
-                ironbee.ib_log_debug(ib, 4, "Request URI Param value: %s=%s", k, f.value())
-            end
-        end
-    end
-
-    -- Use the IronBee PCRE matcher directly
-    --
-    -- A benefit of doing this over using any builtin Lua matchers is that
-    -- a Lua copy of the value is not required. Using the PCRE matcher passes
-    -- the field value by reference (the cvalue) without the overhead of
-    -- a copy. You should use this method for large values.
-    --
-    -- NOTE: The "pcre" variable used here was initialized in the
-    --       onEventHandleContextConn() handler so that it can be used
-    --       in any other handler following it.
-    if pcre ~= nil then
-        local patt = "(?i:foo)"
-        local rc = ironbee.ib_matcher_match_field(pcre, patt, 0, req_line)
-        if rc == ironbee.IB_OK then
-            ironbee.ib_log_debug(ib, 4, "Request Line matches: %s", patt)
-            -- Generate a test event (alert)
-            ironbee.ib_clog_event(
-                tx.ctx(), 
-                ironbee.ib_logevent_create(
-                    tx.mp(),
-                    "-",
-                    IB_LEVENT_TYPE_ALERT,
-                    IB_LEVENT_ACT_ATTEMPTED_ATTACK,
-                    IB_LEVENT_PCLASS_INJECTION,
-                    IB_LEVENT_SCLASS_SQL,
-                    90, 80,
-                    IB_LEVENT_SYS_PUBLIC,
-                    IB_LEVENT_ACTION_BLOCK,
-                    IB_LEVENT_ACTION_IGNORED,
-                    "[TEST Event] Request Line matches: %s", patt
-                )
-            )
-        else
-            ironbee.ib_log_debug(ib, 4, "Request Line does not match: %s", patt)
-        end
-    end
-
-    return 0
-end]]></programlisting>
+            implement handlers which are registered to execute when an event is triggered.</para>
+        <programlisting><xi:include parse="text" href="extending-ironbee/lua-example.txt"/></programlisting>
     </section>
 </chapter>
