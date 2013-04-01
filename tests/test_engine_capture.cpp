@@ -49,7 +49,7 @@ public:
         ib_field_t **pfield)
     {
         return ib_data_get(ib_tx->data,
-                           ib_capture_fullname(ib_tx, NULL, 0),
+                           ib_capture_fullname(ib_tx, NULL, num),
                            pfield);
     };
 
@@ -59,7 +59,7 @@ public:
         ib_field_t **pfield)
     {
         return ib_data_get(ib_tx->data,
-                           ib_capture_fullname(ib_tx, capture, 0),
+                           ib_capture_fullname(ib_tx, capture, num),
                            pfield);
     };
 
@@ -74,6 +74,10 @@ public:
         ib_status_t   rc;
 
         name = ib_capture_name(num);
+        name = ib_mpool_strdup(MainPool(), name);
+        if (name == NULL) {
+            throw std::runtime_error("Failed to dup name");
+        }
         rc = ib_bytestr_dup_nulstr(&bstr, MainPool(), value);
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to dup NulStr into ByteStr");
@@ -126,96 +130,182 @@ TEST_F(CaptureTest, test_names)
 
 TEST_F(CaptureTest, basic)
 {
-    ib_status_t         rc;
-    ib_field_t         *ifield;
-    ib_field_t         *ofield;
-    const ib_bytestr_t *bs;
+    ib_status_t           rc;
+    ib_field_t           *ifield;
+    ib_field_t           *ofield;
+    const ib_field_t     *tfield;
+    const ib_list_node_t *node;
+    const ib_list_t      *l;
+    const ib_bytestr_t   *bs;
 
     rc = CaptureGet(0, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(0U, ib_list_elements(l));
 
     rc = CaptureBytestr(NULL, 0, "value0", &ifield);
     ASSERT_EQ(IB_OK, rc);
 
     rc = CaptureGet(0, &ofield);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_BYTESTR, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_bytestr_out(&bs)));
-    ASSERT_EQ(0, memcmp("value0", ib_bytestr_const_ptr(bs), 5));
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(1U, ib_list_elements(l));
+    node = ib_list_first_const(l);
+    ASSERT_TRUE(node != NULL);
+    tfield = (const ib_field_t *)node->data;
+    ASSERT_EQ(IB_FTYPE_BYTESTR, tfield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(tfield, ib_ftype_bytestr_out(&bs)));
+    ASSERT_EQ(6U, ib_bytestr_length(bs));
+    ASSERT_EQ(0, memcmp("value0", ib_bytestr_const_ptr(bs), 6));
 
-    rc = CaptureGet(1, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
-
-    rc = CaptureBytestr(NULL, 1, "value1", &ifield);
+    /* */
+    rc = CaptureBytestr(NULL, 1, "xyzzy1", &ifield);
     ASSERT_EQ(IB_OK, rc);
 
     rc = CaptureGet(1, &ofield);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_BYTESTR, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_bytestr_out(&bs)));
-    ASSERT_EQ(0, memcmp("value1", ib_bytestr_const_ptr(bs), 5));
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(1U, ib_list_elements(l));
+    node = ib_list_first_const(l);
+    ASSERT_TRUE(node != NULL);
+    tfield = (const ib_field_t *)node->data;
+    ASSERT_EQ(IB_FTYPE_BYTESTR, tfield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(tfield, ib_ftype_bytestr_out(&bs)));
+    ASSERT_EQ(6U, ib_bytestr_length(bs));
+    ASSERT_EQ(0, memcmp("xyzzy1", ib_bytestr_const_ptr(bs), 6));
 
     rc = CaptureGet(2, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(0U, ib_list_elements(l));
 
     rc = ib_capture_clear(ib_tx, NULL);
     ASSERT_EQ(IB_OK, rc);
+
     rc = CaptureGet(0, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(0U, ib_list_elements(l));
+
     rc = CaptureGet(1, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
-    rc = CaptureGet(2, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(0U, ib_list_elements(l));
+
+    rc = CaptureGet(1, &ofield);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(0U, ib_list_elements(l));
 }
 
-TEST_F(CaptureTest, collection_type)
+TEST_F(CaptureTest, named_collection)
 {
-    ib_status_t         rc;
-    ib_field_t         *ifield;
-    ib_field_t         *ofield;
-    const ib_bytestr_t *bs;
-    ib_num_t            n = 666;
-
-    rc = ib_field_create(&ofield, MainPool(),
-                         IB_FIELD_NAME(CAP_NAME),
-                         IB_FTYPE_NUM, ib_ftype_num_in(&n));
-    ASSERT_EQ(IB_OK, rc);
-    rc = ib_data_get(ib_tx->data,
-                     ib_capture_fullname(ib_tx, CAP_NAME, 0),
-                     &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_NUM, ofield->type);
+    ib_status_t           rc;
+    ib_field_t           *ifield;
+    ib_field_t           *ofield;
+    const ib_field_t     *tfield;
+    const ib_list_node_t *node;
+    const ib_list_t      *l;
+    const ib_bytestr_t   *bs;
 
     rc = CaptureBytestr(CAP_NAME, 0, "value0", &ifield);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = CaptureGet(0, &ofield);
+    rc = CaptureGet(CAP_NAME, 0, &ofield);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_BYTESTR, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_bytestr_out(&bs)));
-    ASSERT_EQ(0, memcmp("value0", ib_bytestr_const_ptr(bs), 5));
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(1U, ib_list_elements(l));
+    node = ib_list_first_const(l);
+    ASSERT_TRUE(node != NULL);
+    tfield = (const ib_field_t *)node->data;
+    ASSERT_EQ(IB_FTYPE_BYTESTR, tfield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(tfield, ib_ftype_bytestr_out(&bs)));
+    ASSERT_EQ(6U, ib_bytestr_length(bs));
+    ASSERT_EQ(0, memcmp("value0", ib_bytestr_const_ptr(bs), 6));
 
-    rc = CaptureGet(1, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
-
-    rc = CaptureBytestr(CAP_NAME, 1, "value1", &ifield);
+    /* */
+    rc = CaptureBytestr(CAP_NAME, 1, "xyzzy1", &ifield);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = CaptureGet(1, &ofield);
+    rc = CaptureGet(CAP_NAME, 1, &ofield);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_BYTESTR, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_bytestr_out(&bs)));
-    ASSERT_EQ(0, memcmp("value1", ib_bytestr_const_ptr(bs), 5));
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(1U, ib_list_elements(l));
+    node = ib_list_first_const(l);
+    ASSERT_TRUE(node != NULL);
+    tfield = (const ib_field_t *)node->data;
+    ASSERT_EQ(IB_FTYPE_BYTESTR, tfield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(tfield, ib_ftype_bytestr_out(&bs)));
+    ASSERT_EQ(6U, ib_bytestr_length(bs));
+    ASSERT_EQ(0, memcmp("xyzzy1", ib_bytestr_const_ptr(bs), 6));
 
-    rc = CaptureGet(2, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
+    rc = CaptureGet(CAP_NAME, 2, &ofield);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(0U, ib_list_elements(l));
 
     rc = ib_capture_clear(ib_tx, CAP_NAME);
     ASSERT_EQ(IB_OK, rc);
+
     rc = CaptureGet(CAP_NAME, 0, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(0U, ib_list_elements(l));
+
     rc = CaptureGet(CAP_NAME, 1, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
-    rc = CaptureGet(CAP_NAME, 2, &ofield);
-    ASSERT_EQ(IB_ENOENT, rc);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(0U, ib_list_elements(l));
+
+    rc = CaptureGet(CAP_NAME, 1, &ofield);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(0U, ib_list_elements(l));
+}
+
+TEST_F(CaptureTest, collection_type)
+{
+    ib_status_t           rc;
+    ib_field_t           *ifield;
+    ib_field_t           *ofield;
+    const ib_field_t     *tfield;
+    const ib_list_node_t *node;
+    const ib_list_t      *l;
+    const ib_bytestr_t   *bs;
+
+    rc = ib_data_add_num(ib_tx->data, CAP_NAME, 666, &ifield);
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_data_get(ib_tx->data, CAP_NAME, &ofield);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FTYPE_NUM, ofield->type);
+
+
+    rc = CaptureBytestr(CAP_NAME, 0, "value0", &ifield);
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = CaptureGet(CAP_NAME, 0, &ofield);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
+    ASSERT_EQ(1U, ib_list_elements(l));
+    node = ib_list_first_const(l);
+    ASSERT_TRUE(node != NULL);
+    tfield = (const ib_field_t *)node->data;
+    ASSERT_EQ(IB_FTYPE_BYTESTR, tfield->type);
+    ASSERT_EQ(IB_OK, ib_field_value(tfield, ib_ftype_bytestr_out(&bs)));
+    ASSERT_EQ(6U, ib_bytestr_length(bs));
+    ASSERT_EQ(0, memcmp("value0", ib_bytestr_const_ptr(bs), 6));
 }
