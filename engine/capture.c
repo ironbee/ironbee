@@ -205,7 +205,7 @@ ib_status_t ib_capture_clear(
     ib_status_t rc;
     ib_list_t *list;
 
-    rc = get_capture_list(tx, collection_name, 1, &list);
+    rc = get_capture_list(tx, collection_name, 2, &list);
     if (rc != IB_OK) {
         return rc;
     }
@@ -235,7 +235,7 @@ ib_status_t ib_capture_set_item(
 
     name = ib_capture_name(num);
 
-    rc = get_capture_list(tx, collection_name, 1, &list);
+    rc = get_capture_list(tx, collection_name, 2, &list);
     if (rc != IB_OK) {
         return rc;
     }
@@ -282,7 +282,7 @@ ib_status_t ib_capture_add_item(
     ib_status_t rc;
     ib_list_t *list;
 
-    rc = get_capture_list(tx, collection_name, 1, &list);
+    rc = get_capture_list(tx, collection_name, 2, &list);
     if (rc != IB_OK) {
         return rc;
     }
