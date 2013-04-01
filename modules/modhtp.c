@@ -46,12 +46,12 @@
  * 1. The connection parser structure (htp_connp_t) definition has been moved
  * to private, and there is no current API to get the current transaction from
  * the parser, so we rely on pulling it directly from the structure.
- * A public API needs to be added to libhtp to provide this fuctionality.
+ * A public API needs to be added to libhtp to provide this functionality.
  *
  * 2. The normalized request URI is no longer available in the libhtp
  * transaction.  We use the private htp_unparse_uri_noencode() function to
  * assemble a normalized URI from the parsed uri in the transaction.  Again,
- * a public API needs to be added to libhtp to provide this fuctionality.
+ * a public API needs to be added to libhtp to provide this functionality.
  */
 #ifdef __clang__
 #pragma clang diagnostic push
