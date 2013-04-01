@@ -568,7 +568,6 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
  * @brief Create the PCRE operator.
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
- * @param[in] rule Parent rule to the operator
  * @param[in,out] pool The memory pool into which @c op_inst->data
  *                will be allocated.
  * @param[in] pattern The regular expression to be built.
@@ -582,7 +581,6 @@ static
 ib_status_t pcre_operator_create(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *pool,
     const char         *pattern,
     ib_operator_inst_t *op_inst,
@@ -591,7 +589,6 @@ ib_status_t pcre_operator_create(
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(rule != NULL);
     assert(pool != NULL);
     assert(op_inst != NULL);
 
@@ -997,7 +994,6 @@ ib_status_t pcre_operator_execute(
 /**
  * Set the ID of a DFA rule.
  *
- * @param[in] rule Rule to use ID of (if available).
  * @param[in] op_inst Operator instance.
  * @param[in] mp Memory pool to use for allocations.
  * @param[in,out] rule_data DFA rule object to store ID into.
@@ -1006,22 +1002,16 @@ ib_status_t pcre_operator_execute(
  *   - IB_OK on success.
  *   - IB_EALLOC on memory failure.
  */
-static ib_status_t dfa_id_set(const ib_rule_t *rule,
-                              const ib_operator_inst_t *op_inst,
-                              ib_mpool_t *mp,
-                              modpcre_rule_data_t *rule_data)
+static
+ib_status_t dfa_id_set(
+    const ib_operator_inst_t *op_inst,
+    ib_mpool_t               *mp,
+    modpcre_rule_data_t      *rule_data
+)
 {
-    assert(rule != NULL);
     assert(op_inst != NULL);
     assert(mp != NULL);
     assert(rule_data != NULL);
-    const char *rule_id;
-
-    rule_id = ib_rule_id(rule);
-    if (rule_id != NULL) {
-        rule_data->id = rule_id;
-        return IB_OK;
-    }
 
     /* We compute the length of the string buffer as such:
      * +2 for the 0x prefix.
@@ -1045,7 +1035,6 @@ static ib_status_t dfa_id_set(const ib_rule_t *rule,
  * @brief Create the PCRE operator.
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
- * @param[in] rule Parent rule to the operator
  * @param[in,out] pool The memory pool into which @c op_inst->data
  *                will be allocated.
  * @param[in] pattern The regular expression to be built.
@@ -1059,7 +1048,6 @@ static
 ib_status_t dfa_operator_create(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *pool,
     const char         *pattern,
     ib_operator_inst_t *op_inst,
@@ -1068,7 +1056,6 @@ ib_status_t dfa_operator_create(
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(rule != NULL);
     assert(pool != NULL);
     assert(op_inst != NULL);
 
@@ -1117,7 +1104,7 @@ ib_status_t dfa_operator_create(
         return IB_EALLOC;
     }
     rule_data->cpdata = cpdata;
-    rc = dfa_id_set(rule, op_inst, pool, rule_data);
+    rc = dfa_id_set(op_inst, pool, rule_data);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating ID for DFA: %s",
                      ib_status_to_string(rc));

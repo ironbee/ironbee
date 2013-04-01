@@ -372,7 +372,6 @@ ib_status_t DLL_PUBLIC ib_module_operator_inst_create(
         module->ib,
         mpool,
         ib_context_main(module->ib),
-        module->rule,
         0,
         operator_name,
         parameters,

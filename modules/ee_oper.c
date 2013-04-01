@@ -207,7 +207,6 @@ static ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] ctx Current Context
- * @param[in] rule The rule using this operator.
  * @param[in] pool Memory pool to use.
  * @param[in] automata_name The name of the automata to use.
  *                          Defined via the LoadEudoxus directive.
@@ -218,7 +217,6 @@ static
 ib_status_t ee_match_any_operator_create(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *pool,
     const char         *automata_name,
     ib_operator_inst_t *op_inst,

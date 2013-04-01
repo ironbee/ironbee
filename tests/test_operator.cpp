@@ -35,7 +35,6 @@
 ib_status_t test_create_fn(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *pool,
     const char         *data,
     ib_operator_inst_t *op_inst,
@@ -125,7 +124,6 @@ TEST_F(OperatorTest, OperatorCallTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
-                                     rule,
                                      IB_OP_FLAG_PHASE,
                                      "test_op",
                                      "INVALID",
@@ -135,7 +133,6 @@ TEST_F(OperatorTest, OperatorCallTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
-                                     rule,
                                      IB_OP_FLAG_PHASE,
                                      "test_op",
                                      "data",
@@ -193,7 +190,6 @@ TEST_F(CoreOperatorsTest, ContainsTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
-                                     rule,
                                      IB_OP_FLAG_PHASE,
                                      "contains",
                                      "needle",
@@ -238,7 +234,6 @@ TEST_F(CoreOperatorsTest, EqTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
-                                     rule,
                                      IB_OP_FLAG_PHASE,
                                      "eq",
                                      "1",
@@ -284,7 +279,6 @@ TEST_F(CoreOperatorsTest, NeTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
-                                     rule,
                                      IB_OP_FLAG_PHASE,
                                      "ne",
                                      "1",

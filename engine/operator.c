@@ -30,15 +30,17 @@
 
 #include <ironbee/mpool.h>
 
-ib_status_t ib_operator_register(ib_engine_t *ib,
-                                 const char *name,
-                                 ib_flags_t flags,
-                                 ib_operator_create_fn_t fn_create,
-                                 void *cbdata_create,
-                                 ib_operator_destroy_fn_t fn_destroy,
-                                 void *cbdata_destroy,
-                                 ib_operator_execute_fn_t fn_execute,
-                                 void *cbdata_execute)
+ib_status_t ib_operator_register(
+    ib_engine_t              *ib,
+    const char               *name,
+    ib_flags_t                flags,
+    ib_operator_create_fn_t   fn_create,
+    void                     *cbdata_create,
+    ib_operator_destroy_fn_t  fn_destroy,
+    void                     *cbdata_destroy,
+    ib_operator_execute_fn_t  fn_execute,
+    void                     *cbdata_execute
+)
 {
     ib_hash_t *operator_hash = ib->operators;
     ib_mpool_t *pool = ib_engine_pool_main_get(ib);
@@ -81,15 +83,15 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
 }
 
 ib_status_t ib_operator_inst_create_ex(
-    ib_engine_t *ib,
-    ib_mpool_t *mpool,
-    ib_context_t *ctx,
-    const ib_rule_t *rule,
-    ib_flags_t required_op_flags,
-    const char *name,
-    const char *parameters,
-    ib_flags_t flags,
-    ib_operator_inst_t **op_inst)
+    ib_engine_t         *ib,
+    ib_mpool_t          *mpool,
+    ib_context_t        *ctx,
+    ib_flags_t           required_op_flags,
+    const char          *name,
+    const char          *parameters,
+    ib_flags_t           flags,
+    ib_operator_inst_t **op_inst
+)
 {
     ib_hash_t *operator_hash = ib->operators;
     ib_operator_t *op;
@@ -120,7 +122,6 @@ ib_status_t ib_operator_inst_create_ex(
         rc = op->fn_create(
             ib,
             ctx,
-            rule,
             mpool,
             parameters,
             *op_inst,
@@ -146,20 +147,19 @@ ib_status_t ib_operator_inst_create_ex(
 }
 
 ib_status_t ib_operator_inst_create(
-    ib_engine_t *ib,
-    ib_context_t *ctx,
-    const ib_rule_t *rule,
-    ib_flags_t required_op_flags,
-    const char *name,
-    const char *parameters,
-    ib_flags_t flags,
-    ib_operator_inst_t **op_inst)
+    ib_engine_t         *ib,
+    ib_context_t        *ctx,
+    ib_flags_t           required_op_flags,
+    const char          *name,
+    const char          *parameters,
+    ib_flags_t           flags,
+    ib_operator_inst_t **op_inst
+)
 {
     return ib_operator_inst_create_ex(
         ib,
         ib_engine_pool_main_get(ib),
         ctx,
-        rule,
         required_op_flags,
         name,
         parameters,
@@ -167,7 +167,9 @@ ib_status_t ib_operator_inst_create(
         op_inst);
 }
 
-ib_status_t ib_operator_inst_destroy(ib_operator_inst_t *op_inst)
+ib_status_t ib_operator_inst_destroy(
+    ib_operator_inst_t *op_inst
+)
 {
     ib_status_t rc;
 
@@ -184,10 +186,12 @@ ib_status_t ib_operator_inst_destroy(ib_operator_inst_t *op_inst)
     return rc;
 }
 
-ib_status_t ib_operator_execute(const ib_rule_exec_t *rule_exec,
-                                const ib_operator_inst_t *op_inst,
-                                ib_field_t *field,
-                                ib_num_t *result)
+ib_status_t ib_operator_execute(
+    const ib_rule_exec_t     *rule_exec,
+    const ib_operator_inst_t *op_inst,
+    ib_field_t               *field,
+    ib_num_t                 *result
+)
 {
     ib_status_t rc;
 

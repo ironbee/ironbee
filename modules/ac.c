@@ -516,7 +516,6 @@ static
 ib_status_t pmf_operator_create(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *pool,
     const char         *pattern_file,
     ib_operator_inst_t *op_inst,
@@ -627,7 +626,6 @@ static
 ib_status_t pm_operator_create(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *pool,
     const char         *pattern,
     ib_operator_inst_t *op_inst,

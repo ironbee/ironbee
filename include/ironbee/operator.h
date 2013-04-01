@@ -55,7 +55,6 @@ typedef struct ib_operator_inst_t ib_operator_inst_t;
  *
  * @param[in] ib IronBee engine.
  * @param[in] ctx Current context.
- * @param[in] rule The rule that owns the operator instance being executed.
  * @param[in] pool Memory pool to be used for allocating needed memory.
  * @param[in] parameters Unparsed string with the parameters to
  *                       initialize the operator instance.
@@ -67,7 +66,6 @@ typedef struct ib_operator_inst_t ib_operator_inst_t;
 typedef ib_status_t (* ib_operator_create_fn_t)(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *pool,
     const char         *parameters,
     ib_operator_inst_t *op_inst,
@@ -188,7 +186,6 @@ ib_status_t DLL_PUBLIC ib_operator_register(
  * @param[in] ib Ironbee engine
  * @param[in] mpool The memory pool to create the instance from.
  * @param[in] ctx Current IronBee context
- * @param[in] rule The rule that owns the operator instance being executed.
  * @param[in] required_op_flags Required operator flags
  *            (IB_OP_FLAG_{PHASE,STREAM})
  * @param[in] name The name of the operator to create.
@@ -204,7 +201,6 @@ ib_status_t DLL_PUBLIC ib_operator_inst_create_ex(
     ib_engine_t         *ib,
     ib_mpool_t          *mpool,
     ib_context_t        *ctx,
-    const ib_rule_t     *rule,
     ib_flags_t           required_op_flags,
     const char          *name,
     const char          *parameters,
@@ -219,7 +215,6 @@ ib_status_t DLL_PUBLIC ib_operator_inst_create_ex(
  *
  * @param[in] ib Ironbee engine
  * @param[in] ctx Current IronBee context
- * @param[in] rule The rule that owns the operator instance being executed.
  * @param[in] required_op_flags Required operator flags
  *            (IB_OP_FLAG_{PHASE,STREAM})
  * @param[in] name The name of the operator to create.
@@ -234,7 +229,6 @@ ib_status_t DLL_PUBLIC ib_operator_inst_create_ex(
 ib_status_t DLL_PUBLIC ib_operator_inst_create(
     ib_engine_t         *ib,
     ib_context_t        *ctx,
-    const ib_rule_t     *rule,
     ib_flags_t           required_op_flags,
     const char          *name,
     const char          *parameters,

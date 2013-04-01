@@ -100,7 +100,6 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     /* Create the operator instance */
     rc = ib_operator_inst_create(cp->ib,
                                  cp->cur_ctx,
-                                 rule,
                                  ib_rule_required_op_flags(rule),
                                  opname,
                                  operand,

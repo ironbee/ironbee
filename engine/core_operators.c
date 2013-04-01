@@ -295,7 +295,6 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
  *
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
- * @param[in] rule Parent rule to the operator
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters
  * @param[in,out] op_inst Instance operator
@@ -307,7 +306,6 @@ static
 ib_status_t strop_create(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *mp,
     const char         *parameters,
     ib_operator_inst_t *op_inst,
@@ -555,7 +553,6 @@ ib_status_t op_contains_execute(
  *
  * @param[in] ib         The IronBee engine.
  * @param[in] ctx        The current IronBee context (unused).
- * @param[in] rule       Parent rule to the operator.
  * @param[in] mp         Memory pool to use for allocation.
  * @param[in] parameters Parameters (IPv4 address or networks)
  * @param[in] op_inst    Instance operator.
@@ -570,7 +567,6 @@ static
 ib_status_t op_match_create(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *mp,
     const char         *parameters,
     ib_operator_inst_t *op_inst,
@@ -579,7 +575,6 @@ ib_status_t op_match_create(
 {
     assert(ib      != NULL);
     assert(ctx     != NULL);
-    assert(rule    != NULL);
     assert(mp      != NULL);
     assert(op_inst != NULL);
 
@@ -734,7 +729,6 @@ ib_status_t op_match_execute(
  *
  * @param[in] ib         The IronBee engine.
  * @param[in] ctx        The current IronBee context (unused).
- * @param[in] rule       Parent rule to the operator.
  * @param[in] mp         Memory pool to use for allocation.
  * @param[in] parameters Parameters (IPv4 address or networks)
  * @param[in] op_inst    Instance operator.
@@ -749,7 +743,6 @@ static
 ib_status_t op_ipmatch_create(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *mp,
     const char         *parameters,
     ib_operator_inst_t *op_inst,
@@ -758,7 +751,6 @@ ib_status_t op_ipmatch_create(
 {
     assert(ib      != NULL);
     assert(ctx     != NULL);
-    assert(rule    != NULL);
     assert(mp      != NULL);
     assert(op_inst != NULL);
 
@@ -948,7 +940,6 @@ ib_status_t op_ipmatch_execute(
  *
  * @param[in] ib         The IronBee engine.
  * @param[in] ctx        The current IronBee context (unused).
- * @param[in] rule       Parent rule to the operator.
  * @param[in] mp         Memory pool to use for allocation.
  * @param[in] parameters Parameters (IPv6 address or networks)
  * @param[in] op_inst    Instance operator.
@@ -963,7 +954,6 @@ static
 ib_status_t op_ipmatch6_create(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *mp,
     const char         *parameters,
     ib_operator_inst_t *op_inst,
@@ -972,7 +962,6 @@ ib_status_t op_ipmatch6_create(
 {
     assert(ib      != NULL);
     assert(ctx     != NULL);
-    assert(rule    != NULL);
     assert(mp      != NULL);
     assert(op_inst != NULL);
 
@@ -1797,7 +1786,6 @@ ib_status_t op_le_execute(
  *
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
- * @param[in] rule Parent rule to the operator
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] params Constant parameters
  * @param[in,out] op_inst Instance operator
@@ -1809,7 +1797,6 @@ static
 ib_status_t op_numcmp_create(
     ib_engine_t        *ib,
     ib_context_t       *ctx,
-    const ib_rule_t    *rule,
     ib_mpool_t         *mp,
     const char         *params,
     ib_operator_inst_t *op_inst,
