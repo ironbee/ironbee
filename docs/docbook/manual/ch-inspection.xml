@@ -284,19 +284,19 @@ LuaCommitRules</programlisting></para>
                 the full power of Lua to configure the rules. The included Lua script is executed at
                 config time, providing a vast amount of power over rule configuration. Within Lua,
                 you can use the <literal>Sig(id,rev)</literal> function to define signature rules.
-                The Sig() function returns a signature object, which allows you to then specify
-                attributes, such as fields, an operator, actions, etc. The following is a simple
-                rule using the Rule directive, which will serve as an example to be converted using
-                the Lua
+                The <literal>Sig()</literal> function returns a signature object, which allows you
+                to then specify attributes, such as fields, an operator, actions, etc. The following
+                is a simple rule using the <literal>Rule</literal> directive, which will serve as an
+                example to be converted using the Lua
                 configuration.<programlisting>Rule ARGS REQUEST_HEADERS \
      @rx "some-attack-regex" \
      id:test/lua/1 rev:1 \
      severity:50 confidence:75 \
      event:alert block:phase \
      "msg:Some message text." </programlisting></para>
-            <para>This is converted into Lua's Sig() function below. Note that this is an extremely
-                verbose version for clarity. Later, this will be shortened to a much more manageable
-                form.</para>
+            <para>This is converted into Lua's <literal>Sig()</literal> function below. Note that
+                this is an extremely verbose version for clarity. Later, this will be shortened to a
+                much more manageable form.</para>
             <para>
                 <programlisting>-- Create a signature with: id="test/lua/1" rev=1
 local sig = Sig("test/lua/1", 1)
@@ -319,9 +319,9 @@ sig:action("event:alert")
 sig:action("block:phase")
 sig:message("Some message text.")</programlisting>
             </para>
-            <para>The Sig() function returns a signature object, but so do all the attribute
-                functions. This allows us to chain attributes via the colon operator resulting in
-                something much more compact and
+            <para>The <literal>Sig()</literal> function returns a signature object as do all the
+                attribute functions. This allows us to chain attributes via the colon operator
+                resulting in something much more compact and
                 "rule-like".<programlisting>Sig("test/lua/1", 1):
   fields("ARGS", "REQUEST_HEADERS"):
   phase("REQUEST"):
@@ -335,7 +335,7 @@ sig:message("Some message text.")</programlisting>
                 will follow the same form and it will quickly become tedious to write signatures in
                 such a verbose format. To reduce this verbosity, the power of Lua is utilized, which
                 allows customizing how rules are written by defining wrapper functions around the
-                default Sig()
+                default <literal>Sig()</literal>
                 function.<programlisting>--[[ ----------------------------------------------------
 ---- Define a function to reduce verbosity:
 ---- RequestRegex(id, regex [,severity [,confidence]])
@@ -367,8 +367,8 @@ RequestRegex(1,[[some-attack-regex]]):
   message("Some message text.")</programlisting></para>
             <para>As you can see, this can substantially reduce the verbosity of the rules, however,
                 it does require writing some wrapper functions. As IronBee matures, it will expose
-                some builtin wrappers in a separate library. Separating the wrappers into a library,
-                would then reduce this into a file that load the library and the rules
+                some builtin wrappers in a separate library. Separating the wrappers into a library
+                would then reduce this into a file that load the library alongside the rules
                 themselves.</para>
             <para>
                 <programlisting>-- Load the Wrappers
@@ -408,8 +408,8 @@ Sig("lua/3",1):
   Sig("lua/3",1)
 }</programlisting></para>
             <para>Each rule in the recipe will contain the recipe tag and therefore the entire
-                recipe can be enabled via <literal>RuleEnable tag:recipe/1</literal> or
-                similar.</para>
+                recipe can be enabled via the <literal>RuleEnable</literal>
+                directive.<programlisting>RuleEnable tag:recipe/1</programlisting></para>
             <para>The <literal>Rule</literal> directive supports chaining rules via the
                     <literal>chain</literal> rule modifier. Chaining allows rules to be logically
                 ANDed together so that later rules only execute if previous rules match. Chained
@@ -502,7 +502,7 @@ Sig("lua/3",1):follows("lua/2")</programlisting></para>
             <para>While Lua signature definitions are very powerful, they are still limited to
                 signature like operations. To allow for complex logic you can use Lua at rule
                 execution time yielding the full power of Lua as an inspection language. This is
-                accomplished by using either the <literal>RuleExt</literal> directive withing a
+                accomplished by using either the <literal>RuleExt</literal> directive within a
                 configuration file or <literal>ExtSig()</literal> within a Lua configuration
                 file.</para>
             <para>See the documentation for the <literal>RuleExt</literal> directive for more
