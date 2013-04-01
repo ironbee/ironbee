@@ -68,6 +68,23 @@ Then you can merge in the upstream source with:
     git subtree pull --squash --prefix=libs/luajit-2.0-ironbee luajit-2.0
 
 
+LibHTP Code
+-----------
+
+LibHTP is currently distributed with IronBee as it is not widely available.  The
+source is in libs/libhtp and is included using git-subtree with full
+history to allow the tree to later be removed.  Currently 0.5 is tracked.
+
+To update the LibHTP source, you will need a git with subtree support.  You will
+need to add the remote:
+
+    git remote add libhtp git@github.com:ironbee/libhtp.git
+
+Then you can merge in the upstream source with:
+
+    git subtree pull --squash --prefix=libs/libhtp libhtp 0.5.x
+
+
 LibInjection Code
 -----------------
 
