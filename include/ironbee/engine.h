@@ -887,9 +887,7 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   handle_logging_event [label="handle_logging",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_logging_event"]
  *
  *   // These are just for organizational purposes
- *   tx_started_event -> request [style=invis,weight=5.0]
  *   tx_started_event -> tx_finished_event [style=invis,weight=5.0]
- *   response_started_event -> response [style=invis,weight=5.0]
  *
  *   conn_started_event -> conn_opened_event [weight=100.0]
  *   conn_opened_event -> context_conn_selected [weight=100.0]
