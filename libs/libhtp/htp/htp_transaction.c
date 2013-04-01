@@ -99,6 +99,10 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     bstr_free(tx->request_content_type);
 
+    if (tx->request_hostname != NULL) {
+        bstr_free(tx->request_hostname);
+    }
+
     // Response.
 
     bstr_free(tx->response_line);
