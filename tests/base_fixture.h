@@ -630,6 +630,11 @@ public:
 
     virtual ~BaseFixture(){}
 
+    ib_mpool_t *MainPool(void)
+    {
+        return ib_engine_pool_main_get(ib_engine);
+    }
+
     ib_engine_t *ib_engine;
     ib_server_t ibt_ibserver;
 };

@@ -241,6 +241,7 @@ test_util_mpool_SOURCES = test_util_mpool.cpp test_main.cpp
 test_util_mpool_LDADD = $(LDADD) -lboost_thread-mt -lboost_system$(BOOST_SUFFIX)
 
 test_engine_SOURCES = test_engine.cpp test_main.cpp \
+                      test_engine_capture.cpp \
                       test_parsed_content.cpp \
                       ibtest_util.cpp
 test_engine_LDADD = $(MODULE_TEST_LDADD)
