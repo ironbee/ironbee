@@ -90,7 +90,7 @@ directly related to code formatting.
 /**
  * @file
  * @brief IronBee --- SubTitle
- * 
+ *
  * Some description here.
  *
  * @author Author One <author1@company.com>
@@ -98,7 +98,7 @@ directly related to code formatting.
  */
 ```
 
-* All public functions MUST include doxygen documentation such as follows. 
+* All public functions MUST include doxygen documentation such as follows.
   This documentation MUST be in the public header file.
 
 ```
@@ -120,3 +120,7 @@ directly related to code formatting.
   private.  If a private function must be in a public header file surround it
   and the code in question with '@cond internal' and '@endcond internal'.
 
+* All callbacks must support callback data.  Callback data is a `void *` that
+  is provided with the function pointer at registration and is passed as the
+  *last* argument to the callback function.  It is important that it is the
+  last argument as this consistency allows easy trampoline creation (see `include/ironbeepp/c_trampoline.hpp`).
