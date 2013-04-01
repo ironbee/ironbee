@@ -178,13 +178,11 @@ void convert_remainder(
     double               post_delay
 )
 {
-    if (! input.empty()) {
-        events.push_back(
-            boost::make_shared<Input::DataEvent>(body_event, to_buffer(input))
-        );
-        events.back()->pre_delay = pre_delay;
-        pre_delay = 0;
-    }
+    events.push_back(
+        boost::make_shared<Input::DataEvent>(body_event, to_buffer(input))
+    );
+    events.back()->pre_delay = pre_delay;
+    pre_delay = 0;
 
     events.push_back(
         boost::make_shared<Input::NullEvent>(finished_event)
@@ -255,6 +253,14 @@ bool ParseModifier::operator()(Input::input_p& input)
                             Input::REQUEST_HEADER_FINISHED
                         );
                     }
+                    else {
+                        new_tx.events.push_back(
+                            boost::make_shared<Input::HeaderEvent>(Input::REQUEST_HEADER)
+                        );
+                        new_tx.events.push_back(
+                            boost::make_shared<Input::NullEvent>(Input::REQUEST_HEADER_FINISHED)
+                        );
+                    }
 
                     convert_remainder(
                         new_tx.events,
@@ -295,13 +301,31 @@ bool ParseModifier::operator()(Input::input_p& input)
                             Input::RESPONSE_HEADER_FINISHED
                         );
                     }
+                    else {
+                        new_tx.events.push_back(
+                            boost::make_shared<Input::ResponseEvent>(
+                                Input::RESPONSE_STARTED,
+                                Input::Buffer(),
+                                Input::Buffer(),
+                                Input::Buffer(),
+                                Input::Buffer()
+                            )
+                        );
+                        new_tx.events.back()->pre_delay = specific.pre_delay;
+                        new_tx.events.push_back(
+                            boost::make_shared<Input::HeaderEvent>(Input::RESPONSE_HEADER)
+                        );
+                        new_tx.events.push_back(
+                            boost::make_shared<Input::NullEvent>(Input::RESPONSE_HEADER_FINISHED)
+                        );
+                    }
 
                     convert_remainder(
                         new_tx.events,
                         input,
                         Input::RESPONSE_BODY,
                         Input::RESPONSE_FINISHED,
-                        specific.pre_delay,
+                        0,
                         specific.post_delay
                     );
                     break;

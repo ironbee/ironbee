@@ -198,6 +198,10 @@ IronBee v0.7.0
 * Several tests have been added, including a randomized test of IronBee in
   both single and multithreaded mode (`test_holistic`).
 
+* The parse modifier now generates a complete set of events even if some of them are data less.  For example, if no headers are present provided in
+  connection data, clipp will still produce a `REQUEST_HEADERS` event; before
+  this change it would not.
+
 **Other**
 
 * The old CLI (ibcli) has been removed.

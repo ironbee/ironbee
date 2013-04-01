@@ -91,7 +91,6 @@ class TestRegression < Test::Unit::TestCase
       :consumer     => "view"
     )
     assert_no_issues
-    assert_log_no_match /_HEADER/
   end
 
   def test_ipmatch_09
