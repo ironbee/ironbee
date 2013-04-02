@@ -188,7 +188,7 @@ AC_ARG_ENABLE(devel,
   devel=$enableval
 ],
 [
-  devel="no"
+  devel="yes"
 ])
 
 

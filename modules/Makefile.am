@@ -12,6 +12,9 @@ else
 AM_LDFLAGS += -module -avoid-version
 endif
 
+EXTRA_DIST = moddevel_private.h
+
+
 pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
                      ibmod_ac.la \
