@@ -103,7 +103,7 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib)
 
     rc = ib_conn_create(rctx->conn->ironbee, &rctx->conn->iconn, rctx->r->connection);
     if (rc != IB_OK) {
-	cleanup_return(prev_log) NULL;
+        cleanup_return(prev_log) NULL;
     }
 
     ib_state_notify_conn_opened(rctx->conn->ironbee, rctx->conn->iconn);
