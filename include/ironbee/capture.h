@@ -54,27 +54,43 @@ const char *ib_capture_name(int num);
 const char *ib_capture_fullname(
     const ib_tx_t *tx,
     const char    *collection_name,
-    int            num);
+    int            num
+);
+
+/**
+ * Fetch appropriate data field given a name, creating if necessary.
+ *
+ * @param[in] tx Transaction
+ * @param[in] collection_name The name of the capture collection or NULL
+ *                            for default name.
+ * @param[out] field Where to write result to.
+ * @returns IB_OK: All ok
+ * @returns IB_EALLOC: Allocation error.
+ * @returns IB_EINVAL: Unexpected error replacing existing non-list field.
+ * @returns Other on unexpected error.
+ **/
+ib_status_t DLL_PUBLIC ib_capture_acquire(
+    const ib_tx_t  *tx,
+    const char     *collection_name,
+    ib_field_t    **field
+);
 
 /**
  * Clear data capture fields
  *
- * @param[in] tx Transaction
- * @param[in] collection_name The name of the capture collection or NULL
+ * @param[in] capture Capture collection to clear.
  *
  * @returns IB_OK: All OK
  * @returns Error status from: ib_capture_init_item()
  */
-ib_status_t DLL_PUBLIC ib_capture_clear(
-    ib_tx_t    *tx,
-    const char *collection_name);
+ib_status_t DLL_PUBLIC ib_capture_clear(ib_field_t *capture);
 
 /**
  * Set a single capture field item
  *
- * @param[in] tx Transaction
- * @param[in] collection_name The name of the capture collection or NULL
+ * @param[in] capture Capture collection to clear.
  * @param[in] num Number of the capture field
+ * @param[in] mp Memory pool to use.
  * @param[in] in_field Field to add.
  *
  * @returns IB_OK: All OK
@@ -84,10 +100,10 @@ ib_status_t DLL_PUBLIC ib_capture_clear(
  *                             ib_data_list_push()
  *                             ib_field_mutable_value()
  */
-ib_status_t ib_capture_set_item(
-    ib_tx_t    *tx,
-    const char *collection_name,
+ib_status_t DLL_PUBLIC ib_capture_set_item(
+    ib_field_t *capture,
     int         num,
+    ib_mpool_t *mp,
     ib_field_t *in_field
 );
 
@@ -96,8 +112,7 @@ ib_status_t ib_capture_set_item(
  *
  * This will add an, possibly additional, item.
  *
- * @param[in] tx Transaction
- * @param[in] collection_name The name of the capture collection or NULL
+ * @param[in] capture Capture collection to clear.
  * @param[in] in_field Field to add.
  *
  * @returns IB_OK: All OK
@@ -106,9 +121,8 @@ ib_status_t ib_capture_set_item(
  *                             ib_data_list_push()
  *                             ib_field_mutable_value()
  */
-ib_status_t ib_capture_add_item(
-    ib_tx_t    *tx,
-    const char *collection_name,
+ib_status_t DLL_PUBLIC ib_capture_add_item(
+    ib_field_t *capture,
     ib_field_t *in_field
 );
 

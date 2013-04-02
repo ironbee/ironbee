@@ -187,9 +187,10 @@ ib_status_t ib_operator_inst_destroy(
 }
 
 ib_status_t ib_operator_execute(
-    const ib_rule_exec_t     *rule_exec,
+    ib_tx_t                  *tx,
     const ib_operator_inst_t *op_inst,
     ib_field_t               *field,
+    ib_field_t               *capture,
     ib_num_t                 *result
 )
 {
@@ -200,10 +201,11 @@ ib_status_t ib_operator_execute(
         && (op_inst->op->fn_execute != NULL)
     ) {
         rc = op_inst->op->fn_execute(
-            rule_exec,
+            tx,
             op_inst->data,
             op_inst->flags,
             field,
+            capture,
             result,
             op_inst->op->cbdata_execute
         );

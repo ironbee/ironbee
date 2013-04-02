@@ -244,23 +244,23 @@ ib_status_t sqli_op_create(
 
 static
 ib_status_t sqli_op_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
-    assert(rule_exec != NULL);
-    assert(field     != NULL);
-    assert(result    != NULL);
+    assert(tx     != NULL);
+    assert(field  != NULL);
+    assert(result != NULL);
 
     sfilter sf;
     char *val;
     size_t new_size;
     ib_bytestr_t *bs;
-    ib_tx_t *tx = rule_exec->tx;
     ib_status_t rc;
 
     *result = 0;

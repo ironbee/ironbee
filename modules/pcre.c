@@ -34,7 +34,6 @@
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/provider.h>
-#include <ironbee/rule_capture.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
 
@@ -672,28 +671,32 @@ ib_status_t pcre_operator_destroy(
 /**
  * Set the matches into the given field name as .0, .1, .2 ... .9.
  *
- * @param[in] rule_exec Rule execution object
+ * @param[in] tx Current transaction.
+ * @param[in] capture Collection to capture to.
  * @param[in] ovector The vector of integer pairs of matches from PCRE.
  * @param[in] matches The number of matches.
  * @param[in] subject The matched-against string data.
  *
  * @returns IB_OK or IB_EALLOC.
  */
-static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
-                                    int *ovector,
-                                    int matches,
-                                    const char *subject)
+static
+ib_status_t pcre_set_matches(
+    const ib_tx_t *tx,
+    ib_field_t    *capture,
+    int           *ovector,
+    int            matches,
+    const char    *subject
+)
 {
-    assert(rule_exec != NULL);
-    assert(rule_exec->ib != NULL);
-    assert(rule_exec->tx != NULL);
+    assert(tx != NULL);
+    assert(tx->ib != NULL);
+    assert(capture != NULL);
     assert(ovector != NULL);
 
     ib_status_t rc;
-    ib_tx_t *tx = rule_exec->tx;
     int i;
 
-    rc = ib_rule_capture_clear(rule_exec);
+    rc = ib_capture_clear(capture);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error clearing captures: %s",
                         ib_status_to_string(rc));
@@ -732,7 +735,7 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
         }
 
         /* Create a field to hold the byte-string */
-        name = ib_rule_capture_name(rule_exec, i);
+        name = ib_capture_name(i);
         rc = ib_field_create(&field, tx->mp, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
@@ -740,7 +743,7 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
         }
 
         /* Add it to the capture collection */
-        rc = ib_rule_capture_set_item(rule_exec, i, field);
+        rc = ib_capture_set_item(capture, i, tx->mp, field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -753,24 +756,28 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
  * Set the matches from a multi-match dfa as a list in the CAPTURE
  * collection (all with "0" key).
  *
- * @param[in] rule_exec Rule execution object
+ * @param[in] tx Current transaction.
+ * @param[in] capture Collection to capture to.
  * @param[in] ovector The vector of integer pairs of matches from PCRE.
  * @param[in] matches The number of matches.
  * @param[in] subject The matched-against string data.
  *
  * @returns IB_OK or IB_EALLOC.
  */
-static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
-                                      int *ovector,
-                                      int matches,
-                                      const char *subject)
+static
+ib_status_t pcre_dfa_set_match(
+    ib_tx_t    *tx,
+    ib_field_t *capture,
+    int        *ovector,
+    int         matches,
+    const char *subject
+)
 {
-    assert(rule_exec != NULL);
-    assert(rule_exec->ib != NULL);
-    assert(rule_exec->tx != NULL);
+    assert(tx != NULL);
+    assert(tx->ib != NULL);
+    assert(capture != NULL);
     assert(ovector != NULL);
 
-    ib_tx_t *tx = rule_exec->tx;
     int i;
 
     /* We have a match! Now populate TX:0-9 in tx->data. */
@@ -798,7 +805,7 @@ static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
         }
 
         /* Create a field to hold the byte-string */
-        name = ib_rule_capture_name(rule_exec, 0);
+        name = ib_capture_name(0);
         rc = ib_field_create(&field, tx->mp, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
@@ -806,7 +813,7 @@ static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
         }
 
         /* Add it to the capture collection */
-        rc = ib_rule_capture_add_item(rule_exec, field);
+        rc = ib_capture_add_item(capture, field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -818,10 +825,11 @@ static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
 /**
  * @brief Execute the PCRE operator
  *
- * @param[in] rule_exec The rule execution object
+ * @param[in] tx Current transaction.
  * @param[in,out] data User data. A @c modpcre_rule_data_t.
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
+ * @param[in] capture Collection to capture to.
  * @param[out] result The result.
  * @param[in] cbdata Callback data.
  *
@@ -829,19 +837,19 @@ static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
  */
 static
 ib_status_t pcre_operator_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
-    assert(rule_exec != NULL);
-    assert(rule_exec->ib != NULL);
-    assert(rule_exec->tx != NULL);
-    assert(rule_exec->tx->data != NULL);
-    assert(data != NULL);
+    assert(tx       != NULL);
+    assert(tx->ib   != NULL);
+    assert(tx->data != NULL);
+    assert(data     != NULL);
 
     int matches;
     ib_status_t ib_rc;
@@ -894,32 +902,15 @@ ib_status_t pcre_operator_execute(
         subject     = "";
     }
 
-    /* Debug block. Escapes a string and prints it to the log.
-     * Memory is freed. */
-    if (ib_log_get_level(rule_exec->ib) >= 9) {
-
-        /* Worst case, we can have a string that is 4x larger.
-         * Consider if a string of 0xF7 is passed.  That single character
-         * will expand to a string of 4 printed characters +1 for the \0
-         * character. */
-        char *debug_str = ib_util_hex_escape(rule_exec->tx->mp,
-                                             (const uint8_t *)subject,
-                                             subject_len);
-
-        if (debug_str != NULL) {
-            ib_rule_log_trace(rule_exec, "Matching against: \"%s\"", debug_str);
-        }
-    }
-
     if (rule_data->cpdata->is_jit) {
 #ifdef PCRE_JIT_STACK
         jit_stack = pcre_jit_stack_alloc(rule_data->cpdata->jit_stack_start,
                                          rule_data->cpdata->jit_stack_max);
         if (jit_stack == NULL) {
-            ib_rule_log_debug(rule_exec,
-                              "Failed to allocate a jit stack for a "
-                              "jit-compiled rule.  "
-                              "Not using jit for this call.");
+            ib_log_warn(ib,
+                "Failed to allocate a jit stack for a jit-compiled rule.  "
+                "Not using jit for this call."
+            );
         }
         /* If the study data is NULL or size zero, don't use it. */
         else if (rule_data->cpdata->study_data_sz > 0) {
@@ -955,34 +946,19 @@ ib_status_t pcre_operator_execute(
 #endif
 
     if (matches > 0) {
-        if (ib_rule_should_capture(rule_exec, 1) ) {
-            pcre_set_matches(rule_exec, ovector, matches, subject);
+        if (capture != NULL) {
+            pcre_set_matches(tx, capture, ovector, matches, subject);
         }
         ib_rc = IB_OK;
         *result = 1;
     }
     else if (matches == PCRE_ERROR_NOMATCH) {
-
-        if (ib_log_get_level(rule_exec->ib) >= 7) {
-            char* tmp_c = malloc(subject_len+1);
-            memcpy(tmp_c, subject, subject_len);
-            tmp_c[subject_len] = '\0';
-            /* No match. Return false to the caller (*result = 0). */
-            ib_rule_log_trace(rule_exec,
-                              "No match for \"%s\" using pattern \"%s\".",
-                              tmp_c, rule_data->cpdata->patt);
-            free(tmp_c);
-        }
-
-
         ib_rc = IB_OK;
         *result = 0;
     }
     else {
-        /* Some other error occurred. Set the status to false and
-         * report the error. */
-        ib_rule_log_error(rule_exec, "RX match failed (cpat=%p): %d",
-                          (void *)rule_data->cpdata->cpatt, matches);
+        /* Some other error occurred. Set the status to false return the
+         * error. */
         ib_rc = IB_EUNKNOWN;
         *result = 0;
     }
@@ -1239,9 +1215,12 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
  *   - IB_ENOENT if the structure does not exist. Call alloc_dfa_tx_data then.
  *   - IB_EALLOC on an allocation error.
  */
-static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
-                                   const char *id,
-                                   dfa_workspace_t **workspace)
+static
+ib_status_t get_dfa_tx_data(
+    ib_tx_t          *tx,
+    const char       *id,
+    dfa_workspace_t **workspace
+)
 {
     assert(tx);
     assert(tx->mp);
@@ -1267,10 +1246,11 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
 /**
  * @brief Execute the dfa operator
  *
- * @param[in] rule_exec The rule execution object
+ * @param[in] tx Current transaction.
  * @param[in,out] data User data. A @c modpcre_rule_data_t.
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
+ * @param[in] capture Collection to capture to.
  * @param[out] result The result.
  * @param[in] cbdata Callback data.
  *
@@ -1278,20 +1258,19 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
  */
 static
 ib_status_t dfa_operator_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
-    assert(rule_exec);
-    assert(rule_exec->tx != NULL);
-    assert(rule_exec->ib != NULL);
-    assert(data);
+    assert(tx     != NULL);
+    assert(tx->ib != NULL);
+    assert(data   != NULL);
 
-    ib_tx_t *tx = rule_exec->tx;
     int matches;
     ib_status_t ib_rc;
     const int ovecsize = 3 * MATCH_MAX;
@@ -1301,9 +1280,8 @@ ib_status_t dfa_operator_execute(
     size_t subject_len;
     const ib_bytestr_t *bytestr;
     dfa_workspace_t *dfa_workspace;
-    const char *id = ib_rule_id(rule_exec->rule);
+    const char *id = rule_data->id;
     int options; /* dfa exec options. */
-    bool capture;
     int start_offset;
     int match_count;
 
@@ -1338,28 +1316,11 @@ ib_status_t dfa_operator_execute(
         return IB_EINVAL;
     }
 
-    /* Debug block. Escapes a string and prints it to the log.
-     * Memory is freed. */
-    if (ib_log_get_level(rule_exec->ib) >= 9) {
-
-        /* Worst case, we can have a string that is 4x larger.
-         * Consider if a string of 0xF7 is passed.  That single character
-         * will expand to a string of 4 printed characters +1 for the \0
-         * character. */
-        char *debug_str = ib_util_hex_escape(rule_exec->tx->mp,
-                                             (const uint8_t *)subject,
-                                             subject_len);
-
-        if (debug_str != NULL) {
-            ib_log_debug3_tx(tx, "Matching against: \"%s\"", debug_str);
-        }
-    }
-
     /* Get the per-tx workspace data for this rule data id. */
     ib_rc = get_dfa_tx_data(tx, id, &dfa_workspace);
     if (ib_rc == IB_ENOENT) {
         /* First time we are called, clear the captures. */
-        ib_rc = ib_rule_capture_clear(rule_exec);
+        ib_rc = ib_capture_clear(capture);
         if (ib_rc != IB_OK) {
             ib_log_error_tx(tx, "Error clearing captures: %s",
                             ib_status_to_string(ib_rc));
@@ -1370,32 +1331,20 @@ ib_status_t dfa_operator_execute(
         ib_rc = alloc_dfa_tx_data(tx, rule_data->cpdata, id, &dfa_workspace);
         if (ib_rc != IB_OK) {
             free(ovector);
-            ib_rule_log_error(rule_exec,
-                              "Error creating tx storage for dfa operator: %s",
-                              ib_status_to_string(ib_rc));
             return ib_rc;
         }
-
-        ib_rule_log_debug(rule_exec, "Created DFA workspace at %p.",
-                          dfa_workspace);
     }
     else if (ib_rc == IB_OK) {
         options = PCRE_PARTIAL_SOFT | PCRE_DFA_RESTART;
-        ib_rule_log_debug(rule_exec, "Reusing existing DFA workspace %p.",
-                          dfa_workspace);
     }
     else {
         free(ovector);
-        ib_rule_log_error(rule_exec,
-                          "Error fetching dfa data for dfa operator: %s",
-                          ib_status_to_string(ib_rc));
         return ib_rc;
     }
 
     /* Perform the match.
      * If capturing is specified, then find all matches.
      */
-    capture = ib_rule_should_capture(rule_exec, 1);
     start_offset = 0;
     match_count = 0;
     do {
@@ -1411,8 +1360,6 @@ ib_status_t dfa_operator_execute(
                                 dfa_workspace->wscount);
 
         if (matches > 0) {
-            ib_log_debug3_tx(tx, "DFA matched: %d", matches);
-
             ++match_count;
 
             /* Use the longest match - the first in ovector -
@@ -1421,7 +1368,7 @@ ib_status_t dfa_operator_execute(
              */
             start_offset = ovector[1] + 1;
             if (capture) {
-                pcre_dfa_set_match(rule_exec, ovector, 1, subject);
+                pcre_dfa_set_match(tx, capture, ovector, 1, subject);
             }
         }
     } while (capture && (matches > 0));
@@ -1431,32 +1378,16 @@ ib_status_t dfa_operator_execute(
         *result = 1;
     }
     else if ((matches == 0) || (matches == PCRE_ERROR_NOMATCH)) {
-        if (ib_log_get_level(rule_exec->ib) >= 7) {
-            char* tmp_c = malloc(subject_len+1);
-            memcpy(tmp_c, subject, subject_len);
-            tmp_c[subject_len] = '\0';
-            /* No match. Return false to the caller (*result = 0). */
-            ib_rule_log_debug(rule_exec,
-                              "No match for \"%s\" using pattern \"%s\".",
-                              tmp_c, rule_data->cpdata->patt);
-            free(tmp_c);
-        }
-
         ib_rc = IB_OK;
         *result = 0;
     }
     else if (matches == PCRE_ERROR_PARTIAL) {
-        ib_log_debug3_tx(tx, "DFA matched partial: %d", matches);
-        ib_rule_log_debug(rule_exec,
-                          "Partial match found, but not a full match.");
         ib_rc = IB_OK;
         *result = 0;
     }
     else {
         /* Some other error occurred. Set the status to false and
-        report the error. */
-        ib_rule_log_error(rule_exec, "DFA match failed (cpat=%p): %d",
-                          (void *)rule_data->cpdata->cpatt, matches);
+         * return the error. */
         ib_rc = IB_EUNKNOWN;
         *result = 0;
     }

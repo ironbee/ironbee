@@ -88,30 +88,44 @@ static inline const char *get_collection_name(
 }
 
 /**
- * Get the capture list, create if required.
+ * Get the capture list from a field.
  *
- * @param[in] tx Transaction
- * @param[in] collection_name The name of the capture collection or NULL
- * @param[in] recursion Recursion limit -- Don't recurse if recursion is zero
+ * @param[in] capture Field to get list from.
  * @param[out] olist If not NULL, pointer to the capture item's list
  *
  * @returns IB_OK: All OK
- *          IB_EINVAL: @a num is too large
- *          Error status from: ib_data_get()
- *                             ib_data_add_list()
- *                             ib_field_value()
+ * @returns Other if can't fetch field value.
  */
 static
 ib_status_t get_capture_list(
-    ib_tx_t    *tx,
-    const char *collection_name,
-    int         recursion,
-    ib_list_t **olist)
+    ib_field_t  *capture,
+    ib_list_t  **olist
+)
 {
     ib_status_t rc;
-    ib_field_t *field = NULL;
     ib_list_t *list = NULL;
 
+    assert(capture != NULL);
+    assert(capture->type == IB_FTYPE_LIST);
+
+    rc = ib_field_mutable_value(capture, ib_ftype_list_mutable_out(&list));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    if (olist != NULL) {
+        *olist = list;
+    }
+
+    return rc;
+}
+
+ib_status_t ib_capture_acquire(
+    const ib_tx_t  *tx,
+    const char     *collection_name,
+    ib_field_t    **field
+)
+{
     assert(tx != NULL);
     assert(tx->data != NULL);
 
@@ -123,28 +137,23 @@ ib_status_t get_capture_list(
 
     /* Look up the capture list */
     collection_name = get_collection_name(collection_name);
-    rc = ib_data_get(tx->data, collection_name, &field);
+    rc = ib_data_get(tx->data, collection_name, field);
     if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(tx->data, collection_name, &field);
+        rc = ib_data_add_list(tx->data, collection_name, field);
     }
     if (rc != IB_OK) {
         return rc;
     }
 
     if (field->type != IB_FTYPE_LIST) {
-        ib_data_remove(tx->data, collection_name, NULL);
-        return get_capture_list(tx, collection_name, recursion, olist);
-    }
-    rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&list));
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    if (olist != NULL) {
-        *olist = list;
+        rc = ib_data_remove(tx->data, collection_name, NULL);
+        if (rc != IB_OK) {
+            return IB_EINVAL;
+        }
+        return ib_capture_acquire(tx, collection_name, field);
     }
 
-    return rc;
+    return IB_OK;
 }
 
 const char *ib_capture_name(
@@ -163,7 +172,8 @@ const char *ib_capture_name(
 const char *ib_capture_fullname(
     const ib_tx_t *tx,
     const char    *collection_name,
-    int            num)
+    int            num
+)
 {
     assert(tx != NULL);
     assert(num >= 0);
@@ -196,16 +206,14 @@ const char *ib_capture_fullname(
     return buf;
 }
 
-ib_status_t ib_capture_clear(
-    ib_tx_t    *tx,
-    const char *collection_name)
+ib_status_t ib_capture_clear(ib_field_t *capture)
 {
-    assert(tx != NULL);
+    assert(capture != NULL);
 
     ib_status_t rc;
     ib_list_t *list;
 
-    rc = get_capture_list(tx, collection_name, 2, &list);
+    rc = get_capture_list(capture, &list);
     if (rc != IB_OK) {
         return rc;
     }
@@ -214,12 +222,13 @@ ib_status_t ib_capture_clear(
 }
 
 ib_status_t ib_capture_set_item(
-    ib_tx_t    *tx,
-    const char *collection_name,
+    ib_field_t *capture,
     int         num,
-    ib_field_t *in_field)
+    ib_mpool_t *mp,
+    ib_field_t *in_field
+)
 {
-    assert(tx != NULL);
+    assert(capture != NULL);
     assert(num >= 0);
 
     if (num > MAX_CAPTURE_NUM) {
@@ -227,15 +236,15 @@ ib_status_t ib_capture_set_item(
     }
 
     ib_status_t rc;
-    ib_list_t *list;
     ib_field_t *field;
+    ib_list_t *list;
     ib_list_node_t *node;
     ib_list_node_t *next;
     const char *name;
 
     name = ib_capture_name(num);
 
-    rc = get_capture_list(tx, collection_name, 2, &list);
+    rc = get_capture_list(capture, &list);
     if (rc != IB_OK) {
         return rc;
     }
@@ -258,7 +267,7 @@ ib_status_t ib_capture_set_item(
         field = in_field;
     }
     else {
-        rc = ib_field_alias(&field, tx->mp, name, strlen(name), in_field);
+        rc = ib_field_alias(&field, mp, name, strlen(name), in_field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -273,16 +282,16 @@ ib_status_t ib_capture_set_item(
 }
 
 ib_status_t ib_capture_add_item(
-    ib_tx_t    *tx,
-    const char *collection_name,
-    ib_field_t *in_field)
+    ib_field_t *capture,
+    ib_field_t *in_field
+)
 {
-    assert(tx != NULL);
+    assert(capture != NULL);
 
     ib_status_t rc;
     ib_list_t *list;
 
-    rc = get_capture_list(tx, collection_name, 2, &list);
+    rc = get_capture_list(capture, &list);
     if (rc != IB_OK) {
         return rc;
     }

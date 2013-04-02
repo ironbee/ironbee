@@ -26,7 +26,6 @@
 #include <ironbee/operator.h>
 #include <ironbee/server.h>
 #include <ironbee/engine.h>
-#include <ironbee/rule_engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>
 #include "gtest/gtest.h"
@@ -65,12 +64,13 @@ ib_status_t test_destroy_fn(
 }
 
 ib_status_t test_execute_fn(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
     char *searchstr = (char *)data;
@@ -96,7 +96,7 @@ ib_status_t test_execute_fn(
     return IB_OK;
 }
 
-class OperatorTest : public BaseFixture
+class OperatorTest : public BaseTransactionFixture
 {
     void SetUp()
     {
@@ -108,7 +108,6 @@ TEST_F(OperatorTest, OperatorCallTest)
 {
     ib_status_t status;
     ib_num_t call_result;
-    ib_rule_t *rule = NULL; /* Unused by this operator. */
     ib_operator_inst_t *op;
 
     status = ib_operator_register(ib_engine,
@@ -140,10 +139,6 @@ TEST_F(OperatorTest, OperatorCallTest)
                                      &op);
     ASSERT_EQ(IB_OK, status);
 
-    ib_rule_exec_t rule_exec;
-    memset(&rule_exec, 0, sizeof(rule_exec));
-    rule_exec.ib = ib_engine;
-    rule_exec.rule = rule;
 
     ib_field_t *field;
     const char *matching = "data matching string";
@@ -157,12 +152,12 @@ TEST_F(OperatorTest, OperatorCallTest)
     );
 
     ib_field_setv(field, ib_ftype_nulstr_in(matching));
-    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
-    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 
@@ -186,7 +181,6 @@ TEST_F(CoreOperatorsTest, ContainsTest)
     ib_status_t status;
     ib_num_t call_result;
     ib_operator_inst_t *op;
-    ib_rule_t *rule = NULL; /* Not used by this operator. */
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
@@ -209,18 +203,13 @@ TEST_F(CoreOperatorsTest, ContainsTest)
         NULL
     );
 
-    ib_rule_exec_t rule_exec;
-    memset(&rule_exec, 0, sizeof(rule_exec));
-    rule_exec.ib = ib_engine;
-    rule_exec.rule = rule;
-
     ib_field_setv(field, ib_ftype_nulstr_in(matching));
-    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
-    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }
@@ -230,7 +219,6 @@ TEST_F(CoreOperatorsTest, EqTest)
     ib_status_t status;
     ib_num_t call_result;
     ib_operator_inst_t *op;
-    ib_rule_t *rule = NULL; /* Not used by this operator. */
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
@@ -253,19 +241,13 @@ TEST_F(CoreOperatorsTest, EqTest)
         ib_ftype_num_in(&matching)
     );
 
-    ib_rule_exec_t rule_exec;
-    memset(&rule_exec, 0, sizeof(rule_exec));
-    rule_exec.ib = ib_engine;
-    rule_exec.tx = ib_tx;
-    rule_exec.rule = rule;
-
     ib_field_setv(field, ib_ftype_num_in(&matching));
-    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_num_in(&nonmatching));
-    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }
@@ -275,7 +257,6 @@ TEST_F(CoreOperatorsTest, NeTest)
     ib_status_t status;
     ib_num_t call_result;
     ib_operator_inst_t *op;
-    ib_rule_t *rule = NULL; /* Not used by this operator. */
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
@@ -298,19 +279,13 @@ TEST_F(CoreOperatorsTest, NeTest)
         ib_ftype_num_in(&matching)
     );
 
-    ib_rule_exec_t rule_exec;
-    memset(&rule_exec, 0, sizeof(rule_exec));
-    rule_exec.ib = ib_engine;
-    rule_exec.tx = ib_tx;
-    rule_exec.rule = rule;
-
     ib_field_setv(field, ib_ftype_num_in(&matching));
-    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_num_in(&nonmatching));
-    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }

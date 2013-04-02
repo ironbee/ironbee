@@ -34,7 +34,6 @@
 #include <ironbee/ipset.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
-#include <ironbee/rule_capture.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
@@ -343,10 +342,11 @@ ib_status_t strop_create(
 /**
  * Execute function for the "streq" operator
  *
- * @param[in]  rule_exec Rule execution object
+ * @param[in]  tx Current transaction
  * @param[in]  data C-style string to compare to
  * @param[in]  flags Operator instance flags
  * @param[in]  field Field value
+ * @param[in]  capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
  * @param[in]  cbdata Callback data; determines case sensitivity.
  *
@@ -354,15 +354,16 @@ ib_status_t strop_create(
  */
 static
 ib_status_t op_streq_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
-    assert(rule_exec != NULL);
+    assert(tx != NULL);
     assert(data != NULL);
     assert(field != NULL);
     assert(result != NULL);
@@ -375,7 +376,6 @@ ib_status_t op_streq_execute(
     ib_status_t  rc;
     const char  *cstr = (const char *)data;
     char        *expanded;
-    ib_tx_t     *tx = rule_exec->tx;
     bool         case_insensitive;
 
     case_insensitive = (cbdata != NULL);
@@ -442,9 +442,15 @@ ib_status_t op_streq_execute(
         return IB_EINVAL;
     }
 
-    if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_rule_capture_clear(rule_exec);
-        ib_rule_capture_set_item(rule_exec, 0, field);
+    if (capture != NULL && *result) {
+        rc = ib_capture_clear(capture);
+        if (rc != IB_OK) {
+            return rc;
+        }
+        rc = ib_capture_set_item(capture, 0, tx->mp, field);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     return IB_OK;
@@ -457,6 +463,7 @@ ib_status_t op_streq_execute(
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
+ * @param[in]  capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
  * @param[in] cbdata Callback data.
  *
@@ -464,15 +471,16 @@ ib_status_t op_streq_execute(
  */
 static
 ib_status_t op_contains_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
-    assert(rule_exec != NULL);
+    assert(tx != NULL);
     assert(data != NULL);
     assert(field != NULL);
     assert(result != NULL);
@@ -480,7 +488,6 @@ ib_status_t op_contains_execute(
     ib_status_t  rc = IB_OK;
     const char  *cstr = (char *)data;
     char        *expanded;
-    ib_tx_t     *tx = rule_exec->tx;
 
     /* Expand the string */
     if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
@@ -530,21 +537,34 @@ ib_status_t op_contains_execute(
         return IB_EINVAL;
     }
 
-    if ( (tx != NULL) && (ib_rule_should_capture(rule_exec, *result)) ) {
+    if (capture != NULL && *result) {
         ib_field_t *f;
         const char *name;
 
-        ib_rule_capture_clear(rule_exec);
+        rc = ib_capture_clear(capture);
+        if (rc != IB_OK) {
+            return rc;
+        }
 
-        name = ib_rule_capture_name(rule_exec, 0);
-        rc = ib_field_create_bytestr_alias(&f, rule_exec->tx->mp,
-                                           name, strlen(name),
-                                           (uint8_t *)expanded,
-                                           strlen(expanded));
-        ib_rule_capture_set_item(rule_exec, 0, f);
+        name = ib_capture_name(0);
+        rc = ib_field_create_bytestr_alias(
+            &f,
+            tx->mp,
+            name, strlen(name),
+            (uint8_t *)expanded,
+            strlen(expanded)
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        rc = ib_capture_set_item(capture, 0, tx->mp, f);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
-    return rc;
+    return IB_OK;
 }
 
 
@@ -644,12 +664,13 @@ ib_status_t op_match_create(
 /**
  * Execute function for the "match" and "imatch" operators.
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data      Set data.
- * @param[in] flags     Operator instance flags.
- * @param[in] field     Field value.
- * @param[out] result   Pointer to number in which to store the result.
- * @param[in] cbdata Callback data.
+ * @param[in]  rule_exec Rule execution object
+ * @param[in]  data      Set data.
+ * @param[in]  flags     Operator instance flags.
+ * @param[in]  field     Field value.
+ * @param[in]  capture   Collection to capture to.
+ * @param[out] result    Pointer to number in which to store the result.
+ * @param[in]  cbdata    Callback data.
  *
  * @returns
  * - IB_OK if no failure, regardless of match status.
@@ -659,28 +680,27 @@ ib_status_t op_match_create(
  */
 static
 ib_status_t op_match_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
-    assert(rule_exec != NULL);
-    assert(data      != NULL);
-    assert(field     != NULL);
-    assert(result    != NULL);
+    assert(tx     != NULL);
+    assert(data   != NULL);
+    assert(field  != NULL);
+    assert(result != NULL);
 
     ib_status_t        rc;
     const ib_hash_t   *set;
     const char        *s;
     size_t             length;
     void              *v;
-    ib_tx_t           *tx;
 
     set = (const ib_hash_t *)data;
-    tx = rule_exec->tx;
 
     if (field->type == IB_FTYPE_NULSTR) {
         rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
@@ -838,12 +858,13 @@ ib_status_t op_ipmatch_create(
 /**
  * Execute function for the "ipmatch" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data      IP Set data.
- * @param[in] flags     Operator instance flags.
- * @param[in] field     Field value.
- * @param[out] result   Pointer to number in which to store the result.
- * @param[in] cbdata Callback data.
+ * @param[in]  rule_exec Rule execution object
+ * @param[in]  data      IP Set data.
+ * @param[in]  flags     Operator instance flags.
+ * @param[in]  field     Field value.
+ * @param[in]  capture   Collection to capture to.
+ * @param[out] result    Pointer to number in which to store the result.
+ * @param[in]  cbdata    Callback data.
  *
  * @returns
  * - IB_OK if no failure, regardless of match status.
@@ -852,25 +873,25 @@ ib_status_t op_ipmatch_create(
  */
 static
 ib_status_t op_ipmatch_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
-    assert(rule_exec != NULL);
-    assert(data      != NULL);
-    assert(field     != NULL);
-    assert(result    != NULL);
+    assert(tx     != NULL);
+    assert(data   != NULL);
+    assert(field  != NULL);
+    assert(result != NULL);
 
     ib_status_t        rc               = IB_OK;
     const ib_ipset4_t *ipset            = NULL;
     ib_ip4_t           ip               = 0;
     const char        *ipstr            = NULL;
     char               ipstr_buffer[17] = "\0";
-    ib_tx_t           *tx               = rule_exec->tx;
 
     ipset = (const ib_ipset4_t *)data;
 
@@ -917,19 +938,19 @@ ib_status_t op_ipmatch_execute(
     if (rc == IB_ENOENT) {
         *result = 0;
     }
-    else if (rc == IB_OK) {
-        *result = 1;
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_rule_capture_clear(rule_exec);
-            ib_rule_capture_set_item(rule_exec, 0, field);
-        }
-    }
-    else {
-        ib_rule_log_error(rule_exec,
-                          "Error searching set for ip %s: %s",
-                          ipstr, ib_status_to_string(rc)
-        );
+    if (rc != IB_OK) {
         return rc;
+    }
+    *result = 1;
+    if (capture != NULL && *result) {
+        rc = ib_capture_clear(capture);
+        if (rc != IB_OK) {
+            return rc;
+        }
+        rc = ib_capture_set_item(capture, 0, tx->mp, field);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
     return IB_OK;
 }
@@ -1053,6 +1074,7 @@ ib_status_t op_ipmatch6_create(
  * @param[in] data      IP Set data.
  * @param[in] flags     Operator instance flags.
  * @param[in] field     Field value.
+ * @param[in] capture   Collection to capture to.
  * @param[out] result   Pointer to number in which to store the result.
  * @param[in] cbdata Callback data.
  *
@@ -1063,25 +1085,25 @@ ib_status_t op_ipmatch6_create(
  */
 static
 ib_status_t op_ipmatch6_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
-    assert(rule_exec != NULL);
-    assert(data      != NULL);
-    assert(field     != NULL);
-    assert(result    != NULL);
+    assert(tx     != NULL);
+    assert(data   != NULL);
+    assert(field  != NULL);
+    assert(result != NULL);
 
     ib_status_t        rc               = IB_OK;
     const ib_ipset6_t *ipset            = NULL;
     ib_ip6_t           ip               = {{0, 0, 0, 0}};
     const char        *ipstr            = NULL;
     char               ipstr_buffer[41] = "\0";
-    ib_tx_t           *tx               = rule_exec->tx;
 
     ipset = (const ib_ipset6_t *)data;
 
@@ -1128,20 +1150,22 @@ ib_status_t op_ipmatch6_execute(
     if (rc == IB_ENOENT) {
         *result = 0;
     }
-    else if (rc == IB_OK) {
-        *result = 1;
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_rule_capture_clear(rule_exec);
-            ib_rule_capture_set_item(rule_exec, 0, field);
-        }
-    }
-    else {
-        ib_rule_log_error(rule_exec,
-                          "Error searching set for ip %s: %s",
-                          ipstr, ib_status_to_string(rc)
-        );
+    if (rc != IB_OK) {
         return rc;
     }
+    *result = 1;
+    if (capture != NULL && *result) {
+        rc = ib_capture_clear(capture);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        rc = ib_capture_set_item(capture, 0, tx->mp, field);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     return IB_OK;
 }
 
@@ -1165,16 +1189,17 @@ ib_status_t op_ipmatch6_execute(
  *   - IB_EINVAL If an expandable value cannot be expanded.
  *   - Other returned by ib_data_expand_str.
  */
-static ib_status_t expand_field(
-    const ib_rule_exec_t *rule_exec,
-    const ib_flags_t flags,
-    const ib_field_t *in_field,
-    ib_field_t **out_field)
+static
+ib_status_t expand_field(
+    const ib_tx_t     *tx,
+    const ib_flags_t   flags,
+    const ib_field_t  *in_field,
+    ib_field_t       **out_field
+)
 {
-    assert(rule_exec);
-    assert(rule_exec->tx);
-    assert(rule_exec->tx->mp);
-    assert(in_field);
+    assert(tx       != NULL);
+    assert(tx->mp   != NULL);
+    assert(in_field != NULL);
 
     const char *original;
     char *expanded;
@@ -1194,7 +1219,7 @@ static ib_status_t expand_field(
     }
 
     /* Expand the string */
-    rc = ib_data_expand_str(rule_exec->tx->data, original, false, &expanded);
+    rc = ib_data_expand_str(tx->data, original, false, &expanded);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1204,7 +1229,7 @@ static ib_status_t expand_field(
      * fail, we return tmp_field in *out_field. */
     rc = ib_field_create_alias(
         &tmp_field,
-        rule_exec->tx->mp,
+        tx->mp,
         in_field->name,
         in_field->nlen,
         IB_FTYPE_NULSTR,
@@ -1215,7 +1240,7 @@ static ib_status_t expand_field(
 
     /* Attempt a num. */
     rc = ib_field_convert(
-        rule_exec->tx->mp,
+        tx->mp,
         IB_FTYPE_NUM,
         tmp_field,
         out_field);
@@ -1225,7 +1250,7 @@ static ib_status_t expand_field(
 
     /* Attempt a float. */
     rc = ib_field_convert(
-        rule_exec->tx->mp,
+        tx->mp,
         IB_FTYPE_FLOAT,
         tmp_field,
         out_field);
@@ -1241,68 +1266,86 @@ static ib_status_t expand_field(
 /**
  * Store a number in the capture buffer
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] capture The capture number
+ * @param[in] mp Memory pool to use.
+ * @param[in] capture Capture field.
+ * @param[in] n The capture number
  * @param[in] value The actual value
  */
-static ib_status_t capture_float(const ib_rule_exec_t *rule_exec,
-                                 int capture,
-                                 ib_float_t value)
+static
+ib_status_t capture_float(
+    ib_mpool_t *mp,
+    ib_field_t *capture,
+    int         n,
+    ib_float_t  value
+)
 {
-    assert(rule_exec != NULL);
+    assert(mp != NULL);
+    assert(capture != NULL);
 
     ib_status_t rc;
     ib_field_t *field;
     const char *name;
     const char *str;
 
-    name = ib_rule_capture_name(rule_exec, capture);
+    name = ib_capture_name(n);
 
-    str = ib_float_to_string(rule_exec->tx->mp, value);
+    str = ib_float_to_string(mp, value);
     if (str == NULL) {
         return IB_EALLOC;
     }
-    rc = ib_field_create_bytestr_alias(&field, rule_exec->tx->mp,
-                                       name, strlen(name),
-                                       (uint8_t *)str, strlen(str));
+    rc = ib_field_create_bytestr_alias(
+        &field,
+        mp,
+        name, strlen(name),
+        (uint8_t *)str, strlen(str)
+    );
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_rule_capture_set_item(rule_exec, 0, field);
+    rc = ib_capture_set_item(capture, n, mp, field);
     return rc;
 }
 
 /**
  * Store a number in the capture buffer
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] capture The capture number
+ * @param[in] mp Memory pool to use.
+ * @param[in] capture Capture field.
+ * @param[in] n The capture number
  * @param[in] value The actual value
  */
-static ib_status_t capture_num(const ib_rule_exec_t *rule_exec,
-                               int capture,
-                               ib_num_t value)
+static
+ib_status_t capture_num(
+    ib_mpool_t *mp,
+    ib_field_t *capture,
+    int         n,
+    ib_num_t    value
+)
 {
-    assert(rule_exec != NULL);
+    assert(mp != NULL);
+    assert(capture != NULL);
 
     ib_status_t rc;
     ib_field_t *field;
     const char *name;
     const char *str;
 
-    name = ib_rule_capture_name(rule_exec, capture);
+    name = ib_capture_name(n);
 
-    str = ib_num_to_string(rule_exec->tx->mp, value);
+    str = ib_num_to_string(mp, value);
     if (str == NULL) {
         return IB_EALLOC;
     }
-    rc = ib_field_create_bytestr_alias(&field, rule_exec->tx->mp,
-                                       name, strlen(name),
-                                       (uint8_t *)str, strlen(str));
+    rc = ib_field_create_bytestr_alias(
+        &field,
+        mp,
+        name, strlen(name),
+        (uint8_t *)str, strlen(str)
+    );
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_rule_capture_set_item(rule_exec, 0, field);
+    rc = ib_capture_set_item(capture, n, mp, field);
     return rc;
 }
 
@@ -1386,21 +1429,22 @@ static ib_status_t select_math_type_conversion(
  *   - IB_OK On success.
  *   - IB_EINVAL If a type cannot be converted.
  */
-static ib_status_t prepare_math_operands(
-    const ib_rule_exec_t *rule_exec,
-    const ib_flags_t flags,
-    const ib_field_t *lh_in,
-    const ib_field_t *rh_in,
-    ib_field_t **lh_out,
-    ib_field_t **rh_out)
+static
+ib_status_t prepare_math_operands(
+    const ib_tx_t     *tx,
+    const ib_flags_t   flags,
+    const ib_field_t  *lh_in,
+    const ib_field_t  *rh_in,
+    ib_field_t       **lh_out,
+    ib_field_t       **rh_out
+)
 {
-    assert(rule_exec);
-    assert(rule_exec->tx);
-    assert(rule_exec->tx->mp);
-    assert(lh_in);
-    assert(rh_in);
-    assert(lh_out);
-    assert(rh_out);
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
+    assert(lh_in != NULL);
+    assert(rh_in != NULL);
+    assert(lh_out != NULL);
+    assert(rh_out != NULL);
 
     ib_ftype_t type = 0;
     ib_status_t rc;
@@ -1409,7 +1453,7 @@ static ib_status_t prepare_math_operands(
     ib_field_t *tmp_field = NULL;
 
     /* First, expand the right hand input. */
-    rc = expand_field(rule_exec, flags, rh_in, &tmp_field);
+    rc = expand_field(tx, flags, rh_in, &tmp_field);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1429,7 +1473,7 @@ static ib_status_t prepare_math_operands(
     }
 
     /* Convert rh_field. */
-    rc = ib_field_convert(rule_exec->tx->mp, type, *rh_out, &tmp_field);
+    rc = ib_field_convert(tx->mp, type, *rh_out, &tmp_field);
     if (rc != IB_OK){
         *rh_out = NULL;
         *lh_out = NULL;
@@ -1440,7 +1484,7 @@ static ib_status_t prepare_math_operands(
     }
 
     /* Convert lh_field. */
-    rc = ib_field_convert(rule_exec->tx->mp, type, lh_in, &tmp_field);
+    rc = ib_field_convert(tx->mp, type, lh_in, &tmp_field);
     if (rc != IB_OK) {
         *rh_out = NULL;
         *lh_out = NULL;
@@ -1457,28 +1501,31 @@ static ib_status_t prepare_math_operands(
 }
 
 /**
- * param[in] rule_exec Rule execution.
- * param[in] data Parameter field.
- * param[in] flags Flags to influence @a data expansion.
- * param[in] field The field used.
- * param[in] num_compare If this is an ib_num_t, use this to compare.
- * param[in] float_compare If this is an ib_float_t, use this to compare.
- * param[out] result The result is store here.
+ * @param[in] rule_exec Rule execution.
+ * @param[in] data Parameter field.
+ * @param[in] flags Flags to influence @a data expansion.
+ * @param[in] field The field used.
+ * @param[in] capture Collection to capture to.
+ * @param[in] num_compare If this is an ib_num_t, use this to compare.
+ * @param[in] float_compare If this is an ib_float_t, use this to compare.
+ * @param[out] result The result is store here.
  */
-static ib_status_t execute_compare(
-    const ib_rule_exec_t *rule_exec,
-    void *data,
-    ib_flags_t flags,
-    ib_field_t *field,
-    num_compare_fn_t num_compare,
-    float_compare_fn_t float_compare,
-    ib_num_t *result)
+static
+ib_status_t execute_compare(
+    const ib_tx_t      *tx,
+    void               *data,
+    ib_flags_t          flags,
+    ib_field_t         *field,
+    ib_field_t         *capture,
+    num_compare_fn_t    num_compare,
+    float_compare_fn_t  float_compare,
+    ib_num_t           *result
+)
 {
-    assert(data);
-    assert(result);
-    assert(rule_exec);
-    assert(rule_exec->tx);
-    assert(rule_exec->tx->mp);
+    assert(data != NULL);
+    assert(result != NULL);
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
 
     const ib_field_t *pdata = (const ib_field_t *)data;
     ib_status_t rc;
@@ -1486,12 +1533,13 @@ static ib_status_t execute_compare(
     ib_field_t *lh_field = NULL;
 
     rc = prepare_math_operands(
-        rule_exec,
+        tx,
         flags,
         field,
         pdata,
         &lh_field,
-        &rh_field);
+        &rh_field
+    );
     if (rc != IB_OK) {
         return rc;
     }
@@ -1516,12 +1564,14 @@ static ib_status_t execute_compare(
         if (rc != IB_OK) {
             return rc;
         }
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_rule_capture_clear(rule_exec);
-            rc = capture_num(rule_exec, 0, value);
+        if (capture != NULL && *result) {
+            rc = ib_capture_clear(capture);
             if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
+                return rc;
+            }
+            rc = capture_num(tx->mp, capture, 0, value);
+            if (rc != IB_OK) {
+                return rc;
             }
         }
     }
@@ -1546,12 +1596,14 @@ static ib_status_t execute_compare(
         if (rc != IB_OK) {
             return rc;
         }
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_rule_capture_clear(rule_exec);
-            rc = capture_float(rule_exec, 0, value);
+        if (capture != NULL && *result) {
+            rc = ib_capture_clear(capture);
             if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
+                return rc;
+            }
+            rc = capture_float(tx->mp, capture, 0, value);
+            if (rc != IB_OK) {
+                return rc;
             }
         }
     }
@@ -1569,6 +1621,7 @@ static ib_status_t execute_compare(
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
+ * @param[in] capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
  * @param[in] cbdata Callback data.
  *
@@ -1579,24 +1632,27 @@ static ib_status_t execute_compare(
  */
 static
 ib_status_t op_eq_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
     ib_status_t rc;
 
     rc = execute_compare(
-        rule_exec,
+        tx,
         data,
         flags,
         field,
+        capture,
         &num_eq,
         &float_eq,
-        result);
+        result
+    );
 
     return rc;
 }
@@ -1608,6 +1664,7 @@ ib_status_t op_eq_execute(
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
+ * @param[in] capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
  * @param[in] cbdata Callback data.
  *
@@ -1615,21 +1672,23 @@ ib_status_t op_eq_execute(
  */
 static
 ib_status_t op_ne_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
     ib_status_t rc;
 
     rc = execute_compare(
-        rule_exec,
+        tx,
         data,
         flags,
         field,
+        capture,
         &num_ne,
         &float_ne,
         result);
@@ -1644,6 +1703,7 @@ ib_status_t op_ne_execute(
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
+ * @param[in] capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
  * @param[in] cbdata Callback data.
  *
@@ -1651,21 +1711,23 @@ ib_status_t op_ne_execute(
  */
 static
 ib_status_t op_gt_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
     ib_status_t rc;
 
     rc = execute_compare(
-        rule_exec,
+        tx,
         data,
         flags,
         field,
+        capture,
         &num_gt,
         &float_gt,
         result);
@@ -1680,6 +1742,7 @@ ib_status_t op_gt_execute(
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
+ * @param[in] capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
  * @param[in] cbdata Callback data.
  *
@@ -1687,21 +1750,23 @@ ib_status_t op_gt_execute(
  */
 static
 ib_status_t op_lt_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
     ib_status_t rc;
 
     rc = execute_compare(
-        rule_exec,
+        tx,
         data,
         flags,
         field,
+        capture,
         &num_lt,
         &float_lt,
         result);
@@ -1716,6 +1781,7 @@ ib_status_t op_lt_execute(
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
+ * @param[in] capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
  * @param[in] cbdata Callback data.
  *
@@ -1723,21 +1789,23 @@ ib_status_t op_lt_execute(
  */
 static
 ib_status_t op_ge_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
     ib_status_t rc;
 
     rc = execute_compare(
-        rule_exec,
+        tx,
         data,
         flags,
         field,
+        capture,
         &num_ge,
         &float_ge,
         result);
@@ -1752,6 +1820,7 @@ ib_status_t op_ge_execute(
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
+ * @param[in] capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
  * @param[in] cbdata Callback data.
  *
@@ -1759,21 +1828,23 @@ ib_status_t op_ge_execute(
  */
 static
 ib_status_t op_le_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
     ib_status_t rc;
 
     rc = execute_compare(
-        rule_exec,
+        tx,
         data,
         flags,
         field,
+        capture,
         &num_le,
         &float_le,
         result);
@@ -1899,27 +1970,38 @@ ib_status_t op_numcmp_create(
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
+ * @param[in] capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
  * @param[in] cbdata Callback data.
  *
- * @returns Status code (IB_OK)
+ * @returns Status code
  */
 static
 ib_status_t op_nop_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
+    ib_status_t rc;
+
     *result = 1;
 
-    if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_rule_capture_clear(rule_exec);
-        ib_rule_capture_set_item(rule_exec, 0, field);
+    if (capture != NULL) {
+        rc = ib_capture_clear(capture);
+        if (rc != IB_OK) {
+            return rc;
+        }
+        rc = ib_capture_set_item(capture, 0, tx->mp, field);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
+
     return IB_OK;
 }
 
@@ -1930,8 +2012,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 {
     ib_status_t rc;
 
-
-    /**
+    /*
      * String comparison operators
      */
 

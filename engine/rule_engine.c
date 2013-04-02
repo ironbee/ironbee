@@ -32,6 +32,7 @@
 
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
+#include <ironbee/capture.h>
 #include <ironbee/config.h>
 #include <ironbee/core.h>
 #include <ironbee/engine.h>
@@ -425,6 +426,37 @@ static ib_status_t find_meta(
         }
     }
     return IB_ENOENT;
+}
+
+/**
+ * Get a capture collection for a rule_exec.
+ *
+ * @param[in] rule_exec Rule execution environment.
+ * @return Capture collection or NULL if unneeded or error (will log).
+ **/
+static ib_field_t *get_capture(ib_rule_exec_t *rule_exec)
+{
+    ib_field_t *capture = NULL;
+    ib_status_t rc;
+    if (
+        rule_exec->rule != NULL &&
+        ib_flags_all(rule_exec->rule->flags, IB_RULE_FLAG_CAPTURE)
+    )
+    {
+        rc = ib_capture_acquire(
+            rule_exec->tx,
+            rule_exec->rule->capture_collection,
+            &capture
+        );
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                "Failed to create capture collection: %s",
+                ib_status_to_string(rc)
+            );
+            capture = NULL;
+        }
+    }
+    return capture;
 }
 
 ib_status_t ib_rule_exec_create(ib_tx_t *tx,
@@ -1391,8 +1423,13 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
 
         /* Execute the operator */
         /* @todo remove the cast-away of the constness of value */
-        op_rc = ib_operator_execute(rule_exec, opinst,
-                                    (ib_field_t *)value, &result);
+        op_rc = ib_operator_execute(
+            rule_exec->tx,
+            opinst,
+            (ib_field_t *)value,
+            get_capture(rule_exec),
+            &result
+        );
         if (op_rc != IB_OK) {
             ib_rule_log_warn(rule_exec, "Operator returned an error: %s",
                              ib_status_to_string(op_rc));
@@ -1469,8 +1506,13 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
         /* Execute the operator */
         ib_rule_log_trace(rule_exec, "Executing external rule");
-        op_rc = ib_operator_execute(rule_exec, opinst, NULL,
-                                    &rule_exec->result);
+        op_rc = ib_operator_execute(
+            rule_exec->tx,
+            opinst,
+            NULL,
+            get_capture(rule_exec),
+            &rule_exec->result
+        );
         if (op_rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "External operator returned an error: %s",
@@ -2143,7 +2185,13 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     }
 
     /* Execute the rule operator */
-    op_rc = ib_operator_execute(rule_exec, rule->opinst, value, &result);
+    op_rc = ib_operator_execute(
+        rule_exec->tx,
+        rule->opinst,
+        value,
+        get_capture(rule_exec),
+        &result
+    );
     if (op_rc != IB_OK) {
         ib_rule_log_error(rule_exec, "Operator returned an error: %s",
                           ib_status_to_string(op_rc));

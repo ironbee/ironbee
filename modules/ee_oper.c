@@ -31,7 +31,6 @@
 #include <ironbee/module.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
-#include <ironbee/rule_capture.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
 
@@ -47,6 +46,14 @@ IB_MODULE_DECLARE();
 
 /* Global hash to store patterns */
 static ib_hash_t *g_eudoxus_pattern_hash = NULL;
+
+/* Callback data for ee match */
+struct ee_callback_data_t
+{
+    ib_tx_t *tx;
+    ib_field_t *capture;
+};
+typedef struct ee_callback_data_t ee_callback_data_t;
 
 /**
  * Load a eudoxus pattern so it can be used in rules.
@@ -143,7 +150,7 @@ static IB_DIRMAP_INIT_STRUCTURE(eudoxus_directive_map) = {
  * @param[in] output_length Length of output.
  * @param[in] input Current location in the input (first character
  *                  after the match).
- * @param[in,out] cbdata Pointer to the ib_rule_exec_t instance we are
+ * @param[in,out] cbdata Pointer to the ee_callback_data_t instance we are
  *                       handling. This is needed for handling capture
  *                       of the match.
  */
@@ -153,25 +160,26 @@ static ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
                                                     const uint8_t *input,
                                                     void *cbdata)
 {
+    assert(cbdata != NULL);
+    assert(output != NULL);
+
     ib_status_t rc;
     uint32_t match_len;
-    const ib_rule_exec_t *rule_exec = cbdata;
-    ib_tx_t *tx = rule_exec->tx;
+    const ee_callback_data_t *ee_cbdata = cbdata;
+    ib_tx_t *tx = ee_cbdata->tx;
+    ib_field_t *capture = ee_cbdata->capture;
     ib_bytestr_t *bs;
     ib_field_t *field;
     const char *name;
 
-    assert(cbdata != NULL);
-    assert(rule_exec->rule != NULL);
     assert(tx != NULL);
-    assert(output != NULL);
 
-    if (ib_rule_should_capture(rule_exec, 1)) {
+    if (capture != NULL) {
         if (output_length != sizeof(uint32_t)) {
             return IA_EUDOXUS_CMD_ERROR;
         }
         match_len = *(uint32_t *)(output);
-        rc = ib_rule_capture_clear(rule_exec);
+        rc = ib_capture_clear(capture);
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Error clearing captures: %s",
                             ib_status_to_string(rc));
@@ -185,13 +193,13 @@ static ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
-        name = ib_rule_capture_name(rule_exec, 0);
+        name = ib_capture_name(0);
         rc = ib_field_create(&field, tx->mp, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
-        rc = ib_rule_capture_set_item(rule_exec, 0, field);
+        rc = ib_capture_set_item(capture, 0, tx->mp, field);
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
@@ -258,22 +266,24 @@ ib_status_t ee_match_any_operator_create(
  * The capture option is supported; the matched pattern will be placed in the
  * capture variable if a match occurs.
  *
- * @param[in] rule_exec The rule being executed.
+ * @param[in] tc Current transaction.
  * @param[in] data Callback data -- This is the initialized eudoxus engine
  *                 set by ee_match_any_operator_create().
  * @param[in] flags
  * @param[in] field The field to match.
+ * @param[in] capture Collection to capture to.
  * @param[out] result Set to 1 if a match is found 0 otherwise.
  * @param[in] cbdata Callback data.
  */
 static
 ib_status_t ee_match_any_operator_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 )
 {
     ib_status_t rc;
@@ -282,8 +292,9 @@ ib_status_t ee_match_any_operator_execute(
     ia_eudoxus_state_t* state;
     const char *input;
     size_t input_len;
+    ee_callback_data_t *ee_cbdata;
 
-    assert(rule_exec != NULL);
+    assert(tx != NULL);
     assert(data != NULL);
 
     *result = 0;
@@ -311,8 +322,14 @@ ib_status_t ee_match_any_operator_execute(
         return IB_EINVAL;
     }
 
+    ee_cbdata = ib_mpool_alloc(tx->mp, sizeof(*ee_cbdata));
+    if (ee_cbdata == NULL) {
+        return IB_EALLOC;
+    }
+    ee_cbdata->tx = tx;
+    ee_cbdata->capture = capture;
     ia_rc = ia_eudoxus_create_state(&state, eudoxus, ee_first_match_callback,
-                                    (void *)rule_exec);
+                                    (void *)ee_cbdata);
     if (ia_rc != IA_EUDOXUS_OK) {
         return IB_EINVAL;
     }

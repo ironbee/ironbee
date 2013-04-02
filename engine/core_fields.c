@@ -314,9 +314,17 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     }
 
     /* Initialize CAPTURE */
-    rc = ib_capture_clear(tx, NULL);
-    if (rc != IB_OK) {
-        return rc;
+    {
+        ib_field_t *capture;
+        rc = ib_capture_acquire(tx, NULL, &capture);
+        if (rc != IB_OK) {
+            return rc;
+        }
+        assert(capture != NULL);
+        rc = ib_capture_clear(capture);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     /* Core Response Fields */

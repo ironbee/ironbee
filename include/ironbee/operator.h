@@ -37,7 +37,6 @@
 #include <ironbee/build.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
-#include <ironbee/rule_defs.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus
@@ -91,22 +90,24 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(
 /**
  * Operator instance execution callback type.
  *
- * @param[in] rule_exec The rule execution object
+ * @param[in] tx Current transaction.
  * @param[in] data Instance data needed for execution.
  * @param[in] flags Operator instance flags.
  * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  *
  * @returns IB_OK if successful.
  */
 typedef ib_status_t (* ib_operator_execute_fn_t)(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result,
-    void                 *cbdata
+    ib_tx_t    *tx,
+    void       *data,
+    ib_flags_t  flags,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
 );
 
 /** Operator Structure */
@@ -252,17 +253,19 @@ ib_status_t DLL_PUBLIC ib_operator_inst_destroy(
 /**
  * Call the execute function for an operator instance.
  *
- * @param[in] rule_exec The rule execution object
+ * @param[in] tx Current transaction.
  * @param[in] op_inst Operator instance to use.
  * @param[in] field Field to operate on.
+ * @param[in] capture Collection to capture to or NULL if no capture needed.
  * @param[out] result The result of the operator
  *
  * @returns IB_OK on success
  */
 ib_status_t DLL_PUBLIC ib_operator_execute(
-    const ib_rule_exec_t     *rule_exec,
+    ib_tx_t                  *tx,
     const ib_operator_inst_t *op_inst,
     ib_field_t               *field,
+    ib_field_t               *capture,
     ib_num_t                 *result
 );
 

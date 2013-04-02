@@ -154,6 +154,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ib_field_t *outfield;
     const ib_list_t *outlist;
     ib_num_t result;
+    ib_field_t *capture;
 
     // Create the operator instance.
     ASSERT_EQ(IB_OK,
@@ -166,10 +167,11 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                                       &op_inst));
 
     // Attempt to match.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(&rule_exec1,
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(rule_exec1.tx,
                                              op_inst->data,
                                              op_inst->flags,
                                              field1,
+                                             NULL,
                                              &result,
                                              NULL));
 
@@ -177,10 +179,11 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_FALSE(result);
 
     // Attempt to match again.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(&rule_exec1,
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(rule_exec1.tx,
                                              op_inst->data,
                                              op_inst->flags,
                                              field2,
+                                             NULL,
                                              &result,
                                              NULL));
 
@@ -206,10 +209,11 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                                       &op_inst));
 
     // Attempt to match.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(&rule_exec1,
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(rule_exec1.tx,
                                              op_inst->data,
                                              op_inst->flags,
                                              field1,
+                                             NULL,
                                              &result,
                                              NULL));
 
@@ -217,10 +221,11 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_FALSE(result);
 
     // Attempt to match again.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(&rule_exec1,
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(rule_exec1.tx,
                                              op_inst->data,
                                              op_inst->flags,
                                              field2,
+                                             NULL,
                                              &result,
                                              NULL));
 
@@ -245,12 +250,19 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                                       IB_OPINST_FLAG_NONE,
                                       &op_inst));
 
+    ASSERT_EQ(IB_OK,
+              ib_capture_acquire(
+                  rule_exec2.tx,
+                  NULL,
+                  &capture));
+
     // Attempt to match again.
     ASSERT_EQ(IB_OK,
-              op_inst->op->fn_execute(&rule_exec2,
+              op_inst->op->fn_execute(rule_exec2.tx,
                                       op_inst->data,
                                       op_inst->flags,
                                       field2,
+                                      capture,
                                       &result,
                                       NULL));
 
