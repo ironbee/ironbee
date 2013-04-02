@@ -115,7 +115,7 @@ typedef struct ib_operator_t ib_operator_t;
 
 struct ib_operator_t {
     char                     *name; /**< Name of the operator. */
-    ib_flags_t                flags; /**< Operator flags */
+    ib_flags_t                capabilities; /**< Operator capabilities */
     ib_operator_create_fn_t   fn_create; /**< Instance creation function. */
     void                     *cbdata_create; /**< Create callback data. */
     ib_operator_destroy_fn_t  fn_destroy; /**< Instance destroy function. */
@@ -124,12 +124,17 @@ struct ib_operator_t {
     void                     *cbdata_execute; /**< Execute callback data. */
 };
 
-/** Operator flags */
-#define IB_OP_FLAG_NONE        (0x0)      /**< No flags */
-#define IB_OP_FLAG_ALLOW_NULL  (1 << 0)   /**< Op. accepts NULL fields */
-#define IB_OP_FLAG_PHASE       (1 << 1)   /**< Op works with phase rules */
-#define IB_OP_FLAG_STREAM      (1 << 2)   /**< Op works with stream rules */
-#define IB_OP_FLAG_CAPTURE     (1 << 3)   /**< Op supports capture */
+/* Operator capabilities */
+/*! No capabilities */
+#define IB_OP_CAPABILITY_NONE        (0x0)
+/*! Accepts NULL fields */
+#define IB_OP_CAPABILITY_ALLOW_NULL  (1 << 0)
+/*! Works with non-stream phases */
+#define IB_OP_CAPABILITY_NON_STREAM  (1 << 1)
+/*! Works with stream phases */
+#define IB_OP_CAPABILITY_STREAM      (1 << 2)
+/*! Supports capture */
+#define IB_OP_CAPABILITY_CAPTURE     (1 << 3)
 
 struct ib_operator_inst_t {
     struct ib_operator_t *op;      /**< Pointer to the operator type */
@@ -188,7 +193,7 @@ ib_status_t DLL_PUBLIC ib_operator_register(
  * @param[in] mpool The memory pool to create the instance from.
  * @param[in] ctx Current IronBee context
  * @param[in] required_op_flags Required operator flags
- *            (IB_OP_FLAG_{PHASE,STREAM})
+ *            (IB_OP_CAPABILITY_{PHASE,STREAM})
  * @param[in] name The name of the operator to create.
  * @param[in] parameters Parameters used to create the instance.
  * @param[in] flags Operator instance flags (i.e. IB_OPINST_FLAG_INVERT)
@@ -217,7 +222,7 @@ ib_status_t DLL_PUBLIC ib_operator_inst_create_ex(
  * @param[in] ib Ironbee engine
  * @param[in] ctx Current IronBee context
  * @param[in] required_op_flags Required operator flags
- *            (IB_OP_FLAG_{PHASE,STREAM})
+ *            (IB_OP_CAPABILITY_{PHASE,STREAM})
  * @param[in] name The name of the operator to create.
  * @param[in] parameters Parameters used to create the instance.
  * @param[in] flags Operator instance flags (i.e. IB_OPINST_FLAG_INVERT)

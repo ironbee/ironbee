@@ -340,7 +340,7 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Register is_sqli operator. */
     rc = ib_operator_register(ib,
                               "is_sqli",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_CAPABILITY_NON_STREAM,
                               sqli_op_create,
                               NULL,
                               NULL,

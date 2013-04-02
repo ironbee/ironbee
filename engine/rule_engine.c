@@ -103,7 +103,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_ALLOW_TFNS ),
         NULL,
         "Generic 'Phase' Rule",
-        IB_OP_FLAG_PHASE,
+        IB_OP_CAPABILITY_NON_STREAM,
         (ib_state_event_type_t) -1
     },
     {
@@ -116,7 +116,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_REQUEST ),
         "REQUEST_HEADER",
         "Request Header",
-        IB_OP_FLAG_PHASE,
+        IB_OP_CAPABILITY_NON_STREAM,
         handle_request_header_event
     },
     {
@@ -129,7 +129,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_REQUEST ),
         "REQUEST_BODY",
         "Request Body",
-        IB_OP_FLAG_PHASE,
+        IB_OP_CAPABILITY_NON_STREAM,
         handle_request_event
     },
     {
@@ -142,7 +142,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_RESPONSE ),
         "RESPONSE_HEADER",
         "Response Header",
-        IB_OP_FLAG_PHASE,
+        IB_OP_CAPABILITY_NON_STREAM,
         handle_response_header_event
     },
     {
@@ -155,7 +155,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_RESPONSE ),
         "RESPONSE_BODY",
         "Response Body",
-        IB_OP_FLAG_PHASE,
+        IB_OP_CAPABILITY_NON_STREAM,
         handle_response_event
     },
     {
@@ -169,7 +169,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_POSTPROCESS ),
         "POST_PROCESS",
         "Post Process",
-        IB_OP_FLAG_PHASE,
+        IB_OP_CAPABILITY_NON_STREAM,
         handle_postprocess_event
     },
     {
@@ -183,7 +183,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_LOGGING ),
         "LOGGING",
         "Logging",
-        IB_OP_FLAG_PHASE,
+        IB_OP_CAPABILITY_NON_STREAM,
         handle_logging_event
     },
 
@@ -195,7 +195,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_STREAM),
         NULL,
         "Generic 'Stream Inspection' Rule",
-        IB_OP_FLAG_STREAM,
+        IB_OP_CAPABILITY_STREAM,
         (ib_state_event_type_t) -1
     },
     {
@@ -207,7 +207,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_REQUEST ),
         "REQUEST_HEADER_STREAM",
         "Request Header Stream",
-        IB_OP_FLAG_STREAM,
+        IB_OP_CAPABILITY_STREAM,
         handle_context_tx_event
     },
     {
@@ -219,7 +219,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_REQUEST ),
         "REQUEST_BODY_STREAM",
         "Request Body Stream",
-        IB_OP_FLAG_STREAM,
+        IB_OP_CAPABILITY_STREAM,
         request_body_data_event
     },
     {
@@ -231,7 +231,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_RESPONSE ),
         "RESPONSE_HEADER_STREAM",
         "Response Header Stream",
-        IB_OP_FLAG_STREAM,
+        IB_OP_CAPABILITY_STREAM,
         response_header_data_event
     },
     {
@@ -243,7 +243,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_RESPONSE ),
         "RESPONSE_BODY_STREAM",
         "Response Body Stream",
-        IB_OP_FLAG_STREAM,
+        IB_OP_CAPABILITY_STREAM,
         response_body_data_event
     },
     {
@@ -253,7 +253,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         PHASE_FLAG_NONE,
         NULL,
         "Invalid",
-        IB_OP_FLAG_NONE,
+        IB_OP_CAPABILITY_NONE,
         (ib_state_event_type_t) -1
     }
 };
@@ -1567,7 +1567,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         getrc = ib_data_get(tx->data, fname, &value);
         if (getrc == IB_ENOENT) {
             bool allow  =
-                ib_flags_all(opinst->op->flags, IB_OP_FLAG_ALLOW_NULL);
+                ib_flags_all(opinst->op->capabilities, IB_OP_CAPABILITY_ALLOW_NULL);
 
             if (! allow) {
                 ib_rule_log_debug(rule_exec,
@@ -4800,7 +4800,7 @@ ib_status_t ib_rule_set_capture(
     }
 
     /* If the operator doesn't support capture, return an error */
-    if (! ib_flags_any(rule->opinst->op->flags, IB_OP_FLAG_CAPTURE)) {
+    if (! ib_flags_any(rule->opinst->op->capabilities, IB_OP_CAPABILITY_CAPTURE)) {
         return IB_ENOTIMPL;
     }
 

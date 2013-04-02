@@ -1531,8 +1531,8 @@ void ib_rule_log_execution(
             }
 
             if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_TARGET)) {
-                bool allow_null = ib_flags_all(rule->opinst->op->flags,
-                                               IB_OP_FLAG_ALLOW_NULL);
+                bool allow_null = ib_flags_all(rule->opinst->op->capabilities,
+                                               IB_OP_CAPABILITY_ALLOW_NULL);
                 if ( (tgt->original == NULL) && (allow_null == false) ) {
                     rule_log_exec(rule_exec,
                                   "TARGET %s NOT_FOUND",

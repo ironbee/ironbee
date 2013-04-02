@@ -17,8 +17,8 @@ local IB_RULEMD_FLAG_EXPAND_MSG = 1
 local IB_RULEMD_FLAG_EXPAND_DATA = 2
 
 -- Pair of #defines from C code imported here.
-local IB_OP_FLAG_PHASE = 2
-local IB_OP_FLAG_STREAM = 4
+local IB_OP_CAPABILITY_NON_STREAM = 2
+local IB_OP_CAPABILITY_STREAM = 4
 
 local IB_OPINST_FLAG_INVERT = 1
 local IB_OPINST_FLAG_EXPAND = 2
@@ -56,7 +56,7 @@ end
 
 -- Include a configuration file.
 --
--- Rules are not committed to the engine until the end of the 
+-- Rules are not committed to the engine until the end of the
 -- configuration phase.
 --
 -- param[in] cp Configuraiton Parser.
@@ -177,14 +177,14 @@ local build_rule = function(ib, ctx, chain, db)
         end
 
         ffi.C.ib_rule_set_id(ib.ib_engine, prule[0], rule_id)
-        
+
         for _, action in ipairs(rule.data.actions) do
             local name, arg = action.name, action.argument
-    
+
             if name == "logdata" then
                 local expand = ffi.new("bool[1]")
 
-                prule[0].meta.data = 
+                prule[0].meta.data =
                     ffi.C.ib_mpool_memdup(
                         ffi.C.ib_engine_pool_main_get(ib.ib_engine),
                         arg,
@@ -263,7 +263,7 @@ local build_rule = function(ib, ctx, chain, db)
 
         -- Set tags
         for tag, _ in pairs(rule.data.tags) do
-            local tagcpy = 
+            local tagcpy =
                 ffi.C.ib_mpool_memdup(
                     ffi.C.ib_engine_pool_main_get(ib.ib_engine),
                     tag,
@@ -279,7 +279,7 @@ local build_rule = function(ib, ctx, chain, db)
         if rule.data.message then
 
             -- Set the message.
-            prule[0].meta.msg = 
+            prule[0].meta.msg =
                     ffi.C.ib_mpool_memdup(
                         ffi.C.ib_engine_pool_main_get(ib.ib_engine),
                         rule.data.message,
@@ -322,9 +322,9 @@ local build_rule = function(ib, ctx, chain, db)
 
         -- Set the flag values.
         if rule.is_streaming() then
-            op_inst_create_stream_flags = IB_OP_FLAG_STREAM
+            op_inst_create_stream_flags = IB_OP_CAPABILITY_STREAM
         else
-            op_inst_create_stream_flags = IB_OP_FLAG_PHASE
+            op_inst_create_stream_flags = IB_OP_CAPABILITY_NON_STREAM
         end
 
         -- Handle inverted operator.
@@ -386,7 +386,7 @@ local build_rule = function(ib, ctx, chain, db)
     return ffi.C.IB_OK
 end
 
--- 
+--
 -- Build and add all rules configured to the engine.
 -- param[in] ib_ptr IronBee engine ib_engine_t*.
 --

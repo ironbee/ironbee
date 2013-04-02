@@ -58,9 +58,9 @@ for k,v in pairs(eventsTable) do
     end)
 end
 
-local IB_OP_FLAG_PHASE = 1
+local IB_OP_CAPABILITY_NON_STREAM = 1
 local myAction = t:action("setvar", "A=1", 0)
-local myOperator = t:operator("rx", ".*", IB_OP_FLAG_PHASE)
+local myOperator = t:operator("rx", ".*", IB_OP_CAPABILITY_NON_STREAM)
 
 if myAction == nil then
     return ffi.C.IB_EOTHER

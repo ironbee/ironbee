@@ -69,7 +69,7 @@ ib_status_t ib_operator_register(
         return IB_EALLOC;
     }
     op->name = name_copy;
-    op->flags = flags;
+    op->capabilities = flags;
     op->fn_create = fn_create;
     op->cbdata_create = cbdata_create;
     op->fn_destroy = fn_destroy;
@@ -104,7 +104,7 @@ ib_status_t ib_operator_inst_create_ex(
     }
 
     /* Verify that this operator is valid for this rule type */
-    if ( (op->flags & required_op_flags) != required_op_flags) {
+    if ( (op->capabilities & required_op_flags) != required_op_flags) {
         return IB_EINVAL;
     }
 

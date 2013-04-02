@@ -192,7 +192,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     ASSERT_EQ(IB_OK, ib_operator_inst_create(ib_engine,
                                              NULL,
                                              rule,
-                                             IB_OP_FLAG_PHASE,
+                                             IB_OP_CAPABILITY_NON_STREAM,
                                              op_name,
                                              "unused parameter.",
                                              IB_OPINST_FLAG_NONE,

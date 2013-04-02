@@ -112,7 +112,7 @@ TEST_F(OperatorTest, OperatorCallTest)
 
     status = ib_operator_register(ib_engine,
                                   "test_op",
-                                  IB_OP_FLAG_PHASE,
+                                  IB_OP_CAPABILITY_NON_STREAM,
                                   test_create_fn,
                                   NULL,
                                   test_destroy_fn,
@@ -123,7 +123,7 @@ TEST_F(OperatorTest, OperatorCallTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
-                                     IB_OP_FLAG_PHASE,
+                                     IB_OP_CAPABILITY_NON_STREAM,
                                      "test_op",
                                      "INVALID",
                                      IB_OPINST_FLAG_NONE,
@@ -132,7 +132,7 @@ TEST_F(OperatorTest, OperatorCallTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
-                                     IB_OP_FLAG_PHASE,
+                                     IB_OP_CAPABILITY_NON_STREAM,
                                      "test_op",
                                      "data",
                                      IB_OPINST_FLAG_NONE,
@@ -184,7 +184,7 @@ TEST_F(CoreOperatorsTest, ContainsTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
-                                     IB_OP_FLAG_PHASE,
+                                     IB_OP_CAPABILITY_NON_STREAM,
                                      "contains",
                                      "needle",
                                      IB_OPINST_FLAG_NONE,
@@ -222,7 +222,7 @@ TEST_F(CoreOperatorsTest, EqTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
-                                     IB_OP_FLAG_PHASE,
+                                     IB_OP_CAPABILITY_NON_STREAM,
                                      "eq",
                                      "1",
                                      IB_OPINST_FLAG_NONE,
@@ -260,7 +260,7 @@ TEST_F(CoreOperatorsTest, NeTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
-                                     IB_OP_FLAG_PHASE,
+                                     IB_OP_CAPABILITY_NON_STREAM,
                                      "ne",
                                      "1",
                                      IB_OPINST_FLAG_NONE,

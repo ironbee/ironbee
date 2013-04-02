@@ -388,9 +388,9 @@ static ib_status_t ee_module_init(ib_engine_t *ib,
 
     ib_operator_register(ib,
                          "ee_match_any",
-                         ( IB_OP_FLAG_PHASE |
-                           IB_OP_FLAG_STREAM |
-                           IB_OP_FLAG_CAPTURE ),
+                         ( IB_OP_CAPABILITY_NON_STREAM |
+                           IB_OP_CAPABILITY_STREAM |
+                           IB_OP_CAPABILITY_CAPTURE ),
                          &ee_match_any_operator_create,
                          NULL,
                          &ee_match_any_operator_destroy,

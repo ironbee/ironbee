@@ -2470,7 +2470,7 @@ ib_status_t modlua_rule_driver(
 
     rc = ib_operator_register(cp->ib,
                               name,
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_CAPABILITY_NON_STREAM,
                               &lua_operator_create,
                               NULL,
                               &lua_operator_destroy,

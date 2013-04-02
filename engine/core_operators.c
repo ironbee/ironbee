@@ -2019,7 +2019,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the string equal operator */
     rc = ib_operator_register(ib,
                               "streq",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               strop_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2033,7 +2033,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the string equal, case-insensitive, operator */
     rc = ib_operator_register(ib,
                               "istreq",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               strop_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2047,7 +2047,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the string contains operator */
     rc = ib_operator_register(ib,
                               "contains",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               strop_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2061,7 +2061,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the string match operator */
     rc = ib_operator_register(ib,
                               "match",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_CAPABILITY_NON_STREAM,
                               op_match_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2075,7 +2075,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the case insensitive string match operator */
     rc = ib_operator_register(ib,
                               "imatch",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_CAPABILITY_NON_STREAM,
                               op_match_create,
                               (void *)1,
                               NULL, /* no destroy function */
@@ -2089,7 +2089,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the ipmatch operator */
     rc = ib_operator_register(ib,
                               "ipmatch",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_ipmatch_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2103,7 +2103,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the ipmatch6 operator */
     rc = ib_operator_register(ib,
                               "ipmatch6",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_ipmatch6_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2121,7 +2121,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric equal operator */
     rc = ib_operator_register(ib,
                               "eq",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2135,7 +2135,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric not-equal operator */
     rc = ib_operator_register(ib,
                               "ne",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2149,7 +2149,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric greater-than operator */
     rc = ib_operator_register(ib,
                               "gt",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2163,7 +2163,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric less-than operator */
     rc = ib_operator_register(ib,
                               "lt",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2177,7 +2177,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric greater-than or equal to operator */
     rc = ib_operator_register(ib,
                               "ge",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2191,7 +2191,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric less-than or equal to operator */
     rc = ib_operator_register(ib,
                               "le",
-                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -2205,10 +2205,10 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register NOP operator */
     rc = ib_operator_register(ib,
                               "nop",
-                              ( IB_OP_FLAG_ALLOW_NULL |
-                                IB_OP_FLAG_PHASE |
-                                IB_OP_FLAG_STREAM |
-                                IB_OP_FLAG_CAPTURE ),
+                              ( IB_OP_CAPABILITY_ALLOW_NULL |
+                                IB_OP_CAPABILITY_NON_STREAM |
+                                IB_OP_CAPABILITY_STREAM |
+                                IB_OP_CAPABILITY_CAPTURE ),
                               NULL, NULL, /* No create function */
                               NULL, NULL, /* no destroy function */
                               op_nop_execute, NULL);
