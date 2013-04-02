@@ -17,7 +17,6 @@ EXTRA_DIST = moddevel_private.h
 
 pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
-                     ibmod_ac.la \
                      ibmod_rules.la \
                      ibmod_user_agent.la \
                      ibmod_fast.la \
@@ -50,10 +49,6 @@ ibmod_pcre_la_CFLAGS = @PCRE_CFLAGS@
 ibmod_pcre_la_LDFLAGS = $(AM_LDFLAGS) \
                         @PCRE_LDFLAGS@
 ibmod_pcre_la_LIBADD = $(AM_LIBADD) @PCRE_LDADD@
-
-ibmod_ac_la_SOURCES = ac.c
-ibmod_ac_la_CFLAGS = ${AM_CFLAGS}
-ibmod_ac_la_LDFLAGS = $(AM_LDFLAGS)
 
 pkglib_LTLIBRARIES += ibmod_ee.la
 ibmod_ee_la_SOURCES = ee_oper.c

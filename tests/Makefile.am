@@ -93,7 +93,6 @@ check_PROGRAMS = test_gtest \
                  test_util_stream \
                  test_util_log \
                  test_engine \
-                 test_module_ahocorasick \
                  test_module_pcre \
                  test_module_ee_oper \
                  test_operator \
@@ -117,8 +116,6 @@ check_LTLIBRARIES = libtest_util_dso_lib.la
 TESTS=$(check_PROGRAMS)
 
 TEST_EXTRAS = \
-       AhoCorasickModuleTest.config \
-       ahocorasick.patterns \
        DfaModuleTest.matches.config \
        EeOperModuleTest.config \
        eudoxus_pattern1.e \
@@ -269,11 +266,6 @@ test_module_rules_lua_LDADD = $(LDADD) \
                               -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                               -lluajit-ironbee \
                               -lm
-
-test_module_ahocorasick_SOURCES = test_module_ahocorasick.cpp test_main.cpp
-test_module_ahocorasick_LDADD = $(MODULE_TEST_LDADD)
-test_module_ahocorasick_CPPFLAGS = $(AM_CPPFLAGS) \
-                                   -I$(top_srcdir)/modules
 
 test_operator_SOURCES = test_operator.cpp test_main.cpp
 test_operator_LDADD = $(MODULE_TEST_LDADD)

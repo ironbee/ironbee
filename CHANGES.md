@@ -4,6 +4,10 @@ IronBee Changes                                                   {#CHANGES}
 IronBee v0.8.0
 --------------
 
+**Deprecations**
+
+* The 'ac' module (deprecated in 0.7.0) has been removed.
+
 **Engine**
 
 * Operators are now passed their callback data as their last argument.
@@ -11,6 +15,7 @@ IronBee v0.8.0
 * Operators are no longer registered to a particular rule.  This change is
   part of disentangling rules and operators to allow operators to be called
   by modules or alternative rule systems.
+
 
 IronBee v0.7.0
 --------------
