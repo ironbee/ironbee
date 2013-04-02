@@ -370,7 +370,6 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
 {
     ngx_log_t *prev_log;
     ngxib_req_ctx *ctx;
-    ironbee_proc_t *pconf;
     ib_conn_t *iconn;
     ib_parsed_req_line_t *rline;
     ib_parsed_header_wrapper_t *ibhdrs;
@@ -390,7 +389,6 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
     ctx = ngx_pcalloc(r->pool, sizeof(ngxib_req_ctx));
     ctx->r = r;
     ngx_http_set_ctx(r, ctx, ngx_ironbee_module);
-    pconf = ngx_http_get_module_main_conf(r, ngx_ironbee_module);
 
     iconn = ngxib_conn_get(ctx, ironbee);
 
