@@ -102,6 +102,10 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib)
     rctx->conn->log = rctx->r->connection->log;
 
     rc = ib_conn_create(rctx->conn->ironbee, &rctx->conn->iconn, rctx->r->connection);
+    if (rc != IB_OK) {
+	cleanup_return(prev_log) NULL;
+    }
+
     ib_state_notify_conn_opened(rctx->conn->ironbee, rctx->conn->iconn);
 
     cln = ngx_pool_cleanup_add(rctx->r->connection->pool, 0);
