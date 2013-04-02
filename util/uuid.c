@@ -40,7 +40,9 @@
  * every creation.  So we only keep one at reuse it.
  */
 static ib_lock_t  g_uuid_lock;
+static ib_lock_t  g_uuid_v5_lock;
 uuid_t           *g_ossp_uuid;
+uuid_t           *g_ossp_uuid_v5;
 
 ib_status_t ib_uuid_initialize(void)
 {
@@ -50,7 +52,20 @@ ib_status_t ib_uuid_initialize(void)
         return IB_EOTHER;
     }
 
+    if (uuid_create(&g_ossp_uuid_v5) != UUID_RC_OK) {
+        return IB_EOTHER;
+    }
+
     rc = ib_lock_init(&g_uuid_lock);
+    if ( rc != IB_OK ) {
+        return rc;
+    }
+
+    rc = ib_lock_init(&g_uuid_v5_lock);
+    if ( rc != IB_OK ) {
+        ib_lock_destroy(&g_uuid_lock);
+        return rc;
+    }
 
     return rc;
 }
@@ -58,9 +73,16 @@ ib_status_t ib_uuid_initialize(void)
 ib_status_t ib_uuid_shutdown(void)
 {
     ib_status_t rc;
+    ib_status_t tmp_rc;
 
     rc = ib_lock_destroy(&g_uuid_lock);
+    tmp_rc = ib_lock_destroy(&g_uuid_v5_lock);
+    if (tmp_rc != IB_OK && rc == IB_OK) {
+        rc = tmp_rc;
+    }
+
     uuid_destroy(g_ossp_uuid);
+    uuid_destroy(g_ossp_uuid_v5);
 
     return rc;
 }
@@ -215,47 +237,33 @@ ib_status_t ib_uuid_create_v5_str(
 {
     uuid_rc_t uuid_rc;
     ib_status_t rc = IB_OK;
-    uuid_t *uuid;
-    uuid_t *uuid_ns;
 
-    /* Build the UUID we will populate and export. */
-    uuid_rc = uuid_create(&uuid);
-    if (uuid_rc != UUID_RC_OK) {
-        return IB_EALLOC;
-    }
-
-    /* Build the namespace UUID used as our hash starting point. */
-    uuid_rc = uuid_create(&uuid_ns);
-    if (uuid_rc != UUID_RC_OK) {
-        return IB_EALLOC;
+    rc = ib_lock_lock(&g_uuid_v5_lock);
+    if (rc != IB_OK) {
+        return rc;
     }
 
     /* Load the nil UUID. */
-    uuid_rc = uuid_load(uuid_ns, "nil");
+    uuid_rc = uuid_load(g_ossp_uuid_v5, "nil");
     if (uuid_rc != UUID_RC_OK) {
-        rc = IB_EOTHER;
-        goto finish;
+        ib_lock_unlock(&g_uuid_v5_lock);
+        return IB_EOTHER;
     }
 
-    uuid_rc = uuid_make(uuid, UUID_MAKE_V5, uuid_ns, key);
+    uuid_rc = uuid_make(g_ossp_uuid_v5, UUID_MAKE_V5, g_ossp_uuid_v5, key);
+    ib_lock_unlock(&g_uuid_v5_lock);
+
     if (uuid_rc == UUID_RC_MEM) {
-        rc = IB_EALLOC;
-        goto finish;
+        return IB_EALLOC;
     }
     else if (uuid_rc != UUID_RC_OK) {
-        rc = IB_EOTHER;
-        goto finish;
+        return IB_EOTHER;
     }
 
-    uuid_rc = uuid_export(uuid, UUID_FMT_STR, uuid_str, uuid_str_len);
+    uuid_rc = uuid_export(g_ossp_uuid_v5, UUID_FMT_STR, uuid_str, uuid_str_len);
     if (uuid_rc != UUID_RC_OK) {
-        rc = IB_EOTHER;
-        goto finish;
+        return IB_EOTHER;
     }
-
-finish:
-    uuid_destroy(uuid);
-    uuid_destroy(uuid_ns);
 
     return rc;
 }

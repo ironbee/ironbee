@@ -23,6 +23,7 @@ extern "C" {
 #include <ironbee/kvstore_filesystem.h>
 #include <ironbee/mpool.h>
 #include <ironbee/util.h>
+#include <ironbee/uuid.h>
 #include <ironbee/mpool.h>
 
 }
@@ -39,6 +40,7 @@ class TestKVStore : public testing::Test
 
     virtual void SetUp() {
         mkdir("TestKVStore.d", 0777);
+        ib_uuid_initialize();
         ib_kvstore_filesystem_init(&kvstore, "TestKVStore.d");
         ib_mpool_create(&mp, "TestKVStore", NULL);
     }
@@ -46,6 +48,7 @@ class TestKVStore : public testing::Test
     virtual void TearDown() {
         ib_kvstore_destroy(&kvstore);
         ib_mpool_destroy(mp);
+        ib_uuid_shutdown();
     }
 };
 
