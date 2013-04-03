@@ -14,7 +14,7 @@ AC_CONFIG_AUX_DIR([build])
 AC_PREFIX_DEFAULT([/usr/local/ironbee])
 AX_SPLIT_VERSION([$PACKAGE_VERSION])
 
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign tar-pax])
 
 ### Determine automake version.
 AC_MSG_CHECKING([for automake > 1.12])
