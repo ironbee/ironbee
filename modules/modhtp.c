@@ -750,8 +750,8 @@ static inline ib_status_t modhtp_set_hostname(
     /* Finally, fall back to the connection's IP */
     if (itx->conn->local_ipstr != NULL) {
         itx->hostname = itx->conn->local_ipstr;
-        ib_log_warning_tx(itx,
-                          "Set hostname to local IP \"%s\"", itx->hostname);
+        ib_log_notice_tx(itx,
+                         "Set hostname to local IP \"%s\"", itx->hostname);
         return IB_OK;
     }
 
