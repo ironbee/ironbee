@@ -488,6 +488,7 @@ static inline ib_status_t modhtp_set_bstr(
  */
 static ib_status_t modhtp_set_header(
     const ib_tx_t                    *itx,
+    const char                       *label,
     htp_tx_t                         *htx,
     const ib_parsed_header_wrapper_t *header,
     modhtp_set_header_fn_t            fn)
@@ -515,6 +516,11 @@ static ib_status_t modhtp_set_header(
         if (hrc != HTP_OK) {
             return IB_EUNKNOWN;
         }
+        ib_log_debug2_tx(itx, "Handed %s header \"%.*s\" \"%.*s\" to libhtp",
+                         label,
+                         (int)ib_bytestr_length(node->name),
+                         (const char *)ib_bytestr_const_ptr(node->name),
+                         (int)vlen, value);
     }
 
     return IB_OK;
@@ -680,7 +686,24 @@ static inline ib_status_t modhtp_set_hostname(
         }
     }
 
-    /* First try the value from libhtp */
+    /* First try the request hostname from libhtp */
+    if (htx->request_hostname != NULL) {
+        rc = modhtp_set_nulstr(itx, "Hostname", force,
+                               htx->request_hostname,
+                               NULL,
+                               &(itx->hostname));
+        if (rc == IB_OK) {
+            ib_log_debug_tx(itx,
+                            "Set hostname to \"%s\" from libhtp request host",
+                            itx->hostname);
+            return IB_OK;
+        }
+        else if (rc != IB_ENOENT) {
+            return rc;
+        }
+    }
+
+    /* Next, try the value from libhtp */
     uri = htx->parsed_uri;
     if (uri != NULL) {
         rc = modhtp_set_nulstr(itx, "Hostname", force,
@@ -1913,8 +1936,9 @@ static ib_status_t modhtp_iface_request_line(
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
 
-    ib_log_debug_tx(itx,
-                    "SEND REQUEST LINE TO LIBHTP: modhtp_iface_request_line");
+    ib_log_debug_tx(itx, "SEND REQUEST LINE TO LIBHTP: \"%.*s\"",
+                    (int)ib_bytestr_length(line->raw),
+                    (const char *)ib_bytestr_const_ptr(line->raw));
 
     /* Hand the whole request line to libhtp */
     hrc = htp_tx_req_set_line(txdata->htx,
@@ -1949,12 +1973,11 @@ static ib_status_t modhtp_iface_request_header_data(
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
 
-    ib_log_debug_tx(itx,
-                    "SEND REQUEST HEADER DATA TO LIBHTP: "
-                    "modhtp_iface_request_header_data");
+    ib_log_debug_tx(itx, "SEND REQUEST HEADER DATA TO LIBHTP");
 
     /* Hand the headers off to libhtp */
-    irc = modhtp_set_header(itx, txdata->htx, header, htp_tx_req_set_header);
+    irc = modhtp_set_header(itx, "request", txdata->htx, header,
+                            htp_tx_req_set_header);
     if (irc != IB_OK) {
         return irc;
     }
@@ -2134,7 +2157,8 @@ static ib_status_t modhtp_iface_response_header_data(
                     "modhtp_iface_response_header_data");
 
     /* Hand the response headers off to libhtp */
-    irc = modhtp_set_header(itx, txdata->htx, header, htp_tx_res_set_header);
+    irc = modhtp_set_header(itx, "response", txdata->htx, header,
+                            htp_tx_res_set_header);
     if (irc != IB_OK) {
         return irc;
     }
