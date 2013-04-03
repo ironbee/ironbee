@@ -559,7 +559,7 @@ static inline ib_status_t modhtp_set_bytestr(
     if ( (htp_bstr == NULL) || (bstr_len(htp_bstr) == 0) ) {
         if (fallback == NULL) {
             ib_log_debug_tx(itx, "%s unknown: no fallback", label);
-            return IB_OK;
+            return IB_ENOENT;
         }
         ib_log_debug_tx(itx,
                         "%s unknown: using fallback \"%s\"", label, fallback);
@@ -636,7 +636,7 @@ static inline ib_status_t modhtp_set_nulstr(
     if ( (htp_bstr == NULL) || (bstr_len(htp_bstr) == 0) ) {
         if (fallback == NULL) {
             ib_log_debug_tx(itx, "%s unknown: no fallback", label);
-            return IB_OK;
+            return IB_ENOENT;
         }
         ib_log_debug_tx(itx,
                         "%s unknown: using fallback \"%s\"", label, fallback);
@@ -650,6 +650,90 @@ static inline ib_status_t modhtp_set_nulstr(
 
     *nulstr = ib_mpool_memdup_to_str(itx->mp, ptr, len);
     return (*nulstr == NULL) ? IB_EALLOC : IB_OK;
+}
+
+/**
+ * Set the IronBee transaction hostname
+ *
+ * @param[in] htx libhtp transaction
+ * @param[in] force Force setting of host name?
+ * @param[in,out] itx IronBee transaction
+ *
+ * @returns Status code
+ */
+static inline ib_status_t modhtp_set_hostname(
+    const htp_tx_t   *htx,
+    bool              force,
+    ib_tx_t          *itx)
+{
+    assert(itx != NULL);
+    assert(htx != NULL);
+
+    ib_parsed_name_value_pair_list_t *nvnode;
+    ib_status_t      rc;
+    const htp_uri_t *uri;
+
+    /* If it's already set, we're done */
+    if ( (itx->hostname != NULL) && (*(itx->hostname) != '\0') ) {
+        if (! force) {
+            return IB_OK;
+        }
+    }
+
+    /* First try the value from libhtp */
+    uri = htx->parsed_uri;
+    if (uri != NULL) {
+        rc = modhtp_set_nulstr(itx, "Hostname", force,
+                               uri->hostname,
+                               NULL,
+                               &(itx->hostname));
+        if (rc == IB_OK) {
+            ib_log_debug_tx(itx,
+                            "Set hostname to \"%s\" from libhtp header",
+                            itx->hostname);
+            return IB_OK;
+        }
+        else if (rc != IB_ENOENT) {
+            return rc;
+        }
+    }
+
+    /* Next, Look for the name in the IronBee transaction request header */
+    for (nvnode = itx->request_header->head;
+         nvnode != NULL;
+         nvnode = nvnode->next)
+    {
+        const ib_bytestr_t *namebs  = nvnode->name;
+        const ib_bytestr_t *valuebs = nvnode->value;
+        const char         *name  = (const char *)ib_bytestr_const_ptr(namebs);
+
+        if ( (strncasecmp(name, "host", 4) == 0) &&
+             (ib_bytestr_length(valuebs) != 0) )
+        {
+            itx->hostname =
+                ib_mpool_memdup_to_str(itx->mp,
+                                       ib_bytestr_const_ptr(valuebs),
+                                       ib_bytestr_length(valuebs));
+            if (itx->hostname == NULL) {
+                return IB_EALLOC;
+            }
+            ib_log_info_tx(itx,
+                           "Set hostname to \"%s\" from IronBee header",
+                           itx->hostname);
+            return IB_OK;
+        }
+    }
+
+    /* Finally, fall back to the connection's IP */
+    if (itx->conn->local_ipstr != NULL) {
+        itx->hostname = itx->conn->local_ipstr;
+        ib_log_warning_tx(itx,
+                          "Set hostname to local IP \"%s\"", itx->hostname);
+        return IB_OK;
+    }
+
+    /* Something is very bad. */
+    return IB_ENOENT;
 }
 
 /**
@@ -1121,7 +1205,7 @@ static int modhtp_htp_req_line(
     irc = modhtp_set_bytestr(itx, "Request method", false,
                              htx->request_method, NULL,
                              &(itx->request_line->method));
-    if (irc != IB_OK) {
+    if ( (irc != IB_OK) && (irc != IB_ENOENT) ) {
         return HTP_ERROR;
     }
 
@@ -1129,7 +1213,7 @@ static int modhtp_htp_req_line(
     irc = modhtp_set_bytestr(itx, "Request URI", false,
                              htx->request_uri, NULL,
                              &(itx->request_line->uri));
-    if (irc != IB_OK) {
+    if ( (irc != IB_OK) && (irc != IB_ENOENT) ) {
         return HTP_ERROR;
     }
 
@@ -1137,7 +1221,7 @@ static int modhtp_htp_req_line(
     irc = modhtp_set_bytestr(itx, "Request protocol", false,
                              htx->request_protocol, NULL,
                              &(itx->request_line->protocol));
-    if (irc != IB_OK) {
+    if ( (irc != IB_OK) && (irc != IB_ENOENT) ) {
         return HTP_ERROR;
     }
 
@@ -1145,7 +1229,7 @@ static int modhtp_htp_req_line(
     irc = modhtp_set_nulstr(itx, "URI Path", false,
                             htx->parsed_uri->path, "/",
                             &(itx->path));
-    if (irc != IB_OK) {
+    if ( (irc != IB_OK) && (irc != IB_ENOENT) ) {
         return HTP_ERROR;
     }
 
@@ -1159,22 +1243,18 @@ static int modhtp_htp_req_headers(
 {
     modhtp_txdata_t *txdata;
     ib_status_t      irc;
-    ib_tx_t         *itx;
 
     /* Check the parser status */
     irc = modhtp_check_parser(connp, "Request Headers", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
-    itx = txdata->itx;
 
-    /* Update the hostname that may have changed with headers. */
-    irc = modhtp_set_nulstr(itx, "Hostname", true,
-                            txdata->htx->parsed_uri->hostname,
-                            itx->conn->local_ipstr,
-                            &(itx->hostname));
+    /* Set the IronBee transaction hostname if possible */
+    irc = modhtp_set_hostname(txdata->htx, false, txdata->itx);
     if (irc != IB_OK) {
-        return irc;
+        ib_log_error_tx(txdata->itx, "No hostname available!");
+        return HTP_ERROR;
     }
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
@@ -1255,7 +1335,7 @@ static int modhtp_htp_rsp_line(
     irc = modhtp_set_bytestr(itx, "Response protocol", false,
                              htx->response_protocol, NULL,
                              &itx->response_line->protocol);
-    if (irc != IB_OK) {
+    if ( (irc != IB_OK) && (irc != IB_ENOENT) ) {
         return HTP_ERROR;
     }
 
@@ -1263,7 +1343,7 @@ static int modhtp_htp_rsp_line(
     irc = modhtp_set_bytestr(itx, "Response status", false,
                              htx->response_status, NULL,
                              &itx->response_line->status);
-    if (irc != IB_OK) {
+    if ( (irc != IB_OK) && (irc != IB_ENOENT) ) {
         return HTP_ERROR;
     }
 
@@ -1271,7 +1351,7 @@ static int modhtp_htp_rsp_line(
     irc = modhtp_set_bytestr(itx, "Response message", false,
                              htx->response_message, NULL,
                              &itx->response_line->msg);
-    if (irc != IB_OK) {
+    if ( (irc != IB_OK) && (irc != IB_ENOENT) ) {
         return HTP_ERROR;
     }
 
