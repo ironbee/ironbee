@@ -1298,6 +1298,9 @@ static ib_status_t moddevel_txdump_handler(
         }
     }
     txdump.flags = ib_flags_merge(MODDEVEL_TXDUMP_DEFAULT, flags, mask);
+    if (txdump.flags != 0) {
+        txdump.flags |= MODDEVEL_TXDUMP_ENABLED;
+    }
 
     /* Create the txdump entry */
     ptxdump = ib_mpool_memdup(config->mp, &txdump, sizeof(txdump));
@@ -1443,6 +1446,9 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
         }
     }
     txdump.flags = ib_flags_merge(MODDEVEL_TXDUMP_DEFAULT, flags, mask);
+    if (txdump.flags != 0) {
+        txdump.flags |= MODDEVEL_TXDUMP_ENABLED;
+    }
 
     /* Create the txdump entry */
     ptxdump = ib_mpool_memdup(mp, &txdump, sizeof(txdump));
