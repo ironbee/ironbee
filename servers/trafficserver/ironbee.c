@@ -1309,7 +1309,7 @@ static ib_status_t fixup_request_line(
      * Calculate the offset of the offending URL,
      * the start & length of the protocol
      */
-    line_method_len = (bad_line_url - line_buf); 
+    line_method_len = (bad_line_url - line_buf);
     line_proto_off = line_method_len + url_len;
     line_proto_len = line_len - line_proto_off;
 
@@ -1489,7 +1489,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                             &hdr_buf, &hdr_len,
                             &rline_buf, &rline_len);
     if (ib_rc != IB_OK) {
-        TSError ("couldn't get %s header: %s\n", ibd->type_label, 
+        TSError ("couldn't get %s header: %s\n", ibd->type_label,
                  ib_status_to_string(ib_rc));
         return HDR_ERROR;
     }
@@ -1511,7 +1511,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         }
         break;
     }
-    
+
     case IBD_RESP: {
         TSHttpStatus  http_status;
 
