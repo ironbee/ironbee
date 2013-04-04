@@ -60,28 +60,29 @@ struct ib_moddevel_rules_config_t {
  * @note This operator is enabled only for builds configured with
  * "--enable-devel".
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data Operator data (unused)
- * @param[in] flags Operator instance flags
- * @param[in] field Field value (unused)
- * @param[out] result Pointer to number in which to store the result
- *
- *
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
 static ib_status_t op_true_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result)
+    ib_tx_t    *tx,
+    void       *instance_data,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
+)
 {
     *result = 1;
 
-    if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_rule_capture_clear(rule_exec);
-        ib_rule_capture_set_item(rule_exec, 0, field);
+    if (capture != NULL && *result) {
+        ib_capture_clear(capture);
+        ib_capture_set_item(capture, 0, tx->mp, field);
     }
     return IB_OK;
 }
@@ -92,20 +93,23 @@ static ib_status_t op_true_execute(
  * @note This operator is enabled only for builds configured with
  * "--enable-devel".
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data Operator data (unused)
- * @param[in] flags Operator instance flags
- * @param[in] field Field value (unused)
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
 static ib_status_t op_false_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result)
+    ib_tx_t    *tx,
+    void       *instance_data,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
+)
 {
     *result = 0;
     /* Don't check for capture, because we always return zero */
@@ -113,32 +117,45 @@ static ib_status_t op_false_execute(
     return IB_OK;
 }
 
+/** Instance data for assert operator. */
+struct assert_inst_data_t
+{
+    bool expand;
+    const char *str;
+};
+typedef struct assert_inst_data_t assert_inst_data_t;
+
 /**
  * Create function for the "assert" operator
  *
- * @param[in] ib The IronBee engine (unused)
- * @param[in] ctx The current IronBee context (unused)
- * @param[in] rule Parent rule to the operator
- * @param[in,out] mp Memory pool to use for allocation
- * @param[in] parameters Constant parameters
- * @param[in,out] op_inst Instance operator
+ * @param[in] ctx Current context.
+ * @param[in] parameters Unparsed string with the parameters to
+ *                       initialize the operator instance.
+ * @param[out] instance_data Instance data.
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
 static ib_status_t op_assert_create(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    const ib_rule_t    *rule,
-    ib_mpool_t         *mp,
-    const char         *parameters,
-    ib_rule_operator_inst_t *op_inst)
+    ib_context_t  *ctx,
+    const char    *parameters,
+    void         **instance_data,
+    void          *cbdata
+)
 {
     ib_status_t rc;
-    bool expand;
     char *str;
+    bool expand;
+    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    assert_inst_data_t *aid;
 
     if (parameters == NULL) {
         return IB_EINVAL;
+    }
+
+    aid = ib_mpool_alloc(mp, sizeof(*aid));
+    if (aid == NULL) {
+        return IB_EALLOC;
     }
 
     str = ib_mpool_strdup(mp, parameters);
@@ -152,10 +169,12 @@ static ib_status_t op_assert_create(
         return rc;
     }
     else if (expand) {
-        op_inst->flags |= IB_ACTINST_FLAG_EXPAND;
+        aid->expand = true;
     }
 
-    op_inst->data = str;
+    aid->str = str;
+    *instance_data = aid;
+
     return IB_OK;
 }
 
@@ -165,40 +184,44 @@ static ib_status_t op_assert_create(
  * @note This operator is enabled only for builds configured with
  * "--enable-devel".
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data Operator data (unused)
- * @param[in] flags Operator instance flags
- * @param[in] field Field value (unused)
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
 static ib_status_t op_assert_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result)
+    ib_tx_t    *tx,
+    void       *instance_data,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
+)
 {
+    const assert_inst_data_t *aid = (const assert_inst_data_t *)instance_data;
     /* This works on C-style (NUL terminated) strings */
-    const char *cstr = (const char *)data;
+    const char *cstr = aid->str;
     char *expanded = NULL;
     ib_status_t rc;
 
     /* Expand the string */
-    if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(rule_exec->tx->data, cstr, false, &expanded);
+    if (aid->expand) {
+        rc = ib_data_expand_str(tx->data, cstr, false, &expanded);
         if (rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "log_execute: Failed to expand string '%s': %s",
-                              cstr, ib_status_to_string(rc));
+            ib_log_error_tx(tx,
+                            "log_execute: Failed to expand string '%s': %s",
+                            cstr, ib_status_to_string(rc));
         }
     }
     else {
         expanded = (char *)cstr;
     }
 
-    ib_rule_log_error(rule_exec, "ASSERT: %s", expanded);
+    ib_log_error_tx(tx, "ASSERT: %s", expanded);
     assert(0 && expanded);
     return IB_OK;
 }
@@ -206,27 +229,30 @@ static ib_status_t op_assert_execute(
 /**
  * Execute function for the "exists" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data Operator data (unused)
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
 static ib_status_t op_exists_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result)
+    ib_tx_t    *tx,
+    void       *instance_data,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
+)
 {
     /* Return true of field is not NULL */
     *result = (field != NULL);
 
-    if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_rule_capture_clear(rule_exec);
-        ib_rule_capture_set_item(rule_exec, 0, field);
+    if (capture != NULL && *result) {
+        ib_capture_clear(capture);
+        ib_capture_set_item(capture, 0, tx->mp, field);
     }
 
     return IB_OK;
@@ -267,26 +293,28 @@ static istype_params_t istype_params[] = {
  * @note This operator is enabled only for builds configured with
  * "--enable-devel".
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data Operator data (unused)
- * @param[in] flags Operator instance flags
- * @param[in] field Field value (unused)
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
 static ib_status_t op_istype_execute(
-    const ib_rule_exec_t *rule_exec,
-    void                 *data,
-    ib_flags_t            flags,
-    ib_field_t           *field,
-    ib_num_t             *result)
+    ib_tx_t    *tx,
+    void       *instance_data,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
+)
 {
     assert(field != NULL);
 
     /* Ignore data */
-    const istype_params_t *params =
-        (istype_params_t *)rule_exec->rule->opinst->op->cd_execute;
+    const istype_params_t *params = cbdata;
     int n;
 
     assert(params != NULL);
