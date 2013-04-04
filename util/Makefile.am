@@ -8,8 +8,7 @@ if HAVE_NO_UNUSED_BUT_SET_VARIABLE
 libibutil_la_CPPFLAGS += -Wno-unused-but-set-variable
 endif
 
-libibutil_la_SOURCES = ahocorasick.c \
-                       array.c \
+libibutil_la_SOURCES = array.c \
                        bytestr.c \
                        cfgmap.c \
                        clock.c \
@@ -51,7 +50,6 @@ if BUILD_YAJL
 endif
 
 EXTRA_DIST = \
-        ahocorasick_private.h \
         json_yajl_private.h \
         kvstore_private.h
 
