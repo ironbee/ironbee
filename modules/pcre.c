@@ -1292,10 +1292,12 @@ ib_status_t dfa_operator_execute(
     ib_rc = get_dfa_tx_data(tx, id, &dfa_workspace);
     if (ib_rc == IB_ENOENT) {
         /* First time we are called, clear the captures. */
-        ib_rc = ib_capture_clear(capture);
-        if (ib_rc != IB_OK) {
-            ib_log_error_tx(tx, "Error clearing captures: %s",
-                            ib_status_to_string(ib_rc));
+        if (capture) {
+            ib_rc = ib_capture_clear(capture);
+            if (ib_rc != IB_OK) {
+                ib_log_error_tx(tx, "Error clearing captures: %s",
+                                ib_status_to_string(ib_rc));
+            }
         }
 
         options = PCRE_PARTIAL_SOFT;
