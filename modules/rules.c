@@ -160,8 +160,6 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
                       "Rule: operator=\"%s\" operand=\"%s\"",
                       opname,
                       (operand == NULL) ? "" : operand);
-
-    printf("CREATED OPINST = %p\n", opinst);
     return rc;
 }
 
