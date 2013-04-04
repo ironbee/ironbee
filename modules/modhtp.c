@@ -675,18 +675,17 @@ static inline ib_status_t modhtp_set_hostname(
     assert(itx != NULL);
     assert(htx != NULL);
 
-    ib_parsed_name_value_pair_list_t *nvnode;
     ib_status_t      rc;
     const htp_uri_t *uri;
 
-    /* If it's already set, we're done */
+    /* If it's already set, we're done. */
     if ( (itx->hostname != NULL) && (*(itx->hostname) != '\0') ) {
         if (! force) {
             return IB_OK;
         }
     }
 
-    /* First try the request hostname from libhtp */
+    /* First, try the request hostname from libhtp. */
     if (htx->request_hostname != NULL) {
         rc = modhtp_set_nulstr(itx, "Hostname", force,
                                htx->request_hostname,
@@ -703,7 +702,7 @@ static inline ib_status_t modhtp_set_hostname(
         }
     }
 
-    /* Next, try the value from libhtp */
+    /* Next, try the hostname in the parsed URI from libhtp. */
     uri = htx->parsed_uri;
     if (uri != NULL) {
         rc = modhtp_set_nulstr(itx, "Hostname", force,
@@ -721,33 +720,7 @@ static inline ib_status_t modhtp_set_hostname(
         }
     }
 
-    /* Next, Look for the name in the IronBee transaction request header */
-    for (nvnode = itx->request_header->head;
-         nvnode != NULL;
-         nvnode = nvnode->next)
-    {
-        const ib_bytestr_t *namebs  = nvnode->name;
-        const ib_bytestr_t *valuebs = nvnode->value;
-        const char         *name  = (const char *)ib_bytestr_const_ptr(namebs);
-
-        if ( (strncasecmp(name, "host", 4) == 0) &&
-             (ib_bytestr_length(valuebs) != 0) )
-        {
-            itx->hostname =
-                ib_mpool_memdup_to_str(itx->mp,
-                                       ib_bytestr_const_ptr(valuebs),
-                                       ib_bytestr_length(valuebs));
-            if (itx->hostname == NULL) {
-                return IB_EALLOC;
-            }
-            ib_log_info_tx(itx,
-                           "Set hostname to \"%s\" from IronBee header",
-                           itx->hostname);
-            return IB_OK;
-        }
-    }
-
-    /* Finally, fall back to the connection's IP */
+    /* Finally, fall back to the connection's IP. */
     if (itx->conn->local_ipstr != NULL) {
         itx->hostname = itx->conn->local_ipstr;
         ib_log_notice_tx(itx,
