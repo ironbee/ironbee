@@ -312,9 +312,9 @@ local build_rule = function(ib, ctx, chain, db)
         end
 
         -- Create operator instance.
-        local opinst = ffi.new("ib_rule_operator_inst_t*[1]")
+        local opinst = ffi.new("void*[1]")
         local op_inst_create_stream_flags
-        local op
+        local op = ffi.new("ib_operator_t*[1]")
 
         -- Set the flag values.
         if rule.is_streaming() then
@@ -323,21 +323,26 @@ local build_rule = function(ib, ctx, chain, db)
             op_inst_create_stream_flags = IB_OP_CAPABILITY_NON_STREAM
         end
 
-        -- Handle inverted operator.
+        local opname
+
+        -- Get the operator instance.
         if string.sub(rule.data.op, 1, 1) == '!' then
-            op = string.sub(rule.data.op, 2)
-            rc = ffi.C.ib_rule_set_invert(ib.ib_engine, prule[0], 1)
+            opname = string.sub(rule.data.op, 2)
         else
-            op = rule.data.op
+            opname = rule.data.op
         end
 
-        -- Create the argument.
+        rc = ffi.C.ib_operator_lookup(ib.ib_engine, opname, op)
+        if rc ~= ffi.C.IB_OK then
+            ib:logError("Could not locate operator %s", opname)
+            return rc
+        end
+
+        -- Create the operator.
         rc = ffi.C.ib_operator_inst_create(
-            ib.ib_engine,
+            op[0],
             ctx,
-            prule[0],
             op_inst_create_stream_flags,
-            op,
             tostring(rule.data.op_arg),
             opinst)
         if rc ~= ffi.C.IB_OK then
@@ -346,10 +351,23 @@ local build_rule = function(ib, ctx, chain, db)
         end
 
         -- Set operator
-        rc = ffi.C.ib_rule_set_operator(ib.ib_engine, prule[0], opinst[0])
+        rc = ffi.C.ib_rule_set_operator(
+            ib.ib_engine,
+            prule[0],
+            op[0],
+            opinst[0])
         if rc ~= ffi.C.IB_OK then
             ib:logError("Failed to set rule operator.")
             return rc
+        end
+
+        -- Invert the operator.
+        if string.sub(rule.data.op, 1, 1) == '!' then
+            rc = ffi.C.ib_rule_set_invert(prule[0], 1)
+            if rc ~= ffi.C.IB_OK then
+                ib:logError("Failed to invert operator %s.", op)
+                return rc
+            end
         end
 
         -- Find out of this is streaming or not, and treat that as an int.
