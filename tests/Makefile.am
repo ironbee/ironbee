@@ -79,7 +79,6 @@ check_PROGRAMS = test_gtest \
                  test_util_logformat \
                  test_util_lock \
                  test_util_misc \
-                 test_util_ahocorasick \
                  test_util_path \
                  test_util_string \
                  test_util_string_lower \
@@ -231,8 +230,6 @@ test_util_log_LDADD = $(LDADD) -lboost_regex$(BOOST_SUFFIX)
 test_util_uuid_SOURCES = test_util_uuid.cpp test_main.cpp
 test_util_uuid_CPPFLAGS = $(AM_CPPFLAGS) $(OSSP_UUID_CFLAGS)
 test_util_uuid_LDADD = $(MODULE_TEST_LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIBS)
-
-test_util_ahocorasick_SOURCES = test_util_ahocorasick.cpp test_main.cpp
 
 test_util_mpool_SOURCES = test_util_mpool.cpp test_main.cpp
 test_util_mpool_LDADD = $(LDADD) -lboost_thread-mt -lboost_system$(BOOST_SUFFIX)
