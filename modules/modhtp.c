@@ -143,8 +143,6 @@ static modhtp_config_t modhtp_global_config = {
     NULL
 };
 
-static ib_engine_t *modhtp_ib = NULL;
-
 /* -- Define several function types for callbacks */
 
 /**
@@ -2279,7 +2277,6 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
                      "%s", ib_status_to_string(rc));
         return IB_OK;
     }
-    modhtp_ib = ib;
 
     return IB_OK;
 }
