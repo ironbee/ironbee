@@ -216,11 +216,10 @@ end
 --   operator is destroyed (rule_exec was equal to nil).
 moduleapi.operator = function(self, name, param, flags)
     local op = ffi.new('ib_rule_operator_t*[1]')
-    local inst = ffi.new('ib_rule_operator_inst_t*[1]')
+    local inst = ffi.new('void*[1]')
     local rc = ffi.C.ib_operator_lookup(self.ib_engine, name, op)
     if rc ~= ffi.C.IB_OK then
-        rc = tonumber(rc)
-        self:logError("Failed to lookup operator %s(%d).", name, rc)
+        self:logError("Failed to lookup operator %s(%d).", name, tonumber(rc))
         return nil
     end
     local rc = ffi.C.ib_operator_inst_create(
@@ -235,16 +234,18 @@ moduleapi.operator = function(self, name, param, flags)
         return nil
     end
 
-    return function(rule_exec, field)
-        if rule_exec == nil then
-            ffi.C.ib_operator_inst_destroy(inst[0])
+    return function(tx, field)
+        if tx == nil then
+            ffi.C.ib_operator_inst_destroy(op[0], inst[0])
             return ffi.C.IB_OK, 0
         else
             local res = ffi.new('ib_num_t[1]')
             local rc = ffi.C.ib_operator_execute(
-                rule_exec,
+                op[0],
                 inst[0],
-                field,
+                tx,
+                field, -- input field
+                nil,   -- capture field
                 res)
             return tonumber(rc), tonumber(res[0])
         end
