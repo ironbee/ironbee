@@ -129,11 +129,7 @@ ib_status_t ib_capture_acquire(
     assert(tx != NULL);
     assert(tx->data != NULL);
 
-    /* Limit recursion in case something really bad happens */
-    if (recursion-- <= 0) {
-        ib_log_error_tx(tx, "Capture list recursion detected!");
-        return IB_EOTHER;
-    }
+    ib_status_t rc;
 
     /* Look up the capture list */
     collection_name = get_collection_name(collection_name);
@@ -145,7 +141,7 @@ ib_status_t ib_capture_acquire(
         return rc;
     }
 
-    if (field->type != IB_FTYPE_LIST) {
+    if ((*field)->type != IB_FTYPE_LIST) {
         rc = ib_data_remove(tx->data, collection_name, NULL);
         if (rc != IB_OK) {
             return IB_EINVAL;

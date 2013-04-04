@@ -72,6 +72,7 @@ public:
         const char   *name;
         ib_bytestr_t *bstr;
         ib_status_t   rc;
+        ib_field_t *capture_field;
 
         name = ib_capture_name(num);
         name = ib_mpool_strdup(MainPool(), name);
@@ -89,7 +90,12 @@ public:
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to create ByteStr field");
         }
-        rc = ib_capture_set_item(ib_tx, capture, num, *pfield);
+
+        rc = ib_capture_acquire(ib_tx, capture, &capture_field);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to acquire capture field");
+        }
+        rc = ib_capture_set_item(capture_field, num, ib_tx->mp, *pfield);
         return rc;
     }
 };
@@ -133,6 +139,7 @@ TEST_F(CaptureTest, basic)
     ib_status_t           rc;
     ib_field_t           *ifield;
     ib_field_t           *ofield;
+    ib_field_t           *cfield;
     const ib_field_t     *tfield;
     const ib_list_node_t *node;
     const ib_list_t      *l;
@@ -182,7 +189,9 @@ TEST_F(CaptureTest, basic)
     ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
     ASSERT_EQ(0U, ib_list_elements(l));
 
-    rc = ib_capture_clear(ib_tx, NULL);
+    rc = ib_capture_acquire(ib_tx, NULL, &cfield);
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_capture_clear(cfield);
     ASSERT_EQ(IB_OK, rc);
 
     rc = CaptureGet(0, &ofield);
@@ -209,6 +218,7 @@ TEST_F(CaptureTest, named_collection)
     ib_status_t           rc;
     ib_field_t           *ifield;
     ib_field_t           *ofield;
+    ib_field_t           *cfield;
     const ib_field_t     *tfield;
     const ib_list_node_t *node;
     const ib_list_t      *l;
@@ -253,7 +263,9 @@ TEST_F(CaptureTest, named_collection)
     ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
     ASSERT_EQ(0U, ib_list_elements(l));
 
-    rc = ib_capture_clear(ib_tx, CAP_NAME);
+    rc = ib_capture_acquire(ib_tx, CAP_NAME, &cfield);
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_capture_clear(cfield);
     ASSERT_EQ(IB_OK, rc);
 
     rc = CaptureGet(CAP_NAME, 0, &ofield);
