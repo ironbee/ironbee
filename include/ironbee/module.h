@@ -399,37 +399,6 @@ ib_status_t DLL_PUBLIC ib_module_action_inst_create(
     ib_action_inst_t **action_instance);
 
 /**
- * Create an IronBee rule operator for use by this module.
- *
- * Operators created by this method will still need a ib_rule_exec_t
- * which can be found in the ib_tx_t structure.
- *
- * Operators built by this method use the module rule for read-only access.
- *
- * Operators built by this method must be destroyed using
- * ib_operator_inst_destroy(ib_operator_inst_t *).
- *
- * @param[in] module The module.
- * @param[in] mpool The memory pool to use to create this object.
- *            If NULL, then the main engine memory pool will be used.
- * @param[in] operator_name The name of the operator, such as "rx".
- * @param[in] parameters The parameters to pass to the operator.
- * @param[in] flags Flags for the operator.
- * @param[out] operator_instance The created operator instance.
- * @returns Values returned by ib_operator_inst_create.
- *  - IB_OK on success
- *  - IB_ENOENT if the named operator does not exist
- */
-ib_status_t DLL_PUBLIC ib_module_operator_inst_create(
-    ib_module_t *module,
-    ib_mpool_t *mpool,
-    const char *operator_name,
-    const char *parameters,
-    ib_flags_t flags,
-    ib_operator_inst_t **operator_instance);
-
-
-/**
  * @} IronBeeModule
  */
 

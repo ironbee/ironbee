@@ -142,50 +142,58 @@ public:
 
 TEST_F(PcreModuleTest, test_load_module)
 {
-    ib_operator_t op;
-
-    // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, (void**)&op, "pcre"));
+    ib_operator_t *op;
+    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "pcre", &op));
 }
 
 TEST_F(PcreModuleTest, test_pcre_operator)
 {
-    ib_operator_inst_t *op_inst = NULL;
     ib_field_t *outfield;
     const ib_list_t *outlist;
     ib_num_t result;
     ib_field_t *capture;
+    ib_operator_t *op;
+    void *instance_data = NULL;
+    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "pcre", &op));
 
     // Create the operator instance.
-    ASSERT_EQ(IB_OK,
-              ib_operator_inst_create(ib_engine,
-                                      ib_context_main(ib_engine),
-                                      IB_OP_CAPABILITY_NON_STREAM,
-                                      "pcre",
-                                      "string\\s2",
-                                      IB_OPINST_FLAG_NONE,
-                                      &op_inst));
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_inst_create(
+              op,
+              ib_context_main(ib_engine),
+              IB_OP_CAPABILITY_NON_STREAM,
+              "string\\s2",
+              &instance_data
+        )
+    );
 
     // Attempt to match.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(rule_exec1.tx,
-                                             op_inst->data,
-                                             op_inst->flags,
-                                             field1,
-                                             NULL,
-                                             &result,
-                                             NULL));
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_execute(
+            op, instance_data,
+            rule_exec1.tx,
+            field1,
+            NULL,
+            &result
+        )
+    );
 
     // We should fail.
     ASSERT_FALSE(result);
 
     // Attempt to match again.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(rule_exec1.tx,
-                                             op_inst->data,
-                                             op_inst->flags,
-                                             field2,
-                                             NULL,
-                                             &result,
-                                             NULL));
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_execute(
+            op, instance_data,
+            rule_exec1.tx,
+            field2,
+            NULL,
+            &result
+        )
+    );
 
     // This time we should succeed.
     ASSERT_TRUE(result);
@@ -199,35 +207,43 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_EQ(0U, IB_LIST_ELEMENTS(outlist));
 
     // Create the operator instance.
-    ASSERT_EQ(IB_OK,
-              ib_operator_inst_create(ib_engine,
-                                      ib_context_main(ib_engine),
-                                      IB_OP_CAPABILITY_NON_STREAM,
-                                      "pcre",
-                                      "(string 2)",
-                                      IB_OPINST_FLAG_NONE,
-                                      &op_inst));
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_inst_create(
+            op,
+            ib_context_main(ib_engine),
+            IB_OP_CAPABILITY_NON_STREAM,
+            "(string 2)",
+            &instance_data
+        )
+    );
 
     // Attempt to match.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(rule_exec1.tx,
-                                             op_inst->data,
-                                             op_inst->flags,
-                                             field1,
-                                             NULL,
-                                             &result,
-                                             NULL));
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_execute(
+            op, instance_data,
+            rule_exec1.tx,
+            field1,
+            NULL,
+            &result
+        )
+    );
 
     // We should fail.
     ASSERT_FALSE(result);
 
     // Attempt to match again.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(rule_exec1.tx,
-                                             op_inst->data,
-                                             op_inst->flags,
-                                             field2,
-                                             NULL,
-                                             &result,
-                                             NULL));
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_execute(
+            op, instance_data,
+            rule_exec1.tx,
+            field2,
+            NULL,
+            &result
+        )
+    );
 
     // This time we should succeed.
     ASSERT_TRUE(result);
@@ -241,14 +257,16 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_EQ(0U, IB_LIST_ELEMENTS(outlist));
 
     // Create the operator instance.
-    ASSERT_EQ(IB_OK,
-              ib_operator_inst_create(ib_engine,
-                                      ib_context_main(ib_engine),
-                                      IB_OP_CAPABILITY_NON_STREAM,
-                                      "pcre",
-                                      "(string 2)",
-                                      IB_OPINST_FLAG_NONE,
-                                      &op_inst));
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_inst_create(
+            op,
+            ib_context_main(ib_engine),
+            IB_OP_CAPABILITY_NON_STREAM,
+            "(string 2)",
+            &instance_data
+        )
+    );
 
     ASSERT_EQ(IB_OK,
               ib_capture_acquire(
@@ -257,14 +275,16 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                   &capture));
 
     // Attempt to match again.
-    ASSERT_EQ(IB_OK,
-              op_inst->op->fn_execute(rule_exec2.tx,
-                                      op_inst->data,
-                                      op_inst->flags,
-                                      field2,
-                                      capture,
-                                      &result,
-                                      NULL));
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_execute(
+            op, instance_data,
+            rule_exec1.tx,
+            field2,
+            capture,
+            &result
+        )
+    );
 
     // This time we should succeed.
     ASSERT_TRUE(result);

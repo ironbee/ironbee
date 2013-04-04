@@ -244,7 +244,7 @@ void ib_rule_log_phase(
  */
 ib_status_t ib_rule_log_exec_op(
     ib_rule_log_exec_t         *log_exec,
-    const ib_operator_inst_t   *opinst,
+    const ib_rule_operator_inst_t   *opinst,
     ib_status_t                 status);
 
 /**

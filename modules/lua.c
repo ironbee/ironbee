@@ -2328,7 +2328,7 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
  *          allowing for concurrent execution of @a func_name
  *          by a ib_lua_func_eval(ib_engine_t*, ib_txt_t*, const char*).
  *
- * @param[in,out] rule_exec Rule execution environment
+ * @param[in] tx Current transaction.
  * @param[in] func_name The Lua function name to call.
  * @param[out] result The result integer value. This should be set to
  *             1 (true) or 0 (false).
@@ -2336,14 +2336,15 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
  * @returns IB_OK on success, IB_EUNKNOWN on semaphore locking error, and
  *          IB_EALLOC is returned if a new execution stack cannot be created.
  */
-static ib_status_t ib_lua_func_eval_r(const ib_rule_exec_t *rule_exec,
+static ib_status_t ib_lua_func_eval_r(ib_tx_t *tx,
                                       const char *func_name,
                                       ib_num_t *result)
 {
-    assert(rule_exec);
+    assert(tx != NULL);
+    assert(func_name != NULL);
+    assert(result != NULL);
 
-    ib_engine_t *ib = rule_exec->ib;
-    ib_tx_t *tx = rule_exec->tx;
+    ib_engine_t *ib = tx->ib;
     int result_int;
     ib_status_t ib_rc;
     lua_State *L;
@@ -2356,7 +2357,7 @@ static ib_status_t ib_lua_func_eval_r(const ib_rule_exec_t *rule_exec,
     }
 
     /* Call the rule in isolation. */
-    ib_rc = ib_lua_func_eval_int(rule_exec, ib, tx, L, func_name, &result_int);
+    ib_rc = ib_lua_func_eval_int(ib, tx, L, func_name, &result_int);
 
     /* Convert the passed in integer type to an ib_num_t. */
     *result = result_int;
@@ -2371,38 +2372,40 @@ static ib_status_t ib_lua_func_eval_r(const ib_rule_exec_t *rule_exec,
     return ib_rc;
 }
 
-static ib_status_t lua_operator_create(ib_engine_t *ib,
-                                       ib_context_t *ctx,
-                                       const ib_rule_t *rule,
-                                       ib_mpool_t *pool,
-                                       const char *parameters,
-                                       ib_operator_inst_t *op_inst)
+static ib_status_t lua_operator_create(
+    ib_context_t  *ctx,
+    const char    *parameters,
+    void         **instance_data,
+    void          *cbdata
+)
 {
+    assert(parameters    != NULL);
+    assert(instance_data != NULL);
+
+    *instance_data = (void *)parameters;
     return IB_OK;
 }
 
-static ib_status_t lua_operator_execute(const ib_rule_exec_t *rule_exec,
-                                        void *data,
-                                        ib_flags_t flags,
-                                        ib_field_t *field,
-                                        ib_num_t *result)
+static ib_status_t lua_operator_execute(
+    ib_tx_t    *tx,
+    void       *instance_data,
+    ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t   *result,
+    void       *cbdata
+)
 {
     ib_status_t ib_rc;
-    const char *func_name = (char *) data;
+    const char *func_name = (const char *)instance_data;
 
-    ib_rule_log_trace(rule_exec, "Calling lua function %s.", func_name);
+    ib_log_trace_tx(tx, "Calling lua function %s.", func_name);
 
-    ib_rc = ib_lua_func_eval_r(rule_exec, func_name, result);
+    ib_rc = ib_lua_func_eval_r(tx, func_name, result);
 
-    ib_rule_log_trace(rule_exec,
-                      "Lua function %s=%"PRIu64".", func_name, *result);
+    ib_log_trace_tx(tx,
+                    "Lua function %s=%"PRIu64".", func_name, *result);
 
     return ib_rc;
-}
-
-static ib_status_t lua_operator_destroy(ib_operator_inst_t *op_inst)
-{
-    return IB_OK;
 }
 
 /* -- Module Routines -- */
@@ -2434,9 +2437,10 @@ ib_status_t modlua_rule_driver(
     assert(location != NULL);
 
     ib_status_t rc;
-    ib_operator_inst_t *op_inst;
     const char *slash;
     const char *name;
+    ib_operator_t *op;
+    void *instance_data;
 
     if (strncmp(tag, "lua", 3) != 0) {
         ib_cfg_log_error(cp, "Lua rule driver called for non-lua tag.");
@@ -2473,7 +2477,7 @@ ib_status_t modlua_rule_driver(
                               IB_OP_CAPABILITY_NON_STREAM,
                               &lua_operator_create,
                               NULL,
-                              &lua_operator_destroy,
+                              NULL,
                               NULL,
                               &lua_operator_execute,
                               NULL);
@@ -2483,14 +2487,19 @@ ib_status_t modlua_rule_driver(
         return rc;
     }
 
-    rc = ib_operator_inst_create(cp->ib,
+    rc = ib_operator_lookup(cp->ib, name, &op);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to look operator just registered "
+                         "\"%s\": %s",
+                         name, ib_status_to_string(rc));
+        return rc;
+    }
+
+    rc = ib_operator_inst_create(op,
                                  cp->cur_ctx,
-                                 rule,
                                  ib_rule_required_op_flags(rule),
-                                 name,
-                                 NULL,
-                                 IB_OPINST_FLAG_NONE,
-                                 &op_inst);
+                                 ib_rule_id(rule), /* becomes instance_data */
+                                 &instance_data);
 
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
@@ -2500,10 +2509,7 @@ ib_status_t modlua_rule_driver(
         return rc;
     }
 
-    /* The data is then name of the function. */
-    op_inst->data = (void *)ib_rule_id(rule);
-
-    rc = ib_rule_set_operator(cp->ib, rule, op_inst);
+    rc = ib_rule_set_operator(cp->ib, rule, op, instance_data);
 
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,

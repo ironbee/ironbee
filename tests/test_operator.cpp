@@ -32,48 +32,39 @@
 
 
 ib_status_t test_create_fn(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    ib_mpool_t         *pool,
-    const char         *data,
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
+    ib_context_t  *ctx,
+    const char    *parameters,
+    void         **instance_data,
+    void          *cbdata
 )
 {
+    assert(ctx != NULL);
     char *str;
+    ib_mpool_t *pool = ib_context_get_mpool(ctx);
 
-    if (strcmp(data, "INVALID") == 0) {
+    if (strcmp(parameters, "INVALID") == 0) {
         return IB_EINVAL;
     }
-    str = ib_mpool_strdup(pool, data);
+    str = ib_mpool_strdup(pool, parameters);
     if (str == NULL) {
         return IB_EALLOC;
     }
 
-    op_inst->data = str;
+    *instance_data = str;
 
-    return IB_OK;
-}
-
-ib_status_t test_destroy_fn(
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
-)
-{
     return IB_OK;
 }
 
 ib_status_t test_execute_fn(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
     void       *cbdata
 )
 {
-    char *searchstr = (char *)data;
+    char *searchstr = (char *)instance_data;
     const char* s;
     ib_status_t rc;
 
@@ -108,35 +99,36 @@ TEST_F(OperatorTest, OperatorCallTest)
 {
     ib_status_t status;
     ib_num_t call_result;
-    ib_operator_inst_t *op;
+    void *instance_data;
+    ib_operator_t *op;
 
     status = ib_operator_register(ib_engine,
                                   "test_op",
                                   IB_OP_CAPABILITY_NON_STREAM,
                                   test_create_fn,
                                   NULL,
-                                  test_destroy_fn,
+                                  NULL,
                                   NULL,
                                   test_execute_fn,
                                   NULL);
     ASSERT_EQ(IB_OK, status);
 
-    status = ib_operator_inst_create(ib_engine,
-                                     NULL,
+    status = ib_operator_lookup(ib_engine, "test_op", &op);
+
+    ASSERT_EQ(IB_OK, status);
+
+    status = ib_operator_inst_create(op,
+                                     ib_context_main(ib_engine),
                                      IB_OP_CAPABILITY_NON_STREAM,
-                                     "test_op",
                                      "INVALID",
-                                     IB_OPINST_FLAG_NONE,
-                                     &op);
+                                     &instance_data);
     ASSERT_EQ(IB_EINVAL, status);
 
-    status = ib_operator_inst_create(ib_engine,
-                                     NULL,
+    status = ib_operator_inst_create(op,
+                                     ib_context_main(ib_engine),
                                      IB_OP_CAPABILITY_NON_STREAM,
-                                     "test_op",
                                      "data",
-                                     IB_OPINST_FLAG_NONE,
-                                     &op);
+                                     &instance_data);
     ASSERT_EQ(IB_OK, status);
 
 
@@ -152,16 +144,16 @@ TEST_F(OperatorTest, OperatorCallTest)
     );
 
     ib_field_setv(field, ib_ftype_nulstr_in(matching));
-    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
+    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
-    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
+    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 
-    status = ib_operator_inst_destroy(op);
+    status = ib_operator_inst_destroy(op, instance_data);
     ASSERT_EQ(IB_OK, status);
 }
 
@@ -180,15 +172,19 @@ TEST_F(CoreOperatorsTest, ContainsTest)
 {
     ib_status_t status;
     ib_num_t call_result;
-    ib_operator_inst_t *op;
+    ib_operator_t *op;
+    void *instance_data;
 
-    status = ib_operator_inst_create(ib_engine,
-                                     NULL,
+    status = ib_operator_lookup(ib_engine, "contains", &op);
+
+    ASSERT_EQ(IB_OK, status);
+
+
+    status = ib_operator_inst_create(op,
+                                     ib_context_main(ib_engine),
                                      IB_OP_CAPABILITY_NON_STREAM,
-                                     "contains",
                                      "needle",
-                                     IB_OPINST_FLAG_NONE,
-                                     &op);
+                                     &instance_data);
     ASSERT_EQ(IB_OK, status);
 
     // call contains
@@ -204,12 +200,12 @@ TEST_F(CoreOperatorsTest, ContainsTest)
     );
 
     ib_field_setv(field, ib_ftype_nulstr_in(matching));
-    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
+    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
-    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
+    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }
@@ -218,15 +214,18 @@ TEST_F(CoreOperatorsTest, EqTest)
 {
     ib_status_t status;
     ib_num_t call_result;
-    ib_operator_inst_t *op;
+    ib_operator_t *op;
+    void *instance_data;
 
-    status = ib_operator_inst_create(ib_engine,
-                                     NULL,
+    status = ib_operator_lookup(ib_engine, "eq", &op);
+
+    ASSERT_EQ(IB_OK, status);
+
+    status = ib_operator_inst_create(op,
+                                     ib_context_main(ib_engine),
                                      IB_OP_CAPABILITY_NON_STREAM,
-                                     "eq",
                                      "1",
-                                     IB_OPINST_FLAG_NONE,
-                                     &op);
+                                     &instance_data);
     ASSERT_EQ(IB_OK, status);
 
     // call contains
@@ -242,12 +241,12 @@ TEST_F(CoreOperatorsTest, EqTest)
     );
 
     ib_field_setv(field, ib_ftype_num_in(&matching));
-    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
+    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_num_in(&nonmatching));
-    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
+    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }
@@ -256,15 +255,18 @@ TEST_F(CoreOperatorsTest, NeTest)
 {
     ib_status_t status;
     ib_num_t call_result;
-    ib_operator_inst_t *op;
+    ib_operator_t *op;
+    void *instance_data;
 
-    status = ib_operator_inst_create(ib_engine,
-                                     NULL,
+    status = ib_operator_lookup(ib_engine, "ne", &op);
+
+    ASSERT_EQ(IB_OK, status);
+
+    status = ib_operator_inst_create(op,
+                                     ib_context_main(ib_engine),
                                      IB_OP_CAPABILITY_NON_STREAM,
-                                     "ne",
                                      "1",
-                                     IB_OPINST_FLAG_NONE,
-                                     &op);
+                                     &instance_data);
     ASSERT_EQ(IB_OK, status);
 
     // call contains
@@ -280,12 +282,12 @@ TEST_F(CoreOperatorsTest, NeTest)
     );
 
     ib_field_setv(field, ib_ftype_num_in(&matching));
-    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
+    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_num_in(&nonmatching));
-    status = ib_operator_execute(ib_tx, op, field, NULL, &call_result);
+    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }

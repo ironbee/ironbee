@@ -72,12 +72,17 @@ typedef struct {
 typedef struct ib_rule_phase_meta_t ib_rule_phase_meta_t;
 
 /**
+ * Rule instance object.
+ */
+typedef struct ib_rule_operator_inst_t ib_rule_operator_inst_t;
+
+/**
  * Basic rule object.
  */
 struct ib_rule_t {
     ib_rule_meta_t         meta;            /**< Rule meta data */
     const ib_rule_phase_meta_t *phase_meta; /**< Phase meta data */
-    ib_operator_inst_t    *opinst;          /**< Rule operator */
+    ib_rule_operator_inst_t *opinst;          /**< Rule operator */
     ib_list_t             *target_fields;   /**< List of target fields */
     ib_list_t             *true_actions;    /**< Actions if condition True */
     ib_list_t             *false_actions;   /**< Actions if condition False */
@@ -482,6 +487,16 @@ ib_status_t DLL_PUBLIC ib_rule_set_phase(
     ib_rule_phase_num_t         phase);
 
 /**
+ * Set whether the rule to invert its result.
+ *
+ * @param[in,out] rule Rule to operate on.
+ * @param[in] invert True if rule should invert.
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_set_invert(ib_rule_t *rule, bool invert);
+
+/**
  * A utility function that converts a string to the appropriate phase number.
  *
  * This is used when developers are trying to create and register a new rule
@@ -553,14 +568,16 @@ ib_flags_t DLL_PUBLIC ib_rule_required_op_flags(
  *
  * @param[in] ib IronBee engine
  * @param[in,out] rule Rule to operate on
- * @param[in] opinst Operator instance
+ * @param[in] op Operator instance.
+ * @param[in] instance_data Instance data.
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_set_operator(
-    ib_engine_t                *ib,
-    ib_rule_t                  *rule,
-    ib_operator_inst_t         *opinst);
+    ib_engine_t   *ib,
+    ib_rule_t     *rule,
+    ib_operator_t *op,
+    void          *instance_data);
 
 /**
  * Set a rule's ID.

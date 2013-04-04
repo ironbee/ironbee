@@ -115,10 +115,10 @@ typedef struct modpcre_cpat_data_t {
 /**
  * PCRE and DFA rule data types are an alias for the compiled pattern structure.
  */
-typedef struct modpcre_rule_data_t {
+typedef struct modpcre_operator_data_t {
     modpcre_cpat_data_t *cpdata;          /**< Compiled pattern data */
     const char          *id;              /**< ID for DFA rules */
-} modpcre_rule_data_t;
+} modpcre_operator_data_t;
 
 /* Instantiate a module global configuration. */
 static modpcre_cfg_t modpcre_global_cfg = {
@@ -564,43 +564,43 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
 };
 
 /**
- * @brief Create the PCRE operator.
- * @param[in] ib The IronBee engine (unused)
- * @param[in] ctx The current IronBee context (unused)
- * @param[in,out] pool The memory pool into which @c op_inst->data
- *                will be allocated.
- * @param[in] pattern The regular expression to be built.
- * @param[out] op_inst The operator instance that will be populated by
- *             parsing @a pattern.
+ * Create the PCRE operator.
+ *
+ * @param[in] ctx Current context.
+ * @param[in] parameters Unparsed string with the parameters to
+ *                       initialize the operator instance.
+ * @param[out] instance_data Instance data.
  * @param[in] cbdata Callback data.
  *
  * @returns IB_OK on success or IB_EALLOC on any other type of error.
  */
 static
 ib_status_t pcre_operator_create(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    ib_mpool_t         *pool,
-    const char         *pattern,
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
+    ib_context_t  *ctx,
+    const char    *parameters,
+    void         **instance_data,
+    void          *cbdata
 )
 {
+    assert(ctx           != NULL);
+    assert(parameters    != NULL);
+    assert(instance_data != NULL);
+
+    ib_engine_t *ib = ib_context_get_engine(ctx);
+    ib_mpool_t *pool = ib_context_get_mpool(ctx);
     assert(ib != NULL);
-    assert(ctx != NULL);
     assert(pool != NULL);
-    assert(op_inst != NULL);
 
     modpcre_cpat_data_t *cpdata = NULL;
-    modpcre_rule_data_t *rule_data = NULL;
+    modpcre_operator_data_t *operator_data = NULL;
     ib_module_t *module;
     modpcre_cfg_t *config;
     ib_status_t rc;
     const char *errptr;
     int erroffset;
 
-    if (pattern == NULL) {
-        ib_log_error(ib, "No pattern for %s operator", op_inst->op->name);
+    if (parameters == NULL) {
+        ib_log_error(ib, "No pattern for operator");
         return IB_EINVAL;
     }
 
@@ -627,7 +627,7 @@ ib_status_t pcre_operator_create(
                                config,
                                false,
                                &cpdata,
-                               pattern,
+                               parameters,
                                &errptr,
                                &erroffset);
     if (rc != IB_OK) {
@@ -635,37 +635,17 @@ ib_status_t pcre_operator_create(
     }
 
     /* Allocate a rule data object, populate it */
-    rule_data = ib_mpool_alloc(pool, sizeof(*rule_data));
-    if (rule_data == NULL) {
+    operator_data = ib_mpool_alloc(pool, sizeof(*operator_data));
+    if (operator_data == NULL) {
         return IB_EALLOC;
     }
-    rule_data->cpdata = cpdata;
-    rule_data->id = NULL;           /* Not needed for rx rules */
+    operator_data->cpdata = cpdata;
+    operator_data->id = NULL;           /* Not needed for rx rules */
 
     /* Rule data is an alias for the compiled pattern data */
-    op_inst->data = rule_data;
+    *instance_data = operator_data;
 
     return rc;
-}
-
-/**
- * @brief Deinitialize the rule.
- * @param[in,out] op_inst The instance of the operator to be deallocated.
- *                Operator data is allocated out of the memory pool for
- *                IronBee so we do not destroy the operator here.
- *                pool for IronBee and need not be freed by us.
- * @param[in] cbdata Callback data.
- * @returns IB_OK always.
- */
-static
-ib_status_t pcre_operator_destroy(
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
-)
-{
-    assert(op_inst != NULL);
-    /* Nop */
-    return IB_OK;
 }
 
 /**
@@ -826,11 +806,10 @@ ib_status_t pcre_dfa_set_match(
  * @brief Execute the PCRE operator
  *
  * @param[in] tx Current transaction.
- * @param[in,out] data User data. A @c modpcre_rule_data_t.
- * @param[in] flags Operator instance flags
- * @param[in] field The field content.
- * @param[in] capture Collection to capture to.
- * @param[out] result The result.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
@@ -838,18 +817,15 @@ ib_status_t pcre_dfa_set_match(
 static
 ib_status_t pcre_operator_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
     void       *cbdata
 )
 {
-    assert(tx       != NULL);
-    assert(tx->ib   != NULL);
-    assert(tx->data != NULL);
-    assert(data     != NULL);
+    assert(instance_data != NULL);
+    assert(tx            != NULL);
 
     int matches;
     ib_status_t ib_rc;
@@ -858,13 +834,14 @@ ib_status_t pcre_operator_execute(
     const char *subject = NULL;
     size_t subject_len = 0;
     const ib_bytestr_t *bytestr;
-    modpcre_rule_data_t *rule_data = (modpcre_rule_data_t *)data;
+    modpcre_operator_data_t *operator_data =
+        (modpcre_operator_data_t *)instance_data;
     pcre_extra *edata = NULL;
 #ifdef PCRE_JIT_STACK
     pcre_jit_stack *jit_stack = NULL;
 #endif
 
-    assert(rule_data->cpdata->is_dfa == false);
+    assert(operator_data->cpdata->is_dfa == false);
 
     if (ovector==NULL) {
         return IB_EALLOC;
@@ -902,10 +879,10 @@ ib_status_t pcre_operator_execute(
         subject     = "";
     }
 
-    if (rule_data->cpdata->is_jit) {
+    if (operator_data->cpdata->is_jit) {
 #ifdef PCRE_JIT_STACK
-        jit_stack = pcre_jit_stack_alloc(rule_data->cpdata->jit_stack_start,
-                                         rule_data->cpdata->jit_stack_max);
+        jit_stack = pcre_jit_stack_alloc(operator_data->cpdata->jit_stack_start,
+                                         operator_data->cpdata->jit_stack_max);
         if (jit_stack == NULL) {
             ib_log_warn(ib,
                 "Failed to allocate a jit stack for a jit-compiled rule.  "
@@ -913,8 +890,8 @@ ib_status_t pcre_operator_execute(
             );
         }
         /* If the study data is NULL or size zero, don't use it. */
-        else if (rule_data->cpdata->study_data_sz > 0) {
-            edata = rule_data->cpdata->edata;
+        else if (operator_data->cpdata->study_data_sz > 0) {
+            edata = operator_data->cpdata->edata;
         }
         if (edata != NULL) {
             pcre_assign_jit_stack(edata, NULL, jit_stack);
@@ -923,14 +900,14 @@ ib_status_t pcre_operator_execute(
         edata = NULL;
 #endif
     }
-    else if (rule_data->cpdata->study_data_sz > 0) {
-        edata = rule_data->cpdata->edata;
+    else if (operator_data->cpdata->study_data_sz > 0) {
+        edata = operator_data->cpdata->edata;
     }
     else {
         edata = NULL;
     }
 
-    matches = pcre_exec(rule_data->cpdata->cpatt,
+    matches = pcre_exec(operator_data->cpdata->cpatt,
                         edata,
                         subject,
                         subject_len,
@@ -970,9 +947,8 @@ ib_status_t pcre_operator_execute(
 /**
  * Set the ID of a DFA rule.
  *
- * @param[in] op_inst Operator instance.
  * @param[in] mp Memory pool to use for allocations.
- * @param[in,out] rule_data DFA rule object to store ID into.
+ * @param[in,out] operator_data DFA rule object to store ID into.
  *
  * @returns
  *   - IB_OK on success.
@@ -980,14 +956,12 @@ ib_status_t pcre_operator_execute(
  */
 static
 ib_status_t dfa_id_set(
-    const ib_operator_inst_t *op_inst,
-    ib_mpool_t               *mp,
-    modpcre_rule_data_t      *rule_data
+    ib_mpool_t              *mp,
+    modpcre_operator_data_t *operator_data
 )
 {
-    assert(op_inst != NULL);
-    assert(mp != NULL);
-    assert(rule_data != NULL);
+    assert(mp            != NULL);
+    assert(operator_data != NULL);
 
     /* We compute the length of the string buffer as such:
      * +2 for the 0x prefix.
@@ -1001,42 +975,42 @@ ib_status_t dfa_id_set(
         return IB_EALLOC;
     }
 
-    snprintf(id, id_sz, "%p", op_inst);
-    rule_data->id = id;
+    snprintf(id, id_sz, "%p", operator_data);
+    operator_data->id = id;
 
     return IB_OK;
 }
 
 /**
- * @brief Create the PCRE operator.
- * @param[in] ib The IronBee engine (unused)
- * @param[in] ctx The current IronBee context (unused)
- * @param[in,out] pool The memory pool into which @c op_inst->data
- *                will be allocated.
- * @param[in] pattern The regular expression to be built.
- * @param[out] op_inst The operator instance that will be populated by
- *             parsing @a pattern.
+ * Create the PCRE operator.
+ *
+ * @param[in] ctx Current context.
+ * @param[in] parameters Unparsed string with the parameters to
+ *                       initialize the operator instance.
+ * @param[out] instance_data Instance data.
  * @param[in] cbdata Callback data.
  *
  * @returns IB_OK on success or IB_EALLOC on any other type of error.
  */
 static
 ib_status_t dfa_operator_create(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    ib_mpool_t         *pool,
-    const char         *pattern,
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
+    ib_context_t         *ctx,
+    const char           *parameters,
+    void                **instance_data,
+    void                 *cbdata
 )
 {
+    assert(ctx           != NULL);
+    assert(parameters    != NULL);
+    assert(instance_data != NULL);
+
+    ib_engine_t *ib = ib_context_get_engine(ctx);
+    ib_mpool_t *pool = ib_context_get_mpool(ctx);
     assert(ib != NULL);
-    assert(ctx != NULL);
     assert(pool != NULL);
-    assert(op_inst != NULL);
 
     modpcre_cpat_data_t *cpdata;
-    modpcre_rule_data_t *rule_data;
+    modpcre_operator_data_t *operator_data;
     ib_module_t *module;
     modpcre_cfg_t *config;
     ib_status_t rc;
@@ -1064,32 +1038,32 @@ ib_status_t dfa_operator_create(
                                config,
                                true,
                                &cpdata,
-                               pattern,
+                               parameters,
                                &errptr,
                                &erroffset);
 
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to parse DFA operator pattern \"%s\":%s",
-                     pattern, ib_status_to_string(rc));
+                     parameters, ib_status_to_string(rc));
         return rc;
     }
 
     /* Allocate a rule data object, populate it */
-    rule_data = ib_mpool_alloc(pool, sizeof(*rule_data));
-    if (rule_data == NULL) {
+    operator_data = ib_mpool_alloc(pool, sizeof(*operator_data));
+    if (operator_data == NULL) {
         return IB_EALLOC;
     }
-    rule_data->cpdata = cpdata;
-    rc = dfa_id_set(op_inst, pool, rule_data);
+    operator_data->cpdata = cpdata;
+    rc = dfa_id_set(pool, operator_data);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating ID for DFA: %s",
                      ib_status_to_string(rc));
         return rc;
     }
     ib_log_debug(ib, "Compiled DFA id=\"%s\" operator pattern \"%s\" @ %p",
-                 rule_data->id, pattern, (void *)cpdata->cpatt);
+                 operator_data->id, parameters, (void *)cpdata->cpatt);
 
-    op_inst->data = (void *)rule_data;
+    *instance_data = operator_data;
     return IB_OK;
 }
 
@@ -1099,7 +1073,7 @@ ib_status_t dfa_operator_create(
  * The hash is stored at the key @c HASH_NAME_STR.
  *
  * @param[in] tx The transaction containing @c tx->data which holds
- *            the @a rule_data object.
+ *            the @a operator_data object.
  * @param[out] hash The fetched or created rule data hash. This is set
  *             to NULL on failure.
  *
@@ -1107,7 +1081,7 @@ ib_status_t dfa_operator_create(
  *   - IB_OK on success.
  *   - IB_EALLOC on allocation failure
  */
-static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
+static ib_status_t get_or_create_operator_data_hash(ib_tx_t *tx,
                                                 ib_hash_t **hash)
 {
     assert(tx);
@@ -1178,7 +1152,7 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
     size_t size;
 
     *workspace = NULL;
-    rc = get_or_create_rule_data_hash(tx, &hash);
+    rc = get_or_create_operator_data_hash(tx, &hash);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1230,7 +1204,7 @@ ib_status_t get_dfa_tx_data(
     ib_hash_t *hash;
     ib_status_t rc;
 
-    rc = get_or_create_rule_data_hash(tx, &hash);
+    rc = get_or_create_operator_data_hash(tx, &hash);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1247,11 +1221,10 @@ ib_status_t get_dfa_tx_data(
  * @brief Execute the dfa operator
  *
  * @param[in] tx Current transaction.
- * @param[in,out] data User data. A @c modpcre_rule_data_t.
- * @param[in] flags Operator instance flags
- * @param[in] field The field content.
- * @param[in] capture Collection to capture to.
- * @param[out] result The result.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
@@ -1259,33 +1232,32 @@ ib_status_t get_dfa_tx_data(
 static
 ib_status_t dfa_operator_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
     void       *cbdata
 )
 {
-    assert(tx     != NULL);
-    assert(tx->ib != NULL);
-    assert(data   != NULL);
+    assert(instance_data != NULL);
+    assert(tx            != NULL);
 
     int matches;
     ib_status_t ib_rc;
     const int ovecsize = 3 * MATCH_MAX;
-    modpcre_rule_data_t *rule_data = (modpcre_rule_data_t *)data;
+    modpcre_operator_data_t *operator_data =
+        (modpcre_operator_data_t *)instance_data;
     int *ovector;
     const char *subject;
     size_t subject_len;
     const ib_bytestr_t *bytestr;
     dfa_workspace_t *dfa_workspace;
-    const char *id = rule_data->id;
+    const char *id = operator_data->id;
     int options; /* dfa exec options. */
     int start_offset;
     int match_count;
 
-    assert(rule_data->cpdata->is_dfa == true);
+    assert(operator_data->cpdata->is_dfa == true);
 
     ovector = (int *)malloc(ovecsize*sizeof(*ovector));
     if (ovector==NULL) {
@@ -1328,7 +1300,7 @@ ib_status_t dfa_operator_execute(
 
         options = PCRE_PARTIAL_SOFT;
 
-        ib_rc = alloc_dfa_tx_data(tx, rule_data->cpdata, id, &dfa_workspace);
+        ib_rc = alloc_dfa_tx_data(tx, operator_data->cpdata, id, &dfa_workspace);
         if (ib_rc != IB_OK) {
             free(ovector);
             return ib_rc;
@@ -1348,8 +1320,8 @@ ib_status_t dfa_operator_execute(
     start_offset = 0;
     match_count = 0;
     do {
-        matches = pcre_dfa_exec(rule_data->cpdata->cpatt,
-                                rule_data->cpdata->edata,
+        matches = pcre_dfa_exec(operator_data->cpdata->cpatt,
+                                operator_data->cpdata->edata,
                                 subject,
                                 subject_len,
                                 start_offset, /* Starting offset. */
@@ -1394,27 +1366,6 @@ ib_status_t dfa_operator_execute(
 
     free(ovector);
     return ib_rc;
-}
-
-/**
- * @brief Destroy the dfa operator
- *
- * @param[in,out] op_inst The operator instance
- * @param[in] cbdata Callback data.
- *
- * @returns IB_OK
- */
-static
-ib_status_t dfa_operator_destroy(
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
-)
-{
-    assert(op_inst != NULL);
-
-    /* Nop - Memory released by mpool. */
-
-    return IB_OK;
 }
 
 /* -- Module Routines -- */
@@ -1677,7 +1628,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
                          (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE),
                          pcre_operator_create,
                          NULL,
-                         pcre_operator_destroy,
+                         NULL,
                          NULL,
                          pcre_operator_execute,
                          NULL);
@@ -1688,7 +1639,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
                          (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE),
                          pcre_operator_create,
                          NULL,
-                         pcre_operator_destroy,
+                         NULL,
                          NULL,
                          pcre_operator_execute,
                          NULL);
@@ -1699,7 +1650,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
                          (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_STREAM | IB_OP_CAPABILITY_CAPTURE),
                          dfa_operator_create,
                          NULL,
-                         dfa_operator_destroy,
+                         NULL,
                          NULL,
                          dfa_operator_execute,
                          NULL);

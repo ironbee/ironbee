@@ -216,27 +216,24 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
 
 static
 ib_status_t sqli_op_create(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    ib_mpool_t         *mp,
-    const char         *parameters,
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
+    ib_context_t  *ctx,
+    const char    *parameters,
+    void         **instance_data,
+    void          *cbdata
 )
 {
+    ib_engine_t *ib = ib_context_get_engine(ctx);
 
     if (parameters == NULL) {
-        ib_log_error(ib, "Missing parameter for operator %s",
-                     op_inst->op->name);
+        ib_log_error(ib, "Missing parameter for operator sqli");
         return IB_EINVAL;
     }
 
     // TODO: Support loading external patterns.
     if (strcmp("default", parameters) != 0) {
         ib_log_notice(ib,
-                      "SQLi external data not yet supported for %s."
-                      " Use \"default\" for now.",
-                      op_inst->op->name);
+                      "SQLi external data not yet supported for sqli."
+                      " Use \"default\" for now.");
     }
 
     return IB_OK;
@@ -245,8 +242,7 @@ ib_status_t sqli_op_create(
 static
 ib_status_t sqli_op_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,

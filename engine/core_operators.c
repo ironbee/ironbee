@@ -290,35 +290,54 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
 }
 
 /**
+ * Instance data for strop.
+ */
+struct strop_instance_data_t {
+    bool expand; /**< Expand before comparing? */
+    const char *str; /**< String to compare to */
+};
+typedef struct strop_instance_data_t strop_instance_data_t;
+
+/**
+ * Instance data for numop.
+ */
+struct numop_instance_data_t {
+    bool expand; /**< Expand before comparing? */
+    ib_field_t *f; /**< Field to compare to */
+};
+typedef struct numop_instance_data_t numop_instance_data_t;
+
+/**
  * Create function for the "str" family of operators
  *
- * @param[in] ib The IronBee engine (unused)
- * @param[in] ctx The current IronBee context (unused)
- * @param[in,out] mp Memory pool to use for allocation
- * @param[in] parameters Constant parameters
- * @param[in,out] op_inst Instance operator
- * @param[in] cbdata Callback data.
+ * @param[in]  ctx The current IronBee context
+ * @param[in]  parameters Constant parameters
+ * @param[out] instance data Instance Data.
+ * @param[in]  cbdata Callback data.
  *
  * @returns Status code
  */
 static
 ib_status_t strop_create(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    ib_mpool_t         *mp,
-    const char         *parameters,
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
+    ib_context_t  *ctx,
+    const char    *parameters,
+    void         **instance_data,
+    void          *cbdata
 )
 {
+    assert(ctx != NULL);
+
+    ib_engine_t *ib = ib_context_get_engine(ctx);
+    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    assert(ib != NULL);
+    assert(mp != NULL);
+
     ib_status_t rc;
     bool expand;
     char *str;
     size_t str_len;
 
     if (parameters == NULL) {
-        ib_log_error(ib, "Missing parameter for operator %s",
-                     op_inst->op->name);
         return IB_EINVAL;
     }
 
@@ -331,32 +350,36 @@ ib_status_t strop_create(
     if (rc != IB_OK) {
         return rc;
     }
-    if (expand) {
-        op_inst->flags |= IB_OPINST_FLAG_EXPAND;
-    }
 
-    op_inst->data = str;
+    strop_instance_data_t *data =
+        (strop_instance_data_t *)ib_mpool_alloc(mp, sizeof(*data));
+    if (data == NULL) {
+        return IB_EALLOC;
+    }
+    data->expand = expand;
+    data->str = str;
+
+    *instance_data = data;
+
     return IB_OK;
 }
 
 /**
  * Execute function for the "streq" operator
  *
- * @param[in]  tx Current transaction
- * @param[in]  data C-style string to compare to
- * @param[in]  flags Operator instance flags
+ * @param[in]  tx Current transaction.
+ * @param[in]  instance_data Instance data.
  * @param[in]  field Field value
  * @param[in]  capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
- * @param[in]  cbdata Callback data; determines case sensitivity.
+ * @param[in]  cbdata Callback data.
  *
  * @returns Status code
  */
 static
 ib_status_t op_streq_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
@@ -364,7 +387,7 @@ ib_status_t op_streq_execute(
 )
 {
     assert(tx != NULL);
-    assert(data != NULL);
+    assert(instance_data != NULL);
     assert(field != NULL);
     assert(result != NULL);
 
@@ -374,21 +397,21 @@ ib_status_t op_streq_execute(
      * configuration parser can't produce anything else).
      **/
     ib_status_t  rc;
-    const char  *cstr = (const char *)data;
     char        *expanded;
     bool         case_insensitive;
-
+    const strop_instance_data_t *data =
+        (const strop_instance_data_t *)instance_data;
     case_insensitive = (cbdata != NULL);
 
     /* Expand the string */
-    if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
-        rc = ib_data_expand_str(tx->data, cstr, false, &expanded);
+    if ((tx != NULL) && data->expand) {
+        rc = ib_data_expand_str(tx->data, data->str, false, &expanded);
         if (rc != IB_OK) {
             return rc;
         }
     }
     else {
-        expanded = (char *)cstr;
+        expanded = (char *)data->str;
     }
 
     /* Handle NUL-terminated strings and byte strings */
@@ -459,21 +482,19 @@ ib_status_t op_streq_execute(
 /**
  * Execute function for the "contains" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data C-style string to compare to
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
+ * @param[in]  tx Current transaction.
+ * @param[in]  instance_data Instance data.
+ * @param[in]  field Field value
  * @param[in]  capture Collection to capture to.
  * @param[out] result Pointer to number in which to store the result
- * @param[in] cbdata Callback data.
+ * @param[in]  cbdata Callback data.
  *
  * @returns Status code
  */
 static
 ib_status_t op_contains_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
@@ -481,23 +502,24 @@ ib_status_t op_contains_execute(
 )
 {
     assert(tx != NULL);
-    assert(data != NULL);
+    assert(instance_data != NULL);
     assert(field != NULL);
     assert(result != NULL);
 
     ib_status_t  rc = IB_OK;
-    const char  *cstr = (char *)data;
     char        *expanded;
+    const strop_instance_data_t *data =
+        (const strop_instance_data_t *)instance_data;
 
     /* Expand the string */
-    if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
-        rc = ib_data_expand_str(tx->data, cstr, false, &expanded);
+    if ((tx != NULL) && data->expand) {
+        rc = ib_data_expand_str(tx->data, data->str, false, &expanded);
         if (rc != IB_OK) {
             return rc;
         }
     }
     else {
-        expanded = (char *)cstr;
+        expanded = (char *)data->str;
     }
 
     /**
@@ -571,12 +593,10 @@ ib_status_t op_contains_execute(
 /**
  * Create function for the "match" and "imatch" operators.
  *
- * @param[in] ib         The IronBee engine.
- * @param[in] ctx        The current IronBee context (unused).
- * @param[in] mp         Memory pool to use for allocation.
- * @param[in] parameters Parameters (IPv4 address or networks)
- * @param[in] op_inst    Instance operator.
- * @param[in] cbdata    Callback data.
+ * @param[in]  ctx           The current IronBee context (unused).
+ * @param[in]  parameters    Parameters.
+ * @param[out] instance_data Instance_data.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns
  * - IB_OK if no failure.
@@ -585,18 +605,14 @@ ib_status_t op_contains_execute(
  */
 static
 ib_status_t op_match_create(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    ib_mpool_t         *mp,
-    const char         *parameters,
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
+    ib_context_t  *ctx,
+    const char    *parameters,
+    void         **instance_data,
+    void          *cbdata
 )
 {
-    assert(ib      != NULL);
-    assert(ctx     != NULL);
-    assert(mp      != NULL);
-    assert(op_inst != NULL);
+    assert(ctx           != NULL);
+    assert(instance_data != NULL);
 
     ib_status_t  rc;
     ib_hash_t   *set;
@@ -604,11 +620,16 @@ ib_status_t op_match_create(
     char        *copy;
     size_t       copy_len;
 
+    ib_engine_t *ib = ib_context_get_engine(ctx);
+    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    assert(ib != NULL);
+    assert(mp != NULL);
+
     if (parameters == NULL) {
         return IB_EINVAL;
     }
 
-    case_insensitive = (op_inst->op->cbdata_create != NULL);
+    case_insensitive = (cbdata != NULL);
 
     /* Make a copy of the parameters to operate on. */
     rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
@@ -656,7 +677,7 @@ ib_status_t op_match_create(
     }
 
     /* Done */
-    op_inst->data = set;
+    *instance_data = set;
 
     return IB_OK;
 }
@@ -664,13 +685,12 @@ ib_status_t op_match_create(
 /**
  * Execute function for the "match" and "imatch" operators.
  *
- * @param[in]  rule_exec Rule execution object
- * @param[in]  data      Set data.
- * @param[in]  flags     Operator instance flags.
- * @param[in]  field     Field value.
- * @param[in]  capture   Collection to capture to.
- * @param[out] result    Pointer to number in which to store the result.
- * @param[in]  cbdata    Callback data.
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data.
  *
  * @returns
  * - IB_OK if no failure, regardless of match status.
@@ -681,18 +701,17 @@ ib_status_t op_match_create(
 static
 ib_status_t op_match_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
     void       *cbdata
 )
 {
-    assert(tx     != NULL);
-    assert(data   != NULL);
-    assert(field  != NULL);
-    assert(result != NULL);
+    assert(tx            != NULL);
+    assert(instance_data != NULL);
+    assert(field         != NULL);
+    assert(result        != NULL);
 
     ib_status_t        rc;
     const ib_hash_t   *set;
@@ -700,7 +719,7 @@ ib_status_t op_match_execute(
     size_t             length;
     void              *v;
 
-    set = (const ib_hash_t *)data;
+    set = (const ib_hash_t *)instance_data;
 
     if (field->type == IB_FTYPE_NULSTR) {
         rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
@@ -747,12 +766,10 @@ ib_status_t op_match_execute(
 /**
  * Create function for the "ipmatch" operator
  *
- * @param[in] ib         The IronBee engine.
- * @param[in] ctx        The current IronBee context (unused).
- * @param[in] mp         Memory pool to use for allocation.
- * @param[in] parameters Parameters (IPv4 address or networks)
- * @param[in] op_inst    Instance operator.
- * @param[in] cbdata Callback data.
+ * @param[in]  ctx           The current IronBee context (unused).
+ * @param[in]  parameters    Parameters.
+ * @param[out] instance_data Instance data.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns
  * - IB_OK if no failure.
@@ -761,18 +778,20 @@ ib_status_t op_match_execute(
  */
 static
 ib_status_t op_ipmatch_create(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    ib_mpool_t         *mp,
-    const char         *parameters,
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
+    ib_context_t         *ctx,
+    const char           *parameters,
+    void                **instance_data,
+    void                 *cbdata
 )
 {
-    assert(ib      != NULL);
-    assert(ctx     != NULL);
-    assert(mp      != NULL);
-    assert(op_inst != NULL);
+    assert(ctx           != NULL);
+    assert(parameters    != NULL);
+    assert(instance_data != NULL);
+
+    ib_engine_t *ib = ib_context_get_engine(ctx);
+    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    assert(ib != NULL);
+    assert(mp != NULL);
 
     ib_status_t        rc             = IB_OK;
     char              *copy           = NULL;
@@ -850,7 +869,7 @@ ib_status_t op_ipmatch_create(
     }
 
     /* Done */
-    op_inst->data = ipset;
+    *instance_data = ipset;
 
     return IB_OK;
 }
@@ -858,13 +877,12 @@ ib_status_t op_ipmatch_create(
 /**
  * Execute function for the "ipmatch" operator
  *
- * @param[in]  rule_exec Rule execution object
- * @param[in]  data      IP Set data.
- * @param[in]  flags     Operator instance flags.
- * @param[in]  field     Field value.
- * @param[in]  capture   Collection to capture to.
- * @param[out] result    Pointer to number in which to store the result.
- * @param[in]  cbdata    Callback data.
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data.
  *
  * @returns
  * - IB_OK if no failure, regardless of match status.
@@ -874,18 +892,17 @@ ib_status_t op_ipmatch_create(
 static
 ib_status_t op_ipmatch_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
     void       *cbdata
 )
 {
-    assert(tx     != NULL);
-    assert(data   != NULL);
-    assert(field  != NULL);
-    assert(result != NULL);
+    assert(tx            != NULL);
+    assert(instance_data != NULL);
+    assert(field         != NULL);
+    assert(result        != NULL);
 
     ib_status_t        rc               = IB_OK;
     const ib_ipset4_t *ipset            = NULL;
@@ -893,7 +910,7 @@ ib_status_t op_ipmatch_execute(
     const char        *ipstr            = NULL;
     char               ipstr_buffer[17] = "\0";
 
-    ipset = (const ib_ipset4_t *)data;
+    ipset = (const ib_ipset4_t *)instance_data;
 
     if (field->type == IB_FTYPE_NULSTR) {
         rc = ib_field_value(field, ib_ftype_nulstr_out(&ipstr));
@@ -959,12 +976,10 @@ ib_status_t op_ipmatch_execute(
 /**
  * Create function for the "ipmatch6" operator
  *
- * @param[in] ib         The IronBee engine.
- * @param[in] ctx        The current IronBee context (unused).
- * @param[in] mp         Memory pool to use for allocation.
- * @param[in] parameters Parameters (IPv6 address or networks)
- * @param[in] op_inst    Instance operator.
- * @param[in] cbdata     Callback data.
+ * @param[in]  ctx           The current IronBee context (unused).
+ * @param[in]  parameters    Parameters.
+ * @param[out] instance_data Instance_data.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns
  * - IB_OK if no failure.
@@ -973,18 +988,20 @@ ib_status_t op_ipmatch_execute(
  */
 static
 ib_status_t op_ipmatch6_create(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    ib_mpool_t         *mp,
-    const char         *parameters,
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
+    ib_context_t         *ctx,
+    const char           *parameters,
+    void                **instance_data,
+    void                 *cbdata
 )
 {
-    assert(ib      != NULL);
-    assert(ctx     != NULL);
-    assert(mp      != NULL);
-    assert(op_inst != NULL);
+    assert(ctx           != NULL);
+    assert(parameters    != NULL);
+    assert(instance_data != NULL);
+
+    ib_engine_t *ib = ib_context_get_engine(ctx);
+    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    assert(ib != NULL);
+    assert(mp != NULL);
 
     ib_status_t        rc             = IB_OK;
     char              *copy           = NULL;
@@ -1062,7 +1079,7 @@ ib_status_t op_ipmatch6_create(
     }
 
     /* Done */
-    op_inst->data = ipset;
+    *instance_data = ipset;
 
     return IB_OK;
 }
@@ -1070,12 +1087,11 @@ ib_status_t op_ipmatch6_create(
 /**
  * Execute function for the "ipmatch6" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data      IP Set data.
- * @param[in] flags     Operator instance flags.
- * @param[in] field     Field value.
- * @param[in] capture   Collection to capture to.
- * @param[out] result   Pointer to number in which to store the result.
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  *
  * @returns
@@ -1086,18 +1102,17 @@ ib_status_t op_ipmatch6_create(
 static
 ib_status_t op_ipmatch6_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
     void       *cbdata
 )
 {
-    assert(tx     != NULL);
-    assert(data   != NULL);
-    assert(field  != NULL);
-    assert(result != NULL);
+    assert(tx            != NULL);
+    assert(instance_data != NULL);
+    assert(field         != NULL);
+    assert(result        != NULL);
 
     ib_status_t        rc               = IB_OK;
     const ib_ipset6_t *ipset            = NULL;
@@ -1105,7 +1120,7 @@ ib_status_t op_ipmatch6_execute(
     const char        *ipstr            = NULL;
     char               ipstr_buffer[41] = "\0";
 
-    ipset = (const ib_ipset6_t *)data;
+    ipset = (const ib_ipset6_t *)instance_data;
 
     if (field->type == IB_FTYPE_NULSTR) {
         rc = ib_field_value(field, ib_ftype_nulstr_out(&ipstr));
@@ -1178,8 +1193,6 @@ ib_status_t op_ipmatch6_execute(
  * IB_OK is returned and @a out_field is set to NULL.
  *
  * @param[in] rule_exec Rule execution.
- * @param[in] flags Execution flags. If IB_OPINST_FLAG_EXPAND is not set,
- *            then no expansion will be attempted.
  * @param[in] in_field The field to expand and attempt to convert.
  * @param[out] out_field The field that the in_field is converted to.
  *             If no conversion is performed, this is set to NULL.
@@ -1192,7 +1205,6 @@ ib_status_t op_ipmatch6_execute(
 static
 ib_status_t expand_field(
     const ib_tx_t     *tx,
-    const ib_flags_t   flags,
     const ib_field_t  *in_field,
     ib_field_t       **out_field
 )
@@ -1205,12 +1217,6 @@ ib_status_t expand_field(
     char *expanded;
     ib_field_t *tmp_field;
     ib_status_t rc;
-
-    /* No conversion required. */
-    if ( ! (flags & IB_OPINST_FLAG_EXPAND) ) {
-        *out_field = NULL;
-        return IB_OK;
-    }
 
     /* Get the string from the field */
     rc = ib_field_value(in_field, ib_ftype_nulstr_out(&original));
@@ -1420,7 +1426,7 @@ static ib_status_t select_math_type_conversion(
  *           use these fields, so user-beware.
  *
  * @param rule_exec The rule execution environment.
- * @param flags Rule flags used for @a rh_in expansion.
+ * @param expand Expand operands?
  * @param lh_in Left-hand operand input.
  * @param rh_in Right-hand operand input.
  * @param lh_out Left-hand operand out. This may equal @a lh_in.
@@ -1432,7 +1438,7 @@ static ib_status_t select_math_type_conversion(
 static
 ib_status_t prepare_math_operands(
     const ib_tx_t     *tx,
-    const ib_flags_t   flags,
+    bool               expand,
     const ib_field_t  *lh_in,
     const ib_field_t  *rh_in,
     ib_field_t       **lh_out,
@@ -1453,9 +1459,11 @@ ib_status_t prepare_math_operands(
     ib_field_t *tmp_field = NULL;
 
     /* First, expand the right hand input. */
-    rc = expand_field(tx, flags, rh_in, &tmp_field);
-    if (rc != IB_OK) {
-        return rc;
+    if (expand) {
+        rc = expand_field(tx, rh_in, &tmp_field);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
     if (tmp_field) {
         *rh_out = (ib_field_t *)tmp_field;
@@ -1501,9 +1509,8 @@ ib_status_t prepare_math_operands(
 }
 
 /**
- * @param[in] rule_exec Rule execution.
- * @param[in] data Parameter field.
- * @param[in] flags Flags to influence @a data expansion.
+ * @param[in] tx Current transaction.
+ * @param[in] instace_data numop instance data.
  * @param[in] field The field used.
  * @param[in] capture Collection to capture to.
  * @param[in] num_compare If this is an ib_num_t, use this to compare.
@@ -1513,8 +1520,7 @@ ib_status_t prepare_math_operands(
 static
 ib_status_t execute_compare(
     const ib_tx_t      *tx,
-    void               *data,
-    ib_flags_t          flags,
+    void               *instance_data,
     ib_field_t         *field,
     ib_field_t         *capture,
     num_compare_fn_t    num_compare,
@@ -1522,21 +1528,22 @@ ib_status_t execute_compare(
     ib_num_t           *result
 )
 {
-    assert(data != NULL);
+    assert(instance_data != NULL);
     assert(result != NULL);
     assert(tx != NULL);
     assert(tx->mp != NULL);
 
-    const ib_field_t *pdata = (const ib_field_t *)data;
+    const numop_instance_data_t *ndata =
+        (const numop_instance_data_t*)instance_data;
     ib_status_t rc;
     ib_field_t *rh_field = NULL;
     ib_field_t *lh_field = NULL;
 
     rc = prepare_math_operands(
         tx,
-        flags,
+        ndata->expand,
         field,
-        pdata,
+        ndata->f,
         &lh_field,
         &rh_field
     );
@@ -1617,12 +1624,11 @@ ib_status_t execute_compare(
 /**
  * Execute function for the numeric "equal" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data Pointer to number to compare to
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
- * @param[in] capture Collection to capture to.
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  *
  * @returns
@@ -1633,8 +1639,7 @@ ib_status_t execute_compare(
 static
 ib_status_t op_eq_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
@@ -1645,8 +1650,7 @@ ib_status_t op_eq_execute(
 
     rc = execute_compare(
         tx,
-        data,
-        flags,
+        instance_data,
         field,
         capture,
         &num_eq,
@@ -1660,21 +1664,20 @@ ib_status_t op_eq_execute(
 /**
  * Execute function for the numeric "not equal" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data C-style string to compare to
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
- * @param[in] capture Collection to capture to.
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
+
  *
  * @returns Status code
  */
 static
 ib_status_t op_ne_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
@@ -1685,13 +1688,13 @@ ib_status_t op_ne_execute(
 
     rc = execute_compare(
         tx,
-        data,
-        flags,
+        instance_data,
         field,
         capture,
         &num_ne,
         &float_ne,
-        result);
+        result
+    );
 
     return rc;
 }
@@ -1699,12 +1702,11 @@ ib_status_t op_ne_execute(
 /**
  * Execute function for the "gt" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data Pointer to number to compare to
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
- * @param[in] capture Collection to capture to.
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  *
  * @returns Status code
@@ -1712,8 +1714,7 @@ ib_status_t op_ne_execute(
 static
 ib_status_t op_gt_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
@@ -1724,13 +1725,13 @@ ib_status_t op_gt_execute(
 
     rc = execute_compare(
         tx,
-        data,
-        flags,
+        instance_data,
         field,
         capture,
         &num_gt,
         &float_gt,
-        result);
+        result
+    );
 
     return rc;
 }
@@ -1738,21 +1739,20 @@ ib_status_t op_gt_execute(
 /**
  * Execute function for the numeric "less-than" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data C-style string to compare to
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
- * @param[in] capture Collection to capture to.
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
+
  *
  * @returns Status code
  */
 static
 ib_status_t op_lt_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
@@ -1763,13 +1763,13 @@ ib_status_t op_lt_execute(
 
     rc = execute_compare(
         tx,
-        data,
-        flags,
+        instance_data,
         field,
         capture,
         &num_lt,
         &float_lt,
-        result);
+        result
+    );
 
     return rc;
 }
@@ -1777,12 +1777,11 @@ ib_status_t op_lt_execute(
 /**
  * Execute function for the numeric "greater than or equal to" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data Pointer to number to compare to
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
- * @param[in] capture Collection to capture to.
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  *
  * @returns Status code
@@ -1790,8 +1789,7 @@ ib_status_t op_lt_execute(
 static
 ib_status_t op_ge_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
@@ -1802,13 +1800,13 @@ ib_status_t op_ge_execute(
 
     rc = execute_compare(
         tx,
-        data,
-        flags,
+        instance_data,
         field,
         capture,
         &num_ge,
         &float_ge,
-        result);
+        result
+    );
 
     return rc;
 }
@@ -1816,12 +1814,11 @@ ib_status_t op_ge_execute(
 /**
  * Execute function for the "less than or equal to" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data Pointer to number to compare to
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
- * @param[in] capture Collection to capture to.
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  *
  * @returns Status code
@@ -1829,8 +1826,7 @@ ib_status_t op_ge_execute(
 static
 ib_status_t op_le_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
@@ -1841,13 +1837,13 @@ ib_status_t op_le_execute(
 
     rc = execute_compare(
         tx,
-        data,
-        flags,
+        instance_data,
         field,
         capture,
         &num_le,
         &float_le,
-        result);
+        result
+    );
 
     return rc;
 }
@@ -1855,23 +1851,19 @@ ib_status_t op_le_execute(
 /**
  * Create function for the numeric comparison operators
  *
- * @param[in] ib The IronBee engine (unused)
- * @param[in] ctx The current IronBee context (unused)
- * @param[in,out] mp Memory pool to use for allocation
- * @param[in] params Constant parameters
- * @param[in,out] op_inst Instance operator
- * @param[in] cbdata Callback data.
+ * @param[in]  ctx           The current IronBee context (unused).
+ * @param[in]  parameters    Parameters.
+ * @param[out] instance_data Instance_data.
+ * @param[in]  cbdata        Callback data.
  *
  * @returns Status code
  */
 static
 ib_status_t op_numcmp_create(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    ib_mpool_t         *mp,
-    const char         *params,
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
+    ib_context_t  *ctx,
+    const char    *parameters,
+    void         **instance_data,
+    void          *cbdata
 )
 {
     ib_field_t *f;
@@ -1883,9 +1875,14 @@ ib_status_t op_numcmp_create(
     char *params_unesc;
     size_t params_unesc_len;
 
-    rc = unescape_op_args(ib, mp, &params_unesc, &params_unesc_len, params);
+    ib_engine_t *ib = ib_context_get_engine(ctx);
+    ib_mpool_t *mp = ib_context_get_mpool(ctx);
+    assert(ib != NULL);
+    assert(mp != NULL);
+
+    rc = unescape_op_args(ib, mp, &params_unesc, &params_unesc_len, parameters);
     if (rc != IB_OK) {
-        ib_log_debug(ib, "Unable to unescape parameter: %s", params);
+        ib_log_debug(ib, "Unable to unescape parameter: %s", parameters);
         return rc;
     }
 
@@ -1893,14 +1890,22 @@ ib_status_t op_numcmp_create(
         return IB_EINVAL;
     }
 
+    numop_instance_data_t *data =
+        (numop_instance_data_t *)ib_mpool_alloc(mp, sizeof(*data));
+    if (data == NULL) {
+        return IB_EALLOC;
+    }
+    data->expand = false;
+    data->f = NULL;
+    *instance_data = data;
+
     /* Is the string expandable? */
     rc = ib_data_expand_test_str(params_unesc, &expandable);
     if (rc != IB_OK) {
         return rc;
     }
     if (expandable) {
-        op_inst->flags |= IB_OPINST_FLAG_EXPAND;
-
+        data->expand = true;
         rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(params_unesc));
@@ -1928,13 +1933,9 @@ ib_status_t op_numcmp_create(
         }
         /* If it's a valid float, don't use it for eq and ne operators */
         else if (float_rc == IB_OK) {
-            if ( (op_inst->op->fn_execute == op_eq_execute) ||
-                 (op_inst->op->fn_execute == op_ne_execute) )
+            if ( (cbdata == op_eq_execute) ||
+                 (cbdata == op_ne_execute) )
             {
-                ib_log_error(ib,
-                             "Floating point parameter \"%s\" "
-                             "is not supported for operator \"%s\"",
-                             params_unesc, op_inst->op->name);
                 return IB_EINVAL;
             }
             else {
@@ -1947,17 +1948,12 @@ ib_status_t op_numcmp_create(
             }
         }
         else {
-            ib_log_error(ib,
-                         "Parameter \"%s\" for operator \"%s\" "
-                         "is not a valid number",
-                         params_unesc, op_inst->op->name);
             return IB_EINVAL;
         }
     }
 
     if (rc == IB_OK) {
-        op_inst->data = f;
-        op_inst->fparam = f;
+        data->f = f;
     }
 
     return rc;
@@ -1966,12 +1962,11 @@ ib_status_t op_numcmp_create(
 /**
  * Execute function for the "nop" operator
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] data Operator data (unused)
- * @param[in] flags Operator instance flags
- * @param[in] field Field value (unused)
- * @param[in] capture Collection to capture to.
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  *
  * @returns Status code
@@ -1979,8 +1974,7 @@ ib_status_t op_numcmp_create(
 static
 ib_status_t op_nop_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
@@ -2123,7 +2117,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               "eq",
                               IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
-                              NULL,
+                              op_eq_execute,
                               NULL, /* no destroy function */
                               NULL,
                               op_eq_execute,
@@ -2137,7 +2131,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               "ne",
                               IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
-                              NULL,
+                              op_ne_execute,
                               NULL, /* no destroy function */
                               NULL,
                               op_ne_execute,
@@ -2151,7 +2145,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               "gt",
                               IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
-                              NULL,
+                              op_gt_execute,
                               NULL, /* no destroy function */
                               NULL,
                               op_gt_execute,
@@ -2165,7 +2159,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               "lt",
                               IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
-                              NULL,
+                              op_lt_execute,
                               NULL, /* no destroy function */
                               NULL,
                               op_lt_execute,
@@ -2179,7 +2173,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               "ge",
                               IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
-                              NULL,
+                              op_ge_execute,
                               NULL, /* no destroy function */
                               NULL,
                               op_ge_execute,
@@ -2193,7 +2187,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               "le",
                               IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
                               op_numcmp_create,
-                              NULL,
+                              op_le_execute,
                               NULL, /* no destroy function */
                               NULL,
                               op_le_execute,

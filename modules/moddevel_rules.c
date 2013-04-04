@@ -131,7 +131,7 @@ static ib_status_t op_assert_create(
     const ib_rule_t    *rule,
     ib_mpool_t         *mp,
     const char         *parameters,
-    ib_operator_inst_t *op_inst)
+    ib_rule_operator_inst_t *op_inst)
 {
     ib_status_t rc;
     bool expand;

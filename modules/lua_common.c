@@ -109,14 +109,12 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
     return IB_OK;
 }
 
-ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
-                                 ib_engine_t *ib,
+ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
                                  ib_tx_t *tx,
                                  lua_State *L,
                                  const char *func_name,
                                  int *return_value)
 {
-    assert(ib_rule_exec);
     assert(ib);
     assert(tx);
     assert(L);
@@ -146,8 +144,8 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
     /* Create a table for the coming function call. */
     lua_newtable(L);
 
-    lua_pushstring(L, "ib_rule_exec"); /* Push key. */
-    lua_pushlightuserdata(L, (ib_rule_exec_t *)ib_rule_exec); /* Push value. */
+    lua_pushstring(L, "tx"); /* Push key. */
+    lua_pushlightuserdata(L, (ib_tx_t *)tx); /* Push value. */
     lua_settable(L, -3);          /* Assign to -3 key -2 and val -1. */
 
     lua_pushstring(L, "ib_tx");   /* Push key. */
@@ -167,7 +165,7 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
     lua_gettable(L, -2);      /* Get the ruleapi.new function. */
     lua_pushstring(L, "ruleapi"); /* Get ruleapi for self. */
     lua_gettable(L, -4);      /* Get ruleapi table from ibapi table. */
-    lua_pushlightuserdata(L, (ib_rule_exec_t *)ib_rule_exec);
+    lua_pushlightuserdata(L, (ib_tx_t *)tx);
     lua_pushlightuserdata(L, ib); /* Push ib_engine argument to new. */
     lua_pushlightuserdata(L, tx); /* Push ib_tx argument to new. */
     lua_rc = lua_pcall(L, 4, 1, 0); /* Make new ibapi.ruleapi object. */

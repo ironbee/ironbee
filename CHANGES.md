@@ -10,12 +10,9 @@ IronBee v0.8.0
 
 **Engine**
 
-* Operators are now passed their callback data as their last argument.
-
-* Operators are no longer registered to a particular rule.  This change is
-  part of disentangling rules and operators to allow operators to be called
-  by modules or alternative rule systems.
-
+* Operators have been overhauled.  They are now entirely independent of the
+  rule engine and can be called by any code.  The API has been significantly
+  simplified as well.
 
 IronBee v0.7.0
 --------------

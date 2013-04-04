@@ -213,38 +213,35 @@ static ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
  *
  * Looks up the automata name and adds the automata to the operator instance.
  *
- * @param[in] ib Ironbee engine.
- * @param[in] ctx Current Context
- * @param[in] pool Memory pool to use.
- * @param[in] automata_name The name of the automata to use.
- *                          Defined via the LoadEudoxus directive.
- * @param[in,out] op_inst The operator instance being created.
+ * @param[in] ctx Current context.
+ * @param[in] parameters Automata name.
+ * @param[out] instance_data Instance data.
  * @param[in] cbdata Callback data.
  */
 static
 ib_status_t ee_match_any_operator_create(
-    ib_engine_t        *ib,
-    ib_context_t       *ctx,
-    ib_mpool_t         *pool,
-    const char         *automata_name,
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
+    ib_context_t  *ctx,
+    const char    *parameters,
+    void         **instance_data,
+    void          *cbdata
 )
 {
+    assert(ctx != NULL);
+    assert(g_eudoxus_pattern_hash != NULL);
+    assert(parameters != NULL);
+    assert(instance_data != NULL);
 
     ib_status_t rc;
     ia_eudoxus_t* eudoxus;
 
+    ib_engine_t *ib = ib_context_get_engine(ctx);
     assert(ib != NULL);
-    assert(g_eudoxus_pattern_hash != NULL);
-    assert(automata_name != NULL);
-    assert(op_inst != NULL);
 
-    rc = ib_hash_get(g_eudoxus_pattern_hash, &eudoxus, automata_name);
+    rc = ib_hash_get(g_eudoxus_pattern_hash, &eudoxus, parameters);
     if (rc == IB_ENOENT ) {
         ib_log_error(ib,
                      MODULE_NAME_STR ": No eudoxus automata named %s found.",
-                     automata_name);
+                     parameters);
         return rc;
     }
     else if (rc != IB_OK) {
@@ -253,7 +250,7 @@ ib_status_t ee_match_any_operator_create(
         return rc;
     }
 
-    op_inst->data = eudoxus;
+    *instance_data = eudoxus;
 
     return IB_OK;
 }
@@ -266,20 +263,17 @@ ib_status_t ee_match_any_operator_create(
  * The capture option is supported; the matched pattern will be placed in the
  * capture variable if a match occurs.
  *
- * @param[in] tc Current transaction.
- * @param[in] data Callback data -- This is the initialized eudoxus engine
- *                 set by ee_match_any_operator_create().
- * @param[in] flags
- * @param[in] field The field to match.
- * @param[in] capture Collection to capture to.
- * @param[out] result Set to 1 if a match is found 0 otherwise.
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  */
 static
 ib_status_t ee_match_any_operator_execute(
     ib_tx_t    *tx,
-    void       *data,
-    ib_flags_t  flags,
+    void       *instance_data,
     ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
@@ -288,14 +282,14 @@ ib_status_t ee_match_any_operator_execute(
 {
     ib_status_t rc;
     ia_eudoxus_result_t ia_rc;
-    ia_eudoxus_t* eudoxus = data;
+    ia_eudoxus_t* eudoxus = instance_data;
     ia_eudoxus_state_t* state;
     const char *input;
     size_t input_len;
     ee_callback_data_t *ee_cbdata;
 
     assert(tx != NULL);
-    assert(data != NULL);
+    assert(instance_data != NULL);
 
     *result = 0;
 
@@ -348,19 +342,6 @@ ib_status_t ee_match_any_operator_execute(
 }
 
 /**
- * Noop.  No resources that need to be released are allocated when the
- * operator is created.
- */
-static
-ib_status_t ee_match_any_operator_destroy(
-    ib_operator_inst_t *op_inst,
-    void               *cbdata
-)
-{
-    return IB_OK;
-}
-
-/**
  * Initialize the eudoxus operator module.
  *
  * Registers the operators and the hash for storing the eudoxus engine
@@ -393,7 +374,7 @@ static ib_status_t ee_module_init(ib_engine_t *ib,
                            IB_OP_CAPABILITY_CAPTURE ),
                          &ee_match_any_operator_create,
                          NULL,
-                         &ee_match_any_operator_destroy,
+                         NULL,
                          NULL,
                          &ee_match_any_operator_execute,
                          NULL);

@@ -287,6 +287,13 @@ static phase_lookup_t phase_lookup_table[] =
     { NULL,                      false, PHASE_INVALID },
 };
 
+ib_status_t ib_rule_set_invert(ib_rule_t *rule, bool invert)
+{
+    assert(rule != NULL);
+    rule->opinst->invert = invert;
+    return IB_OK;
+}
+
 ib_rule_phase_num_t ib_rule_lookup_phase(
     const char *str,
     bool        is_stream)
@@ -1289,7 +1296,7 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
     assert(rule_exec->target != NULL);
 
     ib_status_t rc;
-    const ib_operator_inst_t *opinst = rule_exec->rule->opinst;
+    const ib_rule_operator_inst_t *opinst = rule_exec->rule->opinst;
     const ib_rule_target_t   *target = rule_exec->target;
 
     /* This if-block is only to log operator values when tracing. */
@@ -1297,7 +1304,7 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
         if ( value == NULL ) {
             ib_rule_log_trace(rule_exec,
                               "Exec of op %s on field %s = NULL",
-                              opinst->op->name,
+                              ib_operator_get_name(opinst->op),
                               target->field_name);
         }
         else if (value->type == IB_FTYPE_NUM) {
@@ -1308,7 +1315,7 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
             }
             ib_rule_log_trace(rule_exec,
                               "Exec of op %s on field %s = %" PRId64,
-                              opinst->op->name,
+                              ib_operator_get_name(opinst->op),
                               target->field_name,
                               num);
         }
@@ -1329,7 +1336,7 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
 
             ib_rule_log_trace(rule_exec,
                               "Exec of op %s on field %s = %s",
-                              opinst->op->name,
+                              ib_operator_get_name(opinst->op),
                               target->field_name,
                               escaped);
         }
@@ -1350,14 +1357,14 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
             }
             ib_rule_log_trace(rule_exec,
                               "Exec of op %s on field %s = %s",
-                              opinst->op->name,
+                              ib_operator_get_name(opinst->op),
                               target->field_name,
                               escaped);
         }
         else {
             ib_rule_log_trace(rule_exec,
                               "Exec of op %s on field %s = %s",
-                              opinst->op->name,
+                              ib_operator_get_name(opinst->op),
                               target->field_name,
                               "[cannot decode field type]");
         }
@@ -1421,11 +1428,11 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
                               ib_status_to_string(rc));
         }
 
-        /* Execute the operator */
         /* @todo remove the cast-away of the constness of value */
         op_rc = ib_operator_execute(
+            opinst->op,
+            opinst->instance_data,
             rule_exec->tx,
-            opinst,
             (ib_field_t *)value,
             get_capture(rule_exec),
             &result
@@ -1452,7 +1459,7 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
          * returns an error.  This needs further discussion to determine what
          * the correct behavior should be.
          */
-        if ( (opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
+        if (opinst->invert) {
             result = (result == 0);
         }
         if (op_rc != IB_OK) {
@@ -1492,11 +1499,13 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 {
     assert(rule_exec != NULL);
     assert(rule_exec->rule != NULL);
+    assert(rule_exec->rule->opinst != NULL);
+    assert(rule_exec->rule->opinst->op != NULL);
     assert(rule_exec->tx != NULL);
 
     ib_tx_t            *tx = rule_exec->tx;
     ib_rule_t          *rule = rule_exec->rule;
-    ib_operator_inst_t *opinst = rule_exec->rule->opinst;
+    ib_rule_operator_inst_t *opinst = rule_exec->rule->opinst;
     ib_status_t         rc = IB_OK;
     ib_list_node_t     *node = NULL;
 
@@ -1507,8 +1516,9 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         /* Execute the operator */
         ib_rule_log_trace(rule_exec, "Executing external rule");
         op_rc = ib_operator_execute(
+            opinst->op,
+            opinst->instance_data,
             rule_exec->tx,
-            opinst,
             NULL,
             get_capture(rule_exec),
             &rule_exec->result
@@ -1559,21 +1569,22 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         ib_status_t         getrc;             /* Status from ib_data_get() */
         bool                pushed = true;
 
-
         /* Set the target in the rule execution object */
         rule_exec_set_target(rule_exec, target);
 
         /* Get the field value */
         getrc = ib_data_get(tx->data, fname, &value);
         if (getrc == IB_ENOENT) {
-            bool allow  =
-                ib_flags_all(opinst->op->capabilities, IB_OP_CAPABILITY_ALLOW_NULL);
+            bool allow = ib_flags_all(
+                ib_operator_get_capabilities(opinst->op),
+                IB_OP_CAPABILITY_ALLOW_NULL
+            );
 
             if (! allow) {
                 ib_rule_log_debug(rule_exec,
                                   "Operator %s will not execute because "
                                   "there is no field %s.",
-                                  opinst->op->name,
+                                  ib_operator_get_name(opinst->op),
                                   fname);
                 ib_rule_log_exec_add_target(rule_exec->exec_log, target, NULL);
                 continue;
@@ -1582,7 +1593,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
             ib_rule_log_debug(rule_exec,
                               "Operator %s receiving null argument because "
                               "there is no field %s.",
-                              opinst->op->name,
+                              ib_operator_get_name(opinst->op),
                               fname);
         }
         else if (getrc != IB_OK) {
@@ -1629,7 +1640,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
                                   "Rule not running because there are no "
                                   "values for operator %s "
                                   "to operate on in field %s.",
-                                  opinst->op->name,
+                                  ib_operator_get_name(opinst->op),
                                   fname);
             }
 
@@ -1678,7 +1689,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
     /* Invert? */
     /* done: */
-    if ( (opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
+    if (opinst->invert) {
         rule_exec->result = (rule_exec->result == 0);
     }
 
@@ -2186,8 +2197,9 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
 
     /* Execute the rule operator */
     op_rc = ib_operator_execute(
+        rule->opinst->op,
+        rule->opinst->instance_data,
         rule_exec->tx,
-        rule->opinst,
         value,
         get_capture(rule_exec),
         &result
@@ -2207,7 +2219,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     rule_exec_pop_value(rule_exec, pushed);
 
     /* Invert? */
-    if ( (rule->opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
+    if (rule->opinst->invert) {
         result = (result == 0);
     }
 
@@ -4011,10 +4023,6 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_log_error(ib, "Cannot register rule: No operator");
         return IB_EINVAL;
     }
-    if (rule->opinst->op->fn_execute == NULL) {
-        ib_log_error(ib, "Cannot register rule: No operator function");
-        return IB_EINVAL;
-    }
 
     /* Verify that the rule has at least one target */
     if (ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT)) {
@@ -4378,14 +4386,24 @@ ib_status_t ib_rule_disable_tag(const ib_engine_t *ib,
 
 ib_status_t ib_rule_set_operator(ib_engine_t *ib,
                                  ib_rule_t *rule,
-                                 ib_operator_inst_t *opinst)
+                                 ib_operator_t *op,
+                                 void *instance_data)
 {
-    if ( (rule == NULL) || (opinst == NULL) ) {
-        ib_log_error(ib,
-                     "Cannot set rule operator: Invalid rule or operator");
-        return IB_EINVAL;
+    assert(ib != NULL);
+    assert(rule != NULL);
+
+    if (rule->opinst == NULL) {
+        rule->opinst = ib_mpool_calloc(
+            ib_engine_pool_main_get(ib),
+            1, sizeof(*(rule->opinst))
+        );
+        if (rule->opinst == NULL) {
+            return IB_EALLOC;
+        }
     }
-    rule->opinst = opinst;
+
+    rule->opinst->op = op;
+    rule->opinst->instance_data = instance_data;
 
     return IB_OK;
 }
@@ -4800,7 +4818,12 @@ ib_status_t ib_rule_set_capture(
     }
 
     /* If the operator doesn't support capture, return an error */
-    if (! ib_flags_any(rule->opinst->op->capabilities, IB_OP_CAPABILITY_CAPTURE)) {
+    if (
+        ! ib_flags_any(
+            ib_operator_get_capabilities(rule->opinst->op),
+            IB_OP_CAPABILITY_CAPTURE
+        )
+    ) {
         return IB_ENOTIMPL;
     }
 

@@ -62,23 +62,14 @@ public:
 
 TEST_F(EeOperModuleTest, test_load_module)
 {
-    ib_operator_t op;
-    // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators,
-                                 reinterpret_cast<void**>(&op),
-                                 "ee_match_any"));
+    ib_operator_t *op;
+    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "ee_match_any", &op));
 }
 
 TEST_F(EeOperModuleTest, test_ee_match_any_success)
 {
-    ib_operator_t op;
     ib_field_t *f;
     ib_num_t n;
-
-    // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators,
-                                 (void**)&op,
-                                 "ee_match_any"));
 
     ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "request_matched", &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
@@ -105,14 +96,8 @@ TEST_F(EeOperModuleTest, test_ee_match_any_success)
 
 TEST_F(EeOperModuleTest, test_ee_match_any_fail)
 {
-    ib_operator_t op;
     ib_field_t *f;
     ib_num_t n;
-
-    // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators,
-                                 (void**)&op,
-                                 "ee_match_any"));
 
     ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "response_matched", &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);

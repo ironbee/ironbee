@@ -19,7 +19,7 @@
  * @file
  * @brief IronBee --- Operator interface
  *
- * @author Craig Forbes <cforbes@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -29,6 +29,37 @@
 #include "engine_private.h"
 
 #include <ironbee/mpool.h>
+
+#include <assert.h>
+
+struct ib_operator_t {
+    /*! Owning engine. */
+    ib_engine_t *ib;
+
+    /*! Name of the operator. */
+    char *name;
+
+    /*! Operator capabilities */
+    ib_flags_t capabilities;
+
+    /*! Instance creation function. */
+    ib_operator_create_fn_t fn_create;
+
+    /*! Create callback data. */
+    void *cbdata_create;
+
+    /*! Instance destroy function. */
+    ib_operator_destroy_fn_t fn_destroy;
+
+    /*! Destroy callback data. */
+    void *cbdata_destroy;
+
+    /*! Instance execution function. */
+    ib_operator_execute_fn_t fn_execute;
+
+    /*! Execute callback data. */
+    void *cbdata_execute;
+};
 
 ib_status_t ib_operator_register(
     ib_engine_t              *ib,
@@ -42,7 +73,9 @@ ib_status_t ib_operator_register(
     void                     *cbdata_execute
 )
 {
-    ib_hash_t *operator_hash = ib->operators;
+    assert(ib   != NULL);
+    assert(name != NULL);
+
     ib_mpool_t *pool = ib_engine_pool_main_get(ib);
     ib_status_t rc;
     char *name_copy;
@@ -53,7 +86,7 @@ ib_status_t ib_operator_register(
         return IB_EINVAL;
     }
 
-    rc = ib_hash_get(operator_hash, &op, name);
+    rc = ib_hash_get(ib->operators, &op, name);
     if (rc == IB_OK) {
         /* name already is registered */
         return IB_EINVAL;
@@ -68,152 +101,132 @@ ib_status_t ib_operator_register(
     if (op == NULL) {
         return IB_EALLOC;
     }
-    op->name = name_copy;
-    op->capabilities = flags;
-    op->fn_create = fn_create;
-    op->cbdata_create = cbdata_create;
-    op->fn_destroy = fn_destroy;
+
+    op->ib             = ib;
+    op->name           = name_copy;
+    op->capabilities   = flags;
+    op->fn_create      = fn_create;
+    op->cbdata_create  = cbdata_create;
+    op->fn_destroy     = fn_destroy;
     op->cbdata_destroy = cbdata_destroy;
-    op->fn_execute = fn_execute;
+    op->fn_execute     = fn_execute;
     op->cbdata_execute = cbdata_execute;
 
-    rc = ib_hash_set(operator_hash, name_copy, op);
+    rc = ib_hash_set(ib->operators, name_copy, op);
 
     return rc;
 }
 
-ib_status_t ib_operator_inst_create_ex(
-    ib_engine_t         *ib,
-    ib_mpool_t          *mpool,
-    ib_context_t        *ctx,
-    ib_flags_t           required_op_flags,
-    const char          *name,
-    const char          *parameters,
-    ib_flags_t           flags,
-    ib_operator_inst_t **op_inst
+ib_engine_t *ib_operator_get_engine(
+    const ib_operator_t *op
 )
 {
-    ib_hash_t *operator_hash = ib->operators;
-    ib_operator_t *op;
-    ib_status_t rc;
+    assert(op != NULL);
 
-    rc = ib_hash_get(operator_hash, &op, name);
-    if (rc != IB_OK) {
-        /* name is not registered */
-        return rc;
-    }
+    return op->ib;
+}
 
-    /* Verify that this operator is valid for this rule type */
-    if ( (op->capabilities & required_op_flags) != required_op_flags) {
-        return IB_EINVAL;
-    }
+const char *ib_operator_get_name(
+    const ib_operator_t *op
+)
+{
+    assert(op != NULL);
 
-    *op_inst = (ib_operator_inst_t *)
-        ib_mpool_alloc(mpool, sizeof(ib_operator_inst_t));
-    if (*op_inst == NULL) {
-        return IB_EALLOC;
-    }
-    (*op_inst)->op = op;
-    (*op_inst)->flags = flags;
-    (*op_inst)->params = ib_mpool_strdup(mpool, parameters);
-    (*op_inst)->fparam = NULL;
+    return op->name;
+}
 
-    if (op->fn_create != NULL) {
-        rc = op->fn_create(
-            ib,
-            ctx,
-            mpool,
-            parameters,
-            *op_inst,
-            op->cbdata_create
-        );
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-    else {
-        rc = IB_OK;
-    }
+ib_flags_t ib_operator_get_capabilities(
+    const ib_operator_t *op
+)
+{
+    assert(op != NULL);
 
-    if ((*op_inst)->fparam == NULL) {
-        rc = ib_field_create(&((*op_inst)->fparam),
-                             mpool,
-                             IB_FIELD_NAME("param"),
-                             IB_FTYPE_NULSTR,
-                             ib_ftype_nulstr_in(parameters));
-    }
+    return op->capabilities;
+}
 
-    return rc;
+ib_status_t ib_operator_lookup(
+    ib_engine_t    *ib,
+    const char     *name,
+    ib_operator_t **op
+)
+{
+    assert(ib != NULL);
+    assert(op != NULL);
+
+    return ib_hash_get(ib->operators, op, name);
 }
 
 ib_status_t ib_operator_inst_create(
-    ib_engine_t         *ib,
-    ib_context_t        *ctx,
-    ib_flags_t           required_op_flags,
-    const char          *name,
-    const char          *parameters,
-    ib_flags_t           flags,
-    ib_operator_inst_t **op_inst
+    ib_operator_t  *op,
+    ib_context_t   *ctx,
+    ib_flags_t      required_capabilities,
+    const char     *parameters,
+    void          **instance_data
 )
 {
-    return ib_operator_inst_create_ex(
-        ib,
-        ib_engine_pool_main_get(ib),
+    assert(op            != NULL);
+    assert(instance_data != NULL);
+
+    /* Verify that this operator is valid for this rule type */
+    if (
+        (op->capabilities & required_capabilities) !=
+        required_capabilities
+    ) {
+        return IB_EINVAL;
+    }
+
+    *instance_data = NULL;
+
+    if (op->fn_create == NULL) {
+        return IB_OK;
+    }
+
+    return op->fn_create(
         ctx,
-        required_op_flags,
-        name,
         parameters,
-        flags,
-        op_inst);
+        instance_data,
+        op->cbdata_create
+    );
 }
 
 ib_status_t ib_operator_inst_destroy(
-    ib_operator_inst_t *op_inst
+    ib_operator_t *op,
+    void          *instance_data
 )
 {
-    ib_status_t rc;
+    assert(op != NULL);
 
-    if (
-        (op_inst != NULL) && (op_inst->op != NULL)
-        && (op_inst->op->fn_destroy != NULL)
-    ) {
-        rc = op_inst->op->fn_destroy(op_inst, op_inst->op->cbdata_destroy);
+    if (op->fn_destroy) {
+        return op->fn_destroy(instance_data, op->cbdata_destroy);
     }
     else {
-        rc = IB_OK;
+        return IB_OK;
     }
-
-    return rc;
 }
 
 ib_status_t ib_operator_execute(
-    ib_tx_t                  *tx,
-    const ib_operator_inst_t *op_inst,
-    ib_field_t               *field,
-    ib_field_t               *capture,
-    ib_num_t                 *result
+    ib_operator_t *op,
+    void          *instance_data,
+    ib_tx_t       *tx,
+    ib_field_t    *field,
+    ib_field_t    *capture,
+    ib_num_t      *result
 )
 {
-    ib_status_t rc;
+    assert(op != NULL);
 
-    if (
-        (op_inst != NULL) && (op_inst->op != NULL)
-        && (op_inst->op->fn_execute != NULL)
-    ) {
-        rc = op_inst->op->fn_execute(
+    if (op->fn_execute == NULL) {
+        *result = 1;
+        return IB_OK;
+    }
+    else {
+        return op->fn_execute(
             tx,
-            op_inst->data,
-            op_inst->flags,
+            instance_data,
             field,
             capture,
             result,
-            op_inst->op->cbdata_execute
+            op->cbdata_execute
         );
     }
-    else {
-        *result = 1;
-        rc = IB_OK;
-    }
-
-    return rc;
 }

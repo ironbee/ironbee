@@ -350,34 +350,3 @@ ib_status_t ib_module_action_inst_create(
 
     return rc;
 }
-
-ib_status_t DLL_PUBLIC ib_module_operator_inst_create(
-    ib_module_t *module,
-    ib_mpool_t *mpool,
-    const char *operator_name,
-    const char *parameters,
-    ib_flags_t flags,
-    ib_operator_inst_t **operator_instance)
-{
-    assert(module);
-    assert(operator_name);
-    assert(parameters);
-    assert(operator_instance);
-
-    if (!mpool) {
-        mpool = ib_engine_pool_main_get(module->ib);
-    }
-
-    ib_status_t rc = ib_operator_inst_create_ex(
-        module->ib,
-        mpool,
-        ib_context_main(module->ib),
-        0,
-        operator_name,
-        parameters,
-        flags,
-        operator_instance);
-
-
-    return rc;
-}

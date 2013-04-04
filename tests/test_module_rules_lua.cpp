@@ -116,7 +116,7 @@ TEST_F(TestIronBeeModuleRulesLua, load_func_eval)
     ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ironbee", "ironbee-ffi"));
     ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ibapi", "ironbee/api"));
     ASSERT_EQ(IB_OK, ib_lua_load_func(ib_engine, L, luafile, "f1"));
-    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(&rule_exec, ib_engine, &tx, L, "f1", &res));
+    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(ib_engine, &tx, L, "f1", &res));
     ASSERT_EQ(5, res);
 }
 
@@ -146,7 +146,7 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
     ASSERT_EQ(IB_OK, ib_lua_new_thread(ib_engine, L, &L2));
     ASSERT_NE(static_cast<lua_State*>(NULL), L2);
     ASSERT_EQ(IB_OK, ib_lua_load_func(ib_engine, L2, luafile, "f1"));
-    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(&rule_exec, ib_engine, &tx, L2, "f1", &res));
+    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(ib_engine, &tx, L2, "f1", &res));
     ASSERT_EQ(IB_OK, ib_lua_join_thread(ib_engine, L, &L2));
     ASSERT_EQ(5, res);
 }
@@ -158,8 +158,8 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     memset(&tx, 0, sizeof(tx));
     tx.ib = ib_engine;
 
-    ib_operator_t op;
-    ib_operator_inst_t *op_inst=NULL;
+    ib_operator_t *op;
+    void *instance_data;
     ib_num_t result;
 
     ib_field_t* field1;
@@ -187,28 +187,23 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     configureIronBee();
 
     // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, (void **)&op, op_name));
+    ASSERT_EQ(IB_OK,
+        ib_operator_lookup(ib_engine, op_name, &op)
+    );
 
-    ASSERT_EQ(IB_OK, ib_operator_inst_create(ib_engine,
+    ASSERT_EQ(IB_OK, ib_operator_inst_create(op,
                                              NULL,
-                                             rule,
                                              IB_OP_CAPABILITY_NON_STREAM,
-                                             op_name,
-                                             "unused parameter.",
-                                             IB_OPINST_FLAG_NONE,
-                                             &op_inst));
-
-    op_inst->data = (void *) rule_name;
-
-    ib_rule_exec_t rule_exec;
-    memset(&rule_exec, 0, sizeof(rule_exec));
-    rule_exec.ib = ib_engine;
-    rule_exec.tx = &tx;
-    rule_exec.rule = rule;
+                                             rule_name,
+                                             &instance_data));
 
     // Attempt to match.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        &rule_exec, op_inst->data, op_inst->flags, field1, &result));
+    ASSERT_EQ(IB_OK, ib_operator_execute(op,
+                                          instance_data,
+                                          &tx,
+                                          field1,
+                                          NULL,
+                                          &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);

@@ -858,7 +858,7 @@ void ib_rule_log_add_audit(
 }
 
 ib_status_t ib_rule_log_exec_op(ib_rule_log_exec_t *exec_log,
-                                const ib_operator_inst_t *opinst,
+                                const ib_rule_operator_inst_t *opinst,
                                 ib_status_t status)
 {
     if (exec_log == NULL) {
@@ -1423,7 +1423,7 @@ static void log_result(
         }
         rule_log_exec(rule_exec,
                       "OP %s(%s) %s%s",
-                      rule_exec->exec_log->rule->opinst->op->name,
+                      ib_operator_get_name(rule_exec->exec_log->rule->opinst->op),
                       ib_field_format(rule_exec->exec_log->rule->opinst->fparam,
                                       true, false, NULL, buf, MAX_FIELD_BUF),
                       s1, s2);
@@ -1531,8 +1531,10 @@ void ib_rule_log_execution(
             }
 
             if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_TARGET)) {
-                bool allow_null = ib_flags_all(rule->opinst->op->capabilities,
-                                               IB_OP_CAPABILITY_ALLOW_NULL);
+                bool allow_null = ib_flags_all(
+                    ib_operator_get_capabilities(rule->opinst->op),
+                    IB_OP_CAPABILITY_ALLOW_NULL
+                );
                 if ( (tgt->original == NULL) && (allow_null == false) ) {
                     rule_log_exec(rule_exec,
                                   "TARGET %s NOT_FOUND",

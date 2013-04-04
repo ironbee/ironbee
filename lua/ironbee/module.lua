@@ -143,7 +143,7 @@ setmetatable(moduleapi, ibengine)
 --            currently always the Lua module file name.
 -- @param[in] index The module index in the IronBee engine.
 -- @param[in] register_directive A function that will
---            do the work in C to register a directive with the IronBee 
+--            do the work in C to register a directive with the IronBee
 --            engine.
 moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
     local t = ibengine:new(ib)
@@ -208,20 +208,26 @@ end
 -- @param[in] param The parameter to pass the operator.
 -- @param[in] flags The flags to pass the operator.
 -- @returns A function that takes an ib_rule_exec_t * and an ib_field_t *.
---   If the ib_rule_exec_t is nil, then the ib_operator_t this 
+--   If the ib_rule_exec_t is nil, then the ib_operator_t this
 --   wraps is destroyed cleanly. Otherwise, that operator is executed.
 --   The returned function, when executed, returns 2 values.
 --   First, an ib_status_t value, normally IB_OK. The second
---   value is the result of the operator execution or 0 when the 
+--   value is the result of the operator execution or 0 when the
 --   operator is destroyed (rule_exec was equal to nil).
 moduleapi.operator = function(self, name, param, flags)
-    local inst = ffi.new('ib_operator_inst_t*[1]')
-    local rc = ffi.C.ib_module_operator_inst_create(
-        self.ib_module,
-        ffi.C.ib_engine_pool_main_get(self.ib_engine),
-        name,
-        param,
+    local op = ffi.new('ib_rule_operator_t*[1]')
+    local inst = ffi.new('ib_rule_operator_inst_t*[1]')
+    local rc = ffi.C.ib_operator_lookup(self.ib_engine, name, op)
+    if rc ~= ffi.C.IB_OK then
+        rc = tonumber(rc)
+        self:logError("Failed to lookup operator %s(%d).", name, rc)
+        return nil
+    end
+    local rc = ffi.C.ib_operator_inst_create(
+        op[0],
+        ffi.C.ib_context_main(self.ib_engine),
         flags,
+        param,
         inst)
     if rc ~= ffi.C.IB_OK then
         rc = tonumber(rc)
@@ -251,7 +257,7 @@ end
 -- @param[in] dirtype The C enum type of the directive.
 -- @param[in] fn The function to call.
 moduleapi.register_directive = function(self, name, dirtype, fn, flagmap)
-    lua_module_directives[name] = { 
+    lua_module_directives[name] = {
         type = dirtype,
         fn = fn,
         mod = self,
@@ -310,7 +316,7 @@ end
 -- @param[in] self The object.
 -- @param[in] name The name of the directive.
 -- @param[in] fn The function to call.
--- @param[in] flagmap 
+-- @param[in] flagmap
 moduleapi.register_opflags_directive = function(self, name, fn, flagmap)
     return self:register_directive(name, ffi.C.IB_DIRTYPE_OPFLAGS, fn, flagmap)
 end
@@ -351,9 +357,9 @@ end
 -- @param[in] cregister_directive A C function that Lua will call
 --            to register directives.
 -- @param[in] module_function The user's module code as a function.
---            This is called and passed a new IronBee Engine API 
+--            This is called and passed a new IronBee Engine API
 --            table with added functions for registering
---            callback functions. Each callback function takes 
+--            callback functions. Each callback function takes
 --            a single argument, the function to callback to when the
 --            event occurs in the IronBee engine.
 --            The callbacks registration functions are:
@@ -430,7 +436,7 @@ end
 M.get_callback = function(ib, module_index, event)
     local  t = lua_modules[module_index]
 
-    -- Since we only use the ib argument for logging, we defer 
+    -- Since we only use the ib argument for logging, we defer
     -- creating an ibengine table until we detect an error to log.
 
     if t == nil then
@@ -444,20 +450,20 @@ M.get_callback = function(ib, module_index, event)
     return handler
 end
 
--- Create a new, empty module configuration table if it does not exist. 
+-- Create a new, empty module configuration table if it does not exist.
 --
 -- This is used for fetching configuration during configuration time.
 --
 -- This is where users should store module configurations such as those
 -- provided through configuration directives.
 --
--- If a parent configuration context is given, it is set as 
+-- If a parent configuration context is given, it is set as
 -- the returned configuration table's metatable's __index value. The
 -- returned configuration will then inherit from the parent configuration.
 --
 -- @param[in] ib IronBee engine.
 -- @param[in] module_index The index of the Lua module in the engine.
--- @param[in] ctxlst The name of the context which the 
+-- @param[in] ctxlst The name of the context which the
 --            configuration should be created for.
 -- @param[in] prev_ctx_name The name of the previous configuration, if any.
 --            This may be nil.
@@ -540,7 +546,7 @@ end
 --
 -- @returns And integer representation of an ib_status_t.
 --   - IB_OK on success.
---   
+--
 M.dispatch_module = function(
     handler,
     ib_engine,

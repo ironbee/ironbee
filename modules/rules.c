@@ -18,6 +18,7 @@
 #include "ironbee_config_auto.h"
 
 #include "engine_private.h"
+#include "rule_engine_private.h"
 
 #include <ironbee/action.h>
 #include <ironbee/cfgmap.h>
@@ -71,40 +72,77 @@ IB_MODULE_DECLARE();
  */
 static ib_status_t parse_operator(ib_cfgparser_t *cp,
                                   ib_rule_t *rule,
-                                  const char *operator,
+                                  const char *operator_string,
                                   const char *operand)
 {
     assert(cp != NULL);
     assert(rule != NULL);
-    assert(operator != NULL);
+    assert(operator_string != NULL);
 
     ib_status_t rc = IB_OK;
     const char *opname = NULL;
-    const char *cptr = operator;
-    ib_flags_t flags = IB_OPINST_FLAG_NONE;
-    ib_operator_inst_t *opinst;
+    const char *cptr = operator_string;
+    bool invert = false;
+    ib_rule_operator_inst_t *opinst;
+    ib_operator_t *operator = NULL;
+    ib_mpool_t *main_mp = ib_engine_pool_main_get(cp->ib);
+    assert(main_mp != NULL);
 
     /* Leading '!' (invert flag)? */
     if (*cptr == '!') {
-        flags |= IB_OPINST_FLAG_INVERT;
+        invert = true;
         ++cptr;
     }
 
     /* Better be an '@' next... */
     if ( (*cptr != '@') || (isalpha(*(cptr+1)) == 0) ) {
-        ib_cfg_log_error(cp, "Invalid rule syntax \"%s\"", operator);
+        ib_cfg_log_error(cp, "Invalid rule syntax \"%s\"", operator_string);
         return IB_EINVAL;
     }
     opname = cptr + 1;
 
+    /* Acquire operator */
+    rc = ib_operator_lookup(cp->ib, opname, &operator);
+    if (rc == IB_ENOENT) {
+        ib_cfg_log_error(cp, "Unknown operator: %s %s", opname, operand);
+        return IB_EINVAL;
+    }
+    else if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Error acquiring operator: %s %s: %s",
+                         opname, operand, ib_status_to_string(rc));
+        return rc;
+    }
+    assert(operator != NULL);
+
+    /* Allocate instance data. */
+    opinst = ib_mpool_calloc(main_mp, 1, sizeof(*opinst));
+    if (opinst == NULL) {
+        return IB_EALLOC;
+    }
+    opinst->op = operator;
+    opinst->params = operand;
+    opinst->invert = invert;
+    rc = ib_field_create(&(opinst->fparam),
+                         main_mp,
+                         IB_FIELD_NAME("param"),
+                         IB_FTYPE_NULSTR,
+                         ib_ftype_nulstr_in(operand));
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Error creating operand field: %s %s: %s",
+                         opname, operand, ib_status_to_string(rc));
+        return rc;
+    }
+
     /* Create the operator instance */
-    rc = ib_operator_inst_create(cp->ib,
-                                 cp->cur_ctx,
-                                 ib_rule_required_op_flags(rule),
-                                 opname,
-                                 operand,
-                                 flags,
-                                 &opinst);
+    rc = ib_operator_inst_create(
+        operator,
+        cp->cur_ctx,
+        ib_rule_required_op_flags(rule),
+        operand,
+        &(opinst->instance_data)
+    );
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Failed to create operator instance "
@@ -116,20 +154,14 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     }
 
     /* Set the operator */
-    rc = ib_rule_set_operator(cp->ib, rule, opinst);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Failed to set operator for rule: %s",
-                         ib_status_to_string(rc));
-        return rc;
-    }
-    ib_cfg_log_debug3(cp,
-                      "Rule: operator=\"%s\" operand=\"%s\" "
-                      "flags=0x%04x",
-                      operator,
-                      (operand == NULL) ? "" : operand,
-                      flags);
+    rule->opinst = opinst;
 
+    ib_cfg_log_debug3(cp,
+                      "Rule: operator=\"%s\" operand=\"%s\"",
+                      opname,
+                      (operand == NULL) ? "" : operand);
+
+    printf("CREATED OPINST = %p\n", opinst);
     return rc;
 }
 
@@ -670,7 +702,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rc = ib_rule_set_capture(cp->ib, rule, value);
         if (rc == IB_ENOTIMPL) {
             ib_cfg_log_error(cp, "Capture not supported by operator %s",
-                             rule->opinst->op->name);
+                             ib_operator_get_name(rule->opinst->op));
             return IB_EINVAL;
         }
         else if (rc != IB_OK) {

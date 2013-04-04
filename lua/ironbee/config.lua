@@ -20,9 +20,6 @@ local IB_RULEMD_FLAG_EXPAND_DATA = 2
 local IB_OP_CAPABILITY_NON_STREAM = 2
 local IB_OP_CAPABILITY_STREAM = 4
 
-local IB_OPINST_FLAG_INVERT = 1
-local IB_OPINST_FLAG_EXPAND = 2
-
 -- Setup the configuration DLS, run the function provided, tear down the DSL.
 --
 -- param[in] f Function to run after the DSL is installed in _G.
@@ -315,9 +312,8 @@ local build_rule = function(ib, ctx, chain, db)
         end
 
         -- Create operator instance.
-        local opinst = ffi.new("ib_operator_inst_t*[1]")
+        local opinst = ffi.new("ib_rule_operator_inst_t*[1]")
         local op_inst_create_stream_flags
-        local op_inst_create_inv_flag
         local op
 
         -- Set the flag values.
@@ -330,10 +326,9 @@ local build_rule = function(ib, ctx, chain, db)
         -- Handle inverted operator.
         if string.sub(rule.data.op, 1, 1) == '!' then
             op = string.sub(rule.data.op, 2)
-            op_inst_create_inv_flag = IB_OPINST_FLAG_INVERT
+            rc = ffi.C.ib_rule_set_invert(ib.ib_engine, prule[0], 1)
         else
             op = rule.data.op
-            op_inst_create_inv_flag = 0
         end
 
         -- Create the argument.
@@ -344,7 +339,6 @@ local build_rule = function(ib, ctx, chain, db)
             op_inst_create_stream_flags,
             op,
             tostring(rule.data.op_arg),
-            op_inst_create_inv_flag,
             opinst)
         if rc ~= ffi.C.IB_OK then
             ib:logError("Failed to create operator instance for %s.", op)
