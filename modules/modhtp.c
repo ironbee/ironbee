@@ -1167,12 +1167,9 @@ static int modhtp_htp_req_start(
 }
 
 static int modhtp_htp_req_line(
-    htp_connp_t   *connp,
-    unsigned char *line,
-    size_t         len)
+    htp_connp_t   *connp)
 {
     assert(connp != NULL);
-    /* @todo: assert(line != NULL); after fix to libhtp? */
 
     modhtp_txdata_t *txdata;
     ib_tx_t         *itx;
@@ -1188,13 +1185,11 @@ static int modhtp_htp_req_line(
     htx = txdata->htx;
 
     /* Store the request line if required */
-    if ( (itx->request_line->raw == NULL) ||
-         (ib_bytestr_length(itx->request_line->raw) == 0) )
-    {
-        irc = ib_bytestr_dup_mem(&itx->request_line->raw, itx->mp, line, len);
-        if (irc != IB_OK) {
-            return HTP_ERROR;
-        }
+    irc = modhtp_set_bytestr(itx, "Request Line", false,
+                             htx->request_line, NULL,
+                             &(itx->request_line->raw));
+    if ( (irc != IB_OK) && (irc != IB_ENOENT) ) {
+        return HTP_ERROR;
     }
 
     /* Store the request method */
