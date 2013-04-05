@@ -292,6 +292,7 @@ void help()
     "\n"
     "Flags:\n"
     "  -c <path> -- Load <path> as CLIPP configuration.\n"
+    "  -e <path> -- Write last input to <path> as pb and exit on error.\n"
     "\n"
     "Generators:\n"
     "Note: For the following, paths can be - to use stdin.\n"
@@ -604,22 +605,40 @@ int main(int argc, char** argv)
         args.push_back(argv[i]);
     }
 
+    string write_on_error;
     list<ConfigurationParser::chain_t> chains;
     // Parse flags.
-    while (! args.empty() && args.front() == "-c") {
+    while (! args.empty() && args.front()[0] == '-') {
+        string arg = args.front();
         args.pop_front();
-        if (args.empty()) {
-            cerr << "-c requires an argument." << endl;
+        if (arg == "-c") {
+            if (args.empty()) {
+                cerr << "-c requires an argument." << endl;
+                help();
+                return 1;
+            }
+            string path = args.front();
+            args.pop_front();
+
+            try {
+                load_configuration_file(chains, path);
+            }
+            CLIPP_CATCH("Error parsing configuraiton file", {return 1;});
+        }
+        else if (arg == "-e") {
+            if (args.empty()) {
+                cerr << "-e requires an argument." << endl;
+                help();
+                return 1;
+            }
+            write_on_error = args.front();
+            args.pop_front();
+        }
+        else {
+            cerr << "Unrecognized flag: " << arg << endl;
             help();
             return 1;
         }
-        string path = args.front();
-        args.pop_front();
-
-        try {
-            load_configuration_file(chains, path);
-        }
-        CLIPP_CATCH("Error parsing configuraiton file", {return 1;});
     }
 
     // Convert argv to configuration.
@@ -791,7 +810,19 @@ int main(int argc, char** argv)
             catch (clipp_continue) {
                 continue;
             }
-            CLIPP_CATCH("Error consuming input", {return 1;});
+            CLIPP_CATCH("Error consuming input", {
+                if (write_on_error.empty()) {
+                    cout << "Exiting." << endl;
+                    break;
+                }
+                else {
+                    PBConsumer consumer(write_on_error);
+                    consumer(input);
+                    cout << "Wrote last input to " << write_on_error << endl;
+                    cout << "Exiting." << endl;
+                    break;
+                }
+            });
 
             if (! consumer_continue) {
                 cerr << "Consumer refusing input." << endl;

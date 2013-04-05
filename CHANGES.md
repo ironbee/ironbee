@@ -14,6 +14,16 @@ IronBee v0.8.0
   rule engine and can be called by any code.  The API has been significantly
   simplified as well.
 
+**CLIPP**
+
+* Added `-e path` which causes `clipp` to handle consumer errors differently.
+  On the first error, `clipp` will write the last input to `path` in protobuf
+  format and exit.
+
+**Other**
+
+* Various clean up and bug fixes.
+
 IronBee v0.7.0
 --------------
 
