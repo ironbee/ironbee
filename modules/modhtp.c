@@ -162,25 +162,6 @@ typedef ib_status_t (* modhtp_table_iterator_callback_fn_t)(
     void                      *data);
 
 /**
- * Function used as a callback to modhtp_set_data()
- *
- * This matches the signature of many htp_tx_{req,res}_set_xxx_c() functions
- * from htp_transaction.h
- *
- * @param[in] tx IronBee transaction
- * @param[in] data Data to set
- * @param[in] dlen Length of @a data
- * @param[in] alloc Allocation strategy
- *
- * @returns Status code
- */
-typedef htp_status_t (* modhtp_set_fn_t)(
-    htp_tx_t                  *tx,
-    const char                *data,
-    size_t                     dlen,
-    enum htp_alloc_strategy_t  alloc);
-
-/**
  * Function used as a callback to modhtp_set_header()
  *
  * This matches the signature of htp_tx_{req,res}_set_header_c() functions
@@ -398,76 +379,6 @@ static ib_status_t modhtp_table_iterator(
     }
 
     return IB_OK;
-}
-
-/**
- * Set a generic request / response item for libhtp by creating a
- * c-style (nul-terminated) string from @a bstr and then calling
- * @a fn with the new c string.
- *
- * @param[in] itx IronBee transaction
- * @param[in] htx HTP transaction
- * @param[in] data Data to set
- * @param[in] dlen Length of @a data
- * @param[in] fn libhtp function to call
- *
- * @returns Status code
- */
-static inline ib_status_t modhtp_set_data(
-    const ib_tx_t      *itx,
-    htp_tx_t           *htx,
-    const char         *data,
-    size_t              dlen,
-    modhtp_set_fn_t     fn)
-{
-    htp_status_t  hrc;
-
-    /* If there's no NULL, libhtp will return an error, so ignore it. */
-    if (data == NULL) {
-        return IB_OK;
-    }
-
-    /* Hand it off to libhtp */
-    hrc = fn(htx, data, dlen, HTP_ALLOC_COPY);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
-    }
-
-    return IB_OK;
-}
-
-/**
- * Set a generic request / response item for libhtp by creating a
- * c-style (nul terminated) string from the non-terminated string @a data
- * of length @a dlen and then calling @a fn with the new c string.
- *
- * @param[in] itx IronBee transaction
- * @param[in] htx HTP transaction
- * @param[in] bstr ByteString to set
- * @param[in] fn libhtp function to call
- *
- * @returns Status code
- */
-static inline ib_status_t modhtp_set_bstr(
-    const ib_tx_t      *itx,
-    htp_tx_t           *htx,
-    const ib_bytestr_t *bstr,
-    modhtp_set_fn_t     fn)
-{
-    assert(itx != NULL);
-    assert(htx != NULL);
-    assert(bstr != NULL);
-    assert(fn != NULL);
-
-    ib_status_t rc;
-    const char *ptr;
-
-    ptr = (const char *)ib_bytestr_const_ptr(bstr);
-    if (ptr == NULL) {
-        ptr = "";
-    }
-    rc = modhtp_set_data(itx, htx, ptr, ib_bytestr_length(bstr), fn);
-    return rc;
 }
 
 /**
