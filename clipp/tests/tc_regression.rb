@@ -46,7 +46,7 @@ class TestRegression < Test::Unit::TestCase
       Content-Length: -1
 
     EOS
-    request.gsub!(/^\s+/, "")
+    request.gsub!(/^ +/, "")
     clipp(
       :input_hashes => [simple_hash(request)],
       :input        => "pb:INPUT_PATH @parse"
@@ -60,7 +60,7 @@ class TestRegression < Test::Unit::TestCase
       Accept-Encoding:
 
     EOS
-    request.gsub!(/^\s+/, "")
+    request.gsub!(/^ +/, "")
     clipp(
       :input_hashes => [simple_hash(request)],
       :input        => "pb:INPUT_PATH @parse @fillbody",
@@ -80,11 +80,11 @@ class TestRegression < Test::Unit::TestCase
       POST /
       This is the body.
     EOS
-    request.gsub!(/^\s+/, "")
+    request.gsub!(/^ +/, "")
     response = <<-EOS
       This is the body.
     EOS
-    response.gsub!(/^\s+/, "")
+    response.gsub!(/^ +/, "")
     clipp(
       :input_hashes => [simple_hash(request, response)],
       :input        => "pb:INPUT_PATH @parse",
