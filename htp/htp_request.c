@@ -186,6 +186,8 @@ static htp_status_t htp_req_handle_state_change(htp_connp_t *connp) {
  * @return HTP_OK, or HTP_ERROR on fatal failure.
  */
 static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
+    if (connp->in_current_data == NULL) return HTP_OK;
+    
     unsigned char *data = connp->in_current_data + connp->in_current_consume_offset;
     size_t len = connp->in_current_read_offset - connp->in_current_consume_offset;
 

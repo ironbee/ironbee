@@ -51,9 +51,11 @@ protected:
         htp_config_register_multipart_parser(cfg);
 
         connp = htp_connp_create(cfg);
+        htp_connp_open(connp, "127.0.0.1", 32768, "127.0.0.1", 80, NULL);
     }
 
     virtual void TearDown() {
+        htp_connp_close(connp, NULL);
         htp_connp_destroy_all(connp);
         htp_config_destroy(cfg);
     }
