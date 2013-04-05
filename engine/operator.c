@@ -95,8 +95,8 @@ ib_status_t ib_operator_create(
 }
 
 ib_status_t ib_operator_register(
-    ib_engine_t   *ib,
-    ib_operator_t *op
+    ib_engine_t         *ib,
+    const ib_operator_t *op
 )
 {
     assert(ib != NULL);
@@ -111,7 +111,7 @@ ib_status_t ib_operator_register(
         return IB_EINVAL;
     }
 
-    rc = ib_hash_set(ib->operators, op->name, op);
+    rc = ib_hash_set(ib->operators, op->name, (void *)op);
 
     return rc;
 }
@@ -179,9 +179,9 @@ ib_flags_t ib_operator_get_capabilities(
 }
 
 ib_status_t ib_operator_lookup(
-    ib_engine_t    *ib,
-    const char     *name,
-    ib_operator_t **op
+    ib_engine_t          *ib,
+    const char           *name,
+    const ib_operator_t **op
 )
 {
     assert(ib != NULL);
@@ -191,11 +191,11 @@ ib_status_t ib_operator_lookup(
 }
 
 ib_status_t ib_operator_inst_create(
-    ib_operator_t  *op,
-    ib_context_t   *ctx,
-    ib_flags_t      required_capabilities,
-    const char     *parameters,
-    void          **instance_data
+    const ib_operator_t  *op,
+    ib_context_t         *ctx,
+    ib_flags_t            required_capabilities,
+    const char           *parameters,
+    void                **instance_data
 )
 {
     assert(op            != NULL);
@@ -224,8 +224,8 @@ ib_status_t ib_operator_inst_create(
 }
 
 ib_status_t ib_operator_inst_destroy(
-    ib_operator_t *op,
-    void          *instance_data
+    const ib_operator_t *op,
+    void                *instance_data
 )
 {
     assert(op != NULL);
@@ -239,12 +239,12 @@ ib_status_t ib_operator_inst_destroy(
 }
 
 ib_status_t ib_operator_execute(
-    ib_operator_t *op,
-    void          *instance_data,
-    ib_tx_t       *tx,
-    ib_field_t    *field,
-    ib_field_t    *capture,
-    ib_num_t      *result
+    const ib_operator_t *op,
+    void                *instance_data,
+    ib_tx_t             *tx,
+    ib_field_t          *field,
+    ib_field_t          *capture,
+    ib_num_t            *result
 )
 {
     assert(op != NULL);

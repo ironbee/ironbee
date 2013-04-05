@@ -158,7 +158,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     memset(&tx, 0, sizeof(tx));
     tx.ib = ib_engine;
 
-    ib_operator_t *op;
+    const ib_operator_t *op;
     void *instance_data;
     ib_num_t result;
 

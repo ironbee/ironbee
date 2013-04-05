@@ -101,6 +101,7 @@ TEST_F(OperatorTest, OperatorCallTest)
     ib_num_t call_result;
     void *instance_data;
     ib_operator_t *op;
+    const ib_operator_t *cop;
 
     status = ib_operator_create_and_register(
         &op,
@@ -113,7 +114,7 @@ TEST_F(OperatorTest, OperatorCallTest)
     );
     ASSERT_EQ(IB_OK, status);
 
-    status = ib_operator_lookup(ib_engine, "test_op", &op);
+    status = ib_operator_lookup(ib_engine, "test_op", &cop);
 
     ASSERT_EQ(IB_OK, status);
 
@@ -172,7 +173,7 @@ TEST_F(CoreOperatorsTest, ContainsTest)
 {
     ib_status_t status;
     ib_num_t call_result;
-    ib_operator_t *op;
+    const ib_operator_t *op;
     void *instance_data;
 
     status = ib_operator_lookup(ib_engine, "contains", &op);
@@ -214,7 +215,7 @@ TEST_F(CoreOperatorsTest, EqTest)
 {
     ib_status_t status;
     ib_num_t call_result;
-    ib_operator_t *op;
+    const ib_operator_t *op;
     void *instance_data;
 
     status = ib_operator_lookup(ib_engine, "eq", &op);
@@ -255,7 +256,7 @@ TEST_F(CoreOperatorsTest, NeTest)
 {
     ib_status_t status;
     ib_num_t call_result;
-    ib_operator_t *op;
+    const ib_operator_t *op;
     void *instance_data;
 
     status = ib_operator_lookup(ib_engine, "ne", &op);

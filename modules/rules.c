@@ -84,7 +84,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     const char *cptr = operator_string;
     bool invert = false;
     ib_rule_operator_inst_t *opinst;
-    ib_operator_t *operator = NULL;
+    const ib_operator_t *operator = NULL;
     ib_mpool_t *main_mp = ib_engine_pool_main_get(cp->ib);
     assert(main_mp != NULL);
 

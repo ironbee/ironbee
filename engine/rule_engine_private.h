@@ -124,11 +124,11 @@ typedef struct ib_rule_injection_cb_t ib_rule_injection_cb_t;
  * Rule engine operator instance object.
  */
 struct ib_rule_operator_inst_t {
-    struct ib_operator_t *op;      /**< Pointer to the operator type */
-    bool                  invert;  /**< Invert operator? */
-    void                 *instance_data; /**< Instance data */
-    const char           *params;  /**< Parameters passed to create */
-    ib_field_t           *fparam;  /**< Parameters as a field */
+    const struct ib_operator_t *op;/**< Pointer to the operator type */
+    bool                        invert;  /**< Invert operator? */
+    void                       *instance_data; /**< Instance data */
+    const char                 *params;  /**< Parameters passed to create */
+    ib_field_t                 *fparam;  /**< Parameters as a field */
 };
 
 /**

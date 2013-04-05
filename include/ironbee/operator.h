@@ -166,8 +166,8 @@ ib_status_t DLL_PUBLIC ib_operator_create(
  * - IB_EALLOC on allocation failure.
  */
 ib_status_t DLL_PUBLIC ib_operator_register(
-    ib_engine_t   *ib,
-    ib_operator_t *op
+    ib_engine_t         *ib,
+    const ib_operator_t *op
 );
 
 /**
@@ -215,9 +215,9 @@ ib_status_t DLL_PUBLIC ib_operator_create_and_register(
  * - IB_ENOENT if no such operator.
  */
 ib_status_t DLL_PUBLIC ib_operator_lookup(
-    ib_engine_t    *ib,
-    const char     *name,
-    ib_operator_t **op
+    ib_engine_t          *ib,
+    const char           *name,
+    const ib_operator_t **op
 );
 
 /**
@@ -258,11 +258,11 @@ ib_flags_t DLL_PUBLIC ib_operator_get_capabilities(
  * - Creation callback status if it reports an error.
  */
 ib_status_t DLL_PUBLIC ib_operator_inst_create(
-    ib_operator_t *op,
-    ib_context_t  *ctx,
-    ib_flags_t     required_capabilities,
-    const char    *parameters,
-    void         **instance_data
+    const ib_operator_t  *op,
+    ib_context_t         *ctx,
+    ib_flags_t            required_capabilities,
+    const char           *parameters,
+    void                **instance_data
 );
 
 /**
@@ -278,8 +278,8 @@ ib_status_t DLL_PUBLIC ib_operator_inst_create(
  * - Status code of destroy callback.
  */
 ib_status_t DLL_PUBLIC ib_operator_inst_destroy(
-    ib_operator_t *op,
-    void          *instance_data
+    const ib_operator_t *op,
+    void                *instance_data
 );
 
 /**
@@ -297,12 +297,12 @@ ib_status_t DLL_PUBLIC ib_operator_inst_destroy(
  * - Execution callback status if it reports an error.
  */
 ib_status_t DLL_PUBLIC ib_operator_execute(
-    ib_operator_t *op,
-    void          *instance_data,
-    ib_tx_t       *tx,
-    ib_field_t    *field,
-    ib_field_t    *capture,
-    ib_num_t      *result
+    const ib_operator_t *op,
+    void                *instance_data,
+    ib_tx_t             *tx,
+    ib_field_t          *field,
+    ib_field_t          *capture,
+    ib_num_t            *result
 );
 
 #ifdef __cplusplus

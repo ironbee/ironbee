@@ -142,7 +142,7 @@ public:
 
 TEST_F(PcreModuleTest, test_load_module)
 {
-    ib_operator_t *op;
+    const ib_operator_t *op;
     ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "pcre", &op));
 }
 
@@ -152,7 +152,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     const ib_list_t *outlist;
     ib_num_t result;
     ib_field_t *capture;
-    ib_operator_t *op;
+    const ib_operator_t *op;
     void *instance_data = NULL;
     ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "pcre", &op));
 
