@@ -87,7 +87,7 @@ static int HybridParsing_Get_Callback_TRANSACTION_START(htp_connp_t *connp) {
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_REQUEST_LINE(htp_connp_t *connp, unsigned char *raw_data, size_t raw_len) {
+static int HybridParsing_Get_Callback_REQUEST_LINE(htp_connp_t *connp) {
     struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
     user_data->callback_REQUEST_LINE_invoked = 1;
     return HTP_OK;
