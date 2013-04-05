@@ -189,7 +189,7 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 
 htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d);
 htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
-htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp, unsigned char *raw_data, size_t raw_len);
+htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
 htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d);
 htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
 
