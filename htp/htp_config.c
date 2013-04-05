@@ -408,7 +408,7 @@ void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_
     htp_hook_register(&cfg->hook_request_headers, (htp_callback_fn_t) callback_fn);
 }
 
-void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *, unsigned char *, size_t)) {
+void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_request_line, (htp_callback_fn_t) callback_fn);
 }

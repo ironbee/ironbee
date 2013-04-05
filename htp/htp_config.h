@@ -235,7 +235,7 @@ void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *, unsigned char *, size_t));
+void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
  * Registers a REQUEST_URI_NORMALIZE callback.
