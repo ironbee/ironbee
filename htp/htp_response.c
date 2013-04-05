@@ -622,8 +622,8 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
  */
 htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
     for (;;) {
-        OUT_COPY_BYTE_OR_RETURN(connp);       
-        
+        OUT_COPY_BYTE_OR_RETURN(connp);
+
         // Have we reached the end of the line?
         if (connp->out_next_byte == LF) {
             unsigned char *data;
@@ -645,8 +645,8 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
                     bstr_free(connp->out_header);
                     connp->out_header = NULL;
                 }
-                
-                htp_connp_res_clear_buffer(connp);               
+
+                htp_connp_res_clear_buffer(connp);
 
                 // We've seen all response headers.
                 if (connp->out_tx->progress == HTP_RESPONSE_HEADERS) {
@@ -760,13 +760,13 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
                 return HTP_OK;
             }
-           
+
             // Deallocate previous response line allocations, which we would have on a 100 response.
 
             if (connp->out_tx->response_line != NULL) {
                 bstr_free(connp->out_tx->response_line);
                 connp->out_tx->response_line = NULL;
-            }           
+            }
 
             if (connp->out_tx->response_protocol != NULL) {
                 bstr_free(connp->out_tx->response_protocol);
@@ -788,7 +788,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             int chomp_result = htp_chomp(data, &len);
 
             connp->out_tx->response_line = bstr_dup_mem(data, len);
-            if (connp->out_tx->response_line == NULL) return HTP_ERROR;            
+            if (connp->out_tx->response_line == NULL) return HTP_ERROR;
 
             if (connp->cfg->parse_response_line(connp) != HTP_OK) return HTP_ERROR;
 
@@ -798,10 +798,10 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
             if (htp_treat_response_line_as_body(connp->out_tx)) {
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
-                
+
                 int rc = htp_tx_res_process_body_data(connp->out_tx, data, len + chomp_result);
                 if (rc != HTP_OK) return rc;
-               
+
                 // Continue to process response body. Because we don't have
                 // any headers to parse, we assume the body continues until
                 // the end of the stream.
@@ -809,13 +809,13 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 connp->out_tx->progress = HTP_RESPONSE_BODY;
                 connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
                 connp->out_body_data_left = -1;
-                
+
                 return HTP_OK;
             }
-           
+
             int rc = htp_tx_state_response_line(connp->out_tx);
             if (rc != HTP_OK) return rc;
-            
+
             htp_connp_res_clear_buffer(connp);
 
             // Move on to the next phase.
@@ -1058,13 +1058,15 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
             fprintf(stderr, "htp_connp_res_data: returning HTP_STREAM_ERROR\n");
             #endif
 
-            // Remember that we've had an error. Errors are
-            // not possible to recover from.
+            // Permanent stream error.
             connp->out_status = HTP_STREAM_ERROR;
 
             return HTP_STREAM_ERROR;
         }
     }
+
+    // Permanent stream error.
+    connp->out_status = HTP_STREAM_ERROR;
 
     return HTP_STREAM_ERROR;
 }
