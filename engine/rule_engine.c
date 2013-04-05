@@ -1948,8 +1948,8 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         if ( (event == handle_postprocess_event) ||
              (event == handle_logging_event) )
         {
-            ib_log_warning_tx(tx, "Rule execution object not created @ %s",
-                              ib_state_event_name(event));
+            ib_log_debug3_tx(tx, "Rule execution object not created @ %s",
+                             ib_state_event_name(event));
             return IB_OK;
         }
         assert(0);
