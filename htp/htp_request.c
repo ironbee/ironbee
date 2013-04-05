@@ -789,7 +789,7 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     // only if the stream has been closed. We do not allow zero-sized
     // chunks in the API, but we use them internally to force the parsers
     // to finalize parsing.
-    if ((len == 0) && (connp->in_status != HTP_STREAM_CLOSED)) {
+    if (((data == NULL)||(len == 0)) && (connp->in_status != HTP_STREAM_CLOSED)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Zero-length data chunks are not allowed");
 
         #ifdef HTP_DEBUG
