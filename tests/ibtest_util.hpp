@@ -67,6 +67,7 @@ extern ib_server_t ibt_ibserver;
 #define ibtest_engine_destroy(e) \
     do { \
         ib_engine_destroy((e)); \
+        ib_shutdown(); \
     } while (0)
 
 
