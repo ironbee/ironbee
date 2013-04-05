@@ -181,6 +181,8 @@ static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
  * @return HTP_OK, or HTP_ERROR on fatal failure.
  */
 static htp_status_t htp_connp_res_buffer(htp_connp_t *connp) {
+    if (connp->out_current_data == NULL) return HTP_OK;
+    
     unsigned char *data = connp->out_current_data + connp->out_current_consume_offset;
     size_t len = connp->out_current_read_offset - connp->out_current_consume_offset;
 
@@ -938,7 +940,7 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     // only if the stream has been closed. We do not allow zero-sized
     // chunks in the API, but we use it internally to force the parsers
     // to finalize parsing.
-    if ((len == 0) && (connp->out_status != HTP_STREAM_CLOSED)) {
+    if (((data == NULL)||(len == 0)) && (connp->out_status != HTP_STREAM_CLOSED)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Zero-length data chunks are not allowed");
 
         #ifdef HTP_DEBUG
