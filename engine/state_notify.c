@@ -303,7 +303,10 @@ ib_status_t ib_state_notify_request_started(
     }
 
     /* Notify the request line if it's present */
-    if (line == NULL) {
+    if ( (line == NULL) ||
+         (line->raw == NULL) ||
+         (ib_bytestr_const_ptr(line->raw) == NULL) )
+    {
         ib_log_error_tx(tx, "Request started with no line");
     }
     else {
@@ -813,8 +816,8 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
         return IB_EINVAL;
     }
 
-    if (    ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)
-        && !ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED))
+    if (    ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)
+        && !ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED))
     {
         ib_log_debug_tx(tx, "Automatically triggering %s",
                         ib_state_event_name(request_finished_event));
@@ -835,7 +838,10 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     }
 
     /* If there's a line, notify the world about it */
-    if (line != NULL) {
+    if ( (line != NULL) &&
+         (line->raw != NULL) &&
+         (ib_bytestr_const_ptr(line->raw) != NULL) )
+    {
         rc = ib_state_notify_resp_line(ib, tx, response_started_event, line);
         if (rc != IB_OK) {
             return rc;
@@ -913,7 +919,7 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     }
 
     /* Generate the response line event if it hasn't been seen */
-    if (! ib_tx_flags_isset(tx, IB_TX_FRES_SEENLINE)) {
+    if (! ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
         /* For HTTP/0.9 there is no response line, so this is normal, but
          * for others this is not normal and should be logged. */
         if (!ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
