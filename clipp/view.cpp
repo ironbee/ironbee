@@ -204,7 +204,7 @@ struct ViewDelegate :
     //! RESPONSE_BODY
     void response_body(const DataEvent& event)
     {
-        cout << "=== RESPONSE BODY ===" << endl;
+        cout << "=== RESPONSE_BODY ===" << endl;
         data_event(event);
         cout << endl;
     }
@@ -212,7 +212,7 @@ struct ViewDelegate :
     //! RESPONSE_FINISHED
     void response_finished(const NullEvent& event)
     {
-        cout << "=== RESPONSE FINISHED ===" << endl;
+        cout << "=== RESPONSE_FINISHED ===" << endl;
     }
 
 private:
