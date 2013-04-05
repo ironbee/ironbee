@@ -367,19 +367,19 @@ static ib_status_t ee_module_init(ib_engine_t *ib,
         }
     }
 
-    ib_operator_register(ib,
-                         "ee_match_any",
-                         ( IB_OP_CAPABILITY_NON_STREAM |
-                           IB_OP_CAPABILITY_STREAM |
-                           IB_OP_CAPABILITY_CAPTURE ),
-                         &ee_match_any_operator_create,
-                         NULL,
-                         NULL,
-                         NULL,
-                         &ee_match_any_operator_execute,
-                         NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "ee_match_any",
+        ( IB_OP_CAPABILITY_NON_STREAM |
+          IB_OP_CAPABILITY_STREAM |
+          IB_OP_CAPABILITY_CAPTURE ),
+        &ee_match_any_operator_create, NULL,
+        NULL, NULL,
+        &ee_match_any_operator_execute, NULL
+    );
 
-    return IB_OK;
+    return rc;
 }
 /**
  * Release resources when the module is unloaded.

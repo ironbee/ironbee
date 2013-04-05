@@ -1625,37 +1625,37 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         PCRE_MAJOR, PCRE_MINOR, IB_XSTRINGIFY(PCRE_DATE), pcre_version());
 
     /* Register operators. */
-    ib_operator_register(ib,
-                         "pcre",
-                         (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE),
-                         pcre_operator_create,
-                         NULL,
-                         NULL,
-                         NULL,
-                         pcre_operator_execute,
-                         NULL);
+    ib_operator_create_and_register(
+        NULL,
+        ib,
+        "pcre",
+        (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE),
+        pcre_operator_create, NULL,
+        NULL, NULL,
+        pcre_operator_execute, NULL
+    );
 
     /* An alias of pcre. The same callbacks are registered. */
-    ib_operator_register(ib,
-                         "rx",
-                         (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE),
-                         pcre_operator_create,
-                         NULL,
-                         NULL,
-                         NULL,
-                         pcre_operator_execute,
-                         NULL);
+    ib_operator_create_and_register(
+        NULL,
+        ib,
+        "rx",
+        (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE),
+        pcre_operator_create, NULL,
+        NULL, NULL,
+        pcre_operator_execute, NULL
+    );
 
     /* Register a pcre operator that uses pcre_dfa_exec to match streams. */
-    ib_operator_register(ib,
-                         "dfa",
-                         (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_STREAM | IB_OP_CAPABILITY_CAPTURE),
-                         dfa_operator_create,
-                         NULL,
-                         NULL,
-                         NULL,
-                         dfa_operator_execute,
-                         NULL);
+    ib_operator_create_and_register(
+        NULL,
+        ib,
+        "dfa",
+        (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_STREAM | IB_OP_CAPABILITY_CAPTURE),
+        dfa_operator_create, NULL,
+        NULL, NULL,
+        dfa_operator_execute, NULL
+    );
 
     return IB_OK;
 }

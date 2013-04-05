@@ -2011,99 +2011,99 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
      */
 
     /* Register the string equal operator */
-    rc = ib_operator_register(ib,
-                              "streq",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              strop_create,
-                              NULL,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_streq_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "streq",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        strop_create, NULL,
+        NULL, NULL,
+        op_streq_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the string equal, case-insensitive, operator */
-    rc = ib_operator_register(ib,
-                              "istreq",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              strop_create,
-                              NULL,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_streq_execute,
-                              (void *)1);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "istreq",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        strop_create, NULL,
+        NULL, NULL,
+        op_streq_execute, (void *)1
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the string contains operator */
-    rc = ib_operator_register(ib,
-                              "contains",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              strop_create,
-                              NULL,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_contains_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "contains",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        strop_create, NULL,
+        NULL, NULL,
+        op_contains_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the string match operator */
-    rc = ib_operator_register(ib,
-                              "match",
-                              IB_OP_CAPABILITY_NON_STREAM,
-                              op_match_create,
-                              NULL,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_match_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "match",
+        IB_OP_CAPABILITY_NON_STREAM,
+        op_match_create, NULL,
+        NULL, NULL,
+        op_match_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the case insensitive string match operator */
-    rc = ib_operator_register(ib,
-                              "imatch",
-                              IB_OP_CAPABILITY_NON_STREAM,
-                              op_match_create,
-                              (void *)1,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_match_execute, /* Note: same as above. */
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "imatch",
+        IB_OP_CAPABILITY_NON_STREAM,
+        op_match_create, (void *)1,
+        NULL, NULL,
+        op_match_execute, /* Note: same as above. */ NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the ipmatch operator */
-    rc = ib_operator_register(ib,
-                              "ipmatch",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              op_ipmatch_create,
-                              NULL,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_ipmatch_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "ipmatch",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        op_ipmatch_create, NULL,
+        NULL, NULL,
+        op_ipmatch_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the ipmatch6 operator */
-    rc = ib_operator_register(ib,
-                              "ipmatch6",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              op_ipmatch6_create,
-                              NULL,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_ipmatch6_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "ipmatch6",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        op_ipmatch6_create, NULL,
+        NULL, NULL,
+        op_ipmatch6_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
@@ -2113,103 +2113,105 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
      */
 
     /* Register the numeric equal operator */
-    rc = ib_operator_register(ib,
-                              "eq",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              op_numcmp_create,
-                              op_eq_execute,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_eq_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "eq",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        op_numcmp_create, op_eq_execute,
+        NULL, NULL,
+        op_eq_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the numeric not-equal operator */
-    rc = ib_operator_register(ib,
-                              "ne",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              op_numcmp_create,
-                              op_ne_execute,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_ne_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "ne",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        op_numcmp_create, op_ne_execute,
+        NULL, NULL,
+        op_ne_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the numeric greater-than operator */
-    rc = ib_operator_register(ib,
-                              "gt",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              op_numcmp_create,
-                              op_gt_execute,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_gt_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "gt",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        op_numcmp_create, op_gt_execute,
+        NULL, NULL,
+        op_gt_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the numeric less-than operator */
-    rc = ib_operator_register(ib,
-                              "lt",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              op_numcmp_create,
-                              op_lt_execute,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_lt_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "lt",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        op_numcmp_create, op_lt_execute,
+        NULL, NULL,
+        op_lt_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the numeric greater-than or equal to operator */
-    rc = ib_operator_register(ib,
-                              "ge",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              op_numcmp_create,
-                              op_ge_execute,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_ge_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "ge",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        op_numcmp_create, op_ge_execute,
+        NULL, NULL,
+        op_ge_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the numeric less-than or equal to operator */
-    rc = ib_operator_register(ib,
-                              "le",
-                              IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
-                              op_numcmp_create,
-                              op_le_execute,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_le_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "le",
+        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        op_numcmp_create, op_le_execute,
+        NULL, NULL,
+        op_le_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register NOP operator */
-    rc = ib_operator_register(ib,
-                              "nop",
-                              ( IB_OP_CAPABILITY_ALLOW_NULL |
-                                IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_STREAM |
-                                IB_OP_CAPABILITY_CAPTURE ),
-                              NULL, NULL, /* No create function */
-                              NULL, NULL, /* no destroy function */
-                              op_nop_execute, NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "nop",
+        ( IB_OP_CAPABILITY_ALLOW_NULL |
+          IB_OP_CAPABILITY_NON_STREAM |
+          IB_OP_CAPABILITY_STREAM |
+          IB_OP_CAPABILITY_CAPTURE ),
+        NULL, NULL, /* No create function */
+        NULL, NULL, /* no destroy function */
+        op_nop_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
-
 
     return IB_OK;
 }

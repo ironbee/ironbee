@@ -102,15 +102,15 @@ TEST_F(OperatorTest, OperatorCallTest)
     void *instance_data;
     ib_operator_t *op;
 
-    status = ib_operator_register(ib_engine,
-                                  "test_op",
-                                  IB_OP_CAPABILITY_NON_STREAM,
-                                  test_create_fn,
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  test_execute_fn,
-                                  NULL);
+    status = ib_operator_create_and_register(
+        &op,
+        ib_engine,
+        "test_op",
+        IB_OP_CAPABILITY_NON_STREAM,
+        test_create_fn, NULL,
+        NULL, NULL,
+        test_execute_fn, NULL
+    );
     ASSERT_EQ(IB_OK, status);
 
     status = ib_operator_lookup(ib_engine, "test_op", &op);

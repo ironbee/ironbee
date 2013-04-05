@@ -334,15 +334,15 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     }
 
     /* Register is_sqli operator. */
-    rc = ib_operator_register(ib,
-                              "is_sqli",
-                              IB_OP_CAPABILITY_NON_STREAM,
-                              sqli_op_create,
-                              NULL,
-                              NULL,
-                              NULL,
-                              sqli_op_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "is_sqli",
+        IB_OP_CAPABILITY_NON_STREAM,
+        sqli_op_create, NULL,
+        NULL, NULL,
+        sqli_op_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }

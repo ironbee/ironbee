@@ -712,13 +712,16 @@ ib_status_t ib_moddevel_rules_init(
      */
 
     /* Register the true operator */
-    rc = ib_operator_register(ib,
-                              "true",
-                              ( IB_OP_CAPABILITY_ALLOW_NULL |
-                                IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_STREAM |
-                                IB_OP_CAPABILITY_CAPTURE ),
-                              NULL, NULL, /* No create function */
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "true",
+        ( IB_OP_CAPABILITY_ALLOW_NULL |
+          IB_OP_CAPABILITY_NON_STREAM |
+              IB_OP_CAPABILITY_STREAM |
+        IB_OP_CAPABILITY_CAPTURE ),
+        NULL, NULL, /* No create function
+    */
                               NULL, NULL, /* no destroy function */
                               op_true_execute, NULL);
     if (rc != IB_OK) {
@@ -726,42 +729,48 @@ ib_status_t ib_moddevel_rules_init(
     }
 
     /* Register the false operator */
-    rc = ib_operator_register(ib,
-                              "false",
-                              ( IB_OP_CAPABILITY_ALLOW_NULL |
-                                IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_STREAM ),
-                              NULL, NULL, /* No create function */
-                              NULL, NULL, /* no destroy function */
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "false",
+        ( IB_OP_CAPABILITY_ALLOW_NULL |
+          IB_OP_CAPABILITY_NON_STREAM |
+              IB_OP_CAPABILITY_STREAM ),
+        NULL, NULL, /* No create function */
+        NULL, NULL, /* no destroy function
+    */
                               op_false_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the field exists operator */
-    rc = ib_operator_register(ib,
-                              "exists",
-                              ( IB_OP_CAPABILITY_ALLOW_NULL |
-                                IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_CAPTURE ),
-                              NULL, /* No create function */
-                              NULL,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_exists_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "exists",
+        ( IB_OP_CAPABILITY_ALLOW_NULL |
+          IB_OP_CAPABILITY_NON_STREAM |
+          IB_OP_CAPABILITY_CAPTURE ),
+        NULL, NULL, /* No create function */
+        NULL, NULL, /* no destroy function */
+        op_exists_execute, NULL
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the false operator */
-    rc = ib_operator_register(ib,
-                              "assert",
-                              ( IB_OP_CAPABILITY_ALLOW_NULL |
-                                IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_STREAM ),
-                              op_assert_create, NULL,
-                              NULL, NULL, /* no destroy function */
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "assert",
+        ( IB_OP_CAPABILITY_ALLOW_NULL |
+          IB_OP_CAPABILITY_NON_STREAM |
+              IB_OP_CAPABILITY_STREAM ),
+        op_assert_create, NULL,
+        NULL, NULL, /* no destroy function
+    */
                               op_assert_execute, NULL);
     if (rc != IB_OK) {
         return rc;
@@ -772,73 +781,91 @@ ib_status_t ib_moddevel_rules_init(
      */
 
     /* Register the IsStr operator */
-    rc = ib_operator_register(ib,
-                              "IsStr",
-                              ( IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_STREAM ),
-                              NULL, NULL, /* no create function */
-                              NULL, NULL, /* no destroy function */
-                              op_istype_execute, &istype_params[IsTypeStr]);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "IsStr",
+        ( IB_OP_CAPABILITY_NON_STREAM |
+          IB_OP_CAPABILITY_STREAM ),
+        NULL, NULL, /* no create function */
+        NULL, NULL, /* no destroy function */
+        op_istype_execute, &istype_params[IsTypeStr]
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the IsNulStr operator */
-    rc = ib_operator_register(ib,
-                              "IsNulStr",
-                              ( IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_STREAM ),
-                              NULL, NULL, /* no create function */
-                              NULL, NULL, /* no destroy function */
-                              op_istype_execute, &istype_params[IsTypeNulStr]);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "IsNulStr",
+        ( IB_OP_CAPABILITY_NON_STREAM |
+          IB_OP_CAPABILITY_STREAM ),
+        NULL, NULL, /* no create function */
+        NULL, NULL, /* no destroy function */
+        op_istype_execute, &istype_params[IsTypeNulStr]
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the IsByteStr operator */
-    rc = ib_operator_register(ib,
-                              "IsByteStr",
-                              ( IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_STREAM ),
-                              NULL, NULL, /* no create function */
-                              NULL, NULL, /* no destroy function */
-                              op_istype_execute, &istype_params[IsTypeByteStr]);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "IsByteStr",
+        ( IB_OP_CAPABILITY_NON_STREAM |
+          IB_OP_CAPABILITY_STREAM ),
+        NULL, NULL, /* no create function */
+        NULL, NULL, /* no destroy function */
+        op_istype_execute, &istype_params[IsTypeByteStr]
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the IsNum operator */
-    rc = ib_operator_register(ib,
-                              "IsNum",
-                              ( IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_STREAM ),
-                              NULL, NULL, /* no create function */
-                              NULL, NULL, /* no destroy function */
-                              op_istype_execute, &istype_params[IsTypeNum]);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "IsNum",
+        ( IB_OP_CAPABILITY_NON_STREAM |
+          IB_OP_CAPABILITY_STREAM ),
+        NULL, NULL, /* no create function */
+        NULL, NULL, /* no destroy function */
+        op_istype_execute, &istype_params[IsTypeNum]
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the IsInt operator */
-    rc = ib_operator_register(ib,
-                              "IsInt",
-                              ( IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_STREAM ),
-                              NULL, NULL, /* no create function */
-                              NULL, NULL, /* no destroy function */
-                              op_istype_execute, &istype_params[IsTypeInt]);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "IsInt",
+        ( IB_OP_CAPABILITY_NON_STREAM |
+          IB_OP_CAPABILITY_STREAM ),
+        NULL, NULL, /* no create function */
+        NULL, NULL, /* no destroy function */
+        op_istype_execute, &istype_params[IsTypeInt]
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the IsFloat operator */
-    rc = ib_operator_register(ib,
-                              "IsFloat",
-                              ( IB_OP_CAPABILITY_NON_STREAM |
-                                IB_OP_CAPABILITY_STREAM ),
-                              NULL, NULL, /* no create function */
-                              NULL, NULL, /* no destroy function */
-                              op_istype_execute, &istype_params[IsTypeFloat]);
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "IsFloat",
+        ( IB_OP_CAPABILITY_NON_STREAM |
+          IB_OP_CAPABILITY_STREAM ),
+        NULL, NULL, /* no create function */
+        NULL, NULL, /* no destroy function */
+        op_istype_execute, &istype_params[IsTypeFloat]
+    );
     if (rc != IB_OK) {
         return rc;
     }

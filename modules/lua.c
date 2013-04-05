@@ -2472,25 +2472,20 @@ ib_status_t modlua_rule_driver(
         name = slash + 1;
     }
 
-    rc = ib_operator_register(cp->ib,
-                              name,
-                              IB_OP_CAPABILITY_NON_STREAM,
-                              &lua_operator_create,
-                              NULL,
-                              NULL,
-                              NULL,
-                              &lua_operator_execute,
-                              NULL);
+    rc = ib_operator_create_and_register(
+        &op,
+        cp->ib,
+        name,
+        IB_OP_CAPABILITY_NON_STREAM,
+        &lua_operator_create,
+        NULL,
+        NULL,
+        NULL,
+        &lua_operator_execute,
+        NULL
+    );
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to register lua operator \"%s\": %s",
-                         name, ib_status_to_string(rc));
-        return rc;
-    }
-
-    rc = ib_operator_lookup(cp->ib, name, &op);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to look operator just registered "
-                         "\"%s\": %s",
                          name, ib_status_to_string(rc));
         return rc;
     }

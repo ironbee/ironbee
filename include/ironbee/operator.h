@@ -56,7 +56,7 @@ extern "C" {
  * @param[out] instance_data Instance data.
  * @param[in] cbdata Callback data.
  *
- * @returns IB_OK if successful.
+ * @return IB_OK if successful.
  */
 typedef ib_status_t (* ib_operator_create_fn_t)(
     ib_context_t  *ctx,
@@ -74,7 +74,7 @@ typedef ib_status_t (* ib_operator_create_fn_t)(
  * @param[in] instance_data Instance data.
  * @param[in] cbdata Callback data.
  *
- * @returns IB_OK if successful.
+ * @return IB_OK if successful.
  */
 typedef ib_status_t (* ib_operator_destroy_fn_t)(
     void *instance_data,
@@ -94,7 +94,7 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(
  * @param[out] result The result of the operator 1=true 0=false.
  * @param[in] cbdata Callback data.
  *
- * @returns IB_OK if successful.
+ * @return IB_OK if successful.
  */
 typedef ib_status_t (* ib_operator_execute_fn_t)(
     ib_tx_t    *tx,
@@ -121,39 +121,87 @@ typedef struct ib_operator_t ib_operator_t;
 #define IB_OP_CAPABILITY_CAPTURE     (1 << 3)
 
 /**
- * Register an operator.
+ * Create an operator.
  *
- * This registers the name and the callbacks used to create, destroy and
- * execute an operator instance.
+ * This creates an operator.
  *
- * @param[in] ib Ironbee engine
- * @param[in] name The name of the operator.
- * @param[in] flags Operator flags.
- * @param[in] fn_create A pointer to the instance creation function.  NULL
- *                      means nop.
- * @param[in] cbdata_create Callback data passed to @a fn_create.
- * @param[in] fn_destroy A pointer to the instance destruction function.
- *                       NULL means nop.
- * @param[in] cbdata_destroy Callback data passed to @a fn_destroy.
- * @param[in] fn_execute A pointer to the operator function.
- *                       NULL means always true.
- * @param[in] cbdata_execute Callback data passed to @a fn_execute.
- *
- * @returns
+ * @param[out] op             Where to store new operator.
+ * @param[in]  mp             Memory pool to use.
+ * @param[in]  name           Name of operator.
+ * @param[in]  capabilities   Operator capabilities.
+ * @param[in]  fn_create      A pointer to the instance creation function.
+ *                            NULL means nop.
+ * @param[in]  cbdata_create  Callback data passed to @a fn_create.
+ * @param[in]  fn_destroy     A pointer to the instance destruction function.
+ *                            NULL means nop.
+ * @param[in]  cbdata_destroy Callback data passed to @a fn_destroy.
+ * @param[in]  fn_execute     A pointer to the operator function.
+ *                            NULL means always true.
+ * @param[in]  cbdata_execute Callback data passed to @a fn_execute.
+ * @return
  * - IB_OK on success.
- * - IB_EINVAL if the name is not unique.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_operator_create(
+    ib_operator_t            **op,
+    ib_mpool_t                *mp,
+    const char                *name,
+    ib_flags_t                 capabilities,
+    ib_operator_create_fn_t    fn_create,
+    void                      *cbdata_create,
+    ib_operator_destroy_fn_t   fn_destroy,
+    void                      *cbdata_destroy,
+    ib_operator_execute_fn_t   fn_execute,
+    void                      *cbdata_execute
+);
+
+/**
+ * Register operator with engine.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] op Operator to register.
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL if an operator with same name already exists.
  * - IB_EALLOC on allocation failure.
  */
 ib_status_t DLL_PUBLIC ib_operator_register(
-    ib_engine_t              *ib,
-    const char               *name,
-    ib_flags_t                flags,
-    ib_operator_create_fn_t   fn_create,
-    void                     *cbdata_create,
-    ib_operator_destroy_fn_t  fn_destroy,
-    void                     *cbdata_destroy,
-    ib_operator_execute_fn_t  fn_execute,
-    void                     *cbdata_execute
+    ib_engine_t   *ib,
+    ib_operator_t *op
+);
+
+/**
+ * Register and create an operator.
+ *
+ * @param[out] op             Where to store new operator, may be NULL.
+ * @param[in]  ib             Memory pool to use.
+ * @param[in]  name           Name of operator.
+ * @param[in]  capabilities   Operator capabilities.
+ * @param[in]  fn_create      A pointer to the instance creation function.
+ *                            NULL means nop.
+ * @param[in]  cbdata_create  Callback data passed to @a fn_create.
+ * @param[in]  fn_destroy     A pointer to the instance destruction function.
+ *                            NULL means nop.
+ * @param[in]  cbdata_destroy Callback data passed to @a fn_destroy.
+ * @param[in]  fn_execute     A pointer to the operator function.
+ *                            NULL means always true.
+ * @param[in]  cbdata_execute Callback data passed to @a fn_execute.
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL if an operator with same name already exists.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_operator_create_and_register(
+    ib_operator_t            **op,
+    ib_engine_t               *ib,
+    const char                *name,
+    ib_flags_t                 capabilities,
+    ib_operator_create_fn_t    fn_create,
+    void                      *cbdata_create,
+    ib_operator_destroy_fn_t   fn_destroy,
+    void                      *cbdata_destroy,
+    ib_operator_execute_fn_t   fn_execute,
+    void                      *cbdata_execute
 );
 
 /**
@@ -170,16 +218,6 @@ ib_status_t DLL_PUBLIC ib_operator_lookup(
     ib_engine_t    *ib,
     const char     *name,
     ib_operator_t **op
-);
-
-/**
- * Get the engine given an operator.
- *
- * @parma[in] operator Operator.
- * @return Engine for operator.
- */
-ib_engine_t DLL_PUBLIC *ib_operator_get_engine(
-    const ib_operator_t *op
 );
 
 /**

@@ -33,9 +33,6 @@
 #include <assert.h>
 
 struct ib_operator_t {
-    /*! Owning engine. */
-    ib_engine_t *ib;
-
     /*! Name of the operator. */
     char *name;
 
@@ -61,69 +58,106 @@ struct ib_operator_t {
     void *cbdata_execute;
 };
 
-ib_status_t ib_operator_register(
-    ib_engine_t              *ib,
-    const char               *name,
-    ib_flags_t                flags,
-    ib_operator_create_fn_t   fn_create,
-    void                     *cbdata_create,
-    ib_operator_destroy_fn_t  fn_destroy,
-    void                     *cbdata_destroy,
-    ib_operator_execute_fn_t  fn_execute,
-    void                     *cbdata_execute
+ib_status_t ib_operator_create(
+    ib_operator_t            **op,
+    ib_mpool_t                *mp,
+    const char                *name,
+    ib_flags_t                 capabilities,
+    ib_operator_create_fn_t    fn_create,
+    void                      *cbdata_create,
+    ib_operator_destroy_fn_t   fn_destroy,
+    void                      *cbdata_destroy,
+    ib_operator_execute_fn_t   fn_execute,
+    void                      *cbdata_execute
 )
 {
-    assert(ib   != NULL);
-    assert(name != NULL);
+    assert(op != NULL);
+    assert(mp != NULL);
 
-    ib_mpool_t *pool = ib_engine_pool_main_get(ib);
-    ib_status_t rc;
-    char *name_copy;
-    ib_operator_t *op;
-
-    /* Verify that it doesn't start with '@' */
-    if (*name == '@') {
-        return IB_EINVAL;
+    *op = (ib_operator_t *)ib_mpool_alloc(mp, sizeof(**op));
+    if (*op == NULL) {
+        return IB_EALLOC;
     }
 
-    rc = ib_hash_get(ib->operators, &op, name);
+    (*op)->name           = ib_mpool_strdup(mp, name);
+    if ((*op)->name == NULL) {
+        return IB_EALLOC;
+    }
+    (*op)->capabilities   = capabilities;
+    (*op)->fn_create      = fn_create;
+    (*op)->cbdata_create  = cbdata_create;
+    (*op)->fn_destroy     = fn_destroy;
+    (*op)->cbdata_destroy = cbdata_destroy;
+    (*op)->fn_execute     = fn_execute;
+    (*op)->cbdata_execute = cbdata_execute;
+
+    return IB_OK;
+}
+
+ib_status_t ib_operator_register(
+    ib_engine_t   *ib,
+    ib_operator_t *op
+)
+{
+    assert(ib != NULL);
+    assert(op != NULL);
+
+    ib_status_t rc;
+    ib_operator_t *existing_op;
+
+    rc = ib_hash_get(ib->operators, &existing_op, op->name);
     if (rc == IB_OK) {
         /* name already is registered */
         return IB_EINVAL;
     }
 
-    name_copy = ib_mpool_strdup(pool, name);
-    if (name_copy == NULL) {
-        return IB_EALLOC;
-    }
-
-    op = (ib_operator_t *)ib_mpool_alloc(pool, sizeof(*op));
-    if (op == NULL) {
-        return IB_EALLOC;
-    }
-
-    op->ib             = ib;
-    op->name           = name_copy;
-    op->capabilities   = flags;
-    op->fn_create      = fn_create;
-    op->cbdata_create  = cbdata_create;
-    op->fn_destroy     = fn_destroy;
-    op->cbdata_destroy = cbdata_destroy;
-    op->fn_execute     = fn_execute;
-    op->cbdata_execute = cbdata_execute;
-
-    rc = ib_hash_set(ib->operators, name_copy, op);
+    rc = ib_hash_set(ib->operators, op->name, op);
 
     return rc;
 }
 
-ib_engine_t *ib_operator_get_engine(
-    const ib_operator_t *op
+ib_status_t ib_operator_create_and_register(
+    ib_operator_t            **op,
+    ib_engine_t               *ib,
+    const char                *name,
+    ib_flags_t                 capabilities,
+    ib_operator_create_fn_t    fn_create,
+    void                      *cbdata_create,
+    ib_operator_destroy_fn_t   fn_destroy,
+    void                      *cbdata_destroy,
+    ib_operator_execute_fn_t   fn_execute,
+    void                      *cbdata_execute
 )
 {
-    assert(op != NULL);
+    assert(ib   != NULL);
+    assert(name != NULL);
 
-    return op->ib;
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    assert(mp != NULL);
+
+    ib_status_t rc;
+
+    ib_operator_t *local_op;
+    if (op == NULL) {
+        op = &local_op;
+    }
+
+    rc = ib_operator_create(
+        op, mp, name, capabilities,
+        fn_create,  cbdata_create,
+        fn_destroy, cbdata_destroy,
+        fn_execute, cbdata_execute
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_operator_register(ib, *op);
+    if (rc  != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
 }
 
 const char *ib_operator_get_name(
