@@ -791,7 +791,7 @@ int main(int argc, char** argv)
             catch (clipp_continue) {
                 continue;
             }
-            CLIPP_CATCH("Error consuming input", {continue;});
+            CLIPP_CATCH("Error consuming input", {return 1;});
 
             if (! consumer_continue) {
                 cerr << "Consumer refusing input." << endl;
