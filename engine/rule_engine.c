@@ -2480,12 +2480,14 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
                                            void *cbdata)
 {
     assert(ib != NULL);
-    assert(header != NULL);
     assert(cbdata != NULL);
 
     const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
-    ib_status_t rc;
-    rc = run_stream_rules(ib, tx, event, NULL, header, meta);
+    ib_status_t rc = IB_OK;
+
+    if (header != NULL) {
+        rc = run_stream_rules(ib, tx, event, NULL, header, meta);
+    }
     return rc;
 }
 
