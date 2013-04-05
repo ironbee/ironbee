@@ -54,6 +54,21 @@ class TestRegression < Test::Unit::TestCase
     assert_no_issues
   end
 
+  def test_negative_content_length2
+    request = <<-EOS
+      GET / HTTP/1.1
+      Content-Length: -1
+
+      Body text!
+    EOS
+    request.gsub!(/^ +/, "")
+    clipp(
+      :input_hashes => [simple_hash(request)],
+      :input        => "pb:INPUT_PATH @parse"
+    )
+    assert_no_issues
+  end
+
   def test_rule_engine_log_with_empty_header
     request = <<-EOS
       GET / HTTP/1.1
