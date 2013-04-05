@@ -30,21 +30,18 @@
 // @todo Remove once ib_engine_operator_get() is available.
 #include "engine_private.h"
 
-class EeOperModuleTest : public BaseModuleFixture
+class EeOperModuleTest : public BaseTransactionFixture
 {
 public:
-    EeOperModuleTest() : BaseModuleFixture("ibmod_ee.so")
-    {
-    }
-
     void SetUp()
     {
-        BaseModuleFixture::SetUp();
+        BaseTransactionFixture::SetUp();
+        configureIronBee();
         performTx();
     }
     void configureIronBee(void)
     {
-        BaseModuleFixture::configureIronBee("EeOperModuleTest.config");
+        BaseTransactionFixture::configureIronBee("EeOperModuleTest.config");
     }
     void generateRequestHeader( )
     {
