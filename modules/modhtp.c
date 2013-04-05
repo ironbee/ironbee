@@ -2022,13 +2022,24 @@ static ib_status_t modhtp_iface_request_finished(
 
     const modhtp_txdata_t *txdata;
     ib_status_t            irc;
+    htp_status_t           hrc;
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Generate fields. */
     irc = modhtp_gen_request_fields(txdata->htx, itx);
-    return irc;
+    if (irc != IB_OK) {
+        return irc;
+    }
+
+    /* Complete the request */
+    hrc = htp_tx_state_request_complete(txdata->htx);
+    if (hrc != HTP_OK) {
+        return IB_EUNKNOWN;
+    }
+
+    return IB_OK;
 }
 
 static ib_status_t modhtp_iface_response_started(
@@ -2207,14 +2218,24 @@ static ib_status_t modhtp_iface_response_finished(
 
     const modhtp_txdata_t *txdata;
     ib_status_t            irc;
+    htp_status_t           hrc;
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Generate fields. */
     irc = modhtp_gen_response_fields(txdata->htx, itx);
+    if (irc != IB_OK) {
+        return irc;
+    }
 
-    return irc;
+    /* Complete the request */
+    hrc = htp_tx_state_response_complete(txdata->htx);
+    if (hrc != HTP_OK) {
+        return IB_EUNKNOWN;
+    }
+
+    return IB_OK;
 }
 
 static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
