@@ -783,6 +783,7 @@ protected:
 
 
 public:
+    explicit
     BaseModuleFixture(const std::string& module_file) :
         m_module_file(module_file),
         ib_module(NULL)
