@@ -392,7 +392,7 @@ static ib_status_t modhtp_table_iterator(
  *
  * @param[in] hrc Return code from libhtp
  * @param[in] txdata Transaction data
- * @param[in] label Label string
+ * @param[in] fn libhtp function name
  */
 static ib_status_t modhtp_check_htprc(
     htp_status_t           hrc,
