@@ -471,27 +471,72 @@ static inline ib_status_t modhtp_set_bstr(
 }
 
 /**
+ * Check return status from libhtp calls
+ *
+ * This function *always* returns IB_OK.  Ideally, it'd do something based
+ * on the return status @a hrc, or the error code (txdata->error_code).
+ *
+ * From what testing I've done, @a hrc is always HTP_OK or HTP_ERROR, and
+ * the error code is always zero.  We should keep an eye on the this.
+ *
+ * @param[in] hrc Return code from libhtp
+ * @param[in] txdata Transaction data
+ * @param[in] label Label string
+ */
+static ib_status_t modhtp_check_htprc(
+    htp_status_t           hrc,
+    const modhtp_txdata_t *txdata,
+    const char            *fn)
+{
+    assert(txdata != NULL);
+
+    /* Short circuit if libhtp returned OK */
+    if (hrc == HTP_OK) {
+        return IB_OK;
+    }
+
+    /* NRL: The error code seems to be always zero.  Warn if not so that
+     * I can figure out what it means. */
+    if (txdata->error_code != 0) {
+        if (txdata->itx != NULL) {
+            ib_log_warning_tx(txdata->itx,
+                              "Error code %d reported by \"%s\"",
+                              txdata->error_code, fn);
+        }
+        else {
+            ib_log_warning(txdata->ib,
+                           "Error code %d reported by \"%s\"",
+                           txdata->error_code, fn);
+        }
+    }
+
+    return IB_OK;
+}
+
+/**
  * Set headers to libhtp
  *
  * The callback function @a fn is called for each iteration of @a header.
  *
- * @param[in] itx IronBee transaction
- * @param[in] htx HTP transaction passed to @a fn
+ * @param[in] txdata modhtp transaction data
+ * @param[in] label Label for logging
  * @param[in] header The header to iterate
  * @param[in] fn The callback function
+ * @param[in] fname The name of @a fn
  *
  * @returns Status code
  *  - IB_OK All OK
  *  - IB_EINVAL If either key or value of any iteration is NULL
  */
 static ib_status_t modhtp_set_header(
-    const ib_tx_t                    *itx,
+    const modhtp_txdata_t            *txdata,
     const char                       *label,
-    htp_tx_t                         *htx,
     const ib_parsed_header_wrapper_t *header,
-    modhtp_set_header_fn_t            fn)
+    modhtp_set_header_fn_t            fn,
+    const char                       *fname)
 {
-    assert(htx != NULL);
+    assert(txdata != NULL);
+    assert(label != NULL);
     assert(header != NULL);
     assert(fn != NULL);
 
@@ -501,24 +546,28 @@ static ib_status_t modhtp_set_header(
         htp_status_t hrc;
         const char *value = (const char *)ib_bytestr_const_ptr(node->value);
         size_t vlen = ib_bytestr_length(node->value);
+        ib_status_t irc;
 
         if (value == NULL) {
             value = "";
             vlen = 0;
         }
-        hrc = fn(htx,
+        hrc = fn(txdata->htx,
                  (const char *)ib_bytestr_const_ptr(node->name),
                  ib_bytestr_length(node->name),
                  value, vlen,
                  HTP_ALLOC_COPY);
-        if (hrc != HTP_OK) {
-            return IB_EUNKNOWN;
+        irc = modhtp_check_htprc(hrc, txdata, fname);
+        if (irc != IB_OK) {
+            return irc;
         }
-        ib_log_debug2_tx(itx, "Handed %s header \"%.*s\" \"%.*s\" to libhtp",
+        ib_log_debug2_tx(txdata->itx,
+                         "Handed %s header \"%.*s\" \"%.*s\" to libhtp %s",
                          label,
                          (int)ib_bytestr_length(node->name),
                          (const char *)ib_bytestr_const_ptr(node->name),
-                         (int)vlen, value);
+                         (int)vlen, value,
+                         fname);
     }
 
     return IB_OK;
@@ -780,7 +829,7 @@ static modhtp_txdata_t *modhtp_get_txdata_htptx(
  *
  * @returns Pointer to the transaction data
  */
-static modhtp_txdata_t* modhtp_get_txdata_parser(
+static modhtp_txdata_t *modhtp_get_txdata_parser(
     const htp_connp_t  *parser)
 {
     assert(parser != NULL);
@@ -838,11 +887,11 @@ static inline ib_status_t modhtp_check_parser(
         return IB_OK;
     }
 
-    ib_log_warning_tx(txdata->itx,
-                      "modhtp/%s: Parser error %d \"%s\"",
-                      label,
-                      log->code,
-                      (log->msg == NULL) ? "UNKNOWN" : log->msg);
+    ib_log_notice_tx(txdata->itx,
+                     "modhtp/%s: Parser error %d \"%s\"",
+                     label,
+                     log->code,
+                     (log->msg == NULL) ? "UNKNOWN" : log->msg);
     txdata->error_code = log->code;
     if (log->msg == NULL) {
         txdata->error_msg = "UNKNOWN";
@@ -1879,11 +1928,7 @@ static ib_status_t modhtp_iface_request_started(
 
     /* Start the request */
     hrc = htp_tx_state_request_start(txdata->htx);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
-    }
-
-    return IB_OK;
+    return modhtp_check_htprc(hrc, txdata, "htp_tx_state_request_start()");
 }
 
 
@@ -1898,6 +1943,7 @@ static ib_status_t modhtp_iface_request_line(
 
     const modhtp_txdata_t *txdata;
     htp_status_t           hrc;
+    ib_status_t            irc;
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
@@ -1911,14 +1957,16 @@ static ib_status_t modhtp_iface_request_line(
                               (const char *)ib_bytestr_const_ptr(line->raw),
                               ib_bytestr_length(line->raw),
                               HTP_ALLOC_COPY);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_req_set_line");
+    if (irc != IB_OK) {
+        return irc;
     }
 
     /* Update the state */
     hrc = htp_tx_state_request_line(txdata->htx);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_state_request_line");
+    if (irc != IB_OK) {
+        return irc;
     }
 
     return IB_OK;
@@ -1942,8 +1990,8 @@ static ib_status_t modhtp_iface_request_header_data(
     ib_log_debug_tx(itx, "SEND REQUEST HEADER DATA TO LIBHTP");
 
     /* Hand the headers off to libhtp */
-    irc = modhtp_set_header(itx, "request", txdata->htx, header,
-                            htp_tx_req_set_header);
+    irc = modhtp_set_header(txdata, "request", header,
+                            htp_tx_req_set_header, "htp_tx_req_set_header");
     if (irc != IB_OK) {
         return irc;
     }
@@ -1967,8 +2015,9 @@ static ib_status_t modhtp_iface_request_header_finished(
 
     /* Update the state */
     hrc = htp_tx_state_request_headers(txdata->htx);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_state_request_headers");
+    if (irc != IB_OK) {
+        return irc;
     }
 
     /* Generate header fields. */
@@ -1995,6 +2044,7 @@ static ib_status_t modhtp_iface_request_body_data(
 
     const modhtp_txdata_t *txdata;
     htp_status_t           hrc;
+    ib_status_t            irc;
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
@@ -2006,8 +2056,9 @@ static ib_status_t modhtp_iface_request_body_data(
     /* Hand the request body data to libhtp. */
     hrc = htp_tx_req_process_body_data(txdata->htx,
                                        ib_txdata->data, ib_txdata->dlen);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_req_process_body_data");
+    if (irc != IB_OK) {
+        return irc;
     }
 
     return IB_OK;
@@ -2022,13 +2073,25 @@ static ib_status_t modhtp_iface_request_finished(
 
     const modhtp_txdata_t *txdata;
     ib_status_t            irc;
+    htp_status_t           hrc;
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Generate fields. */
     irc = modhtp_gen_request_fields(txdata->htx, itx);
-    return irc;
+    if (irc != IB_OK) {
+        return irc;
+    }
+
+    /* Complete the request */
+    hrc = htp_tx_state_request_complete(txdata->htx);
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_request_complete");
+    if (irc != IB_OK) {
+        return irc;
+    }
+
+    return IB_OK;
 }
 
 static ib_status_t modhtp_iface_response_started(
@@ -2040,14 +2103,16 @@ static ib_status_t modhtp_iface_response_started(
 
     const modhtp_txdata_t *txdata;
     htp_status_t           hrc;
+    ib_status_t            irc;
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Start the response transaction */
     hrc = htp_tx_state_response_start(txdata->htx);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_response_start");
+    if (irc != IB_OK) {
+        return irc;
     }
 
     /* Done */
@@ -2065,6 +2130,7 @@ static ib_status_t modhtp_iface_response_line(
     const modhtp_txdata_t *txdata;
     htp_tx_t              *htx;
     htp_status_t           hrc;
+    ib_status_t            irc;
 
     /* For HTTP/0.9 requests, we're done. */
     if (line == NULL) {
@@ -2085,14 +2151,16 @@ static ib_status_t modhtp_iface_response_line(
         (const char *)ib_bytestr_const_ptr(line->raw),
         ib_bytestr_length(line->raw),
         HTP_ALLOC_COPY);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_res_set_status_line");
+    if (irc != IB_OK) {
+        return irc;
     }
 
     /* Set the state */
     hrc = htp_tx_state_response_line(htx);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_state_response_line");
+    if (irc != IB_OK) {
+        return irc;
     }
 
     return IB_OK;
@@ -2123,8 +2191,8 @@ static ib_status_t modhtp_iface_response_header_data(
                     "modhtp_iface_response_header_data");
 
     /* Hand the response headers off to libhtp */
-    irc = modhtp_set_header(itx, "response", txdata->htx, header,
-                            htp_tx_res_set_header);
+    irc = modhtp_set_header(txdata, "response", header,
+                            htp_tx_res_set_header, "htp_tx_res_set_header");
     if (irc != IB_OK) {
         return irc;
     }
@@ -2148,8 +2216,9 @@ static ib_status_t modhtp_iface_response_header_finished(
 
     /* Update the state */
     hrc = htp_tx_state_response_headers(txdata->htx);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_state_response_headers");
+    if (irc != IB_OK) {
+        return irc;
     }
 
     /* Generate header fields. */
@@ -2181,6 +2250,7 @@ static ib_status_t modhtp_iface_response_body_data(
 
     const modhtp_txdata_t *txdata;
     htp_status_t           hrc;
+    ib_status_t            irc;
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
@@ -2191,8 +2261,9 @@ static ib_status_t modhtp_iface_response_body_data(
 
     hrc = htp_tx_res_process_body_data(txdata->htx,
                                        ib_txdata->data, ib_txdata->dlen);
-    if (hrc != HTP_OK) {
-        return IB_EUNKNOWN;
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_res_process_body_data");
+    if (irc != IB_OK) {
+        return irc;
     }
 
     return IB_OK;
@@ -2207,14 +2278,25 @@ static ib_status_t modhtp_iface_response_finished(
 
     const modhtp_txdata_t *txdata;
     ib_status_t            irc;
+    htp_status_t           hrc;
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Generate fields. */
     irc = modhtp_gen_response_fields(txdata->htx, itx);
+    if (irc != IB_OK) {
+        return irc;
+    }
 
-    return irc;
+    /* Complete the request */
+    hrc = htp_tx_state_response_complete(txdata->htx);
+    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_state_response_complete");
+    if (irc != IB_OK) {
+        return irc;
+    }
+
+    return IB_OK;
 }
 
 static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
