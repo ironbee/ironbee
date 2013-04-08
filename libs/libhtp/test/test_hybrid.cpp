@@ -41,6 +41,24 @@
 #include <htp/htp_private.h>
 #include "test.h"
 
+struct HybridParsing_Get_User_Data {
+    // Request callback indicators
+    int callback_TRANSACTION_START_invoked;
+    int callback_REQUEST_LINE_invoked;
+    int callback_REQUEST_HEADERS_invoked;
+    int callback_REQUEST_COMPLETE_invoked;
+
+    // Response callback indicators
+    int callback_RESPONSE_START_invoked;
+    int callback_HTP_RESPONSE_LINE_invoked;
+    int callback_RESPONSE_HEADERS_invoked;
+    int callback_HTP_RESPONSE_COMPLETE_invoked;
+
+    // Response body handling fields
+    int response_body_chunks_seen;
+    int response_body_correctly_received;
+};
+
 class HybridParsing : public testing::Test {
 protected:
 
@@ -63,24 +81,10 @@ protected:
     htp_connp_t *connp;
 
     htp_cfg_t *cfg;
-};
 
-struct HybridParsing_Get_User_Data {
-    // Request callback indicators
-    int callback_TRANSACTION_START_invoked;
-    int callback_REQUEST_LINE_invoked;
-    int callback_REQUEST_HEADERS_invoked;
-    int callback_REQUEST_COMPLETE_invoked;
-
-    // Response callback indicators
-    int callback_RESPONSE_START_invoked;
-    int callback_HTP_RESPONSE_LINE_invoked;
-    int callback_RESPONSE_HEADERS_invoked;
-    int callback_HTP_RESPONSE_COMPLETE_invoked;
-
-    // Response body handling fields
-    int response_body_chunks_seen;
-    int response_body_correctly_received;
+    // This must not be in a test stack frame as it will persist to TearDown
+    // as htp user data.
+    HybridParsing_Get_User_Data user_data;
 };
 
 static int HybridParsing_Get_Callback_TRANSACTION_START(htp_connp_t *connp) {
@@ -182,7 +186,6 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_TRUE(tx != NULL);
 
     // Configure user data and callbacks
-    struct HybridParsing_Get_User_Data user_data;
     user_data.callback_TRANSACTION_START_invoked = 0;
     user_data.callback_REQUEST_LINE_invoked = 0;
     user_data.callback_REQUEST_HEADERS_invoked = 0;
