@@ -55,7 +55,10 @@ protected:
     }
 
     virtual void TearDown() {
-        htp_connp_close(connp, NULL);
+        timeval tv;
+        gettimeofday(&tv, NULL);
+
+        htp_connp_close(connp, &tv);
         htp_connp_destroy_all(connp);
         htp_config_destroy(cfg);
     }
