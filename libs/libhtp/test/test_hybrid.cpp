@@ -41,33 +41,6 @@
 #include <htp/htp_private.h>
 #include "test.h"
 
-class HybridParsing : public testing::Test {
-protected:
-
-    virtual void SetUp() {
-        cfg = htp_config_create();
-        htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2);
-        htp_config_register_urlencoded_parser(cfg);
-        htp_config_register_multipart_parser(cfg);
-
-        connp = htp_connp_create(cfg);
-        htp_connp_open(connp, "127.0.0.1", 32768, "127.0.0.1", 80, NULL);
-    }
-
-    virtual void TearDown() {
-        timeval tv;
-        gettimeofday(&tv, NULL);
-
-        htp_connp_close(connp, &tv);
-        htp_connp_destroy_all(connp);
-        htp_config_destroy(cfg);
-    }
-
-    htp_connp_t *connp;
-
-    htp_cfg_t *cfg;
-};
-
 struct HybridParsing_Get_User_Data {
     // Request callback indicators
     int callback_TRANSACTION_START_invoked;
@@ -84,6 +57,34 @@ struct HybridParsing_Get_User_Data {
     // Response body handling fields
     int response_body_chunks_seen;
     int response_body_correctly_received;
+};
+
+class HybridParsing : public testing::Test {
+protected:
+
+    virtual void SetUp() {
+        cfg = htp_config_create();
+        htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2);
+        htp_config_register_urlencoded_parser(cfg);
+        htp_config_register_multipart_parser(cfg);
+
+        connp = htp_connp_create(cfg);
+        htp_connp_open(connp, "127.0.0.1", 32768, "127.0.0.1", 80, NULL);
+    }
+
+    virtual void TearDown() {
+        htp_connp_close(connp, NULL);
+        htp_connp_destroy_all(connp);
+        htp_config_destroy(cfg);
+    }
+
+    htp_connp_t *connp;
+
+    htp_cfg_t *cfg;
+
+    // This must not be in a test stack frame as it will persist to TearDown
+    // as htp user data.
+    HybridParsing_Get_User_Data user_data;
 };
 
 static int HybridParsing_Get_Callback_TRANSACTION_START(htp_connp_t *connp) {
@@ -185,7 +186,6 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_TRUE(tx != NULL);
 
     // Configure user data and callbacks
-    struct HybridParsing_Get_User_Data user_data;
     user_data.callback_TRANSACTION_START_invoked = 0;
     user_data.callback_REQUEST_LINE_invoked = 0;
     user_data.callback_REQUEST_HEADERS_invoked = 0;
