@@ -332,7 +332,10 @@ local build_rule = function(ib, ctx, chain, db)
             opname = rule.data.op
         end
 
-        rc = ffi.C.ib_operator_lookup(ib.ib_engine, opname, op)
+        rc = ffi.C.ib_operator_lookup(
+            ib.ib_engine,
+            opname, 
+            ffi.cast("const ib_operator_t**", op))
         if rc ~= ffi.C.IB_OK then
             ib:logError("Could not locate operator %s", opname)
             return rc
