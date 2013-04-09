@@ -402,6 +402,9 @@ static ib_status_t act_setflag_execute(
         ib_tx_flags_unset(rule_exec->tx, opdata->flag->tx_flag);
         value = 0;
         break;
+
+    default:
+        return IB_EINVAL;
     }
 
     /* This fails because ib_data_remove() doesn't handle fields within
