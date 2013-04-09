@@ -100,6 +100,8 @@ static ib_status_t filter_exec(ib_filter_t *f,
             ctx = fdata->udata.conn->ctx;
             pool = fdata->udata.conn->mp;
             break;
+        default:
+            return IB_EINVAL;
     }
 
     rc = f->fn_filter(f, fdata, ctx, pool, &flags);
