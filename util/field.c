@@ -75,6 +75,8 @@ const char *ib_field_type_name(
         return "LIST";
     case IB_FTYPE_SBUFFER:
         return "SBUFFER";
+    default:
+        return "Unknown";
     }
 }
 
