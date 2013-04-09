@@ -34,7 +34,14 @@
 #include <ironbee/util.h>
 
 #include <yajl/yajl_parse.h>
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <yajl/yajl_tree.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <assert.h>
 #include <inttypes.h>
@@ -305,8 +312,6 @@ static int decode_end_map(void *ctx)
 {
     decode_ctx_t *decode = (decode_ctx_t *)ctx;
     return decode_end_list(decode, true);
-
-    return 1;
 }
 
 static int decode_start_array(void *ctx)

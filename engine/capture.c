@@ -93,8 +93,9 @@ static inline const char *get_collection_name(
  * @param[in] capture Field to get list from.
  * @param[out] olist If not NULL, pointer to the capture item's list
  *
- * @returns IB_OK: All OK
- * @returns Other if can't fetch field value.
+ * @returns
+ * - IB_OK: All OK
+ * - Other if can't fetch field value.
  */
 static
 ib_status_t get_capture_list(

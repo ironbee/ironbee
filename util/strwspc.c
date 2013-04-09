@@ -67,12 +67,10 @@ typedef ib_status_t (* inplace_fn_t)(uint8_t *buf,
 /**
  * Non-in-place whitespace removal/compression function
  *
- * @param[in] flags Incoming flags
  * @param[in] data_in Input buffer
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Output buffer
  * @param[in] dlen_out Length of @a data_out
- * @param[out] result Result flags (@c IB_STRFLAG_xxx)
  *
  * @returns Status code.
  */

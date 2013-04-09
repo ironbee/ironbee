@@ -338,9 +338,9 @@ void ia_eudoxus_destroy_state(
  *
  * If an error is reported, a message may be available via ia_eudoxus_error().
  *
- * @param[in, out] state        State of automata.
- * @param[in]      input        Input to execute on.
- * @param[in]      input_length Length of input.
+ * @param[in,out] state        State of automata.
+ * @param[in]     input        Input to execute on.
+ * @param[in]     input_length Length of input.
  * @return
  * - IA_EUDOXUS_OK if out of input.
  * - IA_EUDOXUS_END if no next state can be reached.
@@ -368,9 +368,9 @@ ia_eudoxus_result_t ia_eudoxus_execute(
  * processed by a subsequent call to ia_eudoxus_execute() (or this method)
  * with a NULL value of @a input.
  *
- * @param[in, out] state        State of automata.
- * @param[in]      input        Input to execute on.
- * @param[in]      input_length Length of input.
+ * @param[in,out] state        State of automata.
+ * @param[in]     input        Input to execute on.
+ * @param[in]     input_length Length of input.
  * @return As ia_eudoxus_execute()
  */
 ia_eudoxus_result_t ia_eudoxus_execute_without_output(

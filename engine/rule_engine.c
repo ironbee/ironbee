@@ -62,11 +62,6 @@
 #define PHASE_FLAG_POSTPROCESS   (1 <<  7) /**< Post process phase */
 #define PHASE_FLAG_LOGGING       (1 <<  8) /**< Logging phase */
 
-/**
- * Max # of data types (IB_DTYPE_*) per rule phase
- */
-#define MAX_PHASE_DATA_TYPES 4
-
 static const char *default_block_document =
     "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n"
     "<html><head>\n"
@@ -1031,7 +1026,7 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
     tx = rule_exec->tx;
     assert(tx->ctx);
 
-    ib_rule_log_debug(rule_exec, "Setting HTTP error response: status=%d",
+    ib_rule_log_debug(rule_exec, "Setting HTTP error response: status=%" PRId64,
                       rule_exec->tx->block_status);
     rc = ib_server_error_response(ib->server, tx, tx->block_status);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
@@ -2044,7 +2039,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         ib_rule_log_tx_debug(tx,
                              "Not executing rules for phase %d/\"%s\" "
                              "in context \"%s\" because transaction previously "
-                             "has been blocked with status %d",
+                             "has been blocked with status %" PRId64,
                              meta->phase_num, phase_name(meta),
                              ib_context_full_get(ctx), tx->block_status);
         rc = IB_OK;
@@ -2701,11 +2696,11 @@ static ib_status_t init_ruleset(ib_engine_t *ib,
                                 ib_rule_context_t *ctx_rules)
 {
     ib_status_t rc;
-    ib_num_t    phase_num;
+    ib_rule_phase_num_t    phase_num;
 
     /* Initialize the phase rules */
-    for (phase_num = (ib_num_t)PHASE_NONE;
-         phase_num < (ib_num_t)IB_RULE_PHASE_COUNT;
+    for (phase_num = PHASE_NONE;
+         phase_num < IB_RULE_PHASE_COUNT;
          ++phase_num)
     {
         ib_ruleset_phase_t *ruleset_phase =
@@ -3222,7 +3217,6 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                                 name, matches);
         }
         return IB_OK;
-        break;
 
     case RULE_ENABLE_ID :
         /* Note: We return from the loop before because the rule
@@ -3252,7 +3246,6 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                              "No rule with ID of \"%s\" to %s",
                              match->enable_str, lcname);
         return IB_ENOENT;
-        break;
 
     case RULE_ENABLE_TAG :
         ib_cfg_log_debug3_ex(ib, match->file, match->lineno,
@@ -3293,14 +3286,11 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                                 name, matches, match->enable_str);
         }
         return IB_OK;
-        break;
 
     default:
         assert(0 && "Invalid rule enable type");
 
     }
-
-    return IB_OK;
 }
 
 ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
@@ -4975,7 +4965,7 @@ ib_status_t ib_rule_lookup_external_driver(
 
     rc = ib_hash_get(ib->rule_engine->external_drivers, driver, tag);
     return rc;
-};
+}
 
 ib_status_t ib_rule_register_ownership_fn(
     ib_engine_t            *ib,

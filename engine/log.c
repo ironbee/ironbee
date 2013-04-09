@@ -47,7 +47,7 @@
  * @param fmt Formatting string.
  * @param ap Variable argument list.
  */
-static void default_logger(FILE *fp, int level,
+static void default_logger(FILE *fp, ib_log_level_t level,
                            const ib_engine_t *ib,
                            const char *file, int line,
                            const char *fmt, va_list ap)

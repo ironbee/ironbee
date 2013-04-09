@@ -41,7 +41,7 @@ typedef int (*ib_ipset_compare_fn)(const void *, const void *);
  * The mask \f$1^{bits}0^{32-bits}\f$.
  *
  * @param[in] bits Number of 1s.
- * @return \f$1^{bits}0^{32-bits}\f$ as a uint32_t.
+ * @return Bit mask, \f$1^{bits}0^{32-bits}\f$, as a uint32_t.
  */
 static
 uint32_t ib_ipset4_mask(size_t bits)
@@ -125,10 +125,10 @@ bool ib_ipset6_is_prefix(
     const ib_ip6_network_t b_net
 )
 {
-    int initial_bytes  = a_net.size / 32;
-    int remaining_bits = a_net.size % 32;
+    size_t initial_bytes  = a_net.size / 32;
+    size_t remaining_bits = a_net.size % 32;
 
-    for (int i = 0; i < initial_bytes; ++i) {
+    for (size_t i = 0; i < initial_bytes; ++i) {
         if (a_net.ip.ip[i] != b_net.ip.ip[i]) {
             return false;
         }

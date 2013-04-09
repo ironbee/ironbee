@@ -495,7 +495,7 @@ ib_status_t ib_hash_create_ex(
     {
         int num_ones = 0;
         for (
-            int temp_size = size;
+            size_t temp_size = size;
             temp_size > 0;
             temp_size = temp_size >> 1
         ) {

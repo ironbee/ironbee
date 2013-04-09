@@ -70,21 +70,6 @@
         } \
     } while(0)
 
-#define CALL_NULL_HOOKS(out_rc, first_hook, event, ib) \
-    do { \
-        *(out_rc) = IB_OK; \
-        for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
-            ib_status_t rc_ = hook_->callback.null((ib), (event), hook_->cdata); \
-            if (rc_ != IB_OK) { \
-                ib_log_error((ib),  "Hook returned error: %s=%s", \
-                             ib_state_event_name((event)), ib_status_to_string(rc_)); \
-                (*out_rc) = rc_; \
-                break; \
-             } \
-        } \
-    } while(0)
-
-
 static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
                                         ib_state_event_type_t event,
                                         ib_conn_t *conn)

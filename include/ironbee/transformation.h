@@ -49,8 +49,8 @@ extern "C" {
  * @param[in] fndata Transformation function data (config)
  * @param[in] pool Memory pool to use for allocations
  * @param[in] fin Input field
- * @param[out] fout Output field
- * @param[in,out] flags Address of flags set by transformation
+ * @param[out] data_out Output field
+ * @param[in,out] pflags Address of flags set by transformation
  *
  * @returns Status code
  */

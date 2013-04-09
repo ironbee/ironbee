@@ -60,9 +60,6 @@
 #define IB_REG_NOTBOL   0x04 /**< ^ will not match against start-of-string */
 #define IB_REG_NOTEOL   0x08 /**< $ will not match against end-of-string */
 
-#define IB_REG_EXTENDED (0)  /**< unused */
-#define IB_REG_NOSUB    (0)  /**< unused */
-
 #define IB_REG_MULTI 0x10    /* perl's /g (needs fixing) */
 #define IB_REG_NOMEM 0x20    /* nomem in our code */
 #define IB_REG_DOTALL 0x40   /* perl's /s flag */

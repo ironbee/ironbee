@@ -400,8 +400,6 @@ static void core_log_file_close(const ib_engine_t *ib,
  * @param line Source code line number (typically __LINE__)
  * @param fmt Printf like format string
  * @param ap Variable length parameter list
- *
- * @returns Status code
  */
 static void core_vlogmsg_fp(
     const ib_engine_t   *ib,
@@ -470,8 +468,6 @@ static void core_vlogmsg_fp(
  * @param fmt Printf like format string
  * @param ap Variable length parameter list
  * @param cbdata Callback data.
- *
- * @returns Status code
  */
 static void core_vlogmsg(
     const ib_engine_t *ib,
@@ -727,7 +723,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
     f = (ib_field_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
     if (f != NULL) {
         const char *comma;
-        size_t rlen;
+        int rlen;
 
         rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_JSON_MAX_FIELD_LEN);
 
@@ -890,7 +886,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
     ib_engine_t *ib = part->log->ib;
     ib_field_t *f;
     uint8_t *rec;
-    size_t rlen;
+    int rlen;
     ib_status_t rc;
 
 #define CORE_HEADER_MAX_FIELD_LEN 8192
@@ -1065,7 +1061,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
     e = (ib_logevent_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
     if (e != NULL) {
-        size_t rlen;
+        int rlen;
 
         /* Turn tag list into JSON list, limiting the size. */
         char tags[128] = "\0";
@@ -1913,7 +1909,7 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
     core_audit_cfg_t *cfg;
     ib_provider_inst_t *audit;
     ib_list_t *events;
-    uint32_t boundary_rand = rand(); /// @todo better random num
+    int boundary_rand = rand(); /// @todo better random num
     char boundary[46];
     ib_status_t rc;
 

@@ -127,41 +127,6 @@ int DLL_PUBLIC ib_clock_timeval_cmp(const ib_timeval_t *t1,
                                     const ib_timeval_t *t2);
 
 /**
- * Assign values between two timeval structures.
- *
- * This is meant to convert between struct timeval and
- * ib_timeval_t. Either types are supported in dest.
- *
- * @param[out] dest Destination timeval structure
- * @param[in]  src Source timeval structure
- *
- * @returns Status code
- */
-#define IB_CLOCK_ASSIGN_TIMEVAL(dest, src) \
-    do { \
-        (dest).tv_sec = (src).tv_sec; \
-        (dest).tv_usec = (src).tv_usec; \
-    } while (0)
-
-/**
- * Adjust a timeval structure by a value in microseconds.
- *
- * This is meant to convert between struct timeval and
- * ib_timeval_t. Either types are supported in dest/src.
- *
- * @param[out] dest Destination timeval structure
- * @param[in]  usec Time in microseconds to adjust dest
- *
- * @returns Status code
- */
-#define IB_CLOCK_ADJUST_TIMEVAL(dest, usec) \
-    do { \
-        ib_time_t t = IB_CLOCK_TIMEVAL_TIME((dest)); \
-        t += (usec); \
-        IB_CLOCK_TIMEVAL((dest), t); \
-    } while (0)
-
-/**
  * Convert an ib_time_t (microseconds) to seconds
  *
  * @param[in]  time IronBee time structure (ib_time_t)

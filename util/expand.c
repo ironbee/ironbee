@@ -372,7 +372,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
                               hash_lookup, hash,
                               result, result_len);
     return rc;
-};
+}
 
 /*
  * Expand a string from the given hash-like object, ex version.  See expand.h.

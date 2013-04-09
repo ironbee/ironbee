@@ -686,8 +686,6 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             ib_list_shift(args, &p1);
             rc = rec->cb.fn_sblk1(cp, name, p1, rec->cbdata_cb);
             break;
-        default:
-            rc = IB_EINVAL;
     }
 
     return rc;

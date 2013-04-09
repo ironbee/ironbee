@@ -752,7 +752,7 @@ static ib_status_t moddevel_txdump_tx(
         moddevel_txdump(tx, txdump, 2, "Effective IP = %s", tx->er_ipstr);
         moddevel_txdump(tx, txdump, 2, "Path = %s", tx->path);
         if (ib_tx_flags_isset(tx, TX_BLOCKED)) {
-            moddevel_txdump(tx, txdump, 2, "Block Code = %d", tx->block_status);
+            moddevel_txdump(tx, txdump, 2, "Block Code = %" PRId64, tx->block_status);
             if (ib_tx_flags_isset(tx, IB_TX_BLOCK_ADVISORY) ) {
                 moddevel_txdump(tx, txdump, 2, "Block: Advisory");
             }

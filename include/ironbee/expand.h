@@ -230,7 +230,6 @@ ib_status_t DLL_PUBLIC ib_expand_test_str(const char *str,
  *
  * @param[in] str String to check for expansion
  * @param[in] str_len Length of @a str
- * @param[in] str_len Length of @a str
  * @param[in] prefix Prefix string (e.g. "%{")
  * @param[in] suffix Suffix string (e.g. "}")
  * @param[out] result true if @a str would be expanded by expand_str().

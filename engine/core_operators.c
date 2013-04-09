@@ -43,7 +43,7 @@
 #include <inttypes.h>
 
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -54,7 +54,7 @@
 typedef ib_status_t (*num_compare_fn_t)(ib_num_t n1, ib_num_t n2, ib_num_t *result);
 
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -65,7 +65,7 @@ typedef ib_status_t (*num_compare_fn_t)(ib_num_t n1, ib_num_t n2, ib_num_t *resu
 typedef ib_status_t (*float_compare_fn_t)(ib_float_t n1, ib_float_t n2, ib_num_t *result);
 
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -79,7 +79,7 @@ static ib_status_t num_gt(ib_num_t n1, ib_num_t n2, ib_num_t *result)
     return IB_OK;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -93,7 +93,7 @@ static ib_status_t num_lt(ib_num_t n1, ib_num_t n2, ib_num_t *result)
     return IB_OK;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -107,7 +107,7 @@ static ib_status_t num_ge(ib_num_t n1, ib_num_t n2, ib_num_t *result)
     return IB_OK;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -121,7 +121,7 @@ static ib_status_t num_le(ib_num_t n1, ib_num_t n2, ib_num_t *result)
     return IB_OK;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -135,7 +135,7 @@ static ib_status_t num_eq(ib_num_t n1, ib_num_t n2, ib_num_t *result)
     return IB_OK;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -149,7 +149,7 @@ static ib_status_t num_ne(ib_num_t n1, ib_num_t n2, ib_num_t *result)
     return IB_OK;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -163,7 +163,7 @@ static ib_status_t float_gt(ib_float_t n1, ib_float_t n2, ib_num_t *result)
     return IB_OK;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -177,7 +177,7 @@ static ib_status_t float_lt(ib_float_t n1, ib_float_t n2, ib_num_t *result)
     return IB_OK;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -191,7 +191,7 @@ static ib_status_t float_ge(ib_float_t n1, ib_float_t n2, ib_num_t *result)
     return IB_OK;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -205,7 +205,7 @@ static ib_status_t float_le(ib_float_t n1, ib_float_t n2, ib_num_t *result)
     return IB_OK;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -218,7 +218,7 @@ static ib_status_t float_eq(ib_float_t n1, ib_float_t n2, ib_num_t *result)
     return IB_EINVAL;
 }
 /**
- * Perform a comparison of two inputs and store the boolean result in @result.
+ * Perform a comparison of two inputs and store the boolean result in result.
  * @param[in] n1 Input number 1.
  * @param[in] n2 Input number 2.
  * @param[out] result The result.
@@ -312,7 +312,7 @@ typedef struct numop_instance_data_t numop_instance_data_t;
  *
  * @param[in]  ctx The current IronBee context
  * @param[in]  parameters Constant parameters
- * @param[out] instance data Instance Data.
+ * @param[out] instance_data Instance Data.
  * @param[in]  cbdata Callback data.
  *
  * @returns Status code
@@ -1192,7 +1192,7 @@ ib_status_t op_ipmatch6_execute(
  * If no conversion is performed because none is necessary,
  * IB_OK is returned and @a out_field is set to NULL.
  *
- * @param[in] rule_exec Rule execution.
+ * @param[in] tx Current transaction.
  * @param[in] in_field The field to expand and attempt to convert.
  * @param[out] out_field The field that the in_field is converted to.
  *             If no conversion is performed, this is set to NULL.
@@ -1425,7 +1425,7 @@ static ib_status_t select_math_type_conversion(
  *           This is not relevant to how math operations
  *           use these fields, so user-beware.
  *
- * @param rule_exec The rule execution environment.
+ * @param tx Current transaction.
  * @param expand Expand operands?
  * @param lh_in Left-hand operand input.
  * @param rh_in Right-hand operand input.
@@ -1510,7 +1510,7 @@ ib_status_t prepare_math_operands(
 
 /**
  * @param[in] tx Current transaction.
- * @param[in] instace_data numop instance data.
+ * @param[in] instance_data numop instance data.
  * @param[in] field The field used.
  * @param[in] capture Collection to capture to.
  * @param[in] num_compare If this is an ib_num_t, use this to compare.

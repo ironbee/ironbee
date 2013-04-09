@@ -756,8 +756,8 @@ static ib_status_t kvget(
     else if (riak_headers.status == 404) {
         *values_length = 0;
         *values = NULL;
-        goto exit;
         rc = IB_ENOENT;
+        goto exit;
     }
 
     /* Before cleanly existing, set the riak etag and vclock to that of

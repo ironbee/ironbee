@@ -59,8 +59,6 @@ typedef struct ib_kvstore_key_t ib_kvstore_key_t;
  * Implementations may initialize temporary new values, but must free them all.
  *
  * @param[in] kvstore The key-value store object.
- * @param[in] user_value The value that is currently intended to be
- *            written.
  * @param[in] values The array of all values that are already stored at
  *            the given key. Optimally this will be 0 or 1, but
  *            depending on the storage engine guarantees, this might be

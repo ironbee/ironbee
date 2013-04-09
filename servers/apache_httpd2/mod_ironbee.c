@@ -29,8 +29,15 @@
 #include <http_config.h>
 #include <http_log.h>
 #include <util_filter.h>
-#include <apr_strings.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
+#endif
+#include <apr_strings.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <ironbee/engine.h>
 #include <ironbee/config.h>

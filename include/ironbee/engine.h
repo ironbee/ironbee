@@ -253,8 +253,6 @@ void DLL_PUBLIC ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp);
  * Destroy an engine.
  *
  * @param ib Engine handle
- *
- * @returns Status code
  */
 void DLL_PUBLIC ib_engine_destroy(ib_engine_t *ib);
 
@@ -1166,7 +1164,6 @@ typedef ib_status_t (*ib_state_response_line_fn_t)(
  * - @ref conn_closed_event
  *
  * @param[in] ib Engine handle
- * @param[in] tx Transaction.
  * @param[in] event Which event trigger the callback.
  * @param[in] conn Connection.
  * @param[in] cbdata Callback data

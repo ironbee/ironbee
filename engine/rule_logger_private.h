@@ -155,8 +155,6 @@ ib_flags_t ib_rule_log_flags(
  *
  * @param[in] ib The IronBee engine
  * @param[in] ctx The context that we're looking the level up for
- *
- * @return void
  */
 void ib_rule_log_flags_dump(
     ib_engine_t                *ib,
@@ -196,8 +194,6 @@ ib_status_t ib_rule_log_exec_create(
  *
  * @param[in] rule_exec Rule execution object
  * @param[in] event The transaction event to log (as required)
- *
- * @returns void
  */
 void ib_rule_log_tx_event_start(
     const ib_rule_exec_t       *rule_exec,
@@ -208,8 +204,6 @@ void ib_rule_log_tx_event_start(
  *
  * @param[in] rule_exec Rule execution object
  * @param[in] event The transaction event to log (as required)
- *
- * @returns void
  */
 void ib_rule_log_tx_event_end(
     const ib_rule_exec_t       *rule_exec,
@@ -222,8 +216,6 @@ void ib_rule_log_tx_event_end(
  * @param[in] phase_num Phase number
  * @param[in] phase_name Name of phase
  * @param[in] num_rules Number of rules in the phase
- *
- * @returns void
  */
 void ib_rule_log_phase(
     const ib_rule_exec_t       *rule_exec,

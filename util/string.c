@@ -250,8 +250,8 @@ const char *ib_strrstr_ex(const char *haystack,
     return NULL;
 }
 
-const int64_t  P10_INT64_LIMIT  = (INT64_MAX  / 10);
-const uint64_t P10_UINT64_LIMIT = (UINT64_MAX / 10);
+static const int64_t  P10_INT64_LIMIT  = (INT64_MAX  / 10);
+static const uint64_t P10_UINT64_LIMIT = (UINT64_MAX / 10);
 
 size_t ib_num_digits(int64_t num)
 {

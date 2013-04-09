@@ -115,7 +115,7 @@ struct ia_eudoxus_state_t
     /**
      * Remaining bytes in current input chunk.
      */
-    uint32_t remaining_bytes;
+    size_t remaining_bytes;
 };
 
 /**
@@ -124,7 +124,6 @@ struct ia_eudoxus_state_t
  * This enum is a superset of ia_eudoxus_command_t and provides additional
  * items that make sense for next/output functions but not for callbacks.
  */
-typedef enum ia_eudoxus_extended_command_t ia_eudoxus_extended_command_t;
 enum ia_eudoxus_extended_command_t
 {
     /** @name Callback Results
@@ -174,6 +173,7 @@ enum ia_eudoxus_extended_command_t
      */
     IA_EUDOXUS_EXT_INSANITY
 };
+typedef enum ia_eudoxus_extended_command_t ia_eudoxus_extended_command_t;
 
 ia_eudoxus_result_t ia_eudoxus_create(
     ia_eudoxus_t **out_eudoxus,

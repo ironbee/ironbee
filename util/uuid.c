@@ -41,8 +41,8 @@
  */
 static ib_lock_t  g_uuid_lock;
 static ib_lock_t  g_uuid_v5_lock;
-uuid_t           *g_ossp_uuid;
-uuid_t           *g_ossp_uuid_v5;
+static uuid_t    *g_ossp_uuid;
+static uuid_t    *g_ossp_uuid_v5;
 
 ib_status_t ib_uuid_initialize(void)
 {

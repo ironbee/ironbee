@@ -1020,8 +1020,8 @@ static ib_status_t remove_file(
 /**
  * Remove a key from the store.
  *
- * @param[in] kvstore
- * @param[in] key
+ * @param[in] kvstore Store.
+ * @param[in] key Key.
  * @param[in,out] cbdata Callback data.
  * @returns
  *   - IB_OK on success.

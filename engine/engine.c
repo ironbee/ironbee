@@ -57,7 +57,7 @@
 /* -- Constants -- */
 
 /** Constant max path used in calls to getcwd() */
-const size_t maxpath = 512;
+static const size_t maxpath = 512;
 
 /** Constant String Values */
 const ib_default_string_t ib_default_string = {
@@ -68,7 +68,7 @@ const ib_default_string_t ib_default_string = {
     "/",         /* uri_root_path */
 };
 
-const char *default_auditlog_index = "ironbee-index.log";
+static const char *default_auditlog_index = "ironbee-index.log";
 
 /* -- Internal Structures -- */
 typedef struct {
@@ -268,7 +268,7 @@ validate:
 
     table_initialized = true;
     return IB_OK;
-};
+}
 
 /* -- Main Engine Routines -- */
 ib_status_t ib_initialize(void)

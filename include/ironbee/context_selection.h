@@ -106,7 +106,7 @@ typedef ib_status_t (* ib_ctxsel_site_create_fn_t) (
  *
  * @param[in] site Parent site
  * @param[in] ctx Locations' configuration context
- * @param[in] location_str Location string (path)
+ * @param[in] name Location string (path)
  * @param[in] common_cb_data Callback data passed to all registered fns
  * @param[in] fn_cb_data Function-specific callback data
  * @param[out] plocation Address where location will be written / NULL

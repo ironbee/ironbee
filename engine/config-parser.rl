@@ -43,6 +43,11 @@
 
 #include "config-parser.h"
 
+/* Caused by Ragel */
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wunreachable-code"
+#endif
+
 /**
  * Finite state machine type.
  *

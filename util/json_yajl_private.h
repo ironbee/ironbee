@@ -66,8 +66,6 @@ void *json_yajl_realloc(
  *
  * @param[in] ctx Allocation context
  * @param[in] ptr Pointer to memory to free
- *
- * @returns void
  */
 void json_yajl_free(
     void *ctx,

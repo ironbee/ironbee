@@ -126,7 +126,7 @@ static ib_status_t core_managed_collection_vars_register_fn(
 
     /* First pass; walk through all params, look for "a=b" type syntax */
     IB_LIST_LOOP_CONST(params, node) {
-        const int ovecsize = 9;
+        static const int ovecsize = 9;
         int ovector[ovecsize];
         const char *param = (const char *)node->data;
         core_vars_t *vars;
@@ -262,7 +262,7 @@ static ib_status_t core_managed_collection_vars_populate_fn(
  * @param[in] uri_scheme URI scheme (unused)
  * @param[in] uri_data Hierarchical/data part of the URI (typically a path)
  * @param[in] params List of parameter strings
- * @param[in] data Selection callback data
+ * @param[in] register_data Selection callback data
  * @param[out] pmanager_inst_data Pointer to manager specific data
  *
  * @returns Status code:
@@ -359,8 +359,8 @@ static ib_status_t core_managed_collection_jsonfile_register_fn(
  * @param[in] tx Transaction to populate
  * @param[in] module Collection manager's module object
  * @param[in] collection_name The name of the collection.
- * @param[in] collection_data An ib_list_t of fields copied into @a collection.
- * @param[in,out] collection Collection to populate with fields in @a
+ * @param[in] collection An ib_list_t of fields copied into @a collection.
+ * @param[in,out] manager_inst_data Collection to populate with fields in @a
  *                collection_data.
  * @param[in] populate_data Populate callback data
  *

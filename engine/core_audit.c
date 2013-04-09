@@ -58,7 +58,7 @@ typedef struct {
 
 /* The default shell to use for piped commands. */
 static const char * const ib_pipe_shell = "/bin/sh";
-const size_t LOGFORMAT_MAX_LINE_LENGTH = 8192;
+static const size_t LOGFORMAT_MAX_LINE_LENGTH = 8192;
 
 ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
                                       ib_auditlog_t *log,
@@ -70,9 +70,9 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     char *dtmp = (char *)malloc(dtmp_sz);
     char *dn = (char *)malloc(dn_sz);
     char *audit_filename;
-    int audit_filename_sz;
+    size_t audit_filename_sz;
     char *temp_filename;
-    int temp_filename_sz;
+    size_t temp_filename_sz;
     int fd;
     const time_t log_seconds = IB_CLOCK_SECS(log->tx->t.logtime);
     int sys_rc;
@@ -219,7 +219,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
                                            ib_core_cfg_t *corecfg)
 {
     char* index_file;
-    int index_file_sz;
+    size_t index_file_sz;
     ib_status_t ib_rc;
     int sys_rc;
 
@@ -278,7 +278,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
         sys_rc = snprintf(index_file, index_file_sz, "%s/%s",
                           corecfg->auditlog_dir,
                           log->ctx->auditlog->index);
-        if (sys_rc >= index_file_sz) {
+        if ((size_t)sys_rc >= index_file_sz) {
             ib_log_error(log->ib,
                          "Could not create audit log index \"%s/%s\":"
                          " too long",
@@ -589,7 +589,6 @@ static ib_status_t audit_add_line_item(const ib_logformat_t *lf,
         *str = "\n";
         /* Not understood */
         return IB_EINVAL;
-        break;
     }
     return IB_OK;
 }
@@ -686,6 +685,7 @@ ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log)
 
     /* Write to the index file if using one. */
     if ((cfg->index_fp != NULL) && (cfg->parts_written > 0)) {
+        size_t written;
 
         ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
 
@@ -700,9 +700,9 @@ ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log)
             goto cleanup;
         }
 
-        sys_rc = fwrite(line, len, 1, cfg->index_fp);
+        written = fwrite(line, len, 1, cfg->index_fp);
 
-        if (sys_rc < 0) {
+        if (written == 0) {
             sys_rc = errno;
             ib_log_error(log->ib,
                          "Could not write to audit log index: %s (%d)",

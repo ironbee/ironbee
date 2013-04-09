@@ -402,9 +402,6 @@ static ib_status_t act_setflag_execute(
         ib_tx_flags_unset(rule_exec->tx, opdata->flag->tx_flag);
         value = 0;
         break;
-
-    default:
-        return IB_EINVAL;
     }
 
     /* This fails because ib_data_remove() doesn't handle fields within
@@ -909,8 +906,8 @@ static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
  *
  *  @param[in] rule_exec The rule execution object
  *  @param[in] label Label (used for log messages)
- *  @param[in] setvar_data
- *  @param[in] flags
+ *  @param[in] setvar_data Data.
+ *  @param[in] flags Flags.
  *  @param[out] expanded The expanded string, possibly allocated from
  *              the memory pool or the result of
  *              an ib_mpool_alloc(mp, 0) call.
@@ -1297,8 +1294,6 @@ static ib_status_t get_event(const ib_rule_exec_t *rule_exec,
  * Set the IB_TX_BLOCK_ADVISORY flag and set the DPI value @c FLAGS:BLOCK=1.
  *
  * @param[in] rule_exec The rule execution object
- *
- * @returns IB_OK if successful.
  *
  * @return
  *   - IB_OK on success.
@@ -1925,7 +1920,6 @@ static ib_status_t act_set_header_create(
  * @param[in] cbdata Unused.
  *
  * @returns IB_OK if successful.
- * @param[in] rule_exec The rule execution object
  */
 static ib_status_t act_set_request_header_execute(
     const ib_rule_exec_t *rule_exec,
@@ -2032,7 +2026,6 @@ static ib_status_t act_edit_request_header_execute(
  * @param[in] cbdata Unused.
  *
  * @returns IB_OK if successful.
- * @param[in] rule_exec The rule execution object
  */
 static ib_status_t act_del_request_header_execute(
     const ib_rule_exec_t *rule_exec,
@@ -2133,7 +2126,6 @@ static ib_status_t act_set_response_header_execute(
  * @param[in] cbdata Unused.
  *
  * @returns IB_OK if successful.
- * @param[in] rule_exec The rule execution object
  *
  */
 static ib_status_t act_edit_response_header_execute(
@@ -2190,7 +2182,6 @@ static ib_status_t act_edit_response_header_execute(
  * @param[in] cbdata Unused.
  *
  * @returns IB_OK if successful.
- * @param[in] rule_exec The rule execution object
  */
 static ib_status_t act_del_response_header_execute(
     const ib_rule_exec_t *rule_exec,
@@ -2403,7 +2394,7 @@ static ib_status_t act_auditlogparts_execute(
 
     const act_auditlog_parts_t *idata = (const act_auditlog_parts_t *)data;
     ib_tx_t    *tx = rule_exec->tx;
-    ib_flags_t  parts = tx->auditlog_parts;
+    ib_num_t    parts = tx->auditlog_parts;
     ib_flags_t  parts_flags = 0;
     ib_flags_t  parts_mask = 0;
     ib_status_t rc;

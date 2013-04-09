@@ -64,10 +64,11 @@ const char *ib_capture_fullname(
  * @param[in] collection_name The name of the capture collection or NULL
  *                            for default name.
  * @param[out] field Where to write result to.
- * @returns IB_OK: All ok
- * @returns IB_EALLOC: Allocation error.
- * @returns IB_EINVAL: Unexpected error replacing existing non-list field.
- * @returns Other on unexpected error.
+ * @returns
+ * - IB_OK: All ok
+ * - IB_EALLOC: Allocation error.
+ * - IB_EINVAL: Unexpected error replacing existing non-list field.
+ * - Other on unexpected error.
  **/
 ib_status_t DLL_PUBLIC ib_capture_acquire(
     const ib_tx_t  *tx,
@@ -80,8 +81,9 @@ ib_status_t DLL_PUBLIC ib_capture_acquire(
  *
  * @param[in] capture Capture collection to clear.
  *
- * @returns IB_OK: All OK
- * @returns Error status from: ib_capture_init_item()
+ * @returns
+ * - IB_OK: All OK
+ * - Error status from: ib_capture_init_item()
  */
 ib_status_t DLL_PUBLIC ib_capture_clear(ib_field_t *capture);
 
@@ -93,12 +95,13 @@ ib_status_t DLL_PUBLIC ib_capture_clear(ib_field_t *capture);
  * @param[in] mp Memory pool to use.
  * @param[in] in_field Field to add.
  *
- * @returns IB_OK: All OK
- * @returns IB_EINVAL: @a num is too large
- * @returns Error status from: ib_capture_set_list()
- *                             ib_capture_init_item()
- *                             ib_data_list_push()
- *                             ib_field_mutable_value()
+ * @returns
+ * - IB_OK: All OK
+ * - IB_EINVAL: @a num is too large
+ * - Error status from: ib_capture_set_list()
+ *                      ib_capture_init_item()
+ *                      ib_data_list_push()
+ *                      ib_field_mutable_value()
  */
 ib_status_t DLL_PUBLIC ib_capture_set_item(
     ib_field_t *capture,
@@ -115,11 +118,12 @@ ib_status_t DLL_PUBLIC ib_capture_set_item(
  * @param[in] capture Capture collection to clear.
  * @param[in] in_field Field to add.
  *
- * @returns IB_OK: All OK
- * @returns Error status from: ib_capture_set_list()
- *                             ib_capture_init_item()
- *                             ib_data_list_push()
- *                             ib_field_mutable_value()
+ * @returns
+ * - IB_OK: All OK
+ * - Error status from: ib_capture_set_list()
+ *                      ib_capture_init_item()
+ *                      ib_data_list_push()
+ *                      ib_field_mutable_value()
  */
 ib_status_t DLL_PUBLIC ib_capture_add_item(
     ib_field_t *capture,

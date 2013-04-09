@@ -28,7 +28,14 @@
 #include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <yajl/yajl_tree.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <assert.h>
 #include <inttypes.h>

@@ -37,7 +37,7 @@
 #include <stdio.h>
 
 /** Log Event Types */
-const char *ib_logevent_type_str[] = {
+static const char *ib_logevent_type_str[] = {
     "Unknown",
     "Observation",
     "Alert",
