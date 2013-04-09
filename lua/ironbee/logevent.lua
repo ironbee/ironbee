@@ -121,4 +121,43 @@ _M.forEachTag = function(self, func)
     end
 end
 
+-- Iteration function used by e:tags.
+-- Given a table with an element "node" of type ib_list_node_t*
+-- this will iterate across the nodes extracting the 
+-- ib_list_node_data as a string.
+--
+-- This is used by e:tags() and e:fields().
+local next_string_fn = function(t, idx)
+    local data
+
+    if t.node == nil then
+        return nil, nil
+    else
+        data = ffi.C.ib_list_node_data(t.node)
+        data = ffi.string(data)
+    end
+
+    t.node = ffi.cast("ib_list_node_t*", ffi.C.ib_list_node_next(t.node))
+
+    return idx + 1, data
+end
+
+_M.tags = function(self)
+    local t = {
+        node = ffi.cast("ib_list_node_t*", ffi.C.ib_list_first(self.raw.tags))
+    }
+
+    -- return function, table, and index before first.
+    return next_string_fn, t, 0
+end
+
+_M.fields = function()
+    local t = {
+        node = ffi.cast("ib_list_node_t*", ffi.C.ib_list_first(self.raw.fields))
+    }
+
+    -- return function, table, and index before first.
+    return next_string_fn, t, 0
+end
+
 return _M

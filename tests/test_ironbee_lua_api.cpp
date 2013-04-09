@@ -361,3 +361,14 @@ TEST_F(IronBeeLuaApi, read_event2)
          "    end\n"
          "end");
 }
+
+TEST_F(IronBeeLuaApi, read_event3)
+{
+    eval("ib:addEvent(\"Saw some failure\", { tags = { \"t1\", \"t2\" }} )");
+    eval("for i,e in ib:events() do\n"
+         "    print(e:getRuleId())\n"
+         "    for j,t in e:tags() do \n"
+         "        print(t)\n"
+         "    end\n"
+         "end");
+}
