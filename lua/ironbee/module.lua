@@ -583,9 +583,28 @@ _M.dispatch_module = function(
     args:logDebug("Running callback for %s.", args.event_name)
 
     -- Do the dispatch.
-    local rc = handler(args)
+    local success, rc = pcall(handler, args)
 
     args:logDebug("Ran callback for %s.", args.event_name)
+
+    -- If true, then there are no Lua errors.
+    if success then
+        -- If rc == IB_OK, all is well.
+        if rc ~= ffi.C.IB_OK then
+            args:logError(
+                "Callback for %s exited with %s.",
+                args.event_name,
+                ffi.string(ffi.C.ib_status_to_string(rc)))
+        end
+
+    -- Lua error occured. Rc should contain the message.
+    else
+        args:logError(
+            "Callback for %s failed: %s",
+            args.event_name,
+            tostring(rc))
+    end
+
 
     -- Ensure that modules that break our return contract don't cause
     -- too much trouble.
@@ -594,7 +613,8 @@ _M.dispatch_module = function(
         rc = 0
     end
 
-    return tonumber(rc)
+    -- Return IB_OK.
+    return 0
 end
 
 -- ########################################################################
