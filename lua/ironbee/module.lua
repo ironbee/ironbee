@@ -31,14 +31,14 @@ local ibengine = require("ironbee/engine")
 local ibtx = require("ironbee/tx")
 
 -- The module to define.
-local M = {}
+local _M = {}
 
 -- ===============================================
 -- Setup some module metadata.
 -- ===============================================
-M._COPYRIGHT = "Copyright (C) 2010-2013 Qualys, Inc."
-M._DESCRIPTION = "IronBee Lua Module Framework."
-M._VERSION = "1.0"
+_M._COPYRIGHT = "Copyright (C) 2010-2013 Qualys, Inc."
+_M._DESCRIPTION = "IronBee Lua Module Framework."
+_M._VERSION = "1.0"
 
 -- Table of loaded lua modules objects.
 -- These are stored by lua module index after the lua module
@@ -392,7 +392,7 @@ end
 --            - response_body_data_event
 --            - response_finished_event
 --            - handle_logevent_event
-M.load_module = function(
+_M.load_module = function(
     ib,
     ib_module,
     name,
@@ -414,7 +414,7 @@ M.load_module = function(
     end
 
     -- Create an empty main configuration for every module.
-    M.create_configuration(
+    _M.create_configuration(
         ib,
         index,
         {
@@ -434,7 +434,7 @@ end
 -- @param[in] module_index The index number of the lua module.
 -- @param[in] event The numeric value of the event being called.
 -- @returns The callback handler or nil on error of any sort.
-M.get_callback = function(ib, module_index, event)
+_M.get_callback = function(ib, module_index, event)
     local  t = lua_modules[module_index]
 
     -- Since we only use the ib argument for logging, we defer
@@ -470,7 +470,7 @@ end
 --            This may be nil.
 --
 -- @returns Configuration table.
-M.create_configuration = function(ib, module_index, ctxlst)
+_M.create_configuration = function(ib, module_index, ctxlst)
 
     -- If this is the first config, init the table of all configs.
     if lua_module_configs[module_index] == nil then
@@ -515,7 +515,7 @@ end
 --            from most general to most specific. If a string is
 --            give, then only that configuration is checked for and
 --            nil returned if it does not exist.
-M.get_configuration = function(ib, module_index, ctxlst)
+_M.get_configuration = function(ib, module_index, ctxlst)
     -- If ctxlist is a table, iterate DOWN from #ctxlst to find the
     -- most precise configuration table we can for our user.
     local i = #ctxlst
@@ -548,7 +548,7 @@ end
 -- @returns And integer representation of an ib_status_t.
 --   - IB_OK on success.
 --
-M.dispatch_module = function(
+_M.dispatch_module = function(
     handler,
     ib_engine,
     module_index,
@@ -572,7 +572,7 @@ M.dispatch_module = function(
     args.event_name = intToState[tonumber(args.event)]
 
     -- Configuration to use.
-    args.config = M.get_configuration(ib_engine, module_index, ctxlst)
+    args.config = _M.get_configuration(ib_engine, module_index, ctxlst)
 
     if ib_conn ~= nil then
         -- Connection.
@@ -600,8 +600,8 @@ end
 -- ########################################################################
 -- modlua API Directive Callbacks.
 -- ########################################################################
-M.modlua_config_cb_blkend = function(ib, modidx, ctxlst, name)
-    local cfg = M.create_configuration(ib, modidx, ctxlst)
+_M.modlua_config_cb_blkend = function(ib, modidx, ctxlst, name)
+    local cfg = _M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
 
@@ -609,8 +609,8 @@ M.modlua_config_cb_blkend = function(ib, modidx, ctxlst, name)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_onoff = function(ib, modidx, ctxlst, name, onoff)
-    local cfg = M.create_configuration(ib, modidx, ctxlst)
+_M.modlua_config_cb_onoff = function(ib, modidx, ctxlst, name, onoff)
+    local cfg = _M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
 
@@ -618,8 +618,8 @@ M.modlua_config_cb_onoff = function(ib, modidx, ctxlst, name, onoff)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_param1 = function(ib, modidx, ctxlst, name, p1)
-    local cfg = M.create_configuration(ib, modidx, ctxlst)
+_M.modlua_config_cb_param1 = function(ib, modidx, ctxlst, name, p1)
+    local cfg = _M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
 
@@ -627,8 +627,8 @@ M.modlua_config_cb_param1 = function(ib, modidx, ctxlst, name, p1)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_param2 = function(ib, modidx, ctxlst, name, p1, p2)
-    local cfg = M.create_configuration(ib, modidx, ctxlst)
+_M.modlua_config_cb_param2 = function(ib, modidx, ctxlst, name, p1, p2)
+    local cfg = _M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
 
@@ -636,8 +636,8 @@ M.modlua_config_cb_param2 = function(ib, modidx, ctxlst, name, p1, p2)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_list = function(ib, modidx, ctxlst, name, list)
-    local cfg = M.create_configuration(ib, modidx, ctxlst)
+_M.modlua_config_cb_list = function(ib, modidx, ctxlst, name, list)
+    local cfg = _M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
 
@@ -655,8 +655,8 @@ M.modlua_config_cb_list = function(ib, modidx, ctxlst, name, list)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_opflags = function(ib, modidx, ctxlst, name, flags)
-    local cfg = M.create_configuration(ib, modidx, ctxlst)
+_M.modlua_config_cb_opflags = function(ib, modidx, ctxlst, name, flags)
+    local cfg = _M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
 
@@ -664,8 +664,8 @@ M.modlua_config_cb_opflags = function(ib, modidx, ctxlst, name, flags)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_sblk1 = function(ib, modidx, ctxlst, name, p1)
-    local cfg = M.create_configuration(ib, modidx, ctxlst)
+_M.modlua_config_cb_sblk1 = function(ib, modidx, ctxlst, name, p1)
+    local cfg = _M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
 
@@ -677,4 +677,4 @@ end
 -- END modlua API Directive Callbacks.
 -- ########################################################################
 
-return M
+return _M
