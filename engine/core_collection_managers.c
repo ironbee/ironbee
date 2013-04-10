@@ -562,7 +562,7 @@ ib_status_t ib_core_collection_managers_register(
     assert(ib != NULL);
     assert(module != NULL);
 
-    const char *pattern = "^(\\w+)=(.*)$";
+    const char *pattern = "^([^\\s=]+)=(.*)$";
     const int compile_flags = PCRE_DOTALL | PCRE_DOLLAR_ENDONLY;
     pcre *compiled;
     const char *error;
