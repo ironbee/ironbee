@@ -2402,10 +2402,20 @@ static ib_status_t lua_operator_execute(
 
     ib_rc = ib_lua_func_eval_r(tx, func_name, result);
 
+    if (ib_rc != IB_OK) {
+        ib_log_debug_tx(
+            tx,
+            "Lua operator %s failed with %s.",
+            func_name,
+            ib_status_to_string(ib_rc));
+        *result = 0;
+    }
+
     ib_log_trace_tx(tx,
                     "Lua function %s=%"PRIu64".", func_name, *result);
 
-    return ib_rc;
+
+    return IB_OK;
 }
 
 /* -- Module Routines -- */
