@@ -175,9 +175,18 @@ ib_status_t ib_managed_collection_select(
                                   manager->register_data,
                                   &inst_data);
         if (rc == IB_DECLINED) {
+            ib_log_trace(ib,
+                          "Collection manager \"%s\" declined "
+                          "collection \"%s\" URI \"%s\"",
+                          manager->name, collection_name, uri);
             continue;
         }
         else if (rc != IB_OK) {
+            ib_log_debug(ib,
+                         "Collection manager \"%s\" registration for "
+                         "collection \"%s\" URI \"%s\" failed: %s",
+                         manager->name, collection_name, uri,
+                         ib_status_to_string(rc));
             return rc;
         }
 
@@ -204,10 +213,10 @@ ib_status_t ib_managed_collection_select(
             return rc;
         }
 
-        ib_log_trace(ib,
-                     "Registered collection manager \"%s\" "
-                     "for collection \"%s\" URI \"%s\"",
-                     manager->name, collection_name, uri);
+        ib_log_debug2(ib,
+                      "Registered collection manager \"%s\" "
+                      "for collection \"%s\" URI \"%s\"",
+                      manager->name, collection_name, uri);
         return IB_OK;
     }
     return IB_ENOENT;

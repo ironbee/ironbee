@@ -4149,8 +4149,9 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
                                       managers_debug);
     if (rc == IB_ENOENT) {
         ib_cfg_log_error(cp,
-                         "%s: No matching collection manager found for \"%s\"",
-                         directive, collection_name);
+                         "%s: No matching collection manager found "
+                         "for \"%s\" URI \"%s\"",
+                         directive, collection_name, collection_uri);
         return IB_EINVAL;
     }
     else if (rc != IB_OK) {

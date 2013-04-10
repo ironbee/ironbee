@@ -185,16 +185,16 @@ static ib_status_t core_managed_collection_vars_register_fn(
         }
 
         if (field->type == IB_FTYPE_NUM) {
-            ib_log_debug(ib, "Created numeric field \"%s\" %"PRId64" in \"%s\"",
+            ib_log_trace(ib, "Created numeric field \"%s\" %"PRId64" in \"%s\"",
                          vars->name, fval.num, collection_name);
         }
 
         else if (field->type == IB_FTYPE_FLOAT) {
-            ib_log_debug(ib, "Created float field \"%s\" %f in \"%s\"",
+            ib_log_trace(ib, "Created float field \"%s\" %f in \"%s\"",
                          vars->name, (double)fval.fnum, collection_name);
         }
         else {
-            ib_log_debug(ib, "Created string field \"%s\" \"%s\" in \"%s\"",
+            ib_log_trace(ib, "Created string field \"%s\" \"%s\" in \"%s\"",
                          vars->name, fval.nulstr, collection_name);
         }
     }
