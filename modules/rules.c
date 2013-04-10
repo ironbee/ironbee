@@ -749,8 +749,10 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 }
 
 /**
- * @brief Parse a RuleExt directive.
- * @details Register lua function. RuleExt lua:/path/to/rule.lua phase:REQUEST
+ * Parse a RuleExt directive.
+ *
+ * Register lua function. RuleExt lua:/path/to/rule.lua phase:REQUEST
+ *
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
  * @param[in] name The directive name.
@@ -883,8 +885,10 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
 }
 
 /**
- * @brief Parse a Rule directive.
- * @details Register a Rule directive to the engine.
+ * Parse a Rule directive.
+ *
+ * Register a Rule directive to the engine.
+ *
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
  * @param[in] name The directive name.
@@ -1027,8 +1031,9 @@ cleanup:
 }
 
 /**
- * @brief Parse a StreamInspect directive.
- * @details Register the StreamInspect directive to the engine.
+ * Parse a StreamInspect directive.
+ *
+ * Register the StreamInspect directive to the engine.
  *
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
@@ -1140,8 +1145,9 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
 }
 
 /**
- * @brief Parse a RuleEnable directive.
- * @details Handle the RuleEnable directive to the engine.
+ * Parse a RuleEnable directive.
+ *
+ * Handle the RuleEnable directive to the engine.
  *
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
@@ -1192,8 +1198,9 @@ static ib_status_t parse_ruleenable_params(ib_cfgparser_t *cp,
 }
 
 /**
- * @brief Parse a RuleDisable directive.
- * @details Handle the RuleDisable directive to the engine.
+ * Parse a RuleDisable directive.
+ *
+ * Handle the RuleDisable directive to the engine.
  *
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
@@ -1244,8 +1251,10 @@ static ib_status_t parse_ruledisable_params(ib_cfgparser_t *cp,
 }
 
 /**
- * @brief Parse a RuleMarker directive.
- * @details Register a RuleMarker directive to the engine.
+ * Parse a RuleMarker directive.
+ *
+ * Register a RuleMarker directive to the engine.
+ *
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
  * @param[in] name The directive name.
@@ -1338,8 +1347,10 @@ static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
 }
 
 /**
- * @brief Parse an Action directive.
- * @details Register an Action directive to the engine.
+ * Parse an Action directive.
+ *
+ * Register an Action directive to the engine.
+ *
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
  * @param[in] name The directive name.
