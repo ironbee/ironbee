@@ -1922,6 +1922,11 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
         return IB_OK;
     }
 
+    /* If the transaction never started, do nothing */
+    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED) ) {
+        return IB_OK;
+    }
+
     /* Get core tx module data. */
     rc = ib_tx_get_module_data(tx, ib_core_module(), &core_txdata);
     if (rc != IB_OK) {
