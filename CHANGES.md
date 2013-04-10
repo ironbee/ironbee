@@ -14,6 +14,12 @@ IronBee v0.8.0
   rule engine and can be called by any code.  The API has been significantly
   simplified as well.
 
+*IronBee++*
+
+* IronBee++ includes full support for operators and adds an optional
+  functional based interface that can significantly simplify operator
+  definitions, especially in C++11.
+
 **CLIPP**
 
 * Added `-e path` which causes `clipp` to handle consumer errors differently.
