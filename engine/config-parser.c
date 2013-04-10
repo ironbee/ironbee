@@ -177,9 +177,9 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 
     if (access(incfile, R_OK) != 0) {
         if (if_exists) {
-            ib_cfg_log_info(cp,
-                            "Ignoring include file \"%s\": %s",
-                            incfile, strerror(errno));
+            ib_cfg_log(cp, (errno == ENOENT) ? IB_LOG_DEBUG : IB_LOG_NOTICE,
+                       "Ignoring include file \"%s\": %s",
+                       incfile, strerror(errno));
             return IB_OK;
         }
 
@@ -191,9 +191,9 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     statval = stat(incfile, &statbuf);
     if (statval != 0) {
         if (if_exists) {
-            ib_cfg_log_info(cp,
-                            "Ignoring include file \"%s\": %s",
-                            incfile, strerror(errno));
+            ib_cfg_log(cp, (errno == ENOENT) ? IB_LOG_DEBUG : IB_LOG_NOTICE,
+                       "Ignoring include file \"%s\": %s",
+                       incfile, strerror(errno));
             return IB_OK;
         }
 
@@ -620,7 +620,7 @@ _resume:
 			else if ( (*( fsm.p)) > *_mid )
 				_lower = _mid + 1;
 			else {
-				_trans += (_mid - _keys);
+				_trans += (unsigned int)(_mid - _keys);
 				goto _match;
 			}
 		}
@@ -643,7 +643,7 @@ _resume:
 			else if ( (*( fsm.p)) > _mid[1] )
 				_lower = _mid + 2;
 			else {
-				_trans += ((_mid - _keys)>>1);
+				_trans += (unsigned int)((_mid - _keys)>>1);
 				goto _match;
 			}
 		}
