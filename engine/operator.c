@@ -238,7 +238,7 @@ ib_status_t ib_operator_inst_destroy(
     }
 }
 
-ib_status_t ib_operator_execute(
+ib_status_t ib_operator_inst_execute(
     const ib_operator_t *op,
     void                *instance_data,
     ib_tx_t             *tx,

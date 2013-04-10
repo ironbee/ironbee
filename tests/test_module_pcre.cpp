@@ -171,7 +171,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     // Attempt to match.
     ASSERT_EQ(
         IB_OK,
-        ib_operator_execute(
+        ib_operator_inst_execute(
             op, instance_data,
             rule_exec1.tx,
             field1,
@@ -186,7 +186,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     // Attempt to match again.
     ASSERT_EQ(
         IB_OK,
-        ib_operator_execute(
+        ib_operator_inst_execute(
             op, instance_data,
             rule_exec1.tx,
             field2,
@@ -221,7 +221,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     // Attempt to match.
     ASSERT_EQ(
         IB_OK,
-        ib_operator_execute(
+        ib_operator_inst_execute(
             op, instance_data,
             rule_exec1.tx,
             field1,
@@ -236,7 +236,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     // Attempt to match again.
     ASSERT_EQ(
         IB_OK,
-        ib_operator_execute(
+        ib_operator_inst_execute(
             op, instance_data,
             rule_exec1.tx,
             field2,
@@ -277,7 +277,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     // Attempt to match again.
     ASSERT_EQ(
         IB_OK,
-        ib_operator_execute(
+        ib_operator_inst_execute(
             op, instance_data,
             rule_exec1.tx,
             field2,

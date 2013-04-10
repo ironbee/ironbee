@@ -145,12 +145,12 @@ TEST_F(OperatorTest, OperatorCallTest)
     );
 
     ib_field_setv(field, ib_ftype_nulstr_in(matching));
-    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
+    status = ib_operator_inst_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
-    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
+    status = ib_operator_inst_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 
@@ -201,12 +201,12 @@ TEST_F(CoreOperatorsTest, ContainsTest)
     );
 
     ib_field_setv(field, ib_ftype_nulstr_in(matching));
-    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
+    status = ib_operator_inst_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
-    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
+    status = ib_operator_inst_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }
@@ -242,12 +242,12 @@ TEST_F(CoreOperatorsTest, EqTest)
     );
 
     ib_field_setv(field, ib_ftype_num_in(&matching));
-    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
+    status = ib_operator_inst_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_num_in(&nonmatching));
-    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
+    status = ib_operator_inst_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }
@@ -283,12 +283,12 @@ TEST_F(CoreOperatorsTest, NeTest)
     );
 
     ib_field_setv(field, ib_ftype_num_in(&matching));
-    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
+    status = ib_operator_inst_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_num_in(&nonmatching));
-    status = ib_operator_execute(op, instance_data, ib_tx, field, NULL, &call_result);
+    status = ib_operator_inst_execute(op, instance_data, ib_tx, field, NULL, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }

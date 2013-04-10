@@ -240,7 +240,7 @@ moduleapi.operator = function(self, name, param, flags)
             return ffi.C.IB_OK, 0
         else
             local res = ffi.new('ib_num_t[1]')
-            local rc = ffi.C.ib_operator_execute(
+            local rc = ffi.C.ib_operator_inst_execute(
                 op[0],
                 inst[0],
                 tx,

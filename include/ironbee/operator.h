@@ -296,7 +296,7 @@ ib_status_t DLL_PUBLIC ib_operator_inst_destroy(
  * - IB_OK on success.
  * - Execution callback status if it reports an error.
  */
-ib_status_t DLL_PUBLIC ib_operator_execute(
+ib_status_t DLL_PUBLIC ib_operator_inst_execute(
     const ib_operator_t *op,
     void                *instance_data,
     ib_tx_t             *tx,

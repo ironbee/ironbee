@@ -198,7 +198,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
                                              &instance_data));
 
     // Attempt to match.
-    ASSERT_EQ(IB_OK, ib_operator_execute(op,
+    ASSERT_EQ(IB_OK, ib_operator_inst_execute(op,
                                           instance_data,
                                           &tx,
                                           field1,

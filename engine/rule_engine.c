@@ -1424,7 +1424,7 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
         }
 
         /* @todo remove the cast-away of the constness of value */
-        op_rc = ib_operator_execute(
+        op_rc = ib_operator_inst_execute(
             opinst->op,
             opinst->instance_data,
             rule_exec->tx,
@@ -1510,7 +1510,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
         /* Execute the operator */
         ib_rule_log_trace(rule_exec, "Executing external rule");
-        op_rc = ib_operator_execute(
+        op_rc = ib_operator_inst_execute(
             opinst->op,
             opinst->instance_data,
             rule_exec->tx,
@@ -2191,7 +2191,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     }
 
     /* Execute the rule operator */
-    op_rc = ib_operator_execute(
+    op_rc = ib_operator_inst_execute(
         rule->opinst->op,
         rule->opinst->instance_data,
         rule_exec->tx,
