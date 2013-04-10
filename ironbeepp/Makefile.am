@@ -35,6 +35,5 @@ libibpp_la_SOURCES = \
     hooks.cpp \
     notifier.cpp \
     ironbee.cpp \
-    server.cpp
-
-
+    server.cpp \
+		operator.cpp
