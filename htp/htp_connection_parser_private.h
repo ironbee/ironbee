@@ -257,6 +257,12 @@ struct htp_connp_t {
     htp_file_t *put_file;
 };
 
+/**
+ * This function is most likely not used and/or not needed.
+ * 
+ * @param[in] connp
+ */
+void htp_connp_in_reset(htp_connp_t *connp);
 
 #ifdef	__cplusplus
 }

@@ -119,12 +119,6 @@ void htp_connp_open(htp_connp_t *connp, const char *client_addr, int client_port
     int server_port, htp_time_t *timestamp);
 
 /**
- *
- * @param[in] connp
- */
-void htp_connp_in_reset(htp_connp_t *connp);
-
-/**
  * Associate user data with the supplied parser.
  *
  * @param[in] connp
