@@ -186,6 +186,11 @@ void Node::post_transform(NodeReporter reporter) const
     // nop
 }
 
+void Node::pre_eval(Environment environment, NodeReporter reporter)
+{
+    // nop
+}
+
 bool Node::is_literal() const
 {
     return dynamic_cast<const Literal*>(this);

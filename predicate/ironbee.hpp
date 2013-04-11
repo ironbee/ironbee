@@ -27,6 +27,7 @@
 #ifndef __PREDICATE__IRONBEE__
 #define __PREDICATE__IRONBEE__
 
+#include <ironbeepp/engine.hpp>
 #include <ironbeepp/field.hpp>
 #include <ironbeepp/transaction.hpp>
 
@@ -54,6 +55,11 @@ typedef IronBee::Field Value;
  * Context a node is evaluated in.
  **/
 typedef IronBee::Transaction EvalContext;
+
+/**
+ * Environment of a node.
+ **/
+typedef IronBee::Engine Environment;
 
 } // Predicate
 } // IronBee

@@ -285,6 +285,18 @@ public:
      **/
     virtual void post_transform(NodeReporter reporter) const;
 
+    /**
+     * Preform any one time preparations needed for evaluation.
+     *
+     * This method is called after all transformations are complete but before
+     * any evaluation.  It provides the environment of the node and should be
+     * used to do any setup needed to calculate values.
+     *
+     * @param[in] environment Environment for evaluation.
+     * @param[in] reporter    Reporter to report errors with.
+     **/
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
 protected:
     /**
      * Calculate value.
