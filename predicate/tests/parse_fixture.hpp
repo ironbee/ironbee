@@ -48,7 +48,7 @@ protected:
         IronBee::Predicate::EvalContext
     )
     {
-        return IronBee::ConstField();
+        return IronBee::Predicate::Value();
     }
 
 private:

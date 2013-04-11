@@ -39,17 +39,21 @@ namespace Predicate {
  * of the implementation, especially of standard.hpp, would need to change,
  * but changing these typedefs should suffice for adapating the
  * public API.
+ *
+ * The types are not Const because IronBee requires non-const versions for
+ * a variety of purposes, e.g., operators and adding fields to capture
+ * collections.  However, they should be treated as non-mutable when possible.
  */
 
 /**
  * Value of a node.
  **/
-typedef IronBee::ConstField Value;
+typedef IronBee::Field Value;
 
 /**
  * Context a node is evaluated in.
  **/
-typedef IronBee::ConstTransaction EvalContext;
+typedef IronBee::Transaction EvalContext;
 
 } // Predicate
 } // IronBee

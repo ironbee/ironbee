@@ -67,7 +67,7 @@ Value Node::value() const
 
 void Node::reset()
 {
-    m_value = IronBee::ConstField();
+    m_value = IronBee::Field();
     m_has_value = 0;
 }
 

@@ -449,7 +449,7 @@ private:
     //! Memory pool to create field value from.  Alias of m_value_as_s.
     boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
     //! Value returned by calculate().
-    IronBee::ConstField m_value_as_field;
+    Value m_value_as_field;
 };
 
 /**

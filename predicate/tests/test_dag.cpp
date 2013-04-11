@@ -34,7 +34,7 @@ class TestDAG : public ::testing::Test, public IBPPTestFixture
 {
 };
 
-static const ib_field_t c_field = ib_field_t();
+static ib_field_t c_field = ib_field_t();
 
 class DummyCall : public Call
 {
@@ -47,7 +47,7 @@ public:
 protected:
     virtual Value calculate(EvalContext)
     {
-        return IronBee::ConstField(&c_field);
+        return Value(&c_field);
     }
 };
 
