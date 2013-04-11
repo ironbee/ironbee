@@ -356,6 +356,7 @@ static ib_status_t modhtp_table_iterator(
     modhtp_table_iterator_callback_fn_t  fn,
     void                                *data)
 {
+    assert(tx != NULL);
     assert(table != NULL);
     assert(fn != NULL);
 
@@ -400,6 +401,7 @@ static ib_status_t modhtp_check_htprc(
     const char            *fn)
 {
     assert(txdata != NULL);
+    assert(fn != NULL);
 
     /* Short circuit if libhtp returned OK */
     if (hrc == HTP_OK) {
@@ -450,6 +452,7 @@ static ib_status_t modhtp_set_header(
     assert(label != NULL);
     assert(header != NULL);
     assert(fn != NULL);
+    assert(fname != NULL);
 
     const ib_parsed_name_value_pair_list_t *node;
 
@@ -908,11 +911,8 @@ static ib_status_t modhtp_field_gen_bytestr(
     return IB_OK;
 }
 
-#define modhtp_field_gen_list(data, name, pf) \
-    ib_data_add_list_ex((data), (name), strlen((name)), (pf))
 
 /* -- Utility functions -- */
-
 
 /*
  * Macro to check a single libhtp parser flag, set appropriate IB TX flag.
@@ -994,19 +994,25 @@ static void modhtp_parser_flag(
     return;
 }
 
-static ib_status_t modhtp_set_parser_flags(
+/**
+ * Set the parser flags from the libhtp parser
+ *
+ * @param[in] txdata The transaction data object
+ * @param[in] collection The name of the collection in which to store the flags
+ */
+static void modhtp_set_parser_flags(
     modhtp_txdata_t  *txdata,
     const char       *collection)
 {
     assert(txdata != NULL);
     assert(collection != NULL);
 
-    ib_status_t  rc = IB_OK;
     uint64_t     flags = txdata->htx->flags;
     ib_tx_t     *itx = txdata->itx;
 
+    /* If no flag bits are set, nothing to do. */
     if (flags == 0) {
-        return IB_OK;
+        return;
     }
 
     /* FILED_xxxx */
@@ -1055,25 +1061,31 @@ static ib_status_t modhtp_set_parser_flags(
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_OVERLONG_U);
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_HALF_FULL_RANGE);
 
-    /* If flags is not 0 we did not handle one of the bits. */
+    /* If flags is not 0 we did not handle one (or more) of the bits. */
     if (flags != 0) {
         ib_log_error_tx(itx, "HTP parser unknown flag: 0x%"PRIx64, flags);
-        rc = IB_EUNKNOWN;
     }
-
-    return rc;
 }
 
 /* -- LibHTP Callbacks -- */
 
-/* Log htp data via ironbee logging. */
+/**
+ * Error log callback from libhtp
+ *
+ * @param[in] log libhtp log object
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
+
 static int modhtp_htp_log(
     htp_log_t     *log)
 {
     assert(log != NULL);
 
     modhtp_txdata_t *txdata;
-    int              level;
+    ib_log_level_t   level;
 
     /* Get the transaction data */
     txdata = modhtp_get_txdata_parser(log->connp);
@@ -1109,9 +1121,20 @@ static int modhtp_htp_log(
     return 0;
 }
 
+/**
+ * Request start callback from libhtp
+ *
+ * @param[in] connp Connection parser
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_req_start(
     htp_connp_t *connp)
 {
+    assert(connp != NULL);
+
     ib_status_t      irc;
     modhtp_txdata_t *txdata;
 
@@ -1124,6 +1147,15 @@ static int modhtp_htp_req_start(
     return HTP_OK;
 }
 
+/**
+ * Request line callback from libhtp
+ *
+ * @param[in] connp Connection parser
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_req_line(
     htp_connp_t   *connp)
 {
@@ -1187,9 +1219,20 @@ static int modhtp_htp_req_line(
     return HTP_OK;
 }
 
+/**
+ * Request headers callback from libhtp
+ *
+ * @param[in] connp Connection parser
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_req_headers(
     htp_connp_t    *connp)
 {
+    assert(connp != NULL);
+
     modhtp_txdata_t *txdata;
     ib_status_t      irc;
 
@@ -1211,6 +1254,15 @@ static int modhtp_htp_req_headers(
     return HTP_OK;
 }
 
+/**
+ * Request body callback from libhtp
+ *
+ * @param[in] htp_tx_data Transaction data
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_req_body_data(
     htp_tx_data_t    *htp_tx_data)
 {
@@ -1225,6 +1277,15 @@ static int modhtp_htp_req_body_data(
     return HTP_OK;
 }
 
+/**
+ * Request trailer callback from libhtp
+ *
+ * @param[in] connp Connection parser
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_req_trailer(
     htp_connp_t *connp)
 {
@@ -1244,6 +1305,15 @@ static int modhtp_htp_req_trailer(
     return HTP_OK;
 }
 
+/**
+ * Request complete callback from libhtp
+ *
+ * @param[in] connp Connection parser
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_req_complete(
     htp_connp_t *connp)
 {
@@ -1262,6 +1332,15 @@ static int modhtp_htp_req_complete(
     return HTP_OK;
 }
 
+/**
+ * Response line callback from libhtp
+ *
+ * @param[in] connp Connection parser
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_rsp_line(
     htp_connp_t *connp)
 {
@@ -1309,6 +1388,15 @@ static int modhtp_htp_rsp_line(
     return HTP_OK;
 }
 
+/**
+ * Response headers callback from libhtp
+ *
+ * @param[in] connp Connection parser
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_rsp_headers(
     htp_connp_t *connp)
 {
@@ -1328,6 +1416,15 @@ static int modhtp_htp_rsp_headers(
     return HTP_OK;
 }
 
+/**
+ * Response body callback from libhtp
+ *
+ * @param[in] htp_tx_data Transaction data
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_rsp_body_data(
     htp_tx_data_t *htp_tx_data)
 {
@@ -1342,6 +1439,15 @@ static int modhtp_htp_rsp_body_data(
     return HTP_OK;
 }
 
+/**
+ * Response complete callback from libhtp
+ *
+ * @param[in] connp Connection parser
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_rsp_complete(
     htp_connp_t *connp)
 {
@@ -1361,6 +1467,15 @@ static int modhtp_htp_rsp_complete(
     return HTP_OK;
 }
 
+/**
+ * Response trailer callback from libhtp
+ *
+ * @param[in] connp Connection parser
+ *
+ * @returns Status code:
+ *  - HTP_OK All OK
+ *  - HTP_ERROR An error occurred
+ */
 static int modhtp_htp_rsp_trailer(
     htp_connp_t      *connp)
 {
@@ -1380,6 +1495,9 @@ static int modhtp_htp_rsp_trailer(
     return HTP_OK;
 }
 
+/**
+ * Support functions for the Parser Provider Interface Implementation
+ */
 
 /**
  * Generate IronBee request header fields
@@ -1487,10 +1605,21 @@ static ib_status_t modhtp_gen_request_header_fields(
     return IB_OK;
 }
 
+/**
+ * Generate the request fields
+ *
+ * @param[in] htx libhtp transaction
+ * @param[out] itx IronBee transaction
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_gen_request_fields(
     const htp_tx_t *htx,
     ib_tx_t        *itx)
 {
+    assert(htx != NULL);
+    assert(itx != NULL);
+
     ib_field_t  *f;
     ib_status_t  rc;
 
@@ -1527,6 +1656,15 @@ static ib_status_t modhtp_gen_request_fields(
     return IB_OK;
 }
 
+/**
+ * Generate the response header fields
+ *
+ * @param[in] htx libhtp transaction
+ * @param[out] itx IronBee transaction
+ *
+ * @returns Status code
+ *  - IB_OK
+ */
 static ib_status_t modhtp_gen_response_header_fields(
     htp_tx_t *htx,
     ib_tx_t  *itx)
@@ -1534,14 +1672,21 @@ static ib_status_t modhtp_gen_response_header_fields(
     return IB_OK;
 }
 
+/**
+ * Generate the response fields
+ *
+ * @param[in] htx libhtp transaction
+ * @param[out] itx IronBee transaction
+ *
+ * @returns Status code
+ *  - IB_OK
+ */
 static ib_status_t modhtp_gen_response_fields(
     htp_tx_t *htx,
     ib_tx_t  *itx)
 {
     return IB_OK;
 }
-
-/* -- Parser Provider Interface Implementation -- */
 
 /**
  * Create and populate a module configuration context object
@@ -1618,7 +1763,9 @@ static ib_status_t modhtp_build_context (
     return IB_OK;
 }
 
-/*****************************************************************************
+
+/**
+ * Parser Provider Interface Implementation
  *
  * The server will call the parsed versions of the ib_state_notify_*()
  * functions directly with the parsed HTTP data. Because of limitations in
@@ -1626,8 +1773,16 @@ static ib_status_t modhtp_build_context (
  * raw HTTP stream and call the data_in/data_out functions as if it was
  * receiving a raw stream.
  *
- ****************************************************************************/
+ */
 
+/**
+ * Parser provider interface implementation: Connection Initialization
+ *
+ * @param[in] pi The provider instance
+ * @param[in] iconn The IronBee connection
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_conn_init(
     ib_provider_inst_t *pi,
     ib_conn_t          *iconn)
@@ -1668,7 +1823,6 @@ static ib_status_t modhtp_iface_conn_init(
     parser_data->context = context;
     parser_data->parser  = parser;
     parser_data->iconn   = iconn;
-    parser_data->parser  = parser;
 
     /* Store the parser data for access from callbacks. */
     ib_conn_parser_context_set(iconn, parser_data);
@@ -1677,6 +1831,14 @@ static ib_status_t modhtp_iface_conn_init(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Connection Cleanup
+ *
+ * @param[in] pi The provider instance
+ * @param[in] iconn The IronBee connection
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_conn_cleanup(
     ib_provider_inst_t *pi,
     ib_conn_t          *iconn)
@@ -1701,6 +1863,14 @@ static ib_status_t modhtp_iface_conn_cleanup(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Connect
+ *
+ * @param[in] pi The provider instance
+ * @param[in] iconn The IronBee connection
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_connect(
     ib_provider_inst_t *pi,
     ib_conn_t          *iconn)
@@ -1724,6 +1894,14 @@ static ib_status_t modhtp_iface_connect(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Disconnect
+ *
+ * @param[in] pi The provider instance
+ * @param[in] iconn The IronBee connection
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_disconnect(
     ib_provider_inst_t *pi,
     ib_conn_t          *iconn)
@@ -1747,6 +1925,14 @@ static ib_status_t modhtp_iface_disconnect(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Transaction Initialization
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_tx_init(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
@@ -1803,6 +1989,14 @@ static ib_status_t modhtp_iface_tx_init(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Transaction cleanup
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_tx_cleanup(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
@@ -1824,6 +2018,14 @@ static ib_status_t modhtp_iface_tx_cleanup(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Transaction started
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_request_started(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
@@ -1842,7 +2044,15 @@ static ib_status_t modhtp_iface_request_started(
     return modhtp_check_htprc(hrc, txdata, "htp_tx_state_request_start()");
 }
 
-
+/**
+ * Parser provider interface implementation: Request line
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ * @param[in] line The parsed request line
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_request_line(
     ib_provider_inst_t   *pi,
     ib_tx_t              *itx,
@@ -1883,6 +2093,15 @@ static ib_status_t modhtp_iface_request_line(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Request header data
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ * @param[in] header Parsed request header data
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_request_header_data(
     ib_provider_inst_t         *pi,
     ib_tx_t                    *itx,
@@ -1910,6 +2129,14 @@ static ib_status_t modhtp_iface_request_header_data(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Request header finished
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_request_header_finished(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
@@ -1944,6 +2171,15 @@ static ib_status_t modhtp_iface_request_header_finished(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Request body
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ * @param[in] ib_txdata Transaction body data
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_request_body_data(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx,
@@ -1975,6 +2211,14 @@ static ib_status_t modhtp_iface_request_body_data(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Request finished
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_request_finished(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
@@ -2005,6 +2249,14 @@ static ib_status_t modhtp_iface_request_finished(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Reponse started
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_response_started(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
@@ -2030,6 +2282,15 @@ static ib_status_t modhtp_iface_response_started(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Reponse line
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ * @param[in] line The parsed response line
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_response_line(
     ib_provider_inst_t    *pi,
     ib_tx_t               *itx,
@@ -2077,6 +2338,15 @@ static ib_status_t modhtp_iface_response_line(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Reponse header data
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ * @param[in] header Parsed request header data
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_response_header_data(
     ib_provider_inst_t         *pi,
     ib_tx_t                    *itx,
@@ -2111,9 +2381,17 @@ static ib_status_t modhtp_iface_response_header_data(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Reponse finished
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_response_header_finished(
     ib_provider_inst_t *pi,
-    ib_tx_t *itx)
+    ib_tx_t            *itx)
 {
     assert(pi != NULL);
     assert(itx != NULL);
@@ -2150,6 +2428,15 @@ static ib_status_t modhtp_iface_response_header_finished(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Reponse body data
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ * @param[in] ib_txdata Transaction body data
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_response_body_data(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx,
@@ -2180,6 +2467,14 @@ static ib_status_t modhtp_iface_response_body_data(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Reponse finished
+ *
+ * @param[in] pi The provider instance
+ * @param[in] itx The IronBee transaction
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_iface_response_finished(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
@@ -2210,6 +2505,9 @@ static ib_status_t modhtp_iface_response_finished(
     return IB_OK;
 }
 
+/**
+ * Parser provider interface implementation: Interface delcaration
+ */
 static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
     IB_PROVIDER_IFACE_HEADER_DEFAULTS,
 
@@ -2245,6 +2543,15 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
 
 /* -- Module Routines -- */
 
+/**
+ * Module initialization
+ *
+ * @param[in] ib The ironBee engine
+ * @param[in] m The module structure
+ * @param[in] cbdata Module-specific initialization callback data (unused)
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_init(ib_engine_t *ib,
                                ib_module_t *m,
                                void        *cbdata)
@@ -2269,6 +2576,16 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     return IB_OK;
 }
 
+/**
+ * Handle IronBee context close
+ *
+ * @param[in] ib The ironBee engine
+ * @param[in] m The module structure
+ * @param[in] ctx The IronBee context
+ * @param[in] cbdata Module-specific context-close callback data (unused)
+ *
+ * @returns Status code
+ */
 static ib_status_t modhtp_context_close(
     ib_engine_t  *ib,
     ib_module_t  *m,
@@ -2329,6 +2646,9 @@ static ib_status_t modhtp_context_close(
     return IB_OK;
 }
 
+/**
+ * Configuration map data
+ */
 static IB_CFGMAP_INIT_STRUCTURE(modhtp_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".personality",
