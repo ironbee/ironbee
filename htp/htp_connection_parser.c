@@ -120,8 +120,6 @@ void *htp_connp_get_user_data(const htp_connp_t *connp) {
 void htp_connp_in_reset(htp_connp_t *connp) {
     connp->in_content_length = -1;
     connp->in_body_data_left = -1;
-    //connp->in_header_line_index = -1;
-    //connp->in_header_line_counter = 0;
     connp->in_chunk_request_index = connp->in_chunk_count;
 }
 
