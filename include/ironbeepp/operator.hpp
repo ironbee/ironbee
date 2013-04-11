@@ -109,6 +109,51 @@ public:
     //! Capabilities of operator.
     ib_flags_t capabilities() const;
 
+    /**
+     * Register with an engine.
+     *
+     * @param[in] engine Engine to register with.
+     **/
+    void register_with(Engine engine);
+
+    /**
+     * Create an operator instance.
+     *
+     * @param[in] context Context of creation.
+     * @param[in] required_capabilities Capabilities the operator must have.
+     * @param[in] parameters Parameters to oeprator.
+     * @return Instance data to use with execute_instance() and
+     *         destroy_instance().
+     **/
+    void* create_instance(
+        Context     context,
+        ib_flags_t  required_capabilities,
+        const char* parameters
+    ) const;
+
+    /**
+     * Execute an operator instance.
+     *
+     * @param[in] instance_data Instance data returned by create_instance().
+     * @param[in] transaction Current transaction.
+     * @param[in] input Input to operator.
+     * @param[in] capture Collection to capture to; can be singular.
+     * @return Result.
+     **/
+    int execute_instance(
+        void*       instance_data,
+        Transaction transaction,
+        Field       input,
+        Field       capture = Field()
+    ) const;
+
+    /**
+     * Destroy an operator instance.
+     *
+     * @param[in] instance_data Instance data return by create_instance().
+     **/
+    void destroy_instance(void* instance_data) const;
+
 private:
     ib_type m_ib;
 };
@@ -246,51 +291,6 @@ public:
     Operator(ib_type ib_operator);
 
     ///@}
-
-    /**
-     * Register with an engine.
-     *
-     * @param[in] engine Engine to register with.
-     **/
-    void register_with(Engine engine);
-
-    /**
-     * Create an operator instance.
-     *
-     * @param[in] context Context of creation.
-     * @param[in] required_capabilities Capabilities the operator must have.
-     * @param[in] parameters Parameters to oeprator.
-     * @return Instance data to use with execute_instance() and
-     *         destroy_instance().
-     **/
-    void* create_instance(
-        Context     context,
-        ib_flags_t  required_capabilities,
-        const char* parameters
-    ) const;
-
-    /**
-     * Execute an operator instance.
-     *
-     * @param[in] instance_data Instance data returned by create_instance().
-     * @param[in] transaction Current transaction.
-     * @param[in] input Input to operator.
-     * @param[in] capture Collection to capture to; can be singular.
-     * @return Result.
-     **/
-    int execute_instance(
-        void*       instance_data,
-        Transaction transaction,
-        Field       input,
-        Field       capture = Field()
-    ) const;
-
-    /**
-     * Destroy an operator instance.
-     *
-     * @param[in] instance_data Instance data return by create_instance().
-     **/
-    void destroy_instance(void* instance_data) const;
 
 private:
     ib_type m_ib;

@@ -63,6 +63,61 @@ ib_flags_t ConstOperator::capabilities() const
     return ib_operator_get_capabilities(ib());
 }
 
+
+void ConstOperator::register_with(Engine engine)
+{
+    throw_if_error(ib_operator_register(engine.ib(), ib()));
+}
+
+void* ConstOperator::create_instance(
+    Context     context,
+    ib_flags_t  required_capabilities,
+    const char* parameters
+) const
+{
+    void* instance_data = NULL;
+    throw_if_error(
+        ib_operator_inst_create(
+            ib(),
+            context.ib(),
+            required_capabilities,
+            parameters,
+            &instance_data
+        )
+    );
+
+    return instance_data;
+}
+
+int ConstOperator::execute_instance(
+    void*       instance_data,
+    Transaction transaction,
+    Field       input,
+    Field       capture
+) const
+{
+    ib_num_t result = 0;
+    throw_if_error(
+        ib_operator_inst_execute(
+            ib(),
+            instance_data,
+            transaction.ib(),
+            input.ib(),
+            capture.ib(),
+            &result
+        )
+    );
+
+    return result;
+}
+
+void ConstOperator::destroy_instance(void* instance_data) const
+{
+    throw_if_error(
+        ib_operator_inst_destroy(ib(), instance_data)
+    );
+}
+
 // Operator
 
 namespace {
@@ -142,61 +197,6 @@ Operator::Operator(ib_type ib_operator) :
 {
     // nop
 }
-
-void Operator::register_with(Engine engine)
-{
-    throw_if_error(ib_operator_register(engine.ib(), ib()));
-}
-
-void* Operator::create_instance(
-    Context     context,
-    ib_flags_t  required_capabilities,
-    const char* parameters
-) const
-{
-    void* instance_data = NULL;
-    throw_if_error(
-        ib_operator_inst_create(
-            ib(),
-            context.ib(),
-            required_capabilities,
-            parameters,
-            &instance_data
-        )
-    );
-
-    return instance_data;
-}
-
-int Operator::execute_instance(
-    void*       instance_data,
-    Transaction transaction,
-    Field       input,
-    Field       capture
-) const
-{
-    ib_num_t result = 0;
-    throw_if_error(
-        ib_operator_inst_execute(
-            ib(),
-            instance_data,
-            transaction.ib(),
-            input.ib(),
-            capture.ib(),
-            &result
-        )
-    );
-
-    return result;
-}
-
-void Operator::destroy_instance(void* instance_data) const
-{
-    throw_if_error(
-        ib_operator_inst_destroy(ib(), instance_data)
-    );
-}
-
 
 std::ostream& operator<<(std::ostream& o, const ConstOperator& op)
 {
