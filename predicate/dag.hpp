@@ -57,7 +57,7 @@ typedef IronBee::ConstField Value;
 /**
  * Context a node is evaluated in.
  **/
-typedef IronBee::ConstTransaction Context;
+typedef IronBee::ConstTransaction EvalContext;
 
 // Defined below.
 class Node;
@@ -241,11 +241,11 @@ public:
         return m_has_value;
     }
 
-    //! True iff node is a literal, in which case eval(Context()) is valid.
+    //! True iff node is a literal, in which case eval(EvalContext()) is valid.
     bool is_literal() const;
 
     //! Return value, calculating if needed.
-    Value eval(Context context);
+    Value eval(EvalContext context);
 
     //! Return value, throwing if none.
     Value value() const;
@@ -314,7 +314,7 @@ protected:
      * @param [in] context Contex of calculation.
      * @return Value of node.
      */
-    virtual Value calculate(Context context) = 0;
+    virtual Value calculate(EvalContext context) = 0;
 
 private:
     /**
@@ -394,7 +394,7 @@ private:
 };
 
 /**
- * Literal node: no children and value independent of Context.
+ * Literal node: no children and value independent of EvalContext.
  *
  * This class may not be subclassed.
  **/
@@ -458,7 +458,7 @@ public:
 
 protected:
     //! See Node::calculate()
-    virtual Value calculate(Context context);
+    virtual Value calculate(EvalContext context);
 
 private:
     //! Value as a C++ string.
@@ -486,7 +486,7 @@ public:
 
 protected:
     //! See Node::calculate()
-    virtual Value calculate(Context context);
+    virtual Value calculate(EvalContext context);
 };
 
 } // Predicate

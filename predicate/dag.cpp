@@ -44,7 +44,7 @@ Node::~Node()
     // nop
 }
 
-Value Node::eval(Context context)
+Value Node::eval(EvalContext context)
 {
     if (! has_value()) {
         m_value = calculate(context);
@@ -233,7 +233,7 @@ string String::escape(const std::string& s)
     return escaped;
 }
 
-Value String::calculate(Context)
+Value String::calculate(EvalContext)
 {
     return m_value_as_field;
 }
@@ -244,7 +244,7 @@ const string& Null::to_s() const
     return s_null;
 }
 
-Value Null::calculate(Context)
+Value Null::calculate(EvalContext)
 {
     return Value();
 }

@@ -58,7 +58,7 @@ bool False::transform(
     return true;
 }
 
-Value False::calculate(Context)
+Value False::calculate(EvalContext)
 {
     return Value();
 }
@@ -81,12 +81,12 @@ bool True::transform(
     return true;
 }
 
-Value True::calculate(Context)
+Value True::calculate(EvalContext)
 {
     static node_p s_true_literal;
     if (! s_true_literal) {
         s_true_literal = node_p(new String(""));
-        s_true_literal->eval(Context());
+        s_true_literal->eval(EvalContext());
     }
 
     return s_true_literal->value();
@@ -167,7 +167,7 @@ string Or::name() const
     return "or";
 }
 
-Value Or::calculate(Context context)
+Value Or::calculate(EvalContext context)
 {
     assert(children().size() >= 2);
     BOOST_FOREACH(const node_p& child, children()) {
@@ -191,7 +191,7 @@ bool Or::transform(
     node_list_t to_remove;
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
-            if (child->eval(Context())) {
+            if (child->eval(EvalContext())) {
                 node_p replacement = c_true;
                 merge_graph.replace(me, replacement);
                 return true;
@@ -230,7 +230,7 @@ string And::name() const
     return "and";
 }
 
-Value And::calculate(Context context)
+Value And::calculate(EvalContext context)
 {
     assert(children().size() >= 2);
     BOOST_FOREACH(const node_p& child, children()) {
@@ -254,7 +254,7 @@ bool And::transform(
     node_list_t to_remove;
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
-            if (! child->eval(Context())) {
+            if (! child->eval(EvalContext())) {
                 node_p replacement = c_false;
                 merge_graph.replace(me, replacement);
                 return true;
@@ -292,7 +292,7 @@ string Not::name() const
     return "not";
 }
 
-Value Not::calculate(Context context)
+Value Not::calculate(EvalContext context)
 {
     assert(children().size() == 1);
     if (children().front()->eval(context)) {
@@ -315,7 +315,7 @@ bool Not::transform(
 
     if (child->is_literal()) {
         node_p replacement;
-        if (child->eval(Context())) {
+        if (child->eval(EvalContext())) {
             replacement.reset(new Null());
         }
         else {
@@ -334,7 +334,7 @@ string If::name() const
     return "if";
 }
 
-Value If::calculate(Context context)
+Value If::calculate(EvalContext context)
 {
     assert(children().size() == 3);
     node_list_t::const_iterator i;
@@ -370,7 +370,7 @@ bool If::transform(
 
     if (pred->is_literal()) {
         node_p replacement;
-        if (pred->eval(Context())) {
+        if (pred->eval(EvalContext())) {
             replacement = true_value;
         }
         else {
@@ -389,7 +389,7 @@ string Field::name() const
     return "field";
 }
 
-Value Field::calculate(Context context)
+Value Field::calculate(EvalContext context)
 {
     Value key_field = children().front()->eval(context);
     IronBee::ConstByteString key = key_field.value_as_byte_string();

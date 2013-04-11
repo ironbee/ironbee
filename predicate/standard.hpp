@@ -58,7 +58,7 @@ public:
 
 protected:
     //! See Node::calculate()
-    virtual Value calculate(Context);
+    virtual Value calculate(EvalContext);
 };
 
 /**
@@ -85,7 +85,7 @@ public:
 
 protected:
     //! See Node::calculate()
-    virtual Value calculate(Context);
+    virtual Value calculate(EvalContext);
 };
 
 /**
@@ -144,7 +144,7 @@ public:
    );
 
 protected:
-    virtual Value calculate(Context context);
+    virtual Value calculate(EvalContext context);
 };
 
 /**
@@ -169,7 +169,7 @@ public:
        const CallFactory& call_factory
    );
 protected:
-    virtual Value calculate(Context context);
+    virtual Value calculate(EvalContext context);
 };
 
 /**
@@ -195,7 +195,7 @@ public:
     );
 
 protected:
-    virtual Value calculate(Context context);
+    virtual Value calculate(EvalContext context);
 };
 
 /**
@@ -221,7 +221,7 @@ public:
     );
 
 protected:
-    virtual Value calculate(Context context);
+    virtual Value calculate(EvalContext context);
 };
 
 /**
@@ -238,7 +238,7 @@ public:
     virtual std::string name() const;
 
 protected:
-    virtual Value calculate(Context context);
+    virtual Value calculate(EvalContext context);
 };
 
 /**

@@ -45,7 +45,7 @@ public:
     }
 
 protected:
-    virtual Value calculate(Context)
+    virtual Value calculate(EvalContext)
     {
         return IronBee::ConstField(&c_field);
     }
@@ -91,7 +91,7 @@ TEST_F(TestDAG, String)
     EXPECT_EQ("node", n.value_as_s());
     EXPECT_EQ(
         "node",
-        n.eval(Context()).value_as_byte_string().to_s()
+        n.eval(EvalContext()).value_as_byte_string().to_s()
     );
     EXPECT_TRUE(n.is_literal());
 }
@@ -134,7 +134,7 @@ TEST_F(TestDAG, Null)
 {
     Null n;
     EXPECT_EQ("null", n.to_s());
-    EXPECT_FALSE(n.eval(Context()));
+    EXPECT_FALSE(n.eval(EvalContext()));
     EXPECT_TRUE(n.is_literal());
 }
 

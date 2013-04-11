@@ -78,7 +78,7 @@ struct SimpleTest :
     mutable bool post_transform_called;
 
 protected:
-    virtual Value calculate(Context c)
+    virtual Value calculate(EvalContext c)
     {
         return Value();
     }

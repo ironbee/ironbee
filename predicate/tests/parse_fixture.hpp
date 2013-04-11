@@ -45,7 +45,7 @@ public:
 
 protected:
     virtual IronBee::Predicate::Value calculate(
-        IronBee::Predicate::Context
+        IronBee::Predicate::EvalContext
     )
     {
         return IronBee::ConstField();

@@ -37,7 +37,7 @@ public:
     }
 
 protected:
-    virtual Value calculate(Context)
+    virtual Value calculate(EvalContext)
     {
         return Value();
     }
