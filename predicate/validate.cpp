@@ -68,7 +68,7 @@ void n_children(NodeReporter reporter, size_t n)
     if (actual_children != n) {
         reporter.error(
             "Expected " + boost::lexical_cast<string>(n) + " children " +
-            " but have " + boost::lexical_cast<string>(actual_children) +
+            "but have " + boost::lexical_cast<string>(actual_children) +
             "."
         );
     }
