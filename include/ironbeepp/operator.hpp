@@ -185,7 +185,7 @@ public:
      *
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
-     * @param[in] operator ConstOperator to remove const from.
+     * @param[in] op ConstOperator to remove const from.
      * @returns Operator pointing to same underlying operator as @a operator.
      **/
     static Operator remove_const(ConstOperator op);
@@ -302,7 +302,7 @@ private:
  * Output IronBee::Operator[@e value] where @e value is the name.
  *
  * @param[in] o Ostream to output to.
- * @param[in] operator Operator to output.
+ * @param[in] op Operator to output.
  * @return @a o
  **/
 std::ostream& operator<<(std::ostream& o, const ConstOperator& op);

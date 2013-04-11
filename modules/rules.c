@@ -65,7 +65,7 @@ IB_MODULE_DECLARE();
  *
  * @param cp IronBee configuration parser
  * @param rule Rule object to update
- * @param operator Operator string
+ * @param operator_string Operator string
  * @param operand Operand string
  *
  * @returns Status code
