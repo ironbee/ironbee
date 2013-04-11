@@ -310,7 +310,6 @@ std::ostream& operator<<(std::ostream& o, const ConstOperator& op);
 // Implementation
 
 namespace Impl {
-namespace {
 
 struct operator_create_data_t
 {
@@ -319,18 +318,9 @@ struct operator_create_data_t
     std::pair<ib_operator_destroy_fn_t, void*> destroy_trampoline;
 };
 
-void operator_cleanup(operator_create_data_t data)
-{
-    if (data.create_trampoline.second) {
-        delete_c_trampoline(data.create_trampoline.second);
-    }
-    if (data.execute_trampoline.second) {
-        delete_c_trampoline(data.execute_trampoline.second);
-    }
-    if (data.destroy_trampoline.second) {
-        delete_c_trampoline(data.destroy_trampoline.second);
-    }
-}
+void operator_cleanup(operator_create_data_t data);
+
+namespace {
 
 template <typename InstanceData>
 ib_status_t operator_create_translator(

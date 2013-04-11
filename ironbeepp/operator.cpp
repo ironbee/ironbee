@@ -120,6 +120,23 @@ void ConstOperator::destroy_instance(void* instance_data) const
 
 // Operator
 
+namespace Impl {
+
+void operator_cleanup(operator_create_data_t data)
+{
+    if (data.create_trampoline.second) {
+        delete_c_trampoline(data.create_trampoline.second);
+    }
+    if (data.execute_trampoline.second) {
+        delete_c_trampoline(data.execute_trampoline.second);
+    }
+    if (data.destroy_trampoline.second) {
+        delete_c_trampoline(data.destroy_trampoline.second);
+    }
+}
+
+} // Impl
+
 namespace {
 
 class operator_create
