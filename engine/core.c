@@ -3738,10 +3738,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "logger.log_uri", uri);
         return rc;
     }
-    else if (strcasecmp("LogHandler", name) == 0) {
-        ib_cfg_log_notice(cp, "Ignoring deprecated directive \"%s\"", name);
-        return IB_OK;
-    }
     else if (strcasecmp("LoadModule", name) == 0) {
         char *absfile;
         ib_module_t *m;
@@ -4584,11 +4580,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     ),
     IB_DIRMAP_INIT_PARAM1(
         "Log",
-        core_dir_param1,
-        NULL
-    ),
-    IB_DIRMAP_INIT_PARAM1(
-        "LogHandler",
         core_dir_param1,
         NULL
     ),
