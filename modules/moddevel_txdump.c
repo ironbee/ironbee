@@ -821,6 +821,11 @@ static ib_status_t moddevel_txdump_tx(
         }
     }
 
+    /* If the transaction never started, do nothing */
+    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED) ) {
+        return IB_OK;
+    }
+
     /* ARGS */
     if (ib_flags_all(txdump->flags, MODDEVEL_TXDUMP_ARGS) ) {
         const ib_list_t *lst;
