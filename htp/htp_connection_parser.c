@@ -103,6 +103,10 @@ void htp_connp_destroy_all(htp_connp_t *connp) {
     htp_connp_destroy(connp);
 }
 
+htp_conn_t *htp_connp_get_connection(const htp_connp_t *connp) {
+    return connp->conn;
+}
+
 htp_log_t *htp_connp_get_last_error(const htp_connp_t *connp) {
     return connp->last_error;
 }

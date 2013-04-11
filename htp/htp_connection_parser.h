@@ -87,6 +87,14 @@ void htp_connp_destroy(htp_connp_t *connp);
 void htp_connp_destroy_all(htp_connp_t *connp);
 
 /**
+ * Returns the connection associated with the connection parser.
+ *
+ * @param[in] connp
+ * @return htp_conn_t instance, or NULL if one is not available.
+ */
+htp_conn_t *htp_connp_get_connection(const htp_connp_t *connp);
+
+/**
  * Returns the last error that occurred with this connection parser. Do note, however,
  * that the value in this field will only be valid immediately after an error condition,
  * but it is not guaranteed to remain valid if the parser is invoked again.
