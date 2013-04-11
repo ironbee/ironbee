@@ -70,18 +70,12 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
         return NULL;
     }
 
-    connp->in_status = HTP_OK;
-
     // Request parsing
-
-    //connp->in_header_line_index = -1;
     connp->in_state = htp_connp_REQ_IDLE;
+    connp->in_status = HTP_STREAM_NEW;
 
     // Response parsing
-
-    connp->out_state = htp_connp_RES_IDLE;
-
-    connp->in_status = HTP_STREAM_NEW;
+    connp->out_state = htp_connp_RES_IDLE; 
     connp->out_status = HTP_STREAM_NEW;
 
     return connp;
