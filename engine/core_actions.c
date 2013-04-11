@@ -1080,10 +1080,6 @@ static ib_status_t act_setvar_execute(
         assert(setvar_data->type == IB_FTYPE_BYTESTR);
         ib_bytestr_t *bs = NULL;
 
-        if (cur_field != NULL) {
-            ib_data_remove_ex(tx->data, name, nlen, NULL);
-        }
-
         /* Create a bytestr to hold it. */
         rc = ib_bytestr_alias_mem(&bs, tx->mp, (uint8_t *)value, vlen);
         if (rc != IB_OK) {
@@ -1093,6 +1089,18 @@ static ib_status_t act_setvar_execute(
                               (int)nlen, name, ib_status_to_string(rc));
             return rc;
         }
+
+        /* Try to re-use the existing field */
+        if (cur_field != NULL) {
+            if (cur_field->type == IB_FTYPE_BYTESTR) {
+                ib_field_setv(cur_field, ib_ftype_bytestr_in(bs));
+                return IB_OK;
+            }
+            else {
+                ib_data_remove_ex(tx->data, name, nlen, NULL);
+            }
+        }
+        
 
         /* Create the new_field field */
         rc = ib_field_create(&new_field,
@@ -1121,8 +1129,16 @@ static ib_status_t act_setvar_execute(
     case SETVAR_FLOATSET:
         assert(setvar_data->type == IB_FTYPE_FLOAT);
 
+        /* Try to re-use the existing field */
         if (cur_field != NULL) {
-            ib_data_remove_ex(tx->data, name, nlen, NULL);
+            if (cur_field->type == IB_FTYPE_FLOAT) {
+                ib_field_setv(cur_field,
+                              ib_ftype_float_in(&setvar_data->value.flt));
+                return IB_OK;
+            }
+            else {
+                ib_data_remove_ex(tx->data, name, nlen, NULL);
+            }
         }
 
         /* Create the new_field field */
@@ -1152,8 +1168,16 @@ static ib_status_t act_setvar_execute(
     case SETVAR_NUMSET:
         assert(setvar_data->type == IB_FTYPE_NUM);
 
+        /* Try to re-use the existing field */
         if (cur_field != NULL) {
-            ib_data_remove_ex(tx->data, name, nlen, NULL);
+            if (cur_field->type == IB_FTYPE_NUM) {
+                ib_field_setv(cur_field,
+                              ib_ftype_num_in(&setvar_data->value.num));
+                return IB_OK;
+            }
+            else {
+                ib_data_remove_ex(tx->data, name, nlen, NULL);
+            }
         }
 
         /* Create the new_field field */
