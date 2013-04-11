@@ -27,6 +27,8 @@
 #ifndef __PREDICATE__DAG__
 #define __PREDICATE__DAG__
 
+#include "ironbee.hpp"
+
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -35,29 +37,8 @@
 #include <list>
 #include <string>
 
-#include <ironbeepp/field.hpp>
-#include <ironbeepp/transaction.hpp>
-
 namespace IronBee {
 namespace Predicate {
-
-/*
- * The following typedefs are the primary parameters for tying the public
- * API to IronBee.  If this code was to be used in a different system, much
- * of the implementation, especially of standard.hpp, would need to change,
- * but changing these typedefs should suffice for adapating the
- * public API.
- */
-
-/**
- * Value of a node.
- **/
-typedef IronBee::ConstField Value;
-
-/**
- * Context a node is evaluated in.
- **/
-typedef IronBee::ConstTransaction EvalContext;
 
 // Defined below.
 class Node;
