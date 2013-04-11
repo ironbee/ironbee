@@ -25,6 +25,8 @@
 #include "standard.hpp"
 #include "merge_graph.hpp"
 
+#include <ironbeepp/operator.hpp>
+
 #include <boost/foreach.hpp>
 
 using namespace std;
@@ -411,6 +413,98 @@ Value Field::calculate(EvalContext context)
     return Value(data_field);
 }
 
+
+string Operator::name() const
+{
+    return "operator";
+}
+
+struct Operator::data_t
+{
+    ConstOperator op;
+    void*         instance_data;
+};
+
+void Operator::pre_eval(Environment environment, NodeReporter reporter)
+{
+    m_data.reset(new data_t());
+
+    // Validation guarantees that the first two children are string
+    // literals and thus can be evaluated with default EvalContext.
+
+    node_list_t::const_iterator child_i = children().begin();
+    Value op_name_value = (*child_i)->eval(EvalContext());
+    ++child_i;
+    Value params_value = (*child_i)->eval(EvalContext());
+
+    ConstByteString op_name = op_name_value.value_as_byte_string();
+    ConstByteString params  = params_value.value_as_byte_string();
+
+    if (! op_name) {
+        reporter.error("Missing operator name.");
+        return;
+    }
+    if (! params) {
+        reporter.error("Missing parameters.");
+        return;
+    }
+
+    try {
+        m_data->op =
+            ConstOperator::lookup(environment, op_name.to_s().c_str());
+    }
+    catch (IronBee::enoent) {
+        reporter.error("No such operator: " + op_name.to_s());
+        return;
+    }
+
+    if (! (m_data->op.capabilities() & IB_OP_CAPABILITY_NON_STREAM)) {
+        reporter.error("Only non-stream operator currently supported.");
+        return;
+    }
+
+    m_data->instance_data = m_data->op.create_instance(
+        environment.main_context(),
+        IB_OP_CAPABILITY_NON_STREAM,
+        params.to_s().c_str()
+    );
+}
+
+Value Operator::calculate(EvalContext context)
+{
+    static const char* c_capture_name = "predicate_operator_capture";
+
+    if (! m_data) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Evaluation without pre evaluation!"
+            )
+        );
+    }
+
+    Value input = children().back()->eval(context);
+    IronBee::Field capture = IronBee::Field::create_no_copy_list<void *>(
+        context.memory_pool(),
+        c_capture_name,
+        sizeof(c_capture_name) - 1,
+        List<void*>::create(context.memory_pool())
+    );
+
+    int result = m_data->op.execute_instance(
+        m_data->instance_data,
+        context,
+        input,
+        capture
+    );
+
+    if (result) {
+        return capture;
+    }
+    else {
+        return Value();
+    }
+}
+
 void load(CallFactory& to)
 {
     to
@@ -421,6 +515,7 @@ void load(CallFactory& to)
         .add<Not>()
         .add<If>()
         .add<Field>()
+        .add<Operator>()
     ;
 }
 

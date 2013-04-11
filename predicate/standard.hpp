@@ -30,6 +30,8 @@
 
 #include "call_factory.hpp"
 
+#include <boost/scoped_ptr.hpp>
+
 namespace IronBee {
 namespace Predicate {
 namespace Standard {
@@ -239,6 +241,43 @@ public:
 
 protected:
     virtual Value calculate(EvalContext context);
+};
+
+/**
+ * Run IronBee operator.
+ *
+ * First child is name of operator, second is parameters, third is input.
+ * First and second must be string literals.  If operator results is 0,
+ * node value is NULL, otherwise node value is the capture collection.  The
+ * collection will be empty for operators that do not support capture.
+ **/
+class Operator :
+    public Validate::Call<Operator>,
+    public Validate::NChildren<3,
+           Validate::NthChildIsString<0,
+           Validate::NthChildIsString<1
+           > > >
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::pre_eval()
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+protected:
+    virtual Value calculate(EvalContext context);
+
+private:
+    typedef Validate::Call<Operator> parent_t;
+
+    void local_validate(NodeReporter reporter) const;
+
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
 };
 
 /**

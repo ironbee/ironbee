@@ -65,6 +65,15 @@ protected:
                 )
             );
         }
+        n->pre_eval(m_engine, nr);
+        if (r.num_errors() > 0 || r.num_warnings() > 0) {
+            r.write_report(cout);
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << IronBee::errinfo_what(
+                    "pre_eval() failed."
+                )
+            );
+        }
         return n->eval(m_transaction);
     }
 
@@ -193,4 +202,17 @@ TEST_F(TestStandard, Field)
     EXPECT_EQ(IB_OK, rc);
 
     EXPECT_EQ("test", eval_s("(field 'TestStandard.Field')"));
+}
+
+TEST_F(TestStandard, Operator)
+{
+    EXPECT_TRUE(eval_bool("(operator 'istreq' 'fOo' 'foo')"));
+    EXPECT_FALSE(eval_bool("(operator 'istreq' 'fOo' 'bar')"));
+    EXPECT_THROW(eval_bool("(operator 'dne' 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(operator)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(operator 'a')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(operator 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(operator 'a' 'b' 'c' 'd')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(operator 'a' null 'c')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(operator null 'b' 'c')"), IronBee::einval);
 }
