@@ -425,7 +425,7 @@ Operator Operator::create(
     }
     if (destroy) {
         data.destroy_trampoline = make_c_trampoline<
-            ib_status_t(void*)
+            ib_status_t(void *)
         >(
             boost::bind(
                 &Impl::operator_destroy_translator<InstanceData>,

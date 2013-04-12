@@ -1534,7 +1534,7 @@ ib_status_t execute_compare(
     assert(tx->mp != NULL);
 
     const numop_instance_data_t *ndata =
-        (const numop_instance_data_t*)instance_data;
+        (const numop_instance_data_t *)instance_data;
     ib_status_t rc;
     ib_field_t *rh_field = NULL;
     ib_field_t *lh_field = NULL;
