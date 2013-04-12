@@ -30,10 +30,10 @@
 #ifndef __IBPP__OPERATOR__
 #define __IBPP__OPERATOR__
 
-#include <ironbeepp/c_trampoline.hpp>
 #include <ironbeepp/catch.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/context.hpp>
+#include <ironbeepp/c_trampoline.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/field.hpp>
 #include <ironbeepp/transaction.hpp>
