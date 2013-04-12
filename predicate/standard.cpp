@@ -40,6 +40,11 @@ namespace  {
 static const node_p c_true(new String(""));
 static const node_p c_false(new Null());
 
+bool caseless_compare(char a, char b)
+{
+    return (a == b || tolower(a) == tolower(b));
+}
+
 }
 
 string False::name() const
@@ -487,7 +492,7 @@ Value Operator::calculate(EvalContext context)
         context.memory_pool(),
         c_capture_name,
         sizeof(c_capture_name) - 1,
-        List<void*>::create(context.memory_pool())
+        IronBee::List<void *>::create(context.memory_pool())
     );
 
     int result = m_data->op.execute_instance(
@@ -505,6 +510,166 @@ Value Operator::calculate(EvalContext context)
     }
 }
 
+string Name::name() const
+{
+    return "name";
+}
+
+Value Name::calculate(EvalContext context)
+{
+    Value name  = children().front()->eval(context);
+    Value value = children().back()->eval(context);
+
+    ConstByteString name_bs = name.value_as_byte_string();
+    return value.dup(
+        value.memory_pool(),
+        name_bs.const_data(), name_bs.length()
+    );
+}
+
+string List::name() const
+{
+    return "list";
+}
+
+Value List::calculate(EvalContext context)
+{
+    IronBee::List<Value> results =
+        IronBee::List<Value>::create(context.memory_pool());
+    BOOST_FOREACH(const node_p& child, children()) {
+        results.push_back(child->eval(context));
+    }
+
+    return Value::create_no_copy_list(
+        context.memory_pool(),
+        "", 0,
+        results
+    );
+}
+
+string Length::name() const
+{
+    return "length";
+}
+
+Value Length::calculate(EvalContext context)
+{
+    Value v = children().front()->eval(context);
+    size_t length = 0;
+
+    if (v && v.type() == Value::LIST) {
+        length = v.value_as_list<Value>().size();
+    }
+
+    return Value::create_number(
+        context.memory_pool(),
+        "", 0,
+        length
+    );
+}
+
+string Sub::name() const
+{
+    return "sub";
+}
+
+Value Sub::calculate(EvalContext context)
+{
+    Value collection = children().back()->eval(context);
+    if (collection.type() != Value::LIST) {
+        return Value();
+    }
+
+    Value subfield_name = children().front()->eval(context);
+
+    ConstByteString subfield_name_bs = subfield_name.value_as_byte_string();
+
+    if (collection.is_dynamic()) {
+        ConstList<Value> result = collection.value_as_list<Value>(
+            subfield_name_bs.const_data(), subfield_name_bs.length()
+        );
+        if (! result || result.empty()) {
+            return Value();
+        }
+        return result.front();
+    }
+    else {
+        BOOST_FOREACH(const Value& v, collection.value_as_list<Value>()) {
+            if (
+                v.name_length() == subfield_name_bs.length() &&
+                equal(
+                    v.name(), v.name() + v.name_length(),
+                    subfield_name_bs.const_data(),
+                    caseless_compare
+                )
+            )
+            {
+                return v;
+            }
+        }
+        return Value();
+    }
+}
+
+string SubAll::name() const
+{
+    return "suball";
+}
+
+Value SubAll::calculate(EvalContext context)
+{
+    Value collection = children().back()->eval(context);
+    if (collection.type() != Value::LIST) {
+        return Value();
+    }
+
+    Value subfield_name = children().front()->eval(context);
+
+    ConstByteString subfield_name_bs = subfield_name.value_as_byte_string();
+
+    IronBee::List<Value> results =
+        IronBee::List<Value>::create(context.memory_pool());
+    if (collection.is_dynamic()) {
+        ConstList<Value> const_results = collection.value_as_list<Value>(
+            subfield_name_bs.const_data(), subfield_name_bs.length()
+        );
+        if (const_results) {
+            // @todo This copy should be removable with appropriate updates to
+            // IronBee const correctness.  All we need is fields of const
+            // lists.
+            copy(
+                const_results.begin(), const_results.end(),
+                back_inserter(results)
+            );
+        }
+    }
+    else {
+        BOOST_FOREACH(const Value& v, collection.value_as_list<Value>()) {
+            if (
+                v.name_length() == subfield_name_bs.length() &&
+                equal(
+                    v.name(), v.name() + v.name_length(),
+                    subfield_name_bs.const_data(),
+                    caseless_compare
+                )
+            )
+            {
+                results.push_back(v);
+            }
+        }
+    }
+    if (results.empty()) {
+        return Value();
+    }
+    else {
+        return Value::create_no_copy_list<Value>(
+            context.memory_pool(),
+            "", 0,
+            results
+        );
+    }
+}
+
 void load(CallFactory& to)
 {
     to
@@ -516,6 +681,11 @@ void load(CallFactory& to)
         .add<If>()
         .add<Field>()
         .add<Operator>()
+        .add<Name>()
+        .add<List>()
+        .add<Length>()
+        .add<Sub>()
+        .add<SubAll>()
     ;
 }
 

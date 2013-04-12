@@ -96,6 +96,16 @@ protected:
         return bs.to_s();
     }
 
+    int64_t eval_n(const string& text)
+    {
+        node_p n = parse(text);
+        IronBee::ConstField v(eval(n));
+        if (! v) {
+            throw runtime_error("null is not a string.");
+        }
+        return v.value_as_number();
+    }
+
     node_cp transform(node_p n) const
     {
         MergeGraph G;
@@ -215,4 +225,46 @@ TEST_F(TestStandard, Operator)
     EXPECT_THROW(eval_bool("(operator 'a' 'b' 'c' 'd')"), IronBee::einval);
     EXPECT_THROW(eval_bool("(operator 'a' null 'c')"), IronBee::einval);
     EXPECT_THROW(eval_bool("(operator null 'b' 'c')"), IronBee::einval);
+}
+
+TEST_F(TestStandard, Length)
+{
+    EXPECT_EQ(0, eval_n("(length null)"));
+    EXPECT_EQ(0, eval_n("(length 'a')"));
+    EXPECT_EQ(1, eval_n("(length (list 'a'))"));
+    EXPECT_EQ(2, eval_n("(length (list 'a' 'b'))"));
+    EXPECT_THROW(eval_bool("(length)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(length 'a' 'b')"), IronBee::einval);
+}
+
+TEST_F(TestStandard, Name)
+{
+    EXPECT_TRUE(eval_bool("(name 'a' 'b')"));
+    EXPECT_EQ("b", eval_s("(name 'a' 'b')"));
+    EXPECT_THROW(eval_bool("(name)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(name null 'a')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(name 'a')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(name 'a' 'b' 'c')"), IronBee::einval);
+}
+
+TEST_F(TestStandard, Sub)
+{
+    EXPECT_EQ("foo", eval_s("(sub 'a' (list (name 'a' 'foo') (name 'b' 'bar')))"));
+    EXPECT_EQ("foo", eval_s("(sub 'A' (list (name 'a' 'foo') (name 'b' 'bar')))"));
+    EXPECT_EQ("bar", eval_s("(sub 'b' (list (name 'a' 'foo') (name 'b' 'bar')))"));
+    EXPECT_FALSE(eval_bool("(sub 'c' (list (name 'a' 'foo') (name 'b' 'bar')))"));
+
+    EXPECT_THROW(eval_bool("(sub)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(sub null (list))"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(sub 'a')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(sub 'a' (list) 'b')"), IronBee::einval);
+}
+
+TEST_F(TestStandard, SubAll)
+{
+    EXPECT_EQ(2, eval_n("(length (suball 'a' (list (name 'a' 'foo') (name 'a' 'bar') (name 'b' 'baz'))))"));
+    EXPECT_THROW(eval_bool("(suball)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(suball null (list))"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(suball 'a')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(suball 'a' (list) 'b')"), IronBee::einval);
 }

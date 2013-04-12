@@ -281,6 +281,95 @@ private:
 };
 
 /**
+ * Construct a named value from a name (string) and value.
+ **/
+class Name :
+    public Validate::Call<Name>,
+    public Validate::NChildren<2,
+           Validate::NthChildIsString<0,
+           Validate::NthChildIsNotNull<1
+           > > >
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual Value calculate(EvalContext context);
+};
+
+/**
+ * Construct list of values of children.
+ **/
+class List :
+    public Call
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual Value calculate(EvalContext context);
+};
+
+/**
+ * Length of list child.
+ *
+ * Returns 0 if child is empty or not a list.
+ **/
+class Length :
+    public Validate::Call<Length>,
+    public Validate::NChildren<1>
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual Value calculate(EvalContext context);
+};
+
+/**
+ * First subfield of name from first childr in second child.
+ *
+ * Is null if second child is not a list or has no such subfield.
+ * If all subfields of a given name are wanted, use SubAll.
+ **/
+class Sub :
+    public Validate::Call<Sub>,
+    public Validate::NChildren<2,
+           Validate::NthChildIsString<0
+           > >
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual Value calculate(EvalContext context);
+};
+
+/**
+ * All subfield of name from first child in second child.
+ *
+ * Is null if second child is not a list or result would be empty.
+ * If only one subfield of a given name is wanted, use Sub.
+ **/
+class SubAll :
+    public Validate::Call<SubAll>,
+    public Validate::NChildren<2,
+           Validate::NthChildIsString<0
+           > >
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual Value calculate(EvalContext context);
+};
+
+/**
  * Load all standard calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.
