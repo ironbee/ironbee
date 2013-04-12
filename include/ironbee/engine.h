@@ -613,8 +613,8 @@ ib_status_t DLL_PUBLIC ib_conn_create(ib_engine_t *ib,
  * @param[in]  conn Connection
  * @param[in]  module Module.
  * @param[out] data Data.
- 
- * @returns 
+
+ * @returns
  *   - IB_OK on success.
  *   - IB_EINVAL if @a conn does not know about @a module.
  */
@@ -723,7 +723,7 @@ ib_status_t DLL_PUBLIC ib_tx_create(ib_tx_t **ptx,
  * @param[in]  tx Transaction.
  * @param[in]  module Module.
  * @param[out] pdata Address which data is written
- * @returns 
+ * @returns
  *   - IB_OK on success.
  *   - IB_EINVAL if @a tx does not know about @a module.
  */

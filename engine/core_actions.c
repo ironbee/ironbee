@@ -1100,7 +1100,7 @@ static ib_status_t act_setvar_execute(
                 ib_data_remove_ex(tx->data, name, nlen, NULL);
             }
         }
-        
+
 
         /* Create the new_field field */
         rc = ib_field_create(&new_field,
