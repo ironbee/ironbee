@@ -119,6 +119,16 @@ void nth_child_is_null(NodeReporter reporter, size_t n)
     }
 }
 
+void nth_child_is_not_null(NodeReporter reporter, size_t n)
+{
+    node_cp child = nth_child(reporter, n);
+    if (! child || is_a<Null>(child)) {
+        reporter.error(
+            "Child " + boost::lexical_cast<string>(n+1) + " must not be a null."
+        );
+    }
+}
+
 void no_child_is_literal(NodeReporter reporter)
 {
     size_t i = 0;

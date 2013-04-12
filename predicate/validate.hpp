@@ -242,6 +242,14 @@ void nth_child_is_string(NodeReporter reporter, size_t n);
 void nth_child_is_null(NodeReporter reporter, size_t n);
 
 /**
+ * Report error if @a nth child is a null.
+ *
+ * @param[in] reporter Reporter to use.
+ * @param[in] n        Which child should not be a null.
+ **/
+void nth_child_is_not_null(NodeReporter reporter, size_t n);
+
+/**
  * Report error if any child is literal.
  *
  * @param[in] reporter Reporter to use.
@@ -302,6 +310,16 @@ template <size_t N, class Chain = Base>
 struct NthChildIsNull :
     public make_validator_size<
         &nth_child_is_null
+    >::value<N, Chain>
+{};
+
+/**
+ * Validator: nth_child_is_not_null()
+ **/
+template <size_t N, class Chain = Base>
+struct NthChildIsNotNull :
+    public make_validator_size<
+        &nth_child_is_not_null
     >::value<N, Chain>
 {};
 
