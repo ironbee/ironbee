@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1941 
+personal_ws-1.1 en 1946 
 malloced
 malloc'ed
 libnet
@@ -147,6 +147,7 @@ iis
 cerr
 unshifts
 tEvent
+hrc
 hpp
 HSB
 argc
@@ -504,6 +505,7 @@ IronBeeUtilHash
 fdup
 streq
 formatters
+numop
 HandleDisconnect
 IronBeeUtilArray
 IronBeeEnable
@@ -863,6 +865,7 @@ requestheaders
 userId
 portably
 libloader
+InstanceData
 onEventHandleResponseHeaders
 ConfigurationMapInit
 IronBeeProvider
@@ -915,6 +918,7 @@ AuditLogParts
 onEventRequestStarted
 subengines
 nIncoming
+Wdocumentation
 IBUtil
 sensorName
 fieldTypes
@@ -1539,8 +1543,8 @@ substring
 HandleContextTx
 STRINGIFY
 oflags
-moduleName
 modulename
+moduleName
 ifstream
 HandleConnect
 Finalizer
@@ -1821,6 +1825,7 @@ strlist
 abCd
 multipart
 kvstore
+ConstOperator
 SimplePie
 simplepie
 ucweb

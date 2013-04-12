@@ -2250,7 +2250,7 @@ static ib_status_t modhtp_iface_request_finished(
 }
 
 /**
- * Parser provider interface implementation: Reponse started
+ * Parser provider interface implementation: Response started
  *
  * @param[in] pi The provider instance
  * @param[in] itx The IronBee transaction
@@ -2283,7 +2283,7 @@ static ib_status_t modhtp_iface_response_started(
 }
 
 /**
- * Parser provider interface implementation: Reponse line
+ * Parser provider interface implementation: Response line
  *
  * @param[in] pi The provider instance
  * @param[in] itx The IronBee transaction
@@ -2339,7 +2339,7 @@ static ib_status_t modhtp_iface_response_line(
 }
 
 /**
- * Parser provider interface implementation: Reponse header data
+ * Parser provider interface implementation: Response header data
  *
  * @param[in] pi The provider instance
  * @param[in] itx The IronBee transaction
@@ -2382,7 +2382,7 @@ static ib_status_t modhtp_iface_response_header_data(
 }
 
 /**
- * Parser provider interface implementation: Reponse finished
+ * Parser provider interface implementation: Response finished
  *
  * @param[in] pi The provider instance
  * @param[in] itx The IronBee transaction
@@ -2429,7 +2429,7 @@ static ib_status_t modhtp_iface_response_header_finished(
 }
 
 /**
- * Parser provider interface implementation: Reponse body data
+ * Parser provider interface implementation: Response body data
  *
  * @param[in] pi The provider instance
  * @param[in] itx The IronBee transaction
@@ -2468,7 +2468,7 @@ static ib_status_t modhtp_iface_response_body_data(
 }
 
 /**
- * Parser provider interface implementation: Reponse finished
+ * Parser provider interface implementation: Response finished
  *
  * @param[in] pi The provider instance
  * @param[in] itx The IronBee transaction
@@ -2506,7 +2506,7 @@ static ib_status_t modhtp_iface_response_finished(
 }
 
 /**
- * Parser provider interface implementation: Interface delcaration
+ * Parser provider interface implementation: Interface declaration
  */
 static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
     IB_PROVIDER_IFACE_HEADER_DEFAULTS,
@@ -2546,7 +2546,7 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
 /**
  * Module initialization
  *
- * @param[in] ib The ironBee engine
+ * @param[in] ib The IronBee engine
  * @param[in] m The module structure
  * @param[in] cbdata Module-specific initialization callback data (unused)
  *
@@ -2579,7 +2579,7 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
 /**
  * Handle IronBee context close
  *
- * @param[in] ib The ironBee engine
+ * @param[in] ib The IronBee engine
  * @param[in] m The module structure
  * @param[in] ctx The IronBee context
  * @param[in] cbdata Module-specific context-close callback data (unused)

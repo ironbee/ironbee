@@ -121,7 +121,7 @@ public:
      *
      * @param[in] context Context of creation.
      * @param[in] required_capabilities Capabilities the operator must have.
-     * @param[in] parameters Parameters to oeprator.
+     * @param[in] parameters Parameters to operator.
      * @return Instance data to use with execute_instance() and
      *         destroy_instance().
      **/
@@ -238,7 +238,7 @@ public:
      * Operator as operator instance generator.
      *
      * A functional to call to generate an operator_instance_t.  See
-     * non-tempalted create().
+     * non-templated create().
      *
      * Parameters are current context and parameters.  Return value is an
      * operator_instance_t.

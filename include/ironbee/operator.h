@@ -68,7 +68,7 @@ typedef ib_status_t (* ib_operator_create_fn_t)(
 /**
  * Operator instance destruction callback type.
  *
- * This callback is responible for interpreting @a instance_data and freeing
+ * This callback is responsible for interpreting @a instance_data and freeing
  * any resources the create function acquired.
  *
  * @param[in] instance_data Instance data.
@@ -270,7 +270,7 @@ ib_status_t DLL_PUBLIC ib_operator_inst_create(
  *
  * Calls the destroy function for the given operator.
  *
- * @param[in] op Operator to destory instance of.
+ * @param[in] op Operator to destroy instance of.
  * @param[in] instance_data Instance data of instance.
  *
  * @return
