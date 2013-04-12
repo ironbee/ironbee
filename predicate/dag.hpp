@@ -65,8 +65,8 @@ namespace Impl {
 class Final
 {
     // Classes to be final.
-    friend class Null;
-    friend class String;
+    friend class Predicate::Null;
+    friend class Predicate::String;
 private:
     //! Private constructor.
     Final() {}
