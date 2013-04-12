@@ -176,9 +176,9 @@ ib_status_t ib_managed_collection_select(
                                   &inst_data);
         if (rc == IB_DECLINED) {
             ib_log_trace(ib,
-                          "Collection manager \"%s\" declined "
-                          "collection \"%s\" URI \"%s\"",
-                          manager->name, collection_name, uri);
+                         "Collection manager \"%s\" declined "
+                         "collection \"%s\" URI \"%s\"",
+                         manager->name, collection_name, uri);
             continue;
         }
         else if (rc != IB_OK) {

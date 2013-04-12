@@ -1082,7 +1082,7 @@ ib_status_t dfa_operator_create(
  *   - IB_EALLOC on allocation failure
  */
 static ib_status_t get_or_create_operator_data_hash(ib_tx_t *tx,
-                                                ib_hash_t **hash)
+                                                    ib_hash_t **hash)
 {
     assert(tx);
     assert(tx->mp);
