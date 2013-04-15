@@ -41,3 +41,6 @@ test_less_SOURCES = test_less.cpp
 test_leaves_SOURCES = test_leaves.cpp
 test_transform_graph_SOURCES = test_transform_graph.cpp
 test_validate_graph_SOURCES = test_validate_graph.cpp
+
+check-local:
+	(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))

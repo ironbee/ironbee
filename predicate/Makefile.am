@@ -2,11 +2,8 @@ include $(top_srcdir)/build/common.mk
 
 SUBDIRS = tests
 
-lib_LTLIBRARIES = libpredicate.la
-libpredicate_la_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
-libpredicate_la_LDFLAGS = $(LDFLAGS) $(BOOST_LDFLAGS) \
-                     -version-info @LIBRARY_VERSION@ \
-                     -release @MAJOR_VERSION@.@MINOR_VERSION@
+pkglib_LTLIBRARIES = ibmod_predicate.la
+noinst_LTLIBRARIES = libpredicate.la
 libpredicate_la_SOURCES = \
     dag.cpp \
     call_factory.cpp \
@@ -21,3 +18,10 @@ libpredicate_la_SOURCES = \
 		validate_graph.cpp \
 		pre_eval_graph.cpp
 
+ibmod_predicate_la_SOURCES = ibmod_predicate.cpp
+ibmod_predicate_la_LIBADD = libpredicate.la
+if FREEBSD
+ibmod_predicate_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-version -lssp_nonshared
+else
+ibmod_predicate_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+endif
