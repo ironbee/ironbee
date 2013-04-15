@@ -1094,6 +1094,21 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             </itemizedlist>
         </section>
         <section>
+            <title>event</title>
+            <para><emphasis role="bold">Description:</emphasis> Cause the rule to generate a log event.</para>
+            <para><emphasis role="bold">Type:</emphasis> Action</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>event[":observation"|":alert"]</literal></para>
+            <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+            <para>By default this generates a log event of type "observation", but this can be changed to type "alert". Having at least one active alert type event will cause an audit log to be generated.</para>
+            <itemizedlist>
+                <listitem><para><emphasis role="bold">observation</emphasis> - Default event type denoting a rule made an observation, which could contribute to further inspection.</para></listitem>
+                <listitem><para><emphasis role="bold">alert</emphasis> - Alert event type denoting a transaction should be logged.</para></listitem>
+            </itemizedlist>
+        </section>
+        <section>
             <title>logdata</title>
             <para><emphasis role="bold">Description:</emphasis> Add data to be logged with the event.</para>
             <para><emphasis role="bold">Type:</emphasis> Metadata</para>
