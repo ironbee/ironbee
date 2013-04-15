@@ -190,41 +190,20 @@ void delegate_finalize(
 }
 
 /**
- * Initialize handler for delegate.  Forwards to delegate.
+ * Initialize handler for delegate.
  *
- * @tparam DelegateType Type of @a *delegate.
- * @param[in] delegate Pointer to delegate.
+ * Construct a delegate and connect to handlers of @a module.
+ *
+ * @tparam DelegateType Type of delegate to create.
  * @param[in] module   Ignored.
  **/
 template <typename DelegateType>
 void delegate_initialize(
-    DelegateType* delegate,
-    Module        module
-)
-{
-    delegate->initialize();
-}
-
-/**
- * @c on_load handlers for delegates.
- *
- * Constructs delegate and connects hooks to delegate.
- *
- * @tparam DelegateType Type of module delegate.
- * @param[in] module Module being loaded.
- **/
-template <typename DelegateType>
-void delegate_on_load(
     Module module
 )
 {
     DelegateType* delegate = new DelegateType(module);
 
-    module.set_initialize(boost::bind(
-        delegate_initialize<DelegateType>,
-        delegate,
-        _1
-    ));
     module.set_context_open(boost::bind(
         delegate_context_open<DelegateType>,
         delegate,
@@ -250,7 +229,22 @@ void delegate_on_load(
         delegate,
         _1
     ));
+}
 
+/**
+ * @c on_load handlers for delegates.
+ *
+ * Set up initialize handler to do all the real work.
+ *
+ * @tparam DelegateType Type of module delegate.
+ * @param[in] module Module being loaded.
+ **/
+template <typename DelegateType>
+void delegate_on_load(
+    Module module
+)
+{
+    module.set_initialize(delegate_initialize<DelegateType>);
 }
 
 /**
@@ -321,8 +315,8 @@ ib_module_t* IB_MODULE_SYM(ib_engine_t* ib) \
 /**
  * Establish file as the loading point for a module.
  *
- * When the module is loaded, a instance of @a delegate_type will be created,
- * passing an IronBee::Module reference as the only argument to the
+ * When the module is initialized, a instance of @a delegate_type will be
+ * created, passing an IronBee::Module reference as the only argument to the
  * constructor.  The instance will be destroyed when the module is destroyed.
  * All module hooks are mapped the the virtual functions of ModuleDelegate
  * and can be overridden by the child.

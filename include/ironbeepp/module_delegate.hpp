@@ -54,13 +54,12 @@ public:
      *
      * The module can be recovered via module().
      *
+     * Subclasses should do any initialization steps in their constructor.
+     *
      * @param[in] module Module associated with the delegate.
      **/
     explicit
     ModuleDelegate(Module module);
-
-    //! Initialize handler.  Nop.
-    void initialize() const;
 
     //! Context Open Handler.  Nop.
     void context_open(Context context) const;

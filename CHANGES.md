@@ -20,6 +20,11 @@ IronBee v0.8.0
   functional based interface that can significantly simplify operator
   definitions, especially in C++11.
 
+* Module delegates are now constructed on module initialization rather than
+  load.  As a result, the `initialize()` method is no longer called.  This
+  change makes it easier to write modules that function in multiple engine
+  environments.
+
 **CLIPP**
 
 * Added `-e path` which causes `clipp` to handle consumer errors differently.
