@@ -133,7 +133,7 @@ struct make_c_trampoline_helper
  * Example:
  *
  * @code
- * std::pair<int(*)(int, int), void*> trampoline =
+ * std::pair<int(*)(int, int, void*), void*> trampoline =
  *   IronBee::make_c_trampoline<int(int, int)>(
  *     std::plus<int>()
  *   );
