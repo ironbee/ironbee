@@ -36,7 +36,7 @@ struct ib_engine_t;
 
 namespace IronBee {
 
-class Engine;
+class ConstEngine;
 
 /**
  * Handle any exception and translate into an IronBee status code.
@@ -84,14 +84,14 @@ class Engine;
  * @param[in] logging Can be set to false to prevent any logging.
  **/
 ib_status_t convert_exception(
-    ib_engine_t* engine  = NULL,
-    bool         logging = true
+    const ib_engine_t* engine  = NULL,
+    bool               logging = true
 );
 
 //! Overload of previous for Engine.
 ib_status_t convert_exception(
-    Engine engine,
-    bool   logging = true
+    ConstEngine engine,
+    bool        logging = true
 );
 
 } // IronBee

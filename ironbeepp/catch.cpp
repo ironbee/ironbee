@@ -38,8 +38,8 @@ using namespace std;
 namespace IronBee {
 
 ib_status_t convert_exception(
-    ib_engine_t* engine,
-    bool         logging
+    const ib_engine_t* engine,
+    bool               logging
 )
 {
     ib_status_t status = IB_OK;
@@ -156,8 +156,8 @@ ib_status_t convert_exception(
 }
 
 ib_status_t convert_exception(
-    Engine engine,
-    bool   logging
+    ConstEngine engine,
+    bool        logging
 )
 {
     return convert_exception(engine.ib(), logging);

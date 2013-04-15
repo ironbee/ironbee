@@ -28,6 +28,8 @@ IronBee v0.8.0
 * Added static `Module::with_name(engine, name)` to acquire a module of a
   given name, i.e., `ib_engine_module_get()`.
 
+* `convert_exception()` now only requires a ConstEngine instead of an Engine.
+
 **CLIPP**
 
 * Added `-e path` which causes `clipp` to handle consumer errors differently.
