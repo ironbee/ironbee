@@ -864,3 +864,10 @@ TEST_F(ConnectionParsing, InvalidHostname3) {
     ASSERT_FALSE(tx->flags & HTP_HOSTU_INVALID);
     ASSERT_TRUE(tx->flags & HTP_HOST_INVALID);
 }
+
+TEST_F(ConnectionParsing, API_connp_get_connection) {
+    int rc = test_run(home, "34-invalid-hostname.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(connp->conn, htp_connp_get_connection(connp));
+}
