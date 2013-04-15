@@ -165,6 +165,15 @@ public:
     Module();
 
     /**
+     * Get existing module by name.
+     *
+     * @param[in] engine Engine to get module from.
+     * @param[in] name   Name of module.
+     * @returns Module with name @a name.
+     **/
+    static Module with_name(Engine engine, const char* name);
+
+    /**
      * @name Callbacks
      * Types and methods associated with callbacks.
      *

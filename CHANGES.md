@@ -25,6 +25,9 @@ IronBee v0.8.0
   change makes it easier to write modules that function in multiple engine
   environments.
 
+* Added static `Module::with_name(engine, name)` to acquire a module of a
+  given name, i.e., `ib_engine_module_get()`.
+
 **CLIPP**
 
 * Added `-e path` which causes `clipp` to handle consumer errors differently.

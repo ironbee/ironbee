@@ -342,6 +342,15 @@ Module::Module(ib_module_t* ib_module) :
     // nop
 }
 
+Module Module::with_name(Engine engine, const char* name)
+{
+    ib_module_t* m;
+
+    throw_if_error(ib_engine_module_get(engine.ib(), name, &m));
+
+    return Module(m);
+}
+
 // See api documentation for discussion of remove_const
 Module Module::remove_const(const ConstModule& const_module)
 {
