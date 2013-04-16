@@ -46,7 +46,7 @@ static const char *ib_logevent_type_str[] = {
 
 /** Log Event Action Names */
 static const char *ib_logevent_action_str[] = {
-    "Unknown",
+    "NoAction",
     "Log",
     "Block",
     "Ignore",
