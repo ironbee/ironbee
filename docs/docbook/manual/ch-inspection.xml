@@ -513,7 +513,32 @@ Sig("lua/3",1):follows("lua/2")</programlisting></para>
         </section>
         <section>
             <title>Alternative Rule Execution via Rule Injection Modules</title>
-            <para>TBD</para>
+            <para>Modules may define additional rule execution systems via the rule injection mechanism.
+							Rule injection works in two stages:<itemizedlist>
+							<listitem>
+								<para>At the end of configuration, every rule injection system is given a chance to
+									claim each rule. Rule injection systems usually claim a rule if it contains a
+									certain action. Only one rule injection system may claim each rule; it is an
+									error for more than one to claim it. If no rule injection system claims a rule,
+									it is added to the default rule engine.</para>
+							</listitem>
+							<listitem>
+								<para>At each phase during inspection, every rule injection system is given a chance
+									to inject one or more rules. The rule injection system may use whatever method it
+									desires to choose which rules to inject. Injected rules are then executed as usual.
+									</para>
+							</listitem>
+						</itemizedlist></para>
+						<para>The rule injection mechanism is designed to allow for specialized rule systems that,
+							for a certain class of rules, are more expressive, more performant or both. For example,
+							the Fast rule injection systems associates a substring pattern with a rule and uses
+							an Aho-Corasick variant to determine which rules to inject. The benefit over the traditional
+							rule system is that rules that do not fire have minimal performance cost. However, Fast is
+							only suitable for a subset of rules: those that require certain fixed width patterns to appear
+							in the input.</para>
+						<para>The default rule engine claims all rules not otherwise claimed. It evaluates
+							each rule for the appropriate phase and context in order. This approach is slow but also simple
+							and predictable.</para>
         </section>
     </section>
     <section>
