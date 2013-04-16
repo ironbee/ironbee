@@ -603,12 +603,23 @@ Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
         </section>
         <section>
             <title>REQUEST_URI_PATH</title>
-            <para><emphasis role="bold">Description:</emphasis> Parsed path portion of the URI within
+            <para><emphasis role="bold">Description:</emphasis> Parsed and normalized path portion of the URI within
                 the request line.</para>
             <para><emphasis role="bold">Type:</emphasis> String</para>
             <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        </section>
+        <section>
+            <title>REQUEST_URI_PATH_RAW</title>
+            <para><emphasis role="bold">Description:</emphasis> Parsed (raw) path portion of the URI
+                within the request line.</para>
+            <para><emphasis role="bold">Type:</emphasis> String</para>
+            <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+            <note><para>As no URL decoding is performed (this is a raw value), you probably want
+                        <literal>REQUEST_URI_PATH_RAW.urlDecode()</literal> in most cases.</para></note>
         </section>
         <section>
             <title>REQUEST_URI_PORT</title>
@@ -621,7 +632,8 @@ Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
         </section>
         <section>
             <title>REQUEST_URI_RAW</title>
-            <para><emphasis role="bold">Description:</emphasis> Raw, unnormalized, request URI.</para>
+            <para><emphasis role="bold">Description:</emphasis> Raw, unnormalized, request URI from
+                the request line.</para>
             <para><emphasis role="bold">Type:</emphasis> String</para>
             <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
