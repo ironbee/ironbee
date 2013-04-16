@@ -1991,15 +1991,15 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(tx->ctx != NULL);
     assert(cbdata != NULL);
 
-    /* Special handling of postprocess events if tx_started never notified */
+    /* The rule execution object isn't created if tx_started never notified.
+     * This can happen if a connection is created to ATS, but no data
+     * is actually pushed through the connection. */
     if (tx->rule_exec == NULL) {
-        if ( (event == handle_postprocess_event) ||
-             (event == handle_logging_event) )
-        {
-            ib_log_debug3_tx(tx, "Rule execution object not created @ %s",
-                             ib_state_event_name(event));
+        if (! ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED) ) {
             return IB_OK;
         }
+        ib_log_warning_tx(tx, "Rule execution object not created @ %s",
+                          ib_state_event_name(event));
         assert(0);
     }
 
