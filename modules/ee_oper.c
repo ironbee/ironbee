@@ -37,15 +37,22 @@
 #include <assert.h>
 #include <unistd.h>
 
-/* Define the module name as well as a string version of it. */
+/** Module name. */
 #define MODULE_NAME        eudoxus_operators
+/** Stringified version of MODULE_NAME */
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
-/* Define the public module symbol. */
+#ifndef DOXYGEN_SKIP
 IB_MODULE_DECLARE();
+#endif
 
-/* Global hash to store patterns */
-static ib_hash_t *g_eudoxus_pattern_hash = NULL;
+/* See definition below for documentation. */
+typedef struct ee_config_t ee_config_t;
+
+struct ee_config_t {
+    /** Hash of eudoxus patterns defined via the LoadEudoxus directive. */
+    ib_hash_t *eudoxus_pattern_hash;
+};
 
 /* Callback data for ee match */
 struct ee_callback_data_t
@@ -54,6 +61,44 @@ struct ee_callback_data_t
     ib_field_t *capture;
 };
 typedef struct ee_callback_data_t ee_callback_data_t;
+
+/**
+ * Access configuration data.
+ *
+ * @param[in] ib IronBee engine.
+ * @return
+ * - configuration on success.
+ * - NULL on failure.
+ */
+static
+ee_config_t *ee_get_config(
+    ib_engine_t *ib
+)
+{
+    assert(ib != NULL);
+
+    ib_module_t  *module;
+    ib_context_t *context;
+    ib_status_t   rc;
+    ee_config_t  *config;
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        return NULL;
+    }
+
+    context = ib_context_main(ib);
+    if (context == NULL) {
+        return NULL;
+    }
+
+    rc = ib_context_module_config(context, module, &config);
+    if (rc != IB_OK) {
+        return NULL;
+    }
+
+    return config;
+}
 
 /**
  * Load a eudoxus pattern so it can be used in rules.
@@ -66,6 +111,10 @@ typedef struct ee_callback_data_t ee_callback_data_t;
  * @param[in] pattern_name Name to associate with the pattern.
  * @param[in] filename Filename to load.
  * @param[in] cbdata Callback data (unused)
+ * @return
+ * - IB_OK on success.
+ * - IB_EEXIST if the patter has already been defined.
+ * - IB_EINVAL if there was an error loading the automata.
  */
 static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
                                                const char *name,
@@ -73,23 +122,32 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
                                                const char *filename,
                                                void *cbdata)
 {
+    ib_engine_t *ib;
     ib_status_t rc;
     const char *automata_file;
     ia_eudoxus_result_t ia_rc;
+    ib_hash_t *eudoxus_pattern_hash;
     ia_eudoxus_t *eudoxus;
+    ee_config_t* config;
+    ib_mpool_t *mp;
     ib_mpool_t *mp_tmp;
     void *tmp;
 
     assert(cp != NULL);
     assert(cp->ib != NULL);
-    assert(g_eudoxus_pattern_hash != NULL);
     assert(pattern_name != NULL);
     assert(filename != NULL);
 
     mp_tmp = ib_engine_pool_temp_get(cp->ib);
+    ib = cp->ib;
+    mp = ib_engine_pool_main_get(ib);
+    config = ee_get_config(ib);
+    assert(config != NULL);
+
+    eudoxus_pattern_hash = config->eudoxus_pattern_hash;
 
     /* Check if the pattern name is already in use */
-    rc = ib_hash_get(g_eudoxus_pattern_hash, &tmp, pattern_name);
+    rc = ib_hash_get(eudoxus_pattern_hash, &tmp, pattern_name);
     if (rc == IB_OK) {
         ib_log_error(cp->ib,
                      MODULE_NAME_STR ": Pattern named \"%s\" already defined",
@@ -118,7 +176,7 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
         return IB_EINVAL;
     }
 
-    rc = ib_hash_set(g_eudoxus_pattern_hash, pattern_name, eudoxus);
+    rc = ib_hash_set(eudoxus_pattern_hash, pattern_name, eudoxus);
     if (rc != IB_OK) {
         ia_eudoxus_destroy(eudoxus);
         return rc;
@@ -126,17 +184,6 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
 
     return IB_OK;
 }
-
-static IB_DIRMAP_INIT_STRUCTURE(eudoxus_directive_map) = {
-    IB_DIRMAP_INIT_PARAM2(
-        "LoadEudoxus",
-        load_eudoxus_pattern_param2,
-        NULL
-    ),
-
-    /* signal the end of the list */
-    IB_DIRMAP_INIT_LAST
-};
 
 /**
  * Eudoxus first match callback function.  Called when a match occurs.
@@ -153,6 +200,7 @@ static IB_DIRMAP_INIT_STRUCTURE(eudoxus_directive_map) = {
  * @param[in,out] cbdata Pointer to the ee_callback_data_t instance we are
  *                       handling. This is needed for handling capture
  *                       of the match.
+ * @return IA_EUDOXUS_CMD_ERROR on error, IA_EUDOXUS_CMD_STOP otherwise.
  */
 static ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
                                                     const char *output,
@@ -227,17 +275,21 @@ ib_status_t ee_match_any_operator_create(
 )
 {
     assert(ctx != NULL);
-    assert(g_eudoxus_pattern_hash != NULL);
     assert(parameters != NULL);
     assert(instance_data != NULL);
 
     ib_status_t rc;
     ia_eudoxus_t* eudoxus;
-
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    assert(ib != NULL);
+    ee_config_t *config = ee_get_config(ib);
+    ib_hash_t *eudoxus_pattern_hash;
 
-    rc = ib_hash_get(g_eudoxus_pattern_hash, &eudoxus, parameters);
+    assert(config != NULL);
+    assert(config->eudoxus_pattern_hash != NULL);
+
+    eudoxus_pattern_hash = config->eudoxus_pattern_hash;
+
+    rc = ib_hash_get(eudoxus_pattern_hash, &eudoxus, parameters);
     if (rc == IB_ENOENT ) {
         ib_log_error(ib,
                      MODULE_NAME_STR ": No eudoxus automata named %s found.",
@@ -356,11 +408,17 @@ static ib_status_t ee_module_init(ib_engine_t *ib,
                                   void        *cbdata)
 {
     ib_status_t rc;
-    ib_mpool_t *mp;
+    ib_mpool_t *main_mp;
+    ib_mpool_t *mod_mp;
+    ee_config_t *config;
 
-    ib_mpool_create(&mp, "ee_module", ib_engine_pool_main_get(ib));
-    if (g_eudoxus_pattern_hash == NULL) {
-        rc = ib_hash_create_nocase(&g_eudoxus_pattern_hash, mp);
+    main_mp = ib_engine_pool_main_get(ib);
+    config = ee_get_config(ib);
+    assert(config != NULL);
+
+    ib_mpool_create(&mod_mp, "ee_module", main_mp);
+    if (config->eudoxus_pattern_hash == NULL) {
+        rc = ib_hash_create_nocase(&(config->eudoxus_pattern_hash), mod_mp);
         if (rc != IB_OK ) {
             ib_log_error(ib, MODULE_NAME_STR ": Error initializing module.");
             return rc;
@@ -381,6 +439,7 @@ static ib_status_t ee_module_init(ib_engine_t *ib,
 
     return rc;
 }
+
 /**
  * Release resources when the module is unloaded.
  *
@@ -400,35 +459,63 @@ static ib_status_t ee_module_finish(ib_engine_t *ib,
     ib_list_node_t *next;
     ia_eudoxus_t *eudoxus;
     ib_mpool_t *pool;
+    ee_config_t *config = ee_get_config(ib);
+    ib_hash_t *eudoxus_pattern_hash;
+
+    if (
+        config                       == NULL ||
+        config->eudoxus_pattern_hash == NULL
+    ) {
+        return IB_OK;
+    }
+
+    eudoxus_pattern_hash = config->eudoxus_pattern_hash;
 
     /* Destroy all eudoxus automata */
-    if (g_eudoxus_pattern_hash != NULL) {
-        pool = ib_hash_pool(g_eudoxus_pattern_hash);
+    pool = ib_hash_pool(eudoxus_pattern_hash);
 
-        /* The only way to iterate over a hash is to covert it into a list. */
-        rc = ib_list_create(&list, pool);
-        if (rc != IB_OK) {
-            ib_log_error(ib, MODULE_NAME_STR ": Error unloading module.");
-            return rc;
-        }
-        rc = ib_hash_get_all(g_eudoxus_pattern_hash, list);
-        if (rc != IB_OK) {
-            return rc;
-        }
-        IB_LIST_LOOP_SAFE(list, node, next) {
-            eudoxus = IB_LIST_NODE_DATA(node);
-            if (eudoxus != NULL) {
-                ia_eudoxus_destroy(eudoxus);
-            }
-            ib_list_node_remove(list, node);
-        }
-        ib_hash_clear(g_eudoxus_pattern_hash);
-        ib_mpool_release(pool);
-        g_eudoxus_pattern_hash = NULL;
+    /* The only way to iterate over a hash is to covert it into a list. */
+    rc = ib_list_create(&list, pool);
+    if (rc != IB_OK) {
+        ib_log_error(ib, MODULE_NAME_STR ": Error unloading module.");
+        return rc;
     }
+    rc = ib_hash_get_all(eudoxus_pattern_hash, list);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    IB_LIST_LOOP_SAFE(list, node, next) {
+        eudoxus = IB_LIST_NODE_DATA(node);
+        if (eudoxus != NULL) {
+            ia_eudoxus_destroy(eudoxus);
+        }
+        ib_list_node_remove(list, node);
+    }
+    ib_hash_clear(eudoxus_pattern_hash);
+    ib_mpool_release(pool);
 
     return IB_OK;
 }
+
+/**
+ * Initial values of @ref ee_config_t.
+ *
+ * This static will *only* be passed to IronBee as part of module
+ * definition.  It will never be read or written by any code in this file.
+ */
+static ee_config_t g_ee_config = {NULL};
+
+#ifndef DOXYGEN_SKIP
+static IB_DIRMAP_INIT_STRUCTURE(eudoxus_directive_map) = {
+    IB_DIRMAP_INIT_PARAM2(
+        "LoadEudoxus",
+        load_eudoxus_pattern_param2,
+        NULL
+    ),
+
+    /* signal the end of the list */
+    IB_DIRMAP_INIT_LAST
+};
 
 /**
  * Module structure.
@@ -438,7 +525,7 @@ static ib_status_t ee_module_finish(ib_engine_t *ib,
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,            /**< Default metadata */
     MODULE_NAME_STR,                      /**< Module name */
-    IB_MODULE_CONFIG_NULL,                /**< Global config data */
+    IB_MODULE_CONFIG(&g_ee_config),       /**< Global config data */
     NULL,                                 /**< Configuration field map */
     eudoxus_directive_map,                /**< Config directive map */
     ee_module_init,                       /**< Initialize function */
@@ -452,3 +539,4 @@ IB_MODULE_INIT(
     NULL,                                 /**< Context destroy function */
     NULL                                  /**< Callback data */
 );
+#endif
