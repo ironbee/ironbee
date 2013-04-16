@@ -144,6 +144,9 @@ done</programlisting></para>
                 <listitem>
                     <para>External Lua rule scripts.</para>
                 </listitem>
+                <listitem>
+                    <para>Alternative rule execution via rule injection modules.</para>
+                </listitem>
             </itemizedlist></para>
         <section>
             <title>IronBee Rule Language</title>
@@ -507,6 +510,10 @@ Sig("lua/3",1):follows("lua/2")</programlisting></para>
                 file.</para>
             <para>See the documentation for the <literal>RuleExt</literal> directive for more
                 details.</para>
+        </section>
+        <section>
+            <title>Alternative Rule Execution via Rule Injection Modules</title>
+            <para>TBD</para>
         </section>
     </section>
     <section>
