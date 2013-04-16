@@ -307,8 +307,7 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
  *         it needs to continue waiting.
  */
 htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
-    // Check that we saw the response line of the current
-    // inbound transaction.
+    // Check that we saw the response line of the current inbound transaction.
     if (connp->in_tx->progress <= HTP_RESPONSE_LINE) {
         return HTP_DATA_OTHER;
     }

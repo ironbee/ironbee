@@ -848,6 +848,10 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
     // respond to a particular situation before it can decide how to proceed. For
     // example, when a CONNECT is sent, different paths are used when it is accepted
     // and when it is not accepted.
+    //
+    // It is not enough to check only in_status here. Because of pipelining, it's possible
+    // that many inbound transactions have been processed, and that the parser is
+    // waiting on a response that we have not seen yet.
     if ((connp->in_status == HTP_STREAM_DATA_OTHER) && (connp->in_tx == connp->out_tx)) {
         return HTP_DATA_OTHER;
     }
