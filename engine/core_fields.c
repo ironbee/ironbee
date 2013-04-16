@@ -233,6 +233,11 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
         return rc;
     }
 
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri_path_raw");
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     rc = core_field_placeholder_bytestr(tx->data, "request_uri_query");
     if (rc != IB_OK) {
         return rc;

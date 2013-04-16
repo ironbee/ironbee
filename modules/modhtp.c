@@ -1533,6 +1533,9 @@ static ib_status_t modhtp_gen_request_header_fields(
         bstr_free(uri);
     }
 
+    modhtp_field_gen_bytestr(itx, "request_uri_raw",
+                             htx->request_uri, false, NULL);
+
     modhtp_field_gen_bytestr(itx, "request_uri_scheme",
                              htx->parsed_uri->scheme, false, NULL);
 
@@ -1553,6 +1556,9 @@ static ib_status_t modhtp_gen_request_header_fields(
 
     modhtp_field_gen_bytestr(itx, "request_uri_path",
                              htx->parsed_uri->path, false, NULL);
+
+    modhtp_field_gen_bytestr(itx, "request_uri_path_raw",
+                             htx->parsed_uri_raw->path, false, NULL);
 
     modhtp_field_gen_bytestr(itx, "request_uri_query",
                              htx->parsed_uri->query, false, NULL);
@@ -1737,7 +1743,7 @@ static ib_status_t modhtp_build_context (
     /* @todo Make all these configurable??? */
     htp_config->log_level = HTP_LOG_DEBUG2;
     htp_config_set_tx_auto_destroy(htp_config, 0);
-    htp_config_set_generate_request_uri_normalized(htp_config, 1);
+    htp_config_set_generate_request_uri_normalized(htp_config, 0);
 
     htp_config_register_urlencoded_parser(htp_config);
     htp_config_register_multipart_parser(htp_config);
