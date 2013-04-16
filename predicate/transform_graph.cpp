@@ -26,7 +26,6 @@
 
 #include "leaves.hpp"
 #include "merge_graph.hpp"
-#include "reporter.hpp"
 
 #include <boost/function_output_iterator.hpp>
 #include <boost/bind.hpp>
@@ -37,7 +36,7 @@ namespace IronBee {
 namespace Predicate {
 
 bool transform_graph(
-    Reporter&          reporter,
+    reporter_t         reporter,
     MergeGraph&        graph,
     const CallFactory& call_factory
 )

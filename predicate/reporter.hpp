@@ -36,7 +36,18 @@ namespace IronBee {
 namespace Predicate {
 
 /**
- * Collect error and warning messages.
+ * Abstract interface for a reporter.
+ *
+ * First parameter is true if the report is an error rather than a warning.
+ * Second parameter is a message.
+ **/
+typedef boost::function<void(bool, const std::string&)> reporter_t;
+
+/**
+ * An implementation of the reporter_t interface.
+ *
+ * Provides easy access to number of warnings and errors and to outputting
+ * a report to an ostream.
  **/
 class Reporter
 {
@@ -48,6 +59,10 @@ public:
     void error(const std::string& message);
     //! Add warning message.
     void warn(const std::string& message);
+
+    //! Convert to reporter_t.
+    operator reporter_t();
+
     //! Write all messages to @a out.
     void write_report(std::ostream& out) const;
 
@@ -82,7 +97,7 @@ public:
      * @param[in] reporter Reporter to report messages to.
      * @param[in] node     Node to report messages for.
      **/
-    NodeReporter(Reporter& reporter, const node_cp& node);
+    NodeReporter(reporter_t reporter, const node_cp& node);
 
     //! Node accessor.
     const node_cp& node() const
@@ -96,7 +111,7 @@ public:
     void warn(const std::string& msg);
 
 private:
-    Reporter&     m_reporter;
+    reporter_t    m_reporter;
     const node_cp m_node;
 };
 

@@ -28,11 +28,11 @@
 #define __PREDICATE__TRANSFORM_GRAPH__
 
 #include "dag.hpp"
+#include "reporter.hpp"
 
 namespace IronBee {
 namespace Predicate {
 
-class Reporter;     // reporter.hpp
 class MergeGraph;   // merge_graph.hpp
 class ConstFactory; // call_factory.hpp
 
@@ -52,7 +52,7 @@ class ConstFactory; // call_factory.hpp
  *         was changed.
  **/
 bool transform_graph(
-    Reporter&          reporter,
+    reporter_t         reporter,
     MergeGraph&        graph,
     const CallFactory& call_factory
 );

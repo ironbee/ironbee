@@ -28,11 +28,11 @@
 #define __PREDICATE__VALIDATE_GRAPH__
 
 #include "dag.hpp"
+#include "reporter.hpp"
 
 namespace IronBee {
 namespace Predicate {
 
-class Reporter;     // reporter.hpp
 class MergeGraph;   // merge_graph.hpp
 
 //! Which of pre_transform and post_transform to validate.
@@ -53,7 +53,7 @@ enum validation_e {
  **/
 void validate_graph(
     validation_e which,
-    Reporter&    reporter,
+    reporter_t   reporter,
     MergeGraph&  graph
 );
 

@@ -50,6 +50,33 @@ void Reporter::warn(const string& message)
     ++m_num_warnings;
 }
 
+namespace {
+
+class reporter_helper
+{
+public:
+    reporter_helper(Reporter& parent) : m_parent(parent) {/*nop*/}
+    void operator()(bool is_error, const string& message)
+    {
+        if (is_error) {
+            m_parent.error(message);
+        }
+        else {
+            m_parent.warn(message);
+        }
+    }
+
+private:
+    Reporter& m_parent;
+};
+
+}
+
+Reporter::operator reporter_t()
+{
+    return reporter_helper(*this);
+}
+
 void Reporter::write_report(ostream& out) const
 {
     BOOST_FOREACH(const string& msg, m_messages) {
@@ -57,21 +84,21 @@ void Reporter::write_report(ostream& out) const
     }
 }
 
-NodeReporter::NodeReporter(Reporter& reporter, const node_cp& node) :
+NodeReporter::NodeReporter(reporter_t reporter, const node_cp& node) :
     m_reporter(reporter),
     m_node(node)
 {
-
+    // nop
 }
 
 void NodeReporter::error(const string& msg)
 {
-    m_reporter.error(m_node->to_s() + ": " + msg);
+    m_reporter(true, m_node->to_s() + ": " + msg);
 }
 
 void NodeReporter::warn(const string& msg)
 {
-    m_reporter.warn(m_node->to_s() + ": " + msg);
+    m_reporter(false, m_node->to_s() + ": " + msg);
 }
 
 } // Predicate

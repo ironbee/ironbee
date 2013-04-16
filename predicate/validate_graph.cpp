@@ -26,7 +26,6 @@
 
 #include "leaves.hpp"
 #include "merge_graph.hpp"
-#include "reporter.hpp"
 #include "bfs.hpp"
 
 #include <boost/function_output_iterator.hpp>
@@ -43,7 +42,7 @@ namespace  {
 class validate_graph_helper
 {
 public:
-    validate_graph_helper(validation_e which, Reporter& reporter) :
+    validate_graph_helper(validation_e which, reporter_t reporter) :
         m_which(which),
         m_reporter(reporter)
     {
@@ -62,14 +61,14 @@ public:
 
 private:
     validation_e m_which;
-    Reporter&    m_reporter;
+    reporter_t   m_reporter;
 };
 
 }
 
 void validate_graph(
     validation_e which,
-    Reporter&    reporter,
+    reporter_t   reporter,
     MergeGraph&  graph
 )
 {
