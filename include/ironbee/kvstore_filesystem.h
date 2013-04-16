@@ -21,6 +21,9 @@
 #include <ironbee/kvstore.h>
 #include <ironbee/types.h>
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 /**
  * @file
  * @brief IronBee --- Key-Value Filesystem Store Interface
@@ -40,6 +43,8 @@
 struct ib_kvstore_filesystem_server_t {
     const char *directory; /**< The directory in which files are written. */
     size_t directory_length; /**< Cache the string length of the directory. */
+    mode_t fmode; /**< The mode of created files. */
+    mode_t dmode; /**< The mode of created directories. */
 };
 typedef struct ib_kvstore_filesystem_server_t ib_kvstore_filesystem_server_t;
 

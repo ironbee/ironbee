@@ -54,6 +54,16 @@ static const size_t EXPIRE_FMT_WIDTH = 13;
 static const size_t UUID_LEN_STR = 36;
 
 /**
+ * The default fmode for created flies.
+ */
+static const mode_t DEFAULT_FILE_MODE = 0644;
+
+/**
+ * The default dmode for created directories.
+ */
+static const mode_t DEFAULT_DIRECTORY_MODE = 0755;
+
+/**
  * The sprintf format used for expiration times.
  */
 #define EXPIRE_FMT "%012u"
@@ -212,7 +222,7 @@ static ib_status_t build_key_path(
     /* Check for a key directory. Make one if able.*/
     sys_rc = stat(*path, &sb);
     if (errno == ENOENT) {
-        sys_rc = mkdir(*path, 0700);
+        sys_rc = mkdir(*path, server->dmode);
 
         if (sys_rc) {
             rc = IB_EOTHER;
@@ -892,6 +902,7 @@ static ib_status_t kvset(
     ib_kvstore_cbdata_t *cbdata)
 {
     assert(kvstore);
+    assert(kvstore->server);
     assert(key);
     assert(value);
 
@@ -901,6 +912,9 @@ static ib_status_t kvset(
     int fd = -1;
     int sys_rc;
     ssize_t written;
+    ib_kvstore_filesystem_server_t *server;
+    
+    server = (ib_kvstore_filesystem_server_t *) kvstore->server;
 
     /* Build a path with expiration value in it. */
     rc = build_key_path(
@@ -955,6 +969,12 @@ static ib_status_t kvset(
 
     /* Now, rename the temp file to the real file */
     sys_rc = rename(path_tmp, path_real);
+    if (sys_rc < 0) {
+        rc = IB_EOTHER;
+        goto cleanup;
+    }
+
+    sys_rc = chmod(path_real, server->fmode);
     if (sys_rc < 0) {
         rc = IB_EOTHER;
         goto cleanup;
@@ -1098,6 +1118,8 @@ ib_status_t ib_kvstore_filesystem_init(
 
     server->directory = strdup(directory);
     server->directory_length = strlen(directory);
+    server->fmode = DEFAULT_FILE_MODE;
+    server->dmode = DEFAULT_DIRECTORY_MODE;
 
     if ( server->directory == NULL ) {
         free(server);
