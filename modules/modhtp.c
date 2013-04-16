@@ -111,6 +111,7 @@ struct modhtp_parser_data_t {
     ib_conn_t                 *iconn;        /**< IronBee connection */
     htp_time_t                 open_time;    /**< HTP connection start time */
     htp_time_t                 close_time;   /**< HTP connection close time */
+    bool                       disconnected; /**< Are we in disconnect? */
 };
 typedef struct modhtp_parser_data_t modhtp_parser_data_t;
 
@@ -751,6 +752,9 @@ static modhtp_txdata_t *modhtp_get_txdata_parser(
     assert(parser_data != NULL);
     assert(parser_data->parser == parser);
 
+    if (parser_data->disconnected) {
+        return NULL;
+    }
     txdata = htp_tx_get_user_data(parser->in_tx);
     assert(txdata != NULL);
     assert(txdata->parser_data != NULL);
@@ -783,6 +787,10 @@ static inline ib_status_t modhtp_check_parser(
     /* Get the transaction data */
     txdata = modhtp_get_txdata_parser(parser);
     *ptxdata = txdata;
+    if (txdata == NULL) {
+        /* Post close; do nothing more. */
+        return IB_OK;
+    }
 
     /* Sanity checks */
     if ( (txdata->htx == NULL) || (txdata->itx == NULL) ) {
@@ -1077,6 +1085,9 @@ static int modhtp_htp_log(
 
     /* Get the transaction data */
     txdata = modhtp_get_txdata_parser(log->connp);
+    if (txdata == NULL) {
+        return HTP_OK;
+    }
 
     /* Parsing issues are unusual but not IronBee failures. */
     switch(log->level) {
@@ -1139,6 +1150,7 @@ static int modhtp_htp_req_line(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    assert(txdata != NULL);
     itx = txdata->itx;
     htx = txdata->htx;
 
@@ -1198,6 +1210,7 @@ static int modhtp_htp_req_headers(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    assert(txdata != NULL);
 
     /* Set the IronBee transaction hostname if possible */
     irc = modhtp_set_hostname(txdata->htx, false, txdata->itx);
@@ -1238,6 +1251,7 @@ static int modhtp_htp_req_trailer(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    assert(txdata != NULL);
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
 
@@ -1256,6 +1270,13 @@ static int modhtp_htp_req_complete(
     irc = modhtp_check_parser(connp, "Request Complete", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
+    }
+    /* We shouldn't need this check here, but it appears that the current
+     * head of libhtp 0.5.x calls this during htp_connp_close() (see
+     * https://github.com/ironbee/libhtp/issues/42).
+     */
+    if (txdata == NULL) {
+        return HTP_OK;
     }
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
@@ -1277,6 +1298,7 @@ static int modhtp_htp_rsp_line(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    assert(txdata != NULL);
     itx = txdata->itx;
     htx = txdata->htx;
 
@@ -1322,6 +1344,7 @@ static int modhtp_htp_rsp_headers(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    assert(txdata != NULL);
 
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
@@ -1374,6 +1397,11 @@ static int modhtp_htp_rsp_trailer(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    /* May be post-close. */
+    if (txdata == NULL) {
+        return HTP_OK;
+    }
+    assert(txdata != NULL);
 
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
@@ -1597,7 +1625,7 @@ static ib_status_t modhtp_build_context (
 
     /* @todo Make all these configurable??? */
     htp_config->log_level = HTP_LOG_DEBUG2;
-    htp_config_set_tx_auto_destroy(htp_config, 0);
+    htp_config_set_tx_auto_destroy(htp_config, 1);
     htp_config_set_generate_request_uri_normalized(htp_config, 0);
 
     htp_config_register_urlencoded_parser(htp_config);
@@ -1671,10 +1699,10 @@ static ib_status_t modhtp_iface_conn_init(
     if (parser_data == NULL) {
         return IB_EALLOC;
     }
-    parser_data->context = context;
-    parser_data->parser  = parser;
-    parser_data->iconn   = iconn;
-    parser_data->parser  = parser;
+    parser_data->context      = context;
+    parser_data->parser       = parser;
+    parser_data->iconn        = iconn;
+    parser_data->disconnected = false;
 
     /* Store the parser data for access from callbacks. */
     ib_conn_parser_context_set(iconn, parser_data);
@@ -1737,19 +1765,16 @@ static ib_status_t modhtp_iface_disconnect(
     modhtp_parser_data_t *parser_data;
 
     /* Get the parser data */
-    parser_data = (modhtp_parser_data_t *)ib_conn_parser_context_get(iconn);
+    parser_data = ib_conn_parser_context_get(iconn);
     if (parser_data == NULL) {
         ib_log_error(iconn->ib,
                      "Failed to get connection parser data from IB connection");
         return IB_EUNKNOWN;
     }
 
-    /*
-     * @todo This seems to cause libhtp to go into an infinite loop in
-     * the luajit test.
-     *
-     * htp_connp_close(parser_data->parser, &parser_data->close_time);
-     */
+    parser_data->disconnected = true;
+    htp_connp_close(parser_data->parser, &parser_data->close_time);
+
     return IB_OK;
 }
 
@@ -1817,16 +1842,19 @@ static ib_status_t modhtp_iface_tx_cleanup(
     assert(itx != NULL);
 
     modhtp_txdata_t *txdata;
+    htp_tx_t        *htx;
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
+    htx = txdata->htx;
 
     /* Reset libhtp connection parser. */
-    ib_log_debug_tx(itx, "Destroying LibHTP transaction (%p)", txdata->htx);
-    htp_tx_destroy(txdata->htx);
-    txdata->htx = NULL;
-
     htp_connp_clear_error(txdata->parser_data->parser);
+
+    /* Remove references to the txdata which is associated with the IB tx */
+    txdata->htx = NULL;
+    htp_tx_set_user_data(htx, NULL);
+
     return IB_OK;
 }
 
