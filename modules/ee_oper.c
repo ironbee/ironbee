@@ -129,7 +129,6 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
     ib_hash_t *eudoxus_pattern_hash;
     ia_eudoxus_t *eudoxus;
     ee_config_t* config;
-    ib_mpool_t *mp;
     ib_mpool_t *mp_tmp;
     void *tmp;
 
@@ -140,7 +139,6 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
 
     mp_tmp = ib_engine_pool_temp_get(cp->ib);
     ib = cp->ib;
-    mp = ib_engine_pool_main_get(ib);
     config = ee_get_config(ib);
     assert(config != NULL);
 
