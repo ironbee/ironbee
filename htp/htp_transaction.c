@@ -691,12 +691,12 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
 htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
     // Finalize request body.
     if (htp_tx_req_has_body(tx)) {
-        int rc = htp_tx_req_process_body_data(tx, NULL, 0);
+        htp_status_t rc = htp_tx_req_process_body_data(tx, NULL, 0);
         if (rc != HTP_OK) return rc;
     }
 
     // Run hook REQUEST_COMPLETE.
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx->connp);
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx->connp);
     if (rc != HTP_OK) return rc;
 
     // Clean-up.
