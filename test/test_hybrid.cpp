@@ -102,19 +102,19 @@ static int HybridParsing_Get_Callback_REQUEST_COMPLETE(htp_connp_t *connp) {
 }
 
 static int HybridParsing_Get_Callback_RESPONSE_START(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->out_tx);
     ++user_data->callback_RESPONSE_START_invoked;
     return HTP_OK;
 }
 
 static int HybridParsing_Get_Callback_RESPONSE_LINE(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->out_tx);
     ++user_data->callback_RESPONSE_LINE_invoked;
     return HTP_OK;
 }
 
 static int HybridParsing_Get_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->out_tx);
     ++user_data->callback_RESPONSE_HEADERS_invoked;
     return HTP_OK;
 }
@@ -161,7 +161,7 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
 }
 
 static int HybridParsing_Get_Callback_RESPONSE_COMPLETE(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->out_tx);
     user_data->callback_RESPONSE_COMPLETE_invoked = 1;
     return HTP_OK;
 }
@@ -804,11 +804,11 @@ TEST_F(HybridParsing, TestRepeatCallbacks)
     // Response line complete
     htp_tx_state_response_line(tx);
     ASSERT_EQ(1, user_data.callback_RESPONSE_LINE_invoked);
-
+    
     // Response headers complete
     htp_tx_state_response_headers(tx);
     ASSERT_EQ(1, user_data.callback_RESPONSE_HEADERS_invoked);
-
+    
     // Response complete
     htp_tx_state_response_complete(tx);
     ASSERT_EQ(1, user_data.callback_RESPONSE_COMPLETE_invoked);

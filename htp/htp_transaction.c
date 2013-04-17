@@ -706,13 +706,21 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
         tx->connp->put_file = NULL;
     }
 
-    // Update the transaction status, but only if it did already
-    // move on. This may happen when we're processing a CONNECT
+    // Update the transaction status, but only if it not move
+    // on already. This may happen when we're processing a CONNECT
     // request and need to wait for the response to determine how
     // to continue to treat the rest of the TCP stream.
     if (tx->progress < HTP_REQUEST_COMPLETE) {
         tx->progress = HTP_REQUEST_COMPLETE;
     }
+
+    if (tx->is_protocol_0_9) {
+        tx->connp->in_state = htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9;
+    } else {
+        tx->connp->in_state = htp_connp_REQ_IDLE;
+    }
+
+    tx->connp->in_tx = NULL;
 
     return HTP_OK;
 }
