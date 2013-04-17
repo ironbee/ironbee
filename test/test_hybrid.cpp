@@ -767,7 +767,7 @@ TEST_F(HybridParsing, TestRepeatCallbacks)
     ASSERT_EQ(1, user_data.callback_TRANSACTION_START_invoked);
 
     // Request line data
-    htp_tx_req_set_line(tx, "GET / HTTP/1.1\r\n", 16, HTP_ALLOC_COPY);
+    htp_tx_req_set_line(tx, "GET / HTTP/1.1", 16, HTP_ALLOC_COPY);
 
     // Request line complete
     htp_tx_state_request_line(tx);
@@ -779,7 +779,7 @@ TEST_F(HybridParsing, TestRepeatCallbacks)
     ASSERT_TRUE(tx->request_uri != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/"));
     ASSERT_TRUE(tx->request_protocol != NULL);
-    //ASSERT_EQ(0, bstr_cmp_c(tx->request_protocol, "HTTP/1.1"));
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_protocol, "HTTP/1.1"));
 
     ASSERT_TRUE(tx->parsed_uri != NULL);
     
