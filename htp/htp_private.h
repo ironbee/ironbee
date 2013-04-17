@@ -123,6 +123,11 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
 int htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len);
 
 
+// Private transaction functions
+
+htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode);
+
+
 // Utility functions
 
 int htp_convert_method_to_number(bstr *);

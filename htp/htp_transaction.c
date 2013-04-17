@@ -825,7 +825,11 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
 }
 
 htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
-    if (tx->connp->out_tx->progress != HTP_RESPONSE_COMPLETE) {
+    return htp_tx_state_response_complete_ex(tx, 1 /* hybrid mode */);
+}
+
+htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
+    if (tx->progress != HTP_RESPONSE_COMPLETE) {
         tx->progress = HTP_RESPONSE_COMPLETE;
 
         // Run the last RESPONSE_BODY_DATA HOOK, but only if there was a response body present.
@@ -834,8 +838,47 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
         }
 
         // Run hook RESPONSE_COMPLETE.
-        return htp_hook_run_all(tx->connp->cfg->hook_response_complete, tx->connp);
+        htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_response_complete, tx->connp);
+        if (rc != HTP_OK) return rc;
     }
+
+    if (!hybrid_mode) {
+        // Check if the inbound parser is waiting on us. If it is, that means that
+        // there might be request data that the inbound parser hasn't consumed yet.
+        // If we don't stop parsing we might encounter a response without a request,
+        // which is why we want to return straight away before processing any data.
+        //
+        // This situation will occur any time the parser needs to see the server
+        // respond to a particular situation before it can decide how to proceed. For
+        // example, when a CONNECT is sent, different paths are used when it is accepted
+        // and when it is not accepted.
+        //
+        // It is not enough to check only in_status here. Because of pipelining, it's possible
+        // that many inbound transactions have been processed, and that the parser is
+        // waiting on a response that we have not seen yet.
+        if ((tx->connp->in_status == HTP_STREAM_DATA_OTHER) && (tx->connp->in_tx == tx->connp->out_tx)) {
+            return HTP_DATA_OTHER;
+        }
+
+        // Do we have a signal to yield to inbound processing at
+        // the end of the next transaction?
+        if (tx->connp->out_data_other_at_tx_end) {
+            // We do. Let's yield then.
+            tx->connp->out_data_other_at_tx_end = 0;
+            return HTP_DATA_OTHER;
+        }
+
+        // In streaming processing, we destroy the transaction
+        // because it will not be needed any more.
+        if (tx->connp->cfg->tx_auto_destroy) {
+            htp_tx_destroy(tx->connp->out_tx);
+        }
+    }
+
+    // Disconnect from the transaction
+    tx->connp->out_tx = NULL;
+
+    tx->connp->out_state = htp_connp_RES_IDLE;
 
     return HTP_OK;
 }
