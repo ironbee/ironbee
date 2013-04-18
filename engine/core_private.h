@@ -168,6 +168,7 @@ ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
  * Register core collections managers
  *
  * @param[in] ib Engine
+ * @param[in] ctx Current configuration context
  * @param[in] module Collection manager's module object
  *
  * @returns Status code:
@@ -176,6 +177,7 @@ ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
  */
 ib_status_t ib_core_collection_managers_register(
     ib_engine_t       *ib,
+    ib_context_t      *ctx,
     const ib_module_t *module);
 
 /**

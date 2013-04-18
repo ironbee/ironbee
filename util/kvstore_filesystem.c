@@ -1146,3 +1146,24 @@ ib_status_t ib_kvstore_filesystem_init(
 
     return IB_OK;
 }
+
+
+void ib_kvstore_filesystem_set_directory_mode(
+    ib_kvstore_t *kvstore,
+    mode_t mode)
+{
+    assert(kvstore);
+    assert(kvstore->server);
+    ib_kvstore_filesystem_server_t *server =
+        (ib_kvstore_filesystem_server_t *)(kvstore->server);
+    server->dmode = mode;
+}
+
+void ib_kvstore_filesystem_set_file_mode(ib_kvstore_t *kvstore, mode_t mode)
+{
+    assert(kvstore);
+    assert(kvstore->server);
+    ib_kvstore_filesystem_server_t *server =
+        (ib_kvstore_filesystem_server_t *)(kvstore->server);
+    server->fmode = mode;
+}

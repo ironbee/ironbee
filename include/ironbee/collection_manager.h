@@ -67,6 +67,7 @@ typedef struct ib_collection_manager_t ib_collection_manager_t;
  *
  * @param[in] ib Engine
  * @param[in] module Collection manager's module object
+ * @param[in] ctx Current configuration context
  * @param[in] manager The collection manager object
  * @param[in] mp Memory pool to use for allocations
  * @param[in] collection_name Name of the collection
@@ -85,6 +86,7 @@ typedef struct ib_collection_manager_t ib_collection_manager_t;
 typedef ib_status_t (* ib_collection_manager_register_fn_t)(
     const ib_engine_t              *ib,
     const ib_module_t              *module,
+    ib_context_t                   *ctx,
     const ib_collection_manager_t  *manager,
     ib_mpool_t                     *mp,
     const char                     *collection_name,
@@ -210,6 +212,7 @@ typedef ib_status_t (* ib_collection_manager_persist_fn_t)(
  *
  * @param[in,out] ib Engine
  * @param[in] module Registering module
+ * @param[in] ctx Current configuration context
  * @param[in] name Name of collection manager being registered
  * @param[in] uri_scheme URI scheme for identification
  * @param[in] register_fn Function to use for manager registration
@@ -227,6 +230,7 @@ typedef ib_status_t (* ib_collection_manager_persist_fn_t)(
 ib_status_t ib_collection_manager_register(
     ib_engine_t                            *ib,
     const ib_module_t                      *module,
+    ib_context_t                           *ctx,
     const char                             *name,
     const char                             *uri_scheme,
     ib_collection_manager_register_fn_t     register_fn,

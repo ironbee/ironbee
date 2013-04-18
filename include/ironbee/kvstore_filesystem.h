@@ -61,6 +61,21 @@ ib_status_t ib_kvstore_filesystem_init(
     ib_kvstore_t *kvstore,
     const char *directory);
 
+/**
+ * Set the file mode which file datastore files are created with.
+ * @param[in] kvstore Key-Value store.
+ * @param[in] mode The mode.
+ */
+void ib_kvstore_filesystem_set_file_mode(ib_kvstore_t *kvstore, mode_t mode);
+
+/**
+ * Set the file mode which file datastore directories are created with.
+ * @param[in] kvstore Key-Value store.
+ * @param[in] mode The mode.
+ */
+void ib_kvstore_filesystem_set_directory_mode(
+    ib_kvstore_t *kvstore,
+    mode_t mode);
  /**
   * @}
   */

@@ -88,6 +88,7 @@ typedef struct {
 static ib_status_t core_managed_collection_vars_register_fn(
     const ib_engine_t             *ib,
     const ib_module_t             *module,
+    ib_context_t                  *ctx,
     const ib_collection_manager_t *manager,
     ib_mpool_t                    *mp,
     const char                    *collection_name,
@@ -273,6 +274,7 @@ static ib_status_t core_managed_collection_vars_populate_fn(
 static ib_status_t core_managed_collection_jsonfile_register_fn(
     const ib_engine_t              *ib,
     const ib_module_t              *module,
+    ib_context_t                   *ctx,
     const ib_collection_manager_t  *manager,
     ib_mpool_t                     *mp,
     const char                     *collection_name,
@@ -557,6 +559,7 @@ static ib_status_t core_managed_collection_jsonfile_persist_fn(
 
 ib_status_t ib_core_collection_managers_register(
     ib_engine_t  *ib,
+    ib_context_t *ctx,
     const ib_module_t *module)
 {
     assert(ib != NULL);
@@ -572,7 +575,7 @@ ib_status_t ib_core_collection_managers_register(
 
     /* Register the name/value pair InitCollection manager */
     rc = ib_collection_manager_register(
-        ib, module, "core name/value pair", "vars:",
+        ib, module, ctx, "core name/value pair", "vars:",
         core_managed_collection_vars_register_fn, NULL,
         NULL, NULL,
         core_managed_collection_vars_populate_fn, NULL,
@@ -597,7 +600,7 @@ ib_status_t ib_core_collection_managers_register(
 #if ENABLE_JSON
     /* Register the JSON file InitCollection manager */
     rc = ib_collection_manager_register(
-        ib, module, "core JSON file", "json-file://",
+        ib, module, ctx, "core JSON file", "json-file://",
         core_managed_collection_jsonfile_register_fn, NULL,
         NULL, NULL,
         core_managed_collection_jsonfile_populate_fn, NULL,
