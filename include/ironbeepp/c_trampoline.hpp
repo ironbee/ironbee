@@ -184,7 +184,7 @@ make_c_trampoline(boost::function<F> f)
  * @param[in] cdata @c void* portion of a trampoline returned from
  *                  make_c_trampoline().
  */
-void delete_c_trampoline(void* cdata)
+inline void delete_c_trampoline(void* cdata)
 {
     delete reinterpret_cast<boost::any*>(cdata);
 }
