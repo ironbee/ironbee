@@ -159,6 +159,9 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
     char *buf          = NULL; /* Buffer. */
     char *eol          = 0;    /* buf[eol] = end of line. */
     char *bol          = 0;    /* buf[bol] = begin line. */
+    char *pathbuf;
+    const char *save_file;     /* File name, used to restore during cleanup  */
+    const char *save_cwd;      /* CWD, used to restore during cleanup  */
 
     ib_status_t rc = IB_OK;
     unsigned error_count = 0;
@@ -172,13 +175,24 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
         return IB_EINVAL;
     }
 
+    /* Store the current file and path in the save_ stack variables */
+    save_file = cp->cur_file;
+    save_cwd = cp->cur_cwd;
+
+    /* Store the new file and path in the parser object */
+    cp->cur_file = file;
+    pathbuf = (char *)ib_mpool_strdup(cp->mp, file);
+    if (pathbuf != NULL) {
+        cp->cur_cwd = dirname(pathbuf);
+    }
+
     buf = (char *)malloc(sizeof(*buf)*bufsz);
 
     if (buf==NULL) {
         ib_cfg_log_error(cp,
                          "Unable to allocate buffer for configuration file.");
-        close(fd);
-        return IB_EALLOC;
+        rc = IB_EALLOC;
+        goto cleanup;
     }
 
     /* Fill the buffer, parse each line. Conditionally read another line. */
@@ -198,7 +212,6 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                 ++error_count;
                 error_rc = rc;
             }
-
             break;
         }
         else if ( nbytes > 0 ) { /* Normal. */
@@ -224,9 +237,8 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                                  "larger than %zd bytes from file %s. "
                                  "Parsing has failed.",
                                  buflen, file);
-                    free(buf);
-                    close(fd);
-                    return IB_EINVAL;
+                    rc = IB_EINVAL;
+                    goto cleanup;
                 }
             }
             else {
@@ -276,8 +288,18 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
         }
     } while (nbytes > 0);
 
-    free(buf);
-    close(fd);
+cleanup:
+    if (buf != NULL) {
+        free(buf);
+    }
+    if (fd >= 0) {
+        close(fd);
+    }
+
+    /* Restore the saved file and CWDs */
+    cp->cur_file = save_file;
+    cp->cur_cwd = save_cwd;
+
     ib_cfg_log_debug3(cp,
                       "Done reading config \"%s\" via fd=%d errno=%d",
                       file, fd, errno);
@@ -306,20 +328,6 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
     assert(cp != NULL);
     assert(buffer != NULL);
 
-    if (
-        file == NULL || cp->cur_file == NULL ||
-        strcmp(cp->cur_file, file) != 0
-    ) {
-        cp->cur_cwd = NULL;
-        cp->cur_file = NULL;
-        if (file != NULL) {
-            cp->cur_file = (char *)ib_mpool_strdup(cp->mp, file);
-            char *pathbuf = (char *)ib_mpool_strdup(cp->mp, file);
-            if (pathbuf != NULL) {
-                cp->cur_cwd = dirname(pathbuf);
-            }
-        }
-    }
     cp->cur_lineno = lineno;
 
     /* If the previous line ended with a continuation character,
