@@ -2,7 +2,7 @@ include $(top_srcdir)/build/common.mk
 bin_PROGRAMS=clipp
 
 check-local:
-	(cd $(srcdir)/tests; abs_builddir=$(abs_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))
+	(cd $(srcdir)/tests; abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))
 
 # Avoid various warnings as error in clipp builds because protobuf is not
 # careful about warnings.

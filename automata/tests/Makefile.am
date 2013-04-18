@@ -32,4 +32,4 @@ clean-local:
 	rm -rf automata_test_*.*
 
 check-local:
-	(cd $(srcdir); abs_builddir=$(abs_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))
+	(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))

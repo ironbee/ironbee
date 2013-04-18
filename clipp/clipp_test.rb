@@ -76,9 +76,12 @@ module CLIPPTest
   # Build test directory.
   BUILDDIR         = \
     ($abs_builddir || ENV['abs_builddir'] || fatal("abs_builddir not set."))
+  # Top build dir.
+  TOP_BUILDDIR     = \
+    ($abs_top_builddir || ENV['abs_top_builddir'] || fatal("abs_top_builddir not set."))
 
   # CLIPP executable.
-  CLIPP            = File.join(BUILDDIR, 'clipp')
+  CLIPP            = File.join(TOP_BUILDDIR, 'clipp', 'clipp')
   # Default IronBee configuration template.
   DEFAULT_TEMPLATE = 'TESTDIR/ironbee.config.erb'
   # Default consumer.
