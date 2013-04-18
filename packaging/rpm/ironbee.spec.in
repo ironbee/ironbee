@@ -89,7 +89,7 @@ unset FFLAGS
 %endif
 
 %{_configure} %{ts_flags} %{httpd_flags} \
-	--host=%{_host} --build=%{_build} \
+        --host=%{_host} --build=%{_build} \
         --program-prefix=%{?_program_prefix} \
         --prefix=%{_prefix} \
         --exec-prefix=%{_exec_prefix} \
@@ -112,6 +112,28 @@ rm -rf $RPM_BUILD_ROOT
 
 %clean
 
+%if %{with trafficserver}
+%post trafficserver
+if [ "$1" -ge 1 ]; then
+   configfile=/etc/trafficserver/plugin.config
+   if ! grep -q "### START IRONBEE PLUGIN" "$configfile" ; then
+      echo "### START IRONBEE PLUGIN" >>$configfile
+      echo %{_libdir}/libloader.so %{_libdir}/libhtp.so %{_libdir}/libironbee.so >>$configfile
+      echo %{_libdir}/ts_ironbee.so %{_sysconfdir}/ironbee.conf >>$configfile
+      echo "### END IRONBEE PLUGIN" >>$configfile
+   fi
+fi
+
+
+%postun trafficserver
+if [ "$1" = 0 ]; then
+   configfile=/etc/trafficserver/plugin.config
+   if egrep -q "^### START IRONBEE PLUGIN" "$configfile" && egrep -q "^### END IRONBEE PLUGIN" "$configfile"; then
+      sed -i.save -e '/^### START IRONBEE PLUGIN/,/^### END IRONBEE PLUGIN/d' $configfile
+   fi
+fi
+
+%endif
 
 %files
 %attr(0755,root,root) %{_libdir}/libhtp-*.so.*
@@ -141,6 +163,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libdir}/ibmod_*
 %attr(0755,root,root) %{_libdir}/pkgconfig/*.*
 %attr(0644,root,root) %{_sysconfdir}/ironbee.conf.example
+%config(noreplace) %attr(0644,root,root) %{_sysconfdir}/ironbee.conf
 
 %files devel
 %attr(0755,root,root) %{_bindir}/ac_generator
