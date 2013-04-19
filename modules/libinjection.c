@@ -28,7 +28,7 @@
  *   - normalizeSqli: Normalize SQL routine from libinjection.
  *
  * Operators:
- *   - sqli: Returns true if the data contains SQL injection.
+ *   - is_sqli: Returns true if the data contains SQL injection.
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

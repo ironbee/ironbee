@@ -933,6 +933,22 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <para/>
         </section>
         <section>
+            <title>is_sqli</title>
+            <para><emphasis role="bold">Description:</emphasis> Returns true if the data is determined to be SQL injection via the libinjection library.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@is_sqli <replaceable>data-source</replaceable></literal></para>
+            <para><emphasis role="bold">Types:</emphasis> String</para>
+            <para><emphasis role="bold">Module:</emphasis> libinjection</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+            <para>The libinjection ironbee module utilizes Nick Galbreath's libinjection to
+                implement SQLi detection. This operator is similar to libinjection's is_sqli()
+                function. The libinjection library is available via: <link
+                    xlink:href="http://www.client9.com/projects/libinjection/"
+                    >http://www.client9.com/projects/libinjection/</link></para>
+            <para>Currently the <replaceable>data-source</replaceable> must be set to "default" as
+                loading external databases is not yet implemented.</para>
+            <para>Example:<programlisting>Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logdata:%{FIELD} event block:phase</programlisting></para>
+        </section>
+        <section>
             <title>le</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
                 numerically less than or equal to the given value.</para>
@@ -1646,6 +1662,18 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
                 removing back and self references.</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        </section>
+        <section>
+            <title>normalizeSqli</title>
+            <para><emphasis role="bold">Description:</emphasis> Normalize potential SQL injection via libinjection.</para>
+            <para><emphasis role="bold">Module:</emphasis> libinjection</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+            <para>The libinjection ironbee module utilizes Nick Galbreath's libinjection to
+                implement SQLi detection. This transformation is based on an example in libinjection. The libinjection library is available via: <link
+                    xlink:href="http://www.client9.com/projects/libinjection/"
+                    >http://www.client9.com/projects/libinjection/</link></para>
+            <para>Example
+                Input/Output:<programlisting>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</programlisting><programlisting>Output: FOO' OR 1=1 UNION SELECT ID,PASSWD FROM USERS --</programlisting></para>
         </section>
     </section>
 </chapter>
