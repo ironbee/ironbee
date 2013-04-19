@@ -744,9 +744,8 @@ static ib_status_t moddevel_txdump_tx(
     /* Basic */
     if (ib_flags_all(txdump->flags, MODDEVEL_TXDUMP_BASIC) ) {
         char         buf[30];
-        ib_timeval_t tv;
-        IB_CLOCK_TIMEVAL(tv, tx->t.started);
-        ib_clock_timestamp(buf, &tv);
+
+        ib_clock_timestamp(buf, &tx->tv_created);
         moddevel_txdump(tx, txdump, 2, "Started = %s", buf);
         moddevel_txdump(tx, txdump, 2, "Hostname = %s", tx->hostname);
         moddevel_txdump(tx, txdump, 2, "Effective IP = %s", tx->er_ipstr);
