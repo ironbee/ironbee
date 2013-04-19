@@ -54,6 +54,13 @@ typedef struct {
 } ib_core_module_tx_data_t;
 
 /**
+ * Get the core module symbol structure
+ *
+ * @returns Core module static symbol
+ */
+ib_module_t *ib_core_module_sym(void);
+
+/**
  * Initialize the core fields.
  *
  * Called when the core is loaded, registers the core field generators.
@@ -102,13 +109,16 @@ ib_status_t ib_core_auditlog_parts_map(
 /**
  * Get the core mode and data
  *
+ * @param[in] ib IronBee engine
  * @param[out] core_module Pointer to core module (or NULL)
  * @param[out] core_data Pointer to core data (or NULL)
  *
  * @returns IB_OK / return value from ib_engine_module_get()
  */
-ib_status_t ib_core_module_data(ib_module_t **core_module,
-                                ib_core_module_data_t **core_data);
+ib_status_t ib_core_module_data(
+    ib_engine_t            *engine,
+    ib_module_t           **core_module,
+    ib_core_module_data_t **core_data);
 
 /**
  * Initialize the core transformations.

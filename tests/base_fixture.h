@@ -106,9 +106,7 @@ public:
     void setRuleBasePath(const char* path)
     {
         ib_core_cfg_t *corecfg = NULL;
-        ib_context_module_config(ib_context_main(ib_engine),
-                                 ib_core_module(),
-                                 static_cast<void*>(&corecfg));
+        ib_core_context_config(ib_context_main(ib_engine), &corecfg);
         corecfg->rule_base_path = path;
     }
 
@@ -128,9 +126,7 @@ public:
     void setModuleBasePath(const char* path)
     {
         ib_core_cfg_t *corecfg = NULL;
-        ib_context_module_config(ib_context_main(ib_engine),
-                                 ib_core_module(),
-                                 static_cast<void*>(&corecfg));
+        ib_core_context_config(ib_context_main(ib_engine), &corecfg);
         corecfg->module_base_path = path;
     }
 

@@ -49,11 +49,6 @@ extern "C" {
  * @{
  */
 
-#define CORE_MODULE_NAME         core
-#define CORE_MODULE_NAME_STR     IB_XSTRINGIFY(CORE_MODULE_NAME)
-
-/* Static module declarations */
-ib_module_t *ib_core_module(void);
 
 /**
  * Core configuration.
@@ -98,6 +93,28 @@ struct ib_core_cfg_t {
     ib_num_t         block_status;      /**< Status codes when blocking. */
     ib_num_t inspection_engine_options; /**< Inspection engine options */
 };
+
+/**
+ * Get the core module
+ *
+ * @param[in] ib IronBee engine
+ *
+ * @returns Pointer to core module structure
+ */
+ib_module_t *ib_core_module(
+    const ib_engine_t *ib);
+
+/**
+ * Fetch the core module configuration data from the configuration context.
+ *
+ * @param ctx Configuration context
+ * @param pcfg Address which module config data is written
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_core_context_config(
+    ib_context_t   *ctx,
+    ib_core_cfg_t **pcfg);
 
 
 /**

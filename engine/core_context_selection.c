@@ -335,7 +335,7 @@ static ib_status_t core_ctxsel_finalize(
     ib_status_t rc;
 
     /* Do nothing if we're not the current site selector */
-    if (ib_ctxsel_module_is_active(ib, ib_core_module()) == false) {
+    if (ib_ctxsel_module_is_active(ib, ib_core_module(ib)) == false) {
         return IB_OK;
     }
 
@@ -425,7 +425,7 @@ static ib_status_t core_ctxsel_select(
     ib_core_module_data_t *core_data = (ib_core_module_data_t *)common_cb_data;
 
     /* Verify that we're the current selector */
-    if (ib_ctxsel_module_is_active(ib, ib_core_module()) == false) {
+    if (ib_ctxsel_module_is_active(ib, ib_core_module(ib)) == false) {
         return IB_EINVAL;
     }
 
@@ -965,7 +965,7 @@ ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
     const char *failed = "unknown";
 
     /* Get core module data */
-    rc = ib_core_module_data(NULL, &core_data);
+    rc = ib_core_module_data(ib, NULL, &core_data);
     if (rc != IB_OK) {
         return rc;
     }

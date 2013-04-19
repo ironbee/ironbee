@@ -186,7 +186,7 @@ ib_status_t ib_engine_context_create_main(ib_engine_t *ib);
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_engine_module_get(ib_engine_t *ib,
+ib_status_t DLL_PUBLIC ib_engine_module_get(const ib_engine_t *ib,
                                             const char * name,
                                             ib_module_t **pm);
 

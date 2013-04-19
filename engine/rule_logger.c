@@ -244,7 +244,7 @@ void ib_rule_log_tx(
         break;
     case IB_RULE_DLOG_ALWAYS:
     default:
-        ib_context_module_config(tx->ctx, ib_core_module(), (void *)&corecfg);
+        ib_core_context_config(tx->ctx, &corecfg);
         ib_log_level = corecfg->rule_log_level;
         break;
     }
@@ -334,21 +334,21 @@ void ib_rule_log_flags_dump(ib_engine_t *ib,
 ib_flags_t ib_rule_log_flags(ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
-    ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+    ib_core_context_config(ctx, &corecfg);
     return corecfg->rule_log_flags;
 }
 
 ib_log_level_t ib_rule_log_level(ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
-    ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+    ib_core_context_config(ctx, &corecfg);
     return corecfg->rule_log_level;
 }
 
 ib_rule_dlog_level_t ib_rule_dlog_level(ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
-    ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+    ib_core_context_config(ctx, &corecfg);
     return corecfg->rule_debug_level;
 }
 

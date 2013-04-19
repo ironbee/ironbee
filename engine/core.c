@@ -313,9 +313,7 @@ static ib_core_cfg_t *core_get_main_config(const ib_engine_t *ib,
     if (main_ctx != NULL) {
         ib_status_t rc;
 
-        rc = ib_context_module_config(main_ctx,
-                                      ib_core_module(),
-                                      (void *)&config);
+        rc = ib_core_context_config(main_ctx, &config);
 
         /* When a module fails to find its context, use the global one. */
         if (rc != IB_OK) {
@@ -1924,13 +1922,12 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
     }
 
     /* Get core tx module data. */
-    rc = ib_tx_get_module_data(tx, ib_core_module(), &core_txdata);
+    rc = ib_tx_get_module_data(tx, ib_core_module(ib), &core_txdata);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_context_module_config(tx->ctx, ib_core_module(),
-                                  (void *)&corecfg);
+    rc = ib_core_context_config(tx->ctx, &corecfg);
     if (rc != IB_OK) {
         return rc;
     }
@@ -2055,8 +2052,7 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
-    rc = ib_context_module_config(conn->ctx, ib_core_module(),
-                                  (void *)&corecfg);
+    rc = ib_core_context_config(conn->ctx, &corecfg);
 
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to initialize core module: %s",
@@ -2546,8 +2542,7 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
-    rc = ib_context_module_config(tx->ctx, ib_core_module(),
-                                  (void *)&corecfg);
+    rc = ib_core_context_config(tx->ctx, &corecfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
                         "Failure accessing core module: %s",
@@ -2599,8 +2594,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     ib_core_module_tx_data_t *core_txdata;
     ib_status_t rc;
 
-    rc = ib_context_module_config(tx->ctx, ib_core_module(),
-                                  (void *)&corecfg);
+    rc = ib_core_context_config(tx->ctx, &corecfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
                         "Failure accessing core module: %s",
@@ -2619,7 +2613,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
         return IB_EALLOC;
     }
     core_txdata->auditlog_parts = corecfg->auditlog_parts;
-    rc = ib_tx_set_module_data(tx, ib_core_module(), core_txdata);
+    rc = ib_tx_set_module_data(tx, ib_core_module(ib), core_txdata);
     if (rc != IB_OK) {
         return rc;
     }
@@ -2723,13 +2717,15 @@ static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
     return rc;
 }
 
-ib_status_t ib_core_module_data(ib_module_t **core_module,
-                                ib_core_module_data_t **core_data)
+ib_status_t ib_core_module_data(
+    ib_engine_t            *ib,
+    ib_module_t           **core_module,
+    ib_core_module_data_t **core_data)
 {
     ib_module_t *module;
 
     /* Get the core module data */
-    module = ib_core_module();
+    module = ib_core_module(ib);
     if (core_module != NULL) {
         *core_module = module;
     }
@@ -2745,6 +2741,17 @@ ib_status_t ib_core_module_data(ib_module_t **core_module,
         }
     }
     return IB_OK;
+}
+
+ib_status_t ib_core_context_config(ib_context_t *ctx,
+                                   ib_core_cfg_t **pcfg)
+{
+    assert(ctx != NULL);
+    assert(pcfg != NULL);
+
+    return ib_context_module_config(ctx,
+                                    ib_core_module(ib_context_get_engine(ctx)),
+                                    pcfg);
 }
 
 
@@ -3072,13 +3079,11 @@ static ib_status_t core_location_open(ib_cfgparser_t *cp,
         return rc;
     }
 
-    rc = ib_context_module_config(location->site->context, ib_core_module(),
-                                  (void *)&site_cfg);
+    rc = ib_core_context_config(location->site->context, &site_cfg);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_context_module_config(location->context, ib_core_module(),
-                                  (void *)&location_cfg);
+    rc = ib_core_context_config(location->context, &location_cfg);
     if (rc != IB_OK) {
         return rc;
     }
@@ -3197,7 +3202,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     assert(p1 != NULL);
 
     /* Get core module data */
-    rc = ib_core_module_data(NULL, &core_data);
+    rc = ib_core_module_data(cp->ib, NULL, &core_data);
     if (rc != IB_OK) {
         return rc;
     }
@@ -3258,7 +3263,7 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
     const char *site_name;
 
     /* Get core module data */
-    rc = ib_core_module_data(NULL, &core_data);
+    rc = ib_core_module_data(cp->ib, NULL, &core_data);
     if (rc != IB_OK) {
         return rc;
     }
@@ -3312,7 +3317,7 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     assert(p1 != NULL);
 
     /* Get core module data */
-    rc = ib_core_module_data(NULL, &core_data);
+    rc = ib_core_module_data(cp->ib, NULL, &core_data);
     if (rc != IB_OK) {
         return rc;
     }
@@ -3370,7 +3375,7 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
     ib_core_module_data_t *core_data;
 
     /* Get core module data */
-    rc = ib_core_module_data(NULL, &core_data);
+    rc = ib_core_module_data(cp->ib, NULL, &core_data);
     if (rc != IB_OK) {
         return rc;
     }
@@ -3419,7 +3424,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
     ib_site_t *site;
 
     /* Get core module data */
-    rc = ib_core_module_data(NULL, &core_data);
+    rc = ib_core_module_data(cp->ib, NULL, &core_data);
     if (rc != IB_OK) {
         return rc;
     }
@@ -3687,7 +3692,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("DefaultBlockStatus", name) == 0) {
         int status;
 
-        rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+        rc = ib_core_context_config(ctx, &corecfg);
 
         if (rc != IB_OK) {
             ib_log_error(ib,
@@ -3746,9 +3751,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             absfile = (char *)p1_unescaped;
         }
         else {
-            rc = ib_context_module_config(ctx,
-                                          ib_core_module(),
-                                          (void *)&corecfg);
+            rc = ib_core_context_config(ctx, &corecfg);
 
             if (rc != IB_OK) {
                 return rc;
@@ -3837,7 +3840,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         return IB_OK;
     }
     else if (strcasecmp("ModuleBasePath", name) == 0) {
-        rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+        rc = ib_core_context_config(ctx, &corecfg);
 
         if (rc != IB_OK) {
             ib_log_error(ib,
@@ -3850,7 +3853,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         return IB_OK;
     }
     else if (strcasecmp("RuleBasePath", name) == 0) {
-        rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+        rc = ib_core_context_config(ctx, &corecfg);
 
         if (rc != IB_OK) {
             ib_log_error(ib, "Could not set RuleBasePath %s", p1_unescaped);
@@ -4079,7 +4082,7 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
     mp = ib_engine_pool_config_get(cp->ib);
 
     /* Get the configuration */
-    rc = ib_context_module_config(cp->cur_ctx, ib_core_module(), (void *)&cfg);
+    rc = ib_core_context_config(cp->cur_ctx, &cfg);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to get core module configuration: %s",
                          ib_status_to_string(rc));
@@ -4226,8 +4229,7 @@ static ib_status_t core_set_value(ib_cfgparser_t *cp,
     ib_status_t rc;
 
     /* Get the core module config. */
-    rc = ib_context_module_config(ib->ctx, ib_core_module(),
-                                  (void *)&corecfg);
+    rc = ib_core_context_config(ib->ctx, &corecfg);
     if (rc != IB_OK) {
         corecfg = &core_global_cfg;
     }
@@ -4361,8 +4363,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     ib_field_val_union_t fval;
 
     /* Get the core module config. */
-    rc = ib_context_module_config(cp->cur_ctx, ib_core_module(),
-                                  (void *)&corecfg);
+    rc = ib_core_context_config(cp->cur_ctx, &corecfg);
     if (rc != IB_OK) {
         corecfg = &core_global_cfg;
     }
@@ -4762,7 +4763,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Get the core module config. */
-    rc = ib_context_module_config(ib->ctx, m, (void *)&corecfg);
+    rc = ib_core_context_config(ib->ctx, &corecfg);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to fetch core module config: %s",
                      ib_status_to_string(rc));
@@ -5132,9 +5133,22 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     IB_CFGMAP_INIT_LAST
 };
 
-ib_module_t *ib_core_module(void)
+ib_module_t *ib_core_module_sym(void)
 {
     return IB_MODULE_STRUCT_PTR;
+}
+
+ib_module_t *ib_core_module(
+    const ib_engine_t *ib)
+{
+    assert(ib != NULL);
+    ib_module_t *module;
+    ib_status_t  rc;
+
+    /* If this fails, we're in bad shape.  Fail hard. */
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    assert(rc == IB_OK);
+    return module;
 }
 
 ib_status_t ib_core_auditlog_parts_map(
@@ -5208,7 +5222,7 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     }
 
     /* Get the current context config. */
-    rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
+    rc = ib_core_context_config(ctx, &corecfg);
     if (rc != IB_OK) {
         ib_log_alert(ib,
                      "Failed to fetch core module context config: %s",
@@ -5292,7 +5306,7 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Get the current context config. */
-    rc = ib_context_module_config(ctx, mod, (void *)&config);
+    rc = ib_core_context_config(ctx, &config);
     if (rc != IB_OK) {
         ib_log_alert(ib,
                      "Failed to fetch core module context config: %s",

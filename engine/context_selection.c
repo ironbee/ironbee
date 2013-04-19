@@ -427,7 +427,7 @@ ib_status_t ib_ctxsel_registration_register(
         return IB_EINVAL;
     }
 
-    if (registration->module == ib_core_module()) {
+    if (registration->module == ib_core_module(ib)) {
         if (ib->core_ctxsel.module != NULL) {
             return IB_DECLINED;
         }
@@ -435,7 +435,7 @@ ib_status_t ib_ctxsel_registration_register(
     }
 
     /* If it's not the core module, don't allow a second registrant */
-    else if (ib->act_ctxsel.module != ib_core_module()) {
+    else if (ib->act_ctxsel.module != ib_core_module(ib)) {
         return IB_DECLINED;
     }
 
@@ -449,10 +449,10 @@ ib_status_t ib_ctxsel_unregister(
     const ib_module_t *module)
 {
     assert(ib != NULL);
-    assert(ib->core_ctxsel.module == ib_core_module());
+    assert(ib->core_ctxsel.module == ib_core_module(ib));
 
     /* Don't allow core to unregister. */
-    if (module == ib_core_module()) {
+    if (module == ib_core_module(ib)) {
         return IB_DECLINED;
     }
     /* Verify that this is the current module */

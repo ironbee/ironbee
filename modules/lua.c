@@ -2069,10 +2069,7 @@ static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
     const char *lua_search_paths[3];
 
 
-    rc = ib_context_module_config(
-        ib_context_main(ib),
-        ib_core_module(),
-        &corecfg);
+    rc = ib_core_context_config(ib_context_main(ib), &corecfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Could not retrieve core module configuration.");
         return rc;
@@ -2723,9 +2720,7 @@ static ib_status_t modlua_dir_lua_include(ib_cfgparser_t *cp,
     ib_core_cfg_t *corecfg = NULL;
     lua_State *L = modlua_global_cfg.L;
 
-    rc = ib_context_module_config(ib_context_main(ib),
-                                  ib_core_module(),
-                                  (void *)&corecfg);
+    rc = ib_core_context_config(ib_context_main(ib), &corecfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to retrieve core configuration.");
         lua_pop(L, lua_gettop(L));
@@ -2818,10 +2813,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
         return rc;
     }
 
-    rc = ib_context_module_config(ib_context_main(ib),
-                                  ib_core_module(),
-                                  (void *)&corecfg);
-
+    rc = ib_core_context_config(ib_context_main(ib), &corecfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to retrieve core configuration.");
         return rc;

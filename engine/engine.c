@@ -29,6 +29,7 @@
 #include <ironbee/engine.h>
 #include "engine_private.h"
 
+#include "core_private.h"
 #include "state_notify_private.h"
 
 #include <ironbee/array.h>
@@ -434,7 +435,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
 
     /* Initialize the core static module. */
     /// @todo Probably want to do this in a less hard-coded manner.
-    rc = ib_module_init(ib_core_module(), *pib);
+    rc = ib_module_init(ib_core_module_sym(), *pib);
     if (rc != IB_OK) {
         ib_log_alert(*pib,  "Error in ib_module_init");
         goto failed;
@@ -539,7 +540,7 @@ ib_status_t ib_engine_config_finished(ib_engine_t *ib)
     return IB_OK;
 }
 
-ib_status_t ib_engine_module_get(ib_engine_t *ib,
+ib_status_t ib_engine_module_get(const ib_engine_t *ib,
                                  const char * name,
                                  ib_module_t **pm)
 {
@@ -660,7 +661,7 @@ void ib_engine_destroy(ib_engine_t *ib)
     size_t ne;
     size_t idx;
     ib_list_node_t *node;
-    ib_module_t *cm = ib_core_module();
+    ib_module_t *cm = ib_core_module(ib);
     ib_module_t *m;
 
     if (ib == NULL) {
@@ -874,12 +875,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
 
     ib_engine_t *ib = conn->ib;
 
-    rc = ib_context_module_config(
-        ib->ctx,
-        ib_core_module(),
-        (void *)&corecfg
-    );
-
+    rc = ib_core_context_config(ib->ctx, &corecfg);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to retrieve core module configuration.");
     }
@@ -1576,7 +1572,7 @@ ib_status_t ib_context_create(ib_engine_t *ib,
     }
     else {
         /* Register the core module by default. */
-        rc = ib_module_register_context(ib_core_module(), ctx);
+        rc = ib_module_register_context(ib_core_module_sym(), ctx);
         if (rc != IB_OK) {
             goto failed;
         }
