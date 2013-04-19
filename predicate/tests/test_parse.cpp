@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "../parse.hpp"
+#include <predicate/parse.hpp>
 
 #include "gtest/gtest.h"
 

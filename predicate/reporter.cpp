@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "reporter.hpp"
+#include <predicate/reporter.hpp>
 
 #include <boost/foreach.hpp>
 

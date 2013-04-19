@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "standard.hpp"
-#include "merge_graph.hpp"
+#include <predicate/standard.hpp>
+#include <predicate/merge_graph.hpp>
 
 #include <ironbeepp/operator.hpp>
 

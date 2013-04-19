@@ -22,9 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "dag.hpp"
-#include "reporter.hpp"
-#include "merge_graph.hpp"
+#include <predicate/dag.hpp>
+#include <predicate/merge_graph.hpp>
+#include <predicate/reporter.hpp>
 
 #include <ironbeepp/engine.hpp>
 

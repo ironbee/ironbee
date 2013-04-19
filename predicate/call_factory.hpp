@@ -27,12 +27,12 @@
 #ifndef __PREDICATE__CALL_FACTORY__
 #define __PREDICATE__CALL_FACTORY__
 
-#include <map>
-#include <string>
+#include <predicate/dag.hpp>
 
 #include <boost/function.hpp>
 
-#include "dag.hpp"
+#include <map>
+#include <string>
 
 namespace IronBee {
 namespace Predicate {

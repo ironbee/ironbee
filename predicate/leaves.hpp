@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__LEAVES__
 #define __PREDICATE__LEAVES__
 
-#include "bfs.hpp"
+#include <predicate/bfs.hpp>
 
 namespace IronBee {
 namespace Predicate {

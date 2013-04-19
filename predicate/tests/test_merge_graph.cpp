@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "../merge_graph.hpp"
+#include <predicate/merge_graph.hpp>
 #include "parse_fixture.hpp"
 
 #include "gtest/gtest.h"

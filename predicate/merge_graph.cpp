@@ -22,16 +22,16 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "merge_graph.hpp"
+#include <predicate/merge_graph.hpp>
 
-#include "bfs.hpp"
-#include "dot.hpp"
-
-#include <sstream>
+#include <predicate/bfs.hpp>
+#include <predicate/dot.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/function_output_iterator.hpp>
 #include <boost/lexical_cast.hpp>
+
+#include <sstream>
 
 using namespace std;
 

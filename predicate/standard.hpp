@@ -25,10 +25,9 @@
 #ifndef __PREDICATE__STANDARD__
 #define __PREDICATE__STANDARD__
 
-#include "dag.hpp"
-#include "validate.hpp"
-
-#include "call_factory.hpp"
+#include <predicate/call_factory.hpp>
+#include <predicate/dag.hpp>
+#include <predicate/validate.hpp>
 
 #include <boost/scoped_ptr.hpp>
 

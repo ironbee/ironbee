@@ -22,6 +22,23 @@ CANONICAL_INCLUDE_ORDER = [
   '"user_agent_private.h"',
   '<ironbee/module_sym.h>',
 
+  # predicate
+  '<predicate/bfs.hpp>',
+  '<predicate/call_factory.hpp>',
+  '<predicate/dag.hpp>',
+  '<predicate/dot.hpp>',
+  '<predicate/ironbee.hpp>',
+  '<predicate/less.hpp>',
+  '<predicate/leaves.hpp>',
+  '<predicate/merge_graph.hpp>',
+  '<predicate/parse.hpp>',
+  '<predicate/pre_eval_graph.hpp>',
+  '<predicate/reporter.hpp>',
+  '<predicate/standard.hpp>',
+  '<predicate/transform_graph.hpp>',
+  '<predicate/validate.hpp>',
+  '<predicate/validate_graph.hpp>',
+
   '<ironbeepp/abi_compatibility.hpp>',
   '<ironbeepp/all.hpp>',
   '<ironbeepp/byte_string.hpp>',
@@ -47,6 +64,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/module_bootstrap.hpp>',
   '<ironbeepp/module_delegate.hpp>',
   '<ironbeepp/notifier.hpp>',
+  '<ironbeepp/operator.hpp>',
   '<ironbeepp/parsed_name_value.hpp>',
   '<ironbeepp/parsed_request_line.hpp>',
   '<ironbeepp/parsed_response_line.hpp>',
@@ -151,13 +169,16 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/chrono.hpp>',
   '<boost/date_time/posix_time/posix_time.hpp>',
   '<boost/date_time/posix_time/ptime.hpp>',
+  '<boost/enable_shared_from_this.hpp>',
   '<boost/exception/all.hpp>',
   '<boost/filesystem.hpp>',
   '<boost/filesystem/fstream.hpp>',
   '<boost/foreach.hpp>',
   '<boost/format.hpp>',
   '<boost/function.hpp>',
+  '<boost/function_output_iterator.hpp>',
   '<boost/iterator/iterator_facade.hpp>',
+  '<boost/iterator/transform_iterator.hpp>',
   '<boost/lexical_cast.hpp>',
   '<boost/make_shared.hpp>',
   '<boost/mpl/or.hpp>',
@@ -176,6 +197,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/tuple/tuple.hpp>',
   '<boost/type_traits/is_class.hpp>',
   '<boost/type_traits/is_convertible.hpp>',
+  '<boost/type_traits/is_const.hpp>',
   '<boost/type_traits/is_float.hpp>',
   '<boost/type_traits/is_same.hpp>',
   '<boost/type_traits/is_signed.hpp>',
@@ -219,6 +241,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ostream>',
   '<queue>',
   '<set>',
+  '<sstream>',
   '<string>',
   '<stdexcept>',
   '<vector>',
@@ -276,7 +299,7 @@ all_ironbee_code do |path|
   private_name = nil
   if path =~ /(\.c(pp)?)$/
     self_name = Regexp.new(
-      "iron(bee|automata)/(.+/)?" + File.basename(path, $1) + '\.h' + ($2 || "")
+      "(ironbee|ironautomata|predicate)/(.+/)?" + File.basename(path, $1) + '\.h' + ($2 || "")
     )
     private_name = Regexp.new(
       File.basename(path, $1) + '_private\.h' + ($2 || "")

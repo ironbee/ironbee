@@ -65,4 +65,3 @@ typedef IronBee::Engine Environment;
 } // IronBee
 
 #endif
-

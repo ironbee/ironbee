@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "../validate.hpp"
+#include <predicate/validate.hpp>
 
 #include "gtest/gtest.h"
 

@@ -28,8 +28,8 @@
 #ifndef __PREDICATE__MERGE_GRAPH__
 #define __PREDICATE__MERGE_GRAPH__
 
-#include "dag.hpp"
-#include "less.hpp"
+#include <predicate/dag.hpp>
+#include <predicate/less.hpp>
 
 #include <map>
 #include <vector>

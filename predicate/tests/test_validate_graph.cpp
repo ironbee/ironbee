@@ -22,11 +22,11 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "../validate_graph.hpp"
+#include <predicate/validate_graph.hpp>
 
-#include "../standard.hpp"
-#include "../parse.hpp"
-#include "../merge_graph.hpp"
+#include <predicate/standard.hpp>
+#include <predicate/parse.hpp>
+#include <predicate/merge_graph.hpp>
 #include "parse_fixture.hpp"
 
 #include "gtest/gtest.h"

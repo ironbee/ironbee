@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__REPORTER__
 #define __PREDICATE__REPORTER__
 
-#include "dag.hpp"
+#include <predicate/dag.hpp>
 
 #include <list>
 #include <string>

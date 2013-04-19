@@ -28,14 +28,14 @@
 #ifndef __PREDICATE__BFS__
 #define __PREDICATE__BFS__
 
-#include "dag.hpp"
+#include <predicate/dag.hpp>
+
+#include <boost/function_output_iterator.hpp>
+#include <boost/type_traits/is_const.hpp>
 
 #include <list>
 #include <set>
 #include <vector>
-
-#include <boost/function_output_iterator.hpp>
-#include <boost/type_traits/is_const.hpp>
 
 namespace IronBee {
 namespace Predicate {

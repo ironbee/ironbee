@@ -22,13 +22,13 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "pre_eval_graph.hpp"
+#include <predicate/pre_eval_graph.hpp>
 
-#include "merge_graph.hpp"
-#include "bfs.hpp"
+#include <predicate/bfs.hpp>
+#include <predicate/merge_graph.hpp>
 
-#include <boost/function_output_iterator.hpp>
 #include <boost/bind.hpp>
+#include <boost/function_output_iterator.hpp>
 
 using namespace std;
 

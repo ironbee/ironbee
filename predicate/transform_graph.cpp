@@ -22,13 +22,13 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "transform_graph.hpp"
+#include <predicate/transform_graph.hpp>
 
-#include "leaves.hpp"
-#include "merge_graph.hpp"
+#include <predicate/leaves.hpp>
+#include <predicate/merge_graph.hpp>
 
-#include <boost/function_output_iterator.hpp>
 #include <boost/bind.hpp>
+#include <boost/function_output_iterator.hpp>
 
 using namespace std;
 

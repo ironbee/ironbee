@@ -25,7 +25,7 @@
 #ifndef __PREDICATE__LESS__
 #define __PREDICATE__LESS__
 
-#include "dag.hpp"
+#include <predicate/dag.hpp>
 
 #include <string>
 

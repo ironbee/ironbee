@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "bfs.hpp"
+#include <predicate/bfs.hpp>
 
 namespace IronBee {
 namespace Predicate {

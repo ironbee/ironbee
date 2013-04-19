@@ -22,9 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "../standard.hpp"
-#include "../parse.hpp"
-#include "../merge_graph.hpp"
+#include <predicate/standard.hpp>
+#include <predicate/parse.hpp>
+#include <predicate/merge_graph.hpp>
 #include "../../ironbeepp/tests/fixture.hpp"
 #include "parse_fixture.hpp"
 

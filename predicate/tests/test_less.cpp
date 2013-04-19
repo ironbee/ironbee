@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "../less.hpp"
+#include <predicate/less.hpp>
 
 #include "gtest/gtest.h"
 

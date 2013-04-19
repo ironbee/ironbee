@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "../dag.hpp"
+#include <predicate/dag.hpp>
 #include "../../ironbeepp/tests/fixture.hpp"
 
 #include "gtest/gtest.h"

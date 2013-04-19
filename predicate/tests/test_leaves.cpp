@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "../leaves.hpp"
-#include "../merge_graph.hpp"
+#include <predicate/leaves.hpp>
+#include <predicate/merge_graph.hpp>
 #include "parse_fixture.hpp"
 
 #include "gtest/gtest.h"

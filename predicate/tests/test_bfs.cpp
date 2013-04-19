@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "../bfs.hpp"
-#include "../parse.hpp"
+#include <predicate/bfs.hpp>
+#include <predicate/parse.hpp>
 #include "parse_fixture.hpp"
 
 #include "gtest/gtest.h"

@@ -67,14 +67,14 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "bfs.hpp"
-#include "dag.hpp"
-#include "merge_graph.hpp"
-#include "parse.hpp"
-#include "pre_eval_graph.hpp"
-#include "standard.hpp"
-#include "transform_graph.hpp"
-#include "validate_graph.hpp"
+#include <predicate/bfs.hpp>
+#include <predicate/dag.hpp>
+#include <predicate/merge_graph.hpp>
+#include <predicate/parse.hpp>
+#include <predicate/pre_eval_graph.hpp>
+#include <predicate/standard.hpp>
+#include <predicate/transform_graph.hpp>
+#include <predicate/validate_graph.hpp>
 
 #include <ironbeepp/all.hpp>
 
@@ -82,8 +82,8 @@
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -962,4 +962,3 @@ void Delegate::register_trampoline_data(void* cdata)
         shared_ptr<void>(cdata, IB::delete_c_trampoline)
     );
 }
-

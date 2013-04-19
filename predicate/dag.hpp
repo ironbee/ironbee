@@ -27,11 +27,11 @@
 #ifndef __PREDICATE__DAG__
 #define __PREDICATE__DAG__
 
-#include "ironbee.hpp"
+#include <predicate/ironbee.hpp>
 
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 #include <iostream>
 #include <list>

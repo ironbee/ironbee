@@ -27,8 +27,8 @@
 #ifndef __PREDICATE__PRE_EVAL_GRAPH__
 #define __PREDICATE__PRE_EVAL_GRAPH__
 
-#include "dag.hpp"
-#include "reporter.hpp"
+#include <predicate/dag.hpp>
+#include <predicate/reporter.hpp>
 
 namespace IronBee {
 namespace Predicate {

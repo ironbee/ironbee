@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "dot.hpp"
+#include <predicate/dot.hpp>
 
 using namespace std;
 
