@@ -1675,5 +1675,14 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
             <para>Example
                 Input/Output:<programlisting>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</programlisting><programlisting>Output: FOO' OR 1=1 UNION SELECT ID,PASSWD FROM USERS --</programlisting></para>
         </section>
+        <section>
+            <title>normalizeSqlPg</title>
+            <para><emphasis role="bold">Description:</emphasis> Normalize postgres SQL.</para>
+            <para><emphasis role="bold">Module:</emphasis> sqltfn</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+            <para>Normalize Postgres SQL.</para>
+            <para>Example
+                Input/Output:<programlisting>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</programlisting><programlisting>Output: foo' or 1 = 1 union select id,passwd from users </programlisting></para>
+        </section>
     </section>
 </chapter>
