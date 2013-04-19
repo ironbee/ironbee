@@ -71,7 +71,7 @@ typedef struct ee_callback_data_t ee_callback_data_t;
  * - NULL on failure.
  */
 static
-ee_config_t *ee_get_config(
+const ee_config_t *ee_get_config(
     ib_engine_t *ib
 )
 {
@@ -113,10 +113,11 @@ ee_config_t *ee_get_config(
  * @param[in] cbdata Callback data (unused)
  * @return
  * - IB_OK on success.
- * - IB_EEXIST if the patter has already been defined.
+ * - IB_EEXIST if the pattern has already been defined.
  * - IB_EINVAL if there was an error loading the automata.
  */
-static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
+static
+ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
                                                const char *name,
                                                const char *pattern_name,
                                                const char *filename,
@@ -128,7 +129,7 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
     ia_eudoxus_result_t ia_rc;
     ib_hash_t *eudoxus_pattern_hash;
     ia_eudoxus_t *eudoxus;
-    ee_config_t* config;
+    const ee_config_t* config;
     ib_mpool_t *mp_tmp;
     void *tmp;
 
@@ -143,6 +144,7 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
     assert(config != NULL);
 
     eudoxus_pattern_hash = config->eudoxus_pattern_hash;
+    assert(eudoxus_pattern_hash != NULL);
 
     /* Check if the pattern name is already in use */
     rc = ib_hash_get(eudoxus_pattern_hash, &tmp, pattern_name);
@@ -200,7 +202,8 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
  *                       of the match.
  * @return IA_EUDOXUS_CMD_ERROR on error, IA_EUDOXUS_CMD_STOP otherwise.
  */
-static ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
+static
+ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
                                                     const char *output,
                                                     size_t output_length,
                                                     const uint8_t *input,
@@ -279,8 +282,8 @@ ib_status_t ee_match_any_operator_create(
     ib_status_t rc;
     ia_eudoxus_t* eudoxus;
     ib_engine_t *ib = ib_context_get_engine(ctx);
-    ee_config_t *config = ee_get_config(ib);
-    ib_hash_t *eudoxus_pattern_hash;
+    const ee_config_t *config = ee_get_config(ib);
+    const ib_hash_t *eudoxus_pattern_hash;
 
     assert(config != NULL);
     assert(config->eudoxus_pattern_hash != NULL);
@@ -401,7 +404,8 @@ ib_status_t ee_match_any_operator_execute(
  * @param[in] m Module instance.
  * @param[in] cbdata Not used.
  */
-static ib_status_t ee_module_init(ib_engine_t *ib,
+static
+ib_status_t ee_module_init(ib_engine_t *ib,
                                   ib_module_t *m,
                                   void        *cbdata)
 {
@@ -447,7 +451,8 @@ static ib_status_t ee_module_init(ib_engine_t *ib,
  * @param[in] m Module instance.
  * @param[in] cbdata Not used.
  */
-static ib_status_t ee_module_finish(ib_engine_t *ib,
+static
+ib_status_t ee_module_finish(ib_engine_t *ib,
                                     ib_module_t *m,
                                     void        *cbdata)
 {
