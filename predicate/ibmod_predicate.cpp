@@ -46,7 +46,7 @@
  *   Engine.  It will return a reference to the CallFactory used by this
  *   module.  Add your calls to that CallFactory.
  *
- * *To check internal validaty*
+ * *To check internal validity*
  *
  * - Use the `PredicateAssertValid` configuration directive.  Pass in a
  *   path to write the report to or "" for stderr.  The directive will error

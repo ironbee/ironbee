@@ -96,7 +96,7 @@ void bfs_up(
  * As bfs_up() above, but searches children instead of ancestors.
  *
  * @tparam OutputIterator Type of @a out.  Must be output iterator.
- * @param[in] which Base of descndant tree.
+ * @param[in] which Base of descendant tree.
  * @param[in] out   Output iterator to write descendants to.
  * @throw IronBee::einval if @a which is singular.
  **/
@@ -109,7 +109,7 @@ void bfs_down(const node_cp& which, OutputIterator out);
  * As previous but @ref node_p's are output to @a out.
  *
  * @tparam OutputIterator Type of @a out.  Must be output iterator.
- * @param[in] which Base of descndant tree.
+ * @param[in] which Base of descendant tree.
  * @param[in] out   Output iterator to write descendants to.
  * @throw IronBee::einval if @a which is singular.
  **/
@@ -189,7 +189,7 @@ public:
  * Write a @ref node_cp to an output iterator as a @ref node_p.
  *
  * bfs() only needs @ref node_cp's until it actually writes them to the
- * iterator.  To handle the mutable versions of bfs_up() and bfs_donw(), the
+ * iterator.  To handle the mutable versions of bfs_up() and bfs_down(), the
  * non-mutable versions are used, passing the result through this helper to
  * remove the const.  To preserve const correctness, only the mutable
  * versions of bfs_up() and bfs_down() are allowed to instantiate this class.

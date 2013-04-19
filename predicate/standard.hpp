@@ -329,7 +329,7 @@ protected:
 };
 
 /**
- * First subfield of name from first childr in second child.
+ * First subfield of name from first child in second child.
  *
  * Is null if second child is not a list or has no such subfield.
  * If all subfields of a given name are wanted, use SubAll.

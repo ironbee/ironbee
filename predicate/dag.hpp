@@ -304,7 +304,7 @@ protected:
      * Subclass classes should implement this to calculate and return the
      * value.
      *
-     * @param [in] context Contex of calculation.
+     * @param [in] context Context of calculation.
      * @return Value of node.
      */
     virtual Value calculate(EvalContext context) = 0;

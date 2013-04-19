@@ -33,7 +33,7 @@ namespace IronBee {
 namespace Predicate {
 
 /**
- * Comparsion functional for S-Expressions.  See operator()().
+ * Comparison functional for S-Expressions.  See operator()().
  **/
 struct less_sexpr {
     // Intentionally inline.

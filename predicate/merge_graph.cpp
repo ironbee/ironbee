@@ -172,7 +172,7 @@ void MergeGraph::remove_tree(const node_p& which)
 
     // Follow descendants of which so long as single parent.
     // When we hit a multiple parent child, we need to remove it from the
-    // parent we came from (the desendant of which), but should not
+    // parent we came from (the descendant of which), but should not
     // unlearn its sexpr (it's still in the graph from another parent)
     // and can stop our descent.
     // When which has know common subexpressions with other parts of
@@ -264,7 +264,7 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
 
     // At this point, we're done.  Once any external references to known_which
     // are gone, its shared count will go to 0 and it will be freed, reducing
-    // any childrens shared count, and so forth, until it and all children
+    // any children's shared count, and so forth, until it and all children
     // not still part of the graph are freed.
 }
 

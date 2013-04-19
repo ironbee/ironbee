@@ -19,7 +19,7 @@
  * @file
  * @brief Predicate --- MergeGraph
  *
- * Defines MergeGraph, a datastructure for cominging expression trees into a
+ * Defines MergeGraph, a datastructure for combining expression trees into a
  * DAG with common subexpressions merged.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
@@ -42,7 +42,7 @@ namespace Predicate {
  *
  * This class facilitates the combination and manipulation of expressions
  * trees.  The graph is defined as all nodes reachable from a set of root
- * nodes.  When a new root is added, all desendants of it that are equivalent
+ * nodes.  When a new root is added, all descendants of it that are equivalent
  * to nodes already in the graph are replaced with those nodes.  Operations
  * to add, remove, and replace children are provided that similarly preserve
  * the merging of equivalent nodes.
@@ -254,7 +254,7 @@ public:
      *
      * This routine can be used when you have retained a node from the
      * graph, transformed the graph, and now want to know what happened to
-     * your retainen .  It will not work for nodes that were not in the graph,
+     * your retained .  It will not work for nodes that were not in the graph,
      * even if they are equivalent (use known() to find an equivalent
      * in-graph node).  It will also not work across a
      * clear_transform_record() call.

@@ -38,7 +38,7 @@ namespace Predicate {
  * The following typedefs are the primary parameters for tying the public
  * API to IronBee.  If this code was to be used in a different system, much
  * of the implementation, especially of standard.hpp, would need to change,
- * but changing these typedefs should suffice for adapating the
+ * but changing these typedefs should suffice for adapting the
  * public API.
  *
  * The types are not Const because IronBee requires non-const versions for

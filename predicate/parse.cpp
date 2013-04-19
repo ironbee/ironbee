@@ -139,7 +139,7 @@ node_p parse_call(
             }
             node_p n = factory(op);
             if (! top) {
-                // Very importat to keep all our nodes in memory.
+                // Very important to keep all our nodes in memory.
                 top = n;
             }
             if (current) {

@@ -52,7 +52,7 @@ namespace Predicate {
  *
  * Use involves two parts:
  *
- * - The class publically inherits from Validate::Call, passing itself in as
+ * - The class publicly inherits from Validate::Call, passing itself in as
  *   the template parameter.  Validate::Call will implement pre_transform()
  *   and post_transform() to call the validation code defined by the
  *   the validation chain (see below).
@@ -70,7 +70,7 @@ namespace Predicate {
  * that.  As this is now at the bottom of the class hierarchy, it will be able
  * to find the @c validate() defined by the validation chain and call it.
  *
- * Why not have Validate::Call be the top fo the validation chain?  This
+ * Why not have Validate::Call be the top of the validation chain?  This
  * technique would work perfectly well if Validate::Call was used in place of
  * Validate::Base at the top of the validation chain.  Doing so would also
  * remove the need for the dynamic cast Validate::Call would be able to
@@ -97,7 +97,7 @@ namespace Predicate {
  * - Write a template that calls your function.  You can use typed template
  *   parameters to parameterize your validator, i.e., pass additional
  *   arguments to your function.  At present, there is no way to pass complex
- *   types in.  Your template should chian via the last argument, e.g.,
+ *   types in.  Your template should chain via the last argument, e.g.,
  *
  * @code
  * template <size_t arg1, class Chain = Validate::Base>

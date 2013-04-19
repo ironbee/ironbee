@@ -35,7 +35,7 @@ namespace Predicate {
 /**
  * Parse a literal.
  *
- * Text has the following grammer:
+ * Text has the following grammar:
  * @code
  * literal    := "'" ( [^\'] | \\ | \' )* "'" | null
  * @endcode
@@ -55,7 +55,7 @@ node_p parse_literal(
 /**
  * Parse a call.
  *
- * Text has the following grammer:
+ * Text has the following grammar:
  * @code
  * call       := " "* "(" name ( " "* + expression )* ")"
  * expression := call | literal

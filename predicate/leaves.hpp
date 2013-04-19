@@ -90,7 +90,7 @@ output_if_leaf<OutputIterator> make_output_if_leaf(OutputIterator out);
  * @tparam InputIterator  Type of @a begin and @a end.
  * @tparam OutputIterator Type of @a out.
  * @param[in] begin Beginning of input sequence.
- * @param[in] end   End of input sequene.
+ * @param[in] end   End of input sequence.
  * @param[in] out   Output iterator to write leaves to.
  *
  * @sa bfs_up()
