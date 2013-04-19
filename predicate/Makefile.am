@@ -2,8 +2,6 @@ include $(top_srcdir)/build/common.mk
 
 SUBDIRS = tests
 
-AM_CPPFLAGS += -I$(top_srcdir)
-
 pkglib_LTLIBRARIES = ibmod_predicate.la
 noinst_LTLIBRARIES = libpredicate.la
 libpredicate_la_SOURCES = \
