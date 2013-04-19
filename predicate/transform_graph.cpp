@@ -61,7 +61,6 @@ bool transform_graph(
 
         todo.pop_front();
 
-        cout << "n = " << (n ? n->to_s() : "null") << " @ " << n << endl;
         if (visited.count(n)) {
             continue;
         }
@@ -72,7 +71,6 @@ bool transform_graph(
         catch (IronBee::enoent) {
             tn = n;
         }
-        cout << "tn = " << (tn ? tn->to_s() : "null") << " @ " << tn << endl;
         if (! tn) {
             continue;
         }
@@ -93,8 +91,6 @@ bool transform_graph(
         catch (IronBee::enoent) {
             ttn = n;
         }
-        cout << "post transform tn = " << (tn ? tn->to_s() : "null") << " @ " << tn << endl;
-        cout << "ttn = " << (ttn ? ttn->to_s() : "null") << " @ " << ttn << endl;
 
         if (ttn) {
             visited.insert(ttn);
