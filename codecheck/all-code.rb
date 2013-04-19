@@ -21,6 +21,7 @@ def all_ironbee_code
     'include',
     'modules',
     'plugins',
+    'predicate',
     'util'
   ].each do |dir|
     extensions.each do |e|
