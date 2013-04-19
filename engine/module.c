@@ -350,3 +350,28 @@ ib_status_t ib_module_action_inst_create(
 
     return rc;
 }
+
+ib_status_t ib_module_config_initialize(
+    ib_module_t *module,
+    void *cfg,
+    size_t cfg_length)
+{
+    assert(module);
+    assert(module->ib);
+
+    ib_status_t rc;
+    ib_context_t *main_context = ib_context_main(module->ib);
+    ib_context_data_t *main_cfgdata = NULL;
+
+    assert(main_context);
+
+    rc = ib_array_get(main_context->cfgdata, module->idx, &main_cfgdata);
+    if (rc != IB_OK || main_cfgdata->data != NULL) {
+        return IB_EINVAL;
+    }
+    main_cfgdata->data = cfg;
+    module->gcdata = cfg;
+    module->gclen = cfg_length;
+
+    return IB_OK;
+}

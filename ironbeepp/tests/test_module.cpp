@@ -84,6 +84,13 @@ private:
     ib_context_t*& m_out_ib_context;
 };
 
+TEST_F(TestModule, init)
+{
+    ib_module_t* ib_module;
+    ASSERT_EQ(IB_OK, ib_module_create(&ib_module, m_engine.ib()));
+    ASSERT_EQ(IB_OK, ib_module_init(ib_module, m_engine.ib()));
+}
+
 TEST_F(TestModule, basic)
 {
     ib_module_t ib_module;
@@ -461,32 +468,42 @@ TEST_F(TestModule, DataPOD)
     test_data_t data;
     data.x = 17;
 
-    ib_module_t ib_module;
-    ib_module.ib = m_engine.ib();
-    IronBee::Module module(&ib_module);
+    ib_module_t* ib_module;
+    ASSERT_EQ(IB_OK, ib_module_create(&ib_module, m_engine.ib()));
+    ASSERT_EQ(IB_OK, ib_module_init(ib_module, m_engine.ib()));
+    IronBee::Module module(ib_module);
 
     module.set_configuration_data_pod(data, test_data_copier);
 
-    test_data_t* other = reinterpret_cast<test_data_t*>(ib_module.gcdata);
+    test_data_t* other = reinterpret_cast<test_data_t*>(ib_module->gcdata);
     ASSERT_EQ(data.x, other->x);
-    ASSERT_EQ(sizeof(data), ib_module.gclen);
+    ASSERT_EQ(sizeof(data), ib_module->gclen);
 
     ib_status_t rc;
     test_data_t other2;
-    rc = ib_module.fn_cfg_copy(
-        ib_module.ib,
-        &ib_module,
+    rc = ib_module->fn_cfg_copy(
+        ib_module->ib,
+        ib_module,
         &other2,
-        ib_module.gcdata,
-        ib_module.gclen,
-        ib_module.cbdata_cfg_copy
+        ib_module->gcdata,
+        ib_module->gclen,
+        ib_module->cbdata_cfg_copy
     );
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(data.x + 1, other2.x);
+}
+
+TEST_F(TestModule, DataPOD2)
+{
+    test_data_t data;
+    ib_module_t* ib_module;
+    ASSERT_EQ(IB_OK, ib_module_create(&ib_module, m_engine.ib()));
+    ASSERT_EQ(IB_OK, ib_module_init(ib_module, m_engine.ib()));
+    IronBee::Module module(ib_module);
 
     module.set_configuration_data_pod(data);
-    ASSERT_FALSE(ib_module.fn_cfg_copy);
-    ASSERT_FALSE(ib_module.cbdata_cfg_copy);
+    ASSERT_FALSE(ib_module->fn_cfg_copy);
+    ASSERT_FALSE(ib_module->cbdata_cfg_copy);
 }
 
 struct test_data_cpp_t
@@ -501,25 +518,26 @@ TEST_F(TestModule, DataCPP)
 {
     test_data_cpp_t data;
 
-    ib_module_t ib_module;
-    ib_module.ib = m_engine.ib();
-    IronBee::Module module(&ib_module);
+    ib_module_t* ib_module;
+    ASSERT_EQ(IB_OK, ib_module_create(&ib_module, m_engine.ib()));
+    ASSERT_EQ(IB_OK, ib_module_init(ib_module, m_engine.ib()));
+    IronBee::Module module(ib_module);
 
     module.set_configuration_data(data);
 
     test_data_cpp_t* other =
-        *reinterpret_cast<test_data_cpp_t**>(ib_module.gcdata);
+        *reinterpret_cast<test_data_cpp_t**>(ib_module->gcdata);
     ASSERT_EQ(data.x+1, other->x);
 
     ib_status_t rc;
     test_data_cpp_t* other2;
-    rc = ib_module.fn_cfg_copy(
-        ib_module.ib,
-        &ib_module,
+    rc = ib_module->fn_cfg_copy(
+        ib_module->ib,
+        ib_module,
         &other2,
-        ib_module.gcdata,
-        ib_module.gclen,
-        ib_module.cbdata_cfg_copy
+        ib_module->gcdata,
+        ib_module->gclen,
+        ib_module->cbdata_cfg_copy
     );
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(data.x + 2, other2->x);
@@ -544,9 +562,10 @@ TEST_F(TestModule, Const)
 // Complete ConfigurationMap tests are in test_configuration_map.
 TEST_F(TestModule, ConfigurationMap)
 {
-    ib_module_t ib_module;
-    ib_module.ib = m_engine.ib();
-    IronBee::Module module(&ib_module);
+    ib_module_t* ib_module;
+    ASSERT_EQ(IB_OK, ib_module_create(&ib_module, m_engine.ib()));
+    ASSERT_EQ(IB_OK, ib_module_init(ib_module, m_engine.ib()));
+    IronBee::Module module(ib_module);
 
     test_data_t data;
 
@@ -554,7 +573,7 @@ TEST_F(TestModule, ConfigurationMap)
           .number("x", &test_data_t::x)
           ;
 
-    ASSERT_TRUE(ib_module.cm_init);
-    EXPECT_FALSE(ib_module.cm_init[1].name);
-    EXPECT_EQ(std::string("x"), ib_module.cm_init[0].name);
+    ASSERT_TRUE(ib_module->cm_init);
+    EXPECT_FALSE(ib_module->cm_init[1].name);
+    EXPECT_EQ(std::string("x"), ib_module->cm_init[0].name);
 }

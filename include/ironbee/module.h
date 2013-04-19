@@ -399,6 +399,26 @@ ib_status_t DLL_PUBLIC ib_module_action_inst_create(
     ib_action_inst_t **action_instance);
 
 /**
+ * Initialize module configuration for main context.
+ *
+ * This routine is an alternative to setting an initial structure in the
+ * module declaration.  It allows modules to setup their initial configuration
+ * data in their initialization functions.
+ *
+ * @param m Module to initialize configuration data for.
+ * @param cfg Configuration data.
+ * @param cfg_length Length of configuration data.
+ *
+ * @returns
+ * - IB_OK on success.
+ * - IB_EINVAL if @a m already has configuration data.
+ */
+ib_status_t DLL_PUBLIC ib_module_config_initialize(
+    ib_module_t *module,
+    void *cfg,
+    size_t cfg_length);
+
+/**
  * @} IronBeeModule
  */
 

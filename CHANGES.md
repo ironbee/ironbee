@@ -14,6 +14,12 @@ IronBee v0.8.0
   rule engine and can be called by any code.  The API has been significantly
   simplified as well.
 
+* Added `ib_module_config_initialize()`.  This function provides an
+  alternative approach to initializing module configuration data.  The
+  original (still existent) method is to store an initial configuration data
+  value and length in the module structure.  The new approach is to call
+  this function in the module initialization handler.
+
 *IronBee++*
 
 * IronBee++ includes full support for operators and adds an optional

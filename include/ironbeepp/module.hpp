@@ -605,8 +605,13 @@ ConfigurationMapInit<DataType> Module::set_configuration_data_pod(
 ) const
 {
     MemoryPool mpool(ib_engine_pool_main_get(ib()->ib));
-    ib()->gclen = sizeof(global_data);
-    ib()->gcdata = mpool.alloc(ib()->gclen);
+    throw_if_error(
+        ib_module_config_initialize(
+          ib(),
+          mpool.alloc(sizeof(global_data)),
+          sizeof(global_data)
+      )
+    );
 
     if (ib()->gcdata == NULL) {
         BOOST_THROW_EXCEPTION(
