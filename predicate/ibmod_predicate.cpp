@@ -441,7 +441,7 @@ private:
 }
 
 // Defined in ibmod_predicate.hpp.
-P::CallFactory& DelegateCallFactory(IB::Engine engine)
+P::CallFactory& IBModPredicateCallFactory(IB::Engine engine)
 {
     IB::Module m = IB::Module::with_name(engine, c_module_name);
     PerContext& per_context = m.configuration_data<PerContext>(
