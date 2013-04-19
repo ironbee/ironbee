@@ -787,8 +787,8 @@ ib_status_t Delegate::action_create(
         P::node_p parse_tree = P::parse_call(expr, i, m_call_factory);
         if (i != expr.length() - 1) {
             // Parse failed.
-            size_t pre_length  = max(i+1, 10UL);
-            size_t post_length = max(expr.length() - i, 10UL);
+            size_t pre_length  = max(i+1,               size_t(10));
+            size_t post_length = max(expr.length() - i, size_t(10));
             ib_log_error(
                 module().engine().ib(),
                 "Predicate parser error: %s --ERROR-- %s",
