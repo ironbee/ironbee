@@ -18,6 +18,24 @@ libpredicate_la_SOURCES = \
 		validate_graph.cpp \
 		pre_eval_graph.cpp
 
+EXTRA_DIST = \
+		bfs.hpp                 \
+		call_factory.hpp        \
+		dag.hpp                 \
+		dot.hpp                 \
+		ibmod_predicate.hpp     \
+		ironbee.hpp             \
+		leaves.hpp              \
+		less.hpp                \
+		merge_graph.hpp         \
+		parse.hpp               \
+		pre_eval_graph.hpp      \
+		reporter.hpp            \
+		standard.hpp            \
+		transform_graph.hpp     \
+		validate.hpp            \
+		validate_graph.hpp
+
 ibmod_predicate_la_SOURCES = ibmod_predicate.cpp
 ibmod_predicate_la_LIBADD = libpredicate.la
 if FREEBSD

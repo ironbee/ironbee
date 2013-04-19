@@ -27,6 +27,8 @@ check_PROGRAMS = \
     test_transform_graph \
 		test_validate_graph
 
+EXTRA_TEST = parse_fixture.hpp
+
 TESTS=$(check_PROGRAMS)
 CLEANFILES=*.xml *.log
 
