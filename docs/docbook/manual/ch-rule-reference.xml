@@ -890,16 +890,6 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <para/>
         </section>
         <section>
-            <title>match</title>
-            <para><emphasis role="bold">Description:</emphasis> Returns true if the target is any of the given whitespace separated words.</para>
-            <para><emphasis role="bold">Syntax:</emphasis><literal>@match <replaceable>"word1 word2
-                        ... wordN"</replaceable></literal></para>
-            <para><emphasis role="bold">Types:</emphasis> String</para>
-            <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
-            <para/>
-        </section>
-        <section>
             <title>imatch</title>
             <para><emphasis role="bold">Description:</emphasis> As <literal>match</literal>, but
                 case insensitive.</para>
@@ -968,6 +958,16 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <para><emphasis role="bold">Types:</emphasis> Numeric</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+            <para/>
+        </section>
+        <section>
+            <title>match</title>
+            <para><emphasis role="bold">Description:</emphasis> Returns true if the target is any of the given whitespace separated words.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@match <replaceable>"word1 word2
+                ... wordN"</replaceable></literal></para>
+            <para><emphasis role="bold">Types:</emphasis> String</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
             <para/>
         </section>
         <section>
