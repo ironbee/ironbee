@@ -728,7 +728,21 @@ static modhtp_txdata_t *modhtp_get_txdata_htptx(
     modhtp_txdata_t *txdata;
 
     txdata = (modhtp_txdata_t *)htp_tx_get_user_data(htx);
+
+    /**
+     * @todo Seems that libhtp is calling our callbacks after we've
+     * closed the connection.  Hopefully fixed in a future libhtp.  Because
+     * txdata is NULL, we have no way of logging to IronBee, etc., so log
+     * something to stderr.
+     */
+#if 1
+    if (txdata == NULL) {
+        fprintf(stderr, "ERROR: NULL htx->txdata in body callback\n");
+        return NULL;
+    }
+#else
     assert(txdata != NULL);
+#endif
     assert(txdata->htx == htx);
 
     return txdata;
@@ -752,7 +766,14 @@ static modhtp_txdata_t *modhtp_get_txdata_parser(
     assert(parser_data != NULL);
     assert(parser_data->parser == parser);
 
+    /**
+     * @todo Seems that libhtp is calling our callbacks after we've
+     * closed the connection.  Hopefully fixed in a future libhtp.  Because
+     * txdata is NULL, we have no way of logging to IronBee, etc., so log
+     * something to stderr.
+     */
     if (parser_data->disconnected) {
+        fprintf(stderr, "ERROR: Parser disconnected in callback\n");
         return NULL;
     }
     txdata = htp_tx_get_user_data(parser->in_tx);
@@ -788,7 +809,7 @@ static inline ib_status_t modhtp_check_parser(
     txdata = modhtp_get_txdata_parser(parser);
     *ptxdata = txdata;
     if (txdata == NULL) {
-        /* Post close; do nothing more. */
+        /* @todo: Called after close; do nothing more. See above. */
         return IB_OK;
     }
 
@@ -1233,6 +1254,9 @@ static int modhtp_htp_req_body_data(
 
     /* Get the txdata */
     txdata = modhtp_get_txdata_htptx(htp_tx_data->tx);
+    if (txdata == NULL) {
+        return HTP_OK;      /** @todo: called after close */
+    }
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
 
     return HTP_OK;
@@ -1360,6 +1384,9 @@ static int modhtp_htp_rsp_body_data(
 
     /* Get the txdata */
     txdata = modhtp_get_txdata_htptx(htp_tx_data->tx);
+    if (txdata == NULL) {
+        return HTP_OK;         /** @todo Called after close */
+    }
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
     return HTP_OK;
