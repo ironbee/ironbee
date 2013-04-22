@@ -336,7 +336,10 @@ ib_status_t DLL_PUBLIC ib_rule_lookup(
  * @param[in] ref Reference rule.
  * @param[out] rule Matching rule.
  *
- * @returns Status code
+ * @returns Status code:
+ *  - IB_ENOENT No matching rule found
+ *  - IB_EBADVAL Matching rule has different phase
+ *  - IB_OK Matching rule found, phase matches
  */
 ib_status_t DLL_PUBLIC ib_rule_match(
     ib_engine_t                *ib,

@@ -297,6 +297,9 @@ ib_rule_phase_num_t ib_rule_lookup_phase(
 
     for (item = phase_lookup_table;  item->str != NULL;  ++item) {
          if (strcasecmp(str, item->str) == 0) {
+             if (item->is_stream != is_stream) {
+                 return PHASE_INVALID;
+             }
              return item->phase;
          }
     }
@@ -3886,24 +3889,19 @@ ib_status_t ib_rule_match(ib_engine_t *ib,
     assert(rule != NULL);
 
     ib_status_t rc;
-    ib_rule_t *match = NULL;
 
     /* Lookup rule with matching ID */
-    rc = ib_rule_lookup(ib, ctx, ref->meta.id, &match);
+    rc = ib_rule_lookup(ib, ctx, ref->meta.id, rule);
     if (rc != IB_OK) {
-        return rc;
+        return IB_ENOENT;
     }
 
     /* Verify that phase's match */
-    if (ref->meta.phase != match->meta.phase) {
-        ib_log_error(ib,
-                     "\"%s\":%u: Rule phase mismatch @ \"%s\":%u",
-                     ref->meta.config_file, ref->meta.config_line,
-                     match->meta.config_file, match->meta.config_line);
-        return IB_EINVAL;
+    if (ref->meta.phase != (*rule)->meta.phase) {
+        return IB_EBADVAL;
     }
 
-    *rule = match;
+    /* Done */
     return IB_OK;
 }
 
@@ -4096,7 +4094,25 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     /* Put this rule in the hash */
     lookup = NULL;
     rc = ib_rule_match(ib, ctx, rule, &lookup);
-    if ( (rc != IB_OK) && (rc != IB_ENOENT) ) {
+    switch(rc) {
+    case IB_OK:
+    case IB_ENOENT:
+        break;
+    case IB_EBADVAL:
+        ib_cfg_log_error_ex(ib,
+                            rule->meta.config_file,
+                            rule->meta.config_line,
+                            "Phase %s of rule \"%s\":%u "
+                            "differs from previous definition",
+                            ib_rule_phase_name(rule->meta.phase),
+                            rule->meta.id, rule->meta.revision);
+        ib_cfg_log_error_ex(ib,
+                            lookup->meta.config_file, lookup->meta.config_line,
+                            "Note: %s phase previous definition of \"%s\":%u",
+                            ib_rule_phase_name(lookup->meta.phase),
+                            lookup->meta.id, lookup->meta.revision);
+        return rc;
+    default:
         ib_cfg_log_error_ex(ib,
                             rule->meta.config_file,
                             rule->meta.config_line,
