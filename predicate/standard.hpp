@@ -280,6 +280,48 @@ private:
 };
 
 /**
+ * As Operator, but with operator name bound in advance.
+ *
+ * Unlike most Call's, SpecificOperator takes a name in its constructor.  This
+ * name is used both as its name and as the name of the Operator to transform
+ * into.  On transform, it will replace itself with an Operator with a first
+ * child as the name and the latter children as the same as the
+ * SpecificOperator's children.
+ **/
+class SpecificOperator :
+    public Validate::Call<SpecificOperator>,
+    public Validate::NChildren<2,
+           Validate::NthChildIsString<1
+           > >
+{
+public:
+    //! Constructor.
+    explicit
+    SpecificOperator(const std::string& op);
+
+    //! See Call:name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with Operator with first argument given by
+    * constructor.
+    **/
+   virtual bool transform(
+       NodeReporter       reporter,
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory
+   );
+
+protected:
+    virtual Value calculate(EvalContext context);
+
+private:
+    const std::string m_operator;
+};
+
+/**
  * Construct a named value from a name (string) and value.
  **/
 class Name :

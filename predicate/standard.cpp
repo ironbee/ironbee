@@ -510,6 +510,44 @@ Value Operator::calculate(EvalContext context)
     }
 }
 
+SpecificOperator::SpecificOperator(const std::string& op) :
+    m_operator(op)
+{
+    // nop
+}
+
+std::string SpecificOperator::name() const
+{
+    return m_operator;
+}
+
+bool SpecificOperator::transform(
+    NodeReporter       reporter,
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory
+)
+{
+    assert(children().size() == 2);
+
+    const node_cp& me = shared_from_this();
+    node_p replacement(new Operator());
+    replacement->add_child(node_p(new String(m_operator)));
+    replacement->add_child(children().front());
+    replacement->add_child(children().back());
+
+    merge_graph.replace(me, replacement);
+    return true;
+}
+
+Value SpecificOperator::calculate(EvalContext context)
+{
+    BOOST_THROW_EXCEPTION(
+        einval() << errinfo_what(
+            "SpecificOperator must transform."
+        )
+    );
+}
+
 string Name::name() const
 {
     return "name";
@@ -670,6 +708,15 @@ Value SubAll::calculate(EvalContext context)
     }
 }
 
+namespace {
+
+call_p generate_specific_operator(const std::string& name)
+{
+    return call_p(new SpecificOperator(name));
+}
+
+}
+
 void load(CallFactory& to)
 {
     to
@@ -686,6 +733,13 @@ void load(CallFactory& to)
         .add<Length>()
         .add<Sub>()
         .add<SubAll>()
+    ;
+
+    // IronBee SpecificOperators
+    to
+        .add("streq", generate_specific_operator)
+        .add("istreq", generate_specific_operator)
+        .add("rx", generate_specific_operator)
     ;
 }
 

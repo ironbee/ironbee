@@ -227,6 +227,15 @@ TEST_F(TestStandard, Operator)
     EXPECT_THROW(eval_bool("(operator null 'b' 'c')"), IronBee::einval);
 }
 
+TEST_F(TestStandard, SpecificOperator)
+{
+    EXPECT_EQ("(operator 'istreq' 'a' 'b')", transform("(istreq 'a' 'b')"));
+    EXPECT_THROW(eval_bool("(istreq)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(istreq 'a')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(istreq 'a' 'b' 'c')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(istreq null 'c')"), IronBee::einval);
+}
+
 TEST_F(TestStandard, Length)
 {
     EXPECT_EQ(0, eval_n("(length null)"));
