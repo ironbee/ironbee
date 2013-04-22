@@ -57,13 +57,11 @@ typedef struct {
 
 /** File system persistence configuration data */
 typedef struct {
-    mode_t fmode;                    /**< Mode of files for fs persist. */
-    mode_t dmode;                    /**< Mode of dirs for fs persist. */
 } mod_persist_cfg_t;
-static mod_persist_cfg_t mod_persist_global_cfg = { 0644, 0755 };
+static mod_persist_cfg_t mod_persist_global_cfg;
 
 /** Default expiration time of persisted collections (useconds) */
-static const int default_expiration = 60LU * 1000000LU;
+static const ib_time_t default_expiration = 60LU * 1000000LU;
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        persist
@@ -91,13 +89,11 @@ IB_MODULE_DECLARE();
  * @returns Status code:
  *   - IB_DECLINED Parameters not recognized
  *   - IB_OK All OK, parameters recognized
- *   - IB_EALLOC Memory allocation error
  *   - IB_Exxx Other error
  */
 static ib_status_t mod_persist_register_fn(
     const ib_engine_t              *ib,
     const ib_module_t              *module,
-    ib_context_t                   *ctx,
     const ib_collection_manager_t  *manager,
     ib_mpool_t                     *mp,
     const char                     *collection_name,
@@ -129,16 +125,6 @@ static ib_status_t mod_persist_register_fn(
     int ovector[ovecsize];
     int pcre_rc;
     ib_time_t expiration = default_expiration;
-    mod_persist_cfg_t *cfg;
-
-    /* Grab the module configuration values. */
-    /* Const cast is unfortunate side effect of not being able to distinguish
-     * between read-only and read-write access to config. */
-    // @todo Add const correct ib_context_module_config_const()
-    rc = ib_context_module_config(ctx, (ib_module_t *)module, &cfg);
-    if ( rc!= IB_OK) {
-        return rc;
-    }
 
     if (ib_list_elements(params) < 1) {
         return IB_EINVAL;
@@ -214,8 +200,6 @@ static ib_status_t mod_persist_register_fn(
     if (rc != IB_OK) {
         return rc;
     }
-    ib_kvstore_filesystem_set_directory_mode(kvstore, cfg->dmode);
-    ib_kvstore_filesystem_set_file_mode(kvstore, cfg->fmode);
     rc = ib_kvstore_connect(kvstore);
     if (rc != IB_OK) {
         return rc;
@@ -523,13 +507,10 @@ static ib_status_t mod_persist_init(
     int eoff;
     ib_status_t rc;
     const ib_collection_manager_t *manager;
-    ib_context_t *ctx;
-
-    ctx = ib_context_main(ib);
 
     /* Register the name/value pair InitCollection handler */
     rc = ib_collection_manager_register(
-        ib, module, ctx, "Filesystem K/V-Store", "persist-fs://",
+        ib, module, "Filesystem K/V-Store", "persist-fs://",
         mod_persist_register_fn, NULL,
         mod_persist_unregister_fn, NULL,
         mod_persist_populate_fn, NULL,
@@ -565,90 +546,13 @@ static ib_status_t mod_persist_fini(ib_engine_t *ib,
     return IB_OK;
 }
 
-static ib_status_t file_mode_param1(ib_cfgparser_t *cp,
-                                    const char *name,
-                                    const char *p1,
-                                    void *cbdata)
-{
-    ib_status_t rc;
-    ib_context_t *ctx;
-    mod_persist_cfg_t *cfg;
-    ib_module_t *m;
-
-    rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &m);
-    if (rc != IB_OK) {
-        return IB_EOTHER;
-    }
-
-    rc = ib_cfgparser_context_current(cp, &ctx);
-    if ( rc!= IB_OK) {
-        return rc;
-    }
-
-    rc = ib_context_module_config(ctx, m, &cfg);
-    if ( rc!= IB_OK) {
-        return rc;
-    }
-
-    cfg->fmode = atoi(p1);
-
-    return IB_OK;
-}
-static ib_status_t dir_mode_param1(ib_cfgparser_t *cp,
-                                   const char *name,
-                                   const char *p1,
-                                   void *cbdata)
-{
-    ib_status_t rc;
-    ib_context_t *ctx;
-    mod_persist_cfg_t *cfg;
-    ib_module_t *m;
-
-    rc = ib_cfgparser_context_current(cp, &ctx);
-    if ( rc!= IB_OK) {
-        return rc;
-    }
-
-    rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &m);
-    if (rc != IB_OK) {
-        return IB_EOTHER;
-    }
-
-    rc = ib_context_module_config(ctx, m, &cfg);
-    if ( rc!= IB_OK) {
-        return rc;
-    }
-
-    cfg->dmode = atoi(p1);
-
-    return IB_OK;
-}
-
-static IB_DIRMAP_INIT_STRUCTURE(persist_directive_map) = {
-
-    /* Give the config parser a callback for the directive GeoIPDatabaseFile */
-    IB_DIRMAP_INIT_PARAM1(
-        "PersistDirMode",
-        dir_mode_param1,
-        NULL
-    ),
-
-    IB_DIRMAP_INIT_PARAM1(
-        "PersistFileMode",
-        file_mode_param1,
-        NULL
-    ),
-
-    /* signal the end of the list */
-    IB_DIRMAP_INIT_LAST
-};
 /* Initialize the module structure. */
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,             /* Default metadata */
     MODULE_NAME_STR,                       /* Module name */
     IB_MODULE_CONFIG(&mod_persist_global_cfg), /* Global config data */
     NULL,                                  /* Configuration field map */
-    persist_directive_map,                 /* Config directive map */
+    NULL,                                  /* Config directive map */
     mod_persist_init,                      /* Initialize function */
     NULL,                                  /* Callback data */
     mod_persist_fini,                      /* Finish function */

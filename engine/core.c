@@ -4070,14 +4070,6 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
     ib_managed_collection_t *collection = NULL;
     bool                     new_collection = false;
     ib_list_t               *managers_debug = NULL;
-    ib_context_t            *ctx;
-
-    rc = ib_cfgparser_context_current(cp, &ctx);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to get current configuration context: %s",
-                         ib_status_to_string(rc));
-        return rc;
-    }
 
     mp = ib_engine_pool_config_get(cp->ib);
 
@@ -4157,7 +4149,7 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
     }
 
     /* Select a collection manager */
-    rc = ib_managed_collection_select(cp->ib, mp, ctx,
+    rc = ib_managed_collection_select(cp->ib, mp,
                                       collection_name,
                                       collection_uri,
                                       params,
@@ -4961,7 +4953,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
 
     /* Initialize the core collection managers */
-    rc = ib_core_collection_managers_register(ib, ib->ctx, m);
+    rc = ib_core_collection_managers_register(ib, m);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to register core collection managers: %s",
                      ib_status_to_string(rc));

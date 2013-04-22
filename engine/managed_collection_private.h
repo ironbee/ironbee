@@ -163,20 +163,18 @@ ib_status_t DLL_PUBLIC ib_managed_collection_persist_tx(
  * managers are then associated with collection.
  *
  * @param[in] ib Engine.
- * @param[in] mp Memory pool to use for allocations.
- * @param[in] ctx The current configuration context.
- * @param[in] collection_name Name of the managed collection.
- * @param[in] uri The URI associated with the managed collection.
- * @param[in] params Parameter list.
- * @param[in,out] collection Managed collection object.
- * @param[out] managers List of selected collection managers (or NULL).
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] collection_name Name of the managed collection
+ * @param[in] uri The URI associated with the managed collection
+ * @param[in] params Parameter list
+ * @param[in,out] collection Managed collection object
+ * @param[out] managers List of selected collection managers (or NULL)
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_managed_collection_select(
     ib_engine_t                    *ib,
     ib_mpool_t                     *mp,
-    ib_context_t                   *ctx,
     const char                     *collection_name,
     const char                     *uri,
     const ib_list_t                *params,

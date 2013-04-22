@@ -45,7 +45,6 @@
 ib_status_t ib_collection_manager_register(
     ib_engine_t                            *ib,
     const ib_module_t                      *module,
-    ib_context_t                           *ctx,
     const char                             *name,
     const char                             *uri_scheme,
     ib_collection_manager_register_fn_t     register_fn,
@@ -127,7 +126,6 @@ ib_status_t ib_managed_collection_create(
 ib_status_t ib_managed_collection_select(
     ib_engine_t              *ib,
     ib_mpool_t               *mp,
-    ib_context_t             *ctx,
     const char               *collection_name,
     const char               *uri,
     const ib_list_t          *params,
@@ -167,7 +165,6 @@ ib_status_t ib_managed_collection_select(
         /* Register the managed collection with the collection manager */
         rc = manager->register_fn(ib,
                                   manager->module,
-                                  ctx,
                                   manager,
                                   mp,
                                   collection_name,
