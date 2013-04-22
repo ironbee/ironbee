@@ -70,6 +70,22 @@ static const ib_time_t default_expiration = 60LU * 1000000LU;
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
+/**
+ * Helper function that checks if the submitted @a val matches @a name.
+ *
+ * @param val The parameter value.
+ * @param val_len The value length.
+ * @param name The name. This must be a \0 terminated string.
+ */
+static inline bool param_eq(
+    const char *val,
+    const int val_len,
+    const char *name)
+{
+    const int name_len = strlen(name);
+
+    return (val_len == name_len) && (strncasecmp(val, name, name_len) == 0);
+}
 
 /**
  * Handle managed collection register for persistent file system
@@ -124,6 +140,8 @@ static ib_status_t mod_persist_register_fn(
     const int ovecsize = 9;
     int ovector[ovecsize];
     int pcre_rc;
+    mode_t dmode = 0755;
+    mode_t fmode = 0644;
     ib_time_t expiration = default_expiration;
 
     if (ib_list_elements(params) < 1) {
@@ -165,13 +183,39 @@ static ib_status_t mod_persist_register_fn(
         value     = nodestr + ovector[4];
         value_len = ovector[5] - ovector[4];
 
-        if ( (param_len == 3) && (strncasecmp(param, "key", 3) == 0) ) {
+        if ( param_eq(param, param_len, "key") ){
             key = ib_mpool_memdup_to_str(mp, value, value_len);
             if (key == NULL) {
                 return IB_EALLOC;
             }
         }
-        else if ( (param_len == 6) && (strncasecmp(param, "expire", 6) == 0) ) {
+        else if ( param_eq(param, param_len, "fmode") ) {
+            ib_num_t tmp_mode;
+            const char *mode_str;
+
+            mode_str = ib_mpool_memdup_to_str(mp, value, value_len);
+            rc = ib_string_to_num(mode_str, 8, &tmp_mode);
+            if (rc == IB_OK) {
+                fmode = tmp_mode;
+            }
+            else {
+                ib_log_error(ib, "Invalid mode: %s", mode_str);
+            }
+        }
+        else if ( param_eq(param, param_len, "dmode") ) {
+            ib_num_t tmp_mode;
+            const char *mode_str;
+            
+            mode_str = ib_mpool_memdup_to_str(mp, value, value_len);
+            rc = ib_string_to_num(mode_str, 8, &tmp_mode);
+            if (rc == IB_OK) {
+                dmode = tmp_mode;
+            }
+            else {
+                ib_log_error(ib, "Invalid mode: %s", mode_str);
+            }
+        }
+        else if ( param_eq(param, param_len, "expire") ) {
             ib_float_t seconds;
             rc = ib_string_to_float_ex(value, value_len, &seconds);
             if (rc != IB_OK) {
@@ -200,6 +244,8 @@ static ib_status_t mod_persist_register_fn(
     if (rc != IB_OK) {
         return rc;
     }
+    ib_kvstore_filesystem_set_directory_mode(kvstore, dmode);
+    ib_kvstore_filesystem_set_file_mode(kvstore, fmode);
     rc = ib_kvstore_connect(kvstore);
     if (rc != IB_OK) {
         return rc;
