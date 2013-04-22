@@ -121,7 +121,7 @@ ib_status_t ib_module_create(ib_module_t **pm,
  * is compared against the statically linked IB_MODULE_SYM, i.e., the one
  * that core defines.  This extern allows the code to access its address.
  */
-extern ib_module_t *IB_MODULE_SYM(ib_engine_t *);
+extern const ib_module_t *IB_MODULE_SYM(ib_engine_t *);
 
 ib_status_t ib_module_load(ib_module_t **pm,
                            ib_engine_t *ib,
@@ -161,12 +161,25 @@ ib_status_t ib_module_load(ib_module_t **pm,
         return rc;
     }
 
-    /* Fetch the module structure. */
-    *pm = sym.fn_sym(ib);
-    if (*pm == NULL) {
-        ib_log_error(ib, "Failed to load module %s: no module structure",
-                     file);
-        return IB_EUNKNOWN;
+    {
+        const ib_module_t *m;
+
+        /* Fetch and copy the module structure. */
+        m = sym.fn_sym(ib);
+        if (m == NULL) {
+            ib_log_error(ib, "Failed to load module %s: no module structure",
+                         file);
+            return IB_EUNKNOWN;
+        }
+        *pm = (ib_module_t *)ib_mpool_alloc(
+            ib_engine_pool_main_get(ib), sizeof(**pm)
+        );
+        if (*pm == NULL) {
+            return IB_EALLOC;
+        }
+        /* Copy by value! */
+        **pm = *m;
+        /* m departs scope, never to return. */
     }
 
     /* Check module for ABI compatibility with this engine */

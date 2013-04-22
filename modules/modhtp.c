@@ -696,19 +696,21 @@ static inline ib_status_t modhtp_set_hostname(
 /**
  * Get the transaction data for an IronBee transaction
  *
+ * @param[in] m   ModHTP module.
  * @param[in] itx IronBee transaction
  *
  * @returns Pointer to the transaction data
  */
 static modhtp_txdata_t *modhtp_get_txdata_ibtx(
-    const ib_tx_t    *itx)
+    const ib_module_t *m,
+    const ib_tx_t     *itx)
 {
     assert(itx != NULL);
     assert(itx->conn != NULL);
     modhtp_txdata_t *txdata;
     ib_status_t rc;
 
-    rc = ib_tx_get_module_data(itx, IB_MODULE_STRUCT_PTR, &txdata);
+    rc = ib_tx_get_module_data(itx, m, &txdata);
     assert(rc == IB_OK);
     assert(txdata != NULL);
     assert(txdata->itx == itx);
@@ -724,7 +726,7 @@ static modhtp_txdata_t *modhtp_get_txdata_ibtx(
  * @returns Pointer to the transaction data
  */
 static modhtp_txdata_t *modhtp_get_txdata_htptx(
-    const htp_tx_t   *htx)
+    const htp_tx_t    *htx)
 {
     assert(htx != NULL);
     modhtp_txdata_t *txdata;
@@ -1805,7 +1807,7 @@ static ib_status_t modhtp_iface_conn_init(
     htp_connp_t            *parser;
 
     /* Get the module config. */
-    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&config);
+    rc = ib_context_module_config(ctx, (ib_module_t *)pi->data, (void *)&config);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
@@ -1959,7 +1961,7 @@ static ib_status_t modhtp_iface_tx_init(
     }
 
     /* Get the module's configuration for the context */
-    irc = ib_context_module_config(itx->ctx, IB_MODULE_STRUCT_PTR, &config);
+    irc = ib_context_module_config(itx->ctx, (ib_module_t *)pi->data, &config);
     if (irc != IB_OK) {
         ib_log_alert(itx->ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(irc));
@@ -1987,7 +1989,7 @@ static ib_status_t modhtp_iface_tx_init(
 
     /* Point both transactions at the transaction data */
     htp_tx_set_user_data(htx, txdata);
-    irc = ib_tx_set_module_data(itx, IB_MODULE_STRUCT_PTR, txdata);
+    irc = ib_tx_set_module_data(itx, (const ib_module_t *)pi->data, txdata);
     if (irc != IB_OK) {
         return irc;
     }
@@ -2013,7 +2015,7 @@ static ib_status_t modhtp_iface_tx_cleanup(
     modhtp_txdata_t *txdata;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     /* Reset libhtp connection parser. */
     ib_log_debug_tx(itx, "Destroying LibHTP transaction (%p)", txdata->htx);
@@ -2043,7 +2045,7 @@ static ib_status_t modhtp_iface_request_started(
     htp_status_t           hrc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     /* Start the request */
     hrc = htp_tx_state_request_start(txdata->htx);
@@ -2073,7 +2075,7 @@ static ib_status_t modhtp_iface_request_line(
     ib_status_t            irc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     ib_log_debug_tx(itx, "SEND REQUEST LINE TO LIBHTP: \"%.*s\"",
                     (int)ib_bytestr_length(line->raw),
@@ -2121,7 +2123,7 @@ static ib_status_t modhtp_iface_request_header_data(
     ib_status_t            irc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     ib_log_debug_tx(itx, "SEND REQUEST HEADER DATA TO LIBHTP");
 
@@ -2155,7 +2157,7 @@ static ib_status_t modhtp_iface_request_header_finished(
     htp_status_t           hrc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     /* Update the state */
     hrc = htp_tx_state_request_headers(txdata->htx);
@@ -2200,7 +2202,7 @@ static ib_status_t modhtp_iface_request_body_data(
     ib_status_t            irc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     ib_log_debug_tx(itx,
                     "SEND REQUEST BODY DATA TO LIBHTP: "
@@ -2237,7 +2239,7 @@ static ib_status_t modhtp_iface_request_finished(
     htp_status_t           hrc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     /* Generate fields. */
     irc = modhtp_gen_request_fields(txdata->htx, itx);
@@ -2275,7 +2277,7 @@ static ib_status_t modhtp_iface_response_started(
     ib_status_t            irc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     /* Start the response transaction */
     hrc = htp_tx_state_response_start(txdata->htx);
@@ -2320,7 +2322,7 @@ static ib_status_t modhtp_iface_response_line(
                     "modhtp_iface_response_line");
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
     htx = txdata->htx;
 
     /* Hand off the status line */
@@ -2366,7 +2368,7 @@ static ib_status_t modhtp_iface_response_header_data(
     ib_status_t            irc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
@@ -2407,7 +2409,7 @@ static ib_status_t modhtp_iface_response_header_finished(
     htp_status_t           hrc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     /* Update the state */
     hrc = htp_tx_state_response_headers(txdata->htx);
@@ -2457,7 +2459,7 @@ static ib_status_t modhtp_iface_response_body_data(
     ib_status_t            irc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     ib_log_debug_tx(itx,
                     "SEND RESPONSE BODY DATA TO LIBHTP: "
@@ -2493,7 +2495,7 @@ static ib_status_t modhtp_iface_response_finished(
     htp_status_t           hrc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(itx);
+    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
 
     /* Generate fields. */
     irc = modhtp_gen_response_fields(txdata->htx, itx);
@@ -2507,6 +2509,32 @@ static ib_status_t modhtp_iface_response_finished(
     if (irc != IB_OK) {
         return irc;
     }
+
+    return IB_OK;
+}
+
+/**
+ * Initialize parser instance.
+ *
+ * Find and store this module in @c pi->data.
+ *
+ * @param[in] pi Provider instance to update.
+ * @param[in] data Ignored.
+ * @return IB_EOTHER if module could not be found; IB_OK otherwise.
+ **/
+static ib_status_t modhtp_parser_instance_init(ib_provider_inst_t *pi,
+                                               void *data)
+{
+    assert(pi != NULL);
+    ib_module_t *m;
+    ib_status_t rc;
+
+    rc = ib_engine_module_get(pi->pr->ib, MODULE_NAME_STR, &m);
+    if (rc != IB_OK) {
+        return IB_EOTHER;
+    }
+
+    pi->data = m;
 
     return IB_OK;
 }
@@ -2571,7 +2599,7 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     rc = ib_provider_register(ib, IB_PROVIDER_TYPE_PARSER,
                               MODULE_NAME_STR, NULL,
                               &modhtp_parser_iface,
-                              NULL);
+                              &modhtp_parser_instance_init);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      MODULE_NAME_STR ": Error registering htp parser provider: "
@@ -2633,7 +2661,7 @@ static ib_status_t modhtp_context_close(
     }
 
     /* Get the module config. */
-    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&config);
+    rc = ib_context_module_config(ctx, m, (void *)&config);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));

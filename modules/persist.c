@@ -132,7 +132,10 @@ static ib_status_t mod_persist_register_fn(
     mod_persist_cfg_t *cfg;
 
     /* Grab the module configuration values. */
-    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, &cfg);
+    /* Const cast is unfortunate side effect of not being able to distinguish
+     * between read-only and read-write access to config. */
+    // @todo Add const correct ib_context_module_config_const()
+    rc = ib_context_module_config(ctx, (ib_module_t *)module, &cfg);
     if ( rc!= IB_OK) {
         return rc;
     }
@@ -570,13 +573,19 @@ static ib_status_t file_mode_param1(ib_cfgparser_t *cp,
     ib_status_t rc;
     ib_context_t *ctx;
     mod_persist_cfg_t *cfg;
+    ib_module_t *m;
+
+    rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &m);
+    if (rc != IB_OK) {
+        return IB_EOTHER;
+    }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if ( rc!= IB_OK) {
         return rc;
     }
 
-    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, &cfg);
+    rc = ib_context_module_config(ctx, m, &cfg);
     if ( rc!= IB_OK) {
         return rc;
     }
@@ -593,13 +602,19 @@ static ib_status_t dir_mode_param1(ib_cfgparser_t *cp,
     ib_status_t rc;
     ib_context_t *ctx;
     mod_persist_cfg_t *cfg;
+    ib_module_t *m;
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if ( rc!= IB_OK) {
         return rc;
     }
 
-    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, &cfg);
+    rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &m);
+    if (rc != IB_OK) {
+        return IB_EOTHER;
+    }
+
+    rc = ib_context_module_config(ctx, m, &cfg);
     if ( rc!= IB_OK) {
         return rc;
     }

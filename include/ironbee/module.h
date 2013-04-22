@@ -131,7 +131,7 @@ extern "C" {
  * @param ib Engine handle
  * @returns Address of the module structure
  */
-typedef ib_module_t *(*ib_module_sym_fn)(ib_engine_t* ib);
+typedef const ib_module_t *(*ib_module_sym_fn)(ib_engine_t* ib);
 
 /**
  * Function to handle copying configuration data.

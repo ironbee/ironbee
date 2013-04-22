@@ -1072,6 +1072,7 @@ ib_status_t dfa_operator_create(
  *
  * The hash is stored at the key @c HASH_NAME_STR.
  *
+ * @param[in] m  PCRE module.
  * @param[in] tx The transaction containing @c tx->data which holds
  *            the @a operator_data object.
  * @param[out] hash The fetched or created rule data hash. This is set
@@ -1081,8 +1082,12 @@ ib_status_t dfa_operator_create(
  *   - IB_OK on success.
  *   - IB_EALLOC on allocation failure
  */
-static ib_status_t get_or_create_operator_data_hash(ib_tx_t *tx,
-                                                    ib_hash_t **hash)
+static
+ib_status_t get_or_create_operator_data_hash(
+    const ib_module_t  *m,
+    ib_tx_t            *tx,
+    ib_hash_t         **hash
+)
 {
     assert(tx);
     assert(tx->mp);
@@ -1090,7 +1095,7 @@ static ib_status_t get_or_create_operator_data_hash(ib_tx_t *tx,
     ib_status_t rc;
 
     /* Get or create the hash that contains the rule data. */
-    rc = ib_tx_get_module_data(tx, IB_MODULE_STRUCT_PTR, (void **)hash);
+    rc = ib_tx_get_module_data(tx, m, (void **)hash);
     if ( (rc == IB_OK) && (*hash != NULL) ) {
         ib_log_debug2_tx(tx, "Found rule data hash in tx.");
         return IB_OK;
@@ -1105,7 +1110,7 @@ static ib_status_t get_or_create_operator_data_hash(ib_tx_t *tx,
         return rc;
     }
 
-    rc = ib_tx_set_module_data(tx, IB_MODULE_STRUCT_PTR, *hash);
+    rc = ib_tx_set_module_data(tx, m, *hash);
     if (rc != IB_OK) {
         ib_log_debug2_tx(tx, "Failed to store hash: %s",
                          ib_status_to_string(rc));
@@ -1127,6 +1132,7 @@ typedef struct dfa_workspace_t dfa_workspace_t;
 /**
  * Create the per-transaction data for use with the dfa operator.
  *
+ * @param[in] m PCRE module.
  * @param[in,out] tx Transaction to store the value in.
  * @param[in] cpatt_data Compiled pattern data
  * @param[in] id The operator identifier used to get it's workspace.
@@ -1136,10 +1142,14 @@ typedef struct dfa_workspace_t dfa_workspace_t;
  *   - IB_OK on success.
  *   - IB_EALLOC on an allocation error.
  */
-static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
-                                     const modpcre_cpat_data_t *cpatt_data,
-                                     const char *id,
-                                     dfa_workspace_t **workspace)
+static
+ib_status_t alloc_dfa_tx_data(
+    const ib_module_t          *m,
+    ib_tx_t                    *tx,
+    const modpcre_cpat_data_t  *cpatt_data,
+    const char                 *id,
+    dfa_workspace_t           **workspace
+)
 {
     assert(tx);
     assert(tx->mp);
@@ -1152,7 +1162,7 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
     size_t size;
 
     *workspace = NULL;
-    rc = get_or_create_operator_data_hash(tx, &hash);
+    rc = get_or_create_operator_data_hash(m, tx, &hash);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1180,6 +1190,7 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
 /**
  * Return the per-transaction data for use with the dfa operator.
  *
+ * @param[in] m PCRE module.
  * @param[in,out] tx Transaction to store the value in.
  * @param[in] id The operator identifier used to get it's workspace.
  * @param[out] workspace Retrieved.
@@ -1191,9 +1202,10 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
  */
 static
 ib_status_t get_dfa_tx_data(
-    ib_tx_t          *tx,
-    const char       *id,
-    dfa_workspace_t **workspace
+    const ib_module_t  *m,
+    ib_tx_t            *tx,
+    const char         *id,
+    dfa_workspace_t   **workspace
 )
 {
     assert(tx);
@@ -1204,7 +1216,7 @@ ib_status_t get_dfa_tx_data(
     ib_hash_t *hash;
     ib_status_t rc;
 
-    rc = get_or_create_operator_data_hash(tx, &hash);
+    rc = get_or_create_operator_data_hash(m, tx, &hash);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1256,7 +1268,9 @@ ib_status_t dfa_operator_execute(
     int options; /* dfa exec options. */
     int start_offset;
     int match_count;
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
+    assert(m != NULL);
     assert(operator_data->cpdata->is_dfa == true);
 
     ovector = (int *)malloc(ovecsize*sizeof(*ovector));
@@ -1289,7 +1303,7 @@ ib_status_t dfa_operator_execute(
     }
 
     /* Get the per-tx workspace data for this rule data id. */
-    ib_rc = get_dfa_tx_data(tx, id, &dfa_workspace);
+    ib_rc = get_dfa_tx_data(m, tx, id, &dfa_workspace);
     if (ib_rc == IB_ENOENT) {
         /* First time we are called, clear the captures. */
         if (capture) {
@@ -1302,7 +1316,7 @@ ib_status_t dfa_operator_execute(
 
         options = PCRE_PARTIAL_SOFT;
 
-        ib_rc = alloc_dfa_tx_data(tx, operator_data->cpdata, id, &dfa_workspace);
+        ib_rc = alloc_dfa_tx_data(m, tx, operator_data->cpdata, id, &dfa_workspace);
         if (ib_rc != IB_OK) {
             free(ovector);
             return ib_rc;
@@ -1632,7 +1646,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE),
         pcre_operator_create, NULL,
         NULL, NULL,
-        pcre_operator_execute, NULL
+        pcre_operator_execute, m
     );
 
     /* An alias of pcre. The same callbacks are registered. */
@@ -1643,7 +1657,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE),
         pcre_operator_create, NULL,
         NULL, NULL,
-        pcre_operator_execute, NULL
+        pcre_operator_execute, m
     );
 
     /* Register a pcre operator that uses pcre_dfa_exec to match streams. */
@@ -1654,7 +1668,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_STREAM | IB_OP_CAPABILITY_CAPTURE),
         dfa_operator_create, NULL,
         NULL, NULL,
-        dfa_operator_execute, NULL
+        dfa_operator_execute, m
     );
 
     return IB_OK;

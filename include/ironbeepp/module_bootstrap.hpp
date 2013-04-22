@@ -292,7 +292,7 @@ void bootstrap_module(
  **/
 #define IBPP_BOOTSTRAP_MODULE(name, on_load) \
 extern "C" { \
-ib_module_t* IB_MODULE_SYM(ib_engine_t* ib) \
+const ib_module_t* IB_MODULE_SYM(ib_engine_t* ib) \
 { \
     static ib_module_t ib_module; \
     try { \

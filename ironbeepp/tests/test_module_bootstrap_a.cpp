@@ -32,7 +32,7 @@ class TestModuleBootstrapA : public ::testing::Test, public IBPPTestFixture
 {
 };
 
-static ib_module_t* g_test_module;
+static const ib_module_t* g_test_module;
 
 void on_load(IronBee::Module m)
 {
@@ -47,7 +47,7 @@ TEST_F(TestModuleBootstrapA, basic)
 {
     g_test_module = NULL;
 
-    ib_module_t* m = IB_MODULE_SYM(m_engine.ib());
+    const ib_module_t* m = IB_MODULE_SYM(m_engine.ib());
 
     ASSERT_EQ(m,                     g_test_module);
     ASSERT_EQ(s_module_name,         m->name);

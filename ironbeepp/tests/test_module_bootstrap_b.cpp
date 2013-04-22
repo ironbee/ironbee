@@ -34,13 +34,13 @@ class TestModuleBootstrapB : public ::testing::Test, public IBPPTestFixture
 {
 };
 
-static bool          s_delegate_destructed;
-static bool          s_delegate_initialized;
-static bool          s_delegate_context_open;
-static bool          s_delegate_context_close;
-static bool          s_delegate_context_destroy;
-static ib_module_t*  s_ib_module;
-static ib_context_t* s_ib_context;
+static bool                s_delegate_destructed;
+static bool                s_delegate_initialized;
+static bool                s_delegate_context_open;
+static bool                s_delegate_context_close;
+static bool                s_delegate_context_destroy;
+static const ib_module_t*  s_ib_module;
+static ib_context_t*       s_ib_context;
 
 struct Delegate
 {
@@ -88,32 +88,32 @@ TEST_F(TestModuleBootstrapB, basic)
     s_ib_module                = NULL;
     s_ib_context               = NULL;
 
-    ib_module_t* m = IB_MODULE_SYM(m_engine.ib());
+    ib_module_t m = *IB_MODULE_SYM(m_engine.ib());
 
-    EXPECT_EQ(s_module_name,         m->name);
-    EXPECT_EQ(std::string(__FILE__), m->filename);
-    EXPECT_EQ(m_engine.ib(),           m->ib);
+    EXPECT_EQ(s_module_name,         m.name);
+    EXPECT_EQ(std::string(__FILE__), m.filename);
+    EXPECT_EQ(m_engine.ib(),         m.ib);
 
     ib_context_t c;
     ib_status_t rc;
 
     s_delegate_initialized = false;
-    rc = m->fn_init(
+    rc = m.fn_init(
         m_engine.ib(),
-        m,
-        m->cbdata_init
+        &m,
+        m.cbdata_init
     );
     EXPECT_EQ(IB_OK, rc);
     EXPECT_TRUE(s_delegate_initialized);
-    EXPECT_EQ(m, s_ib_module);
+    EXPECT_EQ(&m, s_ib_module);
 
     s_delegate_context_open = false;
     s_ib_context = NULL;
-    rc = m->fn_ctx_open(
+    rc = m.fn_ctx_open(
         m_engine.ib(),
-        m,
+        &m,
         &c,
-        m->cbdata_ctx_open
+        m.cbdata_ctx_open
     );
     EXPECT_EQ(IB_OK, rc);
     EXPECT_TRUE(s_delegate_context_open);
@@ -121,11 +121,11 @@ TEST_F(TestModuleBootstrapB, basic)
 
     s_delegate_context_close = false;
     s_ib_context = NULL;
-    rc = m->fn_ctx_close(
+    rc = m.fn_ctx_close(
         m_engine.ib(),
-        m,
+        &m,
         &c,
-        m->cbdata_ctx_close
+        m.cbdata_ctx_close
     );
     EXPECT_EQ(IB_OK, rc);
     EXPECT_TRUE(s_delegate_context_close);
@@ -133,21 +133,21 @@ TEST_F(TestModuleBootstrapB, basic)
 
     s_delegate_context_destroy = false;
     s_ib_context = NULL;
-    rc = m->fn_ctx_destroy(
+    rc = m.fn_ctx_destroy(
         m_engine.ib(),
-        m,
+        &m,
         &c,
-        m->cbdata_ctx_destroy
+        m.cbdata_ctx_destroy
     );
     EXPECT_EQ(IB_OK, rc);
     EXPECT_TRUE(s_delegate_context_destroy);
     EXPECT_EQ(&c, s_ib_context);
 
     s_delegate_destructed = false;
-    rc = m->fn_fini(
+    rc = m.fn_fini(
         m_engine.ib(),
-        m,
-        m->cbdata_fini
+        &m,
+        m.cbdata_fini
     );
     ASSERT_TRUE(s_delegate_destructed);
 }

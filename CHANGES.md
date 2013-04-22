@@ -20,6 +20,11 @@ IronBee v0.8.0
   value and length in the module structure.  The new approach is to call
   this function in the module initialization handler.
 
+* Modules now provide their static `ib_module_t` as a `const ib_module_t *`
+  instead of an `ib_module_t *`.  The engine makes its own copy rather than
+  reusing the static.  This change allows simultaneous use of modules by
+  multiple engines.
+
 *IronBee++*
 
 * IronBee++ includes full support for operators and adds an optional
