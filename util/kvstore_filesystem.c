@@ -913,7 +913,7 @@ static ib_status_t kvset(
     int sys_rc;
     ssize_t written;
     ib_kvstore_filesystem_server_t *server;
-    
+
     server = (ib_kvstore_filesystem_server_t *) kvstore->server;
 
     /* Build a path with expiration value in it. */
