@@ -8,6 +8,10 @@ IronBee v0.8.0
 
 * The 'ac' module (deprecated in 0.7.0) has been removed.
 
+**Predicate**
+
+* A new rule injection system, Predicate, was added.  Predicate provides a functional approach to writing rules and is designed to make rule logic composition and reuse easy and provide performance benefits.  See `predicate/predicate.md` for an overview.
+
 **Engine**
 
 * Operators have been overhauled.  They are now entirely independent of the
