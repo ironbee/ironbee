@@ -8,7 +8,7 @@ message ConnectionEvent {
 };
 
 message DataEvent {
-    required bytes data = 1;
+    optional bytes data = 1;
 };
 
 message RequestEvent {
