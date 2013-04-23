@@ -42,7 +42,7 @@
  * *To write an additional call*
  *
  * - Create an IronBee module.  Include "ibmod_predicate.hpp".  In
- *   initialization, call DelegateCallFactory(), passing in the IronBee
+ *   initialization, call IBModPredicateCallFactory(), passing in the IronBee
  *   Engine.  It will return a reference to the CallFactory used by this
  *   module.  Add your calls to that CallFactory.
  *
@@ -103,7 +103,7 @@ class Delegate;
 /* Configuration */
 
 //! Name of module.
-const char *c_module_name = "predicate";
+const char* c_module_name = "predicate";
 
 //! Action to mark a rule as a predicate rule.
 const char* c_predicate_action = "predicate";
@@ -136,16 +136,6 @@ const size_t c_num_phases = sizeof(c_phases) / sizeof(ib_rule_phase_num_t);
 //! Per-context data.
 class PerContext
 {
-private:
-    //! List of rules.
-    typedef list<const ib_rule_t*> rule_list_t;
-    //! Map of root index to rule list.
-    typedef map<size_t, rule_list_t> rules_by_index_t;
-    //! Map of node to rule list.
-    typedef map<P::node_p, rule_list_t> rules_by_node_t;
-    //! Map of phase to map of node to rule list.
-    typedef vector<rules_by_node_t> rules_by_phase_t;
-
 public:
     // Public interface is what is used by Delegate.
 
@@ -153,24 +143,8 @@ public:
     PerContext();
 
     //! Constructor with delegate.
-    explicit PerContext(Delegate& delegate);
-
-    //! Const iterator through roots of @ref rules.
-    typedef boost::transform_iterator<
-        boost::function<P::node_p(rules_by_node_t::const_reference)>,
-        rules_by_node_t::const_iterator
-    > roots_iterator;
-
-    /**
-     * Iterate through all root nodes for a phase.
-     *
-     * @param[in] phase Which phase to iterate through.
-     * @returns Pair of begin and end iterator for all roots in @ref rules for
-     *          phase @a phase.
-     **/
-    pair<roots_iterator, roots_iterator> roots(
-        ib_rule_phase_num_t phase
-    ) const;
+    explicit
+    PerContext(Delegate& delegate);
 
     /**
      * Convert rules stored in @ref rules_by_index into @ref rules.
@@ -202,10 +176,39 @@ public:
         IB::List<const ib_rule_t*> rule_list
     );
 
+    //! Delegate accessor.
     Delegate* delegate() const {return m_delegate;}
+
+    //! Delegate setter.
     void set_delegate(Delegate& delegate) {m_delegate = &delegate;}
 
 private:
+    //! List of rules.
+    typedef list<const ib_rule_t*> rule_list_t;
+    //! Map of root index to rule list.
+    typedef map<size_t, rule_list_t> rules_by_index_t;
+    //! Map of node to rule list.
+    typedef map<P::node_p, rule_list_t> rules_by_node_t;
+    //! Map of phase to map of node to rule list.
+    typedef vector<rules_by_node_t> rules_by_phase_t;
+
+    //! Const iterator through roots of @ref rules.  See roots().
+    typedef boost::transform_iterator<
+        boost::function<P::node_p(rules_by_node_t::const_reference)>,
+        rules_by_node_t::const_iterator
+    > roots_iterator;
+
+    /**
+     * Iterate through all root nodes for a phase.
+     *
+     * @param[in] phase Which phase to iterate through.
+     * @returns Pair of begin and end iterator for all roots in @ref rules for
+     *          phase @a phase.
+     **/
+    pair<roots_iterator, roots_iterator> roots(
+        ib_rule_phase_num_t phase
+    ) const;
+
     /**
      * Rules for each root by index.
      *
@@ -262,7 +265,7 @@ public:
      * Context close handler.
      *
      * For non-main context close, the context is recorded for later
-     * processing.  Contexts can not be fully processed until the MergeGraph
+     * processing.  Contexts cannot be fully processed until the MergeGraph
      * has been fully formed and completes its life cycle.
      *
      * At close of main context, it is no longer possible to add expressions
@@ -304,7 +307,7 @@ private:
     ) const;
 
     /**
-     * Injection function: called at each phase in c_phases.
+     * Injection function: called at each phase in @ref c_phases.
      *
      * If first call for given transaction and phase, will reset portion of
      * DAG corresponding to the nodes to be evaluated in this phase.  Will
@@ -355,7 +358,7 @@ private:
     void assert_valid(IB::ConfigurationParser& cp, const char* to) const;
 
     /**
-     * Handler c_debug_report_directive.
+     * Handle c_debug_report_directive.
      *
      * See MergeGraph::write_debug_report().
      *
@@ -386,7 +389,6 @@ private:
 
     /**
      * Register trampoline data for cleanup on destruction.
-     *
      *
      * @sa make_c_trampoline()
      * @param[in] cdata Trampoline data.
@@ -492,8 +494,8 @@ void PerContext::convert_rules()
         BOOST_FOREACH(const ib_rule_t* rule, v.second) {
             ib_rule_phase_num_t phase = rule->meta.phase;
             if (
-                find(c_phases, c_phases+c_num_phases, phase) ==
-                c_phases+c_num_phases
+                find(c_phases, c_phases + c_num_phases, phase) ==
+                c_phases + c_num_phases
             ) {
                 BOOST_THROW_EXCEPTION(
                     IB::einval() << IB::errinfo_what(
@@ -514,6 +516,9 @@ void PerContext::convert_rules()
 
 void PerContext::add_rule(P::node_p root, const ib_rule_t* rule)
 {
+    assert(root);
+    assert(rule);
+
     size_t index = delegate()->graph().add_root(root);
     m_rules_by_index[index].push_back(rule);
 }
@@ -523,13 +528,16 @@ void PerContext::inject(
     IB::List<const ib_rule_t*> rule_list
 )
 {
+    assert(rule_exec);
+    assert(rule_list);
+
     ib_rule_phase_num_t phase = rule_exec->phase;
     IB::Transaction tx(rule_exec->tx);
+    assert(tx);
 
     if (m_phase != phase || tx != tx) {
         P::bfs_down(
-            roots(phase).first,
-            roots(phase).second,
+            roots(phase).first, roots(phase).second,
             boost::make_function_output_iterator(
                 bind(&P::Node::reset, _1)
             )
@@ -557,6 +565,8 @@ Delegate::Delegate(IB::Module module) :
     m_graph(new P::MergeGraph()),
     m_write_debug_report(false)
 {
+    assert(module);
+
     // Call factory.
     P::Standard::load(m_call_factory);
 
@@ -647,6 +657,8 @@ Delegate::Delegate(IB::Module module) :
 
 void Delegate::context_close(IB::Context context)
 {
+    assert(context);
+
     // Register this context for processing at end of main context.
     m_contexts.push_back(context);
 
@@ -690,11 +702,10 @@ void Delegate::context_close(IB::Context context)
         // itself is released.
 
         size_t num_errors = 0;
-        P::reporter_t reporter =
-            bind(
-                &Delegate::report,
-                this, boost::ref(num_errors), _1, _2
-            );
+        P::reporter_t reporter = bind(
+            &Delegate::report,
+            this, boost::ref(num_errors), _1, _2
+        );
 
         if (m_write_debug_report) {
             *debug_out << "Before Transform: " << endl;
@@ -780,6 +791,10 @@ ib_status_t Delegate::action_create(
     ib_action_inst_t* act_inst
 )
 {
+    assert(pool);
+    assert(expr_c);
+    assert(act_inst);
+
     try {
         string expr(expr_c);
 
@@ -800,7 +815,6 @@ ib_status_t Delegate::action_create(
 
         act_inst->data = IB::value_to_data(parse_tree, pool);
     }
-
     catch (...) {
         return IB::convert_exception(module().engine());
     }
@@ -813,6 +827,9 @@ ib_status_t Delegate::ownership(
     const ib_rule_t*   rule
 ) const
 {
+    assert(ib_engine);
+    assert(rule);
+
     IB::ConstEngine engine(ib_engine);
     try {
         IB::ScopedMemoryPool pool;
@@ -869,6 +886,9 @@ ib_status_t Delegate::injection(
     ib_list_t*            ib_rule_list
 ) const
 {
+    assert(rule_exec);
+    assert(ib_rule_list);
+
     try {
         IB::List<const ib_rule_t*> rule_list(ib_rule_list);
         IB::ConstTransaction tx(rule_exec->tx);
@@ -900,6 +920,9 @@ void Delegate::assert_valid(
     const char*              to
 ) const
 {
+    assert(cp);
+    assert(to);
+
     bool is_okay = false;
 
     if (to[0]) {
@@ -928,6 +951,9 @@ void Delegate::debug_report(
     const char*              to
 )
 {
+    assert(cp);
+    assert(to);
+
     if (m_write_debug_report) {
         ib_cfg_log_error(
             cp.ib(),
@@ -958,6 +984,8 @@ void Delegate::report(
 
 void Delegate::register_trampoline_data(void* cdata)
 {
+    assert(cdata);
+
     m_trampolines.push_back(
         shared_ptr<void>(cdata, IB::delete_c_trampoline)
     );
