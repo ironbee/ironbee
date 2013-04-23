@@ -405,7 +405,7 @@ ib_status_t DLL_PUBLIC ib_module_action_inst_create(
  * module declaration.  It allows modules to setup their initial configuration
  * data in their initialization functions.
  *
- * @param m Module to initialize configuration data for.
+ * @param module Module to initialize configuration data for.
  * @param cfg Configuration data.
  * @param cfg_length Length of configuration data.
  *

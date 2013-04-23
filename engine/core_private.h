@@ -109,7 +109,7 @@ ib_status_t ib_core_auditlog_parts_map(
 /**
  * Get the core mode and data
  *
- * @param[in] ib IronBee engine
+ * @param[in] engine IronBee engine
  * @param[out] core_module Pointer to core module (or NULL)
  * @param[out] core_data Pointer to core data (or NULL)
  *
