@@ -133,7 +133,11 @@ const ib_rule_phase_num_t c_phases[] = {
 //! Number of phases in c_phases.
 const size_t c_num_phases = sizeof(c_phases) / sizeof(ib_rule_phase_num_t);
 
-//! Per-context data.
+/**
+ * Per-context behavior and data.
+ *
+ * Used as the module configuration data.
+ **/
 class PerContext
 {
 public:
@@ -439,21 +443,6 @@ private:
     //! Where to write a debug report.
     string m_debug_report_to;
 };
-
-}
-
-// Defined in ibmod_predicate.hpp.
-P::CallFactory& IBModPredicateCallFactory(IB::Engine engine)
-{
-    IB::Module m = IB::Module::with_name(engine, c_module_name);
-    PerContext& per_context = m.configuration_data<PerContext>(
-        engine.main_context()
-    );
-
-    return per_context.delegate()->call_factory();
-}
-
-IBPP_BOOTSTRAP_MODULE_DELEGATE(c_module_name, Delegate);
 
 // Implementation
 
@@ -990,3 +979,20 @@ void Delegate::register_trampoline_data(void* cdata)
         shared_ptr<void>(cdata, IB::delete_c_trampoline)
     );
 }
+
+}
+
+// Outside anonymous namespace.
+
+// Defined in ibmod_predicate.hpp.
+P::CallFactory& IBModPredicateCallFactory(IB::Engine engine)
+{
+    IB::Module m = IB::Module::with_name(engine, c_module_name);
+    PerContext& per_context = m.configuration_data<PerContext>(
+        engine.main_context()
+    );
+
+    return per_context.delegate()->call_factory();
+}
+
+IBPP_BOOTSTRAP_MODULE_DELEGATE(c_module_name, Delegate);
