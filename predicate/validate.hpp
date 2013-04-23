@@ -88,6 +88,7 @@ namespace Predicate {
  *    // Custom pre_transform code.
  *    ...
  * }
+ * @endcode
  *
  * How to write a new validator:
  *
@@ -109,6 +110,7 @@ namespace Predicate {
  *         Chain::validate(reporter);
  *     }
  * };
+ * @endcode
  **/
 namespace Validate {
 

@@ -138,7 +138,7 @@ void bfs_down(
 
 // Implementation
 
-/// @cond Impl
+/// @cond internal
 namespace Impl {
 
 /**
@@ -177,7 +177,7 @@ public:
     /**
      * Pass through.
      *
-     * @tparam[in] node Node to write to output iterator.
+     * @param[in] node Node to write to output iterator.
      **/
     void operator()(const node_cp& node)
     {
@@ -220,7 +220,7 @@ public:
     /**
      * Cast @a node to a @ref node_p and write to output iterator.
      *
-     * @tparam[in] node Node to write, as @ref node_p, to output iterator.
+     * @param[in] node Node to write, as @ref node_p, to output iterator.
      **/
     void operator()(const node_cp& node)
     {
@@ -252,12 +252,13 @@ void bfs_append_list(
  *
  * Every bfs method ultimately calls this routine.
  *
- * @tparam OutputIterator Type of @a out.
  * @tparam Direction      Direction to search.  Must be @ref bfs_up_tag or
  *                        @ref bfs_down_tag.
- * @param[in] which Node to start search at.
- * @param[in] out   Output iterator to write to.
- * @param[in, out]  Set of which nodes have been visited to use/update.
+ * @tparam InputIterator Type of @a begin and @a end.
+ * @tparam OutputIterator Type of @a out.
+ * @param[in] begin Beginning of nodes to start from.
+ * @param[in] end   End of nodes to start from.
+ * @param[in] out   Where to write nodes to as visited.
  * @throw IronBee::einval if any node is singular.
  **/
 template <typename Direction, typename InputIterator, typename OutputIterator>

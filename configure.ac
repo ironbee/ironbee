@@ -268,7 +268,7 @@ fi
 DOXYGEN=$doxygen
 
 DOXYGEN_TOP=`cd $srcdir;pwd`
-DOXYGEN_DIRS="include util engine modules automata fast lua"
+DOXYGEN_DIRS="include util engine modules automata fast lua predicate"
 MARKDOWN_DOXYGEN_FILES=`cd $srcdir;find . lua -type f -maxdepth 1 -name '*.md'`
 EXTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp'`
 INTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' -o -name '*.cc'`

@@ -126,8 +126,8 @@ public:
     /**
      * True iff @a node is a root.
      *
-     * @warn @a node must be a node in the graph.  Use known() first if
-     *       looking at an equivalent node.
+     * @warning @a node must be a node in the graph.  Use known() first if
+     *          looking at an equivalent node.
      *
      * @return true iff @a node is a root.
      * @throw IronBee::einval if @a node is singular.

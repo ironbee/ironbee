@@ -67,10 +67,12 @@ void to_dot(
     dot_node_decorator_t node_decorator = DefaultNodeDecorator()
 );
 
-/// @cond Impl
+/// @cond internal
 namespace Impl {
 
-//! Functional that to_dot() calls for every node.
+/**
+ * Functional that to_dot() calls for every node.
+ **/
 struct dot_node_outputer
 {
 public:

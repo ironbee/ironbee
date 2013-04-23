@@ -43,7 +43,6 @@ string DefaultNodeDecorator::operator()(const node_cp& node) const
     return "label=\"unknown node type\"";
 }
 
-
 namespace Impl {
 
 dot_node_outputer::dot_node_outputer(

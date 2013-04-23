@@ -54,7 +54,7 @@ class MergeGraph;
 // Defined in call_factory.hpp
 class CallFactory;
 
-/// @cond Impl
+/// @cond internal
 namespace Impl {
 
 /**
@@ -422,7 +422,7 @@ public:
     /**
      * Constructor.
      *
-     * @param[in] s Value of node.
+     * @param[in] value Value of node.
      **/
     explicit
     String(const std::string& value);

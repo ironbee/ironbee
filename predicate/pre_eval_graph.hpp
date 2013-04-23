@@ -40,8 +40,9 @@ class MergeGraph;   // merge_graph.hpp
  *
  * Calls Node::pre_eval() on every node in BFS fashion down from the roots.
  *
- * @param[in] reporter Reporter to use for NodeReporter's.
- * @param[in] graph    Graph to transform.
+ * @param[in] reporter    Reporter to use for NodeReporter's.
+ * @param[in] graph       Graph to transform.
+ * @param[in] environment Environment to pass to Node::pre_eval().
  **/
 void pre_eval_graph(
     reporter_t  reporter,
