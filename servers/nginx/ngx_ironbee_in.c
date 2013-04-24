@@ -68,7 +68,8 @@ int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
      * parse the header into tokens and accept look for "chunked"
      * among the tokens, rather than assume an exact match
      */
-    else if (r->headers_in.transfer_encoding->value.len == 7
+    else if (r->headers_in.transfer_encoding
+             && r->headers_in.transfer_encoding->value.len == 7
              && ngx_strncasecmp(r->headers_in.transfer_encoding->value.data,
                                 (u_char *) "chunked", 7) == 0)
         return -1;
@@ -147,7 +148,7 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
             itxdata.data = buf;
             ib_log_debug_tx(ctx->tx, "Feeding %d bytes request data to ironbee",
                             (int)itxdata.dlen);
-            ib_state_notify_request_body_data(ngxib_engine(), ctx->tx, &itxdata);
+            ib_state_notify_request_body_data(ngx_ironbee, ctx->tx, &itxdata);
             count += itxdata.dlen;
         }
         if ((int)itxdata.dlen == NGX_ERROR) {
@@ -161,11 +162,11 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
         ib_log_debug_tx(ctx->tx, "Feeding %d bytes request data to ironbee",
                         (int)itxdata.dlen);
         if (itxdata.dlen > 0) {
-            ib_state_notify_request_body_data(ngxib_engine(), ctx->tx, &itxdata);
+            ib_state_notify_request_body_data(ngx_ironbee, ctx->tx, &itxdata);
         }
     }
     ctx->body_done = 1;
-    ib_state_notify_request_finished(ngxib_engine(), ctx->tx);
+    ib_state_notify_request_finished(ngx_ironbee, ctx->tx);
 
     /* If Ironbee signalled an error, we can return it */
     if (STATUS_IS_ERROR(ctx->status)) {
