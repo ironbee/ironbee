@@ -1137,9 +1137,13 @@ static ib_status_t get_http_header(
     int64_t           bytes;
 
     iobuf = TSIOBufferCreate();
+    /* reader has to be allocated *before* TSHttpHdrPrint, because
+     * the latter loses all reference to blocks before the last 4K
+     * in iobuf.
+     */
+    reader = TSIOBufferReaderAlloc(iobuf);
     TSHttpHdrPrint(hdr_bufp, hdr_loc, iobuf);
 
-    reader = TSIOBufferReaderAlloc(iobuf);
     bytes = TSIOBufferReaderAvail(reader);
     hdr_buf = ib_mpool_alloc(mp, bytes + 1);
     if (hdr_buf == NULL) {
@@ -1148,8 +1152,9 @@ static ib_status_t get_http_header(
     }
     hdr_len = bytes;
 
-    block = TSIOBufferReaderStart(reader);
-    while(block != NULL) {
+    for (block = TSIOBufferReaderStart(reader);
+         block != NULL;
+         block = TSIOBufferBlockNext(block)) {
         const char *data;
         data = TSIOBufferBlockReadStart(block, reader, &bytes);
         if (bytes == 0) {
@@ -1157,10 +1162,6 @@ static ib_status_t get_http_header(
         }
         memcpy(hdr_buf + hdr_off, data, bytes);
         hdr_off += bytes;
-
-        /* Consume the data so that we get to the next block */
-        TSIOBufferReaderConsume(reader, bytes);
-        block = TSIOBufferReaderStart(reader);
     }
     *(hdr_buf + hdr_len) = '\0';
     ++hdr_len;
