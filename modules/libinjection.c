@@ -56,11 +56,11 @@ IB_MODULE_DECLARE();
 
 /* Private configuration structure. */
 typedef struct sqli_config_t {
-    bool fold;
+    int fold;
 } sqli_config_t;
 
 /* Normalization function prototype. */
-typedef bool (*sqli_tokenize_fn_t)(sfilter * sf, stoken_t * sout);
+typedef int (*sqli_tokenize_fn_t)(sfilter * sf, stoken_t * sout);
 
 /*********************************
  * Transformations
@@ -86,7 +86,7 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
     stoken_t current;
     ib_bytestr_t *bs_in;
     ib_bytestr_t *bs_out;
-    char *buf_in;
+    const char *buf_in;
     char *buf_in_start;
     size_t buf_in_len;
     char *buf_out;
@@ -108,21 +108,8 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
         return rc;
     }
 
-    /* Normalize the incoming value for the tokenizer (toupper). */
-    if (ib_bytestr_length(bs_in) == 0) {
-        buf_in = (char *)ib_mpool_calloc(mp, 1, 1);
-    }
-    else {
-        buf_in = (char *)ib_mpool_memdup(mp,
-                                         ib_bytestr_const_ptr(bs_in),
-                                         ib_bytestr_length(bs_in));
-    }
-    if (buf_in == NULL) {
-        return IB_EALLOC;
-    }
-    modp_toupper(buf_in, ib_bytestr_length(bs_in));
-
     /* Create a buffer big enough (double) to allow for normalization. */
+    buf_in = (const char *)ib_bytestr_const_ptr(bs_in);
     buf_out = buf_out_end = (char *)ib_mpool_calloc(mp, 2, ib_bytestr_length(bs_in));
     if (buf_out == NULL) {
         return IB_EALLOC;
@@ -146,7 +133,7 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
         buf_in_start = memchr(buf_in, CHAR_DOUBLE, ib_bytestr_length(bs_in));
     }
     if (buf_in_start == NULL) {
-        buf_in_start = buf_in;
+        buf_in_start = (char *)buf_in;
         buf_in_len = ib_bytestr_length(bs_in);
     }
     else {

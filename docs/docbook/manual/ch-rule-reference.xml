@@ -1673,7 +1673,7 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
                     xlink:href="http://www.client9.com/projects/libinjection/"
                     >http://www.client9.com/projects/libinjection/</link></para>
             <para>Example
-                Input/Output:<programlisting>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</programlisting><programlisting>Output: FOO' OR 1=1 UNION SELECT ID,PASSWD FROM USERS --</programlisting></para>
+                Input/Output:<programlisting>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</programlisting><programlisting>Output: foo' or 1=1 union select id,passwd from users --</programlisting></para>
         </section>
         <section>
             <title>normalizeSqlPg</title>
