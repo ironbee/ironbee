@@ -178,7 +178,7 @@ public:
     void inject(
         const ib_rule_exec_t*      rule_exec,
         IB::List<const ib_rule_t*> rule_list
-    );
+    ) const;
 
     //! Delegate accessor.
     Delegate* delegate() const {return m_delegate;}
@@ -233,23 +233,37 @@ private:
     rules_by_phase_t m_rules;
 
     /**
-     * Last phase evaluated.
-     *
-     * This and @ref tx below are used to detect when the evaluation context
-     * has changed and the DAG needs to be reset.
-     **/
-    ib_rule_phase_num_t m_phase;
-
-    //! Last tx evaluated.  See @ref phase above.
-    IB::ConstTransaction m_tx;
-
-    /**
      * Module delegate.
      *
      * Global (vs per context) data is stored in the delegate().  This member
      * allows access to that data when only the context is available.
      **/
     Delegate* m_delegate;
+};
+
+/**
+ * Per transaction data.
+ *
+ * Initialize on transaction started and read and updated by the injection
+ * function.  Used to determine when a new phase has begun; an event which
+ * requires the DAG to be reset.
+ *
+ * The same problem could be solved by registering appropriate hooks that
+ * reset the DAG at the beginning of each phase.  But such a solution would
+ * require adding hooks to add additional phases.  This solution allows easy
+ * control of which phases to run in via injection and @ref c_phases.
+ **/
+struct per_tx_t
+{
+    per_tx_t() : phase(PHASE_INVALID) {}
+
+    /**
+     * Last phase evaluated.
+     *
+     * This is used to detect when the evaluation context has changed and the
+     * DAG needs to be reset.
+     **/
+    ib_rule_phase_num_t phase;
 };
 
 /**
@@ -351,6 +365,15 @@ private:
     );
 
     /**
+     * Transaction start handler.
+     *
+     * Sets @ref per_tx_t data for transaction.
+     *
+     * @param[in] tx Current transaction.
+     **/
+    void request_started(IB::Transaction tx) const;
+
+    /**
      * Handle c_assert_valid_directive.
      *
      * See MergeGraph::write_validation_report().
@@ -446,14 +469,12 @@ private:
 
 // Implementation
 
-PerContext::PerContext() :
-    m_phase(PHASE_INVALID)
+PerContext::PerContext()
 {
     // nop
 }
 
 PerContext::PerContext(Delegate& delegate) :
-    m_phase(PHASE_INVALID),
     m_delegate(&delegate)
 {
     // nop
@@ -515,7 +536,7 @@ void PerContext::add_rule(P::node_p root, const ib_rule_t* rule)
 void PerContext::inject(
     const ib_rule_exec_t*      rule_exec,
     IB::List<const ib_rule_t*> rule_list
-)
+) const
 {
     assert(rule_exec);
     assert(rule_list);
@@ -524,7 +545,13 @@ void PerContext::inject(
     IB::Transaction tx(rule_exec->tx);
     assert(tx);
 
-    if (m_phase != phase || tx != tx) {
+    per_tx_t* per_tx = NULL;
+    IB::throw_if_error(
+        ib_tx_get_module_data(tx.ib(), m_delegate->module().ib(), &per_tx)
+    );
+    assert(per_tx);
+
+    if (per_tx->phase != phase) {
         P::bfs_down(
             roots(phase).first, roots(phase).second,
             boost::make_function_output_iterator(
@@ -533,8 +560,7 @@ void PerContext::inject(
         );
     }
 
-    m_phase = phase;
-    m_tx    = tx;
+    per_tx->phase = phase;
 
     BOOST_FOREACH(
         PerContext::rules_by_node_t::const_reference v,
@@ -630,6 +656,13 @@ Delegate::Delegate(IB::Module module) :
             NULL, NULL
         )
     );
+
+    // Hooks
+    module.engine().register_hooks()
+        .request_started(
+            boost::bind(&Delegate::request_started, this, _2)
+        )
+        ;
 
     // Introspection directives.
     module.engine().register_configuration_directives()
@@ -894,14 +927,26 @@ ib_status_t Delegate::injection(
             per_context.inject(rule_exec, rule_list);
         }
     }
-    catch (const boost::exception& e) {
-        assert(false);
-    }
     catch (...) {
         return IB::convert_exception(module().engine());
     }
 
     return IB_OK;
+}
+
+void Delegate::request_started(
+    IB::Transaction tx
+) const
+{
+    per_tx_t* per_tx = new (tx.memory_pool().allocate<per_tx_t>()) per_tx_t();
+    // Know  per_tx has trivial destructor so not going to register it
+    // with memory pool.
+    if (! per_tx) {
+        BOOST_THROW_EXCEPTION(IB::ealloc());
+    }
+    IB::throw_if_error(
+        ib_tx_set_module_data(tx.ib(), module().ib(), per_tx)
+    );
 }
 
 void Delegate::assert_valid(
