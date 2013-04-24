@@ -1,5 +1,5 @@
 /**
- * Copyright 2012, Nick Galbreath
+ * Copyright 2012, 2013 Nick Galbreath
  * nickg@client9.com
  * BSD License -- see COPYING.txt for details
  *
@@ -24,7 +24,7 @@ int main(int argc, const char* argv[])
 
     sfilter sf;
     stoken_t current;
-    if (argc < 1) {
+    if (argc < 2) {
         return 1;
     }
     if (strcmp(argv[offset], "-f") == 0 || strcmp(argv[offset], "--fold") == 0) {
@@ -32,12 +32,14 @@ int main(int argc, const char* argv[])
         offset += 1;
     }
 
+     /* ATTENTION: argv is a C-string, null terminated.  We copy this
+      * to it's own location, WITHOUT null byte.  This way, valgrind
+      * can see if we run past the buffer.
+      */
+
     size_t slen = strlen(argv[offset]);
-    char* copy = (char*) malloc(slen + 1);
-    if (copy == NULL) {
-        return 1;
-    }
-    modp_toupper_copy(copy, argv[offset], slen);
+    char* copy = (char* ) malloc(slen);
+    memcpy(copy, argv[offset], slen);
 
     sfilter_reset(&sf, copy, slen);
 
@@ -47,10 +49,23 @@ int main(int argc, const char* argv[])
         }
     } else {
         while (sqli_tokenize(&sf, &current)) {
-            printf("%c %s\n", current.type, current.val);
+            if (current.type == 's') {
+                printf("%c ", current.type);
+                if (current.str_open != CHAR_NULL) {
+                    printf("%c", current.str_open);
+                }
+                printf("%s", current.val);
+                if (current.str_close != CHAR_NULL) {
+                    printf("%c", current.str_open);
+                }
+                printf("%s", "\n");
+            } else {
+                printf("%c %s\n", current.type, current.val);
+            }
         }
     }
 
     free(copy);
+
     return 0;
 }
