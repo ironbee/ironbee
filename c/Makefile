@@ -1,7 +1,7 @@
 
 CC=gcc
 CXX=g++
-CFLAGS=-g -O3 -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align
+CFLAGS=-g -O3 -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Werror
 INDENT=indent
 # Apple over-rides
 #   Trying to avoid using libtool
@@ -31,10 +31,18 @@ help:
 	@echo "make lcov -- lcov"
 	@echo "make reader -- line by line analyzer"
 	@echo "make http -- runs mini-http server, handy for viewing lcov"
+	@echo "make sqli -- a CLI tokenizier (need renaming)"
+	@echo "make fptool -- a fingerprinting tool"
 	@echo ""
 
-reader: Makefile reader.c sqlparse_data.h sqlparse.h sqlparse.c modp_xml.c sqli_normalize.c sqli_fingerprints.h
-	${CC}  ${CFLAGS} -o reader sqlparse.c reader.c sqli_normalize.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
+allbin: reader extractor is_sqli sqli
+
+reader: Makefile reader.c sqlparse_data.h sqlparse.h sqlparse.c modp_burl.c sqli_fingerprints.h modp_ascii.c modp_xml.c
+	${CC}  ${CFLAGS} -o reader sqlparse.c reader.c modp_burl.c modp_ascii.c modp_xml.c
+
+reader-gprof: Makefile reader.c sqlparse_data.h sqlparse.h sqlparse.c modp_burl.c sqli_fingerprints.h modp_ascii.c modp_xml.c
+	make clean
+	${CC} -g -O2 -pg -o reader sqlparse.c reader.c modp_burl.c modp_ascii.c modp_xml.c
 
 extractor: Makefile extractor.cpp sqlparse.c sqlparse.h sqli_normalize.h sqli_normalize.c sqlparse_data.h modp_xml.c sqli_fingerprints.h sqlparse_data.h
 	g++ ${STATIC} ${CFLAGS} -o extractor extractor.cpp sqlparse.c sqli_normalize.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
@@ -42,19 +50,26 @@ extractor: Makefile extractor.cpp sqlparse.c sqlparse.h sqli_normalize.h sqli_no
 is_sqli: Makefile is_sqli_cli.cpp sqlparse.c sqlparse.h sqlparse_data.h modp_xml.c sqli_normalize.c  sqli_fingerprints.h sqlparse_data.h
 	${CXX}  ${CFLAGS} -O3 -o is_sqli is_sqli_cli.cpp sqlparse.c sqli_normalize.c  modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
 
-sqli: Makefile sqli_cli.c sqlparse.c sqlparse.h sqlparse_data.h  sqli_fingerprints.h
-	${CC} ${CFLAGS} -o sqli sqli_cli.c sqlparse.c modp_ascii.c
+sqli: Makefile sqli_cli.c sqlparse.c sqlparse.h sqlparse_data.h sqli_fingerprints.h modp_ascii.c
+	${CC} -g -O1 -o sqli sqli_cli.c sqlparse.c modp_ascii.c
 
+fptool: Makefile fptool.c sqlparse.c sqlparse.h sqlparse_data.h sqli_fingerprints.h
+	${CC} ${CFLAGS} -o fptool fptool.c sqlparse.c
 
 test_speed: sqlparse_data.h sqlparse.c sqlparse.h test_speed.c
 	${CC} ${CFLAGS} -o test_speed sqlparse.c test_speed.c  modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
 	./test_speed
 
 test_unit: test_driver.py sqli sqlparse_data.h sqlparse.c sqlparse.h
-	./test_driver.py ../tests/test-*.txt
+	nosetests --with-xunit test_driver.py
 
 valgrind: test_driver.py sqli sqlparse_data.h sqlparse.c sqlparse.h
-	./test_driver.py --valgrind ../tests/test-*.txt
+	rm -f valgrind-*.xml
+	${MAKE} VALGRIND=1 test_unit
+
+cppcheck:
+	rm -f cppcheck-result.xml
+	cppcheck --enable=all --inconclusive --std=posix  --xml . 2> cppcheck-result.xml
 
 unused:
 	-${MAKE} test_positive | grep True | awk '{print $$4}' | sort -u > /tmp/junk
@@ -74,8 +89,11 @@ test_negative: reader
 sqli_fingerprints.h: fingerprints.txt fingerprints2c.py
 	./fingerprints2c.py > ./sqli_fingerprints.h
 
-sqlparse_data.h: sqlparse_map.py sqlparse2c.py
-	./sqlparse2c.py > ./sqlparse_data.h
+sqlparse_data.json: Makefile sqlparse_map.py
+	./sqlparse_map.py > sqlparse_data.json
+
+sqlparse_data.h: Makefile sqlparse_data.json
+	./sqlparse2c.py < sqlparse_data.json > ./sqlparse_data.h
 
 indent: sqlparse.h sqlparse.c
 	${INDENT} -kr -nut sqlparse.h sqlparse.c test_speed.c sqli_normalize.c reader.c
@@ -91,13 +109,30 @@ clean:
 	rm -f *~ *.pyc
 	rm -f test_tokens test_speed
 	rm -rf *.dSYM
-	rm -rf *.gcno *.gcda *.info
+	rm -rf *.gcno *.gcda *.info cppcheck-result.xml cobertura-coverage.xml
 	rm -rf lcov-html
 	rm -rf core* a.out
+	rm -f gmon.out nosetests.xml valgrind-*.txt
 	rm -f reader extractor is_sqli lcov-reader sqli
 
-lcov:
-	g++ -g -fprofile-arcs -ftest-coverage -O0 -o sqli sqli_cli.cpp sqlparse.c modp_burl.c modp_ascii.c modp_xml.c
+sqli-gcov: sqli_fingerprints.h
+	rm -f sqli
+	gcc -g -fprofile-arcs -ftest-coverage -O0 -o sqli sqli_cli.c sqlparse.c modp_burl.c modp_ascii.c modp_xml.c
+
+# for jenkins
+gcovr-unittest-xml: sqli-gcov
+	nosetests ./test_driver.py
+	gcovr -d -o libinjection-unittest-gcov.xml --gcov-exclude='.*modp_.*'  --gcov-exclude='reader*' --xml -r `pwd`
+
+# for jenkins
+gcovr-samples-xml:
+	rm -f reader libinjection-samples-gcov.xml
+	g++ -g -O0 -fprofile-arcs -ftest-coverage -Wall -Wextra -o reader sqlparse.c reader.c sqli_normalize.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
+	./reader ../data/*.txt > /dev/null
+	gcovr --version
+	gcovr -d -o libinjection-samples-gcov.xml --gcov-exclude='.*modp_.*' --gcov-exclude='reader.*' --xml -r `pwd`
+
+lcov: sqli-gcov
 	lcov -b . --directory . --zerocounters
 	./test_driver.py ../tests/test-*.txt
 	lcov -b . --directory . --capture --output-file libinjection.info
@@ -108,7 +143,6 @@ lcov:
 	mkdir lcov-html
 	genhtml -o lcov-html libinjection.info
 .PHONY: lcov
-
 
 lcov-reader: Makefile sqlparse_data.h sqlparse.h sqlparse.c reader.c sqli_normalize.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
 	g++ -g -O0 -fprofile-arcs -ftest-coverage -Wall -Wextra -o reader sqlparse.c reader.c sqli_normalize.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
@@ -126,3 +160,4 @@ lcov-reader: Makefile sqlparse_data.h sqlparse.h sqlparse.c reader.c sqli_normal
 http:
 	python -m  SimpleHTTPServer
 .PHONY: http
+

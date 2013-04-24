@@ -21,8 +21,6 @@
 #ifndef _SQLPARSE_H
 #define _SQLPARSE_H
 
-#include "modp_stdint.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,6 +30,8 @@ extern "C" {
 
 typedef struct {
     char type;
+    char str_open;
+    char str_close;
     char val[ST_MAX_SIZE];
 } stoken_t;
 
@@ -42,7 +42,7 @@ typedef struct {
 
     /* current tokenize state */
     size_t pos;
-    bool in_comment;
+    int    in_comment;
 
     /* syntax fixups state */
     stoken_t syntax_current;
@@ -57,7 +57,7 @@ typedef struct {
     /* final sqli data */
     stoken_t tokenvec[MAX_TOKENS];
 
-    // +1 for possible ending null
+    /*  +1 for possible ending null */
     char pat[MAX_TOKENS + 1];
     char delim;
     int reason;
@@ -66,14 +66,14 @@ typedef struct {
 /**
  * Pointer to function, takes cstr input, return true/false
  */
-typedef bool (*ptr_fingerprints_fn)(const char*);
+typedef int (*ptr_fingerprints_fn)(const char*);
 
 /**
  *
  *
  * \return TRUE if SQLi, FALSE is benign
  */
-bool is_sqli(sfilter * sql_state, const char *s, size_t slen,
+int is_sqli(sfilter * sql_state, const char *s, size_t slen,
              ptr_fingerprints_fn fn);
 
 #ifdef __cplusplus
