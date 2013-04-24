@@ -124,8 +124,9 @@ TEST_F(TestDAG, Call)
 TEST_F(TestDAG, OutputOperator)
 {
     stringstream s;
+    DummyCall c;
 
-    s << DummyCall();
+    s << c;
 
     EXPECT_EQ("(dummy_call)", s.str());
 }
@@ -178,4 +179,71 @@ TEST_F(TestDAG, ModifyChildren)
     EXPECT_EQ(p, c1->parents().front().lock());
     EXPECT_EQ(p, boost::next(c1->parents().begin())->lock());
     EXPECT_TRUE(c2->parents().empty());
+}
+
+namespace {
+
+class test_thread_worker
+{
+public:
+    test_thread_worker(Value v, EvalContext c, node_p n) :
+        m_v(v), m_c(c), m_n(n)
+    {
+        // nop
+    }
+
+    void operator()()
+    {
+        for (int i = 0; i < 10000; ++i) {
+            if (m_n->eval(m_c) != m_v) {
+                throw runtime_error("FAIL");
+            }
+            usleep(i % 100);
+        }
+    }
+
+private:
+    Value m_v;
+    EvalContext m_c;
+    node_p m_n;
+};
+
+class ConstantCall : public Call
+{
+public:
+    ConstantCall(Value a, Value b) : m_a(a), m_b(b) {}
+
+    virtual string name() const
+    {
+        return "constant_call";
+    }
+
+protected:
+    virtual Value calculate(EvalContext context)
+    {
+        return context ? m_a : m_b;
+    }
+
+private:
+    Value m_a;
+    Value m_b;
+};
+
+}
+
+TEST_F(TestDAG, Threaded)
+{
+    ib_tx_t dummy_tx;
+    ib_field_t dummy_field;
+    EvalContext nonnull(&dummy_tx);
+    Value a(&dummy_field); // non-null
+    Value b; // null
+
+    node_p n(new ConstantCall(a, b));
+
+    // Failure will be a thread throwing an exception.
+    boost::thread_group g;
+    g.create_thread(test_thread_worker(a, nonnull, n));
+    g.create_thread(test_thread_worker(b, EvalContext(), n));
+    g.join_all();
 }

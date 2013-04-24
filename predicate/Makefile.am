@@ -2,6 +2,11 @@ include $(top_srcdir)/build/common.mk
 
 SUBDIRS = tests
 
+AM_LDFLAGS += \
+  	$(BOOST_LDFLAGS) \
+    -lboost_system$(BOOST_SUFFIX) \
+    -lboost_thread-mt
+
 pkglib_LTLIBRARIES = ibmod_predicate.la
 noinst_LTLIBRARIES = libpredicate.la
 libpredicate_la_SOURCES = \

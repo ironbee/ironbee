@@ -32,6 +32,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 
 #include <iostream>
 #include <list>
@@ -125,11 +126,18 @@ typedef std::list<weak_node_p> weak_node_list_t;
  * subclassed.  For literal values, instantiate Null or String.  For
  * call values, create and instantiate a subclass of Call.
  *
+ * Nodes are not thread safe except for values.  Values are per-node and
+ * reset(), has_value(), and value() can be called safely from multiple
+ * threads, resulting in the value for that particular thread.  Subclasses
+ * that implement calculate() in a thread-safe manner can then have eval()
+ * called safely from multiple threads.
+ *
  * @sa Call
  * @sa Literal
  */
 class Node :
-    public boost::enable_shared_from_this<Node>
+    public boost::enable_shared_from_this<Node>,
+    boost::noncopyable
 {
     friend class Call;
     friend class Literal;
@@ -139,7 +147,6 @@ private:
     Node();
 
 public:
-
     //! Destructor.
     virtual ~Node();
 
@@ -216,22 +223,19 @@ public:
         return m_parents;
     }
 
-    //! True iff has value.
-    bool has_value() const
-    {
-        return m_has_value;
-    }
+    //! True iff has (per-thread) value.
+    bool has_value() const;
 
     //! True iff node is a literal, in which case eval(EvalContext()) is valid.
     bool is_literal() const;
 
-    //! Return value, calculating if needed.
+    //! Return (per-thread) value, calculating if needed.
     Value eval(EvalContext context);
 
-    //! Return value, throwing if none.
+    //! Return (per-thread) value, throwing if none.
     Value value() const;
 
-    //! Reset to valueless.
+    //! Reset to valueless for this thread.
     void reset();
 
     /**
@@ -304,6 +308,9 @@ protected:
      * Subclass classes should implement this to calculate and return the
      * value.
      *
+     * It is important to make this thread safe if intending to use Predicate
+     * in a multithreaded situation.
+     *
      * @param [in] context Context of calculation.
      * @return Value of node.
      */
@@ -318,10 +325,25 @@ private:
      **/
     void unlink_from_child(const node_p& child) const;
 
-    //! True if a value has been set.
-    bool m_has_value;
-    //! What value has been set; may be singular to indicate null/false.
-    Value m_value;
+    //! Value information.
+    struct value_t {
+        //! Constructor.
+        value_t();
+
+        //! Has value.
+        bool has_value;
+        //! Value.
+        Value value;
+    };
+
+    //! Fetch value for this thread.
+    value_t& lookup_value();
+    //! Fetch value for this thread.
+    const value_t& lookup_value() const;
+
+    //! Thread specific value.
+    boost::thread_specific_ptr<value_t> m_value;
+
     //! List of parents (note weak pointers).
     weak_node_list_t m_parents;
     //! List of children.

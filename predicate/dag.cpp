@@ -33,8 +33,13 @@ using namespace std;
 namespace IronBee {
 namespace Predicate {
 
-Node::Node() :
-    m_has_value(false)
+Node::value_t::value_t() :
+    has_value(false)
+{
+    // nop
+}
+
+Node::Node()
 {
     // nop
 }
@@ -44,31 +49,61 @@ Node::~Node()
     // nop
 }
 
+Node::value_t& Node::lookup_value()
+{
+    value_t* v = m_value.get();
+    if (! v) {
+        v = new value_t();
+        m_value.reset(v);
+    }
+    return *v;
+}
+
+const Node::value_t& Node::lookup_value() const
+{
+    static const value_t empty_value;
+    const value_t* v = m_value.get();
+    if (! v) {
+        return empty_value;
+    }
+    else {
+        return *v;
+    }
+}
+
 Value Node::eval(EvalContext context)
 {
-    if (! has_value()) {
-        m_value = calculate(context);
-        m_has_value = true;
+    value_t& v = lookup_value();
+    if (! v.has_value) {
+        v.has_value = true;
+        v.value = calculate(context);
     }
-    return value();
+    return v.value;
 }
 
 Value Node::value() const
 {
-    if (! has_value()) {
+    const value_t& v = lookup_value();
+    if (! v.has_value) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
                 "Value asked of valueless node."
             )
         );
     }
-    return m_value;
+    return v.value;
 }
 
 void Node::reset()
 {
-    m_value = IronBee::Field();
-    m_has_value = 0;
+    value_t& v = lookup_value();
+    v.has_value = false;
+    v.value = IronBee::Field();
+}
+
+bool Node::has_value() const
+{
+    return lookup_value().has_value;
 }
 
 void Node::add_child(const node_p& child)
