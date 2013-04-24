@@ -41,11 +41,14 @@ typedef struct ironbee_proc_t {
     ngx_str_t      config_file;
     ngx_uint_t     loglevel;
     ngx_flag_t     use_ngxib_logger;
+    ngx_flag_t     enable;
 } ironbee_proc_t;
 
 
 static ngx_int_t ngx_http_ironbee_post_conf(ngx_conf_t *cf);
 static void *ngx_http_ironbee_create_main_conf(ngx_conf_t *cf);
+static char *ngx_http_ironbee_set_config_slot(ngx_conf_t *cf,
+    ngx_command_t *cmd, void *conf);
 static void ngx_http_ironbee_exit(ngx_cycle_t *cycle);
 static ngx_int_t ngx_http_ironbee_init(ngx_conf_t *cf);
 static ngx_int_t ngx_http_ironbee_post_read_request(ngx_http_request_t *r);
@@ -56,7 +59,7 @@ static ngx_int_t ngx_http_ironbee_body_out(ngx_http_request_t *r,
 static ngx_command_t ngx_ironbee_commands[] = {
     { ngx_string("ironbee_config_file"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_str_slot,
+      ngx_http_ironbee_set_config_slot,
       NGX_HTTP_MAIN_CONF_OFFSET,
       offsetof(ironbee_proc_t, config_file),
       NULL },
@@ -113,6 +116,45 @@ ngx_module_t  ngx_ironbee_module = {
 ib_engine_t *ngx_ironbee;
 static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
 static ngx_http_output_body_filter_pt  ngx_http_next_body_filter;
+
+
+/**
+ * function to create module configuration rec
+ *
+ * @param[in]  cf     Configuration rec
+ * @return     module configuration rec
+ */
+static void *
+ngx_http_ironbee_create_main_conf(ngx_conf_t *cf)
+{
+    ironbee_proc_t  *conf;
+
+    conf = ngx_pcalloc(cf->pool, sizeof(ironbee_proc_t));
+    if (conf == NULL) {
+        return NULL;
+    }
+
+    conf->loglevel = NGX_CONF_UNSET_UINT;
+    conf->use_ngxib_logger = NGX_CONF_UNSET;
+    /*
+      set by ngx_pcalloc
+      conf->enable = 0;
+    */
+
+    return conf;
+}
+
+
+
+static char *
+ngx_http_ironbee_set_config_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ironbee_proc_t  *pcf = conf;
+
+    pcf->enable = 1;
+
+    return ngx_conf_set_str_slot(cf, cmd, conf);
+}
 
 
 /**
@@ -597,6 +639,7 @@ ngx_http_ironbee_init(ngx_conf_t *cf)
 static ngx_int_t
 ngx_http_ironbee_post_conf(ngx_conf_t *cf)
 {
+    ironbee_proc_t             *ipcf;
     ngx_http_handler_pt        *req_handler;
     ngx_http_core_main_conf_t  *main_cf;
 
@@ -610,6 +653,11 @@ ngx_http_ironbee_post_conf(ngx_conf_t *cf)
     } while (0);
 
     main_cf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
+    ipcf = ngx_http_conf_get_module_main_conf(cf, ngx_ironbee_module);
+
+    if (!ipcf->enable) {
+        return NGX_OK;
+    }
 
     /* Register a handler to deal with request line and headers */
     req_handler = ngx_array_push(
@@ -649,29 +697,6 @@ ngx_http_ironbee_post_conf(ngx_conf_t *cf)
     ngx_http_top_body_filter = ngx_http_ironbee_body_out;
 
     return ngx_http_ironbee_init(cf);
-}
-
-
-/**
- * function to create module configuration rec
- *
- * @param[in]  cf     Configuration rec
- * @return     module configuration rec
- */
-static void *
-ngx_http_ironbee_create_main_conf(ngx_conf_t *cf)
-{
-    ironbee_proc_t  *conf;
-
-    conf = ngx_pcalloc(cf->pool, sizeof(ironbee_proc_t));
-    if (conf == NULL) {
-        return NULL;
-    }
-
-    conf->loglevel = NGX_CONF_UNSET_UINT;
-    conf->use_ngxib_logger = NGX_CONF_UNSET;
-
-    return conf;
 }
 
 
