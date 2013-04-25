@@ -104,7 +104,7 @@ InitCollection SESS_DATA persist-fs:///path/to/persisted/data key=%{REQUEST_COOK
                 filename.<programlisting># Format: uuid/expiration-tempname
 0de114da-8ada-55ad-a6de-e68a1263412a/001364624257-0004d91e578bc99f.json.dXFR9d</programlisting></para>
             <para>Periodic purging could be accomplished with a cron job to check that the current
-                apoch based date is greater than that encoded in the
+                epoch based date is greater than that encoded in the
                 file.<programlisting>#!/bin/sh
 
 # Specify the persist-fs: base directory
@@ -405,7 +405,7 @@ Sig("lua/3",1):
                     <listitem>
                         <para>Forces rule execution order within the recipe.</para>
                     </listitem>
-                </itemizedlist><programlisting>Recipe("recipe/1") {
+                </itemizedlist><programlisting>Recipe "recipe/1" {
   Sig("lua/1",1),
   Sig("lua/2",1),
   Sig("lua/3",1)
