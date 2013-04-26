@@ -77,5 +77,4 @@ Some IronBee transformations are provided directly via SpecificTransformations. 
 - `trim`
 - `trimRight`
 - `trimLeft`
-- `lc`
 - `lowercase`

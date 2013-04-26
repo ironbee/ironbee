@@ -871,7 +871,6 @@ void load(CallFactory& to)
         .add("trim", generate_specific_transformation)
         .add("trimRight", generate_specific_transformation)
         .add("trimLeft", generate_specific_transformation)
-        .add("lc", generate_specific_transformation)
         .add("lowercase", generate_specific_transformation)
         ;
 }
