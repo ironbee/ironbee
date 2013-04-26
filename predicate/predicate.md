@@ -11,7 +11,7 @@ Christopher Alfeld <calfeld@qualys.com><br>
 Introduction
 ------------
 
-The Predicate Rule system provides an alternative rule injection system for IronBee.  That is, it provides an alternative way to determine which rules should fire in a phase and does not change the metadata or actions available to rules.  The system associated a predicate *expression* with a rule and fires the rule if and only if the predicate expression evaluates to true.  The major advantages over the traditional rule system are:
+The Predicate Rule system provides an alternative rule injection system for IronBee.  That is, it provides an alternative way to determine which rules should fire in a phase and does not change the metadata or actions available to rules.  The system associates a predicate *expression* with a rule and fires the rule if and only if the predicate expression evaluates to true.  The major advantages over the traditional rule system are:
 
 * Composition: The expressions allow easy composition of other expressions.  Composition allows logic to be shared among rules.  It also allows easy use of boolean operators such as 'and' and 'or' to compose logic.
 
@@ -44,9 +44,9 @@ At present only null and string literals are supported.  In the future, other fi
 
 Expressions are usually represented textually via S-Expressions (sexpr).  The grammar of a predicate sexpr is given below, but first an example:
 
-    (and (gt (atoi (field 'Content-Length')) 100) (streq 'GET' (field 'Request-Method')))
+    (and (gt (atoi (field 'Content-Length')) 0) (streq 'GET' (field 'Request-Method')))
 
-The sexpr above represents the logic "the request is a GET and the Content-Length header is greater than 100".
+The sexpr above represents the logic "the request is a GET and the Content-Length header is greater than 0".
 
 The sexpr grammar is:
 
@@ -64,9 +64,9 @@ Note that the root must be a Call node.
 
 The actual parser is not quite as strict as the grammar above: it allows for additional whitespace except in literals and names.
 
-The most important performance consideration when using expressions is that *common subexpressions are merged*.  For example, if `(gt (atoi (field 'Content-Length')) 100)` appears in 100 predicate expression, you only pay the runtime cost of it once (per phase).  It is important to build expressions out of common building blocks and any Front End should support this.
+The most important performance consideration when using expressions is that *common subexpressions are merged*.  For example, if `(gt (atoi (field 'Content-Length')) 0)` appears in 100 predicate expression, you only pay the runtime cost of it once (per phase).  It is important to build expressions out of common building blocks and any Front End should support this.
 
-The expressiveness of the expression language is defined by the types of Call node it supports.  However, rule writers will usually be writing in Front End languages that provide syntactic constructs and may define functions in terms of others.  For example, for boolean expressions, only `and`, 'or', and `not` are available.  However, the front end can provide an `nor` by converting `a nor b` to `(not (or a b))`.
+The semantics of the expression language is defined by the types of Call node it supports.  However, rule writers will usually be writing in Front End languages that provide syntactic constructs and may define functions in terms of others.  For example, for boolean expressions, only `and`, 'or', and `not` are available.  However, the front end can provide an `nor` by converting `a nor b` to `(not (or a b))`.
 
 The predicate system comes with a set of *Standard* Calls.  Modules may define additional Calls.  The current set of standard calls is documented in `standard.md`.  Standard calls include boolean connectives, data manipulation, and IronBee operators.
 
@@ -78,7 +78,7 @@ Coming Soon
 Action and Operator
 -------------------
 
-Predicate may be used in rules in two ways: the `predicate` action or the `@predicate` operator.
+The Predicate system may be used in rules in two ways: the `predicate` action or the `@predicate` operator.
 
 The preferred way is via the `predicate` action.  The `predicate` action indicates that the rule should be claimed by Predicate and injected if appropriate.  The parameter to the action is the S-Expression that determines whether to inject the rule.
 

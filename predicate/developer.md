@@ -85,7 +85,7 @@ Nodes provide a value for themselves via `Node::calculate()` which takes an `Eva
 
 **Destruction**
 
-All nodes are destroyed when Predicate is completely, i.e., at IronBee termination.  Nodes are also destroyed when no longer needed as part of merging and transformation.  Consistent use of RAII means that most Nodes do not need custom destructors, and Call writers are encouraged to use similar techniques.
+All nodes are destroyed when Predicate is complete, i.e., at IronBee termination.  Nodes are also destroyed when no longer needed as part of merging and transformation.  Consistent use of RAII means that most Nodes do not need custom destructors, and Call writers are encouraged to use similar techniques.
 
 Writing a new Call
 ------------------
