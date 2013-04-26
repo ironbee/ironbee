@@ -182,15 +182,16 @@ Form          | Meaning             | Example                         |
 
 Call expression objects support the following methods:
 
-Form              | Meaning                       | Equivalent           |
------------------ | ----------------------------- | -------------------- |
-`c:length()`      | Length of value               | `P.Length(c)`        |
-`c:sub(name)`     | First subfield named `name`   | `P.Sub(name, c)`     |
-`c:suball(name)`  | All subfields named `name`    | `P.Suball(name, c)`  |
-`c:streq(other)`  | Value string equal to `other` | `P.Streq(other, c)`  |
-`c:istreq(other)` | Case insensitive of previous  | `P.Istreq(other, c)` |
-`c:eq(other)`     | Value number equal to `other` | `P.Eq(other, c)`     |
-`c:T()`           | Run transformation `T`        | `P.T(c)`             |
+Form              | Meaning                           | Equivalent           |
+----------------- | --------------------------------- | -------------------- |
+`c:length()`      | Length of value                   | `P.Length(c)`        |
+`c:sub(name)`     | First subfield named `name`       | `P.Sub(name, c)`     |
+`c:suball(name)`  | All subfields named `name`        | `P.Suball(name, c)`  |
+`c:streq(other)`  | Value string equal to `other`     | `P.Streq(other, c)`  |
+`c:istreq(other)` | Case insensitive of previous      | `P.Istreq(other, c)` |
+`c:eq(other)`     | Value number equal to `other`     | `P.Eq(other, c)`     |
+`c:ne(other)`     | Value number not equal to `other` | `P.Ne(other, c)`     |
+`c:T()`           | Run transformation `T`            | `P.T(c)`             |
 
 In the last row, replace `T` with any transformation described below.
 
@@ -261,6 +262,7 @@ Method           | Meaning                          | Notes   |
 `P.Streq(a, b)`  | String equality                  | 2, 3, 4 |
 `P.Istreq(a, b)` | Case insensitive string equality | 2, 3, 4 |
 `P.Eq(a, b)`     | `a == b` as numbers              | 2, 3, 4 |
+`P.Ne(a, b)`     | `a ~= b` as numbers              | 2, 3, 4 |
 `P.Gt(a, b)`     | `a > b`                          | 2, 3, 4 |
 `P.Lt(a, b)`     | `a < b`                          | 2, 3, 4 |
 `P.Ge(a, b)`     | `a >= b`                         | 2, 3, 4 |

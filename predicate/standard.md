@@ -55,6 +55,12 @@ Some IronBee operators are provided directly via SpecificOperator.  All of these
 - `streq`
 - `istreq`
 - `rx`
+- `eq`
+- `ne`
+- `gt`
+- `lt`
+- `ge`
+- `le`
 
 - `(transformation tfnname dynamic_argument)`: Generic access to any transformation.
 

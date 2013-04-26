@@ -303,6 +303,11 @@ a = P.from_lua(&quot;foo&quot;) + &quot;bar&quot;
 	<td style="text-align:left;"><code>P.Eq(other, c)</code></td>
 </tr>
 <tr>
+	<td style="text-align:left;"><code>c:ne(other)</code></td>
+	<td style="text-align:left;">Value number not equal to <code>other</code></td>
+	<td style="text-align:left;"><code>P.Ne(other, c)</code></td>
+</tr>
+<tr>
 	<td style="text-align:left;"><code>c:T()</code></td>
 	<td style="text-align:left;">Run transformation <code>T</code></td>
 	<td style="text-align:left;"><code>P.T(c)</code></td>
@@ -564,6 +569,11 @@ a = P.from_lua(&quot;foo&quot;) + &quot;bar&quot;
 <tr>
 	<td style="text-align:left;"><code>P.Eq(a, b)</code></td>
 	<td style="text-align:left;"><code>a == b</code> as numbers</td>
+	<td style="text-align:left;">2, 3, 4</td>
+</tr>
+<tr>
+	<td style="text-align:left;"><code>P.Ne(a, b)</code></td>
+	<td style="text-align:left;"><code>a ~= b</code> as numbers</td>
 	<td style="text-align:left;">2, 3, 4</td>
 </tr>
 <tr>

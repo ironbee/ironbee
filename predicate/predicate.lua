@@ -153,7 +153,7 @@ Predicate.False = Predicate.C("false")
 -- Calls
 
 local param1 = {'LLength', 'Not', 'Field'}
-local param2 = {'Sub', 'Suball', 'Name', 'Gt', 'Ge', 'Lt', 'Le', 'Rx', 'Transformation'}
+local param2 = {'Sub', 'Suball', 'Name', 'Rx', 'Transformation'}
 local param3 = {'Operator'}
 local paramn = {'Or', 'And', 'List'}
 for i,n in ipairs(param1) do
@@ -213,9 +213,10 @@ end
 -- be swapped, possibly with an operator change.
 
 local sym = {
-  Streq  = function (a,b) return a.value           == b.value          end,
+  Streq  = function (a,b) return a.value           == b.value           end,
   Istreq = function (a,b) return a.value:lower()   == b.value:lower()   end,
   Eq     = function (a,b) return tonumber(a.value) == tonumber(b.value) end,
+  Ne     = function (a,b) return a.value           ~= b.value           end,
   Gt     = function (a,b) return tonumber(a.value) >  tonumber(b.value) end,
   Ge     = function (a,b) return tonumber(a.value) >= tonumber(b.value) end,
   Lt     = function (a,b) return tonumber(a.value) <  tonumber(b.value) end,

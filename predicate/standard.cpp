@@ -832,6 +832,12 @@ void load(CallFactory& to)
         .add("streq", generate_specific_operator)
         .add("istreq", generate_specific_operator)
         .add("rx", generate_specific_operator)
+        .add("lt", generate_specific_operator)
+        .add("gt", generate_specific_operator)
+        .add("ge", generate_specific_operator)
+        .add("le", generate_specific_operator)
+        .add("eq", generate_specific_operator)
+        .add("ne", generate_specific_operator)
     ;
 
     // IronBee SpecificTransformations
