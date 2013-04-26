@@ -32,12 +32,19 @@ WAGGLE_FILES=ironbee/waggle.lua \
 EXTRA_DIST = ironbee-ffi-h.lua \
              ironbee-ffi.lua \
              ironbee/api.lua \
+             ironbee/config.lua \
+             ironbee/engine.lua \
+             ironbee/logevent.lua \
              ironbee/module.lua \
+             ironbee/rules.lua \
+             ironbee/tx.lua \
+             ironbee/util.lua \
              example.lua \
              threat_level.lua \
              event_processor.lua \
              $(WAGGLE_FILES) \
              qa.lua
+
 
 lua_DATA   = ironbee-ffi-h.lua \
              ironbee-ffi.lua \
