@@ -94,9 +94,6 @@ function call_mt:new(name, ...)
   return r
 end
 
-function call_mt:length()
-  return Predicate.Length(self)
-end
 function call_mt:sub(field_name)
   return Predicate.Sub(field_name, self)
 end
@@ -155,8 +152,8 @@ Predicate.False = Predicate.C("false")
 
 -- Calls
 
-local param1 = {'Length', 'Not', 'Field'}
-local param2 = {'Sub', 'Suball', 'Name', 'Gt', 'Ge', 'Lt', 'Le', 'Rx'}
+local param1 = {'LLength', 'Not', 'Field'}
+local param2 = {'Sub', 'Suball', 'Name', 'Gt', 'Ge', 'Lt', 'Le', 'Rx', 'Transformation'}
 local param3 = {'Operator'}
 local paramn = {'Or', 'And', 'List'}
 for i,n in ipairs(param1) do
@@ -170,6 +167,29 @@ for i,n in ipairs(param3) do
 end
 for i,n in ipairs(paramn) do
   Predicate[n] = function (...) return Predicate.C(n:lower(), unpack(arg)) end
+end
+
+local tfns = {
+  'normalizePathWin',
+  'normalizePath',
+  'htmlEntityDecode',
+  'urlDecode',
+  'min',
+  'max',
+  'count',
+  'length',
+  'compressWhitespace',
+  'removeWhitespace',
+  'trim',
+  'trimRight',
+  'trimLeft',
+  'lc',
+  'lowercase'
+}
+for i,n in ipairs(tfns) do
+  local capitalized = n:gsub("%l", string.upper)
+  Predicate[capitalized] = function (a) return Predicate.C(n, a) end
+  call_mt[n] = function (self) return Predicate[capitalized](self) end
 end
 
 function Predicate.If(a, b, c)

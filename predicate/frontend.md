@@ -174,9 +174,9 @@ Form            | Meaning                   | Equivalent            |
 
 String expression objects support the following methods:
 
-Form         | Meaning          | Example
------------- | ---------------- | -------------------------------
-`s:length()` | Length of string | `P.S("foo"):length()() --> '3'`
+Form          | Meaning             | Example                         |
+------------- | ------------------- | ------------------------------- |
+`s:length()`  | Length(s) of value  | `P.S("foo"):length()() --> '3'` |
 
 **Call Methods**
 
@@ -190,6 +190,9 @@ Form              | Meaning                       | Equivalent           |
 `c:streq(other)`  | Value string equal to `other` | `P.Streq(other, c)`  |
 `c:istreq(other)` | Case insensitive of previous  | `P.Istreq(other, c)` |
 `c:eq(other)`     | Value number equal to `other` | `P.Eq(other, c)`     |
+`c:T()`           | Run transformation `T`        | `P.T(c)`             |
+
+In the last row, replace `T` with any transformation described below.
 
 **Introspection**
 
@@ -204,11 +207,11 @@ Call        | `children` | Array of child objects (arguments)              |
 
 **Utilities**
 
-Utility       | Meaning                                      |
-------------- | -------------------------------------------- |
-P.pp(s)       | Format sexpr `s` for easy human reading      |
-P.from_lua(a) | Convert `a` to appropriate expression object |
-P.to_lua(a)   | Convert `a` to appropriate lua object        |
+Utility         | Meaning                                      |
+--------------- | -------------------------------------------- |
+`P.pp(s)`       | Format sexpr `s` for easy human reading      |
+`P.from_lua(a)` | Convert `a` to appropriate expression object |
+`P.to_lua(a)`   | Convert `a` to appropriate lua object        |
 
 `P.pp` returns a string.
 
@@ -220,74 +223,97 @@ P.to_lua(a)   | Convert `a` to appropriate lua object        |
 
 The Null value and Calls with no parameters are represented as constants.
 
-Constant | Meaning        | Equivalent    |
--------- | -------------- | ------------- |
-P.Null   | Null value     | None          |
-P.True   | True function  | P.C('true')   |
-P.False  | False function | P.C('false')  |
+Constant   | Meaning        | Equivalent    |
+---------- | -------------- | ------------- |
+`P.Null`   | Null value     | None          |
+`P.True`   | True function  | P.C('true')   |
+`P.False`  | False function | P.C('false')  |
 
 **Methods**
 
 Fundamentals:
 
-Method            | Meaning                  | Sexpr        |
------------------ | ------------------------ | ------------ |
-P.Call(name, ...) | Call expression object   | `(name ...)` |
-P.C(name, ...)    | Synonym for `P.Call`     | `(name ...)` |
-P.String(value)   | String expression object | `'value'`    |
-P.S(name, ...)    | Synonym for `P.String`   | `'value'`    |
-P.Raw(value)      | Raw expression object    | `value`      |
-P.R(value)        | Synonym for `P.Raw`      | `value`      |
+Method              | Meaning                  | Sexpr        |
+------------------- | ------------------------ | ------------ |
+`P.Call(name, ...)` | Call expression object   | `(name ...)` |
+`P.C(name, ...)`    | Synonym for `P.Call`     | `(name ...)` |
+`P.String(value)`   | String expression object | `'value'`    |
+`P.S(name, ...)`    | Synonym for `P.String`   | `'value'`    |
+`P.Raw(value)`      | Raw expression object    | `value`      |
+`P.R(value)`        | Synonym for `P.Raw`      | `value`      |
 
 Boolean:
 
-Method       | Meaning      | Notes |
------------- | ------------ | ----- |
-P.And(...)   | Boolean and  |       |
-P.Or(...)    | Boolean or   |       |
-P.Xor(a, b)  | Boolean xor  | 1     |
-P.Not(a)     | Boolean not  |       |
-P.Nand(...)  | Boolean nand | 1     |
-P.Nor(...)   | Boolean nor  | 1     |
-P.Nxor(a, b) | Boolean nxor | 1     |
+Method         | Meaning      | Notes |
+-------------- | ------------ | ----- |
+`P.And(...)`   | Boolean and  |       |
+`P.Or(...)`    | Boolean or   |       |
+`P.Xor(a, b)`  | Boolean xor  | 1     |
+`P.Not(a)`     | Boolean not  |       |
+`P.Nand(...)`  | Boolean nand | 1     |
+`P.Nor(...)`   | Boolean nor  | 1     |
+`P.Nxor(a, b)` | Boolean nxor | 1     |
 
 Comparison:
 
-Method         | Meaning                          | Notes   |
--------------- | -------------------------------- | ------- |
-P.Streq(a, b)  | String equality                  | 2, 3, 4 |
-P.Istreq(a, b) | Case insensitive string equality | 2, 3, 4 |
-P.Eq(a, b)     | `a == b` as numbers              | 2, 3, 4 |
-P.Gt(a, b)     | `a > b`                          | 2, 3, 4 |
-P.Lt(a, b)     | `a < b`                          | 2, 3, 4 |
-P.Ge(a, b)     | `a >= b`                         | 2, 3, 4 |
-P.Le(a, b)     | `a <= b`                         | 2, 3, 4 |
+Method           | Meaning                          | Notes   |
+---------------- | -------------------------------- | ------- |
+`P.Streq(a, b)`  | String equality                  | 2, 3, 4 |
+`P.Istreq(a, b)` | Case insensitive string equality | 2, 3, 4 |
+`P.Eq(a, b)`     | `a == b` as numbers              | 2, 3, 4 |
+`P.Gt(a, b)`     | `a > b`                          | 2, 3, 4 |
+`P.Lt(a, b)`     | `a < b`                          | 2, 3, 4 |
+`P.Ge(a, b)`     | `a >= b`                         | 2, 3, 4 |
+`P.Le(a, b)`     | `a <= b`                         | 2, 3, 4 |
 
 Decision:
 
-Method                        | Meaning                      | Notes |
------------------------------ | ---------------------------- | ----- |
-P.If(pred, if_true, if_false) | Choose value based on `pred` | 3     |
+Method                          | Meaning                      | Notes |
+------------------------------- | ---------------------------- | ----- |
+`P.If(pred, if_true, if_false)` | Choose value based on `pred` | 3     |
 
 Data:
 
-Method                     | Meaning                               | Notes |
--------------------------- | ------------------------------------- | ----- |
-P.Length(collection)       | Number of items                       |       |
-P.Sub(name, collection)    | First subfield `name` in `collection` | 4     |
-P.Suball(name, collection) | All subfields `name` in `collection`  | 4     |
-P.Name(name, value)        | Construct named value                 |       |
-P.List(...)                | Construct list                        |       |
-P.Field(name)              | Data field `name`                     |       |
+Method                       | Meaning                               | Notes |
+---------------------------- | ------------------------------------- | ----- |
+`P.Length(collection)`       | Number of items                       |       |
+`P.Sub(name, collection)`    | First subfield `name` in `collection` | 4     |
+`P.Suball(name, collection)` | All subfields `name` in `collection`  | 4     |
+`P.Name(name, value)`        | Construct named value                 |       |
+`P.List(...)`                | Construct list                        |       |
+`P.Field(name)`              | Data field `name`                     |       |
 
 IronBee Operators:
 
 See IronBee manual for details.  All operators take a static argument passed to them at configuration time and a dynamic argument passed to them at evaluation time.  The static argument must be a string literal.
 
-Method                            | Meaning             | Notes |
---------------------------------- |-------------------- | ----- |
-P.Operator(name, static, dynamic) | Use operator `name` | 4     |
-P.Rx(pattern, data)               | Regular expression  | 4     |
+Method                              | Meaning             | Notes |
+----------------------------------- | ------------------- | ----- |
+`P.Operator(name, static, dynamic)` | Use operator `name` | 4     |
+`P.Rx(pattern, data)`               | Regular expression  | 4     |
+
+IronBee Transformations:
+
+See IronBee manual for details.
+
+Method                             | Meaning                     | Notes |
+---------------------------------- | --------------------------- | ----- |
+`P.Transformation(name,  dynamic)` | Use transformation `name`   | 4     |
+`P.NormalizePathWin(path)`         | Normalize windows path      | 4     |
+`P.NormalizePath(path)`            | Normalize path              | 4     |
+`P.HtmlEntityDecode(s)`            | Decode `s` as HTML          | 4     |
+`P.UrlDecode(url)`                 | Decode `url`                | 4     |
+`P.Min(list)`                      | Smallest number in list     | 4     |
+`P.Max(list)`                      | Largest number in list      | 4     |
+`P.Count(list)`                    | Number of elements of list  | 4     |
+`P.Length(list_or_s)`              | Length(s) of value          | 4     |
+`P.CompressWhitespace(s)`          | Compress whitespace         | 4     |
+`P.RemoveWhitespace(s)`            | Remove all whitespace       | 4     |
+`P.Trim(s)`                        | Remove edge whitespace      | 4     |
+`P.TrimRight(s)`                   | Remove whitespace suffix    | 4     |
+`P.TrimLeft(s)`                    | Remove whitespace prefix    | 4     |
+`P.Lowercase(s)`                   | Convert to lowercase        | 4     |
+
 
 
 1. Implemented in terms of other calls.
