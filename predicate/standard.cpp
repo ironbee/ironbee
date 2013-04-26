@@ -53,9 +53,9 @@ string False::name() const
 }
 
 bool False::transform(
-    NodeReporter       reporter,
     MergeGraph&        merge_graph,
-    const CallFactory& call_factory
+    const CallFactory& call_factory,
+    NodeReporter       reporter
 )
 {
     node_p me = shared_from_this();
@@ -76,9 +76,9 @@ string True::name() const
 }
 
 bool True::transform(
-    NodeReporter       reporter,
     MergeGraph&        merge_graph,
-    const CallFactory& call_factory
+    const CallFactory& call_factory,
+    NodeReporter       reporter
 )
 {
     node_p me = shared_from_this();
@@ -122,13 +122,13 @@ void AbelianCall::replace_child(const node_p& child, const node_p& with)
 }
 
 bool AbelianCall::transform(
-    NodeReporter       reporter,
     MergeGraph&        merge_graph,
-    const CallFactory& call_factory
+    const CallFactory& call_factory,
+    NodeReporter       reporter
 )
 {
     bool parent_result =
-        parent_t::transform(reporter, merge_graph, call_factory);
+        parent_t::transform(merge_graph, call_factory, reporter);
 
     if (m_ordered) {
         return parent_result;
@@ -187,9 +187,9 @@ Value Or::calculate(EvalContext context)
 }
 
 bool Or::transform(
-    NodeReporter       reporter,
     MergeGraph&        merge_graph,
-    const CallFactory& call_factory
+    const CallFactory& call_factory,
+    NodeReporter       reporter
 )
 {
     node_p me = shared_from_this();
@@ -227,7 +227,7 @@ bool Or::transform(
     }
 
     return
-        AbelianCall::transform(reporter, merge_graph, call_factory) ||
+        AbelianCall::transform(merge_graph, call_factory, reporter) ||
         result;
 
 }
@@ -250,9 +250,9 @@ Value And::calculate(EvalContext context)
 }
 
 bool And::transform(
-    NodeReporter       reporter,
     MergeGraph&        merge_graph,
-    const CallFactory& call_factory
+    const CallFactory& call_factory,
+    NodeReporter       reporter
 )
 {
     node_p me = shared_from_this();
@@ -290,7 +290,7 @@ bool And::transform(
     }
 
     return
-        AbelianCall::transform(reporter, merge_graph, call_factory) ||
+        AbelianCall::transform(merge_graph, call_factory, reporter) ||
         result;
 }
 
@@ -311,9 +311,9 @@ Value Not::calculate(EvalContext context)
 }
 
 bool Not::transform(
-    NodeReporter       reporter,
     MergeGraph&        merge_graph,
-    const CallFactory& call_factory
+    const CallFactory& call_factory,
+    NodeReporter       reporter
 )
 {
     assert(children().size() == 1);
@@ -360,9 +360,9 @@ Value If::calculate(EvalContext context)
 }
 
 bool If::transform(
-    NodeReporter       reporter,
     MergeGraph&        merge_graph,
-    const CallFactory& call_factory
+    const CallFactory& call_factory,
+    NodeReporter       reporter
 )
 {
     assert(children().size() == 3);
@@ -522,9 +522,9 @@ std::string SpecificOperator::name() const
 }
 
 bool SpecificOperator::transform(
-    NodeReporter       reporter,
     MergeGraph&        merge_graph,
-    const CallFactory& call_factory
+    const CallFactory& call_factory,
+    NodeReporter       reporter
 )
 {
     assert(children().size() == 2);

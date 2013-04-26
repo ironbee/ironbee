@@ -52,9 +52,9 @@ public:
     * Will replace self with Null.
     **/
    virtual bool transform(
-       NodeReporter        reporter,
        MergeGraph&        merge_graph,
-       const CallFactory& call_factory
+       const CallFactory& call_factory,
+       NodeReporter       reporter
    );
 
 protected:
@@ -79,9 +79,9 @@ public:
     * Will replace self with ''.
     **/
    virtual bool transform(
-       NodeReporter        reporter,
        MergeGraph&        merge_graph,
-       const CallFactory& call_factory
+       const CallFactory& call_factory,
+       NodeReporter       reporter
    );
 
 protected:
@@ -112,9 +112,9 @@ public:
      * Will order children canonically.
      **/
     virtual bool transform(
-        NodeReporter       reporter,
         MergeGraph&        merge_graph,
-        const CallFactory& call_factory
+        const CallFactory& call_factory,
+        NodeReporter       reporter
     );
 
 private:
@@ -139,9 +139,9 @@ public:
     * Will order children canonically.
     **/
    virtual bool transform(
-       NodeReporter        reporter,
        MergeGraph&        merge_graph,
-       const CallFactory& call_factory
+       const CallFactory& call_factory,
+       NodeReporter       reporter
    );
 
 protected:
@@ -165,9 +165,9 @@ public:
     * Will order children canonically.
     **/
    virtual bool transform(
-       NodeReporter        reporter,
        MergeGraph&        merge_graph,
-       const CallFactory& call_factory
+       const CallFactory& call_factory,
+       NodeReporter       reporter
    );
 protected:
     virtual Value calculate(EvalContext context);
@@ -190,9 +190,9 @@ public:
      * Will replace self with a true or false value if child is a literal.
      **/
     virtual bool transform(
-        NodeReporter       reporter,
         MergeGraph&        merge_graph,
-        const CallFactory& call_factory
+        const CallFactory& call_factory,
+        NodeReporter       reporter
     );
 
 protected:
@@ -216,9 +216,9 @@ public:
      * Will replace self with appropriate child if first child is literal.
      **/
     virtual bool transform(
-        NodeReporter       reporter,
         MergeGraph&        merge_graph,
-        const CallFactory& call_factory
+        const CallFactory& call_factory,
+        NodeReporter       reporter
     );
 
 protected:
@@ -309,9 +309,9 @@ public:
     * constructor.
     **/
    virtual bool transform(
-       NodeReporter       reporter,
        MergeGraph&        merge_graph,
-       const CallFactory& call_factory
+       const CallFactory& call_factory,
+       NodeReporter       reporter
    );
 
 protected:

@@ -270,15 +270,15 @@ public:
      * Note: Reporting errors will allow the current transformation loop to
      * continue for other nodes, but will then end the transformation phase.
      *
-     * @param[in] reporter     Reporter to use for errors or warnings.
      * @param[in] merge_graph  MergeGraph used to change the DAG.
      * @param[in] call_factory CallFactory to create new nodes with.
+     * @param[in] reporter     Reporter to use for errors or warnings.
      * @return true iff any changes were made.
      **/
     virtual bool transform(
-        NodeReporter       reporter,
         MergeGraph&        merge_graph,
-        const CallFactory& call_factory
+        const CallFactory& call_factory,
+        NodeReporter       reporter
     );
 
     /**

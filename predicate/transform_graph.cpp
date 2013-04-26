@@ -80,9 +80,9 @@ bool transform_graph(
         }
 
         result = tn->transform(
-            NodeReporter(reporter, tn),
             graph,
-            call_factory
+            call_factory,
+            NodeReporter(reporter, tn)
         ) || result;
 
         try {
