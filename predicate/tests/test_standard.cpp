@@ -252,16 +252,6 @@ TEST_F(TestStandard, SpecificTransformation)
     EXPECT_THROW(eval_bool("(lowercase 'a' 'b')"), IronBee::einval);
 }
 
-TEST_F(TestStandard, LLength)
-{
-    EXPECT_EQ(0, eval_n("(llength null)"));
-    EXPECT_EQ(0, eval_n("(llength 'a')"));
-    EXPECT_EQ(1, eval_n("(llength (list 'a'))"));
-    EXPECT_EQ(2, eval_n("(llength (list 'a' 'b'))"));
-    EXPECT_THROW(eval_bool("(llength)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(llength 'a' 'b')"), IronBee::einval);
-}
-
 TEST_F(TestStandard, Name)
 {
     EXPECT_TRUE(eval_bool("(name 'a' 'b')"));
@@ -287,7 +277,7 @@ TEST_F(TestStandard, Sub)
 
 TEST_F(TestStandard, SubAll)
 {
-    EXPECT_EQ(2, eval_n("(llength (suball 'a' (list (name 'a' 'foo') (name 'a' 'bar') (name 'b' 'baz'))))"));
+    EXPECT_EQ(2, eval_n("(transformation 'count' (suball 'a' (list (name 'a' 'foo') (name 'a' 'bar') (name 'b' 'baz'))))"));
     EXPECT_THROW(eval_bool("(suball)"), IronBee::einval);
     EXPECT_THROW(eval_bool("(suball null (list))"), IronBee::einval);
     EXPECT_THROW(eval_bool("(suball 'a')"), IronBee::einval);

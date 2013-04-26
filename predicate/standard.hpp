@@ -391,24 +391,6 @@ private:
 };
 
 /**
- * Length of list child.
- *
- * Returns 0 if child is empty or not a list.
- * Construct a named value from a name (string) and value.
- **/
-class LLength :
-    public Validate::Call<LLength>,
-    public Validate::NChildren<1>
-{
-public:
-    //! See Call:name()
-    virtual std::string name() const;
-
-protected:
-    virtual Value calculate(EvalContext context);
-};
-
-/**
  * Construct a named value from a name (string) and value.
  **/
 class Name :

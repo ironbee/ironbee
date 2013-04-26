@@ -43,8 +43,6 @@ List and Name can be used together to build collections, e.g.,
 
     (list (name 'foo' 1) (name 'bar' 2))
 
-- `(llength list)`: Length of `list`.
-
 IronBee
 -------
 

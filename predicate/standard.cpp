@@ -694,27 +694,6 @@ Value List::calculate(EvalContext context)
     );
 }
 
-string LLength::name() const
-{
-    return "llength";
-}
-
-Value LLength::calculate(EvalContext context)
-{
-    Value v = children().front()->eval(context);
-    size_t length = 0;
-
-    if (v && v.type() == Value::LIST) {
-        length = v.value_as_list<Value>().size();
-    }
-
-    return Value::create_number(
-        context.memory_pool(),
-        "", 0,
-        length
-    );
-}
-
 string Sub::name() const
 {
     return "sub";
@@ -842,7 +821,6 @@ void load(CallFactory& to)
         .add<Field>()
         .add<Operator>()
         .add<Transformation>()
-        .add<LLength>()
         .add<Name>()
         .add<List>()
         .add<Sub>()
