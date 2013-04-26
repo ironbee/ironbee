@@ -291,7 +291,7 @@ private:
 class SpecificOperator :
     public Validate::Call<SpecificOperator>,
     public Validate::NChildren<2,
-           Validate::NthChildIsString<1
+           Validate::NthChildIsString<0
            > >
 {
 public:
