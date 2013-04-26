@@ -270,8 +270,6 @@ protected:
 private:
     typedef Validate::Call<Operator> parent_t;
 
-    void local_validate(NodeReporter reporter) const;
-
     //! Hidden complex implementation details.
     struct data_t;
 
@@ -322,6 +320,95 @@ private:
 };
 
 /**
+ * Run IronBee transformation.
+ *
+ * Execute an IronBee transformation.  The first child must be a string
+ * literal naming the transformation.  The second child is the input.
+ **/
+class Transformation :
+    public Validate::Call<Transformation>,
+    public Validate::NChildren<2,
+           Validate::NthChildIsString<0
+           > >
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::pre_eval()
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+protected:
+    virtual Value calculate(EvalContext context);
+
+private:
+    typedef Validate::Call<Operator> parent_t;
+
+    void local_validate(NodeReporter reporter) const;
+
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
+};
+
+/**
+ * As Transformation, but with transformation name bound in advance.
+ *
+ * @sa SpecificOperator
+ **/
+class SpecificTransformation :
+    public Validate::Call<SpecificTransformation>,
+    public Validate::NChildren<1
+           >
+{
+public:
+    //! Constructor.
+    explicit
+    SpecificTransformation(const std::string& tfn);
+
+    //! See Call:name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with Operator with first argument given by
+    * constructor.
+    **/
+   virtual bool transform(
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory,
+       NodeReporter       reporter
+   );
+
+protected:
+    virtual Value calculate(EvalContext context);
+
+private:
+    const std::string m_transformation;
+};
+
+/**
+ * Length of list child.
+ *
+ * Returns 0 if child is empty or not a list.
+ * Construct a named value from a name (string) and value.
+ **/
+class LLength :
+    public Validate::Call<LLength>,
+    public Validate::NChildren<1>
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual Value calculate(EvalContext context);
+};
+
+/**
  * Construct a named value from a name (string) and value.
  **/
 class Name :
@@ -344,23 +431,6 @@ protected:
  **/
 class List :
     public Call
-{
-public:
-    //! See Call:name()
-    virtual std::string name() const;
-
-protected:
-    virtual Value calculate(EvalContext context);
-};
-
-/**
- * Length of list child.
- *
- * Returns 0 if child is empty or not a list.
- **/
-class Length :
-    public Validate::Call<Length>,
-    public Validate::NChildren<1>
 {
 public:
     //! See Call:name()

@@ -27,6 +27,8 @@
 
 #include <ironbeepp/operator.hpp>
 
+#include <ironbee/transformation.h>
+
 #include <boost/foreach.hpp>
 
 using namespace std;
@@ -548,6 +550,113 @@ Value SpecificOperator::calculate(EvalContext context)
     );
 }
 
+string Transformation::name() const
+{
+    return "transformation";
+}
+
+struct Transformation::data_t
+{
+    ib_tfn_t *transformation;
+};
+
+void Transformation::pre_eval(Environment environment, NodeReporter reporter)
+{
+    m_data.reset(new data_t());
+
+    // Validation guarantees that the first child is a string interval
+    // and thus can be evaluated with default EvalContext.
+
+    Value name_value = children().front()->eval(EvalContext());
+    ConstByteString name = name_value.value_as_byte_string();
+
+    if (! name) {
+        reporter.error("Missing transformation name.");
+        return;
+    }
+
+    try {
+        IronBee::throw_if_error(
+            ib_tfn_lookup_ex(
+                environment.ib(),
+                name.const_data(), name.length(),
+                &(m_data->transformation)
+            )
+        );
+    }
+    catch (IronBee::enoent) {
+        reporter.error("No such transformation: " + name.to_s());
+        return;
+    }
+}
+
+Value Transformation::calculate(EvalContext context)
+{
+    Value input = children().back()->eval(context);
+
+    if (! input) {
+        return Value();
+    }
+
+    ib_field_t* ib_output = NULL;
+    ib_flags_t flags;
+
+    IronBee::throw_if_error(
+        ib_tfn_transform(
+            context.engine().ib(),
+            context.memory_pool().ib(),
+            m_data->transformation,
+            input.ib(),
+            &ib_output,
+            &flags
+        )
+    );
+
+    if (ib_output) {
+        return Value(ib_output);
+    }
+    else {
+        return Value();
+    }
+}
+
+SpecificTransformation::SpecificTransformation(const std::string& tfn) :
+    m_transformation(tfn)
+{
+    // nop
+}
+
+std::string SpecificTransformation::name() const
+{
+    return m_transformation;
+}
+
+bool SpecificTransformation::transform(
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory,
+    NodeReporter       reporter
+)
+{
+    assert(children().size() == 1);
+
+    const node_cp& me = shared_from_this();
+    node_p replacement(new Transformation());
+    replacement->add_child(node_p(new String(m_transformation)));
+    replacement->add_child(children().front());
+
+    merge_graph.replace(me, replacement);
+    return true;
+}
+
+Value SpecificTransformation::calculate(EvalContext context)
+{
+    BOOST_THROW_EXCEPTION(
+        einval() << errinfo_what(
+            "SpecificTransformation must transform."
+        )
+    );
+}
+
 string Name::name() const
 {
     return "name";
@@ -585,12 +694,12 @@ Value List::calculate(EvalContext context)
     );
 }
 
-string Length::name() const
+string LLength::name() const
 {
-    return "length";
+    return "llength";
 }
 
-Value Length::calculate(EvalContext context)
+Value LLength::calculate(EvalContext context)
 {
     Value v = children().front()->eval(context);
     size_t length = 0;
@@ -714,6 +823,10 @@ call_p generate_specific_operator(const std::string& name)
 {
     return call_p(new SpecificOperator(name));
 }
+call_p generate_specific_transformation(const std::string& name)
+{
+    return call_p(new SpecificTransformation(name));
+}
 
 }
 
@@ -728,9 +841,10 @@ void load(CallFactory& to)
         .add<If>()
         .add<Field>()
         .add<Operator>()
+        .add<Transformation>()
+        .add<LLength>()
         .add<Name>()
         .add<List>()
-        .add<Length>()
         .add<Sub>()
         .add<SubAll>()
     ;
@@ -741,6 +855,25 @@ void load(CallFactory& to)
         .add("istreq", generate_specific_operator)
         .add("rx", generate_specific_operator)
     ;
+
+    // IronBee SpecificTransformations
+    to
+        .add("normalizePathWin", generate_specific_transformation)
+        .add("normalizePath", generate_specific_transformation)
+        .add("htmlEntityDecode", generate_specific_transformation)
+        .add("urlDecode", generate_specific_transformation)
+        .add("min", generate_specific_transformation)
+        .add("max", generate_specific_transformation)
+        .add("count", generate_specific_transformation)
+        .add("length", generate_specific_transformation)
+        .add("compressWhitespace", generate_specific_transformation)
+        .add("removeWhitespace", generate_specific_transformation)
+        .add("trim", generate_specific_transformation)
+        .add("trimRight", generate_specific_transformation)
+        .add("trimLeft", generate_specific_transformation)
+        .add("lc", generate_specific_transformation)
+        .add("lowercase", generate_specific_transformation)
+        ;
 }
 
 } // Standard
