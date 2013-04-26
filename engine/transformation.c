@@ -86,7 +86,7 @@ ib_status_t ib_tfn_lookup_ex(ib_engine_t *ib,
     assert(ptfn != NULL);
 
     ib_hash_t *tfn_hash = ib->tfns;
-    ib_status_t rc = ib_hash_get(tfn_hash, ptfn, name);
+    ib_status_t rc = ib_hash_get_ex(tfn_hash, ptfn, name, nlen);
     return rc;
 }
 
