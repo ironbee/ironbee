@@ -1316,4 +1316,130 @@ Service 192.168.32.5:*</programlisting>
                 </listitem>
             </itemizedlist>
         </section>
+    <section>
+        <title>TxDump</title>
+        <para><emphasis role="bold">Description:</emphasis> Diagnostics directive to dump (log)
+            transaction data for debugging purposes.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>TxDump <replaceable>event</replaceable>
+                <replaceable>destination</replaceable>
+                <replaceable>[data]</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>None</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> devel</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+        <para>The <replaceable>event</replaceable> field allows indicating <emphasis>when</emphasis>
+            you want the data to be written and is one of: <itemizedlist>
+                <listitem>
+                    <para><literal>TxStarted</literal> - Transaction started.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>TxProcess</literal> - Transaction processing (between request and
+                        response).</para>
+                </listitem>
+                <listitem>
+                    <para><literal>TxContext</literal> - Transaction configuration context
+                        chosen.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>RequestStart</literal> - Request started.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>RequestHeader</literal> - Request headers have been
+                        processed.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>Request</literal> - Full request has been processed.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>ResponseStart</literal> - Response started.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>ResponseHeader</literal> - Response headers have been
+                        processed.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>Response</literal> - Full response has been processed.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>TxFinished</literal> - Transaction is finished.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>Logging</literal> - Logging phase.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>PostProcess</literal> - Post-processing phase.</para>
+                </listitem>
+            </itemizedlist>
+        </para>
+        <para>The <replaceable>destination</replaceable> field allows specifying
+                <emphasis>where</emphasis> you want to write the data and is one of the following: <itemizedlist>
+                <listitem>
+                    <para><literal>stderr</literal> - Write to standard error.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>stdout</literal> - Write to standard output.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>ib</literal> - Write to the IronBee log file.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>file://<replaceable>path</replaceable><replaceable>[+]</replaceable></literal>
+                        - Write to an arbitrary file, optionally appending to the file if the last
+                        character is a <literal>+</literal> character.</para>
+                </listitem>
+            </itemizedlist>
+        </para>
+        <para>The <replaceable>data</replaceable> field is optional and allows specifying
+                <emphasis>what</emphasis> is to be written. This can be prefixed with a
+                <literal>+</literal> or a <literal>-</literal> character to enable or disable the
+            data. <itemizedlist>
+                <listitem>
+                    <para><literal>Basic</literal> - Basic TX data.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>Context</literal> - Configuration context data.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>Connection</literal> - Connection data.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>ReqLine</literal> - HTTP request line.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>ReqHdr</literal> - HTTP request header.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>RspLine</literal> - HTTP response line.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>RspHdr</literal> - HTTP response header.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>Flags</literal> - Transaction flags.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>Args</literal> - Request arguments.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>Data</literal> - Transaction data.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>Default</literal> - Default is "Basic ReqLine RspLine".</para>
+                </listitem>
+                <listitem>
+                    <para><literal>Headers</literal> - All HTTP headers.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>All</literal> - All data.</para>
+                </listitem>
+            </itemizedlist>
+        </para>
+        <para>Examples:<programlisting>TxDump TxContext ib Basic +Context
+TxDump PostProcess file:///tmp/tx.txt All
+TxDump Logging file:///var/log/ib/all.txt+ All
+TxDump PostProcess StdOut All</programlisting></para>
+    </section>
 </chapter>
