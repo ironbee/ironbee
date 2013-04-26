@@ -236,9 +236,9 @@ for n,s in pairs(sym) do
     end
     if a.type == 'string' and b.type == 'string' then
       if s(a, b) then
-        return Predicate.True()
+        return Predicate.True
       else
-        return Predicate.False()
+        return Predicate.False
       end
     end
     if a.type ~= 'string' then
