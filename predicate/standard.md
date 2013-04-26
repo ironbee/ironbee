@@ -43,7 +43,7 @@ List and Name can be used together to build collections, e.g.,
 
     (list (name 'foo' 1) (name 'bar' 2))
 
-- `(length list)`: Length of `list`.
+- `(llength list)`: Length of `list`.
 
 IronBee
 -------
@@ -57,3 +57,25 @@ Some IronBee operators are provided directly via SpecificOperator.  All of these
 - `streq`
 - `istreq`
 - `rx`
+
+- `(transformation tfnname dynamic_argument)`: Generic access to any transformation.
+
+Transformation requires `tfnname` to be a string literal.
+
+Some IronBee transformations are provided directly via SpecificTransformations.  All of these take a dynamic argument and transform into appropriate transformation nodes.
+
+- `normalizePathWin`
+- `normalizePath`
+- `htmlEntityDecode`
+- `urlDecode`
+- `min`
+- `max`
+- `count`
+- `length`
+- `compressWhitespace`
+- `removeWhitespace`
+- `trim`
+- `trimRight`
+- `trimLeft`
+- `lc`
+- `lowercase`

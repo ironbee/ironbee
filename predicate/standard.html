@@ -57,7 +57,7 @@
 </code></pre>
 
 <ul>
-<li><code>(length list)</code>: Length of <code>list</code>.</li>
+<li><code>(llength list)</code>: Length of <code>list</code>.</li>
 </ul>
 
 <h2 id="ironbee">IronBee</h2>
@@ -71,9 +71,32 @@
 <p>Some IronBee operators are provided directly via SpecificOperator. All of these take a literal argument and a dynamic argument and transform into appropriate Operator nodes.</p>
 
 <ul>
-<li><code>streq</code></li>
-<li><code>istreq</code></li>
-<li><code>rx</code></li>
+<li><p><code>streq</code></p></li>
+<li><p><code>istreq</code></p></li>
+<li><p><code>rx</code></p></li>
+<li><p><code>(transformation tfnname dynamic_argument)</code>: Generic access to any transformation.</p></li>
+</ul>
+
+<p>Transformation requires <code>tfnname</code> to be a string literal.</p>
+
+<p>Some IronBee transformations are provided directly via SpecificTransformations. All of these take a dynamic argument and transform into appropriate transformation nodes.</p>
+
+<ul>
+<li><code>normalizePathWin</code></li>
+<li><code>normalizePath</code></li>
+<li><code>htmlEntityDecode</code></li>
+<li><code>urlDecode</code></li>
+<li><code>min</code></li>
+<li><code>max</code></li>
+<li><code>count</code></li>
+<li><code>length</code></li>
+<li><code>compressWhitespace</code></li>
+<li><code>removeWhitespace</code></li>
+<li><code>trim</code></li>
+<li><code>trimRight</code></li>
+<li><code>trimLeft</code></li>
+<li><code>lc</code></li>
+<li><code>lowercase</code></li>
 </ul>
 
 </body>
