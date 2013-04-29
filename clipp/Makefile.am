@@ -3,6 +3,9 @@ bin_PROGRAMS=clipp
 
 check-local:
 	(cd $(srcdir)/tests; abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))
+if ENABLE_LUA
+	(cd $(srcdir)/tests; abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) ./ts_lua.rb --verbose $(test_args))
+endif
 
 # Avoid various warnings as error in clipp builds because protobuf is not
 # careful about warnings.
