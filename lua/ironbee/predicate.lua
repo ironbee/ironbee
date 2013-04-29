@@ -86,10 +86,9 @@ end
 function call_mt:new(name, ...)
   local r = all_mt.new(self, 'call')
   local children = {}
-  if arg then
-    for i,v in ipairs(arg) do
-      table.insert(children, Predicate.from_lua(v))
-    end
+
+  for i,v in ipairs({...}) do
+    table.insert(children, Predicate.from_lua(v))
   end
   r.name = name
   r.children = children
@@ -143,11 +142,7 @@ function Predicate.String(value)
 end
 Predicate.S = Predicate.String
 function Predicate.Call(name, ...)
-  if arg then
-    return call_mt:new(name, unpack(arg))
-  else
-    return call_mt:new(name)
-  end
+  return call_mt:new(name, ...)
 end
 Predicate.C = Predicate.Call
 
@@ -172,7 +167,7 @@ for i,n in ipairs(param3) do
   Predicate[n] = function (a, b, c) return Predicate.C(n:lower(), a, b, c) end
 end
 for i,n in ipairs(paramn) do
-  Predicate[n] = function (...) return Predicate.C(n:lower(), unpack(arg)) end
+  Predicate[n] = function (...) return Predicate.C(n:lower(), ...) end
 end
 
 local tfns = {
@@ -263,13 +258,13 @@ function Predicate.Xor(a, b)
   return (a - b) / (b - a)
 end
 function Predicate.Nand(...)
-  return -Predicate.And(unpack(arg))
+  return -Predicate.And(...)
 end
 function Predicate.Nor(...)
-  return -Predicate.Or(unpack(arg))
+  return -Predicate.Or(...)
 end
 function Predicate.Nxor(...)
-  return -Predicate.Xor(unpack(arg))
+  return -Predicate.Xor(...)
 end
 
 -- Utility
