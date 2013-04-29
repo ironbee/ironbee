@@ -3,9 +3,17 @@ require File.join(File.dirname(__FILE__), '..', 'clipp_test')
 class TestRegression < Test::Unit::TestCase
   include CLIPPTest
 
-  CONFIG = <<-EOS
-    LoadModule "ibmod_lua.so"
-  EOS
+  def make_config(file, extras = {})
+    return {
+      :config => "LoadModule \"ibmod_lua.so\"\n" +
+        "LuaInclude \"#{file}\"\n" +
+        "LuaCommitRules",
+      :default_site_config => "RuleEnable all",
+    }.merge(extras)
+  end
+
+  SITE_CONFIG = "RuleEnable all"
+
 
   def test_sig
     lua = <<-EOS
@@ -18,15 +26,9 @@ class TestRegression < Test::Unit::TestCase
     lua_file = File.expand_path(File.join(BUILDDIR, rand(10000).to_s + '.lua'))
     File.open(lua_file, 'w') {|fp| fp.print lua}
 
-    clipp(
-      :input => "echo:\"GET /foo\"",
-      :config => CONFIG,
-      :default_site_config => <<-EOC
-          LuaInclude "#{lua_file}"
-          LuaCommitRules
-          RuleEnable all
-      EOC
-    )
+    clipp(make_config(lua_file,
+      :input => "echo:\"GET /foo\""
+    ))
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: basic1/
   end
@@ -40,14 +42,9 @@ class TestRegression < Test::Unit::TestCase
     lua_file = File.expand_path(File.join(BUILDDIR, rand(10000).to_s + '.lua'))
     File.open(lua_file, 'w') {|fp| fp.print lua}
 
-    clipp(
-      :input => "echo:\"GET /foo\"",
-      :config => CONFIG,
-      :default_site_config => <<-EOC
-          LuaInclude "#{lua_file}"
-          LuaCommitRules
-      EOC
-    )
+    clipp(make_config(lua_file,
+      :input => "echo:\"GET /foo\""
+    ))
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: basic2/
   end
