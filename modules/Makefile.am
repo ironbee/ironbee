@@ -38,7 +38,7 @@ ibmod_geoip_la_CPPFLAGS = $(AM_CPPFLAGS) $(GEOIP_CPPFLAGS)
 endif
 
 ibmod_log_pipe_la_SOURCES = log_pipe.c
-ibmod_log_pipe_la_CFLAGS = $(AM_CFLAGS)
+ibmod_log_pipe_la_CFLAGS = $(AM_CFLAGS) -D_GNU_SOURCE
 ibmod_log_pipe_la_CPPFLAGS = $(AM_CPPFLAGS)
 ibmod_log_pipe_la_LDFLAGS = $(AM_LDFLAGS)
 
