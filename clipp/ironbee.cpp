@@ -97,6 +97,8 @@ public:
             }
             m_connection = IronBee::Connection::create(m_engine);
 
+/* Static analyzer doesn't understand register_clean() */
+#ifndef __clang_analyzer__
             char* local_ip = strndup(
                 event.local_ip.data,
                 event.local_ip.length
@@ -112,6 +114,7 @@ public:
             m_connection.set_local_port(event.local_port);
             m_connection.set_remote_ip_string(remote_ip);
             m_connection.set_remote_port(event.remote_port);
+#endif
         }
 
         m_engine.notify().connection_opened(m_connection);
