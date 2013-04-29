@@ -53,6 +53,8 @@ Signature.new = function(self, rule_id, rule_version, db)
             fields = {},
             -- List of tags.
             tags = {},
+            -- True if a predicate expression has been added to the actions.
+            has_predicate = false,
             -- List of actions.
             actions = {},
             -- After list. List of rules / tags this must occur after.
@@ -137,6 +139,41 @@ Signature.tags = function(self, ...)
     return self
 end
 Signature.tag = Signature.tags
+
+-- Add predicate expression to this rule.
+--
+-- Only a single predicate expression is allowed per rule.
+--
+-- @param[in, out] self The signature/rule.
+-- @param[in] expression String (sexpr) or front end expression object.
+--
+-- @returns The signature/rule object.
+Signature.predicate = function(self, expression)
+  local sexpr;
+
+  if self.data.has_predicate then
+    error("Signatures can have at most one predicate expression.")
+  end
+
+  if type(expression) == 'string' then
+    sexpr = expression
+  else
+    success, sexpr = pcall(expression)
+    if not success then
+      error("predicate argument fatal to produce s-expression.")
+      return self
+    end
+    if type(sexpr) ~= 'string' then
+      error("predicate argument returned non-string.")
+      return self
+    end
+  end
+
+  self.data.has_predicate = true
+  table.insert(self.data.actions, {name = 'predicate', argument = sexpr})
+
+  return self
+end
 
 -- Append a list of actions to this rule.
 --

@@ -11,6 +11,7 @@ _M._DESCRIPTION = "IronBee Configuration"
 _M._VERSION = "1.0"
 
 local Waggle = require('ironbee/waggle')
+local Predicate = require('ironbee/predicate')
 
 -- Pair of #defines from C code imported here.
 local IB_RULEMD_FLAG_EXPAND_MSG = 1
@@ -45,10 +46,12 @@ local DoInDSL = function(f)
             table.insert(to_nil, k)
         end
     end
+    _G['P'] = Predicate
 
     f()
 
     -- Teardown.
+    _G[P] = nil
     for _, k in ipairs(to_nil) do
         _G[k] = nil
     end
