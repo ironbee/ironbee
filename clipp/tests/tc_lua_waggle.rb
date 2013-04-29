@@ -4,14 +4,17 @@ class TestRegression < Test::Unit::TestCase
   include CLIPPTest
 
   CONFIG = <<-EOS
+    LogLevel Debug
     LoadModule "ibmod_lua.so"
+    Set RuleEngineDebugLogLevel Trace
+    RuleEngineLogLevel Debug
   EOS
 
   def test_sig
     lua = <<-EOS
       Sig("basic1", "1"):
         fields([[REQUEST_METHOD]]):
-        op('imatch', [["GET"]]):
+        op('imatch', [[GET]]):
         phase([[REQUEST_HEADER]]):
         action([[clipp_announce:basic1]])
     EOS
@@ -21,7 +24,10 @@ class TestRegression < Test::Unit::TestCase
     clipp(
       :input => "echo:\"GET /foo\"",
       :config => CONFIG,
-      :default_site_config => "LuaInclude \"#{lua_file}\""
+      :default_site_config => <<-EOC
+          LuaInclude "#{lua_file}"
+          LuaCommitRules
+      EOC
     )
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: basic1/
@@ -39,7 +45,10 @@ class TestRegression < Test::Unit::TestCase
     clipp(
       :input => "echo:\"GET /foo\"",
       :config => CONFIG,
-      :default_site_config => "LuaInclude \"#{lua_file}\""
+      :default_site_config => <<-EOC
+          LuaInclude "#{lua_file}"
+          LuaCommitRules
+      EOC
     )
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: basic2/
