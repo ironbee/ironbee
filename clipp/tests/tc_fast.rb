@@ -1,5 +1,4 @@
-$:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
-require 'clipp_test'
+require File.join(File.dirname(__FILE__), '..', 'clipp_test')
 
 class TestFast < Test::Unit::TestCase
   include CLIPPTest
