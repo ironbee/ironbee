@@ -20,6 +20,9 @@ local IB_RULEMD_FLAG_EXPAND_DATA = 2
 local IB_OP_CAPABILITY_NON_STREAM = 2
 local IB_OP_CAPABILITY_STREAM = 4
 
+-- (IB_RULE_FLAG_FORCE_EN|IB_RULE_FLAG_NO_TGT) or (256 + 512)
+local IB_RULE_FLAG_ACTION = 768 
+
 -- Setup the configuration DLS, run the function provided, tear down the DSL.
 --
 -- param[in] f Function to run after the DSL is installed in _G.
@@ -175,7 +178,7 @@ local build_rule = function(ib, ctx, chain, db)
 
         -- For actions, set the magic actionflag.
         if rule.type == "actionsignature" then
-            prule[0].flags = ffi.C.ib_set_flag(prule[0].flags, ffi.C.IB_RULE_FLAG_ACTION);
+            prule[0].flags = ffi.C.ib_set_flag(prule[0].flags, IB_RULE_FLAG_ACTION);
         end
 
         ffi.C.ib_rule_set_id(ib.ib_engine, prule[0], rule_id)
