@@ -57,12 +57,14 @@ static ngx_command_t  ngx_ironbee_commands[] = {
       NGX_HTTP_MAIN_CONF_OFFSET,
       offsetof(ironbee_proc_t, config_file),
       NULL },
+
     { ngx_string("ironbee_logger"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
       NGX_HTTP_MAIN_CONF_OFFSET,
       offsetof(ironbee_proc_t, use_ngxib_logger),
       NULL },
+
     { ngx_string("ironbee_loglevel"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
@@ -171,7 +173,8 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         /* Feed the data to ironbee */
         itxdata.data = link->buf->pos;
         itxdata.dlen = link->buf->last - link->buf->pos;
-            ib_log_debug_tx(ctx->tx, "ironbee_body_out: %d bytes", (int)itxdata.dlen);
+        ib_log_debug_tx(ctx->tx, "ironbee_body_out: %d bytes",
+                        (int)itxdata.dlen);
         if (itxdata.dlen > 0) {
             ib_state_notify_response_body_data(ironbee, ctx->tx, &itxdata);
         }
@@ -526,6 +529,13 @@ static ngx_int_t ngxib_post_conf(ngx_conf_t *cf)
 {
     ngx_http_core_main_conf_t *main_cf;
     ngx_http_handler_pt *req_handler;
+    ironbee_proc_t *ipcf;
+
+    /* Step aside if not configured in nginx */
+    ipcf = ngx_http_conf_get_module_main_conf(cf, ngx_ironbee_module);
+    if (ipcf->config_file.len == 0) {
+        return NGX_OK;
+    }
 
     /* Give ourself the chance to attach gdb */
     do {
@@ -537,11 +547,13 @@ static ngx_int_t ngxib_post_conf(ngx_conf_t *cf)
     } while (0);
 
     main_cf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
-    if (main_cf == NULL)
-        return NGX_ERROR;
+    assert (main_cf != NULL);
 
     /* Register a handler to deal with request line and headers */
     req_handler = ngx_array_push(&main_cf->phases[NGX_HTTP_POST_READ_PHASE].handlers);
+    if (req_handler == NULL) {
+        return NGX_ERROR;
+    }
     *req_handler = ironbee_post_read_request;
 
     /* Register dummy handler to pull input */
@@ -554,6 +566,9 @@ static ngx_int_t ngxib_post_conf(ngx_conf_t *cf)
      */
     //req_handler = ngx_array_push(&main_cf->phases[NGX_HTTP_CONTENT_PHASE].handlers);
     req_handler = ngx_array_push(&main_cf->phases[NGX_HTTP_PREACCESS_PHASE].handlers);
+    if (req_handler == NULL) {
+        return NGX_ERROR;
+    }
     *req_handler = ngxib_handler;
 
     /* Insert headers_out filter */
@@ -576,8 +591,10 @@ static ngx_int_t ngxib_post_conf(ngx_conf_t *cf)
 static void *create_main_conf(ngx_conf_t *cf)
 {
     ironbee_proc_t *conf = ngx_pcalloc(cf->pool, sizeof(ironbee_proc_t));
-    conf->loglevel = NGX_CONF_UNSET_UINT;
-    conf->use_ngxib_logger = NGX_CONF_UNSET;
+    if (conf != NULL) {
+        conf->loglevel = NGX_CONF_UNSET_UINT;
+        conf->use_ngxib_logger = NGX_CONF_UNSET;
+    }
     return conf;
 }
 #define init_main_conf NULL
@@ -622,10 +639,10 @@ ngx_module_t  ngx_ironbee_module = {
     NGX_HTTP_MODULE,               /* module type */
     NULL,                          /* init master */
     NULL,                          /* init module */
-    NULL, //ironbee_init,                  /* init process */
+    NULL,                          /* init process */
     NULL,                          /* init thread */
     NULL,                          /* exit thread */
-    NULL, //ironbee_exit,                  /* exit process */
-    ironbee_exit,                          /* exit master */
+    NULL,                          /* exit process */
+    ironbee_exit,                  /* exit master */
     NGX_MODULE_V1_PADDING
 };
