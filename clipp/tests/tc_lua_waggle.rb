@@ -4,10 +4,7 @@ class TestRegression < Test::Unit::TestCase
   include CLIPPTest
 
   CONFIG = <<-EOS
-    LogLevel Debug
     LoadModule "ibmod_lua.so"
-    Set RuleEngineDebugLogLevel Trace
-    RuleEngineLogLevel Debug
   EOS
 
   def test_sig
@@ -27,6 +24,7 @@ class TestRegression < Test::Unit::TestCase
       :default_site_config => <<-EOC
           LuaInclude "#{lua_file}"
           LuaCommitRules
+          RuleEnable all
       EOC
     )
     assert_no_issues
