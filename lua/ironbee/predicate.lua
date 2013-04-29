@@ -1,4 +1,4 @@
-Predicate = {}
+local Predicate = {}
 
 -- Private helpers
 
@@ -86,8 +86,10 @@ end
 function call_mt:new(name, ...)
   local r = all_mt.new(self, 'call')
   local children = {}
-  for i,v in ipairs(arg) do
-    table.insert(children, Predicate.from_lua(v))
+  if arg then
+    for i,v in ipairs(arg) do
+      table.insert(children, Predicate.from_lua(v))
+    end
   end
   r.name = name
   r.children = children
@@ -141,7 +143,11 @@ function Predicate.String(value)
 end
 Predicate.S = Predicate.String
 function Predicate.Call(name, ...)
-  return call_mt:new(name, unpack(arg))
+  if arg then
+    return call_mt:new(name, unpack(arg))
+  else
+    return call_mt:new(name)
+  end
 end
 Predicate.C = Predicate.Call
 
