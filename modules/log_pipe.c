@@ -137,13 +137,12 @@ static void log_pipe_logger(const ib_engine_t *ib, ib_log_level_t level,
     int ec;
     log_pipe_cfg *cfg;
     time_t tm;
+    ib_status_t rc;
 
-    assert(ib_engine_module_get((ib_engine_t *)ib, MODULE_NAME_STR, &m)
-           == IB_OK);
-    assert (m != NULL);
-    assert(ib_context_module_config(ib_context_main(ib), m, &cfg) == IB_OK);
-    assert (cfg != NULL);
-    assert (cfg->pipe != NULL);
+    rc = ib_engine_module_get((ib_engine_t *)ib, MODULE_NAME_STR, &m);
+    assert((rc == IB_OK) && (m != NULL));
+    rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
+    assert((rc == IB_OK) && (cfg != NULL) && (cfg->pipe != NULL));
 
     if (level > cfg->log_level) {
         return;
@@ -196,10 +195,11 @@ static ib_log_level_t log_pipe_get_level(const ib_engine_t *ib, void *dummy)
     log_pipe_cfg *cfg;
     ib_module_t *m;
     ib_context_t *ctx;
+    ib_status_t rc;
 
-    assert(ib_engine_module_get((ib_engine_t*)ib, MODULE_NAME_STR, &m)
-           == IB_OK);
-    assert (m != NULL);
+    rc = ib_engine_module_get((ib_engine_t *)ib, MODULE_NAME_STR, &m);
+    assert((rc == IB_OK) && (m != NULL));
+
     /* This may get called after ctx has been invalidated, because
      * cleanup happens in a perverse order.
      */
@@ -207,8 +207,8 @@ static ib_log_level_t log_pipe_get_level(const ib_engine_t *ib, void *dummy)
     if (ctx == NULL) {
         return 4;
     }
-    assert(ib_context_module_config(ctx, m, &cfg) == IB_OK);
-    assert (cfg != NULL);
+    rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
+    assert((rc == IB_OK) && (cfg != NULL));
 
     return cfg->log_level;
 }
@@ -277,17 +277,17 @@ static ib_status_t log_pipe_program(ib_cfgparser_t *cp, const char *name,
 {
     log_pipe_cfg *cfg;
     ib_module_t *m;
+    ib_status_t rc;
 
     assert(cp     != NULL);
     assert(cp->ib != NULL);
     assert(name   != NULL);
     assert(p1     != NULL);
 
-    assert(ib_engine_module_get(cp->ib, MODULE_NAME_STR, &m)
-           == IB_OK);
-    assert (m != NULL);
-    assert(ib_context_module_config(ib_context_main(cp->ib), m, &cfg) == IB_OK);
-    assert (cfg != NULL);
+    rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &m);
+    assert((rc == IB_OK) && (m != NULL));
+    rc = ib_context_module_config(ib_context_main(cp->ib), m, &cfg);
+    assert((rc == IB_OK) && (cfg != NULL));
 
     cfg->cmdline = p1;
 
@@ -306,16 +306,17 @@ static ib_status_t log_pipe_set_level(ib_cfgparser_t *cp, const char *name,
 {
     log_pipe_cfg *cfg;
     ib_module_t *m;
+    ib_status_t rc;
 
     assert(cp     != NULL);
     assert(cp->ib != NULL);
     assert(name   != NULL);
     assert(p1     != NULL);
 
-    assert(ib_engine_module_get(cp->ib, MODULE_NAME_STR, &m) == IB_OK);
-    assert (m != NULL);
-    assert(ib_context_module_config(ib_context_main(cp->ib), m, &cfg) == IB_OK);
-    assert (cfg != NULL);
+    rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &m);
+    assert((rc == IB_OK) && (m != NULL));
+    rc = ib_context_module_config(ib_context_main(cp->ib), m, &cfg);
+    assert((rc == IB_OK) && (cfg != NULL));
 
     cfg->log_level = ib_log_string_to_level(p1);
 
