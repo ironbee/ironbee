@@ -1,6 +1,6 @@
 require File.join(File.dirname(__FILE__), '..', 'clipp_test')
 
-class TestRegression < Test::Unit::TestCase
+class TestLuaWaggle < Test::Unit::TestCase
   include CLIPPTest
 
   def make_config(file, extras = {})
