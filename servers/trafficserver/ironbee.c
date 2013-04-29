@@ -1249,7 +1249,7 @@ cleanup:
  *
  * @param[in]  hdr_bufp Header marshal buffer
  * @param[in]  hdr_loc Header location object
- * @param[in]  mp IronBee memory pool to use for allocations
+ * @param[in]  tx IronBee transaction
  * @param[in]  hdr_buf Header buffer
  * @param[in]  hdr_len Header buffer length
  * @param[out] pline_buf Pointer to line buffer
@@ -1260,23 +1260,28 @@ cleanup:
 static ib_status_t fixup_request_line(
     TSMBuffer         hdr_bufp,
     TSMLoc            hdr_loc,
-    ib_mpool_t       *mp,
+    ib_tx_t          *tx,
     const char       *line_buf,
     size_t            line_len,
     const char      **pline_buf,
     size_t           *pline_len)
 {
-    assert(mp != NULL);
+    assert(tx != NULL);
     assert(line_buf != NULL);
     assert(pline_buf != NULL);
     assert(pline_len != NULL);
 
     ib_status_t          rc = IB_OK;
-    static const char   *bad = "http:///";
-    static const size_t  bad_len = 8;
+    static const char   *bad1_str = "http:///";
+    static const size_t  bad1_len = 8;
+    static const char   *bad2_str = "https:///";
+    static const size_t  bad2_len = 9;
+    const char          *bad_url;
+    size_t               bad_len;
     const char          *url_buf;
     size_t               url_len;
     const char          *bad_line_url = NULL;
+    size_t               bad_line_len;
     size_t               line_method_len; /* Includes trailing space(s) */
     size_t               line_proto_off;  /* Includes leading space(s) */
     size_t               line_proto_len;  /* Includes leading space(s) */
@@ -1284,25 +1289,41 @@ static ib_status_t fixup_request_line(
     char                *new_line_cur;
     size_t               new_line_len;
 
-    /* Search for "http:///" in the line; if it's not present, we're done */
-    if (line_len >= 8) {
-        bad_line_url = ib_strstr_ex(line_buf, line_len, bad, bad_len);
-    }
-    if ( (line_len < 8) || (bad_line_url == NULL) ) {
+    /* Search for "http:///" or "https:///" in the line */
+    if (line_len < bad2_len + 2) {
         goto line_ok;
     }
 
-    /* Next, check for "http:///" in the URL.  First, get the URL. */
-    rc = get_request_url(hdr_bufp, hdr_loc, mp, &url_buf, &url_len);
+    /* Look for http:/// first */
+    bad_line_url = ib_strstr_ex(line_buf, line_len, bad1_str, bad1_len);
+    if (bad_line_url != NULL) {
+        bad_url = bad1_str;
+        bad_len = bad1_len;
+    }
+    else {
+        /* Look for https:/// next */
+        bad_line_url = ib_strstr_ex(line_buf, line_len, bad2_str, bad2_len);
+        if (bad_line_url != NULL) {
+            bad_url = bad2_str;
+            bad_len = bad2_len;
+        }
+    }
+    if (bad_line_url == NULL) {
+        goto line_ok;
+    }
+
+    /* Next, check for the pattern in the URL.  We need the URL to do that. */
+    rc = get_request_url(hdr_bufp, hdr_loc, tx->mp, &url_buf, &url_len);
     if (rc != IB_OK) {
         TSError("Failed to get request URL: %s", ib_status_to_string(rc));
         return rc;
     }
 
-    /* If the URL doesn't start with "http:///", we're done. */
-    if ( (url_len < 8) || (memcmp(url_buf, bad, bad_len) != 0) ) {
+    /* If the URL doesn't start with the above pattern, we're done. */
+    if ( (url_len < bad_len) || (memcmp(url_buf, bad_url, bad_len) != 0) ) {
         goto line_ok;
     }
+    bad_line_len = url_len;
 
     /*
      * Calculate the offset of the offending URL,
@@ -1310,6 +1331,7 @@ static ib_status_t fixup_request_line(
      */
     line_method_len = (bad_line_url - line_buf);
     line_proto_off = line_method_len + url_len;
+    assert(line_len >= line_proto_off);
     line_proto_len = line_len - line_proto_off;
 
     /* Advance the pointer into the URL buffer, shorten it... */
@@ -1318,7 +1340,7 @@ static ib_status_t fixup_request_line(
 
     /* Determine the size of the new line buffer, allocate it */
     new_line_len = line_method_len + url_len + line_proto_len;
-    new_line_buf = ib_mpool_alloc(mp, new_line_len);
+    new_line_buf = ib_mpool_alloc(tx->mp, new_line_len+1);
     if (new_line_buf == NULL) {
         TSError("Failed to allocate buffer for fixed request line!!");
         *pline_buf = line_buf;
@@ -1337,6 +1359,13 @@ static ib_status_t fixup_request_line(
     /* Store new pointers */
     *pline_buf = new_line_buf;
     *pline_len = new_line_len;
+
+    /* Log a message */
+    if (ib_log_get_level(tx->ib) >= IB_LOG_DEBUG) {
+        TSDebug("ironbee", "Rewrote request URL from \"%.*s\" to \"%.*s\"",
+                (int)bad_line_len, bad_line_url,
+                (int)url_len, url_buf);
+    }
 
     /* Done */
     return IB_OK;
@@ -1488,15 +1517,15 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                             &hdr_buf, &hdr_len,
                             &rline_buf, &rline_len);
     if (ib_rc != IB_OK) {
-        TSError ("couldn't get %s header: %s\n", ibd->type_label,
-                 ib_status_to_string(ib_rc));
+        TSError("couldn't get %s header: %s\n", ibd->type_label,
+                ib_status_to_string(ib_rc));
         return HDR_ERROR;
     }
 
     /* Handle the request / response line */
     switch(ibd->dir) {
     case IBD_REQ: {
-        ib_rc = fixup_request_line(bufp, hdr_loc, data->tx->mp,
+        ib_rc = fixup_request_line(bufp, hdr_loc, data->tx,
                                    rline_buf, rline_len,
                                    &rline_buf, &rline_len);
         if (ib_rc != IB_OK) {
