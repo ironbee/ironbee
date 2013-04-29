@@ -778,6 +778,7 @@ static modhtp_txdata_t *modhtp_get_txdata_parser(
      * something to stderr.
      */
     if (parser_data->disconnected) {
+        fprintf(stderr, "ERROR: Parser disconnected in callback\n");
         return NULL;
     }
     txdata = htp_tx_get_user_data(parser->in_tx);
