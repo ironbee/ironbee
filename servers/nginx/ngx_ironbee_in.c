@@ -68,7 +68,8 @@ int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
      * parse the header into tokens and accept look for "chunked"
      * among the tokens, rather than assume an exact match
      */
-    else if (r->headers_in.transfer_encoding->value.len == 7
+    else if (r->headers_in.transfer_encoding != NULL
+             && r->headers_in.transfer_encoding->value.len == 7
              && ngx_strncasecmp(r->headers_in.transfer_encoding->value.data,
                                 (u_char *) "chunked", 7) == 0)
         return -1;
