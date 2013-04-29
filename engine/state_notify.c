@@ -791,6 +791,11 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
         pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        return IB_EUNKNOWN;
+    }
+
     tx->t.response_started = ib_clock_get_time();
 
     /* Validate. */
