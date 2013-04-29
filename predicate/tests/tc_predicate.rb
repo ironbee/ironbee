@@ -1,4 +1,4 @@
-require File.join(File.dirname(__FILE__), '..', 'clipp_test')
+require File.join(File.dirname(__FILE__), '..', '..', 'clipp', 'clipp_test')
 
 class TestPredicate < Test::Unit::TestCase
   include CLIPPTest
