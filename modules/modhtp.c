@@ -740,9 +740,14 @@ static modhtp_txdata_t *modhtp_get_txdata_htptx(
      * txdata is NULL, we have no way of logging to IronBee, etc., so log
      * something to stderr.
      */
+#if 1
     if (txdata == NULL) {
+        fprintf(stderr, "ERROR: NULL htx->txdata in body callback\n");
         return NULL;
     }
+#else
+    assert(txdata != NULL);
+#endif
     assert(txdata->htx == htx);
 
     return txdata;
