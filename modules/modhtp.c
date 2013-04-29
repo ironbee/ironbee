@@ -2011,6 +2011,7 @@ static ib_status_t modhtp_iface_tx_init(
     parser_data = ib_conn_parser_context_get(itx->conn);
     if (parser_data == NULL) {
         ib_log_error_tx(itx, "Failed to get parser data for connection");
+        return IB_EOTHER;
     }
 
     /* Get the module's configuration for the context */
