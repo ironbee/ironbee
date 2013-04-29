@@ -1698,6 +1698,70 @@ process_hdr_cleanup:
 }
 
 /**
+ * Initialize the IB connection.
+ *
+ * Initializes an IronBee connection from a ATS continuation
+ *
+ * @param[in] iconn IB connection
+ * @param[in] ssn Session context data
+ *
+ * @returns status
+ */
+static ib_status_t ironbee_conn_init(
+    ib_ssn_ctx *ssn)
+{
+    assert(ssn != NULL);
+    ib_status_t            rc;
+    const struct sockaddr *addr;
+    int                    port;
+    ib_conn_t             *iconn = ssn->iconn;
+               
+    /* remote ip */
+    addr = TSHttpTxnClientAddrGet(ssn->txnp);
+    addr2str(addr, ssn->remote_ip, &port);
+
+    iconn->remote_ipstr = ssn->remote_ip;
+    rc = ib_data_add_bytestr(iconn->data,
+                             "remote_ip",
+                             (uint8_t *)iconn->remote_ipstr,
+                             strlen(ssn->remote_ip),
+                             NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* remote port */
+    iconn->remote_port = port;
+    rc = ib_data_add_num(iconn->data, "remote_port", port, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* local end */
+    addr = TSHttpTxnIncomingAddrGet(ssn->txnp);
+
+    addr2str(addr, ssn->local_ip, &port);
+
+    iconn->local_ipstr = ssn->local_ip;
+    rc = ib_data_add_bytestr(iconn->data,
+                             "local_ip",
+                             (uint8_t *)iconn->local_ipstr,
+                             strlen(ssn->local_ip),
+                             NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* local_port */
+    iconn->local_port = port;
+    rc = ib_data_add_num(iconn->data, "local_port", port, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    return IB_OK;
+}
+
+/**
  * Plugin for the IronBee ATS.
  *
  * Handles some ATS events.
@@ -1758,9 +1822,17 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                     TSError("ironbee: ib_conn_create: %d\n", rc);
                     return rc; // FIXME - figure out what to do
                 }
+
                 TSDebug("ironbee", "CONN CREATE: conn=%p", ssndata->iconn);
                 ssndata->txnp = txnp;
                 ssndata->txn_count = ssndata->closing = 0;
+
+                rc = ironbee_conn_init(ssndata);
+                if (rc != IB_OK) {
+                    TSError("ironbee: ironbee_conn_init: %d\n", rc);
+                    return rc; // FIXME - figure out what to do
+                }
+
                 TSContDataSet(contp, ssndata);
                 TSDebug("ironbee", "ironbee_plugin: calling ib_state_notify_conn_opened()");
                 ib_state_notify_conn_opened(ironbee, ssndata->iconn);
@@ -2100,77 +2172,6 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port)
     *port = atoi(serv);
 }
 
-/**
- * Initialize the IB connection.
- *
- * Initializes an IronBee connection from a ATS continuation
- *
- * @param[in,out] ib IronBee engine
- * @param[in] iconn IB connection
- * @param[in] cbdata Callback data
- *
- * @returns status
- */
-static ib_status_t ironbee_conn_init(ib_engine_t *ib,
-                                     ib_state_event_type_t event,
-                                     ib_conn_t *iconn,
-                                     void *cbdata)
-{
-    /* when does this happen? */
-    ib_status_t rc;
-    const struct sockaddr *addr;
-    int port;
-
-    TSCont contp = iconn->server_ctx;
-    ib_ssn_ctx* data = TSContDataGet(contp);
-//  ib_clog_debug(....);
-
-    /* remote ip */
-    addr = TSHttpTxnClientAddrGet(data->txnp);
-
-    addr2str(addr, data->remote_ip, &port);
-
-    iconn->remote_ipstr = data->remote_ip;
-    rc = ib_data_add_bytestr(iconn->data,
-                             "remote_ip",
-                             (uint8_t *)iconn->remote_ipstr,
-                             strlen(data->remote_ip),
-                             NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* remote port */
-    iconn->remote_port = port;
-    rc = ib_data_add_num(iconn->data, "remote_port", port, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* local end */
-    addr = TSHttpTxnIncomingAddrGet(data->txnp);
-
-    addr2str(addr, data->local_ip, &port);
-
-    iconn->local_ipstr = data->local_ip;
-    rc = ib_data_add_bytestr(iconn->data,
-                             "local_ip",
-                             (uint8_t *)iconn->local_ipstr,
-                             strlen(data->local_ip),
-                             NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* local_port */
-    iconn->local_port = port;
-    rc = ib_data_add_num(iconn->data, "local_port", port, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    return IB_OK;
-}
-
 
 /* this can presumably be global since it's only setup on init */
 //static ironbee_config_t ibconfig;
@@ -2242,8 +2243,6 @@ static int ironbee_init(const char *configfile, const char *logfile)
         return IB_OK + rv;
     }
 
-    ib_hook_conn_register(ironbee, conn_opened_event,
-                          ironbee_conn_init, NULL);
 
 
     /* This creates the main context */
