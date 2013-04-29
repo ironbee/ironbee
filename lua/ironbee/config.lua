@@ -173,6 +173,11 @@ local build_rule = function(ib, ctx, chain, db)
             return rc
         end
 
+        -- For actions, set the magic actionflag.
+        if rule.type == "actionsignature" then
+            prule[0].flags = ffi.C.ib_set_flag(prule[0].flags, ffi.C.IB_RULE_FLAG_ACTION);
+        end
+
         ffi.C.ib_rule_set_id(ib.ib_engine, prule[0], rule_id)
 
         for _, action in ipairs(rule.data.actions) do
@@ -325,8 +330,10 @@ local build_rule = function(ib, ctx, chain, db)
 
         local opname
 
-        -- Get the operator instance.
-        if string.sub(rule.data.op, 1, 1) == '!' then
+        -- Get the operator instance. If not defined, nop is used.
+        if rule.data.op == nil or #rule.data.op == 0 then
+            opname = "nop"
+        elseif string.sub(rule.data.op, 1, 1) == '!' then
             opname = string.sub(rule.data.op, 2)
         else
             opname = rule.data.op
