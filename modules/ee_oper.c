@@ -48,10 +48,17 @@ IB_MODULE_DECLARE();
 
 /* See definition below for documentation. */
 typedef struct ee_config_t ee_config_t;
+typedef struct ee_operator_data_t ee_operator_data_t;
 
 struct ee_config_t {
     /** Hash of eudoxus patterns defined via the LoadEudoxus directive. */
     ib_hash_t *eudoxus_pattern_hash;
+};
+
+/* Operator instance data. */
+struct ee_operator_data_t {
+    /** Pointer to the eudoxus pattern for this instance. */
+    ia_eudoxus_t *eudoxus;
 };
 
 /* Callback data for ee match */
@@ -71,7 +78,7 @@ typedef struct ee_callback_data_t ee_callback_data_t;
  * - NULL on failure.
  */
 static
-const ee_config_t *ee_get_config(
+ee_config_t *ee_get_config(
     ib_engine_t *ib
 )
 {
@@ -99,6 +106,144 @@ const ee_config_t *ee_get_config(
 
     return config;
 }
+
+/**
+ * Get or create an ib_hash_t inside of @c tx for storing dfa rule data.
+ *
+ * The hash is stored at the key @c HASH_NAME_STR.
+ *
+ * @param[in] m  This module.
+ * @param[in] tx The transaction containing @c tx->data which holds
+ *            the @a operator_data object.
+ * @param[out] hash The fetched or created rule data hash. This is set
+ *             to NULL on failure.
+ *
+ * @return
+ *   - IB_OK on success.
+ *   - IB_EALLOC on allocation failure
+ */
+static
+ib_status_t get_or_create_operator_data_hash(
+    const ib_module_t  *m,
+    ib_tx_t            *tx,
+    ib_hash_t         **hash
+)
+{
+    assert(tx);
+    assert(tx->mp);
+
+    ib_status_t rc;
+
+    /* Get or create the hash that contains the rule data. */
+    rc = ib_tx_get_module_data(tx, m, (void **)hash);
+    if ( (rc == IB_OK) && (*hash != NULL) ) {
+        ib_log_debug2_tx(tx, "Found rule data hash in tx.");
+        return IB_OK;
+    }
+
+    ib_log_debug2_tx(tx, "Rule data hash did not exist in tx.");
+
+    rc = ib_hash_create(hash, tx->mp);
+    if (rc != IB_OK) {
+        ib_log_debug2_tx(tx, "Failed to create hash: %s",
+                         ib_status_to_string(rc));
+        return rc;
+    }
+
+    rc = ib_tx_set_module_data(tx, m, *hash);
+    if (rc != IB_OK) {
+        ib_log_debug2_tx(tx, "Failed to store hash: %s",
+                         ib_status_to_string(rc));
+        *hash = NULL;
+    }
+
+    ib_log_debug2_tx(tx, "Returning rule hash at %p.", *hash);
+
+    return rc;
+}
+
+/**
+ * Return the per-transaction data for use with the dfa operator.
+ *
+ * @param[in] m PCRE module.
+ * @param[in,out] tx Transaction to store the value in.
+ * @param[in] id The operator identifier used to get it's workspace.
+ * @param[out] workspace Retrieved.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_ENOENT if the structure does not exist. Call alloc_dfa_tx_data then.
+ *   - IB_EALLOC on an allocation error.
+ */
+static
+ib_status_t get_ee_tx_data(
+    const ib_module_t   *m,
+    ib_tx_t             *tx,
+    ee_operator_data_t  *instance_data,
+    ia_eudoxus_state_t **eudoxus_state
+)
+{
+    assert(tx);
+    assert(tx->mp);
+    assert(instance_data);
+    assert(eudoxus_state);
+
+    ib_hash_t *hash;
+    ib_status_t rc;
+
+    rc = get_or_create_operator_data_hash(m, tx, &hash);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_hash_get_ex(hash, eudoxus_state, &instance_data, sizeof(ee_operator_data_t *));
+    if (rc != IB_OK) {
+        *eudoxus_state = NULL;
+    }
+
+    return rc;
+}
+
+/**
+ * Return the per-transaction data for use with the dfa operator.
+ *
+ * @param[in] m PCRE module.
+ * @param[in,out] tx Transaction to store the value in.
+ * @param[in] id The operator identifier used to get it's workspace.
+ * @param[out] workspace Retrieved.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_ENOENT if the structure does not exist. Call alloc_dfa_tx_data then.
+ *   - IB_EALLOC on an allocation error.
+ */
+static
+ib_status_t set_ee_tx_data(
+    const ib_module_t  *m,
+    ib_tx_t            *tx,
+    ee_operator_data_t *instance_data,
+    ia_eudoxus_state_t *eudoxus_state
+)
+{
+    assert(tx);
+    assert(tx->mp);
+    assert(instance_data);
+    assert(eudoxus_state);
+
+    ib_hash_t *hash;
+    ib_status_t rc;
+
+    rc = get_or_create_operator_data_hash(m, tx, &hash);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_hash_set_ex(hash, &instance_data, sizeof(ee_operator_data_t *),
+                        eudoxus_state);
+
+    return rc;
+}
+
 
 /**
  * Load a eudoxus pattern so it can be used in rules.
@@ -281,12 +426,28 @@ ib_status_t ee_match_any_operator_create(
 
     ib_status_t rc;
     ia_eudoxus_t* eudoxus;
+    ee_operator_data_t *operator_data;
+    ib_module_t *module;
     ib_engine_t *ib = ib_context_get_engine(ctx);
+    ib_mpool_t *pool = ib_context_get_mpool(ctx);
     const ee_config_t *config = ee_get_config(ib);
     const ib_hash_t *eudoxus_pattern_hash;
 
     assert(config != NULL);
     assert(config->eudoxus_pattern_hash != NULL);
+
+    /* Get my module object */
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to get eudoxus operator module object: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+    /* Allocate a rule data object, populate it */
+    operator_data = ib_mpool_alloc(pool, sizeof(*operator_data));
+    if (operator_data == NULL) {
+        return IB_EALLOC;
+    }
 
     eudoxus_pattern_hash = config->eudoxus_pattern_hash;
 
@@ -303,7 +464,9 @@ ib_status_t ee_match_any_operator_create(
         return rc;
     }
 
-    *instance_data = eudoxus;
+    operator_data->eudoxus = eudoxus;
+    *instance_data = operator_data;
+    ib_log_debug(ib, "Found compiled eudoxus pattern \"%s\"", parameters);
 
     return IB_OK;
 }
@@ -335,12 +498,15 @@ ib_status_t ee_match_any_operator_execute(
 {
     ib_status_t rc;
     ia_eudoxus_result_t ia_rc;
-    ia_eudoxus_t* eudoxus = instance_data;
+    ee_operator_data_t *operator_data = instance_data;
+    ia_eudoxus_t* eudoxus = operator_data->eudoxus;
     ia_eudoxus_state_t* state;
     const char *input;
     size_t input_len;
     ee_callback_data_t *ee_cbdata;
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
+    assert(m != NULL);
     assert(tx != NULL);
     assert(instance_data != NULL);
 
@@ -369,18 +535,31 @@ ib_status_t ee_match_any_operator_execute(
         return IB_EINVAL;
     }
 
-    ee_cbdata = ib_mpool_alloc(tx->mp, sizeof(*ee_cbdata));
-    if (ee_cbdata == NULL) {
-        return IB_EALLOC;
+    rc = get_ee_tx_data(m, tx, operator_data, &state);
+    if (rc == IB_ENOENT) {
+        /* State not found create it */
+        ee_cbdata = ib_mpool_alloc(tx->mp, sizeof(*ee_cbdata));
+        if (ee_cbdata == NULL) {
+            return IB_EALLOC;
+        }
+        ee_cbdata->tx = tx;
+        ee_cbdata->capture = capture;
+        ia_rc = ia_eudoxus_create_state(&state,
+                                        eudoxus,
+                                        ee_first_match_callback,
+                                        (void *)ee_cbdata);
+        if (ia_rc != IA_EUDOXUS_OK) {
+            return IB_EINVAL;
+        }
+        set_ee_tx_data(m, tx, operator_data, state);
     }
-    ee_cbdata->tx = tx;
-    ee_cbdata->capture = capture;
-    ia_rc = ia_eudoxus_create_state(&state, eudoxus, ee_first_match_callback,
-                                    (void *)ee_cbdata);
-    if (ia_rc != IA_EUDOXUS_OK) {
-        return IB_EINVAL;
+    else if (rc != IB_OK) {
+        /* Error getting the state -- abort */
+        return rc;
     }
+
     rc = IB_OK;
+
     ia_rc = ia_eudoxus_execute(state, (const uint8_t *)input, input_len);
     if (ia_rc == IA_EUDOXUS_STOP) {
         *result = 1;
@@ -389,10 +568,65 @@ ib_status_t ee_match_any_operator_execute(
     else if (ia_rc == IA_EUDOXUS_ERROR) {
         rc = IB_EUNKNOWN;
     }
-    ia_eudoxus_destroy_state(state);
 
     return rc;
 }
+
+/**
+ * Destroy the eudoxus state when the transaction is complete.
+ *
+ * After the transaction is complete iterate over all of the states create
+ * during the transaction and destroy them.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Current transaction.
+ * @param[in] event Event type (should always be tx_finished_event)
+ * @param[in] cbdata Callback data -- pointer to this module (ib_module_t).
+ *
+ * @returns IB_OK on success.
+ */
+static
+ib_status_t ee_tx_finished_handler(ib_engine_t *ib,
+                                   ib_tx_t *tx,
+                                   ib_state_event_type_t event,
+                                   void *cbdata)
+{
+    ib_status_t rc;
+    ib_hash_t *hash;
+    ib_mpool_t *pool;
+    ib_list_t *list  = NULL;
+    ib_list_node_t *node;
+    ib_list_node_t *next;
+    const ib_module_t *m = (const ib_module_t *)cbdata;
+    ia_eudoxus_state_t *state;
+
+    rc = ib_tx_get_module_data(tx, m, &hash);
+    if (rc != IB_OK || hash == NULL) {
+        return rc;
+    }
+
+    pool = ib_hash_pool(hash);
+    /* The only way to iterate over a hash is to covert it into a list. */
+    rc = ib_list_create(&list, pool);
+    if (rc != IB_OK) {
+        ib_log_error(ib, MODULE_NAME_STR ": Error unloading module.");
+        return rc;
+    }
+    rc = ib_hash_get_all(hash, list);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    IB_LIST_LOOP_SAFE(list, node, next) {
+        state = IB_LIST_NODE_DATA(node);
+        if (state != NULL) {
+            ia_eudoxus_destroy_state(state);
+            state = NULL;
+        }
+    }
+
+    return IB_OK;
+}
+
 
 /**
  * Initialize the eudoxus operator module.
@@ -406,8 +640,8 @@ ib_status_t ee_match_any_operator_execute(
  */
 static
 ib_status_t ee_module_init(ib_engine_t *ib,
-                                  ib_module_t *m,
-                                  void        *cbdata)
+                           ib_module_t *m,
+                           void        *cbdata)
 {
     ib_status_t rc;
     ib_mpool_t *main_mp;
@@ -436,10 +670,31 @@ ib_status_t ee_module_init(ib_engine_t *ib,
           IB_OP_CAPABILITY_CAPTURE ),
         &ee_match_any_operator_create, NULL,
         NULL, NULL,
-        &ee_match_any_operator_execute, NULL
+        &ee_match_any_operator_execute, m
     );
 
-    return rc;
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failed to register ee_match_any operator: %s",
+            ib_status_to_string(rc));
+        return rc;
+    }
+
+    rc = ib_hook_tx_register(ib,
+                             tx_finished_event,
+                             ee_tx_finished_handler,
+                             m);
+
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failed to register transaction finished event for ee_match_any operator: %s",
+            ib_status_to_string(rc));
+        return rc;
+    }
+
+    return IB_OK;
 }
 
 /**
@@ -453,8 +708,8 @@ ib_status_t ee_module_init(ib_engine_t *ib,
  */
 static
 ib_status_t ee_module_finish(ib_engine_t *ib,
-                                    ib_module_t *m,
-                                    void        *cbdata)
+                             ib_module_t *m,
+                             void        *cbdata)
 {
     ib_status_t rc;
     ib_list_t *list  = NULL;
@@ -462,7 +717,7 @@ ib_status_t ee_module_finish(ib_engine_t *ib,
     ib_list_node_t *next;
     ia_eudoxus_t *eudoxus;
     ib_mpool_t *pool;
-    ee_config_t *config = ee_get_config(ib);
+    const ee_config_t *config = ee_get_config(ib);
     ib_hash_t *eudoxus_pattern_hash;
 
     if (
