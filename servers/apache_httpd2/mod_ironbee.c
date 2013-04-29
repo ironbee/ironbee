@@ -1059,10 +1059,8 @@ static void ironbee_filter_insert(request_rec *r)
  * @param[in] conn - the ironbee connection
  * @return OK, or propagated error
  */
-static ib_status_t ironbee_conn_init(ib_engine_t *ib,
-                                     ib_state_event_type_t event,
-                                     ib_conn_t *iconn,
-                                     void *cbdata)
+static ib_status_t ironbee_conn_init(conn_rec *conn,
+                                     ib_conn_t *iconn)
 {
     /* Set connection parameters in ironbee */
     /* iconn->remote_ipstr
@@ -1072,7 +1070,6 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
      * iconn->data fields for local and remote ip
      */
     ib_status_t rc;
-    conn_rec *conn = iconn->server_ctx;
 
 /* These fields differ between 2.2 and 2.4 because the latter
  * introduces the distinction between the HTTP Client (end user)
@@ -1151,6 +1148,10 @@ static int ironbee_pre_conn(conn_rec *conn, void *csd)
     /* Tie the ib_conn lifetime to the conn */
     apr_pool_cleanup_register(conn->pool, iconn, ironbee_conn_cleanup,
                               apr_pool_cleanup_null);
+
+    rc = ironbee_conn_init(conn, iconn);
+
+
     ib_state_notify_conn_opened(ironbee, iconn);
     return DECLINED;
 }
@@ -1212,8 +1213,6 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
                               apr_pool_cleanup_null);
 
     /* TODO: TS creates logfile at this point */
-
-    ib_hook_conn_register(ironbee, conn_opened_event, ironbee_conn_init, NULL);
 
     /* Parse the config file. */
     rc = ib_cfgparser_create(&cp, ironbee);
