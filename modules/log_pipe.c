@@ -237,7 +237,7 @@ static void log_pipe_close(void *data)
  * Function to open a pipe named in the config
  *
  * @param[in] ib  Ironbee engine
- * @param[in] data  config struct
+ * @param[in] cfg config struct
  * @return  success or failure
  */
 static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
