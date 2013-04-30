@@ -205,7 +205,7 @@ static ib_status_t mod_persist_register_fn(
         else if ( param_eq(param, param_len, "dmode") ) {
             ib_num_t tmp_mode;
             const char *mode_str;
-            
+
             mode_str = ib_mpool_memdup_to_str(mp, value, value_len);
             rc = ib_string_to_num(mode_str, 8, &tmp_mode);
             if (rc == IB_OK) {
