@@ -268,7 +268,7 @@ static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
 }
 
 /**
- * Configuration function to read pipe's commandline and open the pipe
+ * Configuration function to read pipe's command line and open the pipe
  *
  * @param[in] cp  Config parser
  * @param[in] name  unused
