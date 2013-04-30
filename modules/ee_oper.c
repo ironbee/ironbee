@@ -263,10 +263,10 @@ ib_status_t set_ee_tx_data(
  */
 static
 ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
-                                               const char *name,
-                                               const char *pattern_name,
-                                               const char *filename,
-                                               void *cbdata)
+                                        const char *name,
+                                        const char *pattern_name,
+                                        const char *filename,
+                                        void *cbdata)
 {
     ib_engine_t *ib;
     ib_status_t rc;
@@ -349,10 +349,10 @@ ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
  */
 static
 ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
-                                                    const char *output,
-                                                    size_t output_length,
-                                                    const uint8_t *input,
-                                                    void *cbdata)
+                                             const char *output,
+                                             size_t output_length,
+                                             const uint8_t *input,
+                                             void *cbdata)
 {
     assert(cbdata != NULL);
     assert(output != NULL);
