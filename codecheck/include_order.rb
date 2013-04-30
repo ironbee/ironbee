@@ -194,6 +194,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/scoped_ptr.hpp>',
   '<boost/shared_ptr.hpp>',
   '<boost/static_assert.hpp>',
+  '<boost/thread.hpp>',
   '<boost/tuple/tuple.hpp>',
   '<boost/type_traits/is_class.hpp>',
   '<boost/type_traits/is_convertible.hpp>',
