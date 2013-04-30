@@ -108,7 +108,7 @@ ee_config_t *ee_get_config(
 }
 
 /**
- * Get or create an ib_hash_t inside of @c tx for storing dfa rule data.
+ * Get or create an ib_hash_t inside of @c tx for storing the operator state.
  *
  * The hash is stored at the key @c HASH_NAME_STR.
  *
@@ -129,8 +129,8 @@ ib_status_t get_or_create_operator_data_hash(
     ib_hash_t         **hash
 )
 {
-    assert(tx);
-    assert(tx->mp);
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
 
     ib_status_t rc;
 
@@ -140,8 +140,6 @@ ib_status_t get_or_create_operator_data_hash(
         ib_log_debug2_tx(tx, "Found rule data hash in tx.");
         return IB_OK;
     }
-
-    ib_log_debug2_tx(tx, "Rule data hash did not exist in tx.");
 
     rc = ib_hash_create(hash, tx->mp);
     if (rc != IB_OK) {
@@ -163,17 +161,19 @@ ib_status_t get_or_create_operator_data_hash(
 }
 
 /**
- * Return the per-transaction data for use with the dfa operator.
+ * Return the per-transaction state for the operator.
  *
- * @param[in] m PCRE module.
- * @param[in,out] tx Transaction to store the value in.
- * @param[in] id The operator identifier used to get it's workspace.
- * @param[out] workspace Retrieved.
+ * @param[in] m This module.
+ * @param[in,out] tx Transaction to lookup the data in.
+ * @param[in] instance_data Pointer to the operator instance data.
+ *                          The pointer value is used key to lookup the instance
+ *                          state.
+ * @param[out] eudoxus_state Returns the state if found.
  *
  * @returns
  *   - IB_OK on success.
- *   - IB_ENOENT if the structure does not exist. Call alloc_dfa_tx_data then.
- *   - IB_EALLOC on an allocation error.
+ *   - IB_ENOENT if the state is not found. The caller should create it
+ *               and add it to the hash using @ref set_ee_tx_data
  */
 static
 ib_status_t get_ee_tx_data(
@@ -183,10 +183,10 @@ ib_status_t get_ee_tx_data(
     ia_eudoxus_state_t **eudoxus_state
 )
 {
-    assert(tx);
-    assert(tx->mp);
-    assert(instance_data);
-    assert(eudoxus_state);
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
+    assert(instance_data != NULL);
+    assert(eudoxus_state != NULL);
 
     ib_hash_t *hash;
     ib_status_t rc;
@@ -205,17 +205,16 @@ ib_status_t get_ee_tx_data(
 }
 
 /**
- * Return the per-transaction data for use with the dfa operator.
+ * Store the per-transaction data for use with the operator.
  *
- * @param[in] m PCRE module.
- * @param[in,out] tx Transaction to store the value in.
- * @param[in] id The operator identifier used to get it's workspace.
- * @param[out] workspace Retrieved.
+ * @param[in] m This module.
+ * @param[in,out] tx Transaction to store the data in.
+ * @param[in] instance_data Pointer to the operator instance data.
+ * @param[in] eudoxus_state State to be stored.
  *
  * @returns
  *   - IB_OK on success.
- *   - IB_ENOENT if the structure does not exist. Call alloc_dfa_tx_data then.
- *   - IB_EALLOC on an allocation error.
+ *   - IB_ENOENT if the structure does not exist.
  */
 static
 ib_status_t set_ee_tx_data(
@@ -225,10 +224,10 @@ ib_status_t set_ee_tx_data(
     ia_eudoxus_state_t *eudoxus_state
 )
 {
-    assert(tx);
-    assert(tx->mp);
-    assert(instance_data);
-    assert(eudoxus_state);
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
+    assert(instance_data != NULL);
+    assert(eudoxus_state != NULL);
 
     ib_hash_t *hash;
     ib_status_t rc;
@@ -580,8 +579,8 @@ ib_status_t ee_match_any_operator_execute(
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx Current transaction.
- * @param[in] event Event type (should always be tx_finished_event)
- * @param[in] cbdata Callback data -- pointer to this module (ib_module_t).
+ * @param[in] event Event type (should always be @ref tx_finished_event)
+ * @param[in] cbdata Callback data -- pointer to this module (@ref ib_module_t).
  *
  * @returns IB_OK on success.
  */
