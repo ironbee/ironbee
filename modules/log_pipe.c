@@ -70,7 +70,7 @@ static void log_pipe_mutex_init(ib_engine_t *ib, log_pipe_cfg *cfg)
     ib_mpool_t *mp;
     mp = ib_engine_pool_main_get(ib);
     if (ib_lock_init(&log_pipe_mutex) == IB_OK)
-        ib_mpool_cleanup_register(mp, (void*)ib_lock_destroy, &log_pipe_mutex);
+        ib_mpool_cleanup_register(mp, (void *)ib_lock_destroy, &log_pipe_mutex);
 }
 #else
 #define MUTEX_LOCK
@@ -100,7 +100,7 @@ static ib_status_t log_pipe_restart(const ib_engine_t *ib, ib_module_t *m,
 
     pclose(cfg->pipe);
     cfg->pipe = NULL;
-    if (rc = log_pipe_open((ib_engine_t*)ib, cfg), rc == IB_OK) {
+    if (rc = log_pipe_open((ib_engine_t *)ib, cfg), rc == IB_OK) {
         /* OK, we should be back up&logging ... */
         fprintf(cfg->pipe, "%s: %s\n", timestr,
                 "LOG ERROR.  Piped log restarted!");
