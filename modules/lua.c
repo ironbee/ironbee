@@ -2687,8 +2687,6 @@ static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
 };
 
 
-
-
 /* -- Configuration Directives -- */
 
 /**
@@ -2719,6 +2717,17 @@ static ib_status_t modlua_dir_lua_include(ib_cfgparser_t *cp,
     int lua_rc;
     ib_core_cfg_t *corecfg = NULL;
     lua_State *L = modlua_global_cfg.L;
+    ib_context_t *cur_ctx;
+
+    ib_cfgparser_context_current(cp, &cur_ctx);
+
+    if (cur_ctx != ib_context_main(ib)) {
+        ib_cfg_log_error(
+            cp,
+            "Directive %s may only be used in the main context.",
+            name);
+        return IB_EOTHER;
+    }
 
     rc = ib_core_context_config(ib_context_main(ib), &corecfg);
     if (rc != IB_OK) {
