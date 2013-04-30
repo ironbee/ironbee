@@ -10,7 +10,7 @@ IronBee v0.8.0
 
 **Predicate**
 
-* A new rule injection system, Predicate, was added.  Predicate provides a functional approach to writing rules and is designed to make rule logic composition and reuse easy and provide performance benefits.  See `predicate/predicate.md` for an overview.
+* A new rule injection system, Predicate, was added.  Predicate provides a functional approach to writing rules and is designed to make rule logic composition and reuse easier and provide performance benefits.  See `predicate/predicate.md` for an overview.
 
 **Engine**
 
@@ -28,6 +28,8 @@ IronBee v0.8.0
   instead of an `ib_module_t *`.  The engine makes its own copy rather than
   reusing the static.  This change allows simultaneous use of modules by
   multiple engines.
+
+* As part of the ongoing provider removal project, the matcher provider was removed.  Nothing was using it.
 
 *IronBee++*
 

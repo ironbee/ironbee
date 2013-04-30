@@ -49,7 +49,7 @@ base.require('ironbee-ffi-h')
 -- Cache lookup of ffi.C
 local c = ffi.C
 
--- 
+--
 -- =========================================================================
 -- =========================================================================
 -- Implementation Notes:
@@ -80,7 +80,7 @@ local c = ffi.C
 --
 -- =========================================================================
 -- =========================================================================
--- 
+--
 
 -- ===============================================
 -- Status
@@ -413,7 +413,6 @@ end
 -- ===============================================
 IB_PROVIDER_TYPE_LOGGER    = "logger"
 IB_PROVIDER_TYPE_PARSER    = "parser"
-IB_PROVIDER_TYPE_MATCHER   = "matcher"
 IB_PROVIDER_TYPE_LOGEVENT  = "logevent"
 
 -- ===============================================
@@ -435,42 +434,6 @@ function ib_provider_lookup(ib, type, key)
     end
 
     return newProvider(c_ppr[0]);
-end
-
-function ib_matcher_create(ib, pool, key)
-    local c_ib = ib.cvalue()
-    local c_pool = pool.cvalue()
-    local c_pm = ffi.new("ib_matcher_t*[1]")
-    local rc
-
-    rc = c.ib_matcher_create(c_ib, c_pool, key, c_pm)
-    if rc ~= c.IB_OK then
-        return nil
-    end
-
-    -- TODO Probably should return a wrapper???
-    return c_pm[0]
-end
-
-function ib_matcher_match_field(m, patt, flags, f)
-    local cpatt
-    local c_f = f.cvalue()
-    local rc
-
-    if base.type(patt) == "string" then
-        -- TODO Do we need to GC these?
-        local errptr = ffi.new("const char *[1]")
-        local erroffset = ffi.new("int[1]")
-        cpatt = c.ib_matcher_compile(m, patt, errptr, erroffset)
-    else
-        cpatt = patt
-    end
-
-    if cpatt == nil then
-        return c.IB_EINVAL
-    end
-
-    return c.ib_matcher_match_field(m, cpatt, flags, c_f)
 end
 
 function ib_logevent_type_name(num)
