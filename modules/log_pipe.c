@@ -38,6 +38,10 @@
  */
 
 
+#ifndef NO_THREADS
+#include <ironbee/lock.h>
+#endif
+
 #include <ironbee/module.h>
 
 #include <assert.h>
@@ -61,7 +65,6 @@ typedef struct log_pipe_cfg {
  * apache+prefork) we can save a tiny bit of overhead.
  */
 #ifndef NO_THREADS
-#include <ironbee/lock.h>
 #define MUTEX_LOCK ib_lock_lock(&log_pipe_mutex)
 #define MUTEX_UNLOCK ib_lock_unlock(&log_pipe_mutex)
 static ib_lock_t log_pipe_mutex;
