@@ -27,7 +27,7 @@ AM_LDFLAGS += -no-undefined -static-libtool-libs
 endif
 
 WAGGLE_FILES=ironbee/waggle.lua \
-             $(shell find ironbee/waggle -name \*lua)
+             $(shell find $(srcdir)/ironbee/waggle -name \*lua)
 
 EXTRA_DIST = ironbee-ffi-h.lua \
              ironbee-ffi.lua \
