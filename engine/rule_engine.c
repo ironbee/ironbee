@@ -3009,29 +3009,29 @@ static ib_status_t copy_rule_hash(const ib_context_t *ctx,
     assert(src_hash != NULL);
     assert(dest_hash != NULL);
     ib_status_t rc;
-    const ib_list_node_t *node;
-    ib_list_t *src_list;
+    ib_hash_iterator_t *iterator;
 
     if (ib_hash_size(src_hash) == 0) {
         return IB_OK;
     }
-    rc = ib_list_create(&src_list, ib_engine_pool_temp_get(ctx->ib));
-    if (rc != IB_OK) {
-        return rc;
+    iterator = ib_hash_iterator(ib_engine_pool_temp_get(ctx->ib));
+    if (iterator == NULL) {
+        return IB_EALLOC;
     }
-    rc = ib_hash_get_all(src_hash, src_list);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    ib_hash_first(iterator, src_hash);
 
-    IB_LIST_LOOP_CONST(src_list, node) {
-        assert(node->data != NULL);
-        const ib_rule_t *rule = (const ib_rule_t *)node->data;
+    while (! ib_hash_at_end(iterator)) {
+        const ib_rule_t *rule;
+        ib_hash_fetch(NULL, NULL, &rule, iterator);
 
-        rc = ib_hash_set(dest_hash, rule->meta.id, node->data);
+        assert(rule != NULL);
+
+        rc = ib_hash_set(dest_hash, rule->meta.id, (void *)rule);
         if (rc != IB_OK) {
             return rc;
         }
+
+        ib_hash_next(iterator);
     }
     return IB_OK;
 }

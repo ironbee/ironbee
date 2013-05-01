@@ -593,35 +593,36 @@ ib_status_t ee_tx_finished_handler(ib_engine_t *ib,
     ib_status_t rc;
     ib_hash_t *hash;
     ib_mpool_t *pool;
-    ib_list_t *list  = NULL;
-    ib_list_node_t *node;
-    ib_list_node_t *next;
     const ib_module_t *m = (const ib_module_t *)cbdata;
     ia_eudoxus_state_t *state;
+    ib_hash_iterator_t *iterator;
 
     rc = ib_tx_get_module_data(tx, m, &hash);
     if (rc != IB_OK || hash == NULL) {
         return rc;
     }
 
-    pool = ib_hash_pool(hash);
-    /* The only way to iterate over a hash is to covert it into a list. */
-    rc = ib_list_create(&list, pool);
-    if (rc != IB_OK) {
-        ib_log_error(ib, MODULE_NAME_STR ": Error unloading module.");
-        return rc;
-    }
-    rc = ib_hash_get_all(hash, list);
+    rc = ib_mpool_create(&pool, "temp", NULL);
     if (rc != IB_OK) {
         return rc;
     }
-    IB_LIST_LOOP_SAFE(list, node, next) {
-        state = IB_LIST_NODE_DATA(node);
+
+    iterator = ib_hash_iterator(pool);
+    if (iterator == NULL) {
+        ib_mpool_destroy(pool);
+        return IB_EALLOC;
+    }
+    ib_hash_first(iterator, hash);
+    while (! ib_hash_at_end(iterator)) {
+        ib_hash_fetch(NULL, NULL, &state, iterator);
         if (state != NULL) {
             ia_eudoxus_destroy_state(state);
             state = NULL;
         }
+        ib_hash_next(iterator);
     }
+
+    ib_mpool_destroy(pool);
 
     return IB_OK;
 }
@@ -711,13 +712,11 @@ ib_status_t ee_module_finish(ib_engine_t *ib,
                              void        *cbdata)
 {
     ib_status_t rc;
-    ib_list_t *list  = NULL;
-    ib_list_node_t *node;
-    ib_list_node_t *next;
     ia_eudoxus_t *eudoxus;
     ib_mpool_t *pool;
     const ee_config_t *config = ee_get_config(ib);
     ib_hash_t *eudoxus_pattern_hash;
+    ib_hash_iterator_t *iterator;
 
     if (
         config                       == NULL ||
@@ -728,25 +727,25 @@ ib_status_t ee_module_finish(ib_engine_t *ib,
 
     eudoxus_pattern_hash = config->eudoxus_pattern_hash;
 
-    /* Destroy all eudoxus automata */
-    pool = ib_hash_pool(eudoxus_pattern_hash);
+    rc = ib_mpool_create(&pool, "temp", NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
-    /* The only way to iterate over a hash is to covert it into a list. */
-    rc = ib_list_create(&list, pool);
-    if (rc != IB_OK) {
-        ib_log_error(ib, MODULE_NAME_STR ": Error unloading module.");
-        return rc;
+    iterator = ib_hash_iterator(pool);
+    if (iterator == NULL) {
+        ib_mpool_destroy(pool);
+        return IB_EALLOC;
     }
-    rc = ib_hash_get_all(eudoxus_pattern_hash, list);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    IB_LIST_LOOP_SAFE(list, node, next) {
-        eudoxus = IB_LIST_NODE_DATA(node);
+    for (
+        ib_hash_first(iterator, eudoxus_pattern_hash);
+        ! ib_hash_at_end(iterator);
+        ib_hash_next(iterator)
+    ) {
+        ib_hash_fetch(NULL, NULL, &eudoxus, iterator);
         if (eudoxus != NULL) {
             ia_eudoxus_destroy(eudoxus);
         }
-        ib_list_node_remove(list, node);
     }
     ib_hash_clear(eudoxus_pattern_hash);
     ib_mpool_release(pool);
