@@ -31,7 +31,11 @@ IronBee v0.8.0
 
 * As part of the ongoing provider removal project, the matcher provider was removed.  Nothing was using it.
 
-*IronBee++*
+**Util**
+
+* Add external iterator support for hash.  See `ib_hash_iterator()`, `ib_hash_first()`, `ib_hash_next()`, `ib_hash_fetch()`, and `ib_hash_at_end()`.
+
+**IronBee++**
 
 * IronBee++ includes full support for operators and adds an optional
   functional based interface that can significantly simplify operator

@@ -53,12 +53,7 @@
 /**
  * See ib_hash_entry_t()
  */
-typedef struct ib_hash_entry_t    ib_hash_entry_t;
-
-/**
- * See ib_hash_iterator_t()
- */
-typedef struct ib_hash_iterator_t ib_hash_iterator_t;
+typedef struct ib_hash_entry_t ib_hash_entry_t;
 
 /**
  * Entry in a ib_hash_t.
@@ -89,7 +84,7 @@ struct ib_hash_iterator_t {
     ib_hash_entry_t     *current_entry;
     /** Next entry. */
     ib_hash_entry_t     *next_entry;
-    /** Which slot we are in. */
+    /** Which slot to look in next. */
     size_t               slot_index;
 };
 
@@ -159,47 +154,23 @@ static ib_hash_entry_t *ib_hash_find_htentry(
 );
 
 /**
- * Return iterator pointing to first entry of @a hash.
- *
- * @sa IB_HASH_LOOP()
- *
- * @param[in]  hash Hash table to iterate over.
- *
- * @return Iterator pointing to first entry in @a hash.
- */
-static ib_hash_iterator_t ib_hash_first(
-     const ib_hash_t* hash
-);
-
-/**
- * Move @a iterator to the next entry.
- *
- * @sa IB_HASH_LOOP()
- *
- * @param[in,out] iterator Iterator to advance.
- */
-static void ib_hash_next(
-    ib_hash_iterator_t *iterator
-);
-
-/**
  * Set @a entry to every entry in @a hash in sequence.
  *
  * @code
- * ib_hash_entry_t *current_entry;
- * IB_HASH_LOOP(current_entry, hash) {
+ * ib_hash_iterator_t iterator;
+ * IB_HASH_LOOP(iterator, hash) {
  *   ...
  * }
  * @endcode
  *
- * @param[in,out] entry Set to each entry in @a hash in sequence.
- * @param[in]     hash  Hash table to iterate through.
+ * @param[in,out] iterator Iterator to use.
+ * @param[in]     hash     Hash table to iterate through.
  **/
-#define IB_HASH_LOOP(entry, hash) \
+#define IB_HASH_LOOP(iterator, hash) \
     for ( \
-        ib_hash_iterator_t iterator = ib_hash_first(hash); \
-        ((entry) = iterator.current_entry) != NULL; \
-        ib_hash_next(&iterator) \
+        ib_hash_first(&(iterator), (hash)); \
+        ! ib_hash_at_end(&(iterator)); \
+        ib_hash_next(&(iterator)) \
     )
 
 /**
@@ -294,20 +265,50 @@ ib_status_t ib_hash_find_entry(
     return IB_OK;
 }
 
-ib_hash_iterator_t ib_hash_first(
-    const ib_hash_t *hash
+ib_hash_iterator_t *ib_hash_iterator(ib_mpool_t *mp)
+{
+    return (ib_hash_iterator_t *)ib_mpool_alloc(
+        mp,
+        sizeof(ib_hash_iterator_t)
+    );
+}
+
+bool ib_hash_at_end(const ib_hash_iterator_t *iterator)
+{
+    return iterator->current_entry == NULL;
+}
+
+void ib_hash_first(
+    ib_hash_iterator_t *iterator,
+    const ib_hash_t    *hash
 )
 {
-    /* There is no ftrace return macro for custom types. */
-    assert(hash != NULL);
+    assert(iterator != NULL);
+    assert(hash     != NULL);
 
-    ib_hash_iterator_t iterator;
+    memset(iterator, 0, sizeof(*iterator));
+    iterator->hash = hash;
+    ib_hash_next(iterator);
+}
 
-    memset(&iterator, 0, sizeof(iterator));
-    iterator.hash = hash;
-    ib_hash_next(&iterator);
+void ib_hash_fetch(
+    const char               **key,
+    size_t                    *key_length,
+    void                      *value,
+    const ib_hash_iterator_t  *iterator
+)
+{
+    assert(iterator   != NULL);
 
-    return iterator;
+    if (key != NULL) {
+        *key            = iterator->current_entry->key;
+    }
+    if (key_length != NULL) {
+        *key_length     = iterator->current_entry->key_length;
+    }
+    if (value != NULL) {
+        *(void **)value = iterator->current_entry->value;
+    }
 }
 
 void ib_hash_next(
@@ -324,8 +325,6 @@ void ib_hash_next(
         ++iterator->slot_index;
     }
     iterator->next_entry = iterator->current_entry->next_entry;
-
-    return;
 }
 
 ib_status_t ib_hash_resize_slots(
@@ -333,9 +332,9 @@ ib_status_t ib_hash_resize_slots(
 ) {
     assert(hash != NULL);
 
-    ib_hash_entry_t **new_slots     = NULL;
-    ib_hash_entry_t  *current_entry = NULL;
-    size_t            new_max_slot = 0;
+    ib_hash_entry_t    **new_slots     = NULL;
+    size_t               new_max_slot = 0;
+    ib_hash_iterator_t   i;
 
     /* Maintain power of 2 slots */
     new_max_slot = 2 * hash->max_slot + 1;
@@ -348,10 +347,11 @@ ib_status_t ib_hash_resize_slots(
         return IB_EALLOC;
     }
 
-    IB_HASH_LOOP(current_entry, hash) {
-        size_t i                  = current_entry->hash_value & new_max_slot;
-        current_entry->next_entry = new_slots[i];
-        new_slots[i]              = current_entry;
+    IB_HASH_LOOP(i, hash) {
+        size_t j =
+            i.current_entry->hash_value & new_max_slot;
+        i.current_entry->next_entry = new_slots[j];
+        new_slots[j] = i.current_entry;
     }
     hash->max_slot = new_max_slot;
     hash->slots     = new_slots;
@@ -649,10 +649,9 @@ ib_status_t ib_hash_get_all(
     assert(list != NULL);
     assert(hash != NULL);
 
-    ib_hash_entry_t* current_entry = NULL;
-
-    IB_HASH_LOOP(current_entry, hash) {
-        ib_list_push(list, current_entry->value);
+    ib_hash_iterator_t i;
+    IB_HASH_LOOP(i, hash) {
+        ib_list_push(list, i.current_entry->value);
     }
 
     if (ib_list_elements(list) <= 0) {

@@ -30,6 +30,8 @@
 #include <ironbee/list.h>
 #include <ironbee/types.h>
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -56,6 +58,9 @@ extern "C" {
  * @sa hash.h
  **/
 typedef struct ib_hash_t ib_hash_t;
+
+// XXX
+typedef struct ib_hash_iterator_t ib_hash_iterator_t;
 
 /**
  * Function pointer for a hash function.
@@ -477,6 +482,80 @@ ib_status_t DLL_PUBLIC ib_hash_remove(
     ib_hash_t   *hash,
     void        *value,
     const char  *key
+);
+
+/*@}*/
+
+
+/**
+ * @name Iterators
+ *
+ * These functions relate to hash iterators.
+ */
+/*@{*/
+
+/**
+ * Create a hash iterator.
+ *
+ * @warning Return iterator is singular and all behavior is undefined except
+ *          for calling ib_hash_first().
+ *
+ * @param[in] mp Memory pool to use.
+ * @return New iterator or NULL on allocation error.
+ **/
+ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator(ib_mpool_t *mp);
+
+/**
+ * Is iterator at end of hash.
+ *
+ * @warning Behavior is undefined for singular iterators.
+ *
+ * @param[in] iterator Iterator to check.
+ * @return true iff iterator is at end of hash.
+ **/
+bool DLL_PUBLIC ib_hash_at_end(const ib_hash_iterator_t *iterator);
+
+/**
+ * Fetch value of hash.
+ *
+ * @warning Behavior is undefined for singular iterators or iterators at
+ *          end of hash.
+ *
+ * Any out variable may be NULL.
+ *
+ * @param[out] key        Key.
+ * @param[out] key_length Length of @a key.
+ * @param[out] value      Value.
+ * @param[in]  iterator   Iterator to fetch value of.
+ **/
+void DLL_PUBLIC ib_hash_fetch(
+    const char               **key,
+    size_t                    *key_length,
+    void                      *value,
+    const ib_hash_iterator_t  *iterator
+);
+
+/**
+ * Return iterator pointing to first entry of @a hash.
+ *
+ * @param[out] iterator Iterator to set.
+ * @param[in]  hash     Hash table to iterate over.
+ */
+void DLL_PUBLIC ib_hash_first(
+    ib_hash_iterator_t *iterator,
+    const ib_hash_t    *hash
+);
+
+/**
+ * Move @a iterator to the next entry.
+ *
+ * @warning Behavior is undefined for singular iterators or iterators at
+ *          end of hash.
+ *
+ * @param[in,out] iterator Iterator to advance.
+ */
+void DLL_PUBLIC ib_hash_next(
+    ib_hash_iterator_t *iterator
 );
 
 /*@}*/

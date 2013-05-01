@@ -269,6 +269,7 @@ TEST_F(TestIBUtilHash, test_hash_getall)
     EXPECT_EQ(1000UL, ib_hash_size(hash));
 
     EXPECT_EQ(IB_OK, ib_hash_get_all(hash, list2));
+    EXPECT_EQ(1000UL, ib_list_elements(list2));
     {
         ib_list_node_t *li  = NULL;
         ib_list_node_t *li2 = NULL;
@@ -433,4 +434,55 @@ TEST_F(TestIBUtilHash, bad_size) {
         ib_hashfunc_djb2,
         ib_hashequal_default
     ));
+}
+
+TEST_F(TestIBUtilHash, iterator) {
+    ib_hash_t *hash          = NULL;
+    static const char* a     = "abc";
+    static const char* b     = "def";
+    static const char* c     = "ghi";
+    const char*        value = NULL;
+
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, MemPool()));
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, a, (void *)a));
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, b, (void *)b));
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, c, (void *)c));
+
+    bool found_a = false;
+    bool found_b = false;
+    bool found_c = false;
+
+    ib_hash_iterator_t *i = ib_hash_iterator(MemPool());
+    ib_hash_first(i, hash);
+    while (! ib_hash_at_end(i)) {
+        const char *key = NULL;
+        size_t key_length = 0;
+
+        ib_hash_fetch(&key, &key_length, (void *)&value, i);
+
+        if (key == std::string(a)) {
+            ASSERT_FALSE(found_a);
+            found_a = true;
+            ASSERT_EQ(std::string(a), (const char *)value);
+        }
+        else if (key == std::string(b)) {
+            ASSERT_FALSE(found_b);
+            found_b = true;
+            ASSERT_EQ(std::string(b), (const char *)value);
+        }
+        else if (key == std::string(c)) {
+            ASSERT_FALSE(found_c);
+            found_c = true;
+            ASSERT_EQ(std::string(c), (const char *)value);
+        }
+        else {
+            FAIL();
+        }
+
+        ib_hash_next(i);
+    }
+
+    ASSERT_TRUE(found_a);
+    ASSERT_TRUE(found_b);
+    ASSERT_TRUE(found_c);
 }
