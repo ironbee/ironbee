@@ -22,7 +22,8 @@ def all_ironbee_code
     'modules',
     'plugins',
     'predicate',
-    'util'
+    'util',
+    'example_modules'
   ].each do |dir|
     extensions.each do |e|
       globs << "#{dir}/**/*#{e}"

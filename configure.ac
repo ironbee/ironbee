@@ -268,7 +268,7 @@ fi
 DOXYGEN=$doxygen
 
 DOXYGEN_TOP=`cd $srcdir;pwd`
-DOXYGEN_DIRS="include util engine modules automata fast lua predicate"
+DOXYGEN_DIRS="include util engine modules automata fast lua predicate example_modules"
 MARKDOWN_DOXYGEN_FILES=`cd $srcdir;find . lua -type f -maxdepth 1 -name '*.md'`
 EXTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp'`
 INTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' -o -name '*.cc'`
@@ -451,7 +451,7 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="util engine servers automata fast modules tools etc docs tests packaging"
+TOPLEVEL_SUBDIRS="util engine servers automata fast modules tools etc docs tests packaging example_modules"
 LIBS_SUBDIRS="libhtp sqltfn"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver nginx"
 
@@ -596,6 +596,8 @@ fi
 AC_CONFIG_FILES([lua/Makefile])
 AC_CONFIG_FILES([tools/Makefile])
 AC_CONFIG_FILES([modules/Makefile])
+AC_CONFIG_FILES([example_modules/Makefile])
+AC_CONFIG_FILES([example_modules/tests/Makefile])
 
 AC_CONFIG_FILES([etc/Makefile])
 
