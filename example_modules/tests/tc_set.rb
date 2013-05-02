@@ -37,6 +37,23 @@ class TestSet < Test::Unit::TestCase
     assert_log_no_match /CLIPP ANNOUNCE: NO/
   end
 
+  def test_debug
+    clipp(
+      :config => CONFIG,
+      :input_hashes => [make_request('GET')],
+      :default_site_config => <<-EOS
+        Set set.debug 1
+        SetDefine set1 GET POST
+        SetDefine set2 FOO BAR
+        Rule REQUEST_METHOD @set_member "set1" id:1 phase:REQUEST_HEADER clipp_announce:YES
+        Rule REQUEST_METHOD @set_member "set2" id:2 phase:REQUEST_HEADER clipp_announce:NO
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /set_member set1 for GET = yes/
+    assert_log_match /set_member set2 for GET = no/
+  end
+
   def test_inheritance
     clipp(
       :config => CONFIG + "\nSetDefine set1 GET POST",
