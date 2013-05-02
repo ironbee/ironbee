@@ -323,7 +323,7 @@ size_t DLL_PUBLIC ib_hash_size(
  * @sa ib_hash_get_nocase()
  *
  * @param[in]  hash       Hash table.
- * @param[out] value      Address which value is written.
+ * @param[out] value      Address which value is written.  May be NULL.
  * @param[in]  key        Key to lookup.
  * @param[in]  key_length Length of @a key.
  *
@@ -346,7 +346,7 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
  * @sa ib_hash_get_nocase()
  *
  * @param[in]  hash  Hash table.
- * @param[out] value Address which value is written.
+ * @param[out] value Address which value is written.  May be NULL.
  * @param[in]  key   Key to lookup
  *
  * @returns

@@ -592,7 +592,6 @@ ib_status_t ib_hash_get_ex(
     const void       *key,
     size_t            key_length
 ) {
-    assert(value != NULL);
     assert(hash  != NULL);
 
     ib_status_t      rc;
@@ -609,13 +608,15 @@ ib_status_t ib_hash_get_ex(
         key,
         key_length
     );
-    if (rc == IB_OK) {
-        assert(current_entry != NULL);
+    if (value != NULL) {
+        if (rc == IB_OK) {
+            assert(current_entry != NULL);
 
-        *(void **)value = current_entry->value;
-    }
-    else {
-        *(void **)value = NULL;
+            *(void **)value = current_entry->value;
+        }
+        else {
+            *(void **)value = NULL;
+        }
     }
 
     return rc;
@@ -626,11 +627,12 @@ ib_status_t ib_hash_get(
     void              *value,
     const char        *key
 ) {
-    assert(value != NULL);
     assert(hash  != NULL);
 
     if (key == NULL) {
-        *(void **)value = NULL;
+        if (value != NULL) {
+            *(void **)value = NULL;
+        }
         return IB_EINVAL;
     }
 

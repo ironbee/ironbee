@@ -34,6 +34,7 @@ IronBee v0.8.0
 **Util**
 
 * Add external iterator support for hash.  See `ib_hash_iterator()`, `ib_hash_first()`, `ib_hash_next()`, `ib_hash_fetch()`, and `ib_hash_at_end()`.
+* `ib_hash_get()` and `ib_hash_get_ex()` now support NULL for the value argument to allow for membership tests.
 
 **IronBee++**
 
@@ -58,6 +59,8 @@ IronBee v0.8.0
   format and exit.
 
 **Other**
+
+* Added `example_modules` directory with example modules.
 
 * Various clean up and bug fixes.
 
