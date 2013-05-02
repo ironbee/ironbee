@@ -87,6 +87,7 @@
 #include <errno.h>
 #define _GNU_SOURCE
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef NDEBUG
 #warning "NDEBUG is inappropriate.  Disabling."
@@ -893,14 +894,20 @@ ib_status_t operator_execute(
     }
 
     if (per_operator->debug) {
+        char *input_c = strndup(
+            (const char *)ib_bytestr_const_ptr(input),
+            ib_bytestr_length(input)
+        );
+
         ib_log_info_tx(tx,
-            "%s %s for %*s = %s",
+            "%s %s for %s = %s",
             c_set_member,
             per_operator->set_name,
-            (int)ib_bytestr_length(input),
-            ib_bytestr_const_ptr(input),
+            input_c,
             (*result == 1 ? "yes" : "no")
         );
+
+        free(input_c);
     }
 
     return IB_OK;
