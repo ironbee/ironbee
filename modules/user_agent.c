@@ -30,6 +30,8 @@
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
+#include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/ip.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>

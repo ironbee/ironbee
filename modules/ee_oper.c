@@ -28,6 +28,7 @@
 
 #include <ironbee/capture.h>
 #include <ironbee/hash.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/module.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>

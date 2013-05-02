@@ -5,6 +5,7 @@ include $(top_srcdir)/build/common.mk
 luadir = $(libdir)
 
 FFI_FILES = $(top_srcdir)/include/ironbee/engine.h \
+            $(top_srcdir)/include/ironbee/engine_state.h \
 	    $(top_srcdir)/include/ironbee/core.h \
 	    $(top_srcdir)/include/ironbee/rule_defs.h \
 	    $(top_srcdir)/include/ironbee/rule_engine.h \

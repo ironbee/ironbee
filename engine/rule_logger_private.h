@@ -29,6 +29,7 @@
  */
 
 #include <ironbee/clock.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/types.h>
 

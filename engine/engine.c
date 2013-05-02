@@ -37,6 +37,7 @@
 #include <ironbee/context_selection.h>
 #include <ironbee/core.h>
 #include <ironbee/hash.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/ip.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>

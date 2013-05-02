@@ -53,7 +53,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
 #include <ironbee/core.h>
-#include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/field.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>

@@ -31,6 +31,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/core.h>
 #include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>

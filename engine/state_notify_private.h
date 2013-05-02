@@ -25,6 +25,7 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/engine_state.h>
 #include <ironbee/engine_types.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/types.h>

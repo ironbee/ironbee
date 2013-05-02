@@ -18,6 +18,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
 #include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/module.h>

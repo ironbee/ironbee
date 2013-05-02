@@ -29,6 +29,7 @@
 #include <ironbee/capture.h>
 #include <ironbee/core.h>
 #include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/field.h>
 #include <ironbee/provider.h>
 #include <ironbee/stream.h>

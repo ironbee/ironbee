@@ -26,7 +26,7 @@
 
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
-#include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/flags.h>

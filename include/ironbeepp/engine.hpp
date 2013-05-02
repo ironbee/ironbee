@@ -31,6 +31,7 @@
 #include <ironbeepp/common_semantics.hpp>
 
 #include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 
 #include <iostream>
 
