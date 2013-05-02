@@ -151,7 +151,7 @@ private
   def generate_ironbee_configuration(context, template = nil)
     template ||= DEFAULT_TEMPLATE
     template = expand_path(template)
-    fatal "Could not read #{template}" if ! File.readable?(template)
+    CLIPPTestCast::fatal "Could not read #{template}" if ! File.readable?(template)
 
     erb = ERB.new(IO.read(template))
     config = erb.result(context)
