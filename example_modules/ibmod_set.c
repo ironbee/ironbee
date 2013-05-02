@@ -85,6 +85,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#define _GNU_SOURCE
 #include <stdio.h>
 
 #ifdef NDEBUG
