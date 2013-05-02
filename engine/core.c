@@ -4124,7 +4124,13 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
         }
 
         rc = core_set_value(cp, ctx, type, p1, p2);
-        return rc;
+        if (rc == IB_EINVAL) {
+            /* Core doesn't know about it; another module may. */
+            return IB_OK;
+        }
+        else {
+            return rc;
+        }
     }
 
     ib_log_error(ib, "Unhandled directive: %s %s %s", name, p1, p2);
