@@ -45,7 +45,7 @@
  *   insensitive.
  *
  * @par Configuration
- * - `set.debug = 1` -- Turn on debugging information for the current
+ * - `Set set.debug 1` -- Turn on debugging information for the current
  *   context.  Will log every membership query.
  *
  * @par Note
@@ -442,7 +442,7 @@ static per_context_t c_per_context_initial = {
  * to configuration settings.  Settings can be set in configuration, e.g.,
  *
  * @code
- * set.debug = 1
+ * Set set.debug 1
  * @endcode
  *
  * Configuration maps work through fields (see field.h) and thus require the
