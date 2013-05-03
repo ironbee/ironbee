@@ -593,6 +593,17 @@ void DLL_PUBLIC ib_hash_next(
     ib_hash_iterator_t *iterator
 );
 
+/**
+ * Copy @a from iterator to @a to iterator.
+ *
+ * @param[in] to   Iterator to copy to.
+ * @param[in] from Iterator to copy from.
+ */
+void DLL_PUBLIC ib_hash_copy_iterator(
+    ib_hash_iterator_t *to,
+    ib_hash_iterator_t *from
+);
+
 /*@}*/
 
 /** @} IronBeeUtilHash */

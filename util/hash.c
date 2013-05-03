@@ -343,6 +343,14 @@ void ib_hash_next(
     iterator->next_entry = iterator->current_entry->next_entry;
 }
 
+void ib_hash_copy_iterator(
+    ib_hash_iterator_t *to,
+    ib_hash_iterator_t *from
+)
+{
+    *to = *from;
+}
+
 ib_status_t ib_hash_resize_slots(
     ib_hash_t *hash
 ) {
