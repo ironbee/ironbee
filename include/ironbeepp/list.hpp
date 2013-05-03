@@ -264,9 +264,6 @@ public:
         return this->base().node();
     }
 
-private:
-    friend class boost::iterator_core_access;
-
     //! Operator-> support.
     T* operator->() const
     {
@@ -274,6 +271,9 @@ private:
         m_dummy = T(*this->base());
         return &m_dummy;
     }
+
+private:
+    friend class boost::iterator_core_access;
 
     //! Dereference.  Note returns copy not reference.
     T dereference() const
