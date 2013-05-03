@@ -143,7 +143,7 @@ struct make_c_trampoline_helper
  *
  * // C++11 example.
  * auto trampoline =
- *   IronBee::make_c_trampoline<int(int, int)(
+ *   IronBee::make_c_trampoline<int(int, int)>(
  *     [](int a, int b) {return a + b;}
  *   );
  * int x = trampoline.first(1, 2, trampoline.second);
