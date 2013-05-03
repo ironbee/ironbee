@@ -174,9 +174,9 @@ static ib_hash_entry_t *ib_hash_find_htentry(
  **/
 #define IB_HASH_LOOP(iterator, hash) \
     for ( \
-        ib_hash_first(&(iterator), (hash)); \
-        ! ib_hash_at_end(&(iterator)); \
-        ib_hash_next(&(iterator)) \
+        ib_hash_iterator_first(&(iterator), (hash)); \
+        ! ib_hash_iterator_at_end(&(iterator)); \
+        ib_hash_iterator_next(&(iterator)) \
     )
 
 /**
@@ -276,7 +276,7 @@ ib_status_t ib_hash_find_entry(
     return IB_OK;
 }
 
-ib_hash_iterator_t *ib_hash_iterator(ib_mpool_t *mp)
+ib_hash_iterator_t *ib_hash_iterator_create(ib_mpool_t *mp)
 {
     return (ib_hash_iterator_t *)ib_mpool_alloc(
         mp,
@@ -284,17 +284,17 @@ ib_hash_iterator_t *ib_hash_iterator(ib_mpool_t *mp)
     );
 }
 
-ib_hash_iterator_t *ib_hash_iterator_malloc()
+ib_hash_iterator_t *ib_hash_iterator_create_malloc()
 {
     return malloc(sizeof(ib_hash_iterator_t));
 }
 
-bool ib_hash_at_end(const ib_hash_iterator_t *iterator)
+bool ib_hash_iterator_at_end(const ib_hash_iterator_t *iterator)
 {
     return iterator->current_entry == NULL;
 }
 
-void ib_hash_first(
+void ib_hash_iterator_first(
     ib_hash_iterator_t *iterator,
     const ib_hash_t    *hash
 )
@@ -304,17 +304,17 @@ void ib_hash_first(
 
     memset(iterator, 0, sizeof(*iterator));
     iterator->hash = hash;
-    ib_hash_next(iterator);
+    ib_hash_iterator_next(iterator);
 }
 
-void ib_hash_fetch(
+void ib_hash_iterator_fetch(
     const char               **key,
     size_t                    *key_length,
     void                      *value,
     const ib_hash_iterator_t  *iterator
 )
 {
-    assert(iterator   != NULL);
+    assert(iterator != NULL);
 
     if (key != NULL) {
         *key            = iterator->current_entry->key;
@@ -327,7 +327,7 @@ void ib_hash_fetch(
     }
 }
 
-void ib_hash_next(
+void ib_hash_iterator_next(
     ib_hash_iterator_t *iterator
 ) {
     assert(iterator != NULL);
@@ -343,12 +343,25 @@ void ib_hash_next(
     iterator->next_entry = iterator->current_entry->next_entry;
 }
 
-void ib_hash_copy_iterator(
-    ib_hash_iterator_t *to,
-    ib_hash_iterator_t *from
+void ib_hash_iterator_copy(
+    ib_hash_iterator_t       *to,
+    const ib_hash_iterator_t *from
 )
 {
     *to = *from;
+}
+
+bool ib_hash_iterator_equal(
+    const ib_hash_iterator_t *a,
+    const ib_hash_iterator_t *b
+)
+{
+    return
+        a->hash          == b->hash          &&
+        a->current_entry == b->current_entry &&
+        a->next_entry    == b->next_entry    &&
+        a->slot_index    == b->slot_index
+        ;
 }
 
 ib_status_t ib_hash_resize_slots(

@@ -524,12 +524,12 @@ ib_status_t DLL_PUBLIC ib_hash_remove(
  * Create a hash iterator.
  *
  * @warning Return iterator is singular and all behavior is undefined except
- *          for calling ib_hash_first().
+ *          for calling ib_hash_iterator_first().
  *
  * @param[in] mp Memory pool to use.
  * @return New iterator or NULL on allocation error.
  **/
-ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator(ib_mpool_t *mp);
+ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator_create(ib_mpool_t *mp);
 
 /**
  * Create a hash iterator with malloc.
@@ -538,7 +538,7 @@ ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator(ib_mpool_t *mp);
  *
  * @return New iterator or NULL on allocation error.
  **/
-ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator_malloc();
+ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator_create_malloc();
 
 /**
  * Is iterator at end of hash.
@@ -548,7 +548,7 @@ ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator_malloc();
  * @param[in] iterator Iterator to check.
  * @return true iff iterator is at end of hash.
  **/
-bool DLL_PUBLIC ib_hash_at_end(const ib_hash_iterator_t *iterator);
+bool DLL_PUBLIC ib_hash_iterator_at_end(const ib_hash_iterator_t *iterator);
 
 /**
  * Fetch value of hash.
@@ -563,7 +563,7 @@ bool DLL_PUBLIC ib_hash_at_end(const ib_hash_iterator_t *iterator);
  * @param[out] value      Value.
  * @param[in]  iterator   Iterator to fetch value of.
  **/
-void DLL_PUBLIC ib_hash_fetch(
+void DLL_PUBLIC ib_hash_iterator_fetch(
     const char               **key,
     size_t                    *key_length,
     void                      *value,
@@ -576,7 +576,7 @@ void DLL_PUBLIC ib_hash_fetch(
  * @param[out] iterator Iterator to set.
  * @param[in]  hash     Hash table to iterate over.
  */
-void DLL_PUBLIC ib_hash_first(
+void DLL_PUBLIC ib_hash_iterator_first(
     ib_hash_iterator_t *iterator,
     const ib_hash_t    *hash
 );
@@ -589,7 +589,7 @@ void DLL_PUBLIC ib_hash_first(
  *
  * @param[in,out] iterator Iterator to advance.
  */
-void DLL_PUBLIC ib_hash_next(
+void DLL_PUBLIC ib_hash_iterator_next(
     ib_hash_iterator_t *iterator
 );
 
@@ -599,9 +599,21 @@ void DLL_PUBLIC ib_hash_next(
  * @param[in] to   Iterator to copy to.
  * @param[in] from Iterator to copy from.
  */
-void DLL_PUBLIC ib_hash_copy_iterator(
-    ib_hash_iterator_t *to,
-    ib_hash_iterator_t *from
+void DLL_PUBLIC ib_hash_iterator_copy(
+    ib_hash_iterator_t       *to,
+    const ib_hash_iterator_t *from
+);
+
+/**
+ * Compare two iterators.
+ *
+ * @param[in] a First iterator.
+ * @param[in] b Second iterator.
+ * @return true iff @a a and @a b refer to the same hash entry.
+ **/
+bool DLL_PUBLIC ib_hash_iterator_equal(
+    const ib_hash_iterator_t *a,
+    const ib_hash_iterator_t *b
 );
 
 /*@}*/

@@ -453,13 +453,13 @@ TEST_F(TestIBUtilHash, iterator) {
     bool found_b = false;
     bool found_c = false;
 
-    ib_hash_iterator_t *i = ib_hash_iterator(MemPool());
-    ib_hash_first(i, hash);
-    while (! ib_hash_at_end(i)) {
+    ib_hash_iterator_t *i = ib_hash_iterator_create(MemPool());
+    ib_hash_iterator_first(i, hash);
+    while (! ib_hash_iterator_at_end(i)) {
         const char *key = NULL;
         size_t key_length = 0;
 
-        ib_hash_fetch(&key, &key_length, (void *)&value, i);
+        ib_hash_iterator_fetch(&key, &key_length, (void *)&value, i);
 
         if (key == std::string(a)) {
             ASSERT_FALSE(found_a);
@@ -480,7 +480,7 @@ TEST_F(TestIBUtilHash, iterator) {
             FAIL();
         }
 
-        ib_hash_next(i);
+        ib_hash_iterator_next(i);
     }
 
     ASSERT_TRUE(found_a);

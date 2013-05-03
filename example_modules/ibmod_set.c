@@ -920,19 +920,19 @@ ib_status_t context_open(
     temp_mp = ib_engine_pool_temp_get(ib);
     assert(temp_mp != NULL);
 
-    iterator = ib_hash_iterator(temp_mp);
+    iterator = ib_hash_iterator_create(temp_mp);
     assert(iterator != NULL);
 
     for (
-        ib_hash_first(iterator, parent_sets);
-        ! ib_hash_at_end(iterator);
-        ib_hash_next(iterator)
+        ib_hash_iterator_first(iterator, parent_sets);
+        ! ib_hash_iterator_at_end(iterator);
+        ib_hash_iterator_next(iterator)
     ) {
         const char      *key        = NULL;
         size_t           key_length = 0;
         const ib_hash_t *set        = NULL;
 
-        ib_hash_fetch(&key, &key_length, &set, iterator);
+        ib_hash_iterator_fetch(&key, &key_length, &set, iterator);
 
         assert(key != NULL);
         assert(set != NULL);

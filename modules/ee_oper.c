@@ -609,19 +609,21 @@ ib_status_t ee_tx_finished_handler(ib_engine_t *ib,
         return rc;
     }
 
-    iterator = ib_hash_iterator(pool);
+    iterator = ib_hash_iterator_create(pool);
     if (iterator == NULL) {
         ib_mpool_destroy(pool);
         return IB_EALLOC;
     }
-    ib_hash_first(iterator, hash);
-    while (! ib_hash_at_end(iterator)) {
-        ib_hash_fetch(NULL, NULL, &state, iterator);
+    for (
+        ib_hash_iterator_first(iterator, hash);
+        ! ib_hash_iterator_at_end(iterator);
+        ib_hash_iterator_next(iterator)
+    ) {
+        ib_hash_iterator_fetch(NULL, NULL, &state, iterator);
         if (state != NULL) {
             ia_eudoxus_destroy_state(state);
             state = NULL;
         }
-        ib_hash_next(iterator);
     }
 
     ib_mpool_destroy(pool);
@@ -734,17 +736,17 @@ ib_status_t ee_module_finish(ib_engine_t *ib,
         return rc;
     }
 
-    iterator = ib_hash_iterator(pool);
+    iterator = ib_hash_iterator_create(pool);
     if (iterator == NULL) {
         ib_mpool_destroy(pool);
         return IB_EALLOC;
     }
     for (
-        ib_hash_first(iterator, eudoxus_pattern_hash);
-        ! ib_hash_at_end(iterator);
-        ib_hash_next(iterator)
+        ib_hash_iterator_first(iterator, eudoxus_pattern_hash);
+        ! ib_hash_iterator_at_end(iterator);
+        ib_hash_iterator_next(iterator)
     ) {
-        ib_hash_fetch(NULL, NULL, &eudoxus, iterator);
+        ib_hash_iterator_fetch(NULL, NULL, &eudoxus, iterator);
         if (eudoxus != NULL) {
             ia_eudoxus_destroy(eudoxus);
         }

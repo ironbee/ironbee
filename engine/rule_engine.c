@@ -3014,15 +3014,15 @@ static ib_status_t copy_rule_hash(const ib_context_t *ctx,
     if (ib_hash_size(src_hash) == 0) {
         return IB_OK;
     }
-    iterator = ib_hash_iterator(ib_engine_pool_temp_get(ctx->ib));
+    iterator = ib_hash_iterator_create(ib_engine_pool_temp_get(ctx->ib));
     if (iterator == NULL) {
         return IB_EALLOC;
     }
-    ib_hash_first(iterator, src_hash);
+    ib_hash_iterator_first(iterator, src_hash);
 
-    while (! ib_hash_at_end(iterator)) {
+    while (! ib_hash_iterator_at_end(iterator)) {
         const ib_rule_t *rule;
-        ib_hash_fetch(NULL, NULL, &rule, iterator);
+        ib_hash_iterator_fetch(NULL, NULL, &rule, iterator);
 
         assert(rule != NULL);
 
@@ -3031,7 +3031,7 @@ static ib_status_t copy_rule_hash(const ib_context_t *ctx,
             return rc;
         }
 
-        ib_hash_next(iterator);
+        ib_hash_iterator_next(iterator);
     }
     return IB_OK;
 }
