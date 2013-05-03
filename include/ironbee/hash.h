@@ -59,7 +59,17 @@ extern "C" {
  **/
 typedef struct ib_hash_t ib_hash_t;
 
-// XXX
+/**
+ * Hash iterator.
+ *
+ * An external iterator for hashes.
+ *
+ * @sa ib_hash_iterator()
+ * @sa ib_hash_fetch()
+ * @sa ib_hash_first()
+ * @sa ib_hash_at_end()
+ * @sa ib_hash_next()
+ **/
 typedef struct ib_hash_iterator_t ib_hash_iterator_t;
 
 /**
