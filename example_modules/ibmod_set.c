@@ -82,6 +82,26 @@
 /* See `man 7 feature_test_macros` on certain Linux flavors. */
 #define _POSIX_C_SOURCE 200809L
 
+/* IronBee has a canonical header order, exemplified in this module.  It is
+ * not required for third party development.
+ *
+ * Headers are divided into sections, more or less:
+ *
+ * - The autoconf config file containing information about configure.
+ * - For implementation files, the public header file.
+ * - Any corresponding private header file.
+ * - Headers for the framework the current file is party of.
+ * - IronBee++
+ * - IronBee
+ * - Third party libraries, e.g., boost.
+ * - Standard library.
+ *
+ * Within each section, includes are arranged alphabetically.
+ *
+ * The order is, more or less, specific to general and is arranged as such to
+ * increase the chance of catching missing includes.
+ */
+
 #include <ironbee/engine.h>
 #include <ironbee/hash.h>
 #include <ironbee/module.h>
@@ -102,7 +122,7 @@
 /** MODULE_NAME as string */
 #define MODULE_NAME_STR IB_XSTRINGIFY(MODULE_NAME)
 
-/** Define the public module symbol. */
+/** The public module symbol */
 IB_MODULE_DECLARE();
 
 /**
@@ -114,7 +134,7 @@ IB_MODULE_DECLARE();
  * created as copies of the parent's @ref per_context_t.
  *
  * The function `ctx_open()` will be called at the beginning of  every
- * context.  It will create a new hash, copy the existing (parents)  @c sets
+ * context.  It will create a new hash, copy the existing (parent's) @c sets
  * member into the new hash, and then set the @c sets member to the new hash.
  * In this way, each child will know of all the sets of its parent but any
  * sets it defines will not be added to the parents @c sets hash.
@@ -177,27 +197,6 @@ typedef struct {
      **/
     const char *set_name;
 } per_operator_t;
-
-/**
- * @name String Constants
- */
-/*@{*/
-
-/** Set membership operator. */
-static const char *c_set_member = "set_member";
-
-/* These must be macros to properly interact with IB_DIRMAP_INIT_STRUCTURE */
-
-/** Define set directive. */
-#define C_DEFINE "SetDefine"
-/** Define case insensitive set directive. */
-#define C_DEFINE_INSENSITIVE "SetDefineInsensitive"
-/** Define set from file directive. */
-#define C_DEFINE_FROM_FILE "SetDefineFromFile"
-/** Define case insensitive set from file directive. */
-#define C_DEFINE_INSENSITIVE_FROM_FILE "SetDefineInsensitiveFromFile"
-
-/*@}*/
 
 /**
  * @name Helper Functions
@@ -276,11 +275,11 @@ ib_status_t define_set(
  * - Set up module state.
  *
  * @param[in] ib     IronBee engine.
- * @parma[in] m      This module.
+ * @param[in] m      This module.
  * @param[in] cbdata Callback data; unused.
  * @return
  * - IB_OK on success.
- * - IB_EOTHER if an operator named @ref c_set_member already exists.
+ * - IB_EOTHER if an operator named @c set_member already exists.
  **/
 static
 ib_status_t init(
@@ -294,14 +293,13 @@ ib_status_t init(
  *
  * @param[in] cp     Configuration parser representing state of configuration
  *                   handling.  Can be used to access engine or report errors.
- * @param[in] name   Name of directive.  Will be used to determine if set
- *                   should be case insensitive.
+ * @param[in] name   Name of directive.
  * @param[in] params List of `const char *` representing parameters to
  *                   directive.
- * @param[in] cbdata Callback data; not used.
+ * @param[in] cbdata Callback data; case insensitive iff non-NULL.
  * @return
  * - IB_OK on success.
- * - IB_EOTHER if less than two parameters provided.
+ * - IB_EINVAL if less than two parameters provided.
  **/
 static
 ib_status_t dir_define(
@@ -317,14 +315,13 @@ ib_status_t dir_define(
  * @param[in] cp       Configuration parser representing state of
  *                     configuration handling.  Can be used to access engine
  *                     or report errors.
- * @param[in] name     Name of directive.  Will be used to determine if set
- *                     should be case insensitive.
+ * @param[in] name     Name of directive.
  * @param[in] set_name Name of set.  First parameter to directive.
  * @param[in] path     Path to file of items.  Second parameter to directive.
- * @param[in] cbdata   Callback data; not used.
+ * @param[in] cbdata Callback data; case insensitive iff non-NULL.
  * @return
  * - IB_OK on success.
- * - IB_EOTHER on file system error.
+ * - IB_EINVAL] on file system error.
  **/
 static
 ib_status_t dir_define_from_file(
@@ -396,7 +393,7 @@ ib_status_t operator_execute(
 );
 
 /**
- * Called at open of every context.
+ * Called at open of every configuration context.
  *
  * This callback is called at the beginning of every configuration context
  * during configuration parsing.  This module uses it to set up the
@@ -406,7 +403,7 @@ ib_status_t operator_execute(
  * function will never be called for the main context.  Per-context data for
  * the main context is handled in init().
  *
- * It will create a new hash for per_context_t::sets and copy the parents
+ * It will create a new hash for per_context_t::sets and copy the parent's
  * sets into it.
  *
  * @param[in] ib     IronBee engine.
@@ -428,7 +425,8 @@ ib_status_t context_open(
 /**
  * @name Initialization Statics
  *
- * These static variables are used to initialize the module.
+ * These static variables are used to initialize the module.  They should
+ * never be used to hold varying state, only to provide configuration.
  */
 /*@{*/
 
@@ -470,23 +468,26 @@ static IB_CFGMAP_INIT_STRUCTURE(c_config_map) = {
  * to automatically register directives.  It is also possible to register
  * directive during module initialization via ib_config_register_directive().
  * This latter approach is useful, e.g., if complex callback data is needed.
+ *
+ * The use of `(void *)1` below is used to indicate case insensitivity, i.e.,
+ * case insensitive iff callback data is non-NULL.
  **/
 static IB_DIRMAP_INIT_STRUCTURE(c_directive_map) = {
     IB_DIRMAP_INIT_LIST(
-        C_DEFINE,
+        "SetDefine",
         dir_define, NULL
     ),
     IB_DIRMAP_INIT_LIST(
-        C_DEFINE_INSENSITIVE,
-        dir_define, NULL
+        "SetDefineInsensitive",
+        dir_define, (void *)1
     ),
     IB_DIRMAP_INIT_PARAM2(
-        C_DEFINE_FROM_FILE,
+        "SetDefineFromFile",
         dir_define_from_file, NULL
     ),
     IB_DIRMAP_INIT_PARAM2(
-        C_DEFINE_INSENSITIVE_FROM_FILE,
-        dir_define_from_file, NULL
+        "SetDefineInsensitiveFromFile",
+        dir_define_from_file, (void *)1
     ),
     IB_DIRMAP_INIT_LAST
 };
@@ -641,7 +642,7 @@ ib_status_t init(
     rc = ib_operator_create_and_register(
         NULL,
         ib,
-        c_set_member,
+        "set_member",
         IB_OP_CAPABILITY_ALLOW_NULL |
             IB_OP_CAPABILITY_NON_STREAM |
             IB_OP_CAPABILITY_STREAM,
@@ -650,10 +651,7 @@ ib_status_t init(
         operator_execute, NULL
     );
     if (rc == IB_EINVAL) {
-        ib_log_error(ib,
-            "Operator %s already exists.  Double load?",
-            c_set_member
-        );
+        ib_log_error(ib, "Operator set_member already exists.  Double load?");
         return IB_EOTHER;
     }
 
@@ -672,23 +670,13 @@ ib_status_t dir_define(
     assert(name   != NULL);
     assert(params != NULL);
 
-    bool        case_insensitive           = false;
+    bool        case_insensitive           = (cbdata != NULL);
     const       ib_list_node_t *param_node = NULL;
     const char *set_name                   = NULL;
 
-    if (
-        strncmp(
-            name,
-            C_DEFINE_INSENSITIVE,
-            strlen(C_DEFINE_INSENSITIVE)
-        ) == 0
-    ) {
-        case_insensitive = true;
-    }
-
     if (ib_list_elements(params) < 2) {
         ib_cfg_log_error(cp, "%s requires 2 or more arguments.", name);
-        return IB_EOTHER;
+        return IB_EINVAL;
     }
 
     param_node = ib_list_first_const(params);
@@ -721,7 +709,7 @@ ib_status_t dir_define_from_file(
     assert(path     != NULL);
 
     ib_status_t  rc;
-    bool         case_insensitive = false;
+    bool         case_insensitive = (cbdata != NULL);
     FILE        *fp               = NULL;
     char        *buffer           = NULL;
     size_t       buffer_size      = 0;
@@ -731,16 +719,6 @@ ib_status_t dir_define_from_file(
     mp = ib_engine_pool_main_get(cp->ib);
     assert(mp != NULL);
 
-    if (
-        strncmp(
-            name,
-            C_DEFINE_INSENSITIVE_FROM_FILE,
-            strlen(C_DEFINE_INSENSITIVE_FROM_FILE)
-        ) == 0
-    ) {
-        case_insensitive = true;
-    }
-
     fp = fopen(path, "r");
     if (fp == NULL) {
         ib_cfg_log_error(
@@ -749,7 +727,7 @@ ib_status_t dir_define_from_file(
             name,
             path
         );
-        return IB_EOTHER;
+        return IB_EINVAL;
     }
 
     rc = ib_list_create(&items, mp);
@@ -770,7 +748,7 @@ ib_status_t dir_define_from_file(
                     errno
                 );
                 fclose(fp);
-                return IB_EOTHER;
+                return IB_EINVAL;
             }
             else {
                 break;
@@ -873,8 +851,7 @@ ib_status_t operator_execute(
     );
     if (rc == IB_EINVAL) {
         ib_log_error_tx(tx,
-            "Input to %s %s is not a bytestring.",
-            c_set_member,
+            "Input to set_member %s is not a bytestring.",
             per_operator->set_name
         );
         return IB_EINVAL;
@@ -896,20 +873,13 @@ ib_status_t operator_execute(
     }
 
     if (per_operator->debug) {
-        char *input_c = strndup(
-            (const char *)ib_bytestr_const_ptr(input),
-            ib_bytestr_length(input)
-        );
-
         ib_log_info_tx(tx,
-            "%s %s for %s = %s",
-            c_set_member,
+            "set_member %s for %.*s = %s",
             per_operator->set_name,
-            input_c,
+            (int)ib_bytestr_length(input),
+            ib_bytestr_const_ptr(input),
             (*result == 1 ? "yes" : "no")
         );
-
-        free(input_c);
     }
 
     return IB_OK;
@@ -947,8 +917,7 @@ ib_status_t context_open(
     assert(rc                == IB_OK);
     assert(per_context->sets != NULL);
 
-    rc = ib_mpool_create(&temp_mp, "temporary", NULL);
-    assert(rc      == IB_OK);
+    temp_mp = ib_engine_pool_temp_get(ib);
     assert(temp_mp != NULL);
 
     iterator = ib_hash_iterator(temp_mp);
@@ -975,8 +944,6 @@ ib_status_t context_open(
         );
         assert(rc == IB_OK);
     }
-
-    ib_mpool_destroy(temp_mp);
 
     return IB_OK;
 }
