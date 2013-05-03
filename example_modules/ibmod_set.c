@@ -861,7 +861,7 @@ ib_status_t operator_execute(
     rc = ib_hash_get_ex(
         per_operator->set,
         NULL,
-        ib_bytestr_const_ptr(input),
+        (const char *)ib_bytestr_const_ptr(input),
         ib_bytestr_length(input)
     );
     if (rc == IB_ENOENT) {

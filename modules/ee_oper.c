@@ -196,7 +196,7 @@ ib_status_t get_ee_tx_data(
         return rc;
     }
 
-    rc = ib_hash_get_ex(hash, eudoxus_state, &instance_data, sizeof(ee_operator_data_t *));
+    rc = ib_hash_get_ex(hash, eudoxus_state, (const char *)&instance_data, sizeof(ee_operator_data_t *));
     if (rc != IB_OK) {
         *eudoxus_state = NULL;
     }
@@ -237,7 +237,9 @@ ib_status_t set_ee_tx_data(
         return rc;
     }
 
-    rc = ib_hash_set_ex(hash, &instance_data, sizeof(ee_operator_data_t *),
+    rc = ib_hash_set_ex(hash,
+                        (const char *)&instance_data,
+                        sizeof(ee_operator_data_t *),
                         eudoxus_state);
 
     return rc;
