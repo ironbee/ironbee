@@ -41,7 +41,8 @@ check_PROGRAMS = \
     test_ironbee \
     test_server \
     test_engine \
-		test_operator
+		test_operator \
+		test_hash
 
 TESTS=$(check_PROGRAMS)
 CLEANFILES=*.xml *.log
@@ -76,3 +77,4 @@ test_ironbee_SOURCES              = test_ironbee.cpp
 test_server_SOURCES               = test_server.cpp
 test_engine_SOURCES               = test_engine.cpp fixture.cpp
 test_operator_SOURCES						  = test_operator.cpp fixture.cpp
+test_hash_SOURCES   						  = test_hash.cpp

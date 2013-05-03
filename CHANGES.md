@@ -55,6 +55,8 @@ IronBee v0.8.0
 
 * `convert_exception()` now only requires a ConstEngine instead of an Engine.
 
+* Added `IronBee::Hash<T>`.
+
 **CLIPP**
 
 * Added `-e path` which causes `clipp` to handle consumer errors differently.

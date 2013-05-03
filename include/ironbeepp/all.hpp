@@ -39,6 +39,7 @@
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/field.hpp>
+#include <ironbeepp/hash.hpp>
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/ironbee.hpp>
 #include <ironbeepp/list.hpp>

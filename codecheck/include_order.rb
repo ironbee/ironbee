@@ -56,6 +56,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/engine.hpp>',
   '<ironbeepp/exception.hpp>',
   '<ironbeepp/field.hpp>',
+  '<ironbeepp/hash.hpp>',
   '<ironbeepp/hooks.hpp>',
   '<ironbeepp/ironbee.hpp>',
   '<ironbeepp/list.hpp>',
