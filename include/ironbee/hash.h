@@ -516,6 +516,15 @@ ib_status_t DLL_PUBLIC ib_hash_remove(
 ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator(ib_mpool_t *mp);
 
 /**
+ * Create a hash iterator with malloc.
+ *
+ * Caller is responsible for freeing.
+ *
+ * @return New iterator or NULL on allocation error.
+ **/
+ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator_malloc();
+
+/**
  * Is iterator at end of hash.
  *
  * @warning Behavior is undefined for singular iterators.

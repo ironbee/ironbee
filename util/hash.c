@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 
 /* Internal Declarations */
@@ -271,6 +272,11 @@ ib_hash_iterator_t *ib_hash_iterator(ib_mpool_t *mp)
         mp,
         sizeof(ib_hash_iterator_t)
     );
+}
+
+ib_hash_iterator_t *ib_hash_iterator_malloc()
+{
+    return malloc(sizeof(ib_hash_iterator_t));
 }
 
 bool ib_hash_at_end(const ib_hash_iterator_t *iterator)
