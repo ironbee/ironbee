@@ -406,15 +406,14 @@ typedef ib_status_t (*ib_state_response_line_fn_t)(
  * - @ref conn_closed_event
  *
  * @param[in] ib Engine handle
- * @param[in] event Which event trigger the callback.
  * @param[in] conn Connection.
+ * @param[in] event Which event trigger the callback.
  * @param[in] cbdata Callback data
  */
-// FIXME: event and conn parameters seem reversed in order
 typedef ib_status_t (*ib_state_conn_hook_fn_t)(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
     ib_conn_t *conn,
+    ib_state_event_type_t event,
     void *cbdata
 );
 
@@ -473,7 +472,6 @@ typedef ib_status_t (*ib_state_tx_hook_fn_t)(
  * @param[in] txdata Transaction data.
  * @param[in] cbdata Callback data
  */
-// FIXME: Should take: ib,tx,event,buf,len,cbdata?
 typedef ib_status_t (*ib_state_txdata_hook_fn_t)(
     ib_engine_t *ib,
     ib_tx_t *tx,

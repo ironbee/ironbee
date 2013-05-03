@@ -148,8 +148,8 @@ protected:
 
         void operator()(
             Engine engine,
-            Engine::state_event_e event,
-            Connection connection
+            Connection connection,
+            Engine::state_event_e event
         )
         {
             m_info.which = CB_CONNECTION;
@@ -195,6 +195,29 @@ protected:
                 ib_logevent, hook->cdata)
         );
         EXPECT_EQ(CB_TRANSACTION, info.which);
+        EXPECT_EQ(m_engine, info.engine);
+        EXPECT_EQ(event, info.event);
+    }
+
+    void test_conn(
+        Engine::state_event_e event,
+        handler_info_t&       info
+    )
+    {
+        ib_hook_t* hook;
+        ib_state_event_type_t ib_logevent =
+            static_cast<ib_state_event_type_t>(event);
+        info = handler_info_t();
+        hook = m_engine.ib()->hook[event];
+        while (hook->next != NULL) {
+            hook = hook->next;
+        }
+        EXPECT_EQ(IB_OK,
+            hook->callback.conn(
+                m_engine.ib(), m_connection.ib(),
+                ib_logevent, hook->cdata)
+        );
+        EXPECT_EQ(CB_CONNECTION, info.which);
         EXPECT_EQ(m_engine, info.engine);
         EXPECT_EQ(event, info.event);
     }
@@ -337,11 +360,9 @@ protected:
         handler_info_t&       info
     )
     {
-        test_notx_one_argument<ib_conn_t>(
+        test_conn(
             event,
-            info,
-            CB_CONNECTION,
-            &handler_info_t::connection
+            info
         );
     }
 

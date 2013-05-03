@@ -71,9 +71,23 @@
         } \
     } while(0)
 
+#define CALL_CONN_HOOKS(out_rc, first_hook, event, whicb, ib, conn) \
+    do { \
+        *(out_rc) = IB_OK; \
+        for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
+            ib_status_t rc_ = hook_->callback.whicb((ib), (conn), (event), hook_->cdata); \
+            if (rc_ != IB_OK) { \
+                ib_log_error((ib),  "Hook returned error: %s=%s", \
+                             ib_state_event_name((event)), ib_status_to_string(rc_)); \
+                (*out_rc) = rc_; \
+                break; \
+             } \
+        } \
+    } while(0)
+
 static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
-                                        ib_state_event_type_t event,
-                                        ib_conn_t *conn)
+                                        ib_conn_t *conn,
+                                        ib_state_event_type_t event)
 {
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
@@ -86,7 +100,7 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
 
     ib_log_debug3(ib, "CONN EVENT: %s", ib_state_event_name(event));
 
-    CALL_NOTX_HOOKS(&rc, ib->hook[event], event, conn, ib, conn);
+    CALL_CONN_HOOKS(&rc, ib->hook[event], event, conn, ib, conn);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         return rc;
@@ -339,12 +353,12 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
         }
     }
 
-    rc = ib_state_notify_conn(ib, conn_started_event, conn);
+    rc = ib_state_notify_conn(ib, conn, conn_started_event);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_conn(ib, conn_opened_event, conn);
+    rc = ib_state_notify_conn(ib, conn, conn_opened_event);
     if (rc != IB_OK) {
         return rc;
     }
@@ -355,7 +369,7 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_state_notify_conn(ib, handle_context_conn_event, conn);
+    rc = ib_state_notify_conn(ib, conn, handle_context_conn_event);
     if (rc != IB_OK) {
         return rc;
     }
@@ -368,7 +382,7 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
         }
     }
 
-    rc = ib_state_notify_conn(ib, handle_connect_event, conn);
+    rc = ib_state_notify_conn(ib, conn, handle_connect_event);
     return rc;
 }
 
@@ -434,17 +448,17 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 
     ib_conn_flags_set(conn, IB_CONN_FCLOSED);
 
-    rc = ib_state_notify_conn(ib, conn_closed_event, conn);
+    rc = ib_state_notify_conn(ib, conn, conn_closed_event);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_conn(ib, handle_disconnect_event, conn);
+    rc = ib_state_notify_conn(ib, conn, handle_disconnect_event);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_state_notify_conn(ib, conn_finished_event, conn);
+    rc = ib_state_notify_conn(ib, conn, conn_finished_event);
     if (rc != IB_OK) {
         return rc;
     }

@@ -2036,15 +2036,15 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
  * Create the data provider instance and initialize the parser.
  *
  * @param ib Engine.
- * @param event Event type.
  * @param conn Connection.
+ * @param event Event type.
  * @param cbdata Callback data.
  *
  * @returns Status code.
  */
 static ib_status_t core_hook_conn_started(ib_engine_t *ib,
-                                          ib_state_event_type_t event,
                                           ib_conn_t *conn,
+                                          ib_state_event_type_t event,
                                           void *cbdata)
 {
     assert(event == conn_started_event);

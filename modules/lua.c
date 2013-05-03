@@ -1506,8 +1506,8 @@ static ib_status_t modlua_null(
  */
 static ib_status_t modlua_conn(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
     ib_conn_t *conn,
+    ib_state_event_type_t event,
     void *cbdata)
 {
     assert(ib);
@@ -2203,8 +2203,8 @@ static ib_status_t modlua_commit_configuration(ib_engine_t *ib)
  * module, the Lua Module.
  *
  * @param ib Engine.
- * @param event Event type.
  * @param conn Connection.
+ * @param event Event type.
  * @param cbdata Unused.
  *
  * @return
@@ -2213,8 +2213,8 @@ static ib_status_t modlua_commit_configuration(ib_engine_t *ib)
  *   - Other upon failure of callback registration.
  */
 static ib_status_t modlua_conn_init_lua_runtime(ib_engine_t *ib,
-                                                ib_state_event_type_t event,
                                                 ib_conn_t *conn,
+                                                ib_state_event_type_t event,
                                                 void *cbdata)
 {
     assert(event == conn_started_event);
@@ -2258,8 +2258,8 @@ static ib_status_t modlua_conn_init_lua_runtime(ib_engine_t *ib,
  * in the order of their registration).
  *
  * @param ib Engine.
- * @param event Event type.
  * @param conn Connection.
+ * @param event Event type.
  * @param cbdata Unused.
  *
  * @return
@@ -2270,8 +2270,8 @@ static ib_status_t modlua_conn_init_lua_runtime(ib_engine_t *ib,
  *   - Other upon failure of callback registration.
  */
 static ib_status_t modlua_conn_fini_lua_runtime(ib_engine_t *ib,
-                                                ib_state_event_type_t event,
                                                 ib_conn_t *conn,
+                                                ib_state_event_type_t event,
                                                 void *cbdata)
 {
     assert(event == conn_finished_event);

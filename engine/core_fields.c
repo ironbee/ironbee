@@ -383,8 +383,8 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
  * Callback used to generate connection fields.
  */
 static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
-                                           ib_state_event_type_t event,
                                            ib_conn_t *conn,
+                                           ib_state_event_type_t event,
                                            void *cbdata)
 {
     ib_status_t rc;

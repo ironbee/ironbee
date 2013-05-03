@@ -161,16 +161,16 @@ ib_status_t response_line(
  * Hooks handler for connection callbacks.
  *
  * @param[in] ib_engine     The IronBee engine.
- * @param[in] event         Which event happened.
  * @param[in] ib_connection Data of event.
+ * @param[in] event         Which event happened.
  * @param[in] cbdata        Callback data: contains C++ functional to forward
  *                          to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t connection(
     ib_engine_t*          ib_engine,
-    ib_state_event_type_t event,
     ib_conn_t*            ib_connection,
+    ib_state_event_type_t event,
     void*                 cbdata
 )
 {
@@ -181,8 +181,8 @@ ib_status_t connection(
     try {
         data_to_value<HooksRegistrar::connection_t>(cbdata)(
             Engine(ib_engine),
-            static_cast<Engine::state_event_e>(event),
-            Connection(ib_connection)
+            Connection(ib_connection),
+            static_cast<Engine::state_event_e>(event)
         );
     }
     catch (...) {

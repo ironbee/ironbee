@@ -165,8 +165,8 @@ public:
     typedef boost::function<
         void(
             Engine,
-            Engine::state_event_e,
-            Connection
+            Connection,
+            Engine::state_event_e
         )
     > connection_t;
 
