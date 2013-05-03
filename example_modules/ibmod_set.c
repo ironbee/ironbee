@@ -79,13 +79,15 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+/* See `man 7 feature_test_macros` on certain Linux flavors. */
+#define _POSIX_C_SOURCE 200809L
+
 #include <ironbee/engine.h>
 #include <ironbee/hash.h>
 #include <ironbee/module.h>
 
 #include <assert.h>
 #include <errno.h>
-#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 
