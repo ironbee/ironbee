@@ -121,29 +121,29 @@ TEST_F(TestIBUtilHash, test_hash_ex)
     ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, key1, 2, (void *)"value"));
 
     char *val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get_ex(hash, &val, (void *)key1, 2));
+    EXPECT_EQ(IB_OK, ib_hash_get_ex(hash, &val, key1, 2));
     EXPECT_STREQ("value", val);
 
-    ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, (void *)key2, 2, (void *)"other"));
+    ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, key2, 2, (void *)"other"));
 
     val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get_ex(hash, &val, (void *)key2, 2));
+    EXPECT_EQ(IB_OK, ib_hash_get_ex(hash, &val, key2, 2));
     EXPECT_STREQ("other", val);
 
     val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get_ex(hash, &val, (void *)key1, 2));
+    EXPECT_EQ(IB_OK, ib_hash_get_ex(hash, &val, key1, 2));
     EXPECT_STREQ("other", val);
 
     val = NULL;
     EXPECT_EQ(
         IB_ENOENT,
-        ib_hash_get_ex(hash, &val, (void *)key3, 2)
+        ib_hash_get_ex(hash, &val, key3, 2)
     );
 
     val = NULL;
     EXPECT_EQ(
         IB_ENOENT,
-        ib_hash_get_ex(hash, &val, (void *)key4, 2)
+        ib_hash_get_ex(hash, &val, key4, 2)
     );
 }
 
@@ -339,7 +339,7 @@ TEST_F(TestIBUtilHash, test_hash_clear)
 }
 
 static uint32_t test_hash_delete_hashfunc(
-    const void* key,
+    const char* key,
     size_t      key_length,
     uint32_t    randomzier,
     void*       cbdata

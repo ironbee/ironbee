@@ -61,7 +61,7 @@ typedef struct ib_hash_entry_t ib_hash_entry_t;
  **/
 struct ib_hash_entry_t {
     /** Key. */
-    const void          *key;
+    const char          *key;
     /** Length of @c key. */
     size_t               key_length;
     /** Value. */
@@ -136,7 +136,7 @@ struct ib_hash_t {
 static ib_status_t ib_hash_find_entry(
     const ib_hash_t  *hash,
     ib_hash_entry_t **hash_entry,
-    const void       *key,
+    const char       *key,
     size_t            key_length
 );
 
@@ -154,7 +154,7 @@ static ib_status_t ib_hash_find_entry(
 static ib_hash_entry_t *ib_hash_find_htentry(
      const ib_hash_t *hash,
      ib_hash_entry_t *first,
-     const void      *key,
+     const char      *key,
      size_t           key_length,
      uint32_t         hash_value
 );
@@ -208,7 +208,7 @@ static char ib_hash_tolower(
 ib_hash_entry_t *ib_hash_find_htentry(
     const ib_hash_t *hash,
     ib_hash_entry_t *first,
-    const void      *key,
+    const char      *key,
     size_t           key_length,
     uint32_t         hash_value
 ) {
@@ -238,7 +238,7 @@ ib_hash_entry_t *ib_hash_find_htentry(
 ib_status_t ib_hash_find_entry(
      const ib_hash_t  *hash,
      ib_hash_entry_t **hash_entry,
-     const void       *key,
+     const char       *key,
      size_t            key_length
 ) {
     assert(hash_entry != NULL);
@@ -421,7 +421,7 @@ static char ib_hash_tolower(
 /* End Internal Definitions */
 
 uint32_t ib_hashfunc_djb2(
-    const void *key,
+    const char *key,
     size_t      key_length,
     uint32_t    randomizer,
     void       *cbdata
@@ -439,7 +439,7 @@ uint32_t ib_hashfunc_djb2(
 }
 
 uint32_t ib_hashfunc_djb2_nocase(
-    const void *key,
+    const char *key,
     size_t      key_length,
     uint32_t    randomizer,
     void       *cbdata
@@ -457,9 +457,9 @@ uint32_t ib_hashfunc_djb2_nocase(
 }
 
 int ib_hashequal_default(
-    const void *a,
+    const char *a,
     size_t      a_length,
-    const void *b,
+    const char *b,
     size_t      b_length,
     void       *cbdata
 ) {
@@ -470,9 +470,9 @@ int ib_hashequal_default(
 }
 
 int ib_hashequal_nocase(
-    const void *a,
+    const char *a,
     size_t      a_length,
-    const void *b,
+    const char *b,
     size_t      b_length,
     void       *cbdata
 ) {
@@ -613,7 +613,7 @@ size_t ib_hash_size(
 ib_status_t ib_hash_get_ex(
     const ib_hash_t  *hash,
     void             *value,
-    const void       *key,
+    const char       *key,
     size_t            key_length
 ) {
     assert(hash  != NULL);
@@ -689,7 +689,7 @@ ib_status_t ib_hash_get_all(
 
 ib_status_t ib_hash_set_ex(
     ib_hash_t  *hash,
-    const void *key,
+    const char *key,
     size_t      key_length,
     void       *value
 ) {

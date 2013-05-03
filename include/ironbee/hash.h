@@ -89,7 +89,7 @@ typedef struct ib_hash_iterator_t ib_hash_iterator_t;
  * @returns Hash value of @a key.
  **/
 typedef uint32_t (*ib_hash_function_t)(
-    const void *key,
+    const char *key,
     size_t      key_length,
     uint32_t    randomizer,
     void       *cbdata
@@ -110,9 +110,9 @@ typedef uint32_t (*ib_hash_function_t)(
  * @returns 1 if @a a and @a b are to be considered equal and 0 otherwise.
  **/
 typedef int (*ib_hash_equal_t)(
-    const void *a,
+    const char *a,
     size_t      a_length,
-    const void *b,
+    const char *b,
     size_t      b_length,
     void       *cbdata
 );
@@ -146,7 +146,7 @@ typedef int (*ib_hash_equal_t)(
  * @returns Hash value of @a key.
  */
 uint32_t DLL_PUBLIC ib_hashfunc_djb2(
-    const void *key,
+    const char *key,
     size_t      key_length,
     uint32_t    randomizer,
     void       *cbdata
@@ -174,7 +174,7 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2(
  * @returns Hash value of @a key.
  */
 uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
-    const void *key,
+    const char *key,
     size_t      key_length,
     uint32_t    randomizer,
     void       *cbdata
@@ -197,9 +197,9 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
  * otherwise.
  **/
 int DLL_PUBLIC ib_hashequal_default(
-    const void *a,
+    const char *a,
     size_t      a_length,
-    const void *b,
+    const char *b,
     size_t      b_length,
     void       *cbdata
 );
@@ -221,9 +221,9 @@ int DLL_PUBLIC ib_hashequal_default(
  * otherwise.
  **/
 int DLL_PUBLIC ib_hashequal_nocase(
-    const void *a,
+    const char *a,
     size_t      a_length,
-    const void *b,
+    const char *b,
     size_t      b_length,
     void       *cbdata
 );
@@ -361,7 +361,7 @@ size_t DLL_PUBLIC ib_hash_size(
 ib_status_t DLL_PUBLIC ib_hash_get_ex(
     const ib_hash_t  *hash,
     void             *value,
-    const void       *key,
+    const char       *key,
     size_t            key_length
 );
 
@@ -431,7 +431,7 @@ ib_status_t DLL_PUBLIC ib_hash_get_all(
  */
 ib_status_t DLL_PUBLIC ib_hash_set_ex(
     ib_hash_t  *hash,
-    const void *key,
+    const char *key,
     size_t      key_length,
     void       *value
 );
