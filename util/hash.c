@@ -95,8 +95,13 @@ struct ib_hash_iterator_t {
 struct ib_hash_t {
     /** Hash function. */
     ib_hash_function_t   hash_function;
+    /** Hash function callback data. */
+    void                *hash_cbdata;
     /** Key equality predicate. */
     ib_hash_equal_t      equal_predicate;
+    /** Key equality callback data. */
+    void                *equal_cbdata;
+
     /**
      * Slots.
      *
@@ -220,7 +225,8 @@ ib_hash_entry_t *ib_hash_find_htentry(
             current_entry->hash_value == hash_value &&
             hash->equal_predicate(
                 key,                key_length,
-                current_entry->key, current_entry->key_length
+                current_entry->key, current_entry->key_length,
+                hash->equal_cbdata
             )
         ) {
             return current_entry;
@@ -246,7 +252,11 @@ ib_status_t ib_hash_find_entry(
         return IB_EINVAL;
     }
 
-    hash_value = hash->hash_function(key, key_length, hash->randomizer);
+    hash_value = hash->hash_function(
+        key, key_length,
+        hash->randomizer,
+        hash->hash_cbdata
+    );
 
     /* hash->max_slot+1 is a power of 2 */
     current_slot = hash->slots[hash_value & hash->max_slot];
@@ -413,7 +423,8 @@ static char ib_hash_tolower(
 uint32_t ib_hashfunc_djb2(
     const void *key,
     size_t      key_length,
-    uint32_t    randomizer
+    uint32_t    randomizer,
+    void       *cbdata
 ) {
     assert(key != NULL);
 
@@ -430,7 +441,8 @@ uint32_t ib_hashfunc_djb2(
 uint32_t ib_hashfunc_djb2_nocase(
     const void *key,
     size_t      key_length,
-    uint32_t    randomizer
+    uint32_t    randomizer,
+    void       *cbdata
 ) {
     assert(key != NULL);
 
@@ -448,7 +460,8 @@ int ib_hashequal_default(
     const void *a,
     size_t      a_length,
     const void *b,
-    size_t      b_length
+    size_t      b_length,
+    void       *cbdata
 ) {
     assert(a != NULL);
     assert(b != NULL);
@@ -460,7 +473,8 @@ int ib_hashequal_nocase(
     const void *a,
     size_t      a_length,
     const void *b,
-    size_t      b_length
+    size_t      b_length,
+    void       *cbdata
 ) {
     assert(a != NULL);
     assert(b != NULL);
@@ -486,7 +500,9 @@ ib_status_t ib_hash_create_ex(
     ib_mpool_t          *pool,
     size_t               size,
     ib_hash_function_t   hash_function,
-    ib_hash_equal_t      equal_predicate
+    void                *hash_cbdata,
+    ib_hash_equal_t      equal_predicate,
+    void                *equal_cbdata
 ) {
     assert(hash != NULL);
     assert(pool != NULL);
@@ -531,7 +547,9 @@ ib_status_t ib_hash_create_ex(
     }
 
     new_hash->hash_function   = hash_function;
+    new_hash->hash_cbdata     = hash_cbdata;
     new_hash->equal_predicate = equal_predicate;
+    new_hash->equal_cbdata    = equal_cbdata;
     new_hash->max_slot        = size-1;
     new_hash->slots           = slots;
     new_hash->pool            = pool;
@@ -555,8 +573,8 @@ ib_status_t ib_hash_create(
         hash,
         pool,
         IB_HASH_INITIAL_SIZE,
-        ib_hashfunc_djb2,
-        ib_hashequal_default
+        ib_hashfunc_djb2, NULL,
+        ib_hashequal_default, NULL
     );
 }
 
@@ -571,8 +589,8 @@ ib_status_t ib_hash_create_nocase(
         hash,
         pool,
         IB_HASH_INITIAL_SIZE,
-        ib_hashfunc_djb2_nocase,
-        ib_hashequal_nocase
+        ib_hashfunc_djb2_nocase, NULL,
+        ib_hashequal_nocase, NULL
     );
 }
 
@@ -686,7 +704,11 @@ ib_status_t ib_hash_set_ex(
     /* Points to pointer that points to current_entry */
     ib_hash_entry_t **current_entry_handle  = NULL;
 
-    hash_value = hash->hash_function(key, key_length, hash->randomizer);
+    hash_value = hash->hash_function(
+        key, key_length,
+        hash->randomizer,
+        hash->hash_cbdata
+    );
     slot_index = (hash_value & hash->max_slot);
 
     current_entry_handle = &hash->slots[slot_index];
@@ -697,7 +719,8 @@ ib_status_t ib_hash_set_ex(
             current_entry->hash_value == hash_value &&
             hash->equal_predicate(
                current_entry->key, current_entry->key_length,
-               key,                key_length
+               key,                key_length,
+               hash->equal_cbdata
             )
         ) {
             found = 1;

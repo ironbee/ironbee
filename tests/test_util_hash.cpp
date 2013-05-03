@@ -114,8 +114,8 @@ TEST_F(TestIBUtilHash, test_hash_ex)
         &hash,
         MemPool(),
         32,
-        ib_hashfunc_djb2,
-        ib_hashequal_default
+        ib_hashfunc_djb2, NULL,
+        ib_hashequal_default, NULL
     ));
 
     ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, key1, 2, (void *)"value"));
@@ -153,12 +153,12 @@ TEST_F(TestIBUtilHash, test_hashfunc_djb2)
     uint32_t hash2 = 0;
 
     // Test with no case sensitive
-    hash1 = ib_hashfunc_djb2_nocase("Key", 3, 17);
-    hash2 = ib_hashfunc_djb2_nocase("kEY", 3, 17);
+    hash1 = ib_hashfunc_djb2_nocase("Key", 3, 17, NULL);
+    hash2 = ib_hashfunc_djb2_nocase("kEY", 3, 17, NULL);
     EXPECT_EQ(hash2, hash1);
     // Test with case sensitive
-    hash1 = ib_hashfunc_djb2("Key", 3, 17);
-    hash2 = ib_hashfunc_djb2("kEY", 3, 17);
+    hash1 = ib_hashfunc_djb2("Key", 3, 17, NULL);
+    hash2 = ib_hashfunc_djb2("kEY", 3, 17, NULL);
     EXPECT_NE(hash2, hash1);
 }
 
@@ -168,22 +168,22 @@ TEST_F(TestIBUtilHash, test_hashfunc_randomizer)
     uint32_t hash2 = 0;
 
     // Different randomizers means different values.
-    hash1 = ib_hashfunc_djb2_nocase("Key", 3, 17);
-    hash2 = ib_hashfunc_djb2_nocase("Key", 3, 23);
+    hash1 = ib_hashfunc_djb2_nocase("Key", 3, 17, NULL);
+    hash2 = ib_hashfunc_djb2_nocase("Key", 3, 23, NULL);
     EXPECT_NE(hash2, hash1);
-    hash1 = ib_hashfunc_djb2("Key", 3, 17);
-    hash2 = ib_hashfunc_djb2("Key", 3, 23);
+    hash1 = ib_hashfunc_djb2("Key", 3, 17, NULL);
+    hash2 = ib_hashfunc_djb2("Key", 3, 23, NULL);
     EXPECT_NE(hash2, hash1);
 }
 
 TEST_F(TestIBUtilHash, test_hashequal)
 {
-    EXPECT_EQ(1, ib_hashequal_default("key",3,"key",3));
-    EXPECT_EQ(0, ib_hashequal_default("key",3,"kEy",3));
-    EXPECT_EQ(0, ib_hashequal_default("key",3,"keys",4));
-    EXPECT_EQ(1, ib_hashequal_nocase("key",3,"key",3));
-    EXPECT_EQ(1, ib_hashequal_nocase("key",3,"kEy",3));
-    EXPECT_EQ(0, ib_hashequal_nocase("key",3,"kEys",4));
+    EXPECT_EQ(1, ib_hashequal_default("key",3,"key",3, NULL));
+    EXPECT_EQ(0, ib_hashequal_default("key",3,"kEy",3, NULL));
+    EXPECT_EQ(0, ib_hashequal_default("key",3,"keys",4, NULL));
+    EXPECT_EQ(1, ib_hashequal_nocase("key",3,"key",3, NULL));
+    EXPECT_EQ(1, ib_hashequal_nocase("key",3,"kEy",3, NULL));
+    EXPECT_EQ(0, ib_hashequal_nocase("key",3,"kEys",4, NULL));
 }
 
 TEST_F(TestIBUtilHash, test_hash_resizing)
@@ -341,7 +341,8 @@ TEST_F(TestIBUtilHash, test_hash_clear)
 static uint32_t test_hash_delete_hashfunc(
     const void* key,
     size_t      key_length,
-    uint32_t    randomzier
+    uint32_t    randomzier,
+    void*       cbdata
 )
 {
     return 1234;
@@ -360,8 +361,8 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
         &hash,
         MemPool(),
         32,
-        test_hash_delete_hashfunc,
-        ib_hashequal_default
+        test_hash_delete_hashfunc, NULL,
+        ib_hashequal_default, NULL
     ));
 
     ASSERT_EQ(IB_OK, ib_hash_set(hash, a, (void *)a));
@@ -431,8 +432,8 @@ TEST_F(TestIBUtilHash, bad_size) {
         &hash,
         MemPool(),
         3,
-        ib_hashfunc_djb2,
-        ib_hashequal_default
+        ib_hashfunc_djb2, NULL,
+        ib_hashequal_default, NULL
     ));
 }
 

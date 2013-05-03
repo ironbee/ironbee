@@ -84,13 +84,15 @@ typedef struct ib_hash_iterator_t ib_hash_iterator_t;
  * @param[in] key        Key to hash.
  * @param[in] key_length Length of @a key.
  * @param[in] randomizer Value to randomize hash function.
+ * @param[in] cbdata     Callback data.
  *
  * @returns Hash value of @a key.
  **/
 typedef uint32_t (*ib_hash_function_t)(
     const void *key,
     size_t      key_length,
-    uint32_t    randomizer
+    uint32_t    randomizer,
+    void       *cbdata
 );
 
 /**
@@ -103,6 +105,7 @@ typedef uint32_t (*ib_hash_function_t)(
  * @param[in] a_length Length of @a a.
  * @param[in] b        Second key.
  * @param[in] b_length Length of @a b.
+ * @param[in] cbdata     Callback data.
  *
  * @returns 1 if @a a and @a b are to be considered equal and 0 otherwise.
  **/
@@ -110,7 +113,8 @@ typedef int (*ib_hash_equal_t)(
     const void *a,
     size_t      a_length,
     const void *b,
-    size_t      b_length
+    size_t      b_length,
+    void       *cbdata
 );
 
 /**
@@ -137,13 +141,15 @@ typedef int (*ib_hash_equal_t)(
  * @param[in] key        The key to hash.
  * @param[in] key_length Length of @a key.
  * @param[in] randomizer Value to randomize hash function.
+ * @param[in] cbdata     Callback data; unused.
  *
  * @returns Hash value of @a key.
  */
 uint32_t DLL_PUBLIC ib_hashfunc_djb2(
     const void *key,
     size_t      key_length,
-    uint32_t    randomizer
+    uint32_t    randomizer,
+    void       *cbdata
 );
 
 /**
@@ -163,13 +169,15 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2(
  * @param[in] key        The key to hash.
  * @param[in] key_length Length of @a key.
  * @param[in] randomizer Value to randomize hash function.
+ * @param[in] cbdata     Callback data; unused.
  *
  * @returns Hash value of @a key.
  */
 uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
     const void *key,
     size_t      key_length,
-    uint32_t    randomizer
+    uint32_t    randomizer,
+    void       *cbdata
 );
 
 /**
@@ -183,6 +191,7 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
  * @param[in] a_length Length of @a a.
  * @param[in] b        Second key.
  * @param[in] b_length Length of @a b.
+ * @param[in] cbdata     Callback data; unused.
  *
  * @returns 1 if @a a and @a b have same length and same bytes and 0
  * otherwise.
@@ -191,7 +200,8 @@ int DLL_PUBLIC ib_hashequal_default(
     const void *a,
     size_t      a_length,
     const void *b,
-    size_t      b_length
+    size_t      b_length,
+    void       *cbdata
 );
 
 /**
@@ -205,6 +215,7 @@ int DLL_PUBLIC ib_hashequal_default(
  * @param[in] a_length Length of @a a.
  * @param[in] b        Second key.
  * @param[in] b_length Length of @a b.
+ * @param[in] cbdata     Callback data; unused.
  *
  * @returns 1 if @a a and @a b have same length and same bytes and 0
  * otherwise.
@@ -213,7 +224,8 @@ int DLL_PUBLIC ib_hashequal_nocase(
     const void *a,
     size_t      a_length,
     const void *b,
-    size_t      b_length
+    size_t      b_length,
+    void       *cbdata
 );
 
 /*@}*/
@@ -235,7 +247,9 @@ int DLL_PUBLIC ib_hashequal_nocase(
  * @param[in]  size            The number of slots in the hash table.
  *                             Must be a power of 2.
  * @param[in]  hash_function   Hash function to use, e.g., ib_hashfunc_djb2().
+ * @param[in]  hash_cbdata     Callback data for @a hash_function.
  * @param[in]  equal_predicate Predicate to use for key equality.
+ * @param[in]  equal_cbdata    Callback data for @a equal_predicate.
  *
  * @returns
  * - IB_OK on success.
@@ -247,7 +261,9 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(
     ib_mpool_t          *pool,
     size_t               size,
     ib_hash_function_t   hash_function,
-    ib_hash_equal_t      equal_predicate
+    void                *hash_cbdata,
+    ib_hash_equal_t      equal_predicate,
+    void                *equal_cbdata
 );
 
 /**
