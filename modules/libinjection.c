@@ -33,6 +33,7 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/context.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
@@ -349,10 +350,4 @@ IB_MODULE_INIT(
     NULL,                                /* Callback data */
     sqli_fini,                           /* Finish function */
     NULL,                                /* Callback data */
-    NULL,                                /* Context open function */
-    NULL,                                /* Callback data */
-    NULL,                                /* Context close function */
-    NULL,                                /* Callback data */
-    NULL,                                /* Context destroy function */
-    NULL                                 /* Callback data */
 );

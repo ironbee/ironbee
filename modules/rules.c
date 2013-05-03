@@ -23,6 +23,7 @@
 #include <ironbee/action.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
+#include <ironbee/context.h>
 #include <ironbee/core.h>
 #include <ironbee/engine.h>
 #include <ironbee/flags.h>
@@ -1501,10 +1502,4 @@ IB_MODULE_INIT(
     NULL,                                /* Callback data */
     NULL,                                /* Finish function */
     NULL,                                /* Callback data */
-    NULL,                                /* Context open function */
-    NULL,                                /* Callback data */
-    NULL,                                /* Context close function */
-    NULL,                                /* Callback data */
-    NULL,                                /* Context destroy function */
-    NULL                                 /* Callback data */
 );

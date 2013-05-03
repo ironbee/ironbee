@@ -27,6 +27,7 @@
 #include <ironautomata/eudoxus.h>
 
 #include <ironbee/capture.h>
+#include <ironbee/context.h>
 #include <ironbee/hash.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/module.h>
@@ -793,11 +794,5 @@ IB_MODULE_INIT(
     NULL,                                 /**< Callback data */
     ee_module_finish,                     /**< Finish function */
     NULL,                                 /**< Callback data */
-    NULL,                                 /**< Context open function */
-    NULL,                                 /**< Callback data */
-    NULL,                                 /**< Context close function */
-    NULL,                                 /**< Callback data */
-    NULL,                                 /**< Context destroy function */
-    NULL                                  /**< Callback data */
 );
 #endif

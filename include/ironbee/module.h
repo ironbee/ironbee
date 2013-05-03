@@ -67,14 +67,8 @@ extern "C" {
  * @param[in] xcbdata_init        Initialize function callback data
  * @param[in] xfn_fini            Finish function
  * @param[in] xcbdata_fini        Finish function callback data
- * @param[in] xfn_ctx_open        Context open function
- * @param[in] xcbdata_ctx_open    Context open function callback data
- * @param[in] xfn_ctx_close       Context close function
- * @param[in] xcbdata_ctx_close   Context close function callback data
- * @param[in] xfn_ctx_destroy     Context destroy function
- * @param[in] xcbdata_ctx_destroy Context destroy function callback data
  */
-#define IB_MODULE_INIT_DYNAMIC(m, xfilename, xdata, xib, xname, xgcdata, xgclen, xfn_cfg_copy, xcbdata_cfg_copy, xcm_init, xdm_init, xfn_init, xcbdata_init, xfn_fini, xcbdata_fini, xfn_ctx_open, xcbdata_ctx_open, xfn_ctx_close, xcbdata_ctx_close, xfn_ctx_destroy, xcbdata_ctx_destroy) \
+#define IB_MODULE_INIT_DYNAMIC(m, xfilename, xdata, xib, xname, xgcdata, xgclen, xfn_cfg_copy, xcbdata_cfg_copy, xcm_init, xdm_init, xfn_init, xcbdata_init, xfn_fini, xcbdata_fini) \
     do { \
         (m)->vernum             = IB_VERNUM; \
         (m)->abinum             = IB_ABINUM; \
@@ -95,12 +89,6 @@ extern "C" {
         (m)->cbdata_init        = xcbdata_init; \
         (m)->fn_fini            = xfn_fini; \
         (m)->cbdata_fini        = xcbdata_fini; \
-        (m)->fn_ctx_open        = xfn_ctx_open; \
-        (m)->cbdata_ctx_open    = xcbdata_ctx_open; \
-        (m)->fn_ctx_close       = xfn_ctx_close; \
-        (m)->cbdata_ctx_close   = xcbdata_ctx_close; \
-        (m)->fn_ctx_destroy     = xfn_ctx_destroy; \
-        (m)->cbdata_ctx_destroy = xcbdata_ctx_destroy; \
     } while (0)
 
 /** Defaults for all module structure headers */
@@ -192,67 +180,6 @@ typedef ib_status_t (*ib_module_fn_fini_t)(
 );
 
 /**
- * Function called when a context is opened.
- *
- * This is called when a context is opened in the configuration file.
- *
- * @param[in] ib     Engine handle
- * @param[in] m      Module
- * @param[in] ctx    Config context
- * @param[in] cbdata Callback data
- *
- * @returns Status code
- */
-typedef ib_status_t (*ib_module_fn_ctx_open_t)(
-    ib_engine_t  *ib,
-    ib_module_t  *m,
-    ib_context_t *ctx,
-    void         *cbdata
-);
-
-/**
- * Function called when a context is closed.
- *
- * This is called when ib_context_close() is called to close.
- * a configuration context. This should be used to initialize
- * any per-config-context resources.
- *
- * @param[in] ib     Engine handle
- * @param[in] m      Module
- * @param[in] ctx    Config context
- * @param[in] cbdata Callback data
- *
- * @returns Status code
- */
-typedef ib_status_t (*ib_module_fn_ctx_close_t)(
-    ib_engine_t  *ib,
-    ib_module_t  *m,
-    ib_context_t *ctx,
-    void         *cbdata
-);
-
-/**
- * Function called when a context is destroyed.
- *
- * This is called when ib_context_destroy() is called to finish
- * a configuration context. This should be used to destroy
- * any per-config-context resources.
- *
- * @param[in] ib     Engine handle
- * @param[in] m      Module
- * @param[in] ctx    Config context
- * @param[in] cbdata Callback data.
- *
- * @returns Status code
- */
-typedef ib_status_t (*ib_module_fn_ctx_destroy_t)(
-    ib_engine_t  *ib,
-    ib_module_t  *m,
-    ib_context_t *ctx,
-    void         *cbdata
-);
-
-/**
  * Additional functionality for IronBee.
  *
  * A module provides additional functionality to IronBee.  It can register
@@ -287,12 +214,6 @@ struct ib_module_t {
     void                       *cbdata_init;     /**< fn_init callback data */
     ib_module_fn_fini_t         fn_fini;         /**< Module finish */
     void                       *cbdata_fini;     /**< fn_init callback data */
-    ib_module_fn_ctx_open_t     fn_ctx_open;     /**< Context open */
-    void                       *cbdata_ctx_open; /**< fn_init callback data */
-    ib_module_fn_ctx_close_t    fn_ctx_close;    /**< Context close */
-    void                       *cbdata_ctx_close;/**< fn_init callback data */
-    ib_module_fn_ctx_destroy_t  fn_ctx_destroy;  /**< Context destroy */
-    void                       *cbdata_ctx_destroy; /**< fn_init callback data */
 };
 
 /**

@@ -29,6 +29,7 @@
 
 #include "engine_private.h"
 
+#include <ironbee/context.h>
 #include <ironbee/dso.h>
 #include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
@@ -36,6 +37,48 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdlib.h>
+
+/**
+ * Context open hook
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx Context
+ * @param[in] event Event
+ * @param[in] cbdata Callback data (module pointer)
+ *
+ * @returns Status code
+ */
+static ib_status_t module_context_open(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    void *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(event == handle_context_open_event);
+    assert(cbdata != NULL);
+
+    ib_module_t *m = (ib_module_t *)cbdata;
+    ib_status_t  rc;
+
+    /* We only care about the main context */
+    if (ib_context_type(ctx) != IB_CTYPE_MAIN) {
+        return IB_OK;
+    }
+
+    /* Create the module's rule */
+    rc = ib_rule_create(ib, ctx, __FILE__, __LINE__, false, &(m->rule));
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Failed to create module rule %s: %s",
+                     m->name,
+                     ib_status_to_string(rc));
+    }
+
+    return IB_OK;
+}
 
 /// @todo Probably need to load into a given context???
 ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
@@ -49,19 +92,11 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     ib_log_debug2(ib, "Initializing module %s (%zd): %s",
                   m->name, m->idx, m->filename);
 
-    rc = ib_rule_create(
-        ib,
-        ib_context_main(ib),
-        __FILE__,
-        __LINE__,
-        false,
-        &(m->rule));
+    /* Register our own context open callback */
+    rc = ib_hook_context_register(ib, handle_context_open_event,
+                                  module_context_open, m);
     if (rc != IB_OK) {
-        ib_log_error(
-            ib,
-            "Failed to create module rule %s: %s",
-            m->name,
-            ib_status_to_string(rc));
+        return rc;
     }
 
     /* Register directives */

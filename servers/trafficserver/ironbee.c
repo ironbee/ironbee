@@ -45,6 +45,7 @@
 #include <ironbee/module.h> /* Only needed while config is in here. */
 #include <ironbee/provider.h>
 #include <ironbee/server.h>
+#include <ironbee/context.h>
 #include <ironbee/core.h>
 #include <ironbee/site.h>
 #include <ironbee/state_notify.h>

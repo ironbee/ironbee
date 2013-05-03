@@ -34,6 +34,7 @@
 #include "engine_private.h"
 #include "rule_engine_private.h"
 
+#include <ironbee/context.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>

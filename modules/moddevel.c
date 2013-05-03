@@ -147,10 +147,4 @@ IB_MODULE_INIT(
     NULL,                               /* Callback data */
     moddevel_finish,                    /* Finish function */
     NULL,                               /* Callback data */
-    NULL,                               /* Context open function */
-    NULL,                               /* Callback data */
-    NULL,                               /* Context close function */
-    NULL,                               /* Callback data */
-    NULL,                               /* Context destroy function */
-    NULL                                /* Callback data */
 );

@@ -45,6 +45,7 @@
 #include <ironautomata/eudoxus.h>
 
 #include <ironbee/cfgmap.h>
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/module.h>
 #include <ironbee/rule_engine.h>
@@ -1384,11 +1385,5 @@ IB_MODULE_INIT(
     NULL,                                /**< Callback data */
     fast_fini,                           /**< Finish function */
     NULL,                                /**< Callback data */
-    NULL,                                /**< Context open function */
-    NULL,                                /**< Callback data */
-    NULL,                                /**< Context close function */
-    NULL,                                /**< Callback data */
-    NULL,                                /**< Context destroy function */
-    NULL                                 /**< Callback data */
 );
 #endif

@@ -603,10 +603,4 @@ IB_MODULE_INIT(
     NULL,                                  /* Callback data */
     mod_persist_fini,                      /* Finish function */
     NULL,                                  /* Callback data */
-    NULL,                                  /* Context open function */
-    NULL,                                  /* Callback data */
-    NULL,                                  /* Context close function */
-    NULL,                                  /* Callback data */
-    NULL,                                  /* Context destroy function */
-    NULL                                   /* Callback data */
 );

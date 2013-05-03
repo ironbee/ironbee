@@ -22,12 +22,41 @@
 
 #include "engine_private.h"
 
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/field.h>
 #include <ironbee/provider.h>
 
 #include <assert.h>
+
+static ib_status_t ib_state_notify_context(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_state_event_type_t event
+)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+
+    const ib_list_node_t *node;
+    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_CTX);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    ib_log_debug3(ib, "CTX EVENT: %s", ib_state_event_name(event));
+
+    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        rc = hook->callback.ctx(ib, ctx, event, hook->cbdata);
+        if (rc != IB_OK) {
+            break;
+        }
+    }
+
+    return rc;
+}
 
 static ib_status_t ib_state_notify_conn(
     ib_engine_t *ib,
@@ -1176,6 +1205,54 @@ ib_status_t ib_state_notify_logevent(ib_engine_t *ib,
     ib_status_t rc;
 
     rc = ib_state_notify_tx(ib, handle_logevent_event, tx);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_state_notify_context_open(ib_engine_t *ib,
+                                         ib_context_t *ctx)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_state_notify_context(ib, ctx, handle_context_open_event);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_state_notify_context_close(ib_engine_t *ib,
+                                          ib_context_t *ctx)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_state_notify_context(ib, ctx, handle_context_close_event);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_state_notify_context_destroy(ib_engine_t *ib,
+                                            ib_context_t *ctx)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_state_notify_context(ib, ctx, handle_context_destroy_event);
     if (rc != IB_OK) {
         return rc;
     }

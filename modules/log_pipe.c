@@ -356,7 +356,4 @@ IB_MODULE_INIT(
     log_pipe_config,                     /**< Config directive map */
     NULL, NULL,                          /**< Initialize function */
     NULL, NULL,                          /**< Finish function */
-    NULL, NULL,                          /**< Context open function */
-    NULL, NULL,                          /**< Context close function */
-    NULL, NULL                           /**< Context destroy function */
 );

@@ -27,6 +27,7 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/capture.h>
 #include <ironbee/cfgmap.h>
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
@@ -1501,10 +1502,4 @@ IB_MODULE_INIT(
     NULL,                                 /**< Callback data */
     NULL,                                 /**< Finish function */
     NULL,                                 /**< Callback data */
-    NULL,                                 /**< Context open function */
-    NULL,                                 /**< Callback data */
-    NULL,                                 /**< Context close function */
-    NULL,                                 /**< Callback data */
-    NULL,                                 /**< Context destroy function */
-    NULL                                  /**< Callback data */
 );

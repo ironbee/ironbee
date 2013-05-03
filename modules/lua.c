@@ -29,6 +29,7 @@
 
 #include <ironbee/array.h>
 #include <ironbee/cfgmap.h>
+#include <ironbee/context.h>
 #include <ironbee/core.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
@@ -319,12 +320,6 @@ static ib_status_t build_near_empty_module(
         NULL,                           /* Initialize function */
         NULL,                           /* Callback data */
         NULL,                           /* Finish function */
-        NULL,                           /* Callback data */
-        NULL,                           /* Context open function */
-        NULL,                           /* Callback data */
-        NULL,                           /* Context close function */
-        NULL,                           /* Callback data */
-        NULL,                           /* Context destroy function */
         NULL                            /* Callback data */
     );
 
@@ -1691,6 +1686,38 @@ static ib_status_t modlua_respline(
 }
 
 /**
+ * Context callback hook.
+ */
+static ib_status_t modlua_ctx(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    void *cbdata)
+{
+    assert(cbdata);
+    assert(ctx);
+    assert(ib);
+
+    ib_status_t rc;
+
+    /* TODO */
+    rc = modlua_callback_setup(ib, event, NULL, NULL, cbdata);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Custom table setup */
+
+    /* TODO */
+    rc = modlua_callback_dispatch(ib, event, NULL, NULL, cbdata);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return rc;
+}
+
+/**
  * Called by modlua_module_load to load the lua script into the Lua runtime.
  *
  * @param[in] ib IronBee engine.
@@ -1913,6 +1940,9 @@ static ib_status_t modlua_module_load_wire_callbacks(
                     break;
                 case IB_STATE_HOOK_INVALID:
                     ib_log_error(ib, "Invalid hook: %d", event);
+                    break;
+                case IB_STATE_HOOK_CTX:
+                    rc = ib_hook_context_register(ib, event, modlua_ctx, cbdata);
                     break;
                 case IB_STATE_HOOK_CONN:
                     rc = ib_hook_conn_register(ib, event, modlua_conn, cbdata);
@@ -2529,6 +2559,45 @@ ib_status_t modlua_rule_driver(
     return IB_OK;
 }
 
+static ib_status_t modlua_context_close(ib_engine_t           *ib,
+                                        ib_context_t          *ctx,
+                                        ib_state_event_type_t  event,
+                                        void                  *cbdata)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(event == handle_context_close_event);
+
+    ib_status_t rc;
+
+    /* Close of the main context signifies configuration finished. */
+    if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
+
+        /* Register this callback after the main context is closed.
+         * This allows it to be executed LAST allowing all the Lua
+         * modules created during configuration to be executed first. */
+        rc = ib_hook_conn_register(
+            ib,
+            conn_finished_event,
+            modlua_conn_fini_lua_runtime,
+            NULL);
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "Failed to register conn_finished_event hook: %s",
+                ib_status_to_string(rc));
+        }
+
+        /* Commit any pending configuration items. */
+        rc = modlua_commit_configuration(ib);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    return IB_OK;
+}
+
 /**
  * Initialize the ModLua Module.
  *
@@ -2603,6 +2672,17 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         return rc;
     }
 
+    /* Hook the context close event */
+    rc = ib_hook_context_register(ib,
+                                  handle_context_close_event,
+                                  modlua_context_close,
+                                  NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to register context_close_event hook: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
     /* Initialize lock to protect making new lua threads. */
     modlua_global_cfg.L_lck = malloc(sizeof(*modlua_global_cfg.L_lck));
     if (modlua_global_cfg.L_lck == NULL) {
@@ -2619,41 +2699,6 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     rc = rules_lua_init(ib, m, cbdata);
     if (rc != IB_OK) {
         return rc;
-    }
-
-    return IB_OK;
-}
-
-static ib_status_t modlua_context_close(ib_engine_t  *ib,
-                                        ib_module_t  *m,
-                                        ib_context_t *ctx,
-                                        void         *cbdata)
-{
-    ib_status_t rc;
-
-    /* Close of the main context signifies configuration finished. */
-    if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
-
-        /* Register this callback after the main context is closed.
-         * This allows it to be executed LAST allowing all the Lua
-         * modules created during configuration to be executed first. */
-        rc = ib_hook_conn_register(
-            ib,
-            conn_finished_event,
-            modlua_conn_fini_lua_runtime,
-            NULL);
-        if (rc != IB_OK) {
-            ib_log_error(
-                ib,
-                "Failed to register conn_finished_event hook: %s",
-                ib_status_to_string(rc));
-        }
-
-        /* Commit any pending configuration items. */
-        rc = modlua_commit_configuration(ib);
-        if (rc != IB_OK) {
-            return rc;
-        }
     }
 
     return IB_OK;
@@ -2966,10 +3011,4 @@ IB_MODULE_INIT(
     NULL,                                /**< Callback data */
     modlua_fini,                         /**< Finish function */
     NULL,                                /**< Callback data */
-    NULL,                                /**< Context open function */
-    NULL,                                /**< Callback data */
-    modlua_context_close,                /**< Context close function */
-    NULL,                                /**< Callback data */
-    NULL,                                /**< Context destroy function */
-    NULL                                 /**< Callback data */
 );

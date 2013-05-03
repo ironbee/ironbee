@@ -137,11 +137,9 @@ struct ib_rule_operator_inst_t {
  * Called when the rule engine is loaded, registers event handlers.
  *
  * @param[in,out] ib IronBee object
- * @param[in] mod Module object
  */
 ib_status_t ib_rule_engine_init(
-    ib_engine_t                *ib,
-    ib_module_t                *mod);
+    ib_engine_t                *ib);
 
 /**
  * Create a rule execution object
@@ -155,35 +153,6 @@ ib_status_t ib_rule_engine_init(
 ib_status_t ib_rule_exec_create(
     ib_tx_t                    *tx,
     ib_rule_exec_t            **rule_exec);
-
-/**
- * Rule engine context open
- *
- * Called when a context is opened; performs rule engine context-specific
- * initializations.
- *
- * @param[in,out] ib IronBee object
- * @param[in] mod Module object
- * @param[in,out] ctx IronBee context
- */
-ib_status_t ib_rule_engine_ctx_open(
-    ib_engine_t                *ib,
-    ib_module_t                *mod,
-    ib_context_t               *ctx);
-
-/**
- * Close a context for the rule engine.
- *
- * Called when a context is closed; performs rule engine rule fixups.
- *
- * @param[in,out] ib IronBee object
- * @param[in] mod Module object
- * @param[in,out] ctx IronBee context
- */
-ib_status_t ib_rule_engine_ctx_close(
-    ib_engine_t                *ib,
-    ib_module_t                *mod,
-    ib_context_t               *ctx);
 
 
 #endif /* IB_RULE_ENGINE_PRIVATE_H_ */

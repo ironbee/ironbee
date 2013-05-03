@@ -34,6 +34,7 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/capture.h>
 #include <ironbee/config.h>
+#include <ironbee/context.h>
 #include <ironbee/core.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
@@ -3082,75 +3083,6 @@ static ib_status_t import_rule_context(const ib_context_t *ctx,
 }
 
 
-ib_status_t ib_rule_engine_init(ib_engine_t *ib,
-                                ib_module_t *mod)
-{
-    ib_status_t rc;
-
-    /* Create the rule engine object */
-    rc = create_rule_engine(ib, ib->mp, &(ib->rule_engine));
-    if (rc != IB_OK) {
-        ib_log_error(ib,
-                     "Rule engine failed to create rule engine: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Register the rule callbacks */
-    rc = register_callbacks(ib, ib->mp, ib->rule_engine);
-    if (rc != IB_OK) {
-        ib_log_error(ib,
-                     "Rule engine failed to register phase callbacks: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    return IB_OK;
-}
-
-ib_status_t ib_rule_engine_ctx_open(ib_engine_t *ib,
-                                    ib_module_t *mod,
-                                    ib_context_t *ctx)
-{
-    ib_status_t rc;
-
-    /* If the rules are already initialized, do nothing */
-    if (ctx->rules != NULL) {
-        return IB_OK;
-    }
-
-    /* Create the rule engine object */
-    rc = create_rule_context(ib, ctx->mp, &(ctx->rules));
-    if (rc != IB_OK) {
-        ib_log_error(ib,
-                     "Rule engine failed to initialize context rules: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Initialize the rule sets */
-    rc = init_ruleset(ib, ctx->mp, ctx->rules);
-    if (rc != IB_OK) {
-        ib_log_error(ib,
-                     "Rule engine failed to initialize phase ruleset: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* If this is a location context, import our parents context info */
-    if (ctx->ctype == IB_CTYPE_LOCATION) {
-        rc = import_rule_context(ctx, ctx->parent->rules, ctx->rules);
-        if (rc != IB_OK) {
-            ib_log_error(ib,
-                         "Rule engine failed to import from parent: %s",
-                         ib_status_to_string(rc));
-            return rc;
-        }
-    }
-
-    return IB_OK;
-}
-
 /**
  * Enable/disable an individual rule
  *
@@ -3298,13 +3230,26 @@ static ib_status_t enable_rules(ib_engine_t *ib,
     }
 }
 
-ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
-                                     ib_module_t *mod,
-                                     ib_context_t *ctx)
+/**
+ * Close a context for the rule engine.
+ *
+ * Called when a context is closed; performs rule engine rule fixups.
+ *
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in,out] ctx IronBee context
+ * @param[in] event Event
+ * @param[in] cbdata Callback data (unused)
+ */
+static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
+                                         ib_context_t *ctx,
+                                         ib_state_event_type_t event,
+                                         void *cbdata)
 {
     assert(ib != NULL);
-    assert(mod != NULL);
     assert(ctx != NULL);
+    assert(event == handle_context_close_event);
+    assert(cbdata == NULL);
 
     ib_list_t      *all_rules;
     ib_list_node_t *node;
@@ -3567,6 +3512,108 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
     return IB_OK;
 }
 
+/**
+ * Rule engine context open
+ *
+ * Called when a context is opened; performs rule engine context-specific
+ * initializations.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] ctx IronBee context
+ * @param[in] event Event
+ * @param[in] cbdata Callback data (unused)
+ */
+static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
+                                        ib_context_t *ctx,
+                                        ib_state_event_type_t event,
+                                        void *cbdata)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(event == handle_context_open_event);
+    assert(cbdata == NULL);
+
+    ib_status_t rc;
+
+    /* Late registration of the context close event */
+    if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
+        rc = ib_hook_context_register(ib, handle_context_close_event,
+                                      rule_engine_ctx_close, NULL);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    /* If the rules are already initialized for this context, do nothing */
+    if (ctx->rules != NULL) {
+        return IB_OK;
+    }
+
+    /* Create the rule engine object */
+    rc = create_rule_context(ib, ctx->mp, &(ctx->rules));
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule engine failed to initialize context rules: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Initialize the rule sets */
+    rc = init_ruleset(ib, ctx->mp, ctx->rules);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule engine failed to initialize phase ruleset: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* If this is a location context, import our parents context info */
+    if (ctx->ctype == IB_CTYPE_LOCATION) {
+        rc = import_rule_context(ctx, ctx->parent->rules, ctx->rules);
+        if (rc != IB_OK) {
+            ib_log_error(ib,
+                         "Rule engine failed to import from parent: %s",
+                         ib_status_to_string(rc));
+            return rc;
+        }
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_rule_engine_init(ib_engine_t *ib)
+{
+    ib_status_t rc;
+
+    /* Create the rule engine object */
+    rc = create_rule_engine(ib, ib->mp, &(ib->rule_engine));
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule engine failed to create rule engine: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Register the rule callbacks */
+    rc = register_callbacks(ib, ib->mp, ib->rule_engine);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule engine failed to register phase callbacks: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Register the context open callback -- it'll register the
+     * context close handler at the open of the main context. */
+    rc = ib_hook_context_register(ib, handle_context_open_event,
+                                  rule_engine_ctx_open, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
 ib_mpool_t *ib_rule_mpool(ib_engine_t *ib)
 {
     /* Return a pointer to the configuration memory pool */
@@ -3652,12 +3699,14 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     assert(ctx != NULL);
 
     /* Open context's rule set (if required) */
+#if 0
     rc = ib_rule_engine_ctx_open(ib, NULL, ctx);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to initialize rules for context \"%s\"",
                      ib_context_full_get(ctx));
         return rc;
     }
+#endif
 
     /* Look up the generic rule phase */
     rc = find_meta(is_stream, PHASE_NONE, &phase_meta);

@@ -30,10 +30,12 @@
 #include "engine_private.h"
 
 #include "core_private.h"
+#include "rule_engine_private.h"
 #include "state_notify_private.h"
 
 #include <ironbee/array.h>
 #include <ironbee/cfgmap.h>
+#include <ironbee/context.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/core.h>
 #include <ironbee/hash.h>
@@ -274,6 +276,11 @@ static ib_status_t ib_event_table_init(void)
     /* Logevent updated */
     INIT_EVENT_TABLE_ENT(handle_logevent_event, IB_STATE_HOOK_TX);
 
+    /* Context events */
+    INIT_EVENT_TABLE_ENT(handle_context_open_event, IB_STATE_HOOK_CTX);
+    INIT_EVENT_TABLE_ENT(handle_context_close_event, IB_STATE_HOOK_CTX);
+    INIT_EVENT_TABLE_ENT(handle_context_destroy_event, IB_STATE_HOOK_CTX);
+
     /* Sanity check the table, make sure all events are initialized */
 validate:
     for(event = conn_started_event;  event < IB_STATE_EVENT_NUM;  ++event) {
@@ -455,6 +462,14 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
         if (rc != IB_OK) {
             goto failed;
         }
+    }
+
+    /* Initialize the rule engine */
+    rc = ib_rule_engine_init(*pib);
+    if (rc != IB_OK) {
+        ib_log_alert(*pib, "Failed to initialize rule engine: %s",
+                     ib_status_to_string(rc));
+        return rc;
     }
 
     /* Initialize the core static module. */
@@ -821,7 +836,7 @@ ib_status_t ib_conn_get_module_data(
   return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_conn_set_module_data(
+ib_status_t ib_conn_set_module_data(
     ib_conn_t         *conn,
     const ib_module_t *m,
     void              *data
@@ -1043,7 +1058,7 @@ ib_status_t ib_tx_get_module_data(
   return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_tx_set_module_data(
+ib_status_t ib_tx_set_module_data(
     ib_tx_t *tx,
     const ib_module_t *m,
     void *data
@@ -1122,7 +1137,7 @@ ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event)
     return ib_event_table[event].hook_type;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_null_register(
+ib_status_t ib_hook_null_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb,
@@ -1150,7 +1165,7 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_null_unregister(
+ib_status_t ib_hook_null_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb
@@ -1167,7 +1182,7 @@ ib_status_t DLL_PUBLIC ib_hook_null_unregister(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_conn_register(
+ib_status_t ib_hook_conn_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb,
@@ -1195,7 +1210,7 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_conn_unregister(
+ib_status_t ib_hook_conn_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb
@@ -1212,7 +1227,7 @@ ib_status_t DLL_PUBLIC ib_hook_conn_unregister(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_tx_register(
+ib_status_t ib_hook_tx_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb,
@@ -1239,7 +1254,7 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_tx_unregister(
+ib_status_t ib_hook_tx_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb
@@ -1256,7 +1271,7 @@ ib_status_t DLL_PUBLIC ib_hook_tx_unregister(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_txdata_register(
+ib_status_t ib_hook_txdata_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb,
@@ -1283,7 +1298,7 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_txdata_unregister(
+ib_status_t ib_hook_txdata_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb
@@ -1300,7 +1315,7 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_unregister(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
+ib_status_t ib_hook_parsed_header_data_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_header_data_fn_t cb,
@@ -1327,7 +1342,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
+ib_status_t ib_hook_parsed_header_data_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_header_data_fn_t cb)
@@ -1344,7 +1359,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
+ib_status_t ib_hook_parsed_req_line_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_request_line_fn_t cb,
@@ -1371,7 +1386,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_unregister(
+ib_status_t ib_hook_parsed_req_line_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_request_line_fn_t cb)
@@ -1388,7 +1403,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_unregister(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
+ib_status_t ib_hook_parsed_resp_line_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_response_line_fn_t cb,
@@ -1415,7 +1430,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
+ib_status_t ib_hook_parsed_resp_line_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_response_line_fn_t cb)
@@ -1423,6 +1438,52 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
     ib_status_t rc;
 
     rc = ib_hook_check(ib, event, IB_STATE_HOOK_RESPLINE);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
+
+    return rc;
+}
+
+ib_status_t ib_hook_context_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_ctx_hook_fn_t cb,
+    void *cbdata
+)
+{
+    ib_status_t rc;
+
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CTX);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+    if (hook == NULL) {
+        ib_log_emergency(ib, "Error in ib_mpool_calloc");
+        return IB_EALLOC;
+    }
+
+    hook->callback.ctx = cb;
+    hook->cbdata = cbdata;
+
+    rc = ib_hook_register(ib, event, hook);
+
+    return rc;
+}
+
+ib_status_t ib_hook_context_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_ctx_hook_fn_t cb
+)
+{
+    ib_status_t rc;
+
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CTX);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1611,10 +1672,7 @@ failed:
 ib_status_t ib_context_open(ib_context_t *ctx)
 {
     ib_engine_t *ib = ctx->ib;
-    ib_context_data_t *cfgdata;
     ib_status_t rc;
-    size_t ncfgdata;
-    size_t i;
 
     if (ctx->state != CTX_CREATED) {
         return IB_EINVAL;
@@ -1632,21 +1690,11 @@ ib_status_t ib_context_open(ib_context_t *ctx)
         }
     }
 
-    IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
-        if (cfgdata == NULL) {
-            continue;
-        }
-        ib_module_t *m = cfgdata->module;
-
-        if (m->fn_ctx_open != NULL) {
-            rc = m->fn_ctx_open(ib, m, ctx, m->cbdata_ctx_open);
-            if (rc != IB_OK) {
-                /// @todo Log the error???  Fail???
-                ib_log_error(ib, "Failed to call context open: %s",
-                             ib_status_to_string(rc));
-                return rc;
-            }
-        }
+    rc = ib_state_notify_context_open(ib, ctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to call context opened: %s",
+                     ib_status_to_string(rc));
+        return rc;
     }
 
     ctx->state = CTX_OPEN;
@@ -1655,34 +1703,19 @@ ib_status_t ib_context_open(ib_context_t *ctx)
 
 ib_status_t ib_context_close(ib_context_t *ctx)
 {
-        ib_engine_t *ib = ctx->ib;
-    ib_context_data_t *cfgdata;
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    size_t ncfgdata;
-    size_t i;
 
     if (ctx->state != CTX_OPEN) {
         return IB_EINVAL;
     }
     ib_log_debug3(ib, "Closing context ctx=%p '%s'", ctx, ctx->ctx_full);
 
-    IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
-        if (cfgdata == NULL) {
-            continue;
-        }
-        ib_module_t *m = cfgdata->module;
-
-        if (m->fn_ctx_close != NULL) {
-            rc = m->fn_ctx_close(ib, m, ctx, m->cbdata_ctx_close);
-            if (rc != IB_OK) {
-                /// @todo Log the error???  Fail???
-                ib_log_error(ib,
-                             "Failed to call context close: %s",
-                             ib_status_to_string(rc)
-                );
-                return rc;
-            }
-        }
+    rc = ib_state_notify_context_close(ib, ctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to call context close: %s",
+                     ib_status_to_string(rc));
+        return rc;
     }
 
     if (ctx->ctype != IB_CTYPE_ENGINE) {
@@ -1980,9 +2013,7 @@ const char *ib_context_full_get(const ib_context_t *ctx)
 void ib_context_destroy(ib_context_t *ctx)
 {
     ib_engine_t *ib;
-    ib_context_data_t *cfgdata;
     ib_status_t rc;
-    size_t ncfgdata, i;
 
     if (ctx == NULL) {
         return;
@@ -1993,26 +2024,10 @@ void ib_context_destroy(ib_context_t *ctx)
     ib_log_debug3(ib, "Destroying context ctx=%p '%s'", ctx, ctx->ctx_full);
 
     /* Run through the context modules to call any ctx_fini functions. */
-    /// @todo Not sure this is needed anymore
-    IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
-        if (cfgdata == NULL) {
-            continue;
-        }
-        ib_module_t *m = cfgdata->module;
-
-        if (m->fn_ctx_destroy != NULL) {
-            ib_log_debug3(ib,
-                          "Finishing context ctx=%p '%s' for module=%s (%p)",
-                          ctx, ctx->ctx_full, m->name, m);
-            rc = m->fn_ctx_destroy(ib, m, ctx, m->cbdata_ctx_destroy);
-            if (rc != IB_OK) {
-                /// @todo Log the error???  Fail???
-                ib_log_error(ib,
-                    "Failed to call context fini: %s",
-                    ib_status_to_string(rc)
-                );
-            }
-        }
+    rc = ib_state_notify_context_destroy(ib, ctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Error notifying context destroy for ctx=%p '%s'",
+                     ctx, ctx->ctx_full);
     }
 
     ib_engine_pool_destroy(ib, ctx->mp);

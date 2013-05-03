@@ -33,12 +33,14 @@
 #include "core_private.h"
 #include "core_audit_private.h"
 #include "engine_private.h"
-#include "rule_engine_private.h"
 #include "managed_collection_private.h"
+#include "rule_engine_private.h"
+#include "state_notify_private.h"
 
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/clock.h>
+#include <ironbee/context.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/engine_types.h>
 #include <ironbee/escape.h>
@@ -4546,6 +4548,179 @@ static void core_util_logger(
 }
 
 /**
+ * Handle context open events for the core module
+ *
+ * @param[in] ib Engine
+ * @param[in] ctx Context
+ * @param[in] event Event triggering the callback
+ * @param[in] cbdata Callback data (Module data)
+ *
+ * @returns Status code
+ */
+static ib_status_t core_ctx_open(ib_engine_t *ib,
+                                 ib_context_t *ctx,
+                                 ib_state_event_type_t event,
+                                 void *cbdata)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(event == handle_context_open_event);
+    assert(cbdata != NULL);
+
+    ib_status_t rc;
+    ib_module_t *mod = (ib_module_t *)cbdata;
+
+    /* Initialize the core fields context. */
+    rc = ib_core_fields_ctx_init(ib, mod, ctx, cbdata);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to initialize core fields: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Handle context close events for the core module
+ *
+ * @param[in] ib Engine
+ * @param[in] ctx Context
+ * @param[in] event Event triggering the callback
+ * @param[in] cbdata Callback data (Module data)
+ *
+ * @returns Status code
+ */
+static ib_status_t core_ctx_close(ib_engine_t *ib,
+                                  ib_context_t *ctx,
+                                  ib_state_event_type_t event,
+                                  void *cbdata)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(event == handle_context_close_event);
+    assert(cbdata != NULL);
+
+    ib_core_cfg_t *corecfg;
+    ib_status_t rc;
+
+    /* Get the current context config. */
+    rc = ib_core_context_config(ctx, &corecfg);
+    if (rc != IB_OK) {
+        ib_log_alert(ib,
+                     "Failed to fetch core module context config: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Build the site selection list at the close of the main context */
+    if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
+        rc = ib_ctxsel_finalize( ib );
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    return IB_OK;
+}
+
+static ib_status_t core_ctx_managed_collection_destroy(
+    ib_engine_t *ib,
+    ib_module_t *mod,
+    ib_context_t *ctx,
+    ib_core_cfg_t *corecfg)
+{
+    assert(ib != NULL);
+    assert(mod != NULL);
+    assert(ctx != NULL);
+    assert(corecfg != NULL);
+
+    const ib_list_node_t *node;
+    ib_status_t rc = IB_OK;
+
+    /* If there are no collections, do nothing */
+    if (corecfg->mancoll_list == NULL) {
+        return IB_OK;
+    }
+
+    /* Walk through the list of collections & destroy. */
+    IB_LIST_LOOP_CONST(corecfg->mancoll_list, node) {
+        const ib_managed_collection_t *collection =
+            (const ib_managed_collection_t *)node->data;
+        ib_status_t tmprc;
+
+        tmprc = ib_managed_collection_destroy(ib, collection);
+        if (tmprc != IB_OK) {
+            ib_log_warning(ib,
+                           "Error creating managed collection \"%s\": %s",
+                           collection->collection_name,
+                           ib_status_to_string(tmprc));
+            if (rc == IB_OK) {
+                rc = tmprc;
+            }
+        }
+        else {
+            ib_log_trace(ib, "Unregistered managed collection \"%s\"",
+                         collection->collection_name);
+        }
+    }
+    ib_list_clear(corecfg->mancoll_list);
+
+    return rc;
+}
+
+/**
+ * Destroy the core module context
+ *
+ * @param[in] ib Engine
+ * @param[in] ctx Context
+ * @param[in] event Event triggering the callback
+ * @param[in] cbdata Callback data (Module data)
+ *
+ * @returns Status code
+ */
+static ib_status_t core_ctx_destroy(ib_engine_t *ib,
+                                    ib_context_t *ctx,
+                                    ib_state_event_type_t event,
+                                    void *cbdata)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(event == handle_context_destroy_event);
+    assert(cbdata != NULL);
+
+    ib_core_cfg_t *config;
+    ib_core_cfg_t *main_config;
+    ib_module_t *mod = (ib_module_t *)cbdata;
+    ib_status_t rc;
+
+    /* Get the current context config. */
+    rc = ib_core_context_config(ctx, &config);
+    if (rc != IB_OK) {
+        ib_log_alert(ib,
+                     "Failed to fetch core module context config: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Tell the collection manager about this context going away */
+    rc = core_ctx_managed_collection_destroy(ib, mod, ctx, config);
+    if (rc != IB_OK) {
+        ib_log_alert(ib,
+                     "Failed to shut down managed collections for \"%s\": %s",
+                     ib_context_full_get(ctx), ib_status_to_string(rc));
+    }
+
+    /* Close the log file in the main configuration only */
+    main_config = core_get_main_config(ib, false);
+    if (config == main_config) {
+        core_log_file_close(ib, config);
+    }
+
+    return IB_OK;
+}
+
+/**
  * Initialize the core module on load.
  *
  * @param[in] ib Engine
@@ -4674,6 +4849,14 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_hook_tx_register(ib, handle_logging_event,
                         logevent_hook_logging, NULL);
 
+    /* Register context hooks. */
+    ib_hook_context_register(ib, handle_context_open_event,
+                             core_ctx_open, m);
+    ib_hook_context_register(ib, handle_context_close_event,
+                             core_ctx_close, m);
+    ib_hook_context_register(ib, handle_context_destroy_event,
+                             core_ctx_destroy, m);
+
     /* Create core data structure */
     core_data = ib_mpool_calloc(ib->mp, sizeof(*core_data), 1);
     if (core_data == NULL) {
@@ -4716,13 +4899,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     rc = ib_core_fields_init(ib, m);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to initialize core fields: %s", ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Initialize the rule engine */
-    rc = ib_rule_engine_init(ib, m);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize rule engine: %s", ib_status_to_string(rc));
         return rc;
     }
 
@@ -4955,178 +5131,6 @@ ib_status_t ib_core_auditlog_parts_map(
 }
 
 /**
- * Handle context open events for the core module
- *
- * @param ib Engine
- * @param mod Module
- * @param ctx Context
- * @param cbdata Callback data (unused)
- *
- * @returns Status code
- */
-static ib_status_t core_ctx_open(ib_engine_t  *ib,
-                                 ib_module_t  *mod,
-                                 ib_context_t *ctx,
-                                 void         *cbdata)
-{
-    ib_status_t rc;
-
-    /* Initialize the core fields context. */
-    rc = ib_core_fields_ctx_init(ib, mod, ctx, cbdata);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to initialize core fields: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Inform the rule engine of the context open */
-    rc = ib_rule_engine_ctx_open(ib, mod, ctx);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Rule engine failed to open context: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    return IB_OK;
-}
-
-/**
- * Handle context close events for the core module
- *
- * @param ib Engine
- * @param mod Module
- * @param ctx Context
- * @param cbdata Callback data (unused)
- *
- * @returns Status code
- */
-static ib_status_t core_ctx_close(ib_engine_t  *ib,
-                                  ib_module_t  *mod,
-                                  ib_context_t *ctx,
-                                  void         *cbdata)
-{
-    ib_core_cfg_t *corecfg;
-    ib_status_t rc;
-
-    /* Initialize the rule engine for the context */
-    rc = ib_rule_engine_ctx_close(ib, mod, ctx);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to close rule engine context: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Get the current context config. */
-    rc = ib_core_context_config(ctx, &corecfg);
-    if (rc != IB_OK) {
-        ib_log_alert(ib,
-                     "Failed to fetch core module context config: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Build the site selection list at the close of the main context */
-    if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
-        rc = ib_ctxsel_finalize( ib );
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
-    return IB_OK;
-}
-
-static ib_status_t core_ctx_managed_collection_destroy(
-    ib_engine_t *ib,
-    ib_module_t *mod,
-    ib_context_t *ctx,
-    ib_core_cfg_t *corecfg)
-{
-    assert(ib != NULL);
-    assert(mod != NULL);
-    assert(ctx != NULL);
-    assert(corecfg != NULL);
-
-    const ib_list_node_t *node;
-    ib_status_t rc = IB_OK;
-
-    /* If there are no collections, do nothing */
-    if (corecfg->mancoll_list == NULL) {
-        return IB_OK;
-    }
-
-    /* Walk through the list of collections & destroy. */
-    IB_LIST_LOOP_CONST(corecfg->mancoll_list, node) {
-        const ib_managed_collection_t *collection =
-            (const ib_managed_collection_t *)node->data;
-        ib_status_t tmprc;
-
-        tmprc = ib_managed_collection_destroy(ib, collection);
-        if (tmprc != IB_OK) {
-            ib_log_warning(ib,
-                           "Error creating managed collection \"%s\": %s",
-                           collection->collection_name,
-                           ib_status_to_string(tmprc));
-            if (rc == IB_OK) {
-                rc = tmprc;
-            }
-        }
-        else {
-            ib_log_trace(ib, "Unregistered managed collection \"%s\"",
-                         collection->collection_name);
-        }
-    }
-    ib_list_clear(corecfg->mancoll_list);
-
-    return rc;
-}
-
-/**
- * Close the core module context
- *
- * @param ib Engine
- * @param mod Module
- * @param ctx Context
- * @param cbdata Callback data (unused)
- *
- * @returns Status code
- */
-static ib_status_t core_ctx_destroy(ib_engine_t *ib,
-                                    ib_module_t *mod,
-                                    ib_context_t *ctx,
-                                    void *cbdata)
-{
-    ib_core_cfg_t *config;
-    ib_core_cfg_t *main_config;
-    ib_status_t rc;
-
-    /* Get the current context config. */
-    rc = ib_core_context_config(ctx, &config);
-    if (rc != IB_OK) {
-        ib_log_alert(ib,
-                     "Failed to fetch core module context config: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Tell the collection manager about this context going away */
-    rc = core_ctx_managed_collection_destroy(ib, mod, ctx, config);
-    if (rc != IB_OK) {
-        ib_log_alert(ib,
-                     "Failed to shut down managed collections for \"%s\": %s",
-                     ib_context_full_get(ctx), ib_status_to_string(rc));
-    }
-
-    /* Close the log file in the main configuration only */
-    main_config = core_get_main_config(ib, false);
-    if (config == main_config) {
-        core_log_file_close(ib, config);
-    }
-
-    return IB_OK;
-}
-
-/**
  * Static core module structure.
  */
 IB_MODULE_INIT(
@@ -5138,11 +5142,5 @@ IB_MODULE_INIT(
     core_init,                           /**< Initialize function */
     NULL,                                /**< Callback data */
     core_finish,                         /**< Finish function */
-    NULL,                                /**< Callback data */
-    core_ctx_open,                       /**< Context open function */
-    NULL,                                /**< Callback data */
-    core_ctx_close,                      /**< Context close function */
-    NULL,                                /**< Callback data */
-    core_ctx_destroy,                    /**< Context destroy function */
     NULL                                 /**< Callback data */
 );

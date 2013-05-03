@@ -28,6 +28,7 @@
 #include "core_private.h"
 #include "engine_private.h"
 
+#include <ironbee/context.h>
 #include <ironbee/core.h>
 #include <ironbee/engine_types.h>
 #include <ironbee/path.h>

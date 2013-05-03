@@ -29,6 +29,7 @@
 #include "config-parser.h"
 #include "engine_private.h"
 
+#include <ironbee/context.h>
 #include <ironbee/flags.h>
 #include <ironbee/mpool.h>
 #include <ironbee/strval.h>

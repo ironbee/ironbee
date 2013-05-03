@@ -328,6 +328,22 @@ struct ib_list_t {
          (node) = ib_list_node_prev(node))
 
 /**
+ * Loop through all elements in the list in reverse order.
+ *
+ * @todo Make this generic (non-ib_list_t specific)
+ *
+ * @warning Do not use to delete an element in the list. Instead use
+ *          the @ref IB_LIST_LOOP_REVERSE_SAFE loop.
+ *
+ * @param list List
+ * @param node Symbol holding node
+ */
+#define IB_LIST_LOOP_REVERSE_CONST(list, node) \
+    for ((node) = ib_list_last_const(list); \
+         (node) != NULL; \
+         (node) = ib_list_node_prev(node))
+
+/**
  * Loop through all elements in the list in reverse order, taking care
  * to allow for deletions.
  *

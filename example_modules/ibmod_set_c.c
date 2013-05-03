@@ -102,7 +102,9 @@
  * increase the chance of catching missing includes.
  */
 
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/hash.h>
 #include <ironbee/module.h>
 
@@ -407,17 +409,18 @@ ib_status_t operator_execute(
  * sets into it.
  *
  * @param[in] ib     IronBee engine.
- * @param[in] m      This module.
  * @param[in] ctx    Current configuration context.
+ * @param[in] event  Which event fired.
  * @param[in] cbdata Callback data; unused.
+ *
  * @return IB_OK
  **/
 static
 ib_status_t context_open(
-    ib_engine_t  *ib,
-    ib_module_t  *m,
-    ib_context_t *ctx,
-    void         *cbdata
+    ib_engine_t           *ib,
+    ib_context_t          *ctx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
 );
 
 /*@}*/
@@ -511,9 +514,6 @@ IB_MODULE_INIT(
     c_directive_map,                          /* Directive map      */
     init,         NULL,                       /* On initialize      */
     NULL,         NULL,                       /* On finish          */
-    context_open, NULL,                       /* On context open    */
-    NULL,         NULL,                       /* On context close   */
-    NULL,         NULL                        /* On context destroy */
 );
 
 /* Finished with declarations.  Remainder of file is definitions. */
@@ -637,6 +637,13 @@ ib_status_t init(
     rc = ib_hash_create(&per_context->sets, mp);
     assert(rc                == IB_OK);
     assert(per_context->sets != NULL);
+
+    /* Register context open callback to handle per context data copying. */
+    ib_hook_context_register(
+        ib,
+        handle_context_open_event,
+        context_open,  NULL
+    );
 
     /* Register operator */
     rc = ib_operator_create_and_register(
@@ -887,15 +894,16 @@ ib_status_t operator_execute(
 
 static
 ib_status_t context_open(
-    ib_engine_t  *ib,
-    ib_module_t  *m,
-    ib_context_t *ctx,
-    void         *cbdata
+    ib_engine_t           *ib,
+    ib_context_t          *ctx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
 )
 {
-    assert(ib  != NULL);
-    assert(m   != NULL);
-    assert(ctx != NULL);
+    assert(ib     != NULL);
+    assert(ctx    != NULL);
+    assert(event  == handle_context_open_event);
+    assert(cbdata == NULL);
 
     ib_status_t         rc;
     ib_mpool_t         *mp          = NULL;

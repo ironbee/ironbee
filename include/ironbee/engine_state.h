@@ -262,6 +262,14 @@ typedef enum {
     handle_logevent_event,         /**< Logevent updated
                                     * (Hook type:@ref ib_state_tx_hook_fn_t) */
 
+    /* Context states */
+    handle_context_open_event,     /**< Context open
+                                    * (Hook type:@ref ib_state_ctx_hook_fn_t) */
+    handle_context_close_event,    /**< Context close
+                                    * (Hook type:@ref ib_state_ctx_hook_fn_t) */
+    handle_context_destroy_event,  /**< Context destroy
+                                    * (Hook type:@ref ib_state_ctx_hook_fn_t) */
+
     /* Not an event, but keeps track of the number of events. */
     IB_STATE_EVENT_NUM,
 } ib_state_event_type_t;
@@ -274,6 +282,8 @@ typedef enum {
                              * (Hook type: @ref ib_state_null_hook_fn_t) */
     IB_STATE_HOOK_INVALID,  /**< Something went wrong
                              * (Hook type: None) */
+    IB_STATE_HOOK_CTX,      /**< Hook receives context data
+                             * (Hook type: @ref ib_state_context_hook_fn_t) */
     IB_STATE_HOOK_CONN,     /**< Hook receives connection data
                              * (Hook type: @ref ib_state_conn_hook_fn_t) */
     IB_STATE_HOOK_TX,       /**< Hook receives ib_tx_t
@@ -478,6 +488,32 @@ typedef ib_status_t (*ib_state_txdata_hook_fn_t)(
     ib_state_event_type_t event,
     ib_txdata_t *txdata,
     void *cbdata
+);
+
+/**
+ * Context Event Hook Callback Function.
+ *
+ * Related registration functions:
+ * - ib_hook_context_register()
+ * - ib_hook_context_unregister()
+ *
+ * Handles events:
+ * - @ref handle_context_open_event
+ * - @ref handle_context_close_event
+ * - @ref handle_context_destroy_event
+ *
+ * @param[in] ib Engine handle
+ * @param[in] ctx Config context
+ * @param[in] event Which event trigger the callback.
+ * @param[in] cbdata Callback data
+ *
+ * @returns Status code
+ */
+typedef ib_status_t (*ib_state_ctx_hook_fn_t)(
+    ib_engine_t  *ib,
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    void         *cbdata
 );
 
 /**
@@ -724,6 +760,40 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_response_line_fn_t cb);
+
+/* ib_context_t data */
+
+/**
+ * Register a callback for a context event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cbdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_hook_context_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_ctx_hook_fn_t cb,
+    void *cbdata
+);
+
+/**
+ * Unregister a callback for a context event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_hook_context_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_ctx_hook_fn_t cb
+);
 
 /**
  * @} IronBeeEngineHooks

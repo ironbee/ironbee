@@ -28,6 +28,7 @@
 
 #include <ironbee/bytestr.h>
 #include <ironbee/capture.h>
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>

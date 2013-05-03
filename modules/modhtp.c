@@ -27,7 +27,9 @@
 
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
 #include <ironbee/module.h>
@@ -2634,6 +2636,78 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
 /* -- Module Routines -- */
 
 /**
+ * Handle IronBee context close
+ *
+ * @param[in] ib The IronBee engine
+ * @param[in] ctx The IronBee context
+ * @param[in] event Event
+ * @param[in] cbdata Module-specific context-close callback data (module data)
+ *
+ * @returns Status code
+ */
+static ib_status_t modhtp_context_close(
+    ib_engine_t           *ib,
+    ib_context_t          *ctx,
+    ib_state_event_type_t  event,
+    void                  *cbdata)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(event == handle_context_close_event);
+    assert(cbdata != NULL);
+
+    ib_status_t         rc;
+    ib_provider_inst_t *pi;
+    modhtp_config_t    *config;
+    modhtp_context_t   *modctx;
+    ib_module_t        *module = (ib_module_t *)cbdata;
+
+    /* If there is not a parser set, then use this parser. */
+    pi = ib_parser_provider_get_instance(ctx);
+    if (pi == NULL) {
+        ib_log_debug(ib, "Using \"%s\" parser by default in context %s.",
+                     MODULE_NAME_STR, ib_context_full_get(ctx));
+
+        /* Lookup/set this parser provider instance. */
+        rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_PARSER,
+                                         MODULE_NAME_STR, &pi,
+                                         ib_engine_pool_main_get(ib), NULL);
+        if (rc != IB_OK) {
+            ib_log_alert(ib, "Failed to create %s parser instance: %s",
+                         MODULE_NAME_STR, ib_status_to_string(rc));
+            return rc;
+        }
+
+        rc = ib_parser_provider_set_instance(ctx, pi);
+        if (rc != IB_OK) {
+            ib_log_alert(ib, "Failed to set %s as default parser: %s",
+                         MODULE_NAME_STR, ib_status_to_string(rc));
+            return rc;
+        }
+        pi = ib_parser_provider_get_instance(ctx);
+    }
+
+    /* Get the module config. */
+    rc = ib_context_module_config(ctx, module, (void *)&config);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Build a context */
+    rc = modhtp_build_context(ib, ib_engine_pool_main_get(ib), config, &modctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to create a module context for %s: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
+        return rc;
+    }
+    config->context = modctx;
+
+    return IB_OK;
+}
+
+/**
  * Module initialization
  *
  * @param[in] ib The IronBee engine
@@ -2663,75 +2737,12 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
         return IB_OK;
     }
 
-    return IB_OK;
-}
-
-/**
- * Handle IronBee context close
- *
- * @param[in] ib The IronBee engine
- * @param[in] m The module structure
- * @param[in] ctx The IronBee context
- * @param[in] cbdata Module-specific context-close callback data (unused)
- *
- * @returns Status code
- */
-static ib_status_t modhtp_context_close(
-    ib_engine_t  *ib,
-    ib_module_t  *m,
-    ib_context_t *ctx,
-    void         *cbdata)
-{
-    assert(ib != NULL);
-    assert(m != NULL);
-    assert(ctx != NULL);
-
-    ib_status_t         rc;
-    ib_provider_inst_t *pi;
-    modhtp_config_t    *config;
-    modhtp_context_t   *modctx;
-
-    /* If there is not a parser set, then use this parser. */
-    pi = ib_parser_provider_get_instance(ctx);
-    if (pi == NULL) {
-        ib_log_debug(ib, "Using \"%s\" parser by default in context %s.",
-                     MODULE_NAME_STR, ib_context_full_get(ctx));
-
-        /* Lookup/set this parser provider instance. */
-        rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_PARSER,
-                                         MODULE_NAME_STR, &pi,
-                                         ib_engine_pool_main_get(ib), NULL);
-        if (rc != IB_OK) {
-            ib_log_alert(ib, "Failed to create %s parser instance: %s",
-                         MODULE_NAME_STR, ib_status_to_string(rc));
-            return rc;
-        }
-
-        rc = ib_parser_provider_set_instance(ctx, pi);
-        if (rc != IB_OK) {
-            ib_log_alert(ib, "Failed to set %s as default parser: %s",
-                         MODULE_NAME_STR, ib_status_to_string(rc));
-            return rc;
-        }
-        pi = ib_parser_provider_get_instance(ctx);
-    }
-
-    /* Get the module config. */
-    rc = ib_context_module_config(ctx, m, (void *)&config);
+    /* Register the context close function */
+    rc = ib_hook_context_register(ib, handle_context_close_event,
+                                  modhtp_context_close, m);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to fetch module %s config: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
-
-    /* Build a context */
-    rc = modhtp_build_context(ib, ib_engine_pool_main_get(ib), config, &modctx);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to create a module context for %s: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
-        return rc;
-    }
-    config->context = modctx;
 
     return IB_OK;
 }
@@ -2764,10 +2775,4 @@ IB_MODULE_INIT(
     NULL,                                    /**< Callback data */
     NULL,                                    /**< Finish function */
     NULL,                                    /**< Callback data */
-    NULL,                                    /**< Context open function */
-    NULL,                                    /**< Callback data */
-    modhtp_context_close,                    /**< Context close function */
-    NULL,                                    /**< Callback data */
-    NULL,                                    /**< Context destroy function */
-    NULL                                     /**< Callback data */
 );

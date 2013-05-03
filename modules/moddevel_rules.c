@@ -33,6 +33,7 @@
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/capture.h>
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/list.h>

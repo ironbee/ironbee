@@ -46,6 +46,7 @@ struct ib_hook_t {
         ib_state_header_data_fn_t   headerdata;
         ib_state_request_line_fn_t  requestline;
         ib_state_response_line_fn_t responseline;
+        ib_state_ctx_hook_fn_t      ctx;
     } callback;
     void               *cbdata;            /**< Data passed to the callback */
 };
@@ -61,5 +62,42 @@ struct ib_hook_t {
 ib_status_t ib_hook_check(ib_engine_t *ib,
                           ib_state_event_type_t event,
                           ib_state_hook_type_t hook_type);
+
+
+/* Events that are only notified internally. */
+
+/**
+ * Notify the state machine that a configuration context has opened
+ *
+ * @param ib Engine handle
+ * @param ctx Configuration context
+ *
+ * @returns Status code
+ */
+ib_status_t ib_state_notify_context_open(ib_engine_t *ib,
+                                         ib_context_t *ctx);
+
+/**
+ * Notify the state machine that a configuration context is closing
+ *
+ * @param ib Engine handle
+ * @param ctx Configuration context
+ *
+ * @returns Status code
+ */
+ib_status_t ib_state_notify_context_close(ib_engine_t *ib,
+                                          ib_context_t *ctx);
+
+/**
+ * Notify the state machine that a configuration context is being destroyed
+ *
+ * @param ib Engine handle
+ * @param ctx Configuration context
+ *
+ * @returns Status code
+ */
+ib_status_t ib_state_notify_context_destroy(ib_engine_t *ib,
+                                            ib_context_t *ctx);
+
 
 #endif /* IB_HOOK_PRIVATE_H */
