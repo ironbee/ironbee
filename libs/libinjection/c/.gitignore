@@ -2,6 +2,10 @@ reader
 lcov-reader
 extractor
 is_sqli
+fptool
+sqli
+test_speed
+build
 *~
 *.pyc
 *.dSYM
