@@ -40,7 +40,6 @@
 #include <ironbee/util.h>
 
 #include <modp_ascii.h>
-#include <sqli_normalize.h>
 #include <sqli_fingerprints.h>
 #include <sqlparse.h>
 #include <sqlparse_private.h>
@@ -240,8 +239,6 @@ ib_status_t sqli_op_execute(const ib_rule_exec_t *rule_exec,
     assert(result    != NULL);
 
     sfilter sf;
-    char *val;
-    size_t new_size;
     ib_bytestr_t *bs;
     ib_tx_t *tx = rule_exec->tx;
     ib_status_t rc;
@@ -259,22 +256,12 @@ ib_status_t sqli_op_execute(const ib_rule_exec_t *rule_exec,
         return rc;
     }
 
-    /* Normalize the value with libinjection. */
-    val = (char *)malloc(ib_bytestr_length(bs));
-    if (val == NULL) {
-        return IB_EALLOC;
-    }
-    memcpy(val, ib_bytestr_const_ptr(bs), ib_bytestr_length(bs));
-    new_size = sqli_qs_normalize(val, ib_bytestr_length(bs));
-
     /* Run through libinjection. */
     // TODO: Support alternative SQLi pattern lookup
-    if (is_sqli(&sf, val, new_size, is_sqli_pattern)) {
+    if (is_sqli(&sf, (const char *)ib_bytestr_const_ptr(bs), ib_bytestr_length(bs), is_sqli_pattern)) {
         ib_log_debug_tx(tx, "Matched SQLi pattern: %s", sf.pat);
         *result = 1;
     }
-
-    free(val);
 
     return IB_OK;
 }
