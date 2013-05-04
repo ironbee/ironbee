@@ -99,7 +99,7 @@ will need to add the remote:
 
 Then you can merge in the upstream source with:
 
-    git subtree pull --squash --prefix=libs/libinjection libinjection
+    git subtree pull --squash --prefix=libs/libinjection libinjection v1.1.0
 
 
 Coding Style
