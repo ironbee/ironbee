@@ -127,7 +127,6 @@ ibmod_fast_la_LIBADD = $(AMLIB_ADD) ../automata/libiaeudoxus.la
 ibmod_libinjection_la_SOURCES = libinjection.c
 nodist_ibmod_libinjection_la_SOURCES = \
     $(abs_top_srcdir)/libs/libinjection/c/sqlparse.c \
-    $(abs_top_srcdir)/libs/libinjection/c/sqli_normalize.c \
     $(abs_top_srcdir)/libs/libinjection/c/modp_qsiter.c \
     $(abs_top_srcdir)/libs/libinjection/c/modp_burl.c \
     $(abs_top_srcdir)/libs/libinjection/c/modp_ascii.c \
