@@ -48,6 +48,7 @@
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
 #include <ironbeepp/notifier.hpp>
+#include <ironbeepp/operator.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
