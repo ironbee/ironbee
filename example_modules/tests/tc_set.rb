@@ -3,7 +3,7 @@ require File.join(File.dirname(__FILE__), '..', '..', 'clipp', 'clipp_test')
 class TestSet < Test::Unit::TestCase
   include CLIPPTest
 
-  CONFIG = 'LoadModule "' + BUILDDIR + '/../.libs/ibmod_c_set.so"'
+  CONFIG = 'LoadModule "' + BUILDDIR + '/../.libs/ibmod_set_c.so"'
 
   def make_request(method)
     simple_hash("#{method} /foobar/a HTTP/1.1\nHost: foo.bar\n\n")

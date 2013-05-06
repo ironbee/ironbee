@@ -14,6 +14,6 @@ else
 AM_LDFLAGS += -module -avoid-version
 endif
 
-pkglib_LTLIBRARIES = ibmod_c_set.la
+pkglib_LTLIBRARIES = ibmod_set_c.la
 
-ibmod_c_set_la_SOURCES = ibmod_set.c
+ibmod_set_c_la_SOURCES = ibmod_set_c.c
