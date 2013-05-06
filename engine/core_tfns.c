@@ -40,7 +40,6 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <limits.h>
 
 /**
  * String modification transformation core
@@ -1045,50 +1044,26 @@ static ib_status_t tfn_to_type(
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
-    assert(fin->name != NULL); /* name is used in logging. */
-    assert(fin->nlen < INT_MAX); /* nlen is casted to an int in logging. */
     assert(fout != NULL);
 
     ib_status_t rc;
 
-    ib_log_debug(
-        ib,
-        "Attempting to convert field %.*s from %s to %s.",
-        (int)fin->nlen,
-        fin->name,
-        ib_field_type_name(fin->type),
-        ib_field_type_name(type));
-
     rc = ib_field_convert(mp, type, fin, fout);
     if (rc != IB_OK) {
-        ib_log_error(
-            ib,
-            "Failed to convert field %.*s from %s to %s.",
-            (int)fin->nlen,
-            fin->name,
-            ib_field_type_name(fin->type),
-            ib_field_type_name(type));
         return rc;
     }
 
     /* rc==OK and fout==NULL means the types match and no conversion was done.
      * Copy the value. */
     if (*fout == NULL) {
-        ib_log_debug(
-            ib,
-            "Field %.*s is alredy of type %s. Copying to output.",
-            (int)fin->nlen,
-            fin->name,
-            ib_field_type_name(fin->type));
-        rc = ib_field_copy(fout, mp, fin->name, fin->nlen, fin);
-        return rc;
+        return ib_field_copy(fout, mp, fin->name, fin->nlen, fin);
     }
 
     return rc;
 }
 
 /**
- * Use tfn_to_type to convert @a fin to @a fout.
+ * Use tfn_to_type() to convert @a fin to @a fout.
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -1113,7 +1088,7 @@ static ib_status_t tfn_to_float(
 }
 
 /**
- * Use tfn_to_type to convert @a fin to @a fout.
+ * Use tfn_to_type() to convert @a fin to @a fout.
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -1138,7 +1113,7 @@ static ib_status_t tfn_to_integer(
 }
 
 /**
- * Use tfn_to_type to convert @a fin to @a fout.
+ * Use tfn_to_type() to convert @a fin to @a fout.
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -1165,12 +1140,12 @@ static ib_status_t tfn_to_string(
 /**
  * Extract the name of the given field and convert it to a new field.
  *
- * This is the common function used by tfn_to_names and tfn_to_name.
+ * This function is the common to tfn_to_names() and tfn_to_name().
  *
  * The new field will be named as the old field, and will contain
  * a bytestr containing the field name.
  *
- * On error @a fout is unchanged.
+ * On error, @a fout is unchanged.
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -1190,8 +1165,6 @@ static ib_status_t tfn_to_name_common(
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
-    assert(fin->name != NULL); /* name is used in logging. */
-    assert(fin->nlen < INT_MAX); /* nlen is casted to an int in logging. */
     assert(fout != NULL);
 
     ib_field_t *new_field;
@@ -1204,11 +1177,6 @@ static ib_status_t tfn_to_name_common(
         (const uint8_t*)fin->name,
         sizeof(*(fin->name)) * fin->nlen);
     if (rc != IB_OK) {
-        ib_log_error(
-            ib,
-            "Cannot allocate new bytes string to store field name \"%.*s.\"",
-            (int)fin->nlen,
-            fin->name);
         return IB_EALLOC;
     }
 
@@ -1220,11 +1188,6 @@ static ib_status_t tfn_to_name_common(
         IB_FTYPE_BYTESTR,
         ib_ftype_bytestr_in(new_value));
     if (rc != IB_OK) {
-        ib_log_error(
-            ib,
-            "Cannot allocate field to them name of the field \"%.*s.\"",
-            (int)fin->nlen,
-            fin->name);
         return IB_EALLOC;
     }
 
@@ -1240,7 +1203,7 @@ static ib_status_t tfn_to_name_common(
  * The new field will be named as the old field, and will contain
  * a bytestr containing the field name.
  *
- * On error @a fout is unchanged.
+ * On error, @a fout is unchanged.
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -1299,8 +1262,6 @@ static ib_status_t tfn_to_names(
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
-    assert(fin->name != NULL); /* name is used in logging. */
-    assert(fin->nlen < INT_MAX); /* nlen is casted to an int in logging. */
     assert(fout != NULL);
 
     ib_field_t *new_field;
@@ -1311,34 +1272,18 @@ static ib_status_t tfn_to_names(
 
     /* Fail if the input field is not a list. */
     if (fin->type != IB_FTYPE_LIST) {
-        ib_log_error(
-            ib,
-            "Cannot operate on non-list field \"%.*s.\" with type %s",
-            (int)fin->nlen,
-            fin->name,
-            ib_field_type_name(fin->type));
         return IB_EINVAL;
     }
 
     /* Build an output list to hold the values. */
     rc = ib_list_create(&new_value, mp);
     if (rc != IB_OK) {
-        ib_log_error(
-            ib,
-            "Failed to allocate new list to hold names of list field \"%.*s.\"",
-            (int)fin->nlen,
-            fin->name);
         return IB_EALLOC;
     }
 
     /* Get the input list of fields. */
     rc = ib_field_value(fin, ib_ftype_list_out(&list));
     if (rc != IB_OK) {
-        ib_log_error(
-            ib,
-            "Failed to extract list from field \"%.*s.\"",
-            (int)fin->nlen,
-            fin->name);
         return rc;
     }
 
@@ -1350,21 +1295,11 @@ static ib_status_t tfn_to_names(
         
         rc = tfn_to_name_common(ib, mp, list_field, &list_out_field);
         if (rc != IB_OK) {
-            ib_log_error(
-                ib,
-                "Failed to build name field for collection \"%.*s\".",
-                (int)fin->nlen,
-                fin->name);
             return rc;
         }
 
         rc = ib_list_push(new_value, list_out_field);
         if (rc != IB_OK) {
-            ib_log_error(
-                ib,
-                "Failed to append to name collection of collection \"%.*s\".",
-                (int)fin->nlen,
-                fin->name);
             return rc;
         }
     }
@@ -1379,13 +1314,9 @@ static ib_status_t tfn_to_names(
         IB_FTYPE_LIST,
         ib_ftype_list_in(new_value));
     if (rc != IB_OK) {
-        ib_log_error(
-            ib,
-            "Cannot create new list field to hold names from field \"%.*s.\"",
-            (int)fin->nlen,
-            fin->name);
         return IB_EALLOC;
     }
+
     /* Commit back the new field. */
     *fout = new_field;
     return IB_OK;
