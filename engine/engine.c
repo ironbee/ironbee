@@ -122,7 +122,8 @@ ib_status_t ib_hook_check(
     ib_engine_t* ib,
     ib_state_event_type_t event,
     ib_state_hook_type_t hook_type
-) {
+)
+{
     static const size_t num_events =
         sizeof(ib_event_table) / sizeof(ib_event_type_data_t);
     ib_state_hook_type_t expected_hook_type;
@@ -148,56 +149,69 @@ ib_status_t ib_hook_check(
 }
 
 static ib_status_t ib_hook_register(
-    ib_engine_t* ib,
+    ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_hook_t* hook
-) {
-    ib_hook_t *last = ib->hook[event];
+    ib_hook_t *hook
+)
+{
+    assert(ib != NULL);
+
+    ib_status_t           rc;
+    ib_list_t            *list;
+    const ib_list_node_t *node;
+
+    list = ib->hooks[event];
+    assert(list != NULL);
+
+    /* Get the current last node in the list */
+    node = ib_list_last_const(list);
 
     /* Insert the hook at the end of the list */
-    if (last == NULL) {
+    rc = ib_list_push(list, hook);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* If there was no previous node, this is the first */
+    if (node == NULL) {
         ib_log_debug3(ib, "Registering %s hook: %p",
                       ib_state_event_name(event),
                       hook->callback.as_void);
-
-        ib->hook[event] = hook;
-
-        return IB_OK;
     }
-    while (last->next != NULL) {
-        last = last->next;
+    else {
+        const ib_hook_t *prev = (const ib_hook_t *)node->data;
+        ib_log_debug3(ib, "Registering %s hook after %p: %p",
+                      ib_state_event_name(event),
+                      prev->callback.as_void,
+                      hook->callback.as_void);
     }
-
-    last->next = hook;
-
-    ib_log_debug3(ib, "Registering %s hook after %p: %p",
-                  ib_state_event_name(event), last->callback.as_void,
-                  hook->callback.as_void);
 
     return IB_OK;
 }
 
 static ib_status_t ib_hook_unregister(
-    ib_engine_t* ib,
+    ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_void_fn_t cb
-) {
-    ib_hook_t *prev = NULL;
-    ib_hook_t *hook = ib->hook[event];
+)
+{
+    assert(ib != NULL);
+
+    ib_list_t      *list;
+    ib_list_node_t *node;
+    ib_list_node_t *next;
+
+    list = ib->hooks[event];
+    assert(list != NULL);
 
     /* Remove the first matching hook */
-    while (hook != NULL) {
+    IB_LIST_LOOP_SAFE(list, node, next) {
+        ib_hook_t *hook = (ib_hook_t *)node->data;
+
         if (hook->callback.as_void == cb) {
-            if (prev == NULL) {
-                ib->hook[event] = hook->next;
-            }
-            else {
-                prev->next = hook->next;
-            }
+            ib_list_node_remove(list, node);
             return IB_OK;
         }
-        prev = hook;
-        hook = hook->next;
     }
 
     return IB_ENOENT;
@@ -305,6 +319,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
 {
     ib_mpool_t *pool;
     ib_status_t rc;
+    ib_state_event_type_t event;
 
     /* Create primary memory pool */
     rc = ib_mpool_create(&pool, "engine", NULL);
@@ -432,6 +447,14 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
     rc = ib_hash_create_nocase(&((*pib)->actions), (*pib)->mp);
     if (rc != IB_OK) {
         goto failed;
+    }
+
+    /* Initialize the hook lists */
+    for(event = conn_started_event; event < IB_STATE_EVENT_NUM; ++event) {
+        rc = ib_list_create(&(*pib)->hooks[event], (*pib)->mp);
+        if (rc != IB_OK) {
+            goto failed;
+        }
     }
 
     /* Initialize the core static module. */
@@ -1103,8 +1126,9 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb,
-    void *cdata
-) {
+    void *cbdata
+)
+{
     ib_status_t rc;
 
     rc = ib_hook_check(ib, event, IB_STATE_HOOK_NULL);
@@ -1119,8 +1143,7 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
     }
 
     hook->callback.null = cb;
-    hook->cdata = cdata;
-    hook->next = NULL;
+    hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
 
@@ -1148,8 +1171,9 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb,
-    void *cdata
-) {
+    void *cbdata
+)
+{
     ib_status_t rc;
 
     rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONN);
@@ -1164,8 +1188,7 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
     }
 
     hook->callback.conn = cb;
-    hook->cdata = cdata;
-    hook->next = NULL;
+    hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
 
@@ -1193,7 +1216,7 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb,
-    void *cdata
+    void *cbdata
 ) {
     ib_status_t rc;
 
@@ -1209,8 +1232,7 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
     }
 
     hook->callback.tx = cb;
-    hook->cdata = cdata;
-    hook->next = NULL;
+    hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
 
@@ -1238,7 +1260,7 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb,
-    void *cdata
+    void *cbdata
 ) {
     ib_status_t rc;
 
@@ -1254,8 +1276,7 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     }
 
     hook->callback.txdata = cb;
-    hook->cdata = cdata;
-    hook->next = NULL;
+    hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
 
@@ -1283,7 +1304,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_header_data_fn_t cb,
-    void *cdata)
+    void *cbdata)
 {
     ib_status_t rc;
 
@@ -1299,8 +1320,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
     }
 
     hook->callback.headerdata = cb;
-    hook->cdata = cdata;
-    hook->next = NULL;
+    hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
 
@@ -1328,7 +1348,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_request_line_fn_t cb,
-    void *cdata)
+    void *cbdata)
 {
     ib_status_t rc;
 
@@ -1344,8 +1364,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
     }
 
     hook->callback.requestline = cb;
-    hook->cdata = cdata;
-    hook->next = NULL;
+    hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
 
@@ -1373,7 +1392,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_response_line_fn_t cb,
-    void *cdata)
+    void *cbdata)
 {
     ib_status_t rc;
 
@@ -1389,8 +1408,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
     }
 
     hook->callback.responseline = cb;
-    hook->cdata = cdata;
-    hook->next = NULL;
+    hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
 
@@ -1414,10 +1432,6 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
     return rc;
 }
 
-
-/* -- Connection Handling -- */
-
-/* -- Transaction Handling -- */
 
 /* -- Configuration Contexts -- */
 

@@ -147,7 +147,7 @@ struct ib_engine_t {
     void                  *loglevel_cbdata; /**< Log level callback data. */
 
     /* Hooks */
-    ib_hook_t *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
+    ib_list_t *hooks[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
 
     /* Context selection function registration; both active and core */
     ib_ctxsel_registration_t act_ctxsel;  /**< Active context selection reg. */

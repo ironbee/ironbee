@@ -29,70 +29,17 @@
 
 #include <assert.h>
 
-#define CALL_HOOKS(out_rc, first_hook, event, whicb, ib, tx, param) \
-    do { \
-        *(out_rc) = IB_OK; \
-        for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
-            ib_status_t rc_ = hook_->callback.whicb((ib), (tx), (event), (param), hook_->cdata); \
-            if (rc_ != IB_OK) { \
-                ib_log_error_tx((tx),  "Hook returned error: %s=%s", \
-                                ib_state_event_name((event)), ib_status_to_string(rc_)); \
-                (*out_rc) = rc_; \
-                break; \
-             } \
-        } \
-    } while(0)
-
-#define CALL_NOTX_HOOKS(out_rc, first_hook, event, whicb, ib, param) \
-    do { \
-        *(out_rc) = IB_OK; \
-        for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
-            ib_status_t rc_ = hook_->callback.whicb((ib), (event), (param), hook_->cdata); \
-            if (rc_ != IB_OK) { \
-                ib_log_error((ib),  "Hook returned error: %s=%s", \
-                             ib_state_event_name((event)), ib_status_to_string(rc_)); \
-                (*out_rc) = rc_; \
-                break; \
-             } \
-        } \
-    } while(0)
-
-#define CALL_TX_HOOKS(out_rc, first_hook, event, whicb, ib, tx) \
-    do { \
-        *(out_rc) = IB_OK; \
-        for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
-            ib_status_t rc_ = hook_->callback.whicb((ib), (tx), (event), hook_->cdata); \
-            if (rc_ != IB_OK) { \
-                ib_log_error_tx((tx),  "Hook returned error: %s=%s", \
-                                ib_state_event_name((event)), ib_status_to_string(rc_)); \
-                (*out_rc) = rc_; \
-                break; \
-             } \
-        } \
-    } while(0)
-
-#define CALL_CONN_HOOKS(out_rc, first_hook, event, whicb, ib, conn) \
-    do { \
-        *(out_rc) = IB_OK; \
-        for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
-            ib_status_t rc_ = hook_->callback.whicb((ib), (conn), (event), hook_->cdata); \
-            if (rc_ != IB_OK) { \
-                ib_log_error((ib),  "Hook returned error: %s=%s", \
-                             ib_state_event_name((event)), ib_status_to_string(rc_)); \
-                (*out_rc) = rc_; \
-                break; \
-             } \
-        } \
-    } while(0)
-
-static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
-                                        ib_conn_t *conn,
-                                        ib_state_event_type_t event)
+static ib_status_t ib_state_notify_conn(
+    ib_engine_t *ib,
+    ib_conn_t *conn,
+    ib_state_event_type_t event
+)
 {
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(conn != NULL);
 
+    const ib_list_node_t *node;
     ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
         return rc;
@@ -100,7 +47,13 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
 
     ib_log_debug3(ib, "CONN EVENT: %s", ib_state_event_name(event));
 
-    CALL_CONN_HOOKS(&rc, ib->hook[event], event, conn, ib, conn);
+    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        rc = hook->callback.conn(ib, conn, event, hook->cbdata);
+        if (rc != IB_OK) {
+            break;
+        }
+    }
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         return rc;
@@ -109,10 +62,12 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
     return rc;
 }
 
-static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
-                                            ib_tx_t *tx,
-                                            ib_state_event_type_t event,
-                                            ib_parsed_req_line_t *line)
+static ib_status_t ib_state_notify_req_line(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_state_event_type_t event,
+    ib_parsed_req_line_t *line
+)
 {
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
@@ -126,6 +81,7 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface =
         pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
+    const ib_list_node_t *node;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -155,7 +111,13 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
         }
     }
 
-    CALL_HOOKS(&rc, ib->hook[event], event, requestline, ib, tx, line);
+    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        rc = hook->callback.requestline(ib, tx, event, line, hook->cbdata);
+        if (rc != IB_OK) {
+            break;
+        }
+    }
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         return rc;
@@ -180,6 +142,7 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface =
         pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
+    const ib_list_node_t *node;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -214,7 +177,13 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
         }
     }
 
-    CALL_HOOKS(&rc, ib->hook[event], event, responseline, ib, tx, line);
+    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        rc = hook->callback.responseline(ib, tx, event, line, hook->cbdata);
+        if (rc != IB_OK) {
+            break;
+        }
+    }
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         return rc;
@@ -231,6 +200,7 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
+    const ib_list_node_t *node;
     ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
         return rc;
@@ -241,7 +211,13 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
 
-    CALL_TX_HOOKS(&rc, ib->hook[event], event, tx, ib, tx);
+    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        rc = hook->callback.tx(ib, tx, event, hook->cbdata);
+        if (rc != IB_OK) {
+            break;
+        }
+    }
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         return rc;
@@ -492,6 +468,7 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
     assert(tx != NULL);
     assert(header != NULL);
 
+    const ib_list_node_t *node;
     ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "ib_hook_check() failed: %s",
@@ -501,13 +478,14 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
 
     ib_log_debug3_tx(tx, "HEADER EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc,
-               ib->hook[event],
-               event,
-               headerdata,
-               ib,
-               tx,
-               header->head);
+    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        rc = hook->callback.headerdata(ib, tx, event,
+                                       header->head, hook->cbdata);
+        if (rc != IB_OK) {
+            break;
+        }
+    }
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         return rc;
@@ -526,6 +504,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     assert(tx != NULL);
     assert(txdata != NULL);
 
+    const ib_list_node_t *node;
     ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
         return rc;
@@ -538,7 +517,13 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
 
-    CALL_HOOKS(&rc, ib->hook[event], event, txdata, ib, tx, txdata);
+    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        rc = hook->callback.txdata(ib, tx, event, txdata, hook->cbdata);
+        if (rc != IB_OK) {
+            break;
+        }
+    }
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         return rc;

@@ -181,18 +181,20 @@ protected:
         handler_info_t&       info
     )
     {
-        ib_hook_t* hook;
+        const ib_hook_t* hook;
         ib_state_event_type_t ib_logevent =
             static_cast<ib_state_event_type_t>(event);
+
         info = handler_info_t();
-        hook = m_engine.ib()->hook[event];
-        while (hook->next != NULL) {
-            hook = hook->next;
-        }
+        const ib_list_node_t *node =
+            ib_list_last_const(m_engine.ib()->hooks[event]);
+        EXPECT_TRUE(node != NULL);
+        hook = (const ib_hook_t *)node->data;
+
         EXPECT_EQ(IB_OK,
             hook->callback.tx(
                 m_engine.ib(), m_transaction.ib(),
-                ib_logevent, hook->cdata)
+                ib_logevent, hook->cbdata)
         );
         EXPECT_EQ(CB_TRANSACTION, info.which);
         EXPECT_EQ(m_engine, info.engine);
@@ -204,18 +206,19 @@ protected:
         handler_info_t&       info
     )
     {
-        ib_hook_t* hook;
+        const ib_hook_t* hook;
         ib_state_event_type_t ib_logevent =
             static_cast<ib_state_event_type_t>(event);
+        const ib_list_node_t *node =
+            ib_list_last_const(m_engine.ib()->hooks[event]);
+        EXPECT_TRUE(node != NULL);
+        hook = (const ib_hook_t *)node->data;
         info = handler_info_t();
-        hook = m_engine.ib()->hook[event];
-        while (hook->next != NULL) {
-            hook = hook->next;
-        }
+
         EXPECT_EQ(IB_OK,
             hook->callback.conn(
                 m_engine.ib(), m_connection.ib(),
-                ib_logevent, hook->cdata)
+                ib_logevent, hook->cbdata)
         );
         EXPECT_EQ(CB_CONNECTION, info.which);
         EXPECT_EQ(m_engine, info.engine);
@@ -227,16 +230,17 @@ protected:
         handler_info_t&       info
     )
     {
-        ib_hook_t* hook;
+        const ib_hook_t* hook;
         ib_state_event_type_t ib_logevent =
             static_cast<ib_state_event_type_t>(event);
+        const ib_list_node_t *node =
+            ib_list_last_const(m_engine.ib()->hooks[event]);
+        EXPECT_TRUE(node != NULL);
+        hook = (const ib_hook_t *)node->data;
         info = handler_info_t();
-        hook = m_engine.ib()->hook[event];
-        while (hook->next != NULL) {
-            hook = hook->next;
-        }
+
         EXPECT_EQ(IB_OK,
-            hook->callback.null(m_engine.ib(), ib_logevent, hook->cdata)
+            hook->callback.null(m_engine.ib(), ib_logevent, hook->cbdata)
         );
         EXPECT_EQ(CB_NULL, info.which);
         EXPECT_EQ(m_engine, info.engine);
@@ -259,19 +263,19 @@ protected:
             void*
         );
 
-        ib_hook_t* hook;
+        const ib_hook_t* hook;
         ib_state_event_type_t ib_logevent =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
-        hook = m_engine.ib()->hook[event];
-        while (hook->next != NULL) {
-            hook = hook->next;
-        }
+        const ib_list_node_t *node =
+            ib_list_last_const(m_engine.ib()->hooks[event]);
+        EXPECT_TRUE(node != NULL);
+        hook = (const ib_hook_t *)node->data;
         DataType ib_data;
         ib_status_t rc =
             reinterpret_cast<ib_callback_t>(hook->callback.as_void)(
                 m_engine.ib(), m_transaction.ib(),
-                ib_logevent, &ib_data, hook->cdata
+                ib_logevent, &ib_data, hook->cbdata
             );
         EXPECT_EQ(IB_OK, rc);
         EXPECT_EQ(which_cb, info.which);
@@ -296,18 +300,18 @@ protected:
             void*
         );
 
-        ib_hook_t* hook;
+        const ib_hook_t* hook;
         ib_state_event_type_t ib_logevent =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
-        hook = m_engine.ib()->hook[event];
-        while (hook->next != NULL) {
-            hook = hook->next;
-        }
+        const ib_list_node_t *node =
+            ib_list_last_const(m_engine.ib()->hooks[event]);
+        EXPECT_TRUE(node != NULL);
+        hook = (const ib_hook_t *)node->data;
         DataType ib_data;
         ib_status_t rc =
             reinterpret_cast<ib_callback_t>(hook->callback.as_void)(
-                m_engine.ib(), ib_logevent, &ib_data, hook->cdata
+                m_engine.ib(), ib_logevent, &ib_data, hook->cbdata
             );
         EXPECT_EQ(IB_OK, rc);
         EXPECT_EQ(which_cb, info.which);

@@ -507,7 +507,7 @@ const char *ib_state_event_name(ib_state_event_type_t event);
  * @param ib Engine handle
  * @param event Event
  * @param cb The callback to register
- * @param cdata Data passed to the callback (or NULL)
+ * @param cbdata Data passed to the callback (or NULL)
  *
  * @returns Status code
  */
@@ -515,7 +515,7 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb,
-    void *cdata
+    void *cbdata
 );
 
 /**
@@ -541,7 +541,7 @@ ib_status_t DLL_PUBLIC ib_hook_null_unregister(
  * @param ib Engine handle
  * @param event Event
  * @param cb The callback to register
- * @param cdata Data passed to the callback (or NULL)
+ * @param cbdata Data passed to the callback (or NULL)
  *
  * @returns Status code
  */
@@ -549,7 +549,7 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb,
-    void *cdata
+    void *cbdata
 );
 
 /**
@@ -575,7 +575,7 @@ ib_status_t DLL_PUBLIC ib_hook_conn_unregister(
  * @param ib Engine handle
  * @param event Event
  * @param cb The callback to register
- * @param cdata Data passed to the callback (or NULL)
+ * @param cbdata Data passed to the callback (or NULL)
  *
  * @returns Status code
  */
@@ -583,7 +583,7 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb,
-    void *cdata
+    void *cbdata
 );
 
 /**
@@ -609,7 +609,7 @@ ib_status_t DLL_PUBLIC ib_hook_tx_unregister(
  * @param ib Engine handle
  * @param event Event
  * @param cb The callback to register
- * @param cdata Data passed to the callback (or NULL)
+ * @param cbdata Data passed to the callback (or NULL)
  *
  * @returns Status code
  */
@@ -617,7 +617,7 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb,
-    void *cdata
+    void *cbdata
 );
 
 /**

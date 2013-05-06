@@ -47,8 +47,7 @@ struct ib_hook_t {
         ib_state_request_line_fn_t  requestline;
         ib_state_response_line_fn_t responseline;
     } callback;
-    void               *cdata;            /**< Data passed to the callback */
-    ib_hook_t          *next;             /**< The next callback in the list */
+    void               *cbdata;            /**< Data passed to the callback */
 };
 
 /**
