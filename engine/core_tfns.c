@@ -40,6 +40,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <limits.h>
 
 /**
  * String modification transformation core
@@ -1022,6 +1023,375 @@ static ib_status_t tfn_normalize_path(ib_engine_t *ib,
 }
 
 /**
+ * Convert @a fin to @a type and store the result in @a fout.
+ *
+ * @param[in] ib IronBee engine. Used for logging.
+ * @param[in] mp Memory pool. All allocations are out of here.
+ * @param[in] type The target type.
+ * @param[in] fin The input field.
+ * @param[out] fout The output field.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EALLOC Allocation error.
+ *   - IB_EINVAL If a conversion cannot be performed.
+ */
+static ib_status_t tfn_to_type(
+    ib_engine_t *ib,
+    ib_mpool_t *mp,
+    ib_ftype_t type,
+    const ib_field_t *fin,
+    ib_field_t **fout)
+{
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(fin != NULL);
+    assert(fin->name != NULL); /* name is used in logging. */
+    assert(fin->nlen < INT_MAX); /* nlen is casted to an int in logging. */
+    assert(fout != NULL);
+
+    ib_status_t rc;
+
+    ib_log_debug(
+        ib,
+        "Attempting to convert field %.*s from %s to %s.",
+        (int)fin->nlen,
+        fin->name,
+        ib_field_type_name(fin->type),
+        ib_field_type_name(type));
+
+    rc = ib_field_convert(mp, type, fin, fout);
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failed to convert field %.*s from %s to %s.",
+            (int)fin->nlen,
+            fin->name,
+            ib_field_type_name(fin->type),
+            ib_field_type_name(type));
+        return rc;
+    }
+
+    /* rc==OK and fout==NULL means the types match and no conversion was done.
+     * Copy the value. */
+    if (*fout == NULL) {
+        ib_log_debug(
+            ib,
+            "Field %.*s is alredy of type %s. Copying to output.",
+            (int)fin->nlen,
+            fin->name,
+            ib_field_type_name(fin->type));
+        rc = ib_field_copy(fout, mp, fin->name, fin->nlen, fin);
+        return rc;
+    }
+
+    return rc;
+}
+
+/**
+ * Use tfn_to_type to convert @a fin to @a fout.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns 
+ *   - IB_OK If successful.
+ *   - IB_EALLOC On allocation errors.
+ */
+static ib_status_t tfn_to_float(
+    ib_engine_t *ib,
+    ib_mpool_t *mp,
+    void *fndata,
+    const ib_field_t *fin,
+    ib_field_t **fout,
+    ib_flags_t *pflags)
+{
+    return tfn_to_type(ib, mp, IB_FTYPE_FLOAT, fin, fout);
+}
+
+/**
+ * Use tfn_to_type to convert @a fin to @a fout.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns 
+ *   - IB_OK If successful.
+ *   - IB_EALLOC On allocation errors.
+ */
+static ib_status_t tfn_to_integer(
+    ib_engine_t *ib,
+    ib_mpool_t *mp,
+    void *fndata,
+    const ib_field_t *fin,
+    ib_field_t **fout,
+    ib_flags_t *pflags)
+{
+    return tfn_to_type(ib, mp, IB_FTYPE_NUM, fin, fout);
+}
+
+/**
+ * Use tfn_to_type to convert @a fin to @a fout.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns 
+ *   - IB_OK If successful.
+ *   - IB_EALLOC On allocation errors.
+ */
+static ib_status_t tfn_to_string(
+    ib_engine_t *ib,
+    ib_mpool_t *mp,
+    void *fndata,
+    const ib_field_t *fin,
+    ib_field_t **fout,
+    ib_flags_t *pflags)
+{
+    return tfn_to_type(ib, mp, IB_FTYPE_BYTESTR, fin, fout);
+}
+
+/**
+ * Extract the name of the given field and convert it to a new field.
+ *
+ * This is the common function used by tfn_to_names and tfn_to_name.
+ *
+ * The new field will be named as the old field, and will contain
+ * a bytestr containing the field name.
+ *
+ * On error @a fout is unchanged.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ *
+ * @returns 
+ *   - IB_OK if successful.
+ *   - IB_EALLOC if allocation error.
+ */
+static ib_status_t tfn_to_name_common(
+    ib_engine_t *ib,
+    ib_mpool_t *mp,
+    const ib_field_t *fin,
+    ib_field_t **fout)
+{
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(fin != NULL);
+    assert(fin->name != NULL); /* name is used in logging. */
+    assert(fin->nlen < INT_MAX); /* nlen is casted to an int in logging. */
+    assert(fout != NULL);
+
+    ib_field_t *new_field;
+    ib_status_t rc;
+    ib_bytestr_t *new_value;
+
+    rc = ib_bytestr_dup_mem(
+        &new_value,
+        mp,
+        (const uint8_t*)fin->name,
+        sizeof(*(fin->name)) * fin->nlen);
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Cannot allocate new bytes string to store field name \"%.*s.\"",
+            (int)fin->nlen,
+            fin->name);
+        return IB_EALLOC;
+    }
+
+    rc = ib_field_create(
+        &new_field,
+        mp,
+        fin->name,
+        fin->nlen,
+        IB_FTYPE_BYTESTR,
+        ib_ftype_bytestr_in(new_value));
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Cannot allocate field to them name of the field \"%.*s.\"",
+            (int)fin->nlen,
+            fin->name);
+        return IB_EALLOC;
+    }
+
+    /* Commit back the value. */
+    *fout = new_field;
+
+    return IB_OK;
+}
+
+/**
+ * Extract the name of the given field and convert it to a new field.
+ *
+ * The new field will be named as the old field, and will contain
+ * a bytestr containing the field name.
+ *
+ * On error @a fout is unchanged.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns 
+ *   - IB_OK if successful.
+ *   - IB_EALLOC if allocation error.
+ */
+static ib_status_t tfn_to_name(
+    ib_engine_t *ib,
+    ib_mpool_t *mp,
+    void *fndata,
+    const ib_field_t *fin,
+    ib_field_t **fout,
+    ib_flags_t *pflags)
+{
+    return tfn_to_name_common(ib, mp, fin, fout);
+}
+
+/**
+ * Extract the names of the given collection members.
+ *
+ * The extracted names are put into a new collection with the same
+ * name as @a fin. The extracted names are contained as bytestr fields
+ * in which their name and value are the same.
+ *
+ * By way of example, the collection C with member fields c1, c2, and c3
+ * will produce a new collection named C with member fields c1, c2, and c3.
+ * However, the *values* of c1, c2, and c3 will be bytestrs that
+ * represent the stings c1, c2, and c3.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns 
+ *   - IB_OK If successful.
+ *   - IB_EINVAL If @a fin is not a list.
+ *   - IB_EALLOC Failed allocation.
+ */
+static ib_status_t tfn_to_names(
+    ib_engine_t *ib,
+    ib_mpool_t *mp,
+    void *fndata,
+    const ib_field_t *fin,
+    ib_field_t **fout,
+    ib_flags_t *pflags)
+{
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(fin != NULL);
+    assert(fin->name != NULL); /* name is used in logging. */
+    assert(fin->nlen < INT_MAX); /* nlen is casted to an int in logging. */
+    assert(fout != NULL);
+
+    ib_field_t *new_field;
+    ib_status_t rc;
+    ib_list_t *new_value;
+    const ib_list_t *list;
+    const ib_list_node_t *node;
+
+    /* Fail if the input field is not a list. */
+    if (fin->type != IB_FTYPE_LIST) {
+        ib_log_error(
+            ib,
+            "Cannot operate on non-list field \"%.*s.\" with type %s",
+            (int)fin->nlen,
+            fin->name,
+            ib_field_type_name(fin->type));
+        return IB_EINVAL;
+    }
+
+    /* Build an output list to hold the values. */
+    rc = ib_list_create(&new_value, mp);
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failed to allocate new list to hold names of list field \"%.*s.\"",
+            (int)fin->nlen,
+            fin->name);
+        return IB_EALLOC;
+    }
+
+    /* Get the input list of fields. */
+    rc = ib_field_value(fin, ib_ftype_list_out(&list));
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failed to extract list from field \"%.*s.\"",
+            (int)fin->nlen,
+            fin->name);
+        return rc;
+    }
+
+    /* Build the new_value list using the input list. */
+    IB_LIST_LOOP_CONST(list, node) {
+        const ib_field_t *list_field =
+            (const ib_field_t*)ib_list_node_data_const(node);
+        ib_field_t *list_out_field;
+        
+        rc = tfn_to_name_common(ib, mp, list_field, &list_out_field);
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "Failed to build name field for collection \"%.*s\".",
+                (int)fin->nlen,
+                fin->name);
+            return rc;
+        }
+
+        rc = ib_list_push(new_value, list_out_field);
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "Failed to append to name collection of collection \"%.*s\".",
+                (int)fin->nlen,
+                fin->name);
+            return rc;
+        }
+    }
+
+    /* If we haven't failed yet, make a new output field holding the created
+     * list, new_value. */
+    rc = ib_field_create(
+        &new_field,
+        mp,
+        fin->name,
+        fin->nlen,
+        IB_FTYPE_LIST,
+        ib_ftype_list_in(new_value));
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Cannot create new list field to hold names from field \"%.*s.\"",
+            (int)fin->nlen,
+            fin->name);
+        return IB_EALLOC;
+    }
+    /* Commit back the new field. */
+    *fout = new_field;
+    return IB_OK;
+}
+
+/**
  * Path normalization transformation with support for Windows path separator
  *
  * @param[in] ib IronBee engine
@@ -1148,6 +1518,35 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
     if (rc != IB_OK) {
         return rc;
     }
+
+    /* Type conversion transformations. */
+    rc = ib_tfn_register(ib, "toString", tfn_to_string, IB_TFN_FLAG_NONE, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_tfn_register(ib, "toInteger", tfn_to_integer,
+                         IB_TFN_FLAG_NONE, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_tfn_register(ib, "toFloat", tfn_to_float, IB_TFN_FLAG_NONE, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Name extraction transformations. */
+    rc = ib_tfn_register(ib, "name", tfn_to_name, IB_TFN_FLAG_NONE, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_tfn_register(ib, "names", tfn_to_names, IB_TFN_FLAG_NONE, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
 
     return IB_OK;
 }
