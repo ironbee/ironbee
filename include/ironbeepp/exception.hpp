@@ -59,6 +59,9 @@
 
 namespace IronBee {
 
+class ConfigurationParser;
+class Transaction;
+
 /**
  * Base exception type for all IronBee exceptions.  See exception.hpp
  *
@@ -105,12 +108,34 @@ struct eexist    : public error {};
 typedef boost::error_info<struct tag_errinfo_what,std::string> errinfo_what;
 
 /**
- * Level exception info given the desired log level.
+ * Level exception info giving the desired log level.
  *
  * If present in an exception, will be used to control the log level.  If
  * absent, log level 1 is used.
  **/
 typedef boost::error_info<struct tag_errinfo_level,int> errinfo_level;
+
+/**
+ * Configuration parser info giving the configuration context.
+ *
+ * If present in an exception, will be used to provide which part of the
+ * configuration caused the error.  Not compatible with
+ * @ref errinfo_transaction.
+ **/
+typedef boost::error_info<
+    struct tag_errinfo_configuration_parser, ConfigurationParser
+> errinfo_configuration_parser;
+
+/**
+ * Transaction info giving the current transaction.
+ *
+ * If present in an exception, will be used to provide which transaction the
+ * error occurred during.  Not compatible with
+ * @ref errinfo_configuration_parser.
+ **/
+typedef boost::error_info<
+    struct tag_errinfo_transaction, Transaction
+> errinfo_transaction;
 
 } // IronBee
 

@@ -55,9 +55,10 @@ class ConstEngine;
  * @endcode
  *
  * All exceptions except allocation errors will result in log messages.  If
- * an engine is provided, the engine logger will be used, otherwise the util
- * logger will be used.  This logging behavior can be overridden via the
- * @a logging parameter.
+ * a configuration parser or transaction is attached to the exception, the
+ * appropriate engine logger will be used.  If neither is available and no
+ * engine is provided, the util logger will be used.  If no message or an
+ * empty message is attached, it will not be logged.
  *
  * - The subclasses of IronBee::error turn into their corresponding
  *   ib_status_t.  E.g., declined becomes IB_DECLINED.
@@ -70,10 +71,8 @@ class ConstEngine;
  * - For any exception that translates to IB_EALLOC, nothing is logged to
  *   avoid further allocations.
  * - For IronBee::error and its subclasses, the errinfo_what will be
- *   extracted and reported.  If IBPP_DEBUG is defined, full diagnostic
- *   info is logged (boost::diagnostic_information()).
- * - For any other boost::exception, a generic message is logged, and
- *   full diagnostic info if IBPP_DEBUG is defined.
+ *   extracted and reported.
+ * - For any other boost::exception, a generic message is logged.
  * - For any other std::exception, std::exception::what() is logged.
  * - For any other exception, a generic message is logged.
  *

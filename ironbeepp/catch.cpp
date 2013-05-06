@@ -24,14 +24,17 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include <ironbee/config.h>  // ib_cfg_log()
 #include <ironbee/types.h>  // ib_status_t, ib_status_to_string()
 #include <ironbee/log.h> // ib_log_*
 #include <ironbee/util.h> // ib_util_log_*
 
 #include <ironbeepp/catch.hpp>
 
+#include <ironbeepp/configuration_parser.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/exception.hpp>
+#include <ironbeepp/transaction.hpp>
 
 using namespace std;
 
@@ -76,43 +79,70 @@ ib_status_t convert_exception(
                 message += *boost::get_error_info<errinfo_what>(e);
             }
             else {
-                message +=
-                    "IronBee++ Exception but no explanation provided.  "
-                    "Please report as bug.";
+                message.clear();
             }
 
             if (boost::get_error_info<errinfo_level>(e)) {
                 level = *boost::get_error_info<errinfo_level>(e);
             }
+            ib_log_level_t ib_level = static_cast<ib_log_level_t>(level);
 
-            if (engine) {
-                ib_log_level_t ib_level = static_cast<ib_log_level_t>(level);
-                ib_log(engine, ib_level, "%s", message.c_str());
-                ib_log_debug(engine, "%s", diagnostic_information(e).c_str() );
-            } else {
-                ib_util_log_error("%s", message.c_str());
+            if (
+                const ConfigurationParser* cp =
+                    boost::get_error_info<errinfo_configuration_parser>(e)
+            ) {
+                if (! message.empty()) {
+                    ib_cfg_log(cp->ib(), ib_level, "%s", message.c_str());
+                }
+                ib_cfg_log_debug(
+                    cp->ib(),
+                    "%s",
+                    diagnostic_information(e).c_str()
+                );
+            }
+            else if (
+                const Transaction* tx =
+                    boost::get_error_info<errinfo_transaction>(e)
+            ) {
+                if (! message.empty()) {
+                    ib_log_tx(tx->ib(), ib_level, "%s", message.c_str());
+                }
+                ib_log_debug_tx(
+                    tx->ib(),
+                    "%s",
+                    diagnostic_information(e).c_str()
+                );
+            }
+            else if (engine) {
+                if (! message.empty()) {
+                    ib_log(engine, ib_level, "%s", message.c_str());
+                }
+                ib_log_debug(
+                    engine,
+                    "%s",
+                    diagnostic_information(e).c_str()
+                );
+            }
+            else {
+                if (! message.empty()) {
+                    ib_util_log_error("%s", message.c_str());
+                }
                 ib_util_log_debug("%s", diagnostic_information(e).c_str());
             }
         }
         catch (const boost::exception& e) {
             string message;
-            int level = 1;
 
-            message = "Unknown boost::exception thrown: ";
             if (boost::get_error_info<boost::throw_function>(e)) {
+                message = "Unknown boost::exception thrown by ";
                 message += *boost::get_error_info<boost::throw_function>(e);
             }
             else {
-                message += "No information provided.  Please report as bug.";
-            }
-
-            if (boost::get_error_info<errinfo_level>(e)) {
-                level = *boost::get_error_info<errinfo_level>(e);
+                message = "Unknown boost::exception thrown.";
             }
 
             if (engine) {
-                ib_log_level_t ib_level = static_cast<ib_log_level_t>(level);
-                ib_log(engine, ib_level, "%s", message.c_str());
+                ib_log_error(engine, "%s", message.c_str());
                 ib_log_debug(engine, "%s",
                     diagnostic_information(e).c_str()
                 );

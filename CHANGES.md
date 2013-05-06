@@ -57,6 +57,8 @@ IronBee v0.8.0
 
 * Added `IronBee::Hash<T>`.
 
+* Exceptions can now have a transaction or configuration parser attached to them (`errinfo_configuration_parser` and `errinfo_transaction`) which will be used to improve the log message.  Also, logging can be prevented by not attaching an `errinfo_what`.
+
 **CLIPP**
 
 * Added `-e path` which causes `clipp` to handle consumer errors differently.
