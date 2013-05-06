@@ -248,7 +248,7 @@ ib_status_t sqli_op_execute(
     /* Currently only bytestring types are supported.
      * Other types will just get passed through. */
     if (field->type != IB_FTYPE_BYTESTR) {
-        return IB_DECLINED;
+        return IB_OK;
     }
 
     rc = ib_field_value(field, ib_ftype_bytestr_mutable_out(&bs));
