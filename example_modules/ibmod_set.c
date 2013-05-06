@@ -600,7 +600,7 @@ ib_status_t define_set(
         n = ib_list_node_next_const(n)
     ) {
         const char *item = ib_list_node_data_const(n);
-        rc = ib_hash_set(set, item, (void *)1);
+        rc = ib_hash_set(set, ib_mpool_strdup(mp, item), (void *)1);
         assert(rc == IB_OK);
     }
 
