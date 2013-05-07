@@ -40,6 +40,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <math.h>
 
 /**
  * String modification transformation core
@@ -1137,6 +1138,174 @@ static ib_status_t tfn_to_string(
     return tfn_to_type(ib, mp, IB_FTYPE_BYTESTR, fin, fout);
 }
 
+//! Convert a float. This matches operations found in math.h intentionally.
+typedef ib_float_t (*ib_float_op_t) (ib_float_t);
+
+/**
+ * Convert a floating point field to another floating point field.
+ *
+ * This code wraps field logic around math.h defined calls to
+ * functions like ceill, floorl, and roundl. The math.h calls are
+ * passed in as the @a op parameter.
+ *
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] op Operation to perform. It should take a long double and
+ *            return a long double.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns 
+ *   - IB_OK If successful.
+ *   - IB_EALLOC On allocation errors.
+ *   - IB_EOTHER If any unexpected error is encountered.
+ */
+static ib_status_t tfn_float_op(
+    ib_mpool_t *mp,
+    ib_float_op_t op,
+    const ib_field_t *fin,
+    const ib_field_t **fout,
+    ib_flags_t *pflags)
+{
+    ib_float_t flt;
+    ib_field_t *fnew;
+    ib_status_t rc = IB_OK;
+
+    const ib_bytestr_t *bstr;
+    const char *str;
+
+    /* Get the float value. */
+    switch(fin->type) {
+        case IB_FTYPE_NUM:
+            *fout = fin;
+            return IB_OK;
+        case IB_FTYPE_FLOAT:
+            rc = ib_field_value(fin, ib_ftype_float_out(&flt));
+            if (rc != IB_OK) {
+                return IB_EOTHER;
+            }
+            break;
+        case IB_FTYPE_NULSTR:
+            rc = ib_field_value(fin, ib_ftype_nulstr_out(&str));
+            if (rc != IB_OK) {
+                return IB_EOTHER;
+            }
+            rc = ib_string_to_float(str, &flt);
+            if (rc != IB_OK) {
+                return IB_EOTHER;
+            }
+            break;
+        case IB_FTYPE_BYTESTR:
+            rc = ib_field_value(fin, ib_ftype_bytestr_out(&bstr));
+            if (rc != IB_OK) {
+                return IB_EOTHER;
+            }
+            rc = ib_string_to_float_ex(
+                (const char *)ib_bytestr_const_ptr(bstr),
+                ib_bytestr_length(bstr),
+                &flt);
+            if (rc != IB_OK) {
+                return IB_EOTHER;
+            }
+            break;
+        case IB_FTYPE_LIST:
+        case IB_FTYPE_SBUFFER:
+        case IB_FTYPE_GENERIC:
+            return IB_EINVAL;
+    }
+
+    flt = op(flt);
+
+    rc = ib_field_create(
+        &fnew,
+        mp,
+        fin->name,
+        fin->nlen,
+        IB_FTYPE_FLOAT,
+        ib_ftype_float_in(&flt));
+    if (rc == IB_OK) {
+        *pflags |= IB_TFN_FMODIFIED;
+        *fout = fnew;
+    }
+
+    return rc;
+}
+
+/**
+ * Convert a bytestr, nulstr, float, or num field to a float using floorl.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns 
+ *   - IB_OK If successful.
+ *   - IB_EALLOC On allocation errors.
+ */
+static ib_status_t tfn_floor(
+    ib_engine_t *ib,
+    ib_mpool_t *mp,
+    void *fndata,
+    const ib_field_t *fin,
+    const ib_field_t **fout,
+    ib_flags_t *pflags)
+{
+    return tfn_float_op(mp, floorl, fin, fout, pflags);
+}
+
+/**
+ * Convert a bytestr, nulstr, float, or num field to a float using ceill.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns 
+ *   - IB_OK If successful.
+ *   - IB_EALLOC On allocation errors.
+ */
+static ib_status_t tfn_ceil(
+    ib_engine_t *ib,
+    ib_mpool_t *mp,
+    void *fndata,
+    const ib_field_t *fin,
+    const ib_field_t **fout,
+    ib_flags_t *pflags)
+{
+    return tfn_float_op(mp, ceill, fin, fout, pflags);
+}
+
+/**
+ * Convert a bytestr, nulstr, float, or num field to a float using roundl.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns 
+ *   - IB_OK If successful.
+ *   - IB_EALLOC On allocation errors.
+ */
+static ib_status_t tfn_round(
+    ib_engine_t *ib,
+    ib_mpool_t *mp,
+    void *fndata,
+    const ib_field_t *fin,
+    const ib_field_t **fout,
+    ib_flags_t *pflags)
+{
+    return tfn_float_op(mp, roundl, fin, fout, pflags);
+}
+
 /**
  * Extract the name of the given field and convert it to a new field.
  *
@@ -1446,6 +1615,22 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
 
     rc = ib_tfn_register(ib, "normalizePathWin", tfn_normalize_path_win,
                          IB_TFN_FLAG_NONE, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Math transformations. */
+    rc = ib_tfn_register(ib, "round", tfn_round, IB_TFN_FLAG_NONE, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_tfn_register(ib, "ceil", tfn_ceil, IB_TFN_FLAG_NONE, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_tfn_register(ib, "floor", tfn_floor, IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         return rc;
     }
