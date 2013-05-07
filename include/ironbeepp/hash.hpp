@@ -42,9 +42,9 @@
 #include <ironbee/hash.h>
 
 #include <boost/bind.hpp>
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_pointer.hpp>
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/type_traits/is_pointer.hpp>
+#include <boost/utility/enable_if.hpp>
 
 #include <ostream>
 
