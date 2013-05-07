@@ -143,7 +143,7 @@ public:
     int execute_instance(
         void*       instance_data,
         Transaction transaction,
-        Field       input,
+        ConstField  input,
         Field       capture = Field()
     ) const;
 
@@ -219,7 +219,7 @@ public:
             create,
         boost::function<void(InstanceData*)>
             destroy,
-        boost::function<int(Transaction, InstanceData*, Field, Field)>
+        boost::function<int(Transaction, InstanceData*, ConstField, Field)>
             execute
     );
 
@@ -232,7 +232,7 @@ public:
      * Parameters are current transaction, input field, and capture field.
      * Return value is result.
      **/
-    typedef boost::function<int(Transaction, Field, Field)> operator_instance_t;
+    typedef boost::function<int(Transaction, ConstField, Field)> operator_instance_t;
 
     /**
      * Operator as operator instance generator.
@@ -346,17 +346,17 @@ ib_status_t operator_create_translator(
 
 template <typename InstanceData>
 ib_status_t operator_execute_translator(
-    boost::function<int(Transaction, InstanceData*, Field, Field)>
+    boost::function<int(Transaction, InstanceData*, ConstField, Field)>
         execute,
     ib_tx_t*    ib_tx,
     void*       raw_instance_data,
-    ib_field_t* ib_field,
+    const ib_field_t* ib_field,
     ib_field_t* ib_capture,
     ib_num_t*   result
 )
 {
     Transaction tx(ib_tx);
-    Field field(ib_field);
+    ConstField field(ib_field);
     Field capture(ib_capture);
     try {
         *result = execute(
@@ -398,7 +398,7 @@ Operator Operator::create(
     ib_flags_t  capabilities,
     boost::function<InstanceData*(Context, const char*)> create,
     boost::function<void(InstanceData*)> destroy,
-    boost::function<int(Transaction, InstanceData*, Field, Field)> execute
+    boost::function<int(Transaction, InstanceData*, ConstField, Field)> execute
 )
 {
     Impl::operator_create_data_t data;
@@ -415,7 +415,7 @@ Operator Operator::create(
     }
     if (execute) {
         data.execute_trampoline = make_c_trampoline<
-            ib_status_t(ib_tx_t*, void*, ib_field_t*, ib_field_t*, ib_num_t*)
+            ib_status_t(ib_tx_t*, void*, const ib_field_t*, ib_field_t*, ib_num_t*)
         >(
             boost::bind(
                 &Impl::operator_execute_translator<InstanceData>,

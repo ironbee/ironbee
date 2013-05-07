@@ -70,12 +70,12 @@ struct ib_moddevel_rules_config_t {
  * @returns Status code
  */
 static ib_status_t op_true_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     *result = 1;
@@ -103,12 +103,12 @@ static ib_status_t op_true_execute(
  * @returns Status code
  */
 static ib_status_t op_false_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     *result = 0;
@@ -194,12 +194,12 @@ static ib_status_t op_assert_create(
  * @returns Status code
  */
 static ib_status_t op_assert_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     const assert_inst_data_t *aid = (const assert_inst_data_t *)instance_data;
@@ -239,12 +239,12 @@ static ib_status_t op_assert_execute(
  * @returns Status code
  */
 static ib_status_t op_exists_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     /* Return true of field is not NULL */
@@ -303,12 +303,12 @@ static istype_params_t istype_params[] = {
  * @returns Status code
  */
 static ib_status_t op_istype_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     assert(field != NULL);
@@ -720,10 +720,9 @@ ib_status_t ib_moddevel_rules_init(
           IB_OP_CAPABILITY_NON_STREAM |
               IB_OP_CAPABILITY_STREAM |
         IB_OP_CAPABILITY_CAPTURE ),
-        NULL, NULL, /* No create function
-    */
-                              NULL, NULL, /* no destroy function */
-                              op_true_execute, NULL);
+        NULL, NULL, /* No create function */
+        NULL, NULL, /* no destroy function */
+        op_true_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }

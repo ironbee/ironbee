@@ -99,7 +99,7 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(
 typedef ib_status_t (* ib_operator_execute_fn_t)(
     ib_tx_t    *tx,
     void       *instance_data,
-    ib_field_t *field,
+    const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
     void       *cbdata
@@ -300,7 +300,7 @@ ib_status_t DLL_PUBLIC ib_operator_inst_execute(
     const ib_operator_t *op,
     void                *instance_data,
     ib_tx_t             *tx,
-    ib_field_t          *field,
+    const ib_field_t    *field,
     ib_field_t          *capture,
     ib_num_t            *result
 );

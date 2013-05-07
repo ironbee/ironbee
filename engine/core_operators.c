@@ -378,12 +378,12 @@ ib_status_t strop_create(
  */
 static
 ib_status_t op_streq_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     assert(tx != NULL);
@@ -493,12 +493,12 @@ ib_status_t op_streq_execute(
  */
 static
 ib_status_t op_contains_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     assert(tx != NULL);
@@ -700,12 +700,12 @@ ib_status_t op_match_create(
  */
 static
 ib_status_t op_match_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     assert(tx            != NULL);
@@ -891,12 +891,12 @@ ib_status_t op_ipmatch_create(
  */
 static
 ib_status_t op_ipmatch_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     assert(tx            != NULL);
@@ -1101,12 +1101,12 @@ ib_status_t op_ipmatch6_create(
  */
 static
 ib_status_t op_ipmatch6_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     assert(tx            != NULL);
@@ -1519,13 +1519,13 @@ ib_status_t prepare_math_operands(
  */
 static
 ib_status_t execute_compare(
-    const ib_tx_t      *tx,
-    void               *instance_data,
-    ib_field_t         *field,
-    ib_field_t         *capture,
-    num_compare_fn_t    num_compare,
-    float_compare_fn_t  float_compare,
-    ib_num_t           *result
+    const ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
+    ib_field_t *capture,
+    num_compare_fn_t num_compare,
+    float_compare_fn_t float_compare,
+    ib_num_t *result
 )
 {
     assert(instance_data != NULL);
@@ -1638,12 +1638,12 @@ ib_status_t execute_compare(
  */
 static
 ib_status_t op_eq_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     ib_status_t rc;
@@ -1676,12 +1676,12 @@ ib_status_t op_eq_execute(
  */
 static
 ib_status_t op_ne_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     ib_status_t rc;
@@ -1713,12 +1713,12 @@ ib_status_t op_ne_execute(
  */
 static
 ib_status_t op_gt_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     ib_status_t rc;
@@ -1751,12 +1751,12 @@ ib_status_t op_gt_execute(
  */
 static
 ib_status_t op_lt_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     ib_status_t rc;
@@ -1788,12 +1788,12 @@ ib_status_t op_lt_execute(
  */
 static
 ib_status_t op_ge_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     ib_status_t rc;
@@ -1825,12 +1825,12 @@ ib_status_t op_ge_execute(
  */
 static
 ib_status_t op_le_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     ib_status_t rc;
@@ -1973,12 +1973,12 @@ ib_status_t op_numcmp_create(
  */
 static
 ib_status_t op_nop_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     ib_status_t rc;

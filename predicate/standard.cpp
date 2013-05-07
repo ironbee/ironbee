@@ -598,7 +598,7 @@ Value Transformation::calculate(EvalContext context)
         return Value();
     }
 
-    ib_field_t* ib_output = NULL;
+    const ib_field_t* ib_output = NULL;
     ib_flags_t flags;
 
     IronBee::throw_if_error(
@@ -687,7 +687,7 @@ Value List::calculate(EvalContext context)
         results.push_back(child->eval(context));
     }
 
-    return Value::create_no_copy_list(
+    return IronBee::Field::create_no_copy_list(
         context.memory_pool(),
         "", 0,
         results
@@ -788,7 +788,7 @@ Value SubAll::calculate(EvalContext context)
         return Value();
     }
     else {
-        return Value::create_no_copy_list<Value>(
+        return IronBee::Field::create_no_copy_list<Value>(
             context.memory_pool(),
             "", 0,
             results

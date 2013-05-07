@@ -87,10 +87,11 @@ static ib_status_t foo2bar(ib_engine_t *ib,
                            ib_mpool_t *mp,
                            void *fndata,
                            const ib_field_t *fin,
-                           ib_field_t **fout,
+                           const ib_field_t **fout,
                            ib_flags_t *pflags)
 {
     ib_status_t rc = IB_OK;
+    ib_field_t *fnew;
 
     if (fin->type == IB_FTYPE_BYTESTR) {
         const ib_bytestr_t *ibs;
@@ -124,9 +125,12 @@ static ib_status_t foo2bar(ib_engine_t *ib,
         else {
             data_out = (uint8_t *)data_in;
         }
-        rc = ib_field_create_bytestr_alias(fout, mp,
+        rc = ib_field_create_bytestr_alias(&fnew, mp,
                                            fin->name, fin->nlen,
                                            data_out, dlen_in);
+        if (rc == IB_OK) {
+            *fout = fnew;
+        }
     }
     else if (fin->type == IB_FTYPE_NULSTR) {
         const char *in;
@@ -151,8 +155,11 @@ static ib_status_t foo2bar(ib_engine_t *ib,
         else {
             out = (char *)in;
         }
-        rc = ib_field_create(fout, mp, fin->name, fin->nlen,
+        rc = ib_field_create(&fnew, mp, fin->name, fin->nlen,
                              IB_FTYPE_NULSTR, ib_ftype_nulstr_in(out));
+        if (rc == IB_OK) {
+            *fout = fnew;
+        }
     }
     else {
         return IB_EINVAL;
@@ -170,7 +177,7 @@ TEST(TestIronBee, test_tfn)
     ib_flags_t flags;
     uint8_t data_in[128];
     ib_field_t *fin;
-    ib_field_t *fout;
+    const ib_field_t *fout;
     ib_bytestr_t *bs;
 
     ibtest_engine_create(&ib);

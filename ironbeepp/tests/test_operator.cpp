@@ -47,7 +47,7 @@ public:
         // nop
     }
 
-    int operator()(Transaction, Field, Field)
+    int operator()(Transaction, ConstField, Field)
     {
         m_result = m_param;
         return 42;

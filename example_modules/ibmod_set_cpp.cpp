@@ -229,7 +229,7 @@ private:
         const_set_t          set,
         const string&        set_name,
         IronBee::Transaction tx,
-        IronBee::Field       input
+        IronBee::ConstField  input
     ) const;
 
     //! Type used to track sets by name.
@@ -474,7 +474,7 @@ int PerContext::operator_execute(
     const_set_t          set,
     const string&        set_name,
     IronBee::Transaction tx,
-    IronBee::Field       input
+    IronBee::ConstField  input
 ) const
 {
     // Used to log queries of a null input.

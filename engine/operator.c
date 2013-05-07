@@ -242,7 +242,7 @@ ib_status_t ib_operator_inst_execute(
     const ib_operator_t *op,
     void                *instance_data,
     ib_tx_t             *tx,
-    ib_field_t          *field,
+    const ib_field_t    *field,
     ib_field_t          *capture,
     ib_num_t            *result
 )

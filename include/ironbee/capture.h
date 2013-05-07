@@ -107,7 +107,7 @@ ib_status_t DLL_PUBLIC ib_capture_set_item(
     ib_field_t *capture,
     int         num,
     ib_mpool_t *mp,
-    ib_field_t *in_field
+    const ib_field_t *in_field
 );
 
 /**

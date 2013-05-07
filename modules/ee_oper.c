@@ -490,12 +490,12 @@ ib_status_t ee_match_any_operator_create(
  */
 static
 ib_status_t ee_match_any_operator_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     ib_status_t rc;

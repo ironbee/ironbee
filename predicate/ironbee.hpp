@@ -49,7 +49,7 @@ namespace Predicate {
 /**
  * Value of a node.
  **/
-typedef IronBee::Field Value;
+typedef IronBee::ConstField Value;
 
 /**
  * Context a node is evaluated in.

@@ -58,7 +58,7 @@ ib_status_t test_create_fn(
 ib_status_t test_execute_fn(
     ib_tx_t    *tx,
     void       *instance_data,
-    ib_field_t *field,
+    const ib_field_t *field,
     ib_field_t *capture,
     ib_num_t   *result,
     void       *cbdata

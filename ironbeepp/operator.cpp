@@ -92,7 +92,7 @@ void* ConstOperator::create_instance(
 int ConstOperator::execute_instance(
     void*       instance_data,
     Transaction transaction,
-    Field       input,
+    ConstField  input,
     Field       capture
 ) const
 {
@@ -160,7 +160,7 @@ private:
 int operator_execute(
     Transaction tx,
     void*       instance_data,
-    Field       field,
+    ConstField  field,
     Field       capture
 )
 {

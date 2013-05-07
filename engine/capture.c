@@ -222,7 +222,7 @@ ib_status_t ib_capture_set_item(
     ib_field_t *capture,
     int         num,
     ib_mpool_t *mp,
-    ib_field_t *in_field
+    const ib_field_t *in_field
 )
 {
     assert(capture != NULL);
@@ -248,32 +248,32 @@ ib_status_t ib_capture_set_item(
 
     /* Remove any nodes with the same name */
     IB_LIST_LOOP_SAFE(list, node, next) {
-        field = (ib_field_t *)node->data;
-        if (strncmp(name, field->name, field->nlen) == 0) {
+        ib_field_t *tmp_field = (ib_field_t *)node->data;
+        if (strncmp(name, tmp_field->name, tmp_field->nlen) == 0) {
             ib_list_node_remove(list, node);
         }
     }
-    field = NULL;
 
     if(in_field == NULL) {
         return IB_OK;
     }
 
-    /* Make sure we have the correct name */
+    /* Make sure we have the correct name. If we do, add the field... */
     if (strncmp(name, in_field->name, in_field->nlen) == 0) {
-        field = in_field;
+        /* Add the node to the list */
+        rc = ib_list_push(list, (void *)in_field);
     }
+
+    /* ... else, alias to the proper name. */
     else {
         rc = ib_field_alias(&field, mp, name, strlen(name), in_field);
         if (rc != IB_OK) {
             return rc;
         }
-
+        assert(field != NULL);
+        /* Add the node to the list */
+        rc = ib_list_push(list, field);
     }
-    assert(field != NULL);
-
-    /* Add the node to the list */
-    rc = ib_list_push(list, field);
 
     return rc;
 }

@@ -647,12 +647,12 @@ ib_status_t pcre_dfa_set_match(
  */
 static
 ib_status_t pcre_operator_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     assert(instance_data != NULL);
@@ -1074,12 +1074,12 @@ ib_status_t get_dfa_tx_data(
  */
 static
 ib_status_t dfa_operator_execute(
-    ib_tx_t    *tx,
-    void       *instance_data,
-    ib_field_t *field,
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
     ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_num_t *result,
+    void *cbdata
 )
 {
     assert(instance_data != NULL);

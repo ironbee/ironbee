@@ -675,7 +675,7 @@ ib_status_t DLL_PUBLIC ib_field_alias(
     ib_mpool_t  *mp,
     const char  *name,
     size_t       nlen,
-    ib_field_t  *src
+    const ib_field_t  *src
 );
 
 /**
