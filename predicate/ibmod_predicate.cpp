@@ -280,6 +280,18 @@ public:
     Delegate(IB::Module module);
 
     /**
+     * Call factory accessor.
+     *
+     * @sa DelegateCallFactory
+     * @returns Call factory.
+     **/
+    P::CallFactory& call_factory() { return m_call_factory; }
+
+    //! MergeGraph accessor.  Only meaningful before end of configuration.
+    P::MergeGraph& graph() const { return *m_graph; }
+
+private:
+    /**
      * Context close handler.
      *
      * For non-main context close, the context is recorded for later
@@ -293,18 +305,6 @@ public:
      **/
     void context_close(IB::Context context);
 
-    /**
-     * Call factory accessor.
-     *
-     * @sa DelegateCallFactory
-     * @returns Call factory.
-     **/
-    P::CallFactory& call_factory() { return m_call_factory; }
-
-    //! MergeGraph accessor.  Only meaningful before end of configuration.
-    P::MergeGraph& graph() const { return *m_graph; }
-
-private:
     /**
      * Ownership function: called on each rule at end of configuration.
      *
@@ -661,6 +661,9 @@ Delegate::Delegate(IB::Module module) :
     module.engine().register_hooks()
         .request_started(
             boost::bind(&Delegate::request_started, this, _2)
+        )
+        .context_close(
+            boost::bind(&Delegate::context_close, this, _2)
         )
         ;
 
