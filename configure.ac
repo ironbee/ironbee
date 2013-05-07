@@ -451,7 +451,7 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="util engine servers automata fast modules tools etc docs tests packaging example_modules"
+TOPLEVEL_SUBDIRS="util engine servers automata fast modules tools etc docs tests packaging"
 LIBS_SUBDIRS="libhtp sqltfn"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver nginx"
 
@@ -469,6 +469,9 @@ dnl Enable clipp subdir if enabled
 if test "${cpp_code}" = 1; then
     TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} clipp"
 fi
+
+dnl Example modules should go last.
+TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} example_modules"
 
 dnl Make sure abs_top_builddir is available
 AC_MSG_CHECKING([abs_top_builddir is available])
