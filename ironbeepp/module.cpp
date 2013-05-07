@@ -63,30 +63,6 @@ private:
     Module::module_callback_t m_next;
 };
 
-class ModuleHookPreChainContext
-{
-public:
-    ModuleHookPreChainContext(
-        Module::context_callback_t f,
-        Module::context_callback_t next
-    ) :
-        m_f(f),
-        m_next(next)
-    {
-        // nop
-    }
-
-    void operator()(Module m, Context c) const
-    {
-        m_f(m, c);
-        m_next(m, c);
-    }
-
-private:
-    Module::context_callback_t m_f;
-    Module::context_callback_t m_next;
-};
-
 class ModuleHookChainModule
 {
 public:
@@ -109,30 +85,6 @@ public:
 private:
     Module::module_callback_t m_f;
     Module::module_callback_t m_prev;
-};
-
-class ModuleHookChainContext
-{
-public:
-    ModuleHookChainContext(
-        Module::context_callback_t f,
-        Module::context_callback_t prev
-    ) :
-        m_f(f),
-        m_prev(prev)
-    {
-        // nop
-    }
-
-    void operator()(Module m, Context c) const
-    {
-        m_prev(m, c);
-        m_f(m, c);
-    }
-
-private:
-    Module::context_callback_t m_f;
-    Module::context_callback_t m_prev;
 };
 
 namespace Hooks {
@@ -170,69 +122,6 @@ ib_status_t finalize(
     try {
         data_to_value<Module::finalize_t>(cbdata)(
             Module(ib_module)
-        );
-    }
-    catch (...) {
-        return convert_exception(ib_engine);
-    }
-    return IB_OK;
-}
-
-ib_status_t context_open(
-    ib_engine_t*  ib_engine,
-    ib_module_t*  ib_module,
-    ib_context_t* ib_context,
-    void*         cbdata
-)
-{
-    assert(ib_engine = ib_module->ib);
-
-    try {
-        data_to_value<Module::context_open_t>(cbdata)(
-            Module(ib_module),
-            Context(ib_context)
-        );
-    }
-    catch (...) {
-        return convert_exception(ib_engine);
-    }
-    return IB_OK;
-}
-
-ib_status_t context_close(
-    ib_engine_t*  ib_engine,
-    ib_module_t*  ib_module,
-    ib_context_t* ib_context,
-    void*         cbdata
-)
-{
-    assert(ib_engine = ib_module->ib);
-
-    try {
-        data_to_value<Module::context_close_t>(cbdata)(
-            Module(ib_module),
-            Context(ib_context)
-        );
-    }
-    catch (...) {
-        return convert_exception(ib_engine);
-    }
-    return IB_OK;
-}
-
-ib_status_t context_destroy(
-    ib_engine_t*  ib_engine,
-    ib_module_t*  ib_module,
-    ib_context_t* ib_context,
-    void*         cbdata
-)
-{
-    assert(ib_engine = ib_module->ib);
-
-    try {
-        data_to_value<Module::context_destroy_t>(cbdata)(
-            Module(ib_module),
-            Context(ib_context)
         );
     }
     catch (...) {
@@ -444,141 +333,6 @@ void Module::set_finalize(finalize_t f) const
             engine().main_memory_pool().ib()
         );
         ib()->fn_fini = Internal::Hooks::finalize;
-    }
-}
-
-void Module::chain_context_open(context_open_t f) const
-{
-    if (! ib()->fn_ctx_open) {
-        set_context_open(f);
-    }
-    else {
-        set_context_open( Internal::ModuleHookChainContext(
-            f,
-            data_to_value<Module::context_open_t>(
-                ib()->cbdata_ctx_open
-            )
-        ) );
-    }
-}
-
-void Module::prechain_context_open(context_open_t f) const
-{
-    if (! ib()->fn_ctx_open) {
-        set_context_open(f);
-    }
-    else {
-        set_context_open( Internal::ModuleHookPreChainContext(
-            f,
-            data_to_value<Module::context_open_t>(
-                ib()->cbdata_ctx_open
-            )
-        ) );
-    }
-}
-
-void Module::set_context_open(context_open_t f) const
-{
-    if (f.empty()) {
-        ib()->cbdata_ctx_open = NULL;
-        ib()->fn_ctx_open     = NULL;
-    }
-    else {
-        ib()->cbdata_ctx_open = value_to_data(
-            f,
-            engine().main_memory_pool().ib()
-        );
-        ib()->fn_ctx_open = Internal::Hooks::context_open;
-    }
-}
-
-void Module::chain_context_close(context_close_t f) const
-{
-    if (! ib()->fn_ctx_close) {
-        set_context_close(f);
-    }
-    else {
-        set_context_close( Internal::ModuleHookChainContext(
-            f,
-            data_to_value<Module::context_close_t>(
-                ib()->cbdata_ctx_close
-            )
-        ) );
-    }
-}
-
-void Module::prechain_context_close(context_close_t f) const
-{
-    if (! ib()->fn_ctx_close) {
-        set_context_close(f);
-    }
-    else {
-        set_context_close( Internal::ModuleHookPreChainContext(
-            f,
-            data_to_value<Module::context_close_t>(
-                ib()->cbdata_ctx_close
-            )
-        ) );
-    }
-}
-
-void Module::set_context_close(context_close_t f) const
-{
-    if (f.empty()) {
-        ib()->cbdata_ctx_close = NULL;
-        ib()->fn_ctx_close     = NULL;
-    }
-    else {
-        ib()->cbdata_ctx_close = value_to_data(
-            f,
-            engine().main_memory_pool().ib()
-        );
-        ib()->fn_ctx_close = Internal::Hooks::context_close;
-    }
-}
-
-void Module::chain_context_destroy(context_destroy_t f) const
-{
-    if (! ib()->fn_ctx_destroy) {
-        set_context_destroy(f);
-    }
-    else {
-        set_context_destroy( Internal::ModuleHookChainContext(
-            f,
-            data_to_value<Module::context_destroy_t>(
-                ib()->cbdata_ctx_destroy
-            )
-        ) );
-    }
-}
-
-void Module::prechain_context_destroy(context_destroy_t f) const
-{
-    if (! ib()->fn_ctx_destroy) {
-        set_context_destroy(f);
-    }
-    else {
-        set_context_destroy( Internal::ModuleHookPreChainContext(
-            f,
-            data_to_value<Module::context_destroy_t>(
-                ib()->cbdata_ctx_destroy
-            )
-        ) );
-    }
-}
-
-void Module::set_context_destroy(context_destroy_t f) const
-{
-    if (f.empty()) {
-        ib()->cbdata_ctx_destroy = NULL;
-        ib()->fn_ctx_destroy     = NULL;
-    }
-    else {
-        ib()->cbdata_ctx_destroy = value_to_data(
-            f,
-            engine().main_memory_pool().ib()
-        );
-        ib()->fn_ctx_destroy = Internal::Hooks::context_destroy;
     }
 }
 

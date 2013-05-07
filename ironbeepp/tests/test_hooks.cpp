@@ -23,8 +23,8 @@
  **/
 
 #include <ironbeepp/hooks.hpp>
-#include <ironbeepp/hooks.hpp>
 #include <ironbeepp/connection.hpp>
+#include <ironbeepp/context.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/transaction_data.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
@@ -48,7 +48,7 @@ using namespace IronBee;
 
 class TestHooks : public ::testing::Test, public IBPPTestFixture
 {
-protected:
+public:
     enum callback_e
     {
         CB_NOT_CALLED,
@@ -59,7 +59,8 @@ protected:
         CB_CONNECTION,
         CB_CONNECTION_DATA,
         CB_TRANSACTION,
-        CB_TRANSACTION_DATA
+        CB_TRANSACTION_DATA,
+        CB_CONTEXT
     };
 
     struct handler_info_t
@@ -75,6 +76,7 @@ protected:
         ParsedResponseLine    parsed_response_line;
         Connection            connection;
         TransactionData       transaction_data;
+        Context               context;
     };
 
     class Handler
@@ -172,10 +174,24 @@ protected:
             m_info.transaction_data = transaction_data;
         }
 
+        void operator()(
+            Engine engine,
+            Context context,
+            Engine::state_event_e event
+        )
+        {
+            m_info.which = CB_CONTEXT;
+            m_info.engine = engine;
+            m_info.context = context;
+            m_info.event = event;
+        }
+
     private:
         handler_info_t& m_info;
     };
 
+
+protected:
     void test_tx(
         Engine::state_event_e event,
         handler_info_t&       info
@@ -295,8 +311,8 @@ protected:
     {
         typedef ib_status_t (*ib_callback_t)(
             ib_engine_t*,
-            ib_state_event_type_t,
             DataType*,
+            ib_state_event_type_t,
             void*
         );
 
@@ -311,7 +327,7 @@ protected:
         DataType ib_data;
         ib_status_t rc =
             reinterpret_cast<ib_callback_t>(hook->callback.as_void)(
-                m_engine.ib(), ib_logevent, &ib_data, hook->cbdata
+                m_engine.ib(), &ib_data, ib_logevent, hook->cbdata
             );
         EXPECT_EQ(IB_OK, rc);
         EXPECT_EQ(which_cb, info.which);
@@ -393,68 +409,89 @@ protected:
             &handler_info_t::transaction_data
         );
     }
+
+    void test_context(
+        Engine::state_event_e event,
+        handler_info_t&       info
+    )
+    {
+        test_notx_one_argument<ib_context_t>(
+            event,
+            info,
+            CB_CONTEXT,
+            &handler_info_t::context
+        );
+    }
 };
+
+// Need to be static as we'll be used in engine destruction.
+
+static TestHooks::handler_info_t s_info;
+static TestHooks::Handler s_handler(s_info);
 
 TEST_F(TestHooks, Basic)
 {
     HooksRegistrar H(m_engine);
-    handler_info_t info;
-    Handler handler(info);
 
-
-    H.request_header_data(handler);
-    test_header_data(Engine::request_header_data, info);
-    H.response_header_data(handler);
-    test_header_data(Engine::response_header_data, info);
-    H.request_started(handler);
-    test_request_line(Engine::request_started, info);
-    H.response_started(handler);
-    test_response_line(Engine::response_started, info);
-    H.connection_started(handler);
-    test_connection(Engine::connection_started, info);
-    H.connection_finished(handler);
-    test_connection(Engine::connection_finished, info);
-    H.connection_opened(handler);
-    test_connection(Engine::connection_opened, info);
-    H.connection_closed(handler);
-    test_connection(Engine::connection_closed, info);
-    H.handle_context_connection(handler);
-    test_connection(Engine::handle_context_connection, info);
-    H.handle_connect(handler);
-    test_connection(Engine::handle_connect, info);
-    H.handle_disconnect(handler);
-    test_connection(Engine::handle_disconnect, info);
-    H.transaction_started(handler);
-    test_transaction(Engine::transaction_started, info);
-    H.transaction_process(handler);
-    test_transaction(Engine::transaction_process, info);
-    H.transaction_finished(handler);
-    test_transaction(Engine::transaction_finished, info);
-    H.handle_context_transaction(handler);
-    test_transaction(Engine::handle_context_transaction, info);
-    H.handle_request_header(handler);
-    test_transaction(Engine::handle_request_header, info);
-    H.handle_request(handler);
-    test_transaction(Engine::handle_request, info);
-    H.handle_response_header(handler);
-    test_transaction(Engine::handle_response_header, info);
-    H.handle_response(handler);
-    test_transaction(Engine::handle_response, info);
-    H.handle_postprocess(handler);
-    test_transaction(Engine::handle_postprocess, info);
-    H.handle_logging(handler);
-    test_transaction(Engine::handle_logging, info);
-    H.request_header_finished(handler);
-    test_transaction(Engine::request_header_finished, info);
-    H.request_finished(handler);
-    test_transaction(Engine::request_finished, info);
-    H.response_header_finished(handler);
-    test_transaction(Engine::response_header_finished, info);
-    H.response_finished(handler);
-    test_transaction(Engine::response_finished, info);
-    H.request_body_data(handler);
-    test_transaction_data(Engine::request_body_data, info);
-    H.response_body_data(handler);
-    test_transaction_data(Engine::response_body_data, info);
+    H.request_header_data(s_handler);
+    test_header_data(Engine::request_header_data, s_info);
+    H.response_header_data(s_handler);
+    test_header_data(Engine::response_header_data, s_info);
+    H.request_started(s_handler);
+    test_request_line(Engine::request_started, s_info);
+    H.response_started(s_handler);
+    test_response_line(Engine::response_started, s_info);
+    H.connection_started(s_handler);
+    test_connection(Engine::connection_started, s_info);
+    H.connection_finished(s_handler);
+    test_connection(Engine::connection_finished, s_info);
+    H.connection_opened(s_handler);
+    test_connection(Engine::connection_opened, s_info);
+    H.connection_closed(s_handler);
+    test_connection(Engine::connection_closed, s_info);
+    H.handle_context_connection(s_handler);
+    test_connection(Engine::handle_context_connection, s_info);
+    H.handle_connect(s_handler);
+    test_connection(Engine::handle_connect, s_info);
+    H.handle_disconnect(s_handler);
+    test_connection(Engine::handle_disconnect, s_info);
+    H.transaction_started(s_handler);
+    test_transaction(Engine::transaction_started, s_info);
+    H.transaction_process(s_handler);
+    test_transaction(Engine::transaction_process, s_info);
+    H.transaction_finished(s_handler);
+    test_transaction(Engine::transaction_finished, s_info);
+    H.handle_context_transaction(s_handler);
+    test_transaction(Engine::handle_context_transaction, s_info);
+    H.handle_request_header(s_handler);
+    test_transaction(Engine::handle_request_header, s_info);
+    H.handle_request(s_handler);
+    test_transaction(Engine::handle_request, s_info);
+    H.handle_response_header(s_handler);
+    test_transaction(Engine::handle_response_header, s_info);
+    H.handle_response(s_handler);
+    test_transaction(Engine::handle_response, s_info);
+    H.handle_postprocess(s_handler);
+    test_transaction(Engine::handle_postprocess, s_info);
+    H.handle_logging(s_handler);
+    test_transaction(Engine::handle_logging, s_info);
+    H.request_header_finished(s_handler);
+    test_transaction(Engine::request_header_finished, s_info);
+    H.request_finished(s_handler);
+    test_transaction(Engine::request_finished, s_info);
+    H.response_header_finished(s_handler);
+    test_transaction(Engine::response_header_finished, s_info);
+    H.response_finished(s_handler);
+    test_transaction(Engine::response_finished, s_info);
+    H.request_body_data(s_handler);
+    test_transaction_data(Engine::request_body_data, s_info);
+    H.response_body_data(s_handler);
+    test_transaction_data(Engine::response_body_data, s_info);
+    H.context_open(s_handler);
+    test_context(Engine::context_open, s_info);
+    H.context_close(s_handler);
+    test_context(Engine::context_close, s_info);
+    H.context_destroy(s_handler);
+    test_context(Engine::context_destroy, s_info);
 }
 

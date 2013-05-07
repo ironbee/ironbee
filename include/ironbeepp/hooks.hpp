@@ -187,7 +187,7 @@ public:
     > transaction_t;
 
     /**
-     * Call back type that takes TransactionData argument.
+     * Call back type that takes a TransactionData argument.
      *
      * Parameters are:
      * - IronBee engine.
@@ -203,6 +203,22 @@ public:
             TransactionData
         )
     > transaction_data_t;
+
+    /**
+     * Call back type that takes a Context argument.
+     *
+     * Parameters are:
+     * - IronBee engine.
+     * - Current context.
+     * - Which event triggered the callback.
+     **/
+    typedef boost::function<
+        void(
+            Engine,
+            Context,
+            Engine::state_event_e
+        )
+    > context_t;
     ///@}
 
     /**
@@ -308,7 +324,20 @@ public:
     HooksRegistrar& transaction_data(
         Engine::state_event_e event,
         transaction_data_t    f
-     );
+    );
+
+    /**
+     * Register context callback.
+     *
+     * @param[in] event Event to register for.
+     * @param[in] f     Functional to register.
+     * @returns @c *this for call chaining.
+     * @throw einval if callback type is not appropriate for @a event.
+     **/
+    HooksRegistrar& context(
+        Engine::state_event_e event,
+        context_t             f
+    );
 
     ///@}
 
@@ -642,6 +671,39 @@ public:
      * @throw IronBee++ exception on failure.
      **/
     HooksRegistrar& response_body_data(transaction_data_t f);
+
+    /**
+     * Register callback for context_open.
+     *
+     * @sa Engine::state_event_e
+     *
+     * @param[in] f Callback to register.
+     * @returns @c *this for call chaining.
+     * @throw IronBee++ exception on failure.
+     **/
+    HooksRegistrar& context_open(context_t f);
+
+    /**
+     * Register callback for context_close.
+     *
+     * @sa Engine::state_event_e
+     *
+     * @param[in] f Callback to register.
+     * @returns @c *this for call chaining.
+     * @throw IronBee++ exception on failure.
+     **/
+    HooksRegistrar& context_close(context_t f);
+
+    /**
+     * Register callback for context_destroy.
+     *
+     * @sa Engine::state_event_e
+     *
+     * @param[in] f Callback to register.
+     * @returns @c *this for call chaining.
+     * @throw IronBee++ exception on failure.
+     **/
+    HooksRegistrar& context_destroy(context_t f);
 
     ///@}
 

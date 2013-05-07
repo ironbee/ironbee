@@ -1,5 +1,6 @@
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/connection.hpp>
+#include <ironbeepp/context.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/transaction_data.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
@@ -263,6 +264,40 @@ ib_status_t transaction_data(
     return IB_OK;
 }
 
+/**
+ * Hooks handler for context callbacks.
+ *
+ * @param[in] ib_engine           The IronBee engine.
+ * @param[in] ib_context          Current context.
+ * @param[in] event               Which event happened.
+ * @param[in] cbdata              Callback data: contains C++ functional to
+ *                                forward to.
+ * @returns Status code reflecting any exceptions thrown.
+ **/
+ib_status_t context(
+    ib_engine_t*          ib_engine,
+    ib_context_t*         ib_ctx,
+    ib_state_event_type_t event,
+    void*                 cbdata
+)
+{
+    assert(ib_engine != NULL);
+    assert(ib_ctx != NULL);
+    assert(cbdata != NULL);
+
+    try {
+        data_to_value<HooksRegistrar::context_t>(cbdata)(
+            Engine(ib_engine),
+            Context(ib_ctx),
+            static_cast<Engine::state_event_e>(event)
+        );
+    }
+    catch (...) {
+        return convert_exception(ib_engine);
+    }
+    return IB_OK;
+}
+
 } // Hooks
 }
 } // Internal
@@ -280,7 +315,7 @@ HooksRegistrar& HooksRegistrar::null(
 {
     if (f.empty()) {
         BOOST_THROW_EXCEPTION(einval() << errinfo_what(
-            "Empty functional passed to hook registrarion."
+            "Empty functional passed to hook registration."
         ));
     }
 
@@ -306,7 +341,7 @@ HooksRegistrar& HooksRegistrar::header_data(
 {
     if (f.empty()) {
         BOOST_THROW_EXCEPTION(einval() << errinfo_what(
-            "Empty functional passed to hook registrarion."
+            "Empty functional passed to hook registration."
         ));
     }
 
@@ -332,7 +367,7 @@ HooksRegistrar& HooksRegistrar::request_line(
 {
     if (f.empty()) {
         BOOST_THROW_EXCEPTION(einval() << errinfo_what(
-            "Empty functional passed to hook registrarion."
+            "Empty functional passed to hook registration."
         ));
     }
 
@@ -358,7 +393,7 @@ HooksRegistrar& HooksRegistrar::response_line(
 {
     if (f.empty()) {
         BOOST_THROW_EXCEPTION(einval() << errinfo_what(
-            "Empty functional passed to hook registrarion."
+            "Empty functional passed to hook registration."
         ));
     }
 
@@ -384,7 +419,7 @@ HooksRegistrar& HooksRegistrar::connection(
 {
     if (f.empty()) {
         BOOST_THROW_EXCEPTION(einval() << errinfo_what(
-            "Empty functional passed to hook registrarion."
+            "Empty functional passed to hook registration."
         ));
     }
 
@@ -410,7 +445,7 @@ HooksRegistrar& HooksRegistrar::transaction(
 {
     if (f.empty()) {
         BOOST_THROW_EXCEPTION(einval() << errinfo_what(
-            "Empty functional passed to hook registrarion."
+            "Empty functional passed to hook registration."
         ));
     }
 
@@ -436,7 +471,7 @@ HooksRegistrar& HooksRegistrar::transaction_data(
 {
     if (f.empty()) {
         BOOST_THROW_EXCEPTION(einval() << errinfo_what(
-            "Empty functional passed to hook registrarion."
+            "Empty functional passed to hook registration."
         ));
     }
 
@@ -446,6 +481,32 @@ HooksRegistrar& HooksRegistrar::transaction_data(
             static_cast<ib_state_event_type_t>(event),
             &Internal::Hooks::transaction_data,
             value_to_data<transaction_data_t>(
+                f,
+                m_engine.main_memory_pool().ib()
+            )
+        )
+    );
+
+    return *this;
+}
+
+HooksRegistrar& HooksRegistrar::context(
+    Engine::state_event_e event,
+    context_t             f
+)
+{
+    if (f.empty()) {
+        BOOST_THROW_EXCEPTION(einval() << errinfo_what(
+            "Empty functional passed to hook registration."
+        ));
+    }
+
+    throw_if_error(
+        ib_hook_context_register(
+            m_engine.ib(),
+            static_cast<ib_state_event_type_t>(event),
+            &Internal::Hooks::context,
+            value_to_data<context_t>(
                 f,
                 m_engine.main_memory_pool().ib()
             )
@@ -667,6 +728,30 @@ HooksRegistrar& HooksRegistrar::response_body_data(transaction_data_t f)
 {
     return transaction_data(
         Engine::response_body_data,
+        f
+    );
+}
+
+HooksRegistrar& HooksRegistrar::context_open(context_t f)
+{
+    return context(
+        Engine::context_open,
+        f
+    );
+}
+
+HooksRegistrar& HooksRegistrar::context_close(context_t f)
+{
+    return context(
+        Engine::context_close,
+        f
+    );
+}
+
+HooksRegistrar& HooksRegistrar::context_destroy(context_t f)
+{
+    return context(
+        Engine::context_destroy,
         f
     );
 }

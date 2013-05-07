@@ -52,12 +52,6 @@ void bootstrap_module(
         NULL,
         NULL,
         NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
         NULL
     );
     ib_module.ib = ib_engine;

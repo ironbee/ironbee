@@ -33,7 +33,7 @@
  *
  * IBPP_BOOTSTRAP_MODULE() takes a function to call on module load.  That
  * function is passed an IronBee::Module reference and can then set up
- * whatever hooks it needs, e.g., via IronBee::Module::set_context_open().
+ * whatever hooks it needs, e.g., via IronBee::Module::set_initialize().
  *
  * IBPP_BOOTSTRAP_MODULE_DELEGATE() supports an object oriented approach.
  * Instead of a function, it takes the name of a class.  An instance of the
@@ -57,17 +57,6 @@
  *   up hooks.
  * - @c destructor --- The destructor will be called when the module is
  *   destroyed.  A default destructor is acceptable.
- * - @c initialize() --- @c initialize is called when the engine
- *   initializes the module.  This is where you should set up hooks or
- *   otherwise do initial interaction with the engine.
- * - @c context_open(@c IronBee::Context @a context) --- @c
- *   context_open is called whenever a new context is opened.  The lifetime
- *   of @a context is until just after the corresponding @c context_destroy
- *   is called.
- * - @c context_close(@c IronBee::Context @a context) --- As above, but
- *   for the context closing.
- * - @c context_destroy(@c IronBee::Context @a context) --- As above,
- *   but for the context being destroyed.
  *
  * Any exceptions thrown in your code, will be translated into, when possible,
  * log error message, and appropriate ib_status_t values.  To assist and
@@ -102,7 +91,6 @@
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/catch.hpp>
-#include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/module.hpp>
 
@@ -115,60 +103,6 @@
 namespace IronBee {
 namespace Internal {
 /// @cond Internal
-
-/**
- * Context open handler for delegate.  Forwards to delegate.
- *
- * @tparam DelegateType Type of @a *delegate.
- * @param[in] delegate Pointer to delegate.
- * @param[in] module   Module.
- * @param[in] context  Context.
- **/
-template <typename DelegateType>
-void delegate_context_open(
-    DelegateType* delegate,
-    Module        module,
-    Context       context
-)
-{
-    delegate->context_open(context);
-}
-
-/**
- * Context close handler for delegate.  Forwards to delegate.
- *
- * @tparam DelegateType Type of @a *delegate.
- * @param[in] delegate Pointer to delegate.
- * @param[in] module   Module.
- * @param[in] context  Context.
- **/
-template <typename DelegateType>
-void delegate_context_close(
-    DelegateType* delegate,
-    Module        module,
-    Context       context
-)
-{
-    delegate->context_close(context);
-}
-
-/**
- * Context destroy handler for delegate.  Forwards to delegate.
- *
- * @tparam DelegateType Type of @a *delegate.
- * @param[in] delegate Pointer to delegate.
- * @param[in] module   Module.
- * @param[in] context  Context.
- **/
-template <typename DelegateType>
-void delegate_context_destroy(
-    DelegateType* delegate,
-    Module        module,
-    Context       context
-)
-{
-    delegate->context_destroy(context);
-}
 
 /**
  * Finalizer for delegates --- destroys delegate.
@@ -204,26 +138,6 @@ void delegate_initialize(
 {
     DelegateType* delegate = new DelegateType(module);
 
-    module.set_context_open(boost::bind(
-        delegate_context_open<DelegateType>,
-        delegate,
-        _1,
-        _2
-    ));
-    module.set_context_close(boost::bind(
-        delegate_context_close<DelegateType>,
-        delegate,
-        _1,
-        _2
-    ));
-    module.set_context_destroy(boost::bind(
-        delegate_context_destroy<DelegateType>,
-        delegate,
-        _1,
-        _2
-    ));
-
-    // Note this one is different!
     module.set_finalize(boost::bind(
         delegate_finalize<DelegateType>,
         delegate,

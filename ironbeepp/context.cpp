@@ -2,6 +2,7 @@
 #include <ironbeepp/site.hpp>
 #include <ironbeepp/engine.hpp>
 
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/core.h>
 

@@ -191,7 +191,7 @@ public:
      *
      * - An Engine parameter is not provided.  Instead, use Module::engine().
      * - Parameters are passed by copy as they are references to underlying
-     *   C objects.  See Module and Context.
+     *   C objects.  See Module.
      * - Any exceptions thrown will be translated to log messages and
      *   appropriate status returns.  See exception.hpp.
      * - As boost::function's, these are compatible with any function pointer
@@ -201,51 +201,25 @@ public:
 
     //! Module callback.
     typedef boost::function<void (Module)> module_callback_t;
-    //! Context callback.
-    typedef boost::function<void (Module, Context)> context_callback_t;
     //! Called on module initialization.
     typedef module_callback_t initialize_t;
      //! Called on module finalization.
     typedef module_callback_t finalize_t;
-    //! Called on context open.
-    typedef context_callback_t context_open_t;
-    //! Called on context close.
-    typedef context_callback_t context_close_t;
-    //! Called on context destroy.
-    typedef context_callback_t context_destroy_t;
 
     //! Chain initialization function.
     void chain_initialize(initialize_t f) const;
     //! Chain finalize function.
     void chain_finalize(finalize_t f) const;
-    //! Chain context open function.
-    void chain_context_open(context_open_t f) const;
-    //! Chain context close function.
-    void chain_context_close(context_close_t f) const;
-    //! Chain context destroy function.
-    void chain_context_destroy(context_destroy_t f) const;
 
     //! Prechain initialization function.  Prefer chain_initialize().
     void prechain_initialize(initialize_t f) const;
     //! Prechain finalize function.  Prefer chain_finalize().
     void prechain_finalize(finalize_t f) const;
-    //! Prechain context open function.  Prefer chain_context_open().
-    void prechain_context_open(context_open_t f) const;
-    //! Prechain context close function.  Prefer chain_context_close().
-    void prechain_context_close(context_close_t f) const;
-    //! Prechain context destroy function.  Prefer chain_context_destroy().
-    void prechain_context_destroy(context_destroy_t f) const;
 
     //! Set initialization function.  Prefer chain_initialize().
     void set_initialize(initialize_t f) const;
     //! Set finalize function.  Prefer chain_finalize().
     void set_finalize(finalize_t f) const;
-    //! Set context open function.  Prefer chain_context_open().
-    void set_context_open(context_open_t f) const;
-    //! Set context close function.  Prefer chain_context_close().
-    void set_context_close(context_close_t f) const;
-    //! Set context destroy function.  Prefer chain_context_destroy().
-    void set_context_destroy(context_destroy_t f) const;
 
     ///@}
 
