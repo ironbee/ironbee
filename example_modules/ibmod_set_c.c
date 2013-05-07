@@ -321,7 +321,7 @@ ib_status_t dir_define(
  * @param[in] cbdata Callback data; case insensitive iff non-NULL.
  * @return
  * - IB_OK on success.
- * - IB_EINVAL] on file system error.
+ * - IB_EINVAL on file system error.
  **/
 static
 ib_status_t dir_define_from_file(
