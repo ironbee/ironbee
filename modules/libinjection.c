@@ -70,7 +70,7 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
                                ib_mpool_t *mp,
                                void *tfn_data,
                                const ib_field_t *field_in,
-                               ib_field_t **field_out,
+                               const ib_field_t **field_out,
                                ib_flags_t *pflags)
 {
     assert(ib != NULL);
@@ -93,12 +93,14 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
     size_t buf_out_len;
     size_t lead_len = 0;
     char prev_token_type;
+    ib_field_t *field_new;
     ib_status_t rc;
 
     /* Currently only bytestring types are supported.
      * Other types will just get passed through. */
     if (field_in->type != IB_FTYPE_BYTESTR) {
-        return ib_field_copy(field_out, mp, field_in->name, field_in->nlen, field_in);
+        *field_out = field_in;
+        return IB_OK;
     }
 
     /* Extract the underlying incoming value. */
@@ -190,10 +192,14 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
     if (rc != IB_OK) {
         return rc;
     }
-    return ib_field_create(field_out, mp,
-                           field_in->name, field_in->nlen,
-                           IB_FTYPE_BYTESTR,
-                           ib_ftype_bytestr_mutable_in(bs_out));
+    rc = ib_field_create(&field_new, mp,
+                         field_in->name, field_in->nlen,
+                         IB_FTYPE_BYTESTR,
+                         ib_ftype_bytestr_mutable_in(bs_out));
+    if (rc == IB_OK) {
+        *field_out = field_new;
+    }
+    return rc;
 }
 
 /*********************************

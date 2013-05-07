@@ -44,21 +44,38 @@ extern "C" {
 
 
 /**
- * Transformation function.
+ * The defintion of a transformation function.
  *
- * @param[in] fndata Transformation function data (config)
- * @param[in] pool Memory pool to use for allocations
- * @param[in] fin Input field
- * @param[out] data_out Output field
- * @param[in,out] pflags Address of flags set by transformation
+ * Implementations of this type should follow some basic rules:
+ * 
+ *  -# Do not log, unless absolutely necessary. The caller should log.
+ *  -# All input types should have well defined behavior, even if that
+ *     behavior is to return IB_EINVAL.
+ *  -# Fields may have null names with the legnth set to 0. Do 
+ *     not assume that all fields come from the DPI.
+ *  -# @a fout Should not be changed unless you are returning IB_OK.
+ *  -# @a fout May be assigned @a fin if no transformation is
+ *     necessary. Fields are immutable.
+ *  -# Allocate out of the given @a mp so that if you do assign @a fin
+ *     to @a fout their lifetimes will be the same.
  *
- * @returns Status code
+ * @param[in] fndata Transformation function data (config).
+ * @param[in] pool Memory pool to use for allocations.
+ * @param[in] fin Input field. This may be assigned to @a fout.
+ * @param[out] data_out Output field. This may point to @a fin.
+ * @param[in,out] pflags Address of flags set by transformation.
+ *
+ * @returns 
+ *   - IB_OK On success.
+ *   - IB_EALLOC On memory allocation errors.
+ *   - IB_EINVAL If input field type is incompatible with this.
+ *   - IB_EOTHER Something very unexpected happened.
  */
 typedef ib_status_t (*ib_tfn_fn_t)(ib_engine_t *ib,
                                    ib_mpool_t *pool,
                                    void *fndata,
                                    const ib_field_t *fin,
-                                   ib_field_t **data_out,
+                                   const ib_field_t **data_out,
                                    ib_flags_t *pflags);
 
 /** @cond Internal */
@@ -158,7 +175,7 @@ ib_status_t DLL_PUBLIC ib_tfn_transform(ib_engine_t *ib,
                                         ib_mpool_t *mp,
                                         const ib_tfn_t *tfn,
                                         const ib_field_t *fin,
-                                        ib_field_t **fout,
+                                        const ib_field_t **fout,
                                         ib_flags_t *pflags);
 
 /**
@@ -178,7 +195,7 @@ ib_status_t DLL_PUBLIC ib_tfn_data_get_ex(
     ib_data_t   *data,
     const char  *name,
     size_t       nlen,
-    ib_field_t **pf,
+    const ib_field_t **pf,
     const char  *tfn
 );
 
@@ -197,7 +214,7 @@ ib_status_t DLL_PUBLIC ib_tfn_data_get(
     ib_engine_t *ib,
     ib_data_t   *data,
     const char  *name,
-    ib_field_t **pf,
+    const ib_field_t **pf,
     const char  *tfn
 );
 

@@ -742,6 +742,19 @@ ib_status_t DLL_PUBLIC ib_field_list_add(
 );
 
 /**
+ * Add a const field to a IB_FTYPE_LIST field.
+ *
+ * @param[in] f   Field.
+ * @param[in] val Field to add to the list.
+ *
+ * @returns Status code
+ */
+ib_status_t ib_field_list_add_const(
+    ib_field_t *f,
+    const ib_field_t *val
+);
+
+/**
  * Add a buffer to a IB_FTYPE_SBUFFER type field.
  *
  * @param[in] f     Field.

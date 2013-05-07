@@ -708,11 +708,11 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
                                       const ib_tfn_t *tfn,
                                       const ib_field_t *value,
                                       int recursion,
-                                      ib_field_t **result)
+                                      const ib_field_t **result)
 {
-    ib_status_t     rc;
-    ib_field_t     *out = NULL;
-    bool            unroll = false;
+    ib_status_t       rc;
+    const ib_field_t *out = NULL;
+    bool              unroll = false;
 
     assert(rule_exec != NULL);
     assert(tfn != NULL);
@@ -750,6 +750,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
         const ib_list_t *value_list;
         const ib_list_node_t *node;
         ib_list_t *out_list;
+        ib_field_t *fnew;
 
         assert(value->type == IB_FTYPE_LIST);
 
@@ -777,7 +778,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
 
         IB_LIST_LOOP_CONST(value_list, node) {
             const ib_field_t *in;
-            ib_field_t *tfn_out;
+            const ib_field_t *tfn_out;
 
             in = (const ib_field_t *)node->data;
             assert(in != NULL);
@@ -794,7 +795,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
             }
             ib_rule_log_exec_tfn_value(rule_exec->exec_log, in, tfn_out, rc);
 
-            rc = ib_list_push(out_list, tfn_out);
+            rc = ib_list_push(out_list, (void *)tfn_out);
             if (rc != IB_OK) {
                 ib_rule_log_error(rule_exec,
                                   "Error adding tfn result to list: %s",
@@ -804,7 +805,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
         }
 
         /* Finally, create the output field (list) and return it */
-        rc = ib_field_create(&out, rule_exec->tx->mp,
+        rc = ib_field_create(&fnew, rule_exec->tx->mp,
                              value->name, value->nlen,
                              IB_FTYPE_LIST, ib_ftype_list_in(out_list));
         if (rc != IB_OK) {
@@ -812,6 +813,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
                               "Error creating output list field: %s",
                               ib_status_to_string(rc));
         }
+        out = fnew;
     }
 
     /* OK, no unrolling required.  Just execute the transformation. */
@@ -859,7 +861,7 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
     ib_status_t          rc;
     const ib_list_node_t *node = NULL;
     const ib_field_t     *in_field;
-    ib_field_t           *out = NULL;
+    const ib_field_t           *out = NULL;
 
     assert(rule_exec != NULL);
     assert(result != NULL);

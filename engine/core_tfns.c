@@ -60,11 +60,12 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
                               ib_strmod_fn_t str_fn,
                               ib_strmod_ex_fn_t ex_fn,
                               const ib_field_t *fin,
-                              ib_field_t **fout,
+                              const ib_field_t **fout,
                               ib_flags_t *pflags)
 {
     ib_status_t rc;
     ib_flags_t result;
+    ib_field_t *fnew;
 
     assert(ib != NULL);
     assert(mp != NULL);
@@ -93,13 +94,14 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create(fout, mp,
+        rc = ib_field_create(&fnew, mp,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
         if (rc != IB_OK) {
             return rc;
         }
+        *fout = fnew;
         break;
     }
 
@@ -128,12 +130,13 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create_bytestr_alias(fout, mp,
+        rc = ib_field_create_bytestr_alias(&fnew, mp,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
             return rc;
         }
+        *fout = fnew;
         break;
     }
 
@@ -168,7 +171,7 @@ static ib_status_t tfn_lowercase(ib_engine_t *ib,
                                  ib_mpool_t *mp,
                                  void *fndata,
                                  const ib_field_t *fin,
-                                 ib_field_t **fout,
+                                 const ib_field_t **fout,
                                  ib_flags_t *pflags)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
@@ -194,7 +197,7 @@ static ib_status_t tfn_trim_left(ib_engine_t *ib,
                                  ib_mpool_t *mp,
                                  void *fndata,
                                  const ib_field_t *fin,
-                                 ib_field_t **fout,
+                                 const ib_field_t **fout,
                                  ib_flags_t *pflags)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
@@ -220,7 +223,7 @@ static ib_status_t tfn_trim_right(ib_engine_t *ib,
                                   ib_mpool_t *mp,
                                   void *fndata,
                                   const ib_field_t *fin,
-                                  ib_field_t **fout,
+                                  const ib_field_t **fout,
                                   ib_flags_t *pflags)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
@@ -246,7 +249,7 @@ static ib_status_t tfn_trim(ib_engine_t *ib,
                             ib_mpool_t *mp,
                             void *fndata,
                             const ib_field_t *fin,
-                            ib_field_t **fout,
+                            const ib_field_t **fout,
                             ib_flags_t *pflags)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
@@ -272,7 +275,7 @@ static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
                                    ib_mpool_t *mp,
                                    void *fndata,
                                    const ib_field_t *fin,
-                                   ib_field_t **fout,
+                                   const ib_field_t **fout,
                                    ib_flags_t *pflags)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
@@ -298,7 +301,7 @@ static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
                                      ib_mpool_t *mp,
                                      void *fndata,
                                      const ib_field_t *fin,
-                                     ib_field_t **fout,
+                                     const ib_field_t **fout,
                                      ib_flags_t *pflags)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
@@ -324,15 +327,16 @@ static ib_status_t tfn_length(ib_engine_t *ib,
                               ib_mpool_t *mp,
                               void *fndata,
                               const ib_field_t *fin,
-                              ib_field_t **fout,
+                              const ib_field_t **fout,
                               ib_flags_t *pflags)
 {
-    ib_status_t rc = IB_OK;
-
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
     assert(pflags != NULL);
+
+    ib_status_t rc = IB_OK;
+    ib_field_t *fnew;
 
     /**
      * This works on C-style (NUL terminated) and byte strings.  Note
@@ -348,7 +352,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
 
         const ib_num_t len = strlen(fval);
         rc = ib_field_create(
-            fout, mp,
+            &fnew, mp,
             IB_FIELD_NAME("Length"),
             IB_FTYPE_NUM,
             ib_ftype_num_in(&len)
@@ -363,7 +367,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
 
         const ib_num_t len = ib_bytestr_length(value);
         rc = ib_field_create(
-            fout, mp,
+            &fnew, mp,
             IB_FIELD_NAME("Length"),
             IB_FTYPE_NUM,
             ib_ftype_num_in(&len)
@@ -386,7 +390,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
 
         /* Create the outgoing list field */
         rc = ib_field_create(
-            fout, mp,
+            &fnew, mp,
             IB_FIELD_NAME("Length"),
             IB_FTYPE_LIST, NULL
         );
@@ -397,14 +401,14 @@ static ib_status_t tfn_length(ib_engine_t *ib,
         /* Walk through the incoming fields */
         IB_LIST_LOOP_CONST(ilist, node) {
             const ib_field_t *ifield = (ib_field_t *)node->data;
-            ib_field_t *ofield = NULL;
+            const ib_field_t *ofield = NULL;
             ib_flags_t flags = 0;
 
             rc = tfn_length(ib, mp, NULL, ifield, &ofield, &flags);
             if (rc != IB_OK) {
                 return rc;
             }
-            rc = ib_field_list_add(*fout, ofield);
+            rc = ib_field_list_add_const(fnew, ofield);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -413,12 +417,15 @@ static ib_status_t tfn_length(ib_engine_t *ib,
     else {
         const ib_num_t len = 1;
         rc = ib_field_create(
-            fout, mp, fin->name, fin->nlen, IB_FTYPE_NUM,
+            &fnew, mp, fin->name, fin->nlen, IB_FTYPE_NUM,
             ib_ftype_num_in(&len)
         );
     }
 
-    (*pflags) |= IB_TFN_FMODIFIED;
+    if (rc == IB_OK) {
+        (*pflags) |= IB_TFN_FMODIFIED;
+        *fout = fnew;
+    }
     return rc;
 }
 
@@ -438,16 +445,17 @@ static ib_status_t tfn_count(ib_engine_t *ib,
                              ib_mpool_t *mp,
                              void *fndata,
                              const ib_field_t *fin,
-                             ib_field_t **fout,
+                             const ib_field_t **fout,
                              ib_flags_t *pflags)
 {
-    ib_status_t rc = IB_OK;
-    ib_num_t value = 0;
-
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
     assert(pflags != NULL);
+
+    ib_status_t rc = IB_OK;
+    ib_num_t value = 0;
+    ib_field_t *fnew;
 
     /* If this is a list, return it's count */
     if (fin->type == IB_FTYPE_LIST) {
@@ -465,11 +473,15 @@ static ib_status_t tfn_count(ib_engine_t *ib,
 
     /* Create the output field */
     rc = ib_field_create(
-        fout, mp, fin->name, fin->nlen, IB_FTYPE_NUM,
+        &fnew, mp, fin->name, fin->nlen, IB_FTYPE_NUM,
         ib_ftype_num_in(&value)
     );
 
-    (*pflags) |= IB_TFN_FMODIFIED;
+    if (rc == IB_OK) {
+        (*pflags) |= IB_TFN_FMODIFIED;
+        *fout = fnew;
+    }
+
     return rc;
 }
 
@@ -486,17 +498,18 @@ static ib_status_t tfn_count(ib_engine_t *ib,
 static ib_status_t list_minmax(bool is_max,
                                ib_mpool_t *mp,
                                const ib_field_t *fin,
-                               ib_field_t **fout)
+                               const ib_field_t **fout)
 {
-    ib_status_t           rc = IB_OK;
-    const ib_list_t      *lst;
-    const ib_list_node_t *node = NULL;
-    bool             first = true;
-    ib_num_t              mmvalue = 0;     /* Current Min / max value */
-
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
+
+    ib_status_t           rc = IB_OK;
+    ib_field_t           *fnew;
+    const ib_list_t      *lst;
+    const ib_list_node_t *node = NULL;
+    bool                  first = true;
+    ib_num_t              mmvalue = 0;     /* Current Min / max value */
 
     /* Get the incoming list */
     // @todo Remove mutable once list is const correct.
@@ -553,7 +566,7 @@ static ib_status_t list_minmax(bool is_max,
 
         case IB_FTYPE_LIST:
         {
-            ib_field_t *tmp = NULL;
+            const ib_field_t *tmp = NULL;
             ib_num_t v;
 
             rc = list_minmax(is_max, mp, fin, &tmp);
@@ -582,9 +595,13 @@ static ib_status_t list_minmax(bool is_max,
     }
 
     /* Create the output field */
-    rc = ib_field_create(fout, mp,
+    rc = ib_field_create(&fnew, mp,
                          fin->name, fin->nlen,
                          IB_FTYPE_NUM, ib_ftype_num_in(&mmvalue));
+
+    if (rc == IB_OK) {
+        *fout = fnew;
+    }
 
     return rc;
 }
@@ -605,15 +622,15 @@ static ib_status_t tfn_max(ib_engine_t *ib,
                            ib_mpool_t *mp,
                            void *fndata,
                            const ib_field_t *fin,
-                           ib_field_t **fout,
+                           const ib_field_t **fout,
                            ib_flags_t *pflags)
 {
-    ib_status_t rc = IB_OK;
-
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
     assert(pflags != NULL);
+
+    ib_status_t rc = IB_OK;
 
     switch (fin->type) {
         case IB_FTYPE_NUM:
@@ -648,7 +665,7 @@ static ib_status_t tfn_min(ib_engine_t *ib,
                            ib_mpool_t *mp,
                            void *fndata,
                            const ib_field_t *fin,
-                           ib_field_t **fout,
+                           const ib_field_t **fout,
                            ib_flags_t *pflags)
 {
     ib_status_t rc = IB_OK;
@@ -692,20 +709,18 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
                                   ib_mpool_t *mp,
                                   void *fndata,
                                   const ib_field_t *fin,
-                                  ib_field_t **fout,
+                                  const ib_field_t **fout,
                                   ib_flags_t *pflags)
 {
-    ib_status_t rc;
-    ib_flags_t result;
-
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
     assert(pflags != NULL);
 
-    /* Initialize the output field pointer */
-    *fout = NULL;
+    ib_status_t rc;
+    ib_flags_t result;
+    ib_field_t *fnew;
 
     switch(fin->type) {
     case IB_FTYPE_NULSTR :
@@ -723,7 +738,7 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create(fout, mp,
+        rc = ib_field_create(&fnew, mp,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
@@ -758,7 +773,7 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create_bytestr_alias(fout, mp,
+        rc = ib_field_create_bytestr_alias(&fnew, mp,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
@@ -769,6 +784,9 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
     default:
         return IB_EINVAL;
     } /* switch(fin->type) */
+
+    /* When we reach this point rc==IB_OK. Commit the output value. */
+    *fout = fnew;
 
     /* Check the flags */
     if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
@@ -797,20 +815,18 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
                                           ib_mpool_t *mp,
                                           void *fndata,
                                           const ib_field_t *fin,
-                                          ib_field_t **fout,
+                                          const ib_field_t **fout,
                                           ib_flags_t *pflags)
 {
-    ib_status_t rc;
-    ib_flags_t result;
-
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
     assert(pflags != NULL);
 
-    /* Initialize the output field pointer */
-    *fout = NULL;
+    ib_status_t rc;
+    ib_flags_t result;
+    ib_field_t *fnew;
 
     switch(fin->type) {
     case IB_FTYPE_NULSTR :
@@ -828,7 +844,7 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create(fout, mp,
+        rc = ib_field_create(&fnew, mp,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
@@ -863,7 +879,7 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create_bytestr_alias(fout, mp,
+        rc = ib_field_create_bytestr_alias(&fnew, mp,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
@@ -874,6 +890,9 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
     default:
         return IB_EINVAL;
     } /* switch(fin->type) */
+
+    /* When we reach this point, rc==IB_OK. Commit the output values. */
+    *fout = fnew;
 
     /* Check the flags */
     if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
@@ -902,20 +921,18 @@ static ib_status_t normalize_path(ib_engine_t *ib,
                                   ib_mpool_t *mp,
                                   const ib_field_t *fin,
                                   bool win,
-                                  ib_field_t **fout,
+                                  const ib_field_t **fout,
                                   ib_flags_t *pflags)
 {
-    ib_status_t rc;
-    ib_flags_t result;
-
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
     assert(pflags != NULL);
 
-    /* Initialize the output field pointer */
-    *fout = NULL;
+    ib_status_t rc;
+    ib_flags_t result;
+    ib_field_t *fnew;
 
     switch(fin->type) {
     case IB_FTYPE_NULSTR :
@@ -933,7 +950,7 @@ static ib_status_t normalize_path(ib_engine_t *ib,
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create(fout, mp,
+        rc = ib_field_create(&fnew, mp,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
@@ -968,7 +985,7 @@ static ib_status_t normalize_path(ib_engine_t *ib,
         if (rc != IB_OK) {
             return rc;
         }
-        rc = ib_field_create_bytestr_alias(fout, mp,
+        rc = ib_field_create_bytestr_alias(&fnew, mp,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
@@ -979,6 +996,9 @@ static ib_status_t normalize_path(ib_engine_t *ib,
     default:
         return IB_EINVAL;
     } /* switch(fin->type) */
+
+    /* When we reach here, rc == IB_OK. Commit the output values. */
+    *fout = fnew;
 
     /* Check the flags */
     if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
@@ -1007,23 +1027,26 @@ static ib_status_t tfn_normalize_path(ib_engine_t *ib,
                                       ib_mpool_t *mp,
                                       void *fndata,
                                       const ib_field_t *fin,
-                                      ib_field_t **fout,
+                                      const ib_field_t **fout,
                                       ib_flags_t *pflags)
 {
-    ib_status_t rc;
-
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
     assert(pflags != NULL);
 
+    ib_status_t rc;
+
     rc = normalize_path(ib, mp, fin, false, fout, pflags);
+
     return rc;
 }
 
 /**
  * Convert @a fin to @a type and store the result in @a fout.
+ *
+ * If @a fin->type == @a type, then @a fout is set to @a fin.
  *
  * @param[in] ib IronBee engine. Used for logging.
  * @param[in] mp Memory pool. All allocations are out of here.
@@ -1040,7 +1063,7 @@ static ib_status_t tfn_to_type(
     ib_mpool_t *mp,
     ib_ftype_t type,
     const ib_field_t *fin,
-    ib_field_t **fout)
+    const ib_field_t **fout)
 {
     assert(ib != NULL);
     assert(mp != NULL);
@@ -1049,18 +1072,22 @@ static ib_status_t tfn_to_type(
 
     ib_status_t rc;
 
-    rc = ib_field_convert(mp, type, fin, fout);
+    ib_field_t *fnew;
+
+    rc = ib_field_convert(mp, type, fin, &fnew);
     if (rc != IB_OK) {
         return rc;
     }
 
-    /* rc==OK and fout==NULL means the types match and no conversion was done.
-     * Copy the value. */
-    if (*fout == NULL) {
-        return ib_field_copy(fout, mp, fin->name, fin->nlen, fin);
+    /* Commit output value. If fnew == NULL, then there was no conversion. */
+    if (fnew == NULL) {
+        *fout = fin;
+    }
+    else {
+        *fout = fnew;
     }
 
-    return rc;
+    return IB_OK;
 }
 
 /**
@@ -1082,7 +1109,7 @@ static ib_status_t tfn_to_float(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    ib_field_t **fout,
+    const ib_field_t **fout,
     ib_flags_t *pflags)
 {
     return tfn_to_type(ib, mp, IB_FTYPE_FLOAT, fin, fout);
@@ -1107,7 +1134,7 @@ static ib_status_t tfn_to_integer(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    ib_field_t **fout,
+    const ib_field_t **fout,
     ib_flags_t *pflags)
 {
     return tfn_to_type(ib, mp, IB_FTYPE_NUM, fin, fout);
@@ -1132,7 +1159,7 @@ static ib_status_t tfn_to_string(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    ib_field_t **fout,
+    const ib_field_t **fout,
     ib_flags_t *pflags)
 {
     return tfn_to_type(ib, mp, IB_FTYPE_BYTESTR, fin, fout);
@@ -1329,14 +1356,14 @@ static ib_status_t tfn_to_name_common(
     ib_engine_t *ib,
     ib_mpool_t *mp,
     const ib_field_t *fin,
-    ib_field_t **fout)
+    const ib_field_t **fout)
 {
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
-    ib_field_t *new_field;
+    ib_field_t *fnew;
     ib_status_t rc;
     ib_bytestr_t *new_value;
 
@@ -1350,7 +1377,7 @@ static ib_status_t tfn_to_name_common(
     }
 
     rc = ib_field_create(
-        &new_field,
+        &fnew,
         mp,
         fin->name,
         fin->nlen,
@@ -1361,7 +1388,7 @@ static ib_status_t tfn_to_name_common(
     }
 
     /* Commit back the value. */
-    *fout = new_field;
+    *fout = fnew;
 
     return IB_OK;
 }
@@ -1390,7 +1417,7 @@ static ib_status_t tfn_to_name(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    ib_field_t **fout,
+    const ib_field_t **fout,
     ib_flags_t *pflags)
 {
     return tfn_to_name_common(ib, mp, fin, fout);
@@ -1425,7 +1452,7 @@ static ib_status_t tfn_to_names(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    ib_field_t **fout,
+    const ib_field_t **fout,
     ib_flags_t *pflags)
 {
     assert(ib != NULL);
@@ -1433,7 +1460,7 @@ static ib_status_t tfn_to_names(
     assert(fin != NULL);
     assert(fout != NULL);
 
-    ib_field_t *new_field;
+    ib_field_t *fnew;
     ib_status_t rc;
     ib_list_t *new_value;
     const ib_list_t *list;
@@ -1444,39 +1471,22 @@ static ib_status_t tfn_to_names(
         return IB_EINVAL;
     }
 
-    /* Build an output list to hold the values. */
-    rc = ib_list_create(&new_value, mp);
-    if (rc != IB_OK) {
-        return IB_EALLOC;
-    }
-
     /* Get the input list of fields. */
     rc = ib_field_value(fin, ib_ftype_list_out(&list));
     if (rc != IB_OK) {
         return rc;
     }
 
-    /* Build the new_value list using the input list. */
-    IB_LIST_LOOP_CONST(list, node) {
-        const ib_field_t *list_field =
-            (const ib_field_t*)ib_list_node_data_const(node);
-        ib_field_t *list_out_field;
-        
-        rc = tfn_to_name_common(ib, mp, list_field, &list_out_field);
-        if (rc != IB_OK) {
-            return rc;
-        }
-
-        rc = ib_list_push(new_value, list_out_field);
-        if (rc != IB_OK) {
-            return rc;
-        }
+    /* Build an output list to hold the values. */
+    rc = ib_list_create(&new_value, mp);
+    if (rc != IB_OK) {
+        return IB_EALLOC;
     }
 
     /* If we haven't failed yet, make a new output field holding the created
      * list, new_value. */
     rc = ib_field_create(
-        &new_field,
+        &fnew,
         mp,
         fin->name,
         fin->nlen,
@@ -1486,8 +1496,25 @@ static ib_status_t tfn_to_names(
         return IB_EALLOC;
     }
 
+    /* Build the new_value list using the input list. */
+    IB_LIST_LOOP_CONST(list, node) {
+        const ib_field_t *list_field =
+            (const ib_field_t*)ib_list_node_data_const(node);
+        const ib_field_t *list_out_field;
+        
+        rc = tfn_to_name_common(ib, mp, list_field, &list_out_field);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        rc = ib_field_list_add_const(fnew, list_out_field);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     /* Commit back the new field. */
-    *fout = new_field;
+    *fout = fnew;
     return IB_OK;
 }
 
@@ -1507,18 +1534,19 @@ static ib_status_t tfn_normalize_path_win(ib_engine_t *ib,
                                           ib_mpool_t *mp,
                                           void *fndata,
                                           const ib_field_t *fin,
-                                          ib_field_t **fout,
+                                          const ib_field_t **fout,
                                           ib_flags_t *pflags)
 {
-    ib_status_t rc;
-
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
     assert(pflags != NULL);
 
+    ib_status_t rc;
+
     rc = normalize_path(ib, mp, fin, true, fout, pflags);
+
     return rc;
 }
 

@@ -94,7 +94,7 @@ ib_status_t ib_tfn_transform(ib_engine_t *ib,
                              ib_mpool_t *mp,
                              const ib_tfn_t *tfn,
                              const ib_field_t *fin,
-                             ib_field_t **fout,
+                             const ib_field_t **fout,
                              ib_flags_t *pflags)
 {
     assert(tfn != NULL);
@@ -113,7 +113,7 @@ ib_status_t ib_tfn_data_get_ex(
     ib_data_t   *data,
     const char  *name,
     size_t       nlen,
-    ib_field_t **pf,
+    const ib_field_t **pf,
     const char  *tfn
 )
 {
@@ -126,7 +126,7 @@ ib_status_t ib_tfn_data_get_ex(
 
     /* No tfn just means a normal get. */
     if (tfn == NULL) {
-        rc = ib_data_get_ex(data, name, nlen, pf);
+        rc = ib_data_get_ex(data, name, nlen, (void*)pf);
         return rc;
     }
 
@@ -142,31 +142,32 @@ ib_status_t ib_tfn_data_get_ex(
     /* See if there is already a transformed version, otherwise
      * one needs to be created.
      */
-    rc = ib_data_get_ex(data, fullname, fnlen, pf);
+    rc = ib_data_get_ex(data, fullname, fnlen, (void*)pf);
     if (rc == IB_ENOENT) {
         const char *tname;
         size_t i;
+        ib_field_t *new_pf;
 
         /* Get the non-tfn field. */
-        rc = ib_data_get_ex(data, name, nlen, pf);
+        rc = ib_data_get_ex(data, name, nlen, &new_pf);
         if (rc != IB_OK) {
             return rc;
         }
 
         /* Currently this only works for string type fields. */
-        if (   ((*pf)->type != IB_FTYPE_NULSTR)
-            && ((*pf)->type != IB_FTYPE_BYTESTR))
+        if (   (new_pf->type != IB_FTYPE_NULSTR)
+            && (new_pf->type != IB_FTYPE_BYTESTR))
         {
             return IB_EINVAL;
         }
 
 
         /* Copy the field, noting the tfn. */
-        rc = ib_field_copy(pf, ib_data_pool(data), fullname, fnlen, *pf);
+        rc = ib_field_copy(&new_pf, ib_data_pool(data), fullname, fnlen, new_pf);
         if (rc != IB_OK) {
             return rc;
         }
-        (*pf)->tfn = (char *)ib_mpool_memdup(ib_data_pool(data), tfn, tlen + 1);
+        new_pf->tfn = (char *)ib_mpool_memdup(ib_data_pool(data), tfn, tlen + 1);
 
 
         /* Transform. */
@@ -180,7 +181,7 @@ ib_status_t ib_tfn_data_get_ex(
 
                 rc = ib_tfn_lookup_ex(ib, tname, len, &t);
                 if (rc == IB_OK) {
-                    rc = ib_tfn_transform(ib, ib_data_pool(data), t, *pf, pf, &flags);
+                    rc = ib_tfn_transform(ib, ib_data_pool(data), t, new_pf, (const ib_field_t**) &new_pf, &flags);
                     if (rc != IB_OK) {
                         /// @todo What to do here?  Fail or ignore?
                     }
@@ -194,10 +195,11 @@ ib_status_t ib_tfn_data_get_ex(
         }
 
         /* Store the transformed field. */
-        rc = ib_data_set(data, *pf, name, nlen);
+        rc = ib_data_set(data, new_pf, name, nlen);
         if (rc != IB_OK) {
             return rc;
         }
+        *pf = new_pf;
     }
 
     return rc;
@@ -207,7 +209,7 @@ ib_status_t ib_tfn_data_get(
     ib_engine_t *ib,
     ib_data_t   *data,
     const char  *name,
-    ib_field_t **pf,
+    const ib_field_t **pf,
     const char  *tfn
 )
 {

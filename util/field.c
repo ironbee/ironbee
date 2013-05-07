@@ -765,6 +765,27 @@ failed:
     return rc;
 }
 
+ib_status_t ib_field_list_add_const(
+    ib_field_t *f,
+    const ib_field_t *fval
+)
+{
+    ib_status_t rc;
+    ib_list_t *l = NULL;
+
+    rc = ib_field_mutable_value_type(
+        f,
+        ib_ftype_list_mutable_out(&l),
+        IB_FTYPE_LIST
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_list_push(l, (void *)fval);
+    return rc;
+}
+
 ib_status_t ib_field_list_add(
     ib_field_t *f,
     ib_field_t *fval
