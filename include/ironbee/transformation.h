@@ -47,11 +47,11 @@ extern "C" {
  * The definition of a transformation function.
  *
  * Implementations of this type should follow some basic rules:
- * 
+ *
  *  -# Do not log, unless absolutely necessary. The caller should log.
  *  -# All input types should have well defined behavior, even if that
  *     behavior is to return IB_EINVAL.
- *  -# Fields may have null names with the length set to 0. Do 
+ *  -# Fields may have null names with the length set to 0. Do
  *     not assume that all fields come from the DPI.
  *  -# @a fout Should not be changed unless you are returning IB_OK.
  *  -# @a fout May be assigned @a fin if no transformation is
@@ -65,7 +65,7 @@ extern "C" {
  * @param[out] data_out Output field. This may point to @a fin.
  * @param[in,out] pflags Address of flags set by transformation.
  *
- * @returns 
+ * @returns
  *   - IB_OK On success.
  *   - IB_EALLOC On memory allocation errors.
  *   - IB_EINVAL If input field type is incompatible with this.

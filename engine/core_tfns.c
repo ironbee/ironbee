@@ -1126,7 +1126,7 @@ static ib_status_t tfn_to_type(
  * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
- * @returns 
+ * @returns
  *   - IB_OK If successful.
  *   - IB_EALLOC On allocation errors.
  */
@@ -1151,7 +1151,7 @@ static ib_status_t tfn_to_float(
  * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
- * @returns 
+ * @returns
  *   - IB_OK If successful.
  *   - IB_EALLOC On allocation errors.
  */
@@ -1176,7 +1176,7 @@ static ib_status_t tfn_to_integer(
  * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
- * @returns 
+ * @returns
  *   - IB_OK If successful.
  *   - IB_EALLOC On allocation errors.
  */
@@ -1208,7 +1208,7 @@ typedef ib_float_t (*ib_float_op_t) (ib_float_t);
  * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
- * @returns 
+ * @returns
  *   - IB_OK If successful.
  *   - IB_EALLOC On allocation errors.
  *   - IB_EOTHER If any unexpected error is encountered.
@@ -1297,7 +1297,7 @@ static ib_status_t tfn_float_op(
  * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
- * @returns 
+ * @returns
  *   - IB_OK If successful.
  *   - IB_EALLOC On allocation errors.
  */
@@ -1322,7 +1322,7 @@ static ib_status_t tfn_floor(
  * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
- * @returns 
+ * @returns
  *   - IB_OK If successful.
  *   - IB_EALLOC On allocation errors.
  */
@@ -1347,7 +1347,7 @@ static ib_status_t tfn_ceil(
  * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
- * @returns 
+ * @returns
  *   - IB_OK If successful.
  *   - IB_EALLOC On allocation errors.
  */
@@ -1375,7 +1375,7 @@ static ib_status_t tfn_round(
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
  *
- * @returns 
+ * @returns
  *   - IB_OK if successful.
  *   - IB_EALLOC if allocation error.
  */
@@ -1436,7 +1436,7 @@ static ib_status_t tfn_to_name_common(
  * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
- * @returns 
+ * @returns
  *   - IB_OK if successful.
  *   - IB_EALLOC if allocation error.
  */
@@ -1470,7 +1470,7 @@ static ib_status_t tfn_to_name(
  * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
- * @returns 
+ * @returns
  *   - IB_OK If successful.
  *   - IB_EINVAL If @a fin is not a list.
  *   - IB_EALLOC Failed allocation.
@@ -1532,7 +1532,7 @@ static ib_status_t tfn_to_names(
         const ib_field_t *list_field =
             (const ib_field_t*)ib_list_node_data_const(node);
         const ib_field_t *list_out_field;
-        
+
         rc = tfn_to_name_common(ib, mp, list_field, &list_out_field);
         if (rc != IB_OK) {
             return rc;
