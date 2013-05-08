@@ -34,7 +34,6 @@
 #include "core_audit_private.h"
 #include "engine_private.h"
 #include "managed_collection_private.h"
-#include "rule_engine_private.h"
 #include "state_notify_private.h"
 
 #include <ironbee/bytestr.h>
@@ -2429,15 +2428,6 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = data_default_init(ib, tx);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failed to initialize data provider instance.");
-        return rc;
-    }
-
-    /* Create the rule engine execution environment object */
-    rc = ib_rule_exec_create(tx, NULL);
-    if (rc != IB_OK) {
-        ib_rule_log_tx_error(tx,
-                             "Failed to create rule execution object: %s",
-                             ib_status_to_string(rc));
         return rc;
     }
 

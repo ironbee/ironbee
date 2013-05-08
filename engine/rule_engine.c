@@ -465,8 +465,17 @@ static ib_field_t *get_capture(ib_rule_exec_t *rule_exec)
     return capture;
 }
 
-ib_status_t ib_rule_exec_create(ib_tx_t *tx,
-                                ib_rule_exec_t **rule_exec)
+/**
+ * Create a rule execution object
+ *
+ * @param[in] tx Transaction.
+ * @param[out] rule_exec Rule execution object (or NULL)
+ *
+ * @returns
+ *   - IB_OK on success.
+ */
+static ib_status_t rule_exec_create(ib_tx_t *tx,
+                                    ib_rule_exec_t **rule_exec)
 {
     assert(tx != NULL);
 
@@ -3581,6 +3590,40 @@ static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
     return IB_OK;
 }
 
+/**
+ * Handle the transaction starting.
+ *
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param cbdata Callback data.
+ *
+ * @returns Status code.
+ */
+static ib_status_t rule_engine_tx_started(ib_engine_t *ib,
+                                          ib_tx_t *tx,
+                                          ib_state_event_type_t event,
+                                          void *cbdata)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(event == tx_started_event);
+    assert(cbdata == NULL);
+
+    ib_status_t rc;
+
+    /* Create the rule engine execution environment object */
+    rc = rule_exec_create(tx, NULL);
+    if (rc != IB_OK) {
+        ib_rule_log_tx_error(tx,
+                             "Failed to create rule execution object: %s",
+                             ib_status_to_string(rc));
+        return rc;
+    }
+
+    return IB_OK;
+}
+
 ib_status_t ib_rule_engine_init(ib_engine_t *ib)
 {
     ib_status_t rc;
@@ -3591,6 +3634,13 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib)
         ib_log_error(ib,
                      "Rule engine failed to create rule engine: %s",
                      ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Register the tx start event */
+    rc = ib_hook_tx_register(ib, tx_started_event,
+                             rule_engine_tx_started, NULL);
+    if (rc != IB_OK) {
         return rc;
     }
 

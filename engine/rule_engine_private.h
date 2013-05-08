@@ -141,18 +141,5 @@ struct ib_rule_operator_inst_t {
 ib_status_t ib_rule_engine_init(
     ib_engine_t                *ib);
 
-/**
- * Create a rule execution object
- *
- * @param[in] tx Transaction.
- * @param[out] rule_exec Rule execution object (or NULL)
- *
- * @returns
- *   - IB_OK on success.
- */
-ib_status_t ib_rule_exec_create(
-    ib_tx_t                    *tx,
-    ib_rule_exec_t            **rule_exec);
-
 
 #endif /* IB_RULE_ENGINE_PRIVATE_H_ */
