@@ -391,6 +391,10 @@ IBPP_BOOTSTRAP_MODULE_DELEGATE("set", Delegate)
 
 // PerContext
 
+// This reopening of the anonymous namespace is required to keep doxygen
+// happy.  C++ doesn't care.
+namespace {
+
 void PerContext::add_set(const string& name, set_t set)
 {
     m_sets[name] = set;
@@ -710,4 +714,6 @@ IronBee::Operator::operator_instance_t Delegate::make_operator_instance(
     // Forward to context.
     return module().configuration_data<PerContext>(context)
         .make_operator_instance(set_name);
+}
+
 }
