@@ -1269,13 +1269,17 @@ static ib_status_t modlua_callback_setup(
         ib_log_error(ib, "Failed to push configuration path onto Lua stack.");
         return rc;
     }
+    /* Push connection. */
     lua_pushlightuserdata(L, conn);
+    /* Push transaction. */
     if (tx) {
         lua_pushlightuserdata(L, tx);
     }
     else {
         lua_pushnil(L);
     }
+    /* Push configuration contenxt used in conn. */
+    lua_pushlightuserdata(L, conn->ctx);
 
     return IB_OK;
 }
@@ -1303,7 +1307,7 @@ static ib_status_t modlua_callback_dispatch_base(
     ib_log_debug(ib, "Calling handler for lua module: %s", module->name);
 
     /* Run dispatcher. */
-    lua_rc = lua_pcall(L, 7, 1, 0);
+    lua_rc = lua_pcall(L, 8, 1, 0);
     switch(lua_rc) {
         case 0:
             /* NOP */
@@ -1426,7 +1430,7 @@ static ib_status_t modlua_callback_dispatch(
 }
 
 /**
- * Null callback hook.
+ * Dispatch a null event into a Lua module.
  */
 static ib_status_t modlua_null(
     ib_engine_t *ib,
@@ -1441,9 +1445,12 @@ static ib_status_t modlua_null(
     lua_State *L;
     modlua_lua_cbdata_t *modlua_lua_cbdata;
     ib_module_t *module;
+    ib_context_t *ctx;
 
     modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
     module = modlua_lua_cbdata->module;
+
+    ctx = ib_context_main(ib);
 
     /* Since there is  no connection Lua stack, we make a new one. */
     rc = call_in_critical_section(ib, &ib_lua_new_thread, &L);
@@ -1469,13 +1476,14 @@ static ib_status_t modlua_null(
     lua_pushlightuserdata(L, ib);
     lua_pushinteger(L, module->idx);
     lua_pushinteger(L, event);
-    rc = modlua_push_config_path(ib, ib_context_main(ib), L);
+    rc = modlua_push_config_path(ib, ctx, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Cannot push modlua.config_path to stack.");
         return rc;
     }
-    lua_pushnil(L); /* Connection (conn) is nil. */
-    lua_pushnil(L); /* Transaction (tx) is nil. */
+    lua_pushnil(L);                /* Connection (conn) is nil. */
+    lua_pushnil(L);                /* Transaction (tx) is nil. */
+    lua_pushlightuserdata(L, ctx); /* Configuration context. */
 
     rc = modlua_callback_dispatch_base(ib, module, L);
     if (rc != IB_OK) {
@@ -1497,7 +1505,7 @@ static ib_status_t modlua_null(
 }
 
 /**
- * Connection callback hook.
+ * Dispatch a connection event into a Lua module.
  */
 static ib_status_t modlua_conn(
     ib_engine_t *ib,
@@ -1527,7 +1535,7 @@ static ib_status_t modlua_conn(
 }
 
 /**
- * Transaction callback hook.
+ * Dispatch a transaction event into a Lua module.
  */
 static ib_status_t modlua_tx(
     ib_engine_t *ib,
@@ -1558,7 +1566,7 @@ static ib_status_t modlua_tx(
 }
 
 /**
- * Transaction data callback hook.
+ * Dispatch a transaction data event into a Lua module.
  */
 static ib_status_t modlua_txdata(
     ib_engine_t *ib,
@@ -1590,7 +1598,7 @@ static ib_status_t modlua_txdata(
 }
 
 /**
- * Header callback hook.
+ * Dispatch a header callback hook.
  */
 static ib_status_t modlua_header(
     ib_engine_t *ib,
@@ -1622,7 +1630,7 @@ static ib_status_t modlua_header(
 }
 
 /**
- * Request line callback hook.
+ * Dispatch a request line callback hook.
  */
 static ib_status_t modlua_reqline(
     ib_engine_t *ib,
@@ -1654,7 +1662,7 @@ static ib_status_t modlua_reqline(
 }
 
 /**
- * Response line callback hook.
+ * Dispatch a response line callback hook.
  */
 static ib_status_t modlua_respline(
     ib_engine_t *ib,
@@ -1686,7 +1694,7 @@ static ib_status_t modlua_respline(
 }
 
 /**
- * Context callback hook.
+ * Dispatch a context event into a Lua module.
  */
 static ib_status_t modlua_ctx(
     ib_engine_t *ib,
@@ -1699,19 +1707,64 @@ static ib_status_t modlua_ctx(
     assert(ib);
 
     ib_status_t rc;
+    ib_status_t join_rc;
+    lua_State *L;
+    modlua_lua_cbdata_t *modlua_lua_cbdata;
+    ib_module_t *module;
 
-    /* TODO */
-    rc = modlua_callback_setup(ib, event, NULL, NULL, cbdata);
+    modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
+    module = modlua_lua_cbdata->module;
+
+    /* Allocate a new Lua thread in a thread-safe manner. */
+    rc = call_in_critical_section(ib, &ib_lua_new_thread, &L);
     if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to allocate new Lua thread.");
         return rc;
     }
 
-    /* Custom table setup */
-
-    /* TODO */
-    rc = modlua_callback_dispatch(ib, event, NULL, NULL, cbdata);
+    /* Push Lua dispatch method to stack. */
+    rc = modlua_push_dispatcher(ib, module, event, L);
     if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
         return rc;
+    }
+
+    /* Push Lua handler onto the table. */
+    rc = modlua_push_lua_handler(ib, module, event, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot push modlua event handler to stack.");
+        return rc;
+    }
+
+    /* Push handler arguments... */
+    /* Push ib... */
+    lua_pushlightuserdata(L, ib);             /* Push module index... */
+    lua_pushinteger(L, module->idx);          /* Push event type... */
+    lua_pushinteger(L, event);                /* Push event type... */
+    rc = modlua_push_config_path(ib, ctx, L); /* Push ctx path table... */
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot push modlua.config_path to stack.");
+        return rc;
+    }
+    lua_pushnil(L);                /* Connection (conn) is nil... */
+    lua_pushnil(L);                /* Transaction (tx) is nil... */
+    lua_pushlightuserdata(L, ctx); /* Push configuration context. */
+
+    rc = modlua_callback_dispatch_base(ib, module, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failure while executing callback handler.");
+        /* Do not return. We must join the Lua thread. */
+    }
+
+    /* Join lua thread in a thread-safe manner. */
+    join_rc = call_in_critical_section(ib, &ib_lua_join_thread, &L);
+    if (join_rc != IB_OK) {
+        ib_log_alert(ib, "Failed to join created Lua thread.");
+
+        /* If there is no other error, return the join error. */
+        if (rc == IB_OK) {
+            rc = join_rc;
+        }
     }
 
     return rc;
@@ -1901,6 +1954,8 @@ static ib_status_t modlua_module_load_lua(
  *                @a module.
  * @returns
  *   - IB_OK on success.
+ *   - IB_EALLOC on allocation errors.
+ *   - IB_EOTHER on unexpected errors. 
  */
 static ib_status_t modlua_module_load_wire_callbacks(
     ib_engine_t *ib,

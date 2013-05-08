@@ -118,6 +118,12 @@ local stateToInt = {
         tonumber(ffi.C.response_finished_event),
     ["handle_logevent_event"] =
         tonumber(ffi.C.handle_logevent_event)
+    ["handle_context_open_event"] =
+        tonumber(ffi.C.handle_context_open_event)
+    ["handle_context_close_event"] =
+        tonumber(ffi.C.handle_context_close_event)
+    ["handle_context_destroy_event"] =
+        tonumber(ffi.C.handle_context_destroy_event)
 }
 
 -- Build reverse map of stateToInt.
@@ -392,6 +398,9 @@ end
 --            - response_body_data_event
 --            - response_finished_event
 --            - handle_logevent_event
+--            - handle_context_open_event
+--            - handle_context_close_event
+--            - handle_context_destroy_event
 _M.load_module = function(
     ib,
     ib_module,
@@ -544,6 +553,9 @@ end
 -- @param[in] ctxlst List of contexts.
 -- @param[in] ib_conn The connection pointer. May be nil for null callbacks.
 -- @param[in] ib_tx The transaction pointer. May be nil.
+-- @param[in] ib_ctx The configuration context in the case of 
+--            context events. If this is nil, then the main context
+--            is fetched out of ib_engine.
 --
 -- @returns And integer representation of an ib_status_t.
 --   - IB_OK on success.
@@ -555,7 +567,8 @@ _M.dispatch_module = function(
     event,
     ctxlst,
     ib_conn,
-    ib_tx)
+    ib_tx,
+    ib_ctx)
 
     local args
 
@@ -577,6 +590,14 @@ _M.dispatch_module = function(
     if ib_conn ~= nil then
         -- Connection.
         args.ib_conn = ffi.cast("ib_conn_t*", ib_conn)
+    end
+
+    if ib_ctx == nil then
+        -- Configuration context for context events.
+        args.ib_ctx = ffi.C.ib_context_main(ib_engine)
+    else
+        -- Configuration context for context events.
+        args.ib_ctx = ffi.cast("ib_context_t*", ib_ctx)
     end
 
     -- Dispatch
