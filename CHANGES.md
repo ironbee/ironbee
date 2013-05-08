@@ -29,6 +29,9 @@ IronBee v0.8.0
   reusing the static.  This change allows simultaneous use of modules by
   multiple engines.
 
+* The context hook functions have been removed from the module initialization
+  structures, and have been replaced with context hook registration functions.
+
 * As part of the ongoing provider removal project, the matcher provider was removed.  Nothing was using it.
 
 **Util**
