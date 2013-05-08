@@ -175,7 +175,7 @@ _M.False = _M.C("false")
 -- Calls
 
 local param1 = {'LLength', 'Not', 'Field'}
-local param2 = {'Sub', 'Suball', 'Name', 'Rx', 'Transformation'}
+local param2 = {'Sub', 'Suball', 'SetName', 'Rx', 'Transformation'}
 local param3 = {'Operator'}
 local paramn = {'Or', 'And', 'List'}
 for i,n in ipairs(param1) do

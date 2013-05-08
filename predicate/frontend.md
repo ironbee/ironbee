@@ -281,7 +281,7 @@ Method                       | Meaning                               | Notes |
 `P.Length(collection)`       | Number of items                       |       |
 `P.Sub(name, collection)`    | First subfield `name` in `collection` | 4     |
 `P.Suball(name, collection)` | All subfields `name` in `collection`  | 4     |
-`P.Name(name, value)`        | Construct named value                 |       |
+`P.SetName(name, value)`     | Construct named value                 |       |
 `P.List(...)`                | Construct list                        |       |
 `P.Field(name)`              | Data field `name`                     |       |
 

@@ -657,12 +657,12 @@ Value SpecificTransformation::calculate(EvalContext context)
     );
 }
 
-string Name::name() const
+string SetName::name() const
 {
-    return "name";
+    return "set_name";
 }
 
-Value Name::calculate(EvalContext context)
+Value SetName::calculate(EvalContext context)
 {
     Value name  = children().front()->eval(context);
     Value value = children().back()->eval(context);
@@ -821,7 +821,7 @@ void load(CallFactory& to)
         .add<Field>()
         .add<Operator>()
         .add<Transformation>()
-        .add<Name>()
+        .add<SetName>()
         .add<List>()
         .add<Sub>()
         .add<SubAll>()

@@ -19,7 +19,7 @@
 
 <p>The Lua Front End provides an API for easy construction of Predicate expressions.</p>
 
-<p>To use, simply load <code>ibmod_predicate</code> and make use of the functions in the <code>Predicate</code> table. If you are using it outside of IronBee, then load <code>predicate.lua</code> as a module.</p>
+<p>The easiest way to use in IronBee is via waggle. Add <code>predicate(...)</code> to your signatures and then <code>LuaInclude</code> the file. Predicate will be available as both <code>P</code> and <code>Predicate</code>. Be sure to load <code>ibmod_predicate</code> before the <code>LuaInclude</code>. If you are using it outside of IronBee, then load <code>../lua/ironbee/predicate.lua</code> as a module.</p>
 
 <h2 id="examples">Examples</h2>
 
@@ -657,7 +657,7 @@ a = P.from_lua(&quot;foo&quot;) + &quot;bar&quot;
 	<td style="text-align:left;">4</td>
 </tr>
 <tr>
-	<td style="text-align:left;"><code>P.Name(name, value)</code></td>
+	<td style="text-align:left;"><code>P.SetName(name, value)</code></td>
 	<td style="text-align:left;">Construct named value</td>
 	<td style="text-align:left;"></td>
 </tr>

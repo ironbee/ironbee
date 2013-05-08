@@ -254,20 +254,20 @@ TEST_F(TestStandard, SpecificTransformation)
 
 TEST_F(TestStandard, Name)
 {
-    EXPECT_TRUE(eval_bool("(name 'a' 'b')"));
-    EXPECT_EQ("b", eval_s("(name 'a' 'b')"));
-    EXPECT_THROW(eval_bool("(name)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(name null 'a')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(name 'a')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(name 'a' 'b' 'c')"), IronBee::einval);
+    EXPECT_TRUE(eval_bool("(set_name 'a' 'b')"));
+    EXPECT_EQ("b", eval_s("(set_name 'a' 'b')"));
+    EXPECT_THROW(eval_bool("(set_name)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(set_name null 'a')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(set_name 'a')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(set_name 'a' 'b' 'c')"), IronBee::einval);
 }
 
 TEST_F(TestStandard, Sub)
 {
-    EXPECT_EQ("foo", eval_s("(sub 'a' (list (name 'a' 'foo') (name 'b' 'bar')))"));
-    EXPECT_EQ("foo", eval_s("(sub 'A' (list (name 'a' 'foo') (name 'b' 'bar')))"));
-    EXPECT_EQ("bar", eval_s("(sub 'b' (list (name 'a' 'foo') (name 'b' 'bar')))"));
-    EXPECT_FALSE(eval_bool("(sub 'c' (list (name 'a' 'foo') (name 'b' 'bar')))"));
+    EXPECT_EQ("foo", eval_s("(sub 'a' (list (set_name 'a' 'foo') (set_name 'b' 'bar')))"));
+    EXPECT_EQ("foo", eval_s("(sub 'A' (list (set_name 'a' 'foo') (set_name 'b' 'bar')))"));
+    EXPECT_EQ("bar", eval_s("(sub 'b' (list (set_name 'a' 'foo') (set_name 'b' 'bar')))"));
+    EXPECT_FALSE(eval_bool("(sub 'c' (list (set_name 'a' 'foo') (set_name 'b' 'bar')))"));
 
     EXPECT_THROW(eval_bool("(sub)"), IronBee::einval);
     EXPECT_THROW(eval_bool("(sub null (list))"), IronBee::einval);
@@ -277,7 +277,7 @@ TEST_F(TestStandard, Sub)
 
 TEST_F(TestStandard, SubAll)
 {
-    EXPECT_EQ(2, eval_n("(transformation 'count' (suball 'a' (list (name 'a' 'foo') (name 'a' 'bar') (name 'b' 'baz'))))"));
+    EXPECT_EQ(2, eval_n("(transformation 'count' (suball 'a' (list (set_name 'a' 'foo') (set_name 'a' 'bar') (set_name 'b' 'baz'))))"));
     EXPECT_THROW(eval_bool("(suball)"), IronBee::einval);
     EXPECT_THROW(eval_bool("(suball null (list))"), IronBee::einval);
     EXPECT_THROW(eval_bool("(suball 'a')"), IronBee::einval);

@@ -37,11 +37,11 @@ Data
 Sub returns the first found member of the collection with the given name.  SubAll returns a list of all members with the given name.  Both return Null if there is no member with the given name.
 
 - `(list a...)`: Construct a list from one or more children.
-- `(name n v)`: Construct a named value with name `n` and value `v`.
+- `(set_name n v)`: Construct a named value with name `n` and value `v`.
 
-List and Name can be used together to build collections, e.g.,
+List and SetName can be used together to build collections, e.g.,
 
-    (list (name 'foo' 1) (name 'bar' 2))
+    (list (set_name 'foo' 1) (set_name 'bar' 2))
 
 IronBee
 -------

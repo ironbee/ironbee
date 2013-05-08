@@ -48,12 +48,12 @@
 
 <ul>
 <li><code>(list a...)</code>: Construct a list from one or more children.</li>
-<li><code>(name n v)</code>: Construct a named value with name <code>n</code> and value <code>v</code>.</li>
+<li><code>(set_name n v)</code>: Construct a named value with name <code>n</code> and value <code>v</code>.</li>
 </ul>
 
-<p>List and Name can be used together to build collections, e.g.,</p>
+<p>List and SetName can be used together to build collections, e.g.,</p>
 
-<pre><code>(list (name 'foo' 1) (name 'bar' 2))
+<pre><code>(list (set_name 'foo' 1) (set_name 'bar' 2))
 </code></pre>
 
 <h2 id="ironbee">IronBee</h2>

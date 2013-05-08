@@ -393,8 +393,8 @@ private:
 /**
  * Construct a named value from a name (string) and value.
  **/
-class Name :
-    public Validate::Call<Name>,
+class SetName :
+    public Validate::Call<SetName>,
     public Validate::NChildren<2,
            Validate::NthChildIsString<0,
            Validate::NthChildIsNotNull<1
