@@ -3571,6 +3571,14 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             corecfg->block_mode = IB_CORE_BLOCK_STATUS;
             ib_log_debug2(ib, "BlockingMethod: %d", status);
         }
+        else {
+            ib_log_error(
+                ib,
+                "Unrecognized parameter to directive \"%s\": \"%s\"",
+                name,
+                p1);
+            return IB_EINVAL;
+        }
         return IB_OK;
     }
     else if (strcasecmp("Log", name) == 0)
