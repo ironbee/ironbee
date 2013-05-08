@@ -80,16 +80,16 @@ CANONICAL_INCLUDE_ORDER = [
   '"engine_private.h"',
   '"ironbee_private.h"',
   '"json_yajl_private.h"',
+  '"kvstore_private.h"',
+  '"lua/ironbee.h"',
+  '"lua_common_private.h"',
+  '"managed_collection_private.h"',
+  '"moddevel_private.h"',
   '"rule_engine_private.h"',
   '"rule_logger_private.h"',
-  '"managed_collection_private.h"',
   '"rules_lua_private.h"',
   '"state_notify_private.h"',
   '"user_agent_private.h"',
-  '"lua/ironbee.h"',
-  '"lua_common_private.h"',
-  '"moddevel_private.h"',
-  '"kvstore_private.h"',
 
   # Automata
   '<ironautomata/bits.h>',
@@ -117,12 +117,14 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/cfgmap.h>',
   '<ironbee/clock.h>',
   '<ironbee/config.h>',
+  '<ironbee/context.h>',
   '<ironbee/context_selection.h>',
   '<ironbee/core.h>',
   '<ironbee/data.h>',
   '<ironbee/decode.h>',
   '<ironbee/dso.h>',
   '<ironbee/engine.h>',
+  '<ironbee/engine_state.h>',
   '<ironbee/engine_types.h>',
   '<ironbee/escape.h>',
   '<ironbee/expand.h>',
@@ -305,7 +307,7 @@ all_ironbee_code do |path|
       "(ironbee|ironautomata|predicate)/(.+/)?" + File.basename(path, $1) + '\.h' + ($2 || "")
     )
     private_name = Regexp.new(
-      File.basename(path, $1) + '_private\.h' + ($2 || "")
+      '^"' + File.basename(path, $1) + '_private\.h' + ($2 || "")
     )
   end
   extract_includes(path).each do |i|
