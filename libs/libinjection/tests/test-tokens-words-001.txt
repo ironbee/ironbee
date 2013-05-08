@@ -1,8 +1,0 @@
---TEST--
-keyword parsing, note truncation of really long word
---INPUT--
-SELECT AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB;
---EXPECTED--
-k SELECT
-n AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-; ;

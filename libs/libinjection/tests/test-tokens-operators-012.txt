@@ -1,9 +1,0 @@
---TEST--
-operator
---INPUT--
-SELECT NOT 1;
---EXPECTED--
-k SELECT
-o NOT
-1 1
-; ;

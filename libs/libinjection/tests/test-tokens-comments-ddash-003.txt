@@ -1,9 +1,0 @@
---TEST--
-Double dash 'till end of line' comment.  Comment is removed not last token.
---INPUT--
-SELECT 1 -- ABCD
-;
---EXPECTED--
-k SELECT
-1 1
-; ;

@@ -1,8 +1,0 @@
---TEST--
-Bizarre MySQL shortcut for NULL
---INPUT--
-SELECT \N;
---EXPECTED--
-k SELECT
-1 NULL
-; ;

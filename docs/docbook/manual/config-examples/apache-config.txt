@@ -1,4 +1,0 @@
-<IfModule ironbee_module>
-    IronbeeConfigFile /usr/local/ironbee/etc/ironbee-httpd.conf
-    IronbeeRawHeaders On
-</IfModule>

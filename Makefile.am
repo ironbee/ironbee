@@ -1,55 +1,36 @@
-ACLOCAL_AMFLAGS = -I acinclude
-SUBDIRS = @TOPLEVEL_SUBDIRS@
 
-include $(top_srcdir)/build/common.mk
-EXTRA_DIST = include \
-             ironbee_config_auto.h \
-             README.md \
-             CHANGES.md \
-             CODESTYLE.md \
-             DEVELOPMENT.md
+ACLOCAL_AMFLAGS= -I m4
 
-RPM_RELEASE ?= 1
+SUBDIRS= $(GENERIC_LIBRARY_NAME) test docs
+
+DIST_SUBDIRS = $(GENERIC_LIBRARY_NAME) test docs
+EXTRA_DIST = LICENSE NOTICE docs/doxygen.conf docs/QUICK_START 
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = ironbee.pc
-# Sort to eliminate duplicates if top_srcdir == top_builddir
-pkginclude_HEADERS = $(sort $(wildcard $(top_srcdir)/include/ironbee/*.h) $(top_builddir)/include/ironbee/release.h)
+pkgconfig_DATA = htp.pc
+
+test: all
+	@(cd test && $(MAKE) $@)
+
+test-compile-only: all
+	@(cd test && $(MAKE) $@)
+
+check-compile-only: all
+	@(cd test && $(MAKE) $@)
+
 doxygen doxygen-pdf:
 	@(cd docs && $(MAKE) $@)
 
-manual:
-	@(cd docs && $(MAKE) manual)
-
-luajit:
-	@(cd libs && $(MAKE) )
-
-nginx:
-	@(cd servers/nginx && $(MAKE) nginx )
-
-nginx-install:	nginx
-	@(cd servers/nginx && $(MAKE) nginx-install)
-
-tengine-install:
-	@(cd servers/nginx && $(MAKE) tengine-install)
-
-.PHONY: doxygen doxygen-pdf manual luajit nginx
-
-rpm_topdir=$(abs_top_builddir)/packaging/rpm
-rpm-package: dist
-	if test x$(HAVE_RPM) = xyes ; then \
-		cd $(rpm_topdir) ; \
-		mkdir -p BUILD RPMS SOURCES ; \
-		cd SOURCES ; \
-		ln -s ../../../$(distdir).tar.gz ; \
-		cd .. ; \
-		rpmbuild --define "_topdir $(rpm_topdir)" --define "_release $(RPM_RELEASE)" -ba ironbee.spec && \
-		echo "Package successfully built in `pwd`/RPMS." ; \
-	else \
-		echo "Error: RPM executable and/or source directory not found." ; \
+gcov: test		
+	@ if [[ -x $(LCOV) ]]; then \
+		lcov --capture --directory $(top_builddir)/htp/ --output-file $(top_builddir)/test/coverage.info --no-external ; \
+		genhtml $(top_builddir)/test/coverage.info --output-directory $(top_builddir)/docs/lcov ; \
+		echo "" ; \
+		echo "Open docs/lcov/index.html to review lcov output" ; \
 	fi
 
-if CPP
-ironbeepp_include_HEADERS = \
-    $(top_srcdir)/include/ironbeepp/*.hpp
-endif
+clean-local:
+	rm -rf $(top_builddir)/docs/doxygen
+	rm -rf $(top_builddir)/docs/lcov
+	find $(top_builddir) -type f \( -name '*.gcda' -o -name '*.gcno' -o -name '*.gcov' \) -exec rm '{}' ';'
+	   
