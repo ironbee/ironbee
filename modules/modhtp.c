@@ -768,6 +768,7 @@ static modhtp_txdata_t *modhtp_get_txdata_parser(
     assert(parser != NULL);
     modhtp_txdata_t      *txdata;
     modhtp_parser_data_t *parser_data;
+    htp_tx_t *htx;
 
     parser_data = htp_connp_get_user_data(parser);
     assert(parser_data != NULL);
@@ -782,7 +783,19 @@ static modhtp_txdata_t *modhtp_get_txdata_parser(
     if (parser_data->disconnected) {
         return NULL;
     }
-    txdata = htp_tx_get_user_data(parser->in_tx);
+
+    /* Attempt to get the active libhtp transaction. */
+    htx = htp_connp_get_in_tx(parser);
+    if (htx == NULL) {
+        /* No active inbound transaction. */
+        htx = htp_connp_get_out_tx(parser);
+        if (htx == NULL) {
+            /* No active transaction. */
+            return NULL;
+        }
+    }
+
+    txdata = htp_tx_get_user_data(htx);
     assert(txdata != NULL);
     assert(txdata->parser_data != NULL);
     assert(txdata->parser_data == parser_data);
