@@ -1186,6 +1186,10 @@ static ib_status_t expand_field(
     /* Wrap the string into a field and set it to the tmp_field.
      * We will not try to expand tmp_field into a number. If we
      * fail, we return tmp_field in *out_field. */
+
+    /* FIXME NRL: This should be ib_field_create_alias(), but, for some
+     * reason that I've not been able to figure out, that causes the
+     * ib_field_convert() call below to fail (at least in some cases) */
     rc = ib_field_create(
         &tmp_field,
         rule_exec->tx->mp,
