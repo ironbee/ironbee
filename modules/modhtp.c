@@ -29,6 +29,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
+#include <ironbee/flags.h>
 #include <ironbee/hash.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
@@ -126,8 +127,25 @@ struct modhtp_txdata_t {
     const modhtp_parser_data_t *parser_data; /**< Connection parser data */
     int                         error_code;  /**< Error code from parser */
     const char                 *error_msg;   /**< Error message from parser */
+    ib_flags_t                  flags;       /**< Various flags */
 };
 typedef struct modhtp_txdata_t modhtp_txdata_t;
+
+/**
+ * Flags for modhtp_txdata_t.flags
+ */
+static const ib_flags_t txdata_none      = 0;         /**< No flags */
+static const ib_flags_t txdata_req_start = (1 <<  0);  /**< req_start() */
+static const ib_flags_t txdata_req_line  = (1 <<  1);  /**< req_line() */
+static const ib_flags_t txdata_req_hdrs  = (1 <<  2);  /**< req_headers() */
+static const ib_flags_t txdata_req_body  = (1 <<  3);  /**< req_body_data() */
+static const ib_flags_t txdata_req_trail = (1 <<  4);  /**< req_trailer() */
+static const ib_flags_t txdata_req_comp  = (1 <<  5);  /**< req_complete() */
+static const ib_flags_t txdata_rsp_line  = (1 <<  6);  /**< rsp_line() */
+static const ib_flags_t txdata_rsp_hdrs  = (1 <<  7);  /**< rsp_headers() */
+static const ib_flags_t txdata_rsp_body  = (1 <<  8);  /**< rsp_body_data() */
+static const ib_flags_t txdata_rsp_trail = (1 <<  9);  /**< rsp_trailer() */
+static const ib_flags_t txdata_rsp_comp  = (1 << 10);  /**< rsp_complete() */
 
 /**
  * Callback data for the param iterator callback
@@ -634,8 +652,9 @@ static inline ib_status_t modhtp_set_hostname(
     assert(itx != NULL);
     assert(htx != NULL);
 
-    ib_status_t      rc;
-    const htp_uri_t *uri;
+    ib_status_t        rc;
+    const htp_uri_t   *uri;
+    static const char *name = "Hostname";
 
     /* If it's already set, we're done. */
     if ( (itx->hostname != NULL) && (*(itx->hostname) != '\0') ) {
@@ -646,7 +665,7 @@ static inline ib_status_t modhtp_set_hostname(
 
     /* First, try the request hostname from libhtp. */
     if (htx->request_hostname != NULL) {
-        rc = modhtp_set_nulstr(itx, "Hostname", force,
+        rc = modhtp_set_nulstr(itx, name, force,
                                htx->request_hostname,
                                NULL,
                                &(itx->hostname));
@@ -663,8 +682,8 @@ static inline ib_status_t modhtp_set_hostname(
 
     /* Next, try the hostname in the parsed URI from libhtp. */
     uri = htx->parsed_uri;
-    if (uri != NULL) {
-        rc = modhtp_set_nulstr(itx, "Hostname", force,
+    if ( (uri != NULL) && (uri->hostname != NULL) ) {
+        rc = modhtp_set_nulstr(itx, name, force,
                                uri->hostname,
                                NULL,
                                &(itx->hostname));
@@ -678,6 +697,36 @@ static inline ib_status_t modhtp_set_hostname(
             return rc;
         }
     }
+
+    /* See if there's a host name in IronBee's parsed header */
+    if (itx->request_header != NULL) {
+        const ib_parsed_name_value_pair_list_t *node;
+        for (node = itx->request_header->head;
+             node != NULL;
+             node = node->next)
+        {
+            if (strncasecmp((const char *)ib_bytestr_const_ptr(node->name),
+                            "host",
+                            ib_bytestr_length(node->name)) == 0)
+            {
+                itx->hostname =
+                    ib_mpool_memdup_to_str(itx->mp,
+                                           ib_bytestr_const_ptr(node->value),
+                                           ib_bytestr_length(node->value));
+                if (itx->hostname == NULL) {
+                    return IB_EALLOC;
+                }
+                else {
+                    ib_log_debug_tx(itx,
+                                    "Set hostname to \"%s\" "
+                                    "from IronBee parsed header",
+                                    itx->hostname);
+                    return IB_OK;
+                }
+            }
+        }
+    }
+
 
     /* Finally, fall back to the connection's IP. */
     if (itx->conn->local_ipstr != NULL) {
@@ -1159,6 +1208,8 @@ static int modhtp_htp_req_start(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    assert(txdata != NULL);
+    txdata->flags |= txdata_req_start;
 
     return HTP_OK;
 }
@@ -1179,6 +1230,7 @@ static int modhtp_htp_req_line(
         return HTP_ERROR;
     }
     assert(txdata != NULL);
+    txdata->flags |= txdata_req_line;
     itx = txdata->itx;
     htx = txdata->htx;
 
@@ -1227,18 +1279,17 @@ static int modhtp_htp_req_line(
     return HTP_OK;
 }
 
-static int modhtp_htp_req_headers(
-    htp_connp_t    *connp)
+static int modhtp_process_req_headers(
+    modhtp_txdata_t *txdata)
 {
-    modhtp_txdata_t *txdata;
-    ib_status_t      irc;
-
-    /* Check the parser status */
-    irc = modhtp_check_parser(connp, "Request Headers", &txdata);
-    if (irc != IB_OK) {
-        return HTP_ERROR;
-    }
     assert(txdata != NULL);
+    ib_status_t irc;
+
+    /* Prevent duplicate calls */
+    if (ib_flags_all(txdata->flags, txdata_req_hdrs)) {
+        return HTP_OK;
+    }
+    txdata->flags |= txdata_req_hdrs;
 
     /* Set the IronBee transaction hostname if possible */
     irc = modhtp_set_hostname(txdata->htx, false, txdata->itx);
@@ -1252,6 +1303,22 @@ static int modhtp_htp_req_headers(
     return HTP_OK;
 }
 
+static int modhtp_htp_req_headers(
+    htp_connp_t    *connp)
+{
+    modhtp_txdata_t *txdata;
+    ib_status_t      irc;
+
+    /* Check the parser status */
+    irc = modhtp_check_parser(connp, "Request Headers", &txdata);
+    if (irc != IB_OK) {
+        return HTP_ERROR;
+    }
+    assert(txdata != NULL);
+
+    return modhtp_process_req_headers(txdata);
+}
+
 static int modhtp_htp_req_body_data(
     htp_tx_data_t    *htp_tx_data)
 {
@@ -1261,10 +1328,10 @@ static int modhtp_htp_req_body_data(
 
     /* Get the txdata */
     txdata = modhtp_get_txdata_htptx(htp_tx_data->tx);
-    if (txdata == NULL) {
-        return HTP_OK;      /** @todo: called after close */
-    }
+    assert(txdata != NULL);
+
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
+    txdata->flags |= txdata_req_body;
 
     return HTP_OK;
 }
@@ -1283,6 +1350,7 @@ static int modhtp_htp_req_trailer(
         return HTP_ERROR;
     }
     assert(txdata != NULL);
+    txdata->flags |= txdata_req_trail;
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
 
@@ -1302,13 +1370,8 @@ static int modhtp_htp_req_complete(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
-    /* We shouldn't need this check here, but it appears that the current
-     * head of libhtp 0.5.x calls this during htp_connp_close() (see
-     * https://github.com/ironbee/libhtp/issues/42).
-     */
-    if (txdata == NULL) {
-        return HTP_OK;
-    }
+    assert(txdata != NULL);
+    txdata->flags |= txdata_req_comp;
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
     return HTP_OK;
@@ -1330,6 +1393,7 @@ static int modhtp_htp_rsp_line(
         return HTP_ERROR;
     }
     assert(txdata != NULL);
+    txdata->flags |= txdata_rsp_line;
     itx = txdata->itx;
     htx = txdata->htx;
 
@@ -1376,6 +1440,7 @@ static int modhtp_htp_rsp_headers(
         return HTP_ERROR;
     }
     assert(txdata != NULL);
+    txdata->flags |= txdata_rsp_hdrs;
 
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
@@ -1391,28 +1456,8 @@ static int modhtp_htp_rsp_body_data(
 
     /* Get the txdata */
     txdata = modhtp_get_txdata_htptx(htp_tx_data->tx);
-    if (txdata == NULL) {
-        return HTP_OK;         /** @todo Called after close */
-    }
-    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
-
-    return HTP_OK;
-}
-
-static int modhtp_htp_rsp_complete(
-    htp_connp_t *connp)
-{
-    assert(connp != NULL);
-
-    modhtp_txdata_t *txdata;
-    ib_status_t      irc;
-
-    /* Check the parser status */
-    irc = modhtp_check_parser(connp, "Response Complete", &txdata);
-    if (irc != IB_OK) {
-        return HTP_ERROR;
-    }
-
+    assert(txdata != NULL);
+    txdata->flags |= txdata_rsp_body;
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
     return HTP_OK;
@@ -1436,7 +1481,28 @@ static int modhtp_htp_rsp_trailer(
         return HTP_OK;
     }
     assert(txdata != NULL);
+    txdata->flags |= txdata_rsp_trail;
 
+    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
+
+    return HTP_OK;
+}
+
+static int modhtp_htp_rsp_complete(
+    htp_connp_t *connp)
+{
+    assert(connp != NULL);
+
+    modhtp_txdata_t *txdata;
+    ib_status_t      irc;
+
+    /* Check the parser status */
+    irc = modhtp_check_parser(connp, "Response Complete", &txdata);
+    if (irc != IB_OK) {
+        return HTP_ERROR;
+    }
+    assert(txdata != NULL);
+    txdata->flags |= txdata_rsp_comp;
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
     return HTP_OK;
@@ -1985,9 +2051,9 @@ static ib_status_t modhtp_iface_request_header_finished(
     assert(pi != NULL);
     assert(itx != NULL);
 
-    const modhtp_txdata_t *txdata;
-    ib_status_t            irc;
-    htp_status_t           hrc;
+    modhtp_txdata_t *txdata;
+    ib_status_t      irc;
+    htp_status_t     hrc;
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
@@ -2000,6 +2066,7 @@ static ib_status_t modhtp_iface_request_header_finished(
     }
 
     /* Generate header fields. */
+    modhtp_process_req_headers(txdata);
     irc = modhtp_gen_request_header_fields(txdata);
     if (irc != IB_OK) {
         return irc;
