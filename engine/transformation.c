@@ -126,7 +126,7 @@ ib_status_t ib_tfn_data_get_ex(
 
     /* No tfn just means a normal get. */
     if (tfn == NULL) {
-        rc = ib_data_get_ex(data, name, nlen, (void*)pf);
+        rc = ib_data_get_ex(data, name, nlen, (void *)pf);
         return rc;
     }
 
@@ -142,7 +142,7 @@ ib_status_t ib_tfn_data_get_ex(
     /* See if there is already a transformed version, otherwise
      * one needs to be created.
      */
-    rc = ib_data_get_ex(data, fullname, fnlen, (void*)pf);
+    rc = ib_data_get_ex(data, fullname, fnlen, (void *)pf);
     if (rc == IB_ENOENT) {
         const char *tname;
         size_t i;

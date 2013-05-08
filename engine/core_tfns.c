@@ -1530,7 +1530,7 @@ static ib_status_t tfn_to_names(
     /* Build the new_value list using the input list. */
     IB_LIST_LOOP_CONST(list, node) {
         const ib_field_t *list_field =
-            (const ib_field_t*)ib_list_node_data_const(node);
+            (const ib_field_t *)ib_list_node_data_const(node);
         const ib_field_t *list_out_field;
 
         rc = tfn_to_name_common(ib, mp, list_field, &list_out_field);
