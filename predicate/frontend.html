@@ -800,13 +800,29 @@ a = P.from_lua(&quot;foo&quot;) + &quot;bar&quot;
 	<td style="text-align:left;">Convert to lowercase</td>
 	<td style="text-align:left;">4</td>
 </tr>
+<tr>
+	<td style="text-align:left;"><code>P.Name(f)</code></td>
+	<td style="text-align:left;">Name of <code>f</code></td>
+	<td style="text-align:left;">4</td>
+</tr>
+<tr>
+	<td style="text-align:left;"><code>P.Names(list)</code></td>
+	<td style="text-align:left;">Name of items of <code>list      | 4     |
+</code>P.floor(n)<code>| Round</code>n<code>down.             | 4     |
+</code>P.ceil(n)<code>| Round</code>n<code>up.               | 4     |
+</code>P.round(n)<code>| Round</code>n<code>to nearest.       | 4     |
+</code>P.toString(n)<code>| Convert</code>n<code>to string.      | 4     |
+</code>P.toInteger(s)<code>| Convert</code>s<code>to integer.     | 4     |
+</code>P.toFloat(s)<code>| Convert</code>s` to float.</td>
+	<td style="text-align:left;">4</td>
+</tr>
 </tbody>
 </table>
 <ol>
 <li>Implemented in terms of other calls.</li>
 <li>Requires one static argument. If second argument is the static argument, will swap, possibly changing operator. E.g., <code>P.Gt(P.Field('a'), 5)</code> becomes <code>P.Lt(5, P.Field('a'))</code>.</li>
 <li>Will evaluate at configuration time if possible.</li>
-<li>Implemented via an IronBee operator (see <code>P.Operator</code> and IronBee manual).</li>
+<li>Implemented via an IronBee operator or transformation (see <code>P.Operator</code>, <code>P.Transformation</code>, and IronBee manual).</li>
 </ol>
 
 </body>

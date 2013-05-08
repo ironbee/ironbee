@@ -315,10 +315,16 @@ Method                             | Meaning                     | Notes |
 `P.TrimRight(s)`                   | Remove whitespace suffix    | 4     |
 `P.TrimLeft(s)`                    | Remove whitespace prefix    | 4     |
 `P.Lowercase(s)`                   | Convert to lowercase        | 4     |
-
-
+`P.Name(f)`                        | Name of `f`                 | 4     |
+`P.Names(list)`                    | Name of items of `list      | 4     |
+`P.floor(n)`                       | Round `n` down.             | 4     |
+`P.ceil(n)`                        | Round `n` up.               | 4     |
+`P.round(n)`                       | Round `n` to nearest.       | 4     |
+`P.toString(n)`                    | Convert `n` to string.      | 4     |
+`P.toInteger(s)`                   | Convert `s` to integer.     | 4     |
+`P.toFloat(s)`                     | Convert `s` to float.       | 4     |
 
 1. Implemented in terms of other calls.
 2. Requires one static argument.  If second argument is the static argument, will swap, possibly changing operator.  E.g., `P.Gt(P.Field('a'), 5)` becomes `P.Lt(5, P.Field('a'))`.
 3. Will evaluate at configuration time if possible.
-4. Implemented via an IronBee operator (see `P.Operator` and IronBee manual).
+4. Implemented via an IronBee operator or transformation (see `P.Operator`, `P.Transformation`, and IronBee manual).

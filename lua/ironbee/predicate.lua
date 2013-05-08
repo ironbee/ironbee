@@ -206,7 +206,15 @@ local tfns = {
   'trimRight',
   'trimLeft',
   'lc',
-  'lowercase'
+  'lowercase',
+  'ceil',
+  'floor',
+  'round',
+  'name',
+  'names',
+  'toString',
+  'toInteger',
+  'toFloat'
 }
 for i,n in ipairs(tfns) do
   local capitalized = n:gsub("%l", string.upper)

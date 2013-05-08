@@ -82,3 +82,11 @@ Some IronBee transformations are provided directly via SpecificTransformations. 
 - `trimRight`
 - `trimLeft`
 - `lowercase`
+- `name`
+- `names`
+- `round`
+- `ceil`
+- `floor`
+- `toString`
+- `toInteger`
+- `toFloat`

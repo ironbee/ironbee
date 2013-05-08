@@ -856,6 +856,14 @@ void load(CallFactory& to)
         .add("trimRight", generate_specific_transformation)
         .add("trimLeft", generate_specific_transformation)
         .add("lowercase", generate_specific_transformation)
+        .add("name", generate_specific_transformation)
+        .add("names", generate_specific_transformation)
+        .add("round", generate_specific_transformation)
+        .add("ceil", generate_specific_transformation)
+        .add("floor", generate_specific_transformation)
+        .add("toString", generate_specific_transformation)
+        .add("toInteger", generate_specific_transformation)
+        .add("toFloat", generate_specific_transformation)
         ;
 }
 
