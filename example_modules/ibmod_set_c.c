@@ -19,8 +19,8 @@
  * @file
  * @brief IronBee --- Example Module: Set (C Version)
  *
- * This file is the C implementation of the Set example module.  There are
- * also C++ (ibmod_set.cpp) and Lua (ibmod_set.lua) implementations.
+ * This file is the C implementation of the Set example module.  There is
+ * also a C++ (ibmod_set.cpp) implementation.
  *
  * @par Summary
  * This module provides set membership of named sets.  It is similar
