@@ -95,6 +95,17 @@ void htp_connp_destroy_all(htp_connp_t *connp);
 htp_conn_t *htp_connp_get_connection(const htp_connp_t *connp);
 
 /**
+ * Retrieves the pointer to the active inbound transaction. In connection
+ * parsing mode there can be many open transactions, and up to 2 active
+ * transactions at any one time. This is due to HTTP pipelining. This
+ * function should only be used in a request callback.
+ *
+ * @param[in] connp
+ * @return Active inbound transaction, or NULL if there isn't one.
+ */
+htp_tx_t *htp_connp_get_in_tx(const htp_connp_t *connp);
+
+/**
  * Returns the last error that occurred with this connection parser. Do note, however,
  * that the value in this field will only be valid immediately after an error condition,
  * but it is not guaranteed to remain valid if the parser is invoked again.
@@ -104,6 +115,17 @@ htp_conn_t *htp_connp_get_connection(const htp_connp_t *connp);
  *         if there isn't.
  */
 htp_log_t *htp_connp_get_last_error(const htp_connp_t *connp);
+
+/**
+ * Retrieves the pointer to the active outbound transaction. In connection
+ * parsing mode there can be many open transactions, and up to 2 active
+ * transactions at any one time. This is due to HTTP pipelining. This function
+ * should be only be used in a response callback.
+ *
+ * @param[in] connp
+ * @return Active outbound transaction, or NULL if there isn't one.
+ */
+htp_tx_t *htp_connp_get_out_tx(const htp_connp_t *connp);
 
 /**
  * Retrieve the user data associated with this connection parser.
