@@ -283,7 +283,7 @@ typedef enum {
     IB_STATE_HOOK_INVALID,  /**< Something went wrong
                              * (Hook type: None) */
     IB_STATE_HOOK_CTX,      /**< Hook receives context data
-                             * (Hook type: @ref ib_state_context_hook_fn_t) */
+                             * (Hook type: @ref ib_state_ctx_hook_fn_t) */
     IB_STATE_HOOK_CONN,     /**< Hook receives connection data
                              * (Hook type: @ref ib_state_conn_hook_fn_t) */
     IB_STATE_HOOK_TX,       /**< Hook receives ib_tx_t
