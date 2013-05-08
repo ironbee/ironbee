@@ -58,6 +58,15 @@ typedef enum ib_block_mode_t {
 } ib_block_mode_t;
 
 /**
+ * The possible states of the IronBee audit engine.
+ */
+typedef enum ib_audit_mode_t {
+    IB_AUDIT_MODE_OFF,      /**< Off. No auditing. */
+    IB_AUDIT_MODE_ON,       /**< On. Record all. */
+    IB_AUDIT_MODE_RELEVANT, /**< Only record relevant information. */
+} ib_audit_mode_t;
+
+/**
  * Core configuration.
  */
 typedef struct ib_core_cfg_t ib_core_cfg_t;
@@ -80,7 +89,7 @@ struct ib_core_cfg_t {
     ib_list_t       *mancoll_list;      /**< List of ib_managed_collection_t */
     ib_num_t         buffer_req;        /**< Request buffering options */
     ib_num_t         buffer_res;        /**< Response buffering options */
-    ib_num_t         audit_engine;      /**< Audit engine status */
+    ib_audit_mode_t  audit_engine;      /**< Audit engine status */
     ib_num_t         auditlog_dmode;    /**< Audit log dir create mode */
     ib_num_t         auditlog_fmode;    /**< Audit log file create mode */
     ib_num_t         auditlog_parts;    /**< Audit log parts */

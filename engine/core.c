@@ -3428,15 +3428,24 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("AuditEngine", name) == 0) {
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         if (strcasecmp("RelevantOnly", p1_unescaped) == 0) {
-            rc = ib_context_set_num(ctx, "audit_engine", 2);
+            rc = ib_context_set_num(
+                ctx,
+                "audit_engine",
+                IB_AUDIT_MODE_RELEVANT);
             return rc;
         }
         else if (strcasecmp("On", p1_unescaped) == 0) {
-            rc = ib_context_set_num(ctx, "audit_engine", 1);
+            rc = ib_context_set_num(
+                ctx,
+                "audit_engine",
+                IB_AUDIT_MODE_ON);
             return rc;
         }
         else if (strcasecmp("Off", p1_unescaped) == 0) {
-            rc = ib_context_set_num(ctx, "audit_engine", 0);
+            rc = ib_context_set_num(
+                ctx,
+                "audit_engine",
+                IB_AUDIT_MODE_OFF);
             return rc;
         }
 
@@ -4796,7 +4805,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->parser               = MODULE_NAME_STR;
     corecfg->buffer_req           = 0;
     corecfg->buffer_res           = 0;
-    corecfg->audit_engine         = 2; // TODO: enum these
+    corecfg->audit_engine         = IB_AUDIT_MODE_RELEVANT;
     corecfg->auditlog_dmode       = 0700;
     corecfg->auditlog_fmode       = 0600;
     corecfg->auditlog_parts       = IB_ALPARTS_DEFAULT;
