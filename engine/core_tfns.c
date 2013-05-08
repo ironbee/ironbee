@@ -1198,7 +1198,7 @@ typedef ib_float_t (*ib_float_op_t) (ib_float_t);
  * Convert a floating point field to another floating point field.
  *
  * This code wraps field logic around math.h defined calls to
- * functions like ceill, floorl, and roundl. The math.h calls are
+ * functions like ceill(), floorl(), and roundl(). The math.h calls are
  * passed in as the @a op parameter.
  *
  * @param[in] mp Memory pool to use for allocations.
@@ -1288,7 +1288,7 @@ static ib_status_t tfn_float_op(
 }
 
 /**
- * Convert a bytestr, nulstr, float, or num field to a float using floorl.
+ * Convert a bytestr, nulstr, float, or num field to a float using floorl().
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -1313,7 +1313,7 @@ static ib_status_t tfn_floor(
 }
 
 /**
- * Convert a bytestr, nulstr, float, or num field to a float using ceill.
+ * Convert a bytestr, nulstr, float, or num field to a float using ceill().
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -1338,7 +1338,7 @@ static ib_status_t tfn_ceil(
 }
 
 /**
- * Convert a bytestr, nulstr, float, or num field to a float using roundl.
+ * Convert a bytestr, nulstr, float, or num field to a float using roundl().
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
