@@ -117,13 +117,13 @@ local stateToInt = {
     ["response_finished_event"] =
         tonumber(ffi.C.response_finished_event),
     ["handle_logevent_event"] =
-        tonumber(ffi.C.handle_logevent_event)
+        tonumber(ffi.C.handle_logevent_event),
     ["handle_context_open_event"] =
-        tonumber(ffi.C.handle_context_open_event)
+        tonumber(ffi.C.handle_context_open_event),
     ["handle_context_close_event"] =
-        tonumber(ffi.C.handle_context_close_event)
+        tonumber(ffi.C.handle_context_close_event),
     ["handle_context_destroy_event"] =
-        tonumber(ffi.C.handle_context_destroy_event)
+        tonumber(ffi.C.handle_context_destroy_event),
 }
 
 -- Build reverse map of stateToInt.
