@@ -1220,7 +1220,7 @@ ib_status_t ib_state_notify_context_open(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    rc = ib_state_notify_context(ib, ctx, handle_context_open_event);
+    rc = ib_state_notify_context(ib, ctx, context_open_event);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1236,7 +1236,7 @@ ib_status_t ib_state_notify_context_close(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    rc = ib_state_notify_context(ib, ctx, handle_context_close_event);
+    rc = ib_state_notify_context(ib, ctx, context_close_event);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1252,7 +1252,7 @@ ib_status_t ib_state_notify_context_destroy(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    rc = ib_state_notify_context(ib, ctx, handle_context_destroy_event);
+    rc = ib_state_notify_context(ib, ctx, context_destroy_event);
     if (rc != IB_OK) {
         return rc;
     }

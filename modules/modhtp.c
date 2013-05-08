@@ -2666,7 +2666,7 @@ static ib_status_t modhtp_context_close(
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == handle_context_close_event);
+    assert(event == context_close_event);
     assert(cbdata != NULL);
 
     ib_status_t         rc;
@@ -2751,7 +2751,7 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     }
 
     /* Register the context close function */
-    rc = ib_hook_context_register(ib, handle_context_close_event,
+    rc = ib_hook_context_register(ib, context_close_event,
                                   modhtp_context_close, m);
     if (rc != IB_OK) {
         return rc;

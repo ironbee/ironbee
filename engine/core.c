@@ -4623,7 +4623,7 @@ static ib_status_t core_ctx_open(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == handle_context_open_event);
+    assert(event == context_open_event);
     assert(cbdata != NULL);
 
     ib_status_t rc;
@@ -4657,7 +4657,7 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == handle_context_close_event);
+    assert(event == context_close_event);
     assert(cbdata != NULL);
 
     ib_core_cfg_t *corecfg;
@@ -4745,7 +4745,7 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == handle_context_destroy_event);
+    assert(event == context_destroy_event);
     assert(cbdata != NULL);
 
     ib_core_cfg_t *config;
@@ -4910,11 +4910,11 @@ static ib_status_t core_init(ib_engine_t *ib,
                         logevent_hook_logging, NULL);
 
     /* Register context hooks. */
-    ib_hook_context_register(ib, handle_context_open_event,
+    ib_hook_context_register(ib, context_open_event,
                              core_ctx_open, m);
-    ib_hook_context_register(ib, handle_context_close_event,
+    ib_hook_context_register(ib, context_close_event,
                              core_ctx_close, m);
-    ib_hook_context_register(ib, handle_context_destroy_event,
+    ib_hook_context_register(ib, context_destroy_event,
                              core_ctx_destroy, m);
 
     /* Create core data structure */

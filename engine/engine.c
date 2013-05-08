@@ -277,9 +277,9 @@ static ib_status_t ib_event_table_init(void)
     INIT_EVENT_TABLE_ENT(handle_logevent_event, IB_STATE_HOOK_TX);
 
     /* Context events */
-    INIT_EVENT_TABLE_ENT(handle_context_open_event, IB_STATE_HOOK_CTX);
-    INIT_EVENT_TABLE_ENT(handle_context_close_event, IB_STATE_HOOK_CTX);
-    INIT_EVENT_TABLE_ENT(handle_context_destroy_event, IB_STATE_HOOK_CTX);
+    INIT_EVENT_TABLE_ENT(context_open_event, IB_STATE_HOOK_CTX);
+    INIT_EVENT_TABLE_ENT(context_close_event, IB_STATE_HOOK_CTX);
+    INIT_EVENT_TABLE_ENT(context_destroy_event, IB_STATE_HOOK_CTX);
 
     /* Sanity check the table, make sure all events are initialized */
 validate:

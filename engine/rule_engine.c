@@ -3248,7 +3248,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == handle_context_close_event);
+    assert(event == context_close_event);
     assert(cbdata == NULL);
 
     ib_list_t      *all_rules;
@@ -3530,14 +3530,14 @@ static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == handle_context_open_event);
+    assert(event == context_open_event);
     assert(cbdata == NULL);
 
     ib_status_t rc;
 
     /* Late registration of the context close event */
     if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
-        rc = ib_hook_context_register(ib, handle_context_close_event,
+        rc = ib_hook_context_register(ib, context_close_event,
                                       rule_engine_ctx_close, NULL);
         if (rc != IB_OK) {
             return rc;
@@ -3605,7 +3605,7 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib)
 
     /* Register the context open callback -- it'll register the
      * context close handler at the open of the main context. */
-    rc = ib_hook_context_register(ib, handle_context_open_event,
+    rc = ib_hook_context_register(ib, context_open_event,
                                   rule_engine_ctx_open, NULL);
     if (rc != IB_OK) {
         return rc;

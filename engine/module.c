@@ -57,7 +57,7 @@ static ib_status_t module_context_open(
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == handle_context_open_event);
+    assert(event == context_open_event);
     assert(cbdata != NULL);
 
     ib_module_t *m = (ib_module_t *)cbdata;
@@ -93,7 +93,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
                   m->name, m->idx, m->filename);
 
     /* Register our own context open callback */
-    rc = ib_hook_context_register(ib, handle_context_open_event,
+    rc = ib_hook_context_register(ib, context_open_event,
                                   module_context_open, m);
     if (rc != IB_OK) {
         return rc;

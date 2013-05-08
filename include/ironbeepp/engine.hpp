@@ -96,9 +96,9 @@ public:
         response_header_data       = response_header_data_event,
         response_body_data         = response_body_data_event,
         response_finished          = response_finished_event,
-        context_open               = handle_context_open_event,
-        context_close              = handle_context_close_event,
-        context_destroy            = handle_context_destroy_event
+        context_open               = context_open_event,
+        context_close              = context_close_event,
+        context_destroy            = context_destroy_event
     };
 
     /**

@@ -2566,7 +2566,7 @@ static ib_status_t modlua_context_close(ib_engine_t           *ib,
 {
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert(event == handle_context_close_event);
+    assert(event == context_close_event);
 
     ib_status_t rc;
 
@@ -2674,7 +2674,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
 
     /* Hook the context close event */
     rc = ib_hook_context_register(ib,
-                                  handle_context_close_event,
+                                  context_close_event,
                                   modlua_context_close,
                                   NULL);
     if (rc != IB_OK) {

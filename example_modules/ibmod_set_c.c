@@ -641,7 +641,7 @@ ib_status_t init(
     /* Register context open callback to handle per context data copying. */
     ib_hook_context_register(
         ib,
-        handle_context_open_event,
+        context_open_event,
         context_open,  NULL
     );
 
@@ -902,7 +902,7 @@ ib_status_t context_open(
 {
     assert(ib     != NULL);
     assert(ctx    != NULL);
-    assert(event  == handle_context_open_event);
+    assert(event  == context_open_event);
     assert(cbdata == NULL);
 
     ib_status_t         rc;

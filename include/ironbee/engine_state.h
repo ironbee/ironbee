@@ -263,11 +263,11 @@ typedef enum {
                                     * (Hook type:@ref ib_state_tx_hook_fn_t) */
 
     /* Context states */
-    handle_context_open_event,     /**< Context open
+    context_open_event,     /**< Context open
                                     * (Hook type:@ref ib_state_ctx_hook_fn_t) */
-    handle_context_close_event,    /**< Context close
+    context_close_event,    /**< Context close
                                     * (Hook type:@ref ib_state_ctx_hook_fn_t) */
-    handle_context_destroy_event,  /**< Context destroy
+    context_destroy_event,  /**< Context destroy
                                     * (Hook type:@ref ib_state_ctx_hook_fn_t) */
 
     /* Not an event, but keeps track of the number of events. */
@@ -498,9 +498,9 @@ typedef ib_status_t (*ib_state_txdata_hook_fn_t)(
  * - ib_hook_context_unregister()
  *
  * Handles events:
- * - @ref handle_context_open_event
- * - @ref handle_context_close_event
- * - @ref handle_context_destroy_event
+ * - @ref context_open_event
+ * - @ref context_close_event
+ * - @ref context_destroy_event
  *
  * @param[in] ib Engine handle
  * @param[in] ctx Config context
