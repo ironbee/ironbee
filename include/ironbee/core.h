@@ -49,6 +49,13 @@ extern "C" {
  * @{
  */
 
+/**
+ * Enumerate the blocking mode that IronBee's core module should use.
+ */
+typedef enum ib_block_mode_t {
+    IB_CORE_BLOCK_STATUS, /**< Block using an HTTP status code response. */
+    IB_CORE_BLOCK_CLOSE,  /**< Block by closing the transport (TCP) layer. */
+} ib_block_mode_t;
 
 /**
  * Core configuration.
@@ -90,7 +97,9 @@ struct ib_core_cfg_t {
     ib_num_t         rule_log_level;    /**< Rule execution logging level */
     const char      *rule_debug_str;    /**< Rule debug logging level */
     ib_num_t         rule_debug_level;  /**< Rule debug logging level */
-    ib_num_t         block_status;      /**< Status codes when blocking. */
+    ib_block_mode_t  block_mode;        /**< What blocking method to use. */
+    //! Status code used when blocking with for @ref IB_CORE_BLOCK_STATUS mode.
+    ib_num_t         block_status;
     ib_num_t inspection_engine_options; /**< Inspection engine options */
 };
 

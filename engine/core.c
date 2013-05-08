@@ -3522,6 +3522,48 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_log_debug2(ib, "DefaultBlockStatus: %d", status);
         return IB_OK;
     }
+    else if (strcasecmp("BlockingMethod", name) == 0) {
+
+        rc = ib_core_context_config(ctx, &corecfg);
+
+        if (rc != IB_OK) {
+            ib_log_error(ib,
+                         "Could not set DefaultBlockStatus %s",
+                         p1_unescaped);
+            return rc;
+        }
+
+        if (strncasecmp(p1, "close", sizeof("close"))) {
+            corecfg->block_mode = IB_CORE_BLOCK_CLOSE;
+            corecfg->block_status = 0;
+        }
+        /* The only argument is status=<int>.
+         * Check for it. If OK, set status_str. */
+        else if (strncasecmp(p1, "status=", sizeof("status=")) == 0) {
+            int status;
+            const char *status_str;
+
+            status_str = p1 + sizeof("status=");
+            status  = atoi(status_str);
+
+            if (!(status <= 200 && status < 600))
+            {
+                ib_log_debug2(
+                    ib,
+                    "DefaultBlockStatus must be 200 <= status < 600.");
+                ib_log_debug2(
+                    ib,
+                    "DefaultBlockStatus may not be %d",
+                    status);
+                return IB_EINVAL;
+            }
+
+            corecfg->block_status = status;
+            corecfg->block_mode = IB_CORE_BLOCK_STATUS;
+            ib_log_debug2(ib, "BlockingMethod: %d", status);
+        }
+        return IB_OK;
+    }
     else if (strcasecmp("Log", name) == 0)
     {
         ib_mpool_t   *mp  = ib_engine_pool_main_get(ib);
@@ -4770,6 +4812,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->rule_debug_str       = "error";
     corecfg->rule_debug_level     = IB_RULE_DLOG_ERROR;
     corecfg->block_status         = 403;
+    corecfg->block_mode           = IB_CORE_BLOCK_STATUS;
     corecfg->inspection_engine_options = IB_IEOPT_DEFAULT;
 
     /* Register logger functions. */
