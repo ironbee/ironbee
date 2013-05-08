@@ -50,7 +50,7 @@
  * @param[in] str_fn NUL-terminated string transformation function
  * @param[in] ex_fn EX (string/length) transformation function
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -162,7 +162,7 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -188,7 +188,7 @@ static ib_status_t tfn_lowercase(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -214,7 +214,7 @@ static ib_status_t tfn_trim_left(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -240,7 +240,7 @@ static ib_status_t tfn_trim_right(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -266,7 +266,7 @@ static ib_status_t tfn_trim(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -292,7 +292,7 @@ static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -318,7 +318,7 @@ static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -337,6 +337,9 @@ static ib_status_t tfn_length(ib_engine_t *ib,
 
     ib_status_t rc = IB_OK;
     ib_field_t *fnew;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     /**
      * This works on C-style (NUL terminated) and byte strings.  Note
@@ -436,7 +439,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -456,6 +459,9 @@ static ib_status_t tfn_count(ib_engine_t *ib,
     ib_status_t rc = IB_OK;
     ib_num_t value = 0;
     ib_field_t *fnew;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     /* If this is a list, return it's count */
     if (fin->type == IB_FTYPE_LIST) {
@@ -491,7 +497,7 @@ static ib_status_t tfn_count(ib_engine_t *ib,
  * @param[in] is_max true for max, false for min
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  *
  * @returns IB_OK if successful.
  */
@@ -510,6 +516,9 @@ static ib_status_t list_minmax(bool is_max,
     const ib_list_node_t *node = NULL;
     bool                  first = true;
     ib_num_t              mmvalue = 0;     /* Current Min / max value */
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     /* Get the incoming list */
     // @todo Remove mutable once list is const correct.
@@ -613,7 +622,7 @@ static ib_status_t list_minmax(bool is_max,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -631,6 +640,9 @@ static ib_status_t tfn_max(ib_engine_t *ib,
     assert(pflags != NULL);
 
     ib_status_t rc = IB_OK;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     switch (fin->type) {
         case IB_FTYPE_NUM:
@@ -656,7 +668,7 @@ static ib_status_t tfn_max(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -674,6 +686,9 @@ static ib_status_t tfn_min(ib_engine_t *ib,
     assert(fin != NULL);
     assert(fout != NULL);
     assert(pflags != NULL);
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     switch (fin->type) {
         case IB_FTYPE_NUM:
@@ -700,7 +715,7 @@ static ib_status_t tfn_min(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -721,6 +736,9 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
     ib_status_t rc;
     ib_flags_t result;
     ib_field_t *fnew;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     switch(fin->type) {
     case IB_FTYPE_NULSTR :
@@ -806,7 +824,7 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -827,6 +845,9 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
     ib_status_t rc;
     ib_flags_t result;
     ib_field_t *fnew;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     switch(fin->type) {
     case IB_FTYPE_NULSTR :
@@ -912,7 +933,7 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[in] win Handle windows-style '\'?
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -933,6 +954,9 @@ static ib_status_t normalize_path(ib_engine_t *ib,
     ib_status_t rc;
     ib_flags_t result;
     ib_field_t *fnew;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     switch(fin->type) {
     case IB_FTYPE_NULSTR :
@@ -1018,7 +1042,7 @@ static ib_status_t normalize_path(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
@@ -1052,7 +1076,7 @@ static ib_status_t tfn_normalize_path(ib_engine_t *ib,
  * @param[in] mp Memory pool. All allocations are out of here.
  * @param[in] type The target type.
  * @param[in] fin The input field.
- * @param[out] fout The output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @returns
  *   - IB_OK On success.
  *   - IB_EALLOC Allocation error.
@@ -1071,8 +1095,10 @@ static ib_status_t tfn_to_type(
     assert(fout != NULL);
 
     ib_status_t rc;
-
     ib_field_t *fnew;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     rc = ib_field_convert(mp, type, fin, &fnew);
     if (rc != IB_OK) {
@@ -1097,7 +1123,7 @@ static ib_status_t tfn_to_type(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns 
@@ -1122,7 +1148,7 @@ static ib_status_t tfn_to_float(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns 
@@ -1147,7 +1173,7 @@ static ib_status_t tfn_to_integer(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns 
@@ -1179,7 +1205,7 @@ typedef ib_float_t (*ib_float_op_t) (ib_float_t);
  * @param[in] op Operation to perform. It should take a long double and
  *            return a long double.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns 
@@ -1200,6 +1226,9 @@ static ib_status_t tfn_float_op(
 
     const ib_bytestr_t *bstr;
     const char *str;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     /* Get the float value. */
     switch(fin->type) {
@@ -1265,7 +1294,7 @@ static ib_status_t tfn_float_op(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns 
@@ -1290,7 +1319,7 @@ static ib_status_t tfn_floor(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns 
@@ -1315,7 +1344,7 @@ static ib_status_t tfn_ceil(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns 
@@ -1341,12 +1370,10 @@ static ib_status_t tfn_round(
  * The new field will be named as the old field, and will contain
  * a bytestr containing the field name.
  *
- * On error, @a fout is unchanged.
- *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  *
  * @returns 
  *   - IB_OK if successful.
@@ -1366,6 +1393,9 @@ static ib_status_t tfn_to_name_common(
     ib_field_t *fnew;
     ib_status_t rc;
     ib_bytestr_t *new_value;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     rc = ib_bytestr_dup_mem(
         &new_value,
@@ -1399,13 +1429,11 @@ static ib_status_t tfn_to_name_common(
  * The new field will be named as the old field, and will contain
  * a bytestr containing the field name.
  *
- * On error, @a fout is unchanged.
- *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns 
@@ -1439,7 +1467,7 @@ static ib_status_t tfn_to_name(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns 
@@ -1465,6 +1493,9 @@ static ib_status_t tfn_to_names(
     ib_list_t *new_value;
     const ib_list_t *list;
     const ib_list_node_t *node;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
 
     /* Fail if the input field is not a list. */
     if (fin->type != IB_FTYPE_LIST) {
@@ -1525,7 +1556,7 @@ static ib_status_t tfn_to_names(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
- * @param[out] fout Output field.
+ * @param[out] fout Output field. This is NULL on error.
  * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
