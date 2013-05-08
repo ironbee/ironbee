@@ -307,8 +307,7 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
  *         it needs to continue waiting.
  */
 htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
-    // Check that we saw the response line of the current
-    // inbound transaction.
+    // Check that we saw the response line of the current inbound transaction.
     if (connp->in_tx->progress <= HTP_RESPONSE_LINE) {
         return HTP_DATA_OTHER;
     }
@@ -699,18 +698,7 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
 }
 
 htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
-    int rc = htp_tx_state_request_complete(connp->in_tx);
-    if (rc != HTP_OK) return rc;
-
-    if (connp->in_tx->is_protocol_0_9) {
-        connp->in_state = htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9;
-    } else {
-        connp->in_state = htp_connp_REQ_IDLE;
-    }
-
-    connp->in_tx = NULL;
-
-    return HTP_OK;
+    return htp_tx_state_request_complete(connp->in_tx);
 }
 
 htp_status_t htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9(htp_connp_t *connp) {

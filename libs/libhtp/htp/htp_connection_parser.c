@@ -107,8 +107,16 @@ htp_conn_t *htp_connp_get_connection(const htp_connp_t *connp) {
     return connp->conn;
 }
 
+htp_tx_t *htp_connp_get_in_tx(const htp_connp_t *connp) {
+    return connp->in_tx;
+}
+
 htp_log_t *htp_connp_get_last_error(const htp_connp_t *connp) {
     return connp->last_error;
+}
+
+htp_tx_t *htp_connp_get_out_tx(const htp_connp_t *connp) {
+    return connp->out_tx;
 }
 
 void *htp_connp_get_user_data(const htp_connp_t *connp) {
