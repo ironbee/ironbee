@@ -10,7 +10,10 @@ IronBee v0.8.0
 
 **Predicate**
 
-* A new rule injection system, Predicate, was added.  Predicate provides a functional approach to writing rules and is designed to make rule logic composition and reuse easier and provide performance benefits.  See `predicate/predicate.md` for an overview.
+* A new rule injection system, Predicate, was added.  Predicate provides a
+  functional approach to writing rules and is designed to make rule logic
+  composition and reuse easier and provide performance benefits.  See
+  `predicate/predicate.md` for an overview.
 
 **Engine**
 
@@ -32,13 +35,17 @@ IronBee v0.8.0
 * The context hook functions have been removed from the module initialization
   structures, and have been replaced with context hook registration functions.
 
-* As part of the ongoing provider removal project, the matcher provider was removed.  Nothing was using it.
+* As part of the ongoing provider removal project, the matcher provider was
+  removed.  Nothing was using it.
 
 **Util**
 
-* Add external iterator support for hash.  See `ib_hash_iterator*`. `ib_hash_get()` and `ib_hash_get_ex()` now support NULL for the value argument to allow for membership tests.
+* Add external iterator support for hash.  See `ib_hash_iterator*`.
+  `ib_hash_get()` and `ib_hash_get_ex()` now support NULL for the value
+  argument to allow for membership tests.
 
-* Hash keys are now consistently `const char *` instead of a mix of `const char *` and `const void *`.
+* Hash keys are now consistently `const char *` instead of a mix of
+  `const char *` and `const void *`.
 
 * Hash now supports callback data for key hashing and equality.
 
@@ -60,7 +67,10 @@ IronBee v0.8.0
 
 * Added `IronBee::Hash<T>`.
 
-* Exceptions can now have a transaction or configuration parser attached to them (`errinfo_configuration_parser` and `errinfo_transaction`) which will be used to improve the log message.  Also, logging can be prevented by not attaching an `errinfo_what`.
+* Exceptions can now have a transaction or configuration parser attached to
+  them (`errinfo_configuration_parser` and `errinfo_transaction`) which will
+  be used to improve the log message.  Also, logging can be prevented by not
+  attaching an `errinfo_what`.
 
 **CLIPP**
 
