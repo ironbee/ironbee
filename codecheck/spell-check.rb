@@ -40,11 +40,20 @@ def spell_check(path, list_mode = false)
   end
 end
 
-list_mode = ARGV[0] == 'list'
+if ARGV[0] == '-list'
+  list_mode = true
+  ARGV.shift
+end
 
-okay = true
-all_ironbee_code do |path|
-  okay &= spell_check(path, list_mode)
+  okay = true
+if ARGV.empty?
+  all_ironbee_code do |path|
+    okay &= spell_check(path, list_mode)
+  end
+else
+  ARGV.each do |path|
+    okay &= spell_check(path, list_mode)
+  end
 end
 
 exit 1 if ! okay
