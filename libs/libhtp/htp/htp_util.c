@@ -581,7 +581,7 @@ int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t *uri) {
  * @param[out] flags
  * @return HTP_OK on success or HTP_ERROR error.
  */
-int htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
+htp_status_t htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
     int invalid;
 
     htp_status_t rc = htp_parse_hostport(hostport, hostname, port, &invalid);
@@ -2091,12 +2091,12 @@ char *htp_connp_out_state_as_string(htp_connp_t *connp) {
 /**
  *
  */
-char *htp_tx_progress_as_string(htp_tx_t *tx) {
+char *htp_tx_request_progress_as_string(htp_tx_t *tx) {
     if (tx == NULL) return "NULL";
 
-    switch (tx->progress) {
-        case HTP_REQUEST_START:
-            return "NEW";
+    switch (tx->request_progress) {
+        case HTP_REQUEST_NOT_STARTED:
+            return "NOT_STARTED";
         case HTP_REQUEST_LINE:
             return "REQ_LINE";
         case HTP_REQUEST_HEADERS:
@@ -2106,7 +2106,21 @@ char *htp_tx_progress_as_string(htp_tx_t *tx) {
         case HTP_REQUEST_TRAILER:
             return "REQ_TRAILER";
         case HTP_REQUEST_COMPLETE:
-            return "WAIT";
+            return "COMPLETE";
+    }
+
+    return "INVALID";
+}
+
+/**
+ *
+ */
+char *htp_tx_response_progress_as_string(htp_tx_t *tx) {
+    if (tx == NULL) return "NULL";
+
+    switch (tx->response_progress) {
+        case HTP_RESPONSE_NOT_STARTED:
+            return "NOT_STARTED";
         case HTP_RESPONSE_LINE:
             return "RES_LINE";
         case HTP_RESPONSE_HEADERS:
@@ -2116,10 +2130,10 @@ char *htp_tx_progress_as_string(htp_tx_t *tx) {
         case HTP_RESPONSE_TRAILER:
             return "RES_TRAILER";
         case HTP_RESPONSE_COMPLETE:
-            return "DONE";
+            return "COMPLETE";
     }
 
-    return "UNKOWN";
+    return "INVALID";
 }
 
 /**
