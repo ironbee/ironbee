@@ -82,57 +82,10 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     return tx;
 }
 
-void htp_tx_destroy(htp_tx_t *tx) {
-    // Request.
-
-    bstr_free(tx->request_line);
-
-    bstr_free(tx->request_method);
-    bstr_free(tx->request_uri);
-    bstr_free(tx->request_protocol);
-
-    htp_uri_free(tx->parsed_uri_raw);
-    htp_uri_free(tx->parsed_uri);
-
-    // Destroy request_headers.
-    if (tx->request_headers != NULL) {
-        htp_header_t *h = NULL;
-        for (size_t i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
-            h = htp_table_get_index(tx->request_headers, i, NULL);
-            bstr_free(h->name);
-            bstr_free(h->value);
-            free(h);
-        }
-
-        htp_table_destroy(tx->request_headers);
-    }
-
-    bstr_free(tx->request_content_type);
-
-    if (tx->request_hostname != NULL) {
-        bstr_free(tx->request_hostname);
-    }
-
-    // Response.
-
-    bstr_free(tx->response_line);
-
-    bstr_free(tx->response_protocol);
-    bstr_free(tx->response_status);
-    bstr_free(tx->response_message);
-
-    // Destroy response headers.
-    if (tx->response_headers != NULL) {
-        htp_header_t *h = NULL;
-        for (size_t i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
-            h = htp_table_get_index(tx->response_headers, i, NULL);
-            bstr_free(h->name);
-            bstr_free(h->value);
-            free(h);
-        }
-
-        htp_table_destroy(tx->response_headers);
-    }
+htp_status_t htp_tx_destroy(htp_tx_t *tx) {
+    if (!htp_tx_is_complete(tx)) return HTP_ERROR;
+    
+    // Disconnect transaction from other structures.
 
     // Tell the connection to remove this transaction from the list.
     htp_conn_remove_tx(tx->conn, tx);
@@ -146,15 +99,38 @@ void htp_tx_destroy(htp_tx_t *tx) {
         }
     }
 
-    bstr_free(tx->response_content_type);
+    // Request fields.
 
-    // Parsers
+    bstr_free(tx->request_line);
+    bstr_free(tx->request_method);
+    bstr_free(tx->request_uri);
+    bstr_free(tx->request_protocol);
+    bstr_free(tx->request_content_type);
+    bstr_free(tx->request_hostname);
+
+    htp_uri_free(tx->parsed_uri_raw);
+    htp_uri_free(tx->parsed_uri);
+
+    // Request_headers.
+    if (tx->request_headers != NULL) {
+        htp_header_t *h = NULL;
+        for (size_t i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
+            h = htp_table_get_index(tx->request_headers, i, NULL);
+            bstr_free(h->name);
+            bstr_free(h->value);
+            free(h);
+        }
+
+        htp_table_destroy(tx->request_headers);
+    }
+
+    // Request parsers.
 
     htp_urlenp_destroy(tx->request_urlenp_query);
     htp_urlenp_destroy(tx->request_urlenp_body);
     htp_mpartp_destroy(tx->request_mpartp);
 
-    // Request parameters
+    // Request parameters.
 
     htp_param_t *param = NULL;
     for (size_t i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
@@ -166,7 +142,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     htp_table_destroy(tx->request_params);
 
-    // Request cookies
+    // Request cookies.
 
     if (tx->request_cookies != NULL) {
         bstr *b = NULL;
@@ -180,12 +156,35 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     htp_hook_destroy(tx->hook_request_body_data);
 
-    // If we're using a private configuration, destroy it.
+    // Response fields.
+
+    bstr_free(tx->response_line);
+    bstr_free(tx->response_protocol);
+    bstr_free(tx->response_status);
+    bstr_free(tx->response_message);
+    bstr_free(tx->response_content_type);
+
+    // Destroy response headers.
+    if (tx->response_headers != NULL) {
+        htp_header_t *h = NULL;
+        for (size_t i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
+            h = htp_table_get_index(tx->response_headers, i, NULL);
+            bstr_free(h->name);
+            bstr_free(h->value);
+            free(h);
+        }
+
+        htp_table_destroy(tx->response_headers);
+    }      
+    
+    // If we're using a private configuration structure, destroy it.
     if (tx->is_config_shared == HTP_CONFIG_PRIVATE) {
         htp_config_destroy(tx->cfg);
     }
 
     free(tx);
+
+    return HTP_OK;
 }
 
 int htp_tx_get_is_config_shared(const htp_tx_t *tx) {

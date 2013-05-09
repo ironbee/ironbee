@@ -748,7 +748,7 @@ protected:
 
 /**
  * Test hybrid mode with one complete GET transaction; request then response
- * with no body.  Crashes in htp_connp_close().
+ * with no body. Used to crash in htp_connp_close().
  */
 TEST_F(HybridParsing, TestRepeatCallbacks)
 {
@@ -813,6 +813,8 @@ TEST_F(HybridParsing, TestRepeatCallbacks)
     htp_tx_state_response_complete(tx);
     ASSERT_EQ(1, user_data.callback_RESPONSE_COMPLETE_invoked);
 
+    ASSERT_EQ(htp_tx_destroy(tx), HTP_OK);
+
     // Close connection
     CloseConnParser();
 
@@ -824,4 +826,25 @@ TEST_F(HybridParsing, TestRepeatCallbacks)
     ASSERT_EQ(1, user_data.callback_RESPONSE_LINE_invoked);
     ASSERT_EQ(1, user_data.callback_RESPONSE_HEADERS_invoked);
     ASSERT_EQ(1, user_data.callback_RESPONSE_COMPLETE_invoked);
+}
+
+/**
+ * Try to delete a transaction before it is complete.
+ */
+TEST_F(HybridParsing, DeleteTransactionBeforeComplete)
+{
+    // Create a new LibHTP transaction
+    htp_tx_t *tx = htp_connp_tx_create(connp);
+    ASSERT_TRUE(tx != NULL);
+
+    // Request begins
+    htp_tx_state_request_start(tx);
+
+    // Request line data
+    htp_tx_req_set_line(tx, "GET / HTTP/1.1", 16, HTP_ALLOC_COPY);
+
+    ASSERT_EQ(htp_tx_destroy(tx), HTP_ERROR);
+
+    // Close connection
+    CloseConnParser();   
 }

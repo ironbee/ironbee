@@ -106,7 +106,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp);
  *
  * @param[in] tx
  */
-void htp_tx_destroy(htp_tx_t *tx);
+htp_status_t htp_tx_destroy(htp_tx_t *tx);
 
 /**
  * Determines if the transaction used a shared configuration structure. See the
