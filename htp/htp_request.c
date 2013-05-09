@@ -284,8 +284,15 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
     // response in order to determine if the tunneling request
     // was a success.
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
+        // Because we will be waiting on the response, complete as much
+        // of the request straight away. This is because, if there's no more
+        // inbound data we may not be called again, and the request may end
+        // up never being finalized.
+        htp_tx_state_request_complete_partial(connp->in_tx);
+
         connp->in_state = htp_connp_REQ_CONNECT_WAIT_RESPONSE;
-        connp->in_status = HTP_STREAM_DATA_OTHER;        
+        connp->in_status = HTP_STREAM_DATA_OTHER;       
+
         return HTP_DATA_OTHER;
     }
 
@@ -697,7 +704,7 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
     return HTP_ERROR;
 }
 
-htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {    
     return htp_tx_state_request_complete(connp->in_tx);
 }
 

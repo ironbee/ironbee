@@ -696,7 +696,7 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
     return HTP_OK;
 }
 
-htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
+htp_status_t htp_tx_state_request_complete_partial(htp_tx_t *tx) {
     // Finalize request body.
     if (htp_tx_req_has_body(tx)) {
         htp_status_t rc = htp_tx_req_process_body_data(tx, NULL, 0);
@@ -714,6 +714,15 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
         bstr_free(tx->connp->put_file->filename);
         free(tx->connp->put_file);
         tx->connp->put_file = NULL;
+    }
+
+    return HTP_OK;
+}
+
+htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
+    if (tx->request_progress != HTP_REQUEST_COMPLETE) {
+        htp_status_t rc = htp_tx_state_request_complete_partial(tx);
+        if (rc != HTP_OK) return rc;
     }
     
     // Check if the entire transaction is complete.
