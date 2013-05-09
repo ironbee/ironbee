@@ -33,7 +33,6 @@
 #include <ironbee/build.h>
 #include <ironbee/config.h>
 #include <ironbee/operator.h>
-#include <ironbee/rule_defs.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus
@@ -76,7 +75,6 @@ extern "C" {
         (m)->filename           = xfilename; \
         (m)->data               = xdata; \
         (m)->ib                 = xib; \
-        (m)->rule               = NULL; \
         (m)->idx                = 0; \
         (m)->name               = xname; \
         (m)->gcdata             = xgcdata; \
@@ -96,7 +94,6 @@ extern "C" {
                                       IB_ABINUM, \
                                       IB_VERSION, \
                                       __FILE__, \
-                                      NULL, \
                                       NULL, \
                                       NULL, \
                                       0
@@ -194,7 +191,6 @@ struct ib_module_t {
     const char  *filename;    /**< Module code filename */
     void        *data;        /**< Module data */
     ib_engine_t *ib;          /**< Engine */
-    ib_rule_t   *rule;        /**< Access to Rule Engine and env. Init=NULL*/
     size_t       idx;         /**< Module index */
 
 

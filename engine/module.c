@@ -60,21 +60,9 @@ static ib_status_t module_context_open(
     assert(event == context_open_event);
     assert(cbdata != NULL);
 
-    ib_module_t *m = (ib_module_t *)cbdata;
-    ib_status_t  rc;
-
     /* We only care about the main context */
     if (ib_context_type(ctx) != IB_CTYPE_MAIN) {
         return IB_OK;
-    }
-
-    /* Create the module's rule */
-    rc = ib_rule_create(ib, ctx, __FILE__, __LINE__, false, &(m->rule));
-    if (rc != IB_OK) {
-        ib_log_error(ib,
-                     "Failed to create module rule %s: %s",
-                     m->name,
-                     ib_status_to_string(rc));
     }
 
     return IB_OK;
