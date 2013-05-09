@@ -119,6 +119,110 @@ TEST_F(TestIBUtilList, test_list_push_and_pop)
     ASSERT_EQ(0UL, ib_list_elements(list));
 }
 
+/// @test Test util list library - IB_LIST_REMOVE()
+TEST_F(TestIBUtilList, test_list_remove_head)
+{
+    ib_list_t *list;
+    ib_list_node_t *node;
+    ib_status_t rc;
+    int init[] = { 0, 1, 2, 3, 4 };
+    int *val;
+    int i;
+
+    rc = ib_list_create(&list, MemPool());
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(list);
+    ASSERT_EQ(0UL, ib_list_elements(list));
+
+    for (i = 0; i < 5; i++) {
+        rc = ib_list_push(list, &init[i]);
+        ASSERT_EQ(IB_OK, rc);
+    }
+    ASSERT_EQ(5UL, ib_list_elements(list));
+
+    node = IB_LIST_FIRST(list);
+    val = (int *)ib_list_node_data(node);
+    ASSERT_EQ(0, *val);
+    IB_LIST_NODE_REMOVE(list, node);
+    ASSERT_EQ(4UL, ib_list_elements(list));
+
+    node = IB_LIST_FIRST(list);
+    val = (int *)ib_list_node_data(node);
+    ASSERT_EQ(1, *val);
+    IB_LIST_NODE_REMOVE(list, node);
+    ASSERT_EQ(3UL, ib_list_elements(list));
+
+    node = IB_LIST_FIRST(list);
+    val = (int *)ib_list_node_data(node);
+    ASSERT_EQ(2, *val);
+    IB_LIST_NODE_REMOVE(list, node);
+    ASSERT_EQ(2UL, ib_list_elements(list));
+
+    node = IB_LIST_FIRST(list);
+    val = (int *)ib_list_node_data(node);
+    ASSERT_EQ(3, *val);
+    IB_LIST_NODE_REMOVE(list, node);
+    ASSERT_EQ(1UL, ib_list_elements(list));
+
+    node = IB_LIST_FIRST(list);
+    val = (int *)ib_list_node_data(node);
+    ASSERT_EQ(4, *val);
+    IB_LIST_NODE_REMOVE(list, node);
+    ASSERT_EQ(0UL, ib_list_elements(list));
+
+}
+/// @test Test util list library - IB_LIST_REMOVE()
+TEST_F(TestIBUtilList, test_list_remove_tail)
+{
+    ib_list_t *list;
+    ib_list_node_t *node;
+    ib_status_t rc;
+    int init[] = { 0, 1, 2, 3, 4 };
+    int *val;
+    int i;
+
+    rc = ib_list_create(&list, MemPool());
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(list);
+    ASSERT_EQ(0UL, ib_list_elements(list));
+
+    for (i = 0; i < 5; i++) {
+        rc = ib_list_push(list, &init[i]);
+        ASSERT_EQ(IB_OK, rc);
+    }
+    ASSERT_EQ(5UL, ib_list_elements(list));
+
+    node = IB_LIST_LAST(list);
+    val = (int *)ib_list_node_data(node);
+    ASSERT_EQ(4, *val);
+    IB_LIST_NODE_REMOVE(list, node);
+    ASSERT_EQ(4UL, ib_list_elements(list));
+
+    node = IB_LIST_LAST(list);
+    val = (int *)ib_list_node_data(node);
+    ASSERT_EQ(3, *val);
+    IB_LIST_NODE_REMOVE(list, node);
+    ASSERT_EQ(3UL, ib_list_elements(list));
+
+    node = IB_LIST_LAST(list);
+    val = (int *)ib_list_node_data(node);
+    ASSERT_EQ(2, *val);
+    IB_LIST_NODE_REMOVE(list, node);
+    ASSERT_EQ(2UL, ib_list_elements(list));
+
+    node = IB_LIST_LAST(list);
+    val = (int *)ib_list_node_data(node);
+    ASSERT_EQ(1, *val);
+    IB_LIST_NODE_REMOVE(list, node);
+    ASSERT_EQ(1UL, ib_list_elements(list));
+
+    node = IB_LIST_LAST(list);
+    val = (int *)ib_list_node_data(node);
+    ASSERT_EQ(0, *val);
+    IB_LIST_NODE_REMOVE(list, node);
+    ASSERT_EQ(0UL, ib_list_elements(list));
+}
+
 /// @test Test util list library - ib_list_unshift() and ib_list_shift()
 TEST_F(TestIBUtilList, test_list_unshift_and_shift)
 {
@@ -146,40 +250,49 @@ TEST_F(TestIBUtilList, test_list_unshift_and_shift)
     rc = ib_list_unshift(list, &v0);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(1UL, ib_list_elements(list));
+
     rc = ib_list_unshift(list, &v1);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(2UL, ib_list_elements(list));
+
     rc = ib_list_unshift(list, &v2);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(3UL, ib_list_elements(list));
+
     rc = ib_list_unshift(list, &v3);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(4UL, ib_list_elements(list));
+
     rc = ib_list_unshift(list, &v4);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(5UL, ib_list_elements(list));
     ASSERT_EQ(v4, *(int *)(ib_list_node_data(ib_list_first(list))));
     ASSERT_EQ(v0, *(int *)(ib_list_node_data(ib_list_last(list))));
+
     rc = ib_list_shift(list, (void *)&val);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(val);
     ASSERT_EQ(v4, *val);
     ASSERT_EQ(4UL, ib_list_elements(list));
+
     rc = ib_list_shift(list, (void *)&val);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(val);
     ASSERT_EQ(v3, *val);
     ASSERT_EQ(3UL, ib_list_elements(list));
+
     rc = ib_list_shift(list, (void *)&val);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(val);
     ASSERT_EQ(v2, *val);
     ASSERT_EQ(2UL, ib_list_elements(list));
+
     rc = ib_list_shift(list, (void *)&val);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(val);
     ASSERT_EQ(v1, *val);
     ASSERT_EQ(1UL, ib_list_elements(list));
+
     rc = ib_list_shift(list, (void *)&val);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(val);
@@ -309,3 +422,69 @@ TEST_F(TestIBUtilList, test_list_loop_reverse_safe)
     }
     ASSERT_EQ(5UL, ib_list_elements(list));
 }
+
+/// @test Test util list library - IB_LIST_REMOVE() from loop
+TEST_F(TestIBUtilList, test_list_loop_remove)
+{
+    ib_list_t *list;
+    ib_list_node_t *node;
+    ib_list_node_t *node_next;
+    ib_status_t rc;
+    int init[] = { 0, 1, 2, 3, 4 };
+    int *val;
+    int i;
+
+    rc = ib_list_create(&list, MemPool());
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(list);
+    ASSERT_EQ(0UL, ib_list_elements(list));
+
+    for (i = 0; i < 5; i++) {
+        rc = ib_list_push(list, &init[i]);
+        ASSERT_EQ(IB_OK, rc);
+    }
+    ASSERT_EQ(5UL, ib_list_elements(list));
+
+    i = 0;
+    IB_LIST_LOOP_SAFE(list, node, node_next) {
+        val = (int *)ib_list_node_data(node);
+        ASSERT_EQ(init[i], *val);
+        ++i;
+        IB_LIST_NODE_REMOVE(list, node);
+    }
+    ASSERT_EQ(0UL, ib_list_elements(list));
+}
+
+
+/// @test Test util list library - IB_LIST_REMOVE() from loop reverse
+TEST_F(TestIBUtilList, test_list_loop_reverse_remove)
+{
+    ib_list_t *list;
+    ib_list_node_t *node;
+    ib_list_node_t *node_next;
+    ib_status_t rc;
+    int init[] = { 0, 1, 2, 3, 4 };
+    int *val;
+    int i;
+
+    rc = ib_list_create(&list, MemPool());
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(list);
+    ASSERT_EQ(0UL, ib_list_elements(list));
+
+    for (i = 0; i < 5; i++) {
+        rc = ib_list_push(list, &init[i]);
+        ASSERT_EQ(IB_OK, rc);
+    }
+    ASSERT_EQ(5UL, ib_list_elements(list));
+
+    i = 4;
+    IB_LIST_LOOP_REVERSE_SAFE(list, node, node_next) {
+        val = (int *)ib_list_node_data(node);
+        ASSERT_EQ(init[i], *val);
+        --i;
+        IB_LIST_NODE_REMOVE(list, node);
+    }
+    ASSERT_EQ(0UL, ib_list_elements(list));
+}
+

@@ -221,14 +221,24 @@ struct ib_list_t {
  * Remove a node from a list.
  *
  * @param list List
- * @param node Node to insert
+ * @param node Node to remove
  */
 #define IB_LIST_NODE_REMOVE(list, node) \
     do { \
-        if ((node)->prev != NULL) { \
-            (node)->prev->next = (node)->next; \
+        if ((list)->nelts == 1) { \
+            (list)->head = NULL; \
+            (list)->tail = NULL; \
         } \
-        if ((node)->next != NULL) { \
+        else if ((node) == (list)->head) {    \
+            (list)->head = (list)->head->next; \
+            (list)->head->prev = NULL; \
+        } \
+        else if ((node) == (list)->tail) { \
+            (node)->prev->next = (node)->next; \
+            (list)->tail = (node)->prev; \
+        } \
+        else { \
+            (node)->prev->next = (node)->next; \
             (node)->next->prev = (node)->prev; \
         } \
         --(list)->nelts; \
@@ -243,7 +253,6 @@ struct ib_list_t {
     do { \
         if ((list)->tail != NULL) { \
             IB_LIST_NODE_REMOVE((list), (list)->tail); \
-            (list)->tail = (list)->tail->prev; \
         } \
     } while(0)
 
@@ -256,7 +265,6 @@ struct ib_list_t {
     do { \
         if ((list)->head != NULL) { \
             IB_LIST_NODE_REMOVE((list), (list)->head); \
-            (list)->head = (list)->head->next; \
         } \
     } while(0)
 
