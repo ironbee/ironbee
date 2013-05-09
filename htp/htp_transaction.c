@@ -475,7 +475,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     if (rc != HTP_OK) return rc;
 
     // Run hook REQUEST_HEADERS.
-    rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp->in_tx);
+    rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx);
     if (rc != HTP_OK) return rc;
     
     // We cannot proceed if the request is invalid.
@@ -600,7 +600,7 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
     }
 
     // Run hook HTP_RESPONSE_LINE
-    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_response_line, tx->connp->out_tx);
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_response_line, tx);
     if (rc != HTP_OK) return rc;
 
     return HTP_OK;
@@ -729,7 +729,7 @@ htp_status_t htp_tx_state_request_complete_partial(htp_tx_t *tx) {
     tx->request_progress = HTP_REQUEST_COMPLETE;
 
     // Run hook REQUEST_COMPLETE.
-    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx->connp->in_tx);
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx);
     if (rc != HTP_OK) return rc;
 
     // Clean-up.
@@ -766,7 +766,7 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
 
 htp_status_t htp_tx_state_request_start(htp_tx_t *tx) {
     // Run hook REQUEST_START.
-    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_start, tx->connp->in_tx);
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_start, tx);
     if (rc != HTP_OK) return rc;
 
     // Change state into request line parsing.
@@ -784,7 +784,7 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
         // Request trailers.
 
         // Run hook HTP_REQUEST_TRAILER.
-        htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp->in_tx);
+        htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_trailer, tx);
         if (rc != HTP_OK) return rc;
 
         // Finalize sending raw header data.
@@ -848,12 +848,12 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
     }
 
     // Run hook REQUEST_URI_NORMALIZE.
-    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_uri_normalize, tx->connp->in_tx);
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_uri_normalize, tx);
     if (rc != HTP_OK) return rc;
 
 
     // Run hook REQUEST_LINE.
-    rc = htp_hook_run_all(tx->connp->cfg->hook_request_line, tx->connp->in_tx);
+    rc = htp_hook_run_all(tx->connp->cfg->hook_request_line, tx);
     if (rc != HTP_OK) return rc;
 
     // Move on to the next phase.
