@@ -326,6 +326,14 @@ void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp
 void htp_config_register_response_trailer_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *d));
 
 /**
+ * Registers a TRANSACTION_COMPLETE callback.
+ *
+ * @param[in] cfg
+ * @param[in] callback_fn
+ */
+void htp_config_register_transaction_complete(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+
+/**
  * Adds the built-in Urlencoded parser to the configuration. The parser will
  * parse query strings and request bodies with the appropriate MIME type.
  *

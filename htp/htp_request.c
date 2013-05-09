@@ -270,7 +270,7 @@ static void htp_connp_req_clear_buffer(htp_connp_t *connp) {
 }
 
 /**
- * Performs check for a CONNECT transaction to decide whether inbound
+ * Performs a check for a CONNECT transaction to decide whether inbound
  * parsing needs to be suspended.
  *
  * @param[in] connp
@@ -285,9 +285,7 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
     // was a success.
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         connp->in_state = htp_connp_REQ_CONNECT_WAIT_RESPONSE;
-        connp->in_status = HTP_STREAM_DATA_OTHER;
-        connp->in_tx->request_progress = HTP_REQUEST_COMPLETE;
-
+        connp->in_status = HTP_STREAM_DATA_OTHER;        
         return HTP_DATA_OTHER;
     }
 
@@ -514,6 +512,7 @@ htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
                 connp->in_tx->connp->in_state = htp_connp_REQ_FINALIZE;
             }
             break;
+            
         case HTP_CODING_NO_BODY:
             // This request does not have a body, which
             // means that we're done with it

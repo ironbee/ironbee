@@ -146,7 +146,6 @@ void htp_tx_destroy(htp_tx_t *tx) {
         }
     }
 
-
     bstr_free(tx->response_content_type);
 
     // Parsers
@@ -704,6 +703,8 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
         if (rc != HTP_OK) return rc;
     }
 
+    tx->request_progress = HTP_REQUEST_COMPLETE;
+
     // Run hook REQUEST_COMPLETE.
     htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx->connp);
     if (rc != HTP_OK) return rc;
@@ -714,9 +715,12 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
         free(tx->connp->put_file);
         tx->connp->put_file = NULL;
     }
+    
+    // Check if the entire transaction is complete.
+    htp_tx_finalize(tx);
 
-    tx->request_progress = HTP_REQUEST_COMPLETE;
-
+    // Determine what happens next, and remove this transaction from the parser.
+    
     if (tx->is_protocol_0_9) {
         tx->connp->in_state = htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9;
     } else {
@@ -831,6 +835,21 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
     return htp_tx_state_response_complete_ex(tx, 1 /* hybrid mode */);
 }
 
+htp_status_t htp_tx_finalize(htp_tx_t *tx) {
+    if (!htp_tx_is_complete(tx)) return HTP_OK;
+
+    // Run hook TRANSACTION_COMPLETE.
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_transaction_complete, tx->connp);
+    if (rc != HTP_OK) return rc;
+    
+    // In streaming processing, we destroy the transaction because it will not be needed any more.
+    if (tx->connp->cfg->tx_auto_destroy) {
+        htp_tx_destroy(tx);
+    }
+        
+    return HTP_OK;
+}
+
 htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
     if (tx->response_progress != HTP_RESPONSE_COMPLETE) {
         tx->response_progress = HTP_RESPONSE_COMPLETE;
@@ -871,11 +890,8 @@ htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
             return HTP_DATA_OTHER;
         }
 
-        // In streaming processing, we destroy the transaction
-        // because it will not be needed any more.
-        if (tx->connp->cfg->tx_auto_destroy) {
-            htp_tx_destroy(tx->connp->out_tx);
-        }
+        htp_status_t rc = htp_tx_finalize(tx);
+        if (rc != HTP_OK) return rc;       
     }
 
     // Disconnect from the transaction
@@ -984,4 +1000,15 @@ void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_d
  */
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {
     htp_hook_register(&tx->hook_response_body_data, (htp_callback_fn_t) callback_fn);
+}
+
+int htp_tx_is_complete(htp_tx_t *tx) {
+    // A transaction is considered complete only when both the request and
+    // response are complete. (Sometimes a complete response can be seen
+    // even while the request is ongoing.)
+    if ((tx->request_progress != HTP_REQUEST_COMPLETE)||(tx->response_progress != HTP_RESPONSE_COMPLETE)) {
+        return 0;
+    } else {
+        return 1;
+    }
 }

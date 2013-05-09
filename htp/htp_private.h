@@ -219,6 +219,10 @@ htp_status_t htp_parse_ct_header(bstr *header, bstr **ct);
 htp_status_t htp_connp_req_receiver_finalize_clear(htp_connp_t *connp);
 htp_status_t htp_connp_res_receiver_finalize_clear(htp_connp_t *connp);
 
+htp_status_t htp_tx_finalize(htp_tx_t *tx);
+
+int htp_tx_is_complete(htp_tx_t *tx);
+
 #ifdef	__cplusplus
 }
 #endif
