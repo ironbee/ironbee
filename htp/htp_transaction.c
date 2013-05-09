@@ -328,21 +328,22 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     // Check for the Transfer-Encoding header, which would indicate a chunked request body.
     if (te != NULL) {
         // Make sure it contains "chunked" only.
+        // TODO The HTTP/1.1 RFC also allows the T-E header to contain "identity", which
+        //      presumably has the same effect as T-E header absence.
         if (bstr_cmp_c(te->value, "chunked") != 0) {
             // Invalid T-E header value.
-            tx->flags |= HTP_INVALID_CHUNKING;
-
-            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "Invalid T-E value in request");
+            tx->flags |= HTP_REQUEST_INVALID_T_E;
+            tx->flags |= HTP_REQUEST_INVALID;
         }
 
-        // Chunked encoding is a HTTP/1.1 feature. Check that some other protocol is not
-        // used. The flag will also be set if the protocol could not be parsed.
+        // Chunked encoding is a HTTP/1.1 feature, so check that an earlier protocol
+        // version is not used. The flag will also be set if the protocol could not be parsed.
         //
         // TODO IIS 7.0, for example, would ignore the T-E header when it
-        //      it is used with a protocol below HTTP 1.1.
+        //      it is used with a protocol below HTTP 1.1. This should be a
+        //      personality trait.
         if (tx->request_protocol_number < HTP_PROTOCOL_1_1) {
-            tx->flags |= HTP_INVALID_CHUNKING;
+            tx->flags |= HTP_REQUEST_INVALID_T_E;
         }
 
         // If the T-E header is present we are going to use it.
@@ -350,8 +351,15 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
         // We are still going to check for the presence of C-L.
         if (cl != NULL) {
-            // This is a violation of the RFC.
-            tx->flags |= HTP_REQUEST_SMUGGLING;
+            // According to the HTTP/1.1 RFC (section 4.4):
+            //
+            // "The Content-Length header field MUST NOT be sent
+            //  if these two lengths are different (i.e., if a Transfer-Encoding
+            //  header field is present). If a message is received with both a
+            //  Transfer-Encoding header field and a Content-Length header field,
+            //  the latter MUST be ignored."
+            //
+            tx->flags |= HTP_REQUEST_SMUGGLING;            
         }
     } else if (cl != NULL) {
         // We have a request body of known length.
@@ -373,8 +381,8 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // Get body length.
         tx->request_content_length = htp_parse_content_length(cl->value);
         if (tx->request_content_length < 0) {
-            tx->flags |= HTP_REQUEST_INVALID;
-            tx->flags |= HTP_REQUEST_INVALID_C_L;     
+            tx->flags |= HTP_REQUEST_INVALID_C_L;
+            tx->flags |= HTP_REQUEST_INVALID;            
         }
     } else {
         // No body.

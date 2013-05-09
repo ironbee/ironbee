@@ -884,15 +884,44 @@ TEST_F(ConnectionParsing, EarlyResponse) {
 
 TEST_F(ConnectionParsing, InvalidRequest1) {
     int rc = test_run(home, "36-invalid-request-1.t", cfg, &connp);
-    ASSERT_GE(rc, -101);
+    ASSERT_LT(rc, 0);
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(tx->request_progress, HTP_REQUEST_HEADERS);
+    ASSERT_EQ(HTP_REQUEST_HEADERS, tx->request_progress);
 
     ASSERT_TRUE(tx->flags & HTP_REQUEST_INVALID);
     ASSERT_TRUE(tx->flags & HTP_REQUEST_INVALID_C_L);
+
+    ASSERT_TRUE(tx->request_hostname != NULL);
+}
+
+TEST_F(ConnectionParsing, InvalidRequest2) {
+    int rc = test_run(home, "37-invalid-request-2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    
+    ASSERT_TRUE(tx->flags & HTP_REQUEST_SMUGGLING);
+
+    ASSERT_TRUE(tx->request_hostname != NULL);
+}
+
+TEST_F(ConnectionParsing, InvalidRequest3) {
+    int rc = test_run(home, "38-invalid-request-3.t", cfg, &connp);
+    ASSERT_LT(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_HEADERS, tx->request_progress);
+
+    ASSERT_TRUE(tx->flags & HTP_REQUEST_INVALID);
+    ASSERT_TRUE(tx->flags & HTP_REQUEST_INVALID_T_E);    
 
     ASSERT_TRUE(tx->request_hostname != NULL);
 }
