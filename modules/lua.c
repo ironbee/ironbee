@@ -131,7 +131,7 @@ ib_status_t modlua_rule_driver(
  * Get the lua runtime from the connection.
  *
  * @param[in] conn Connection
- * @param[out] lua Lua runtime struct.
+ * @param[out] lua Lua runtime struct. *lua must be NULL.
  *
  * @returns
  *   - IB_OK on success.
@@ -144,6 +144,7 @@ static ib_status_t modlua_runtime_get(
     assert(conn != NULL);
     assert(conn->ib != NULL);
     assert(lua != NULL);
+    assert(*lua == NULL);
 
     ib_status_t rc;
     ib_module_t *module = NULL;
@@ -322,6 +323,17 @@ static ib_status_t build_near_empty_module(
 
 /**
  * Evaluate the Lua stack and report errors about directive processing.
+ *
+ * @param[in] L Lua state.
+ * @param[in] ib IronBee engine.
+ * @param[in] module The Lua module structure.
+ * @param[in] name The function. This is used for logging only.
+ * @param[in] args The number of arguments to the Lua function being called.
+ *
+ * @returns
+ *   - IB_OK on succes.
+ *   - IB_EALLOC If Lua interpretation fails with an LUA_ERRMEM error.
+ *   - IB_EINVAL on all other failures.
  */
 static ib_status_t modlua_config_cb_eval(
     lua_State *L,
@@ -339,7 +351,7 @@ static ib_status_t modlua_config_cb_eval(
         case LUA_ERRRUN:
             ib_log_error(
                 ib,
-                "Error processing directive for module %s: %s",
+                "Error processing call for module %s: %s",
                 module->name,
                 lua_tostring(L, -1));
             lua_pop(L, 1); /* Get error string off of the stack. */
@@ -347,13 +359,13 @@ static ib_status_t modlua_config_cb_eval(
         case LUA_ERRMEM:
             ib_log_error(
                 ib,
-                "Failed to allocate memory processing directive for %s",
+                "Failed to allocate memory processing call for %s",
                 module->name);
-            return IB_EINVAL;
+            return IB_EALLOC;
         case LUA_ERRERR:
             ib_log_error(
                 ib,
-                "Error fetching error message during directive for %s",
+                "Error fetching error message during call for %s",
                 module->name);
             return IB_EINVAL;
 #if LUA_VERSION_NUM > 501
@@ -362,14 +374,14 @@ static ib_status_t modlua_config_cb_eval(
         case LUA_ERRGCMM:
             ib_log_error(
                 ib,
-                "Garbage collection error during directive for %s.",
+                "Garbage collection error during call for %s.",
                 module->name);
             return IB_EINVAL;
 #endif
         default:
             ib_log_error(
                 ib,
-                "Unexpected error(%d) during directive %s for %s: %s",
+                "Unexpected error(%d) during call %s for %s: %s",
                 lua_rc,
                 name,
                 module->name,
@@ -411,6 +423,9 @@ static ib_status_t modlua_config_cb_eval(
  * @param[in] ib IronBee Engine.
  * @param[in] ctx The current / starting context.
  * @param[in,out] L Lua stack onto which is pushed the table of configurations.
+ *
+ * @returns
+ *   - IB_OK is currently always returned.
  */
 static ib_status_t modlua_push_config_path(
     ib_engine_t *ib,
@@ -449,6 +464,10 @@ static ib_status_t modlua_push_config_path(
  * @param[in] cp Configuration parser.
  * @param[in] name Directive name for the block that is being closed.
  * @param[in,out] cbdata Callback data.
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_EALLOC on memory errors in the Lua VM.
+ *   - IB_EINVAL if lua evaluation fails.
  */
 static ib_status_t modlua_config_cb_blkend(
     ib_cfgparser_t *cp,
@@ -1309,7 +1328,7 @@ static ib_status_t modlua_callback_setup(
     ib_status_t rc;
     ib_module_t *module;
     lua_State *L;
-    modlua_runtime_t *lua;
+    modlua_runtime_t *lua = NULL;
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
@@ -1489,7 +1508,7 @@ static ib_status_t modlua_callback_dispatch(
     ib_status_t rc;
     ib_module_t *module = NULL;
     lua_State *L;
-    modlua_runtime_t *lua;
+    modlua_runtime_t *lua = NULL;
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
@@ -2480,7 +2499,7 @@ static ib_status_t modlua_conn_fini_lua_runtime(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    modlua_runtime_t *modlua_rt;
+    modlua_runtime_t *modlua_rt = NULL;
     ib_context_t *ctx = conn->ctx;
     ib_module_t *module = NULL;
     modlua_cfg_t *cfg = NULL;
