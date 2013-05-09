@@ -38,6 +38,9 @@ IronBee v0.8.0
 * As part of the ongoing provider removal project, the matcher provider was
   removed.  Nothing was using it.
 
+* As part of the ongoing provider removal project, the parser provider was
+  removed.  `modhtp` has been updated to provide parsing via engine hooks.
+
 **Util**
 
 * Add external iterator support for hash.  See `ib_hash_iterator*`.

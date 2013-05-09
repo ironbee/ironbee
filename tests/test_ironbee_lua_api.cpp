@@ -193,7 +193,6 @@ const char * IronBeeLuaApi::ib_conf =
     "LoadModule \"ibmod_rules.so\"\n"
     "LoadModule \"ibmod_lua.so\"\n"
     "LoadModule \"ibmod_user_agent.so\"\n"
-    "Set parser \"htp\"\n"
     "<Site default>\n"
         "SiteId AAAABBBB-1111-2222-3333-000000000000\n"
         "Hostname *\n"

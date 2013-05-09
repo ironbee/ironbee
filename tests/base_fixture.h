@@ -149,8 +149,6 @@ public:
             "# Disable audit logs\n"
             "AuditEngine Off\n"
 
-            "Set parser \"htp\"\n"
-
             "<Site test-site>\n"
             "SiteId AAAABBBB-1111-2222-3333-000000000000\n"
             "Hostname somesite.com\n"

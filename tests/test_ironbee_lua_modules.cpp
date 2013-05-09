@@ -104,7 +104,6 @@ const char * IronBeeLuaModules::c_ib_conf =
     "LoadModule \"ibmod_lua.so\"\n"
     "ModuleBasePath \".\"\n"
     "LuaInclude \"test_ironbee_lua_configs.lua\"\n"
-    "Set parser \"htp\"\n"
     "<Site default>\n"
         "SiteId AAAABBBB-1111-2222-3333-000000000000\n"
         "Hostname *\n"

@@ -71,11 +71,6 @@ typedef enum ib_audit_mode_t {
  */
 typedef struct ib_core_cfg_t ib_core_cfg_t;
 struct ib_core_cfg_t {
-    /** Provider instances */
-    struct {
-        ib_provider_inst_t *parser;     /**< Parser provider instance */
-    } pi;
-
     /** Providers (instance is per-transaction) */
     struct {
         ib_provider_t   *audit;         /**< Audit log provider */
@@ -98,7 +93,6 @@ struct ib_core_cfg_t {
     const char      *auditlog_dir;      /**< Audit log base directory */
     const char      *auditlog_sdir_fmt; /**< Audit log sub-directory format */
     const char      *audit;             /**< Active audit provider key */
-    const char      *parser;            /**< Active parser provider key */
     const char      *data;              /**< Active data provider key */
     const char      *module_base_path;  /**< Module base path. */
     const char      *rule_base_path;    /**< Rule base path. */

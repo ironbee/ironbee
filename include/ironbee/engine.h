@@ -452,24 +452,6 @@ ib_status_t DLL_PUBLIC ib_conn_set_module_data(
 );
 
 /**
- * Set the connection parser context.
- *
- * @param conn Connection structure
- * @param parser_ctx Parser context
- */
-void ib_conn_parser_context_set(ib_conn_t *conn,
-                                void *parser_ctx);
-
-/**
- * Get the connection parser context.
- *
- * @param conn Connection structure
- *
- * @returns The connection parser context
- */
-void DLL_PUBLIC *ib_conn_parser_context_get(ib_conn_t *conn);
-
-/**
  * Set connection flags.
  *
  * @param conn Connection structure

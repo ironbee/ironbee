@@ -34,7 +34,6 @@
 #include <ironbee/hash.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
-#include <ironbee/provider.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
 #include <ironbee/strval.h>
@@ -99,7 +98,7 @@ typedef struct modhtp_config_t modhtp_config_t;
  * Module Context Structure
  */
 struct modhtp_context_t {
-    const ib_engine_t         *ib;           /**< Engine handle */
+    const ib_engine_t         *ib;           /**< IronBee engine. */
     const modhtp_config_t     *mod_config;   /**< Module config structure */
     const htp_cfg_t           *htp_config;   /**< Parser config handle */
 };
@@ -444,22 +443,23 @@ static ib_status_t modhtp_check_htprc(
  *  - IB_OK All OK
  *  - IB_EINVAL If either key or value of any iteration is NULL
  */
-static ib_status_t modhtp_set_header(
-    const modhtp_txdata_t            *txdata,
-    const char                       *label,
-    const ib_parsed_header_wrapper_t *header,
-    modhtp_set_header_fn_t            fn,
-    const char                       *fname)
+static
+ib_status_t modhtp_set_header(
+    const modhtp_txdata_t    *txdata,
+    const char               *label,
+    const ib_parsed_header_t *header,
+    modhtp_set_header_fn_t    fn,
+    const char               *fname
+)
 {
     assert(txdata != NULL);
     assert(label != NULL);
-    assert(header != NULL);
     assert(fn != NULL);
     assert(fname != NULL);
 
     const ib_parsed_name_value_pair_list_t *node;
 
-    for (node = header->head;  node != NULL;  node = node->next) {
+    for (node = header;  node != NULL;  node = node->next) {
         htp_status_t hrc;
         const char *value = (const char *)ib_bytestr_const_ptr(node->value);
         size_t vlen = ib_bytestr_length(node->value);
@@ -1853,22 +1853,25 @@ static ib_status_t modhtp_build_context (
  */
 
 /**
- * Parser provider interface implementation: Connection Initialization
+ * Connection Init Hook
  *
- * @param[in] pi The provider instance
- * @param[in] iconn The IronBee connection
+ * @param[in] ib     IronBee engine.
+ * @param[in] iconn  Connection.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_conn_init(
-    ib_provider_inst_t *pi,
-    ib_conn_t          *iconn)
+static
+ib_status_t modhtp_conn_init(
+    ib_engine_t           *ib,
+    ib_conn_t             *iconn,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(iconn != NULL);
-
-    ib_engine_t            *ib = iconn->ib;
     ib_context_t           *ctx = iconn->ctx;
+    ib_module_t            *m = (ib_module_t *)cbdata;
     ib_status_t             rc;
     modhtp_config_t        *config;
     const modhtp_context_t *context;
@@ -1876,7 +1879,7 @@ static ib_status_t modhtp_iface_conn_init(
     htp_connp_t            *parser;
 
     /* Get the module config. */
-    rc = ib_context_module_config(ctx, (ib_module_t *)pi->data, (void *)&config);
+    rc = ib_context_module_config(ctx, m, (void *)&config);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
@@ -1903,61 +1906,79 @@ static ib_status_t modhtp_iface_conn_init(
     parser_data->disconnected = false;
 
     /* Store the parser data for access from callbacks. */
-    ib_conn_parser_context_set(iconn, parser_data);
+    rc = ib_conn_set_module_data(iconn, m, parser_data);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to set connection data for %s: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
+        return IB_EUNKNOWN;
+    }
     htp_connp_set_user_data(parser, parser_data);
 
     return IB_OK;
 }
 
 /**
- * Parser provider interface implementation: Connection Cleanup
+ * Connection Finish Hook
  *
- * @param[in] pi The provider instance
- * @param[in] iconn The IronBee connection
+ * @param[in] ib     IronBee engine.
+ * @param[in] iconn  Connection.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_conn_cleanup(
-    ib_provider_inst_t *pi,
-    ib_conn_t          *iconn)
+static
+ib_status_t modhtp_conn_finish(
+    ib_engine_t           *ib,
+    ib_conn_t             *iconn,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(iconn != NULL);
-
+    const ib_module_t *m = (const ib_module_t *)cbdata;
     modhtp_parser_data_t   *parser_data;
+    ib_status_t irc;
 
     /* Get the parser data */
-    parser_data = ib_conn_parser_context_get(iconn);
-    if (parser_data == NULL) {
-        ib_log_error(iconn->ib,
+    irc = ib_conn_get_module_data(iconn, m, (void **)&parser_data);
+    if (irc != IB_OK) {
+        ib_log_error(ib,
                      "Failed to get connection parser data from IB connection");
         return IB_EUNKNOWN;
     }
 
     /* Destroy the parser on disconnect. */
-    ib_log_debug3(iconn->ib, "Destroying LibHTP parser");
+    ib_log_debug3(ib, "Destroying LibHTP parser");
     htp_connp_destroy_all(parser_data->parser);
 
     return IB_OK;
 }
 
 /**
- * Parser provider interface implementation: Connect
+ * Connect Hook
  *
- * @param[in] pi The provider instance
- * @param[in] iconn The IronBee connection
+ * @param[in] ib     IronBee engine.
+ * @param[in] iconn  Connection.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_connect(
-    ib_provider_inst_t *pi,
-    ib_conn_t          *iconn)
+static
+ib_status_t modhtp_connect(
+    ib_engine_t           *ib,
+    ib_conn_t             *iconn,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
     modhtp_parser_data_t *parser_data;
+    ib_status_t irc;
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     /* Get the parser data */
-    parser_data = ib_conn_parser_context_get(iconn);
-    if (parser_data == NULL) {
+    irc = ib_conn_get_module_data(iconn, m, (void **)&parser_data);
+    if (irc != IB_OK) {
         ib_log_error(iconn->ib,
                      "Failed to get connection parser data from IB connection");
         return IB_EUNKNOWN;
@@ -1973,22 +1994,30 @@ static ib_status_t modhtp_iface_connect(
 }
 
 /**
- * Parser provider interface implementation: Disconnect
+ * Disconnect Hook
  *
- * @param[in] pi The provider instance
- * @param[in] iconn The IronBee connection
+ * @param[in] ib     IronBee engine.
+ * @param[in] iconn  Connection.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_disconnect(
-    ib_provider_inst_t *pi,
-    ib_conn_t          *iconn)
+static
+ib_status_t modhtp_disconnect(
+    ib_engine_t           *ib,
+    ib_conn_t             *iconn,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
     modhtp_parser_data_t *parser_data;
+    ib_status_t irc;
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     /* Get the parser data */
-    parser_data = ib_conn_parser_context_get(iconn);
-    if (parser_data == NULL) {
+    irc = ib_conn_get_module_data(iconn, m, (void **)&parser_data);
+    if (irc != IB_OK) {
         ib_log_error(iconn->ib,
                      "Failed to get connection parser data from IB connection");
         return IB_EUNKNOWN;
@@ -2001,37 +2030,47 @@ static ib_status_t modhtp_iface_disconnect(
 }
 
 /**
- * Parser provider interface implementation: Transaction Initialization
+ * Transaction Started Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_tx_init(
-    ib_provider_inst_t *pi,
-    ib_tx_t            *itx)
+static
+ib_status_t modhtp_tx_started(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    ib_module_t *m = (ib_module_t *)cbdata;
 
     modhtp_txdata_t      *txdata;
     modhtp_parser_data_t *parser_data;
     modhtp_config_t      *config;
     htp_tx_t             *htx;
     ib_status_t           irc;
+    htp_status_t          hrc;
 
     /* Get the parser data from the transaction */
-    parser_data = ib_conn_parser_context_get(itx->conn);
-    if (parser_data == NULL) {
+    irc = ib_conn_get_module_data(itx->conn, m, (void **)&parser_data);
+    if (irc != IB_OK) {
         ib_log_error_tx(itx, "Failed to get parser data for connection");
         return IB_EOTHER;
     }
 
     /* Get the module's configuration for the context */
-    irc = ib_context_module_config(itx->ctx, (ib_module_t *)pi->data, &config);
+    irc = ib_context_module_config(itx->ctx, m, &config);
     if (irc != IB_OK) {
-        ib_log_alert(itx->ib, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(irc));
         return irc;
     }
@@ -2042,7 +2081,7 @@ static ib_status_t modhtp_iface_tx_init(
         ib_log_error_tx(itx, "Failed to allocate transaction data");
         return IB_EALLOC;
     }
-    txdata->ib = itx->ib;
+    txdata->ib = ib;
     txdata->itx = itx;
     txdata->parser_data = parser_data;
     txdata->context = config->context;
@@ -2057,34 +2096,44 @@ static ib_status_t modhtp_iface_tx_init(
 
     /* Point both transactions at the transaction data */
     htp_tx_set_user_data(htx, txdata);
-    irc = ib_tx_set_module_data(itx, (const ib_module_t *)pi->data, txdata);
+    irc = ib_tx_set_module_data(itx, m, txdata);
     if (irc != IB_OK) {
         return irc;
     }
 
-    return IB_OK;
+    /* Start the request */
+    hrc = htp_tx_state_request_start(txdata->htx);
+    return modhtp_check_htprc(hrc, txdata, "htp_tx_state_request_start()");
 }
 
 /**
- * Parser provider interface implementation: Transaction cleanup
+ * Transaction Finished Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_tx_cleanup(
-    ib_provider_inst_t *pi,
-    ib_tx_t            *itx)
+static ib_status_t modhtp_tx_finished(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     modhtp_txdata_t *txdata;
     htp_tx_t        *htx;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
     htx = txdata->htx;
 
     /* Reset libhtp connection parser. */
@@ -2098,55 +2147,41 @@ static ib_status_t modhtp_iface_tx_cleanup(
 }
 
 /**
- * Parser provider interface implementation: Transaction started
+ * Request Start Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
- *
- * @returns Status code
- */
-static ib_status_t modhtp_iface_request_started(
-    ib_provider_inst_t *pi,
-    ib_tx_t            *itx)
-{
-    assert(pi != NULL);
-    assert(itx != NULL);
-
-    const modhtp_txdata_t *txdata;
-    htp_status_t           hrc;
-
-    /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
-
-    /* Start the request */
-    hrc = htp_tx_state_request_start(txdata->htx);
-    return modhtp_check_htprc(hrc, txdata, "htp_tx_state_request_start()");
-}
-
-/**
- * Parser provider interface implementation: Request line
- *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
- * @param[in] line The parsed request line
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] line   The parsed request line.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_request_line(
-    ib_provider_inst_t   *pi,
-    ib_tx_t              *itx,
-    ib_parsed_req_line_t *line)
+static
+ib_status_t modhtp_request_started(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    ib_parsed_req_line_t  *line,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
-    assert(line != NULL);
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     const modhtp_txdata_t *txdata;
     htp_status_t           hrc;
     ib_status_t            irc;
 
+    if (line == NULL) {
+        return IB_OK;
+    }
+
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     ib_log_debug_tx(itx, "SEND REQUEST LINE TO LIBHTP: \"%.*s\"",
                     (int)ib_bytestr_length(line->raw),
@@ -2173,28 +2208,40 @@ static ib_status_t modhtp_iface_request_line(
 }
 
 /**
- * Parser provider interface implementation: Request header data
+ * Request Header Data Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
- * @param[in] header Parsed request header data
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] header Parsed connection header.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_request_header_data(
-    ib_provider_inst_t         *pi,
-    ib_tx_t                    *itx,
-    ib_parsed_header_wrapper_t *header)
+static
+ib_status_t modhtp_request_header_data(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    ib_parsed_header_t    *header,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
-    assert(header != NULL);
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     const modhtp_txdata_t *txdata;
     ib_status_t            irc;
 
+    if (header == NULL) {
+        return IB_OK;
+    }
+
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     ib_log_debug_tx(itx, "SEND REQUEST HEADER DATA TO LIBHTP");
 
@@ -2209,26 +2256,35 @@ static ib_status_t modhtp_iface_request_header_data(
 }
 
 /**
- * Parser provider interface implementation: Request header finished
+ * Request Header Finished Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_request_header_finished(
-    ib_provider_inst_t *pi,
-    ib_tx_t            *itx)
+static
+ib_status_t modhtp_request_header_finished(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     const modhtp_txdata_t *txdata;
     ib_status_t            irc;
     htp_status_t           hrc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     /* Update the state */
     hrc = htp_tx_state_request_headers(txdata->htx);
@@ -2245,72 +2301,84 @@ static ib_status_t modhtp_iface_request_header_finished(
 
     ib_log_debug_tx(itx,
                     "SEND REQUEST HEADER FINISHED TO LIBHTP: "
-                    "modhtp_iface_request_header_finished");
+                    "modhtp_request_header_finished");
 
     return IB_OK;
 }
 
 /**
- * Parser provider interface implementation: Request body
+ * Request Body Data Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
- * @param[in] ib_txdata Transaction body data
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] txdata Transaction data.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_request_body_data(
-    ib_provider_inst_t *pi,
-    ib_tx_t            *itx,
-    ib_txdata_t        *ib_txdata)
+static
+ib_status_t modhtp_request_body_data(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    ib_txdata_t           *itxdata,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
-    assert(ib_txdata != NULL);
+    assert(ib      != NULL);
+    assert(itx     != NULL);
+    assert(itxdata != NULL);
+    assert(cbdata  != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     const modhtp_txdata_t *txdata;
     htp_status_t           hrc;
-    ib_status_t            irc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     ib_log_debug_tx(itx,
                     "SEND REQUEST BODY DATA TO LIBHTP: "
-                    "modhtp_iface_request_body_data");
+                    "modhtp_request_body_data");
 
     /* Hand the request body data to libhtp. */
     hrc = htp_tx_req_process_body_data(txdata->htx,
-                                       ib_txdata->data, ib_txdata->dlen);
-    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_req_process_body_data");
-    if (irc != IB_OK) {
-        return irc;
-    }
-
-    return IB_OK;
+                                       itxdata->data, itxdata->dlen);
+    return modhtp_check_htprc(hrc, txdata, "htp_tx_req_process_body_data");
 }
 
 /**
- * Parser provider interface implementation: Request finished
+ * Request Finished Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_request_finished(
-    ib_provider_inst_t *pi,
-    ib_tx_t            *itx)
+static
+ib_status_t modhtp_request_finished(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     const modhtp_txdata_t *txdata;
-    ib_status_t            irc;
     htp_status_t           hrc;
+    ib_status_t irc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     /* Generate fields. */
     irc = modhtp_gen_request_fields(txdata->htx, itx);
@@ -2320,35 +2388,41 @@ static ib_status_t modhtp_iface_request_finished(
 
     /* Complete the request */
     hrc = htp_tx_state_request_complete(txdata->htx);
-    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_request_complete");
-    if (irc != IB_OK) {
-        return irc;
-    }
-
-    return IB_OK;
+    return modhtp_check_htprc(hrc, txdata, "htp_tx_request_complete");
 }
 
 /**
- * Parser provider interface implementation: Response started
+ * Response Start Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] line   The parsed response line.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_response_started(
-    ib_provider_inst_t *pi,
-    ib_tx_t            *itx)
+static ib_status_t modhtp_response_started(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    ib_parsed_resp_line_t *line,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     const modhtp_txdata_t *txdata;
     htp_status_t           hrc;
+    htp_tx_t              *htx;
     ib_status_t            irc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     /* Start the response transaction */
     hrc = htp_tx_state_response_start(txdata->htx);
@@ -2356,32 +2430,6 @@ static ib_status_t modhtp_iface_response_started(
     if (irc != IB_OK) {
         return irc;
     }
-
-    /* Done */
-    return IB_OK;
-}
-
-/**
- * Parser provider interface implementation: Response line
- *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
- * @param[in] line The parsed response line
- *
- * @returns Status code
- */
-static ib_status_t modhtp_iface_response_line(
-    ib_provider_inst_t    *pi,
-    ib_tx_t               *itx,
-    ib_parsed_resp_line_t *line)
-{
-    assert(pi != NULL);
-    assert(itx != NULL);
-
-    const modhtp_txdata_t *txdata;
-    htp_tx_t              *htx;
-    htp_status_t           hrc;
-    ib_status_t            irc;
 
     /* For HTTP/0.9 requests, we're done. */
     if (line == NULL) {
@@ -2392,8 +2440,6 @@ static ib_status_t modhtp_iface_response_line(
                     "SEND RESPONSE LINE TO LIBHTP: "
                     "modhtp_iface_response_line");
 
-    /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
     htx = txdata->htx;
 
     /* Hand off the status line */
@@ -2409,37 +2455,43 @@ static ib_status_t modhtp_iface_response_line(
 
     /* Set the state */
     hrc = htp_tx_state_response_line(htx);
-    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_state_response_line");
-    if (irc != IB_OK) {
-        return irc;
-    }
-
-    return IB_OK;
+    return modhtp_check_htprc(hrc, txdata, "htp_tx_state_response_line");
 }
 
 /**
- * Parser provider interface implementation: Response header data
+ * Response Header Data Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
- * @param[in] header Parsed request header data
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] header Parsed connection header.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_response_header_data(
-    ib_provider_inst_t         *pi,
-    ib_tx_t                    *itx,
-    ib_parsed_header_wrapper_t *header)
+static
+ib_status_t modhtp_response_header_data(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    ib_parsed_header_t    *header,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
-    assert(header != NULL);
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     const modhtp_txdata_t *txdata;
-    ib_status_t            irc;
+
+    if (header == NULL) {
+        return IB_OK;
+    }
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
@@ -2451,36 +2503,40 @@ static ib_status_t modhtp_iface_response_header_data(
                     "modhtp_iface_response_header_data");
 
     /* Hand the response headers off to libhtp */
-    irc = modhtp_set_header(txdata, "response", header,
-                            htp_tx_res_set_header, "htp_tx_res_set_header");
-    if (irc != IB_OK) {
-        return irc;
-    }
-
-    return IB_OK;
+    return modhtp_set_header(txdata, "response", header,
+                             htp_tx_res_set_header, "htp_tx_res_set_header");
 }
 
 /**
- * Parser provider interface implementation: Response finished
+ * Response Header Finished Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_response_header_finished(
-    ib_provider_inst_t *pi,
-    ib_tx_t            *itx)
+static
+ib_status_t modhtp_response_header_finished(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     const modhtp_txdata_t *txdata;
     ib_status_t            irc;
     htp_status_t           hrc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     /* Update the state */
     hrc = htp_tx_state_response_headers(txdata->htx);
@@ -2508,65 +2564,77 @@ static ib_status_t modhtp_iface_response_header_finished(
 }
 
 /**
- * Parser provider interface implementation: Response body data
+ * Response Body Data Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
- * @param[in] ib_txdata Transaction body data
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] txdata Transaction data.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_response_body_data(
-    ib_provider_inst_t *pi,
-    ib_tx_t            *itx,
-    ib_txdata_t        *ib_txdata)
+static
+ib_status_t modhtp_response_body_data(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    ib_txdata_t           *itxdata,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
-    assert(ib_txdata != NULL);
+    assert(ib      != NULL);
+    assert(itx     != NULL);
+    assert(itxdata != NULL);
+    assert(cbdata  != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     const modhtp_txdata_t *txdata;
     htp_status_t           hrc;
-    ib_status_t            irc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     ib_log_debug_tx(itx,
                     "SEND RESPONSE BODY DATA TO LIBHTP: "
                     "modhtp_iface_response_body_data");
 
     hrc = htp_tx_res_process_body_data(txdata->htx,
-                                       ib_txdata->data, ib_txdata->dlen);
-    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_res_process_body_data");
-    if (irc != IB_OK) {
-        return irc;
-    }
-
-    return IB_OK;
+                                       itxdata->data, itxdata->dlen);
+    return modhtp_check_htprc(hrc, txdata, "htp_tx_res_process_body_data");
 }
 
 /**
- * Parser provider interface implementation: Response finished
+ * Response Finished Hook
  *
- * @param[in] pi The provider instance
- * @param[in] itx The IronBee transaction
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
  *
  * @returns Status code
  */
-static ib_status_t modhtp_iface_response_finished(
-    ib_provider_inst_t *pi,
-    ib_tx_t            *itx)
+static
+ib_status_t modhtp_response_finished(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
-    assert(pi != NULL);
-    assert(itx != NULL);
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
 
     const modhtp_txdata_t *txdata;
     ib_status_t            irc;
     htp_status_t           hrc;
 
     /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx((const ib_module_t *)pi->data, itx);
+    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     /* Generate fields. */
     irc = modhtp_gen_response_fields(txdata->htx, itx);
@@ -2576,75 +2644,8 @@ static ib_status_t modhtp_iface_response_finished(
 
     /* Complete the request */
     hrc = htp_tx_state_response_complete(txdata->htx);
-    irc = modhtp_check_htprc(hrc, txdata, "htp_tx_state_response_complete");
-    if (irc != IB_OK) {
-        return irc;
-    }
-
-    return IB_OK;
+    return modhtp_check_htprc(hrc, txdata, "htp_tx_state_response_complete");
 }
-
-/**
- * Initialize parser instance.
- *
- * Find and store this module in @c pi->data.
- *
- * @param[in] pi Provider instance to update.
- * @param[in] data Ignored.
- * @return IB_EOTHER if module could not be found; IB_OK otherwise.
- **/
-static ib_status_t modhtp_parser_instance_init(ib_provider_inst_t *pi,
-                                               void *data)
-{
-    assert(pi != NULL);
-    ib_module_t *m;
-    ib_status_t rc;
-
-    rc = ib_engine_module_get(pi->pr->ib, MODULE_NAME_STR, &m);
-    if (rc != IB_OK) {
-        return IB_EOTHER;
-    }
-
-    pi->data = m;
-
-    return IB_OK;
-}
-
-/**
- * Parser provider interface implementation: Interface declaration
- */
-static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
-    IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-
-    /* Connection Init/Cleanup */
-    modhtp_iface_conn_init,
-    modhtp_iface_conn_cleanup,
-
-    /* Connect/Disconnect */
-    modhtp_iface_connect,
-    modhtp_iface_disconnect,
-
-    /* Transaction Init/Cleanup */
-    modhtp_iface_tx_init,
-    modhtp_iface_tx_cleanup,
-
-    /* Request */
-    modhtp_iface_request_started,
-    modhtp_iface_request_line,
-    modhtp_iface_request_header_data,
-    modhtp_iface_request_header_finished,
-    modhtp_iface_request_body_data,
-    modhtp_iface_request_finished,
-
-    /* Response */
-    modhtp_iface_response_started,
-    modhtp_iface_response_line,
-    modhtp_iface_response_header_data,
-    modhtp_iface_response_header_finished,
-    modhtp_iface_response_body_data,
-    modhtp_iface_response_finished,
-};
-
 
 /* -- Module Routines -- */
 
@@ -2670,35 +2671,9 @@ static ib_status_t modhtp_context_close(
     assert(cbdata != NULL);
 
     ib_status_t         rc;
-    ib_provider_inst_t *pi;
     modhtp_config_t    *config;
     modhtp_context_t   *modctx;
     ib_module_t        *module = (ib_module_t *)cbdata;
-
-    /* If there is not a parser set, then use this parser. */
-    pi = ib_parser_provider_get_instance(ctx);
-    if (pi == NULL) {
-        ib_log_debug(ib, "Using \"%s\" parser by default in context %s.",
-                     MODULE_NAME_STR, ib_context_full_get(ctx));
-
-        /* Lookup/set this parser provider instance. */
-        rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_PARSER,
-                                         MODULE_NAME_STR, &pi,
-                                         ib_engine_pool_main_get(ib), NULL);
-        if (rc != IB_OK) {
-            ib_log_alert(ib, "Failed to create %s parser instance: %s",
-                         MODULE_NAME_STR, ib_status_to_string(rc));
-            return rc;
-        }
-
-        rc = ib_parser_provider_set_instance(ctx, pi);
-        if (rc != IB_OK) {
-            ib_log_alert(ib, "Failed to set %s as default parser: %s",
-                         MODULE_NAME_STR, ib_status_to_string(rc));
-            return rc;
-        }
-        pi = ib_parser_provider_get_instance(ctx);
-    }
 
     /* Get the module config. */
     rc = ib_context_module_config(ctx, module, (void *)&config);
@@ -2738,21 +2713,74 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    /* Register as a parser provider. */
-    rc = ib_provider_register(ib, IB_PROVIDER_TYPE_PARSER,
-                              MODULE_NAME_STR, NULL,
-                              &modhtp_parser_iface,
-                              &modhtp_parser_instance_init);
-    if (rc != IB_OK) {
-        ib_log_error(ib,
-                     MODULE_NAME_STR ": Error registering htp parser provider: "
-                     "%s", ib_status_to_string(rc));
-        return IB_OK;
-    }
-
+    /* Register hooks */
     /* Register the context close function */
     rc = ib_hook_context_register(ib, context_close_event,
                                   modhtp_context_close, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_conn_register(ib, handle_connect_event, modhtp_connect, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_conn_register(ib, handle_disconnect_event, modhtp_disconnect, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_conn_register(ib, conn_opened_event, modhtp_conn_init, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_conn_register(ib, conn_finished_event, modhtp_conn_finish, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_tx_register(ib, tx_started_event, modhtp_tx_started, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_tx_register(ib, tx_finished_event, modhtp_tx_finished, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_parsed_req_line_register(ib, request_started_event, modhtp_request_started, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_parsed_header_data_register(ib, request_header_data_event, modhtp_request_header_data, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_tx_register(ib, request_header_finished_event, modhtp_request_header_finished, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_txdata_register(ib, request_body_data_event, modhtp_request_body_data, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_tx_register(ib, request_finished_event, modhtp_request_finished, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_parsed_resp_line_register(ib, response_started_event, modhtp_response_started, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_parsed_header_data_register(ib, response_header_data_event, modhtp_response_header_data, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_tx_register(ib, response_header_finished_event, modhtp_response_header_finished, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_txdata_register(ib, response_body_data_event, modhtp_response_body_data, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_tx_register(ib, response_finished_event, modhtp_response_finished, m);
     if (rc != IB_OK) {
         return rc;
     }

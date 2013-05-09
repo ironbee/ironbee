@@ -2034,7 +2034,7 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
 /**
  * Handle the connection starting.
  *
- * Create the data provider instance and initialize the parser.
+ * Forward to ib_core_context_config().
  *
  * @param ib Engine.
  * @param conn Connection.
@@ -2059,35 +2059,6 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
         ib_log_alert(ib, "Failed to initialize core module: %s",
                      ib_status_to_string(rc));
         return rc;
-    }
-
-    return IB_OK;
-}
-
-
-/* -- Parser Implementation -- */
-
-/**
- * Parser provider registration function.
- *
- * This just does a version and sanity check on a registered provider.
- *
- * @param ib Engine
- * @param pr Logger provider
- *
- * @returns Status code
- */
-static ib_status_t parser_register(ib_engine_t *ib,
-                                   ib_provider_t *pr)
-{
-    assert(pr != NULL);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        (IB_PROVIDER_IFACE_TYPE(parser) *)pr->iface;
-    assert(iface != NULL);
-
-    /* Check that versions match. */
-    if (iface->version != IB_PROVIDER_VERSION_PARSER) {
-        return IB_EINCOMPAT;
     }
 
     return IB_OK;
@@ -4082,30 +4053,7 @@ static ib_status_t core_set_value(ib_cfgparser_t *cp,
         corecfg = &core_global_cfg;
     }
 
-    if (strcasecmp("parser", name) == 0) {
-        ib_provider_inst_t *pi;
-
-        if (strcmp(MODULE_NAME_STR, corecfg->parser) == 0) {
-            return IB_OK;
-        }
-        /* Lookup/set parser provider instance. */
-        rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_PARSER,
-                                         val, &pi,
-                                         ib->mp, NULL);
-        if (rc != IB_OK) {
-            ib_cfg_log_alert(cp, "Failed to create %s provider instance: %s",
-                             IB_PROVIDER_TYPE_PARSER, ib_status_to_string(rc));
-            return rc;
-        }
-
-        rc = ib_parser_provider_set_instance(ctx, pi);
-        if (rc != IB_OK) {
-            ib_cfg_log_alert(cp, "Failed to set %s provider instance: %s",
-                             IB_PROVIDER_TYPE_PARSER, ib_status_to_string(rc));
-            return rc;
-        }
-    }
-    else if (strcasecmp("audit", name) == 0) {
+    if (strcasecmp("audit", name) == 0) {
         /* Lookup the audit log provider. */
         rc = ib_provider_lookup(ib,
                                 IB_PROVIDER_TYPE_AUDIT,
@@ -4785,7 +4733,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_core_cfg_t *corecfg;
     ib_provider_t *core_audit_provider;
     ib_core_module_data_t *core_data;
-    ib_provider_inst_t *parser;
     ib_filter_t *fbuffer;
     ib_status_t rc;
 
@@ -4800,7 +4747,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     /* Set defaults */
     corecfg->log_level            = 4;
     corecfg->log_uri              = "";
-    corecfg->parser               = MODULE_NAME_STR;
     corecfg->buffer_req           = 0;
     corecfg->buffer_res           = 0;
     corecfg->audit_engine         = IB_AUDIT_MODE_RELEVANT;
@@ -4848,15 +4794,6 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
-    /* Define the parser provider API. */
-    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_PARSER,
-                            parser_register, NULL);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to define parser provider: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
     /* Filter/Buffer */
     rc = ib_filter_register(&fbuffer,
                             ib,
@@ -4878,15 +4815,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_hook_conn_register(ib, conn_started_event, core_hook_conn_started, NULL);
     ib_hook_tx_register(ib, tx_started_event, core_hook_tx_started, NULL);
     ib_hook_tx_register(ib, handle_logging_event, core_hook_logging, NULL);
-    /*
-     * @todo Need the parser to parse the header before context, but others
-     * after context so that the personality can change based on the header
-     * (Host, uri path, etc)
-     */
-    /*
-     * ib_hook_register(ib, handle_context_tx_event,
-     *                  (void *)parser_hook_req_header, NULL);
-     */
 
     /* Register auditlog body buffering hooks. */
     ib_hook_txdata_register(ib, request_body_data_event,
@@ -4930,19 +4858,6 @@ static ib_status_t core_init(ib_engine_t *ib,
         ib_log_alert(ib, "Failed to lookup %s audit log provider: %s",
                      IB_DSTR_CORE, ib_status_to_string(rc));
         return rc;
-    }
-
-    /* Lookup/set default parser provider if not the "core" parser. */
-    if (strcmp(MODULE_NAME_STR, corecfg->parser) != 0) {
-        rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_PARSER,
-                                         corecfg->parser, &parser,
-                                         ib->mp, NULL);
-        if (rc != IB_OK) {
-            ib_log_alert(ib, "Failed to create %s provider instance: %s",
-                         IB_DSTR_CORE, ib_status_to_string(rc));
-            return rc;
-        }
-        ib_parser_provider_set_instance(ib->ctx, parser);
     }
 
     /* Initialize the core fields */
@@ -5069,14 +4984,6 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NUM,
         ib_core_cfg_t,
         rule_debug_level
-    ),
-
-    /* Parser */
-    IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_TYPE_PARSER,
-        IB_FTYPE_NULSTR,
-        ib_core_cfg_t,
-        parser
     ),
 
     /* Buffering */

@@ -26,7 +26,6 @@
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/field.h>
-#include <ironbee/provider.h>
 
 #include <assert.h>
 
@@ -107,16 +106,8 @@ static ib_status_t ib_state_notify_req_line(
     assert(line->uri != NULL);
     assert(line->protocol != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     const ib_list_node_t *node;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     rc = ib_hook_check(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
@@ -131,14 +122,6 @@ static ib_status_t ib_state_notify_req_line(
     }
 
     tx->request_line = line;
-
-    /* Notify the parser of the request line. */
-    if (iface->request_line != NULL) {
-        rc = iface->request_line(pi, tx, line);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
 
     IB_LIST_LOOP_CONST(ib->hooks[event], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
@@ -168,16 +151,8 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     assert((line == NULL) || (line->status != NULL));
     assert((line == NULL) || (line->msg != NULL));
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     const ib_list_node_t *node;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     rc = ib_hook_check(ib, event, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
@@ -197,14 +172,6 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     }
 
     tx->response_line = line;
-
-    /* Notify the parser of the response line. */
-    if (iface->response_line != NULL) {
-        rc = iface->response_line(pi, tx, line);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
 
     IB_LIST_LOOP_CONST(ib->hooks[event], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
@@ -263,13 +230,6 @@ ib_status_t ib_state_notify_request_started(
     assert(ib != NULL);
     assert(tx != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-
-    assert(pi != NULL);
-
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface;
-
     ib_status_t rc;
 
     /* Validate. */
@@ -284,22 +244,6 @@ ib_status_t ib_state_notify_request_started(
     tx->t.request_started = ib_clock_get_time();
 
     ib_tx_flags_set(tx, IB_TX_FREQ_STARTED);
-
-    /* Notify the parser to initialize the transaction. */
-    if (iface->tx_init != NULL) {
-        rc = iface->tx_init(pi, tx);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
-    /* Notify the parser that the request started. */
-    if (iface->request_started != NULL) {
-        rc = iface->request_started(pi, tx);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
 
     /* Notify everybody */
     rc = ib_state_notify_tx(ib, tx_started_event, tx);
@@ -332,15 +276,7 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(conn != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     if (ib_conn_flags_isset(conn, IB_CONN_FOPENED)) {
         ib_log_error(ib, "Attempted to notify previously notified event: %s",
@@ -349,14 +285,6 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
     }
 
     ib_conn_flags_set(conn, IB_CONN_FOPENED);
-
-    /* Notify the parser to initialize the connection. */
-    if (iface->conn_init != NULL) {
-        rc = iface->conn_init(pi, conn);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
 
     rc = ib_state_notify_conn(ib, conn, conn_started_event);
     if (rc != IB_OK) {
@@ -379,14 +307,6 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
         return rc;
     }
 
-    /* Notify the parser a connection was made. */
-    if (iface->connect != NULL) {
-        rc = iface->connect(pi, conn);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
     rc = ib_state_notify_conn(ib, conn, handle_connect_event);
     return rc;
 }
@@ -398,15 +318,7 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(conn != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     /* Validate. */
     if (ib_conn_flags_isset(conn, IB_CONN_FCLOSED)) {
@@ -466,22 +378,6 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
     rc = ib_state_notify_conn(ib, conn, conn_finished_event);
     if (rc != IB_OK) {
         return rc;
-    }
-
-    /* Notify the parser a disconnect was performed. */
-    if (iface->disconnect != NULL) {
-        rc = iface->disconnect(pi, conn);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
-    /* Notify the parser to cleanup the connection. */
-    if (iface->conn_cleanup != NULL) {
-        rc = iface->conn_cleanup(pi, conn);
-        if (rc != IB_OK) {
-            return rc;
-        }
     }
 
     return IB_OK;
@@ -569,15 +465,7 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
     assert(tx != NULL);
     assert(header != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     /* Mark the time. */
     if (tx->t.request_started == 0) {
@@ -596,19 +484,10 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
         }
     }
 
-    /* Notify the parser of request header data. */
-    if (iface->request_header_data != NULL) {
-        rc = iface->request_header_data(pi, tx, header);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_header_data(ib, tx, request_header_data_event, header);
     return rc;
 }
-
 
 ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
                                                     ib_tx_t *tx)
@@ -617,15 +496,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     /* Validate. */
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
@@ -654,12 +525,6 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     }
 
     ib_tx_flags_set(tx, IB_TX_FREQ_SEENHEADER);
-
-    /* Notify the request header is finished. */
-    rc = iface->request_header_finished(pi, tx);
-    if (rc != IB_OK) {
-        return rc;
-    }
 
     rc = ib_state_notify_tx(ib, request_header_finished_event, tx);
     if (rc != IB_OK) {
@@ -691,15 +556,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     assert(tx != NULL);
     assert(txdata != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     /* Generate the request line event if it hasn't been seen */
     if (! ib_tx_flags_isset(tx, IB_TX_FREQ_SEENLINE)) {
@@ -718,14 +575,6 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
         ib_tx_flags_set(tx, IB_TX_FREQ_SEENBODY);
     }
 
-    /* Notify the parser of request body data. */
-    if (iface->request_body_data != NULL) {
-        rc = iface->request_body_data(pi, tx, txdata);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_txdata(ib, tx, request_body_data_event, txdata);
     if (rc != IB_OK) {
@@ -742,15 +591,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     /* Validate. */
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED)) {
@@ -785,14 +626,6 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FREQ_FINISHED);
 
-    /* Notify the parser the request finished. */
-    if (iface->request_finished != NULL) {
-        rc = iface->request_finished(pi, tx);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
     rc = ib_state_notify_tx(ib, request_finished_event, tx);
     if (rc != IB_OK) {
         return rc;
@@ -815,15 +648,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     tx->t.response_started = ib_clock_get_time();
 
@@ -848,23 +673,17 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FRES_STARTED);
 
-    /* Notify the parser that the response started. */
-    if (iface->response_started != NULL) {
-        rc = iface->response_started(pi, tx);
-        if (rc != IB_OK) {
-            return rc;
-        }
+    /* Notify the world about it */
+    rc = ib_state_notify_resp_line(ib, tx, response_started_event, line);
+    if (rc != IB_OK) {
+        return rc;
     }
 
-    /* If there's a line, notify the world about it */
+    /* Record if we saw a line. */
     if ( (line != NULL) &&
          (line->raw != NULL) &&
          (ib_bytestr_const_ptr(line->raw) != NULL) )
     {
-        rc = ib_state_notify_resp_line(ib, tx, response_started_event, line);
-        if (rc != IB_OK) {
-            return rc;
-        }
         ib_tx_flags_set(tx, IB_TX_FRES_SEENLINE);
     }
 
@@ -880,15 +699,7 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
     assert(tx != NULL);
     assert(header != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     /* Mark the time. */
     if (tx->t.response_started == 0) {
@@ -907,14 +718,6 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
         }
     }
 
-    /* Notify the parser of response header data. */
-    if (iface->response_header_data != NULL) {
-        rc = iface->response_header_data(pi, tx, header);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_header_data(ib, tx, response_header_data_event, header);
     return rc;
@@ -927,15 +730,7 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     /* Generate the response line event if it hasn't been seen */
     if (! ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
@@ -976,14 +771,6 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FRES_SEENHEADER);
 
-    /* Notify the parser the response header finished. */
-    if (iface->response_header_finished != NULL) {
-        rc = iface->response_header_finished(pi, tx);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
     rc = ib_state_notify_tx(ib, response_header_finished_event, tx);
     if (rc != IB_OK) {
         return rc;
@@ -1003,15 +790,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     assert(tx != NULL);
     assert(txdata != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     /* Validate the header has already been seen. */
     if (! ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
@@ -1040,14 +819,6 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
         ib_tx_flags_set(tx, IB_TX_FRES_SEENBODY);
     }
 
-    /* Notify the parser of response body data. */
-    if (iface->response_body_data != NULL) {
-        rc = iface->response_body_data(pi, tx, txdata);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_txdata(ib, tx, response_body_data_event, txdata);
 
@@ -1061,15 +832,7 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED)) {
         ib_log_error_tx(tx,
@@ -1088,14 +851,6 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     tx->t.response_finished = ib_clock_get_time();
 
     ib_tx_flags_set(tx, IB_TX_FRES_FINISHED);
-
-    /* Notify the parser the response finished. */
-    if (iface->response_finished != NULL) {
-        rc = iface->response_finished(pi, tx);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
 
     rc = ib_state_notify_tx(ib, response_finished_event, tx);
     if (rc != IB_OK) {
@@ -1127,14 +882,6 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     rc = ib_state_notify_tx(ib, tx_finished_event, tx);
     if (rc != IB_OK) {
         return rc;
-    }
-
-    /* Notify the parser to cleanup the transaction. */
-    if (iface->tx_cleanup != NULL) {
-        rc = iface->tx_cleanup(pi, tx);
-        if (rc != IB_OK) {
-            return rc;
-        }
     }
 
     return rc;

@@ -172,7 +172,6 @@ struct ib_conn_t {
     ib_mpool_t         *mp;              /**< Connection memory pool */
     ib_context_t       *ctx;             /**< Config context */
     void               *server_ctx;      /**< Server context */
-    void               *parser_ctx;      /**< Parser context */
     ib_data_t          *data;            /**< Data provider instance */
     ib_array_t         *module_data;     /**< Per module data. */
 

@@ -849,23 +849,6 @@ ib_status_t ib_conn_set_module_data(
   return rc;
 }
 
-void ib_conn_parser_context_set(ib_conn_t *conn,
-                                void *parser_ctx)
-{
-    assert(conn != NULL);
-
-    conn->parser_ctx = parser_ctx;
-
-    return;
-}
-
-void *ib_conn_parser_context_get(ib_conn_t *conn)
-{
-    assert(conn != NULL);
-
-    return conn->parser_ctx;
-}
-
 void ib_conn_destroy(ib_conn_t *conn)
 {
     /// @todo Probably need to update state???

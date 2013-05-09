@@ -90,7 +90,6 @@ TEST_F(TestConfig, valid_module)
 {
     ASSERT_IB_OK(config("ModuleBasePath "IB_XSTRINGIFY(MODULE_BASE_PATH)));
     ASSERT_IB_OK(config("LoadModule ibmod_htp.so"));
-    ASSERT_IB_OK(config("Set parser htp", 1));
 }
 
 TEST_F(TestConfig, false_directive)
