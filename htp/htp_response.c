@@ -665,7 +665,7 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
                     if (rc != HTP_OK) return rc;
 
                     // Run hook response_TRAILER.
-                    rc = htp_hook_run_all(connp->cfg->hook_response_trailer, connp);
+                    rc = htp_hook_run_all(connp->cfg->hook_response_trailer, connp->out_tx);
                     if (rc != HTP_OK) return rc;
 
                     // The next step is to finalize this response.

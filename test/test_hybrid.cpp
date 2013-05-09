@@ -83,44 +83,44 @@ public:
     }
 };
 
-static int HybridParsing_Get_Callback_REQUEST_START(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
+static int HybridParsing_Get_Callback_REQUEST_START(htp_tx_t *tx) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(tx);
     ++user_data->callback_REQUEST_START_invoked;
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_REQUEST_LINE(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
+static int HybridParsing_Get_Callback_REQUEST_LINE(htp_tx_t *tx) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(tx);
     ++user_data->callback_REQUEST_LINE_invoked;
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_REQUEST_HEADERS(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
+static int HybridParsing_Get_Callback_REQUEST_HEADERS(htp_tx_t *tx) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(tx);
     ++user_data->callback_REQUEST_HEADERS_invoked;
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_REQUEST_COMPLETE(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
+static int HybridParsing_Get_Callback_REQUEST_COMPLETE(htp_tx_t *tx) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(tx);
     ++user_data->callback_REQUEST_COMPLETE_invoked;
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_RESPONSE_START(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->out_tx);
+static int HybridParsing_Get_Callback_RESPONSE_START(htp_tx_t *tx) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(tx);
     ++user_data->callback_RESPONSE_START_invoked;
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_RESPONSE_LINE(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->out_tx);
+static int HybridParsing_Get_Callback_RESPONSE_LINE(htp_tx_t *tx) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(tx);
     ++user_data->callback_RESPONSE_LINE_invoked;
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->out_tx);
+static int HybridParsing_Get_Callback_RESPONSE_HEADERS(htp_tx_t *tx) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(tx);
     ++user_data->callback_RESPONSE_HEADERS_invoked;
     return HTP_OK;
 }
@@ -166,14 +166,14 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_RESPONSE_COMPLETE(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->out_tx);
+static int HybridParsing_Get_Callback_RESPONSE_COMPLETE(htp_tx_t *tx) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(tx);
     ++user_data->callback_RESPONSE_COMPLETE_invoked;
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_TRANSACTION_COMPLETE(htp_connp_t *connp) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->out_tx);
+static int HybridParsing_Get_Callback_TRANSACTION_COMPLETE(htp_tx_t *tx) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(tx);
     ++user_data->callback_TRANSACTION_COMPLETE_invoked;
     return HTP_OK;
 }
@@ -523,8 +523,8 @@ TEST_F(HybridParsing, CompressedResponseNoDecompression) {
     ASSERT_EQ(187, tx->response_entity_len);
 }
 
-static int HybridParsing_ForcedDecompressionTest_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
-    connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_GZIP;
+static int HybridParsing_ForcedDecompressionTest_Callback_RESPONSE_HEADERS(htp_tx_t *tx) {
+    tx->response_content_encoding_processing = HTP_COMPRESSION_GZIP;
     return HTP_OK;
 }
 
@@ -548,8 +548,8 @@ TEST_F(HybridParsing, ForcedDecompression) {
     ASSERT_EQ(225, tx->response_entity_len);
 }
 
-static int HybridParsing_DisableDecompressionTest_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
-    connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
+static int HybridParsing_DisableDecompressionTest_Callback_RESPONSE_HEADERS(htp_tx_t *tx) {
+    tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
     return HTP_OK;
 }
 
