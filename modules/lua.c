@@ -1355,7 +1355,7 @@ static ib_status_t modlua_callback_setup(
     else {
         lua_pushnil(L);
     }
-    /* Push configuration contenxt used in conn. */
+    /* Push configuration context used in conn. */
     lua_pushlightuserdata(L, conn->ctx);
 
     return IB_OK;
@@ -2056,7 +2056,7 @@ static ib_status_t modlua_module_load_lua(
  * @returns
  *   - IB_OK on success.
  *   - IB_EALLOC on allocation errors.
- *   - IB_EOTHER on unexpected errors. 
+ *   - IB_EOTHER on unexpected errors.
  */
 static ib_status_t modlua_module_load_wire_callbacks(
     ib_engine_t *ib,
@@ -2813,7 +2813,7 @@ ib_status_t modlua_rule_driver(
  *           @ref context_close_event.
  * param[in] cbdata Callback data. Unused.
  *
- * @returns 
+ * @returns
  *   - IB_OK on success.
  *   - Non-IB_OK on an unexpected internal engine failure.
  */
@@ -2840,7 +2840,7 @@ static ib_status_t modlua_context_close(
 
         /* Register this callback after the main context is closed.
          * This allows it to be executed LAST allowing all the Lua
-         * modules created during configuration to be executed 
+         * modules created during configuration to be executed
          * in FILO ordering. */
         rc = ib_hook_conn_register(
             ib,
@@ -2866,7 +2866,7 @@ static ib_status_t modlua_context_close(
 
 /**
  * Context destroy callback.
- * 
+ *
  * Destroys Lua stack and pointer when the main context is destroyed.
  *
  * param[in] ib IronBee engine.
@@ -2875,7 +2875,7 @@ static ib_status_t modlua_context_close(
  *           @ref context_close_event.
  * param[in] cbdata Callback data. Unused.
  *
- * @returns 
+ * @returns
  *   - IB_OK on success.
  *   - Non-IB_OK on an unexpected internal engine failure.
  */
@@ -2900,7 +2900,7 @@ static ib_status_t modlua_context_destroy(
         }
 
         ib_log_debug(ib, "Destroying module Lua stack lock.");
-        /* Destroy mutext and NULL it. */
+        /* Destroy mutex and NULL it. */
         ib_lock_destroy(cfg->L_lck);
         free(cfg->L_lck);
         cfg->L_lck = NULL;

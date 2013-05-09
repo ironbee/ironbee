@@ -74,6 +74,7 @@ uops Oops
 ctrl variable
 enval EINVAL
 byestring ByteString
+mutext mutex
 staus Status
 bae base
 varargs variable args

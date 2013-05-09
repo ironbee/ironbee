@@ -657,8 +657,8 @@ ahrefs
 getList
 nd
 DSOs
-functionals
 Deprecations
+functionals
 xffffffff
 mj
 ne
@@ -671,8 +671,8 @@ lt
 Metcalf
 lu
 pb
-Wchar
 NL
+Wchar
 pc
 lx
 pe
@@ -1317,8 +1317,8 @@ parr
 subexpressions
 IronAutomataEudoxusAutomata
 GraphViz
-patt
 CFLAGS
+patt
 CODESTYLE
 msie
 RuleDisable
@@ -1454,9 +1454,9 @@ ploc
 setaside
 abcdefghij
 sexpr
+ConstX
 rsphdr
 RspHdr
-ConstX
 iphone
 whitespace
 PersonalityClearAll
@@ -1480,7 +1480,6 @@ MyList
 cpath
 PersonalityAliasParam
 automake
-Automake
 cpart
 Cardinality
 abbba
@@ -1961,6 +1960,7 @@ inuse
 addr
 nAdditionally
 vstr
+Preloading
 parallelization
 ScopedMemoryPools
 IronBeeError
