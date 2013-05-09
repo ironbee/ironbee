@@ -896,11 +896,11 @@ htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
             // We do. Let's yield then.
             tx->connp->out_data_other_at_tx_end = 0;
             return HTP_DATA_OTHER;
-        }
-
-        htp_status_t rc = htp_tx_finalize(tx);
-        if (rc != HTP_OK) return rc;       
+        }       
     }
+
+    htp_status_t rc = htp_tx_finalize(tx);
+    if (rc != HTP_OK) return rc;
 
     // Disconnect from the transaction
     tx->connp->out_tx = NULL;
