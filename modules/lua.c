@@ -74,7 +74,6 @@ IB_MODULE_DECLARE();
 
 typedef struct modlua_runtime_t modlua_runtime_t;
 typedef struct modlua_cfg_t modlua_cfg_t;
-typedef struct modlua_lua_cbdata_t modlua_lua_cbdata_t;
 
 /**
  * Callback type for functions executed protected by global lock.
@@ -97,34 +96,13 @@ struct modlua_runtime_t {
 };
 
 /**
- * Callback data passed to Lua module C dispatch functions.
- *
- * All Lua module event handlers are called by a C function, which we here
- * refer to as the dispatcher. The dispatcher receives this struct
- * as its callback data. From it, and other sources, the dispatcher
- * will construct a single table that is passed to the Lua
- * event handler, and will then call that Lua event handler.
- */
-struct modlua_lua_cbdata_t {
-    ib_module_t *module; /**< The module object for this Lua module. */
-};
-
-/**
- * Global module configuration.
+ * Module configuration.
  */
 struct modlua_cfg_t {
-    char               *pkg_path;  /**< Package path Lua Configuration. */
-    char               *pkg_cpath; /**< Cpath Lua Configuration. */
     lua_State          *L;         /**< Lua runtime stack. */
     ib_lock_t          *L_lck;     /**< Lua runtime stack lock. */
-};
-
-/* Instantiate a module global configuration. */
-static modlua_cfg_t modlua_global_cfg = {
-    NULL, /* pkg_path */
-    NULL, /* pkg_cpath */
-    NULL,
-    NULL
+    char               *pkg_path;  /**< Package path Lua Configuration. */
+    char               *pkg_cpath; /**< Cpath Lua Configuration. */
 };
 
 ib_status_t modlua_rule_driver(
@@ -163,12 +141,12 @@ static ib_status_t modlua_runtime_get(
     ib_conn_t *conn,
     modlua_runtime_t **lua)
 {
-    assert(conn);
-    assert(conn->ib);
-    assert(lua);
+    assert(conn != NULL);
+    assert(conn->ib != NULL);
+    assert(lua != NULL);
 
     ib_status_t rc;
-    ib_module_t *module;
+    ib_module_t *module = NULL;
 
     rc = ib_engine_module_get(conn->ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
@@ -194,12 +172,13 @@ static ib_status_t modlua_runtime_set(
     ib_conn_t *conn,
     modlua_runtime_t *lua)
 {
-    assert(conn);
-    assert(conn->ib);
-    assert(lua);
+    assert(conn != NULL);
+    assert(conn->ib != NULL);
+    assert(lua != NULL);
+    assert(lua->L != NULL);
 
     ib_status_t rc;
-    ib_module_t *module;
+    ib_module_t *module = NULL;
 
     rc = ib_engine_module_get(conn->ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
@@ -221,24 +200,29 @@ static ib_status_t modlua_runtime_set(
  * @param[in] ib IronBee context. Used for logging.
  * @param[in] fn The function to execute. This is passed @a ib and @a fn.
  * @param[in,out] L The Lua State to create or destroy. Passed to @a fn.
+ *                This may be NULL as it is sometimes an input value
+ *                depending on what @a fn does with it.
  * @returns If any error locking or unlocking the
  *          semaphore is encountered, the error code is returned.
  *          Otherwise the result of @a fn is returned.
  */
 static ib_status_t call_in_critical_section(ib_engine_t *ib,
                                             critical_section_fn_t fn,
+                                            modlua_cfg_t *cfg,
                                             lua_State **L)
 {
-    assert(ib);
-    assert(fn);
-    assert(L);
+    assert(ib != NULL);
+    assert(fn != NULL);
+    assert(cfg != NULL);
+    assert(cfg->L != NULL);
+    assert(cfg->L_lck != NULL);
 
     /* Return code from IronBee calls. */
     ib_status_t ib_rc;
     /* Return code form critical call. */
     ib_status_t critical_rc;
 
-    ib_rc  = ib_lock_lock(modlua_global_cfg.L_lck);
+    ib_rc  = ib_lock_lock(cfg->L_lck);
     /* Report semop error and return. */
     if (ib_rc != IB_OK) {
         ib_log_error(ib, "Failed to lock Lua context.");
@@ -246,9 +230,9 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
     }
 
     /* Execute lua call in critical section. */
-    critical_rc = fn(ib, modlua_global_cfg.L, L);
+    critical_rc = fn(ib, cfg->L, L);
 
-    ib_rc = ib_lock_unlock(modlua_global_cfg.L_lck);
+    ib_rc = ib_lock_unlock(cfg->L_lck);
 
     if (critical_rc != IB_OK) {
         ib_log_error(ib, "Critical call failed: %s",
@@ -433,9 +417,9 @@ static ib_status_t modlua_push_config_path(
     ib_context_t *ctx,
     lua_State *L)
 {
-    assert(ib);
-    assert(ctx);
-    assert(L);
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(L != NULL);
 
     int table;
 
@@ -471,22 +455,37 @@ static ib_status_t modlua_config_cb_blkend(
     const char *name,
     void *cbdata)
 {
-    assert(cp);
-    assert(name);
-    assert(cbdata);
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
 
     ib_status_t rc;
-    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    lua_State *L = modlua_global_cfg.L;
-    ib_module_t *module = modlua_lua_cbdata->module;
-    ib_engine_t *ib = module->ib;
+    lua_State *L;
+    modlua_cfg_t *cfg = NULL;
+    ib_module_t *module = NULL;
+    ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Could not retrieve current context.");
         return rc;
     }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        return rc;
+    }
+    assert(cfg->L);
+    assert(cfg->L_lck);
+    L = cfg->L;
 
     /* Push standard module directive arguments. */
     lua_getglobal(L, "modlua");
@@ -519,22 +518,37 @@ static ib_status_t modlua_config_cb_onoff(
     int onoff,
     void *cbdata)
 {
-    assert(cp);
-    assert(name);
-    assert(cbdata);
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
 
     ib_status_t rc;
-    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    lua_State *L = modlua_global_cfg.L;
-    ib_module_t *module = modlua_lua_cbdata->module;
-    ib_engine_t *ib = module->ib;
+    modlua_cfg_t *cfg = NULL;
+    lua_State *L;
+    ib_module_t *module = NULL;
+    ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Could not retrieve current context.");
         return rc;
     }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        return rc;
+    }
+    assert(cfg->L);
+    assert(cfg->L_lck);
+    L = cfg->L;
 
     /* Push standard module directive arguments. */
     lua_getglobal(L, "modlua");
@@ -567,23 +581,38 @@ static ib_status_t modlua_config_cb_param1(
     const char *p1,
     void *cbdata)
 {
-    assert(cp);
-    assert(name);
-    assert(p1);
-    assert(cbdata);
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(p1 != NULL);
 
     ib_status_t rc;
-    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    lua_State *L = modlua_global_cfg.L;
-    ib_module_t *module = modlua_lua_cbdata->module;
-    ib_engine_t *ib = module->ib;
+    lua_State *L;
+    modlua_cfg_t *cfg = NULL;
+    ib_module_t *module = NULL;
+    ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Could not retrieve current context.");
         return rc;
     }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        return rc;
+    }
+    assert(cfg->L);
+    assert(cfg->L_lck);
+    L = cfg->L;
 
     /* Push standard module directive arguments. */
     lua_getglobal(L, "modlua");
@@ -618,24 +647,39 @@ static ib_status_t modlua_config_cb_param2(
     const char *p2,
     void *cbdata)
 {
-    assert(cp);
-    assert(name);
-    assert(p1);
-    assert(p2);
-    assert(cbdata);
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(p1 != NULL);
+    assert(p2 != NULL);
 
     ib_status_t rc;
-    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    lua_State *L = modlua_global_cfg.L;
-    ib_module_t *module = modlua_lua_cbdata->module;
-    ib_engine_t *ib = module->ib;
+    lua_State *L;
+    ib_module_t *module = NULL;
+    ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
+    modlua_cfg_t *cfg = NULL;
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Could not retrieve current context.");
         return rc;
     }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        return rc;
+    }
+    assert(cfg->L);
+    assert(cfg->L_lck);
+    L = cfg->L;
 
     /* Push standard module directive arguments. */
     lua_getglobal(L, "modlua");
@@ -669,23 +713,39 @@ static ib_status_t modlua_config_cb_list(
     const ib_list_t *list,
     void *cbdata)
 {
-    assert(cp);
-    assert(name);
-    assert(list);
-    assert(cbdata);
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(list != NULL);
 
     ib_status_t rc;
-    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    lua_State *L = modlua_global_cfg.L;
-    ib_module_t *module = modlua_lua_cbdata->module;
-    ib_engine_t *ib = module->ib;
+    lua_State *L;
+    modlua_cfg_t *cfg = NULL;
+    ib_module_t *module = NULL;
+    ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Could not retrieve current context.");
         return rc;
     }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        return rc;
+    }
+    assert(cfg->L);
+    assert(cfg->L_lck);
+    L = cfg->L;
+
 
     /* Push standard module directive arguments. */
     lua_getglobal(L, "modlua");
@@ -718,22 +778,37 @@ static ib_status_t modlua_config_cb_opflags(
     ib_flags_t mask,
     void *cbdata)
 {
-    assert(cp);
-    assert(name);
-    assert(cbdata);
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
 
     ib_status_t rc;
-    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    lua_State *L = modlua_global_cfg.L;
-    ib_module_t *module = modlua_lua_cbdata->module;
-    ib_engine_t *ib = module->ib;
+    lua_State *L;
+    modlua_cfg_t *cfg = NULL;
+    ib_module_t *module = NULL;
+    ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Could not retrieve current context.");
         return rc;
     }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        return rc;
+    }
+    assert(cfg->L);
+    assert(cfg->L_lck);
+    L = cfg->L;
 
     /* Push standard module directive arguments. */
     lua_getglobal(L, "modlua");
@@ -766,23 +841,38 @@ static ib_status_t modlua_config_cb_sblk1(
     const char *p1,
     void *cbdata)
 {
-    assert(cp);
-    assert(name);
-    assert(p1);
-    assert(cbdata);
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(p1 != NULL);
 
     ib_status_t rc;
-    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    lua_State *L = modlua_global_cfg.L;
-    ib_module_t *module = modlua_lua_cbdata->module;
-    ib_engine_t *ib = module->ib;
+    lua_State *L;
+    modlua_cfg_t *cfg = NULL;
+    ib_module_t *module = NULL;
+    ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Could not retrieve current context.");
         return rc;
     }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        return rc;
+    }
+    assert(cfg->L);
+    assert(cfg->L_lck);
+    L = cfg->L;
 
     /* Push standard module directive arguments. */
     lua_getglobal(L, "modlua");
@@ -829,8 +919,6 @@ static int modlua_config_register_directive(lua_State *L)
     int args = lua_gettop(L);       /* Arguments passed to this function. */
     ib_strval_t *strvalmap;         /* Optional 4th arg. Must be converted. */
     ib_void_fn_t cfg_cb;            /* Configuration callback. */
-    ib_mpool_t *mp;
-    modlua_lua_cbdata_t *modlua_lua_cbdata;
     ib_module_t *module;
 
     /* We choose assert here because if this value is incorrect,
@@ -938,18 +1026,6 @@ static int modlua_config_register_directive(lua_State *L)
         strvalmap = NULL;
     }
 
-    mp = ib_engine_pool_main_get(ib);
-    modlua_lua_cbdata = ib_mpool_alloc(mp, sizeof(*modlua_lua_cbdata));
-    if (modlua_lua_cbdata == NULL) {
-        rc = IB_EALLOC;
-        rcmsg = "Failed to allocate callback data structure for directive.";
-        if (strvalmap != NULL) {
-            free(strvalmap);
-        }
-        goto exit;
-    }
-    modlua_lua_cbdata->module = module;
-
     /* Assign the cfg_cb pointer to hand the callback. */
     switch (type) {
         case IB_DIRTYPE_ONOFF:
@@ -982,8 +1058,8 @@ static int modlua_config_register_directive(lua_State *L)
         type,
         cfg_cb,
         &modlua_config_cb_blkend,
-        modlua_lua_cbdata,
-        modlua_lua_cbdata,
+        NULL,
+        NULL,
         strvalmap);
     if (rc != IB_OK) {
         rcmsg = "Failed to register directive.";
@@ -1229,16 +1305,17 @@ static ib_status_t modlua_callback_setup(
 {
     assert(ib);
     assert(conn);
-    assert(cbdata);
 
     ib_status_t rc;
-    modlua_lua_cbdata_t *modlua_lua_cbdata;
     ib_module_t *module;
     lua_State *L;
     modlua_runtime_t *lua;
 
-    modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    module = modlua_lua_cbdata->module;
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
 
     rc = modlua_runtime_get(conn, &lua);
     if (rc != IB_OK) {
@@ -1408,16 +1485,17 @@ static ib_status_t modlua_callback_dispatch(
 {
     assert(ib);
     assert(conn);
-    assert(cbdata);
 
     ib_status_t rc;
-    modlua_lua_cbdata_t *modlua_lua_cbdata;
-    ib_module_t *module;
+    ib_module_t *module = NULL;
     lua_State *L;
     modlua_runtime_t *lua;
 
-    modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    module = modlua_lua_cbdata->module;
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
 
     rc = modlua_runtime_get(conn, &lua);
     if (rc != IB_OK) {
@@ -1438,22 +1516,33 @@ static ib_status_t modlua_null(
     void *cbdata)
 {
     assert(ib);
-    assert(cbdata);
 
     ib_status_t rc;
     ib_status_t join_rc; /* We need a temporary rc value for thread joins. */
     lua_State *L;
-    modlua_lua_cbdata_t *modlua_lua_cbdata;
-    ib_module_t *module;
+    ib_module_t *module = NULL;
     ib_context_t *ctx;
+    modlua_cfg_t *cfg = NULL;
 
-    modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    module = modlua_lua_cbdata->module;
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
 
     ctx = ib_context_main(ib);
 
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not retrieve module configuration.");
+        return rc;
+    }
+    assert(cfg->L);
+    assert(cfg->L_lck);
+    L = cfg->L;
+
     /* Since there is  no connection Lua stack, we make a new one. */
-    rc = call_in_critical_section(ib, &ib_lua_new_thread, &L);
+    rc = call_in_critical_section(ib, &ib_lua_new_thread, cfg, &L);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to allocate new Lua thread.");
         return rc;
@@ -1491,7 +1580,7 @@ static ib_status_t modlua_null(
         /* Do not return. We must join the Lua thread. */
     }
 
-    join_rc = call_in_critical_section(ib, &ib_lua_join_thread, &L);
+    join_rc = call_in_critical_section(ib, &ib_lua_join_thread, cfg, &L);
     if (join_rc != IB_OK) {
         ib_log_alert(ib, "Failed to join created Lua thread.");
 
@@ -1709,14 +1798,26 @@ static ib_status_t modlua_ctx(
     ib_status_t rc;
     ib_status_t join_rc;
     lua_State *L;
-    modlua_lua_cbdata_t *modlua_lua_cbdata;
-    ib_module_t *module;
+    modlua_cfg_t *cfg = NULL;
+    ib_module_t *module = NULL;
 
-    modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    module = modlua_lua_cbdata->module;
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not retrieve module configuration.");
+        return rc;
+    }
+    assert(cfg->L);
+    assert(cfg->L_lck);
+    L = cfg->L;
 
     /* Allocate a new Lua thread in a thread-safe manner. */
-    rc = call_in_critical_section(ib, &ib_lua_new_thread, &L);
+    rc = call_in_critical_section(ib, &ib_lua_new_thread, cfg, &L);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to allocate new Lua thread.");
         return rc;
@@ -1757,7 +1858,7 @@ static ib_status_t modlua_ctx(
     }
 
     /* Join lua thread in a thread-safe manner. */
-    join_rc = call_in_critical_section(ib, &ib_lua_join_thread, &L);
+    join_rc = call_in_critical_section(ib, &ib_lua_join_thread, cfg, &L);
     if (join_rc != IB_OK) {
         ib_log_alert(ib, "Failed to join created Lua thread.");
 
@@ -1967,8 +2068,6 @@ static ib_status_t modlua_module_load_wire_callbacks(
 
     ib_mpool_t *mp;
 
-    modlua_lua_cbdata_t *cbdata;
-
     mp = ib_engine_pool_main_get(ib);
     if (mp == NULL) {
         ib_log_error(
@@ -1978,60 +2077,53 @@ static ib_status_t modlua_module_load_wire_callbacks(
         return IB_EOTHER;
     }
 
-    cbdata = ib_mpool_alloc(mp, sizeof(*cbdata));
-    if (!cbdata) {
-        return IB_EALLOC;
-    }
-
-    cbdata->module = module;
-
     for (ib_state_event_type_t event = 0; event < IB_STATE_EVENT_NUM; ++event) {
 
         rc = module_has_callback(ib, module, event, L);
         if (rc == IB_OK) {
             switch(ib_state_hook_type(event)) {
                 case IB_STATE_HOOK_NULL:
-                    rc = ib_hook_null_register(ib, event, modlua_null, cbdata);
+                    rc = ib_hook_null_register(ib, event, modlua_null, NULL);
                     break;
                 case IB_STATE_HOOK_INVALID:
                     ib_log_error(ib, "Invalid hook: %d", event);
                     break;
                 case IB_STATE_HOOK_CTX:
-                    rc = ib_hook_context_register(ib, event, modlua_ctx, cbdata);
+                    rc = ib_hook_context_register(ib, event, modlua_ctx, NULL);
                     break;
                 case IB_STATE_HOOK_CONN:
-                    rc = ib_hook_conn_register(ib, event, modlua_conn, cbdata);
+                    rc = ib_hook_conn_register(ib, event, modlua_conn, NULL);
                     break;
                 case IB_STATE_HOOK_TX:
-                    rc = ib_hook_tx_register(ib, event, modlua_tx, cbdata);
+                    rc = ib_hook_tx_register(ib, event, modlua_tx, NULL);
                     break;
                 case IB_STATE_HOOK_TXDATA:
                     rc = ib_hook_txdata_register(
                         ib,
                         event,
                         modlua_txdata,
-                        cbdata);
+                        NULL);
                     break;
                 case IB_STATE_HOOK_REQLINE:
                     rc = ib_hook_parsed_req_line_register(
                         ib,
                         event,
                         modlua_reqline,
-                        cbdata);
+                        NULL);
                     break;
                 case IB_STATE_HOOK_RESPLINE:
                     rc = ib_hook_parsed_resp_line_register(
                         ib,
                         event,
                         modlua_respline,
-                        cbdata);
+                        NULL);
                     break;
                 case IB_STATE_HOOK_HEADER:
                     rc = ib_hook_parsed_header_data_register(
                         ib,
                         event,
                         modlua_header,
-                        cbdata);
+                        NULL);
                     break;
             }
         }
@@ -2056,12 +2148,20 @@ static ib_status_t modlua_module_load_wire_callbacks(
  *                receive the constructed module.
  * @param[in] file The file to read off of disk that contains the
  *            Lua module definition.
+ * @param[out] L The Lua state to be populated.
  *
  * @returns
  *   - IB_OK on success.
  */
-static ib_status_t modlua_module_load(ib_engine_t *ib, const char *file) {
-    lua_State *L;
+static ib_status_t modlua_module_load(
+    ib_engine_t *ib,
+    const char *file,
+    lua_State *L)
+{
+    assert(ib != NULL);
+    assert(file != NULL);
+    assert(L != NULL);
+
     ib_module_t *module;
     ib_status_t rc;
 
@@ -2069,17 +2169,6 @@ static ib_status_t modlua_module_load(ib_engine_t *ib, const char *file) {
     if (rc != IB_OK) {
         ib_log_error(ib, "Cannot initialize empty lua module structure.");
         return rc;
-    }
-
-    /* Uses the main configuration's Lua state to create a global,
-     * read-only module object. */
-    L = modlua_global_cfg.L;
-    if (L == NULL) {
-        ib_log_error(
-            ib,
-            "Cannot load lua module \"%s\": Lua support not available.",
-            file);
-        return IB_OK;
     }
 
     rc = modlua_module_load_lua(ib, file, module, L);
@@ -2223,16 +2312,23 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
  * Commit any pending configuration items, such as rules.
  *
  * @param[in] ib IronBee engine.
+ * @param[in] cfg Module configuration.
  *
  * @returns
  *   - IB_OK
  *   - IB_EOTHER on Rule adding errors. See log file.
  */
-static ib_status_t modlua_commit_configuration(ib_engine_t *ib)
+static ib_status_t modlua_commit_configuration(
+    ib_engine_t *ib,
+    modlua_cfg_t *cfg)
 {
+    assert(ib != NULL);
+    assert(cfg != NULL);
+    assert(cfg->L != NULL);
+
     ib_status_t rc;
     int lua_rc;
-    lua_State *L = modlua_global_cfg.L;
+    lua_State *L = cfg->L;
 
     lua_getglobal(L, "ibconfig");
     if ( ! lua_istable(L, -1) ) {
@@ -2297,30 +2393,49 @@ static ib_status_t modlua_commit_configuration(ib_engine_t *ib)
  *   - IB_EALLOC on memory allocation failure.
  *   - Other upon failure of callback registration.
  */
-static ib_status_t modlua_conn_init_lua_runtime(ib_engine_t *ib,
-                                                ib_conn_t *conn,
-                                                ib_state_event_type_t event,
-                                                void *cbdata)
+static ib_status_t modlua_conn_init_lua_runtime(
+    ib_engine_t *ib,
+    ib_conn_t *conn,
+    ib_state_event_type_t event,
+    void *cbdata)
 {
     assert(event == conn_started_event);
-    assert(ib);
-    assert(conn);
+    assert(ib != NULL);
+    assert(conn != NULL);
+    assert(conn->ctx != NULL);
 
     ib_status_t rc;
-    modlua_runtime_t *modlua_runtime;
+    modlua_runtime_t *modlua_rt;
+    modlua_cfg_t *cfg = NULL;
+    ib_context_t *ctx = conn->ctx;
+    ib_module_t *module = NULL;
 
-    modlua_runtime = ib_mpool_alloc(conn->mp, sizeof(modlua_runtime));
-    if (!modlua_runtime) {
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve modlua configuration.");
+        return rc;
+    }
+    assert(cfg->L != NULL);
+
+    modlua_rt = ib_mpool_alloc(conn->mp, sizeof(*modlua_rt));
+    if (!modlua_rt) {
         return IB_EALLOC;
     }
 
-    rc = call_in_critical_section(ib, &ib_lua_new_thread, &modlua_runtime->L);
+    rc = call_in_critical_section(ib, &ib_lua_new_thread, cfg, &(modlua_rt->L));
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to allocate new Lua thread for connection.");
         return rc;
     }
+    assert(modlua_rt->L != NULL);
 
-    rc = modlua_runtime_set(conn, modlua_runtime);
+    rc = modlua_runtime_set(conn, modlua_rt);
     if (rc != IB_OK) {
         ib_log_alert(
             ib,
@@ -2360,25 +2475,40 @@ static ib_status_t modlua_conn_fini_lua_runtime(ib_engine_t *ib,
                                                 void *cbdata)
 {
     assert(event == conn_finished_event);
-    assert(ib);
-    assert(conn);
+    assert(ib != NULL);
+    assert(conn != NULL);
 
     ib_status_t rc;
 
-    modlua_runtime_t *modlua_runtime;
+    modlua_runtime_t *modlua_rt;
+    ib_context_t *ctx = conn->ctx;
+    ib_module_t *module = NULL;
+    modlua_cfg_t *cfg = NULL;
 
-    rc = modlua_runtime_get(conn, &modlua_runtime);
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve modlua configuration.");
+        return rc;
+    }
+
+    rc = modlua_runtime_get(conn, &modlua_rt);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Could not fetch per-connection Lua execution stack.");
         return rc;
     }
-    if (modlua_runtime == NULL) {
+    if (modlua_rt == NULL) {
         ib_log_alert(ib, "Stored Lua execution stack was unexpectedly NULL.");
         return IB_EOTHER;
     }
 
     /* Atomically destroy the Lua stack */
-    rc = call_in_critical_section(ib, &ib_lua_join_thread, &modlua_runtime->L);
+    rc = call_in_critical_section(ib, &ib_lua_join_thread, cfg, &modlua_rt->L);
 
     return rc;
 }
@@ -2406,6 +2536,44 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 }
 
 /**
+ * Using only the context, fetch the module configuration.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] ctx The current configuration context.
+ * @param[out] cfg Where to store the configuration. **cfg must be NULL.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_EEXIST if the module cannot be found in the engine.
+ */
+ib_status_t modlua_cfg_get(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    modlua_cfg_t **cfg)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(*cfg == NULL);
+
+    ib_status_t rc;
+    ib_module_t *module = NULL;
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        return rc;
+    }
+
+    rc = ib_context_module_config(ctx, module, cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve modlua configuration.");
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+/**
  * @brief Call the rule named @a func_name on a new Lua stack.
  * @details This will atomically create and destroy a lua_State*
  *          allowing for concurrent execution of @a func_name
@@ -2419,21 +2587,33 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
  * @returns IB_OK on success, IB_EUNKNOWN on semaphore locking error, and
  *          IB_EALLOC is returned if a new execution stack cannot be created.
  */
-static ib_status_t ib_lua_func_eval_r(ib_tx_t *tx,
-                                      const char *func_name,
-                                      ib_num_t *result)
+static ib_status_t ib_lua_func_eval_r(
+    ib_tx_t *tx,
+    const char *func_name,
+    ib_num_t *result)
 {
     assert(tx != NULL);
+    assert(tx->ib != NULL);
     assert(func_name != NULL);
     assert(result != NULL);
 
+    ib_status_t rc;
     ib_engine_t *ib = tx->ib;
+    ib_context_t *ctx = NULL;
     int result_int;
     ib_status_t ib_rc;
     lua_State *L;
+    modlua_cfg_t *cfg = NULL;
+
+    ctx = (tx->ctx == NULL)?  ib_context_main(ib) : tx->ctx;
+
+    rc = modlua_cfg_get(ib, ctx, &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Atomically create a new Lua stack */
-    ib_rc = call_in_critical_section(ib, &ib_lua_new_thread, &L);
+    ib_rc = call_in_critical_section(ib, &ib_lua_new_thread, cfg, &L);
 
     if (ib_rc != IB_OK) {
         return ib_rc;
@@ -2450,7 +2630,7 @@ static ib_status_t ib_lua_func_eval_r(ib_tx_t *tx,
     }
 
     /* Atomically destroy the Lua stack */
-    ib_rc = call_in_critical_section(ib, &ib_lua_join_thread, &L);
+    ib_rc = call_in_critical_section(ib, &ib_lua_join_thread, cfg, &L);
 
     return ib_rc;
 }
@@ -2526,6 +2706,7 @@ ib_status_t modlua_rule_driver(
 )
 {
     assert(cp != NULL);
+    assert(cp->ib != NULL);
     assert(tag != NULL);
     assert(location != NULL);
 
@@ -2534,23 +2715,31 @@ ib_status_t modlua_rule_driver(
     const char *name;
     ib_operator_t *op;
     void *instance_data;
+    ib_engine_t *ib = cp->ib;
+    modlua_cfg_t *cfg = NULL;
+    ib_context_t *ctx = NULL;
 
     if (strncmp(tag, "lua", 3) != 0) {
         ib_cfg_log_error(cp, "Lua rule driver called for non-lua tag.");
         return IB_EINVAL;
     }
 
-    /* Check if lua is available. */
-    if (modlua_global_cfg.L == NULL) {
-        ib_cfg_log_error(cp, "Lua is not available");
-        return IB_EINVAL;
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to retrieve current context.");
+        return rc;
     }
 
-    rc = ib_lua_load_func(cp->ib,
-                          modlua_global_cfg.L,
-                          location,
-                          ib_rule_id(rule));
+    rc = modlua_cfg_get(ib, ctx, &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
+    rc = ib_lua_load_func(
+        cp->ib,
+        cfg->L,
+        location,
+        ib_rule_id(rule));
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to load lua file \"%s\"", location);
         return rc;
@@ -2584,7 +2773,7 @@ ib_status_t modlua_rule_driver(
     }
 
     rc = ib_operator_inst_create(op,
-                                 cp->cur_ctx,
+                                 ctx,
                                  ib_rule_required_op_flags(rule),
                                  ib_rule_id(rule), /* becomes instance_data */
                                  &instance_data);
@@ -2614,10 +2803,25 @@ ib_status_t modlua_rule_driver(
     return IB_OK;
 }
 
-static ib_status_t modlua_context_close(ib_engine_t           *ib,
-                                        ib_context_t          *ctx,
-                                        ib_state_event_type_t  event,
-                                        void                  *cbdata)
+/**
+ * Context close callback. Registers outstanding rule configurations
+ * if the context being closed in the main context.
+ *
+ * param[in] ib IronBee engine.
+ * param[in] ctx The configuration context.
+ * param[in] event The type of event. This must always be a
+ *           @ref context_close_event.
+ * param[in] cbdata Callback data. Unused.
+ *
+ * @returns 
+ *   - IB_OK on success.
+ *   - Non-IB_OK on an unexpected internal engine failure.
+ */
+static ib_status_t modlua_context_close(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    void *cbdata)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
@@ -2627,10 +2831,17 @@ static ib_status_t modlua_context_close(ib_engine_t           *ib,
 
     /* Close of the main context signifies configuration finished. */
     if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
+        modlua_cfg_t *cfg = NULL;
+
+        rc = modlua_cfg_get(ib, ctx, &cfg);
+        if (rc != IB_OK) {
+            return rc;
+        }
 
         /* Register this callback after the main context is closed.
          * This allows it to be executed LAST allowing all the Lua
-         * modules created during configuration to be executed first. */
+         * modules created during configuration to be executed 
+         * in FILO ordering. */
         rc = ib_hook_conn_register(
             ib,
             conn_finished_event,
@@ -2644,10 +2855,60 @@ static ib_status_t modlua_context_close(ib_engine_t           *ib,
         }
 
         /* Commit any pending configuration items. */
-        rc = modlua_commit_configuration(ib);
+        rc = modlua_commit_configuration(ib, cfg);
         if (rc != IB_OK) {
             return rc;
         }
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Context destroy callback.
+ * 
+ * Destroys Lua stack and pointer when the main context is destroyed.
+ *
+ * param[in] ib IronBee engine.
+ * param[in] ctx The configuration context.
+ * param[in] event The type of event. This must always be a
+ *           @ref context_close_event.
+ * param[in] cbdata Callback data. Unused.
+ *
+ * @returns 
+ *   - IB_OK on success.
+ *   - Non-IB_OK on an unexpected internal engine failure.
+ */
+static ib_status_t modlua_context_destroy(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    void *cbdata)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(event == context_destroy_event);
+
+    /* Close of the main context signifies configuration finished. */
+    if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
+        ib_status_t rc;
+        modlua_cfg_t *cfg = NULL;
+
+        rc = modlua_cfg_get(ib, ctx, &cfg);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        ib_log_debug(ib, "Destroying module Lua stack lock.");
+        /* Destroy mutext and NULL it. */
+        ib_lock_destroy(cfg->L_lck);
+        free(cfg->L_lck);
+        cfg->L_lck = NULL;
+
+        ib_log_debug(ib, "Destroying module Lua stack.");
+        /* Destroy Lua stack and NULL it. */
+        lua_close(cfg->L);
+        cfg->L = NULL;
     }
 
     return IB_OK;
@@ -2660,53 +2921,72 @@ static ib_status_t modlua_context_close(ib_engine_t           *ib,
  * will be loaded.
  */
 static ib_status_t modlua_init(ib_engine_t *ib,
-                               ib_module_t *m,
+                               ib_module_t *module,
                                void        *cbdata)
 {
+    assert(ib != NULL);
+    assert(module != NULL);
+
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
     ib_status_t rc;
+    modlua_cfg_t *cfg = NULL;
+
+    cfg = ib_mpool_calloc(mp, 1, sizeof(*cfg));
+    if (cfg == NULL) {
+        ib_log_error(ib, "Failed to allocate lua module configuration.");
+        return IB_EALLOC;
+    }
+    ib_log_debug(ib, "Allocated main configuration at %p.", cfg);
+
+    rc = ib_module_config_initialize(module, cfg, sizeof(*cfg));
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Module already has configuration data?");
+        return rc;
+    }
 
     /* Set up defaults */
-    modlua_global_cfg.L = NULL;
-
-    modlua_global_cfg.L = luaL_newstate();
-    if (modlua_global_cfg.L == NULL) {
+    ib_log_debug(ib, "Making shared Lua state.");
+    cfg->L = luaL_newstate();
+    if (cfg->L == NULL) {
         ib_log_error(ib, "Failed to initialize lua module.");
         return IB_EUNKNOWN;
     }
 
-    luaL_openlibs(modlua_global_cfg.L);
+    ib_log_debug(ib, "Opening shared Lua state common libs.");
+    luaL_openlibs(cfg->L);
 
     /* Setup search paths before ffi, api, etc loading. */
-    rc = modlua_setup_searchpath(ib, modlua_global_cfg.L);
+    rc = modlua_setup_searchpath(ib, cfg->L);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Load ffi, api, etc. */
-    rc = modlua_preload(ib, modlua_global_cfg.L);
+    ib_log_debug(ib, "Preloading libraries into shared Lua state.");
+    rc = modlua_preload(ib, cfg->L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to pre-load Lua files.");
         return rc;
     }
 
     /* Set package paths if configured. */
-    if (modlua_global_cfg.pkg_path) {
+    if (cfg->pkg_path) {
         ib_log_debug(
             ib,
             "Using lua package.path=\"%s\"",
-             modlua_global_cfg.pkg_path);
-        lua_getfield(modlua_global_cfg.L, -1, "path");
-        lua_pushstring(modlua_global_cfg.L, modlua_global_cfg.pkg_path);
-        lua_setglobal(modlua_global_cfg.L, "path");
+             cfg->pkg_path);
+        lua_getfield(cfg->L, -1, "path");
+        lua_pushstring(cfg->L, cfg->pkg_path);
+        lua_setglobal(cfg->L, "path");
     }
-    if (modlua_global_cfg.pkg_cpath) {
+    if (cfg->pkg_cpath) {
         ib_log_debug(
             ib,
             "Using lua package.cpath=\"%s\"",
-            modlua_global_cfg.pkg_cpath);
-        lua_getfield(modlua_global_cfg.L, -1, "cpath");
-        lua_pushstring(modlua_global_cfg.L, modlua_global_cfg.pkg_cpath);
-        lua_setglobal(modlua_global_cfg.L, "cpath");
+            cfg->pkg_cpath);
+        lua_getfield(cfg->L, -1, "cpath");
+        lua_pushstring(cfg->L, cfg->pkg_cpath);
+        lua_setglobal(cfg->L, "cpath");
     }
 
     /* Hook to initialize the lua runtime with the connection.
@@ -2727,31 +3007,45 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         return rc;
     }
 
-    /* Hook the context close event */
-    rc = ib_hook_context_register(ib,
-                                  context_close_event,
-                                  modlua_context_close,
-                                  NULL);
+    /* Hook the context close event. */
+    rc = ib_hook_context_register(
+        ib,
+        context_close_event,
+        modlua_context_close,
+        NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register context_close_event hook: %s",
                      ib_status_to_string(rc));
         return rc;
     }
 
+    /* Hook the context destroy event to deallocate the Lua stack and lock. */
+    rc = ib_hook_context_register(
+        ib,
+        context_destroy_event,
+        modlua_context_destroy,
+        NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to register context_destroy_event hook: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
     /* Initialize lock to protect making new lua threads. */
-    modlua_global_cfg.L_lck = malloc(sizeof(*modlua_global_cfg.L_lck));
-    if (modlua_global_cfg.L_lck == NULL) {
+    ib_log_debug(ib, "Making Lua lock.");
+    cfg->L_lck = malloc(sizeof(*(cfg->L_lck)));
+    if (cfg->L_lck == NULL) {
         ib_log_error(ib, "Failed to initialize lua global lock.");
         return IB_EALLOC;
     }
-    rc = ib_lock_init(modlua_global_cfg.L_lck);
+    rc = ib_lock_init(cfg->L_lck);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to initialize lua global lock.");
         return rc;
     }
 
     /* Set up rule support. */
-    rc = rules_lua_init(ib, m, cbdata);
+    rc = rules_lua_init(ib, module, cbdata);
     if (rc != IB_OK) {
         return rc;
     }
@@ -2765,7 +3059,25 @@ static ib_status_t modlua_dir_commit_rules(
     const ib_list_t *list,
     void *cbdata)
 {
-    return modlua_commit_configuration(cp->ib);
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+
+    ib_context_t *ctx = NULL;
+    modlua_cfg_t *cfg = NULL;
+    ib_engine_t *ib = cp->ib;
+    ib_status_t rc;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_cfg_get(ib, ctx, &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return modlua_commit_configuration(ib, cfg);
 }
 
 /* -- Module Configuration -- */
@@ -2813,22 +3125,39 @@ static ib_status_t modlua_dir_lua_include(ib_cfgparser_t *cp,
                                           const char *p1,
                                           void *cbdata)
 {
-    ib_engine_t *ib = cp->ib;
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(p1 != NULL);
+
     ib_status_t rc;
     int lua_rc;
+    ib_engine_t *ib = cp->ib;
     ib_core_cfg_t *corecfg = NULL;
-    lua_State *L = modlua_global_cfg.L;
-    ib_context_t *cur_ctx;
+    modlua_cfg_t *cfg = NULL;
+    lua_State *L = NULL;
+    ib_context_t *ctx;
 
-    ib_cfgparser_context_current(cp, &cur_ctx);
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to retrieve current context.");
+        return rc;
+    }
 
-    if (cur_ctx != ib_context_main(ib)) {
+    if (ctx != ib_context_main(ib)) {
         ib_cfg_log_error(
             cp,
             "Directive %s may only be used in the main context.",
             name);
         return IB_EOTHER;
     }
+
+    rc = modlua_cfg_get(ib, ctx, &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    L = cfg->L;
 
     rc = ib_core_context_config(ib_context_main(ib), &corecfg);
     if (rc != IB_OK) {
@@ -2902,6 +3231,19 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     size_t p1_len = strlen(p1);
     size_t p1_unescaped_len;
     char *p1_unescaped = malloc(p1_len+1);
+    ib_context_t *ctx = NULL;
+    modlua_cfg_t *cfg = NULL;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Cannot get current configuration context.");
+        return rc;
+    }
+
+    rc = modlua_cfg_get(ib, ctx, &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     if ( p1_unescaped == NULL ) {
         return IB_EALLOC;
@@ -2918,24 +3260,24 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
         const char *msg = (rc == IB_EBADVAL)?
             "Value for parameter \"%s\" may not contain NULL bytes: %s":
             "Value for parameter \"%s\" could not be unescaped: %s";
-        ib_log_debug(ib, msg, name, p1);
+        ib_cfg_log_debug(cp, msg, name, p1);
         free(p1_unescaped);
         return rc;
     }
 
     rc = ib_core_context_config(ib_context_main(ib), &corecfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to retrieve core configuration.");
+        ib_cfg_log_error(cp, "Failed to retrieve core configuration.");
         return rc;
     }
 
     if (strcasecmp("LuaLoadModule", name) == 0) {
         /* Absolute path. */
         if (p1_unescaped[0] == '/') {
-            rc = modlua_module_load(ib, p1_unescaped);
+            rc = modlua_module_load(ib, p1_unescaped, cfg->L);
             if (rc != IB_OK) {
-                ib_log_error(
-                    ib,
+                ib_cfg_log_error(
+                    cp,
                     "Failed to load Lua module with error %s: %s",
                     ib_status_to_string(rc),
                     p1_unescaped);
@@ -2953,7 +3295,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
 
             path = malloc(path_len+1);
             if (!path) {
-                ib_log_error(ib, "Cannot allocate memory for module path.");
+                ib_cfg_log_error(cp, "Cannot allocate memory for module path.");
                 free(p1_unescaped);
                 return IB_EALLOC;
             }
@@ -2966,7 +3308,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
                 corecfg->module_base_path,
                 p1_unescaped);
 
-            rc = modlua_module_load(ib, path);
+            rc = modlua_module_load(ib, path, cfg->L);
             if (rc != IB_OK) {
                 ib_log_error(
                     ib,
@@ -2980,14 +3322,12 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
         }
     }
     else if (strcasecmp("LuaPackagePath", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_path", p1_unescaped);
         free(p1_unescaped);
         return rc;
     }
     else if (strcasecmp("LuaPackageCPath", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_cpath", p1_unescaped);
         free(p1_unescaped);
@@ -3037,15 +3377,11 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
 /**
  * Destroy global lock and Lua state.
  */
-static ib_status_t modlua_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata) {
-
-    ib_lock_destroy(modlua_global_cfg.L_lck);
-    free(modlua_global_cfg.L_lck);
-    modlua_global_cfg.L_lck = NULL;
-
-    lua_close(modlua_global_cfg.L);
-    modlua_global_cfg.L = NULL;
-
+static ib_status_t modlua_fini(
+    ib_engine_t *ib,
+    ib_module_t *module,
+    void *cbdata)
+{
     return IB_OK;
 }
 
@@ -3059,7 +3395,7 @@ static ib_status_t modlua_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata) {
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,           /**< Default metadata */
     MODULE_NAME_STR,                     /**< Module name */
-    IB_MODULE_CONFIG(&modlua_global_cfg),/**< Global config data */
+    IB_MODULE_CONFIG_NULL,               /**< modlua_init sets this. */
     modlua_config_map,                   /**< Configuration field map */
     modlua_directive_map,                /**< Config directive map */
     modlua_init,                         /**< Initialize function */
