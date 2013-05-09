@@ -776,13 +776,7 @@ htp_status_t htp_tx_state_request_start(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
-    // Did this request arrive in multiple chunks?
-    // XXX Will the below be correct on a request that has trailers?
-    if (tx->connp->in_chunk_count != tx->connp->in_chunk_request_index) {
-        tx->flags |= HTP_MULTI_PACKET_HEAD;
-    }
-
+htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {    
     // If we're in HTP_REQ_HEADERS that means that this is the
     // first time we're processing headers in a request. Otherwise,
     // we're dealing with trailing headers.
@@ -801,6 +795,11 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
         tx->connp->in_state = htp_connp_REQ_FINALIZE;
     } else if (tx->request_progress >= HTP_REQUEST_LINE) {
         // Request headers.
+
+        // Did this request arrive in multiple data chunks?
+        if (tx->connp->in_chunk_count != tx->connp->in_chunk_request_index) {
+            tx->flags |= HTP_MULTI_PACKET_HEAD;
+        }
 
         htp_status_t rc = htp_tx_process_request_headers(tx);
         if (rc != HTP_OK) return rc;
