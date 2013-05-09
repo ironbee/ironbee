@@ -50,6 +50,9 @@ static ib_status_t ib_state_notify_context(
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
         rc = hook->callback.ctx(ib, ctx, event, hook->cbdata);
         if (rc != IB_OK) {
+            ib_log_error(ib, "Hook returned error: %s=%s",
+                         ib_state_event_name(event),
+                         ib_status_to_string(rc));
             break;
         }
     }
@@ -79,6 +82,9 @@ static ib_status_t ib_state_notify_conn(
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
         rc = hook->callback.conn(ib, conn, event, hook->cbdata);
         if (rc != IB_OK) {
+            ib_log_error(ib, "Hook returned error: %s=%s",
+                         ib_state_event_name(event),
+                         ib_status_to_string(rc));
             break;
         }
     }
@@ -127,6 +133,9 @@ static ib_status_t ib_state_notify_req_line(
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
         rc = hook->callback.requestline(ib, tx, event, line, hook->cbdata);
         if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Hook returned error: %s=%s",
+                            ib_state_event_name(event),
+                            ib_status_to_string(rc));
             break;
         }
     }
@@ -177,6 +186,9 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
         rc = hook->callback.responseline(ib, tx, event, line, hook->cbdata);
         if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Hook returned error: %s=%s",
+                            ib_state_event_name(event),
+                            ib_status_to_string(rc));
             break;
         }
     }
@@ -211,6 +223,9 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
         rc = hook->callback.tx(ib, tx, event, hook->cbdata);
         if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Hook returned error: %s=%s",
+                            ib_state_event_name(event),
+                            ib_status_to_string(rc));
             break;
         }
     }
@@ -408,6 +423,9 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
         rc = hook->callback.headerdata(ib, tx, event,
                                        header->head, hook->cbdata);
         if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Hook returned error: %s=%s",
+                            ib_state_event_name(event),
+                            ib_status_to_string(rc));
             break;
         }
     }
@@ -446,6 +464,9 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
         rc = hook->callback.txdata(ib, tx, event, txdata, hook->cbdata);
         if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Hook returned error: %s=%s",
+                            ib_state_event_name(event),
+                            ib_status_to_string(rc));
             break;
         }
     }
