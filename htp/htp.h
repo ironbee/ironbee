@@ -524,8 +524,10 @@ struct htp_tx_t {
      */
     uint64_t flags;
 
-    // XXX
+    /** Request progress. */
     enum htp_tx_req_progress_t request_progress;
+
+    /** Response progress. */
     enum htp_tx_res_progress_t response_progress;
 };
 
