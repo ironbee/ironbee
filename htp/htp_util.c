@@ -581,7 +581,7 @@ int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t *uri) {
  * @param[out] flags
  * @return HTP_OK on success or HTP_ERROR error.
  */
-int htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
+htp_status_t htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
     int invalid;
 
     htp_status_t rc = htp_parse_hostport(hostport, hostname, port, &invalid);

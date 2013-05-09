@@ -881,3 +881,18 @@ TEST_F(ConnectionParsing, EarlyResponse) {
 
     ASSERT_TRUE(htp_tx_is_complete(tx));
 }
+
+TEST_F(ConnectionParsing, InvalidRequest1) {
+    int rc = test_run(home, "36-invalid-request-1.t", cfg, &connp);
+    ASSERT_GE(rc, -101);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(tx->request_progress, HTP_REQUEST_HEADERS);
+
+    ASSERT_TRUE(tx->flags & HTP_REQUEST_INVALID);
+    ASSERT_TRUE(tx->flags & HTP_REQUEST_INVALID_C_L);
+
+    ASSERT_TRUE(tx->request_hostname != NULL);
+}

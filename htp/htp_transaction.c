@@ -318,7 +318,10 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9) {
 }
 
 static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
+    htp_status_t rc = HTP_OK;
+    
     // Determine if we have a request body, and how it is packaged.
+    
     htp_header_t *cl = htp_table_get_c(tx->request_headers, "content-length");
     htp_header_t *te = htp_table_get_c(tx->request_headers, "transfer-encoding");
 
@@ -362,13 +365,16 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // Check for multiple C-L headers.
         if (cl->flags & HTP_FIELD_REPEATED) {
             tx->flags |= HTP_REQUEST_SMUGGLING;
+            // TODO Personality trait to determine which C-L header to parse.
+            //      At the moment we're parsing the combination of all instances,
+            //      which is bound to fail.
         }
 
         // Get body length.
         tx->request_content_length = htp_parse_content_length(cl->value);
         if (tx->request_content_length < 0) {
-            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in request");
-            return HTP_ERROR;
+            tx->flags |= HTP_REQUEST_INVALID;
+            tx->flags |= HTP_REQUEST_INVALID_C_L;     
         }
     } else {
         // No body.
@@ -389,10 +395,12 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         return HTP_OK;
     }
 
-    // Use the hostname from the URI, when available.   
+    // Determine hostname.
 
+    // Use the hostname from the URI, when available.   
     if (tx->parsed_uri->hostname != NULL) {
         tx->request_hostname = bstr_dup(tx->parsed_uri->hostname);
+        if (tx->request_hostname == NULL) return HTP_ERROR;
     }
 
     tx->request_port_number = tx->parsed_uri->port_number;
@@ -405,9 +413,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
         // HTTP/1.1 requires host information in the headers.
         if (tx->request_protocol_number >= HTP_PROTOCOL_1_1) {
-            tx->flags |= HTP_HOST_MISSING;
-            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                    "Host information in request headers required by HTTP/1.1");
+            tx->flags |= HTP_HOST_MISSING;            
         }
     } else {
         // Host information available in the headers.
@@ -415,7 +421,8 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         bstr *hostname;
         int port;
 
-        if (htp_parse_header_hostport(h->value, &hostname, &port, &(tx->flags)) != HTP_OK) return HTP_ERROR;
+        rc = htp_parse_header_hostport(h->value, &hostname, &port, &(tx->flags));
+        if (rc != HTP_OK) return rc;
 
         // Is there host information in the URI?
         if (tx->request_hostname == NULL) {
@@ -424,40 +431,49 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
             tx->request_hostname = hostname;
             tx->request_port_number = port;
         } else {
+            // The host information appears in the URI and in the headers. It's
+            // OK if both have the same thing, but we want to check for differences.
             if ((bstr_cmp_nocase(hostname, tx->request_hostname) != 0) || (port != tx->request_port_number)) {
                 // The host information is different in the headers and the URI. The
                 // HTTP RFC states that we should ignore the header copy.
-                tx->flags |= HTP_HOST_AMBIGUOUS;
-                htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
+                tx->flags |= HTP_HOST_AMBIGUOUS;                
             }
 
             bstr_free(hostname);
         }
     }
 
-    // Parse the Content-Type header.
+    // Determine Content-Type.
     htp_header_t *ct = htp_table_get_c(tx->request_headers, "content-type");
     if (ct != NULL) {
-        if (htp_parse_ct_header(ct->value, &tx->request_content_type) != HTP_OK) return HTP_ERROR;
+        rc = htp_parse_ct_header(ct->value, &tx->request_content_type);
+        if (rc != HTP_OK) return rc;
     }
 
     // Parse cookies.
     if (tx->connp->cfg->parse_request_cookies) {
-        htp_parse_cookies_v0(tx->connp);
+        rc = htp_parse_cookies_v0(tx->connp);
+        if (rc != HTP_OK) return rc;
     }
 
     // Parse authentication information.
     if (tx->connp->cfg->parse_request_auth) {
-        htp_parse_authorization(tx->connp);
+        rc = htp_parse_authorization(tx->connp);
+        if (rc != HTP_OK) return rc;
     }
 
     // Finalize sending raw header data.
-    htp_status_t rc = htp_connp_req_receiver_finalize_clear(tx->connp);
+    rc = htp_connp_req_receiver_finalize_clear(tx->connp);
     if (rc != HTP_OK) return rc;
 
     // Run hook REQUEST_HEADERS.
     rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
     if (rc != HTP_OK) return rc;
+    
+    // We cannot proceed if the request is invalid.
+    if (tx->flags & HTP_REQUEST_INVALID) {
+        return HTP_ERROR;
+    }
 
     return HTP_OK;
 }

@@ -230,6 +230,8 @@ enum htp_file_source_t {
 #define HTP_URLEN_INVALID_ENCODING         0x08000000
 #define HTP_URLEN_OVERLONG_U               0x10000000
 #define HTP_URLEN_HALF_FULL_RANGE          0x20000000 /* Range U+FF00 - U+FFEF detected. */
+#define HTP_REQUEST_INVALID                0x40000000
+#define HTP_REQUEST_INVALID_C_L            0x80000000
 
 #define HTP_HOST_INVALID ( HTP_HOSTU_INVALID | HTP_HOSTH_INVALID )
 
