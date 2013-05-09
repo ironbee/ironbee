@@ -1059,7 +1059,11 @@ static ib_status_t modhtp_set_parser_flags(
 
     /* INVALID_xxx */
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, INVALID_FOLDING);
-    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, INVALID_CHUNKING);
+
+    /* REQUEST_INVALIDxxx */
+    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, REQUEST_INVALID);
+    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, REQUEST_INVALID_C_L);
+    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, REQUEST_INVALID_T_E);
 
     /* MULTI_PACKET_HEAD */
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, MULTI_PACKET_HEAD);
