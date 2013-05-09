@@ -55,18 +55,28 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->cfg = connp->cfg;
     tx->is_config_shared = HTP_CONFIG_SHARED;
 
+    // Request fields.
+
+    tx->request_progress = HTP_REQUEST_NOT_STARTED;
     tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;
     tx->request_headers = htp_table_create(32);
+    if (tx->request_headers == NULL) return NULL;
     tx->request_params = htp_table_create(32);
+    if (tx->request_params == NULL) return NULL;
     tx->request_content_length = -1;
 
     tx->parsed_uri_raw = htp_uri_alloc();
+    if (tx->parsed_uri_raw == NULL) return NULL;
 
+    // Response fields.
+
+    tx->response_progress = HTP_RESPONSE_NOT_STARTED;
     tx->response_status = NULL;
     tx->response_status_number = HTP_STATUS_UNKNOWN;
     tx->response_protocol_number = HTP_PROTOCOL_UNKNOWN;
 
     tx->response_headers = htp_table_create(32);
+    if (tx->response_headers == NULL) return NULL;
     tx->response_content_length = -1;
 
     return tx;
@@ -465,10 +475,9 @@ htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const void *data, size_t
     d.data = (unsigned char *) data;
     d.len = len;
 
-    int rc = htp_req_run_hook_body_data(tx->connp, &d);
+    htp_status_t rc = htp_req_run_hook_body_data(tx->connp, &d);
     if (rc != HTP_OK) {
-        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                "Request body data callback returned error (%d)", rc);
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request body data callback returned error (%d)", rc);
         return HTP_ERROR;
     }
 
@@ -569,7 +578,7 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
     }
 
     // Run hook HTP_RESPONSE_LINE
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_response_line, tx->connp);
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_response_line, tx->connp);
     if (rc != HTP_OK) return rc;
 
     return HTP_OK;
@@ -634,7 +643,7 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     d->tx->response_entity_len += d->len;
 
     // Invoke all callbacks.
-    int rc = htp_res_run_hook_body_data(d->tx->connp, d);
+    htp_status_t rc = htp_res_run_hook_body_data(d->tx->connp, d);
     if (rc != HTP_OK) return HTP_ERROR;
 
     return HTP_OK;
@@ -672,7 +681,7 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
             // is identical to response_message_len.
             tx->response_entity_len += d.len;
 
-            int rc = htp_res_run_hook_body_data(tx->connp, &d);
+            htp_status_t rc = htp_res_run_hook_body_data(tx->connp, &d);
             if (rc != HTP_OK) return HTP_ERROR;
             break;
 
@@ -706,13 +715,7 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
         tx->connp->put_file = NULL;
     }
 
-    // Update the transaction status, but only if it not move
-    // on already. This may happen when we're processing a CONNECT
-    // request and need to wait for the response to determine how
-    // to continue to treat the rest of the TCP stream.
-    if (tx->progress < HTP_REQUEST_COMPLETE) {
-        tx->progress = HTP_REQUEST_COMPLETE;
-    }
+    tx->request_progress = HTP_REQUEST_COMPLETE;
 
     if (tx->is_protocol_0_9) {
         tx->connp->in_state = htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9;
@@ -727,12 +730,12 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
 
 htp_status_t htp_tx_state_request_start(htp_tx_t *tx) {
     // Run hook REQUEST_START.
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_start, tx->connp);
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_start, tx->connp);
     if (rc != HTP_OK) return rc;
 
     // Change state into request line parsing.
     tx->connp->in_state = htp_connp_REQ_LINE;
-    tx->connp->in_tx->progress = HTP_REQUEST_LINE;
+    tx->connp->in_tx->request_progress = HTP_REQUEST_LINE;
 
     return HTP_OK;
 }
@@ -744,10 +747,10 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
         tx->flags |= HTP_MULTI_PACKET_HEAD;
     }
 
-    // If we're in TX_PROGRESS_REQ_HEADERS that means that this is the
+    // If we're in HTP_REQ_HEADERS that means that this is the
     // first time we're processing headers in a request. Otherwise,
     // we're dealing with trailing headers.
-    if (tx->progress > HTP_REQUEST_HEADERS) {
+    if (tx->request_progress > HTP_REQUEST_HEADERS) {
         // Request trailers.
 
         // Run hook HTP_REQUEST_TRAILER.
@@ -760,7 +763,7 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
 
         // Completed parsing this request; finalize it now.
         tx->connp->in_state = htp_connp_REQ_FINALIZE;
-    } else if (tx->progress >= HTP_REQUEST_LINE) {
+    } else if (tx->request_progress >= HTP_REQUEST_LINE) {
         // Request headers.
 
         htp_status_t rc = htp_tx_process_request_headers(tx);
@@ -768,7 +771,7 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
 
         tx->connp->in_state = htp_connp_REQ_CONNECT_CHECK;
     } else {
-        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "[Internal Error] Invalid tx progress: %d", tx->progress);
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "[Internal Error] Invalid tx progress: %d", tx->request_progress);
 
         return HTP_ERROR;
     }
@@ -829,8 +832,8 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
 }
 
 htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
-    if (tx->progress != HTP_RESPONSE_COMPLETE) {
-        tx->progress = HTP_RESPONSE_COMPLETE;
+    if (tx->response_progress != HTP_RESPONSE_COMPLETE) {
+        tx->response_progress = HTP_RESPONSE_COMPLETE;
 
         // Run the last RESPONSE_BODY_DATA HOOK, but only if there was a response body present.
         if (tx->response_transfer_coding != HTP_CODING_NO_BODY) {
@@ -944,7 +947,7 @@ htp_status_t htp_tx_state_response_start(htp_tx_t *tx) {
     tx->connp->out_tx = tx;
 
     // Run hook RESPONSE_START.
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_response_start, tx->connp);
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_response_start, tx->connp);
     if (rc != HTP_OK) return rc;
 
     // Change state into response line parsing, except if we're following
@@ -952,12 +955,12 @@ htp_status_t htp_tx_state_response_start(htp_tx_t *tx) {
     if (tx->is_protocol_0_9) {
         tx->response_transfer_coding = HTP_CODING_IDENTITY;
         tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
-        tx->progress = HTP_RESPONSE_BODY;
+        tx->response_progress = HTP_RESPONSE_BODY;
         tx->connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
         tx->connp->out_body_data_left = -1;
     } else {
         tx->connp->out_state = htp_connp_RES_LINE;
-        tx->progress = HTP_RESPONSE_LINE;
+        tx->response_progress = HTP_RESPONSE_LINE;
     }
 
     return HTP_OK;

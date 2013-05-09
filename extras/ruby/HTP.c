@@ -815,7 +815,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "NONE", INT2FIX( HTP_AUTH_NONE ) );
   rb_define_const( mHTP, "IDENTITY", INT2FIX( HTP_CODING_IDENTITY ) );
   rb_define_const( mHTP, "CHUNKED", INT2FIX( HTP_CODING_CHUNKED ) );
-  rb_define_const( mHTP, "TX_PROGRESS_NEW", INT2FIX( HTP_REQUEST_START ) );
+  rb_define_const( mHTP, "TX_PROGRESS_NEW", INT2FIX( HTP_REQUEST_NOT_STARTED ) );
   rb_define_const( mHTP, "TX_PROGRESS_REQ_LINE", INT2FIX( HTP_REQUEST_LINE ) );
   rb_define_const( mHTP, "TX_PROGRESS_REQ_HEADERS", INT2FIX( HTP_REQUEST_HEADERS ) );
   rb_define_const( mHTP, "TX_PROGRESS_REQ_BODY", INT2FIX( HTP_REQUEST_BODY ) );

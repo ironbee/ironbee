@@ -285,7 +285,7 @@ TEST_F(ConnectionParsing, ResponseWithoutContentLength) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
 
 TEST_F(ConnectionParsing, FailedConnectRequest) {
@@ -297,7 +297,7 @@ TEST_F(ConnectionParsing, FailedConnectRequest) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 
     ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "CONNECT"));
 
@@ -313,7 +313,7 @@ TEST_F(ConnectionParsing, CompressedResponseContentType) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 
     ASSERT_EQ(187, tx->response_message_len);
 
@@ -329,7 +329,7 @@ TEST_F(ConnectionParsing, CompressedResponseChunked) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 
     ASSERT_EQ(28261, tx->response_message_len);
 
@@ -345,7 +345,7 @@ TEST_F(ConnectionParsing, SuccessfulConnectRequest) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 
     ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "CONNECT"));
 
@@ -361,12 +361,12 @@ TEST_F(ConnectionParsing, ConnectRequestWithExtraData) {
     htp_tx_t *tx1 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
 
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx1->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx1->response_progress);
 
     htp_tx_t *tx2 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
     ASSERT_TRUE(tx2 != NULL);
 
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx2->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx2->response_progress);
 }
 
 TEST_F(ConnectionParsing, Multipart) {
@@ -378,7 +378,7 @@ TEST_F(ConnectionParsing, Multipart) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 
     htp_param_t *field1 = htp_tx_req_get_param(tx, "field1", 6);
     ASSERT_TRUE(field1 != NULL);
@@ -398,7 +398,7 @@ TEST_F(ConnectionParsing, CompressedResponseDeflate) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 
     ASSERT_EQ(755, tx->response_message_len);
 
@@ -414,7 +414,7 @@ TEST_F(ConnectionParsing, UrlEncoded) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 
     ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "POST"));
     ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=1&q=2"));
@@ -440,19 +440,19 @@ TEST_F(ConnectionParsing, AmbiguousHost) {
 
     htp_tx_t *tx1 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx1->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx1->response_progress);
     ASSERT_FALSE(tx1->flags & HTP_HOST_AMBIGUOUS);
 
     htp_tx_t *tx2 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
     ASSERT_TRUE(tx2 != NULL);
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx2->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx2->response_progress);
     ASSERT_TRUE(tx2->flags & HTP_HOST_AMBIGUOUS);
     ASSERT_TRUE(tx2->request_hostname != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx2->request_hostname, "example.com"));
 
     htp_tx_t *tx3 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 2);
     ASSERT_TRUE(tx3 != NULL);
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx3->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx3->response_progress);
     ASSERT_FALSE(tx3->flags & HTP_HOST_AMBIGUOUS);
     ASSERT_TRUE(tx3->request_hostname != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx3->request_hostname, "www.example.com"));
@@ -460,7 +460,7 @@ TEST_F(ConnectionParsing, AmbiguousHost) {
 
     htp_tx_t *tx4 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 3);
     ASSERT_TRUE(tx4 != NULL);
-    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx4->progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx4->response_progress);
     ASSERT_TRUE(tx4->flags & HTP_HOST_AMBIGUOUS);
     ASSERT_TRUE(tx4->request_hostname != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx4->request_hostname, "www.example.com"));
@@ -870,4 +870,15 @@ TEST_F(ConnectionParsing, API_connp_get_connection) {
     ASSERT_GE(rc, 0);
 
     ASSERT_EQ(connp->conn, htp_connp_get_connection(connp));
+}
+
+TEST_F(ConnectionParsing, EarlyResponse) {
+    int rc = test_run(home, "35-early-response.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(tx->request_progress, HTP_REQUEST_COMPLETE);
+    ASSERT_EQ(tx->response_progress, HTP_RESPONSE_COMPLETE);
 }

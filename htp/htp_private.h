@@ -183,7 +183,8 @@ void fprint_raw_data_ex(FILE *stream, const char *name, const void *data, size_t
 
 char *htp_connp_in_state_as_string(htp_connp_t *connp);
 char *htp_connp_out_state_as_string(htp_connp_t *connp);
-char *htp_tx_progress_as_string(htp_tx_t *tx);
+char *htp_tx_request_progress_as_string(htp_tx_t *tx);
+char *htp_tx_response_progress_as_string(htp_tx_t *tx);
 
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
