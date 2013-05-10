@@ -462,7 +462,7 @@ fi
 
 dnl Enable C++ subdirs if enabled
 if test "$cpp_code" != 0; then
-    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} ironbeepp predicate"
+    TOPLEVEL_SUBDIRS="ironbeepp ${TOPLEVEL_SUBDIRS} predicate"
 fi
 
 dnl Enable clipp subdir if enabled
