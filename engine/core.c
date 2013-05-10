@@ -1393,7 +1393,10 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                     continue;
                 }
 
-                ib_field_setv(tx_msg, ib_ftype_nulstr_in(e->msg));
+                /* Use the last event message, if there is one. */
+                if ((e->msg != NULL) && (strlen(e->msg) > 0)) {
+                    ib_field_setv(tx_msg, ib_ftype_nulstr_in(e->msg));
+                }
 
                 IB_LIST_LOOP(e->tags, tnode) {
                     char *tag = (char *)ib_list_node_data(tnode);
