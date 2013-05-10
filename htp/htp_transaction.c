@@ -86,18 +86,8 @@ htp_status_t htp_tx_destroy(htp_tx_t *tx) {
     if (!htp_tx_is_complete(tx)) return HTP_ERROR;
 
     // Disconnect transaction from other structures.
-
-    // Tell the connection to remove this transaction from the list.
     htp_conn_remove_tx(tx->conn, tx);
-
-    // Invalidate the pointer to this transactions held
-    // by the connection parser. This is to allow a transaction
-    // to be destroyed from within the final response callback.
-    if (tx->connp != NULL) {
-        if (tx->connp->out_tx == tx) {
-            tx->connp->out_tx = NULL;
-        }
-    }
+    htp_connp_tx_remove(tx->connp, tx);
 
     // Request fields.
 
@@ -107,7 +97,6 @@ htp_status_t htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(tx->request_protocol);
     bstr_free(tx->request_content_type);
     bstr_free(tx->request_hostname);
-
     htp_uri_free(tx->parsed_uri_raw);
     htp_uri_free(tx->parsed_uri);
 

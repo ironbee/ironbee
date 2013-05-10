@@ -167,3 +167,21 @@ htp_tx_t *htp_connp_tx_create(htp_connp_t *connp) {
 
     return tx;
 }
+
+/**
+ * Removes references to the supplied transaction.
+ *
+ * @param[in] connp
+ * @param[in] tx
+ */
+void htp_connp_tx_remove(htp_connp_t *connp, htp_tx_t *tx) {
+    if (connp == NULL) return;
+
+    if (connp->in_tx == tx) {
+        connp->in_tx = NULL;
+    }
+
+    if (connp->out_tx == tx) {
+        connp->out_tx = NULL;
+    }
+}
