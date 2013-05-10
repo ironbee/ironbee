@@ -94,6 +94,7 @@ check_PROGRAMS = test_gtest \
                  test_engine \
                  test_module_pcre \
                  test_module_ee_oper \
+		 test_ibmod_engine_shutdown \
                  test_operator \
                  test_action \
                  test_config \
@@ -274,6 +275,10 @@ test_module_pcre_SOURCES = test_module_pcre.cpp \
                            test_module_dfa.cpp \
                            test_main.cpp
 test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
+
+test_ibmod_engine_shutdown_SOURCES = test_ibmod_engine_shutdown.cpp \
+                                     test_main.cpp
+test_ibmod_engine_shutdown_LDADD = $(MODULE_TEST_LDADD)
 
 test_luajit_SOURCES = test_main.cpp \
                       test_luajit.cpp \

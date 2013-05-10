@@ -72,30 +72,61 @@ typedef enum {
  * that it has failed to process an instruction.
  */
 typedef enum {
-    IB_HDR_SET,
-    IB_HDR_APPEND,
-    IB_HDR_MERGE,
-    IB_HDR_ADD,
-    IB_HDR_UNSET,
-    IB_HDR_EDIT
+    IB_HDR_SET,    /**< Remove other values of the header and add this one. */
+    IB_HDR_APPEND, /**< Append the header. */
+    IB_HDR_MERGE,  /**< Append unless the header value already exists. */
+    IB_HDR_ADD,    /**< Add the header. */
+    IB_HDR_UNSET,  /**< Unset the header. */
+    IB_HDR_EDIT    /**< Use the @ref ib_rx_t to edit the header. */
 } ib_server_header_action_t;
 
+/**
+ * Set server error status code.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] status The status code.
+ */
 typedef ib_status_t (*ib_server_error_fn_t)(
     ib_tx_t *tx,
     int status,
     void *cbdata
 );
+/**
+ * Set server error header.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] name The null-terminated name of the header.
+ * @param[in] name The null-terminated value of the header.
+ */
 typedef ib_status_t (*ib_server_error_hdr_fn_t)(
     ib_tx_t *tx,
     const char *name,
     const char *value,
     void *cbdata
 );
+/**
+ * Set server error data.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] data The data to set.
+ */
 typedef ib_status_t (*ib_server_error_data_fn_t)(
     ib_tx_t *tx,
     const char *data,
     void *cbdata
 );
+
+/**
+ * Set a server header.
+ * 
+ * @param[in] tx The transaction.
+ * @param[in] dir The direction.
+ * @param[in] action The action determening how to add the header.
+ * @param[in] hdr The header name. A null-terminated string.
+ * @param[in] value The header value. A null-terminated string.
+ * @param[in] rx The regular expresion if the action is @ref IB_HDR_EDIT.
+ * @param[in] cbdata Callback data.
+ */
 typedef ib_status_t (*ib_server_header_fn_t)(
     ib_tx_t *tx,
     ib_server_direction_t dir,

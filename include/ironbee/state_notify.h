@@ -234,7 +234,6 @@ ib_status_t DLL_PUBLIC ib_state_notify_postprocess(ib_engine_t *ib,
 ib_status_t DLL_PUBLIC ib_state_notify_logging(ib_engine_t *ib,
                                                ib_tx_t *tx);
 
-
 /**
  * Notify the state machine that a logevent event has occurred
  *
@@ -246,6 +245,17 @@ ib_status_t DLL_PUBLIC ib_state_notify_logging(ib_engine_t *ib,
 ib_status_t DLL_PUBLIC ib_state_notify_logevent(ib_engine_t *ib,
                                                 ib_tx_t *tx);
 
+/**
+ * Notify all listener that the IronBee Engine is being requested to shutdown.
+ *
+ * @param ib Engine handle
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - Non-IB_OK if a hook fails to fire correctly.
+ */
+ib_status_t DLL_PUBLIC ib_state_notify_engine_shutdown_initiated(
+    ib_engine_t *ib);
 
 /**
  * @} IronBeeEngineState

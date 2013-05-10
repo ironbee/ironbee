@@ -263,13 +263,17 @@ typedef enum {
                                     * (Hook type:@ref ib_state_tx_hook_fn_t) */
 
     /* Context states */
-    context_open_event,     /**< Context open
+    context_open_event,            /**< Context open
                                     * (Hook type:@ref ib_state_ctx_hook_fn_t) */
-    context_close_event,    /**< Context close
+    context_close_event,           /**< Context close
                                     * (Hook type:@ref ib_state_ctx_hook_fn_t) */
-    context_destroy_event,  /**< Context destroy
+    context_destroy_event,         /**< Context destroy
                                     * (Hook type:@ref ib_state_ctx_hook_fn_t) */
 
+    /* Engine Events */
+    engine_shutdown_initiated_event,/**< Engine has been requested to shut 
+                                    * down.
+                                    * (Hook type:@ref ib_state_null_hook_fn_t) */
     /* Not an event, but keeps track of the number of events. */
     IB_STATE_EVENT_NUM,
 } ib_state_event_type_t;

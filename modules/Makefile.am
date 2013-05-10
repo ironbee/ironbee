@@ -143,7 +143,7 @@ if CPP
 pkglib_LTLIBRARIES += ibmod_engine_shutdown.la
 ibmod_engine_shutdown_la_SOURCES = \
     engine_shutdown.cpp
-ibmod_engine_shutdown_la_LIBADD = \
+ibmod_engine_shutdown_la_LIBADD = $(AM_LIBADD) \
     $(top_builddir)/ironbeepp/libibpp.la
 endif
 

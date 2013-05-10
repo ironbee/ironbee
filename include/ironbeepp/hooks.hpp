@@ -705,6 +705,17 @@ public:
      **/
     HooksRegistrar& context_destroy(context_t f);
 
+    /**
+     * Register callback for @ref engine_shutdown_initited.
+     *
+     * @sa engine::state_event_e
+     *
+     * @param[in] f Callback to register.
+     * @returns @c *this for call chanining.
+     * @throw IronBee++ exception on failure.
+     */
+    HooksRegistrar& engine_shutdown_initiated(null_t f);
+
     ///@}
 
 private:

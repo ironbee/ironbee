@@ -756,4 +756,12 @@ HooksRegistrar& HooksRegistrar::context_destroy(context_t f)
     );
 }
 
+HooksRegistrar& HooksRegistrar::engine_shutdown_initiated(null_t f)
+{
+    return null(
+        Engine::engine_shutdown_initiated,
+        f
+    );
+}
+
 } // IronBee

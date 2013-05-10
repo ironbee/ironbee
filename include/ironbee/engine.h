@@ -115,7 +115,7 @@ ib_status_t DLL_PUBLIC ib_shutdown(void);
  * Create an engine handle.
  *
  * After creating the engine, the caller must configure defaults, such as
- * initial logging parameters, and then call @ref ib_engine_init() to
+ * initial logging parameters, and then call ib_engine_init() to
  * initialize the engine configuration context.
  *
  * @param pib Address which new handle is written
@@ -560,6 +560,77 @@ ib_status_t DLL_PUBLIC ib_tx_set_module_data(
     ib_tx_t *tx,
     const ib_module_t *module,
     void *data
+);
+
+/**
+ * Set server error status code.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] status The status code.
+ *
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_ENOTIMPL If not implemented by the server plugin.
+ */
+ib_status_t DLL_PUBLIC ib_tx_server_error(
+    ib_tx_t *tx,
+    int status
+);
+
+/**
+ * Set server error header.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] name The null-terminated name of the header.
+ * @param[in] name The null-terminated value of the header.
+ *
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_ENOTIMPL If not implemented by the server plugin.
+ */
+ib_status_t DLL_PUBLIC ib_tx_server_error_header(
+    ib_tx_t *tx,
+    const char *name,
+    const char *value
+);
+
+/**
+ * Set server error data.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] data The data to set.
+ *
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_ENOTIMPL If not implemented by the server plugin.
+ */
+ib_status_t DLL_PUBLIC ib_tx_server_error_data(
+    ib_tx_t *tx,
+    const char *data
+);
+
+/**
+ * Set a header to be either requested or responded to in the server.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] dir Direction. This indicates if this is for the request or
+ *            the response of the HTTP transaction.
+ * @param[in] action How to add this header. Add, delete, set, etc.
+ * @param[in] hdr Null-terminated header name string.
+ * @param[in] value Null-terminated header value string.
+ * @param[in] rx The regular expresion if the action is @ref IB_HDR_EDIT.
+ *
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_ENOTIMPL If not implemented by the server plugin.
+ */
+ib_status_t DLL_PUBLIC ib_tx_server_header(
+    ib_tx_t *tx,
+    ib_server_direction_t dir,
+    ib_server_header_action_t action,
+    const char *hdr,
+    const char *value,
+    ib_rx_t *rx
 );
 
 /**

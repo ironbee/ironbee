@@ -98,7 +98,8 @@ public:
         response_finished          = response_finished_event,
         context_open               = context_open_event,
         context_close              = context_close_event,
-        context_destroy            = context_destroy_event
+        context_destroy            = context_destroy_event,
+        engine_shutdown_initiated  = engine_shutdown_initiated_event
     };
 
     /**

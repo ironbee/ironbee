@@ -24,15 +24,4 @@
 #ifndef __MODULES__ENGINE_SHUTDOWN_HPP__
 #define __MODULES__ENGINE_SHUTDOWN_HPP__
 
-#include <ironbeepp/module_delegate.hpp>
-
-/**
- * Implement simple policy changes when the IronBee engines is to shutdown.
- */
-class EngineShutdownModule : public IronBee::ModuleDelegate
-{
-    public:
-    EngineShutdownModule(IronBee::Module module);
-};
-
 #endif // __MODULES__ENGINE_SHUTDOWN_HPP__

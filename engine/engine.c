@@ -272,13 +272,16 @@ static ib_status_t ib_event_table_init(void)
     INIT_EVENT_TABLE_ENT(response_body_data_event, IB_STATE_HOOK_TXDATA);
     INIT_EVENT_TABLE_ENT(response_finished_event, IB_STATE_HOOK_TX);
 
-    /* Logevent updated */
+    /* Logevent Updated */
     INIT_EVENT_TABLE_ENT(handle_logevent_event, IB_STATE_HOOK_TX);
 
-    /* Context events */
+    /* Context Events */
     INIT_EVENT_TABLE_ENT(context_open_event, IB_STATE_HOOK_CTX);
     INIT_EVENT_TABLE_ENT(context_close_event, IB_STATE_HOOK_CTX);
     INIT_EVENT_TABLE_ENT(context_destroy_event, IB_STATE_HOOK_CTX);
+
+    /* Engine Events */
+    INIT_EVENT_TABLE_ENT(engine_shutdown_initiated_event, IB_STATE_HOOK_NULL);
 
     /* Sanity check the table, make sure all events are initialized */
 validate:
@@ -1061,6 +1064,65 @@ ib_status_t ib_tx_set_module_data(
   ib_status_t rc = ib_array_setn(tx->module_data, m->idx, data);
   return rc;
 }
+
+ib_status_t ib_tx_server_error(
+    ib_tx_t *tx,
+    int status
+)
+{
+    assert(tx != NULL);
+    assert(tx->ib != NULL);
+    assert(tx->ib->server != NULL);
+
+    return ib_server_error_response(tx->ib->server, tx, status);
+}
+
+ib_status_t ib_tx_server_error_header(
+    ib_tx_t *tx,
+    const char *name,
+    const char *value
+)
+{
+    assert(tx != NULL);
+    assert(tx->ib != NULL);
+    assert(tx->ib->server != NULL);
+    assert(name != NULL);
+    assert(value != NULL);
+
+    return ib_server_error_header(tx->ib->server, tx, name, value);
+}
+
+ib_status_t ib_tx_server_error_data(
+    ib_tx_t *tx,
+    const char *data
+)
+{
+    assert(tx != NULL);
+    assert(tx->ib != NULL);
+    assert(tx->ib->server != NULL);
+    assert(data != NULL);
+
+    return ib_server_error_body(tx->ib->server, tx, data);
+}
+
+ib_status_t ib_tx_server_header(
+    ib_tx_t *tx,
+    ib_server_direction_t dir,
+    ib_server_header_action_t action,
+    const char *hdr,
+    const char *value,
+    ib_rx_t *rx
+)
+{
+    assert(tx != NULL);
+    assert(tx->ib != NULL);
+    assert(tx->ib->server != NULL);
+    assert(hdr != NULL);
+    assert(value != NULL);
+
+    return ib_server_header(tx->ib->server, tx, dir, action, hdr, value, rx);
+}
+
 
 void ib_tx_destroy(ib_tx_t *tx)
 {

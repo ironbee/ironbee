@@ -29,6 +29,35 @@
 
 #include <assert.h>
 
+static ib_status_t ib_state_notify_null(
+    ib_engine_t *ib,
+    ib_state_event_type_t event
+)
+{
+    assert(ib != NULL);
+
+    const ib_list_node_t *node;
+    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    ib_log_debug3(ib, "NULL EVENT: %s", ib_state_event_name(event));
+
+    IB_LIST_LOOP_CONST(ib->hooks[event], node) {
+        const ib_hook_t *hook = (const ib_hook_t *)node->data;
+        rc = hook->callback.null(ib, event, hook->cbdata);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Hook returned error: %s=%s",
+                         ib_state_event_name(event),
+                         ib_status_to_string(rc));
+            break;
+        }
+    }
+
+    return rc;
+}
+
 static ib_status_t ib_state_notify_context(
     ib_engine_t *ib,
     ib_context_t *ctx,
@@ -1026,4 +1055,17 @@ ib_status_t ib_state_notify_context_destroy(ib_engine_t *ib,
     }
 
     return IB_OK;
+}
+
+ib_status_t ib_state_notify_engine_shutdown_initiated(ib_engine_t *ib)
+{
+    assert(ib != NULL);
+
+    ib_status_t rc;
+
+    ib_log_info(ib, "IronBee Engine Shutdown Requested.");
+
+    rc = ib_state_notify_null(ib, engine_shutdown_initiated_event);
+
+    return rc;
 }
