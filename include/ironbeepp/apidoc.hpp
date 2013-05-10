@@ -68,7 +68,7 @@
  *
  * class MyModule : public IronBee::ModuleDelegate
  * {
- *     public:
+ * public:
  *     MyModule(IronBee::Module m);
  *     void context_open(IronBee::Context c) const;
  * };
