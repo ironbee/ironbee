@@ -139,6 +139,14 @@ ibmod_sqltfn_la_CFLAGS = ${AM_CFLAGS} -I$(abs_top_srcdir)/libs/sqltfn/src
 ibmod_sqltfn_la_LDFLAGS = $(AM_LDFLAGS)
 ibmod_sqltfn_la_LIBADD = ../libs/sqltfn/src/libsqltfn.la
 
+if CPP
+pkglib_LTLIBRARIES += ibmod_engine_shutdown.la
+ibmod_engine_shutdown_la_SOURCES = \
+    engine_shutdown.cpp
+ibmod_engine_shutdown_la_LIBADD = \
+    $(top_builddir)/ironbeepp/libibpp.la
+endif
+
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
 	for m in $(pkglib_LTLIBRARIES); do \
