@@ -476,11 +476,9 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
         bstr_free(part->value);
     }
 
-    // Content-Type is currently only an alias for the
-    // value stored in the headers structure.
+    bstr_free(part->content_type);
 
     if (part->headers != NULL) {
-        // Destroy request_headers
         htp_header_t *h = NULL;
         for (size_t i = 0, n = htp_table_size(part->headers); i < n; i++) {
             h = htp_table_get_index(part->headers, i, NULL);

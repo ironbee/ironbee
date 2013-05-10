@@ -2386,7 +2386,7 @@ htp_status_t htp_parse_ct_header(bstr *header, bstr **ct) {
 
     // The assumption here is that the header value we receive
     // here has been left-trimmed, which means the starting position
-    // is on the mediate type. On some platform that may not be the
+    // is on the media type. On some platforms that may not be the
     // case, and we may need to do the left-trim ourselves.
 
     // Find the end of the MIME type, using the same approach PHP 5.4.3 uses.
