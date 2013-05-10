@@ -846,14 +846,22 @@ TEST_F(DecodingTest, DecodeUrlencodedInplace5_UrlencodedInvalidDecode) {
 TEST_F(DecodingTest, DecodeUrlencodedInplace6_UrlencodedInvalidNotEnoughBytes) {
     bstr *i = bstr_dup_c("/%a");
     bstr *e = bstr_dup_c("/%a");
-    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PROCESS_INVALID);
     htp_decode_urlencoded_inplace(cfg, tx, i);
     ASSERT_TRUE(bstr_cmp(i, e) == 0);
     bstr_free(e);
     bstr_free(i);
 }
 
-TEST_F(DecodingTest, DecodeUrlencodedInplace7_Uencoded) {
+TEST_F(DecodingTest, DecodeUrlencodedInplace7_UrlencodedInvalidNotEnoughBytes) {
+    bstr *i = bstr_dup_c("/%");
+    bstr *e = bstr_dup_c("/%");
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace8_Uencoded) {
     bstr *i = bstr_dup_c("/%u0064");
     bstr *e = bstr_dup_c("/d");
     htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
@@ -863,7 +871,7 @@ TEST_F(DecodingTest, DecodeUrlencodedInplace7_Uencoded) {
     bstr_free(i);
 }
 
-TEST_F(DecodingTest, DecodeUrlencodedInplace8_UencodedDoNotDecode) {
+TEST_F(DecodingTest, DecodeUrlencodedInplace9_UencodedDoNotDecode) {
     bstr *i = bstr_dup_c("/%u0064");
     bstr *e = bstr_dup_c("/%u0064");
     htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 0);
@@ -874,12 +882,117 @@ TEST_F(DecodingTest, DecodeUrlencodedInplace8_UencodedDoNotDecode) {
     bstr_free(i);
 }
 
-TEST_F(DecodingTest, DecodeUrlencodedInplace9_UencodedInvalidNotEnoughBytes) {
+TEST_F(DecodingTest, DecodeUrlencodedInplace10_UencodedInvalidNotEnoughBytes) {
     bstr *i = bstr_dup_c("/%u006");
     bstr *e = bstr_dup_c("/%u006");
     htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
     htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PROCESS_INVALID);
-    htp_decode_urlencoded_inplace(cfg, tx, i);   
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace11_UencodedInvalidPreserve) {
+    bstr *i = bstr_dup_c("/%u006");
+    bstr *e = bstr_dup_c("/%u006");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace12_UencodedInvalidRemove) {
+    bstr *i = bstr_dup_c("/%uXXXX");
+    bstr *e = bstr_dup_c("/uXXXX");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_REMOVE_PERCENT);
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace13_UencodedInvalidDecode) {
+    bstr *i = bstr_dup_c("/%u00}9");
+    bstr *e = bstr_dup_c("/i");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PROCESS_INVALID);
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace14_UencodedInvalidPreserve) {
+    bstr *i = bstr_dup_c("/%u00");
+    bstr *e = bstr_dup_c("/%u00");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace15_UencodedInvalidPreserve) {
+    bstr *i = bstr_dup_c("/%u0");
+    bstr *e = bstr_dup_c("/%u0");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace16_UencodedInvalidPreserve) {
+    bstr *i = bstr_dup_c("/%u");
+    bstr *e = bstr_dup_c("/%u");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace17_UrlencodedNul) {
+    bstr *i = bstr_dup_c("/%00");
+    bstr *e = bstr_dup_mem("/\0", 2);
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace18_UrlencodedNulTerminates) {
+    bstr *i = bstr_dup_c("/%00ABC");
+    bstr *e = bstr_dup_c("/");
+    htp_config_set_nul_encoded_terminates(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace19_RawNulTerminates) {
+    bstr *i = bstr_dup_mem("/\0ABC", 5);
+    bstr *e = bstr_dup_c("/");
+    htp_config_set_nul_raw_terminates(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_decode_urlencoded_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodeUrlencodedInplace20_UencodedBestFit) {
+    bstr *i = bstr_dup_c("/%u0107");
+    bstr *e = bstr_dup_c("/c");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_decode_urlencoded_inplace(cfg, tx, i);
     ASSERT_TRUE(bstr_cmp(i, e) == 0);
     bstr_free(e);
     bstr_free(i);
