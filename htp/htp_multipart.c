@@ -77,8 +77,9 @@ static void htp_mpart_decode_quoted_cd_value_inplace(bstr *b) {
 
     while (pos < len) {
         // Ignore \ when before \ or ".
-        if ((*s == '\\')&&(pos + 1 < len)&&((*(s+1) == '"')||(*(s+1) == '\\'))) {
+        if ((*s == '\\')&&(pos + 1 < len)&&((*(s + 1) == '"')||(*(s + 1) == '\\'))) {
             s++;
+            pos++;
         }
 
         *d++ = *s++;
