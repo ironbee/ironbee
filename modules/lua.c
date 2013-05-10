@@ -330,7 +330,7 @@ static ib_status_t build_near_empty_module(
  * @param[in] args The number of arguments to the Lua function being called.
  *
  * @returns
- *   - IB_OK on succes.
+ *   - IB_OK on success.
  *   - IB_EALLOC If Lua interpretation fails with an LUA_ERRMEM error.
  *   - IB_EINVAL on all other failures.
  */
