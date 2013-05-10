@@ -84,7 +84,11 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 
 htp_status_t htp_tx_destroy(htp_tx_t *tx) {
     if (!htp_tx_is_complete(tx)) return HTP_ERROR;
+    htp_tx_destroy_incomplete(tx);
+    return HTP_OK;
+}
 
+void htp_tx_destroy_incomplete(htp_tx_t *tx) {
     // Disconnect transaction from other structures.
     htp_conn_remove_tx(tx->conn, tx);
     htp_connp_tx_remove(tx->connp, tx);
@@ -172,8 +176,6 @@ htp_status_t htp_tx_destroy(htp_tx_t *tx) {
     }
 
     free(tx);
-
-    return HTP_OK;
 }
 
 int htp_tx_get_is_config_shared(const htp_tx_t *tx) {

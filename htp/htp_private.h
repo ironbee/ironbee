@@ -227,6 +227,8 @@ htp_status_t htp_tx_state_request_complete_partial(htp_tx_t *tx);
 
 void htp_connp_tx_remove(htp_connp_t *connp, htp_tx_t *tx);
 
+void htp_tx_destroy_incomplete(htp_tx_t *tx);
+
 #ifdef	__cplusplus
 }
 #endif
