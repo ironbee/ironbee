@@ -143,6 +143,7 @@ struct ib_engine_t {
     void                  *logger_cbdata;   /**< Logger callback data. */
     ib_log_level_fn_t      loglevel_fn;     /**< Log level function. */
     void                  *loglevel_cbdata; /**< Log level callback data. */
+    ib_data_config_t      *data_config;     /**< Data configuration. */
 
     /* Hooks */
     ib_list_t *hooks[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */

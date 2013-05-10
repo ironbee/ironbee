@@ -46,17 +46,44 @@ extern "C" {
 typedef struct ib_data_t ib_data_t;
 
 /**
+ * Data configuration.
+ *
+ * Every @ref ib_data_t belongs to one of these.  It allows keys to be
+ * registered as "indexed" allowing them to be rapidly (O(1)) looked up by
+ * index but means that memory for a pointer to that will be allocated in
+ * every @ref ib_data_t.
+ *
+ * @sa ib_data_register_indexed_ex()
+ **/
+typedef struct ib_data_config_t ib_data_config_t;
+
+/**
+ * Create new data store configuration.
+ * @param[in]  mp     Memory pool to use.
+ * @param[out] config The new data store configuration.
+ * @returns
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ **/
+ib_status_t DLL_PUBLIC ib_data_config_create(
+    ib_mpool_t        *mp,
+    ib_data_config_t **config
+);
+
+/**
  * Create new data store.
  *
- * @param[in]  mp   Memory pool to use.
- * @param[out] data The new data store.
+ * @param[in]  config Data configuration.
+ * @param[in]  mp     Memory pool to use.
+ * @param[out] data   The new data store.
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
  */
 ib_status_t DLL_PUBLIC ib_data_create(
-    ib_mpool_t  *mp,
-    ib_data_t  **data
+    const ib_data_config_t  *config,
+    ib_mpool_t              *mp,
+    ib_data_t              **data
 );
 
 /**
@@ -67,6 +94,76 @@ ib_status_t DLL_PUBLIC ib_data_create(
  */
 ib_mpool_t DLL_PUBLIC *ib_data_pool(
     const ib_data_t *data
+);
+
+/**
+ * Register an indexed data field.
+ *
+ * Indexed data fields will have a pointer to them allocated in every
+ * @ref ib_data_t which can be looked up in O(1) time by index via
+ * ib_data_get_indexed().
+ *
+ * @param[in]  config     Data configuration to register key with.
+ * @param[in]  key        Key.
+ * @param[in]  key_length Length of key.
+ * @param[out] index      Where to store index; can be NULL.
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL if @a key already registered.
+ **/
+ib_status_t DLL_PUBLIC ib_data_register_indexed_ex(
+    ib_data_config_t *config,
+    const char       *key,
+    size_t            key_length,
+    size_t           *index
+);
+
+/**
+ * Lookup index for an indexed data field.
+ *
+ * @param[in]  config     Data configuration to lookup key in.
+ * @param[in]  key        Key.
+ * @param[in]  key_length Length of key.
+ * @param[out] index      Where to store index; can be NULL.
+ * @return
+ * - IB_OK on success.
+ * - IB_ENOENT if no such key registered.
+ **/
+ib_status_t DLL_PUBLIC ib_data_lookup_index_ex(
+    const ib_data_config_t *config,
+    const char             *key,
+    size_t                  key_length,
+    size_t                 *index
+);
+
+/**
+ * Null string version of ib_data_lookup_index_ex().
+ *
+ * @param[in]  config     Data configuration to lookup key in.
+ * @param[in]  key        Key.
+ * @param[out] index      Where to store index; can be NULL.
+ * @return
+ * - IB_OK on success.
+ * - IB_ENOENT if no such key registered.
+ **/
+ib_status_t DLL_PUBLIC ib_data_lookup_index(
+    const ib_data_config_t *config,
+    const char             *key,
+    size_t                 *index
+);
+
+/**
+ * Null string version of ib_data_register_indexed_ex().
+ *
+ * @param[in]  config     Data configuration to register key with.
+ * @param[in]  key        Key.
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL if @a key already registered.
+ **/
+ib_status_t DLL_PUBLIC ib_data_register_indexed(
+    ib_data_config_t *config,
+    const char       *key
 );
 
 /**
@@ -207,6 +304,22 @@ ib_status_t DLL_PUBLIC ib_data_get_ex(
     const ib_data_t  *data,
     const char       *name,
     size_t            nlen,
+    ib_field_t      **pf
+);
+
+/**
+ * Get a data field by index.
+ *
+ * @param[in]  data  Data.
+ * @param[in]  index Index of field to get.
+ * @param[out] pf    Pointer to where field is written.
+ * @return
+ * - IB_OK on success.
+ * - IB_ENOENT if no field of given index.
+ */
+ib_status_t DLL_PUBLIC ib_data_get_indexed(
+    const ib_data_t  *data,
+    size_t            index,
     ib_field_t      **pf
 );
 

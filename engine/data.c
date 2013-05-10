@@ -57,10 +57,19 @@ static const char *IB_VARIABLE_EXPANSION_PREFIX = "%{";
 /** Variable postfix */
 static const char *IB_VARIABLE_EXPANSION_POSTFIX = "}";
 
+struct ib_data_config_t
+{
+    ib_mpool_t *mp;
+    ib_hash_t  *index_by_key; /**< Hash of keys to index. */
+    size_t      next_index;   /**< Next index to use. */
+};
+
 struct ib_data_t
 {
-    ib_mpool_t *mp;    /**< Memory pool. */
-    ib_hash_t  *hash;  /**< Hash of data fields. */
+    const ib_data_config_t *config; /**< Configuration; holds indices by keys. */
+    ib_mpool_t             *mp;     /**< Memory pool. */
+    ib_hash_t              *hash;   /**< Hash of data fields. */
+    ib_array_t             *array;  /**< Array of indexed data fields. */
 };
 
 /* Internal helper functions */
@@ -381,7 +390,20 @@ ib_status_t ib_data_add_internal(
 
     /* Normal add. */
     else {
-        return ib_hash_set_ex(data->hash, name, nlen, field);
+        size_t index;
+
+        rc = ib_hash_set_ex(data->hash, name, nlen, field);
+        if (rc != IB_OK) {
+            return rc;
+        }
+        rc = ib_data_lookup_index_ex(data->config, name, nlen, &index);
+        if (rc == IB_OK) {
+            assert(data->array != NULL);
+            rc = ib_array_setn(data->array, index, field);
+            if (rc != IB_OK) {
+                return rc;
+            }
+        }
     }
 
     return IB_OK;
@@ -408,9 +430,120 @@ ib_status_t expand_lookup_fn(
 
 /* -- Exported Data Access Routines -- */
 
+ib_status_t ib_data_config_create(
+    ib_mpool_t        *mp,
+    ib_data_config_t **config
+)
+{
+    assert(mp != NULL);
+    assert(config != NULL);
+
+    ib_status_t rc;
+    ib_data_config_t *local_config;
+
+    local_config = ib_mpool_calloc(mp, 1, sizeof(**config));
+    if (local_config == NULL) {
+        return IB_EALLOC;
+    }
+    local_config->mp = mp;
+    local_config->next_index = 0;
+
+    rc = ib_hash_create_nocase(&local_config->index_by_key, mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    *config = local_config;
+
+    return IB_OK;
+}
+
+ib_status_t ib_data_register_indexed_ex(
+    ib_data_config_t *config,
+    const char       *key,
+    size_t            key_length,
+    size_t           *index
+)
+{
+    assert(config != NULL);
+    assert(key != NULL);
+    assert(key_length > 0);
+
+    ib_status_t rc;
+    rc = ib_hash_get_ex(config->index_by_key, NULL, key, key_length);
+    if (rc != IB_ENOENT) {
+        return IB_EINVAL;
+    }
+
+
+    size_t *local_index = ib_mpool_alloc(config->mp, sizeof(*local_index));
+    if (local_index == NULL) {
+        return IB_EALLOC;
+    }
+
+    *local_index = config->next_index;
+
+    rc = ib_hash_set_ex(config->index_by_key, key, key_length, local_index);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Nothing can fail now. Update state. */
+    ++config->next_index;
+    if (index != NULL) {
+        *index = *local_index;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_data_lookup_index_ex(
+    const ib_data_config_t *config,
+    const char             *key,
+    size_t                  key_length,
+    size_t                 *index
+)
+{
+    assert(config != NULL);
+    assert(key != NULL);
+    assert(key_length > 0);
+
+    size_t *local_index;
+    ib_status_t rc;
+
+    rc = ib_hash_get_ex(config->index_by_key, &local_index, key, key_length);
+    if (rc == IB_ENOENT) {
+        return IB_ENOENT;
+    }
+
+    if (index != NULL) {
+        *index = *local_index;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_data_lookup_index(
+    const ib_data_config_t *config,
+    const char             *key,
+    size_t                 *index
+)
+{
+    return ib_data_lookup_index_ex(config, key, strlen(key), index);
+}
+
+ib_status_t ib_data_register_indexed(
+    ib_data_config_t *config,
+    const char       *key
+)
+{
+    return ib_data_register_indexed_ex(config, key, strlen(key), NULL);
+}
+
 ib_status_t ib_data_create(
-    ib_mpool_t  *mp,
-    ib_data_t  **data
+    const ib_data_config_t  *config,
+    ib_mpool_t              *mp,
+    ib_data_t              **data
 )
 {
     assert(mp != NULL);
@@ -423,11 +556,20 @@ ib_status_t ib_data_create(
         return IB_EALLOC;
     }
 
+    (*data)->config = config;
     (*data)->mp = mp;
     rc = ib_hash_create_nocase(&(*data)->hash, mp);
     if (rc != IB_OK) {
         *data = NULL;
         return rc;
+    }
+
+    if ((*data)->config->next_index > 0) {
+        rc = ib_array_create(&(*data)->array, mp, (*data)->config->next_index, 5);
+        if (rc != IB_OK) {
+            *data = NULL;
+            return rc;
+        }
     }
 
     return IB_OK;
@@ -736,6 +878,35 @@ error_handler:
     free(name_str);
 
     return rc;
+}
+
+ib_status_t ib_data_get_indexed(
+    const ib_data_t  *data,
+    size_t            index,
+    ib_field_t      **pf
+)
+{
+    assert(data != NULL);
+
+    ib_status_t rc;
+    ib_field_t *f;
+
+    if (data->array == NULL) {
+        /* No indexed fields. */
+        assert(data->config->next_index == 0);
+        return IB_ENOENT;
+    }
+
+    rc = ib_array_get(data->array, index, &f);
+    if (rc != IB_OK) {
+        return IB_ENOENT;
+    }
+
+    if (pf != NULL) {
+        *pf = f;
+    }
+
+    return IB_OK;
 }
 
 ib_status_t ib_data_get_all(

@@ -40,6 +40,13 @@ IronBee v0.8.0
   now provides parsing via engine hooks; and the audit log provider was
   removed -- audit logging is now contained entirely within core.
 
+* Added indexed data fields which allows modules to register data field keys
+  that are known at configuration time for rapid lookup.  Registration and
+  rapid lookup will be added to various parts of IronBee and should be
+  transparent to rule writers.  Module authors that create fields should
+  consider registering those keys as indexed during initialization via:
+  `ib_data_register_indexed(ib_engine_data_configuration_get(ib), "my key")`
+
 **Util**
 
 * Add external iterator support for hash.  See `ib_hash_iterator*`.

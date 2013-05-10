@@ -459,6 +459,14 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
         return rc;
     }
 
+    /* Initialize the data configuration. */
+    rc = ib_data_config_create((*pib)->mp, &(*pib)->data_config);
+    if (rc != IB_OK) {
+        ib_log_alert(*pib, "Failed to create data configuration: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
     /* Initialize the core static module. */
     /// @todo Probably want to do this in a less hard-coded manner.
     rc = ib_module_init(ib_core_module_sym(), *pib);
@@ -681,6 +689,19 @@ void ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp)
     return;
 }
 
+ib_data_config_t *ib_engine_data_config_get(
+    ib_engine_t *ib
+)
+{
+    return ib->data_config;
+}
+
+const ib_data_config_t *ib_engine_data_config_get_const(
+    const ib_engine_t *ib
+)
+{
+    return ib->data_config;
+}
 
 void ib_engine_destroy(ib_engine_t *ib)
 {
@@ -783,7 +804,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->server_ctx = server_ctx;
 
     /* Data */
-    rc = ib_data_create((*pconn)->mp, &(*pconn)->data);
+    rc = ib_data_create(ib->data_config, (*pconn)->mp, &(*pconn)->data);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to create conn data: %s",
                      ib_status_to_string(rc));
@@ -933,7 +954,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     ib_tx_generate_id(tx, tx->mp);
 
     /* Create data */
-    rc = ib_data_create(tx->mp, &tx->data);
+    rc = ib_data_create(tx->ib->data_config, tx->mp, &tx->data);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
                         "Failed to create tx data: %s",

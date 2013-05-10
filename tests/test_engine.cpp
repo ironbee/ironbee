@@ -260,6 +260,7 @@ static ib_status_t dyn_get(
 TEST(TestIronBee, test_data_dynf)
 {
     ib_engine_t *ib;
+    ib_data_config_t *dataconfig;
     ib_data_t *data;
     ib_field_t *dynf;
     ib_field_t *f;
@@ -270,7 +271,8 @@ TEST(TestIronBee, test_data_dynf)
 
     ibtest_engine_create(&ib);
 
-    ASSERT_EQ(IB_OK, ib_data_create(ib_engine_pool_main_get(ib), &data));
+    ASSERT_EQ(IB_OK, ib_data_config_create(ib_engine_pool_main_get(ib), & dataconfig));
+    ASSERT_EQ(IB_OK, ib_data_create(dataconfig, ib_engine_pool_main_get(ib), &data));
     ASSERT_TRUE(data);
 
     /* Create a field with no initial value. */
@@ -339,13 +341,15 @@ TEST(TestIronBee, test_data_dynf)
 TEST(TestIronBee, test_data_name)
 {
     ib_engine_t *ib = NULL;
+    ib_data_config_t *dataconfig = NULL;
     ib_data_t *data = NULL;
     ib_field_t *list_field = NULL;
     ib_field_t *out_field = NULL;
 
     ibtest_engine_create(&ib);
 
-    ASSERT_EQ(IB_OK, ib_data_create(ib_engine_pool_main_get(ib), &data));
+    ASSERT_EQ(IB_OK, ib_data_config_create(ib_engine_pool_main_get(ib), & dataconfig));
+    ASSERT_EQ(IB_OK, ib_data_create(dataconfig, ib_engine_pool_main_get(ib), &data));
     ASSERT_TRUE(data);
 
     ASSERT_IB_OK(ib_data_add_list(data, "ARGV", &list_field));
@@ -361,6 +365,7 @@ TEST(TestIronBee, test_data_name)
 TEST(TestIronBee, test_data_pcre)
 {
     ib_engine_t *ib;
+    ib_data_config_t *dataconfig;
     ib_data_t *data;
     ib_field_t *list_field;
     ib_field_t *out_field;
@@ -375,7 +380,8 @@ TEST(TestIronBee, test_data_pcre)
 
     ibtest_engine_create(&ib);
 
-    ASSERT_EQ(IB_OK, ib_data_create(ib_engine_pool_main_get(ib), &data));
+    ASSERT_EQ(IB_OK, ib_data_config_create(ib_engine_pool_main_get(ib), & dataconfig));
+    ASSERT_EQ(IB_OK, ib_data_create(dataconfig, ib_engine_pool_main_get(ib), &data));
     ASSERT_TRUE(data);
 
     ASSERT_IB_OK(
@@ -406,4 +412,36 @@ TEST(TestIronBee, test_data_pcre)
     ASSERT_FALSE(memcmp(out_field->name, field3->name, field3->nlen));
 
     ibtest_engine_destroy(ib);
+}
+
+TEST(TestIronBee, test_data_indexed)
+{
+    ib_engine_t *ib;
+    ib_data_config_t *dataconfig;
+    ib_data_t *data;
+    ib_field_t *f;
+    size_t i;
+    size_t j;
+    ib_num_t n;
+
+    ibtest_engine_create(&ib);
+
+    ASSERT_EQ(IB_OK, ib_data_config_create(ib_engine_pool_main_get(ib), & dataconfig));
+
+    ASSERT_EQ(IB_OK, ib_data_register_indexed_ex(dataconfig, "foo", 3, &i));
+    ASSERT_EQ(IB_OK, ib_data_lookup_index(dataconfig, "foo", &j));
+    ASSERT_EQ(i, j);
+    ASSERT_EQ(IB_ENOENT, ib_data_lookup_index(dataconfig, "bar", NULL));
+    ASSERT_EQ(IB_EINVAL, ib_data_register_indexed(dataconfig, "foo"));
+
+    ASSERT_EQ(IB_OK, ib_data_create(dataconfig, ib_engine_pool_main_get(ib), &data));
+    ASSERT_TRUE(data);
+
+    ASSERT_EQ(IB_OK, ib_data_add_num(data, "foo", 5, NULL));
+    ASSERT_EQ(IB_OK, ib_data_get_indexed(data, i, &f));
+    ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_num_out(&n)));
+    ASSERT_EQ(5, n);
+    ASSERT_EQ(IB_OK, ib_data_get(data, "foo", &f));
+    ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_num_out(&n)));
+    ASSERT_EQ(5, n);
 }
