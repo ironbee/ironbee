@@ -487,4 +487,3 @@ TEST_F(TestIBUtilList, test_list_loop_reverse_remove)
     }
     ASSERT_EQ(0UL, ib_list_elements(list));
 }
-
