@@ -1475,6 +1475,12 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
         pos++;
     }
 
+    if (pos >= len) {
+        // No value after the equals sign.
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+        return HTP_DECLINED;
+    }
+
     if (data[pos] == '"') {
         // Quoted boundary.
 
