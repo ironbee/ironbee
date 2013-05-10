@@ -83,6 +83,14 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
 
 void htp_connp_destroy(htp_connp_t *connp) {
     if (connp == NULL) return;
+    
+    if (connp->in_buf != NULL) {
+        free(connp->in_buf);
+    }
+
+    if (connp->out_buf != NULL) {
+        free(connp->out_buf);
+    }
         
     if (connp->out_decompressor != NULL) {
         connp->out_decompressor->destroy(connp->out_decompressor);
