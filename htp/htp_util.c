@@ -714,12 +714,10 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
                     hostname_len = hostname_len - (m - hostname_start + 1);
                     hostname_start = m + 1;
 
+                    // Port string
                     m = memchr(hostname_start, ':', hostname_len);
                     if (m != NULL) {
                         size_t port_len = hostname_len - (m - hostname_start) - 1;
-                        hostname_len = hostname_len - port_len - 1;
-
-                        // Port string
                         (*uri)->port = bstr_dup_mem(m + 1, port_len);
                         if ((*uri)->port == NULL) return HTP_ERROR;
                     }
