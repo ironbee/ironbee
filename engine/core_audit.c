@@ -32,7 +32,6 @@
 #include <ironbee/core.h>
 #include <ironbee/engine_types.h>
 #include <ironbee/path.h>
-#include <ironbee/provider.h>
 #include <ironbee/rule_logger.h>
 #include <ironbee/util.h>
 
@@ -61,7 +60,7 @@ typedef struct {
 static const char * const ib_pipe_shell = "/bin/sh";
 static const size_t LOGFORMAT_MAX_LINE_LENGTH = 8192;
 
-ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
+ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
                                       ib_auditlog_t *log,
                                       core_audit_cfg_t *cfg,
                                       ib_core_cfg_t *corecfg)
@@ -214,7 +213,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     return IB_OK;
 }
 
-ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
+ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
                                            ib_auditlog_t *log,
                                            core_audit_cfg_t *cfg,
                                            ib_core_cfg_t *corecfg)
@@ -378,7 +377,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
     return IB_OK;
 }
 
-ib_status_t core_audit_open(ib_provider_inst_t *lpi,
+ib_status_t core_audit_open(ib_engine_t *ib,
                             ib_auditlog_t *log)
 {
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
@@ -389,7 +388,6 @@ ib_status_t core_audit_open(ib_provider_inst_t *lpi,
      * corecfg->auditlog_index_hp. */
     ib_logformat_t *auditlog_index_hp;
 
-    assert(NULL != lpi);
     assert(NULL != log);
     assert(NULL != log->ctx);
     assert(NULL != log->ctx->auditlog);
@@ -415,7 +413,7 @@ ib_status_t core_audit_open(ib_provider_inst_t *lpi,
          * Open the audit log index file. If the file name starts with
          * a | a pipe is opened to a subprocess, etc...
          */
-        rc = core_audit_open_auditindexfile(lpi, log, cfg, corecfg);
+        rc = core_audit_open_auditindexfile(ib, log, cfg, corecfg);
 
         if (rc != IB_OK) {
             ib_log_error(log->ib,  "Could not open auditlog index.");
@@ -426,7 +424,7 @@ ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     /* Open audit file that contains the record identified by the line
      * written in index_fp. */
     if (cfg->fp == NULL) {
-        rc = core_audit_open_auditfile(lpi, log, cfg, corecfg);
+        rc = core_audit_open_auditfile(ib, log, cfg, corecfg);
 
         if (rc!=IB_OK) {
             ib_log_error(log->ib,  "Failed to open audit log file.");
@@ -458,7 +456,7 @@ ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     return IB_OK;
 }
 
-ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
+ib_status_t core_audit_write_header(ib_engine_t *ib,
                                     ib_auditlog_t *log)
 {
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
@@ -482,7 +480,7 @@ ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
 
     hlen = strlen(header);
     if (fwrite(header, hlen, 1, cfg->fp) != 1) {
-        ib_log_error(lpi->pr->ib,  "Failed to write audit log header");
+        ib_log_error(ib,  "Failed to write audit log header");
         return IB_EUNKNOWN;
     }
     fflush(cfg->fp);
@@ -490,7 +488,7 @@ ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
     return IB_OK;
 }
 
-ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
+ib_status_t core_audit_write_part(ib_engine_t *ib,
                                   ib_auditlog_part_t *part)
 {
     ib_auditlog_t *log = part->log;
@@ -512,7 +510,7 @@ ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
     /* Write the part data. */
     while((chunk_size = part->fn_gen(part, &chunk)) != 0) {
         if (fwrite(chunk, chunk_size, 1, cfg->fp) != 1) {
-            ib_log_error(lpi->pr->ib,  "Failed to write audit log part");
+            ib_log_error(ib,  "Failed to write audit log part");
             fflush(cfg->fp);
             return IB_EUNKNOWN;
         }
@@ -525,7 +523,7 @@ ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
     return IB_OK;
 }
 
-ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
+ib_status_t core_audit_write_footer(ib_engine_t *ib,
                                     ib_auditlog_t *log)
 {
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
@@ -594,13 +592,13 @@ static ib_status_t audit_add_line_item(const ib_logformat_t *lf,
     return IB_OK;
 }
 
-static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
+static ib_status_t core_audit_get_index_line(ib_engine_t *ib,
                                              ib_auditlog_t *log,
                                              char *line,
                                              size_t line_size,
                                              size_t *line_len)
 {
-    assert(lpi != NULL);
+    assert(ib != NULL);
     assert(log != NULL);
     assert(line != NULL);
     assert(line_size > 0);
@@ -641,7 +639,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
     return rc;
 }
 
-ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log)
+ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
 {
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
@@ -687,7 +685,7 @@ ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log)
 
         ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
 
-        ib_rc = core_audit_get_index_line(lpi, log, line,
+        ib_rc = core_audit_get_index_line(ib, log, line,
                                           LOGFORMAT_MAX_LINE_LENGTH,
                                           &len);
         line[len + 0] = '\n';

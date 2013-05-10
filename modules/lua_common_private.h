@@ -31,7 +31,6 @@
 #include <ironbee/engine.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>
-#include <ironbee/provider.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
 

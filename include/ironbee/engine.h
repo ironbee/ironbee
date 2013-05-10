@@ -586,16 +586,6 @@ ib_status_t DLL_PUBLIC ib_tx_set_module_data(
  */
 void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
 
-
-/**
- * Write out audit log.
- *
- * @param pi Provider instance
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_auditlog_write(ib_provider_inst_t *pi);
-
 /**
  * @} IronBeeEngineEvent
  */

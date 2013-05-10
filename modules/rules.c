@@ -33,7 +33,6 @@
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
-#include <ironbee/provider.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>

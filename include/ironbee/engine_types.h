@@ -53,13 +53,6 @@ typedef struct ib_engine_t ib_engine_t;
 /** Module Structure */
 typedef struct ib_module_t ib_module_t;
 
-/** Provider Definition */
-typedef struct ib_provider_def_t ib_provider_def_t;
-/** Provider */
-typedef struct ib_provider_t ib_provider_t;
-/** Provider Instance */
-typedef struct ib_provider_inst_t ib_provider_inst_t;
-
 /** Configuration Context. */
 typedef struct ib_context_t ib_context_t;
 

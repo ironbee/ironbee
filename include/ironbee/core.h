@@ -71,11 +71,7 @@ typedef enum ib_audit_mode_t {
  */
 typedef struct ib_core_cfg_t ib_core_cfg_t;
 struct ib_core_cfg_t {
-    /** Providers (instance is per-transaction) */
-    struct {
-        ib_provider_t   *audit;         /**< Audit log provider */
-    } pr;
-
+    ib_auditlog_t   *audit_log;       /**< Audit log */
     ib_num_t         log_level;         /**< Log level */
     const char      *log_uri;           /**< Log URI */
     FILE            *log_fp;            /**< File pointer for log. */

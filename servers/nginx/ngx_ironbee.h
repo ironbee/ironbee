@@ -27,7 +27,6 @@
 
 #include <ngx_http.h>
 #include <ironbee/engine.h>
-#include <ironbee/provider.h>
 
 /* HTTP statuses we'll support when Ironbee asks us to return them */
 #define STATUS_IS_ERROR(code) ( ((code) >= 200) && ((code) <  600) )

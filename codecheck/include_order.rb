@@ -149,7 +149,6 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/path.h>',
   '<ironbee/ipset.h>',
   '<ironbee/parsed_content.h>',
-  '<ironbee/provider.h>',
   '<ironbee/regex.h>',
   '<ironbee/release.h>',
   '<ironbee/rule_defs.h>',

@@ -134,8 +134,6 @@ struct ib_engine_t {
     ib_array_t            *filters;         /**< Array tracking filters */
     ib_list_t             *contexts;        /**< Configuration contexts */
     ib_hash_t             *dirmap;          /**< Hash tracking directive map */
-    ib_hash_t             *apis;            /**< Hash tracking provider APIs */
-    ib_hash_t             *providers;       /**< Hash tracking providers */
     ib_hash_t             *tfns;            /**< Hash tracking transforms */
     ib_hash_t             *operators;       /**< Hash tracking operators */
     ib_hash_t             *actions;         /**< Hash tracking rules */

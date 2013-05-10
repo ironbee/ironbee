@@ -49,7 +49,6 @@
 #include <ironbee/logevent.h>
 #include <ironbee/collection_manager.h>
 #include <ironbee/mpool.h>
-#include <ironbee/provider.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
@@ -278,15 +277,6 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
     return rc;
 }
 
-static IB_PROVIDER_IFACE_TYPE(audit) core_audit_iface = {
-    IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-    core_audit_open,
-    core_audit_write_header,
-    core_audit_write_part,
-    core_audit_write_footer,
-    core_audit_close
-};
-
 /* -- Logger API Implementations -- */
 
 /**
@@ -507,78 +497,71 @@ static ib_log_level_t core_loglevel(
     return config->log_level;
 }
 
-/* -- Audit API Implementations -- */
+/* -- Audit Implementations -- */
 
 /**
  * Write an audit log.
  *
- * @param lpi Audit provider
+ * @param[in] ib IronBee engine.
  *
  * @returns Status code
  */
-static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
+static ib_status_t audit_write_log(ib_engine_t *ib)
 {
-    IB_PROVIDER_IFACE_TYPE(audit) *iface =
-        (IB_PROVIDER_IFACE_TYPE(audit) *)lpi->pr->iface;
-    ib_auditlog_t *log = (ib_auditlog_t *)lpi->data;
+    ib_core_cfg_t *config = core_get_main_config(ib, false);
+    ib_auditlog_t *log = config->audit_log;
     ib_list_node_t *node;
     ib_status_t rc;
 
     if (ib_list_elements(log->parts) == 0) {
-        ib_log_error(lpi->pr->ib,  "No parts to write to audit log");
+        ib_log_error(ib, "No parts to write to audit log");
         return IB_EINVAL;
     }
 
     /* Open the log if required. This is thread safe. */
-    if (iface->open != NULL) {
-        rc = iface->open(lpi, log);
-        if (rc != IB_OK) {
-            if (log->ctx->auditlog->index != NULL) {
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            }
-            return rc;
+    rc = core_audit_open(ib, log);
+    if (rc != IB_OK) {
+        if (log->ctx->auditlog->index != NULL) {
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
         }
+        return rc;
     }
 
     /* Lock to write. */
     if (log->ctx->auditlog->index != NULL) {
         rc = ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
         if (rc != IB_OK) {
-            ib_log_error(lpi->pr->ib, "Cannot lock %s for write.",
+            ib_log_error(ib, "Cannot lock %s for write.",
                          log->ctx->auditlog->index);
             return rc;
         }
     }
 
     /* Write the header if required. */
-    if (iface->write_header != NULL) {
-        rc = iface->write_header(lpi, log);
-        if (rc != IB_OK) {
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            return rc;
-        }
+    rc = core_audit_write_header(ib, log);
+    if (rc != IB_OK) {
+        ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+        return rc;
     }
 
     /* Write the parts. */
     IB_LIST_LOOP(log->parts, node) {
         ib_auditlog_part_t *part =
             (ib_auditlog_part_t *)ib_list_node_data(node);
-        rc = iface->write_part(lpi, part);
+        rc = core_audit_write_part(ib, part);
         if (rc != IB_OK) {
-            ib_log_error(log->ib,  "Failed to write audit log part: %s",
+            ib_log_error(log->ib, "Failed to write audit log part: %s",
                          part->name);
         }
     }
 
     /* Write the footer if required. */
-    if (iface->write_footer != NULL) {
-        rc = iface->write_footer(lpi, log);
-        if (rc != IB_OK) {
-            if (log->ctx->auditlog->index != NULL) {
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            }
-            return rc;
+    rc = core_audit_write_footer(ib, log);
+    if (rc != IB_OK) {
+        if (log->ctx->auditlog->index != NULL) {
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
         }
+        return rc;
     }
 
     /* Writing is done. Unlock. Close is thread-safe. */
@@ -587,53 +570,13 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
     }
 
     /* Close the log if required. */
-    if (iface->close != NULL) {
-        rc = iface->close(lpi, log);
-        if (rc != IB_OK) {
-            return rc;
-        }
+    rc = core_audit_close(ib, log);
+    if (rc != IB_OK) {
+        return rc;
     }
 
     return IB_OK;
 }
-
-/**
- * Audit provider registration function.
- *
- * This just does a version and sanity check on a registered provider.
- *
- * @param ib Engine
- * @param lpr Audit provider
- *
- * @returns Status code
- */
-static ib_status_t audit_register(ib_engine_t *ib,
-                                  ib_provider_t *lpr)
-{
-    IB_PROVIDER_IFACE_TYPE(audit) *iface =
-        (IB_PROVIDER_IFACE_TYPE(audit) *)lpr->iface;
-
-    /* Check that versions match. */
-    if (iface->version != IB_PROVIDER_VERSION_AUDIT) {
-        return IB_EINCOMPAT;
-    }
-
-    /* Verify that required interface functions are implemented. */
-    if (iface->write_part == NULL) {
-        ib_log_alert(ib, "The write_part function "
-                     "MUST be implemented by a audit provider");
-        return IB_EINVAL;
-    }
-
-    return IB_OK;
-}
-
-/**
- * Audit provider API mapping for core module.
- */
-static IB_PROVIDER_API_TYPE(audit) audit_api = {
-    audit_api_write_log
-};
 
 static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
                                          const uint8_t **chunk)
@@ -1906,7 +1849,6 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
     ib_core_cfg_t *corecfg;
     ib_core_module_tx_data_t *core_txdata;
     core_audit_cfg_t *cfg;
-    ib_provider_inst_t *audit;
     ib_list_t *events;
     int boundary_rand = rand(); /// @todo better random num
     char boundary[46];
@@ -2013,17 +1955,7 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
         ib_auditlog_add_part_http_response_body(log);
     }
 
-    /* Audit Log Provider Instance */
-    rc = ib_provider_instance_create_ex(ib, corecfg->pr.audit, &audit,
-                                        tx->mp, log);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(tx,
-                        "Failed to create audit log provider instance: %s",
-                        ib_status_to_string(rc));
-        return rc;
-    }
-
-    ib_auditlog_write(audit);
+    audit_write_log(ib);
 
     /* Events */
     ib_logevent_write_all(tx);
@@ -4053,19 +3985,7 @@ static ib_status_t core_set_value(ib_cfgparser_t *cp,
         corecfg = &core_global_cfg;
     }
 
-    if (strcasecmp("audit", name) == 0) {
-        /* Lookup the audit log provider. */
-        rc = ib_provider_lookup(ib,
-                                IB_PROVIDER_TYPE_AUDIT,
-                                val,
-                                &corecfg->pr.audit);
-        if (rc != IB_OK) {
-            ib_cfg_log_alert(cp, "Failed to lookup %s audit log provider: %s",
-                             val, ib_status_to_string(rc));
-            return rc;
-        }
-    }
-    else if (strcasecmp("RuleEngineDebugLogLevel", name) == 0) {
+    if (strcasecmp("RuleEngineDebugLogLevel", name) == 0) {
         rc = ib_rule_engine_set(cp, name, val);
         if (rc != IB_OK) {
             return rc;
@@ -4731,7 +4651,6 @@ static ib_status_t core_init(ib_engine_t *ib,
                              void        *cbdata)
 {
     ib_core_cfg_t *corecfg;
-    ib_provider_t *core_audit_provider;
     ib_core_module_data_t *core_data;
     ib_filter_t *fbuffer;
     ib_status_t rc;
@@ -4774,22 +4693,6 @@ static ib_status_t core_init(ib_engine_t *ib,
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger(core_util_logger, ib);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Define the audit provider API. */
-    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_AUDIT,
-                            audit_register, &audit_api);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Register the core audit provider. */
-    rc = ib_provider_register(ib, IB_PROVIDER_TYPE_AUDIT,
-                              MODULE_NAME_STR, &core_audit_provider,
-                              &core_audit_iface,
-                              NULL);
     if (rc != IB_OK) {
         return rc;
     }
@@ -4846,17 +4749,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     /* Register context selection hooks, etc. */
     rc = ib_core_ctxsel_init(ib, m);
     if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Lookup the core audit log provider. */
-    rc = ib_provider_lookup(ib,
-                            IB_PROVIDER_TYPE_AUDIT,
-                            IB_DSTR_CORE,
-                            &corecfg->pr.audit);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to lookup %s audit log provider: %s",
-                     IB_DSTR_CORE, ib_status_to_string(rc));
         return rc;
     }
 
@@ -5043,13 +4935,6 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         ib_core_cfg_t,
         auditlog_index_fmt
     ),
-    IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_TYPE_AUDIT,
-        IB_FTYPE_NULSTR,
-        ib_core_cfg_t,
-        audit
-    ),
-
     IB_CFGMAP_INIT_ENTRY(
         "inspection_engine_options",
         IB_FTYPE_NUM,

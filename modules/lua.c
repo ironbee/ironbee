@@ -39,7 +39,6 @@
 #include <ironbee/lock.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
-#include <ironbee/provider.h>
 
 #include <lauxlib.h>
 #include <lua.h>

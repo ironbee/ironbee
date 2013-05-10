@@ -31,7 +31,6 @@
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/field.h>
-#include <ironbee/provider.h>
 #include <ironbee/stream.h>
 
 #include <assert.h>

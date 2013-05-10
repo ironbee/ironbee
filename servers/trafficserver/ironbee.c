@@ -43,7 +43,6 @@
 #include <ironbee/engine.h>
 #include <ironbee/config.h>
 #include <ironbee/module.h> /* Only needed while config is in here. */
-#include <ironbee/provider.h>
 #include <ironbee/server.h>
 #include <ironbee/context.h>
 #include <ironbee/core.h>
@@ -1716,7 +1715,7 @@ static ib_status_t ironbee_conn_init(
     const struct sockaddr *addr;
     int                    port;
     ib_conn_t             *iconn = ssn->iconn;
-               
+
     /* remote ip */
     addr = TSHttpTxnClientAddrGet(ssn->txnp);
     addr2str(addr, ssn->remote_ip, &port);

@@ -35,11 +35,10 @@ IronBee v0.8.0
 * The context hook functions have been removed from the module initialization
   structures, and have been replaced with context hook registration functions.
 
-* As part of the ongoing provider removal project, the matcher provider was
-  removed.  Nothing was using it.
-
-* As part of the ongoing provider removal project, the parser provider was
-  removed.  `modhtp` has been updated to provide parsing via engine hooks.
+* As part of the provider removal project, the matcher provider was
+  removed -- nothing was using it; the parser provider was removed -- modhtp
+  now provides parsing via engine hooks; and the audit log provider was
+  removed -- audit logging is now contained entirely within core.
 
 **Util**
 

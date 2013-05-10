@@ -29,7 +29,6 @@
 #include <ironbee/state_notify.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/transformation.h>
-#include <ironbee/provider.h>
 
 #include "config-parser.h"
 #include "ibtest_util.hpp"

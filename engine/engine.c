@@ -43,7 +43,6 @@
 #include <ironbee/ip.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
-#include <ironbee/provider.h>
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
@@ -422,18 +421,6 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
 
     /* Create a hash to hold configuration directive mappings by name */
     rc = ib_hash_create_nocase(&((*pib)->dirmap), (*pib)->mp);
-    if (rc != IB_OK) {
-        goto failed;
-    }
-
-    /* Create a hash to hold provider apis by name */
-    rc = ib_hash_create_nocase(&((*pib)->apis), (*pib)->mp);
-    if (rc != IB_OK) {
-        goto failed;
-    }
-
-    /* Create a hash to hold providers by name */
-    rc = ib_hash_create_nocase(&((*pib)->providers), (*pib)->mp);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -2109,20 +2096,5 @@ ib_status_t ib_context_get(ib_context_t *ctx,
                            void *pval, ib_ftype_t *ptype)
 {
     ib_status_t rc = ib_cfgmap_get(ctx->cfg, name, pval, ptype);
-    return rc;
-}
-
-ib_status_t ib_auditlog_write(ib_provider_inst_t *pi)
-{
-    IB_PROVIDER_API_TYPE(audit) *api;
-    ib_status_t rc;
-
-    if (pi == NULL) {
-        return IB_EINVAL;
-    }
-
-    api = (IB_PROVIDER_API_TYPE(audit) *)pi->pr->api;
-
-    rc = api->write_log(pi);
     return rc;
 }

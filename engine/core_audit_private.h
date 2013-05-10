@@ -66,18 +66,18 @@ struct core_audit_cfg_t {
 /**
  * Set cfg->fn to the file name and cfg->fp to the FILE* of the audit log.
  *
- * @param[in] lpi Log provider instance.
+ * @param[in] ib IronBee engine.
  * @param[in] log Audit Log that will be written. Contains the context and
  *            other information.
  * @param[in] cfg The configuration.
  * @param[in] corecfg The core configuration.
  */
-ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
+ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
                                       ib_auditlog_t *log,
                                       core_audit_cfg_t *cfg,
                                       ib_core_cfg_t *corecfg);
 
-ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
+ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
                                            ib_auditlog_t *log,
                                            core_audit_cfg_t *cfg,
                                            ib_core_cfg_t *corecfg);
@@ -91,44 +91,44 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
  *
  * This and core_audit_close are thread-safe.
  *
- * @param[in] lpi Log provider interface.
+ * @param[in] ib IronBee engine.
  * @param[in] log The log record.
  * @return IB_OK or other. See log file for details of failure.
  */
-ib_status_t core_audit_open(ib_provider_inst_t *lpi,
+ib_status_t core_audit_open(ib_engine_t *ib,
                             ib_auditlog_t *log);
 
 /**
  * Write audit log header. This is not thread-safe and should be protected
  * with a lock.
  *
- * @param[in] lpi Log provider interface.
+ * @param[in] ib IronBee engine.
  * @param[in] log The log record.
  * @return IB_OK or IB_EUNKNOWN.
  */
-ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
+ib_status_t core_audit_write_header(ib_engine_t *ib,
                                     ib_auditlog_t *log);
 
 /**
  * Write part of a audit log. This call should be protected by a lock.
  *
- * @param[in] lpi Log provider interface.
+ * @param[in] ib IronBee engine.
  * @param[in] part The log record.
  * @return IB_OK or other. See log file for details of failure.
  */
-ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
+ib_status_t core_audit_write_part(ib_engine_t *ib,
                                   ib_auditlog_part_t *part);
 
 /**
  * Write an audit log footer. This call should be protected by a lock.
  *
- * @param[in] lpi Log provider interface.
+ * @param[in] ib IronBee engine.
  * @param[in] log The log record.
  * @return IB_OK or other. See log file for details of failure.
  */
-ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
+ib_status_t core_audit_write_footer(ib_engine_t *ib,
                                     ib_auditlog_t *log);
 
-ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log);
+ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log);
 
 #endif // _IB_CORE_AUDIT_PRIVATE_H_
