@@ -84,7 +84,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 
 htp_status_t htp_tx_destroy(htp_tx_t *tx) {
     if (!htp_tx_is_complete(tx)) return HTP_ERROR;
-    
+
     // Disconnect transaction from other structures.
 
     // Tell the connection to remove this transaction from the list.
@@ -175,8 +175,8 @@ htp_status_t htp_tx_destroy(htp_tx_t *tx) {
         }
 
         htp_table_destroy(tx->response_headers);
-    }      
-    
+    }
+
     // If we're using a private configuration structure, destroy it.
     if (tx->is_config_shared == HTP_CONFIG_PRIVATE) {
         htp_config_destroy(tx->cfg);
@@ -319,9 +319,9 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9) {
 
 static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     htp_status_t rc = HTP_OK;
-    
+
     // Determine if we have a request body, and how it is packaged.
-    
+
     htp_header_t *cl = htp_table_get_c(tx->request_headers, "content-length");
     htp_header_t *te = htp_table_get_c(tx->request_headers, "transfer-encoding");
 
@@ -359,7 +359,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
             //  Transfer-Encoding header field and a Content-Length header field,
             //  the latter MUST be ignored."
             //
-            tx->flags |= HTP_REQUEST_SMUGGLING;            
+            tx->flags |= HTP_REQUEST_SMUGGLING;
         }
     } else if (cl != NULL) {
         // We have a request body of known length.
@@ -382,7 +382,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         tx->request_content_length = htp_parse_content_length(cl->value);
         if (tx->request_content_length < 0) {
             tx->flags |= HTP_REQUEST_INVALID_C_L;
-            tx->flags |= HTP_REQUEST_INVALID;            
+            tx->flags |= HTP_REQUEST_INVALID;
         }
     } else {
         // No body.
@@ -421,7 +421,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
         // HTTP/1.1 requires host information in the headers.
         if (tx->request_protocol_number >= HTP_PROTOCOL_1_1) {
-            tx->flags |= HTP_HOST_MISSING;            
+            tx->flags |= HTP_HOST_MISSING;
         }
     } else {
         // Host information available in the headers.
@@ -444,7 +444,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
             if ((bstr_cmp_nocase(hostname, tx->request_hostname) != 0) || (port != tx->request_port_number)) {
                 // The host information is different in the headers and the URI. The
                 // HTTP RFC states that we should ignore the header copy.
-                tx->flags |= HTP_HOST_AMBIGUOUS;                
+                tx->flags |= HTP_HOST_AMBIGUOUS;
             }
 
             bstr_free(hostname);
@@ -477,7 +477,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     // Run hook REQUEST_HEADERS.
     rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx);
     if (rc != HTP_OK) return rc;
-    
+
     // We cannot proceed if the request is invalid.
     if (tx->flags & HTP_REQUEST_INVALID) {
         return HTP_ERROR;
@@ -747,19 +747,26 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
         htp_status_t rc = htp_tx_state_request_complete_partial(tx);
         if (rc != HTP_OK) return rc;
     }
-    
-    // Check if the entire transaction is complete.
-    htp_tx_finalize(tx);
+
+    // Make a copy of the connection parser pointer, so that
+    // we don't have to reference it via tx, which may be
+    // destroyed later.
+    htp_connp_t *connp = tx->connp;
 
     // Determine what happens next, and remove this transaction from the parser.
-    
     if (tx->is_protocol_0_9) {
-        tx->connp->in_state = htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9;
+        connp->in_state = htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9;
     } else {
-        tx->connp->in_state = htp_connp_REQ_IDLE;
+        connp->in_state = htp_connp_REQ_IDLE;
     }
 
-    tx->connp->in_tx = NULL;
+    // Check if the entire transaction is complete. This call may
+    // destroy the transaction, if auto-destroy is enabled.
+    htp_tx_finalize(tx);
+
+    // At this point, tx may no longer be valid.
+
+    connp->in_tx = NULL;
 
     return HTP_OK;
 }
@@ -776,7 +783,7 @@ htp_status_t htp_tx_state_request_start(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {    
+htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
     // If we're in HTP_REQ_HEADERS that means that this is the
     // first time we're processing headers in a request. Otherwise,
     // we're dealing with trailing headers.
@@ -872,12 +879,12 @@ htp_status_t htp_tx_finalize(htp_tx_t *tx) {
     // Run hook TRANSACTION_COMPLETE.
     htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_transaction_complete, tx);
     if (rc != HTP_OK) return rc;
-    
+
     // In streaming processing, we destroy the transaction because it will not be needed any more.
     if (tx->connp->cfg->tx_auto_destroy) {
         htp_tx_destroy(tx);
     }
-        
+
     return HTP_OK;
 }
 
@@ -919,16 +926,21 @@ htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
             // We do. Let's yield then.
             tx->connp->out_data_other_at_tx_end = 0;
             return HTP_DATA_OTHER;
-        }       
+        }
     }
 
+    // Make a copy of the connection parser pointer, so that
+    // we don't have to reference it via tx, which may be destroyed later.
+    htp_connp_t *connp = tx->connp;
+
+    // Finalize the transaction. This may call may destroy the transaction, if auto-destroy is enabled.
     htp_status_t rc = htp_tx_finalize(tx);
     if (rc != HTP_OK) return rc;
 
-    // Disconnect from the transaction
-    tx->connp->out_tx = NULL;
+    // Disconnect transaction from the parser.
+    connp->out_tx = NULL;
 
-    tx->connp->out_state = htp_connp_RES_IDLE;
+    connp->out_state = htp_connp_RES_IDLE;
 
     return HTP_OK;
 }
@@ -1037,7 +1049,7 @@ int htp_tx_is_complete(htp_tx_t *tx) {
     // A transaction is considered complete only when both the request and
     // response are complete. (Sometimes a complete response can be seen
     // even while the request is ongoing.)
-    if ((tx->request_progress != HTP_REQUEST_COMPLETE)||(tx->response_progress != HTP_RESPONSE_COMPLETE)) {
+    if ((tx->request_progress != HTP_REQUEST_COMPLETE) || (tx->response_progress != HTP_RESPONSE_COMPLETE)) {
         return 0;
     } else {
         return 1;
