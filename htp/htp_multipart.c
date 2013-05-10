@@ -906,8 +906,9 @@ void htp_mpartp_destroy(htp_mpartp_t *parser) {
     }
 
     bstr_builder_destroy(parser->boundary_pieces);
-    bstr_builder_destroy(parser->part_data_pieces);
     bstr_builder_destroy(parser->part_header_pieces);
+    bstr_free(parser->pending_header_line);
+    bstr_builder_destroy(parser->part_data_pieces);
 
     // Free the parts.
     if (parser->multipart.parts != NULL) {
