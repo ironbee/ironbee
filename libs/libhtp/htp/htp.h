@@ -519,7 +519,7 @@ struct htp_tx_t {
     // Common fields
 
     /**
-     * Parsing flags; a combination of: HTP_INVALID_CHUNKING, HTP_INVALID_FOLDING,
+     * Parsing flags; a combination of: HTP_REQUEST_INVALID_T_E, HTP_INVALID_FOLDING,
      * HTP_REQUEST_SMUGGLING, HTP_MULTI_PACKET_HEAD, and HTP_FIELD_UNPARSEABLE.
      */
     uint64_t flags;
