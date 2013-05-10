@@ -925,3 +925,12 @@ TEST_F(ConnectionParsing, InvalidRequest3) {
 
     ASSERT_TRUE(tx->request_hostname != NULL);
 }
+
+TEST_F(ConnectionParsing, AutoDestroyCrash) {
+    htp_config_set_tx_auto_destroy(cfg, 1);
+    
+    int rc = test_run(home, "39-auto-destroy-crash.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(4, htp_list_size(connp->conn->transactions));
+}
