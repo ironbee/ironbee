@@ -781,8 +781,7 @@ static modhtp_txdata_t *modhtp_get_txdata_htptx(
     /**
      * @todo Seems that libhtp is calling our callbacks after we've
      * closed the connection.  Hopefully fixed in a future libhtp.  Because
-     * txdata is NULL, we have no way of logging to IronBee, etc., so log
-     * something to stderr.
+     * txdata is NULL, we have no way of logging to IronBee, etc.
      */
     if (txdata == NULL) {
         return NULL;
@@ -1274,7 +1273,9 @@ static int modhtp_htp_req_headers(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
-    assert(txdata != NULL);
+    if (txdata == NULL) {
+        return HTP_OK;  /* TODO */
+    }
 
     return modhtp_process_req_headers(txdata);
 }
@@ -1288,7 +1289,9 @@ static int modhtp_htp_req_body_data(
 
     /* Get the txdata */
     txdata = modhtp_get_txdata_htptx(htp_tx_data->tx);
-    assert(txdata != NULL);
+    if (txdata == NULL) {
+        return HTP_OK; /* TODO */
+    }
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
     txdata->flags |= txdata_req_body;
@@ -1309,7 +1312,9 @@ static int modhtp_htp_req_trailer(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
-    assert(txdata != NULL);
+    if (txdata == NULL) {
+        return IB_OK;  /* TODO */
+    }
     txdata->flags |= txdata_req_trail;
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
@@ -1330,7 +1335,9 @@ static int modhtp_htp_req_complete(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
-    assert(txdata != NULL);
+    if (txdata == NULL) {
+        return HTP_OK;  /* TODO */
+    }
     txdata->flags |= txdata_req_comp;
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
@@ -1351,7 +1358,9 @@ static int modhtp_htp_rsp_line(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
-    assert(txdata != NULL);
+    if (txdata == NULL) {
+        return HTP_OK;  /* TODO */
+    }
     txdata->flags |= txdata_rsp_line;
     itx = txdata->itx;
     htx = txdata->htx;
@@ -1398,7 +1407,9 @@ static int modhtp_htp_rsp_headers(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
-    assert(txdata != NULL);
+    if (txdata == NULL) {
+        return HTP_OK;  /* TODO */
+    }
     txdata->flags |= txdata_rsp_hdrs;
 
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
@@ -1415,7 +1426,9 @@ static int modhtp_htp_rsp_body_data(
 
     /* Get the txdata */
     txdata = modhtp_get_txdata_htptx(htp_tx_data->tx);
-    assert(txdata != NULL);
+    if (txdata == NULL) {
+        return HTP_OK;  /* TODO */
+    }
     txdata->flags |= txdata_rsp_body;
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
@@ -1460,7 +1473,9 @@ static int modhtp_htp_rsp_complete(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
-    assert(txdata != NULL);
+    if (txdata == NULL) {
+        return HTP_OK;  /* TODO */
+    }
     txdata->flags |= txdata_rsp_comp;
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
