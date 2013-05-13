@@ -1583,7 +1583,12 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         rule_exec_set_target(rule_exec, target);
 
         /* Get the field value */
-        getrc = ib_data_get(tx->data, fname, &value);
+        if (target->is_indexed) {
+            getrc = ib_data_get_indexed(tx->data, target->index, &value);
+        }
+        else {
+            getrc = ib_data_get(tx->data, fname, &value);
+        }
         if (getrc == IB_ENOENT) {
             bool allow = ib_flags_all(
                 ib_operator_get_capabilities(opinst->op),
@@ -4136,6 +4141,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         }
         tgt->field_name = "NULL";
         tgt->target_str = "NULL";
+        tgt->is_indexed = false;
         rc = ib_list_create(&(tgt->tfn_list), ib_rule_mpool(ib));
         if (rc != IB_OK) {
             return rc;
@@ -4648,6 +4654,7 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
                                   int *tfns_not_found)
 {
     ib_status_t rc;
+    size_t index;
 
     assert(ib != NULL);
     assert(target != NULL);
@@ -4673,6 +4680,26 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
     if ((*target)->field_name == NULL) {
         ib_log_error(ib, "Error copying target field name \"%s\"", name);
         return IB_EALLOC;
+    }
+
+    /* Check for index. */
+    rc = ib_data_lookup_index(
+        ib_engine_data_config_get_const(ib),
+        name,
+        &index
+    );
+    if (rc == IB_ENOENT) {
+        (*target)->is_indexed = false;
+        (*target)->index      = 0;
+    }
+    else if (rc == IB_OK) {
+        (*target)->is_indexed = true;
+        (*target)->index      = index;
+    }
+    else {
+        ib_log_error(ib, "Error looking up target index for \"%s\": %s",
+                     name, ib_status_to_string(rc));
+        return IB_EOTHER;
     }
 
     /* Copy the original */

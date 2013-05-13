@@ -84,9 +84,11 @@ struct ib_rule_context_t {
  * Rule target fields
  */
 struct ib_rule_target_t {
-    const char            *field_name;    /**< The field name */
-    const char            *target_str;    /**< The target string */
-    ib_list_t             *tfn_list;      /**< List of transformations */
+    const char            *field_name; /**< The field name */
+    bool                   is_indexed; /**< Is the field indexed? */
+    size_t                 index;      /**< Index if field; if is_indexed */
+    const char            *target_str; /**< The target string */
+    ib_list_t             *tfn_list;   /**< List of transformations */
 };
 
 /**
