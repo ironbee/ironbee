@@ -4799,6 +4799,16 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
+    /* Register CAPTURE */
+    rc = ib_data_register_indexed(ib_engine_data_config_get(ib), IB_TX_CAPTURE);
+    if (rc != IB_OK) {
+        ib_log_warning(ib,
+            "Failed to register %s as indexed: %s",
+            IB_TX_CAPTURE, ib_status_to_string(rc)
+        );
+        /* Everything should still work, so do not return error. */
+    }
+
     return IB_OK;
 }
 
