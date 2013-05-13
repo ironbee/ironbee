@@ -794,7 +794,7 @@ static modhtp_txdata_t *modhtp_get_txdata_htptx(
 /**
  * Check the modhtp connection parser status, get the related transactions
  *
- * @param[in] parser libhtp connection parser
+ * @param[in] htx LibHTP transaction
  * @param[in] label Label string (for logging)
  * @param[out] ptxdata Pointer to transaction data
  *
@@ -1125,6 +1125,7 @@ static int modhtp_htp_log(
     if (txdata == NULL) {
         return HTP_OK;
     }
+    assert(txdata != NULL);
 
     /* Parsing issues are unusual but not IronBee failures. */
     switch(log->level) {
@@ -1168,6 +1169,9 @@ static int modhtp_htp_req_start(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+    if (txdata == NULL) {
+        return HTP_ERROR; /* TODO */
+    }
     assert(txdata != NULL);
     txdata->flags |= txdata_req_start;
 
@@ -1187,6 +1191,9 @@ static int modhtp_htp_req_line(
     irc = modhtp_check_tx(htx, "Request Line", &txdata);
     if (irc != IB_OK) {
         return HTP_ERROR;
+    }
+    if (txdata == NULL) {
+        return HTP_ERROR; /* TODO */
     }
     assert(txdata != NULL);
     txdata->flags |= txdata_req_line;
@@ -1276,6 +1283,7 @@ static int modhtp_htp_req_headers(
     if (txdata == NULL) {
         return HTP_OK;  /* TODO */
     }
+    assert(txdata != NULL);
 
     return modhtp_process_req_headers(txdata);
 }
@@ -1292,6 +1300,7 @@ static int modhtp_htp_req_body_data(
     if (txdata == NULL) {
         return HTP_OK; /* TODO */
     }
+    assert(txdata != NULL);
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
     txdata->flags |= txdata_req_body;
@@ -1315,6 +1324,7 @@ static int modhtp_htp_req_trailer(
     if (txdata == NULL) {
         return IB_OK;  /* TODO */
     }
+    assert(txdata != NULL);
     txdata->flags |= txdata_req_trail;
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
@@ -1338,6 +1348,7 @@ static int modhtp_htp_req_complete(
     if (txdata == NULL) {
         return HTP_OK;  /* TODO */
     }
+    assert(txdata != NULL);
     txdata->flags |= txdata_req_comp;
 
     modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
@@ -1361,6 +1372,7 @@ static int modhtp_htp_rsp_line(
     if (txdata == NULL) {
         return HTP_OK;  /* TODO */
     }
+    assert(txdata != NULL);
     txdata->flags |= txdata_rsp_line;
     itx = txdata->itx;
     htx = txdata->htx;
@@ -1410,6 +1422,7 @@ static int modhtp_htp_rsp_headers(
     if (txdata == NULL) {
         return HTP_OK;  /* TODO */
     }
+    assert(txdata != NULL);
     txdata->flags |= txdata_rsp_hdrs;
 
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
@@ -1429,6 +1442,7 @@ static int modhtp_htp_rsp_body_data(
     if (txdata == NULL) {
         return HTP_OK;  /* TODO */
     }
+    assert(txdata != NULL);
     txdata->flags |= txdata_rsp_body;
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
@@ -1476,6 +1490,7 @@ static int modhtp_htp_rsp_complete(
     if (txdata == NULL) {
         return HTP_OK;  /* TODO */
     }
+    assert(txdata != NULL);
     txdata->flags |= txdata_rsp_comp;
     modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
