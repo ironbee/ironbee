@@ -401,7 +401,7 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Description:</emphasis> Initializes a locally scoped collection
             data field for later use and optional persistence.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>InitVar <replaceable>collection-name</replaceable>
+            <literal>InitCollection <replaceable>collection-name</replaceable>
                 <replaceable>uri</replaceable>
                 <replaceable>[param1 param2 ... paramN]</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
