@@ -41,11 +41,12 @@ IronBee v0.8.0
   removed -- audit logging is now contained entirely within core.
 
 * Added indexed data fields which allows modules to register data field keys
-  that are known at configuration time for rapid lookup.  Registration and
-  rapid lookup will be added to various parts of IronBee and should be
-  transparent to rule writers.  Module authors that create fields should
+  that are known at configuration time for rapid lookup.  Most pre-defined
+  fields have been set as indexed.  Module authors that create fields should
   consider registering those keys as indexed during initialization via:
-  `ib_data_register_indexed(ib_engine_data_configuration_get(ib), "my key")`
+  `ib_data_register_indexed(ib_engine_data_configuration_get(ib), "my key")`.
+  Custom data fields can be indexed via the `InitVarIndexed` and
+  `InitCollectionIndexed` directives.
 
 **Util**
 
