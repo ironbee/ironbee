@@ -503,13 +503,12 @@ static ib_log_level_t core_loglevel(
  * Write an audit log.
  *
  * @param[in] ib IronBee engine.
+ * @param[in] log Log to write.
  *
  * @returns Status code
  */
-static ib_status_t audit_write_log(ib_engine_t *ib)
+static ib_status_t audit_write_log(ib_engine_t *ib, ib_auditlog_t *log)
 {
-    ib_core_cfg_t *config = core_get_main_config(ib, false);
-    ib_auditlog_t *log = config->audit_log;
     ib_list_node_t *node;
     ib_status_t rc;
 
@@ -1958,7 +1957,7 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
         ib_auditlog_add_part_http_response_body(log);
     }
 
-    audit_write_log(ib);
+    audit_write_log(ib, log);
 
     /* Events */
     ib_logevent_write_all(tx);
