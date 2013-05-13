@@ -751,6 +751,24 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                  "Found %d match rules",
                  modua_match_ruleset->num_rules);
 
+    rc = ib_data_register_indexed(ib_engine_data_config_get(ib), "remote_addr");
+    if (rc != IB_OK) {
+        ib_log_warning(ib,
+            "User agent failed to register \"remote_addr\" as indexed: %s",
+            ib_status_to_string(rc)
+        );
+        /* Continue. */
+    }
+
+    rc = ib_data_register_indexed(ib_engine_data_config_get(ib), "UA");
+    if (rc != IB_OK) {
+        ib_log_warning(ib,
+            "User agent failed to register \"UA\" as indexed: %s",
+            ib_status_to_string(rc)
+        );
+        /* Continue. */
+    }
+
     return IB_OK;
 }
 
