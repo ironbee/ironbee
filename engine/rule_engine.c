@@ -74,6 +74,15 @@ static const char *default_block_document =
     "<hr>\n"
     "</body></html>\n";
 
+static const char *indexed_keys[] = {
+    "FIELD",
+    "FIELD_TFN",
+    "FIELD_TARGET",
+    "FIELD_NAME",
+    "FIELD_NAME_FULL",
+    NULL
+};
+
 /**
  * Data on each rule phase, one per phase.
  */
@@ -3551,10 +3560,37 @@ static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
 
     /* Late registration of the context close event */
     if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
+        ib_data_config_t *config;
+
         rc = ib_hook_context_register(ib, context_close_event,
                                       rule_engine_ctx_close, NULL);
         if (rc != IB_OK) {
             return rc;
+        }
+
+        /* Register indexed fields.  Do this here instead of at init to avoid
+         * requiring that the data subsystem be initialized before the
+         * rule subsystem.
+         */
+        config = ib_engine_data_config_get(ib);
+        assert(config != NULL);
+        for (
+            const char **key = indexed_keys;
+            *key != NULL;
+            ++key
+        )
+        {
+            rc = ib_data_register_indexed(config, *key);
+            if (rc != IB_OK) {
+                ib_log_warning(ib,
+                    "Rule engine failed to register \"%s\" as indexed: %s",
+                    *key,
+                    ib_status_to_string(rc)
+                );
+            }
+            /* Do not abort.  Everything should still work, just be a little
+             * slower.
+             */
         }
     }
 
