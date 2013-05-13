@@ -37,6 +37,44 @@
 
 /* -- Field Generation Routines -- */
 
+/* Keys to register as indexed. */
+static const char *indexed_keys[] = {
+    "ARGS",
+    "FLAGS",
+    "auth_password",
+    "auth_type",
+    "auth_username",
+    "request_body_params",
+    "request_content_type",
+    "request_cookies",
+    "request_filename",
+    "request_headers",
+    "request_host",
+    "request_line",
+    "request_method",
+    "request_protocol",
+    "request_uri",
+    "request_uri_fragment",
+    "request_uri_host",
+    "request_uri_params",
+    "request_uri_password",
+    "request_uri_path",
+    "request_uri_path_raw",
+    "request_uri_port",
+    "request_uri_query",
+    "request_uri_raw",
+    "request_uri_scheme",
+    "request_uri_username",
+    "response_content_type",
+    "response_cookies",
+    "response_headers",
+    "response_line",
+    "response_message",
+    "response_protocol",
+    "response_status",
+    NULL
+};
+
 /* Placeholder for as-of-yet-initialized bytestring fields. */
 static const uint8_t core_placeholder_value[] = {
     '_', '_', 'c', 'o', 'r', 'e', '_', '_',
@@ -822,6 +860,8 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
     assert(ib != NULL);
     assert(mod != NULL);
 
+    ib_data_config_t *config;
+    ib_status_t rc;
 
     ib_hook_conn_register(ib, handle_connect_event,
                           core_gen_connect_fields, NULL);
@@ -843,6 +883,27 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
 
     ib_hook_tx_register(ib, response_finished_event,
                         core_gen_response_body_fields, NULL);
+
+    config = ib_engine_data_config_get(ib);
+    assert(config != NULL);
+    for (
+        const char **key = indexed_keys;
+        *key != NULL;
+        ++key
+    )
+    {
+        rc = ib_data_register_indexed(config, *key);
+        if (rc != IB_OK) {
+            ib_log_warning(ib,
+                "Core fields failed to register \"%s\" as indexed: %s",
+                *key,
+                ib_status_to_string(rc)
+            );
+        }
+        /* Do not abort.  Everything should still work, just be a little
+         * slower.
+         */
+    }
 
     return IB_OK;
 }
