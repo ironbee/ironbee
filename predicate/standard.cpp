@@ -27,6 +27,8 @@
 
 #include <ironbeepp/operator.hpp>
 
+#include <ironbee/data.h>
+#include <ironbee/engine.h>
 #include <ironbee/transformation.h>
 
 #include <boost/foreach.hpp>
@@ -398,6 +400,38 @@ string Field::name() const
     return "field";
 }
 
+void Field::pre_eval(Environment environment, NodeReporter reporter)
+{
+    const ib_data_config_t* config;
+    ib_status_t rc;
+    size_t i;
+
+    config = ib_engine_data_config_get_const(environment.ib());
+    assert(config != NULL);
+
+    // Key must be static.
+    Value key_field = children().front()->eval(EvalContext());
+    IronBee::ConstByteString key = key_field.value_as_byte_string();
+
+    rc = ib_data_lookup_index_ex(
+        config,
+        key.const_data(), key.size(),
+        &i
+    );
+
+    if (rc == IB_ENOENT) {
+        /* Not an indexed field. */
+        m_is_indexed = false;
+    }
+    else if (rc == IB_OK) {
+        m_is_indexed = true;
+        m_index = i;
+    }
+    else {
+        IronBee::throw_if_error(rc);
+    }
+}
+
 Value Field::calculate(EvalContext context)
 {
     Value key_field = children().front()->eval(context);
@@ -405,16 +439,23 @@ Value Field::calculate(EvalContext context)
     ib_field_t* data_field;
     ib_status_t rc;
 
-    rc = ib_data_get_ex(
-        context.ib()->data,
-        key.const_data(), key.size(),
-        &data_field
-    );
-    if (rc == IB_ENOENT) {
-        return Value();
+    if (m_is_indexed) {
+        IronBee::throw_if_error(
+            ib_data_get_indexed(context.ib()->data, m_index, &data_field)
+        );
     }
     else {
-        IronBee::throw_if_error(rc);
+        rc = ib_data_get_ex(
+            context.ib()->data,
+            key.const_data(), key.size(),
+            &data_field
+        );
+        if (rc == IB_ENOENT) {
+            return Value();
+        }
+        else {
+            IronBee::throw_if_error(rc);
+        }
     }
 
     return Value(data_field);

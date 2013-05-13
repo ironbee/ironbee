@@ -240,6 +240,11 @@ public:
 
 protected:
     virtual Value calculate(EvalContext context);
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+private:
+    bool m_is_indexed;
+    size_t m_index;
 };
 
 /**
