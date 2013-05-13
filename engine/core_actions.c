@@ -2583,5 +2583,14 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         return rc;
     }
 
+    rc = ib_data_register_indexed(ib_engine_data_config_get(ib), "param");
+    if (rc != IB_OK) {
+        ib_log_warning(ib,
+            "Core actions failed to register \"param\" as indexed: %s",
+            ib_status_to_string(rc)
+        );
+        /* Continue. */
+    }
+
     return IB_OK;
 }
