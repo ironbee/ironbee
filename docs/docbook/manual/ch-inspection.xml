@@ -40,6 +40,13 @@
                     <literal>InitVar</literal> directive for more details.</para>
         </section>
         <section>
+            <title>Defining and Initializing Scalar Variables with
+                <literal>InitVarIndexed</literal></title>
+            <para>As <literal>InitVar</literal>, but also indicates that the variable should be indexed.
+    						Indexed variables can be accessed more quickly but impose a small memory cost on every
+							  transaction.</para>
+        </section>
+        <section>
             <title>Defining and Initializing Collections with
                 <literal>InitCollection</literal></title>
             <para>Similar to the <literal>InitVar</literal> directive, you can also define and
@@ -63,6 +70,7 @@
     "key2": "value2",
     "key3": "value3"
 }</programlisting></para>
+						<para><literal>InitCollectionInexed</literal> is also available.  See <literal>InitVarIndexed</literal>.</para>
             <para>See the full documentation for <literal>InitCollection</literal> directive for
                 more details. </para>
         </section>

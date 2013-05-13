@@ -477,6 +477,19 @@ Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block
         </section>
     </section>
         <section>
+            <title>InitCollectionIndexed</title>
+            <para><emphasis role="bold">Description:</emphasis> As InitCollection but also index key.</para>
+		        <para><emphasis role="bold">Syntax:</emphasis>
+		            <literal>InitCollectionIndexed <replaceable>collection-name</replaceable>
+		                <replaceable>uri</replaceable>
+		                <replaceable>[param1 param2 ... paramN]</replaceable></literal></para>
+		        <para><emphasis role="bold">Default:</emphasis> None</para>
+		        <para><emphasis role="bold">Context:</emphasis> Any</para>
+		        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
+		        <para><emphasis role="bold">Module:</emphasis> core, persist</para>
+		        <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+        </section>
+        <section>
             <title>InitVar</title>
             <para><emphasis role="bold">Description:</emphasis> Initializes a locally scoped
             variable data field for later use.</para>
@@ -488,6 +501,18 @@ Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block
             <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        </section>
+        <section>
+            <title>InitVarIndexed</title>
+            <para><emphasis role="bold">Description:</emphasis> As InitVar but also index key.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>InitVarIndexed <replaceable>variable-name</replaceable>
+                <replaceable>initial-value</replaceable></literal></para>
+            <para><emphasis role="bold">Default:</emphasis> None</para>
+            <para><emphasis role="bold">Context:</emphasis> Any</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
         </section>
         <section>
             <title>InspectionEngineOptions</title>

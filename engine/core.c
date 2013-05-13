@@ -3810,7 +3810,7 @@ static ib_status_t core_dir_inspection_engine_options(ib_cfgparser_t *cp,
  * @param[in] cp Configuration parser
  * @param[in] directive The directive name.
  * @param[in] vars The list of variables passed to @c name.
- * @param[in] cbdata User data. Unused.
+ * @param[in] cbdata User data.  Index key if not null.
  */
 static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
                                            const char *directive,
@@ -3832,6 +3832,7 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
     ib_managed_collection_t *collection = NULL;
     bool                     new_collection = false;
     ib_list_t               *managers_debug = NULL;
+    bool                     index = (cbdata != NULL);
 
     mp = ib_engine_pool_config_get(cp->ib);
 
@@ -3957,6 +3958,13 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
         }
     }
 
+    /* Index if desired */
+    if (index) {
+        rc = ib_data_register_indexed(ib_engine_data_config_get(cp->ib), collection_name);
+        /* Only known error is already registered; ignore. */
+        assert(rc == IB_OK || rc == IB_EINVAL);
+    }
+
     /* Done */
     return IB_OK;
 }
@@ -4068,7 +4076,7 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
  * @param[in] directive The directive name.
  * @param[in] name 1st parameter to InitVar
  * @param[in] value 2nd parameter to InitVar
- * @param[in] cbdata User data. Unused.
+ * @param[in] cbdata User data. If non-NULL, will index key.
  */
 static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
                                     const char *directive,
@@ -4086,6 +4094,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     ib_core_cfg_t *corecfg;
     ib_field_t *field;
     ib_field_val_union_t fval;
+    bool index = (cbdata != NULL);
 
     /* Get the core module config. */
     rc = ib_core_context_config(cp->cur_ctx, &corecfg);
@@ -4109,6 +4118,13 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp, "Error creating field for InitVar: %s",
                          ib_status_to_string(rc));
         return rc;
+    }
+
+    /* Index if desired */
+    if (index) {
+        rc = ib_data_register_indexed(ib_engine_data_config_get(cp->ib), name);
+        /* Only known error is already registered; ignore. */
+        assert(rc == IB_OK || rc == IB_EINVAL);
     }
 
     /* Add the field to the list */
@@ -4438,12 +4454,22 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         core_dir_initvar,
         NULL
     ),
+    IB_DIRMAP_INIT_PARAM2(
+        "InitVarIndexed",
+        core_dir_initvar,
+        (void *)1
+    ),
 
     /* TX Initialized Collection */
     IB_DIRMAP_INIT_LIST(
         "InitCollection",
         core_dir_initcollection,
         NULL
+    ),
+    IB_DIRMAP_INIT_LIST(
+        "InitCollectionIndexed",
+        core_dir_initcollection,
+        (void *)1
     ),
 
     /* End */
