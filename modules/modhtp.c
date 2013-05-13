@@ -145,6 +145,26 @@ static modhtp_config_t modhtp_global_config = {
     NULL
 };
 
+/* Keys to register as indexed. */
+static const char *indexed_keys[] = {
+    "HTP_REQUEST_FLAGS",
+    "HTP_RESPONSE_FLAGS",
+    "request_line",
+    "request_uri",
+    "request_uri_raw",
+    "request_uri_scheme",
+    "request_uri_username",
+    "request_uri_password",
+    "request_uri_host",
+    "request_host",
+    "request_uri_port",
+    "request_uri_path",
+    "request_uri_path_raw",
+    "request_uri_query",
+    "request_uri_fragment",
+    NULL
+};
+
 /* -- Define several function types for callbacks */
 
 /**
@@ -2707,6 +2727,7 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     assert(m != NULL);
 
     ib_status_t rc;
+    ib_data_config_t *config;
 
     /* Register hooks */
     /* Register the context close function */
@@ -2778,6 +2799,27 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     rc = ib_hook_tx_register(ib, response_finished_event, modhtp_response_finished, m);
     if (rc != IB_OK) {
         return rc;
+    }
+
+    /* These keys may be registered by other modules as well.  As such
+     * ignore IB_EINVAL from ib_data_register_indexed().
+     */
+    config = ib_engine_data_config_get(ib);
+    assert(config != NULL);
+    for (
+        const char **key = indexed_keys;
+        *key != NULL;
+        ++key
+    )
+    {
+        rc = ib_data_register_indexed(config, *key);
+        if (rc != IB_OK && rc != IB_EINVAL) {
+            ib_log_warning(ib,
+                "modhtp failed to register \"%s\" as indexed: %s",
+                *key,
+                ib_status_to_string(rc)
+            );
+        }
     }
 
     return IB_OK;
