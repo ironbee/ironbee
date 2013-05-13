@@ -2210,6 +2210,7 @@ static int ironbee_init(const char *configfile, const char *logfile)
     ib_cfgparser_t *cp;
     ib_context_t *ctx;
     int rv;
+    ib_engine_t *ib = NULL;
 
     rc = ib_initialize();
     if (rc != IB_OK) {
@@ -2227,15 +2228,15 @@ static int ironbee_init(const char *configfile, const char *logfile)
 
     ib_util_log_level(4);
 
-    rc = ib_engine_create(&ironbee, &ibplugin);
+    rc = ib_engine_create(&ib, &ibplugin);
     if (rc != IB_OK) {
         return rc;
     }
 
-    ib_log_set_logger_fn(ironbee, ironbee_logger, NULL);
+    ib_log_set_logger_fn(ib, ironbee_logger, NULL);
     /* Using default log level function. */
 
-    rc = ib_engine_init(ironbee);
+    rc = ib_engine_init(ib);
     if (rc != IB_OK) {
         return rc;
     }
@@ -2244,31 +2245,31 @@ static int ironbee_init(const char *configfile, const char *logfile)
         return IB_OK + rv;
     }
 
-    ib_hook_conn_register(ironbee, conn_opened_event,
+    ib_hook_conn_register(ib, conn_opened_event,
                           ironbee_conn_init, NULL);
 
 
     /* This creates the main context */
-    rc = ib_cfgparser_create(&cp, ironbee);
+    rc = ib_cfgparser_create(&cp, ib);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_engine_config_started(ironbee, cp);
+    rc = ib_engine_config_started(ib, cp);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Get the main context, set some defaults */
-    ctx = ib_context_main(ironbee);
+    ctx = ib_context_main(ib);
     ib_context_set_num(ctx, "logger.log_level", 4);
 
     rc = ib_cfgparser_parse(cp, configfile);
     if (rc != IB_OK) {
-        ib_engine_config_finished(ironbee);
+        ib_engine_config_finished(ib);
         ib_cfgparser_destroy(cp);
         return rc;
     }
-    rc = ib_engine_config_finished(ironbee);
+    rc = ib_engine_config_finished(ib);
     if (rc != IB_OK) {
         return rc;
     }
@@ -2277,6 +2278,8 @@ static int ironbee_init(const char *configfile, const char *logfile)
         return rc;
     }
 
+    /* Now that we're all done initializing, set the engine pointer */
+    ironbee = ib;
     return IB_OK;
 }
 
