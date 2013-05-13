@@ -1018,3 +1018,109 @@ TEST_F(DecodingTest, DecodePathInplace2_UencodedInvalidNotEnoughBytes) {
     bstr_free(e);
     bstr_free(i);
 }
+
+class UrlencodedParser : public testing::Test {
+
+protected:
+
+    virtual void SetUp() {
+        cfg = htp_config_create();
+        connp = htp_connp_create(cfg);
+        htp_connp_open(connp, "127.0.0.1", 32768, "127.0.0.1", 80, NULL);
+        tx = htp_connp_tx_create(connp);
+        urlenp = htp_urlenp_create(tx);
+    }
+
+    virtual void TearDown() {
+        htp_urlenp_destroy(urlenp);
+        htp_connp_destroy_all(connp);
+        htp_config_destroy(cfg);
+    }
+
+    htp_connp_t *connp;
+
+    htp_cfg_t *cfg;
+
+    htp_tx_t *tx;
+
+    htp_urlenp_t *urlenp;
+};
+
+TEST_F(UrlencodedParser, Empty) {
+    htp_urlenp_parse_complete(urlenp, "", 0);
+    ASSERT_EQ(0, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, EmptyKey1) {
+    htp_urlenp_parse_complete(urlenp, "&", 1);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "", 0);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+    
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, EmptyKey2) {
+    htp_urlenp_parse_complete(urlenp, "=&", 2);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "", 0);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, EmptyKey3) {
+    htp_urlenp_parse_complete(urlenp, "=1&", 3);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "", 0);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p, "1"));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, EmptyKeyAndValue) {
+    htp_urlenp_parse_complete(urlenp, "=", 1);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "", 0);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, OnePair) {
+    htp_urlenp_parse_complete(urlenp, "p=1", 3);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p, "1"));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, OnePairEmptyValue) {
+    htp_urlenp_parse_complete(urlenp, "p=", 2);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, TwoPairs) {
+    htp_urlenp_parse_complete(urlenp, "p=1&q=2", 7);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p, "1"));
+
+    bstr *q = (bstr *)htp_table_get_mem(urlenp->params, "q", 1);
+    ASSERT_TRUE(q != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(q, "2"));
+
+    ASSERT_EQ(2, htp_table_size(urlenp->params));
+}
