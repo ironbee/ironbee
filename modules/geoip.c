@@ -282,6 +282,15 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     ib_log_debug(ib, "Done registering handler.");
 
+    rc = ib_data_register_indexed(ib_engine_data_config_get(ib), "GEOIP");
+    if (rc != IB_OK) {
+        ib_log_warning(ib,
+            "GeoIP failed to register \"GEOIP\" as indexed: %s",
+            ib_status_to_string(rc)
+        );
+        /* Continue */
+    }
+
     if (rc != IB_OK)
     {
         ib_log_debug(ib, "Failed to load GeoIP module.");
