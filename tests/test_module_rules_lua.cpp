@@ -36,6 +36,7 @@ extern "C" {
 #include <string>
 
 namespace {
+    // Defined in Makefile.am to point to test_module_rules_lua.lua.
     const char* luafile = TEST_LUA_FILE;
 }
 
