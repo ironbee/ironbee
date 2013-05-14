@@ -107,6 +107,8 @@ typedef struct ironbee_dir_conf {
 
 /*************    GENERAL GLOBALS        *************************/
 static const char *ironbee_config_file = NULL;
+static int ironbee_log_level = 4;
+static int ironbee_log_active = 1;
 static ib_engine_t *ironbee = NULL;
 static int log_level_is_startup = APLOG_STARTUP;
 
@@ -1194,15 +1196,16 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
         return IB2AP(rc);
     }
 
-    ib_util_log_level(4);
-
     rc = ib_engine_create(&ironbee, &ibplugin);
     if (rc != IB_OK) {
         return IB2AP(rc);
     }
 
-    ib_log_set_logger_fn(ironbee, ironbee_logger, NULL);
-    /* Use the default log level function */
+    if (ironbee_log_active) {
+        ib_util_log_level(ironbee_log_level);
+        ib_log_set_logger_fn(ironbee, ironbee_logger, NULL);
+        /* Use the default log level function */
+    }
 
     rc = ib_engine_init(ironbee);
     if (rc != IB_OK)
@@ -1402,6 +1405,41 @@ static const char *ironbee_configfile(cmd_parms *cmd, void *x, const char *fname
 
     return NULL;
 }
+/**
+ * HTTPD configuration callback to specify whether to log ironbee messages
+ * to apache log file
+ * @param[in] cmd - the cmd_parms struct
+ * @param[in] x - unused
+ * @param[in] set - On or off
+ * @return NULL (success)
+ */
+static const char *ib_log_active(cmd_parms *cmd, void *x, int set)
+{
+    const char *errmsg = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (errmsg)
+        return errmsg;
+
+    ironbee_log_active = set;
+
+    return NULL;
+}
+/**
+ * HTTPD configuration callback to specify Ironbee initial log level
+ * @param[in] cmd - the cmd_parms struct
+ * @param[in] x - unused
+ * @param[in] level - Log level
+ * @return NULL (success)
+ */
+static const char *ib_log_level(cmd_parms *cmd, void *x, const char *level)
+{
+    const char *errmsg = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (errmsg)
+        return errmsg;
+
+    ironbee_log_level = atoi(level);
+
+    return NULL;
+}
 
 /**
  * Module Directives
@@ -1417,6 +1455,10 @@ static const command_rec ironbee_cmds[] = {
     AP_INIT_FLAG("IronbeeFilterOutput", ap_set_flag_slot,
                  (void*)APR_OFFSETOF(ironbee_dir_conf, filter_output),
                  ACCESS_CONF, "Filter Output Data through Ironbee"),
+    AP_INIT_FLAG("IronbeeLog", ib_log_active, NULL,
+                 RSRC_CONF, "Log Ironbee messages to Apache error log"),
+    AP_INIT_TAKE1("IronbeeLogLevel", ib_log_level, NULL,
+                  RSRC_CONF, "Initial log level"),
     {NULL, {NULL}, NULL, 0, 0, NULL}
 };
 

@@ -67,8 +67,44 @@ LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
             <para><emphasis role="bold">Syntax:</emphasis>
                 <literal>IronbeeRawHeaders On|Off</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
-                <literal>Off</literal></para>
+                <literal>On</literal></para>
             <para>Setting this to <literal>On</literal> will cause IronBee to be sent the raw headers from the client. Setting this to <literal>Off</literal> will cause IronBee to be sent the proxied headers (those seen by the server).</para>
+        </section>
+        <section>
+            <title>IronbeeFilterInput</title>
+            <para><emphasis role="bold">Description:</emphasis> Filter HTTP request body data.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>IronbeeFilterInput On|Off</literal></para>
+            <para><emphasis role="bold">Default:</emphasis>
+                <literal>On</literal></para>
+            <para>Determines whether HTTP request bodies (where present) are sent to Ironbee for inspection.</para>
+        </section>
+        <section>
+            <title>IronbeeFilterOutput</title>
+            <para><emphasis role="bold">Description:</emphasis> Filter HTTP response body data.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>IronbeeFilterOutput On|Off</literal></para>
+            <para><emphasis role="bold">Default:</emphasis>
+                <literal>On</literal></para>
+            <para>Determines whether HTTP response bodies (where present) are sent to Ironbee for inspection.</para>
+        </section>
+        <section>
+            <title>IronbeeLog</title>
+            <para><emphasis role="bold">Description:</emphasis> Enable/Disable apache logging.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>IronbeeLog On|Off</literal></para>
+            <para><emphasis role="bold">Default:</emphasis>
+                <literal>On</literal></para>
+            <para>Determines whether Ironbee messages are logged to the HTTPD error log.  If disabled, some other logger should be configured.</para>
+        </section>
+        <section>
+            <title>IronbeeLogLevel</title>
+            <para><emphasis role="bold">Description:</emphasis> Set default Ironbee log level.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>IronbeeLogLevel 0-9</literal></para>
+            <para><emphasis role="bold">Default:</emphasis>
+                <literal>4</literal></para>
+            <para>Sets the initial log level for Ironbee messages (ignored if IronbeeLog is Off).</para>
         </section>
     </section>
     <section>
