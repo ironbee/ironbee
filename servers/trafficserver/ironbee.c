@@ -1494,6 +1494,9 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     bool has_body = false;
     ib_parsed_header_wrapper_t *ibhdrs;
 
+    if (data->tx == NULL) {
+        return IB_OK;
+    }
     TSDebug("ironbee", "process %s headers\n", ibd->type_label);
 
     /* Use alternative simpler path to get the un-doctored request
@@ -1753,7 +1756,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             ssndata = TSContDataGet(contp);
             TSMutexLock(ssndata->mutex);
-            if (ssndata->iconn == NULL) {
+            if ( (ssndata->iconn == NULL) && (ironbee != NULL) ) {
                 ib_status_t rc;
                 rc = ib_conn_create(ironbee, &ssndata->iconn, contp);
                 if (rc != IB_OK) {
@@ -1790,8 +1793,16 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* Hook to process requests */
             TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, mycont);
 
-            ib_tx_create(&txndata->tx, ssndata->iconn, txndata);
-            TSDebug("ironbee", "TX CREATE: conn=%p tx=%p id=%s txn_count=%d", ssndata->iconn, txndata->tx, txndata->tx->id, txndata->ssn->txn_count);
+            if (ssndata->iconn == NULL) {
+                txndata->tx = NULL;
+            }
+            else {
+                ib_tx_create(&txndata->tx, ssndata->iconn, txndata);
+                TSDebug("ironbee",
+                        "TX CREATE: conn=%p tx=%p id=%s txn_count=%d",
+                        ssndata->iconn, txndata->tx, txndata->tx->id,
+                        txndata->ssn->txn_count);
+            }
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
@@ -1799,6 +1810,10 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         /* HTTP RESPONSE */
         case TS_EVENT_HTTP_READ_RESPONSE_HDR:
             txndata = TSContDataGet(contp);
+            if (txndata->tx == NULL) {
+                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+                break;
+            }
 
             /* Feed ironbee the headers if not done alread. */
             if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
@@ -1943,14 +1958,16 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         case TS_EVENT_HTTP_TXN_CLOSE:
         {
             ib_txn_ctx *ctx = TSContDataGet(contp);
-            TSDebug("ironbee", "TXN Close: %p\n", (void *)contp);
-            if (!ib_tx_flags_isset(ctx->tx, IB_TX_FPOSTPROCESS)) {
-                ib_state_notify_postprocess(ironbee, ctx->tx);
+            if (ctx->tx != NULL) {
+                TSDebug("ironbee", "TXN Close: %p\n", (void *)contp);
+                if (!ib_tx_flags_isset(ctx->tx, IB_TX_FPOSTPROCESS)) {
+                    ib_state_notify_postprocess(ironbee, ctx->tx);
+                }
+                if (!ib_tx_flags_isset(ctx->tx, IB_TX_FLOGGING)) {
+                    ib_state_notify_logging(ironbee, ctx->tx);
+                }
+                ib_txn_ctx_destroy(ctx);
             }
-            if (!ib_tx_flags_isset(ctx->tx, IB_TX_FLOGGING)) {
-                ib_state_notify_logging(ironbee, ctx->tx);
-            }
-            ib_txn_ctx_destroy(ctx);
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
