@@ -48,6 +48,12 @@ _M.fieldToLua = function(self, field)
     -- Nil, guard against undefined fields.
     if field == nil then
         return nil
+    -- Protect against structures without a type field.
+    elseif not ffi.istype("ib_field_t*", field) then
+        self:logError(
+            "Cdata type  ib_field_t * exepcted. Got %s",
+            tostring(field))
+        return nil
     -- Number
     elseif field.type == ffi.C.IB_FTYPE_NUM then
         local value = ffi.new("ib_num_t[1]")
