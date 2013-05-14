@@ -1714,7 +1714,7 @@ static ib_status_t modhtp_build_context (
 
     /* @todo Make all these configurable??? */
     htp_config->log_level = HTP_LOG_DEBUG2;
-    htp_config_set_tx_auto_destroy(htp_config, 1);
+    htp_config_set_tx_auto_destroy(htp_config, 0);
     htp_config_set_generate_request_uri_normalized(htp_config, 0);
 
     htp_config_register_urlencoded_parser(htp_config);
@@ -1943,6 +1943,9 @@ static ib_status_t modhtp_iface_tx_cleanup(
     /* Remove references to the txdata which is associated with the IB tx */
     txdata->htx = NULL;
     htp_tx_set_user_data(htx, NULL);
+
+    /* And, destroy the transaction */
+    htp_tx_destroy(htx);
 
     return IB_OK;
 }
