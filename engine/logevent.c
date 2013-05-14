@@ -98,7 +98,7 @@ const char *ib_logevent_suppress_name(ib_logevent_suppress_t num)
 }
 
 ib_status_t ib_logevent_create(ib_logevent_t **ple,
-                               ib_mpool_t *pool,
+                               ib_mpool_t *mp,
                                const char *rule_id,
                                ib_logevent_type_t type,
                                ib_logevent_action_t rec_action,
@@ -118,35 +118,46 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
 
     char buf[IB_LEVENT_MSG_BUF_SIZE];
     va_list ap;
-    int r = 0;
+    int len = 0;
+    ib_status_t rc;
 
-    *ple = (ib_logevent_t *)ib_mpool_calloc(pool, 1, sizeof(**ple));
+    *ple = (ib_logevent_t *)ib_mpool_calloc(mp, 1, sizeof(**ple));
     if (*ple == NULL) {
         return IB_EALLOC;
     }
 
     (*ple)->event_id = (uint32_t)ib_clock_get_time(); /* truncated */
-    (*ple)->mp = pool;
-    (*ple)->rule_id = ib_mpool_strdup(pool, rule_id);
+    (*ple)->mp = mp;
+    (*ple)->rule_id = ib_mpool_strdup(mp, rule_id);
     (*ple)->type = type;
     (*ple)->rec_action = rec_action;
     (*ple)->confidence = confidence;
     (*ple)->severity = severity;
     (*ple)->suppress = IB_LEVENT_SUPPRESS_NONE;
 
+    rc = ib_list_create(&((*ple)->tags), mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_list_create(&((*ple)->fields), mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     /*
      * Generate the message, replacing the last three characters
      * with "..." if truncation is required.
      */
     va_start(ap, fmt);
-    r = vsnprintf(buf, IB_LEVENT_MSG_BUF_SIZE, fmt, ap);
-    if (r >= IB_LEVENT_MSG_BUF_SIZE) {
+    len = vsnprintf(buf, IB_LEVENT_MSG_BUF_SIZE, fmt, ap);
+    if (len >= IB_LEVENT_MSG_BUF_SIZE) {
         memcpy(buf + (IB_LEVENT_MSG_BUF_SIZE - 4), "...", 3);
     }
     va_end(ap);
 
     /* Copy the formatted message. */
-    (*ple)->msg = ib_mpool_strdup(pool, buf);
+    (*ple)->msg = ib_mpool_strdup(mp, buf);
 
     return IB_OK;
 }
