@@ -26,11 +26,10 @@
             <title>TrafficServer IronBee Plugin</title>
             <para><emphasis role="bold">Description:</emphasis> Bootstrap the trafficserver ironbee plugin.</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal>ts_ironbee.so <replaceable>/path/to/ironbee.conf</replaceable>
-                    <replaceable>[optional-logfilename.log]</replaceable></literal></para>
+                <literal><replaceable>/path/to/</replaceable>ts_ironbee.so <replaceable>[-v loglevel] [-l log-file-name] [-L] /path/to/ironbee.conf</replaceable></literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
-            <para>The default log filename is "ts-ironbee.log".</para>
+            <para>The default log filename is "ts-ironbee.log" and log level 4. The optional <emphasis>-l name</emphasis> sets a different name, while <emphasis>-v n</emphasis> sets a log level, and <emphasis>-L</emphasis> disables logging Ironbee messages by Trafficserver altogether (for users with an alternative logger configured).</para>
         </section>
     </section>
     <section>

@@ -56,7 +56,7 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port);
 #define ADDRSIZE 48 /* what's the longest IPV6 addr ? */
 
 ib_engine_t DLL_LOCAL *ironbee = NULL;
-TSTextLogObject ironbee_log;
+TSTextLogObject ironbee_log = NULL;
 #define DEFAULT_LOG "ts-ironbee"
 
 typedef enum {
@@ -2187,25 +2187,79 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port)
  */
 static void ibexit(void)
 {
-    TSTextLogObjectDestroy(ironbee_log);
+    if (ironbee_log != NULL)
+        TSTextLogObjectDestroy(ironbee_log);
     ib_engine_destroy(ironbee);
 }
 
+/**
+ * Function and struct to read a TS-style argc/argv commandline into
+ * a config struct.  This struct is only used for ironbee_init, and
+ * serves to enable new/revised options without disrupting the API or
+ * load syntax.
+ *
+ * @param[out] ibconf Configuration struct to populate
+ * @param[in] argc Command-line argument count
+ * @param[in] argv Command-line argument list
+ * @return  Success/Failure parsing the config line
+ */
+ 
+typedef struct ibconf_t {
+    const char *configfile;
+    const char *logfile;
+    int loglevel;
+    int no_log;
+} ibconf_t;
+static ib_status_t read_ibconf(ibconf_t *ibconf, int argc, const char *argv[])
+{
+    int c;
+
+    /* defaults */
+    memset(ibconf, 0, sizeof(ibconf_t));
+    ibconf->loglevel = 4;
+    ibconf->logfile = DEFAULT_LOG;
+
+    /* const-ness mismatch looks like an oversight, so casting should be fine */
+    while (c = getopt(argc, (char**)argv, "l:Lv:"), c != -1) {
+        switch(c) {
+            case 'L':
+                ibconf->no_log = 1;
+                break;
+            case 'l':
+                ibconf->logfile = optarg;
+                break;
+            case 'v':
+                ibconf->loglevel = atoi(optarg);
+                break;
+            default:
+                TSError("[ironbee] Unrecognised option -%c ignored.\n", optopt);
+                break;
+        }
+    }
+
+    /* keep the config file as a non-opt argument for back-compatibility */
+    if (optind == argc-1) {
+        ibconf->configfile = argv[optind];
+        return IB_OK;
+    }
+    else {
+        TSError("[ironbee] exactly one configuration file name required\n");
+        return IB_EINVAL;
+    }
+}
 /**
  * Initialize IronBee for ATS.
  *
  * Performs IB initializations for the ATS plugin.
  *
- * @param[in] configfile Configuration file
- * @param[in] logfile Log file
+ * @param[in] ibconf Configuration read from the Trafficserver plugin load line
  *
  * @returns status
  */
-static int ironbee_init(const char *configfile, const char *logfile)
+static int ironbee_init(ibconf_t *ibconf)
 {
     /* grab from httpd module's post-config */
     ib_status_t rc;
-//  ib_provider_t *lpr;
     ib_cfgparser_t *cp;
     ib_context_t *ctx;
     int rv;
@@ -2215,23 +2269,27 @@ static int ironbee_init(const char *configfile, const char *logfile)
         return rc;
     }
 
-    /* success is documented as TS_LOG_ERROR_NO_ERROR but that's undefined.
-     * It's actually a TS_SUCCESS (proxy/InkAPI.cc line 6641).
-     */
-    rv = TSTextLogObjectCreate(logfile, TS_LOG_MODE_ADD_TIMESTAMP,
-                               &ironbee_log);
-    if (rv != TS_SUCCESS) {
-        return IB_OK + rv;
-    }
+    if (!ibconf->no_log) {
+        /* success is documented as TS_LOG_ERROR_NO_ERROR but that's undefined.
+         * It's actually a TS_SUCCESS (proxy/InkAPI.cc line 6641).
+         */
+        rv = TSTextLogObjectCreate(ibconf->logfile, TS_LOG_MODE_ADD_TIMESTAMP,
+                                   &ironbee_log);
+        if (rv != TS_SUCCESS) {
+            return IB_OK + rv;
+        }
 
-    ib_util_log_level(4);
+        ib_util_log_level(ibconf->loglevel);
+    }
 
     rc = ib_engine_create(&ironbee, &ibplugin);
     if (rc != IB_OK) {
         return rc;
     }
 
-    ib_log_set_logger_fn(ironbee, ironbee_logger, NULL);
+    if (!ibconf->no_log) {
+        ib_log_set_logger_fn(ironbee, ironbee_logger, NULL);
+    }
     /* Using default log level function. */
 
     rc = ib_engine_init(ironbee);
@@ -2242,8 +2300,6 @@ static int ironbee_init(const char *configfile, const char *logfile)
     if (rc != 0) {
         return IB_OK + rv;
     }
-
-
 
     /* This creates the main context */
     rc = ib_cfgparser_create(&cp, ironbee);
@@ -2257,9 +2313,10 @@ static int ironbee_init(const char *configfile, const char *logfile)
 
     /* Get the main context, set some defaults */
     ctx = ib_context_main(ironbee);
-    ib_context_set_num(ctx, "logger.log_level", 4);
+    if (!ibconf->no_log)
+        ib_context_set_num(ctx, "logger.log_level", ibconf->loglevel);
 
-    rc = ib_cfgparser_parse(cp, configfile);
+    rc = ib_cfgparser_parse(cp, ibconf->configfile);
     if (rc != IB_OK) {
         ib_engine_config_finished(ironbee);
         ib_cfgparser_destroy(cp);
@@ -2290,6 +2347,7 @@ void TSPluginInit(int argc, const char *argv[])
     int rv;
     TSPluginRegistrationInfo info;
     TSCont cont;
+    ibconf_t ibconf;
 
     /* FIXME - check why these are char*, not const char* */
     info.plugin_name = (char *)"ironbee";
@@ -2306,20 +2364,26 @@ void TSPluginInit(int argc, const char *argv[])
         goto Lerror;
     }
 
+    rv = read_ibconf(&ibconf, argc, argv);
+    if (rv != IB_OK) {
+        /* we already logged the error */
+        goto Lerror;
+    }
+
+    rv = ironbee_init(&ibconf);
+    if (rv != IB_OK) {
+        TSError("[ironbee] initialization failed with %d\n", rv);
+        goto Lerror;
+    }
+
     cont = TSContCreate(ironbee_plugin, TSMutexCreate());
+    if (cont == NULL) {
+        TSError("[ironbee] failed to create initial continuation!\n");
+        goto Lerror;
+    }
 
     /* connection initialization & cleanup */
     TSHttpHookAdd(TS_HTTP_SSN_START_HOOK, cont);
-
-
-    if (argc < 2) {
-        TSError("[ironbee] configuration file name required\n");
-        goto Lerror;
-    }
-    rv = ironbee_init(argv[1], argc >= 3 ? argv[2] : DEFAULT_LOG);
-    if (rv != IB_OK) {
-        TSError("[ironbee] initialization failed with %d\n", rv);
-    }
     return;
 
 Lerror:
