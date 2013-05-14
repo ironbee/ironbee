@@ -1367,7 +1367,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
             /* It is more important to write out what is possible
              * than to fail here. So, some error codes are ignored.
              *
-             * TODO: Simplify buy not using collections
+             * TODO: Simplify by not using collections
              */
             IB_LIST_LOOP(events, enode) {
                 ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(enode);
