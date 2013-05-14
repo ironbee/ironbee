@@ -1495,7 +1495,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     ib_parsed_header_wrapper_t *ibhdrs;
 
     if (data->tx == NULL) {
-        return IB_OK;
+        return HDR_OK;
     }
     TSDebug("ironbee", "process %s headers\n", ibd->type_label);
 
