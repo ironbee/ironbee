@@ -450,12 +450,12 @@ ib_status_t sqli_dir_pattern_set(
     assert(set_name       != NULL);
     assert(set_path       != NULL);
 
-    ib_context_t         *ctx;
     ib_status_t           rc;
-    ib_module_t          *m;
-    sqli_module_config_t *cfg;
-    sqli_pattern_set_t   *ps;
-    ib_mpool_t           *mp;
+    ib_context_t         *ctx = NULL;
+    ib_module_t          *m   = NULL;
+    sqli_module_config_t *cfg = NULL;
+    sqli_pattern_set_t   *ps  = NULL;
+    ib_mpool_t           *mp  = NULL;
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     assert(rc  == IB_OK);
