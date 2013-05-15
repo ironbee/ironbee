@@ -2084,6 +2084,11 @@ static ib_status_t modhtp_iface_request_body_data(
     htp_status_t           hrc;
     ib_status_t            irc;
 
+    /* Ignore NULL / zero length body data */
+    if ( (ib_txdata->data == NULL) || (ib_txdata->dlen == 0) ) {
+        return IB_OK;
+    }
+
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
 
@@ -2289,6 +2294,11 @@ static ib_status_t modhtp_iface_response_body_data(
     const modhtp_txdata_t *txdata;
     htp_status_t           hrc;
     ib_status_t            irc;
+
+    /* Ignore NULL / zero length body data */
+    if ( (ib_txdata->data == NULL) || (ib_txdata->dlen == 0) ) {
+        return IB_OK;
+    }
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
