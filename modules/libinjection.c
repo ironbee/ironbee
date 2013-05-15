@@ -58,6 +58,22 @@ typedef struct sqli_config_t {
     int fold;
 } sqli_config_t;
 
+/* Finger printer database. */
+typedef struct sqli_pattern_set_t {
+    const char **patterns;     /**< Sorted array of patterns. */
+    size_t       num_patterns; /**< Size of @ref patterns. */
+} sqli_pattern_set_t;
+
+/* Module configuration. */
+typedef struct sqli_module_config_t {
+    /* For now, only support main context configuration. */
+    /**
+     * Hash of set name to sqli_pattern_set_t*.
+     **/
+    ib_hash_t *pattern_sets;
+} sqli_module_config_t;
+static sqli_module_config_t sqli_initial_config = { NULL };
+
 /* Normalization function prototype. */
 typedef int (*sqli_tokenize_fn_t)(sfilter * sf, stoken_t * sout);
 
@@ -215,20 +231,55 @@ ib_status_t sqli_op_create(
 )
 {
     ib_engine_t *ib = ib_context_get_engine(ctx);
+    ib_status_t rc;
+    ib_module_t *m = (ib_module_t *)cbdata;
+    const sqli_module_config_t *cfg = NULL;
+    const sqli_pattern_set_t    *ps  = NULL;
 
     if (parameters == NULL) {
         ib_log_error(ib, "Missing parameter for operator sqli");
         return IB_EINVAL;
     }
 
-    // TODO: Support loading external patterns.
     if (strcmp("default", parameters) != 0) {
-        ib_log_notice(ib,
-                      "SQLi external data not yet supported for sqli."
-                      " Use \"default\" for now.");
+        *instance_data = NULL;
+        return IB_OK;
     }
 
+    rc = ib_context_module_config(ctx, m, &cfg);
+    assert(rc == IB_OK);
+    assert(cfg->pattern_sets != NULL);
+
+    rc = ib_hash_get(cfg->pattern_sets, &ps, parameters);
+    if (rc == IB_ENOENT) {
+        ib_log_error(ib, "No such pattern set: %s", parameters);
+        return IB_EINVAL;
+    }
+    assert(rc == IB_OK);
+    assert(ps != NULL);
+
+    *instance_data = (void *)ps;
+
     return IB_OK;
+}
+
+static
+int sqli_cmp(const void *a, const void *b)
+{
+    return strcmp((const char *)a, (const char *)b);
+}
+
+static
+int sqli_is_sqli_pattern(const char *pattern, void *cbdata)
+{
+    const sqli_pattern_set_t *ps = (const sqli_pattern_set_t *)cbdata;
+
+    void *result = bsearch(
+        pattern,
+        ps->patterns, ps->num_patterns, sizeof(*ps->patterns),
+        &sqli_cmp
+    );
+    return result != NULL;
 }
 
 static
@@ -241,13 +292,14 @@ ib_status_t sqli_op_execute(
     void *cbdata
 )
 {
-    assert(tx     != NULL);
-    assert(field  != NULL);
-    assert(result != NULL);
+    assert(tx            != NULL);
+    assert(field         != NULL);
+    assert(result        != NULL);
 
     sfilter sf;
     ib_bytestr_t *bs;
     ib_status_t rc;
+    const sqli_pattern_set_t *ps = (const sqli_pattern_set_t *)instance_data;
 
     *result = 0;
 
@@ -264,7 +316,14 @@ ib_status_t sqli_op_execute(
 
     /* Run through libinjection. */
     // TODO: Support alternative SQLi pattern lookup
-    if (libinjection_is_sqli(&sf, (const char *)ib_bytestr_const_ptr(bs), ib_bytestr_length(bs), NULL, NULL)) {
+    if (
+        libinjection_is_sqli(
+            &sf,
+            (const char *)ib_bytestr_const_ptr(bs), ib_bytestr_length(bs),
+            (ps != NULL ? sqli_is_sqli_pattern : NULL),
+            (void *)ps
+        )
+    ) {
         ib_log_debug_tx(tx, "Matched SQLi pattern: %s", sf.pat);
         *result = 1;
     }
@@ -273,6 +332,189 @@ ib_status_t sqli_op_execute(
 }
 
 
+
+/*********************************
+ * Helper Functions
+ *********************************/
+static
+ib_status_t sqli_create_pattern_set_from_file(
+    sqli_pattern_set_t **out_ps,
+    const char         *path,
+    ib_mpool_t         *mp
+)
+{
+    assert(out_ps != NULL);
+    assert(path   != NULL);
+    assert(mp     != NULL);
+
+    ib_status_t  rc;
+    FILE               *fp          = NULL;
+    char               *buffer      = NULL;
+    size_t              buffer_size = 0;
+    ib_list_t          *items       = NULL;
+    ib_list_node_t     *n           = NULL;
+    ib_mpool_t         *tmp         = NULL;
+    sqli_pattern_set_t *ps          = NULL;
+    size_t              i           = 0;
+
+    /* Temporary memory pool for htis function only. */
+    rc = ib_mpool_create(&tmp, "sqli tmp", NULL);
+    assert(rc == IB_OK);
+    assert(tmp != NULL);
+
+    fp = fopen(path, "r");
+    if (fp == NULL) {
+        goto fail;
+    }
+
+    rc = ib_list_create(&items, tmp);
+    assert(rc    == IB_OK);
+    assert(items != NULL);
+
+    for (;;) {
+        char *buffer_copy;
+        int   read = getline(&buffer, &buffer_size, fp);
+
+        if (read == -1) {
+            if (! feof(fp)) {
+                fclose(fp);
+                goto fail;
+            }
+            else {
+                break;
+            }
+        }
+
+        buffer_copy = ib_mpool_memdup(mp, buffer, read);
+        assert(buffer_copy != NULL);
+        while (buffer_copy[read-1] == '\n' || buffer_copy[read-1] == '\r') {
+            buffer_copy[read-1] = '\0';
+            --read;
+        }
+
+        rc = ib_list_push(items, (void *)buffer_copy);
+        assert(rc == IB_OK);
+    }
+
+    fclose(fp);
+
+    ps = ib_mpool_alloc(mp, sizeof(*ps));
+    assert(ps != NULL);
+
+    ps->num_patterns = ib_list_elements(items);
+    ps->patterns =
+        ib_mpool_alloc(mp, ps->num_patterns * sizeof(*ps->patterns));
+    assert(ps->patterns != NULL);
+
+    i = 0;
+    IB_LIST_LOOP(items, n) {
+        ps->patterns[i] = ib_list_node_data(n);
+        ++i;
+    }
+    assert(i == ps->num_patterns);
+
+    ib_mpool_destroy(tmp);
+
+    qsort(
+        ps->patterns, ps->num_patterns,
+        sizeof(*ps->patterns),
+        &sqli_cmp
+    );
+
+    return IB_OK;
+
+fail:
+    ib_mpool_destroy(tmp);
+    return IB_EINVAL;
+}
+
+/*********************************
+ * Directive Functions
+ *********************************/
+
+static
+ib_status_t sqli_dir_pattern_set(
+    ib_cfgparser_t  *cp,
+    const char      *directive_name,
+    const char      *set_name,
+    const char      *set_path,
+    void            *cbdata
+)
+{
+    assert(cp             != NULL);
+    assert(directive_name != NULL);
+    assert(set_name       != NULL);
+    assert(set_path       != NULL);
+
+    ib_context_t         *ctx;
+    ib_status_t           rc;
+    ib_module_t          *m;
+    sqli_module_config_t *cfg;
+    sqli_pattern_set_t   *ps;
+    ib_mpool_t           *mp;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    assert(rc  == IB_OK);
+    assert(ctx != NULL);
+
+    if (ctx != ib_context_main(cp->ib)) {
+        ib_cfg_log_error(cp,
+            "%s: Only valid at main context.", directive_name
+        );
+        return IB_EINVAL;
+    }
+
+    if (strcmp("default", set_name) == 0) {
+        ib_cfg_log_error(cp,
+            "%s: default is a reserved set name.", directive_name
+        );
+        return IB_EINVAL;
+    }
+
+    mp = ib_engine_pool_main_get(cp->ib);
+    assert(mp != NULL);
+
+    rc = ib_engine_module_get(
+        ib_context_get_engine(ctx),
+        MODULE_NAME_STR,
+        &m
+    );
+    assert(rc == IB_OK);
+
+    rc = ib_context_module_config(ctx, m, &cfg);
+    assert(rc == IB_OK);
+
+    if (cfg->pattern_sets == NULL) {
+        rc = ib_hash_create(&cfg->pattern_sets, mp);
+        assert(rc == IB_OK);
+    }
+    assert(cfg->pattern_sets != NULL);
+
+    rc = ib_hash_get(cfg->pattern_sets, NULL, set_name);
+    if (rc == IB_OK) {
+        ib_cfg_log_error(cp,
+            "%s: Duplicate pattern set definition: %s",
+            directive_name, set_name
+        );
+        return IB_EINVAL;
+    }
+    assert(rc == IB_ENOENT);
+
+    rc = sqli_create_pattern_set_from_file(&ps, set_path, mp);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+            "%s: Failure to load pattern set from file: %s",
+            directive_name, set_path
+        );
+        return IB_EINVAL;
+    }
+    assert(ps != NULL);
+
+    rc = ib_hash_set(cfg->pattern_sets, ib_mpool_strdup(mp, set_name), ps);
+    assert(rc == IB_OK);
+
+    return IB_OK;
+}
 
 /*********************************
  * Module Functions
@@ -319,7 +561,7 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         ib,
         "is_sqli",
         IB_OP_CAPABILITY_NON_STREAM,
-        sqli_op_create, NULL,
+        sqli_op_create, m,
         NULL, NULL,
         sqli_op_execute, NULL
     );
@@ -338,13 +580,21 @@ static ib_status_t sqli_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     return IB_OK;
 }
 
+static IB_DIRMAP_INIT_STRUCTURE(sqli_directive_map) = {
+    IB_DIRMAP_INIT_PARAM2(
+        "SQLiPatternSet",
+        sqli_dir_pattern_set, NULL
+    ),
+    IB_DIRMAP_INIT_LAST
+};
+
 /* Initialize the module structure. */
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,           /* Default metadata */
     MODULE_NAME_STR,                     /* Module name */
-    IB_MODULE_CONFIG_NULL,               /* Global config data */
+    IB_MODULE_CONFIG(&sqli_initial_config), /* Global config data */
     NULL,                                /* Configuration field map */
-    NULL,                                /* Config directive map */
+    sqli_directive_map,                  /* Config directive map */
     sqli_init,                           /* Initialize function */
     NULL,                                /* Callback data */
     sqli_fini,                           /* Finish function */
