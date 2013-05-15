@@ -418,6 +418,7 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
 
     // Send request body
     htp_tx_req_process_body_data(tx, "p=1", 3);
+    htp_tx_req_process_body_data(tx, NULL, 0);
     htp_tx_req_process_body_data(tx, "&", 1);
     htp_tx_req_process_body_data(tx, "q=2", 3);
 
