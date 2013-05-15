@@ -33,6 +33,9 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+/* See `man 7 feature_test_macros` on certain Linux flavors. */
+#define _POSIX_C_SOURCE 200809L
+
 #include <ironbee/context.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
@@ -45,6 +48,7 @@
 #include <sqlparse_private.h>
 
 #include <assert.h>
+#include <stdio.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        sqli
