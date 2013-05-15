@@ -934,3 +934,35 @@ TEST_F(ConnectionParsing, AutoDestroyCrash) {
 
     ASSERT_EQ(4, htp_list_size(connp->conn->transactions));
 }
+
+/**
+ * Suspected NULL pointer dereference, but have not been able to replicate.
+ */
+TEST_F(ConnectionParsing, SuspectedCrashFile40) {
+    htp_config_set_tx_auto_destroy(cfg, 1);
+    
+    int rc = test_run(home, "40-suspected-crash.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    htp_param_t *p1 = htp_tx_req_get_param(tx, "null", 4);
+    ASSERT_TRUE(p1 != NULL);
+    ASSERT_TRUE(p1->value != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p1->value, ""));
+
+    htp_param_t *p2 = htp_tx_req_get_param(tx, "anticsrf", 8);
+    ASSERT_TRUE(p2 != NULL);
+    ASSERT_TRUE(p2->value != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p2->value, "0.42120081241972007"));
+
+    htp_param_t *p3 = htp_tx_req_get_param(tx, "comments", 8);
+    ASSERT_TRUE(p3 != NULL);
+    ASSERT_TRUE(p3->value != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p3->value, "http://www.google.com:80/search?q=OWASP%20ZAP"));   
+}
