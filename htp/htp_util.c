@@ -852,7 +852,9 @@ static uint8_t bestfit_codepoint(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, uin
 void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     if (path == NULL) return;
 
-    uint8_t *data = (unsigned char *) bstr_ptr(path);
+    uint8_t *data = bstr_ptr(path);
+    if (data == NULL) return;
+    
     size_t len = bstr_len(path);
     size_t rpos = 0;
     size_t wpos = 0;
@@ -1160,6 +1162,7 @@ static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char 
  * @param[in] path
  */
 int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
+    if (path == NULL) return -1;
     unsigned char *data = bstr_ptr(path);
     if (data == NULL) return -1;
 
@@ -1421,7 +1424,10 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 }
 
 int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
+    if (input == NULL) return -1;
+    
     unsigned char *data = bstr_ptr(input);
+    if (data == NULL) return -1;
     size_t len = bstr_len(input);
 
     size_t rpos = 0;
@@ -1809,6 +1815,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
     if (s == NULL) return;
 
     unsigned char *data = bstr_ptr(s);
+    if (data == NULL) return;
     size_t len = bstr_len(s);
 
     size_t rpos = 0;
@@ -1866,6 +1873,7 @@ void htp_normalize_uri_path_inplace(bstr *s) {
     if (s == NULL) return;
 
     unsigned char *data = bstr_ptr(s);
+    if (data == NULL) return;
     size_t len = bstr_len(s);
 
     size_t rpos = 0;
