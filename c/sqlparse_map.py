@@ -14,7 +14,9 @@ added to the data directly (JSON doesn't support comments).
 KEYWORDS = {
 'UTL_INADDR.GET_HOST_ADDRESS': 'f',
 
-# http://blog.red-database-security.com/2009/01/17/tutorial-oracle-sql-injection-in-webapps-part-i/print/
+# ORACLE
+# http://blog.red-database-security.com/
+#  /2009/01/17/tutorial-oracle-sql-injection-in-webapps-part-i/print/
 'DBMS_PIPE.RECEIVE_MESSAGE':   'f',
 'CTXSYS.DRITHSX.SN': 'f',
 'SYS.STRAGG': 'f',
@@ -698,7 +700,6 @@ KEYWORDS = {
 'STATEMENT_TIMESTAMP'         : 'f',
 'STATS_DATE'                  : 'f',
 'STDDEV'                      : 'f',
-'STDDEV'                      : 'p',
 'STDDEV_POP'                  : 'f',
 'STDDEV_SAMP'                 : 'f',
 'STRAIGHT_JOIN'               : 'k',
@@ -952,13 +953,13 @@ CHARMAP = [
     'CHAR_WHITE',
     'CHAR_WHITE',
     'CHAR_WHITE',
-    'CHAR_WHITE', #30
-    'CHAR_WHITE',
-    'CHAR_WHITE',
+    'CHAR_WHITE', # 30
+    'CHAR_WHITE', # 31
+    'CHAR_WHITE', # 32
     'CHAR_OP2',   # 33 !
     'CHAR_STR',   # 34 "
     'CHAR_COM1',  # 35 "#"
-    'CHAR_MONEY',  # 36 $ -- ignore optional currency symbol for TSQL money types
+    'CHAR_MONEY', # 36 $
     'CHAR_OP1',   # 37 %
     'CHAR_OP2',   # 38 &
     'CHAR_STR',   # 39 '
@@ -1111,6 +1112,18 @@ PHRASES = {
     }
 
 import json
+
+def get_fingerprints():
+    """
+    fingerprints are stored in plain text file, one fingerprint per file
+    the result is sorted
+    """
+
+    with open('fingerprints.txt', 'r') as lines:
+        sqlipat = [ line.strip() for line in lines ]
+
+    return sorted(sqlipat)
+
 def dump():
     """
     generates a JSON file, sorted keys
@@ -1120,7 +1133,8 @@ def dump():
         'keywords': KEYWORDS,
         'charmap': CHARMAP,
         'operators2': OPERATORS2,
-        'phrases': PHRASES
+        'phrases': PHRASES,
+        'fingerprints': get_fingerprints()
         }
     return json.dumps(objs, sort_keys=True, indent=4)
 

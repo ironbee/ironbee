@@ -1,18 +1,11 @@
 
-CC=gcc
-CXX=g++
-CFLAGS=-g -O3 -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Werror
-INDENT=indent
-# Apple over-rides
-#   Trying to avoid using libtool
 #
-APPLE=$(shell uname -a | grep -c Darwin)
-ifeq ($(APPLE),1)
-	SONAME=dylib
-	RT=
-	INDENT=gnuindent
-	SHARED=-dynamiclib -flat_namespace
-endif
+# -Wcase-align works with gcc, but not clang on
+#  some of the modp_* files.  Remove for now.
+#
+
+CFLAGS=-g -O3 -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-qual -Werror
+# -DNDEBUG
 
 help:
 	@echo ""
@@ -37,33 +30,33 @@ help:
 
 allbin: reader sqli fptool
 
-reader: Makefile reader.c sqlparse_data.h sqlparse.h sqlparse.c modp_burl.c sqli_fingerprints.h modp_ascii.c modp_xml.c
-	${CC}  ${CFLAGS} -o reader sqlparse.c reader.c modp_burl.c modp_ascii.c modp_xml.c
+reader: Makefile reader.c sqlparse_data.h libinjection.h libinjection_sqli.c modp_burl.c modp_ascii.c modp_xml.c
+	${CC}  ${CFLAGS} -o reader libinjection_sqli.c reader.c modp_burl.c modp_ascii.c modp_xml.c
 
-reader-gprof: Makefile reader.c sqlparse_data.h sqlparse.h sqlparse.c modp_burl.c sqli_fingerprints.h modp_ascii.c modp_xml.c
+reader-gprof: Makefile reader.c sqlparse_data.h libinjection.h libinjection_sqli.c modp_burl.c modp_ascii.c modp_xml.c
 	make clean
-	${CC} -g -O2 -pg -o reader sqlparse.c reader.c modp_burl.c modp_ascii.c modp_xml.c
+	${CC} -g -O2 -pg -o reader libinjection_sqli.c reader.c modp_burl.c modp_ascii.c modp_xml.c
 
-extractor: Makefile extractor.cpp sqlparse.c sqlparse.h sqlparse_data.h modp_xml.c sqli_fingerprints.h sqlparse_data.h
-	g++ ${STATIC} ${CFLAGS} -o extractor extractor.cpp sqlparse.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
+extractor: Makefile extractor.cpp libinjection_sqli.c libinjection.h sqlparse_data.h modp_xml.c sqlparse_data.h
+	g++ ${STATIC} ${CFLAGS} -o extractor extractor.cpp libinjection_sqli.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
 
-is_sqli: Makefile is_sqli_cli.cpp sqlparse.c sqlparse.h sqlparse_data.h modp_xml.c sqli_fingerprints.h sqlparse_data.h
-	${CXX}  ${CFLAGS} -O3 -o is_sqli is_sqli_cli.cpp sqlparse.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
+is_sqli: Makefile is_sqli_cli.cpp libinjection_sqli.c libinjection.h sqlparse_data.h modp_xml.c sqlparse_data.h
+	${CXX}  ${CFLAGS} -O3 -o is_sqli is_sqli_cli.cpp libinjection_sqli.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
 
-sqli: Makefile sqli_cli.c sqlparse.c sqlparse.h sqlparse_data.h sqli_fingerprints.h
-	${CC} -g -O1 -o sqli sqli_cli.c sqlparse.c
+sqli: Makefile sqli_cli.c libinjection_sqli.c libinjection.h sqlparse_data.h
+	${CC} -g -O1 -o sqli sqli_cli.c libinjection_sqli.c
 
-fptool: Makefile fptool.c sqlparse.c sqlparse.h sqlparse_data.h sqli_fingerprints.h
-	${CC} ${CFLAGS} -o fptool fptool.c sqlparse.c
+fptool: Makefile fptool.c libinjection_sqli.c libinjection.h sqlparse_data.h
+	${CC} ${CFLAGS} -o fptool fptool.c libinjection_sqli.c
 
-test_speed: sqlparse_data.h sqlparse.c sqlparse.h test_speed.c
-	${CC} ${CFLAGS} -o test_speed sqlparse.c test_speed.c  modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
+test_speed: sqlparse_data.h libinjection_sqli.c libinjection.h test_speed.c
+	${CC} ${CFLAGS} -DNDEDBUG -o test_speed libinjection_sqli.c test_speed.c  modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
 	./test_speed
 
-test_unit: test_driver.py sqli sqlparse_data.h sqlparse.c sqlparse.h
+test_unit: test_driver.py sqli sqlparse_data.h libinjection_sqli.c libinjection.h
 	nosetests --with-xunit test_driver.py
 
-valgrind: test_driver.py sqli sqlparse_data.h sqlparse.c sqlparse.h
+valgrind: test_driver.py sqli sqlparse_data.h libinjection_sqli.c libinjection.h
 	rm -f valgrind-*.xml
 	${MAKE} VALGRIND=1 test_unit
 
@@ -86,25 +79,18 @@ test_negative: reader
 
 .PHONY: test_positive test_negative test test_unit test_speed
 
-sqli_fingerprints.h: fingerprints.txt fingerprints2c.py
-	./fingerprints2c.py > ./sqli_fingerprints.h
-
 sqlparse_data.json: Makefile sqlparse_map.py
 	./sqlparse_map.py > sqlparse_data.json
 
-sqlparse_data.h: Makefile sqlparse_data.json
+sqlparse_data.h: Makefile sqlparse2c.py sqlparse_data.json
 	./sqlparse2c.py < sqlparse_data.json > ./sqlparse_data.h
-
-indent: sqlparse.h sqlparse.c
-	${INDENT} -kr -nut sqlparse.h sqlparse.c test_speed.c reader.c
-.PHONY: indent
 
 sort:
 	wc -l fingerprints.txt
 	LC_ALL=C sort -u fingerprints.txt > /tmp/junk
 	mv /tmp/junk fingerprints.txt
 	wc -l fingerprints.txt
-	./fingerprints2c.py > ./sqli_fingerprints.h
+	${MAKE} sqlparse_data.h
 
 clean:
 	rm -f *~ *.pyc
@@ -117,9 +103,9 @@ clean:
 	rm -f gmon.out nosetests.xml valgrind-*.txt
 	rm -f reader extractor is_sqli lcov-reader sqli
 
-sqli-gcov: sqli_fingerprints.h
+sqli-gcov:
 	rm -f sqli
-	gcc -g -fprofile-arcs -ftest-coverage -O0 -o sqli sqli_cli.c sqlparse.c modp_burl.c modp_ascii.c modp_xml.c
+	gcc -g -fprofile-arcs -ftest-coverage -O0 -o sqli sqli_cli.c libinjection_sqli.c modp_burl.c modp_ascii.c modp_xml.c
 
 # for jenkins
 gcovr-unittest-xml: sqli-gcov
@@ -129,7 +115,7 @@ gcovr-unittest-xml: sqli-gcov
 # for jenkins
 gcovr-samples-xml:
 	rm -f reader libinjection-samples-gcov.xml
-	g++ -g -O0 -fprofile-arcs -ftest-coverage -Wall -Wextra -o reader sqlparse.c reader.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
+	g++ -g -O0 -fprofile-arcs -ftest-coverage -Wall -Wextra -o reader libinjection_sqli.c reader.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
 	./reader ../data/*.txt > /dev/null
 	gcovr --version
 	gcovr -d -o libinjection-samples-gcov.xml --gcov-exclude='.*modp_.*' --gcov-exclude='reader.*' --xml -r `pwd`
@@ -146,8 +132,8 @@ lcov: sqli-gcov
 	genhtml -o lcov-html libinjection.info
 .PHONY: lcov
 
-lcov-reader: Makefile sqlparse_data.h sqlparse.h sqlparse.c reader.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
-	g++ -g -O0 -fprofile-arcs -ftest-coverage -Wall -Wextra -o reader sqlparse.c reader.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
+lcov-reader: Makefile sqlparse_data.h libinjection.h libinjection_sqli.c reader.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
+	g++ -g -O0 -fprofile-arcs -ftest-coverage -Wall -Wextra -o reader libinjection_sqli.c reader.c modp_qsiter.c modp_burl.c modp_ascii.c modp_xml.c
 	lcov -b . --directory . --zerocounters
 	-./reader ../data/*.txt
 	lcov -b . --directory . --capture --output-file libinjection.info
@@ -163,6 +149,6 @@ http:
 	python -m  SimpleHTTPServer
 .PHONY: http
 
-python: sqli_fingerprints.h sqlparse_data.h
+python: libinjection_sqli.c libinjection.h sqlparse_private.h sqlparse_data.h
 	sudo python setup.py --verbose build --force
 	sudo python setup.py --verbose install

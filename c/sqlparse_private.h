@@ -11,7 +11,7 @@
 #ifndef _SQLPARSE_PRIVATE_H
 #define _SQLPARSE_PRIVATE_H
 
-#include "sqlparse.h"
+#include "libinjection.h"
 
 typedef struct {
     const char *word;
@@ -22,8 +22,6 @@ char bsearch_keyword_type(const char *key, const keyword_t keywords[],
                           size_t len);
 
 int is_operator2(const char *key);
-
-int is_sqli_pattern(const char *key);
 
 size_t parse_none(sfilter * sf);
 size_t parse_money(sfilter * sf);

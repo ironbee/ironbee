@@ -73,6 +73,9 @@ memchr2(const char *haystack, size_t haystack_len, char c0, char c1)
  * C Standard library 'strspn' only works for 'c-strings' (null terminated)
  * This works on arbitrary length.
  *
+ * Performance notes:
+ *   not critical
+ *
  * Porting notes:
  *   if accept is 'ABC', then this function would be similar to
  *   a_regexp.match(a_str, '[ABC]*'),
@@ -92,17 +95,22 @@ size_t strlenspn(const char *s, size_t len, const char *accept)
 }
 
 /*
- * ASCII case insenstive compare only!
+ * ASCII half-case-insenstive compare!
+ *
+ * DANGER: this assume arg0 is *always upper case*
+ *  and arg1 is mixed case!!
+ *
+ * Required since libc version uses the current locale
+ * and is much slower.
  */
-int cstrcasecmp(const char *a, const char *b)
+static int cstrcasecmp(const char *a, const char *b)
 {
-    int ca, cb;
+    char ca, cb;
 
     do {
-        ca = *a++ & 0xff;
-        cb = *b++ & 0xff;
-        if (ca >= 'a' && ca <= 'z')
-            ca -= 0x20;
+        ca = *a++;
+        cb = *b++;
+        assert(ca < 'a' || ca > 'z');
         if (cb >= 'a' && cb <= 'z')
             cb -= 0x20;
     } while (ca == cb && ca != '\0');
@@ -111,57 +119,85 @@ int cstrcasecmp(const char *a, const char *b)
 }
 
 /**
- * Case insentive string compare.
+ * Case sensitive string compare.
  *  Here only to make code more readable
  */
-int streq(const char *a, const char *b)
+static int streq(const char *a, const char *b)
 {
-    return cstrcasecmp(a, b) == 0;
+    return strcmp(a, b) == 0;
 }
 
 /*
- * Case-sensitive binary search.
+ * Case-sensitive binary search with "deferred detection of equality"
+ * We assume in most cases the key will NOT be found.  This makes the
+ * main loop only have one comparison branch, which should optimize
+ * better in CPU.  See #Deferred_detection_of_equality in
+ * http://en.wikipedia.org/wiki/Binary_search_algorithm
  *
+ * This is used for fingerprint lookups, and a few other places.
+ * Note in normal operation this maybe takes 1% of total run time, so
+ * replacing this with another datastructure probably isn't worth
+ * the effort.
  */
 int bsearch_cstr(const char *key, const char *base[], size_t nmemb)
 {
-    int left = 0;
-    int right = (int) nmemb - 1;
+    size_t pos;
+    size_t left = 0;
+    size_t right = nmemb - 1;
 
-    while (left <= right) {
-        int pos = (left + right) / 2;
-        int cmp = strcmp(base[pos], key);
-        if (cmp == 0) {
-            return TRUE;
-        } else if (cmp < 0) {
+    /* assert(nmemb > 0); */
+
+    while (left < right) {
+        pos = (left + right) >> 1;
+        /* assert(pos < right); */
+        if (strcmp(base[pos], key) < 0) {
             left = pos + 1;
         } else {
-            right = pos - 1;
+            right = pos;
         }
     }
-    return FALSE;
+    if ((left == right) && strcmp(base[left], key) == 0) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
 }
 
 /*
  * Case-insensitive binary search
+ *
  */
 int bsearch_cstrcase(const char *key, const char *base[], size_t nmemb)
 {
-    int left = 0;
-    int right = (int) nmemb - 1;
+    size_t pos;
+    size_t left = 0;
+    size_t right = nmemb - 1;
 
-    while (left <= right) {
-        int pos = (left + right) / 2;
-        int cmp = cstrcasecmp(base[pos], key);
-        if (cmp == 0) {
-            return TRUE;
-        } else if (cmp < 0) {
+    while (left < right) {
+        pos = (left + right) >> 1;
+        /* arg0 = upper case only, arg1 = mixed case */
+        if (cstrcasecmp(base[pos], key) < 0) {
             left = pos + 1;
         } else {
-            right = pos - 1;
+            right = pos;
         }
     }
-    return FALSE;
+    if ((left == right) && cstrcasecmp(base[left], key) == 0) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+/**
+ *
+ */
+#define UNUSED(x) (void)(x)
+
+static int is_sqli_pattern(const char* key, void* callbackarg)
+{
+    UNUSED(callbackarg);
+    return bsearch_cstr(key, sql_fingerprints, sqli_fingerprints_sz);
 }
 
 /**
@@ -171,31 +207,35 @@ int bsearch_cstrcase(const char *key, const char *base[], size_t nmemb)
  * Porting Notes:
  *  given a mapping/hash of string to char
  *  this is just
- *     mapping[key.upper()]
+ *    typecode = mapping[key.upper()]
  */
 char bsearch_keyword_type(const char *key, const keyword_t * keywords,
                           size_t numb)
 {
-    int left = 0;
-    int right = (int) numb - 1;
+    size_t pos;
+    size_t left = 0;
+    size_t right = numb - 1;
 
-    while (left <= right) {
-        int pos = (left + right) / 2;
-        int cmp = cstrcasecmp(keywords[pos].word, key);
-        if (cmp == 0) {
-            return keywords[pos].type;
-        } else if (cmp < 0) {
+    while (left < right) {
+        pos = (left + right) >> 1;
+
+        /* arg0 = upper case only, arg1 = mixed case */
+        if (cstrcasecmp(keywords[pos].word, key) < 0) {
             left = pos + 1;
         } else {
-            right = pos - 1;
+            right = pos;
         }
     }
-    return CHAR_NULL;
+    if ((left == right) && cstrcasecmp(keywords[left].word, key) == 0) {
+        return keywords[left].type;
+    } else {
+        return CHAR_NULL;
+    }
 }
 
 /* st_token methods
  *
- * The folow just manipulates the stoken_t type
+ * The following functions manipulates the stoken_t type
  *
  *
  */
@@ -247,7 +287,8 @@ int st_is_unary_op(const stoken_t * st)
                                  strcmp(st->val, "-") &&
                                  strcmp(st->val, "!") &&
                                  strcmp(st->val, "!!") &&
-                                 cstrcasecmp(st->val, "NOT") &&
+                                 /* arg0 = upper case only, arg1 = mixed case */
+                                 cstrcasecmp("NOT", st->val) &&
                                  strcmp(st->val, "~")));
 }
 
@@ -262,8 +303,9 @@ int st_is_arith_op(const stoken_t * st)
                                  strcmp(st->val, "*") &&
                                  strcmp(st->val, "|") &&
                                  strcmp(st->val, "&") &&
-                                 cstrcasecmp(st->val, "MOD") &&
-                                 cstrcasecmp(st->val, "DIV")));
+                                 /* arg1 = upper case only, arg1 = mixed case */
+                                 cstrcasecmp("MOD", st->val) &&
+                                 cstrcasecmp("DIV", st->val)));
 }
 
 /* Parsers
@@ -795,6 +837,10 @@ int parse_token(sfilter * sf)
     return FALSE;
 }
 
+/**
+ * Initializes parsing state
+ *  TBD: explicity add parsing content (NULL, SINGLE, DOUBLE)
+ */
 void sfilter_reset(sfilter * sf, const char *s, size_t len)
 {
     memset(sf, 0, sizeof(sfilter));
@@ -802,6 +848,22 @@ void sfilter_reset(sfilter * sf, const char *s, size_t len)
     sf->slen = len;
 }
 
+/** See if two tokens can be merged since they are compound SQL phrases.
+ *
+ * This takes two tokens, and, if they are the right type,
+ * merges their values together.  Then checks to see if the
+ * new value is special using the PHRASES mapping.
+ *
+ * Example: "UNION" + "ALL" ==> "UNION ALL"
+ *
+ * C Security Notes: this is safe to use C-strings (null-terminated)
+ *  since the types involved by definition do not have embedded nulls
+ *  (e.g. there is no keyword with embedded null)
+ *
+ * Porting Notes: since this is C, it's oddly complicated.
+ *  This is just:  multikeywords[token.value + ' ' + token2.value]
+ *
+ */
 int syntax_merge_words(stoken_t * a, stoken_t * b)
 {
     size_t sz1;
@@ -818,8 +880,8 @@ int syntax_merge_words(stoken_t * a, stoken_t * b)
 
     sz1 = strlen(a->val);
     sz2 = strlen(b->val);
-    sz3 = sz1 + sz2 + 1;
-    if (sz3 >= ST_MAX_SIZE) {
+    sz3 = sz1 + sz2 + 1; /* +1 for space in the middle */
+    if (sz3 >= ST_MAX_SIZE) { /* make sure there is room for ending null */
         return FALSE;
     }
     /*
@@ -832,9 +894,6 @@ int syntax_merge_words(stoken_t * a, stoken_t * b)
 
     ch = bsearch_keyword_type(tmp, multikeywords, multikeywords_sz);
     if (ch != CHAR_NULL) {
-        /*
-         * -1, don't copy the null byte
-         */
         st_assign(a, ch, tmp, sz3);
         return TRUE;
     } else {
@@ -970,8 +1029,10 @@ int sqli_tokenize(sfilter * sf, stoken_t * sout)
              * fix up for ambigous "IN"
              * handle case where IN is typically a function
              * but used in compound "IN BOOLEAN MODE" jive
+             *
+             * warning on cstrcasecmp arg0=upper case only, arg1 = mixed
              */
-            if (last->type == 'n' && !cstrcasecmp(last->val, "IN")) {
+            if (last->type == 'n' && !cstrcasecmp("IN", last->val)) {
                 st_copy(last, current);
                 st_assign(sout, 'f', "IN", 2);
                 return TRUE;
@@ -1121,8 +1182,10 @@ int filter_fold(sfilter * sf, stoken_t * sout)
  *          double quote.
  *
  */
-int is_string_sqli(sfilter * sql_state, const char *s, size_t slen,
-                    const char delim, ptr_fingerprints_fn fn)
+int libinjection_is_string_sqli(sfilter * sql_state,
+                                const char *s, size_t slen,
+                                const char delim,
+                                ptr_fingerprints_fn fn, void* callbackarg)
 {
     int tlen = 0;
     char ch;
@@ -1158,7 +1221,7 @@ int is_string_sqli(sfilter * sql_state, const char *s, size_t slen,
         return TRUE;
     }
 
-    patmatch = fn(sql_state->pat);
+    patmatch = fn(sql_state->pat, callbackarg);
 
     /*
      * No match.
@@ -1179,6 +1242,11 @@ int is_string_sqli(sfilter * sql_state, const char *s, size_t slen,
     switch (tlen) {
     case 2:{
         /*
+         * case 2 are "very small SQLi" which make them
+         * hard to tell from normal input...
+         */
+
+        /*
          * if 'comment' is '#' ignore.. too many FP
          */
         if (sql_state->tokenvec[1].val[0] == '#') {
@@ -1197,6 +1265,28 @@ int is_string_sqli(sfilter * sql_state, const char *s, size_t slen,
                 return FALSE;
         }
 
+        /*
+         * if '1c' ends with '/x' then it's sqli
+         */
+        if (sql_state->tokenvec[0].type == '1' &&
+            sql_state->tokenvec[1].type == 'c' &&
+            sql_state->tokenvec[1].val[0] == '/') {
+            return TRUE;
+        }
+
+        /*
+         * if 'oc' then input must be 'CASE/x'
+         * used in HPP attack
+         */
+        if (sql_state->tokenvec[0].type == 'o' &&
+            sql_state->tokenvec[1].type == 'c' &&
+            sql_state->tokenvec[1].val[0] == '/' &&
+            cstrcasecmp("CASE", sql_state->tokenvec[0].val) != 0)
+        {
+            sql_state->reason = __LINE__;
+            return FALSE;
+        }
+
         /**
          * there are some odd base64-looking query string values
          * 1234-ABCDEFEhfhihwuefi--
@@ -1206,6 +1296,8 @@ int is_string_sqli(sfilter * sql_state, const char *s, size_t slen,
          *
          * Need to check -original- string since the folding step
          * may have merged tokens, e.g. "1+FOO" is folded into "1"
+         *
+         * Note: evasion: 1*1--
          */
         if (sql_state->tokenvec[0].type == '1'&& sql_state->tokenvec[1].type == 'c') {
             /*
@@ -1293,8 +1385,8 @@ int is_string_sqli(sfilter * sql_state, const char *s, size_t slen,
  *
  *
  */
-int is_sqli(sfilter * sql_state, const char *s, size_t slen,
-            ptr_fingerprints_fn fn)
+int libinjection_is_sqli(sfilter * sql_state, const char *s, size_t slen,
+                         ptr_fingerprints_fn fn, void* callbackarg)
 {
 
     /*
@@ -1304,10 +1396,15 @@ int is_sqli(sfilter * sql_state, const char *s, size_t slen,
         return FALSE;
     }
 
+    if (fn == NULL) {
+        fn = is_sqli_pattern;
+    }
+
     /*
      * test input "as-is"
      */
-    if (is_string_sqli(sql_state, s, slen, CHAR_NULL, fn)) {
+    if (libinjection_is_string_sqli(sql_state, s, slen, CHAR_NULL,
+                                    fn, callbackarg)) {
         return TRUE;
     }
 
@@ -1317,11 +1414,12 @@ int is_sqli(sfilter * sql_state, const char *s, size_t slen,
      * example: if input if "1' = 1", then pretend it's
      *   "'1' = 1"
      * Porting Notes: example the same as doing
-     *   is_string_sqli(sql_state, "'" + s, slen+1, NULL, fn)
+     *   is_string_sqli(sql_state, "'" + s, slen+1, NULL, fn, arg)
      *
      */
     if (memchr(s, CHAR_SINGLE, slen)
-        && is_string_sqli(sql_state, s, slen, CHAR_SINGLE, fn)) {
+        && libinjection_is_string_sqli(sql_state, s, slen, CHAR_SINGLE,
+                                       fn, callbackarg)) {
         return TRUE;
     }
 
@@ -1329,7 +1427,8 @@ int is_sqli(sfilter * sql_state, const char *s, size_t slen,
      * same as above but with a double-quote "
      */
     if (memchr(s, CHAR_DOUBLE, slen)
-        && is_string_sqli(sql_state, s, slen, CHAR_DOUBLE, fn)) {
+        && libinjection_is_string_sqli(sql_state, s, slen, CHAR_DOUBLE,
+                                       fn, callbackarg)) {
         return TRUE;
     }
 
