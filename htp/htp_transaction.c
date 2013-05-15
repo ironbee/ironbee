@@ -492,6 +492,13 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 }
 
 htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const void *data, size_t len) {
+    if (data == NULL) return HTP_ERROR;
+    if (len == 0) return HTP_OK;
+
+    return htp_tx_req_process_body_data_ex(tx, data, len);
+}
+
+htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, size_t len) {
     // Keep track of the body length.
     tx->request_entity_len += len;
 
@@ -727,7 +734,7 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
 htp_status_t htp_tx_state_request_complete_partial(htp_tx_t *tx) {
     // Finalize request body.
     if (htp_tx_req_has_body(tx)) {
-        htp_status_t rc = htp_tx_req_process_body_data(tx, NULL, 0);
+        htp_status_t rc = htp_tx_req_process_body_data_ex(tx, NULL, 0);
         if (rc != HTP_OK) return rc;
     }
 
