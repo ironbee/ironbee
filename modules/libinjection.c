@@ -41,8 +41,7 @@
 #include <ironbee/util.h>
 
 #include <modp_ascii.h>
-#include <sqli_fingerprints.h>
-#include <sqlparse.h>
+#include <libinjection.h>
 #include <sqlparse_private.h>
 
 #include <assert.h>
@@ -265,7 +264,7 @@ ib_status_t sqli_op_execute(
 
     /* Run through libinjection. */
     // TODO: Support alternative SQLi pattern lookup
-    if (is_sqli(&sf, (const char *)ib_bytestr_const_ptr(bs), ib_bytestr_length(bs), is_sqli_pattern)) {
+    if (libinjection_is_sqli(&sf, (const char *)ib_bytestr_const_ptr(bs), ib_bytestr_length(bs), NULL, NULL)) {
         ib_log_debug_tx(tx, "Matched SQLi pattern: %s", sf.pat);
         *result = 1;
     }
