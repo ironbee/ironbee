@@ -1048,6 +1048,7 @@ protected:
 
 TEST_F(UrlencodedParser, Empty) {
     htp_urlenp_parse_complete(urlenp, "", 0);
+
     ASSERT_EQ(0, htp_table_size(urlenp->params));
 }
 
@@ -1091,22 +1092,22 @@ TEST_F(UrlencodedParser, EmptyKeyAndValue) {
     ASSERT_EQ(1, htp_table_size(urlenp->params));
 }
 
-TEST_F(UrlencodedParser, OnePair) {
-    htp_urlenp_parse_complete(urlenp, "p=1", 3);
-
-    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
-    ASSERT_TRUE(p != NULL);
-    ASSERT_EQ(0, bstr_cmp_c(p, "1"));
-
-    ASSERT_EQ(1, htp_table_size(urlenp->params));
-}
-
 TEST_F(UrlencodedParser, OnePairEmptyValue) {
     htp_urlenp_parse_complete(urlenp, "p=", 2);
 
     bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
     ASSERT_TRUE(p != NULL);
     ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, OnePair) {
+    htp_urlenp_parse_complete(urlenp, "p=1", 3);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(p, "1"));
 
     ASSERT_EQ(1, htp_table_size(urlenp->params));
 }
@@ -1121,6 +1122,154 @@ TEST_F(UrlencodedParser, TwoPairs) {
     bstr *q = (bstr *)htp_table_get_mem(urlenp->params, "q", 1);
     ASSERT_TRUE(q != NULL);
     ASSERT_EQ(0, bstr_cmp_c(q, "2"));
+
+    ASSERT_EQ(2, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, KeyNoValue1) {
+    htp_urlenp_parse_complete(urlenp, "p", 1);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, KeyNoValue2) {
+    htp_urlenp_parse_complete(urlenp, "p&", 2);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);   
+
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, KeyNoValue3) {
+    htp_urlenp_parse_complete(urlenp, "p&q", 3);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    bstr *q = (bstr *)htp_table_get_mem(urlenp->params, "q", 1);
+    ASSERT_TRUE(q != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(q, ""));
+
+    ASSERT_EQ(2, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, KeyNoValue4) {
+    htp_urlenp_parse_complete(urlenp, "p&q=2", 5);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    bstr *q = (bstr *)htp_table_get_mem(urlenp->params, "q", 1);
+    ASSERT_TRUE(q != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(q, "2"));
+
+    ASSERT_EQ(2, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, Partial1) {
+    htp_urlenp_parse_partial(urlenp, "p", 1);    
+    htp_urlenp_finalize(urlenp);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));   
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, Partial2) {
+    htp_urlenp_parse_partial(urlenp, "p", 1);
+    htp_urlenp_parse_partial(urlenp, "x", 1);
+    htp_urlenp_finalize(urlenp);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "px", 2);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, Partial3) {
+    htp_urlenp_parse_partial(urlenp, "p", 1);
+    htp_urlenp_parse_partial(urlenp, "x&", 2);
+    htp_urlenp_finalize(urlenp);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "px", 2);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, Partial4) {
+    htp_urlenp_parse_partial(urlenp, "p", 1);
+    htp_urlenp_parse_partial(urlenp, "=", 1);
+    htp_urlenp_finalize(urlenp);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, Partial5) {
+    htp_urlenp_parse_partial(urlenp, "p", 1);
+    htp_urlenp_parse_partial(urlenp, "", 0);
+    htp_urlenp_parse_partial(urlenp, "", 0);
+    htp_urlenp_parse_partial(urlenp, "", 0);
+    htp_urlenp_finalize(urlenp);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "p", 1);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p, ""));
+
+    ASSERT_EQ(1, htp_table_size(urlenp->params));
+}
+
+TEST_F(UrlencodedParser, Partial6) {
+    htp_urlenp_parse_partial(urlenp, "px", 2);
+    htp_urlenp_parse_partial(urlenp, "n", 1);
+    htp_urlenp_parse_partial(urlenp, "", 0);
+    htp_urlenp_parse_partial(urlenp, "=", 1);
+    htp_urlenp_parse_partial(urlenp, "1", 1);
+    htp_urlenp_parse_partial(urlenp, "2", 1);
+    htp_urlenp_parse_partial(urlenp, "&", 1);
+    htp_urlenp_parse_partial(urlenp, "qz", 2);
+    htp_urlenp_parse_partial(urlenp, "n", 1);
+    htp_urlenp_parse_partial(urlenp, "", 0);
+    htp_urlenp_parse_partial(urlenp, "=", 1);
+    htp_urlenp_parse_partial(urlenp, "2", 1);
+    htp_urlenp_parse_partial(urlenp, "3", 1);
+    htp_urlenp_parse_partial(urlenp, "&", 1);
+    htp_urlenp_finalize(urlenp);
+
+    bstr *p = (bstr *)htp_table_get_mem(urlenp->params, "pxn", 3);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p, "12"));
+
+    bstr *q = (bstr *)htp_table_get_mem(urlenp->params, "qzn", 3);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(q, "23"));
 
     ASSERT_EQ(2, htp_table_size(urlenp->params));
 }
