@@ -682,6 +682,11 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
         pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
+    if ( (txdata->data == NULL) || (txdata->dlen == 0) ) {
+        ib_log_notice(ib, "Request body data with no data.  Ignoring.");
+        return IB_OK;
+    }
+
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
         return IB_EUNKNOWN;
@@ -988,6 +993,11 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     IB_PROVIDER_IFACE_TYPE(parser) *iface =
         pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
+
+    if ( (txdata->data == NULL) || (txdata->dlen == 0) ) {
+        ib_log_notice(ib, "Response body data with no data.  Ignoring.");
+        return IB_OK;
+    }
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
