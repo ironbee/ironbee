@@ -53,7 +53,7 @@ public:
      * Unparse request line into text block.
      *
      * @param[out] out   String to append text to.
-     * @parma[in]  event RequestEvent to unparse.
+     * @param[in]  event RequestEvent to unparse.
      **/
     static
     void unparse_request_line(
@@ -65,7 +65,7 @@ public:
      * Unparse response line into text block.
      *
      * @param[out] out   String to append text to.
-     * @parma[in]  event ResponseEvent to unparse.
+     * @param[in]  event ResponseEvent to unparse.
      **/
     static
     void unparse_response_line(
