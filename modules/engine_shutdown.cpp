@@ -32,6 +32,13 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/version.hpp>
+
+#if BOOST_VERSION >= 105300
+#define HAVE_BOOST_ATOMIC_HPP 1
+#endif
+
+#ifdef HAVE_BOOST_ATOMIC_HPP
 
 // Avoid a part of atomic.hpp.
 #ifndef BOOST_NO_CXX11_CHAR16_T
@@ -53,6 +60,12 @@
 #error "EngineShutdown Module is not lock-free. Define IBMOD_ENGINE_SHUTDOWN_LOCK to ignore."
 #endif
 
+#endif
+
+#else
+extern "C" {
+#include <signal.h>
+}
 #endif
 
 /* C includes. */
@@ -140,7 +153,11 @@ private:
      */
     mode_t get_mode() const
     {
+#ifdef HAVE_BOOST_ATOMIC_HPP
         return m_mode.load(boost::memory_order_acquire);
+#else
+        return (mode_t)m_mode;
+#endif
     }
 
     /**
@@ -150,7 +167,11 @@ private:
      */
     void set_mode(mode_t mode)
     {
+#ifdef HAVE_BOOST_ATOMIC_HPP
         m_mode.store(mode, boost::memory_order_release);
+#else
+        m_mode = (sig_atomic_t)mode;
+#endif
     }
 
     /**
@@ -237,7 +258,12 @@ private:
     /**
      * The mode configuration.
      */
-    boost::atomic<mode_t> m_mode;
+#ifdef HAVE_BOOST_ATOMIC_HPP
+    boost::atomic<mode_t>
+#else
+    sig_atomic_t
+#endif
+        m_mode;
 };
 
 IBPP_BOOTSTRAP_MODULE_DELEGATE("EngineShutdownModule", EngineShutdownModule);
