@@ -43,7 +43,7 @@
 #define BOOST_NO_CXX11_CHAR32_T 1
 #endif
 
-#include <boost/atomic/atomic.hpp>
+#include <boost/atomic.hpp>
 
 // Force the user to accept not-lock-free use of the EngineShutdown module
 // if they cannot compile lock free pointer access.
