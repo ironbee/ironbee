@@ -44,7 +44,7 @@ endif
 
 LDFLAGS += $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
 
-# This is a common set of files for runnign tests of modules.
+# This is a common set of files for running tests of modules.
 MODULE_TEST_LDADD = $(LDADD) \
                     $(PCRE_LDADD) \
                     -lboost_filesystem$(BOOST_SUFFIX) \
@@ -278,7 +278,8 @@ test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
 
 test_ibmod_engine_shutdown_SOURCES = test_ibmod_engine_shutdown.cpp \
                                      test_main.cpp
-test_ibmod_engine_shutdown_LDADD = $(MODULE_TEST_LDADD)
+test_ibmod_engine_shutdown_LDADD = $(MODULE_TEST_LDADD) \
+                                   $(builddir)/../ironbeepp/libibpp.la
 
 test_luajit_SOURCES = test_main.cpp \
                       test_luajit.cpp \
