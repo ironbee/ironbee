@@ -144,7 +144,8 @@ setmetatable(moduleapi, ibengine)
 -- @param[in] index The module index in the IronBee engine.
 -- @param[in] register_directive A function that will
 --            do the work in C to register a directive with the IronBee 
---            engine.
+--            engine. May be null if this is used after the
+--            ironbe configuration phase.
 moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
     local t = ibengine:new(ib)
 
@@ -251,6 +252,12 @@ end
 -- @param[in] dirtype The C enum type of the directive.
 -- @param[in] fn The function to call.
 moduleapi.register_directive = function(self, name, dirtype, fn, flagmap)
+
+    -- If there is no registration directive, bail out.
+    if self.cregister_directive ~= nil then
+        return ffi.C.IB_OK
+    end
+
     lua_module_directives[name] = { 
         type = dirtype,
         fn = fn,
@@ -349,7 +356,9 @@ end
 -- @param[in] module_index The index of the module in the engine.
 -- @param[in] name The name of the module. Typically the file name.
 -- @param[in] cregister_directive A C function that Lua will call
---            to register directives.
+--            to register directives. This may be nil
+--            if this is called outside of the ironbee configuration
+--            process.
 -- @param[in] module_function The user's module code as a function.
 --            This is called and passed a new IronBee Engine API 
 --            table with added functions for registering
