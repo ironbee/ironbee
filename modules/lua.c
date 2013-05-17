@@ -2262,8 +2262,7 @@ static ib_status_t modlua_module_load_wire_callbacks(
  * @param[in] ib IronBee engine.
  * @param[in] cfg Configuration.
  * @param[in] type The type of the thing to reload.
- * @param[in] file Where is the Lua file to load. This is
- *            not copied, but stored.
+ * @param[in] file Where is the Lua file to load. This is copied.
  */
 static ib_status_t modlua_record_reload(
     ib_engine_t *ib,
@@ -2290,9 +2289,24 @@ static ib_status_t modlua_record_reload(
         return IB_EALLOC;
     }
 
-    data->file = file;
+    /* Record type. */
     data->type = type;
-    data->rule_id = rule_id;
+
+    /* Copy file name. */
+    data->file = ib_mpool_strdup(mp, file);
+    if (data->file == NULL) {
+        ib_log_error(ib, "Failed to copy file name %s", file);
+        return IB_EALLOC;
+    }
+
+    /* Copy rule_id. */
+    if (rule_id != NULL) {
+        data->rule_id = ib_mpool_strdup(mp, rule_id);
+        if (data->rule_id == NULL) {
+            ib_log_error(ib, "Failed to copy rule_id %s", rule_id);
+            return IB_EALLOC;
+        }
+    }
 
     rc = ib_list_push(cfg->reloads, (void *)data);
     if (rc != IB_OK) {
