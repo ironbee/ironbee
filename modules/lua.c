@@ -1857,7 +1857,7 @@ static ib_status_t modlua_reload(ib_engine_t *ib, lua_State *L)
     assert(L != NULL);
 
     ib_status_t rc = IB_OK;
-    ib_status_t tmp_rc;
+    ib_status_t tmp_rc = IB_OK;
     ib_module_t *module;
     modlua_cfg_t *cfg;
     const ib_list_node_t *node;
