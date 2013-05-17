@@ -3363,7 +3363,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     ib_core_cfg_t *corecfg = NULL;
     size_t p1_len = strlen(p1);
     size_t p1_unescaped_len;
-    char *p1_unescaped = malloc(p1_len+1);
+    char *p1_unescaped;
     ib_context_t *ctx = NULL;
     modlua_cfg_t *cfg = NULL;
 
@@ -3378,6 +3378,13 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
         return rc;
     }
 
+    rc = ib_core_context_config(ib_context_main(ib), &corecfg);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to retrieve core configuration.");
+        return rc;
+    }
+
+    p1_unescaped = malloc(p1_len+1);
     if ( p1_unescaped == NULL ) {
         return IB_EALLOC;
     }
@@ -3395,12 +3402,6 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
             "Value for parameter \"%s\" could not be unescaped: %s";
         ib_cfg_log_debug(cp, msg, name, p1);
         free(p1_unescaped);
-        return rc;
-    }
-
-    rc = ib_core_context_config(ib_context_main(ib), &corecfg);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to retrieve core configuration.");
         return rc;
     }
 
