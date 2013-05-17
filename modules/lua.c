@@ -1284,6 +1284,18 @@ static ib_status_t modlua_callback_setup(
         return rc;
     }
 
+    if (lua == NULL) {
+        ib_log_error(
+            ib,
+            "No module configuration data found. Cannot retrieve Lua stack.");
+        return IB_EOTHER;
+    }
+    if (lua->L == NULL) {
+        ib_log_error(
+            ib,
+            "No Lua stack found in module data. Cannot retrieve Lua stack.");
+        return IB_EOTHER;
+    }
     L = lua->L;
 
     /* Push Lua dispatch method to stack. */
