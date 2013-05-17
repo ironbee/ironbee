@@ -94,12 +94,29 @@ struct modlua_runtime_t {
     lua_State          *L;            /**< Lua stack */
 };
 
+enum modlua_reload_type_t {
+    MODLUA_RELOAD_RULE,
+    MODLUA_RELOAD_MODULE
+};
+typedef enum modlua_reload_type_t modlua_reload_type_t;
+
+/**
+ * This represents a Lua item that must be reloaded in a transaction.
+ */
+struct modlua_reload_t {
+    modlua_reload_type_t type; /**< Is this a module or a rule? */
+    const char *file; /**< File holding the rule or module code. */
+    const char *rule_id; /**< Rule if this is a rule type. */
+};
+typedef struct modlua_reload_t modlua_reload_t;
+
 /**
  * Module configuration.
  */
 struct modlua_cfg_t {
     lua_State          *L;         /**< Lua runtime stack. */
     ib_lock_t          *L_lck;     /**< Lua runtime stack lock. */
+    ib_list_t          *reloads;   /**< modlua_reload_t list. */
     char               *pkg_path;  /**< Package path Lua Configuration. */
     char               *pkg_cpath; /**< Cpath Lua Configuration. */
 };
@@ -188,64 +205,6 @@ static ib_status_t modlua_runtime_set(
     ib_conn_set_module_data(conn, module, lua);
 
     return IB_OK;
-}
-
-/**
- * This will use module lock to atomically call @a fn.
- *
- * The argument @a fn will be either
- * ib_lua_new_thread() or ib_lua_join_thread() which will be called
- * only if module lock can be locked using @c semop.
- *
- * @param[in] ib IronBee context. Used for logging.
- * @param[in] fn The function to execute. This is passed @a ib and @a fn.
- * @param[in,out] L The Lua State to create or destroy. Passed to @a fn.
- *                This may be NULL as it is sometimes an input value
- *                depending on what @a fn does with it.
- * @returns If any error locking or unlocking the
- *          semaphore is encountered, the error code is returned.
- *          Otherwise the result of @a fn is returned.
- */
-static ib_status_t call_in_critical_section(ib_engine_t *ib,
-                                            critical_section_fn_t fn,
-                                            modlua_cfg_t *cfg,
-                                            lua_State **L)
-{
-    assert(ib != NULL);
-    assert(fn != NULL);
-    assert(cfg != NULL);
-    assert(cfg->L != NULL);
-    assert(cfg->L_lck != NULL);
-
-    /* Return code from IronBee calls. */
-    ib_status_t ib_rc;
-    /* Return code form critical call. */
-    ib_status_t critical_rc;
-
-    ib_rc  = ib_lock_lock(cfg->L_lck);
-    /* Report semop error and return. */
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, "Failed to lock Lua context.");
-        return ib_rc;
-    }
-
-    /* Execute lua call in critical section. */
-    critical_rc = fn(ib, cfg->L, L);
-
-    ib_rc = ib_lock_unlock(cfg->L_lck);
-
-    if (critical_rc != IB_OK) {
-        ib_log_error(ib, "Critical call failed: %s",
-                     ib_status_to_string(critical_rc));
-    }
-
-    /* Report semop error and return. */
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, "Failed to unlock Lua context.");
-        return ib_rc;
-    }
-
-    return critical_rc;
 }
 
 /**
@@ -1525,6 +1484,436 @@ static ib_status_t modlua_callback_dispatch(
     return modlua_callback_dispatch_base(ib, module, L);
 }
 
+
+/**
+ * Given a search prefix this will build a search path and add it to Lua.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in,out] L Lua State that the search path will be set in.
+ * @param[in] prefix The prefix. ?.lua will be appended.
+ * @returns
+ *   - IB_OK on success
+ *   - IB_EALLOC on malloc failure.
+ */
+static ib_status_t modlua_append_searchprefix(
+    ib_engine_t *ib,
+    lua_State *L,
+    const char *prefix)
+{
+    /* This is the search pattern that is appended to each element of
+     * lua_search_paths and then added to the Lua runtime package.path
+     * global variable. */
+    const char *lua_file_pattern = "?.lua";
+
+    char *path = NULL; /* Tmp string to build a search path. */
+    ib_log_debug(ib, "Adding \"%s\" to lua search path.", prefix);
+
+    /* Strlen + 2. One for \0 and 1 for the path separator. */
+    path = malloc(strlen(prefix) + strlen(lua_file_pattern) + 2);
+    if (path == NULL) {
+        ib_log_error(ib, "Could allocate buffer for string append.");
+        free(path);
+        return IB_EALLOC;
+    }
+
+    strcpy(path, prefix);
+    strcpy(path + strlen(path), "/");
+    strcpy(path + strlen(path), lua_file_pattern);
+
+    ib_lua_add_require_path(ib, L, path);
+
+    ib_log_debug(ib, "Added \"%s\" to lua search path.", path);
+
+    /* We are done with path. To be safe, we NULL it as there is more work
+     * to be done in this function, and we do not want to touch path again. */
+    free(path);
+
+    return IB_OK;
+}
+
+/**
+ * Set the search path in the lua state from the core config.
+ */
+static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
+{
+    ib_status_t rc;
+
+    ib_core_cfg_t *corecfg = NULL;
+    /* Null terminated list of search paths. */
+    const char *lua_search_paths[3];
+
+
+    rc = ib_core_context_config(ib_context_main(ib), &corecfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not retrieve core module configuration.");
+        return rc;
+    }
+
+    /* Initialize the search paths list. */
+    lua_search_paths[0] = corecfg->module_base_path;
+    lua_search_paths[1] = corecfg->rule_base_path;
+    lua_search_paths[2] = NULL;
+
+    for (int i = 0; lua_search_paths[i] != NULL; ++i)
+    {
+        rc = modlua_append_searchprefix(ib, L, lua_search_paths[i]);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Pre-load files into the given lua stack.
+ *
+ * This will attempt to run...
+ *   - waggle  = require("ironbee/waggle")
+ *   - ffi     = require("ffi")
+ *   - ironbee = require("ironbee-ffi")
+ *   - ibapi   = require("ironbee/api")
+ *   - modlua  = require("ironbee/module")
+ *
+ * @param[in] ib IronBee engine. Used to find load paths from the
+ *            core module.
+ * @param[out] L The Lua state that the modules will be "required" into.
+ */
+static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
+
+    ib_status_t rc;
+
+    const char *lua_preloads[][2] = { { "waggle", "ironbee/waggle" },
+                                      { "ibconfig", "ironbee/config" },
+                                      { "ffi", "ffi" },
+                                      { "ffi", "ffi" },
+                                      { "ironbee", "ironbee-ffi" },
+                                      { "ibapi", "ironbee/api" },
+                                      { "modlua", "ironbee/module" },
+                                      { NULL, NULL } };
+
+    for (int i = 0; lua_preloads[i][0] != NULL; ++i)
+    {
+        rc = ib_lua_require(ib, L, lua_preloads[i][0], lua_preloads[i][1]);
+        if (rc != IB_OK)
+        {
+            ib_log_error(ib,
+                "Failed to load mode \"%s\" into \"%s\".",
+                lua_preloads[i][1],
+                lua_preloads[i][0]);
+            return rc;
+        }
+    }
+    return IB_OK;
+}
+
+static ib_status_t modlua_newstate(
+    ib_engine_t *ib,
+    modlua_cfg_t *cfg,
+    lua_State **Lout)
+{
+    lua_State *L;
+    ib_status_t rc;
+    L = luaL_newstate();
+    if (L == NULL) {
+        ib_log_error(ib, "Failed to initialize lua module.");
+        return IB_EUNKNOWN;
+    }
+
+    ib_log_debug(ib, "Opening shared Lua state common libs.");
+    luaL_openlibs(L);
+
+    /* Setup search paths before ffi, api, etc loading. */
+    rc = modlua_setup_searchpath(ib, L);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Load ffi, api, etc. */
+    ib_log_debug(ib, "Preloading libraries into shared Lua state.");
+    rc = modlua_preload(ib, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to pre-load Lua files.");
+        return rc;
+    }
+
+    /* Set package paths if configured. */
+    if (cfg->pkg_path) {
+        ib_log_debug(
+            ib,
+            "Using lua package.path=\"%s\"",
+             cfg->pkg_path);
+        lua_getfield(L, -1, "path");
+        lua_pushstring(L, cfg->pkg_path);
+        lua_setglobal(L, "path");
+    }
+    if (cfg->pkg_cpath) {
+        ib_log_debug(
+            ib,
+            "Using lua package.cpath=\"%s\"",
+            cfg->pkg_cpath);
+        lua_getfield(L, -1, "cpath");
+        lua_pushstring(L, cfg->pkg_cpath);
+        lua_setglobal(L, "cpath");
+    }
+
+    *Lout = L;
+
+    return IB_OK;
+}
+
+/**
+ * Called by modlua_module_load to load the lua script into the Lua runtime.
+ *
+ * If @a is_config_time is true, then this will also register
+ * configuration directives and handle them.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] is_config_time Is this executing at configuration time.
+ *            If yes, then effects on the ironbee engine may be performed,
+ *            such as rules and directives.
+ * @param[in] file The file we are loading.
+ * @param[in] module The registered module structure.
+ * @param[in,out] L The lua context that @a file will be loaded into as
+ *                @a module.
+ * @returns
+ *   - IB_OK on success.
+ */
+static ib_status_t modlua_module_load_lua(
+    ib_engine_t *ib,
+    bool is_config_time,
+    const char *file,
+    ib_module_t *module,
+    lua_State *L)
+{
+    assert(ib);
+    assert(file);
+    assert(module);
+    assert(L);
+
+    int lua_rc;
+
+    lua_getglobal(L, "modlua"); /* Get the package. */
+    if (lua_isnil(L, -1)) {
+        ib_log_error(ib, "Module modlua is undefined.");
+        return IB_EINVAL;
+    }
+    if (! lua_istable(L, -1)) {
+        ib_log_error(ib, "Module modlua is not a table/module.");
+        lua_pop(L, 1); /* Pop modlua global off stack. */
+        return IB_EINVAL;
+    }
+
+    lua_getfield(L, -1, "load_module"); /* Push load_module */
+    if (lua_isnil(L, -1)) {
+        ib_log_error(ib, "Module function load_module is undefined.");
+        lua_pop(L, 1); /* Pop modlua global off stack. */
+        return IB_EINVAL;
+    }
+    if (! lua_isfunction(L, -1)) {
+        ib_log_error(ib, "Module function load_module is not a function.");
+        lua_pop(L, 1); /* Pop modlua global off stack. */
+        return IB_EINVAL;
+    }
+
+    lua_pushlightuserdata(L, ib); /* Push ib engine. */
+    lua_pushlightuserdata(L, module); /* Push module engine. */
+    lua_pushstring(L, file);
+    lua_pushinteger(L, module->idx);
+
+    if (is_config_time) {
+        lua_pushcfunction(L, &modlua_config_register_directive);
+    }
+    else {
+        lua_pushnil(L);
+    }
+
+    lua_rc = luaL_loadfile(L, file);
+    switch(lua_rc) {
+        case 0:
+            /* NOP */
+            break;
+        case LUA_ERRRUN:
+            ib_log_error(
+                ib,
+                "Error evaluating %s: %s",
+                file,
+                lua_tostring(L, -1));
+            lua_pop(L, 1); /* Get error string off of the stack. */
+            lua_pop(L, 1); /* Pop modlua global off stack. */
+            return IB_EINVAL;
+        case LUA_ERRMEM:
+            ib_log_error(
+                ib,
+                "Failed to allocate memory during evaluation of %s",
+                file);
+            lua_pop(L, 1); /* Pop modlua global off stack. */
+            return IB_EINVAL;
+        case LUA_ERRERR:
+            ib_log_error(
+                ib,
+                "Error fetching error message during evaluation of %s",
+                file);
+            lua_pop(L, 1); /* Pop modlua global off stack. */
+            return IB_EINVAL;
+#if LUA_VERSION_NUM > 501
+        /* If LUA_ERRGCMM is defined, include a custom error for it as well.
+          This was introduced in Lua 5.2. */
+        case LUA_ERRGCMM:
+            ib_log_error(
+                ib,
+                "Garbage collection error during evaluation of %s.",
+                file);
+            lua_pop(L, 1); /* Pop modlua global off stack. */
+            return IB_EINVAL;
+#endif
+        default:
+            ib_log_error(
+                ib,
+                "Unexpected error(%d) during evaluation of %s: %s",
+                lua_rc,
+                file,
+                lua_tostring(L, -1));
+            lua_pop(L, 1); /* Get error string off of the stack. */
+            lua_pop(L, 1); /* Pop modlua global off stack. */
+            return IB_EINVAL;
+    }
+
+    /**
+     * The stack now is...
+     * +-------------------------------------------+
+     * | load_module                               |
+     * | ib                                        |
+     * | ib_module                                 |
+     * | module name (file name)                   |
+     * | module index                              |
+     * | modlua_config_register_directive (or nil) |
+     * | module script                             |
+     * +-------------------------------------------+
+     *
+     * Next step is to call load_module which will, in turn, execute
+     * the module script.
+     */
+    lua_rc = lua_pcall(L, 6, 1, 0);
+    switch(lua_rc) {
+        case 0:
+            /* NOP */
+            break;
+        case LUA_ERRRUN:
+            ib_log_error(
+                ib,
+                "Error loading module %s: %s",
+                file,
+                lua_tostring(L, -1));
+            lua_pop(L, 1); /* Get error string off of the stack. */
+            lua_pop(L, 1); /* Pop modlua global off stack. */
+            return IB_EINVAL;
+        case LUA_ERRMEM:
+            ib_log_error(
+                ib,
+                "Failed to allocate memory during module load of %s",
+                file);
+            lua_pop(L, 1); /* Pop modlua global off stack. */
+            return IB_EINVAL;
+        case LUA_ERRERR:
+            ib_log_error(
+                ib,
+                "Error fetching error message during module load of %s",
+                file);
+            lua_pop(L, 1); /* Pop modlua global off stack. */
+            return IB_EINVAL;
+#if LUA_VERSION_NUM > 501
+        /* If LUA_ERRGCMM is defined, include a custom error for it as well.
+          This was introduced in Lua 5.2. */
+        case LUA_ERRGCMM:
+            ib_log_error(
+                ib,
+                "Garbage collection error during module load of %s.",
+                file);
+            lua_pop(L, 1); /* Pop modlua global off stack. */
+            return IB_EINVAL;
+#endif
+        default:
+            ib_log_error(
+                ib,
+                "Unexpected error(%d) during evaluation of %s: %s",
+                lua_rc,
+                file,
+                lua_tostring(L, -1));
+            lua_pop(L, 1); /* Get error string off of the stack. */
+            lua_pop(L, 1); /* Pop modlua global off stack. */
+            return IB_EINVAL;
+    }
+
+    lua_pop(L, 1); /* Pop modlua global off stack. */
+
+    return IB_OK;
+}
+
+
+static ib_status_t modlua_reload(ib_engine_t *ib, lua_State *L)
+{
+    assert(ib != NULL);
+    assert(L != NULL);
+
+    ib_status_t rc = IB_OK;
+    ib_status_t tmp_rc;
+    ib_module_t *module;
+    modlua_cfg_t *cfg;
+    const ib_list_node_t *node;
+    ib_context_t *ctx;
+
+    ctx = ib_context_main(ib);
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve module " MODULE_NAME_STR);
+        return rc;
+    }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve modlua configuration.");
+        return rc;
+    }
+
+    IB_LIST_LOOP_CONST(cfg->reloads, node) {
+        const modlua_reload_t *reload = 
+            (const modlua_reload_t *)ib_list_node_data_const(node);
+
+        ib_log_debug(ib, "Reloading %s", reload->file);
+
+        switch(reload->type) {
+            case MODLUA_RELOAD_MODULE:
+                tmp_rc = modlua_module_load_lua(
+                    ib,
+                    false,
+                    reload->file,
+                    module,
+                    L);
+                break;
+            case MODLUA_RELOAD_RULE:
+                tmp_rc = ib_lua_load_func(
+                    ib,
+                    L,
+                    reload->file,
+                    reload->rule_id);
+                break;
+        }
+
+        if (rc == IB_OK && tmp_rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "Failed to reload Lua rule or module %s.",
+                reload->file);
+            rc = tmp_rc;
+        }
+    }
+
+    return rc;
+}
+
+
 /**
  * Dispatch a null event into a Lua module.
  */
@@ -1536,7 +1925,6 @@ static ib_status_t modlua_null(
     assert(ib);
 
     ib_status_t rc;
-    ib_status_t join_rc; /* We need a temporary rc value for thread joins. */
     lua_State *L;
     ib_module_t *module = NULL;
     ib_context_t *ctx;
@@ -1559,10 +1947,15 @@ static ib_status_t modlua_null(
     assert(cfg->L_lck);
     L = cfg->L;
 
-    /* Since there is  no connection Lua stack, we make a new one. */
-    rc = call_in_critical_section(ib, &ib_lua_new_thread, cfg, &L);
+    L = NULL;
+    rc = modlua_newstate(ib, cfg, &L);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to allocate new Lua thread.");
+        ib_log_error(ib, "Could not create Lua stack.");
+        return rc;
+    }
+    rc = modlua_reload(ib, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not configure Lua stack.");
         return rc;
     }
 
@@ -1598,15 +1991,7 @@ static ib_status_t modlua_null(
         /* Do not return. We must join the Lua thread. */
     }
 
-    join_rc = call_in_critical_section(ib, &ib_lua_join_thread, cfg, &L);
-    if (join_rc != IB_OK) {
-        ib_log_alert(ib, "Failed to join created Lua thread.");
-
-        /* If there is no other error, return the join error. */
-        if (rc == IB_OK) {
-            rc = join_rc;
-        }
-    }
+    lua_close(L);
 
     return rc;
 }
@@ -1814,7 +2199,6 @@ static ib_status_t modlua_ctx(
     assert(ib);
 
     ib_status_t rc;
-    ib_status_t join_rc;
     lua_State *L;
     modlua_cfg_t *cfg = NULL;
     ib_module_t *module = NULL;
@@ -1834,10 +2218,15 @@ static ib_status_t modlua_ctx(
     assert(cfg->L_lck);
     L = cfg->L;
 
-    /* Allocate a new Lua thread in a thread-safe manner. */
-    rc = call_in_critical_section(ib, &ib_lua_new_thread, cfg, &L);
+    L = NULL;
+    rc = modlua_newstate(ib, cfg, &L);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to allocate new Lua thread.");
+        ib_log_error(ib, "Could not create Lua stack.");
+        return rc;
+    }
+    rc = modlua_reload(ib, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not configure Lua stack.");
         return rc;
     }
 
@@ -1875,192 +2264,9 @@ static ib_status_t modlua_ctx(
         /* Do not return. We must join the Lua thread. */
     }
 
-    /* Join lua thread in a thread-safe manner. */
-    join_rc = call_in_critical_section(ib, &ib_lua_join_thread, cfg, &L);
-    if (join_rc != IB_OK) {
-        ib_log_alert(ib, "Failed to join created Lua thread.");
-
-        /* If there is no other error, return the join error. */
-        if (rc == IB_OK) {
-            rc = join_rc;
-        }
-    }
+    lua_close(L);
 
     return rc;
-}
-
-/**
- * Called by modlua_module_load to load the lua script into the Lua runtime.
- *
- * @param[in] ib IronBee engine.
- * @param[in] file The file we are loading.
- * @param[in] module The registered module structure.
- * @param[in,out] L The lua context that @a file will be loaded into as
- *                @a module.
- * @returns
- *   - IB_OK on success.
- */
-static ib_status_t modlua_module_load_lua(
-    ib_engine_t *ib,
-    const char *file,
-    ib_module_t *module,
-    lua_State *L)
-{
-    assert(ib);
-    assert(file);
-    assert(module);
-    assert(L);
-
-    int lua_rc;
-
-    lua_getglobal(L, "modlua"); /* Get the package. */
-    if (lua_isnil(L, -1)) {
-        ib_log_error(ib, "Module modlua is undefined.");
-        return IB_EINVAL;
-    }
-    if (! lua_istable(L, -1)) {
-        ib_log_error(ib, "Module modlua is not a table/module.");
-        lua_pop(L, 1); /* Pop modlua global off stack. */
-        return IB_EINVAL;
-    }
-
-    lua_getfield(L, -1, "load_module"); /* Push load_module */
-    if (lua_isnil(L, -1)) {
-        ib_log_error(ib, "Module function load_module is undefined.");
-        lua_pop(L, 1); /* Pop modlua global off stack. */
-        return IB_EINVAL;
-    }
-    if (! lua_isfunction(L, -1)) {
-        ib_log_error(ib, "Module function load_module is not a function.");
-        lua_pop(L, 1); /* Pop modlua global off stack. */
-        return IB_EINVAL;
-    }
-
-    lua_pushlightuserdata(L, ib); /* Push ib engine. */
-    lua_pushlightuserdata(L, module); /* Push module engine. */
-    lua_pushstring(L, file);
-    lua_pushinteger(L, module->idx);
-    lua_pushcfunction(L, &modlua_config_register_directive);
-    lua_rc = luaL_loadfile(L, file);
-    switch(lua_rc) {
-        case 0:
-            /* NOP */
-            break;
-        case LUA_ERRRUN:
-            ib_log_error(
-                ib,
-                "Error evaluating %s: %s",
-                file,
-                lua_tostring(L, -1));
-            lua_pop(L, 1); /* Get error string off of the stack. */
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-        case LUA_ERRMEM:
-            ib_log_error(
-                ib,
-                "Failed to allocate memory during evaluation of %s",
-                file);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-        case LUA_ERRERR:
-            ib_log_error(
-                ib,
-                "Error fetching error message during evaluation of %s",
-                file);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-#if LUA_VERSION_NUM > 501
-        /* If LUA_ERRGCMM is defined, include a custom error for it as well.
-          This was introduced in Lua 5.2. */
-        case LUA_ERRGCMM:
-            ib_log_error(
-                ib,
-                "Garbage collection error during evaluation of %s.",
-                file);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-#endif
-        default:
-            ib_log_error(
-                ib,
-                "Unexpected error(%d) during evaluation of %s: %s",
-                lua_rc,
-                file,
-                lua_tostring(L, -1));
-            lua_pop(L, 1); /* Get error string off of the stack. */
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-    }
-
-    /**
-     * The stack now is...
-     * +----------------------------------+
-     * | load_module                      |
-     * | ib                               |
-     * | ib_module                        |
-     * | module name (file name)          |
-     * | module index                     |
-     * | modlua_config_register_directive |
-     * | module script                    |
-     * +----------------------------------+
-     *
-     * Next step is to call load_module which will, in turn, execute
-     * the module script.
-     */
-    lua_rc = lua_pcall(L, 6, 1, 0);
-    switch(lua_rc) {
-        case 0:
-            /* NOP */
-            break;
-        case LUA_ERRRUN:
-            ib_log_error(
-                ib,
-                "Error loading module %s: %s",
-                file,
-                lua_tostring(L, -1));
-            lua_pop(L, 1); /* Get error string off of the stack. */
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-        case LUA_ERRMEM:
-            ib_log_error(
-                ib,
-                "Failed to allocate memory during module load of %s",
-                file);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-        case LUA_ERRERR:
-            ib_log_error(
-                ib,
-                "Error fetching error message during module load of %s",
-                file);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-#if LUA_VERSION_NUM > 501
-        /* If LUA_ERRGCMM is defined, include a custom error for it as well.
-          This was introduced in Lua 5.2. */
-        case LUA_ERRGCMM:
-            ib_log_error(
-                ib,
-                "Garbage collection error during module load of %s.",
-                file);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-#endif
-        default:
-            ib_log_error(
-                ib,
-                "Unexpected error(%d) during evaluation of %s: %s",
-                lua_rc,
-                file,
-                lua_tostring(L, -1));
-            lua_pop(L, 1); /* Get error string off of the stack. */
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-    }
-
-    lua_pop(L, 1); /* Pop modlua global off stack. */
-
-    return IB_OK;
 }
 
 /**
@@ -2157,6 +2363,55 @@ static ib_status_t modlua_module_load_wire_callbacks(
 }
 
 /**
+ * Push the file and the type into the reload list.
+ *
+ * This list is used to reload modules and rules into independent lua stacks
+ * per transaction.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] cfg Configuration.
+ * @param[in] type The type of the thing to reload.
+ * @param[in] file Where is the Lua file to load. This is
+ *            not copied, but stored.
+ */
+static ib_status_t modlua_record_reload(
+    ib_engine_t *ib,
+    modlua_cfg_t *cfg,
+    modlua_reload_type_t type,
+    const char *rule_id,
+    const char *file)
+{
+    assert(ib != NULL);
+    assert(cfg != NULL);
+    assert(cfg->reloads != NULL);
+    assert(file != NULL);
+
+    ib_mpool_t *mp;
+    ib_status_t rc;
+    modlua_reload_t *data;
+    
+    mp = ib_engine_pool_config_get(ib);
+
+    ib_log_debug(ib, "Recording reloadable lua: %s", file);
+
+    data = ib_mpool_alloc(mp, sizeof(*data));
+    if (data == NULL) {
+        return IB_EALLOC;
+    }
+
+    data->file = file;
+    data->type = type;
+    data->rule_id = rule_id;
+
+    rc = ib_list_push(cfg->reloads, (void *)data);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+/**
  * Load a Lua module from a .lua file.
  *
  * This will dynamically create a Lua module that is managed by this
@@ -2174,11 +2429,14 @@ static ib_status_t modlua_module_load_wire_callbacks(
 static ib_status_t modlua_module_load(
     ib_engine_t *ib,
     const char *file,
-    lua_State *L)
+    modlua_cfg_t *cfg)
 {
     assert(ib != NULL);
     assert(file != NULL);
-    assert(L != NULL);
+    assert(cfg != NULL);
+    assert(cfg->L != NULL);
+
+    lua_State *L = cfg->L;
 
     ib_module_t *module;
     ib_status_t rc;
@@ -2189,142 +2447,31 @@ static ib_status_t modlua_module_load(
         return rc;
     }
 
-    rc = modlua_module_load_lua(ib, file, module, L);
+    /* Load the modules into the main Lua stack. Also register directives. */
+    rc = modlua_module_load_lua(ib, true, file, module, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to load lua modules: %s", file);
         return rc;
     }
 
+    /* If the previous succeeds, record that we should reload it on each tx. */
+    rc = modlua_record_reload(ib, cfg, MODLUA_RELOAD_MODULE, NULL, file);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to record module file name to reload.");
+        return rc;
+    }
+
+    /* Wirte up the callbacks. */
     rc = modlua_module_load_wire_callbacks(ib, file, module, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed register lua callbacks for module : %s", file);
         return rc;
     }
 
+
     return rc;
 }
 
-/**
- * Given a search prefix this will build a search path and add it to Lua.
- *
- * @param[in] ib IronBee engine.
- * @param[in,out] L Lua State that the search path will be set in.
- * @param[in] prefix The prefix. ?.lua will be appended.
- * @returns
- *   - IB_OK on success
- *   - IB_EALLOC on malloc failure.
- */
-static ib_status_t modlua_append_searchprefix(
-    ib_engine_t *ib,
-    lua_State *L,
-    const char *prefix)
-{
-    /* This is the search pattern that is appended to each element of
-     * lua_search_paths and then added to the Lua runtime package.path
-     * global variable. */
-    const char *lua_file_pattern = "?.lua";
-
-    char *path = NULL; /* Tmp string to build a search path. */
-    ib_log_debug(ib, "Adding \"%s\" to lua search path.", prefix);
-
-    /* Strlen + 2. One for \0 and 1 for the path separator. */
-    path = malloc(strlen(prefix) + strlen(lua_file_pattern) + 2);
-    if (path == NULL) {
-        ib_log_error(ib, "Could allocate buffer for string append.");
-        free(path);
-        return IB_EALLOC;
-    }
-
-    strcpy(path, prefix);
-    strcpy(path + strlen(path), "/");
-    strcpy(path + strlen(path), lua_file_pattern);
-
-    ib_lua_add_require_path(ib, L, path);
-
-    ib_log_debug(ib, "Added \"%s\" to lua search path.", path);
-
-    /* We are done with path. To be safe, we NULL it as there is more work
-     * to be done in this function, and we do not want to touch path again. */
-    free(path);
-
-    return IB_OK;
-}
-
-/**
- * Set the search path in the lua state from the core config.
- */
-static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
-{
-    ib_status_t rc;
-
-    ib_core_cfg_t *corecfg = NULL;
-    /* Null terminated list of search paths. */
-    const char *lua_search_paths[3];
-
-
-    rc = ib_core_context_config(ib_context_main(ib), &corecfg);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Could not retrieve core module configuration.");
-        return rc;
-    }
-
-    /* Initialize the search paths list. */
-    lua_search_paths[0] = corecfg->module_base_path;
-    lua_search_paths[1] = corecfg->rule_base_path;
-    lua_search_paths[2] = NULL;
-
-    for (int i = 0; lua_search_paths[i] != NULL; ++i)
-    {
-        rc = modlua_append_searchprefix(ib, L, lua_search_paths[i]);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
-    return IB_OK;
-}
-
-/**
- * Pre-load files into the given lua stack.
- *
- * This will attempt to run...
- *   - waggle  = require("ironbee/waggle")
- *   - ffi     = require("ffi")
- *   - ironbee = require("ironbee-ffi")
- *   - ibapi   = require("ironbee/api")
- *   - modlua  = require("ironbee/module")
- *
- * @param[in] ib IronBee engine. Used to find load paths from the
- *            core module.
- * @param[out] L The Lua state that the modules will be "required" into.
- */
-static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
-
-    ib_status_t rc;
-
-    const char *lua_preloads[][2] = { { "waggle", "ironbee/waggle" },
-                                      { "ibconfig", "ironbee/config" },
-                                      { "ffi", "ffi" },
-                                      { "ffi", "ffi" },
-                                      { "ironbee", "ironbee-ffi" },
-                                      { "ibapi", "ironbee/api" },
-                                      { "modlua", "ironbee/module" },
-                                      { NULL, NULL } };
-
-    for (int i = 0; lua_preloads[i][0] != NULL; ++i)
-    {
-        rc = ib_lua_require(ib, L, lua_preloads[i][0], lua_preloads[i][1]);
-        if (rc != IB_OK)
-        {
-            ib_log_error(ib,
-                "Failed to load mode \"%s\" into \"%s\".",
-                lua_preloads[i][1],
-                lua_preloads[i][0]);
-            return rc;
-        }
-    }
-    return IB_OK;
-}
 
 /**
  * Commit any pending configuration items, such as rules.
@@ -2446,12 +2593,17 @@ static ib_status_t modlua_conn_init_lua_runtime(
         return IB_EALLOC;
     }
 
-    rc = call_in_critical_section(ib, &ib_lua_new_thread, cfg, &(modlua_rt->L));
+    modlua_rt->L = NULL;
+    rc = modlua_newstate(ib, cfg, &(modlua_rt->L));
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to allocate new Lua thread for connection.");
+        ib_log_error(ib, "Could not create Lua stack.");
         return rc;
     }
-    assert(modlua_rt->L != NULL);
+    rc = modlua_reload(ib, modlua_rt->L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not configure Lua stack.");
+        return rc;
+    }
 
     rc = modlua_runtime_set(conn, modlua_rt);
     if (rc != IB_OK) {
@@ -2525,8 +2677,7 @@ static ib_status_t modlua_conn_fini_lua_runtime(ib_engine_t *ib,
         return IB_EOTHER;
     }
 
-    /* Atomically destroy the Lua stack */
-    rc = call_in_critical_section(ib, &ib_lua_join_thread, cfg, &modlua_rt->L);
+    lua_close(modlua_rt->L);
 
     return rc;
 }
@@ -2620,7 +2771,7 @@ static ib_status_t ib_lua_func_eval_r(
     ib_context_t *ctx = NULL;
     int result_int;
     ib_status_t ib_rc;
-    lua_State *L;
+    lua_State *L = NULL;
     modlua_cfg_t *cfg = NULL;
 
     ctx = (tx->ctx == NULL)?  ib_context_main(ib) : tx->ctx;
@@ -2630,8 +2781,17 @@ static ib_status_t ib_lua_func_eval_r(
         return rc;
     }
 
-    /* Atomically create a new Lua stack */
-    ib_rc = call_in_critical_section(ib, &ib_lua_new_thread, cfg, &L);
+    L = NULL;
+    ib_rc = modlua_newstate(ib, cfg, &L);
+    if (ib_rc != IB_OK) {
+        ib_log_error(ib, "Could not create Lua stack.");
+        return ib_rc;
+    }
+    ib_rc = modlua_reload(ib, L);
+    if (ib_rc != IB_OK) {
+        ib_log_error(ib, "Could not configure Lua stack.");
+        return ib_rc;
+    }
 
     if (ib_rc != IB_OK) {
         return ib_rc;
@@ -2647,8 +2807,7 @@ static ib_status_t ib_lua_func_eval_r(
         return ib_rc;
     }
 
-    /* Atomically destroy the Lua stack */
-    ib_rc = call_in_critical_section(ib, &ib_lua_join_thread, cfg, &L);
+    lua_close(L);
 
     return ib_rc;
 }
@@ -2760,6 +2919,16 @@ ib_status_t modlua_rule_driver(
         ib_rule_id(rule));
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to load lua file \"%s\"", location);
+        return rc;
+    }
+
+    /* Record the we need to reload this rule in each TX. */
+    rc = modlua_record_reload(cp->ib, cfg, MODLUA_RELOAD_RULE, ib_rule_id(rule), location);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "Failed to record  lua file \"%s\" to reload",
+            location);
         return rc;
     }
 
@@ -2956,6 +3125,12 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     }
     ib_log_debug(ib, "Allocated main configuration at %p.", cfg);
 
+    rc = ib_list_create(&(cfg->reloads), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to allocate reloads list.");
+        return rc;
+    }
+
     rc = ib_module_config_initialize(module, cfg, sizeof(*cfg));
     if (rc != IB_OK) {
         ib_log_error(ib, "Module already has configuration data?");
@@ -2964,47 +3139,12 @@ static ib_status_t modlua_init(ib_engine_t *ib,
 
     /* Set up defaults */
     ib_log_debug(ib, "Making shared Lua state.");
-    cfg->L = luaL_newstate();
-    if (cfg->L == NULL) {
-        ib_log_error(ib, "Failed to initialize lua module.");
-        return IB_EUNKNOWN;
-    }
 
-    ib_log_debug(ib, "Opening shared Lua state common libs.");
-    luaL_openlibs(cfg->L);
-
-    /* Setup search paths before ffi, api, etc loading. */
-    rc = modlua_setup_searchpath(ib, cfg->L);
+    cfg->L = NULL;
+    rc = modlua_newstate(ib, cfg, &(cfg->L));
     if (rc != IB_OK) {
+        ib_log_error(ib, "Could not create Lua stack.");
         return rc;
-    }
-
-    /* Load ffi, api, etc. */
-    ib_log_debug(ib, "Preloading libraries into shared Lua state.");
-    rc = modlua_preload(ib, cfg->L);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to pre-load Lua files.");
-        return rc;
-    }
-
-    /* Set package paths if configured. */
-    if (cfg->pkg_path) {
-        ib_log_debug(
-            ib,
-            "Using lua package.path=\"%s\"",
-             cfg->pkg_path);
-        lua_getfield(cfg->L, -1, "path");
-        lua_pushstring(cfg->L, cfg->pkg_path);
-        lua_setglobal(cfg->L, "path");
-    }
-    if (cfg->pkg_cpath) {
-        ib_log_debug(
-            ib,
-            "Using lua package.cpath=\"%s\"",
-            cfg->pkg_cpath);
-        lua_getfield(cfg->L, -1, "cpath");
-        lua_pushstring(cfg->L, cfg->pkg_cpath);
-        lua_setglobal(cfg->L, "cpath");
     }
 
     /* Hook to initialize the lua runtime with the connection.
@@ -3292,7 +3432,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     if (strcasecmp("LuaLoadModule", name) == 0) {
         /* Absolute path. */
         if (p1_unescaped[0] == '/') {
-            rc = modlua_module_load(ib, p1_unescaped, cfg->L);
+            rc = modlua_module_load(ib, p1_unescaped, cfg);
             if (rc != IB_OK) {
                 ib_cfg_log_error(
                     cp,
@@ -3326,7 +3466,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
                 corecfg->module_base_path,
                 p1_unescaped);
 
-            rc = modlua_module_load(ib, path, cfg->L);
+            rc = modlua_module_load(ib, path, cfg);
             if (rc != IB_OK) {
                 ib_log_error(
                     ib,
