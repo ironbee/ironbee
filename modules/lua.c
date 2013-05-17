@@ -485,7 +485,7 @@ static ib_status_t modlua_config_cb_onoff(
     assert(name != NULL);
 
     ib_status_t rc;
-    modlua_cfg_t *cfg = NULL;    
+    modlua_cfg_t *cfg = NULL;
     lua_State *L = NULL;
     ib_module_t *module = NULL;
     ib_engine_t *ib = cp->ib;
@@ -1854,7 +1854,7 @@ static ib_status_t modlua_reload(ib_engine_t *ib, lua_State *L)
     }
 
     IB_LIST_LOOP_CONST(cfg->reloads, node) {
-        const modlua_reload_t *reload = 
+        const modlua_reload_t *reload =
             (const modlua_reload_t *)ib_list_node_data_const(node);
 
         ib_log_debug(ib, "Reloading %s", reload->file);
@@ -2264,7 +2264,7 @@ static ib_status_t modlua_record_reload(
     ib_mpool_t *mp;
     ib_status_t rc;
     modlua_reload_t *data;
-    
+
     mp = ib_engine_pool_config_get(ib);
 
     ib_log_debug(ib, "Recording reloadable lua: %s", file);
@@ -2444,7 +2444,7 @@ static ib_status_t modlua_conn_init_lua_runtime(
     modlua_runtime_t *modlua_rt;
     modlua_cfg_t *cfg = NULL;
     ib_context_t *ctx = conn->ctx;
-    ib_module_t *module = NULL;    
+    ib_module_t *module = NULL;
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
@@ -2731,7 +2731,7 @@ ib_status_t modlua_rule_driver(
     ib_operator_inst_t *op_inst;
     const char *slash;
     const char *name;
-    ib_engine_t *ib = cp->ib;    
+    ib_engine_t *ib = cp->ib;
     modlua_cfg_t *cfg = NULL;
     ib_context_t *ctx = NULL;
 
@@ -3187,8 +3187,8 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     size_t p1_len = strlen(p1);
     size_t p1_unescaped_len;
     char *p1_unescaped = malloc(p1_len+1);
-    ib_context_t *ctx = NULL;    
-    modlua_cfg_t *cfg = NULL;    
+    ib_context_t *ctx = NULL;
+    modlua_cfg_t *cfg = NULL;
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
