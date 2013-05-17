@@ -2093,8 +2093,9 @@ static ib_status_t modhtp_iface_request_body_data(
     txdata = modhtp_get_txdata_ibtx(itx);
 
     ib_log_debug_tx(itx,
-                    "SEND REQUEST BODY DATA TO LIBHTP: "
-                    "modhtp_iface_request_body_data");
+                    "SEND REQUEST BODY DATA TO LIBHTP: size=%zd "
+                    "modhtp_iface_request_body_data",
+                    ib_txdata->dlen);
 
     /* Hand the request body data to libhtp. */
     hrc = htp_tx_req_process_body_data(txdata->htx,
@@ -2121,15 +2122,18 @@ static ib_status_t modhtp_iface_request_finished(
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(itx);
 
-    /* Generate fields. */
-    irc = modhtp_gen_request_fields(txdata->htx, itx);
-    if (irc != IB_OK) {
-        return irc;
-    }
+    /* Signal libhtp that the body is finished. */
+    htp_tx_req_process_body_data_ex(txdata->htx, NULL, 0);
 
     /* Complete the request */
     hrc = htp_tx_state_request_complete(txdata->htx);
     irc = modhtp_check_htprc(hrc, txdata, "htp_tx_request_complete");
+    if (irc != IB_OK) {
+        return irc;
+    }
+
+    /* Generate fields. */
+    irc = modhtp_gen_request_fields(txdata->htx, itx);
     if (irc != IB_OK) {
         return irc;
     }
