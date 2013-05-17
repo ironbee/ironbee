@@ -2262,6 +2262,7 @@ static ib_status_t modlua_module_load_wire_callbacks(
  * @param[in] ib IronBee engine.
  * @param[in] cfg Configuration.
  * @param[in] type The type of the thing to reload.
+ * @param[in] rule_id The rule id. This is copied.
  * @param[in] file Where is the Lua file to load. This is copied.
  */
 static ib_status_t modlua_record_reload(
