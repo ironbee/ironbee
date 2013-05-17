@@ -168,6 +168,8 @@ static ib_status_t modlua_runtime_get(
         return rc;
     }
 
+    assert(module != NULL);
+
     ib_conn_get_module_data(conn, module, (void **)lua);
 
     return IB_OK;
@@ -199,6 +201,8 @@ static ib_status_t modlua_runtime_set(
     if (rc != IB_OK) {
         return rc;
     }
+
+    assert(module != NULL);
 
     ib_conn_set_module_data(conn, module, (void **)lua);
 
@@ -2460,7 +2464,7 @@ static ib_status_t modlua_conn_init_lua_runtime(
     assert(cfg->L != NULL);
 
     modlua_rt = ib_mpool_alloc(conn->mp, sizeof(*modlua_rt));
-    if (!modlua_rt) {
+    if (modlua_rt == NULL) {
         return IB_EALLOC;
     }
 
