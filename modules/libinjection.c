@@ -43,8 +43,8 @@
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
 
-#include <modp_ascii.h>
 #include <libinjection.h>
+#include <modp_ascii.h>
 #include <sqlparse_private.h>
 
 #include <assert.h>

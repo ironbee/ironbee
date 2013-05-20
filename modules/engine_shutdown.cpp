@@ -30,6 +30,12 @@
 #include <ironbeepp/parsed_name_value.hpp>
 #include <ironbeepp/transaction.hpp>
 
+/* C includes. */
+extern "C" {
+#include <ironbee/engine.h>
+#include <ironbee/server.h>
+}
+
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/version.hpp>
@@ -67,12 +73,6 @@ extern "C" {
 #include <signal.h>
 }
 #endif
-
-/* C includes. */
-extern "C" {
-#include <ironbee/server.h>
-#include <ironbee/engine.h>
-}
 
 /**
  * Implement simple policy changes when the IronBee engines is to shutdown.

@@ -210,6 +210,9 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/utility.hpp>',
   '<boost/utility/enable_if.hpp>',
   '<boost/uuid/uuid.hpp>',
+  '<boost/version.hpp>',
+  # Special case for engine_shutdown.cpp
+  '<boost/atomic.hpp>',
 
   '<google/protobuf/io/gzip_stream.h>',
   '<google/protobuf/io/zero_copy_stream_impl_lite.h>',
@@ -220,6 +223,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<htp.h>',
   '<htp_private.h>',
   '<lauxlib.h>',
+  '<libinjection.h>',
   '<lua.h>',
   '<lualib.h>',
   '<modp_ascii.h>',
@@ -266,6 +270,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<limits.h>',
   '<math.h>',
   '<regex.h>',
+  '<signal.h>',
   '<stdarg.h>',
   '<stdbool.h>',
   '<stddef.h>',
