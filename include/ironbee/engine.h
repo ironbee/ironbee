@@ -582,7 +582,7 @@ ib_status_t DLL_PUBLIC ib_tx_server_error(
  *
  * @param[in] tx The transaction.
  * @param[in] name The null-terminated name of the header.
- * @param[in] name The null-terminated value of the header.
+ * @param[in] value The null-terminated value of the header.
  *
  * @returns
  *   - IB_OK On success.
