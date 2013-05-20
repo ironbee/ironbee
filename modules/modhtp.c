@@ -2389,11 +2389,11 @@ ib_status_t modhtp_request_header_finished(
 /**
  * Request Body Data Hook
  *
- * @param[in] ib     IronBee engine.
- * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
- * @param[in] txdata Transaction data.
- * @param[in] cbdata Callback data; this module.
+ * @param[in] ib      IronBee engine.
+ * @param[in] itx     Transaction.
+ * @param[in] event   Which event trigger the callback.
+ * @param[in] itxdata Transaction data.
+ * @param[in] cbdata  Callback data; this module.
  *
  * @returns Status code
  */
@@ -2646,11 +2646,11 @@ ib_status_t modhtp_response_header_finished(
 /**
  * Response Body Data Hook
  *
- * @param[in] ib     IronBee engine.
- * @param[in] itx    Transaction.
- * @param[in] event  Which event trigger the callback.
- * @param[in] txdata Transaction data.
- * @param[in] cbdata Callback data; this module.
+ * @param[in] ib      IronBee engine.
+ * @param[in] itx     Transaction.
+ * @param[in] event   Which event trigger the callback.
+ * @param[in] itxdata Transaction data.
+ * @param[in] cbdata  Callback data; this module.
  *
  * @returns Status code
  */
