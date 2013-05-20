@@ -289,10 +289,19 @@ static ib_status_t ib_errdata_callback(ib_tx_t *tx, const char *data, void *cbda
     return IB_ENOTIMPL;
 }
 
+static ib_status_t ib_errclose_callback(
+    ib_conn_t *conn,
+    ib_tx_t *tx,
+    void *cbdata)
+{
+    ib_log_error(conn->ib, "BLOCK BY CLOSE NOT IMPLEMENTED.");
+    return IB_ENOTIMPL;
+}
+
 /**
  * The ironbee plugin
  */
-static ib_server_t ibplugin = {
+ib_server_t DLL_LOCAL ibplugin = {
     IB_SERVER_HEADER_DEFAULTS,
     "httpd-ironbee",
     ib_header_callback,
@@ -303,6 +312,8 @@ static ib_server_t ibplugin = {
     NULL,
     ib_errdata_callback,
     NULL,
+    ib_errclose_callback,
+    NULL
 };
 
 /* BOOTSTRAP: lift logger straight from the old mod_ironbee */
