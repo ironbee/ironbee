@@ -1024,44 +1024,76 @@ static ib_status_t execute_action_list(const ib_rule_exec_t *rule_exec,
 }
 
 /**
- * Perform a block operation by signaling an error to the server.
+ * Called by report_block_to_server() to immediately close a connection.
  *
- * The server is signaled with
- * ib_server_error_response(ib_server_t *, ib_context_t *, int) using
- * tx and ib from @a rule_exec to provide the @c ib_context_t* and
- * @c ib_server_t*, respectively.
- *
- * @param[in] rule_exec Rule execution object
- *
- * @returns The result of calling ib_server_error_response().
+ * @returns
+ *   - IB_OK on success.
  */
-static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
-{
-    /* Store the final return code here. */
-    ib_status_t  rc;
-    ib_engine_t *ib;
-    ib_tx_t     *tx;
-
+static ib_status_t report_close_block_to_server(
+    const ib_rule_exec_t *rule_exec
+) {
     assert(rule_exec != NULL);
     assert(rule_exec->ib != NULL);
-    ib = rule_exec->ib;
-    assert(ib->server);
-    assert(rule_exec->tx);
-    tx = rule_exec->tx;
-    assert(tx->ctx);
+    assert(rule_exec->ib->server != NULL);
+    assert(rule_exec->tx != NULL);
+    assert(rule_exec->tx->conn != NULL);
 
-    ib_rule_log_debug(rule_exec, "Setting HTTP error response: status=%" PRId64,
-                      rule_exec->tx->block_status);
+    ib_status_t  rc;
+    ib_server_t *server = rule_exec->ib->server;
+    ib_tx_t *tx = rule_exec->tx;
+    ib_conn_t *conn = rule_exec->tx->conn;
+
+    rc = ib_server_error_close(server, conn, tx);
+    if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
+        ib_rule_log_notice(
+            rule_exec,
+            "Server not willing close connection.");
+    }
+    else if (rc != IB_OK) {
+        ib_rule_log_error(
+            rule_exec,
+            "Server failed to close connection: %s.",
+            ib_status_to_string(rc));
+    }
+
+    return rc;
+}
+
+/**
+ * Called by report_block_to_server() to report an HTTP status code block.
+ *
+ * @returns
+ *   - IB_OK on success.
+ */
+static ib_status_t report_status_block_to_server(
+    const ib_rule_exec_t *rule_exec
+) {
+    assert(rule_exec != NULL);
+    assert(rule_exec->ib != NULL);
+    assert(rule_exec->ib->server != NULL);
+    assert(rule_exec->tx != NULL);
+    assert(rule_exec->tx->ctx != NULL);
+
+    ib_status_t  rc;
+    ib_engine_t *ib = rule_exec->ib;
+    ib_tx_t     *tx = rule_exec->tx;
+    ib_rule_log_debug(
+        rule_exec,
+        "Setting HTTP error response: status=%" PRId64,
+         rule_exec->tx->block_status);
+
     rc = ib_server_error_response(ib->server, tx, tx->block_status);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
-        ib_rule_log_notice(rule_exec,
-                           "Server not willing to set HTTP error response.");
+        ib_rule_log_notice(
+            rule_exec,
+            "Server not willing to set HTTP error response.");
         return IB_OK;
     }
     else if (rc != IB_OK) {
-        ib_rule_log_error(rule_exec,
-                          "Server failed to set HTTP error response: %s",
-                          ib_status_to_string(rc));
+        ib_rule_log_error(
+            rule_exec,
+            "Server failed to set HTTP error response: %s",
+            ib_status_to_string(rc));
         return rc;
     }
 
@@ -1072,22 +1104,72 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
     ib_rule_log_debug(rule_exec, "Setting HTTP error response data.");
     rc = ib_server_error_body(ib->server, tx, default_block_document);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
-        ib_rule_log_notice(rule_exec,
-                           "Server not willing to set HTTP error response data.");
+        ib_rule_log_notice(
+            rule_exec,
+            "Server not willing to set HTTP error response data.");
         return IB_OK;
     }
     else if (rc != IB_OK) {
-        ib_rule_log_error(rule_exec,
-                          "Server failed to set HTTP error response data: %s",
-                          ib_status_to_string(rc));
+        ib_rule_log_error(
+            rule_exec,
+            "Server failed to set HTTP error response data: %s",
+            ib_status_to_string(rc));
         return rc;
     }
 
     /* Disable further inspection on the response. */
-    ib_log_debug_tx(tx, "Disabling further inspection of response due to blocking.");
+    ib_log_debug_tx(
+        tx,
+        "Disabling further inspection of response due to blocking.");
     ib_tx_flags_unset(tx, IB_TX_FINSPECT_RSPHDR|IB_TX_FINSPECT_RSPBODY);
 
     return IB_OK;
+}
+
+/**
+ * Perform a block operation by signaling an error to the server.
+ *
+ * The server is signaled in one of two ways (possibly failing-back to 
+ * the other method if a block could not be executed exactly as
+ * requested):
+ *
+ * @param[in] rule_exec Rule execution object
+ *
+ * @returns The result of calling ib_server_error_response().
+ */
+static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
+{
+    assert(rule_exec != NULL);
+    assert(rule_exec->ib != NULL);
+    assert(rule_exec->ib->server != NULL); /* Required deeper in call stack. */
+    assert(rule_exec->tx != NULL);
+    assert(rule_exec->tx->ctx != NULL);
+
+    ib_status_t  rc = IB_OK;
+    ib_tx_t     *tx = rule_exec->tx;
+
+    switch(tx->block_mode) {
+        case IB_BLOCK_MODE_STATUS:
+            rc = report_status_block_to_server(rule_exec);
+
+            /* Failover. */
+            if (rc != IB_OK) {
+                ib_rule_log_info( rule_exec, "Failing back to close block.");
+                rc = report_close_block_to_server(rule_exec);
+            }
+            break;
+        case IB_BLOCK_MODE_CLOSE:
+            rc = report_close_block_to_server(rule_exec);
+
+            /* Failover */
+            if (rc != IB_OK) {
+                ib_rule_log_info(rule_exec, "Failing back to status block.");
+                rc = report_status_block_to_server(rule_exec);
+            }
+            break;
+    }
+
+    return rc;
 }
 
 /**
