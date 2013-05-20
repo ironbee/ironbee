@@ -7,4 +7,5 @@ require 'tc_regression'
 require 'tc_fast'
 require 'tc_operators'
 require 'tc_holistic'
+require 'tc_libinjection'
 
