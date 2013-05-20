@@ -472,6 +472,27 @@ ib_status_t clipp_header(
 
 } // extern "C"
 
+int clipp_print_op_executor(
+    const char* args,
+    ConstField field
+)
+{
+    cout << "clipp_print [" << args << "]: " << field.to_s() << endl;
+    return 1;
+}
+
+Operator::operator_instance_t clipp_print_op_generator(
+    Context ctx,
+    const char* args
+)
+{
+    return boost::bind(
+        clipp_print_op_executor,
+        args,
+        _2
+    );
+};
+
 // Move to new file?
 template <typename WorkType>
 class FunctionWorkerPool :
@@ -661,6 +682,15 @@ IronBeeModifier::IronBeeModifier(
     if (rc != IB_OK) {
         throw runtime_error("Could not register clipp_announce action.");
     }
+
+    Operator::create(
+        m_state->engine.main_memory_pool(),
+        "clipp_print",
+        IB_OP_CAPABILITY_ALLOW_NULL |
+            IB_OP_CAPABILITY_NON_STREAM |
+            IB_OP_CAPABILITY_STREAM,
+        clipp_print_op_generator
+    ).register_with(m_state->engine);
 
     load_configuration(m_state->engine, config_path);
 }

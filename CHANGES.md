@@ -88,6 +88,9 @@ IronBee v0.8.0
   On the first error, `clipp` will write the last input to `path` in protobuf
   format and exit.
 
+* Added `@clipp_print` operator to IronBee modifier and consumer which outputs
+  its argument and input to standard out.
+
 **Other**
 
 * Added `example_modules` directory with example modules.
