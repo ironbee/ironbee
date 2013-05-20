@@ -157,7 +157,7 @@ typedef ib_status_t (*ib_server_filter_data_fn_t)(
  * @param[in] conn Connection to close.
  * @param[in] tx Transaction that the connection is in.
  *               There are situations where tx may be NULL.
- *               Implementers should exepct to close a
+ *               Implementers should expect to close a
  *               connection when there is no associated transaction.
  * @param[in] cbdata Callback data.
  *
