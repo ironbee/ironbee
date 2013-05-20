@@ -1683,35 +1683,37 @@ static ib_status_t modhtp_gen_request_header_fields(
     modhtp_field_gen_bytestr(itx, "request_uri_raw",
                              htx->request_uri, false, NULL);
 
-    modhtp_field_gen_bytestr(itx, "request_uri_scheme",
-                             htx->parsed_uri->scheme, false, NULL);
+    if (htx->parsed_uri != NULL) {
+        modhtp_field_gen_bytestr(itx, "request_uri_scheme",
+                                 htx->parsed_uri->scheme, false, NULL);
 
-    modhtp_field_gen_bytestr(itx, "request_uri_username",
-                             htx->parsed_uri->username, false, NULL);
+        modhtp_field_gen_bytestr(itx, "request_uri_username",
+                                 htx->parsed_uri->username, false, NULL);
 
-    modhtp_field_gen_bytestr(itx, "request_uri_password",
-                             htx->parsed_uri->password, false, NULL);
+        modhtp_field_gen_bytestr(itx, "request_uri_password",
+                                 htx->parsed_uri->password, false, NULL);
 
-    modhtp_field_gen_bytestr(itx, "request_uri_host",
-                             htx->parsed_uri->hostname, false, NULL);
+        modhtp_field_gen_bytestr(itx, "request_uri_host",
+                                 htx->parsed_uri->hostname, false, NULL);
 
-    modhtp_field_gen_bytestr(itx, "request_host",
-                             htx->parsed_uri->hostname, false, NULL);
+        modhtp_field_gen_bytestr(itx, "request_host",
+                                 htx->parsed_uri->hostname, false, NULL);
 
-    modhtp_field_gen_bytestr(itx, "request_uri_port",
-                             htx->parsed_uri->port, false, NULL);
+        modhtp_field_gen_bytestr(itx, "request_uri_port",
+                                 htx->parsed_uri->port, false, NULL);
 
-    modhtp_field_gen_bytestr(itx, "request_uri_path",
-                             htx->parsed_uri->path, false, NULL);
+        modhtp_field_gen_bytestr(itx, "request_uri_path",
+                                 htx->parsed_uri->path, false, NULL);
 
-    modhtp_field_gen_bytestr(itx, "request_uri_path_raw",
-                             htx->parsed_uri_raw->path, false, NULL);
+        modhtp_field_gen_bytestr(itx, "request_uri_path_raw",
+                                 htx->parsed_uri_raw->path, false, NULL);
 
-    modhtp_field_gen_bytestr(itx, "request_uri_query",
-                             htx->parsed_uri->query, false, NULL);
+        modhtp_field_gen_bytestr(itx, "request_uri_query",
+                                 htx->parsed_uri->query, false, NULL);
 
-    modhtp_field_gen_bytestr(itx, "request_uri_fragment",
-                             htx->parsed_uri->fragment, false, NULL);
+        modhtp_field_gen_bytestr(itx, "request_uri_fragment",
+                                 htx->parsed_uri->fragment, false, NULL);
+    }
 
     rc = ib_data_add_list(itx->data, "request_cookies", &f);
     if ( (htx->request_cookies != NULL) &&
