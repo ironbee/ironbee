@@ -1150,8 +1150,7 @@ static int ironbee_pre_conn(conn_rec *conn, void *csd)
     apr_pool_cleanup_register(conn->pool, iconn, ironbee_conn_cleanup,
                               apr_pool_cleanup_null);
 
-    rc = ironbee_conn_init(conn, iconn);
-
+    ironbee_conn_init(conn, iconn);
 
     ib_state_notify_conn_opened(ironbee, iconn);
     return DECLINED;
