@@ -284,7 +284,7 @@ static ib_status_t build_near_empty_module(
  * @param[in] ib IronBee engine.
  * @param[in] module The Lua module structure.
  * @param[in] name The function. This is used for logging only.
- * @param[in] args The number of arguments to the Lua function being called.
+ * @param[in] args_in The number of arguments to the Lua function being called.
  *
  * @returns
  *   - IB_OK on success.
