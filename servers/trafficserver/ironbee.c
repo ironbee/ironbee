@@ -407,6 +407,19 @@ static ib_status_t ib_errdata_callback(ib_tx_t *tx, const char *data, void *cbda
     return IB_OK;
 }
 
+/**
+ * Called by IronBee when a connection should be blocked by closing the conn.
+ *
+ * If this returns not-IB_OK a block by status code will be attempted.
+ *
+ * @param[in] conn The connection to close.
+ * @param[in] tx The transaction, if available. If a transaction is
+ *            not available, this will be NULL.
+ * @param[in] cbdata Callback data.
+ *
+ * @returns
+ *   - IB_OK on success.
+ */
 static ib_status_t ib_errclose_callback(
     ib_conn_t *conn,
     ib_tx_t *tx,
