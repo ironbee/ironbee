@@ -121,10 +121,10 @@ typedef ib_status_t (*ib_server_error_data_fn_t)(
  *
  * @param[in] tx The transaction.
  * @param[in] dir The direction.
- * @param[in] action The action determening how to add the header.
+ * @param[in] action The action determining how to add the header.
  * @param[in] hdr The header name. A null-terminated string.
  * @param[in] value The header value. A null-terminated string.
- * @param[in] rx The regular expresion if the action is @ref IB_HDR_EDIT.
+ * @param[in] rx The regular expression if the action is @ref IB_HDR_EDIT.
  * @param[in] cbdata Callback data.
  */
 typedef ib_status_t (*ib_server_header_fn_t)(

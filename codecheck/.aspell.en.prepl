@@ -72,8 +72,10 @@ prefixs prefix
 prefixs prefixes
 uops Oops
 ctrl variable
+wirte Write
 enval EINVAL
 byestring ByteString
+htis this
 mutext mutex
 staus Status
 bae base

@@ -374,7 +374,7 @@ ib_status_t sqli_create_pattern_set_from_file(
     sqli_pattern_set_t *ps          = NULL;
     size_t              i           = 0;
 
-    /* Temporary memory pool for htis function only. */
+    /* Temporary memory pool for this function only. */
     rc = ib_mpool_create(&tmp, "sqli tmp", NULL);
     assert(rc == IB_OK);
     assert(tmp != NULL);

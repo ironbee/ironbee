@@ -711,7 +711,7 @@ public:
      * @sa engine::state_event_e
      *
      * @param[in] f Callback to register.
-     * @returns @c *this for call chanining.
+     * @returns @c *this for call chaining.
      * @throw IronBee++ exception on failure.
      */
     HooksRegistrar& engine_shutdown_initiated(null_t f);

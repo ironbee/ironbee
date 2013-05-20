@@ -618,7 +618,7 @@ ib_status_t DLL_PUBLIC ib_tx_server_error_data(
  * @param[in] action How to add this header. Add, delete, set, etc.
  * @param[in] hdr Null-terminated header name string.
  * @param[in] value Null-terminated header value string.
- * @param[in] rx The regular expresion if the action is @ref IB_HDR_EDIT.
+ * @param[in] rx The regular expression if the action is @ref IB_HDR_EDIT.
  *
  * @returns
  *   - IB_OK On success.
