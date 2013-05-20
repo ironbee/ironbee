@@ -118,7 +118,7 @@ typedef ib_status_t (*ib_server_error_data_fn_t)(
 
 /**
  * Set a server header.
- * 
+ *
  * @param[in] tx The transaction.
  * @param[in] dir The direction.
  * @param[in] action The action determening how to add the header.

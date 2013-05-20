@@ -271,7 +271,7 @@ typedef enum {
                                     * (Hook type:@ref ib_state_ctx_hook_fn_t) */
 
     /* Engine Events */
-    engine_shutdown_initiated_event,/**< Engine has been requested to shut 
+    engine_shutdown_initiated_event,/**< Engine has been requested to shut
                                     * down.
                                     * (Hook type:@ref ib_state_null_hook_fn_t) */
     /* Not an event, but keeps track of the number of events. */

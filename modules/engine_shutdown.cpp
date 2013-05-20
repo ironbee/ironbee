@@ -147,7 +147,7 @@ private:
 
     /**
      * Get the current @ref mode_t of this module.
-     * @returns 
+     * @returns
      *   - @ref STOPPING if the shutdown initiated hook has fired.
      *   - @ref RUNNING otherwise.
      */
@@ -189,7 +189,7 @@ private:
     {
         if (get_mode() != RUNNING) {
             ib_log_error(
-                ib.ib(), 
+                ib.ib(),
                 "New transaction started after shutdown req.");
         }
     }
@@ -235,7 +235,7 @@ private:
     {
         if (get_mode() != RUNNING) {
             ib_log_error(
-                ib.ib(), 
+                ib.ib(),
                 "New connection started after shutdown req.");
         }
     }
@@ -251,7 +251,7 @@ private:
     void on_engine_shutdown_initiated(IronBee::Engine ib)
     {
         ib_log_info(ib.ib(), "EngineShutdown module entering shutdown mode.");
-        
+
         set_mode(STOPPING);
     }
 
