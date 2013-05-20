@@ -354,7 +354,7 @@ public:
     ///@{
 
     /**
-     * Register callback for request_header_data.
+     * Register callback for @ref request_header_data.
      *
      * @sa Engine::state_event_e
      *
@@ -365,7 +365,7 @@ public:
     HooksRegistrar& request_header_data(header_data_t f);
 
     /**
-     * Register callback for response_header_data.
+     * Register callback for @ref response_header_data.
      *
      * @sa Engine::state_event_e
      *
@@ -376,7 +376,7 @@ public:
     HooksRegistrar& response_header_data(header_data_t f);
 
     /**
-     * Register callback for request_started.
+     * Register callback for @ref request_started.
      *
      * @sa Engine::state_event_e
      *
@@ -387,7 +387,7 @@ public:
     HooksRegistrar& request_started(request_line_t f);
 
     /**
-     * Register callback for response_started.
+     * Register callback for @ref response_started.
      *
      * @sa Engine::state_event_e
      *
@@ -398,7 +398,7 @@ public:
     HooksRegistrar& response_started(response_line_t f);
 
     /**
-     * Register callback for connection_started.
+     * Register callback for @ref connection_started.
      *
      * @sa Engine::state_event_e
      *
@@ -409,7 +409,7 @@ public:
     HooksRegistrar& connection_started(connection_t f);
 
     /**
-     * Register callback for connection_finished.
+     * Register callback for @ref connection_finished.
      *
      * @sa Engine::state_event_e
      *
@@ -420,7 +420,7 @@ public:
     HooksRegistrar& connection_finished(connection_t f);
 
     /**
-     * Register callback for connection_opened.
+     * Register callback for @ref connection_opened.
      *
      * @sa Engine::state_event_e
      *
@@ -431,7 +431,7 @@ public:
     HooksRegistrar& connection_opened(connection_t f);
 
     /**
-     * Register callback for connection_closed.
+     * Register callback for @ref connection_closed.
      *
      * @sa Engine::state_event_e
      *
@@ -442,7 +442,7 @@ public:
     HooksRegistrar& connection_closed(connection_t f);
 
     /**
-     * Register callback for handle_context_connection.
+     * Register callback for @ref handle_context_connection.
      *
      * @sa Engine::state_event_e
      *
@@ -453,7 +453,7 @@ public:
     HooksRegistrar& handle_context_connection(connection_t f);
 
     /**
-     * Register callback for handle_connect.
+     * Register callback for @ref handle_connect.
      *
      * @sa Engine::state_event_e
      *
@@ -464,7 +464,7 @@ public:
     HooksRegistrar& handle_connect(connection_t f);
 
     /**
-     * Register callback for handle_disconnect.
+     * Register callback for @ref handle_disconnect.
      *
      * @sa Engine::state_event_e
      *
@@ -475,7 +475,7 @@ public:
     HooksRegistrar& handle_disconnect(connection_t f);
 
     /**
-     * Register callback for transaction_started.
+     * Register callback for @ref transaction_started.
      *
      * @sa Engine::state_event_e
      *
@@ -486,7 +486,7 @@ public:
     HooksRegistrar& transaction_started(transaction_t f);
 
     /**
-     * Register callback for transaction_process.
+     * Register callback for @ref transaction_process.
      *
      * @sa Engine::state_event_e
      *
@@ -497,7 +497,7 @@ public:
     HooksRegistrar& transaction_process(transaction_t f);
 
     /**
-     * Register callback for transaction_finished.
+     * Register callback for @ref transaction_finished.
      *
      * @sa Engine::state_event_e
      *
@@ -508,7 +508,7 @@ public:
     HooksRegistrar& transaction_finished(transaction_t f);
 
     /**
-     * Register callback for handle_context_transaction.
+     * Register callback for @ref handle_context_transaction.
      *
      * @sa Engine::state_event_e
      *
@@ -519,7 +519,7 @@ public:
     HooksRegistrar& handle_context_transaction(transaction_t f);
 
     /**
-     * Register callback for handle_request_header.
+     * Register callback for @ref handle_request_header.
      *
      * @sa Engine::state_event_e
      *
@@ -530,7 +530,7 @@ public:
     HooksRegistrar& handle_request_header(transaction_t f);
 
     /**
-     * Register callback for handle_request.
+     * Register callback for @ref handle_request.
      *
      * @sa Engine::state_event_e
      *
@@ -541,7 +541,7 @@ public:
     HooksRegistrar& handle_request(transaction_t f);
 
     /**
-     * Register callback for handle_response_header.
+     * Register callback for @ref handle_response_header.
      *
      * @sa Engine::state_event_e
      *
@@ -552,7 +552,7 @@ public:
     HooksRegistrar& handle_response_header(transaction_t f);
 
     /**
-     * Register callback for handle_response.
+     * Register callback for @ref handle_response.
      *
      * @sa Engine::state_event_e
      *
@@ -563,7 +563,7 @@ public:
     HooksRegistrar& handle_response(transaction_t f);
 
     /**
-     * Register callback for handle_postprocess.
+     * Register callback for @ref handle_postprocess.
      *
      * @sa Engine::state_event_e
      *
@@ -574,7 +574,7 @@ public:
     HooksRegistrar& handle_postprocess(transaction_t f);
 
     /**
-     * Register callback for handle_logging.
+     * Register callback for @ref handle_logging.
      *
      * @sa Engine::state_event_e
      *
@@ -585,7 +585,7 @@ public:
     HooksRegistrar& handle_logging(transaction_t f);
 
     /**
-     * Register callback for request_header_finished.
+     * Register callback for @ref request_header_finished.
      *
      * @sa Engine::state_event_e
      *
@@ -596,7 +596,7 @@ public:
     HooksRegistrar& request_header_finished(transaction_t f);
 
     /**
-     * Register callback for request_finished.
+     * Register callback for @ref request_finished.
      *
      * @sa Engine::state_event_e
      *
@@ -607,7 +607,7 @@ public:
     HooksRegistrar& request_finished(transaction_t f);
 
     /**
-     * Register callback for response_header_finished.
+     * Register callback for @ref response_header_finished.
      *
      * @sa Engine::state_event_e
      *
@@ -618,7 +618,7 @@ public:
     HooksRegistrar& response_header_finished(transaction_t f);
 
     /**
-     * Register callback for response_finished.
+     * Register callback for @ref response_finished.
      *
      * @sa Engine::state_event_e
      *
@@ -629,7 +629,7 @@ public:
     HooksRegistrar& response_finished(transaction_t f);
 
     /**
-     * Register callback for transaction_data_in.
+     * Register callback for @ref transaction_data_in.
      *
      * @sa Engine::state_event_e
      *
@@ -640,7 +640,7 @@ public:
     HooksRegistrar& transaction_data_in(transaction_data_t f);
 
     /**
-     * Register callback for transaction_data_out.
+     * Register callback for @ref transaction_data_out.
      *
      * @sa Engine::state_event_e
      *
@@ -651,7 +651,7 @@ public:
     HooksRegistrar& transaction_data_out(transaction_data_t f);
 
     /**
-     * Register callback for request_body_data.
+     * Register callback for @ref request_body_data.
      *
      * @sa Engine::state_event_e
      *
@@ -662,7 +662,7 @@ public:
     HooksRegistrar& request_body_data(transaction_data_t f);
 
     /**
-     * Register callback for response_body_data.
+     * Register callback for @ref response_body_data.
      *
      * @sa Engine::state_event_e
      *
@@ -673,7 +673,7 @@ public:
     HooksRegistrar& response_body_data(transaction_data_t f);
 
     /**
-     * Register callback for context_open.
+     * Register callback for @ref context_open.
      *
      * @sa Engine::state_event_e
      *
@@ -684,7 +684,7 @@ public:
     HooksRegistrar& context_open(context_t f);
 
     /**
-     * Register callback for context_close.
+     * Register callback for @ref context_close.
      *
      * @sa Engine::state_event_e
      *
@@ -695,7 +695,7 @@ public:
     HooksRegistrar& context_close(context_t f);
 
     /**
-     * Register callback for context_destroy.
+     * Register callback for @ref context_destroy.
      *
      * @sa Engine::state_event_e
      *
@@ -706,7 +706,7 @@ public:
     HooksRegistrar& context_destroy(context_t f);
 
     /**
-     * Register callback for @ref engine_shutdown_initited.
+     * Register callback for @ref engine_shutdown_initiated.
      *
      * @sa engine::state_event_e
      *
