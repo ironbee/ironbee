@@ -1129,7 +1129,7 @@ static ib_status_t report_status_block_to_server(
 /**
  * Perform a block operation by signaling an error to the server.
  *
- * The server is signaled in one of two ways (possibly failing-back to 
+ * The server is signaled in one of two ways (possibly failing-back to
  * the other method if a block could not be executed exactly as
  * requested):
  *
