@@ -505,11 +505,14 @@ ib_status_t ib_data_lookup_index_ex(
 )
 {
     assert(config != NULL);
-    assert(key != NULL);
-    assert(key_length > 0);
 
     size_t *local_index;
     ib_status_t rc;
+
+    /* Null and 0-length keys are allowed and are never indexed. */
+    if (key == NULL || key_length == 0) {
+        return IB_ENOENT;
+    }
 
     rc = ib_hash_get_ex(config->index_by_key, &local_index, key, key_length);
     if (rc == IB_ENOENT) {
