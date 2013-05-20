@@ -237,6 +237,9 @@ ib_status_t sqli_op_create(
     ib_engine_t *ib = ib_context_get_engine(ctx);
     ib_status_t rc;
     ib_module_t *m = (ib_module_t *)cbdata;
+    const char *set_name;
+    size_t set_name_len;
+
     const sqli_module_config_t *cfg = NULL;
     const sqli_pattern_set_t    *ps  = NULL;
 
@@ -245,7 +248,17 @@ ib_status_t sqli_op_create(
         return IB_EINVAL;
     }
 
-    if (strcmp("default", parameters) != 0) {
+    set_name = parameters;
+    set_name_len = strlen(parameters);
+    if (set_name[0] == '\'') {
+        ++set_name;
+        --set_name_len;
+    }
+    if (set_name[set_name_len-1] == '\'') {
+        --set_name_len;
+    }
+
+    if (strncmp("default", set_name, set_name_len) == 0) {
         *instance_data = NULL;
         return IB_OK;
     }
@@ -254,7 +267,7 @@ ib_status_t sqli_op_create(
     assert(rc == IB_OK);
     assert(cfg->pattern_sets != NULL);
 
-    rc = ib_hash_get(cfg->pattern_sets, &ps, parameters);
+    rc = ib_hash_get_ex(cfg->pattern_sets, &ps, set_name, set_name_len);
     if (rc == IB_ENOENT) {
         ib_log_error(ib, "No such pattern set: %s", parameters);
         return IB_EINVAL;
@@ -280,7 +293,7 @@ int sqli_is_sqli_pattern(const char *pattern, void *cbdata)
 
     void *result = bsearch(
         pattern,
-        ps->patterns, ps->num_patterns, sizeof(*ps->patterns),
+        *ps->patterns, ps->num_patterns, sizeof(*ps->patterns),
         &sqli_cmp
     );
     return result != NULL;
@@ -424,6 +437,8 @@ ib_status_t sqli_create_pattern_set_from_file(
         sizeof(*ps->patterns),
         &sqli_cmp
     );
+
+    *out_ps = ps;
 
     return IB_OK;
 
