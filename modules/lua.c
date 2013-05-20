@@ -2468,7 +2468,7 @@ static ib_status_t modlua_module_load(
         return rc;
     }
 
-    /* Write up the callbacks. */
+    /* Wirte up the callbacks. */
     rc = modlua_module_load_wire_callbacks(ib, file, module, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed register lua callbacks for module : %s", file);

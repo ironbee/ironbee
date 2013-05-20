@@ -50,15 +50,16 @@
  * @param[in] c Should contain -1 if the reason this function is called is because the end of
  *          the current data chunk is reached.
  */
-static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char *data, size_t startpos, size_t endpos, int last_char) {
+static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char *data, size_t startpos, size_t endpos, int last_char) {    
     // Add field if we know it ended (last_char is something other than -1)
-    // or if we know that we've used all of the input data.
-    if ((last_char != -1) || (urlenp->_complete)) {
-        // Add field
+    // or if we know that there won't be any more input data (urlenp->_complete is true).
+    if ((last_char != -1) || (urlenp->_complete)) {       
+        // Prepare the field value, assembling from multiple pieces as necessary.
+    
         bstr *field = NULL;
 
         // Did we use the string builder for this field?
-        if (bstr_builder_size(urlenp->_bb) > 0) {
+        if (bstr_builder_size(urlenp->_bb) > 0) {            
             // The current field consists of more than once piece, we have to use the string builder.
 
             // Add current piece to string builder.
@@ -71,7 +72,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
             if (field == NULL) return;
 
             bstr_builder_clear(urlenp->_bb);
-        } else {
+        } else {            
             // We only have the current piece to work with, so no need to involve the string builder.
             if ((data != NULL) && (endpos - startpos > 0)) {
                 field = bstr_dup_mem(data + startpos, endpos - startpos);
@@ -79,18 +80,28 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
             }
         }
 
+        // Process field as key or value, as appropriate.
+        
         if (urlenp->_state == HTP_URLENP_STATE_KEY) {
             // Key.
 
             // If there is no more work left to do, then we have a single key. Add it.
-            if (urlenp->_complete) {
-                // Process the key only if it isn't empty. There's little point in adding
-                // a parameter with an empty key and an empty value.
-                if (field != NULL) {
-                    // Param with key but no value.
+            if ((urlenp->_complete)||(last_char == urlenp->argument_separator)) {                
+                
+                // Handling empty pairs is tricky. We don't want to create a pair for
+                // an entirely empty input, but in some cases it may be appropriate
+                // (e.g., /index.php?&q=2).
+                if ((field != NULL)||(last_char == urlenp->argument_separator)) {
+                    // Add one pair, with an empty value and possibly empty key too.
 
                     bstr *name = field;
+                    if (name == NULL) {
+                        name = bstr_dup_c("");
+                        if (name == NULL) return;
+                    }
+
                     bstr *value = bstr_dup_c("");
+                    if (value == NULL) return;
 
                     if (urlenp->decode_url_encoding) {
                         htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, name);
@@ -101,26 +112,27 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
                     urlenp->_name = NULL;
 
                     #ifdef HTP_DEBUG
-                    fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(name), bstr_len(name));
-                    fprint_raw_data(stderr, "VALUE", (unsigned char *) bstr_ptr(value), bstr_len(value));
+                    fprint_raw_data(stderr, "NAME", bstr_ptr(name), bstr_len(name));
+                    fprint_raw_data(stderr, "VALUE", bstr_ptr(value), bstr_len(value));
                     #endif
                 }
-            } else {
-                // There's more work to do, so just remember the key for later.
-                if (field != NULL) {
-                    urlenp->_name = field;
-                } else {
-                    urlenp->_name = bstr_dup_c("");
-                }
+            } else {                
+                // This key will possibly be followed by a value, so keep it for later.
+                urlenp->_name = field;
             }
-        } else {
+        } else {            
             // Value (with a key remembered from before).
 
             bstr *name = urlenp->_name;
-            bstr *value = field;
+            if (name == NULL) {
+                name = bstr_dup_c("");
+                if (name == NULL) return;
+            }
 
+            bstr *value = field;
             if (value == NULL) {
                 value = bstr_dup_c("");
+                if (value == NULL) return;
             }
 
             if (urlenp->decode_url_encoding) {
@@ -133,12 +145,13 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
             urlenp->_name = NULL;
 
             #ifdef HTP_DEBUG
-            fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(name), bstr_len(name));
-            fprint_raw_data(stderr, "VALUE", (unsigned char *) bstr_ptr(value), bstr_len(value));
+            fprint_raw_data(stderr, "NAME", bstr_ptr(name), bstr_len(name));
+            fprint_raw_data(stderr, "VALUE", bstr_ptr(value), bstr_len(value));
             #endif
-        }
+        }        
     } else {
         // The field has not ended. We'll make a copy of of the available data for later.
+
         if ((data != NULL) && (endpos - startpos > 0)) {
             bstr_builder_append_mem(urlenp->_bb, data + startpos, endpos - startpos);
         }
@@ -257,7 +270,7 @@ htp_status_t htp_urlenp_parse_partial(htp_urlenp_t *urlenp, const void *_data, s
         else c = -1;
 
         switch (urlenp->_state) {
-                // Process key
+
             case HTP_URLENP_STATE_KEY:
                 // Look for =, argument separator, or end of input.
                 if ((c == '=') || (c == urlenp->argument_separator) || (c == -1)) {
@@ -268,15 +281,19 @@ htp_status_t htp_urlenp_parse_partial(htp_urlenp_t *urlenp, const void *_data, s
                     if (c != -1) {
                         // Next state.
                         startpos = pos + 1;
-                        urlenp->_state = HTP_URLENP_STATE_VALUE;
+
+                        if (c == urlenp->argument_separator) {
+                            urlenp->_state = HTP_URLENP_STATE_KEY;
+                        } else {
+                            urlenp->_state = HTP_URLENP_STATE_VALUE;
+                        }
                     }
                 }
 
                 pos++;
 
                 break;
-
-                // Process value
+            
             case HTP_URLENP_STATE_VALUE:
                 // Look for argument separator or end of input.
                 if ((c == urlenp->argument_separator) || (c == -1)) {

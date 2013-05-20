@@ -608,6 +608,12 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
 
     ib_status_t rc;
 
+    /* We should never get NULL data */
+    if ( (txdata->data == NULL) || (txdata->dlen == 0) ) {
+        ib_log_info_tx(tx, "Request body data with no data.  Ignoring.");
+        return IB_OK;
+    }
+
     /* Generate the request line event if it hasn't been seen */
     if (! ib_tx_flags_isset(tx, IB_TX_FREQ_SEENLINE)) {
     }
@@ -841,6 +847,12 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     assert(txdata != NULL);
 
     ib_status_t rc;
+
+    /* We should never get NULL data */
+    if ( (txdata->data == NULL) || (txdata->dlen == 0) ) {
+        ib_log_info_tx(tx, "Response body data with no data.  Ignoring.");
+        return IB_OK;
+    }
 
     /* Validate the header has already been seen. */
     if (! ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
