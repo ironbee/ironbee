@@ -133,7 +133,7 @@ clipp_LDADD = \
     $(top_builddir)/automata/libiaeudoxus.la
 
 clean-local:
-	rm -f clipp_test_*.pb clipp_test_*.config clipp_test_*.clipp
+	rm -f clipp_test_*.pb clipp_test_*.config clipp_test_*.clipp *.lua
 
 CLEANFILES=clipp.pb.cc clipp.pb.h
 
