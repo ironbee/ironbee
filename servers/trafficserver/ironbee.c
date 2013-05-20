@@ -407,6 +407,15 @@ static ib_status_t ib_errdata_callback(ib_tx_t *tx, const char *data, void *cbda
     return IB_OK;
 }
 
+static ib_status_t ib_errclose_callback(
+    ib_conn_t *conn,
+    ib_tx_t *tx,
+    void *cbdata)
+{
+    ib_log_error(conn->ib, "BLOCK BY CLOSE NOT IMPLEMENTED.");
+    return IB_ENOTIMPL;
+}
+
 /* Plugin Structure */
 ib_server_t DLL_LOCAL ibplugin = {
     IB_SERVER_HEADER_DEFAULTS,
@@ -419,6 +428,8 @@ ib_server_t DLL_LOCAL ibplugin = {
     NULL,
     ib_errdata_callback,
     NULL,
+    ib_errclose_callback,
+    NULL
 };
 
 /**

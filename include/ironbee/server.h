@@ -151,6 +151,26 @@ typedef ib_status_t (*ib_server_filter_data_fn_t)(
 );
 #endif /* HAVE_FILTER_DATA_API */
 
+/**
+ * Close the given connection.
+ *
+ * @param[in] conn Connection to close.
+ * @param[in] tx Transaction that the connection is in.
+ *               There are situations where tx may be NULL. 
+ *               Implementers should exepct to close a
+ *               connection when there is no associated transaction.
+ * @param[in] cbdata Callback data.
+ *
+ * @returns 
+ *   - IB_OK on success.
+ *   - IB_DECLINED if the server cannot honor this request.
+ */
+typedef ib_status_t (*ib_server_close_fn_t)(
+    ib_conn_t *conn,
+    ib_tx_t *tx,
+    void *cbdata
+);
+
 struct ib_server_t {
     /* Header */
     uint32_t                 vernum;   /**< Engine version number */
@@ -203,7 +223,14 @@ struct ib_server_t {
 
     /** Callback data for data_fn */
     void *data_data;
+
 #endif
+
+    /** Close connection. */
+    ib_server_close_fn_t close_fn;
+
+    /** Callback data for close_fn. */
+    void *close_data;
 };
 
 #ifdef DOXYGEN
@@ -361,6 +388,10 @@ ib_status_t ib_server_filter_data(
     ((svr) && (svr)->data_fn) ? (svr)->data_fn(tx, dir, data, len, (svr)->data_data) \
                    : IB_ENOTIMPL
 #endif /* HAVE_FILTER_DATA_API */
+
+#define ib_server_error_close(svr, conn, tx) \
+    ((svr) && (svr)->close_fn) ? (svr)->close_fn(conn, tx, (svr)->close_data) \
+                  : IB_ENOTIMPL
 
 #endif /* DOXYGEN */
 
