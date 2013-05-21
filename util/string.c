@@ -46,11 +46,12 @@
 /**
  * Convert a string (with length) to a number.
  */
-ib_status_t ib_string_to_num_ex(const char *s,
-                                size_t slen,
-                                int base,
-                                ib_num_t *result)
-{
+ib_status_t ib_string_to_num_ex(
+    const char *s,
+    size_t slen,
+    int base,
+    ib_num_t *result
+) {
     assert(result != NULL);
 
     char buf[NUM_BUF_LEN+1];
@@ -71,10 +72,11 @@ ib_status_t ib_string_to_num_ex(const char *s,
 /**
  * Convert a string (with length) to a number.
  */
-ib_status_t ib_string_to_num(const char *s,
-                             int base,
-                             ib_num_t *result)
-{
+ib_status_t ib_string_to_num(
+    const char *s,
+    int base,
+    ib_num_t *result
+) {
     assert(result != NULL);
 
     size_t slen = strlen(s);
@@ -104,8 +106,11 @@ ib_status_t ib_string_to_num(const char *s,
     }
 }
 
-ib_status_t ib_string_to_time_ex(const char *s, size_t slen, ib_time_t *result)
-{
+ib_status_t ib_string_to_time_ex(
+    const char *s,
+    size_t slen,
+    ib_time_t *result
+) {
     ib_num_t n;
     ib_status_t rc;
     rc = ib_string_to_num_ex(s, slen, 0, &n);
@@ -113,8 +118,10 @@ ib_status_t ib_string_to_time_ex(const char *s, size_t slen, ib_time_t *result)
     return rc;
 }
 
-ib_status_t ib_string_to_time(const char *s, ib_time_t *result)
-{
+ib_status_t ib_string_to_time(
+    const char *s,
+    ib_time_t *result
+) {
     ib_num_t n;
     ib_status_t rc;
     rc = ib_string_to_num(s, 0, &n);
@@ -126,10 +133,11 @@ ib_status_t ib_string_to_time(const char *s, ib_time_t *result)
 /**
  * Convert a string to a ib_float_t.
  */
-ib_status_t ib_string_to_float_ex(const char *s,
-                                  size_t slen,
-                                  ib_float_t *result)
-{
+ib_status_t ib_string_to_float_ex(
+    const char *s,
+    size_t slen,
+    ib_float_t *result
+) {
     ib_status_t rc;
 
     /* Check for zero length string */
@@ -195,11 +203,12 @@ ib_status_t ib_string_to_float(const char *s, ib_float_t *result)
 /**
  * strstr() clone that works with non-NUL terminated strings
  */
-const char *ib_strstr_ex(const char *haystack,
-                         size_t      haystack_len,
-                         const char *needle,
-                         size_t      needle_len)
-{
+const char *ib_strstr_ex(
+    const char *haystack,
+    size_t      haystack_len,
+    const char *needle,
+    size_t      needle_len
+) {
     size_t i = 0;
     size_t imax;
 
@@ -234,11 +243,12 @@ const char *ib_strstr_ex(const char *haystack,
 /**
  * Reverse strstr() clone that works with non-NUL terminated strings
  */
-const char *ib_strrstr_ex(const char *haystack,
-                          size_t      haystack_len,
-                          const char *needle,
-                          size_t      needle_len)
-{
+const char *ib_strrstr_ex(
+    const char *haystack,
+    size_t      haystack_len,
+    const char *needle,
+    size_t      needle_len
+) {
     size_t imax;
     const char *hp;
 
@@ -319,9 +329,10 @@ size_t ib_unum_buf_size(uint64_t unum)
     return digits + 1;
 }
 
-const char *ib_num_to_string(ib_mpool_t *mp,
-                             int64_t value)
-{
+const char *ib_num_to_string(
+    ib_mpool_t *mp,
+    int64_t value
+) {
     size_t size = ib_num_buf_size(value);
     char *buf = ib_mpool_alloc(mp, size);
     if (buf != NULL) {
@@ -335,9 +346,10 @@ const char *ib_time_to_string(ib_mpool_t *mp, ib_time_t time)
     return ib_num_to_string(mp, time);
 }
 
-const char *ib_unum_to_string(ib_mpool_t *mp,
-                              uint64_t value)
-{
+const char *ib_unum_to_string(
+    ib_mpool_t *mp,
+    uint64_t value
+) {
     size_t size = ib_unum_buf_size(value);
     char *buf = ib_mpool_alloc(mp, size);
     if (buf != NULL) {
@@ -346,9 +358,10 @@ const char *ib_unum_to_string(ib_mpool_t *mp,
     return buf;
 }
 
-const char *ib_float_to_string(ib_mpool_t *mp,
-                               long double value)
-{
+const char *ib_float_to_string(
+    ib_mpool_t *mp,
+    long double value
+) {
     char *buf = ib_mpool_alloc(mp, 10);
     if (buf != NULL) {
         snprintf(buf, 10, "%Lf", value);
@@ -360,11 +373,12 @@ const char *ib_float_to_string(ib_mpool_t *mp,
  * Look for a character in a string that can have embedded NUL characters
  * in it.  This version will ignore NUL characters.
  */
-ib_status_t ib_strchr_nul_ignore(const char *str,
-                                 size_t len,
-                                 int c,
-                                 ssize_t *offset)
-{
+ib_status_t ib_strchr_nul_ignore(
+    const char *str,
+    size_t len,
+    int c,
+    ssize_t *offset
+) {
     const char *p;
 
     for ( p=str;  len > 0;  ++p, --len) {
@@ -377,11 +391,12 @@ ib_status_t ib_strchr_nul_ignore(const char *str,
     return IB_OK;
 }
 
-ib_status_t ib_strchr_nul_error(const char *str,
-                                size_t len,
-                                int c,
-                                ssize_t *offset)
-{
+ib_status_t ib_strchr_nul_error(
+    const char *str,
+    size_t len,
+    int c,
+    ssize_t *offset
+) {
     const char *p;
 
     for ( p=str;  len > 0;  ++p, --len) {
