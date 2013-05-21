@@ -127,6 +127,16 @@ extern "C" {
  *     </tr>
  *
  *     <tr>
+ *         <td>@c IB_FTYPE_TIME</td>
+ *         <td>@c ib_time_t</td>
+ *         <td>@c const @c ib_time_t*</td>
+ *         <td>@c ib_time_t*</td>
+ *         <td>@c const @c ib_time_t*</td>
+ *         <td>@c ib_time_t**</td>
+ *         <td>@c ib_time_t*</td>
+ *     </tr>
+ *
+ *     <tr>
  *         <td>@c IB_FTYPE_NULSTR</td>
  *         <td>@c char*</td>
  *         <td>@c const @c char*</td>
@@ -183,6 +193,7 @@ extern "C" {
 typedef enum {
     IB_FTYPE_GENERIC = 0, /**< Generic pointer value */
     IB_FTYPE_NUM,         /**< Numeric value */
+    IB_FTYPE_TIME,        /**< Milliseconds since epoch. */
     IB_FTYPE_FLOAT,       /**< Floating point value. */
     IB_FTYPE_NULSTR,      /**< NUL terminated string value */
     IB_FTYPE_BYTESTR,     /**< Binary data value */
@@ -210,6 +221,12 @@ struct ib_field_t {
  * Field numerical signed value type
  */
 typedef int64_t ib_num_t;
+
+/**
+ * The number of milliseconds since 1970-01-01 00:00:00 +0000 (UTC).
+ */
+typedef uint64_t ib_time_t;
+
 /**
  * Field float unsigned value type
  */
@@ -219,6 +236,7 @@ typedef long double ib_float_t;
 typedef union {
     ib_num_t       num;           /**< Generic numeric value */
     ib_float_t     fnum;          /**< Floating type value. */
+    ib_time_t      time;          /**< Milliseconds since epoch. */
     ib_bytestr_t  *bytestr;       /**< Byte string value */
     char          *nulstr;        /**< NUL string value */
     ib_list_t     *list;          /**< List of fields */
@@ -303,7 +321,6 @@ static inline void *ib_ftype_float_storage(ib_float_t *v)
     return (void *)(v);
 }
 
-
 /**
  * Assert @a v is proper type.
  */
@@ -340,6 +357,46 @@ static inline void *ib_ftype_num_mutable_out(ib_num_t **v)
  * Assert @a v is proper type.
  */
 static inline void *ib_ftype_num_storage(ib_num_t *v)
+{
+    return (void *)(v);
+}
+
+/**
+ * Assert @a v is proper type.
+ */
+static inline void *ib_ftype_time_mutable_in(ib_time_t *v)
+{
+    return (void *)(v);
+}
+
+/**
+ * Assert @a v is proper type.
+ */
+static inline void *ib_ftype_time_in(const ib_time_t *v)
+{
+    return (void *)(v);
+}
+
+/**
+ * Assert @a v is proper type.
+ */
+static inline void *ib_ftype_time_out(ib_time_t *v)
+{
+    return (void *)(v);
+}
+
+/**
+ * Assert @a v is proper type.
+ */
+static inline void *ib_ftype_time_mutable_out(ib_time_t **v)
+{
+    return (void *)(v);
+}
+
+/**
+ * Assert @a v is proper type.
+ */
+static inline void *ib_ftype_time_storage(ib_time_t *v)
 {
     return (void *)(v);
 }

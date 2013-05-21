@@ -1221,6 +1221,7 @@ static ib_status_t tfn_float_op(
     ib_flags_t *pflags)
 {
     ib_float_t flt;
+    ib_num_t num;
     ib_field_t *fnew;
     ib_status_t rc = IB_OK;
 
@@ -1233,8 +1234,19 @@ static ib_status_t tfn_float_op(
     /* Get the float value. */
     switch(fin->type) {
         case IB_FTYPE_NUM:
-            *fout = fin;
-            return IB_OK;
+            rc = ib_field_value(fin, ib_ftype_num_out(&num));
+            if (rc != IB_OK) {
+                return IB_EOTHER;
+            }
+            flt = num;
+            break;
+        case IB_FTYPE_TIME:
+            rc = ib_field_value(fin, ib_ftype_num_out(&num));
+            if (rc != IB_OK) {
+                return IB_EOTHER;
+            }
+            flt = num;
+            break;
         case IB_FTYPE_FLOAT:
             rc = ib_field_value(fin, ib_ftype_float_out(&flt));
             if (rc != IB_OK) {

@@ -104,6 +104,25 @@ ib_status_t ib_string_to_num(const char *s,
     }
 }
 
+ib_status_t ib_string_to_time_ex(const char *s, size_t slen, ib_time_t *result)
+{
+    ib_num_t n;
+    ib_status_t rc;
+    rc = ib_string_to_num_ex(s, slen, 0, &n);
+    *result = n;
+    return rc;
+}
+
+ib_status_t ib_string_to_time(const char *s, ib_time_t *result)
+{
+    ib_num_t n;
+    ib_status_t rc;
+    rc = ib_string_to_num(s, 0, &n);
+    *result = n;
+    return rc;
+}
+
+
 /**
  * Convert a string to a ib_float_t.
  */
@@ -309,6 +328,11 @@ const char *ib_num_to_string(ib_mpool_t *mp,
         snprintf(buf, size, "%"PRId64, value);
     }
     return buf;
+}
+
+const char *ib_time_to_string(ib_mpool_t *mp, ib_time_t time)
+{
+    return ib_num_to_string(mp, time);
 }
 
 const char *ib_unum_to_string(ib_mpool_t *mp,

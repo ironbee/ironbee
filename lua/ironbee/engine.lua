@@ -60,6 +60,12 @@ _M.fieldToLua = function(self, field)
         ffi.C.ib_field_value(field, value)
         return tonumber(value[0])
 
+    -- Time
+    elseif field.type == ffi.C.IB_FTYPE_TIME then
+        local value = ffi.new("ib_time_t[1]")
+        ffi.C.ib_field_value(field, value)
+        return tonumber(value[0])
+
     -- Float Number
     elseif field.type == ffi.C.IB_FTYPE_FLOAT then
         local value = ffi.new("ib_float_t[1]")

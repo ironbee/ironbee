@@ -174,6 +174,35 @@ ib_status_t DLL_PUBLIC ib_string_to_num_ex(const char *s,
                                            ib_num_t *result);
 
 /**
+ * Convert a string to a time type, with error checking
+ *
+ * @param[in] s String to convert
+ * @param[in] slen Length of string
+ * for details.
+ * @param[out] result Resulting time.
+ *
+ * @returns
+ *   - IB_OK
+ *   - IB_EINVAL
+ */
+ib_status_t DLL_PUBLIC ib_string_to_time_ex(const char *s,
+                                            size_t slen,
+                                            ib_time_t *result);
+
+/**
+ * Convert a string to a time type, with error checking
+ *
+ * @param[in] s String to convert
+ * @param[out] result Resulting time.
+ *
+ * @returns
+ *   - IB_OK
+ *   - IB_EINVAL
+ */
+ib_status_t DLL_PUBLIC ib_string_to_time(const char *s,
+                                         ib_time_t *result);
+
+/**
  * Convert a string to an ib_float_t with error checking.
  *
  * Avoid using this function because it requires that a copy of the
@@ -531,6 +560,18 @@ size_t ib_unum_buf_size(uint64_t num);
 const char *ib_num_to_string(ib_mpool_t *mp,
                              int64_t value);
 
+/**
+ * Get a string representation of a time.
+ *
+ * The string is the integer representing the number of milliseconds
+ * since the epoch.
+ *
+ * @param[in] mp The memory pool to use for allocations
+ * @param[in] value The number to operate on
+ *
+ * @returns The buffer or NULL if allocation fails
+ */
+const char *ib_time_to_string(ib_mpool_t *mp, ib_time_t value);
 /**
  * Get a string representation of a number
  *
