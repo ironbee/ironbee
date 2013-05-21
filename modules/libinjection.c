@@ -44,7 +44,6 @@
 #include <ironbee/util.h>
 
 #include <libinjection.h>
-#include <modp_ascii.h>
 
 #include <assert.h>
 #include <stdio.h>

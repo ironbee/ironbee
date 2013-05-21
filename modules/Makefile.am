@@ -126,11 +126,7 @@ ibmod_fast_la_LIBADD = $(AMLIB_ADD) ../automata/libiaeudoxus.la
 
 ibmod_libinjection_la_SOURCES = libinjection.c
 nodist_ibmod_libinjection_la_SOURCES = \
-    $(abs_top_srcdir)/libs/libinjection/c/libinjection_sqli.c \
-    $(abs_top_srcdir)/libs/libinjection/c/modp_qsiter.c \
-    $(abs_top_srcdir)/libs/libinjection/c/modp_burl.c \
-    $(abs_top_srcdir)/libs/libinjection/c/modp_ascii.c \
-    $(abs_top_srcdir)/libs/libinjection/c/modp_xml.c
+    $(abs_top_srcdir)/libs/libinjection/c/libinjection_sqli.c
 ibmod_libinjection_la_CFLAGS = ${AM_CFLAGS} -I$(abs_top_srcdir)/libs/libinjection/c
 ibmod_libinjection_la_LDFLAGS = $(AM_LDFLAGS)
 
