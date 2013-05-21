@@ -111,10 +111,26 @@ ib_status_t ib_string_to_time_ex(
     size_t slen,
     ib_time_t *result
 ) {
-    ib_num_t n;
+    assert(result != NULL);
+
     ib_status_t rc;
-    rc = ib_string_to_num_ex(s, slen, 0, &n);
-    *result = n;
+    char *buf;
+
+    /* Check for zero length string */
+    if ( (s == NULL) || (slen == 0) ) {
+        return IB_EINVAL;
+    }
+    
+    buf = malloc(slen+1);
+    if (buf == NULL) {
+        return IB_EALLOC;
+    }
+
+    memcpy(buf, s, slen);
+    buf[slen] = '\0';
+    rc = ib_string_to_time(buf, result);
+
+    free(buf);
     return rc;
 }
 
@@ -122,11 +138,32 @@ ib_status_t ib_string_to_time(
     const char *s,
     ib_time_t *result
 ) {
-    ib_num_t n;
-    ib_status_t rc;
-    rc = ib_string_to_num(s, 0, &n);
-    *result = n;
-    return rc;
+    assert(result != NULL);
+
+    size_t slen = strlen(s);
+    char *end;
+    unsigned long int value;
+    size_t vlen;
+
+    /* Check for zero length string */
+    if ( (s == NULL) || (*s == '\0') ) {
+        return IB_EINVAL;
+    }
+
+    /* Do the conversion, check for errors */
+    value = strtoul(s, &end, 0);
+    vlen = (end - s);
+    if (vlen != slen) {
+        return IB_EINVAL;
+    }
+    else if ( (value == ULONG_MAX) && (errno == ERANGE) )
+    {
+        return IB_EINVAL;
+    }
+    else {
+        *result = value;
+        return IB_OK;
+    }
 }
 
 
@@ -341,9 +378,14 @@ const char *ib_num_to_string(
     return buf;
 }
 
-const char *ib_time_to_string(ib_mpool_t *mp, ib_time_t time)
+const char *ib_time_to_string(ib_mpool_t *mp, ib_time_t value)
 {
-    return ib_num_to_string(mp, time);
+    size_t size = ib_num_buf_size(value);
+    char *buf = ib_mpool_alloc(mp, size);
+    if (buf != NULL) {
+        snprintf(buf, size, "%"PRIu64, value);
+    }
+    return buf;
 }
 
 const char *ib_unum_to_string(
