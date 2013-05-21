@@ -312,7 +312,7 @@ local build_rule = function(ib, ctx, chain, db)
 
         -- Chains
         if i < #chain then
-            rc = ffi.C.rule_set_chain(ib.ib_engine, prule[0])
+            rc = ffi.C.ib_rule_set_chain(ib.ib_engine, prule[0])
             if rc ~= ffi.C.IB_OK then
                 ib:logError("Failed to setup chain rule.")
             end
