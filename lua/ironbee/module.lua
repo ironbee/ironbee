@@ -254,7 +254,7 @@ end
 moduleapi.register_directive = function(self, name, dirtype, fn, flagmap)
 
     -- If there is no registration directive, bail out.
-    if self.cregister_directive ~= nil then
+    if self.cregister_directive == nil then
         return ffi.C.IB_OK
     end
 
