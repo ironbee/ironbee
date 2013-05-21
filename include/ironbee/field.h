@@ -28,6 +28,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/bytestr.h>
+#include <ironbee/clock.h>
 #include <ironbee/list.h>
 #include <ironbee/mpool.h>
 #include <ironbee/stream.h>
@@ -221,11 +222,6 @@ struct ib_field_t {
  * Field numerical signed value type
  */
 typedef int64_t ib_num_t;
-
-/**
- * The number of milliseconds since 1970-01-01 00:00:00 +0000 (UTC).
- */
-typedef uint64_t ib_time_t;
 
 /**
  * Field float unsigned value type
