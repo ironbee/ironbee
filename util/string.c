@@ -41,8 +41,6 @@
 /**
  * Length of the string buffer for converting strings.
  */
-#define NUM_BUF_LEN 64
-
 /**
  * Convert a string (with length) to a number.
  */
@@ -54,18 +52,22 @@ ib_status_t ib_string_to_num_ex(
 ) {
     assert(result != NULL);
 
-    char buf[NUM_BUF_LEN+1];
+    char *buf;
     ib_status_t rc;
 
     /* Check for zero length string */
-    if ( (s == NULL) || (slen > NUM_BUF_LEN) || (slen == 0) ) {
+    if ( (s == NULL) || (slen == 0) ) {
         return IB_EINVAL;
     }
 
-    /* Copy the string to a buffer, let string_to_num() do the real work */
+    buf = malloc(slen+1);
+    if (buf == NULL) {
+        return IB_EALLOC;
+    }
     memcpy(buf, s, slen);
     buf[slen] = '\0';
     rc = ib_string_to_num(buf, base, result);
+    free(buf);
     return rc;
 }
 
