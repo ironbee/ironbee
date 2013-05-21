@@ -45,7 +45,6 @@
 
 #include <libinjection.h>
 #include <modp_ascii.h>
-#include <sqlparse_private.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -56,11 +55,6 @@
 
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
-
-/* Private configuration structure. */
-typedef struct sqli_config_t {
-    int fold;
-} sqli_config_t;
 
 /* Finger printer database. */
 typedef struct sqli_pattern_set_t {
@@ -99,10 +93,7 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
     assert(field_out != NULL);
     assert(pflags != NULL);
 
-    sqli_config_t *cfg = (sqli_config_t *)tfn_data;
-    sqli_tokenize_fn_t tokenize_fn;
     sfilter sf;
-    stoken_t current;
     ib_bytestr_t *bs_in;
     ib_bytestr_t *bs_out;
     const char *buf_in;
@@ -115,6 +106,7 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
     char prev_token_type;
     ib_field_t *field_new;
     ib_status_t rc;
+    size_t pat_len;
 
     /* Currently only bytestring types are supported.
      * Other types will just get passed through. */
@@ -175,11 +167,12 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
      * tokens are written back to the beginning of the original
      * buffer.
      */
-    tokenize_fn = cfg->fold ? filter_fold : sqli_tokenize;
-    sfilter_reset(&sf, buf_in_start, buf_in_len);
+    libinjection_is_sqli(&sf, buf_in_start, buf_in_len, NULL, NULL);
     buf_out_len = 0;
     prev_token_type = 0;
-    while (tokenize_fn(&sf, &current)) {
+    pat_len = strlen(sf.pat);
+    for (size_t i = 0; i < pat_len; ++i) {
+        stoken_t current = sf.tokenvec[i];
         size_t token_len = strlen(current.val);
         ib_log_debug2(ib, "SQLi TOKEN: %c \"%s\"", current.type, current.val);
 
@@ -545,31 +538,13 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     assert(ib != NULL);
     assert(m != NULL);
 
-    ib_mpool_t *pool = ib_engine_pool_config_get(ib);
-    sqli_config_t *sqli_config;
     ib_status_t rc;
 
     ib_log_debug(ib, "Initializing %s module.", MODULE_NAME_STR);
 
     /* Register normalizeSqli transformation. */
-    sqli_config = (sqli_config_t *)ib_mpool_calloc(pool, 1, sizeof(*sqli_config));
-    if (sqli_config == NULL) {
-        return IB_EALLOC;
-    }
     rc = ib_tfn_register(ib, "normalizeSqli", sqli_normalize_tfn,
-                         IB_TFN_FLAG_NONE, sqli_config);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Register normalizeSqliFold transformation. */
-    sqli_config = (sqli_config_t *)ib_mpool_calloc(pool, 1, sizeof(*sqli_config));
-    if (sqli_config == NULL) {
-        return IB_EALLOC;
-    }
-    sqli_config->fold = 1;
-    rc = ib_tfn_register(ib, "normalizeSqliFold", sqli_normalize_tfn,
-                         IB_TFN_FLAG_NONE, sqli_config);
+                         IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         return rc;
     }
