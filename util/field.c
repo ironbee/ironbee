@@ -181,12 +181,12 @@ const char *ib_field_format(
         case IB_FTYPE_TIME :          /**< Time value */
         {
             ib_time_t t;
-            tname = "NUM";
+            tname = "TIME";
             rc = ib_field_value(field, ib_ftype_time_out(&t));
             if (rc != IB_OK) {
                 break;
             }
-            snprintf(buf, bufsize, "%"PRId64, t);
+            snprintf(buf, bufsize, "%"PRIu64, t);
             break;
         }
 
@@ -423,7 +423,7 @@ void ib_field_util_log_debug(
             ib_time_t v;
             rc = ib_field_value(f, ib_ftype_time_out(&v));
             if (rc == IB_OK) {
-                ib_util_log_debug("%s value=%"PRId64, prefix, v);
+                ib_util_log_debug("%s value=%"PRIu64, prefix, v);
             }
             break;
         }
@@ -1314,6 +1314,10 @@ ib_status_t ib_field_convert(
             break;
         case IB_FTYPE_FLOAT:
             flt = (ib_float_t)tme;
+            /* Check that our assignment is within error=1, or fail. */
+            if (llabs(tme - flt) > 1) {
+                return IB_EINVAL;
+            }
             new_field_value = ib_ftype_float_in(&flt);
             break;
         default:
@@ -1349,11 +1353,17 @@ ib_status_t ib_field_convert(
             new_field_value = ib_ftype_bytestr_in(bstr);
             break;
         case IB_FTYPE_TIME:
+            if (num < 0) {
+                return IB_EINVAL;
+            }
             tme = (ib_time_t)num;
             new_field_value = ib_ftype_time_in(&tme);
             break;
         case IB_FTYPE_FLOAT:
             flt = (ib_float_t)num;
+            if (llabs(flt - num) > 1) {
+                return IB_EINVAL;
+            }
             new_field_value = ib_ftype_float_in(&flt);
             break;
         default:
@@ -1389,6 +1399,9 @@ ib_status_t ib_field_convert(
             new_field_value = ib_ftype_bytestr_in(bstr);
             break;
         case IB_FTYPE_TIME:
+            if (flt < 0) {
+                return IB_EINVAL;
+            }
             tme = (ib_float_t)flt;
             new_field_value = ib_ftype_time_in(&tme);
             break;
