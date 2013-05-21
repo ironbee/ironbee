@@ -85,6 +85,7 @@ typedef enum {
  *
  * @param[in] tx The transaction.
  * @param[in] status The status code.
+ * @param[in] cbdata Callback data.
  */
 typedef ib_status_t (*ib_server_error_fn_t)(
     ib_tx_t *tx,
@@ -97,6 +98,7 @@ typedef ib_status_t (*ib_server_error_fn_t)(
  * @param[in] tx The transaction.
  * @param[in] name The null-terminated name of the header.
  * @param[in] name The null-terminated value of the header.
+ * @param[in] cbdata Callback data.
  */
 typedef ib_status_t (*ib_server_error_hdr_fn_t)(
     ib_tx_t *tx,
@@ -109,10 +111,13 @@ typedef ib_status_t (*ib_server_error_hdr_fn_t)(
  *
  * @param[in] tx The transaction.
  * @param[in] data The data to set.
+ * @param[in] dlen The data length to be copied, starting at index 0.
+ * @param[in] cbdata Callback data.
  */
 typedef ib_status_t (*ib_server_error_data_fn_t)(
     ib_tx_t *tx,
-    const char *data,
+    const uint8_t *data,
+    size_t dlen,
     void *cbdata
 );
 
@@ -206,10 +211,10 @@ struct ib_server_t {
     /**
      * Function to communicate an error response body to host server.
      */
-    ib_server_error_data_fn_t err_data_fn;
+    ib_server_error_data_fn_t err_body_fn;
 
-    /** Callback data for err_data_fn */
-    void *err_data_data;
+    /** Callback data for err_body_fn */
+    void *err_body_data;
 
 #ifdef HAVE_FILTER_DATA_API
     /** Initialize data filtering */
@@ -373,8 +378,8 @@ ib_status_t ib_server_filter_data(
 #define ib_server_error_header(svr, tx, name, val) \
     ((svr) && (svr)->err_hdr_fn) ? (svr)->err_hdr_fn(tx, name, val, (svr)->err_hdr_data) \
                       : IB_ENOTIMPL
-#define ib_server_error_body(svr, tx, data) \
-    ((svr) && (svr)->err_data_fn) ? (svr)->err_data_fn(tx, data, (svr)->err_data_data) \
+#define ib_server_error_body(svr, tx, data, dlen) \
+    ((svr) && (svr)->err_body_fn) ? (svr)->err_body_fn(tx, data, dlen, (svr)->err_body_data) \
                        : IB_ENOTIMPL
 #define ib_server_header(svr, tx, dir, action, hdr, value, rx) \
     ((svr) && (svr)->hdr_fn) ? (svr)->hdr_fn(tx, dir, action, hdr, value, (svr)->hdr_data, rx) \

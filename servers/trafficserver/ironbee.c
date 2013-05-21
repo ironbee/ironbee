@@ -391,19 +391,31 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *
     return IB_OK;
 }
 
-static ib_status_t ib_errdata_callback(ib_tx_t *tx, const char *data, void *cbdata)
+static ib_status_t ib_errbody_callback(
+    ib_tx_t *tx,
+    const uint8_t *data,
+    size_t dlen,
+    void *cbdata)
 {
+    uint8_t *err_body;
     ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
+
     /* Handle No Data as zero length data. */
-    if (data == NULL) {
+    if (data == NULL || dlen == 0) {
         return IB_OK;
     }
 
     /* We can't return an error after the response has started */
-    if (ctx->state & START_RESPONSE)
+    if (ctx->state & START_RESPONSE) {
         return IB_DECLINED;
+    }
 
-    ctx->err_body = TSstrdup(data);
+    err_body = TSmalloc(dlen);
+    if (err_body == NULL) {
+        return IB_EALLOC;
+    }
+
+    ctx->err_body = memcpy(err_body, data, dlen);
     return IB_OK;
 }
 
@@ -439,7 +451,7 @@ ib_server_t DLL_LOCAL ibplugin = {
     NULL,
     ib_errhdr_callback,
     NULL,
-    ib_errdata_callback,
+    ib_errbody_callback,
     NULL,
     ib_errclose_callback,
     NULL

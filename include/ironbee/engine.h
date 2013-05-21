@@ -599,6 +599,7 @@ ib_status_t DLL_PUBLIC ib_tx_server_error_header(
  *
  * @param[in] tx The transaction.
  * @param[in] data The data to set.
+ * @param[in] dlen The length of the data to send.
  *
  * @returns
  *   - IB_OK On success.
@@ -606,7 +607,8 @@ ib_status_t DLL_PUBLIC ib_tx_server_error_header(
  */
 ib_status_t DLL_PUBLIC ib_tx_server_error_data(
     ib_tx_t *tx,
-    const char *data
+    const uint8_t *data,
+    size_t dlen
 );
 
 /**

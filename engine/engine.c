@@ -1095,7 +1095,8 @@ ib_status_t ib_tx_server_error_header(
 
 ib_status_t ib_tx_server_error_data(
     ib_tx_t *tx,
-    const char *data
+    const uint8_t *data,
+    size_t dlen
 )
 {
     assert(tx != NULL);
@@ -1103,7 +1104,7 @@ ib_status_t ib_tx_server_error_data(
     assert(tx->ib->server != NULL);
     assert(data != NULL);
 
-    return ib_server_error_body(tx->ib->server, tx, data);
+    return ib_server_error_body(tx->ib->server, tx, data, dlen);
 }
 
 ib_status_t ib_tx_server_header(

@@ -272,9 +272,14 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *
  *
  * @param[in] tx - Ironbee transaction
  * @param[in] data - Data to set
+ * @param[in] dlen - Length of @a data.
  * @return NOTIMPL, or Declined if called too late, or EINVAL.
  */
-static ib_status_t ib_errdata_callback(ib_tx_t *tx, const char *data, void *cbdata)
+static ib_status_t ib_errdata_callback(
+    ib_tx_t *tx,
+    const uint8_t *data,
+    size_t dlen,
+    void *cbdata)
 {
     ironbee_req_ctx *ctx = tx->sctx;
     if (ctx->state & START_RESPONSE)

@@ -63,16 +63,20 @@
 #define PHASE_FLAG_POSTPROCESS   (1 <<  7) /**< Post process phase */
 #define PHASE_FLAG_LOGGING       (1 <<  8) /**< Logging phase */
 
-static const char *default_block_document =
-    "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n"
-    "<html><head>\n"
-    "<title>Access Denied</title>\n"
-    "</head><body>\n"
-    "<h1>Access to this webpage was denied.</h1>\n"
-    "<hr>\n"
-    "You are not authorized to access this webpage.\n"
-    "<hr>\n"
-    "</body></html>\n";
+#define DEFAULT_BLOCK_DOCUMENT \
+    "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n" \
+    "<html><head>\n" \
+    "<title>Access Denied</title>\n" \
+    "</head><body>\n" \
+    "<h1>Access to this webpage was denied.</h1>\n" \
+    "<hr>\n" \
+    "You are not authorized to access this webpage.\n" \
+    "<hr>\n" \
+    "</body></html>\n"
+
+static const uint8_t *default_block_document =
+    (const uint8_t *)DEFAULT_BLOCK_DOCUMENT;
+static const size_t default_block_document_len = sizeof(DEFAULT_BLOCK_DOCUMENT);
 
 static const char *indexed_keys[] = {
     "FIELD",
@@ -1102,7 +1106,11 @@ static ib_status_t report_status_block_to_server(
      *       document from a file/template.
      */
     ib_rule_log_debug(rule_exec, "Setting HTTP error response data.");
-    rc = ib_server_error_body(ib->server, tx, default_block_document);
+    rc = ib_server_error_body(
+        ib->server,
+        tx,
+        default_block_document,
+        default_block_document_len);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_rule_log_notice(
             rule_exec,
