@@ -41,6 +41,7 @@
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/type_traits/is_float.hpp>
 #include <boost/type_traits/is_signed.hpp>
+#include <boost/type_traits/is_unsigned.hpp>
 
 #include <ostream>
 
@@ -74,6 +75,8 @@ public:
         GENERIC         = IB_FTYPE_GENERIC,
         //! Signed Number
         NUMBER          = IB_FTYPE_NUM,
+        //! Time --- This is represented by an unsigned 64bit int.
+        TIME            = IB_FTYPE_TIME,
         //! Floating Point
         FLOAT           = IB_FTYPE_FLOAT,
         //! Null terminated string
@@ -93,6 +96,7 @@ public:
      * type, @a T.  If no value is appropriate, a compiler error results.
      *
      * - Signed integral types result in NUMBER.
+     * - Unsigned integral types result in TIME.
      * - Float types result in FLOAT.
      * - Types convertible to @c const @c char* result in NULL_STRING.
      * - Types convertible to ConstByteString result in BYTE_STRING.
@@ -109,11 +113,18 @@ public:
         // or_ has limited number of arguments, so cascade.
         BOOST_STATIC_ASSERT((
             boost::mpl::or_<
-                boost::is_float<T>,
-                boost::is_signed<T>,
-                boost::is_convertible<T,const char*>,
-                boost::is_convertible<T,ConstByteString>,
-                is_list<T>
+                /* Check number types. */
+                boost::mpl::or_<
+                    boost::is_float<T>,
+                    boost::is_signed<T>,
+                    boost::is_unsigned<T>
+                >,
+                /* Check other types. */
+                boost::mpl::or_<
+                    boost::is_convertible<T,const char*>,
+                    boost::is_convertible<T,ConstByteString>,
+                    is_list<T>
+                >
             >::value
         ));
         if (boost::is_float<T>::value) {
@@ -121,6 +132,9 @@ public:
         }
         if (boost::is_signed<T>::value) {
             return NUMBER;
+        }
+        if (boost::is_unsigned<T>::value) {
+            return TIME;
         }
         else if (boost::is_convertible<T,const char*>::value) {
             return NULL_STRING;
@@ -239,6 +253,16 @@ public:
     int64_t value_as_number(const std::string& arg) const;
     //! Number value accessor -- dynamic.
     int64_t value_as_number(
+        const char* arg,
+        size_t      arg_length
+    ) const;
+
+    //! Time value accessor.
+    uint64_t value_as_time() const;
+    //! Time value accessor -- dynamic.
+    uint64_t value_as_time(const std::string& arg) const;
+    //! Time value accessor -- dynamic.
+    uint64_t value_as_time(
         const char* arg,
         size_t      arg_length
     ) const;
@@ -379,6 +403,22 @@ public:
     ///@{
 
     /**
+     * Create time field.
+     *
+     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] name        Name of key.
+     * @param[in] name_length Length of @a name.
+     * @param[in] value       Value of field.
+     * @throws IronBee++ exception on any error.
+     **/
+    static Field create_time(
+        MemoryPool  pool,
+        const char* name,
+        size_t      name_length,
+        uint64_t    value
+    );
+
+    /**
      * Create (signed) number field.
      *
      * @param[in] pool        Pool to use for memory allocation.
@@ -496,6 +536,21 @@ public:
     );
 
     /**
+     * Create Time alias.
+     *
+     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] name        Name of key.
+     * @param[in] name_length Length of @a name.
+     * @param[in] value       Where to store value.
+     **/
+    static Field create_alias_time(
+         MemoryPool  pool,
+         const char* name,
+         size_t      name_length,
+         uint64_t&   value
+    );
+
+    /**
      * Create Number alias.
      *
      * @param[in] pool        Pool to use for memory allocation.
@@ -586,6 +641,10 @@ public:
      **/
     /// @{
 
+    //! Time field getter.
+    typedef boost::function<
+        uint64_t(ConstField, const char*, size_t)
+    > time_get_t;
     //! (Signed) Number field getter.
     typedef boost::function<
         int64_t(ConstField, const char*, size_t)
@@ -603,6 +662,10 @@ public:
         ConstByteString(ConstField, const char*, size_t)
     > byte_string_get_t;
 
+    //! Time field setter.
+    typedef boost::function<
+        void(Field, const char*, size_t, uint64_t)
+    > time_set_t;
     //! (Signed) Number field setter.
     typedef boost::function<
         void(Field, const char*, size_t, int64_t)
@@ -627,6 +690,15 @@ public:
         size_t       name_length,
         number_get_t get,
         number_set_t set
+    );
+
+    //! As create_time() but with dynamic setter/getter.
+    static Field create_dynamic_time(
+        MemoryPool   pool,
+        const char*  name,
+        size_t       name_length,
+        time_get_t get,
+        time_set_t set
     );
 
     //! As create_float() but with dynamic setter/getter.
@@ -690,11 +762,18 @@ public:
      **/
     ///@{
 
-    //! Set (signed) number value.
+    //! Set time value.
+    void set_time(uint64_t value) const;
+    //! Set time value -- dynamic.
+    void set_time(uint64_t value, const std::string& arg) const;
+    //! Set time value -- dynamic.
+    void set_time(uint64_t value, const char* arg, size_t arg_length) const;
+
+    //! Set number value.
     void set_number(int64_t value) const;
-    //! Set (signed) number value -- dynamic.
+    //! Set number value -- dynamic.
     void set_number(int64_t value, const std::string& arg) const;
-    //! Set (signed) number value -- dynamic.
+    //! Set number value -- dynamic.
     void set_number(int64_t value, const char* arg, size_t arg_length) const;
 
     //! Set float value.
@@ -759,6 +838,8 @@ public:
      **/
     ///@{
 
+    //! Number mutable value accessor.
+    uint64_t& mutable_value_as_time() const;
     //! Number mutable value accessor.
     int64_t& mutable_value_as_number() const;
     //! Unsigned number mutable value accessor.

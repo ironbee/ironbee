@@ -42,6 +42,7 @@ std::string type_as_s(Field::type_e type)
 {
     static const std::string generic("GENERIC");
     static const std::string number("NUMBER");
+    static const std::string time("TIME");
     static const std::string float_s("FLOAT");
     static const std::string null_string("NULL STRING");
     static const std::string byte_string("BYTE STRING");
@@ -49,6 +50,7 @@ std::string type_as_s(Field::type_e type)
     static const std::string stream_buffer("STREAM BUFFER");
     switch (type) {
         case Field::GENERIC: return generic;
+        case Field::TIME: return time;
         case Field::NUMBER: return number;
         case Field::FLOAT: return float_s;
         case Field::NULL_STRING: return null_string;
@@ -121,6 +123,13 @@ ib_status_t field_dynamic_get(
     ib_status_t rc = IB_OK;
     try {
         switch (field->type) {
+            case IB_FTYPE_TIME: {
+                ib_time_t* n = reinterpret_cast<ib_time_t*>(out_val);
+                *n = data_to_value<Field::time_get_t>(cbdata)(
+                    fieldpp, carg, arg_length
+                );
+                return IB_OK;
+            }
             case IB_FTYPE_NUM: {
                 ib_num_t* n = reinterpret_cast<ib_num_t*>(out_val);
                 *n = data_to_value<Field::number_get_t>(cbdata)(
@@ -199,6 +208,13 @@ ib_status_t field_dynamic_set(
     // No engine available.
     try {
         switch (field->type) {
+            case IB_FTYPE_TIME:
+                data_to_value<Field::time_set_t>(cbdata)(
+                    Field(field),
+                    carg, arg_length,
+                    *reinterpret_cast<const uint64_t*>(in_value)
+                );
+                break;
             case IB_FTYPE_NUM:
                 data_to_value<Field::number_set_t>(cbdata)(
                     Field(field),
@@ -431,6 +447,8 @@ MemoryPool ConstField::memory_pool() const
 std::string ConstField::to_s() const
 {
     switch (type()) {
+        case TIME:
+            return boost::lexical_cast<std::string>(value_as_time());
         case NUMBER:
             return boost::lexical_cast<std::string>(value_as_number());
         case FLOAT:
@@ -453,6 +471,33 @@ std::string ConstField::to_s() const
 bool ConstField::is_dynamic() const
 {
     return ib_field_is_dynamic(ib()) == 1;
+}
+
+uint64_t ConstField::value_as_time() const
+{
+    Internal::check_type(TIME, type());
+    uint64_t v;
+    throw_if_error(ib_field_value(ib(), ib_ftype_time_out(&v)));
+    return v;
+}
+
+uint64_t ConstField::value_as_time(const std::string& arg) const
+{
+    return value_as_time(arg.data(),arg.length());
+}
+
+uint64_t ConstField::value_as_time(
+    const char* arg,
+    size_t      arg_length
+) const
+{
+    Internal::check_type(TIME, type());
+    uint64_t v;
+    throw_if_error(ib_field_value_ex(
+        ib(), ib_ftype_time_out(&v),
+        arg, arg_length
+    ));
+    return v;
 }
 
 int64_t ConstField::value_as_number() const
@@ -581,6 +626,21 @@ Field::Field() :
     // nop
 }
 
+Field Field::create_time(
+    MemoryPool  pool,
+    const char* name,
+    size_t      name_length,
+    uint64_t     value
+)
+{
+    return Internal::create_field(
+        pool,
+        name, name_length,
+        Field::TIME,
+        ib_ftype_time_in(&value)
+    );
+}
+
 Field Field::create_number(
     MemoryPool  pool,
     const char* name,
@@ -595,7 +655,6 @@ Field Field::create_number(
         ib_ftype_num_in(&value)
     );
 }
-
 
 Field Field::create_float(
     MemoryPool  pool,
@@ -669,6 +728,21 @@ Field Field::create_no_copy_byte_string(
         name, name_length,
         Field::BYTE_STRING,
         ib_ftype_bytestr_mutable_in(value.ib())
+    );
+}
+
+Field Field::create_alias_time(
+     MemoryPool  pool,
+     const char* name,
+     size_t      name_length,
+     uint64_t&   value
+)
+{
+    return Internal::create_alias(
+        pool,
+        name, name_length,
+        Field::TIME,
+        ib_ftype_time_storage(&value)
     );
 }
 
@@ -749,6 +823,23 @@ Field Field::create_alias_list(
     );
 }
 
+Field Field::create_dynamic_time(
+    MemoryPool   pool,
+    const char*  name,
+    size_t       name_length,
+    time_get_t   get,
+    time_set_t   set
+)
+{
+    return Internal::create_dynamic_field(
+        pool,
+        name, name_length,
+        Field::TIME,
+        value_to_data(get, pool.ib()),
+        value_to_data(set, pool.ib())
+    );
+}
+
 Field Field::create_dynamic_number(
     MemoryPool   pool,
     const char*  name,
@@ -815,6 +906,26 @@ Field Field::create_dynamic_byte_string(
         value_to_data(get, pool.ib()),
         value_to_data(set, pool.ib())
     );
+}
+
+void Field::set_time(uint64_t value) const
+{
+    Internal::check_type(TIME, type());
+    Internal::set_value(ib(), ib_ftype_time_in(&value));
+}
+
+void Field::set_time(uint64_t value, const std::string& arg) const
+{
+    return set_time(value, arg.data(), arg.length());
+}
+
+void Field::set_time(
+    uint64_t value,
+    const char* arg, size_t arg_length
+) const
+{
+    Internal::check_type(TIME, type());
+    Internal::set_value(ib(), ib_ftype_time_in(&value), arg, arg_length);
 }
 
 void Field::set_number(int64_t value) const
@@ -916,6 +1027,16 @@ void Field::set_no_copy_byte_string(ByteString value) const
     Internal::set_value_no_copy(
         ib(), ib_ftype_bytestr_mutable_in(value.ib())
     );
+}
+
+uint64_t& Field::mutable_value_as_time() const
+{
+    Internal::check_type(TIME, type());
+    ib_time_t* n;
+    throw_if_error(ib_field_mutable_value(ib(),
+        ib_ftype_time_mutable_out(&n)
+    ));
+    return *n;
 }
 
 int64_t& Field::mutable_value_as_number() const
