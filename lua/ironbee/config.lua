@@ -300,7 +300,7 @@ local build_rule = function(ib, ctx, chain, db)
         end
 
         -- Set revision
-        prule[0].meta.revision = rule.data.version
+        prule[0].meta.revision = tonumber(rule.data.version) or 1
 
         -- Chains
         if i < #chain then
