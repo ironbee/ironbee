@@ -3432,14 +3432,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         if (rc != IB_OK) {
             ib_log_error(ib,
-                         "Could not set DefaultBlockStatus %s",
+                         "Could not set BlockingMethod: %s",
                          p1_unescaped);
             return rc;
         }
 
         if (strncasecmp(p1, "close", sizeof("close"))) {
             corecfg->block_mode = IB_BLOCK_MODE_CLOSE;
-            corecfg->block_status = 0;
         }
         /* The only argument is status=<int>.
          * Check for it. If OK, set status_str. */
@@ -3454,10 +3453,10 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             {
                 ib_log_debug2(
                     ib,
-                    "DefaultBlockStatus must be 200 <= status < 600.");
+                    "BlockingMethod status must be 200 <= status < 600.");
                 ib_log_debug2(
                     ib,
-                    "DefaultBlockStatus may not be %d",
+                    "BlockingMethod status may not be %d",
                     status);
                 return IB_EINVAL;
             }
