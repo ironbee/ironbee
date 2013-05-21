@@ -1,5 +1,6 @@
 """
-libinjection module for pytho
+libinjection module for python
+
  Copyright 2012, 2013 Nick Galbreath
  nickg@client9.com
  BSD License -- see COPYING.txt for details
@@ -13,12 +14,12 @@ MODULE = Extension(
     include_dirs = [],
     libraries = [],
     library_dirs = [],
-    sources = ['libinjection_module.c', 'sqlparse.c']
+    sources = ['python_libinjection_module.c', 'libinjection_sqli.c']
     )
 
 setup (
     name             = 'libinjection',
-    version          = '1.2.0',
+    version          = '2.0.3',
     description      = 'Wrapper around libinjection c-code to detect sqli',
     author           = 'Nick Galbreath',
     author_email     = 'nickg@client9.com',

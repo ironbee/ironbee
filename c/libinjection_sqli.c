@@ -28,9 +28,7 @@
 #define FOLD_DEBUG
 #endif
 
-/* order is important here */
-#include "sqlparse_private.h"
-#include "sqlparse_data.h"
+#include "libinjection_sqli_data.h"
 
 /* memchr2 finds a string of 2 characters inside another string
  * This a specialized version of "memmem" or "memchr".
@@ -40,7 +38,7 @@
  *    astring.find("AB")
  *
  */
-const char *
+static const char *
 memchr2(const char *haystack, size_t haystack_len, char c0, char c1)
 {
     const char *cur = haystack;
@@ -80,7 +78,8 @@ memchr2(const char *haystack, size_t haystack_len, char c0, char c1)
  *   if accept is 'ABC', then this function would be similar to
  *   a_regexp.match(a_str, '[ABC]*'),
  */
-size_t strlenspn(const char *s, size_t len, const char *accept)
+static size_t
+strlenspn(const char *s, size_t len, const char *accept)
 {
     size_t i;
     for (i = 0; i < len; ++i) {
@@ -139,7 +138,7 @@ static int streq(const char *a, const char *b)
  * replacing this with another datastructure probably isn't worth
  * the effort.
  */
-int bsearch_cstr(const char *key, const char *base[], size_t nmemb)
+static int bsearch_cstr(const char *key, const char *base[], size_t nmemb)
 {
     size_t pos;
     size_t left = 0;
@@ -167,7 +166,7 @@ int bsearch_cstr(const char *key, const char *base[], size_t nmemb)
  * Case-insensitive binary search
  *
  */
-int bsearch_cstrcase(const char *key, const char *base[], size_t nmemb)
+static int bsearch_cstrcase(const char *key, const char *base[], size_t nmemb)
 {
     size_t pos;
     size_t left = 0;
@@ -209,8 +208,9 @@ static int is_sqli_pattern(const char* key, void* callbackarg)
  *  this is just
  *    typecode = mapping[key.upper()]
  */
-char bsearch_keyword_type(const char *key, const keyword_t * keywords,
-                          size_t numb)
+
+static char bsearch_keyword_type(const char *key, const keyword_t * keywords,
+                                 size_t numb)
 {
     size_t pos;
     size_t left = 0;
@@ -233,6 +233,11 @@ char bsearch_keyword_type(const char *key, const keyword_t * keywords,
     }
 }
 
+static char is_keyword(const char* key)
+{
+    return bsearch_keyword_type(key, sql_keywords, sql_keywords_sz);
+}
+
 /* st_token methods
  *
  * The following functions manipulates the stoken_t type
@@ -240,7 +245,7 @@ char bsearch_keyword_type(const char *key, const keyword_t * keywords,
  *
  */
 
-void st_clear(stoken_t * st)
+static void st_clear(stoken_t * st)
 {
     st->type = CHAR_NULL;
     st->str_open = CHAR_NULL;
@@ -248,19 +253,19 @@ void st_clear(stoken_t * st)
     st->val[0] = CHAR_NULL;
 }
 
-int st_is_empty(const stoken_t * st)
+static int st_is_empty(const stoken_t * st)
 {
     return st->type == CHAR_NULL;
 }
 
-void st_assign_char(stoken_t * st, const char stype, const char value)
+static void st_assign_char(stoken_t * st, const char stype, const char value)
 {
     st->type = stype;
     st->val[0] = value;
     st->val[1] = CHAR_NULL;
 }
 
-void st_assign(stoken_t * st, const char stype, const char *value,
+static void st_assign(stoken_t * st, const char stype, const char *value,
                size_t len)
 {
     size_t last = len < ST_MAX_SIZE ? len : (ST_MAX_SIZE - 1);
@@ -269,19 +274,19 @@ void st_assign(stoken_t * st, const char stype, const char *value,
     st->val[last] = CHAR_NULL;
 }
 
-void st_copy(stoken_t * dest, const stoken_t * src)
+static void st_copy(stoken_t * dest, const stoken_t * src)
 {
     memcpy(dest, src, sizeof(stoken_t));
 }
 
-int st_is_multiword_start(const stoken_t * st)
+static int st_is_multiword_start(const stoken_t * st)
 {
     return bsearch_cstrcase(st->val,
                             multikeywords_start,
                             multikeywords_start_sz);
 }
 
-int st_is_unary_op(const stoken_t * st)
+static int st_is_unary_op(const stoken_t * st)
 {
     return (st->type == 'o' && !(strcmp(st->val, "+") &&
                                  strcmp(st->val, "-") &&
@@ -292,7 +297,7 @@ int st_is_unary_op(const stoken_t * st)
                                  strcmp(st->val, "~")));
 }
 
-int st_is_arith_op(const stoken_t * st)
+static int st_is_arith_op(const stoken_t * st)
 {
     return (st->type == 'o' && !(strcmp(st->val, "-") &&
                                  strcmp(st->val, "+") &&
@@ -314,12 +319,12 @@ int st_is_arith_op(const stoken_t * st)
  */
 
 
-size_t parse_white(sfilter * sf)
+static size_t parse_white(sfilter * sf)
 {
     return sf->pos + 1;
 }
 
-size_t parse_operator1(sfilter * sf)
+static size_t parse_operator1(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -329,7 +334,7 @@ size_t parse_operator1(sfilter * sf)
     return pos + 1;
 }
 
-size_t parse_other(sfilter * sf)
+static size_t parse_other(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -339,7 +344,7 @@ size_t parse_other(sfilter * sf)
     return pos + 1;
 }
 
-size_t parse_char(sfilter * sf)
+static size_t parse_char(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -349,7 +354,7 @@ size_t parse_char(sfilter * sf)
     return pos + 1;
 }
 
-size_t parse_eol_comment(sfilter * sf)
+static size_t parse_eol_comment(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -367,7 +372,7 @@ size_t parse_eol_comment(sfilter * sf)
     }
 }
 
-size_t parse_dash(sfilter * sf)
+static size_t parse_dash(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -384,7 +389,7 @@ size_t parse_dash(sfilter * sf)
     }
 }
 
-size_t is_mysql_comment(const char *cs, const size_t len, size_t pos)
+static size_t is_mysql_comment(const char *cs, const size_t len, size_t pos)
 {
     size_t i;
 
@@ -424,7 +429,7 @@ size_t is_mysql_comment(const char *cs, const size_t len, size_t pos)
     return 8;
 }
 
-size_t parse_slash(sfilter * sf)
+static size_t parse_slash(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -477,7 +482,7 @@ size_t parse_slash(sfilter * sf)
     }
 }
 
-size_t parse_backslash(sfilter * sf)
+static size_t parse_backslash(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -498,12 +503,12 @@ size_t parse_backslash(sfilter * sf)
 /** Is input a 2-char operator?
  *
  */
-int is_operator2(const char *key)
+static int is_operator2(const char *key)
 {
     return bsearch_cstr(key, operators2, operators2_sz);
 }
 
-size_t parse_operator2(sfilter * sf)
+static size_t parse_operator2(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -554,8 +559,8 @@ size_t parse_operator2(sfilter * sf)
     }
 }
 
-size_t parse_string_core(const char *cs, const size_t len, size_t pos,
-                         stoken_t * st, char delim, size_t offset)
+static size_t parse_string_core(const char *cs, const size_t len, size_t pos,
+                                stoken_t * st, char delim, size_t offset)
 {
     /*
      * offset is to skip the perhaps first quote char
@@ -607,7 +612,7 @@ size_t parse_string_core(const char *cs, const size_t len, size_t pos,
 /**
  * Used when first char is a ' or "
  */
-size_t parse_string(sfilter * sf)
+static size_t parse_string(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -620,7 +625,7 @@ size_t parse_string(sfilter * sf)
     return parse_string_core(cs, slen, pos, current, cs[pos], 1);
 }
 
-size_t parse_word(sfilter * sf)
+static size_t parse_word(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -637,8 +642,8 @@ size_t parse_word(sfilter * sf)
     if (dot != NULL) {
         *dot = '\0';
 
-        ch = bsearch_keyword_type(current->val, sql_keywords,
-                                  sql_keywords_sz);
+        ch = is_keyword(current->val);
+
         if (ch == 'k' || ch == 'o') {
             /*
              * we got something like "SELECT.1"
@@ -657,8 +662,9 @@ size_t parse_word(sfilter * sf)
      * do normal lookup with word including '.'
      */
     if (slen < ST_MAX_SIZE) {
-        ch = bsearch_keyword_type(current->val, sql_keywords,
-                                       sql_keywords_sz);
+
+        ch = is_keyword(current->val);
+
         if (ch == CHAR_NULL) {
             ch = 'n';
         }
@@ -667,7 +673,7 @@ size_t parse_word(sfilter * sf)
     return pos + slen;
 }
 
-size_t parse_var(sfilter * sf)
+static size_t parse_var(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -694,7 +700,7 @@ size_t parse_var(sfilter * sf)
     }
 }
 
-size_t parse_money(sfilter *sf)
+static size_t parse_money(sfilter *sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -718,7 +724,7 @@ size_t parse_money(sfilter *sf)
     }
 }
 
-size_t parse_number(sfilter * sf)
+static size_t parse_number(sfilter * sf)
 {
     stoken_t *current = &sf->syntax_current;
     const char *cs = sf->s;
@@ -864,7 +870,7 @@ void sfilter_reset(sfilter * sf, const char *s, size_t len)
  *  This is just:  multikeywords[token.value + ' ' + token2.value]
  *
  */
-int syntax_merge_words(stoken_t * a, stoken_t * b)
+static int syntax_merge_words(stoken_t * a, stoken_t * b)
 {
     size_t sz1;
     size_t sz2;
