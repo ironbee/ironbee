@@ -10,11 +10,8 @@ for details and presentations.
 To use:
 look at sqli_cli.cpp, reader.c as examples, but it's as simple as this:
 
-
-
 ```c
-#include "sqlparse.h"
-#include "sqli_fingerprints.h"
+#include "libinjection.h"
 
 void doit() {
 
@@ -30,9 +27,9 @@ void doit() {
     // input is const (not changed or written to)
     //
     // The last arg control how fingerprints are matched
-    // with SQLi.  NULL means use the default built-in
-    // list.
-    bool issqli = is_sqli(&sf, linebuf, len, NULL);
+    // with SQLi.  The last args of "NULL, NULL"  means
+    //  use the default built-in list.
+    bool issqli = libinjection_is_sqli(&sf, linebuf, len, NULL, NULL);
 
     // sfilter now also has interesting details
     //   the fingerprint
@@ -65,7 +62,7 @@ QUALITY AND DIAGNOSITICS
 
 Use the diagnostic test page at
 
-http://libinjection.client9.com/diagnostics
+https://libinjection.client9.com/diagnostics
 
 For quick experiments, cracking and breaking, and other ad-hoc tests.
 
@@ -90,4 +87,16 @@ Licensed under the standard BSD open source license.  See [COPYING.txt](/COPYING
 Commercial and support licenses available.
 
 Send requests to nickg@client9.com
+
+
+EMBEDDING
+=============
+
+The 'c' directory is a mess, but you only need to copy the following
+into your source tree:
+
+* c/libinjection.h
+* c/libinjection_sqli.c
+* c/libinjection_sqli_data.h
+* COPYING
 

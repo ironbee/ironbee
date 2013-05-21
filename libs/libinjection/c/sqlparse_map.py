@@ -12,6 +12,7 @@ added to the data directly (JSON doesn't support comments).
 """
 
 KEYWORDS = {
+'AUTOINCREMENT'              : 'k',
 'UTL_INADDR.GET_HOST_ADDRESS': 'f',
 
 # ORACLE
@@ -23,6 +24,7 @@ KEYWORDS = {
 'SYS.FN_BUILTIN_PERMISSIONS'  : 'f',
 'SYS.FN_GET_AUDIT_FILE'       : 'f',
 'SYS.FN_MY_PERMISSIONS'       : 'f',
+'ABORT'                       : 'k',
 'ABS'                         : 'f',
 'ACCESSIBLE'                  : 'k',
 'ACOS'                        : 'f',
@@ -105,6 +107,8 @@ KEYWORDS = {
 'CLNG'                        : 'f',
 'CSNG'                        : 'f',
 'CVAR'                        : 'f',
+# CHANGES: sqlite3
+'CHANGES'                     : 'f',
 'CHDIR'                       : 'f',
 'CHDRIVE'                     : 'f',
 'CURDIR'                      : 'f',
@@ -180,6 +184,7 @@ KEYWORDS = {
 'COUNT_BIG'                   : 'k',
 'CRC32'                       : 'f',
 'CREATE'                      : 'k',
+'CROSS'                       : 'n',
 'CUME_DIST'                   : 'f',
 'CURDATE'                     : 'f',
 'CURRENT_DATE'                : 'k',
@@ -420,6 +425,7 @@ KEYWORDS = {
 'IS_USED_LOCK'                : 'f',
 'ITERATE'                     : 'k',
 'JOIN'                        : 'k',
+'JULIANDAY'                   : 'f',
 # pgsql
 'JUSTIFY_DAYS'                : 'f',
 'JUSTIFY_HOURS'               : 'f',
@@ -430,6 +436,7 @@ KEYWORDS = {
 'KILL'                        : 'k',
 'LAG'                         : 'f',
 'LAST_INSERT_ID'              : 'f',
+'LAST_INSERT_ROWID'           : 'f',
 'LAST_VALUE'                  : 'f',
 'LASTVAL'                     : 'f',
 'LCASE'                       : 'f',
@@ -445,6 +452,7 @@ KEYWORDS = {
 'LINES'                       : 'k',
 'LN'                          : 'f',
 'LOAD'                        : 'k',
+'LOAD_EXTENSION'              : 'f',
 'LOAD_FILE'                   : 'f',
 'LOCALTIME'                   : 'k',
 'LOCALTIMESTAMP'              : 'k',
@@ -489,9 +497,11 @@ KEYWORDS = {
 'MONTH'                       : 'f',
 'MONTHNAME'                   : 'f',
 'NAME_CONST'                  : 'f',
+'NATURAL'                     : 'n',
 'NETMASK'                     : 'f',
 'NEXTVAL'                     : 'f',
 'NOT'                         : 'o',
+'NOTNULL'                     : 'k',
 'NOW'                         : 'f',
 'NO_WRITE_TO_BINLOG'          : 'k',
 'NTH_VALUE'                   : 'f',
@@ -537,6 +547,7 @@ KEYWORDS = {
 'ORIGINAL_DB_NAME'            : 'f',
 'ORIGINAL_LOGIN'              : 'f',
 'OUT'                         : 'k',
+'OUTER'                       : 'n',
 'OUTFILE'                     : 'k',
 # unusual PGSQL operator that looks like a function
 'OVERLAPS'                    : 'f',
@@ -625,6 +636,8 @@ KEYWORDS = {
 'RELEASE_LOCK'                : 'f',
 'RENAME'                      : 'k',
 'REPEAT'                      : 'k',
+
+# keyword and function
 'REPLACE'                     : 'k',
 'REPLICATE'                   : 'f',
 'REQUIRE'                     : 'k',
@@ -747,6 +760,10 @@ KEYWORDS = {
 'TAN'                         : 'f',
 'TERMINATED'                  : 'k',
 'TERTIARY_WEIGHTS'            : 'f',
+# TEXTPOS PGSQL 6.0
+# remnamed to strpos in 7.0
+# http://www.postgresql.org/message-id/20000601091055.A20245@rice.edu
+'TEXTPOS'                     : 'f',
 'TEXTPTR'                     : 'f',
 'TEXTVALID'                   : 'f',
 'THEN'                        : 'k',
@@ -780,6 +797,9 @@ KEYWORDS = {
 'TO_NUMBER'                   : 'f',
 'TO_SECONDS'                  : 'f',
 'TO_TIMESTAMP'                : 'f',
+# sqlite3
+'TOTAL'                       : 'f',
+'TOTAL_CHANGES'               : 'f',
 'TOP'                         : 'k',
 
 # 'TRAILING' -- only used in TRIM(TRAILING
@@ -799,12 +819,14 @@ KEYWORDS = {
 'TRY_PARSE'                   : 'f',
 'TYPE_ID'                     : 'f',
 'TYPE_NAME'                   : 'f',
+'TYPEOF'                      : 'f',
 'TYPEPROPERTY'                : 'f',
 'UCASE'                       : 'f',
 'UNCOMPRESS'                  : 'f',
 'UNCOMPRESS_LENGTH'           : 'f',
 'UNDO'                        : 'k',
 'UNHEX'                       : 'f',
+'UNICODE'                     : 'f',
 'UNION'                       : 'U',
 
 # 'UNI_ON' -- odd variation that comes up
@@ -885,6 +907,7 @@ KEYWORDS = {
 'YEAR'                        : 'f',
 'YEARWEEK'                    : 'f',
 'YEAR_MONTH'                  : 'k',
+'ZEROBLOB'                    : 'f',
 'ZEROFILL'                    : 'k'
 }
 

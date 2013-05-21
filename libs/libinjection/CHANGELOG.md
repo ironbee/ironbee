@@ -1,5 +1,29 @@
 # vNext
 
+# v2.0.3 2013-05-21
+
+## security
+* Add variations on '1U(((', thanks @LightOS
+* Add automatically all varations on other cases of
+  'parens padding'
+
+# v2.0.2 2013-05-21
+
+## security
+* Added fingerprint 'nU(kn' and variations, thanks to
+  discussion with @ModSecurity .
+
+# v2.0.1 2013-05-21
+
+## security
+* Added fingerprint knknk, thanks @d0znpp
+
+# v2.0.0 2013-05-17
+
+Version 2 is more a software engineering release than SQLi.
+The API, the code, and filenames are improved for embedded
+use.  Please see the README.md file for details on use.
+
 ## security
 
 * Fix Issue30: detection of more small sqli forms with fingerprint "1c".
@@ -7,21 +31,31 @@
 
 ## API Changes
 
-Should be fully backwards compatible.
+BIG CHANGES
 
-* If arg4 in is_sqli is NULL, then  built-in fingerprint data will be
-  used.  This makes it easier to use in most cases.
-* sqlmap_data.json now includes fingerprint information, so people making ports
-  only need to parse one file.
-* sqli_fingerprints.h is now deprecated, this functionality is now included
-  in sqlparse_data.h.  Now most users will now only need to include sqlparse.h,
-  instead of two files.
+* File name changes.  These are the only relevant files:
+   * `c/libinjection.h`
+   * `c/libinjection_sqli.c`
+   * `c/libinjection_sqli_data.h`
+   * `COPYING`
+* Just need to include `libinjection.h` and link with `libinjection_sqli_.c`
+* `sqlparse_private.h` and `sqli_fingerprints.h` are deprecated.
+   Only use `#include "libinjection.h"`
+* API name changes `is_sqli` and `is_string_sqli` are now
+  `libinjection_is_sqli` and `libinjection_is_string_sqli`
+* API change, `libinjection_is_sqli` now takes a 5th arg for callback data
+* API change, `libinjection_is_sqli` accepts `NULL` for arg4 and arg5
+  in which case, a default lookup of fingerprints is used.
+* `sqlmap_data.json` now includes fingerprint information, so people making
+  ports only need to parse one file.
 
 ## other
 
-* Allow clang compiler (also in Jenkins, a build with clang and
+* Allow `clang` compiler (also in Jenkins, a build with clang and
   make-scan is done)
-* Optimizations should result in > 10% performance for normal workloads
+* Optimizations should result in > 10% performance improvement
+  for normal workloads
+* Add `sqlite3` special functions and keywords (since why not)
 
 # v1.2.0 2013-05-06
 
