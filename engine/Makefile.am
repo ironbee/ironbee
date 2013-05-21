@@ -17,7 +17,7 @@ libironbee_la_SOURCES = engine.c data.c \
                         context_selection.c site.c \
                         managed_collection.c \
                         config.c config-parser.c config-parser.h \
-												filter.c \
+                        filter.c \
                         operator.c action.c transformation.c \
                         module.c \
                         parsed_content.c \
