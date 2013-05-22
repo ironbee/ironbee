@@ -69,24 +69,10 @@ typedef enum {
     ((outcome) == HDR_HTTP_STATUS && (data)->status >= 200 && (data)->status < 600)
 #define IB_HTTP_CODE(num) ((num) >= 200 && (num) < 600)
 
-typedef struct tx_list {
-    ib_tx_t *tx;
-    struct tx_list *next;
-} tx_list;
-
-static tx_list *tx_list_add(tx_list *list, ib_tx_t *tx)
+static void tx_list_destroy(ib_conn_t *conn)
 {
-    tx_list *ret = TSmalloc(sizeof(tx_list));
-    ret->tx = tx;
-    ret->next = list;
-    return ret;
-}
-static void tx_list_destroy(tx_list *list)
-{
-    if (list != NULL) {
-        tx_list_destroy(list->next);
-        ib_tx_destroy(list->tx);
-        TSfree(list);
+    while (conn->tx_first != NULL) {
+        ib_tx_destroy(conn->tx_first);
     }
 }
 
@@ -102,10 +88,6 @@ typedef struct {
     TSMutex mutex;
     /* include the contp, so we can delay destroying it from the event */
     TSCont contp;
-    /* and save ib tx structs here, to delay destroying them until the
-     * session closes
-     */
-    tx_list *txns;
 } ib_ssn_ctx;
 
 typedef struct {
@@ -472,10 +454,6 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 //        TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s txn_count=%d", data->tx->conn, data->tx, data->tx->id, data->ssn->txn_count);
 //        ib_tx_destroy(data->tx);
 //        data->tx = NULL;
-        /* For reasons unknown, we can't destroy the tx here.
-         * Instead, save it on the ssn rec to destroy when that closes.
-         */
-        data->ssn->txns = tx_list_add(data->ssn->txns, data->tx);
         if (data->out.output_buffer) {
             TSIOBufferDestroy(data->out.output_buffer);
             data->out.output_buffer = NULL;
@@ -496,7 +474,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
              * Trust TS not to create more TXNs after signalling SSN close!
              */
             if (data->ssn->closing) {
-                tx_list_destroy(data->ssn->txns);
+                tx_list_destroy(data->ssn->iconn);
                 if (data->ssn->iconn) {
                     TSDebug("ironbee", "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
                     ib_state_notify_conn_closed(ironbee, data->ssn->iconn);
@@ -533,8 +511,8 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
     if (data) {
         TSMutexLock(data->mutex);
         if (data->txn_count == 0) { /* TXN_CLOSE happened already */
-            tx_list_destroy(data->txns);
             if (data->iconn) {
+                tx_list_destroy(data->iconn);
                 TSDebug("ironbee", "ib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
                 ib_state_notify_conn_closed(ironbee, data->iconn);
                 TSDebug("ironbee", "CONN DESTROY: conn=%p", data->iconn);
