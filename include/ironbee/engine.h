@@ -675,6 +675,11 @@ ib_status_t DLL_PUBLIC ib_tx_server_header(
 /**
  * Destroy a transaction structure.
  *
+ * The transaction @a tx MUST be the first transaction in the parent
+ * connection's (tx->conn) transaction list.  This function also removes
+ * @a tx from the parent connection's list, and updates the connection's
+ * first (tx_first) and last (tx_last) transaction pointers.
+ *
  * @param tx Transaction structure
  */
 void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
