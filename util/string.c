@@ -122,7 +122,7 @@ ib_status_t ib_string_to_time_ex(
     if ( (s == NULL) || (slen == 0) ) {
         return IB_EINVAL;
     }
-    
+
     buf = malloc(slen+1);
     if (buf == NULL) {
         return IB_EALLOC;
