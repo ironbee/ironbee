@@ -448,7 +448,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
 
     /* Initialize the hook lists */
     for(event = conn_started_event; event < IB_STATE_EVENT_NUM; ++event) {
-        rc = ib_list_create(&(*pib)->hooks[event], (*pib)->mp);
+        rc = ib_list_create(&((*pib)->hooks[event]), (*pib)->mp);
         if (rc != IB_OK) {
             goto failed;
         }
