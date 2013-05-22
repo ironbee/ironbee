@@ -73,7 +73,8 @@ LibHTP Code
 
 LibHTP is currently distributed with IronBee as it is not widely available.  The
 source is in libs/libhtp and is included using git-subtree with full
-history to allow the tree to later be removed.  Currently 0.5 is tracked.
+history to allow the tree to later be removed.  Currently 0.5 is tracked, and
+IronBee is using 0.5.2.
 
 To update the LibHTP source, you will need a git with subtree support.  You will
 need to add the remote:
@@ -81,6 +82,10 @@ need to add the remote:
     git remote add libhtp git@github.com:ironbee/libhtp.git
 
 Then you can merge in the upstream source with:
+
+    git subtree pull --squash --prefix=libs/libhtp libhtp 0.5.2
+
+Or, if there's futher development on 0.5.x:
 
     git subtree pull --squash --prefix=libs/libhtp libhtp 0.5.x
 
