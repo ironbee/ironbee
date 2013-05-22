@@ -129,7 +129,7 @@ typedef IronBee::Hash<const int*> set_t;
 typedef IronBee::ConstHash<const int*> const_set_t;
 
 //! `&c_true` will be the value used for all members of a @ref set_t.
-static const int c_true = 1;
+const int c_true = 1;
 
 /**
  * Per configuration context data.
