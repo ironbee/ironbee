@@ -343,7 +343,7 @@ CHECK_PCRE()
 AX_BOOST_BASE(1.40,
               [have_boost_low=yes],
               [have_boost_low=no])
-AX_BOOST_BASE(1.46,
+AX_BOOST_BASE(1.49,
               [have_boost=yes],
               [have_boost=no])
 if test "$have_boost_low" = "no"; then
