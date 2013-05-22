@@ -547,7 +547,7 @@ if test "$MODERN_COMPILER" == "yes"; then
 	AC_MSG_NOTICE([Modern compiler detected; turning on warnings and errors.])
 	AM_CPPFLAGS="${AM_CPPFLAGS} -Wall -Wextra -Werror"
 else
-	AC_MSG_NOTICE([Old or unknown compiler detected; warningless build not supported.])
+	AC_MSG_NOTICE([Old or unknown compiler detected; limited support.])
 fi
 
 dnl Substitutions
