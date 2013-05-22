@@ -101,6 +101,8 @@ else
 	AX_COMPARE_VERSION([$GCC_VERSION],[gt],[4.6],
 		[MODERN_COMPILER="yes"])
 fi
+AM_CONDITIONAL([MODERN_COMPILER], [test "$MODERN_COMPILER" = "yes"])
+
 dnl After all other tests, we will turn on errors.
 
 AC_PROG_INSTALL
