@@ -2,6 +2,11 @@ ACLOCAL_AMFLAGS = -I../acinclude
 
 include $(top_srcdir)/build/tests.mk
 
+if INTEGRATION_TESTS
+SUBDIRS = integration
+DIST_SUBDIRS = integration
+endif
+
 LDADD = \
 	$(top_builddir)/util/libibutil.la
 

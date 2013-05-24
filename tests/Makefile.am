@@ -24,11 +24,3 @@ if OUT_OF_TREE
 BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
 CLEANFILES += $(TEST_EXTRAS)
 endif
-
-SUBDIRS =
-DIST_SUBDIRS  =
-if INTEGRATION_TESTS
-SUBDIRS += integration
-DIST_SUBDIRS += integration
-endif
-
