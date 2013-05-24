@@ -2,7 +2,9 @@ include $(top_srcdir)/build/tests.mk
 
 LDADD = \
     $(builddir)/../libpredicate.la \
-    $(builddir)/../../ironbeepp/libibpp.la
+    $(builddir)/../../ironbeepp/libibpp.la \
+	$(top_builddir)/util/libibutil.la \
+	$(top_builddir)/engine/libironbee.la
 AM_LDFLAGS += -lstdc++
 
 check_PROGRAMS = \
