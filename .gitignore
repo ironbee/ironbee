@@ -71,7 +71,6 @@ Makefile.in
 /libs/libhtp/
 /ironbee.pc
 /libs/.build-luajit
-/cpp/ibcli_cpp
 
 /ironbeepp/tests/test_byte_string
 /ironbeepp/tests/test_catch
