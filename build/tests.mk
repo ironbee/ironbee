@@ -50,7 +50,10 @@ CLEANFILES = \
 	*_details.xml \
 	*_stderr.log \
 	*_valgrind_memcheck.xml \
-	ironbee_gtest.conf_*
+	ironbee_gtest.conf_* \
+	clipp_test_*.config \
+	clipp_test_*.pb \
+	clipp_test_*.clipp
 
 .PHONY: check-ruby
 check-ruby:
