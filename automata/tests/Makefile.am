@@ -1,9 +1,8 @@
 include $(top_srcdir)/build/tests.mk
 
-AM_LDFLAGS += $(BOOST_LDFLAGS) -L$(top_builddir)/tests -L$(builddir)/.. \
+AM_LDFLAGS += \
+	-L$(builddir)/.. \
     -lironautomata -liaeudoxus -lprotobuf
-CPPFLAGS += $(BOOST_CPPFLAGS) -I$(top_srcdir)/tests \
-    -I$(srcdir)/../include -I$(builddir)/../include
 
 # Ignore protobuf warnings.
 CPPFLAGS += -Wno-shadow -Wno-extra
@@ -23,10 +22,7 @@ test_vls_SOURCES = test_vls.cpp
 
 TESTS = $(check_PROGRAMS)
 
-CLEANFILES += *.xml *.log
-
 clean-local:
 	rm -rf automata_test_*.*
 
-check-local:
-	(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))
+check-local: ruby-tests
