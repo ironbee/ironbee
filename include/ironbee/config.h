@@ -46,22 +46,61 @@ extern "C" {
  */
 
 typedef struct ib_dirmap_init_t ib_dirmap_init_t;
+typedef struct ib_cfgparser_node_t ib_cfgparser_node_t;
 
 /// @todo Should probably be private structure
 struct ib_cfgparser_t {
     ib_engine_t   *ib;                /**< Engine */
     ib_mpool_t    *mp;                /**< Memory pool */
     ib_list_t     *stack;             /**< Stack tracking contexts */
-    ib_list_t     *block;             /**< Stack tracking blocks */
     ib_hash_t     *includes;          /**< Include tracking hash */
     const char    *linebuf;           /**< Line buffer, used for continuation */
 
     /* Parsing states */
     ib_context_t  *cur_ctx;           /**< Current context */
-    const char    *cur_blkname;       /**< Current block name */
-    const char    *cur_file;          /**< Current file name */
     const char    *cur_cwd;           /**< Directory of the current file */
-    unsigned int   cur_lineno;        /**< Current line number */
+
+    /* Parse tree. */
+    /**
+     * The root of the parse tree.
+     *
+     * This is always a root node and always has no params.
+     */
+    ib_cfgparser_node_t *root;
+
+    /**
+     * The current parser node.
+     *
+     * When parsing a file or block, this is the current node
+     * being built. When applying a configuration to an @ref ib_engine_t
+     * this is the current node being applied (and also the current 
+     * file and line number).
+     */
+    ib_cfgparser_node_t *curr;
+
+    /**
+     * Finite state machine type.
+     *
+     * Values here must persist across calls to
+     * ib_cfgparser_ragel_parse_chunk().
+     *
+     * Contains state information for Ragel's parser.
+     * Many of these values and names come from the Ragel documentation, section
+     * 5.1 Variable Used by Ragel. p35 of The Ragel Guide 6.7 found at
+     * http://www.complang.org/ragel/ragel-guide-6.7.pdf
+     */
+    struct {
+        const char *ts;          /**< Pointer to character data for Ragel. */
+        const char *te;          /**< Pointer to character data for Ragel. */
+        int         cs;          /**< Current state. */
+        int         top;         /**< Top of the stack. */
+        int         act;         /**< Track the last successful match. */
+        int         stack[1024]; /**< Stack of states. */
+    } fsm;
+
+    size_t buffer_sz;  /**< Size of buffer. */
+    size_t buffer_len; /**< Length of string stored in buffer. */
+    char *buffer;      /**< Buffer for building tokens. */
 };
 
 /**
@@ -75,6 +114,54 @@ typedef enum {
     IB_DIRTYPE_OPFLAGS,                  /**< Option flags directive */
     IB_DIRTYPE_SBLK1,                    /**< One param subblock directive */
 } ib_dirtype_t;
+
+/**
+ * The type of node in a node in the parse tree.
+ */
+typedef enum {
+    //! Reserved for the root node.
+    IB_CFGPARSER_NODE_ROOT,
+
+    //! The node is a normal directive. This is most common.
+    IB_CFGPARSER_NODE_DIRECTIVE,
+
+    //! The node is a block. Directive @ref IB_DIRTYPE_SBLK1.
+    IB_CFGPARSER_NODE_BLOCK,
+
+    //! The node is the result of parsing a file.
+    IB_CFGPARSER_NODE_FILE
+} ib_cfgparser_node_type_t;
+
+/**
+ * This represents a node in the parse tree of an IronBee configuration.
+ *
+ * The contents of this structure depends on the type and if this is the 
+ * root node of the parse tree. If this is the root node (parent == NULL)
+ * then the type is IB_CFGPARSER_NODE_ROOT, the param list is empty,
+ * and directive is NULL.
+ * 
+ * If the type is IB_CFGPARSER_NODE_BLOCK
+ * then the directive and params are set appropriately and all child
+ * directives are placed in nodes
+ * in the children list.
+ *
+ * Otherwise the children list is empty.
+ */
+struct ib_cfgparser_node_t {
+    ib_cfgparser_node_type_t   type;      /**< The type of directive. */
+    ib_cfgparser_node_t       *parent;    /**< Parent node. NULL if root. */
+
+    /**
+     * A list of ib_cfgparser_node_t *.
+     * While directives do not have child nodes, all other node types
+     * may have child nodes. 
+     */
+    ib_list_t                 *children;
+    const char                *directive; /**< Directive. NULL if root. */
+    ib_list_t                 *params;    /**< List of const char * params. */
+    size_t                     line;      /**< Line number of the directive. */
+    const char                *file;      /**< File the directive is in. */
+};
 
 /** Callback for ending (processing) a block */
 typedef ib_status_t (*ib_config_cb_blkend_fn_t)(ib_cfgparser_t *cp,
@@ -257,6 +344,43 @@ struct ib_dirmap_init_t {
 ib_status_t DLL_PUBLIC ib_cfgparser_create(ib_cfgparser_t **pcp,
                                            ib_engine_t *ib);
 
+/**
+ * Create a new configuration parser node.
+ *
+ * @param[out] node The node to be created. This must be NULL initially.
+ * @param[in] cfgparser The configuration parser to make this node for.
+ *            The node will be destroyed when the cfgparser is destroyed.
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_cfgparser_node_create(ib_cfgparser_node_t **node,
+                                                ib_cfgparser_t *cfgparser);
+
+/**
+ * Pop the current node unless it is the parent.
+ *
+ * @param[in] cp Configuration parser whose curr node will be changed.
+ */
+void ib_cfgparser_pop_node(ib_cfgparser_t *cp);
+
+/**
+ * Push the given node so that it is the current node in @a cp.
+ *
+ * This means that @a node will be added to the current node's children list.
+ *
+ * @sa ib_cfgparser_pop_node to restore the previous current node.
+ *
+ * @param[in] cp Configuration parser whose current node will be changed.
+ * @param[in] node The node to push. 
+ *
+ * @return 
+ *   - IB_OK
+ *   - IB_EALLOC If memory cannot be allocated.
+ *   - Status of ib_list_push if it fails.
+ */
+ib_status_t ib_cfgparser_push_node(ib_cfgparser_t *cp,
+                                   ib_cfgparser_node_t *node);
+
 /// @todo Create a ib_cfgparser_parse_ex that can parse non-files (DBs, etc)
 
 /**
@@ -274,6 +398,49 @@ ib_status_t DLL_PUBLIC ib_cfgparser_create(ib_cfgparser_t **pcp,
  */
 ib_status_t DLL_PUBLIC ib_cfgparser_parse(ib_cfgparser_t *cp,
                                           const char *file);
+
+/**
+ * Apply the configuration represented by @a cp to @a ib. 
+ *
+ * This will set the @c curr field of @a cp to be the current node being
+ * applied.
+ *
+ * This is typically called by ib_engine_config_finished(), so there
+ * is typically no need for the user to explicitly call this.
+ *
+ * @param[in] cp Configuration parser holding the current IronBee
+ *            configuration.
+ * @param[out] ib The IronBee engine to be configured.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - Other status codes on error.
+ */
+ib_status_t DLL_PUBLIC ib_cfgparser_apply(ib_cfgparser_t *cp, ib_engine_t *ib);
+
+/**
+ * Apply the parse tree rooted at @a node to @a ib.
+ *
+ * This will set the @c curr field of @a cp to be the current node being
+ * applied.
+ *
+ * This function is provided so that parse trees produced outside
+ * of the provided configuration parsers may be used
+ * with a newly initialized configuration parser to configure IronBee.
+ *
+ * @param[in] cp Configuration parser holding the current IronBee
+ *            configuration.
+ * @param[in] tree The root of a parse tree to apply.
+ * @param[out] ib The IronBee engine to be configured.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - Other status codes on error.
+ */
+ib_status_t DLL_PUBLIC ib_cfgparser_apply_node(
+    ib_cfgparser_t *cp,
+    ib_cfgparser_node_t *tree,
+    ib_engine_t *ib);
 
 /**
  * Parse @a buffer.
@@ -327,28 +494,6 @@ ib_status_t DLL_PUBLIC ib_cfgparser_context_pop(ib_cfgparser_t *cp,
  */
 ib_status_t ib_cfgparser_context_current(const ib_cfgparser_t *cp,
                                          ib_context_t **pctx);
-
-/**
- * Push a new block name onto the stack and make it the current.
- *
- * @param cp Parser
- * @param name New block name
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
-                                               const char *name);
-
-/**
- * Pop the current block name off the stack and make the previous the current.
- *
- * @param cp Parser
- * @param pname Address which the removed name will be written (if non-NULL)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
-                                              const char **pname);
 
 /**
  * Destroy the parser.

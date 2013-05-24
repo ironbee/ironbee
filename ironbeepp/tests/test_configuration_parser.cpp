@@ -44,26 +44,29 @@ class TestConfigurationParser :
 
 TEST_F(TestConfigurationParser, ConfigurationParser)
 {
-    ib_cfgparser_t parser;
+    ib_cfgparser_t *parser;
+    
+    ASSERT_EQ(IB_OK, ib_cfgparser_create(&parser, m_engine.ib()));
+    ASSERT_TRUE(parser);
 
-    ConfigurationParser P(&parser);
+    ConfigurationParser P(parser);
 
     ASSERT_TRUE(P);
-    ASSERT_EQ(&parser, P.ib());
+    ASSERT_EQ(parser, P.ib());
 
-    parser.ib = m_engine.ib();
-    parser.mp = m_engine.main_memory_pool().ib();
+    parser->ib = m_engine.ib();
+    parser->mp = m_engine.main_memory_pool().ib();
 
     ib_context_t ctx;
-    parser.cur_ctx = &ctx;
-    parser.cur_file = "testfile";
-    parser.cur_blkname = "foobar";
+    parser->cur_ctx = &ctx;
+    parser->curr->file = "testfile";
+    parser->curr->directive = "foobar";
 
-    EXPECT_EQ(parser.ib, P.engine().ib());
-    EXPECT_EQ(parser.mp, P.memory_pool().ib());
-    EXPECT_EQ(parser.cur_ctx, P.current_context().ib());
-    EXPECT_EQ(parser.cur_file, P.current_file());
-    EXPECT_EQ(parser.cur_blkname, P.current_block_name());
+    EXPECT_EQ(parser->ib, P.engine().ib());
+    EXPECT_EQ(parser->mp, P.memory_pool().ib());
+    EXPECT_EQ(parser->cur_ctx, P.current_context().ib());
+    EXPECT_EQ(parser->curr->file, P.current_file());
+    EXPECT_EQ(parser->curr->directive, P.current_block_name());
 
     // Parse routines tested in test_configuration_directives.
 }

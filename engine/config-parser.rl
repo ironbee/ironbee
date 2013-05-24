@@ -49,68 +49,84 @@
 #endif
 
 /**
- * Finite state machine type.
- *
- * Contains state information for Ragel's parser.
- * Many of these values and names come from the Ragel documentation, section
- * 5.1 Variable Used by Ragel. p35 of The Ragel Guide 6.7 found at
- * http://www.complang.org/ragel/ragel-guide-6.7.pdf
+ * Variables used by the finite state machine per-call.
+ * Values here do not have to persist across calls to
+ * ib_cfgparser_ragel_parse_chunk().
  */
 typedef struct {
-    const char    *p;     /**< Pointer to the chunk being parsed. */
-    const char    *pe;    /**< Pointer past the end of p (p+length(p)). */
-    const char    *eof;   /**< eof==p==pe on last chunk. NULL otherwise. */
-    const char    *ts;    /**< Pointer to character data for Ragel. */
-    const char    *te;    /**< Pointer to character data for Ragel. */
-    int      cs;          /**< Current state. */
-    int      top;         /**< Top of the stack. */
-    int      act;         /**< Used to track the last successful match. */
-    int      stack[1024]; /**< Stack of states. */
-} fsm_t;
-
+    const char *p;     /**< Pointer to the chunk being parsed. */
+    const char *pe;    /**< Pointer past the end of p (p+length(p)). */
+    const char *eof;   /**< eof==p==pe on last chunk. NULL otherwise. */
+} fsm_vars_t;
 
 /**
- * @brief Malloc and unescape into that buffer the marked string.
+ * Append @a c to the internal buffer of @a cp. 
+ * @param[in] cp Configuration parser.
+ * @param[in] c Char to append.
+ * @returns
+ * - IB_OK
+ * - IB_EALLOC if there is no space left in the buffer.
+ */
+static ib_status_t cpbuf_append(ib_cfgparser_t *cp, char c)
+{
+    assert(cp != NULL);
+    assert(cp->buffer != NULL);
+    assert (cp->buffer_sz >= cp->buffer_len);
+
+    if (cp->buffer_sz == cp->buffer_len) {
+        return IB_EALLOC;
+    }
+
+    cp->buffer[cp->buffer_len] = c;
+    ++(cp->buffer_len);
+
+    return IB_OK;
+}
+
+/**
+ * Clear the buffer in @a cp.
+ * @param[in] cp Configuration parser.
+ */
+static void cpbuf_clear(ib_cfgparser_t *cp) {
+    assert(cp != NULL);
+    assert(cp->buffer != NULL);
+
+    cp->buffer_len = 0;
+    cp->buffer[0] = '\0';
+}
+
+/**
+ * Using the given mp, strdup the buffer in @a cp.
+ *
+ * If the buffer starts and ends with double quotes, remove them.
+ *
  * @param[in] cp The configuration parser
- * @param[in] fpc_mark The start of the string.
- * @param[in] fpc The current character from ragel.
- * @param[in,out] mp Temporary memory pool passed in by Ragel.
+ * @param[in,out] mp Pool to copy out of.
+ *
  * @return a buffer allocated from the tmpmp memory pool
  *         available in ib_cfgparser_ragel_parse_chunk. This buffer may be
  *         larger than the string stored in it if the length of the string is
  *         reduced by Javascript unescaping.
  */
-static char* alloc_cpy_marked_string(ib_cfgparser_t *cp,
-                                     const char *fpc_mark,
-                                     const char *fpc,
-                                     ib_mpool_t* mp)
+static char* qstrdup(ib_cfgparser_t *cp, ib_mpool_t* mp)
 {
-    const char *afpc = fpc;
-    size_t pvallen;
-    char* pval;
+    const char *start = cp->buffer;
+    const char *end = cp->buffer + cp->buffer_len - 1;
+    size_t len = cp->buffer_len;
+
     /* Adjust for quoted value. */
-    if ((*fpc_mark == '"') && (*(afpc-1) == '"') && (fpc_mark+1 < afpc)) {
-        fpc_mark++;
-        afpc--;
+    if ((*start == '"') && (*end == '"') && (start < end))
+    {
+        start++;
+        len -= 2;
     }
-    pvallen = (size_t)(afpc - fpc_mark);
-    pval = (char *)ib_mpool_memdup(mp, fpc_mark, (pvallen + 1) * sizeof(*pval));
 
-    pval[pvallen] = '\0';
-
-    /* At this point the buffer i pvallen+1 in size, but we cannot shrink it. */
-    /* This is not considered a problem for configuration parsing and it is
-       deallocated after parsing and configuration is complete. */
-    return pval;
+    return ib_mpool_memdup_to_str(mp, start, len);
 }
 
 static ib_status_t include_config_fn(ib_cfgparser_t *cp,
                                      ib_mpool_t* mp,
-                                     const char *directive,
-                                     const char *mark,
-                                     const char *fpc,
-                                     const char *file,
-                                     unsigned int lineno)
+                                     const char *directive)
 {
     struct stat statbuf;
     ib_status_t rc;
@@ -119,10 +135,15 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     char *pval;
     char *real;
     char *lookup;
+    const char *file = cp->curr->file;
     void *freeme = NULL;
     bool if_exists = strcasecmp("IncludeIfExists", directive) ? false : true;
 
-    pval = alloc_cpy_marked_string(cp, mark, fpc, mp);
+    pval = qstrdup(cp, mp);
+    if (pval == NULL) {
+        return IB_EALLOC;
+    }
+
     incfile = ib_util_relative_file(mp, file, pval);
     if (incfile == NULL) {
         ib_cfg_log_error(cp, "Failed to resolve included file \"%s\": %s",
@@ -234,78 +255,124 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 %%{
     machine ironbee_config;
 
-    # Mark the start of a string.
-    action mark { mark = fpc; }
     action error_action {
         rc = IB_EOTHER;
-        ib_cfg_log_error(cp,
-                         "parser error before \"%.*s\"",
-                         (int)(fpc - mark), mark);
+        ib_cfg_log_error(
+            cp,
+            "parser error near %s:%zu.",
+            cp->curr->file,
+            cp->curr->line);
     }
 
     # Parameter
     action push_param {
-        pval = alloc_cpy_marked_string(cp, mark, fpc, mpcfg);
+        pval = qstrdup(cp, mpcfg);
+        if (pval == NULL) {
+            return IB_EALLOC;
+        }
         ib_list_push(plist, pval);
     }
     action push_blkparam {
-        pval = alloc_cpy_marked_string(cp, mark, fpc, mpcfg);
+        pval = qstrdup(cp, mpcfg);
+        if (pval == NULL) {
+            return IB_EALLOC;
+        }
         ib_list_push(plist, pval);
+    }
+
+    action newline {
+        cp->curr->line += 1;
     }
 
     # Directives
     action start_dir {
-        size_t namelen = (size_t)(fpc - mark);
-        directive = (char *)calloc(namelen + 1, sizeof(*directive));
-        memcpy(directive, mark, namelen);
+        directive = ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
+        if (directive == NULL) {
+            return IB_EALLOC;
+        }
         ib_list_clear(plist);
+        cpbuf_clear(cp);
     }
     action push_dir {
-        rc = ib_config_directive_process(cp, directive, plist);
+        ib_cfgparser_node_t *node = NULL;
+        ib_cfgparser_node_create(&node, cp);
         if (rc != IB_OK) {
-            ib_cfg_log_error(cp,
-                             "Failed to process directive \"%s\" "
-                             ": %s (see preceeding messages for details)",
-                             directive, ib_status_to_string(rc));
+            ib_cfg_log_error(cp, "Cannot create node.");
+            return rc;
         }
-        if (directive != NULL) {
-            free(directive);
-            directive = NULL;
+        node->directive = directive;
+        directive = NULL;
+        node->file = ib_mpool_strdup(cp->mp, cp->curr->file);
+        if (node->file == NULL) {
+            return IB_EALLOC;
         }
+        node->line = cp->curr->line;
+        node->type = IB_CFGPARSER_NODE_DIRECTIVE;
+        ib_list_node_t *lst_node;
+        IB_LIST_LOOP(plist, lst_node) {
+            ib_list_push(node->params, ib_list_node_data(lst_node));
+        }
+        ib_list_push(cp->curr->children, node);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp, "Out of memory.");
+        }
+    }
+
+    action cpbuf_append {
+        if (cpbuf_append(cp, *fpc) != IB_OK) {
+            return IB_EALLOC;
+        }
+    }
+
+    action cpbuf_clear {
+        cpbuf_clear(cp);
     }
 
     # Blocks
     action start_block {
-        size_t namelen = (size_t)(fpc - mark);
-        blkname = (char *)calloc(namelen + 1, sizeof(*blkname));
-        memcpy(blkname, mark, namelen);
+        blkname = ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
+        if (blkname == NULL) {
+            return IB_EALLOC;
+        }
         ib_list_clear(plist);
+        cpbuf_clear(cp);
     }
     action push_block {
-        rc = ib_config_block_start(cp, blkname, plist);
+        ib_cfgparser_node_t *node = NULL;
+        rc = ib_cfgparser_node_create(&node, cp);
         if (rc != IB_OK) {
-            ib_cfg_log_error(cp,
-	                     "Failed to start block \"%s\": %s",
-                             blkname, ib_status_to_string(rc));
+            ib_cfg_log_error(cp, "Cannot create node.");
+            return rc;
+        }
+        node->directive = blkname;
+        node->file = ib_mpool_strdup(cp->mp, cp->curr->file);
+        if (node->file == NULL) {
+            return IB_EALLOC;
+        }
+        node->line = cp->curr->line;
+        node->type = IB_CFGPARSER_NODE_BLOCK;
+        ib_list_node_t *lst_node;
+        IB_LIST_LOOP(plist, lst_node) {
+            rc = ib_list_push(node->params, ib_list_node_data(lst_node));
+            if (rc != IB_OK) {
+                ib_cfg_log_error(cp, "Cannot push directive.");
+                return rc;
+            }
+        }
+        rc = ib_cfgparser_push_node(cp, node);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp, "Cannot push node.");
+            return rc;
         }
     }
     action pop_block {
-        blkname = (char *)cp->cur_blkname;
-        rc = ib_config_block_process(cp, blkname);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp,
-                             "Failed to process block \"%s\": %s",
-                             blkname, ib_status_to_string(rc));
-        }
-        if (blkname != NULL) {
-            free(blkname);
-        }
-        blkname = (char *)cp->cur_blkname;
+        ib_cfgparser_pop_node(cp);
+        blkname = NULL;
     }
 
     # include file logic
     action include_config {
-        rc = include_config_fn(cp, mpcfg, directive, mark, fpc, file, lineno);
+        rc = include_config_fn(cp, mpcfg, directive);
 
         if (rc == IB_OK) {
             ib_cfg_log_debug(cp, "Done processing include directive");
@@ -315,27 +382,17 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
                              "Failed to process include directive: %s",
                              ib_status_to_string(rc));
         }
-
-        if (directive != NULL) {
-            free(directive);
-            directive = NULL;
-        }
     }
 
-    # Line continuation logic
-    action handle_continuation {
-        size_t len = (size_t)(fpc - mark);
-        ib_cfg_log_debug(cp, "contination: \"%.*s\"", (int)len, mark);
-        /* blkname = (char *)calloc(namelen + 1, sizeof(*blkname));
-           memcpy(blkname, mark, namelen); */
-    }
-
+    # Whitespace.
     WS = [ \t];
-    EOLSEQ = '\r'? '\n';
-    EOL = WS* EOLSEQ;
+    # End of line.
+    EOL = '\r'? '\n';
+    # Continuation.
     CONT = '\\' EOL;
+    # Non-breaking space. Space that does not terminate a statement.
+    NBSP = ( WS | '\\' EOL );
 
-    sep = WS+;
     qchar = '\\' any;
     qtoken = '"' ( qchar | ( any - ["\\] ) )* '"';
     token = (qchar | (any - (WS | EOL | [<>#"\\]))) (qchar | (any - ( WS | EOL | [<>"\\])))*;
@@ -343,42 +400,84 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     keyval = token '=' param;
     iparam = ( '"' (any - (EOL | '"'))+ '"' ) | (any - (WS | EOL) )+;
 
-    comment = '#' (any -- EOLSEQ)*;
+    # A comment is any string starting with # and not including a newline.
+    # Notice that we do *not* make allowances for NBSP used in line comments.
+    comment = '#' (any -- EOL)*;
 
+    # The parameters machine pull in parameter.
     parameters := |*
-        WS* param >mark %push_param $/push_param $/push_dir;
-        EOL @push_dir { fret; };
+        WS;
+        CONT  $newline;
+        EOL   $newline
+              @push_dir { fret; };
+        param >cpbuf_clear
+              $cpbuf_append
+              %push_param
+              $/push_param
+              $/push_dir;
     *|;
 
     block_parameters := |*
-        WS* param >mark %push_blkparam;
-        WS* ">" @push_block { fret; };
+        WS;
+        CONT  $newline;
+        param >cpbuf_clear
+              $cpbuf_append
+              %push_blkparam;
+        ">"   @push_block
+              { fret; };
     *|;
 
     newblock := |*
-        WS* token >mark %start_block $!error_action { fcall block_parameters; };
-        EOL $!error_action { fret; };
+        WS;
+        CONT   $newline
+               $!error_action { fret; };
+        EOL    $newline
+               $!error_action { fret; };
+        token  >cpbuf_clear
+               $cpbuf_append
+               %start_block
+               $!error_action
+               { fcall block_parameters; };
     *|;
 
     endblock := |*
-	WS* EOL %error_action { fret; };
-        WS* token >mark $!error_action %pop_block;
-        WS* ">" EOL $!error_action { fret; };
-    *|;
-
-    finclude := |*
-        WS* iparam >mark $!error_action %include_config EOL >mark $!error_action { fret; };
+        WS;
+        CONT    $newline;
+        token   >cpbuf_clear
+                $cpbuf_append
+                $!error_action
+                %pop_block;
+	EOL     $newline
+                %error_action { fret; };
+        ">" EOL $newline
+                $!error_action { fret; };
     *|;
 
     main := |*
-        WS* comment;
-        WS* CONT %handle_continuation;
-        WS* [Ii] [Nn] [Cc] [Ll] [Uu] [Dd] [Ee] ([Ii] [Ff] [Ee] [Xx] [Ii] [Ss] [Tt] [Ss])? { fcall finclude; };
-        WS* token >mark %start_dir { fcall parameters; };
-        "<" { fcall newblock; };
-        "</" { fcall endblock; };
-        WS+;
-        EOL;
+        comment;
+
+        #  A directive.
+        token >cpbuf_clear
+              $cpbuf_append
+              %start_dir
+              { fcall parameters; };
+
+        # This machine will include a file in the current parse tree.
+        # This will execute as well as token as both of these
+        # machines share a prefix.
+        'Include'i ('IfExists'i)? (WS | CONT $newline)+ iparam >cpbuf_clear
+                                                        $cpbuf_append
+                                                        $!error_action
+                                                        %include_config;
+        
+        # Handle block configurations <Site... >.
+        "<" (any - "/") { fhold; fcall newblock;};
+        "</"            {        fcall endblock;};
+
+        # Eat space.
+        WS;
+        CONT $newline;
+        EOL  $newline;
     *|;
 }%%
 
@@ -387,10 +486,11 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
                                            const size_t blen,
-                                           const char *file,
-                                           const unsigned lineno,
                                            const int is_last_chunk)
 {
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+
     ib_engine_t *ib_engine = cp->ib;
 
     /* Temporary memory pool. */
@@ -411,22 +511,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     /* Parameter value being added to the plist. */
     char *pval = NULL;
 
-    /* Store the start of a string to act on.
-     * fpc - mark is the string length when processing after
-     * a mark action. */
-    const char *mark = buf;
-
     /* Temporary list for storing values before they are committed to the
      * configuration. */
     ib_list_t *plist;
 
     /* Create a finite state machine type. */
-    fsm_t fsm;
+    fsm_vars_t fsm_vars;
 
-    fsm.p = buf;
-    fsm.pe = buf + blen;
-    fsm.eof = (is_last_chunk ? fsm.pe : NULL);
-    memset(fsm.stack, 0, sizeof(fsm.stack));
+    fsm_vars.p = buf;
+    fsm_vars.pe = buf + blen;
+    fsm_vars.eof = (is_last_chunk ? fsm_vars.pe : NULL);
 
     /* Create a temporary list for storing parameter values. */
     ib_list_create(&plist, mptmp);
@@ -435,10 +529,10 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     }
 
     /* Access all ragel state variables via structure. */
-    %% access fsm.;
-    %% variable p fsm.p;
-    %% variable pe fsm.pe;
-    %% variable eof fsm.eof;
+    %% access cp->fsm.;
+    %% variable p fsm_vars.p;
+    %% variable pe fsm_vars.pe;
+    %% variable eof fsm_vars.eof;
 
     %% write init;
     %% write exec;

@@ -41,12 +41,12 @@ Context ConstConfigurationParser::current_context() const
 
 const char* ConstConfigurationParser::current_file() const
 {
-    return ib()->cur_file;
+    return ib()->curr->file;
 }
 
 const char* ConstConfigurationParser::current_block_name() const
 {
-    return ib()->cur_blkname;
+    return ib()->curr->directive;
 }
 
 // ConfigurationParser

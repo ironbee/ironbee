@@ -62,6 +62,36 @@ struct cfgp_blk_t {
     ib_list_t                *dirs;     /**< Block directives */
 };
 
+ib_status_t ib_cfgparser_node_create(ib_cfgparser_node_t **node,
+                                     ib_cfgparser_t *cfgparser)
+{
+    assert(node != NULL);
+    assert(*node == NULL);
+    assert(cfgparser != NULL);
+    assert(cfgparser->mp != NULL);
+
+    ib_mpool_t *mp = cfgparser->mp;
+    ib_status_t rc;
+
+    ib_cfgparser_node_t *new_node = ib_mpool_calloc(mp, sizeof(*new_node), 1);
+    if (new_node == NULL) {
+        return IB_EALLOC;
+    }
+
+    rc = ib_list_create(&(new_node->params), mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_list_create(&(new_node->children), mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    *node = new_node;
+
+    return IB_OK;
+}
 
 /* -- Configuration Parser Routines -- */
 
@@ -99,17 +129,28 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
         goto failed;
     }
 
-    /* Create the block tracking list */
-    rc = ib_list_create(&(cp->block), pool);
-    if (rc != IB_OK) {
-        goto failed;
-    }
-
     /* Create the include tracking list */
     rc = ib_hash_create(&(cp->includes), pool);
     if (rc != IB_OK) {
         goto failed;
     }
+
+    /* Create the parse tree root. */
+    rc = ib_cfgparser_node_create(&(cp->root), cp);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
+    cp->root->type = IB_CFGPARSER_NODE_ROOT;
+    cp->root->file = "[root]";
+    cp->root->line = 0;
+    cp->root->directive = "[root]";
+    cp->curr = cp->root;
+
+    /* Build a buffer for aggregating tokens into. */
+    cp->buffer_sz = 1024;
+    cp->buffer_len = 0;
+    cp->buffer = ib_mpool_alloc(pool, cp->buffer_sz);
 
     /* Other fields are NULLed via calloc */
     *pcp = cp;
@@ -146,6 +187,37 @@ static char *find_eol(char *buf, size_t len, size_t *skip)
     }
 }
 
+void ib_cfgparser_pop_node(ib_cfgparser_t *cp)
+{
+    assert(cp != NULL);
+    assert(cp->curr != NULL);
+
+    if (cp->curr->parent != NULL) {
+        cp->curr = cp->curr->parent;
+    }
+}
+
+ib_status_t ib_cfgparser_push_node(ib_cfgparser_t *cp,
+                                   ib_cfgparser_node_t *node)
+{
+    assert(cp != NULL);
+    assert(cp->curr != NULL);
+    assert(cp->curr->children != NULL);
+    assert(node != NULL);
+
+    ib_status_t rc;
+
+    /* Set up-link. */
+    node->parent = cp->curr;
+
+    /* Set down-link. */
+    rc = ib_list_push(cp->curr->children, node);
+
+    cp->curr = node;
+
+    return rc;
+}
+
 /// @todo Create a ib_cfgparser_parse_ex that can parse non-files (DBs, etc)
 
 ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
@@ -161,8 +233,8 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
     char *eol          = 0;    /* buf[eol] = end of line. */
     char *bol          = 0;    /* buf[bol] = begin line. */
     char *pathbuf;
-    const char *save_file;     /* File name, used to restore during cleanup  */
     const char *save_cwd;      /* CWD, used to restore during cleanup  */
+    ib_cfgparser_node_t *node; /* Parser node for this file. */
 
     ib_status_t rc = IB_OK;
     unsigned error_count = 0;
@@ -177,11 +249,22 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
     }
 
     /* Store the current file and path in the save_ stack variables */
-    save_file = cp->cur_file;
     save_cwd = cp->cur_cwd;
 
+    node = NULL;
+    rc = ib_cfgparser_node_create(&node, cp);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+    node->file = file;
+    node->line = 1;
+    node->type = IB_CFGPARSER_NODE_FILE;
+    rc = ib_cfgparser_push_node(cp, node);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+
     /* Store the new file and path in the parser object */
-    cp->cur_file = file;
     pathbuf = (char *)ib_mpool_strdup(cp->mp, file);
     if (pathbuf != NULL) {
         cp->cur_cwd = dirname(pathbuf);
@@ -297,9 +380,9 @@ cleanup:
         close(fd);
     }
 
-    /* Restore the saved file and CWDs */
-    cp->cur_file = save_file;
     cp->cur_cwd = save_cwd;
+
+    ib_cfgparser_pop_node(cp);
 
     ib_cfg_log_debug3(cp,
                       "Done reading config \"%s\" via fd=%d errno=%d",
@@ -313,6 +396,10 @@ cleanup:
     }
     ib_cfg_log_error(cp, "%u Error(s) parsing config file: %s",
                      error_count, ib_status_to_string(rc));
+
+    /* Zero Ragel parser state. */
+    memset(&(cp->fsm), 0, sizeof(cp->fsm));
+
     return rc;
 }
 
@@ -328,8 +415,6 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
 
     assert(cp != NULL);
     assert(buffer != NULL);
-
-    cp->cur_lineno = lineno;
 
     /* If the previous line ended with a continuation character,
      * join it with this line. */
@@ -398,10 +483,194 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
     rc = ib_cfgparser_ragel_parse_chunk(cp,
                                         buffer,
                                         length,
-                                        file,
-                                        lineno,
                                         (more ? 1 : 0) );
+
+    if (!more) {
+        /* Zero Ragel parser state. */
+        memset(&(cp->fsm), 0, sizeof(cp->fsm));
+    }
+
     return rc;
+}
+
+/* Forward declare because it is mutually recursive with 
+ * cfgparser_apply_node_children_helper. */
+static ib_status_t cfgparser_apply_node_helper(
+    ib_cfgparser_t *cp,
+    ib_engine_t *ib,
+    ib_cfgparser_node_t *node);
+
+static ib_status_t cfgparser_apply_node_children_helper(
+    ib_cfgparser_t *cp,
+    ib_engine_t *ib,
+    ib_cfgparser_node_t *node)
+{
+    ib_list_node_t *list_node;
+    ib_status_t rc = IB_OK;
+
+    IB_LIST_LOOP(node->children, list_node) {
+        ib_cfgparser_node_t *child = ib_list_node_data(list_node);
+        ib_status_t tmp_rc;
+
+        tmp_rc = cfgparser_apply_node_helper(cp, ib, child);
+        if (rc == IB_OK && tmp_rc != IB_OK) {
+            rc = tmp_rc;
+        }
+    }
+
+    return rc;
+}
+
+/**
+ * Helper function to recursively apply the configuration nodes.
+ *
+ * This sets the curr member of @a cp to @a node.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - Other on error. This failure is not failure. If a recursive
+ *     call fails, the first failure code is returned to the caller.
+ */
+static ib_status_t cfgparser_apply_node_helper(
+    ib_cfgparser_t *cp,
+    ib_engine_t *ib,
+    ib_cfgparser_node_t *node)
+{
+    assert(cp != NULL);
+    assert(ib != NULL);
+    assert(node != NULL);
+
+    ib_status_t rc = IB_OK;
+    ib_status_t tmp_rc;
+
+    ib_cfg_log_debug(
+        cp,
+        "Applying %s (type=%d) from %s:%zd.",
+        node->directive,
+        node->type,
+        node->file,
+        node->line);
+
+    switch(node->type) {
+        case IB_CFGPARSER_NODE_ROOT:
+            ib_log_debug(ib, "At root configuration node.");
+            tmp_rc = cfgparser_apply_node_children_helper(cp, ib, node);
+            if (rc == IB_OK) {
+                rc = tmp_rc;
+            }
+            break;
+
+        case IB_CFGPARSER_NODE_DIRECTIVE:
+            ib_log_debug(ib, "Applying directive %s", node->directive);
+
+            /* Set the current node before callbacks. */
+            cp->curr = node;
+
+            /* Callback to user directives. */
+            tmp_rc = ib_config_directive_process(
+                cp,
+                node->directive,
+                node->params);
+            if (tmp_rc != IB_OK) {
+                ib_cfg_log_error(
+                    cp,
+                    "Failed to process directive \"%s\" "
+                    ": %s (see preceeding messages for details)",
+                    node->directive, ib_status_to_string(tmp_rc));
+                if (rc == IB_OK) {
+                    rc = tmp_rc;
+                }
+            }
+            rc = cfgparser_apply_node_children_helper(cp, ib, node);
+            if (rc == IB_OK) {
+                rc = tmp_rc;
+            }
+            break;
+
+        case IB_CFGPARSER_NODE_BLOCK:
+            ib_log_debug(ib, "Applying block %s", node->directive);
+
+            /* Set the current node before callbacks. */
+            cp->curr = node;
+
+            /* Callback to user directives. */
+            tmp_rc = ib_config_block_start(cp, node->directive, node->params);
+            if (tmp_rc != IB_OK) {
+                ib_cfg_log_error(cp,
+	                        "Failed to start block \"%s\": %s",
+                                node->directive, ib_status_to_string(tmp_rc));
+                if (rc == IB_OK) {
+                    rc = tmp_rc;
+                }
+            }
+
+            tmp_rc = cfgparser_apply_node_children_helper(cp, ib, node);
+            if (rc == IB_OK) {
+                rc = tmp_rc;
+            }
+
+            /* Set the current node before callbacks. */
+            cp->curr = node;
+
+            /* Callback to user directives. */
+            tmp_rc = ib_config_block_process(cp, node->directive);
+            if (tmp_rc != IB_OK) {
+                ib_cfg_log_error(cp,
+                                "Failed to process block \"%s\": %s",
+                                node->directive,
+                                ib_status_to_string(tmp_rc));
+                if (rc == IB_OK) {
+                    rc = tmp_rc;
+                }
+            }
+            break;
+
+        case IB_CFGPARSER_NODE_FILE:
+            ib_log_debug(ib, "Applying file block %s", node->file);
+            for (ib_cfgparser_node_t *tmp_node = node->parent;
+                 tmp_node != NULL;
+                 tmp_node = tmp_node->parent)
+            {
+                if (tmp_node->type == IB_CFGPARSER_NODE_FILE) {
+                    ib_log_debug(
+                        ib,
+                        "\tincluded from %s:%zd",
+                        node->file,
+                        node->line);
+                }
+            }
+
+            tmp_rc = cfgparser_apply_node_children_helper(cp, ib, node);
+            if (rc == IB_OK) {
+                rc = tmp_rc;
+            }
+            break;
+    }
+
+    return rc;
+}
+
+ib_status_t ib_cfgparser_apply(ib_cfgparser_t *cp, ib_engine_t *ib)
+{
+    assert(cp != NULL);
+    assert(ib != NULL);
+    assert(cp->curr != NULL);
+    assert(cp->root != NULL);
+
+    return ib_cfgparser_apply_node(cp, cp->root, ib);
+}
+
+ib_status_t ib_cfgparser_apply_node(
+    ib_cfgparser_t *cp,
+    ib_cfgparser_node_t *tree,
+    ib_engine_t *ib)
+{
+    assert(cp != NULL);
+    assert(ib != NULL);
+    assert(cp->curr != NULL);
+    assert(cp->root != NULL);
+
+    return cfgparser_apply_node_helper(cp, ib, tree);
 }
 
 static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
@@ -484,55 +753,6 @@ ib_status_t ib_cfgparser_context_current(const ib_cfgparser_t *cp,
     assert(pctx != NULL);
 
     *pctx = cp->cur_ctx;
-
-    return IB_OK;
-}
-
-ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
-                                               const char *name)
-{
-    assert(cp != NULL);
-    assert(name != NULL);
-    ib_status_t rc;
-
-    rc = ib_list_push(cp->block, (void *)name);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Failed to push block %p: %s",
-                         name, ib_status_to_string(rc));
-        return rc;
-    }
-    cp->cur_blkname = name;
-
-    return IB_OK;
-}
-
-ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
-                                              const char **pname)
-{
-    assert(cp != NULL);
-    const char *name;
-    ib_status_t rc;
-
-    if (pname != NULL) {
-        *pname = NULL;
-    }
-
-    rc = ib_list_pop(cp->block, &name);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Failed to pop block: %s",
-                         ib_status_to_string(rc));
-        cp->cur_blkname = NULL;
-        return rc;
-    }
-
-    if (pname != NULL) {
-        *pname = name;
-    }
-
-    /* The last in the list is now the current. */
-    cp->cur_blkname = (const char *)ib_list_node_data(ib_list_last(cp->block));
 
     return IB_OK;
 }
@@ -707,10 +927,6 @@ ib_status_t ib_config_block_start(ib_cfgparser_t *cp,
     assert(cp != NULL);
     assert(name != NULL);
 
-    ib_status_t rc = ib_cfgparser_block_push(cp, name);
-    if (rc != IB_OK) {
-        return rc;
-    }
     return ib_config_directive_process(cp, name, args);
 }
 
@@ -723,12 +939,6 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     ib_engine_t *ib = cp->ib;
     ib_dirmap_init_t *rec;
     ib_status_t rc;
-
-    /* Finished with this block. */
-    rc = ib_cfgparser_block_pop(cp, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
 
     rc = ib_hash_get(ib->dirmap, &rec, name);
     if (rc != IB_OK) {
@@ -858,7 +1068,7 @@ void ib_cfg_vlog(ib_cfgparser_t *cp, ib_log_level_t level,
     assert(cp != NULL);
     assert(fmt != NULL);
 
-    ib_cfg_vlog_ex(cp->ib, cp->cur_file, cp->cur_lineno,
+    ib_cfg_vlog_ex(cp->ib, cp->curr->file, cp->curr->line,
                    level, file, line, fmt, ap);
 
     return;

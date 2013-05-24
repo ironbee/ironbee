@@ -558,6 +558,12 @@ ib_status_t ib_engine_config_finished(ib_engine_t *ib)
     assert(ib->cfg_state == CFG_STARTED);
     ib_status_t rc;
 
+    /* Apply the configuration. */
+    rc = ib_cfgparser_apply(ib->cfgparser, ib);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "There were errors configuring the IronBee engine.");
+    }
+
     /* Initialize (and close) the main configuration context.
      * Note: The context can be NULL for unit tests. */
     if (ib->ctx != NULL) {

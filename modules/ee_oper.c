@@ -303,9 +303,9 @@ ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
         return IB_EEXIST;
     }
 
-    ib_log_debug(cp->ib, "pattern %s: checking for file %s relative to %s", pattern_name,filename, cp->cur_file);
+    ib_log_debug(cp->ib, "pattern %s: checking for file %s relative to %s", pattern_name,filename, cp->curr->file);
 
-    automata_file = ib_util_relative_file(mp_tmp, cp->cur_file, filename);
+    automata_file = ib_util_relative_file(mp_tmp, cp->curr->file, filename);
     ib_log_debug(cp->ib, "pattern %s: path=%s", pattern_name, automata_file);
 
     if (access(automata_file, R_OK) != 0) {

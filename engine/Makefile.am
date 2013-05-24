@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 
 include $(top_srcdir)/build/common.mk
 
-EXTRA_DIST =  config-parser.rl run-ragel.py \
+EXTRA_DIST =  config-parser.rl \
               engine_private.h  \
               state_notify_private.h \
               rule_engine_private.h \
@@ -53,11 +53,10 @@ install-exec-hook: $(lib_LTLIBRARIES)
 endif
 
 # Ragel generated files
-RUNRAGEL=$(srcdir)/run-ragel.py
-$(srcdir)/config-parser.c: $(srcdir)/config-parser.rl
-	$(RUNRAGEL) "$(RAGEL)" $*
+%.c: %.rl
+	$(RAGEL) -s $<
 
-config-parser.dot: $(srcdir)/config-parser.rl
+config-parser.dot: $(srcdir)/engine/config-parser.rl
 	$(RAGEL) -V $< > $@
 
 config-parser.svg: config-parser.dot

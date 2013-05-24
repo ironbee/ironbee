@@ -78,7 +78,7 @@ TEST(TestIronBee, test_engine_config_basic)
         "</Site>\n";
 
     ibtest_engine_create(&ib);
-    ibtest_engine_config_buf(ib, cfgbuf, strlen(cfgbuf), "test.conf", 1);
+    ibtest_engine_config_buf(ib, cfgbuf, strlen(cfgbuf));
     ibtest_engine_destroy(ib);
 }
 

@@ -72,12 +72,20 @@ class TestConfig : public BaseFixture
                                int isEnd=0)
     {
         string s = configString + "\n";
-        return ib_cfgparser_ragel_parse_chunk(cfgparser,
-                                              s.c_str(),
-                                              s.length(),
-                                              file,
-                                              lineno,
-                                              isEnd);
+        ib_status_t rc;
+        rc = ib_cfgparser_ragel_parse_chunk(cfgparser,
+                                            s.c_str(),
+                                            s.length(),
+                                            isEnd);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        if (isEnd) {
+            rc = ib_cfgparser_apply(cfgparser, cfgparser->ib);
+        } 
+
+        return rc;
     }
 };
 
@@ -94,7 +102,7 @@ TEST_F(TestConfig, valid_module)
 
 TEST_F(TestConfig, false_directive)
 {
-    ASSERT_NE(IB_OK, config("blah blah"));
+    ASSERT_NE(IB_OK, config("blah blah", 1));
 }
 
 TEST_F(TestConfig, incomplete_site_block)

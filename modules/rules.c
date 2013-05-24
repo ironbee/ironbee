@@ -787,7 +787,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
-                        cp->cur_file, cp->cur_lineno,
+                        cp->curr->file, cp->curr->line,
                         false, &rule);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to create rule: %s",
@@ -831,7 +831,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     if (tag == NULL) {
         return IB_EALLOC;
     }
-    location = ib_util_relative_file(cp->mp, cp->cur_file, colon + 1);
+    location = ib_util_relative_file(cp->mp, cp->curr->file, colon + 1);
     if (location == NULL) {
         return IB_EALLOC;
     }
@@ -913,7 +913,7 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
-                        cp->cur_file, cp->cur_lineno,
+                        cp->curr->file, cp->curr->line,
                         false, &rule);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to allocate rule: %s",
@@ -1082,7 +1082,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
-                        cp->cur_file, cp->cur_lineno,
+                        cp->curr->file, cp->curr->line,
                         true, &rule);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to create rule: %s",
@@ -1172,18 +1172,18 @@ static ib_status_t parse_ruleenable_params(ib_cfgparser_t *cp,
 
         if (strcasecmp(param, "all") == 0) {
             rc = ib_rule_enable_all(cp->ib, cp->cur_ctx,
-                                    cp->cur_file, cp->cur_lineno);
+                                    cp->curr->file, cp->curr->line);
         }
         else if (strncasecmp(param, "id:", 3) == 0) {
             const char *id = param + 3;
             rc = ib_rule_enable_id(cp->ib, cp->cur_ctx,
-                                   cp->cur_file, cp->cur_lineno,
+                                   cp->curr->file, cp->curr->line,
                                    id);
         }
         else if (strncasecmp(param, "tag:", 4) == 0) {
             const char *tag = param + 4;
             rc = ib_rule_enable_tag(cp->ib, cp->cur_ctx,
-                                    cp->cur_file, cp->cur_lineno,
+                                    cp->curr->file, cp->curr->line,
                                     tag);
         }
         else {
@@ -1225,18 +1225,18 @@ static ib_status_t parse_ruledisable_params(ib_cfgparser_t *cp,
 
         if (strcasecmp(param, "all") == 0) {
             rc = ib_rule_disable_all(cp->ib, cp->cur_ctx,
-                                     cp->cur_file, cp->cur_lineno);
+                                     cp->curr->file, cp->curr->line);
         }
         else if (strncasecmp(param, "id:", 3) == 0) {
             const char *id = param + 3;
             rc = ib_rule_disable_id(cp->ib, cp->cur_ctx,
-                                    cp->cur_file, cp->cur_lineno,
+                                    cp->curr->file, cp->curr->line,
                                     id);
         }
         else if (strncasecmp(param, "tag:", 4) == 0) {
             const char *tag = param + 4;
             rc = ib_rule_disable_tag(cp->ib, cp->cur_ctx,
-                                     cp->cur_file, cp->cur_lineno,
+                                     cp->curr->file, cp->curr->line,
                                      tag);
         }
         else {
@@ -1275,7 +1275,7 @@ static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
-                        cp->cur_file, cp->cur_lineno,
+                        cp->curr->file, cp->curr->line,
                         false, &rule);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to allocate rule: %s",
@@ -1371,7 +1371,7 @@ static ib_status_t parse_action_params(ib_cfgparser_t *cp,
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
-                        cp->cur_file, cp->cur_lineno,
+                        cp->curr->file, cp->curr->line,
                         false, &rule);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to allocate rule: %s",
