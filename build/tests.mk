@@ -52,3 +52,9 @@ CLEANFILES = \
 	*_valgrind_memcheck.xml \
 	ironbee_gtest.conf_*
 
+.PHONY: ruby-tests
+ruby-tests:
+if CPP
+	(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))
+endif
+
