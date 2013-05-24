@@ -2804,13 +2804,57 @@ static ib_status_t modhtp_context_close(
     }
 
     /* Build a context */
-    rc = modhtp_build_context(ib, ib_engine_pool_main_get(ib), config, &modctx);
+    rc = modhtp_build_context(ib, ib_context_get_mpool(ctx), config, &modctx);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create a module context for %s: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
     config->context = modctx;
+
+    return IB_OK;
+}
+
+/**
+ * Handle IronBee context destroy
+ *
+ * @param[in] ib The IronBee engine
+ * @param[in] ctx The IronBee context
+ * @param[in] event Event
+ * @param[in] cbdata Module-specific context-destroy callback data (module data)
+ *
+ * @returns Status code
+ */
+static ib_status_t modhtp_context_destroy(
+    ib_engine_t           *ib,
+    ib_context_t          *ctx,
+    ib_state_event_type_t  event,
+    void                  *cbdata)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(event == context_destroy_event);
+    assert(cbdata != NULL);
+
+    ib_status_t         rc;
+    modhtp_config_t    *config;
+    modhtp_context_t   *modctx;
+    ib_module_t        *module = (ib_module_t *)cbdata;
+
+    /* Get the module config. */
+    rc = ib_context_module_config(ctx, module, (void *)&config);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Destroy the context */
+    modctx = (modhtp_context_t *)config->context; /* cast away const-ness */
+    if ( (modctx != NULL) && (modctx->htp_config != NULL) ) {
+        htp_config_destroy((htp_cfg_t *)modctx->htp_config);
+        modctx->htp_config = NULL;
+    }
 
     return IB_OK;
 }
@@ -2835,9 +2879,14 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     ib_data_config_t *config;
 
     /* Register hooks */
-    /* Register the context close function */
+    /* Register the context close/destroy function */
     rc = ib_hook_context_register(ib, context_close_event,
                                   modhtp_context_close, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_context_register(ib, context_destroy_event,
+                                  modhtp_context_destroy, m);
     if (rc != IB_OK) {
         return rc;
     }
