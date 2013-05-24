@@ -83,8 +83,7 @@ test_luajit_LDADD = $(LDADD) \
                     -lluajit-ironbee \
                     -lm
 
-test_module_rules_lua_SOURCES = test_module_rules_lua.cpp \
-                                test_main.cpp ibtest_util.cpp
+test_module_rules_lua_SOURCES = test_module_rules_lua.cpp
 test_module_rules_lua_CPPFLAGS = $(AM_CPPFLAGS) \
                                  -I$(top_srcdir)/modules \
                                  -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
@@ -93,7 +92,6 @@ test_module_rules_lua_CPPFLAGS = $(AM_CPPFLAGS) \
                                  -DTEST_LUA_FILE=\"$(abs_top_srcdir)/tests/test_module_rules_lua.lua\" \
                                  -DTEST_FFI_FILE=\"$(abs_top_srcdir)/lua/ironbee-ffi.lua\"
 test_module_rules_lua_LDADD = $(LDADD) \
-                              $(MODULE_TEST_LDADD) \
                               $(top_builddir)/lua/libironbee-lua.la \
                               $(top_builddir)/modules/ibmod_rules_la-lua_common.o \
                               -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
