@@ -68,7 +68,7 @@ TEST_F(TestField, Construction)
     f = Field::create_time(m_pool, "test", 4, 18);
     EXPECT_TRUE(f);
     EXPECT_EQ(Field::TIME, f.type());
-    EXPECT_EQ(18, f.value_as_time());
+    EXPECT_EQ(18UL, f.value_as_time());
     EXPECT_EQ("test", f.name_as_s());
     EXPECT_EQ(m_pool, f.memory_pool());
     EXPECT_FALSE(f.is_dynamic());
@@ -132,7 +132,7 @@ TEST_F(TestField, SetAndGet)
     EXPECT_THROW(f.value_as_byte_string(),     IronBee::einval);
     EXPECT_THROW(f.value_as_list<int*>(),      IronBee::einval);
     EXPECT_NO_THROW(f.set_time(6));
-    EXPECT_EQ(6, f.value_as_time());
+    EXPECT_EQ(6UL, f.value_as_time());
 
     f = Field::create_float(m_pool, "test", 4, 17.1);
     EXPECT_THROW(f.set_number(1),              IronBee::einval);
@@ -328,21 +328,21 @@ TEST_F(TestField, Dynamic)
         args.reset();
         v = 0;
         f.set_time(23);
-        EXPECT_EQ(23, v);
+        EXPECT_EQ(23UL, v);
         EXPECT_EQ(f, args.field);
         EXPECT_FALSE(args.arg);
         EXPECT_EQ(0UL, args.arg_length);
         args.reset();
         v = 0;
         f.set_time(24, "Hello", 5);
-        EXPECT_EQ(24, v);
+        EXPECT_EQ(24UL, v);
         EXPECT_EQ(f, args.field);
         EXPECT_EQ("Hello", string(args.arg, args.arg_length));
 
         f.make_static();
         f.set_time(123);
         EXPECT_FALSE(f.is_dynamic());
-        EXPECT_EQ(123, f.value_as_time());
+        EXPECT_EQ(123UL, f.value_as_time());
     }
 
     {
@@ -593,7 +593,7 @@ TEST_F(TestField, CreateAlias)
 
         f.set_time(8);
 
-        EXPECT_EQ(n, 8);
+        EXPECT_EQ(8UL, n);
     }
     {
         long double n = 0;
@@ -640,7 +640,7 @@ TEST_F(TestField, Mutable)
     {
         Field f = Field::create_time(m_pool, "foo", 3, 7);
         f.mutable_value_as_time() = 9;
-        EXPECT_EQ(9, f.value_as_time());
+        EXPECT_EQ(9UL, f.value_as_time());
     }
     {
         Field f = Field::create_float(m_pool, "foo", 3, 7.1);
