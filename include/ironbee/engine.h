@@ -149,9 +149,11 @@ ib_status_t DLL_PUBLIC ib_engine_config_started(ib_engine_t *ib,
 /**
  * Inform the engine that the configuration phase is complete
  *
- * @param ib Engine handle
+ * @param[in] ib Engine handle
  *
- * @returns Status code
+ * @returns Status code:
+ *  - IB_OK - All OK
+ *  - Status from ib_context_close() (including the context close functions)
  */
 ib_status_t DLL_PUBLIC ib_engine_config_finished(ib_engine_t *ib);
 

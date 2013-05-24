@@ -73,12 +73,13 @@ const char DLL_PUBLIC *ib_log_level_to_string(ib_log_level_t level);
 /**
  * Logger callback.
  *
- * @param cbdata Callback data
- * @param level Log level
  * @param ib IronBee engine.
+ * @param level Log level
  * @param file Optional source filename (or NULL)
  * @param line Optional source line number (or 0)
  * @param fmt Formatting string
+ * @param ap Variable args list
+ * @param cbdata Callback data
  */
 typedef void (*ib_log_logger_fn_t)(
     const ib_engine_t *ib,
