@@ -129,7 +129,7 @@ struct ib_engine_t {
     ib_cfgparser_t        *cfgparser;       /**< Our configuration parser */
 
     /// @todo Only these should be private
-    ib_server_t           *server;          /**< Info about the server */
+    const ib_server_t     *server;          /**< Info about the server */
     ib_array_t            *modules;         /**< Array tracking modules */
     ib_array_t            *filters;         /**< Array tracking filters */
     ib_list_t             *contexts;        /**< Configuration contexts */

@@ -124,7 +124,7 @@ ib_status_t DLL_PUBLIC ib_shutdown(void);
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib,
-                                        ib_server_t *server);
+                                        const ib_server_t *server);
 
 /**
  * Initialize the engine configuration context.

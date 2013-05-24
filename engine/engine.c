@@ -324,7 +324,8 @@ ib_status_t ib_shutdown(void)
     return IB_OK;
 }
 
-ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
+ib_status_t ib_engine_create(ib_engine_t **pib,
+                             const ib_server_t *server)
 {
     ib_mpool_t *pool;
     ib_status_t rc;

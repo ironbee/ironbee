@@ -1035,17 +1035,18 @@ static ib_status_t execute_action_list(const ib_rule_exec_t *rule_exec,
  */
 static ib_status_t report_close_block_to_server(
     const ib_rule_exec_t *rule_exec
-) {
+)
+{
     assert(rule_exec != NULL);
     assert(rule_exec->ib != NULL);
     assert(rule_exec->ib->server != NULL);
     assert(rule_exec->tx != NULL);
     assert(rule_exec->tx->conn != NULL);
 
-    ib_status_t  rc;
-    ib_server_t *server = rule_exec->ib->server;
-    ib_tx_t *tx = rule_exec->tx;
-    ib_conn_t *conn = rule_exec->tx->conn;
+    ib_status_t        rc;
+    const ib_server_t *server = rule_exec->ib->server;
+    ib_tx_t           *tx = rule_exec->tx;
+    ib_conn_t         *conn = rule_exec->tx->conn;
 
     rc = ib_server_error_close(server, conn, tx);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
