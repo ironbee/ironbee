@@ -22,9 +22,7 @@ AM_CPPFLAGS += \
     -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs
 
 if ENABLE_LUA
-check_PROGRAMS += \
-	test_luajit \
-	test_module_rules_lua
+check_PROGRAMS += test_luajit
 endif
 
 TESTS = $(check_PROGRAMS)
@@ -35,10 +33,8 @@ TEST_EXTRAS = \
        CoreActionTest.setVarSub.config \
        CoreActionTest.integration.config \
        RuleInjectTest.test_inject.config \
-       TestIronBeeModuleRulesLua.operator_test.config \
        test_ironbee_lua_modules.lua \
-       test_ironbee_lua_configs.lua \
-       test_module_rules_lua.lua
+       test_ironbee_lua_configs.lua
 
 EXTRA_DIST = $(TEST_EXTRAS)
 
@@ -73,30 +69,13 @@ test_luajit_SOURCES = \
 test_luajit_CPPFLAGS = $(AM_CPPFLAGS) \
                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                        -I$(top_srcdir)
-test_luajit_LDFLAGS = $(LDFLAGS)
 test_luajit_LDADD = $(LDADD) \
-                    $(MODULE_TEST_LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \
                     $(top_builddir)/modules/ibmod_lua_la-lua.o \
                     $(top_builddir)/modules/ibmod_lua_la-lua_common.o \
                     -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                     -lluajit-ironbee \
                     -lm
-
-test_module_rules_lua_SOURCES = test_module_rules_lua.cpp
-test_module_rules_lua_CPPFLAGS = $(AM_CPPFLAGS) \
-                                 -I$(top_srcdir)/modules \
-                                 -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
-                                 -I$(top_srcdir) \
-                                 -D_XOPEN_SOURCE=1 \
-                                 -DTEST_LUA_FILE=\"$(abs_top_srcdir)/tests/test_module_rules_lua.lua\" \
-                                 -DTEST_FFI_FILE=\"$(abs_top_srcdir)/lua/ironbee-ffi.lua\"
-test_module_rules_lua_LDADD = $(LDADD) \
-                              $(top_builddir)/lua/libironbee-lua.la \
-                              $(top_builddir)/modules/ibmod_rules_la-lua_common.o \
-                              -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
-                              -lluajit-ironbee \
-                              -lm
 endif
 
 test_kvstore_SOURCES = test_kvstore.cpp

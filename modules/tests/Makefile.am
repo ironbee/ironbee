@@ -17,6 +17,10 @@ check_PROGRAMS = \
 	test_module_ee_oper \
 	test_module_pcre
 
+if ENABLE_LUA
+check_PROGRAMS += test_module_rules_lua
+endif
+
 if CPP
 check_PROGRAMS += test_ibmod_engine_shutdown
 test_ibmod_engine_shutdown_SOURCES = test_ibmod_engine_shutdown.cpp
@@ -35,7 +39,25 @@ TEST_EXTRAS = \
        PcreModuleTest.test_pcre_operator.config \
        PcreModuleTest.test_match_basic.config \
        PcreModuleTest.test_match_capture.config \
-       PcreModuleTest.test_match_capture_named.config
+       PcreModuleTest.test_match_capture_named.config \
+       test_module_rules_lua.lua \
+       TestIronBeeModuleRulesLua.operator_test.config
+
+if ENABLE_LUA
+test_module_rules_lua_SOURCES = test_module_rules_lua.cpp
+test_module_rules_lua_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	-I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+	-D_XOPEN_SOURCE=1 \
+	-DTEST_LUA_FILE=\"$(abs_srcdir)/test_module_rules_lua.lua\" \
+	-DTEST_FFI_FILE=\"$(abs_top_srcdir)/lua/ironbee-ffi.lua\"
+test_module_rules_lua_LDADD = \
+	$(LDADD) \
+	$(top_builddir)/lua/libironbee-lua.la \
+	$(top_builddir)/modules/ibmod_rules_la-lua_common.o \
+	-L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
+	-lluajit-ironbee
+endif
 
 EXTRA_DIST = $(TEST_EXTRAS)
 
