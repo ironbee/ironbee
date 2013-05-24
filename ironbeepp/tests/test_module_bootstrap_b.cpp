@@ -70,7 +70,6 @@ TEST_F(TestModuleBootstrapB, basic)
     EXPECT_EQ(std::string(__FILE__), m.filename);
     EXPECT_EQ(m_engine.ib(),         m.ib);
 
-    ib_context_t c;
     ib_status_t rc;
 
     s_delegate_initialized = false;
