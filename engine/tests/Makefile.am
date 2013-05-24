@@ -1,0 +1,107 @@
+include $(top_srcdir)/build/tests.mk
+
+LDADD = \
+	$(top_builddir)/util/libibutil.la \
+	$(top_builddir)/engine/libironbee.la \
+    $(top_builddir)/libs/libhtp/htp/libhtp.la
+
+check_PROGRAMS = \
+	test_action \
+	test_config \
+	test_engine \
+	test_kvstore \
+	test_operator \
+	test_rule_inject
+
+AM_LDFLAGS += \
+	-lboost_system$(BOOST_SUFFIX) \
+	-lboost_filesystem$(BOOST_SUFFIX)
+
+AM_CPPFLAGS += \
+	-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
+    -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs
+
+if ENABLE_LUA
+check_PROGRAMS += \
+	test_luajit \
+	test_module_rules_lua
+endif
+
+TESTS = $(check_PROGRAMS)
+
+TEST_EXTRAS = \
+       CoreActionTest.setVarMult.config \
+       CoreActionTest.setVarAdd.config \
+       CoreActionTest.setVarSub.config \
+       CoreActionTest.integration.config \
+       RuleInjectTest.test_inject.config \
+       TestIronBeeModuleRulesLua.operator_test.config \
+       test_ironbee_lua_modules.lua \
+       test_ironbee_lua_configs.lua \
+       test_module_rules_lua.lua
+
+EXTRA_DIST = $(TEST_EXTRAS)
+
+if OUT_OF_TREE
+BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
+CLEANFILES += $(TEST_EXTRAS)
+endif
+
+check-programs: $(check_PROGRAMS)
+build: check-programs check-libs
+
+test_engine_SOURCES = test_engine.cpp \
+                      test_engine_capture.cpp \
+                      test_parsed_content.cpp
+test_engine_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
+
+test_rule_inject_SOURCES = test_rule_inject.cpp
+test_rule_inject_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
+
+test_config_SOURCES = test_config.cpp
+
+test_operator_SOURCES = test_operator.cpp
+
+test_action_SOURCES = test_action.cpp test_core_actions.cpp
+
+if ENABLE_LUA
+test_luajit_SOURCES = \
+                      test_luajit.cpp \
+                      test_ironbee_lua_api.cpp \
+                      test_ironbee_lua_configs.cpp \
+                      test_ironbee_lua_modules.cpp
+test_luajit_CPPFLAGS = $(AM_CPPFLAGS) \
+                       -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+                       -I$(top_srcdir)
+test_luajit_LDFLAGS = $(LDFLAGS)
+test_luajit_LDADD = $(LDADD) \
+                    $(MODULE_TEST_LDADD) \
+                    $(top_builddir)/lua/libironbee-lua.la \
+                    $(top_builddir)/modules/ibmod_lua_la-lua.o \
+                    $(top_builddir)/modules/ibmod_lua_la-lua_common.o \
+                    -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
+                    -lluajit-ironbee \
+                    -lm
+
+test_module_rules_lua_SOURCES = test_module_rules_lua.cpp \
+                                test_main.cpp ibtest_util.cpp
+test_module_rules_lua_CPPFLAGS = $(AM_CPPFLAGS) \
+                                 -I$(top_srcdir)/modules \
+                                 -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+                                 -I$(top_srcdir) \
+                                 -D_XOPEN_SOURCE=1 \
+                                 -DTEST_LUA_FILE=\"$(abs_top_srcdir)/tests/test_module_rules_lua.lua\" \
+                                 -DTEST_FFI_FILE=\"$(abs_top_srcdir)/lua/ironbee-ffi.lua\"
+test_module_rules_lua_LDADD = $(LDADD) \
+                              $(MODULE_TEST_LDADD) \
+                              $(top_builddir)/lua/libironbee-lua.la \
+                              $(top_builddir)/modules/ibmod_rules_la-lua_common.o \
+                              -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
+                              -lluajit-ironbee \
+                              -lm
+endif
+
+test_kvstore_SOURCES = test_kvstore.cpp
+
+clean-local:
+	rm -rf TestKVStore.d

@@ -2,8 +2,6 @@ ACLOCAL_AMFLAGS = -I../acinclude
 
 AM_CPPFLAGS += $(BOOST_CPPFLAGS) -I$(top_builddir)/include
 LDADD = \
-    $(top_builddir)/tests/libgtest.a \
-    $(top_builddir)/tests/test_main.o \
     $(builddir)/../libpredicate.la \
     $(builddir)/../../ironbeepp/libibpp.la \
     $(top_builddir)/util/libibutil.la \
@@ -30,7 +28,7 @@ check_PROGRAMS = \
 EXTRA_TEST = parse_fixture.hpp
 
 TESTS=$(check_PROGRAMS)
-CLEANFILES=*.xml *.log
+CLEANFILES+=*.xml *.log
 
 test_dag_SOURCES = test_dag.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_SOURCES = test_standard.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp

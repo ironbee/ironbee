@@ -61,5 +61,3 @@ if BUILD_RIAK
 test_kvstore_riak_SOURCES = ../test_main.cpp test_kvstore_riak.cpp
 test_kvstore_riak_LDADD = $(LDADD)
 endif
-
-CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml

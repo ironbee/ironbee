@@ -2,6 +2,8 @@ ACLOCAL_AMFLAGS = -I ../acinclude
 
 include $(top_srcdir)/build/common.mk
 
+SUBDIRS = tests
+
 pkglibdir = $(libdir)
 
 AM_LIBADD = $(top_builddir)/engine/libironbee.la

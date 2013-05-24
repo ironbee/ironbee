@@ -578,7 +578,9 @@ AC_CONFIG_FILES([Makefile])
 
 AC_CONFIG_FILES([libs/Makefile])
 AC_CONFIG_FILES([util/Makefile])
+AC_CONFIG_FILES([util/tests/Makefile])
 AC_CONFIG_FILES([engine/Makefile])
+AC_CONFIG_FILES([engine/tests/Makefile])
 AC_CONFIG_FILES([automata/Makefile])
 AC_CONFIG_FILES([automata/bin/Makefile])
 AC_CONFIG_FILES([automata/tests/Makefile])
@@ -601,6 +603,7 @@ fi
 AC_CONFIG_FILES([lua/Makefile])
 AC_CONFIG_FILES([tools/Makefile])
 AC_CONFIG_FILES([modules/Makefile])
+AC_CONFIG_FILES([modules/tests/Makefile])
 AC_CONFIG_FILES([example_modules/Makefile])
 AC_CONFIG_FILES([example_modules/tests/Makefile])
 

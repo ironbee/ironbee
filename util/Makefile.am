@@ -2,6 +2,8 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 
 include $(top_srcdir)/build/common.mk
 
+SUBDIRS = tests
+
 lib_LTLIBRARIES = libibutil.la
 libibutil_la_CPPFLAGS = $(AM_CPPFLAGS)
 if HAVE_NO_UNUSED_BUT_SET_VARIABLE

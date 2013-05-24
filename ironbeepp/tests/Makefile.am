@@ -2,8 +2,6 @@ ACLOCAL_AMFLAGS = -I../acinclude
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_builddir)/include
 LDADD = \
-    $(top_builddir)/tests/libgtest.a \
-    $(top_builddir)/tests/test_main.o \
     $(builddir)/../libibpp.la \
     $(top_builddir)/util/libibutil.la \
     $(top_builddir)/engine/libironbee.la
@@ -45,7 +43,7 @@ check_PROGRAMS = \
 		test_hash
 
 TESTS=$(check_PROGRAMS)
-CLEANFILES=*.xml *.log
+CLEANFILES+=*.xml *.log
 
 test_catch_SOURCES                = test_catch.cpp
 test_c_trampoline_SOURCES         = test_c_trampoline.cpp

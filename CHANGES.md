@@ -95,6 +95,10 @@ IronBee v0.8.0
 
 * Added `example_modules` directory with example modules.
 
+* Major test organization overhaul.  The `tests` directory now holds only
+  common test code. Module tests now in `modules/tests`, engine tests in
+  `engine/tests`, and utility tests in `util/tests`.
+
 * Various clean up and bug fixes.
 
 IronBee v0.7.0

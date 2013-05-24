@@ -2,7 +2,9 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 
 include $(top_srcdir)/build/common.mk
 
+SUBDIRS = tests
 EXTRA_DIST =  config-parser.rl \
+			  run-ragel.py \
               engine_private.h  \
               state_notify_private.h \
               rule_engine_private.h \
