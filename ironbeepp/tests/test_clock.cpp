@@ -31,7 +31,7 @@ using namespace IronBee;
 
 TEST(Clock, Basic)
 {
-    ib_timeval_t tv_ib = { 0 };
+    ib_timeval_t tv_ib = { 0, 0 };
     ib_time_t t_ib = 0;
     ptime p = from_time_t(0);
 
