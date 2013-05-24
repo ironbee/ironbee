@@ -203,7 +203,7 @@ TEST_F(TestHash, ConstHash)
     List<const char*> l = List<const char*>::create(m_pool);
     hash.get_all(l);
 
-    EXPECT_EQ(3, l.size());
+    EXPECT_EQ(3UL, l.size());
 }
 
 TEST_F(TestHash, PointerHash)
