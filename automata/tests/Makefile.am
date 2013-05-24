@@ -5,7 +5,10 @@ AM_LDFLAGS += \
     -lironautomata -liaeudoxus -lprotobuf
 
 # Ignore protobuf warnings.
-CPPFLAGS += -Wno-shadow -Wno-extra
+AM_CPPFLAGS += \
+	-Wno-shadow -Wno-extra \
+	-I$(srcdir)/../include \
+	-I$(builddir)/../include
 
 check_PROGRAMS = \
     test_bits \
