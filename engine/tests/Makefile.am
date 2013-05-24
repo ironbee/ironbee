@@ -105,3 +105,5 @@ test_kvstore_SOURCES = test_kvstore.cpp
 
 clean-local:
 	rm -rf TestKVStore.d
+
+check-local: check-ruby

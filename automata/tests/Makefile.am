@@ -25,4 +25,4 @@ TESTS = $(check_PROGRAMS)
 clean-local:
 	rm -rf automata_test_*.*
 
-check-local: ruby-tests
+check-local: check-ruby

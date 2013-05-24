@@ -1,11 +1,9 @@
-require File.join(File.dirname(__FILE__), '..', 'clipp_test')
-
 class TestLibInjection < Test::Unit::TestCase
   include CLIPPTest
 
   CONFIG = [
     'LoadModule "ibmod_libinjection.so"',
-    "SQLiPatternSet a #{TESTDIR}/sqli_a.txt"
+    "SQLiPatternSet a #{Dir.pwd}/sqli_a.txt"
   ].join("\n")
 
   def make_request(s)

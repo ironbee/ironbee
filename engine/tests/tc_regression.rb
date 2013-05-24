@@ -1,5 +1,3 @@
-require File.join(File.dirname(__FILE__), '..', 'clipp_test')
-
 class TestRegression < Test::Unit::TestCase
   include CLIPPTest
 

@@ -594,6 +594,7 @@ AC_CONFIG_FILES([servers/nginx/config.tengine])
 
 if test "$cpp_code" != 0; then
 AC_CONFIG_FILES([clipp/Makefile])
+AC_CONFIG_FILES([clipp/tests/Makefile])
 AC_CONFIG_FILES([ironbeepp/Makefile])
 AC_CONFIG_FILES([ironbeepp/tests/Makefile])
 AC_CONFIG_FILES([predicate/Makefile])
@@ -619,7 +620,7 @@ AC_CONFIG_FILES([docs/docbook/manual/fop.xconf])
 AC_CONFIG_FILES([tests/Makefile])
 
 if test "$integration_tests" != "no"; then
-AC_CONFIG_FILES([tests/integration/Makefile])
+AC_CONFIG_FILES([util/tests/integration/Makefile])
 fi
 
 # pkg-config

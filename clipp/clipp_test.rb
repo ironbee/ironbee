@@ -72,7 +72,7 @@ module CLIPPTest
   end
 
   # Source test directory.
-  TESTDIR          = File.join(File.expand_path(File.dirname(__FILE__)), 'tests')
+  CLIPPDIR          = File.expand_path(File.dirname(__FILE__))
   # Build test directory.
   BUILDDIR         = \
     ($abs_builddir || ENV['abs_builddir'] || fatal("abs_builddir not set."))
@@ -83,7 +83,7 @@ module CLIPPTest
   # CLIPP executable.
   CLIPP            = File.join(TOP_BUILDDIR, 'clipp', 'clipp')
   # Default IronBee configuration template.
-  DEFAULT_TEMPLATE = 'TESTDIR/ironbee.config.erb'
+  DEFAULT_TEMPLATE = 'CLIPPDIR/ironbee.config.erb'
   # Default consumer.
   DEFAULT_CONSUMER = 'ironbee:IRONBEE_CONFIG'
 
@@ -131,12 +131,12 @@ module CLIPPTest
     end
   end
 
-  # Replace TESTDIR and BUILDDIR in path with the appropriate values (see
+  # Replace CLIPPDIR and BUILDDIR in path with the appropriate values (see
   # above).
   def expand_path(path)
     File.expand_path(
       path.gsub(
-        'TESTDIR',  TESTDIR
+        'CLIPPDIR',  CLIPPDIR
       ).gsub(
         'BUILDDIR', BUILDDIR
       )

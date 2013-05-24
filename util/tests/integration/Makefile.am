@@ -4,7 +4,7 @@ LDADD = \
 	$(top_builddir)/util/libibutil.la
 
 if BUILD_RIAK
-check_PROGRAMS += test_kvstore_riak
+check_PROGRAMS = test_kvstore_riak
 test_kvstore_riak_SOURCES = test_kvstore_riak.cpp
 endif
 

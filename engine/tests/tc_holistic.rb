@@ -1,7 +1,5 @@
-require File.join(File.dirname(__FILE__), '..', 'clipp_test')
-
 CONFIG_AUTO = File.expand_path(
-  ENV['abs_builddir'] + "/../ironbee_config_auto_gen.h"
+  ENV['abs_top_builddir'] + "/ironbee_config_auto_gen.h"
 )
 $thread_sanitizer_workaround = false
 File.open(CONFIG_AUTO, 'r') do |fp|

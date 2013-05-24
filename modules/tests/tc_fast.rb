@@ -1,11 +1,9 @@
-require File.join(File.dirname(__FILE__), '..', 'clipp_test')
-
 class TestFast < Test::Unit::TestCase
   include CLIPPTest
 
   CONFIG = [
     'LoadModule "ibmod_fast.so"',
-    "FastAutomata \"#{TESTDIR}/fast_rules.txt.e\""
+    "FastAutomata \"#{Dir.pwd}/fast_rules.txt.e\""
   ].join("\n")
 
   def make_request(s)
@@ -39,7 +37,7 @@ class TestFast < Test::Unit::TestCase
     clipp(
       :input_hashes => [make_request('foobar')],
       :config => CONFIG,
-      :default_site_config => "Include \"#{TESTDIR}/fast_rules.txt\""
+      :default_site_config => "Include \"#{Dir.pwd}/fast_rules.txt\""
     )
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: foobar/
@@ -49,7 +47,7 @@ class TestFast < Test::Unit::TestCase
     clipp(
       :input_hashes => [make_request('abcdef')],
       :config => CONFIG,
-      :default_site_config => "Include \"#{TESTDIR}/fast_rules.txt\""
+      :default_site_config => "Include \"#{Dir.pwd}/fast_rules.txt\""
     )
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: abc/
@@ -60,7 +58,7 @@ class TestFast < Test::Unit::TestCase
     clipp(
       :input_hashes => [make_request('abcdef')],
       :config => CONFIG,
-      :default_site_config => "Include \"#{TESTDIR}/fast_rules.txt\""
+      :default_site_config => "Include \"#{Dir.pwd}/fast_rules.txt\""
     )
     assert_no_issues
     assert_log_no_match /CLIPP ANNOUNCE: somethingelse/
@@ -70,7 +68,7 @@ class TestFast < Test::Unit::TestCase
     clipp(
       :input_hashes => [make_request('nonfast')],
       :config => CONFIG,
-      :default_site_config => "Include \"#{TESTDIR}/fast_rules.txt\""
+      :default_site_config => "Include \"#{Dir.pwd}/fast_rules.txt\""
     )
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: nonfast/
@@ -80,7 +78,7 @@ class TestFast < Test::Unit::TestCase
     clipp(
       :input_hashes => [make_request('contradiction')],
       :config => CONFIG,
-      :default_site_config => "Include \"#{TESTDIR}/fast_rules.txt\""
+      :default_site_config => "Include \"#{Dir.pwd}/fast_rules.txt\""
     )
     assert_no_issues
     assert_log_no_match /CLIPP ANNOUNCE: contradiction/
@@ -90,7 +88,7 @@ class TestFast < Test::Unit::TestCase
     clipp(
       :input_hashes => [simple_hash("GET /a HTTP/1.1\nHost: headervalue\n\n")],
       :config => CONFIG,
-      :default_site_config => "Include \"#{TESTDIR}/fast_rules.txt\""
+      :default_site_config => "Include \"#{Dir.pwd}/fast_rules.txt\""
     )
     assert_no_issues
     assert_log_no_match /CLIPP ANNOUNCE: headervalue/
@@ -103,7 +101,7 @@ class TestFast < Test::Unit::TestCase
         "HTTP/1.1 200 HelloWorld\nABC: DEF\n\n"
       )],
       :config => CONFIG,
-      :default_site_config => "Include \"#{TESTDIR}/fast_rules.txt\""
+      :default_site_config => "Include \"#{Dir.pwd}/fast_rules.txt\""
     )
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: rmessage/
