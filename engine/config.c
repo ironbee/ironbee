@@ -314,9 +314,6 @@ cleanup:
         error_count,
         ib_status_to_string(rc));
 
-    /* Zero Ragel parser state. */
-    //memset(&(cp->fsm), 0, sizeof(cp->fsm));
-
     return rc;
 }
 
