@@ -206,16 +206,11 @@ public:
     void parse_buffer(
         const char* buffer,
         size_t      length,
-        const char* file,
-        unsigned    lineno,
         bool        more
     ) const;
 
     //! As above, but for string.
-    void parse_buffer(const std::string& s,
-                      const std::string& file,
-                      unsigned lineno,
-                      bool more) const;
+    void parse_buffer(const std::string& s, bool more) const;
 
     //! Destroy configuration parser, reclaiming memory.
     void destroy() const;

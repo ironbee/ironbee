@@ -94,8 +94,6 @@ void ConfigurationParser::parse_file(const string& path) const
 void ConfigurationParser::parse_buffer(
     const char* buffer,
     size_t      length,
-    const char* file,
-    unsigned    lineno,
     bool        more
 ) const
 {
@@ -103,18 +101,15 @@ void ConfigurationParser::parse_buffer(
         ib_cfgparser_parse_buffer(
             ib(),
             buffer, length,
-            file, lineno,
             more
         )
     );
 }
 
 void ConfigurationParser::parse_buffer(const std::string& s,
-                                       const std::string& file,
-                                       unsigned lineno,
                                        bool more) const
 {
-    parse_buffer(s.data(), s.length(), file.c_str(), lineno, more);
+    parse_buffer(s.data(), s.length(), more);
 }
 
 void ConfigurationParser::destroy() const

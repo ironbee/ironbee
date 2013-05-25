@@ -448,17 +448,15 @@ ib_status_t DLL_PUBLIC ib_cfgparser_apply_node(
  * @param[in,out] cp     The configuration parser to be used and populated.
  * @param[in]     buffer The buffer to parser
  * @param[in]     length Length of @a buffer.
- * @param[in]     file   Name of configuration file being parsed
- * @param[in]     lineno Line number of text in @a buffer
  * @param[in]     more   Use true if more data available and false otherwise.
  * @returns IB_OK on success and error code on failure.
  **/
-ib_status_t DLL_PUBLIC ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
-                                                 const char     *buffer,
-                                                 size_t          length,
-                                                 const char     *file,
-                                                 unsigned        lineno,
-                                                 bool            more);
+ib_status_t DLL_PUBLIC ib_cfgparser_parse_buffer(
+    ib_cfgparser_t *cp,
+    const char *buffer,
+    size_t length,
+    bool more
+);
 
 /**
  * Push a new context onto the stack and make it the current.

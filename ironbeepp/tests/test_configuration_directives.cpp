@@ -178,7 +178,7 @@ TEST_F(TestConfigurationDirectives, Registrar)
     R.op_flags("OpFlags", handler, value_map);
 
     info = Info();
-    P.parse_buffer("Param1 HelloWorld\n", "null.conf", 1, true);
+    P.parse_buffer("Param1 HelloWorld\n", true);
     ib_cfgparser_apply(P.ib(), m_engine.ib());
     EXPECT_EQ(1,            info.which);
     EXPECT_EQ(P,            info.parser);
@@ -186,7 +186,7 @@ TEST_F(TestConfigurationDirectives, Registrar)
     EXPECT_EQ("HelloWorld", info.param1);
 
     info = Info();
-    P.parse_buffer("Param2 Foo Bar\n", "null.conf", 1, true);
+    P.parse_buffer("Param2 Foo Bar\n", true);
     ib_cfgparser_apply(P.ib(), m_engine.ib());
     EXPECT_EQ(2,        info.which);
     EXPECT_EQ(P,        info.parser);
@@ -196,7 +196,7 @@ TEST_F(TestConfigurationDirectives, Registrar)
 
     info = Info();
     info2 = Info();
-    P.parse_buffer("<Block Foo>\n</Block>\n", "null.conf", 1, true);
+    P.parse_buffer("<Block Foo>\n</Block>\n", true);
     ib_cfgparser_apply(P.ib(), m_engine.ib());
     EXPECT_EQ(1,       info.which);
     EXPECT_EQ(P,       info.parser);
@@ -207,7 +207,7 @@ TEST_F(TestConfigurationDirectives, Registrar)
     EXPECT_EQ("Block", info2.name);
 
     info = Info();
-    P.parse_buffer("OnOff true\n", "null.conf", 1, true);
+    P.parse_buffer("OnOff true\n", true);
     ib_cfgparser_apply(P.ib(), m_engine.ib());
     EXPECT_EQ(4,       info.which);
     EXPECT_EQ(P,       info.parser);
@@ -215,7 +215,7 @@ TEST_F(TestConfigurationDirectives, Registrar)
     EXPECT_TRUE(info.on);
 
     info = Info();
-    P.parse_buffer("OnOff false\n", "null.conf", 1, true);
+    P.parse_buffer("OnOff false\n", true);
     ib_cfgparser_apply(P.ib(), m_engine.ib());
     EXPECT_EQ(4,       info.which);
     EXPECT_EQ(P,       info.parser);
@@ -223,7 +223,7 @@ TEST_F(TestConfigurationDirectives, Registrar)
     EXPECT_FALSE(info.on);    info = Info();
 
     info = Info();
-    P.parse_buffer("List a b c d\n", "null.conf", 1, true);
+    P.parse_buffer("List a b c d\n", true);
     ib_cfgparser_apply(P.ib(), m_engine.ib());
     EXPECT_EQ(5,      info.which);
     EXPECT_EQ(P,      info.parser);
@@ -235,7 +235,7 @@ TEST_F(TestConfigurationDirectives, Registrar)
     EXPECT_EQ("d",    info.nparam[3]);
 
     info = Info();
-    P.parse_buffer("OpFlags +a -b\n", "null.conf", 1, true);
+    P.parse_buffer("OpFlags +a -b\n", true);
     ib_cfgparser_apply(P.ib(), m_engine.ib());
     EXPECT_EQ(6,         info.which);
     EXPECT_EQ(P,         info.parser);
