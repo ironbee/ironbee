@@ -10,6 +10,7 @@ AM_LDFLAGS += \
 	-lboost_filesystem$(BOOST_SUFFIX)
 
 AM_CPPFLAGS += \
+    -I$(top_srcdir)/modules \
 	-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
     -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs
 
