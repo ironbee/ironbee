@@ -415,9 +415,12 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 {
     if (data) {
         hdr_action_t *x;
-//        TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s txn_count=%d", data->tx->conn, data->tx, data->tx->id, data->ssn->txn_count);
-//        ib_tx_destroy(data->tx);
-//        data->tx = NULL;
+
+        TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s txn_count=%d",
+                data->tx->conn, data->tx, data->tx->id, data->ssn->txn_count);
+        ib_tx_destroy(data->tx);
+        data->tx = NULL;
+
         if (data->out.output_buffer) {
             TSIOBufferDestroy(data->out.output_buffer);
             data->out.output_buffer = NULL;
