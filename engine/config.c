@@ -510,8 +510,8 @@ static ib_status_t cfgparser_apply_node_helper(
             tmp_rc = ib_config_block_start(cp, node->directive, node->params);
             if (tmp_rc != IB_OK) {
                 ib_cfg_log_error(cp,
-	                        "Failed to start block \"%s\": %s",
-                                node->directive, ib_status_to_string(tmp_rc));
+                                 "Failed to start block \"%s\": %s",
+                                 node->directive, ib_status_to_string(tmp_rc));
                 if (rc == IB_OK) {
                     rc = tmp_rc;
                 }
@@ -529,9 +529,9 @@ static ib_status_t cfgparser_apply_node_helper(
             tmp_rc = ib_config_block_process(cp, node->directive);
             if (tmp_rc != IB_OK) {
                 ib_cfg_log_error(cp,
-                                "Failed to process block \"%s\": %s",
-                                node->directive,
-                                ib_status_to_string(tmp_rc));
+                                 "Failed to process block \"%s\": %s",
+                                 node->directive,
+                                 ib_status_to_string(tmp_rc));
                 if (rc == IB_OK) {
                     rc = tmp_rc;
                 }
