@@ -279,6 +279,13 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                              handle_context_tx_event,
                              geoip_lookup,
                              NULL);
+    if (rc != IB_OK) {
+        ib_log_debug(
+            ib,
+            "Failed to register tx hook: %s",
+            ib_status_to_string(rc));
+        return rc;
+    }
 
     ib_log_debug(ib, "Done registering handler.");
 
