@@ -17,6 +17,11 @@ TEST_EXTRAS = \
 
 EXTRA_DIST = \
 	gtest \
+	ibtest_util.hpp \
+	ibtest_textbuf.hpp \
+	ibtest_strbase.hpp \
+	ibtest_log_fixture.hpp \
+	simple_fixture.hpp \
 	base_fixture.h \
 	$(TEST_EXTRAS)
 
