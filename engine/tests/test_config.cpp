@@ -83,7 +83,7 @@ class TestConfig : public BaseFixture
 
         if (isEnd) {
             rc = ib_cfgparser_apply(cfgparser, cfgparser->ib);
-        } 
+        }
 
         return rc;
     }

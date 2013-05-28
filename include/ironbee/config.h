@@ -73,7 +73,7 @@ struct ib_cfgparser_t {
      *
      * When parsing a file or block, this is the current node
      * being built. When applying a configuration to an @ref ib_engine_t
-     * this is the current node being applied (and also the current 
+     * this is the current node being applied (and also the current
      * file and line number).
      */
     ib_cfgparser_node_t *curr;
@@ -135,11 +135,11 @@ typedef enum {
 /**
  * This represents a node in the parse tree of an IronBee configuration.
  *
- * The contents of this structure depends on the type and if this is the 
+ * The contents of this structure depends on the type and if this is the
  * root node of the parse tree. If this is the root node (parent == NULL)
  * then the type is IB_CFGPARSER_NODE_ROOT, the param list is empty,
  * and directive is NULL.
- * 
+ *
  * If the type is IB_CFGPARSER_NODE_BLOCK
  * then the directive and params are set appropriately and all child
  * directives are placed in nodes
@@ -154,7 +154,7 @@ struct ib_cfgparser_node_t {
     /**
      * A list of ib_cfgparser_node_t *.
      * While directives do not have child nodes, all other node types
-     * may have child nodes. 
+     * may have child nodes.
      */
     ib_list_t                 *children;
     const char                *directive; /**< Directive. NULL if root. */
@@ -371,9 +371,9 @@ void ib_cfgparser_pop_node(ib_cfgparser_t *cp);
  * @sa ib_cfgparser_pop_node to restore the previous current node.
  *
  * @param[in] cp Configuration parser whose current node will be changed.
- * @param[in] node The node to push. 
+ * @param[in] node The node to push.
  *
- * @return 
+ * @return
  *   - IB_OK
  *   - IB_EALLOC If memory cannot be allocated.
  *   - Status of ib_list_push if it fails.
@@ -400,7 +400,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_parse(ib_cfgparser_t *cp,
                                           const char *file);
 
 /**
- * Apply the configuration represented by @a cp to @a ib. 
+ * Apply the configuration represented by @a cp to @a ib.
  *
  * This will set the @c curr field of @a cp to be the current node being
  * applied.
