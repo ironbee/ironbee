@@ -60,7 +60,7 @@ check-ruby:
 if CPP
 	(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))
 if ENABLE_LUA
-	if [ -e ts_lua.rb ]; then \
+	if [ -e $(srcdir)/ts_lua.rb ]; then \
 		(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) ./ts_lua.rb --verbose $(test_args)); \
 	fi
 endif
