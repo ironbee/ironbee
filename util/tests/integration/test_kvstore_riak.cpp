@@ -87,7 +87,7 @@ TEST_F(RiakFixture, PING_OK){
     ASSERT_EQ(1, ib_kvstore_riak_ping(&kvstore));
 }
 
-/* This test needs failure and so re-inits to point at a non-server. */
+/* This test needs failure and so re-initializes to point at a non-server. */
 TEST_F(RiakFixture, PING_FAIL){
 
     /* Undo fixture setup. */

@@ -359,7 +359,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_node_create(ib_cfgparser_node_t **node,
 /**
  * Pop the current node unless it is the parent.
  *
- * @param[in] cp Configuration parser whose curr node will be changed.
+ * @param[in] cp Configuration parser whose @c curr node will be changed.
  */
 void ib_cfgparser_pop_node(ib_cfgparser_t *cp);
 

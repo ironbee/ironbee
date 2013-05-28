@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2064 
+personal_ws-1.1 en 2072 
 malloc'ed
 malloced
 libnet
@@ -240,6 +240,7 @@ lld
 nbe
 destructors
 GeoIPRecord
+DIRTYPE
 pabsfile
 VConn
 keylen
@@ -560,6 +561,7 @@ endl
 passwd
 printf
 bc
+curr
 bd
 nanosecs
 bg
@@ -610,6 +612,7 @@ lineptr
 gf
 eq
 gg
+dw
 unparse
 nocase
 fn
@@ -715,10 +718,12 @@ UA
 onEventRequestBody
 th
 UD
+tincluded
 va
 sexprs
 rv
 tm
+rw
 rx
 ss
 MyFirstIronBee
@@ -941,6 +946,7 @@ ilen
 RuleExt
 durations
 abcabc
+VClock
 vclock
 NeedDeconst
 facebookexternalhit
@@ -1378,7 +1384,7 @@ ERRGCMM
 logDebug
 perl
 inplace
-Mult
+mult
 threatlevel
 EINCOMPAT
 RSPBDY
@@ -1538,8 +1544,8 @@ nHost
 kvstore's
 Googlebot
 checkflag
-ahocorasic
 AhoCorasic
+ahocorasic
 NUMMULT
 eventp
 ftrace
@@ -1688,6 +1694,7 @@ urlgrabber
 editResponseHeader
 nline
 sanitizer
+myTestClient
 HOSTx
 defbool
 ConstByteString
@@ -1937,6 +1944,7 @@ strlist
 abca
 abcb
 abCd
+UnitTestBucket
 multipart
 kvstore
 ConstOperator

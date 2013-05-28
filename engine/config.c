@@ -437,7 +437,7 @@ static ib_status_t cfgparser_apply_node_children_helper(
 /**
  * Helper function to recursively apply the configuration nodes.
  *
- * This sets the curr member of @a cp to @a node.
+ * This sets the @c curr member of @a cp to @a node.
  *
  * @returns
  *   - IB_OK on success.
@@ -488,7 +488,7 @@ static ib_status_t cfgparser_apply_node_helper(
                 ib_cfg_log_error(
                     cp,
                     "Failed to process directive \"%s\" "
-                    ": %s (see preceeding messages for details)",
+                    ": %s (see preceding messages for details)",
                     node->directive, ib_status_to_string(tmp_rc));
                 if (rc == IB_OK) {
                     rc = tmp_rc;
