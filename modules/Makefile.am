@@ -33,7 +33,7 @@ endif
 if BUILD_GEOIP
 pkglib_LTLIBRARIES += ibmod_geoip.la
 ibmod_geoip_la_SOURCES = geoip.c
-ibmod_geoip_la_LIBADD = $(AM_LIBADD) -lGeoIP -lm
+ibmod_geoip_la_LIBADD = $(AM_LIBADD) -lGeoIP $(LIBM_LDFLAGS)
 ibmod_geoip_la_LDFLAGS = $(AM_LDFLAGS) $(GEOIP_LDFLAGS)
 ibmod_geoip_la_CFLAGS = $(AM_CFLAGS) $(GEOIP_CFLAGS)
 ibmod_geoip_la_CPPFLAGS = $(AM_CPPFLAGS) $(GEOIP_CPPFLAGS)
@@ -74,7 +74,7 @@ ibmod_lua_la_LIBADD = $(AM_LIBADD) \
                       $(top_builddir)/lua/libironbee-lua.la \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
-                      -lm
+                      $(LIBM_LDFLAGS)
 endif
 
 ibmod_rules_la_SOURCES = rules.c
@@ -82,7 +82,7 @@ ibmod_rules_la_CPPFLAGS = $(AM_CPPFLAGS) \
                         -I$(top_srcdir) \
                         -D_XOPEN_SOURCE=1
 
-ibmod_rules_la_LIBADD = $(AM_LIBADD) -lm
+ibmod_rules_la_LIBADD = $(AM_LIBADD) $(LIBM_LDFLAGS)
 
 if ENABLE_LUA
 ibmod_rules_la_SOURCES += \

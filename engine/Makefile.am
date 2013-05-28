@@ -42,7 +42,7 @@ libironbee_la_SOURCES = engine.c data.c \
 libironbee_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) $(PCRE_CFLAGS)
 libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la $(PCRE_LDADD)
 libironbee_la_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS) \
-						-lm \
+						$(LIBM_LDFLAGS) \
                         -version-info @LIBRARY_VERSION@ \
                         -release @MAJOR_VERSION@.@MINOR_VERSION@
 

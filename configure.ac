@@ -339,6 +339,19 @@ sinclude(acinclude/ax_boost_base.m4)
 sinclude(acinclude/protobuf.m4)
 
 # Required libs
+
+AC_CHECK_LIB([m], [ceill], [have_libm=yes], [have_libm=no])
+if test "$have_libm" = "no"; then
+    AC_CHECK_FUNC([ceill], [], [
+	  # No ceill anywhere.
+	  AC_MSG_ERROR([Unable to find ceill().])
+    ])
+	LIBM_LDFLAGS=""
+else
+    LIBM_LDFLAGS="-lm"
+fi
+AC_SUBST(LIBM_LDFLAGS)
+
 CHECK_PCRE()
 AX_BOOST_BASE(1.40,
               [have_boost_low=yes],
