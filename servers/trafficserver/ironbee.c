@@ -2234,7 +2234,7 @@ static void ibexit(void)
  * @param[in] argv Command-line argument list
  * @return  Success/Failure parsing the config line
  */
- 
+
 typedef struct ibconf_t {
     const char *configfile;
     const char *logfile;
@@ -2293,7 +2293,7 @@ static int ironbee_init(ibconf_t *ibconf)
     ib_status_t rc;
     ib_cfgparser_t *cp;
     ib_context_t *ctx;
-    int rv;
+    int rv = 0;
     ib_engine_t *ib = NULL;
 
     rc = ib_initialize();
