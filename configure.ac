@@ -466,7 +466,7 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="util engine servers automata fast modules tools etc docs tests packaging"
+TOPLEVEL_SUBDIRS="tests util engine servers automata fast modules tools etc docs packaging"
 LIBS_SUBDIRS="libhtp sqltfn"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver nginx"
 
