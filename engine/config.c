@@ -406,7 +406,7 @@ ib_status_t ib_cfgparser_parse_buffer(
     return rc;
 }
 
-/* Forward declare because it is mutually recursive with 
+/* Forward declare because it is mutually recursive with
  * cfgparser_apply_node_children_helper. */
 static ib_status_t cfgparser_apply_node_helper(
     ib_cfgparser_t *cp,
@@ -494,7 +494,7 @@ static ib_status_t cfgparser_apply_node_helper(
                     rc = tmp_rc;
                 }
             }
-            rc = cfgparser_apply_node_children_helper(cp, ib, node);
+            tmp_rc = cfgparser_apply_node_children_helper(cp, ib, node);
             if (rc == IB_OK) {
                 rc = tmp_rc;
             }
