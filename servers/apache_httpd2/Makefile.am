@@ -14,6 +14,7 @@ mod_ironbee_la_CPPFLAGS = $(AM_CPPFLAGS) @APR_CPPFLAGS@
 mod_ironbee_la_LIBADD = @APR_LDADD@ @APU_LDADD@ \
                         $(top_builddir)/engine/libironbee.la
 mod_ironbee_la_LDFLAGS = -module -avoid-version \
+						 -lm \
                          @APR_LDFLAGS@ @APU_LDFLAGS@ @APXS_LDFLAGS@
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
