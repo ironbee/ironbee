@@ -1,5 +1,3 @@
-require File.join(File.dirname(__FILE__), '..', 'clipp_test')
-
 class TestLuaPredicate < Test::Unit::TestCase
   include CLIPPTest
 
