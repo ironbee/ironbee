@@ -124,25 +124,70 @@ static char* qstrdup(ib_cfgparser_t *cp, ib_mpool_t* mp)
     return ib_mpool_memdup_to_str(mp, start, len);
 }
 
-static ib_status_t include_config_fn(ib_cfgparser_t *cp,
-                                     ib_mpool_t* mp,
-                                     const char *directive)
+/**
+ * Callback function to handel parsing of parser directives.
+ */
+typedef ib_status_t(*parse_directive_fn_t)(
+    ib_cfgparser_t *cp,
+    ib_mpool_t* tmp_mp,
+    ib_cfgparser_node_t *node);
+
+struct parse_directive_entry_t {
+    const char *directive;
+    parse_directive_fn_t fn;
+};
+typedef struct parse_directive_entry_t parse_directive_entry_t;
+
+/**
+ * Process "Include" and "IncludeIfExists" parse directives.
+ * param[in] cp Configuration parser.
+ * param[in] mp Memory pool to use.
+ * param[in] node The parse node containing the directive.
+ * param[in] if_exists True if we should not error if the file does not exist.
+ *
+ * @returns
+ * - IB_OK on success.
+ * - Any other code causes a general failure to be repoted but the
+ *   parse continues.
+ */
+static ib_status_t include_config_fn(
+    ib_cfgparser_t *cp,
+    ib_mpool_t* tmpmp,
+    ib_cfgparser_node_t *node)
 {
     struct stat statbuf;
     ib_status_t rc;
+    ib_mpool_t *mp = cp->mp;
     int statval;
     char *incfile;
-    char *pval;
     char *real;
     char *lookup;
     const char *file = cp->curr->file;
     void *freeme = NULL;
-    bool if_exists = strcasecmp("IncludeIfExists", directive) ? false : true;
+    const char* pval;
+    const ib_list_node_t *list_node;
+    bool if_exists;
 
-    pval = qstrdup(cp, mp);
-    if (pval == NULL) {
-        return IB_EALLOC;
+    if (ib_list_elements(node->params) != 1) {
+        ib_cfg_log_error(
+            cp,
+            "%s: %zu - Directive %s only takes 1 parameter not %zu.",
+            node->file,
+            node->line,
+            node->directive,
+            ib_list_elements(node->params));
+        return IB_EINVAL;
     }
+
+    /* Grab the first parameter node. */
+    list_node = ib_list_first_const(node->params);
+    assert(list_node != NULL);
+
+    /* Grab the parameter value. */
+    pval = (const char*) ib_list_node_data_const(list_node);
+    assert(pval != NULL);
+
+    if_exists = strcasecmp("IncludeIfExists", node->directive) == 0;
 
     incfile = ib_util_relative_file(mp, file, pval);
     if (incfile == NULL) {
@@ -252,6 +297,12 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     return IB_OK;
 }
 
+static parse_directive_entry_t parse_directive_table[] = {
+    { "IncludeIfExists", include_config_fn },
+    { "Include",         include_config_fn },
+    { NULL, NULL }
+};
+
 %%{
     machine ironbee_config;
 
@@ -316,6 +367,26 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Out of memory.");
         }
+        
+        /* Handle parse directives using the parse_directive_table. */
+        for (int i = 0; parse_directive_table[i].directive != NULL; ++i) {
+            if (
+                strcasecmp(
+                    parse_directive_table[i].directive,
+                    node->directive) == 0
+            ) {
+                /* Change the node type. This is an parse directive. */
+                node->type = IB_CFGPARSER_NODE_PARSE_DIRECTIVE;
+                /* Process directive. */
+                rc = (parse_directive_table[i].fn)(cp, mptmp, node);
+                if (rc != IB_OK) {
+                    ib_cfg_log_error(
+                        cp,
+                        "Parse directive %s failed.",
+                        node->directive);
+                }
+            }
+        }
     }
 
     action cpbuf_append {
@@ -371,19 +442,6 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     }
 
     # include file logic
-    action include_config {
-        rc = include_config_fn(cp, mpcfg, directive);
-
-        if (rc == IB_OK) {
-            ib_cfg_log_debug(cp, "Done processing include directive");
-        }
-        else {
-            ib_cfg_log_error(cp,
-                             "Failed to process include directive: %s",
-                             ib_status_to_string(rc));
-        }
-    }
-
     # Whitespace.
     WS = [ \t];
     # End of line.
@@ -462,14 +520,6 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
               %start_dir
               { fcall parameters; };
 
-        # This machine will include a file in the current parse tree.
-        # This will execute as well as token as both of these
-        # machines share a prefix.
-        'Include'i ('IfExists'i)? (WS | CONT $newline)+ iparam >cpbuf_clear
-                                                        $cpbuf_append
-                                                        $!error_action
-                                                        %include_config;
-        
         # Handle block configurations <Site... >.
         "<" (any - "/") { fhold; fcall newblock;};
         "</"            {        fcall endblock;};

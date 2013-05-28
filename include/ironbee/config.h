@@ -125,6 +125,13 @@ typedef enum {
     //! The node is a normal directive. This is most common.
     IB_CFGPARSER_NODE_DIRECTIVE,
 
+    /**
+     * The node is a parse directive.
+     * This directive is used by the parser. The engine does not recieve this
+     * directive to take action on it during the apply phase.
+     */
+    IB_CFGPARSER_NODE_PARSE_DIRECTIVE,
+
     //! The node is a block. Directive @ref IB_DIRTYPE_SBLK1.
     IB_CFGPARSER_NODE_BLOCK,
 

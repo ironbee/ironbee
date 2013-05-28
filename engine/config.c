@@ -473,6 +473,12 @@ static ib_status_t cfgparser_apply_node_helper(
             }
             break;
 
+        case IB_CFGPARSER_NODE_PARSE_DIRECTIVE:
+            ib_log_debug(
+                ib,
+                "Parse directive %s. Not passed to engine.",
+                node->directive);
+            break;
         case IB_CFGPARSER_NODE_DIRECTIVE:
             ib_log_debug(ib, "Applying directive %s", node->directive);
 
