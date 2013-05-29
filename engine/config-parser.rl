@@ -96,7 +96,7 @@ static void cpbuf_clear(ib_cfgparser_t *cp) {
 }
 
 /**
- * Using the given mp, strdup the buffer in @a cp.
+ * Using the given mp, strdup the buffer in @a cp consiering quotes.
  *
  * If the buffer starts and ends with double quotes, remove them.
  *
@@ -115,8 +115,7 @@ static char* qstrdup(ib_cfgparser_t *cp, ib_mpool_t* mp)
     size_t len = cp->buffer_len;
 
     /* Adjust for quoted value. */
-    if ((*start == '"') && (*end == '"') && (start < end))
-    {
+    if ((*start == '"') && (*end == '"') && (start < end)) {
         start++;
         len -= 2;
     }
@@ -132,9 +131,12 @@ typedef ib_status_t(*parse_directive_fn_t)(
     ib_mpool_t* tmp_mp,
     ib_cfgparser_node_t *node);
 
+/**
+ * A table entry mapping a parse directive string to a handler function.
+ */
 struct parse_directive_entry_t {
-    const char *directive;
-    parse_directive_fn_t fn;
+    const char *directive;   /**< The directive. Case insensitive. */
+    parse_directive_fn_t fn; /**< The handler function. */
 };
 typedef struct parse_directive_entry_t parse_directive_entry_t;
 
@@ -143,18 +145,24 @@ typedef struct parse_directive_entry_t parse_directive_entry_t;
  * param[in] cp Configuration parser.
  * param[in] mp Memory pool to use.
  * param[in] node The parse node containing the directive.
- * param[in] if_exists True if we should not error if the file does not exist.
  *
  * @returns
  * - IB_OK on success.
  * - Any other code causes a general failure to be repoted but the
  *   parse continues.
  */
-static ib_status_t include_config_fn(
+static ib_status_t include_parse_directive(
     ib_cfgparser_t *cp,
-    ib_mpool_t* tmpmp,
+    ib_mpool_t* tmp_mp,
     ib_cfgparser_node_t *node)
 {
+    assert(cp != NULL);
+    assert(cp->mp != NULL);
+    assert(node != NULL);
+    assert(node->directive != NULL);
+    assert(node->params != NULL);
+    assert(node->file != NULL);
+
     struct stat statbuf;
     ib_status_t rc;
     ib_mpool_t *mp = cp->mp;
@@ -162,11 +170,12 @@ static ib_status_t include_config_fn(
     char *incfile;
     char *real;
     char *lookup;
-    const char *file = cp->curr->file;
-    void *freeme = NULL;
     const char* pval;
     const ib_list_node_t *list_node;
     bool if_exists;
+    /* Some utilities we use employ malloc (eg realpath()).
+     * If a malloc'ed buffer is in use, we alias it here to be free'ed. */
+    void *freeme = NULL; 
 
     if (ib_list_elements(node->params) != 1) {
         ib_cfg_log_error(
@@ -189,10 +198,10 @@ static ib_status_t include_config_fn(
 
     if_exists = strcasecmp("IncludeIfExists", node->directive) == 0;
 
-    incfile = ib_util_relative_file(mp, file, pval);
+    incfile = ib_util_relative_file(mp, node->file, pval);
     if (incfile == NULL) {
         ib_cfg_log_error(cp, "Failed to resolve included file \"%s\": %s",
-                         file, strerror(errno));
+                         node->file, strerror(errno));
         return IB_ENOENT;
     }
 
@@ -297,10 +306,13 @@ static ib_status_t include_config_fn(
     return IB_OK;
 }
 
+/**
+ * Null-terminated table that maps parsing directives to handler functions.
+ */
 static parse_directive_entry_t parse_directive_table[] = {
-    { "IncludeIfExists", include_config_fn },
-    { "Include",         include_config_fn },
-    { NULL, NULL }
+    { "IncludeIfExists", include_parse_directive },
+    { "Include",         include_parse_directive },
+    { NULL, NULL } /* Null termination. Do not remove. */
 };
 
 %%{
