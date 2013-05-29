@@ -66,7 +66,6 @@ ib_status_t ib_cfgparser_node_create(ib_cfgparser_node_t **node,
                                      ib_cfgparser_t *cfgparser)
 {
     assert(node != NULL);
-    assert(*node == NULL);
     assert(cfgparser != NULL);
     assert(cfgparser->mp != NULL);
 
