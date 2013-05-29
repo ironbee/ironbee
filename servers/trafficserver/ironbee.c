@@ -69,13 +69,6 @@ typedef enum {
     ((outcome) == HDR_HTTP_STATUS && (data)->status >= 200 && (data)->status < 600)
 #define IB_HTTP_CODE(num) ((num) >= 200 && (num) < 600)
 
-static void tx_list_destroy(ib_conn_t *conn)
-{
-    while (conn->tx_first != NULL) {
-        ib_tx_destroy(conn->tx_first);
-    }
-}
-
 typedef struct {
     ib_conn_t *iconn;
     /* store the IPs here so we can clean them up and not leak memory */
@@ -203,6 +196,30 @@ typedef struct {
     ib_direction_data_t *ibd;
     ib_filter_ctx *data;
 } ibd_ctx;
+
+static void tx_finish(ib_tx_t *tx)
+{
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED) ) {
+        ib_state_notify_request_finished(tx->ib, tx);
+    }
+    if (!ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED) ) {
+        ib_state_notify_response_finished(tx->ib, tx);
+    }
+    if (!ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+        ib_state_notify_postprocess(tx->ib, tx);
+    }
+    if (!ib_tx_flags_isset(tx, IB_TX_FLOGGING)) {
+        ib_state_notify_logging(tx->ib, tx);
+    }
+}
+
+static void tx_list_destroy(ib_conn_t *conn)
+{
+    while (conn->tx_first != NULL) {
+        tx_finish(conn->tx_first);
+        ib_tx_destroy(conn->tx_first);
+    }
+}
 
 
 static bool is_error_status(int status)
@@ -418,6 +435,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 
         TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s txn_count=%d",
                 data->tx->conn, data->tx, data->tx->id, data->ssn->txn_count);
+        tx_finish(data->tx);
         ib_tx_destroy(data->tx);
         data->tx = NULL;
 
@@ -2013,12 +2031,6 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             ib_txn_ctx *ctx = TSContDataGet(contp);
             if (ctx->tx != NULL) {
                 TSDebug("ironbee", "TXN Close: %p\n", (void *)contp);
-                if (!ib_tx_flags_isset(ctx->tx, IB_TX_FPOSTPROCESS)) {
-                    ib_state_notify_postprocess(ironbee, ctx->tx);
-                }
-                if (!ib_tx_flags_isset(ctx->tx, IB_TX_FLOGGING)) {
-                    ib_state_notify_logging(ironbee, ctx->tx);
-                }
                 ib_txn_ctx_destroy(ctx);
             }
             TSContDataSet(contp, NULL);
