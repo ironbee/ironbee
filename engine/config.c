@@ -176,12 +176,16 @@ ib_status_t ib_cfgparser_push_node(ib_cfgparser_t *cp,
 
     ib_status_t rc;
 
+    /* Set down-link. */
+    rc = ib_list_push(cp->curr->children, node);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     /* Set up-link. */
     node->parent = cp->curr;
 
-    /* Set down-link. */
-    rc = ib_list_push(cp->curr->children, node);
-
+    /* This node is now the current node. */
     cp->curr = node;
 
     return rc;
