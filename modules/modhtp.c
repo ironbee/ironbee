@@ -2364,6 +2364,11 @@ ib_status_t modhtp_request_header_finished(
     ib_status_t      irc;
     htp_status_t     hrc;
 
+    /* LibHTP doesn't like header finished with no body ... */
+    if (itx->request_header == NULL) {
+        return IB_OK;
+    }
+
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(m, itx);
 
@@ -2632,6 +2637,11 @@ ib_status_t modhtp_response_header_finished(
     const modhtp_txdata_t *txdata;
     ib_status_t            irc;
     htp_status_t           hrc;
+
+    /* LibHTP doesn't like header finished with no body ... */
+    if (itx->response_header == NULL) {
+        return IB_OK;
+    }
 
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(m, itx);
