@@ -606,13 +606,15 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         /* this is the second call to us, and we have data buffered.
          * Feed buffered data to ironbee
          */
-        ib_txdata_t itxdata;
-        itxdata.data = (uint8_t *)ibd->data->buf;
-        itxdata.dlen = ibd->data->buflen;
-        TSDebug("ironbee",
-                "process_data: calling ib_state_notify_%s_body() %s:%d",
-                ibd->ibd->dir_label, __FILE__, __LINE__);
-        (*ibd->ibd->ib_notify_body)(ironbee, data->tx, &itxdata);
+        if (ibd->data->buflen != 0) {
+            ib_txdata_t itxdata;
+            itxdata.data = (uint8_t *)ibd->data->buf;
+            itxdata.dlen = ibd->data->buflen;
+            TSDebug("ironbee",
+                    "process_data: calling ib_state_notify_%s_body() %s:%d",
+                    ibd->ibd->dir_label, __FILE__, __LINE__);
+            (*ibd->ibd->ib_notify_body)(ironbee, data->tx, &itxdata);
+        }
         TSfree(ibd->data->buf);
         ibd->data->buf = NULL;
         ibd->data->buflen = 0;
@@ -697,12 +699,18 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                     bufp += ilength;
                 }
                 else {
-                    ib_txdata_t itxdata;
-                    itxdata.data = (uint8_t *)ibd->data->buf;
-                    itxdata.dlen = ibd->data->buflen;
-                    TSDebug("ironbee", "process_data: calling ib_state_notify_%s_body() %s:%d", ((ibd->ibd->dir == IBD_REQ)?"request":"response"), __FILE__, __LINE__);
-                    (*ibd->ibd->ib_notify_body)(ironbee, data->tx,
-                                                (ilength!=0) ? &itxdata : NULL);
+                    if (ibd->data->buflen > 0) {
+                        ib_txdata_t itxdata;
+                        itxdata.data = (uint8_t *)ibd->data->buf;
+                        itxdata.dlen = ibd->data->buflen;
+                        TSDebug("ironbee",
+                                "process_data: calling ib_state_notify_%s_body() "
+                                "%s:%d",
+                                ((ibd->ibd->dir == IBD_REQ)?"request":"response"),
+                                __FILE__, __LINE__);
+                        (*ibd->ibd->ib_notify_body)(ironbee, data->tx,
+                                                    (ilength!=0) ? &itxdata : NULL);
+                    }
                     if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
                                                         * so we discard all this data
                                                         */
