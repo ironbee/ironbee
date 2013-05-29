@@ -429,7 +429,7 @@ static ib_status_t cfgparser_apply_node_helper(
 
             assert(
                 (ib_list_elements(node->children) == 0) &&
-                "Directives may nove have children.");
+                "Directives may not have children.");
 
             ib_log_debug(ib, "Applying directive %s", node->directive);
 

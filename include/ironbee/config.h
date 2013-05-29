@@ -128,7 +128,7 @@ typedef enum {
 
     /**
      * The node is a parse directive.
-     * This directive is used by the parser. The engine does not recieve this
+     * This directive is used by the parser. The engine does not receive this
      * directive to take action on it during the apply phase.
      */
     IB_CFGPARSER_NODE_PARSE_DIRECTIVE,
