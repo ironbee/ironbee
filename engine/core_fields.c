@@ -653,17 +653,19 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
     core_gen_tx_numeric_field(tx, "conn_tx_count",
                               tx->conn->tx_count);
 
-    core_gen_tx_bytestr_alias_field(tx, "request_line",
-                                    tx->request_line->raw);
+    if (tx->request_line != NULL) {
+        core_gen_tx_bytestr_alias_field(tx, "request_line",
+                                        tx->request_line->raw);
 
-    core_gen_tx_bytestr_alias_field(tx, "request_method",
-                                    tx->request_line->method);
+        core_gen_tx_bytestr_alias_field(tx, "request_method",
+                                        tx->request_line->method);
 
-    core_gen_tx_bytestr_alias_field(tx, "request_uri_raw",
-                                    tx->request_line->uri);
+        core_gen_tx_bytestr_alias_field(tx, "request_uri_raw",
+                                        tx->request_line->uri);
 
-    core_gen_tx_bytestr_alias_field(tx, "request_protocol",
-                                    tx->request_line->protocol);
+        core_gen_tx_bytestr_alias_field(tx, "request_protocol",
+                                        tx->request_line->protocol);
+    }
 
     /* Populate the ARGS collection. */
     rc = ib_data_get(tx->data, "ARGS", &f);

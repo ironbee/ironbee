@@ -910,7 +910,10 @@ static void log_tx_request_line(
     ib_tx_t *tx = rule_exec->tx;
 
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_REQ_LINE)) {
-        if (ib_bytestr_length(tx->request_line->protocol) == 0) {
+        if (tx->request_line == NULL) {
+            /* Do nothing */
+        }
+        else if (ib_bytestr_length(tx->request_line->protocol) == 0) {
             rule_log_exec(rule_exec,
                           "REQ_LINE %.*s %.*s",
                           IB_BYTESTR_FMT_PARAM(tx->request_line->method),
