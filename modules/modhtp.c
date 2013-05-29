@@ -2128,7 +2128,9 @@ static ib_status_t modhtp_iface_request_finished(
     txdata = modhtp_get_txdata_ibtx(itx);
 
     /* Signal libhtp that the body is finished. */
-    htp_tx_req_process_body_data_ex(txdata->htx, NULL, 0);
+    if (ib_conn_flags_isset(itx->conn, IB_TX_FREQ_SEENBODY)) {
+        htp_tx_req_process_body_data_ex(txdata->htx, NULL, 0);
+    }
 
     /* Complete the request */
     hrc = htp_tx_state_request_complete(txdata->htx);
