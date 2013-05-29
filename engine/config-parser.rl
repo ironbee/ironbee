@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <math.h>
 #include <errno.h>
 
 #include <ironbee/engine.h>
@@ -141,6 +142,112 @@ struct parse_directive_entry_t {
 typedef struct parse_directive_entry_t parse_directive_entry_t;
 
 /**
+ * Ensure that the node's file:line has not been encountered before.
+ *
+ * @param[in] cp Configuration parser.
+ * @param[in] tmp_mp Temporary memory pool. 
+ * @param[in] node The current parse node.
+ * @returns
+ * - IB_OK if the directive represented by @a node is new (not a dup).
+ * - IB_EINVAL if we detect that @a node's file and line have been seen before.
+ * - IB_EALLOC on allocation errors.
+ * - Other if there is an internal IronBee error.
+ */
+static ib_status_t include_parse_directive_loop_detect(
+    ib_cfgparser_t *cp,
+    ib_mpool_t *tmp_mp,
+    ib_cfgparser_node_t *node
+) {
+    assert(cp != NULL);
+    assert(cp->mp != NULL);
+    assert(tmp_mp != NULL);
+    assert(cp->includes != NULL);
+    assert(node != NULL);
+    assert(node->file != NULL);
+
+    char *directive_loc;     /* file:line of the directive. */
+    size_t directive_loc_sz; /* Size of directive_loc. */
+    char *lookup = NULL;     /* Holder for hash lookup. */
+    long double digits;      /* Digits do we need to print node->line. */
+    size_t printed_size;     /* Used to check snprintf does not truncate. */
+    ib_status_t rc;
+
+    /* Compute the digits required to print the base-10 rep of node->line.
+     * Notice that we +1 the value if it is valid to accomodate floats. */
+    digits = (size_t)log10l(node->line);
+    if (digits == HUGE_VALL) {
+        return IB_EINVAL;
+    }
+    digits += 1; /* Round up. */
+
+    /* strlen + ':' + '\0' + log10(line) */
+    directive_loc_sz = strlen(node->file) + 2 + digits;
+    directive_loc = ib_mpool_alloc(tmp_mp, directive_loc_sz);
+    if (directive_loc == NULL) {
+        return IB_EALLOC;
+    }
+
+    printed_size = snprintf(
+        directive_loc,
+        directive_loc_sz,
+        "%s:%zu",
+        node->file,
+        node->line);
+
+    /* We should always print the whole string. */
+    assert(printed_size < directive_loc_sz);
+
+    /* Check if we've visited this directive location before. */
+    rc = ib_hash_get(cp->includes, &lookup, directive_loc);
+    if (rc == IB_OK) {
+        ib_cfg_log_warning(
+            cp,
+            "Included file \"%s\" loop detected: skipping",
+            directive_loc);
+        for (
+            ib_cfgparser_node_t *tmp_node = node->parent;
+            tmp_node != NULL;
+            tmp_node = tmp_node->parent
+        ) {
+            ib_cfg_log_warning(
+                cp,
+                "\t included from %s:%zu",
+                tmp_node->file,
+                tmp_node->line);
+        }
+
+        return IB_EINVAL;
+    }
+    else if (rc != IB_ENOENT) {
+        ib_cfg_log_error(
+            cp,
+            "Error looking up include file \"%s\": %s",
+            directive_loc,
+            strerror(errno));
+        return rc;
+    }
+
+    /* If we end up here, the file was not found.
+     * We must record that we've now seen the file and line number. */
+
+    /* First, copy the string from the cfg mp, not the tmp mp. */
+    lookup = ib_mpool_strdup(cp->mp, directive_loc);
+    if (lookup == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Record the directive location. */
+    rc = ib_hash_set(cp->includes, lookup, lookup);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Error adding include file to hash \"%s\": %s",
+                         lookup, strerror(errno));
+    }
+
+    return IB_OK;
+}
+
+/**
  * Process "Include" and "IncludeIfExists" parse directives.
  * param[in] cp Configuration parser.
  * param[in] mp Memory pool to use.
@@ -154,8 +261,8 @@ typedef struct parse_directive_entry_t parse_directive_entry_t;
 static ib_status_t include_parse_directive(
     ib_cfgparser_t *cp,
     ib_mpool_t* tmp_mp,
-    ib_cfgparser_node_t *node)
-{
+    ib_cfgparser_node_t *node
+) {
     assert(cp != NULL);
     assert(cp->mp != NULL);
     assert(node != NULL);
@@ -169,7 +276,6 @@ static ib_status_t include_parse_directive(
     int statval;
     char *incfile;
     char *real;
-    char *lookup;
     const char* pval;
     const ib_list_node_t *list_node;
     bool if_exists;
@@ -225,32 +331,13 @@ static ib_status_t include_parse_directive(
         freeme = real;
     }
 
-    /* Look up the real file path in the hash */
-    rc = ib_hash_get(cp->includes, &lookup, real);
-    if (rc == IB_OK) {
-        ib_cfg_log_warning(cp,
-                           "Included file \"%s\" already included: skipping",
-                           real);
-        return IB_OK;
-    }
-    else if (rc != IB_ENOENT) {
-        ib_cfg_log_error(cp, "Error looking up include file \"%s\": %s",
-                         real, strerror(errno));
-    }
-
-    /* Put the real name in the hash */
-    lookup = ib_mpool_strdup(mp, real);
+    rc = include_parse_directive_loop_detect(cp, tmp_mp, node);
     if (freeme != NULL) {
         free(freeme);
         freeme = NULL;
     }
-    if (lookup != NULL) {
-        rc = ib_hash_set(cp->includes, lookup, lookup);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp,
-                             "Error adding include file to hash \"%s\": %s",
-                             lookup, strerror(errno));
-        }
+    if (rc != IB_OK) {
+        return rc;
     }
 
     if (access(incfile, R_OK) != 0) {
