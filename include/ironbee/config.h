@@ -47,7 +47,6 @@ extern "C" {
 
 typedef struct ib_dirmap_init_t ib_dirmap_init_t;
 typedef struct ib_cfgparser_node_t ib_cfgparser_node_t;
-typedef struct ib_cfgparser_t ib_cfgparser_t;
 
 /**
  * The parsing context wraps around important values used during parsing.
