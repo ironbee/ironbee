@@ -1038,13 +1038,13 @@ ib_status_t DLL_PUBLIC ib_tx_set_module_data(
 
 void ib_tx_destroy(ib_tx_t *tx)
 {
-    /// @todo It should always be the first one in the list,
-    ///       so this should not be needed and should cause an error
-    ///       or maybe for us to throw a flag???
     assert(tx != NULL);
     assert(tx->conn != NULL);
-    assert(tx->conn->tx_first == tx);
+    assert(tx->conn->tx_first != NULL);
+
     ib_tx_t *curr;
+    ib_tx_t *prev = NULL;
+    bool found = false;
 
     ib_log_debug3_tx(tx, "TX DESTROY p=%p id=%s", tx, tx->id);
 
@@ -1062,21 +1062,30 @@ void ib_tx_destroy(ib_tx_t *tx)
                           "Logging not run on transaction!");
     }
 
-    /* Keep track of the first/current tx. */
-    tx->conn->tx_first = tx->next;
-    tx->conn->tx = tx->next;
-
+    /* Find the tx in the list */
     for (curr = tx->conn->tx_first; curr != NULL; curr = curr->next) {
         if (curr == tx) {
-            curr->next = curr->next ? curr->next->next : NULL;
+            found = true;
             break;
         }
+        prev = curr;
     }
+    assert(found);
 
-    /* Keep track of the last tx. */
+    /* Update the first and last pointers */
+    if (tx->conn->tx_first == tx) {
+        tx->conn->tx_first = tx->next;
+        tx->conn->tx = tx->next;
+    }
     if (tx->conn->tx_last == tx) {
         tx->conn->tx_last = NULL;
     }
+
+    /* Remove tx from the list */
+    if (prev != NULL) {
+        prev->next = tx->next;
+    }
+    tx->next = NULL;
 
     /// @todo Probably need to update state???
     ib_engine_pool_destroy(tx->ib, tx->mp);
