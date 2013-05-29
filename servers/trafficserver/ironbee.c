@@ -462,57 +462,61 @@ ib_server_t DLL_LOCAL ibplugin = {
  * Handles TS_EVENT_HTTP_TXN_CLOSE (transaction close) close event from the
  * ATS.
  *
- * @param[in,out] data Transaction context data
+ * @param[in,out] ctx Transaction context
  */
-static void ib_txn_ctx_destroy(ib_txn_ctx * data)
+static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
 {
-    if (data) {
-        hdr_action_t *x;
-
-        TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s txn_count=%d",
-                data->tx->conn, data->tx, data->tx->id, data->ssn->txn_count);
-        tx_finish(data->tx);
-        ib_tx_destroy(data->tx);
-        data->tx = NULL;
-
-        if (data->out.output_buffer) {
-            TSIOBufferDestroy(data->out.output_buffer);
-            data->out.output_buffer = NULL;
-        }
-        if (data->in.output_buffer) {
-            TSIOBufferDestroy(data->in.output_buffer);
-            data->in.output_buffer = NULL;
-        }
-        while (x=data->hdr_actions, x != NULL) {
-            data->hdr_actions = x->next;
-            TSfree( (char *)x->hdr);
-            TSfree( (char *)x->value);
-            TSfree(x);
-        }
-        /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
-        if (data->ssn) {
-            /* If it's closing, the contp and with it the mutex are already gone.
-             * Trust TS not to create more TXNs after signalling SSN close!
-             */
-            if (data->ssn->closing) {
-                tx_list_destroy(data->ssn->iconn);
-                if (data->ssn->iconn) {
-                    TSDebug("ironbee", "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
-                    ib_state_notify_conn_closed(ironbee, data->ssn->iconn);
-                    TSDebug("ironbee", "CONN DESTROY: conn=%p", data->ssn->iconn);
-                    ib_conn_destroy(data->ssn->iconn);
-                }
-                TSContDestroy(data->ssn->contp);
-                TSfree(data->ssn);
-            }
-            else {
-                TSMutexLock(data->ssn->mutex);
-                --data->ssn->txn_count;
-                TSMutexUnlock(data->ssn->mutex);
-            }
-        }
-        TSfree(data);
+    if (ctx == NULL) {
+        return;
     }
+
+    hdr_action_t *x;
+
+    TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s txn_count=%d",
+            ctx->tx->conn, ctx->tx, ctx->tx->id, ctx->ssn->txn_count);
+    tx_finish(ctx->tx);
+    ib_tx_destroy(ctx->tx);
+    ctx->tx = NULL;
+
+    if (ctx->out.output_buffer) {
+        TSIOBufferDestroy(ctx->out.output_buffer);
+        ctx->out.output_buffer = NULL;
+    }
+    if (ctx->in.output_buffer) {
+        TSIOBufferDestroy(ctx->in.output_buffer);
+        ctx->in.output_buffer = NULL;
+    }
+    while (x=ctx->hdr_actions, x != NULL) {
+        ctx->hdr_actions = x->next;
+        TSfree( (char *)x->hdr);
+        TSfree( (char *)x->value);
+        TSfree(x);
+    }
+    
+    /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
+    if (ctx->ssn) {
+        /* If it's closing, the contp and with it the mutex are already gone.
+         * Trust TS not to create more TXNs after signalling SSN close!
+         */
+        if (ctx->ssn->closing) {
+            tx_list_destroy(ctx->ssn->iconn);
+            if (ctx->ssn->iconn) {
+                TSDebug("ironbee",
+                        "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
+                ib_state_notify_conn_closed(ironbee, ctx->ssn->iconn);
+                TSDebug("ironbee", "CONN DESTROY: conn=%p", ctx->ssn->iconn);
+                ib_conn_destroy(ctx->ssn->iconn);
+            }
+            TSContDestroy(ctx->ssn->contp);
+            TSfree(ctx->ssn);
+        }
+        else {
+            TSMutexLock(ctx->ssn->mutex);
+            --ctx->ssn->txn_count;
+            TSMutexUnlock(ctx->ssn->mutex);
+        }
+    }
+    TSfree(ctx);
 }
 
 /**
@@ -521,33 +525,36 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
  * Handles TS_EVENT_HTTP_SSN_CLOSE (session close) close event from the
  * ATS.
  *
- * @param[in,out] data session context data
+ * @param[in,out] ctx session context
  */
-static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
+static void ib_ssn_ctx_destroy(ib_ssn_ctx * ctx)
 {
+    if (ctx == NULL) {
+        return;
+    }
+
     /* To avoid the risk of sequencing issues with this coming before TXN_CLOSE,
      * we just mark the session as closing, but leave actually closing it
      * for the TXN_CLOSE if there's a TXN
      */
-    if (data) {
-        TSMutexLock(data->mutex);
-        if (data->txn_count == 0) { /* TXN_CLOSE happened already */
-            if (data->iconn) {
-                tx_list_destroy(data->iconn);
-                TSDebug("ironbee", "ib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
-                ib_state_notify_conn_closed(ironbee, data->iconn);
-                TSDebug("ironbee", "CONN DESTROY: conn=%p", data->iconn);
-                ib_conn_destroy(data->iconn);
-            }
-            /* Unlock has to come first 'cos ContDestroy destroys the mutex */
-            TSMutexUnlock(data->mutex);
-            TSContDestroy(data->contp);
-            TSfree(data);
+    TSMutexLock(ctx->mutex);
+    if (ctx->txn_count == 0) { /* TXN_CLOSE happened already */
+        if (ctx->iconn) {
+            tx_list_destroy(ctx->iconn);
+            TSDebug("ironbee",
+                    "ib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
+            ib_state_notify_conn_closed(ironbee, ctx->iconn);
+            TSDebug("ironbee", "CONN DESTROY: conn=%p", ctx->iconn);
+            ib_conn_destroy(ctx->iconn);
         }
-        else {
-            data->closing = 1;
-            TSMutexUnlock(data->mutex);
-        }
+        /* Unlock has to come first 'cos ContDestroy destroys the mutex */
+        TSMutexUnlock(ctx->mutex);
+        TSContDestroy(ctx->contp);
+        TSfree(ctx);
+    }
+    else {
+        ctx->closing = 1;
+        TSMutexUnlock(ctx->mutex);
     }
 }
 
@@ -559,7 +566,7 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
  * @param[in,out] contp Pointer to the continuation
  * @param[in,out] ibd unknown
  */
-static void process_data(TSCont contp, ibd_ctx* ibd)
+static void process_data(TSCont contp, ibd_ctx *ibd)
 {
     TSVConn output_conn;
     TSIOBuffer buf_test;
