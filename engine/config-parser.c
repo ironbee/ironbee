@@ -145,92 +145,54 @@ typedef struct parse_directive_entry_t parse_directive_entry_t;
 
 /**
  * Ensure that the node's file:line has not been encountered before.
+ *
+ * @param[in] cp Configuration parser.
+ * @param[in] tmp_mp Temporary memory pool. 
+ * @param[in] node The current parse node.
+ * @returns
+ * - IB_OK if the directive represented by @a node is new (not a dup).
+ * - IB_EINVAL if we detect that @a node's file and line have been seen before.
+ * - IB_EALLOC on allocation errors.
+ * - Other if there is an internal IronBee error.
  */
-static ib_status_t include_parse_directive_loop_detect(
+static ib_status_t detect_file_loop(
     ib_cfgparser_t *cp,
-    ib_mpool_t *tmp_mp,
     ib_cfgparser_node_t *node
 ) {
     assert(cp != NULL);
     assert(cp->mp != NULL);
-    assert(tmp_mp != NULL);
-    assert(cp->includes != NULL);
     assert(node != NULL);
     assert(node->file != NULL);
 
-    char *directive_loc;        /* file:line of the directive. */
-    size_t directive_loc_sz;    /* Size of directive_loc. */
-    char *lookup = NULL;        /* Holder for hash lookup. */
-    long double digits;         /* Digits do we need to print node->line. */
-    size_t printed_size;
-    ib_mpool_t *mp = cp->mp;
-    ib_status_t rc;
-
-    digits = (size_t)log10l(node->line);
-    if (digits == HUGE_VALL) {
-        return IB_EINVAL;
-    }
-    digits += 1; /* Round up. */
-
-    /* strlen + ':' + '\0' + log10(line) */
-    directive_loc_sz = strlen(node->file) + 2 + digits;
-    directive_loc = ib_mpool_alloc(tmp_mp, directive_loc_sz);
-    if (directive_loc == NULL) {
-        return IB_EALLOC;
-    }
-
-    printed_size = snprintf(
-        directive_loc,
-        directive_loc_sz,
-        "%s:%zu",
-        node->file,
-        node->line);
-
-    /* We should always print the whole string. */
-    assert(printed_size < directive_loc_sz);
-
-    /* Look up the real file path in the hash */
-    rc = ib_hash_get(cp->includes, &lookup, directive_loc);
-    if (rc == IB_OK) {
-        ib_cfg_log_warning(
-            cp,
-            "Included file \"%s\" loop detected: skipping",
-            directive_loc);
-        for (
-            ib_cfgparser_node_t *tmp_node = node->parent;
-            tmp_node != NULL;
-            tmp_node = tmp_node->parent
-        ) {
-            ib_cfg_log_warning(
+    for (ib_cfgparser_node_t *node2 = node->parent;
+         node2 != NULL;
+         node2 = node2->parent)
+    {
+        /* If a node is at the same file and line, it is clearly a duplciate. */
+        if (node->line == node2->line && strcmp(node->file, node2->file) == 0) {
+            ib_cfg_log_error(
                 cp,
-                "\t included from %s:%zu",
-                tmp_node->file,
-                tmp_node->line);
+                "File include cycle found at %s:%zu.",
+                node->file,
+                node->line);
+
+            for (ib_cfgparser_node_t *node3 = node->parent;
+                 node3 != NULL;
+                 node3 = node2->parent)
+            {
+                /* Skip nodes that are not parse directives, 
+                 * such as the root node and file nodes. */
+                if (node3->type == IB_CFGPARSER_NODE_PARSE_DIRECTIVE) {
+                    ib_cfg_log_error(
+                        cp,
+                        "\t... included from %s:%zu.",
+                        node3->file,
+                        node3->line);
+                }
+            }
+
+            return IB_EINVAL;
         }
-
-        return IB_EOTHER;
-    }
-    else if (rc != IB_ENOENT) {
-        ib_cfg_log_error(
-            cp,
-            "Error looking up include file \"%s\": %s",
-            directive_loc,
-            strerror(errno));
-        return rc;
-    }
-
-    /* Put the real name in the hash. */
-    /* First, copy the string from the cfg mp, not the tmp mp. */
-    lookup = ib_mpool_strdup(mp, directive_loc);
-    if (lookup == NULL) {
-        return IB_EALLOC;
-    }
-
-    rc = ib_hash_set(cp->includes, lookup, lookup);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Error adding include file to hash \"%s\": %s",
-                         lookup, strerror(errno));
     }
 
     return IB_OK;
@@ -320,7 +282,7 @@ static ib_status_t include_parse_directive(
         freeme = real;
     }
 
-    rc = include_parse_directive_loop_detect(cp, tmp_mp, node);
+    rc = detect_file_loop(cp, node);
     if (freeme != NULL) {
         free(freeme);
         freeme = NULL;
@@ -392,11 +354,11 @@ static parse_directive_entry_t parse_directive_table[] = {
 };
 
 
-#line 618 "../../ironbee/engine/config-parser.rl"
+#line 580 "../../ironbee/engine/config-parser.rl"
 
 
 
-#line 400 "../../ironbee/engine/config-parser.c"
+#line 362 "../../ironbee/engine/config-parser.c"
 static const char _ironbee_config_actions[] = {
 	0, 1, 0, 1, 3, 1, 6, 1, 
 	11, 1, 12, 1, 16, 1, 23, 1, 
@@ -597,7 +559,7 @@ static const int ironbee_config_en_endblock = 37;
 static const int ironbee_config_en_main = 18;
 
 
-#line 621 "../../ironbee/engine/config-parser.rl"
+#line 583 "../../ironbee/engine/config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
@@ -646,16 +608,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     /* Access all ragel state variables via structure. */
     
-#line 669 "../../ironbee/engine/config-parser.rl"
+#line 631 "../../ironbee/engine/config-parser.rl"
     
-#line 670 "../../ironbee/engine/config-parser.rl"
+#line 632 "../../ironbee/engine/config-parser.rl"
     
-#line 671 "../../ironbee/engine/config-parser.rl"
+#line 633 "../../ironbee/engine/config-parser.rl"
     
-#line 672 "../../ironbee/engine/config-parser.rl"
+#line 634 "../../ironbee/engine/config-parser.rl"
 
     
-#line 659 "../../ironbee/engine/config-parser.c"
+#line 621 "../../ironbee/engine/config-parser.c"
 	{
 	 cp->fsm.cs = ironbee_config_start;
 	 cp->fsm.top = 0;
@@ -664,9 +626,9 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	 cp->fsm.act = 0;
 	}
 
-#line 674 "../../ironbee/engine/config-parser.rl"
+#line 636 "../../ironbee/engine/config-parser.rl"
     
-#line 670 "../../ironbee/engine/config-parser.c"
+#line 632 "../../ironbee/engine/config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -687,7 +649,7 @@ _resume:
 #line 1 "NONE"
 	{ cp->fsm.ts = ( fsm_vars.p);}
 	break;
-#line 691 "../../ironbee/engine/config-parser.c"
+#line 653 "../../ironbee/engine/config-parser.c"
 		}
 	}
 
@@ -754,7 +716,7 @@ _eof_trans:
 		switch ( *_acts++ )
 		{
 	case 0:
-#line 395 "../../ironbee/engine/config-parser.rl"
+#line 357 "../../ironbee/engine/config-parser.rl"
 	{
         rc = IB_EOTHER;
         ib_cfg_log_error(
@@ -765,7 +727,7 @@ _eof_trans:
     }
 	break;
 	case 1:
-#line 405 "../../ironbee/engine/config-parser.rl"
+#line 367 "../../ironbee/engine/config-parser.rl"
 	{
         pval = qstrdup(cp, mpcfg);
         if (pval == NULL) {
@@ -775,7 +737,7 @@ _eof_trans:
     }
 	break;
 	case 2:
-#line 412 "../../ironbee/engine/config-parser.rl"
+#line 374 "../../ironbee/engine/config-parser.rl"
 	{
         pval = qstrdup(cp, mpcfg);
         if (pval == NULL) {
@@ -785,13 +747,13 @@ _eof_trans:
     }
 	break;
 	case 3:
-#line 420 "../../ironbee/engine/config-parser.rl"
+#line 382 "../../ironbee/engine/config-parser.rl"
 	{
         cp->curr->line += 1;
     }
 	break;
 	case 4:
-#line 425 "../../ironbee/engine/config-parser.rl"
+#line 387 "../../ironbee/engine/config-parser.rl"
 	{
         directive = ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
         if (directive == NULL) {
@@ -802,7 +764,7 @@ _eof_trans:
     }
 	break;
 	case 5:
-#line 433 "../../ironbee/engine/config-parser.rl"
+#line 395 "../../ironbee/engine/config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
         ib_cfgparser_node_create(&node, cp);
@@ -849,7 +811,7 @@ _eof_trans:
     }
 	break;
 	case 6:
-#line 478 "../../ironbee/engine/config-parser.rl"
+#line 440 "../../ironbee/engine/config-parser.rl"
 	{
         if (cpbuf_append(cp, *( fsm_vars.p)) != IB_OK) {
             return IB_EALLOC;
@@ -857,13 +819,13 @@ _eof_trans:
     }
 	break;
 	case 7:
-#line 484 "../../ironbee/engine/config-parser.rl"
+#line 446 "../../ironbee/engine/config-parser.rl"
 	{
         cpbuf_clear(cp);
     }
 	break;
 	case 8:
-#line 489 "../../ironbee/engine/config-parser.rl"
+#line 451 "../../ironbee/engine/config-parser.rl"
 	{
         blkname = ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
         if (blkname == NULL) {
@@ -874,7 +836,7 @@ _eof_trans:
     }
 	break;
 	case 9:
-#line 497 "../../ironbee/engine/config-parser.rl"
+#line 459 "../../ironbee/engine/config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
         rc = ib_cfgparser_node_create(&node, cp);
@@ -905,7 +867,7 @@ _eof_trans:
     }
 	break;
 	case 10:
-#line 525 "../../ironbee/engine/config-parser.rl"
+#line 487 "../../ironbee/engine/config-parser.rl"
 	{
         ib_cfgparser_pop_node(cp);
         blkname = NULL;
@@ -916,27 +878,27 @@ _eof_trans:
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 14:
-#line 554 "../../ironbee/engine/config-parser.rl"
+#line 516 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.act = 2;}
 	break;
 	case 15:
-#line 561 "../../ironbee/engine/config-parser.rl"
+#line 523 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.act = 4;}
 	break;
 	case 16:
-#line 553 "../../ironbee/engine/config-parser.rl"
+#line 515 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 17:
-#line 554 "../../ironbee/engine/config-parser.rl"
+#line 516 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 18:
-#line 556 "../../ironbee/engine/config-parser.rl"
+#line 518 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 19:
-#line 561 "../../ironbee/engine/config-parser.rl"
+#line 523 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 20:
@@ -949,27 +911,27 @@ _eof_trans:
 	}
 	break;
 	case 21:
-#line 566 "../../ironbee/engine/config-parser.rl"
+#line 528 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.act = 6;}
 	break;
 	case 22:
-#line 569 "../../ironbee/engine/config-parser.rl"
+#line 531 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.act = 7;}
 	break;
 	case 23:
-#line 565 "../../ironbee/engine/config-parser.rl"
+#line 527 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 24:
-#line 566 "../../ironbee/engine/config-parser.rl"
+#line 528 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 25:
-#line 571 "../../ironbee/engine/config-parser.rl"
+#line 533 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 26:
-#line 569 "../../ironbee/engine/config-parser.rl"
+#line 531 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 27:
@@ -982,31 +944,31 @@ _eof_trans:
 	}
 	break;
 	case 28:
-#line 577 "../../ironbee/engine/config-parser.rl"
+#line 539 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.act = 10;}
 	break;
 	case 29:
-#line 584 "../../ironbee/engine/config-parser.rl"
+#line 546 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.act = 12;}
 	break;
 	case 30:
-#line 575 "../../ironbee/engine/config-parser.rl"
+#line 537 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 31:
-#line 577 "../../ironbee/engine/config-parser.rl"
+#line 539 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 32:
-#line 579 "../../ironbee/engine/config-parser.rl"
+#line 541 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 33:
-#line 577 "../../ironbee/engine/config-parser.rl"
+#line 539 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 34:
-#line 584 "../../ironbee/engine/config-parser.rl"
+#line 546 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 28; goto _again;} }}
 	break;
 	case 35:
@@ -1022,31 +984,31 @@ _eof_trans:
 	}
 	break;
 	case 36:
-#line 589 "../../ironbee/engine/config-parser.rl"
+#line 551 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.act = 14;}
 	break;
 	case 37:
-#line 593 "../../ironbee/engine/config-parser.rl"
+#line 555 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.act = 15;}
 	break;
 	case 38:
-#line 588 "../../ironbee/engine/config-parser.rl"
+#line 550 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 39:
-#line 589 "../../ironbee/engine/config-parser.rl"
+#line 551 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 40:
-#line 597 "../../ironbee/engine/config-parser.rl"
+#line 559 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 41:
-#line 593 "../../ironbee/engine/config-parser.rl"
+#line 555 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 42:
-#line 595 "../../ironbee/engine/config-parser.rl"
+#line 557 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 43:
@@ -1059,38 +1021,38 @@ _eof_trans:
 	}
 	break;
 	case 44:
-#line 610 "../../ironbee/engine/config-parser.rl"
+#line 572 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 32; goto _again;}}}
 	break;
 	case 45:
-#line 611 "../../ironbee/engine/config-parser.rl"
+#line 573 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{        { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 37; goto _again;}}}
 	break;
 	case 46:
-#line 614 "../../ironbee/engine/config-parser.rl"
+#line 576 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 47:
-#line 615 "../../ironbee/engine/config-parser.rl"
+#line 577 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 48:
-#line 616 "../../ironbee/engine/config-parser.rl"
+#line 578 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 49:
-#line 601 "../../ironbee/engine/config-parser.rl"
+#line 563 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 50:
-#line 607 "../../ironbee/engine/config-parser.rl"
+#line 569 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 23; goto _again;} }}
 	break;
 	case 51:
-#line 607 "../../ironbee/engine/config-parser.rl"
+#line 569 "../../ironbee/engine/config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 23; goto _again;} }}
 	break;
-#line 1094 "../../ironbee/engine/config-parser.c"
+#line 1056 "../../ironbee/engine/config-parser.c"
 		}
 	}
 
@@ -1103,7 +1065,7 @@ _again:
 #line 1 "NONE"
 	{ cp->fsm.ts = 0;}
 	break;
-#line 1107 "../../ironbee/engine/config-parser.c"
+#line 1069 "../../ironbee/engine/config-parser.c"
 		}
 	}
 
@@ -1123,7 +1085,7 @@ _again:
 	while ( __nacts-- > 0 ) {
 		switch ( *__acts++ ) {
 	case 0:
-#line 395 "../../ironbee/engine/config-parser.rl"
+#line 357 "../../ironbee/engine/config-parser.rl"
 	{
         rc = IB_EOTHER;
         ib_cfg_log_error(
@@ -1134,7 +1096,7 @@ _again:
     }
 	break;
 	case 1:
-#line 405 "../../ironbee/engine/config-parser.rl"
+#line 367 "../../ironbee/engine/config-parser.rl"
 	{
         pval = qstrdup(cp, mpcfg);
         if (pval == NULL) {
@@ -1144,7 +1106,7 @@ _again:
     }
 	break;
 	case 5:
-#line 433 "../../ironbee/engine/config-parser.rl"
+#line 395 "../../ironbee/engine/config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
         ib_cfgparser_node_create(&node, cp);
@@ -1190,7 +1152,7 @@ _again:
         }
     }
 	break;
-#line 1194 "../../ironbee/engine/config-parser.c"
+#line 1156 "../../ironbee/engine/config-parser.c"
 		}
 	}
 	}
@@ -1198,7 +1160,7 @@ _again:
 	_out: {}
 	}
 
-#line 675 "../../ironbee/engine/config-parser.rl"
+#line 637 "../../ironbee/engine/config-parser.rl"
 
     /* Ensure that our block is always empty on last chunk. */
     if ( is_last_chunk && blkname != NULL ) {

@@ -129,12 +129,6 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
         goto failed;
     }
 
-    /* Create the include tracking list */
-    rc = ib_hash_create(&(cp->includes), pool);
-    if (rc != IB_OK) {
-        goto failed;
-    }
-
     /* Create the parse tree root. */
     rc = ib_cfgparser_node_create(&(cp->root), cp);
     if (rc != IB_OK) {

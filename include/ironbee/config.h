@@ -53,7 +53,6 @@ struct ib_cfgparser_t {
     ib_engine_t   *ib;                /**< Engine */
     ib_mpool_t    *mp;                /**< Memory pool */
     ib_list_t     *stack;             /**< Stack tracking contexts */
-    ib_hash_t     *includes;          /**< Include tracking hash */
     const char    *linebuf;           /**< Line buffer, used for continuation */
 
     /* Parsing states */

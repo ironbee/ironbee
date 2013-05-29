@@ -153,95 +153,44 @@ typedef struct parse_directive_entry_t parse_directive_entry_t;
  * - IB_EALLOC on allocation errors.
  * - Other if there is an internal IronBee error.
  */
-static ib_status_t include_parse_directive_loop_detect(
+static ib_status_t detect_file_loop(
     ib_cfgparser_t *cp,
-    ib_mpool_t *tmp_mp,
     ib_cfgparser_node_t *node
 ) {
     assert(cp != NULL);
     assert(cp->mp != NULL);
-    assert(tmp_mp != NULL);
-    assert(cp->includes != NULL);
     assert(node != NULL);
     assert(node->file != NULL);
 
-    char *directive_loc;     /* file:line of the directive. */
-    size_t directive_loc_sz; /* Size of directive_loc. */
-    char *lookup = NULL;     /* Holder for hash lookup. */
-    long double digits;      /* Digits do we need to print node->line. */
-    size_t printed_size;     /* Used to check snprintf does not truncate. */
-    ib_status_t rc;
-
-    /* Compute the digits required to print the base-10 rep of node->line.
-     * Notice that we +1 the value if it is valid to accomodate floats. */
-    digits = (size_t)log10l(node->line);
-    if (digits == HUGE_VALL) {
-        return IB_EINVAL;
-    }
-    digits += 1; /* Round up. */
-
-    /* strlen + ':' + '\0' + log10(line) */
-    directive_loc_sz = strlen(node->file) + 2 + digits;
-    directive_loc = ib_mpool_alloc(tmp_mp, directive_loc_sz);
-    if (directive_loc == NULL) {
-        return IB_EALLOC;
-    }
-
-    printed_size = snprintf(
-        directive_loc,
-        directive_loc_sz,
-        "%s:%zu",
-        node->file,
-        node->line);
-
-    /* We should always print the whole string. */
-    assert(printed_size < directive_loc_sz);
-
-    /* Check if we've visited this directive location before. */
-    rc = ib_hash_get(cp->includes, &lookup, directive_loc);
-    if (rc == IB_OK) {
-        ib_cfg_log_warning(
-            cp,
-            "Included file \"%s\" loop detected: skipping",
-            directive_loc);
-        for (
-            ib_cfgparser_node_t *tmp_node = node->parent;
-            tmp_node != NULL;
-            tmp_node = tmp_node->parent
-        ) {
-            ib_cfg_log_warning(
+    for (ib_cfgparser_node_t *node2 = node->parent;
+         node2 != NULL;
+         node2 = node2->parent)
+    {
+        /* If a node is at the same file and line, it is clearly a duplciate. */
+        if (node->line == node2->line && strcmp(node->file, node2->file) == 0) {
+            ib_cfg_log_error(
                 cp,
-                "\t included from %s:%zu",
-                tmp_node->file,
-                tmp_node->line);
+                "File include cycle found at %s:%zu.",
+                node->file,
+                node->line);
+
+            for (ib_cfgparser_node_t *node3 = node->parent;
+                 node3 != NULL;
+                 node3 = node2->parent)
+            {
+                /* Skip nodes that are not parse directives, 
+                 * such as the root node and file nodes. */
+                if (node3->type == IB_CFGPARSER_NODE_PARSE_DIRECTIVE) {
+                    ib_cfg_log_error(
+                        cp,
+                        "\t... included from %s:%zu.",
+                        node3->file,
+                        node3->line);
+                }
+            }
+
+            return IB_EINVAL;
         }
-
-        return IB_EINVAL;
-    }
-    else if (rc != IB_ENOENT) {
-        ib_cfg_log_error(
-            cp,
-            "Error looking up include file \"%s\": %s",
-            directive_loc,
-            strerror(errno));
-        return rc;
-    }
-
-    /* If we end up here, the file was not found.
-     * We must record that we've now seen the file and line number. */
-
-    /* First, copy the string from the cfg mp, not the tmp mp. */
-    lookup = ib_mpool_strdup(cp->mp, directive_loc);
-    if (lookup == NULL) {
-        return IB_EALLOC;
-    }
-
-    /* Record the directive location. */
-    rc = ib_hash_set(cp->includes, lookup, lookup);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Error adding include file to hash \"%s\": %s",
-                         lookup, strerror(errno));
     }
 
     return IB_OK;
@@ -331,7 +280,7 @@ static ib_status_t include_parse_directive(
         freeme = real;
     }
 
-    rc = include_parse_directive_loop_detect(cp, tmp_mp, node);
+    rc = detect_file_loop(cp, node);
     if (freeme != NULL) {
         free(freeme);
         freeme = NULL;
