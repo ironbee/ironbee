@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/config.h>
+#include "config_private.h"
 
 #include "config-parser.h"
 #include "engine_private.h"
@@ -92,40 +93,38 @@ ib_status_t ib_cfgparser_node_create(ib_cfgparser_node_t **node,
     return IB_OK;
 }
 
-/* -- Configuration Parser Routines -- */
-
-ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
-                                ib_engine_t *ib)
+ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
 {
     assert(pcp != NULL);
     assert(ib != NULL);
 
-    ib_mpool_t *pool;
+    ib_mpool_t *mp;
     ib_status_t rc;
     ib_cfgparser_t *cp;
 
     *pcp = NULL;
 
     /* Create parser memory pool */
-    rc = ib_mpool_create(&pool, "cfgparser", ib->mp);
+    rc = ib_mpool_create(&mp, "cfgparser", ib->mp);
     if (rc != IB_OK) {
-        rc = IB_EALLOC;
-        goto failed;
+        return IB_EALLOC;
     }
 
     /* Create the configuration parser object from the memory pool */
-    cp = (ib_cfgparser_t *)ib_mpool_calloc(pool, sizeof(*cp), 1);
+    cp = (ib_cfgparser_t *)ib_mpool_calloc(mp, sizeof(*cp), 1);
     if (cp == NULL) {
         rc = IB_EALLOC;
         goto failed;
     }
+
     cp->ib = ib;
-    cp->mp = pool;
+    cp->mp = mp;
 
     /* Create the stack */
-    rc = ib_list_create(&(cp->stack), pool);
+    rc = ib_list_create(&(cp->stack), mp);
     if (rc != IB_OK) {
-        goto failed;
+        ib_mpool_destroy(mp);
+        return IB_EALLOC;
     }
 
     /* Create the parse tree root. */
@@ -143,7 +142,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
     /* Build a buffer for aggregating tokens into. */
     cp->buffer_sz = 1024;
     cp->buffer_len = 0;
-    cp->buffer = ib_mpool_alloc(pool, cp->buffer_sz);
+    cp->buffer = ib_mpool_alloc(mp, cp->buffer_sz);
 
     /* Other fields are NULLed via calloc */
     *pcp = cp;
@@ -151,7 +150,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
 
 failed:
     /* Make sure everything is cleaned up on failure */
-    ib_engine_pool_destroy(ib, pool);
+    ib_engine_pool_destroy(ib, mp);
 
     return rc;
 }
@@ -193,9 +192,8 @@ ib_status_t ib_cfgparser_push_node(ib_cfgparser_t *cp,
 
 /// @todo Create a ib_cfgparser_parse_ex that can parse non-files (DBs, etc)
 
-ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
-                               const char *file)
-{
+
+ib_status_t ib_cfgparser_parse_private(ib_cfgparser_t *cp, const char *file) {
     int ec             = 0;    /* Error code for sys calls. */
     int fd             = 0;    /* File to read. */
     const size_t bufsz = 8192; /* Buffer size. */
@@ -253,7 +251,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
         ib_cfg_log_debug3(cp, "Read a %zd byte chunk", buflen);
 
         if ( buflen == 0 ) { /* EOF */
-            rc = ib_cfgparser_parse_buffer(cp, buf, buflen, true);
+            rc = ib_cfgparser_ragel_parse_chunk(cp, buf, buflen, true);
             if (rc != IB_OK) {
                 ++error_count;
                 error_rc = rc;
@@ -261,7 +259,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
             break;
         }
         else if ( buflen > 0 ) {
-            rc = ib_cfgparser_parse_buffer(cp, buf, buflen, false);
+            rc = ib_cfgparser_ragel_parse_chunk(cp, buf, buflen, false);
             if (rc != IB_OK) {
                 ++error_count;
                 error_rc = rc;
@@ -314,90 +312,40 @@ cleanup:
     return rc;
 }
 
+ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
+{
+    ib_status_t rc;
+
+    rc = ib_cfgparser_parse_private(cp, file);
+
+    /* Reset the parser. */
+    cp->curr = cp->root;
+
+    return rc;
+}
+
 ib_status_t ib_cfgparser_parse_buffer(
     ib_cfgparser_t *cp,
     const char *buffer,
     size_t length,
     bool more
 ) {
-    ib_status_t rc;
-    const char *end;
-
     assert(cp != NULL);
     assert(buffer != NULL);
 
-    /* If the previous line ended with a continuation character,
-     * join it with this line. */
-    if (cp->linebuf != NULL) {
-        char *newbuf;
-        size_t newlen = strlen(cp->linebuf);
-
-        /* Skip leading whitespace */
-        while ( (length > 0) && (isspace(*buffer) != 0) ) {
-            ++buffer;
-            --length;
-        }
-        newlen += (length + 2);
-        newbuf = (char *)ib_mpool_alloc(cp->mp, newlen);
-        if (newbuf == NULL) {
-            ib_cfg_log_error(cp,
-                "Unable to allocate line continuation buffer"
-            );
-            return IB_EALLOC;
-        }
-        strcpy(newbuf, cp->linebuf);
-        strcat(newbuf, " ");
-        strncat(newbuf, buffer, length);
-        length = newlen - 1;
-        *(newbuf+length) = '\0';
-        buffer = newbuf;
-        cp->linebuf = NULL;
-    }
+    ib_status_t rc;
 
     if (length == 0) {
         return IB_OK;
     }
 
-    /* Handle lines that end with a backslash */
-    end = buffer + (length - 1);
-    if (*end == '\n') {
-        if (end == buffer) {
-            return IB_OK;
-        }
-        --end;
-    }
-    if (*end == '\r') {
-        if (end == buffer) {
-            return IB_OK;
-        }
-        --end;
-    }
-    if (*end == '\\') {
-        size_t len = end - buffer;
-        char *newbuf = (char *)ib_mpool_alloc(cp->mp, len + 1);
-        if (newbuf == NULL) {
-            ib_cfg_log_error(cp,
-                "Unable to allocate line continuation buffer"
-            );
-            return IB_EALLOC;
-        }
-        if (len > 0) {
-            memcpy(newbuf, buffer, len);
-        }
-        *(newbuf+len) = '\0';
-        cp->linebuf = newbuf;
-        return IB_OK;
-    }
-
     ib_cfg_log_debug(cp, "Passing \"%.*s\" to Ragel", (int)length, buffer);
-    rc = ib_cfgparser_ragel_parse_chunk(cp,
-                                        buffer,
-                                        length,
-                                        (more ? 1 : 0) );
+
+    rc = ib_cfgparser_ragel_parse_chunk(cp, buffer, length, (more ? 1 : 0) );
 
     if (!more) {
-        /* Zero Ragel parser state. */
-        memset(&(cp->fsm), 0, sizeof(cp->fsm));
+        /* Reset the parser. */
+        cp->curr = cp->root;
     }
 
     return rc;
@@ -437,9 +385,9 @@ static ib_status_t cfgparser_apply_node_children_helper(
  * This sets the @c curr member of @a cp to @a node.
  *
  * @returns
- *   - IB_OK on success.
- *   - Other on error. This failure is not failure. If a recursive
- *     call fails, the first failure code is returned to the caller.
+ * - IB_OK on success.
+ * - Other on error. Failure is not fatal. If a recursive
+ *   call fails, the first failure code is returned to the caller.
  */
 static ib_status_t cfgparser_apply_node_helper(
     ib_cfgparser_t *cp,
@@ -452,6 +400,7 @@ static ib_status_t cfgparser_apply_node_helper(
 
     ib_status_t rc = IB_OK;
     ib_status_t tmp_rc;
+    ib_cfgparser_node_t *prev_curr;
 
     ib_cfg_log_debug(
         cp,
@@ -477,7 +426,15 @@ static ib_status_t cfgparser_apply_node_helper(
                 node->directive);
             break;
         case IB_CFGPARSER_NODE_DIRECTIVE:
+
+            assert(
+                (ib_list_elements(node->children) == 0) &&
+                "Directives may nove have children.");
+
             ib_log_debug(ib, "Applying directive %s", node->directive);
+
+            /* Store previous current node. */
+            prev_curr = cp->curr;
 
             /* Set the current node before callbacks. */
             cp->curr = node;
@@ -497,10 +454,10 @@ static ib_status_t cfgparser_apply_node_helper(
                     rc = tmp_rc;
                 }
             }
-            tmp_rc = cfgparser_apply_node_children_helper(cp, ib, node);
-            if (rc == IB_OK) {
-                rc = tmp_rc;
-            }
+
+            /* Restore current node. */
+            cp->curr = prev_curr;
+
             break;
 
         case IB_CFGPARSER_NODE_BLOCK:
@@ -573,7 +530,11 @@ ib_status_t ib_cfgparser_apply(ib_cfgparser_t *cp, ib_engine_t *ib)
     assert(cp->curr != NULL);
     assert(cp->root != NULL);
 
-    return ib_cfgparser_apply_node(cp, cp->root, ib);
+    ib_status_t rc;
+
+    rc = ib_cfgparser_apply_node(cp, cp->root, ib);
+
+    return rc;
 }
 
 ib_status_t ib_cfgparser_apply_node(
@@ -677,9 +638,7 @@ ib_status_t ib_cfgparser_destroy(ib_cfgparser_t *cp)
 {
     assert(cp != NULL);
 
-    if (cp != NULL) {
-        ib_engine_pool_destroy(cp->ib, cp->mp);
-    }
+    ib_engine_pool_destroy(cp->ib, cp->mp);
 
     return IB_OK;
 }

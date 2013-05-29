@@ -43,6 +43,7 @@
 #include <ironbee/path.h>
 
 #include "config-parser.h"
+#include "config_private.h"
 
 /* Caused by Ragel */
 #ifdef __clang__
@@ -167,7 +168,10 @@ static ib_status_t detect_file_loop(
          node2 = node2->parent)
     {
         /* If a node is at the same file and line, it is clearly a duplciate. */
-        if (node->line == node2->line && strcmp(node->file, node2->file) == 0) {
+        if (node2->type == IB_CFGPARSER_NODE_PARSE_DIRECTIVE
+        &&  node->line == node2->line
+        &&  strcmp(node->file, node2->file) == 0)
+        {
             ib_cfg_log_error(
                 cp,
                 "File include cycle found at %s:%zu.",
@@ -176,14 +180,15 @@ static ib_status_t detect_file_loop(
 
             for (ib_cfgparser_node_t *node3 = node->parent;
                  node3 != NULL;
-                 node3 = node2->parent)
+                 node3 = node3->parent)
             {
                 /* Skip nodes that are not parse directives, 
                  * such as the root node and file nodes. */
                 if (node3->type == IB_CFGPARSER_NODE_PARSE_DIRECTIVE) {
                     ib_cfg_log_error(
                         cp,
-                        "\t... included from %s:%zu.",
+                        "\t... %s included from %s:%zu.",
+                        node3->directive,
                         node3->file,
                         node3->line);
                 }
@@ -331,7 +336,7 @@ static ib_status_t include_parse_directive(
     }
 
     ib_cfg_log_debug(cp, "Including '%s'", incfile);
-    rc = ib_cfgparser_parse(cp, incfile);
+    rc = ib_cfgparser_parse_private(cp, incfile);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error parsing included file \"%s\": %s",
 	                 incfile, ib_status_to_string(rc));
@@ -405,6 +410,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         if (node->file == NULL) {
             return IB_EALLOC;
         }
+        node->parent = cp->curr;
         node->line = cp->curr->line;
         node->type = IB_CFGPARSER_NODE_DIRECTIVE;
         ib_list_node_t *lst_node;

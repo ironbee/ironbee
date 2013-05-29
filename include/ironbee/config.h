@@ -47,13 +47,16 @@ extern "C" {
 
 typedef struct ib_dirmap_init_t ib_dirmap_init_t;
 typedef struct ib_cfgparser_node_t ib_cfgparser_node_t;
+typedef struct ib_cfgparser_t ib_cfgparser_t;
 
-/// @todo Should probably be private structure
+/**
+ * The parsing context wraps around important values used during parsing.
+ */
 struct ib_cfgparser_t {
-    ib_engine_t   *ib;                /**< Engine */
-    ib_mpool_t    *mp;                /**< Memory pool */
-    ib_list_t     *stack;             /**< Stack tracking contexts */
-    const char    *linebuf;           /**< Line buffer, used for continuation */
+    ib_engine_t    *ib;                /**< Engine */
+    ib_cfgparser_t *cp;                /**< Configuration parser. */
+    ib_mpool_t     *mp;                /**< Memory pool */
+    ib_list_t      *stack;             /**< Stack tracking contexts */
 
     /* Parsing states */
     ib_context_t  *cur_ctx;           /**< Current context */
@@ -97,9 +100,9 @@ struct ib_cfgparser_t {
         int         stack[1024]; /**< Stack of states. */
     } fsm;
 
-    size_t buffer_sz;  /**< Size of buffer. */
-    size_t buffer_len; /**< Length of string stored in buffer. */
-    char *buffer;      /**< Buffer for building tokens. */
+    size_t  buffer_sz;  /**< Size of buffer. */
+    size_t  buffer_len; /**< Length of string stored in buffer. */
+    char   *buffer;     /**< Buffer for building tokens. */
 };
 
 /**
@@ -350,6 +353,7 @@ struct ib_dirmap_init_t {
 ib_status_t DLL_PUBLIC ib_cfgparser_create(ib_cfgparser_t **pcp,
                                            ib_engine_t *ib);
 
+
 /**
  * Create a new configuration parser node.
  *
@@ -507,7 +511,6 @@ ib_status_t ib_cfgparser_context_current(const ib_cfgparser_t *cp,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgparser_destroy(ib_cfgparser_t *cp);
-
 
 /**
  * Register directives with the engine.
