@@ -31,6 +31,7 @@
 #include <ironbee/field.h>
 #include <ironbee/flags.h>
 #include <ironbee/hash.h>
+#include <ironbee/log.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
@@ -811,6 +812,7 @@ static inline ib_status_t modhtp_check_tx(
 
     htp_log_t       *log;
     modhtp_txdata_t *txdata;
+    ib_log_level_t   level;
 
     /* Get the transaction data */
     txdata = (modhtp_txdata_t *)htp_tx_get_user_data(htx);
@@ -834,11 +836,14 @@ static inline ib_status_t modhtp_check_tx(
         return IB_OK;
     }
 
-    ib_log_notice_tx(txdata->itx,
-                     "modhtp/%s: Parser error %d \"%s\"",
-                     label,
-                     log->code,
-                     (log->msg == NULL) ? "UNKNOWN" : log->msg);
+    /* For empty responses, log the message at debug instead of notice */
+    level = (ib_tx_flags_isset(txdata->itx, IB_TX_FRES_HAS_DATA)) ?
+        IB_LOG_NOTICE : IB_LOG_DEBUG;
+    ib_log_tx(txdata->itx, level,
+              "modhtp/%s: Parser error %d \"%s\"",
+              label,
+              log->code,
+              (log->msg == NULL) ? "UNKNOWN" : log->msg);
     txdata->error_code = log->code;
     if (log->msg == NULL) {
         txdata->error_msg = "UNKNOWN";
