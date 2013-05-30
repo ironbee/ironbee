@@ -28,6 +28,20 @@ test_ibmod_engine_shutdown_SOURCES = test_ibmod_engine_shutdown.cpp
 test_ibmod_engine_shutdown_LDADD = \
 	$(LDADD) \
 	$(top_builddir)/ironbeepp/libibpp.la
+
+
+if MODERN_COMPILER
+noinst_PROGRAMS = psparse
+psparse_LDADD = ../libparser_suite.la
+psparse_SOURCES = psparse.cpp
+psparse_CXXFLAGS = -std=c++11
+if DARWIN
+if CC_IS_CLANG
+psparse_CXXFLAGS += -stdlib=libc++
+endif
+endif
+endif
+
 endif
 
 TESTS=$(check_PROGRAMS)

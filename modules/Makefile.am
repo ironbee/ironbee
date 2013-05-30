@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I ../acinclude
 
 include $(top_srcdir)/build/common.mk
 
-SUBDIRS = tests
+SUBDIRS = . tests
 
 pkglibdir = $(libdir)
 
@@ -25,6 +25,19 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_libinjection.la \
                      ibmod_log_pipe.la \
                      ibmod_sqltfn.la
+
+if MODERN_COMPILER
+if CPP
+pkglib_LTLIBRARIES += libparser_suite.la
+libparser_suite_la_SOURCES = parser_suite.cpp
+libparser_suite_la_CXXFLAGS = -std=c++11
+if DARWIN
+if CC_IS_CLANG
+libparser_suite_la_CXXFLAGS += -stdlib=libc++
+endif
+endif
+endif
+endif
 
 if ENABLE_LUA
 pkglib_LTLIBRARIES += ibmod_lua.la
