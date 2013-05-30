@@ -134,19 +134,20 @@ typedef enum {
 #define IB_TX_FRES_SEENBODY     (1 << 14) /**< Response body seen */
 #define IB_TX_FRES_SEENTRAILER  (1 << 15) /**< Response trailer seen */
 #define IB_TX_FRES_FINISHED     (1 << 16) /**< Response finished  */
-#define IB_TX_FSUSPICIOUS       (1 << 17) /**< Transaction is suspicious */
-#define IB_TX_BLOCK_ADVISORY    (1 << 18) /**< Blocking this tx is advised */
-#define IB_TX_BLOCK_PHASE       (1 << 19) /**< Block tx after this phase */
-#define IB_TX_BLOCK_IMMEDIATE   (1 << 20) /**< Block tx ASAP */
-#define IB_TX_ALLOW_PHASE       (1 << 21) /**< Allow current phase */
-#define IB_TX_ALLOW_REQUEST     (1 << 22) /**< Allow all request phases */
-#define IB_TX_ALLOW_ALL         (1 << 23) /**< Allow transaction */
-#define IB_TX_FPOSTPROCESS      (1 << 24) /**< Post-processing occurred */
-#define IB_TX_FLOGGING          (1 << 25) /**< Logging occurred */
-#define IB_TX_FINSPECT_REQHDR   (1 << 26) /**< Inspect request header */
-#define IB_TX_FINSPECT_REQBODY  (1 << 27) /**< Inspect request body */
-#define IB_TX_FINSPECT_RSPHDR   (1 << 28) /**< Inspect response header */
-#define IB_TX_FINSPECT_RSPBODY  (1 << 29) /**< Inspect response body */
+#define IB_TX_FRES_HAS_DATA     (1 << 17) /**< Non-empty response */
+#define IB_TX_FSUSPICIOUS       (1 << 18) /**< Transaction is suspicious */
+#define IB_TX_BLOCK_ADVISORY    (1 << 19) /**< Blocking this tx is advised */
+#define IB_TX_BLOCK_PHASE       (1 << 20) /**< Block tx after this phase */
+#define IB_TX_BLOCK_IMMEDIATE   (1 << 21) /**< Block tx ASAP */
+#define IB_TX_ALLOW_PHASE       (1 << 22) /**< Allow current phase */
+#define IB_TX_ALLOW_REQUEST     (1 << 23) /**< Allow all request phases */
+#define IB_TX_ALLOW_ALL         (1 << 24) /**< Allow transaction */
+#define IB_TX_FPOSTPROCESS      (1 << 25) /**< Post-processing occurred */
+#define IB_TX_FLOGGING          (1 << 26) /**< Logging occurred */
+#define IB_TX_FINSPECT_REQHDR   (1 << 27) /**< Inspect request header */
+#define IB_TX_FINSPECT_REQBODY  (1 << 28) /**< Inspect request body */
+#define IB_TX_FINSPECT_RSPHDR   (1 << 29) /**< Inspect response header */
+#define IB_TX_FINSPECT_RSPBODY  (1 << 30) /**< Inspect response body */
 
 /** Capture collection name */
 #define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */

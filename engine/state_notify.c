@@ -850,6 +850,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
          (line->raw != NULL) &&
          (ib_bytestr_const_ptr(line->raw) != NULL) )
     {
+        ib_tx_flags_set(tx, IB_TX_FRES_HAS_DATA);
         rc = ib_state_notify_resp_line(ib, tx, response_started_event, line);
         if (rc != IB_OK) {
             return rc;
@@ -883,6 +884,7 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
     if (tx->t.response_started == 0) {
         tx->t.response_started = ib_clock_get_time();
     }
+    ib_tx_flags_set(tx, IB_TX_FRES_HAS_DATA);
 
     if ( tx->response_header == NULL ) {
         tx->response_header = header;
@@ -1033,6 +1035,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
         tx->t.response_body = ib_clock_get_time();
         ib_tx_flags_set(tx, IB_TX_FRES_SEENBODY);
     }
+    ib_tx_flags_set(tx, IB_TX_FRES_HAS_DATA);
 
     /* Notify the parser of response body data. */
     if (iface->response_body_data != NULL) {
