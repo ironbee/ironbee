@@ -2110,6 +2110,11 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(tx->ctx != NULL);
     assert(cbdata != NULL);
 
+    /* If this is an empty request, ignore the transaction */
+    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA | IB_TX_FRES_HAS_DATA)) {
+        return IB_OK;
+    }
+
     /* The rule execution object isn't created if tx_started never notified.
      * This can happen if a connection is created to ATS, but no data
      * is actually pushed through the connection. */
