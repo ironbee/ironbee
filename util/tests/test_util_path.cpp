@@ -225,21 +225,68 @@ public:
     }
 };
 
-TEST_P(TestNormalizePath, runtests)
+TEST_P(TestNormalizePath, RunTestInplaceNul)
 {
     TestNormalizePath_t p = GetParam();
     TextBuf input(p.input);
     TextBuf expected(p.expected);
 
     RunTestInplaceNul(input, expected);
-    RunTestInplaceEx(input, expected);
-    RunTestCowNul(input, expected);
-    RunTestCowEx(input, expected);
-    RunTestCopyNul(input, expected);
-    RunTestCopyEx(input, expected);
-    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
 }
 
+TEST_P(TestNormalizePath, RunTestInplaceEx)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestInplaceEx(input, expected);
+}
+
+TEST_P(TestNormalizePath, RunTestCowNul)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestCowNul(input, expected);
+}
+
+TEST_P(TestNormalizePath, RunTestCowEx)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestCowEx(input, expected);
+}
+
+TEST_P(TestNormalizePath, RunTestCopyNul)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestCopyNul(input, expected);
+}
+
+TEST_P(TestNormalizePath, RunTestCopyEx)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestCopyEx(input, expected);
+}
+
+TEST_P(TestNormalizePath, RunTestBuf)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
+}
 
 INSTANTIATE_TEST_CASE_P(Basic, TestNormalizePath, ::testing::Values(
         TestNormalizePath_t("", ""),
@@ -342,18 +389,66 @@ public:
     }
 };
 
-TEST_P(TestNormalizePathWin, runtests)
+TEST_P(TestNormalizePathWin, RunTestInplaceNul)
 {
     TestNormalizePath_t p = GetParam();
     TextBuf input(p.input);
     TextBuf expected(p.expected);
 
     RunTestInplaceNul(input, expected);
+}
+
+TEST_P(TestNormalizePathWin, RunTestInplaceEx)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
     RunTestInplaceEx(input, expected);
+}
+
+TEST_P(TestNormalizePathWin, RunTestCowNul)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
     RunTestCowNul(input, expected);
+}
+
+TEST_P(TestNormalizePathWin, RunTestCowEx)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
     RunTestCowEx(input, expected);
+}
+
+TEST_P(TestNormalizePathWin, RunTestCopyNul)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
     RunTestCopyNul(input, expected);
+}
+
+TEST_P(TestNormalizePathWin, RunTestCopyEx)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
     RunTestCopyEx(input, expected);
+}
+
+TEST_P(TestNormalizePathWin, RunTestBuf)
+{
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
     RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
 }
 
