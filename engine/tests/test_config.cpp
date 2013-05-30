@@ -32,6 +32,16 @@ class TestConfig : public BaseFixture
 
     public:
 
+    const ib_cfgparser_t *GetParser() const
+    {
+        return cfgparser;
+    }
+
+    const ib_cfgparser_node_t *GetParseTree() const
+    {
+        return cfgparser->root;
+    }
+
     virtual void SetUp()
     {
         ib_status_t rc;
@@ -89,37 +99,96 @@ class TestConfig : public BaseFixture
     }
 };
 
-TEST_F(TestConfig, simpleparse)
-{
-    ASSERT_IB_OK(config("LogLevel 9"));
+
+/**
+ * Fixutre for testing the parse tree.
+ *
+ * Many isomorphic configurations are presented to the parser
+ * and they must all result in the same configuration.
+ */
+class FailingParseTest :
+   public TestConfig,
+   public ::testing::WithParamInterface<const char*>
+{ };
+
+class PassingParseTest :
+   public TestConfig,
+   public ::testing::WithParamInterface<const char*>
+{ };
+
+TEST_P(FailingParseTest, FailConfig) {
+    ASSERT_NE(IB_OK, config(GetParam(), 1));
 }
 
-TEST_F(TestConfig, valid_module)
-{
-    ASSERT_IB_OK(config("ModuleBasePath "IB_XSTRINGIFY(MODULE_BASE_PATH)));
-    ASSERT_IB_OK(config("LoadModule ibmod_htp.so"));
+TEST_P(PassingParseTest, SuccessConfig) {
+    ASSERT_EQ(IB_OK, config(GetParam(), 1));
 }
 
-TEST_F(TestConfig, false_directive)
+INSTANTIATE_TEST_CASE_P(
+    IncompleteSiteBlock,
+    FailingParseTest,
+    ::testing::Values(
+        "<Site default>\n"
+        "   Hostname *\n"
+        "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+
+        "</Site",
+
+        "<Site defau",
+
+        "<Site default>\n",
+
+        "<Site default>\n"
+        "   Hostname *\n"
+        "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+));
+
+INSTANTIATE_TEST_CASE_P(
+    SimpleConfigErrors,
+    FailingParseTest,
+    ::testing::Values(
+    "blah blah",
+    "blah blah\n",
+    "LoadModule doesnt_exist.so",
+    "LoadModule doesnt_exist.so\n"
+    ));
+
+INSTANTIATE_TEST_CASE_P(
+    SimpleConfig,
+    PassingParseTest,
+    ::testing::Values(
+        "LogLevel 9",
+
+        "ModuleBasePath "IB_XSTRINGIFY(MODULE_BASE_PATH)"\n"
+        "LoadModule ibmod_htp.so"
+    ));
+
+class ParseTreeTest :
+   public TestConfig,
+   public ::testing::WithParamInterface<const char*>
 {
-    ASSERT_NE(IB_OK, config("blah blah", 1));
+    public:
+    ib_status_t setup_rc;
+
+    virtual void SetUp()
+    {
+        TestConfig::SetUp();
+        setup_rc = config(GetParam());
+    }
+};
+
+TEST_P(ParseTreeTest, IB_OK) {
+    ASSERT_EQ(IB_OK, setup_rc);
 }
 
-TEST_F(TestConfig, incomplete_site_block)
-{
-    ASSERT_NE(IB_OK, config("<Site default>\n"
-                            "Hostname *\n"
-                            "SiteId AAAABBBB-1111-2222-3333-000000000000\n"
-                            "</Site", 1));
-    ASSERT_NE(IB_OK, config("<Site defau",  1));
-    ASSERT_NE(IB_OK, config("<Site default>\n", 1));
-    ASSERT_NE(IB_OK, config("<Site default>\n"
-                            "Hostname *\n"
-                            "SiteId AAAABBBB-1111-2222-3333-000000000000\n",
-                            1));
+TEST_P(ParseTreeTest, RootNodeIsRoot) {
+    ASSERT_EQ(IB_CFGPARSER_NODE_ROOT, GetParseTree()->type);
+    ASSERT_EQ(NULL, GetParseTree()->parent);
 }
 
-TEST_F(TestConfig, unloadable_module)
-{
-    ASSERT_NE(IB_OK, config("LoadModule doesnt_exist.so", 1));
-}
+INSTANTIATE_TEST_CASE_P(
+    SimpleConfig,
+    ParseTreeTest,
+    ::testing::Values(
+    "LogLevel 1"
+));
