@@ -359,9 +359,13 @@ ib_status_t ib_managed_collection_persist_tx(
     const ib_list_node_t *node;
     ib_status_t rc = IB_OK;
 
+    /* If this is an empty request, do nothing */
+    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA | IB_TX_FRES_HAS_DATA)) {
+        return IB_OK;
+    }
     /* If there is no list created, nothing to do */
     if (tx->managed_collections == NULL) {
-        ib_log_trace_tx(tx, "Not managed collections to persist");
+        ib_log_trace_tx(tx, "No managed collections to persist");
         return IB_OK;
     }
 
