@@ -307,9 +307,10 @@ ib_status_t ib_state_notify_request_started(
          (line->raw == NULL) ||
          (ib_bytestr_const_ptr(line->raw) == NULL) )
     {
-        ib_log_error_tx(tx, "Request started with no line");
+        ib_log_debug_tx(tx, "Request started with no line");
     }
     else {
+        ib_tx_flags_set(tx, IB_TX_FREQ_HAS_DATA);
         rc = ib_state_notify_req_line(ib, tx, request_started_event, line);
         if (rc != IB_OK) {
             return rc;
@@ -569,6 +570,7 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
     if (tx->t.request_started == 0) {
         tx->t.request_started = ib_clock_get_time();
     }
+    ib_tx_flags_set(tx, IB_TX_FREQ_HAS_DATA);
 
     if ( tx->request_header == NULL ) {
         tx->request_header = header;
@@ -691,6 +693,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
         ib_log_alert(ib, "Failed to fetch parser interface.");
         return IB_EUNKNOWN;
     }
+    ib_tx_flags_set(tx, IB_TX_FREQ_HAS_DATA);
 
     /* Generate the request line event if it hasn't been seen */
     if (! ib_tx_flags_isset(tx, IB_TX_FREQ_SEENLINE)) {
@@ -928,8 +931,8 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
         /* For HTTP/0.9 there is no response line, so this is normal, but
          * for others this is not normal and should be logged. */
         if (!ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
-            ib_log_warning_tx(tx, "Automatically triggering %s",
-                              ib_state_event_name(response_started_event));
+            ib_log_debug_tx(tx, "Automatically triggering %s",
+                            ib_state_event_name(response_started_event));
         }
         rc = ib_state_notify_response_started(ib, tx, NULL);
         if (rc != IB_OK) {
