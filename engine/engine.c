@@ -1042,6 +1042,7 @@ void ib_tx_destroy(ib_tx_t *tx)
     assert(tx->conn != NULL);
     assert(tx->conn->tx_first != NULL);
 
+    ib_conn_t *conn = tx->conn;
     ib_tx_t *curr;
     ib_tx_t *prev = NULL;
     bool found = false;
@@ -1063,7 +1064,7 @@ void ib_tx_destroy(ib_tx_t *tx)
     }
 
     /* Find the tx in the list */
-    for (curr = tx->conn->tx_first; curr != NULL; curr = curr->next) {
+    for (curr = conn->tx_first; curr != NULL; curr = curr->next) {
         if (curr == tx) {
             found = true;
             break;
@@ -1073,19 +1074,19 @@ void ib_tx_destroy(ib_tx_t *tx)
     assert(found);
 
     /* Update the first and last pointers */
-    if (tx->conn->tx_first == tx) {
-        tx->conn->tx_first = tx->next;
-        tx->conn->tx = tx->next;
+    if (conn->tx_first == tx) {
+        conn->tx_first = tx->next;
+        conn->tx = tx->next;
     }
-    if (tx->conn->tx_last == tx) {
-        tx->conn->tx_last = NULL;
+    if (conn->tx_last == tx) {
+        assert(tx->next == NULL);
+        conn->tx_last = prev;
     }
 
     /* Remove tx from the list */
     if (prev != NULL) {
         prev->next = tx->next;
     }
-    tx->next = NULL;
 
     /// @todo Probably need to update state???
     ib_engine_pool_destroy(tx->ib, tx->mp);
