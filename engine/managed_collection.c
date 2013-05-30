@@ -351,7 +351,7 @@ ib_status_t ib_managed_collection_persist_tx(
     ib_status_t rc = IB_OK;
 
     /* If this is an empty request, do nothing */
-    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA | IB_TX_FRES_HAS_DATA)) {
         return IB_OK;
     }
     /* If there is no list created, nothing to do */
