@@ -29,6 +29,7 @@
 #include <http_config.h>
 #include <http_log.h>
 #include <util_filter.h>
+#include <assert.h>
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -432,6 +433,8 @@ static int ironbee_sethdr(void *data, const char *key, const char *value)
  */
 static apr_status_t ib_req_cleanup(void *data)
 {
+    assert(ironbee != NULL);
+
     ib_status_t rc;
     request_rec *r = data;
     ironbee_req_ctx *ctx = ap_get_module_config(r->request_config,
@@ -1139,6 +1142,8 @@ static ib_status_t ironbee_conn_init(conn_rec *conn,
  */
 static apr_status_t ironbee_conn_cleanup(void *arg)
 {
+    assert(ironbee != NULL);
+
     ib_state_notify_conn_closed(ironbee, (ib_conn_t*)arg);
     ib_conn_destroy((ib_conn_t*)arg);
     return APR_SUCCESS;
@@ -1152,6 +1157,8 @@ static apr_status_t ironbee_conn_cleanup(void *arg)
  */
 static int ironbee_pre_conn(conn_rec *conn, void *csd)
 {
+    assert(ironbee != NULL);
+
     ib_conn_t *iconn;
     ib_status_t rc;
 
@@ -1181,6 +1188,8 @@ static int ironbee_pre_conn(conn_rec *conn, void *csd)
  */
 static apr_status_t ironbee_engine_cleanup(void *data)
 {
+    assert(ironbee != NULL);
+
     ib_engine_destroy(ironbee);
     return APR_SUCCESS;
 }
@@ -1213,8 +1222,12 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
 
     rc = ib_engine_create(&ironbee, &ibplugin);
     if (rc != IB_OK) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
+                     "Ironbee failed to create engine! (%d)", rc);
         return IB2AP(rc);
     }
+
+    assert(ironbee != NULL);
 
     if (ironbee_log_active) {
         ib_util_log_level(ironbee_log_level);
@@ -1223,8 +1236,11 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
     }
 
     rc = ib_engine_init(ironbee);
-    if (rc != IB_OK)
+    if (rc != IB_OK) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
+                     "Ironbee failed to initialize engine! (%d)", rc);
         return IB2AP(rc);
+    }
     /* Tie the Ironbee lifetime to the server */
     apr_pool_cleanup_register(pool, NULL, ironbee_engine_cleanup,
                               apr_pool_cleanup_null);
@@ -1234,10 +1250,14 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
     /* Parse the config file. */
     rc = ib_cfgparser_create(&cp, ironbee);
     if ( (rc != IB_OK) || (cp == NULL) ) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
+                     "Ironbee failed to create config parser! (%d)", rc);
         return IB2AP(rc);
     }
     rc = ib_engine_config_started(ironbee, cp);
     if (rc != IB_OK) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
+                     "Ironbee failed to start configuration! (%d)", rc);
         return IB2AP(rc);
     }
     ctx = ib_context_main(ironbee);
@@ -1245,12 +1265,12 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
     ib_context_set_num(ctx, "logger.log_level", 4);
 
     if (ironbee_config_file == NULL) {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_DEBUG, 0, s,
                      IB_PRODUCT_NAME ": No config specified with IronBeeConfig directive");
     }
     rc = ib_cfgparser_parse(cp, ironbee_config_file);
     if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
                      IB_PRODUCT_NAME ": Failed to parse IronBee configuration");
         ib_engine_config_finished(ironbee);
         ib_cfgparser_destroy(cp);
@@ -1259,12 +1279,16 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
 
     rc = ib_engine_config_finished(ironbee);
     if (rc != IB_OK) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
+                     "Ironbee failed to finish configuration! (%d)", rc);
         ib_cfgparser_destroy(cp);
         return IB2AP(rc);
     }
 
     rc = ib_cfgparser_destroy(cp);
     if (rc != IB_OK) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
+                     "Ironbee failed to destroy config parser! (%d)", rc);
         return IB2AP(rc);
     }
 
@@ -1273,6 +1297,8 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
      * But that's fine, we have the message.
      */
     log_level_is_startup = 0;
+    ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, s,
+                 IB_PRODUCT_VERSION_NAME " initialized.");
     return OK;
 }
 
