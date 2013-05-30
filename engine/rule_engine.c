@@ -1947,7 +1947,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(cbdata != NULL);
 
     /* If this is an empty request, ignore the transaction */
-    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA | IB_TX_FRES_HAS_DATA)) {
         return IB_OK;
     }
 
