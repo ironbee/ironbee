@@ -58,9 +58,11 @@ CLEANFILES = \
 .PHONY: check-ruby
 check-ruby:
 if CPP
-	(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) -I . ./ts_all.rb --verbose $(test_args))
+	if [ -z "$$GTEST_FILTER" ]; then \
+	(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) -I . ./ts_all.rb --verbose $(test_args)) \
+	fi
 if ENABLE_LUA
-	if [ -e $(srcdir)/ts_lua.rb ]; then \
+	if [ -z "$$GTEST_FILTER" ] && [ -e $(srcdir)/ts_lua.rb ]; then \
 		(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) $(RUBY) -I . ./ts_lua.rb --verbose $(test_args)); \
 	fi
 endif
