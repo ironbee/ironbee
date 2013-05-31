@@ -26,6 +26,9 @@
 #define NGXIB_H
 
 #include <ngx_http.h>
+#include <ironbee/config.h>
+#include <ironbee/engine_state.h>
+#include <ironbee/engine_types.h>
 #include <ironbee/engine.h>
 
 /* HTTP statuses we'll support when Ironbee asks us to return them */
@@ -70,8 +73,8 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib);
 
 /* Ironbee's callback to initialise its connection rec */
 ib_status_t ngxib_conn_init(ib_engine_t *ib,
-                            ib_state_event_type_t event,
                             ib_conn_t *iconn,
+                            ib_state_event_type_t event,
                             void *cbdata);
 
 /* Ironbee log function to write to nginx's error log */

@@ -30,7 +30,7 @@
  *  and can just look through pool cleanups to find the connection.
  */
 
-
+#include <ironbee/config.h>
 #include "ngx_ironbee.h"
 #include <ironbee/state_notify.h>
 
@@ -127,8 +127,8 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib)
  * @return    IB_OK or error
  */
 ib_status_t ngxib_conn_init(ib_engine_t *ib,
-                            ib_state_event_type_t event,
                             ib_conn_t *iconn,
+                            ib_state_event_type_t event,
                             void *cbdata)
 {
     unsigned char buf[INET6_ADDRSTRLEN];
