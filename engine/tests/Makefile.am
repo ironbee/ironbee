@@ -18,7 +18,7 @@ AM_LDFLAGS += \
 	-lboost_filesystem$(BOOST_SUFFIX)
 
 AM_CPPFLAGS += \
-	-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
+    -DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
     -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs
 
 if ENABLE_LUA
@@ -32,6 +32,7 @@ TEST_EXTRAS = \
        CoreActionTest.setVarAdd.config \
        CoreActionTest.setVarSub.config \
        CoreActionTest.integration.config \
+       ParseTreeTest.config \
        RuleInjectTest.test_inject.config \
        test_ironbee_lua_modules.lua \
        test_ironbee_lua_configs.lua
@@ -54,7 +55,8 @@ test_engine_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
 test_rule_inject_SOURCES = test_rule_inject.cpp
 test_rule_inject_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
 
-test_config_SOURCES = test_config.cpp
+test_config_SOURCES = test_config.cpp \
+                      mock_module.c
 
 test_operator_SOURCES = test_operator.cpp
 

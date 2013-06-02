@@ -232,6 +232,8 @@ static ib_status_t include_parse_directive(
     char *real;
     const char* pval;
     const ib_list_node_t *list_node;
+    ib_cfgparser_fsm_t fsm;
+    ib_cfgparser_node_t *current_node;
     bool if_exists;
     /* Some utilities we use employ malloc (eg realpath()).
      * If a malloc'ed buffer is in use, we alias it here to be free'ed. */
@@ -336,7 +338,14 @@ static ib_status_t include_parse_directive(
     }
 
     ib_cfg_log_debug(cp, "Including '%s'", incfile);
-    rc = ib_cfgparser_parse_private(cp, incfile);
+
+    /* Make the given node the current node for the file inclusion. */
+    current_node = cp->curr;
+    cp->curr = node;
+    fsm = cp->fsm;
+    rc = ib_cfgparser_parse_private(cp, incfile, false);
+    cp->fsm = fsm;
+    cp->curr = current_node;
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error parsing included file \"%s\": %s",
 	                 incfile, ib_status_to_string(rc));
@@ -347,12 +356,28 @@ static ib_status_t include_parse_directive(
     return IB_OK;
 }
 
+static ib_status_t loglevel_parse_directive(
+    ib_cfgparser_t *cp,
+    ib_mpool_t* tmp_mp,
+    ib_cfgparser_node_t *node
+) {
+    assert(cp != NULL);
+    assert(node != NULL);
+    assert(node->directive != NULL);
+    assert(node->params != NULL);
+
+    ib_cfg_log_debug(cp, "Applying new log level.");
+
+    return ib_config_directive_process(cp, node->directive, node->params);
+}
+
 /**
  * Null-terminated table that maps parsing directives to handler functions.
  */
 static parse_directive_entry_t parse_directive_table[] = {
     { "IncludeIfExists", include_parse_directive },
     { "Include",         include_parse_directive },
+    { "LogLevel",        loglevel_parse_directive },
     { NULL, NULL } /* Null termination. Do not remove. */
 };
 
@@ -432,11 +457,18 @@ static parse_directive_entry_t parse_directive_table[] = {
                 /* Change the node type. This is an parse directive. */
                 node->type = IB_CFGPARSER_NODE_PARSE_DIRECTIVE;
                 /* Process directive. */
+                cpbuf_clear(cp);
                 rc = (parse_directive_table[i].fn)(cp, mptmp, node);
                 if (rc != IB_OK) {
                     ib_cfg_log_error(
                         cp,
                         "Parse directive %s failed.",
+                        node->directive);
+                }
+                else {
+                    ib_cfg_log_debug(
+                        cp,
+                        "Parse directive %s succeeded.",
                         node->directive);
                 }
             }
@@ -478,6 +510,12 @@ static parse_directive_entry_t parse_directive_table[] = {
         node->type = IB_CFGPARSER_NODE_BLOCK;
         ib_list_node_t *lst_node;
         IB_LIST_LOOP(plist, lst_node) {
+            ib_cfg_log_debug(
+                cp,
+                "Adding param \"%s\" to SBLK1 %s (node = %p)",
+                (const char *)ib_list_node_data(lst_node),
+                node->directive,
+                node);
             rc = ib_list_push(node->params, ib_list_node_data(lst_node));
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp, "Cannot push directive.");
@@ -526,7 +564,8 @@ static parse_directive_entry_t parse_directive_table[] = {
               $cpbuf_append
               %push_param
               $/push_param
-              $/push_dir;
+              $/push_dir
+              $eof{ fret; };
     *|;
 
     block_parameters := |*

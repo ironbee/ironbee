@@ -49,6 +49,27 @@ typedef struct ib_dirmap_init_t ib_dirmap_init_t;
 typedef struct ib_cfgparser_node_t ib_cfgparser_node_t;
 
 /**
+ * Finite state machine type.
+ *
+ * Values here must persist across calls to
+ * ib_cfgparser_ragel_parse_chunk().
+ *
+ * Contains state information for Ragel's parser.
+ * Many of these values and names come from the Ragel documentation, section
+ * 5.1 Variable Used by Ragel. p35 of The Ragel Guide 6.7 found at
+ * http://www.complang.org/ragel/ragel-guide-6.7.pdf
+ */
+struct ib_cfgparser_fsm_t {
+    const char *ts;          /**< Pointer to character data for Ragel. */
+    const char *te;          /**< Pointer to character data for Ragel. */
+    int         cs;          /**< Current state. */
+    int         top;         /**< Top of the stack. */
+    int         act;         /**< Track the last successful match. */
+    int         stack[1024]; /**< Stack of states. */
+};
+typedef struct ib_cfgparser_fsm_t ib_cfgparser_fsm_t;
+
+/**
  * The parsing context wraps around important values used during parsing.
  */
 struct ib_cfgparser_t {
@@ -90,14 +111,7 @@ struct ib_cfgparser_t {
      * 5.1 Variable Used by Ragel. p35 of The Ragel Guide 6.7 found at
      * http://www.complang.org/ragel/ragel-guide-6.7.pdf
      */
-    struct {
-        const char *ts;          /**< Pointer to character data for Ragel. */
-        const char *te;          /**< Pointer to character data for Ragel. */
-        int         cs;          /**< Current state. */
-        int         top;         /**< Top of the stack. */
-        int         act;         /**< Track the last successful match. */
-        int         stack[1024]; /**< Stack of states. */
-    } fsm;
+    ib_cfgparser_fsm_t fsm;
 
     size_t  buffer_sz;  /**< Size of buffer. */
     size_t  buffer_len; /**< Length of string stored in buffer. */

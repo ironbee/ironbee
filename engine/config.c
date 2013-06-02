@@ -193,7 +193,11 @@ ib_status_t ib_cfgparser_push_node(ib_cfgparser_t *cp,
 /// @todo Create a ib_cfgparser_parse_ex that can parse non-files (DBs, etc)
 
 
-ib_status_t ib_cfgparser_parse_private(ib_cfgparser_t *cp, const char *file) {
+ib_status_t ib_cfgparser_parse_private(
+    ib_cfgparser_t *cp,
+    const char *file,
+    bool eof_mask
+) {
     int ec             = 0;    /* Error code for sys calls. */
     int fd             = 0;    /* File to read. */
     const size_t bufsz = 8192; /* Buffer size. */
@@ -202,6 +206,7 @@ ib_status_t ib_cfgparser_parse_private(ib_cfgparser_t *cp, const char *file) {
     char *pathbuf;
     const char *save_cwd;      /* CWD, used to restore during cleanup  */
     ib_cfgparser_node_t *node; /* Parser node for this file. */
+    ib_cfgparser_node_t *save_node; /* Previous current node. */
 
     ib_status_t rc = IB_OK;
     unsigned error_count = 0;
@@ -226,7 +231,9 @@ ib_status_t ib_cfgparser_parse_private(ib_cfgparser_t *cp, const char *file) {
     node->file = file;
     node->line = 1;
     node->type = IB_CFGPARSER_NODE_FILE;
+    node->directive = "[file]";
     rc = ib_cfgparser_push_node(cp, node);
+    save_node = cp->curr;
     if (rc != IB_OK) {
         goto cleanup;
     }
@@ -251,7 +258,8 @@ ib_status_t ib_cfgparser_parse_private(ib_cfgparser_t *cp, const char *file) {
         ib_cfg_log_debug3(cp, "Read a %zd byte chunk", buflen);
 
         if ( buflen == 0 ) { /* EOF */
-            rc = ib_cfgparser_ragel_parse_chunk(cp, buf, buflen, true);
+            rc = ib_cfgparser_ragel_parse_chunk(
+                cp, buf, buflen, true && eof_mask);
             if (rc != IB_OK) {
                 ++error_count;
                 error_rc = rc;
@@ -288,6 +296,7 @@ cleanup:
 
     cp->cur_cwd = save_cwd;
 
+    cp->curr = save_node;
     ib_cfgparser_pop_node(cp);
 
     ib_cfg_log_debug3(
@@ -316,7 +325,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
 {
     ib_status_t rc;
 
-    rc = ib_cfgparser_parse_private(cp, file);
+    rc = ib_cfgparser_parse_private(cp, file, true);
 
     /* Reset the parser. */
     cp->curr = cp->root;
@@ -404,11 +413,12 @@ static ib_status_t cfgparser_apply_node_helper(
 
     ib_cfg_log_debug(
         cp,
-        "Applying %s (type=%d) from %s:%zd.",
+        "Applying %s (type=%d) from %s:%zd with %zu params.",
         node->directive,
         node->type,
         node->file,
-        node->line);
+        node->line,
+        ib_list_elements(node->params));
 
     switch(node->type) {
         case IB_CFGPARSER_NODE_ROOT:
@@ -418,12 +428,15 @@ static ib_status_t cfgparser_apply_node_helper(
                 rc = tmp_rc;
             }
             break;
-
         case IB_CFGPARSER_NODE_PARSE_DIRECTIVE:
             ib_log_debug(
                 ib,
                 "Parse directive %s. Not passed to engine.",
                 node->directive);
+            tmp_rc = cfgparser_apply_node_children_helper(cp, ib, node);
+            if (rc == IB_OK) {
+                rc = tmp_rc;
+            }
             break;
         case IB_CFGPARSER_NODE_DIRECTIVE:
 
@@ -459,7 +472,6 @@ static ib_status_t cfgparser_apply_node_helper(
             cp->curr = prev_curr;
 
             break;
-
         case IB_CFGPARSER_NODE_BLOCK:
             ib_log_debug(ib, "Applying block %s", node->directive);
 
@@ -504,12 +516,18 @@ static ib_status_t cfgparser_apply_node_helper(
                  tmp_node != NULL;
                  tmp_node = tmp_node->parent)
             {
+                if (tmp_node->type == IB_CFGPARSER_NODE_ROOT) {
+                    ib_log_debug(
+                        ib,
+                        "\tincluded from [root]:%zd",
+                        tmp_node->line);
+                }
                 if (tmp_node->type == IB_CFGPARSER_NODE_FILE) {
                     ib_log_debug(
                         ib,
                         "\tincluded from %s:%zd",
-                        node->file,
-                        node->line);
+                        tmp_node->file,
+                        tmp_node->line);
                 }
             }
 

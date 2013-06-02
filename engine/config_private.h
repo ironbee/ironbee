@@ -27,7 +27,21 @@
 
 #include <ironbee/config.h>
 
+/**
+ * @param[in] cp Configuration parser.
+ * @param[in] file The file to parse.
+ * @param[in] eof_mask This is boolean AND'ed with the EOF flag sent to ragel.
+ *            If @a eof_mask if false, then ragel will never know that the 
+ *            input stream has ended. This is the case when including 
+ *            files. Only the top-level file parser will
+ *            set this to true so Ragel is told when the 
+ *            top-level file is done being parsed.
+ * @returns
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation errors.
+ * - Others appropriate to the error. See error log for details.
+ */
 ib_status_t DLL_LOCAL
-ib_cfgparser_parse_private(ib_cfgparser_t *cp, const char *file);
+ib_cfgparser_parse_private(ib_cfgparser_t *cp, const char *file, bool eof_mask);
 
 #endif /* _CONFIG_PRIVATE_H_ */
