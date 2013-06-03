@@ -206,27 +206,38 @@ ib_status_t ib_cfgparser_parse_private(
     char *pathbuf;
     const char *save_cwd;      /* CWD, used to restore during cleanup  */
     ib_cfgparser_node_t *node; /* Parser node for this file. */
-    ib_cfgparser_node_t *save_node; /* Previous current node. */
+    ib_cfgparser_node_t *save_node = NULL; /* Previous current node. */
 
     ib_status_t rc = IB_OK;
     unsigned error_count = 0;
     ib_status_t error_rc = IB_OK;
 
+    /* Store the current file and path in the save_ stack variables */
+    save_cwd = cp->cur_cwd;
+
+    /* Open the file to read. */
     fd = open(file, O_RDONLY);
     if (fd == -1) {
         ec = errno;
         ib_cfg_log_error(cp, "Could not open config file \"%s\": (%d) %s",
                          file, ec, strerror(ec));
-        return IB_EINVAL;
+        rc = IB_EINVAL;
+        goto cleanup_fd;
     }
 
-    /* Store the current file and path in the save_ stack variables */
-    save_cwd = cp->cur_cwd;
+    /* Build a buffer to read the file into. */
+    buf = (char *)malloc(sizeof(*buf)*bufsz);
+    if (buf==NULL) {
+        ib_cfg_log_error(cp, "Unable to allocate buffer for config file.");
+        rc = IB_EALLOC;
+        goto cleanup_buf;
+    }
 
+    /* Build a parse node to represent the parsing work we are doing. */
     node = NULL;
     rc = ib_cfgparser_node_create(&node, cp);
     if (rc != IB_OK) {
-        goto cleanup;
+        goto cleanup_create_node;
     }
     node->file = file;
     node->line = 1;
@@ -235,21 +246,13 @@ ib_status_t ib_cfgparser_parse_private(
     rc = ib_cfgparser_push_node(cp, node);
     save_node = cp->curr;
     if (rc != IB_OK) {
-        goto cleanup;
+        goto cleanup_push_node;
     }
 
     /* Store the new file and path in the parser object */
     pathbuf = (char *)ib_mpool_strdup(cp->mp, file);
     if (pathbuf != NULL) {
         cp->cur_cwd = dirname(pathbuf);
-    }
-
-    buf = (char *)malloc(sizeof(*buf)*bufsz);
-
-    if (buf==NULL) {
-        ib_cfg_log_error(cp, "Unable to allocate buffer for config file.");
-        rc = IB_EALLOC;
-        goto cleanup;
     }
 
     /* Fill the buffer, parse each line. Conditionally read another line. */
@@ -280,24 +283,26 @@ ib_status_t ib_cfgparser_parse_private(
                 "Error reading log file %s - %s.",
                 file,
                 strerror(errno));
-            free(buf);
-            close(fd);
-            return IB_ETRUNC;
+            rc = IB_ETRUNC;
+            goto cleanup;
         }
     } while (buflen > 0);
 
+
 cleanup:
-    if (buf != NULL) {
-        free(buf);
-    }
-    if (fd >= 0) {
-        close(fd);
-    }
+
+    ib_cfgparser_pop_node(cp);
+    cp->curr = save_node;
+cleanup_create_node:
+cleanup_push_node:
+
+    free(buf);
+cleanup_buf:
+
+    close(fd);
+cleanup_fd:
 
     cp->cur_cwd = save_cwd;
-
-    cp->curr = save_node;
-    ib_cfgparser_pop_node(cp);
 
     ib_cfg_log_debug3(
         cp,
