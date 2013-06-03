@@ -721,8 +721,9 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
         return IB_EINVAL;
     }
 
-    if (    ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)
-        && !ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED))
+    /* If the request was started, but not finished, notify it now */
+    if (    ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)
+        && !ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED))
     {
         ib_log_debug_tx(tx, "Automatically triggering %s",
                         ib_state_event_name(request_finished_event));
