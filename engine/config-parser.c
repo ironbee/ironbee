@@ -1,5 +1,5 @@
 
-#line 1 "../../ironbee/engine/config-parser.rl"
+#line 1 "/home/nleroy/devel/ib/engine/config-parser.rl"
 /*****************************************************************************
  * Licensed to Qualys, Inc. (QUALYS) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -467,11 +467,11 @@ static parse_directive_entry_t parse_directive_table[] = {
 };
 
 
-#line 712 "../../ironbee/engine/config-parser.rl"
+#line 712 "/home/nleroy/devel/ib/engine/config-parser.rl"
 
 
 
-#line 475 "../../ironbee/engine/config-parser.c"
+#line 475 "/home/nleroy/devel/ib/engine/config-parser.c"
 static const char _ironbee_config_actions[] = {
 	0, 1, 0, 1, 6, 1, 12, 1, 
 	13, 1, 17, 1, 24, 1, 28, 1, 
@@ -666,7 +666,7 @@ static const int ironbee_config_en_endblock = 35;
 static const int ironbee_config_en_main = 16;
 
 
-#line 715 "../../ironbee/engine/config-parser.rl"
+#line 715 "/home/nleroy/devel/ib/engine/config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(
     ib_cfgparser_t *cp,
@@ -717,16 +717,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 
     /* Access all ragel state variables via structure. */
     
-#line 765 "../../ironbee/engine/config-parser.rl"
+#line 765 "/home/nleroy/devel/ib/engine/config-parser.rl"
     
-#line 766 "../../ironbee/engine/config-parser.rl"
+#line 766 "/home/nleroy/devel/ib/engine/config-parser.rl"
     
-#line 767 "../../ironbee/engine/config-parser.rl"
+#line 767 "/home/nleroy/devel/ib/engine/config-parser.rl"
     
-#line 768 "../../ironbee/engine/config-parser.rl"
+#line 768 "/home/nleroy/devel/ib/engine/config-parser.rl"
 
     
-#line 730 "../../ironbee/engine/config-parser.c"
+#line 730 "/home/nleroy/devel/ib/engine/config-parser.c"
 	{
 	 cp->fsm.cs = ironbee_config_start;
 	 cp->fsm.top = 0;
@@ -735,9 +735,9 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 	 cp->fsm.act = 0;
 	}
 
-#line 770 "../../ironbee/engine/config-parser.rl"
+#line 770 "/home/nleroy/devel/ib/engine/config-parser.rl"
     
-#line 741 "../../ironbee/engine/config-parser.c"
+#line 741 "/home/nleroy/devel/ib/engine/config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -758,7 +758,7 @@ _resume:
 #line 1 "NONE"
 	{ cp->fsm.ts = ( fsm_vars.p);}
 	break;
-#line 762 "../../ironbee/engine/config-parser.c"
+#line 762 "/home/nleroy/devel/ib/engine/config-parser.c"
 		}
 	}
 
@@ -780,7 +780,7 @@ _resume:
 			else if ( (*( fsm_vars.p)) > *_mid )
 				_lower = _mid + 1;
 			else {
-				_trans += (_mid - _keys);
+				_trans += (unsigned int)(_mid - _keys);
 				goto _match;
 			}
 		}
@@ -803,7 +803,7 @@ _resume:
 			else if ( (*( fsm_vars.p)) > _mid[1] )
 				_lower = _mid + 2;
 			else {
-				_trans += ((_mid - _keys)>>1);
+				_trans += (unsigned int)((_mid - _keys)>>1);
 				goto _match;
 			}
 		}
@@ -825,7 +825,7 @@ _eof_trans:
 		switch ( *_acts++ )
 		{
 	case 0:
-#line 470 "../../ironbee/engine/config-parser.rl"
+#line 470 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         rc = IB_EOTHER;
         ib_cfg_log_error(
@@ -836,7 +836,7 @@ _eof_trans:
     }
 	break;
 	case 1:
-#line 480 "../../ironbee/engine/config-parser.rl"
+#line 480 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         pval = qstrdup(cp, config_mp);
         if (pval == NULL) {
@@ -846,7 +846,7 @@ _eof_trans:
     }
 	break;
 	case 2:
-#line 487 "../../ironbee/engine/config-parser.rl"
+#line 487 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         pval = qstrdup(cp, config_mp);
         if (pval == NULL) {
@@ -856,13 +856,13 @@ _eof_trans:
     }
 	break;
 	case 3:
-#line 495 "../../ironbee/engine/config-parser.rl"
+#line 495 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         cp->curr->line += 1;
     }
 	break;
 	case 4:
-#line 500 "../../ironbee/engine/config-parser.rl"
+#line 500 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         directive = ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
         if (directive == NULL) {
@@ -873,7 +873,7 @@ _eof_trans:
     }
 	break;
 	case 5:
-#line 508 "../../ironbee/engine/config-parser.rl"
+#line 508 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
         ib_cfgparser_node_create(&node, cp);
@@ -928,7 +928,7 @@ _eof_trans:
     }
 	break;
 	case 6:
-#line 561 "../../ironbee/engine/config-parser.rl"
+#line 561 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         if (cpbuf_append(cp, *( fsm_vars.p)) != IB_OK) {
             return IB_EALLOC;
@@ -936,13 +936,13 @@ _eof_trans:
     }
 	break;
 	case 7:
-#line 567 "../../ironbee/engine/config-parser.rl"
+#line 567 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         cpbuf_clear(cp);
     }
 	break;
 	case 8:
-#line 572 "../../ironbee/engine/config-parser.rl"
+#line 572 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         blkname = ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
         if (blkname == NULL) {
@@ -953,7 +953,7 @@ _eof_trans:
     }
 	break;
 	case 9:
-#line 580 "../../ironbee/engine/config-parser.rl"
+#line 580 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
         rc = ib_cfgparser_node_create(&node, cp);
@@ -990,14 +990,14 @@ _eof_trans:
     }
 	break;
 	case 10:
-#line 614 "../../ironbee/engine/config-parser.rl"
+#line 614 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         ib_cfgparser_pop_node(cp);
         blkname = NULL;
     }
 	break;
 	case 11:
-#line 653 "../../ironbee/engine/config-parser.rl"
+#line 653 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }
 	break;
 	case 14:
@@ -1005,27 +1005,27 @@ _eof_trans:
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 15:
-#line 645 "../../ironbee/engine/config-parser.rl"
+#line 645 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.act = 2;}
 	break;
 	case 16:
-#line 653 "../../ironbee/engine/config-parser.rl"
+#line 653 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.act = 4;}
 	break;
 	case 17:
-#line 644 "../../ironbee/engine/config-parser.rl"
+#line 644 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 18:
-#line 645 "../../ironbee/engine/config-parser.rl"
+#line 645 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 19:
-#line 647 "../../ironbee/engine/config-parser.rl"
+#line 647 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 20:
-#line 653 "../../ironbee/engine/config-parser.rl"
+#line 653 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 21:
@@ -1038,27 +1038,27 @@ _eof_trans:
 	}
 	break;
 	case 22:
-#line 658 "../../ironbee/engine/config-parser.rl"
+#line 658 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.act = 6;}
 	break;
 	case 23:
-#line 661 "../../ironbee/engine/config-parser.rl"
+#line 661 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.act = 7;}
 	break;
 	case 24:
-#line 657 "../../ironbee/engine/config-parser.rl"
+#line 657 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 25:
-#line 658 "../../ironbee/engine/config-parser.rl"
+#line 658 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 26:
-#line 663 "../../ironbee/engine/config-parser.rl"
+#line 663 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 27:
-#line 661 "../../ironbee/engine/config-parser.rl"
+#line 661 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 28:
@@ -1071,31 +1071,31 @@ _eof_trans:
 	}
 	break;
 	case 29:
-#line 669 "../../ironbee/engine/config-parser.rl"
+#line 669 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.act = 10;}
 	break;
 	case 30:
-#line 676 "../../ironbee/engine/config-parser.rl"
+#line 676 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.act = 12;}
 	break;
 	case 31:
-#line 667 "../../ironbee/engine/config-parser.rl"
+#line 667 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 32:
-#line 669 "../../ironbee/engine/config-parser.rl"
+#line 669 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 33:
-#line 671 "../../ironbee/engine/config-parser.rl"
+#line 671 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 34:
-#line 669 "../../ironbee/engine/config-parser.rl"
+#line 669 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 35:
-#line 676 "../../ironbee/engine/config-parser.rl"
+#line 676 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 26; goto _again;} }}
 	break;
 	case 36:
@@ -1111,35 +1111,35 @@ _eof_trans:
 	}
 	break;
 	case 37:
-#line 682 "../../ironbee/engine/config-parser.rl"
+#line 682 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.act = 14;}
 	break;
 	case 38:
-#line 689 "../../ironbee/engine/config-parser.rl"
+#line 689 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.act = 16;}
 	break;
 	case 39:
-#line 680 "../../ironbee/engine/config-parser.rl"
+#line 680 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 40:
-#line 682 "../../ironbee/engine/config-parser.rl"
+#line 682 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 41:
-#line 684 "../../ironbee/engine/config-parser.rl"
+#line 684 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 42:
-#line 691 "../../ironbee/engine/config-parser.rl"
+#line 691 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
 	case 43:
-#line 682 "../../ironbee/engine/config-parser.rl"
+#line 682 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 44:
-#line 689 "../../ironbee/engine/config-parser.rl"
+#line 689 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 45:
@@ -1152,38 +1152,38 @@ _eof_trans:
 	}
 	break;
 	case 46:
-#line 704 "../../ironbee/engine/config-parser.rl"
+#line 704 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 30; goto _again;}}}
 	break;
 	case 47:
-#line 705 "../../ironbee/engine/config-parser.rl"
+#line 705 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{        { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 35; goto _again;}}}
 	break;
 	case 48:
-#line 708 "../../ironbee/engine/config-parser.rl"
+#line 708 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 49:
-#line 709 "../../ironbee/engine/config-parser.rl"
+#line 709 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 50:
-#line 710 "../../ironbee/engine/config-parser.rl"
+#line 710 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 51:
-#line 695 "../../ironbee/engine/config-parser.rl"
+#line 695 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 52:
-#line 701 "../../ironbee/engine/config-parser.rl"
+#line 701 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 21; goto _again;} }}
 	break;
 	case 53:
-#line 701 "../../ironbee/engine/config-parser.rl"
+#line 701 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 21; goto _again;} }}
 	break;
-#line 1187 "../../ironbee/engine/config-parser.c"
+#line 1187 "/home/nleroy/devel/ib/engine/config-parser.c"
 		}
 	}
 
@@ -1196,7 +1196,7 @@ _again:
 #line 1 "NONE"
 	{ cp->fsm.ts = 0;}
 	break;
-#line 1200 "../../ironbee/engine/config-parser.c"
+#line 1200 "/home/nleroy/devel/ib/engine/config-parser.c"
 		}
 	}
 
@@ -1216,7 +1216,7 @@ _again:
 	while ( __nacts-- > 0 ) {
 		switch ( *__acts++ ) {
 	case 0:
-#line 470 "../../ironbee/engine/config-parser.rl"
+#line 470 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         rc = IB_EOTHER;
         ib_cfg_log_error(
@@ -1227,7 +1227,7 @@ _again:
     }
 	break;
 	case 1:
-#line 480 "../../ironbee/engine/config-parser.rl"
+#line 480 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         pval = qstrdup(cp, config_mp);
         if (pval == NULL) {
@@ -1237,7 +1237,7 @@ _again:
     }
 	break;
 	case 5:
-#line 508 "../../ironbee/engine/config-parser.rl"
+#line 508 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
         ib_cfgparser_node_create(&node, cp);
@@ -1292,10 +1292,10 @@ _again:
     }
 	break;
 	case 11:
-#line 653 "../../ironbee/engine/config-parser.rl"
+#line 653 "/home/nleroy/devel/ib/engine/config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }
 	break;
-#line 1299 "../../ironbee/engine/config-parser.c"
+#line 1299 "/home/nleroy/devel/ib/engine/config-parser.c"
 		}
 	}
 	}
@@ -1303,7 +1303,7 @@ _again:
 	_out: {}
 	}
 
-#line 771 "../../ironbee/engine/config-parser.rl"
+#line 771 "/home/nleroy/devel/ib/engine/config-parser.rl"
 
     /* Ensure that our block is always empty on last chunk. */
     if ( is_last_chunk && blkname != NULL ) {
