@@ -677,17 +677,17 @@ static parse_directive_entry_t parse_directive_table[] = {
     *|;
 
     endblock := |*
-        WS;
-        CONT    $newline;
+        WS      $eof(error_action);
+        CONT    $newline
+                $eof(error_action);
+	EOL     $newline
+                $eof(error_action);
         token   >cpbuf_clear
                 $cpbuf_append
                 $!error_action
-                %pop_block;
-	EOL     $newline
-                %error_action
-                { fret; };
-        ">" EOL $newline
-                $!error_action
+                %pop_block
+                $eof(error_action);
+        ">"     $eof(error_action)
                 { fret; };
     *|;
 

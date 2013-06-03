@@ -473,203 +473,197 @@ static parse_directive_entry_t parse_directive_table[] = {
 
 #line 475 "../../ironbee/engine/config-parser.c"
 static const char _ironbee_config_actions[] = {
-	0, 1, 0, 1, 3, 1, 6, 1, 
-	12, 1, 13, 1, 17, 1, 24, 1, 
-	28, 1, 31, 1, 39, 1, 45, 1, 
-	46, 1, 47, 1, 50, 1, 52, 2, 
-	0, 36, 2, 0, 43, 2, 0, 44, 
-	2, 1, 20, 2, 1, 21, 2, 2, 
-	27, 2, 2, 28, 2, 3, 33, 2, 
-	3, 41, 2, 3, 49, 2, 4, 51, 
-	2, 7, 6, 2, 8, 34, 2, 8, 
-	35, 2, 9, 26, 2, 10, 3, 2, 
-	10, 42, 2, 10, 44, 2, 14, 6, 
-	3, 1, 5, 11, 3, 3, 5, 19, 
-	3, 3, 7, 6, 3, 3, 18, 1, 
-	3, 3, 25, 2, 3, 3, 32, 8, 
-	3, 3, 33, 8, 3, 3, 40, 10, 
-	3, 4, 3, 48, 3, 4, 3, 49, 
-	3, 7, 6, 3, 3, 14, 6, 3, 
-	3, 14, 6, 16, 3, 14, 6, 23, 
-	3, 14, 6, 30, 3, 14, 6, 38, 
-	3, 14, 7, 6, 4, 1, 5, 11, 
-	20, 4, 1, 5, 11, 21, 4, 3, 
-	5, 19, 1, 4, 14, 3, 6, 16, 
-	4, 14, 3, 6, 23, 4, 14, 3, 
-	6, 30, 4, 14, 3, 6, 38, 4, 
-	14, 3, 15, 6, 4, 14, 3, 22, 
-	6, 4, 14, 3, 29, 6, 4, 14, 
-	3, 37, 6, 4, 14, 7, 6, 3, 
-	4, 14, 7, 6, 16, 4, 14, 7, 
-	6, 23, 4, 14, 7, 6, 30, 4, 
-	14, 7, 6, 38, 5, 14, 3, 7, 
-	6, 16, 5, 14, 3, 7, 6, 30, 
-	5, 14, 7, 6, 38, 3
+	0, 1, 0, 1, 6, 1, 12, 1, 
+	13, 1, 17, 1, 24, 1, 28, 1, 
+	31, 1, 39, 1, 42, 1, 46, 1, 
+	47, 1, 48, 1, 51, 1, 53, 2, 
+	0, 36, 2, 0, 45, 2, 1, 20, 
+	2, 1, 21, 2, 2, 27, 2, 2, 
+	28, 2, 3, 33, 2, 3, 41, 2, 
+	3, 50, 2, 4, 52, 2, 7, 6, 
+	2, 8, 34, 2, 8, 35, 2, 9, 
+	26, 2, 10, 43, 2, 10, 44, 2, 
+	14, 6, 3, 0, 10, 43, 3, 0, 
+	10, 44, 3, 1, 5, 11, 3, 3, 
+	5, 19, 3, 3, 7, 6, 3, 3, 
+	18, 1, 3, 3, 25, 2, 3, 3, 
+	32, 8, 3, 3, 33, 8, 3, 3, 
+	40, 10, 3, 3, 41, 10, 3, 4, 
+	3, 49, 3, 4, 3, 50, 3, 7, 
+	6, 3, 3, 10, 0, 44, 3, 14, 
+	6, 3, 3, 14, 6, 16, 3, 14, 
+	6, 23, 3, 14, 6, 30, 3, 14, 
+	6, 38, 3, 14, 7, 6, 4, 1, 
+	5, 11, 20, 4, 1, 5, 11, 21, 
+	4, 3, 5, 19, 1, 4, 14, 3, 
+	6, 16, 4, 14, 3, 6, 23, 4, 
+	14, 3, 6, 30, 4, 14, 3, 6, 
+	38, 4, 14, 3, 15, 6, 4, 14, 
+	3, 22, 6, 4, 14, 3, 29, 6, 
+	4, 14, 3, 37, 6, 4, 14, 7, 
+	6, 3, 4, 14, 7, 6, 16, 4, 
+	14, 7, 6, 23, 4, 14, 7, 6, 
+	30, 4, 14, 7, 6, 38, 5, 14, 
+	3, 7, 6, 16, 5, 14, 3, 7, 
+	6, 30, 5, 14, 3, 7, 6, 38
+	
 };
 
 static const unsigned char _ironbee_config_key_offsets[] = {
 	0, 0, 0, 1, 3, 3, 5, 5, 
 	7, 7, 9, 9, 11, 11, 13, 13, 
-	15, 16, 18, 27, 34, 41, 42, 49, 
-	58, 65, 72, 72, 79, 87, 94, 94, 
-	101, 110, 117, 124, 131, 138, 147, 154, 
-	154, 161
+	15, 24, 31, 38, 39, 46, 55, 62, 
+	69, 69, 76, 84, 91, 91, 98, 107, 
+	114, 121, 128, 135, 144, 151, 158, 165
 };
 
 static const char _ironbee_config_trans_keys[] = {
 	47, 10, 13, 34, 92, 10, 13, 34, 
-	92, 10, 13, 10, 13, 10, 13, 10, 
-	10, 13, 9, 10, 13, 32, 34, 35, 
-	60, 62, 92, 32, 34, 60, 62, 92, 
-	9, 10, 9, 10, 32, 34, 60, 62, 
-	92, 10, 9, 10, 32, 34, 60, 62, 
-	92, 9, 10, 13, 32, 34, 35, 60, 
-	62, 92, 32, 34, 60, 62, 92, 9, 
-	10, 9, 10, 32, 34, 60, 62, 92, 
-	9, 10, 32, 34, 60, 62, 92, 9, 
-	10, 32, 34, 35, 60, 62, 92, 32, 
+	92, 10, 13, 10, 13, 10, 13, 9, 
+	10, 13, 32, 34, 35, 60, 62, 92, 
+	32, 34, 60, 62, 92, 9, 10, 9, 
+	10, 32, 34, 60, 62, 92, 10, 9, 
+	10, 32, 34, 60, 62, 92, 9, 10, 
+	13, 32, 34, 35, 60, 62, 92, 32, 
 	34, 60, 62, 92, 9, 10, 9, 10, 
-	32, 34, 60, 62, 92, 9, 10, 13, 
-	32, 60, 62, 92, 34, 35, 32, 34, 
-	60, 62, 92, 9, 10, 9, 10, 32, 
-	34, 60, 62, 92, 32, 34, 60, 62, 
+	32, 34, 60, 62, 92, 9, 10, 32, 
+	34, 60, 62, 92, 9, 10, 32, 34, 
+	35, 60, 62, 92, 32, 34, 60, 62, 
 	92, 9, 10, 9, 10, 32, 34, 60, 
 	62, 92, 9, 10, 13, 32, 60, 62, 
 	92, 34, 35, 32, 34, 60, 62, 92, 
 	9, 10, 9, 10, 32, 34, 60, 62, 
-	92, 9, 10, 32, 34, 60, 62, 92, 
-	0
+	92, 32, 34, 60, 62, 92, 9, 10, 
+	9, 10, 32, 34, 60, 62, 92, 9, 
+	10, 13, 32, 60, 62, 92, 34, 35, 
+	32, 34, 60, 62, 92, 9, 10, 9, 
+	10, 32, 34, 60, 62, 92, 32, 34, 
+	60, 62, 92, 9, 10, 9, 10, 32, 
+	34, 60, 62, 92, 0
 };
 
 static const char _ironbee_config_single_lengths[] = {
 	0, 0, 1, 2, 0, 2, 0, 2, 
 	0, 2, 0, 2, 0, 2, 0, 2, 
-	1, 2, 9, 5, 7, 1, 7, 9, 
-	5, 7, 0, 7, 8, 5, 0, 7, 
-	7, 5, 7, 5, 7, 7, 5, 0, 
-	7, 7
+	9, 5, 7, 1, 7, 9, 5, 7, 
+	0, 7, 8, 5, 0, 7, 7, 5, 
+	7, 5, 7, 7, 5, 7, 5, 7
 };
 
 static const char _ironbee_config_range_lengths[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 1, 0, 0, 0, 0, 
-	1, 0, 0, 0, 0, 1, 0, 0, 
-	1, 1, 0, 1, 0, 1, 1, 0, 
-	0, 0
+	0, 1, 0, 0, 0, 0, 1, 0, 
+	0, 0, 0, 1, 0, 0, 1, 1, 
+	0, 1, 0, 1, 1, 0, 1, 0
 };
 
 static const unsigned char _ironbee_config_index_offsets[] = {
 	0, 0, 1, 3, 6, 7, 10, 11, 
 	14, 15, 18, 19, 22, 23, 26, 27, 
-	30, 32, 35, 45, 52, 60, 62, 70, 
-	80, 87, 95, 96, 104, 113, 120, 121, 
-	129, 138, 145, 153, 160, 168, 177, 184, 
-	185, 193
+	30, 40, 47, 55, 57, 65, 75, 82, 
+	90, 91, 99, 108, 115, 116, 124, 133, 
+	140, 148, 155, 163, 172, 179, 187, 194
 };
 
 static const char _ironbee_config_indicies[] = {
 	1, 3, 2, 4, 5, 1, 7, 9, 
 	10, 8, 8, 11, 12, 7, 14, 16, 
 	17, 15, 15, 18, 19, 14, 21, 22, 
-	23, 21, 25, 27, 28, 26, 27, 26, 
-	29, 30, 25, 32, 33, 34, 32, 36, 
-	35, 37, 36, 38, 31, 39, 39, 39, 
-	39, 40, 39, 1, 39, 41, 39, 39, 
-	39, 39, 40, 1, 42, 35, 39, 43, 
-	39, 39, 39, 39, 40, 1, 45, 46, 
-	47, 45, 48, 36, 36, 36, 49, 44, 
-	50, 50, 50, 50, 51, 50, 7, 53, 
-	54, 53, 53, 53, 53, 51, 7, 53, 
-	53, 55, 53, 53, 53, 53, 51, 7, 
-	57, 36, 57, 58, 36, 36, 59, 60, 
-	56, 61, 61, 61, 61, 62, 61, 14, 
-	63, 63, 64, 63, 63, 63, 63, 62, 
-	14, 66, 67, 68, 66, 26, 26, 69, 
-	26, 65, 70, 70, 70, 70, 71, 70, 
-	21, 70, 72, 70, 70, 70, 70, 71, 
-	21, 73, 73, 73, 73, 71, 73, 21, 
-	70, 74, 70, 70, 70, 70, 71, 21, 
-	76, 77, 78, 76, 26, 79, 80, 26, 
-	75, 81, 81, 81, 81, 82, 81, 25, 
-	83, 84, 85, 84, 84, 84, 84, 82, 
-	25, 84, 86, 84, 84, 84, 84, 82, 
-	25, 0
+	23, 21, 25, 26, 27, 25, 29, 30, 
+	31, 29, 33, 32, 34, 33, 35, 28, 
+	36, 36, 36, 36, 37, 36, 1, 36, 
+	38, 36, 36, 36, 36, 37, 1, 39, 
+	32, 36, 40, 36, 36, 36, 36, 37, 
+	1, 42, 43, 44, 42, 45, 33, 33, 
+	33, 46, 41, 47, 47, 47, 47, 48, 
+	47, 7, 50, 51, 50, 50, 50, 50, 
+	48, 7, 50, 50, 52, 50, 50, 50, 
+	50, 48, 7, 54, 33, 54, 55, 33, 
+	33, 56, 57, 53, 58, 58, 58, 58, 
+	59, 58, 14, 60, 60, 61, 60, 60, 
+	60, 60, 59, 14, 63, 64, 65, 63, 
+	66, 66, 67, 66, 62, 68, 68, 68, 
+	68, 69, 68, 21, 68, 70, 68, 68, 
+	68, 68, 69, 21, 71, 71, 71, 71, 
+	69, 71, 21, 68, 72, 68, 68, 68, 
+	68, 69, 21, 74, 75, 76, 74, 66, 
+	77, 78, 66, 73, 80, 80, 80, 80, 
+	81, 80, 25, 80, 83, 80, 80, 80, 
+	80, 81, 25, 85, 85, 85, 85, 81, 
+	85, 25, 80, 86, 80, 80, 80, 80, 
+	81, 25, 0
 };
 
 static const char _ironbee_config_trans_targs[] = {
-	18, 19, 18, 18, 19, 22, 23, 24, 
-	5, 26, 6, 24, 27, 28, 29, 9, 
-	30, 10, 29, 31, 32, 33, 35, 36, 
-	37, 38, 0, 37, 16, 38, 41, 19, 
-	18, 18, 20, 21, 0, 2, 3, 18, 
-	1, 18, 18, 18, 24, 23, 23, 25, 
-	5, 7, 23, 4, 23, 23, 23, 23, 
-	29, 28, 9, 28, 11, 28, 8, 28, 
-	28, 33, 32, 32, 34, 13, 32, 12, 
-	32, 32, 32, 38, 37, 39, 40, 15, 
-	17, 37, 14, 37, 37, 39, 37
+	16, 17, 16, 16, 17, 20, 21, 22, 
+	5, 24, 6, 22, 25, 26, 27, 9, 
+	28, 10, 27, 29, 30, 31, 33, 34, 
+	35, 36, 38, 39, 17, 16, 16, 18, 
+	19, 0, 2, 3, 16, 1, 16, 16, 
+	16, 22, 21, 21, 23, 5, 7, 21, 
+	4, 21, 21, 21, 21, 27, 26, 9, 
+	26, 11, 26, 8, 26, 26, 31, 30, 
+	30, 32, 0, 13, 30, 12, 30, 30, 
+	30, 36, 35, 35, 37, 35, 15, 35, 
+	35, 14, 35, 35, 35, 35, 35
 };
 
-static const unsigned char _ironbee_config_trans_actions[] = {
-	29, 85, 21, 23, 132, 132, 161, 136, 
-	5, 5, 5, 191, 171, 15, 140, 5, 
-	5, 5, 196, 176, 31, 144, 201, 181, 
-	37, 148, 1, 55, 3, 206, 186, 152, 
-	25, 58, 211, 0, 0, 0, 128, 61, 
-	5, 124, 27, 120, 216, 11, 92, 236, 
-	64, 96, 43, 5, 156, 40, 166, 100, 
-	221, 13, 64, 73, 96, 49, 5, 46, 
-	104, 226, 17, 52, 242, 96, 70, 5, 
-	112, 67, 108, 231, 19, 3, 248, 0, 
-	96, 82, 5, 34, 79, 76, 116
+static const short _ironbee_config_trans_actions[] = {
+	29, 79, 21, 23, 142, 142, 171, 146, 
+	3, 3, 3, 201, 181, 13, 150, 3, 
+	3, 3, 206, 186, 31, 154, 211, 191, 
+	34, 158, 216, 196, 162, 25, 55, 221, 
+	0, 0, 0, 134, 58, 3, 130, 27, 
+	126, 226, 9, 94, 246, 61, 98, 40, 
+	3, 166, 37, 176, 102, 231, 11, 61, 
+	70, 98, 46, 3, 43, 106, 236, 15, 
+	49, 252, 1, 98, 67, 3, 114, 64, 
+	110, 241, 17, 52, 258, 19, 98, 138, 
+	76, 3, 86, 122, 82, 73, 118
 };
 
-static const unsigned char _ironbee_config_to_state_actions[] = {
+static const short _ironbee_config_to_state_actions[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 7, 0, 0, 0, 0, 7, 
-	0, 0, 0, 0, 7, 0, 0, 0, 
+	5, 0, 0, 0, 0, 5, 0, 0, 
+	0, 0, 5, 0, 0, 0, 5, 0, 
+	0, 0, 0, 5, 0, 0, 0, 0
+};
+
+static const short _ironbee_config_from_state_actions[] = {
+	0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 
 	7, 0, 0, 0, 0, 7, 0, 0, 
-	0, 0
+	0, 0, 7, 0, 0, 0, 7, 0, 
+	0, 0, 0, 7, 0, 0, 0, 0
 };
 
-static const unsigned char _ironbee_config_from_state_actions[] = {
-	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 9, 0, 0, 0, 0, 9, 
-	0, 0, 0, 0, 9, 0, 0, 0, 
-	9, 0, 0, 0, 0, 9, 0, 0, 
-	0, 0
-};
-
-static const unsigned char _ironbee_config_eof_actions[] = {
-	0, 0, 0, 0, 0, 88, 88, 88, 
+static const short _ironbee_config_eof_actions[] = {
+	0, 0, 0, 0, 0, 90, 90, 90, 
 	0, 0, 0, 0, 0, 1, 0, 1, 
-	1, 1, 0, 0, 0, 0, 0, 88, 
+	0, 0, 0, 0, 0, 90, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0
+	0, 0, 0, 1, 0, 0, 0, 0
 };
 
 static const unsigned char _ironbee_config_eof_trans[] = {
 	0, 1, 0, 0, 7, 0, 0, 0, 
 	14, 0, 0, 0, 21, 0, 25, 0, 
-	0, 0, 0, 40, 40, 43, 40, 0, 
-	7, 53, 53, 53, 0, 62, 64, 64, 
-	0, 71, 71, 74, 71, 0, 82, 84, 
-	85, 85
+	0, 37, 37, 40, 37, 0, 7, 50, 
+	50, 50, 0, 59, 61, 61, 0, 69, 
+	69, 72, 69, 0, 80, 83, 85, 83
 };
 
-static const int ironbee_config_start = 18;
-static const int ironbee_config_first_final = 18;
+static const int ironbee_config_start = 16;
+static const int ironbee_config_first_final = 16;
 static const int ironbee_config_error = 0;
 
-static const int ironbee_config_en_parameters = 23;
-static const int ironbee_config_en_block_parameters = 28;
-static const int ironbee_config_en_newblock = 32;
-static const int ironbee_config_en_endblock = 37;
-static const int ironbee_config_en_main = 18;
+static const int ironbee_config_en_parameters = 21;
+static const int ironbee_config_en_block_parameters = 26;
+static const int ironbee_config_en_newblock = 30;
+static const int ironbee_config_en_endblock = 35;
+static const int ironbee_config_en_main = 16;
 
 
 #line 715 "../../ironbee/engine/config-parser.rl"
@@ -732,7 +726,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 #line 768 "../../ironbee/engine/config-parser.rl"
 
     
-#line 736 "../../ironbee/engine/config-parser.c"
+#line 730 "../../ironbee/engine/config-parser.c"
 	{
 	 cp->fsm.cs = ironbee_config_start;
 	 cp->fsm.top = 0;
@@ -743,7 +737,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 
 #line 770 "../../ironbee/engine/config-parser.rl"
     
-#line 747 "../../ironbee/engine/config-parser.c"
+#line 741 "../../ironbee/engine/config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -764,7 +758,7 @@ _resume:
 #line 1 "NONE"
 	{ cp->fsm.ts = ( fsm_vars.p);}
 	break;
-#line 768 "../../ironbee/engine/config-parser.c"
+#line 762 "../../ironbee/engine/config-parser.c"
 		}
 	}
 
@@ -1102,7 +1096,7 @@ _eof_trans:
 	break;
 	case 35:
 #line 676 "../../ironbee/engine/config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 28; goto _again;} }}
+	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 26; goto _again;} }}
 	break;
 	case 36:
 #line 1 "NONE"
@@ -1111,40 +1105,44 @@ _eof_trans:
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;} ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }
 	break;
 	case 12:
-	{{( fsm_vars.p) = (( cp->fsm.te))-1;} { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 28; goto _again;} }
+	{{( fsm_vars.p) = (( cp->fsm.te))-1;} { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 26; goto _again;} }
 	break;
 	}
 	}
 	break;
 	case 37:
-#line 681 "../../ironbee/engine/config-parser.rl"
+#line 682 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.act = 14;}
 	break;
 	case 38:
-#line 685 "../../ironbee/engine/config-parser.rl"
-	{ cp->fsm.act = 15;}
+#line 689 "../../ironbee/engine/config-parser.rl"
+	{ cp->fsm.act = 16;}
 	break;
 	case 39:
 #line 680 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 40:
-#line 681 "../../ironbee/engine/config-parser.rl"
+#line 682 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 41:
+#line 684 "../../ironbee/engine/config-parser.rl"
+	{ cp->fsm.te = ( fsm_vars.p)+1;}
+	break;
+	case 42:
 #line 691 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
 	break;
-	case 42:
-#line 685 "../../ironbee/engine/config-parser.rl"
+	case 43:
+#line 682 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
-	case 43:
-#line 688 "../../ironbee/engine/config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }}
-	break;
 	case 44:
+#line 689 "../../ironbee/engine/config-parser.rl"
+	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
+	break;
+	case 45:
 #line 1 "NONE"
 	{	switch(  cp->fsm.act ) {
 	default:
@@ -1153,39 +1151,39 @@ _eof_trans:
 	}
 	}
 	break;
-	case 45:
-#line 704 "../../ironbee/engine/config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 32; goto _again;}}}
-	break;
 	case 46:
-#line 705 "../../ironbee/engine/config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p)+1;{        { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 37; goto _again;}}}
+#line 704 "../../ironbee/engine/config-parser.rl"
+	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 30; goto _again;}}}
 	break;
 	case 47:
+#line 705 "../../ironbee/engine/config-parser.rl"
+	{ cp->fsm.te = ( fsm_vars.p)+1;{        { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 35; goto _again;}}}
+	break;
+	case 48:
 #line 708 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
-	case 48:
+	case 49:
 #line 709 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
-	case 49:
+	case 50:
 #line 710 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
-	case 50:
+	case 51:
 #line 695 "../../ironbee/engine/config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
-	case 51:
-#line 701 "../../ironbee/engine/config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 23; goto _again;} }}
-	break;
 	case 52:
 #line 701 "../../ironbee/engine/config-parser.rl"
-	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 23; goto _again;} }}
+	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 21; goto _again;} }}
 	break;
-#line 1189 "../../ironbee/engine/config-parser.c"
+	case 53:
+#line 701 "../../ironbee/engine/config-parser.rl"
+	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 21; goto _again;} }}
+	break;
+#line 1187 "../../ironbee/engine/config-parser.c"
 		}
 	}
 
@@ -1198,7 +1196,7 @@ _again:
 #line 1 "NONE"
 	{ cp->fsm.ts = 0;}
 	break;
-#line 1202 "../../ironbee/engine/config-parser.c"
+#line 1200 "../../ironbee/engine/config-parser.c"
 		}
 	}
 
@@ -1297,7 +1295,7 @@ _again:
 #line 653 "../../ironbee/engine/config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }
 	break;
-#line 1301 "../../ironbee/engine/config-parser.c"
+#line 1299 "../../ironbee/engine/config-parser.c"
 		}
 	}
 	}
