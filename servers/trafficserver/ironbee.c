@@ -46,6 +46,7 @@
 #include <ironbee/server.h>
 #include <ironbee/context.h>
 #include <ironbee/core.h>
+#include <ironbee/log.h>
 #include <ironbee/site.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>
@@ -2290,7 +2291,8 @@ static ib_status_t read_ibconf(ibconf_t *ibconf, int argc, const char *argv[])
                 ibconf->logfile = optarg;
                 break;
             case 'v':
-                ibconf->loglevel = atoi(optarg);
+                ibconf->loglevel =
+                    ib_log_string_to_level(optarg, IB_LOG_WARNING);
                 break;
             default:
                 TSError("[ironbee] Unrecognised option -%c ignored.\n", optopt);
