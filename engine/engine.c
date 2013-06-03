@@ -625,7 +625,7 @@ ib_mpool_t *ib_engine_pool_main_get(const ib_engine_t *ib)
 
 ib_mpool_t *ib_engine_pool_config_get(const ib_engine_t *ib)
 {
-    return ib->mp;
+    return ib->config_mp;
 }
 
 ib_mpool_t *ib_engine_pool_temp_get(const ib_engine_t *ib)
