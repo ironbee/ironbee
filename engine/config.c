@@ -244,10 +244,10 @@ ib_status_t ib_cfgparser_parse_private(
     node->type = IB_CFGPARSER_NODE_FILE;
     node->directive = "[file]";
     rc = ib_cfgparser_push_node(cp, node);
-    save_node = cp->curr;
     if (rc != IB_OK) {
         goto cleanup_push_node;
     }
+    save_node = cp->curr;
 
     /* Store the new file and path in the parser object */
     pathbuf = (char *)ib_mpool_strdup(cp->mp, file);
