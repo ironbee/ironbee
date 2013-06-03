@@ -59,7 +59,7 @@ endif
 %.c: %.rl
 	$(RAGEL) -s $<
 
-config-parser.dot: $(srcdir)/engine/config-parser.rl
+config-parser.dot: $(srcdir)/config-parser.rl
 	$(RAGEL) -V $< > $@
 
 config-parser.svg: config-parser.dot
