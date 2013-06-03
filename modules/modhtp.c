@@ -1191,6 +1191,7 @@ static int modhtp_htp_req_line(
     modhtp_txdata_t *txdata;
     ib_tx_t         *itx;
     ib_status_t      irc;
+    bool             force_path = false;
 
     /* Check the parser status */
     irc = modhtp_check_tx(htx, "Request Line", &txdata);
@@ -1237,8 +1238,14 @@ static int modhtp_htp_req_line(
         return HTP_ERROR;
     }
 
-    /* Store the transaction URI path. */
-    irc = modhtp_set_nulstr(itx, "URI Path", false,
+    /* Store the transaction URI path.  Set force if the current path is "/". */
+    if (itx->path != NULL) {
+        const char *path = itx->path;
+        if ( (*(path+0) == '/') && (*(path+1) == '\0') ) {
+            force_path = true;
+        }
+    }
+    irc = modhtp_set_nulstr(itx, "URI Path", force_path,
                             htx->parsed_uri->path, "/",
                             &(itx->path));
     if ( (irc != IB_OK) && (irc != IB_ENOENT) ) {
