@@ -28,6 +28,8 @@ IronBee v0.8.0
   the new engine current, and will destroy old engines once they are no longer
   used.
 
+* The Traffic Server plugin has been modified to use the engine manager.
+
 **Engine**
 
 * Operators have been overhauled.  They are now entirely independent of the

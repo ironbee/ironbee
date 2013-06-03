@@ -74,7 +74,8 @@ void TSPluginInit(int argc, const char *argv[])
       TSDebug("libloader", " loaded %s\n", lib);
     }
     else {
-      TSError("[libloader] failed to load %s: %s\n", lib, dlerror());
+        const char *err = dlerror();
+        TSError("[libloader] failed to load %s: %s\n", lib, err);
     }
   }
   return;
