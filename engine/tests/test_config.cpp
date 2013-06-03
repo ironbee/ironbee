@@ -108,17 +108,28 @@ class TestConfig : public BaseFixture
     virtual ib_status_t config(const string& configString, int isEnd=0)
     {
         ib_status_t rc;
-        std::string s = configString + "\n";
+
         rc = ib_cfgparser_ragel_parse_chunk(cfgparser,
-                                            s.c_str(),
-                                            s.length(),
+                                            configString.c_str(),
+                                            configString.length(),
                                             isEnd);
+        ib_log_info(
+            ib_engine,
+            "Done with configuration: %s",
+            ib_status_to_string(rc));
         if (rc != IB_OK) {
             return rc;
         }
 
         if (isEnd) {
+            ib_log_info(ib_engine, "Applying configuration.");
+
             rc = ib_cfgparser_apply(cfgparser, cfgparser->ib);
+
+            ib_log_info(
+                ib_engine,
+                "Done with configuration application: %s",
+                ib_status_to_string(rc));
         }
 
         return rc;
