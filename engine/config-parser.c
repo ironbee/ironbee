@@ -107,7 +107,7 @@ static void cpbuf_clear(ib_cfgparser_t *cp) {
  * @param[in] cp The configuration parser
  * @param[in,out] mp Pool to copy out of.
  *
- * @return a buffer allocated from the tmpmp memory pool
+ * @return a buffer allocated from the temp_mp memory pool
  *         available in ib_cfgparser_ragel_parse_chunk. This buffer may be
  *         larger than the string stored in it if the length of the string is
  *         reduced by Javascript unescaping.
@@ -216,7 +216,7 @@ static ib_status_t detect_file_loop(
  */
 static ib_status_t include_parse_directive(
     ib_cfgparser_t *cp,
-    ib_mpool_t* tmp_mp,
+    ib_mpool_t *tmp_mp,
     ib_cfgparser_node_t *node
 ) {
     assert(cp != NULL);
@@ -591,10 +591,11 @@ static const int ironbee_config_en_main = 18;
 
 #line 628 "../../ironbee/engine/config-parser.rl"
 
-ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
-                                           const char *buf,
-                                           const size_t blen,
-                                           const int is_last_chunk)
+ib_status_t ib_cfgparser_ragel_parse_chunk(
+    ib_cfgparser_t *cp,
+    const char *buf,
+    const size_t blen,
+    const int is_last_chunk)
 {
     assert(cp != NULL);
     assert(cp->ib != NULL);
@@ -602,10 +603,10 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     ib_engine_t *ib_engine = cp->ib;
 
     /* Temporary memory pool. */
-    ib_mpool_t *mptmp = ib_engine_pool_temp_get(ib_engine);
+    ib_mpool_t *temp_mp = ib_engine_pool_temp_get(ib_engine);
 
     /* Configuration memory pool. */
-    ib_mpool_t *mpcfg = ib_engine_pool_config_get(ib_engine);
+    ib_mpool_t *config_mp = ib_engine_pool_config_get(ib_engine);
 
     /* Error actions will update this. */
     ib_status_t rc = IB_OK;
@@ -631,23 +632,23 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     fsm_vars.eof = (is_last_chunk ? fsm_vars.pe : NULL);
 
     /* Create a temporary list for storing parameter values. */
-    ib_list_create(&plist, mptmp);
+    ib_list_create(&plist, temp_mp);
     if (plist == NULL) {
         return IB_EALLOC;
     }
 
     /* Access all ragel state variables via structure. */
     
-#line 676 "../../ironbee/engine/config-parser.rl"
-    
 #line 677 "../../ironbee/engine/config-parser.rl"
     
 #line 678 "../../ironbee/engine/config-parser.rl"
     
 #line 679 "../../ironbee/engine/config-parser.rl"
+    
+#line 680 "../../ironbee/engine/config-parser.rl"
 
     
-#line 651 "../../ironbee/engine/config-parser.c"
+#line 652 "../../ironbee/engine/config-parser.c"
 	{
 	 cp->fsm.cs = ironbee_config_start;
 	 cp->fsm.top = 0;
@@ -656,9 +657,9 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	 cp->fsm.act = 0;
 	}
 
-#line 681 "../../ironbee/engine/config-parser.rl"
+#line 682 "../../ironbee/engine/config-parser.rl"
     
-#line 662 "../../ironbee/engine/config-parser.c"
+#line 663 "../../ironbee/engine/config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -679,7 +680,7 @@ _resume:
 #line 1 "NONE"
 	{ cp->fsm.ts = ( fsm_vars.p);}
 	break;
-#line 683 "../../ironbee/engine/config-parser.c"
+#line 684 "../../ironbee/engine/config-parser.c"
 		}
 	}
 
@@ -759,7 +760,7 @@ _eof_trans:
 	case 1:
 #line 397 "../../ironbee/engine/config-parser.rl"
 	{
-        pval = qstrdup(cp, mpcfg);
+        pval = qstrdup(cp, config_mp);
         if (pval == NULL) {
             return IB_EALLOC;
         }
@@ -769,7 +770,7 @@ _eof_trans:
 	case 2:
 #line 404 "../../ironbee/engine/config-parser.rl"
 	{
-        pval = qstrdup(cp, mpcfg);
+        pval = qstrdup(cp, config_mp);
         if (pval == NULL) {
             return IB_EALLOC;
         }
@@ -831,7 +832,7 @@ _eof_trans:
                 node->type = IB_CFGPARSER_NODE_PARSE_DIRECTIVE;
                 /* Process directive. */
                 cpbuf_clear(cp);
-                rc = (parse_directive_table[i].fn)(cp, mptmp, node);
+                rc = (parse_directive_table[i].fn)(cp, temp_mp, node);
                 if (rc != IB_OK) {
                     ib_cfg_log_error(
                         cp,
@@ -1100,7 +1101,7 @@ _eof_trans:
 #line 614 "../../ironbee/engine/config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 23; goto _again;} }}
 	break;
-#line 1104 "../../ironbee/engine/config-parser.c"
+#line 1105 "../../ironbee/engine/config-parser.c"
 		}
 	}
 
@@ -1113,7 +1114,7 @@ _again:
 #line 1 "NONE"
 	{ cp->fsm.ts = 0;}
 	break;
-#line 1117 "../../ironbee/engine/config-parser.c"
+#line 1118 "../../ironbee/engine/config-parser.c"
 		}
 	}
 
@@ -1146,7 +1147,7 @@ _again:
 	case 1:
 #line 397 "../../ironbee/engine/config-parser.rl"
 	{
-        pval = qstrdup(cp, mpcfg);
+        pval = qstrdup(cp, config_mp);
         if (pval == NULL) {
             return IB_EALLOC;
         }
@@ -1191,7 +1192,7 @@ _again:
                 node->type = IB_CFGPARSER_NODE_PARSE_DIRECTIVE;
                 /* Process directive. */
                 cpbuf_clear(cp);
-                rc = (parse_directive_table[i].fn)(cp, mptmp, node);
+                rc = (parse_directive_table[i].fn)(cp, temp_mp, node);
                 if (rc != IB_OK) {
                     ib_cfg_log_error(
                         cp,
@@ -1212,7 +1213,7 @@ _again:
 #line 568 "../../ironbee/engine/config-parser.rl"
 	{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }
 	break;
-#line 1216 "../../ironbee/engine/config-parser.c"
+#line 1217 "../../ironbee/engine/config-parser.c"
 		}
 	}
 	}
@@ -1220,7 +1221,7 @@ _again:
 	_out: {}
 	}
 
-#line 682 "../../ironbee/engine/config-parser.rl"
+#line 683 "../../ironbee/engine/config-parser.rl"
 
     /* Ensure that our block is always empty on last chunk. */
     if ( is_last_chunk && blkname != NULL ) {

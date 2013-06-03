@@ -105,7 +105,7 @@ static void cpbuf_clear(ib_cfgparser_t *cp) {
  * @param[in] cp The configuration parser
  * @param[in,out] mp Pool to copy out of.
  *
- * @return a buffer allocated from the tmpmp memory pool
+ * @return a buffer allocated from the temp_mp memory pool
  *         available in ib_cfgparser_ragel_parse_chunk. This buffer may be
  *         larger than the string stored in it if the length of the string is
  *         reduced by Javascript unescaping.
@@ -214,7 +214,7 @@ static ib_status_t detect_file_loop(
  */
 static ib_status_t include_parse_directive(
     ib_cfgparser_t *cp,
-    ib_mpool_t* tmp_mp,
+    ib_mpool_t *tmp_mp,
     ib_cfgparser_node_t *node
 ) {
     assert(cp != NULL);
@@ -395,14 +395,14 @@ static parse_directive_entry_t parse_directive_table[] = {
 
     # Parameter
     action push_param {
-        pval = qstrdup(cp, mpcfg);
+        pval = qstrdup(cp, config_mp);
         if (pval == NULL) {
             return IB_EALLOC;
         }
         ib_list_push(plist, pval);
     }
     action push_blkparam {
-        pval = qstrdup(cp, mpcfg);
+        pval = qstrdup(cp, config_mp);
         if (pval == NULL) {
             return IB_EALLOC;
         }
@@ -458,7 +458,7 @@ static parse_directive_entry_t parse_directive_table[] = {
                 node->type = IB_CFGPARSER_NODE_PARSE_DIRECTIVE;
                 /* Process directive. */
                 cpbuf_clear(cp);
-                rc = (parse_directive_table[i].fn)(cp, mptmp, node);
+                rc = (parse_directive_table[i].fn)(cp, temp_mp, node);
                 if (rc != IB_OK) {
                     ib_cfg_log_error(
                         cp,
@@ -626,10 +626,11 @@ static parse_directive_entry_t parse_directive_table[] = {
 
 %% write data;
 
-ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
-                                           const char *buf,
-                                           const size_t blen,
-                                           const int is_last_chunk)
+ib_status_t ib_cfgparser_ragel_parse_chunk(
+    ib_cfgparser_t *cp,
+    const char *buf,
+    const size_t blen,
+    const int is_last_chunk)
 {
     assert(cp != NULL);
     assert(cp->ib != NULL);
@@ -637,10 +638,10 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     ib_engine_t *ib_engine = cp->ib;
 
     /* Temporary memory pool. */
-    ib_mpool_t *mptmp = ib_engine_pool_temp_get(ib_engine);
+    ib_mpool_t *temp_mp = ib_engine_pool_temp_get(ib_engine);
 
     /* Configuration memory pool. */
-    ib_mpool_t *mpcfg = ib_engine_pool_config_get(ib_engine);
+    ib_mpool_t *config_mp = ib_engine_pool_config_get(ib_engine);
 
     /* Error actions will update this. */
     ib_status_t rc = IB_OK;
@@ -666,7 +667,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     fsm_vars.eof = (is_last_chunk ? fsm_vars.pe : NULL);
 
     /* Create a temporary list for storing parameter values. */
-    ib_list_create(&plist, mptmp);
+    ib_list_create(&plist, temp_mp);
     if (plist == NULL) {
         return IB_EALLOC;
     }
