@@ -62,8 +62,18 @@ typedef enum {
 
 /**
  * String to level conversion.
+ *
+ * Attempts to convert @a s as both a number and a symbolic name (e.g. "debug")
+ *
+ * @param[in] s String to convert
+ * @param[in] dlevel Default value in case conversion fails.
+ *
+ * @returns Converted log level (if successful), or @a default.
  */
-ib_log_level_t DLL_PUBLIC ib_log_string_to_level(const char* s);
+ib_log_level_t DLL_PUBLIC ib_log_string_to_level(
+    const char     *s,
+    ib_log_level_t  dlevel
+);
 
 /**
  * Level to string conversion

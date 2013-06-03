@@ -321,7 +321,7 @@ static ib_status_t log_pipe_set_level(ib_cfgparser_t *cp, const char *name,
     rc = ib_context_module_config(ib_context_main(cp->ib), m, &cfg);
     assert((rc == IB_OK) && (cfg != NULL));
 
-    cfg->log_level = ib_log_string_to_level(p1);
+    cfg->log_level = ib_log_string_to_level(p1, IB_LOG_WARNING);
 
     return IB_OK;
 }

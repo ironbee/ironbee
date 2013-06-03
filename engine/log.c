@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/log.h>
+#include <ironbee/string.h>
 
 #include "engine_private.h"
 
@@ -143,19 +144,31 @@ void ib_log_set_loglevel_fn(
     ib->loglevel_cbdata = cbdata;
 }
 
-ib_log_level_t ib_log_string_to_level(const char* s)
+ib_log_level_t ib_log_string_to_level(
+    const char     *s,
+    ib_log_level_t  dlevel
+)
 {
     unsigned int i;
+    ib_num_t     level;
 
+    /* First, if it's a number, just do a numeric conversion */
+    if (ib_string_to_num(s, 10, &level) == IB_OK) {
+        return (ib_log_level_t)level;
+    }
+
+    /* Now, string compare to level names */
     for (i = 0; i < c_num_levels; ++i) {
         if (
             strncasecmp(s, c_log_levels[i], strlen(c_log_levels[i])) == 0 &&
             strlen(s) == strlen(c_log_levels[i])
         ) {
-            break;
+            return i;
         }
     }
-    return i;
+
+    /* No match, return the default */
+    return dlevel;
 }
 
 const char *ib_log_level_to_string(ib_log_level_t level)
