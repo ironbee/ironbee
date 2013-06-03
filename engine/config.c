@@ -198,6 +198,10 @@ ib_status_t ib_cfgparser_parse_private(
     const char *file,
     bool eof_mask
 ) {
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+
+    ib_engine_t *ib    = cp->ib;
     int ec             = 0;    /* Error code for sys calls. */
     int fd             = 0;    /* File to read. */
     const size_t bufsz = 8192; /* Buffer size. */
@@ -212,8 +216,22 @@ ib_status_t ib_cfgparser_parse_private(
     unsigned error_count = 0;
     ib_status_t error_rc = IB_OK;
 
+    /* Temporary memory pool. */
+    ib_mpool_t *temp_mp = ib_engine_pool_temp_get(ib);
+
+    /* Local memory pool. This is released at the end of this function. */
+    ib_mpool_t *local_mp;
+    
     /* Store the current file and path in the save_ stack variables */
     save_cwd = cp->cur_cwd;
+
+    /* Create a memory pool for allocations local to this function.
+     * This is destroyed at the end of this function. */
+    rc = ib_mpool_create(&local_mp, "local_mp", temp_mp);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not make local memory pool.");
+        return rc;
+    }
 
     /* Open the file to read. */
     fd = open(file, O_RDONLY);
@@ -226,7 +244,7 @@ ib_status_t ib_cfgparser_parse_private(
     }
 
     /* Build a buffer to read the file into. */
-    buf = (char *)malloc(sizeof(*buf)*bufsz);
+    buf = (char *)ib_mpool_alloc(local_mp, sizeof(*buf)*bufsz);
     if (buf==NULL) {
         ib_cfg_log_error(cp, "Unable to allocate buffer for config file.");
         rc = IB_EALLOC;
@@ -251,9 +269,11 @@ ib_status_t ib_cfgparser_parse_private(
 
     /* Store the new file and path in the parser object */
     pathbuf = (char *)ib_mpool_strdup(cp->mp, file);
-    if (pathbuf != NULL) {
-        cp->cur_cwd = dirname(pathbuf);
+    if (pathbuf == NULL) {
+        rc = IB_EALLOC;
+        goto cleanup;
     }
+    cp->cur_cwd = dirname(pathbuf);
 
     /* Fill the buffer, parse each line. Conditionally read another line. */
     do {
@@ -295,8 +315,6 @@ cleanup:
     cp->curr = save_node;
 cleanup_create_node:
 cleanup_push_node:
-
-    free(buf);
 cleanup_buf:
 
     close(fd);
@@ -322,6 +340,8 @@ cleanup_fd:
         "%u Error(s) parsing config file: %s",
         error_count,
         ib_status_to_string(rc));
+
+    ib_mpool_release(local_mp);
 
     return rc;
 }

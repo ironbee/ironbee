@@ -28,11 +28,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <limits.h>
 #include <math.h>
 #include <errno.h>
 
@@ -232,12 +234,21 @@ static ib_status_t include_parse_directive(
     char *real;
     const char* pval;
     const ib_list_node_t *list_node;
-    ib_cfgparser_fsm_t fsm;
+
+    /* A temporary local value to store the parser state in.
+     * We allocate this from local_mp to avoid putting the very large 
+     * buffer variable in fsm on the stack. */
+    ib_cfgparser_fsm_t *fsm;
+
     ib_cfgparser_node_t *current_node;
     bool if_exists;
-    /* Some utilities we use employ malloc (eg realpath()).
-     * If a malloc'ed buffer is in use, we alias it here to be free'ed. */
-    void *freeme = NULL; 
+    ib_mpool_t *local_mp = NULL;
+
+    rc = ib_mpool_create(&local_mp, "local_mp", tmp_mp);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to create local memory pool.");
+        goto cleanup;
+    }
 
     if (ib_list_elements(node->params) != 1) {
         ib_cfg_log_error(
@@ -247,7 +258,8 @@ static ib_status_t include_parse_directive(
             node->line,
             node->directive,
             ib_list_elements(node->params));
-        return IB_EINVAL;
+        rc = IB_EINVAL;
+        goto cleanup;
     }
 
     /* Grab the first parameter node. */
@@ -264,10 +276,21 @@ static ib_status_t include_parse_directive(
     if (incfile == NULL) {
         ib_cfg_log_error(cp, "Failed to resolve included file \"%s\": %s",
                          node->file, strerror(errno));
-        return IB_ENOENT;
+        ib_mpool_release(local_mp);
+        rc = IB_ENOENT;
+        goto cleanup;
     }
 
-    real = realpath(incfile, NULL);
+    real = ib_mpool_alloc(local_mp, PATH_MAX);
+    if (real == NULL) {
+        ib_cfg_log_error(
+            cp,
+            "Failed to allocate path buffer of size %d",
+            PATH_MAX);
+        rc = IB_EALLOC;
+        goto cleanup;
+    }
+    real = realpath(incfile, real);
     if (real == NULL) {
         if (!if_exists) {
             ib_cfg_log_error(cp,
@@ -275,66 +298,91 @@ static ib_status_t include_parse_directive(
                              "(using original \"%s\"): %s",
                              incfile, strerror(errno));
         }
+        else {
+            ib_cfg_log_warning(
+                cp,
+                "Failed to normalize path. Using raw include path: %s",
+                incfile);
+        }
 
         real = incfile;
     }
+    else if (strcmp(real, incfile) != 0) {
+        ib_cfg_log_info(
+            cp,
+            "Real path of included file \"%s\" is \"%s\"",
+            incfile,
+            real);
+    }
     else {
-        if (strcmp(real, incfile) != 0) {
-            ib_cfg_log_info(cp,
-                            "Real path of included file \"%s\" is \"%s\"",
-                            incfile, real);
-        }
-        freeme = real;
+        ib_cfg_log_info(
+            cp,
+            "Including file \"%s\"",
+            incfile);
     }
 
     rc = detect_file_loop(cp, node);
-    if (freeme != NULL) {
-        free(freeme);
-        freeme = NULL;
-    }
     if (rc != IB_OK) {
-        return rc;
+        goto cleanup;
     }
 
     if (access(incfile, R_OK) != 0) {
         if (if_exists) {
-            ib_cfg_log(cp, (errno == ENOENT) ? IB_LOG_DEBUG : IB_LOG_NOTICE,
-                       "Ignoring include file \"%s\": %s",
-                       incfile, strerror(errno));
-            return IB_OK;
+            ib_cfg_log(
+                cp, (errno == ENOENT) ? IB_LOG_DEBUG : IB_LOG_NOTICE,
+                "Ignoring include file \"%s\": %s",
+                incfile,
+                strerror(errno));
+            rc = IB_OK;
+            goto cleanup;
         }
 
-        ib_cfg_log_error(cp, "Cannot access included file \"%s\": %s",
-                         incfile, strerror(errno));
-        return IB_ENOENT;
+        ib_cfg_log_error(
+            cp,
+            "Cannot access included file \"%s\": %s",
+            incfile,
+            strerror(errno));
+        rc = IB_ENOENT;
+        goto cleanup;
     }
 
     statval = stat(incfile, &statbuf);
     if (statval != 0) {
         if (if_exists) {
-            ib_cfg_log(cp, (errno == ENOENT) ? IB_LOG_DEBUG : IB_LOG_NOTICE,
-                       "Ignoring include file \"%s\": %s",
-                       incfile, strerror(errno));
-            return IB_OK;
+            ib_cfg_log(
+                cp, (errno == ENOENT) ? IB_LOG_DEBUG : IB_LOG_NOTICE,
+                "Ignoring include file \"%s\": %s",
+                incfile,
+                strerror(errno));
+            rc = IB_OK;
+            goto cleanup;
         }
 
-        ib_cfg_log_error(cp,
-                         "Failed to stat include file \"%s\": %s",
-                         incfile, strerror(errno));
-        return IB_ENOENT;
+        ib_cfg_log_error(
+            cp,
+            "Failed to stat include file \"%s\": %s",
+            incfile,
+            strerror(errno));
+        rc = IB_ENOENT;
+        goto cleanup;
     }
 
     if (S_ISREG(statbuf.st_mode) == 0) {
         if (if_exists) {
-            ib_cfg_log_info(cp,
-                            "Ignoring include file \"%s\": Not a regular file",
-                            incfile);
-            return IB_OK;
+            ib_cfg_log_info(
+                cp,
+                "Ignoring include file \"%s\": Not a regular file",
+                incfile);
+            rc = IB_OK;
+            goto cleanup;
         }
 
-        ib_cfg_log_error(cp,
-	                 "Included file \"%s\" is not a regular file", incfile);
-        return IB_ENOENT;
+        ib_cfg_log_error(
+            cp,
+	    "Included file \"%s\" is not a regular file",
+            incfile);
+        rc = IB_ENOENT;
+        goto cleanup;
     }
 
     ib_cfg_log_debug(cp, "Including '%s'", incfile);
@@ -342,18 +390,34 @@ static ib_status_t include_parse_directive(
     /* Make the given node the current node for the file inclusion. */
     current_node = cp->curr;
     cp->curr = node;
-    fsm = cp->fsm;
+
+    /* Allocate fsm in the heap as it contains a very large buffer. */
+    fsm = ib_mpool_alloc(local_mp, sizeof(*fsm));
+    if (fsm == NULL) {
+        rc = IB_EALLOC;
+        goto cleanup;
+    }
+    *fsm = cp->fsm;
     rc = ib_cfgparser_parse_private(cp, incfile, false);
-    cp->fsm = fsm;
+    cp->fsm = *fsm;
     cp->curr = current_node;
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error parsing included file \"%s\": %s",
-	                 incfile, ib_status_to_string(rc));
-        return rc;
+        ib_cfg_log_error(
+            cp,
+            "Error parsing included file \"%s\": %s",
+	    incfile,
+            ib_status_to_string(rc));
+        rc = IB_OK;
+        goto cleanup;
     }
 
     ib_cfg_log_debug(cp, "Done processing include file \"%s\"", incfile);
-    return IB_OK;
+
+cleanup:
+    if (local_mp != NULL) {
+        ib_mpool_release(local_mp);
+    }
+    return rc;
 }
 
 static ib_status_t loglevel_parse_directive(
