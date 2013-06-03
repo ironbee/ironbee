@@ -78,6 +78,7 @@ static ib_status_t cpbuf_append(ib_cfgparser_t *cp, char c)
     assert (cp->buffer_sz >= cp->buffer_len);
 
     if (cp->buffer_sz == cp->buffer_len) {
+        ib_cfg_log_error(cp, "Appending past the end of our buffer.");
         return IB_EALLOC;
     }
 
@@ -204,7 +205,7 @@ static ib_status_t detect_file_loop(
 }
 
 /**
- * Process "Include" and "IncludeIfExists" parse directives.
+ * Implementation of "Include" and "IncludeIfExists" parse directives.
  * param[in] cp Configuration parser.
  * param[in] mp Memory pool to use.
  * param[in] node The parse node containing the directive.
@@ -214,10 +215,11 @@ static ib_status_t detect_file_loop(
  * - Any other code causes a general failure to be repoted but the
  *   parse continues.
  */
-static ib_status_t include_parse_directive(
+static ib_status_t include_parse_directive_impl(
     ib_cfgparser_t *cp,
     ib_mpool_t *tmp_mp,
-    ib_cfgparser_node_t *node
+    ib_cfgparser_node_t *node,
+    bool if_exists
 ) {
     assert(cp != NULL);
     assert(cp->mp != NULL);
@@ -241,7 +243,6 @@ static ib_status_t include_parse_directive(
     ib_cfgparser_fsm_t *fsm;
 
     ib_cfgparser_node_t *current_node;
-    bool if_exists;
     ib_mpool_t *local_mp = NULL;
 
     rc = ib_mpool_create(&local_mp, "local_mp", tmp_mp);
@@ -420,6 +421,24 @@ cleanup:
     return rc;
 }
 
+//! Proxy to include_parse_directive_impl with if_exists = true.
+static ib_status_t include_if_exists_parse_directive(
+    ib_cfgparser_t *cp,
+    ib_mpool_t *tmp_mp,
+    ib_cfgparser_node_t *node
+) {
+    return include_parse_directive_impl(cp, tmp_mp, node, true);
+}
+
+//! Proxy to include_parse_directive_impl with if_exists = false.
+static ib_status_t include_parse_directive(
+    ib_cfgparser_t *cp,
+    ib_mpool_t *tmp_mp,
+    ib_cfgparser_node_t *node
+) {
+    return include_parse_directive_impl(cp, tmp_mp, node, false);
+}
+
 static ib_status_t loglevel_parse_directive(
     ib_cfgparser_t *cp,
     ib_mpool_t* tmp_mp,
@@ -439,9 +458,9 @@ static ib_status_t loglevel_parse_directive(
  * Null-terminated table that maps parsing directives to handler functions.
  */
 static parse_directive_entry_t parse_directive_table[] = {
-    { "IncludeIfExists", include_parse_directive },
-    { "Include",         include_parse_directive },
-    { "LogLevel",        loglevel_parse_directive },
+    { "IncludeIfExists", include_if_exists_parse_directive },
+    { "Include",         include_parse_directive           },
+    { "LogLevel",        loglevel_parse_directive          },
     { NULL, NULL } /* Null termination. Do not remove. */
 };
 
@@ -607,9 +626,11 @@ static parse_directive_entry_t parse_directive_table[] = {
     # Non-breaking space. Space that does not terminate a statement.
     NBSP = ( WS | '\\' EOL );
 
+
     qchar = '\\' any;
     qtoken = '"' ( qchar | ( any - ["\\] ) )* '"';
-    token = (qchar | (any - (WS | EOL | [<>#"\\]))) (qchar | (any - ( WS | EOL | [<>"\\])))*;
+    token = (qchar | (any - (WS | EOL | [<>#"\\])))
+            (qchar | (any - (WS | EOL | [<>"\\])))*;
     param = qtoken | token;
     keyval = token '=' param;
     iparam = ( '"' (any - (EOL | '"'))+ '"' ) | (any - (WS | EOL) )+;
@@ -629,7 +650,7 @@ static parse_directive_entry_t parse_directive_table[] = {
               %push_param
               $/push_param
               $/push_dir
-              $eof{ fret; };
+              $eof{ fhold; fret; };
     *|;
 
     block_parameters := |*
@@ -645,9 +666,9 @@ static parse_directive_entry_t parse_directive_table[] = {
     newblock := |*
         WS;
         CONT   $newline
-               $!error_action { fret; };
+               $!error_action { fhold; fret; };
         EOL    $newline
-               $!error_action { fret; };
+               $!error_action { fhold; fret; };
         token  >cpbuf_clear
                $cpbuf_append
                %start_block
@@ -663,9 +684,11 @@ static parse_directive_entry_t parse_directive_table[] = {
                 $!error_action
                 %pop_block;
 	EOL     $newline
-                %error_action { fret; };
+                %error_action
+                { fret; };
         ">" EOL $newline
-                $!error_action { fret; };
+                $!error_action
+                { fret; };
     *|;
 
     main := |*
@@ -733,6 +756,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
     /* Create a temporary list for storing parameter values. */
     ib_list_create(&plist, temp_mp);
     if (plist == NULL) {
+        ib_cfg_log_error(cp, "Cannot allocate parameter list.");
         return IB_EALLOC;
     }
 
@@ -747,6 +771,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 
     /* Ensure that our block is always empty on last chunk. */
     if ( is_last_chunk && blkname != NULL ) {
+        ib_cfg_log_error(cp, "Block name is not empty at end of config input");
         return IB_EINVAL;
     }
 
