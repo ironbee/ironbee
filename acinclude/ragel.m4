@@ -26,5 +26,6 @@ AC_DEFUN([CHECK_RAGEL],
 	  )
   fi
   AC_SUBST(RAGEL)
+  AM_CONDITIONAL([HAVE_RAGEL], [test "x$RAGEL" != "x"])
 ])
 

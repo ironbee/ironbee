@@ -244,7 +244,7 @@ AC_ARG_WITH([integration-tests],
 AM_CONDITIONAL([INTEGRATION_TESTS], test "${integration_test}" = "yes"])
 
 ### Ragel
-CHECK_RAGEL(6.8)
+CHECK_RAGEL(6.9)
 
 ### Doxygen
 AC_ARG_WITH([doxygen],

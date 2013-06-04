@@ -56,6 +56,7 @@ install-exec-hook: $(lib_LTLIBRARIES)
 endif
 
 # Ragel generated files
+if HAVE_RAGEL
 %.c: %.rl
 	(cd $(dir $<); $(RAGEL) -s $(notdir $<))
 
@@ -64,3 +65,4 @@ config-parser.dot: $(srcdir)/config-parser.rl
 
 config-parser.svg: config-parser.dot
 	dot -Tsvg $<  > $@
+endif
