@@ -17,13 +17,13 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/collection_manager.h>
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/json.h>
 #include <ironbee/kvstore.h>
 #include <ironbee/kvstore_filesystem.h>
 #include <ironbee/list.h>
-#include <ironbee/collection_manager.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
@@ -44,7 +44,6 @@ typedef struct {
     const pcre   *key_pcre;          /**< Compiled PCRE to match key=[name] */
     const ib_collection_manager_t *manager; /**< Collection manager */
 } mod_persist_param_data_t;
-static mod_persist_param_data_t mod_persist_param_data = { NULL, NULL };
 
 /** File system persistence kvstore data */
 typedef struct {
@@ -55,11 +54,6 @@ typedef struct {
     ib_kvstore_t  *kvstore;          /**< kvstore object */
     ib_time_t      expiration;       /**< Expiration time in useconds */
 } mod_persist_kvstore_t;
-
-/** File system persistence configuration data */
-typedef struct {
-} mod_persist_cfg_t;
-static mod_persist_cfg_t mod_persist_global_cfg;
 
 /** Default expiration time of persisted collections (useconds) */
 static const ib_time_t default_expiration = 60LU * 1000000LU;
@@ -127,7 +121,6 @@ static ib_status_t mod_persist_register_fn(
     assert(collection_name != NULL);
     assert(params != NULL);
     assert(pmanager_inst_data != NULL);
-    assert(mod_persist_param_data.key_pcre != NULL);
 
     const ib_list_node_t *node;
     const char *nodestr;
@@ -144,6 +137,18 @@ static ib_status_t mod_persist_register_fn(
     mode_t dmode = 0755;
     mode_t fmode = 0644;
     ib_time_t expiration = default_expiration;
+    mod_persist_param_data_t *param_data;
+    ib_context_t *context;
+
+    /* Get my configuration data (aka parameter parsing data) */
+    context = ib_context_main(ib);
+    assert(context != NULL);
+    rc = ib_context_module_config(context, module, &param_data);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve persist configuration data.");
+        return rc;
+    }
+    assert(param_data->key_pcre != NULL);
 
     if (ib_list_elements(params) < 1) {
         return IB_EINVAL;
@@ -173,7 +178,7 @@ static ib_status_t mod_persist_register_fn(
         const char *value;
         size_t      value_len;
 
-        pcre_rc = pcre_exec(mod_persist_param_data.key_pcre, NULL,
+        pcre_rc = pcre_exec(param_data->key_pcre, NULL,
                             nodestr, strlen(nodestr),
                             0, 0, ovector, ovecsize);
         if (pcre_rc < 0) {
@@ -529,6 +534,23 @@ static ib_status_t mod_persist_persist_fn(
 }
 
 /**
+ * Cleanup for the persist managed collection module
+ *
+ * @param[in] data Module data
+ */
+static void mod_persist_cleanup(void *data)
+{
+    ib_module_t *module = (ib_module_t *)data;
+    mod_persist_param_data_t *param_data =
+        (mod_persist_param_data_t *)(module->data);
+
+    if (param_data->key_pcre != NULL) {
+        pcre_free((pcre *)param_data->key_pcre);
+        param_data->key_pcre = NULL;
+    }
+}
+
+/**
  * Initialize persist managed collection module
  *
  * @param[in] ib Engine
@@ -554,6 +576,7 @@ static ib_status_t mod_persist_init(
     int eoff;
     ib_status_t rc;
     const ib_collection_manager_t *manager;
+    mod_persist_param_data_t *param_data;
 
     /* Register the name/value pair InitCollection handler */
     rc = ib_collection_manager_register(
@@ -576,20 +599,29 @@ static ib_status_t mod_persist_init(
         ib_log_error(ib, "Failed to compile pattern \"%s\"", key_pattern);
         return IB_EUNKNOWN;
     }
-    mod_persist_param_data.key_pcre = compiled;
-    mod_persist_param_data.manager = manager;
+
+    /* Create & populate our parameter data */
+    param_data = ib_mpool_alloc(ib_engine_pool_main_get(ib),
+                                sizeof(*param_data));
+    if (param_data == NULL) {
+        return IB_EALLOC;
+    }
+    param_data->key_pcre = compiled;
+    param_data->manager = manager;
+    module->data = param_data;
+
+    /* Register a cleanup function to free the regex */
+    ib_mpool_cleanup_register(ib_engine_pool_main_get(ib),
+                              mod_persist_cleanup,
+                              module);
 
     return IB_OK;
 }
 
 static ib_status_t mod_persist_fini(ib_engine_t *ib,
-                                    ib_module_t *m,
+                                    ib_module_t *module,
                                     void *cbdata)
 {
-    if (mod_persist_param_data.key_pcre != NULL) {
-        pcre_free((pcre *)mod_persist_param_data.key_pcre);
-    }
-
     return IB_OK;
 }
 
@@ -597,7 +629,7 @@ static ib_status_t mod_persist_fini(ib_engine_t *ib,
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,             /* Default metadata */
     MODULE_NAME_STR,                       /* Module name */
-    IB_MODULE_CONFIG(&mod_persist_global_cfg), /* Global config data */
+    IB_MODULE_CONFIG_NULL,                 /* Set by initializer. */
     NULL,                                  /* Configuration field map */
     NULL,                                  /* Config directive map */
     mod_persist_init,                      /* Initialize function */
