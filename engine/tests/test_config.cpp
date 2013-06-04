@@ -184,7 +184,8 @@ INSTANTIATE_TEST_CASE_P(
     "LoadModule doesnt_exist.so\r\n",
     "Include Missing.config",
     "Include Missing.config\n",
-    "Include Missing.config\r\n"
+    "Include Missing.config\r\n",
+    "LogLevel TRACE\nLSProfile foo site=*@request_line_length=>numeric_int\n"
     ));
 
 INSTANTIATE_TEST_CASE_P(

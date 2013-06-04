@@ -135,7 +135,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
 
     cp->root->type = IB_CFGPARSER_NODE_ROOT;
     cp->root->file = "[root]";
-    cp->root->line = 0;
+    cp->root->line = 1;
     cp->root->directive = "[root]";
     cp->curr = cp->root;
 

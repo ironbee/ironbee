@@ -650,17 +650,19 @@ static parse_directive_entry_t parse_directive_table[] = {
               %push_param
               $/push_param
               $/push_dir
+              $err{ fhold; fret; }
               $eof{ fhold; fret; };
     *|;
 
     block_parameters := |*
         WS;
         CONT  $newline;
-        param >cpbuf_clear
-              $cpbuf_append
-              %push_blkparam;
         ">"   @push_block
               { fret; };
+        param >cpbuf_clear
+              $cpbuf_append
+              %push_blkparam
+              $err{ fhold; fret; };
     *|;
 
     newblock := |*
@@ -708,6 +710,13 @@ static parse_directive_entry_t parse_directive_table[] = {
         WS;
         CONT $newline;
         EOL  $newline;
+        ">" {
+                ib_cfg_log_error(
+                    cp,
+                    "Character \">\" encountered outside a block tag.");
+                rc = IB_EOTHER;
+                fbreak;
+            };
     *|;
 }%%
 
