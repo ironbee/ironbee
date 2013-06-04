@@ -57,7 +57,7 @@ endif
 
 # Ragel generated files
 %.c: %.rl
-	$(RAGEL) -s $<
+	(cd $(dir $<); $(RAGEL) -s $(notdir $<))
 
 config-parser.dot: $(srcdir)/config-parser.rl
 	$(RAGEL) -V $< > $@
