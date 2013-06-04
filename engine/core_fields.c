@@ -27,6 +27,7 @@
 #include "core_private.h"
 
 #include <ironbee/capture.h>
+#include <ironbee/context.h>
 #include <ironbee/core.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>

@@ -26,6 +26,7 @@
 #define __BASE_FIXTURE_H__
 
 #include <ironbee/release.h>
+#include <ironbee/context.h>
 #include <ironbee/core.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>

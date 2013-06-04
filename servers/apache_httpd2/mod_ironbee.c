@@ -42,6 +42,7 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/config.h>
+#include <ironbee/context.h>
 #include <ironbee/module.h> /* Only needed while config is in here. */
 #include <ironbee/server.h>
 #include <ironbee/core.h>

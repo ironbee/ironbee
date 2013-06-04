@@ -17,6 +17,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/json.h>
 #include <ironbee/kvstore.h>

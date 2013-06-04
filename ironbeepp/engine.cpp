@@ -29,6 +29,7 @@
 #include <ironbeepp/server.hpp>
 #include <ironbeepp/notifier.hpp>
 
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
 
 namespace IronBee {

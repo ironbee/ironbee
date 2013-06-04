@@ -42,6 +42,7 @@
 #include <ironbee/lock.h>
 #endif
 
+#include <ironbee/context.h>
 #include <ironbee/module.h>
 
 #include <assert.h>
