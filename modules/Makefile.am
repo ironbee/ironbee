@@ -26,7 +26,7 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_log_pipe.la \
                      ibmod_sqltfn.la
 
-if MODERN_COMPILER
+if CPP11
 if CPP
 pkglib_LTLIBRARIES += libparser_suite.la
 libparser_suite_la_SOURCES = parser_suite.cpp

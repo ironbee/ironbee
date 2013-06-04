@@ -104,6 +104,17 @@ else
 fi
 AM_CONDITIONAL([MODERN_COMPILER], [test "$MODERN_COMPILER" = "yes"])
 
+dnl Check C++11 support
+CPP11="no"
+if test "$cc_is_clang" == "yes"; then
+	AX_COMPARE_VERSION([$CLANG_VERSION],[ge],[3.2],
+		[CPP11="yes"])
+else
+	AX_COMPARE_VERSION([$GCC_VERSION],[ge],[4.8],
+		[CPP11="yes"])
+fi
+AM_CONDITIONAL([CPP11], [test "$CPP11" = "yes"])
+
 dnl After all other tests, we will turn on errors.
 
 AC_PROG_INSTALL
