@@ -153,6 +153,7 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(
         "LogLevel 9",
         "LogLevel 9\n",
+        "LogLevel 9\r\n",
 
         "ModuleBasePath "IB_XSTRINGIFY(MODULE_BASE_PATH)"\n"
         "LoadModule ibmod_htp.so",
@@ -177,10 +178,13 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(
     "blah blah",
     "blah blah\n",
+    "blah blah\r\n",
     "LoadModule doesnt_exist.so",
-    "LoadModule doesnt_exist.so\n"
+    "LoadModule doesnt_exist.so\n",
+    "LoadModule doesnt_exist.so\r\n",
     "Include Missing.config",
-    "Include Missing.config\n"
+    "Include Missing.config\n",
+    "Include Missing.config\r\n"
     ));
 
 INSTANTIATE_TEST_CASE_P(
