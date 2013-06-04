@@ -15,7 +15,7 @@ AC_DEFUN([CHECK_RAGEL],
 	  exactRagelVersion=[$1]
 	  AC_MSG_CHECKING([for exact version $ragelVersion])
 
-	  ragelVersion=`$RAGEL --version | awk '{print $ 6}'`
+	  ragelVersion=`$RAGEL --version | head -1 | awk '{print $ 6}'`
 
 	  AX_COMPARE_VERSION([$ragelVersion],[eq],[$exactRagelVersion],
 	       [AC_MSG_RESULT($ragelVersion is ok)],
