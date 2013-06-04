@@ -244,17 +244,7 @@ AC_ARG_WITH([integration-tests],
 AM_CONDITIONAL([INTEGRATION_TESTS], test "${integration_test}" = "yes"])
 
 ### Ragel
-AC_ARG_WITH([ragel],
-            [  --with-ragel=PROG ragel executable],
-            [ragel="$withval"],[ragel=no])
-
-if test "$ragel" != "no"; then
-    AC_MSG_NOTICE([Using ragel: $ragel])
-else
-    AC_PATH_PROGS([ragel],[ragel],[])
-fi
-
-RAGEL=$ragel
+CHECK_RAGEL(6.8)
 
 ### Doxygen
 AC_ARG_WITH([doxygen],
@@ -569,7 +559,6 @@ AC_SUBST(CONFIG_MACRO_DIR)
 AC_SUBST(TOPLEVEL_SUBDIRS)
 AC_SUBST(LIBS_SUBDIRS)
 AC_SUBST(SERVERS_SUBDIRS)
-AC_SUBST(RAGEL)
 AC_SUBST(JAVA)
 AC_SUBST(VALGRIND)
 AC_SUBST(AM_CPPFLAGS)
