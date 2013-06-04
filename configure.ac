@@ -89,8 +89,9 @@ AM_CONDITIONAL([CC_IS_CLANG], [test "$cc_is_clang" = "yes"])
 
 dnl if using gcc, determine version.
 if test "$GCC" = "yes" && test "$cc_is_clang" != "yes"; then
-	AC_MSG_NOTICE([Detected gcc (not clang); looking for version.])
 	AX_GCC_VERSION
+else
+	AX_CLANG_VERSION
 fi
 
 dnl turn on lots of warnings with modern compilers
