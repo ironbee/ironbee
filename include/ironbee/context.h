@@ -294,8 +294,8 @@ ib_status_t DLL_PUBLIC ib_context_init_cfg(ib_context_t *ctx,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_context_module_config(ib_context_t *ctx,
-                                                ib_module_t *m,
+ib_status_t DLL_PUBLIC ib_context_module_config(const ib_context_t *ctx,
+                                                const ib_module_t *m,
                                                 void *pcfg);
 
 /**
