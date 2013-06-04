@@ -5,14 +5,6 @@
 
 using namespace std;
 
-#ifndef __clang__
-#ifdef __OPTIMIZE__
-// gcc 4.8 optimizer doesn't like this code so limit to level 1.
-// Suggest using clang instead.
-#pragma GCC optimize 1
-#endif
-#endif
-
 // Tell Fusion about the result structures.
 // These must be in the top namespace.
 

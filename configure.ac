@@ -109,9 +109,6 @@ CPP11="no"
 if test "$cc_is_clang" == "yes"; then
 	AX_COMPARE_VERSION([$CLANG_VERSION],[ge],[3.2],
 		[CPP11="yes"])
-else
-	AX_COMPARE_VERSION([$GCC_VERSION],[ge],[4.8],
-		[CPP11="yes"])
 fi
 AM_CONDITIONAL([CPP11], [test "$CPP11" = "yes"])
 
