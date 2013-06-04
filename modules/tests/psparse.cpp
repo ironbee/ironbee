@@ -56,7 +56,7 @@ void read_all(istream& in, vector<char>& data)
 
 int main(int argc, char **argv)
 {
-    const map<string, parser_t> parsers {
+    static const map<string, parser_t> parsers {
         {"uri",           simple_parser(&parse_uri)},
         {"request_line",  simple_parser(&parse_request_line)},
         {"response_line", simple_parser(&parse_response_line)},
