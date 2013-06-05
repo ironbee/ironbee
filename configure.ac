@@ -471,7 +471,7 @@ SERVERS_SUBDIRS="apache_httpd2 trafficserver nginx"
 
 dnl Enable lua subdir if enabled
 if test "$enable_lua" != "no"; then
-    TOPLEVEL_SUBDIRS="lua ${TOPLEVEL_SUBDIRS}"
+    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} lua"
 fi
 
 dnl Enable C++ subdirs if enabled
@@ -613,6 +613,7 @@ AC_CONFIG_FILES([predicate/tests/Makefile])
 fi
 
 AC_CONFIG_FILES([lua/Makefile])
+AC_CONFIG_FILES([lua/tests/Makefile])
 AC_CONFIG_FILES([tools/Makefile])
 AC_CONFIG_FILES([modules/Makefile])
 AC_CONFIG_FILES([modules/tests/Makefile])

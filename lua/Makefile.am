@@ -2,6 +2,8 @@ ACLOCAL_AMFLAGS = -I ../acinclude
 
 include $(top_srcdir)/build/common.mk
 
+SUBDIRS = tests
+
 luadir = $(libdir)
 
 FFI_FILES = \
@@ -14,6 +16,13 @@ FFI_FILES = \
 
 BUILT_SOURCES = ironbee-ffi.h \
                 ironbee-ffi-h.lua
+
+LUA_CFLAGS = -fPIC
+LUA_LIBADD = -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
+             -lluajit-ironbee \
+             -lm
+LUA_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+	       $(AM_CPPFLAGS)
 
 if DARWIN
 if ENABLE_LUA
@@ -57,16 +66,22 @@ lua_DATA   = ironbee-ffi-h.lua \
              event_processor.lua \
              qa.lua
 
+nobase_pkglib_LTLIBRARIES = 
 noinst_LTLIBRARIES = libironbee-lua.la
 libironbee_lua_la_SOURCES = ironbee.c ironbee.h
-libironbee_lua_la_CPPFLAGS = \
-	-I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
-	$(AM_CPPFLAGS)
+libironbee_lua_la_CPPFLAGS = $(LUA_CPPFLAGS)
+libironbee_lua_la_CFLAGS = $(LUA_CFLAGS)
+libironbee_lua_la_LIBADD = $(LUA_LIBADD)
 
-libironbee_lua_la_CFLAGS = -fPIC
-libironbee_lua_la_LIBADD = -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
-                           -lluajit-ironbee \
-                           -lm
+if ENABLE_JSON
+nobase_pkglib_LTLIBRARIES       += ironbee/util/json.la
+ironbee_util_json_la_SOURCES     = ironbee/util/ljson.c
+ironbee_util_json_la_CPPFLAGS    = $(LUA_CPPFLAGS)
+ironbee_util_json_la_CFLAGS      = $(LUA_CFLAGS)
+ironbee_util_json_la_LIBADD      = $(LUA_LIBADD)
+ironbee_util_json_la_LDFLAGS     = $(LDFLAGS) \
+                                   -module -avoid-version -shared
+endif
 
 ironbee-ffi.h: $(FFI_FILES)
 	> tmp.h
@@ -82,18 +97,6 @@ ironbee-ffi-h.lua: ironbee-ffi.h
 	echo "ffi.cdef [["                             >> $@
 	cat $< | grep -v -e '^# ' | grep -v __typeof__ >> $@
 	echo "]]"                                      >> $@
-
-check_PROGRAMS    = test_lua
-TESTS             = $(check_PROGRAMS)
-test_lua_SOURCES  = test_lua.cpp \
-		    $(top_srcdir)/tests/gtest/gtest_main.cc \
-		    $(top_srcdir)/tests/gtest/gtest-all.cc
-test_lua_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
-		    -I$(top_srcdir)/tests \
-		    -DFFI_FILE=$(top_srcdir)/lua/ironbee-ffi.lua
-test_lua_LDFLAGS  = $(LDFLAGS) \
-		    -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
-test_lua_LDADD    = -lluajit-ironbee
 
 CLEANFILES = ironbee-ffi.h ironbee-ffi-h.lua
 
