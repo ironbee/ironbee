@@ -21,6 +21,7 @@
                 <literal>libloader.so <replaceable>sharedlib.so</replaceable></literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.5.0</para>
         </section>
         <section>
             <title>TrafficServer IronBee Plugin</title>
@@ -29,6 +30,7 @@
                 <literal><replaceable>/path/to/</replaceable>ts_ironbee.so <replaceable>[-v loglevel] [-l log-file-name] [-L] /path/to/ironbee.conf</replaceable></literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8.0</para>
             <para>The default log filename is "ts-ironbee.log" and log level 4. The optional <emphasis>-l name</emphasis> sets a different name, while <emphasis>-v n</emphasis> sets a log level, and <emphasis>-L</emphasis> disables logging Ironbee messages by Trafficserver altogether (for users with an alternative logger configured).</para>
         </section>
     </section>
@@ -59,6 +61,7 @@ LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
                 <literal>IronbeeConfigFile <replaceable>/path/to/ironbee.conf</replaceable></literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.5.0</para>
         </section>
         <section>
             <title>IronbeeRawHeaders</title>
@@ -67,6 +70,7 @@ LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
                 <literal>IronbeeRawHeaders On|Off</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>On</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.5.0</para>
             <para>Setting this to <literal>On</literal> will cause IronBee to be sent the raw headers from the client. Setting this to <literal>Off</literal> will cause IronBee to be sent the proxied headers (those seen by the server).</para>
         </section>
         <section>
@@ -76,6 +80,7 @@ LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
                 <literal>IronbeeFilterInput On|Off</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>On</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8.0</para>
             <para>Determines whether HTTP request bodies (where present) are sent to Ironbee for inspection.</para>
         </section>
         <section>
@@ -85,6 +90,7 @@ LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
                 <literal>IronbeeFilterOutput On|Off</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>On</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8.0</para>
             <para>Determines whether HTTP response bodies (where present) are sent to Ironbee for inspection.</para>
         </section>
         <section>
@@ -94,6 +100,7 @@ LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
                 <literal>IronbeeLog On|Off</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>On</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8.0</para>
             <para>Determines whether Ironbee messages are logged to the HTTPD error log.  If disabled, some other logger should be configured.</para>
         </section>
         <section>
@@ -103,6 +110,7 @@ LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
                 <literal>IronbeeLogLevel 0-9</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>4</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8.0</para>
             <para>Sets the initial log level for Ironbee messages (ignored if IronbeeLog is Off).</para>
         </section>
     </section>
@@ -131,6 +139,7 @@ http {
                 <literal>ironbee_config_file <replaceable>/path/to/ironbee.conf</replaceable>;</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7.0</para>
             <para>This needs to go in the nginx "http" block.</para>
         </section>
         <section>
@@ -140,6 +149,7 @@ http {
                 <literal>ironbee_logger "On"|"Off";</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7.0</para>
             <para>This needs to go in the nginx "http" block.</para>
         </section>
         <section>
@@ -150,6 +160,7 @@ http {
                 <replaceable>numeric-level_0-10</replaceable>;</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7.0</para>
             <para>This needs to go in the nginx "http" block.</para>
         </section>
     </section>
