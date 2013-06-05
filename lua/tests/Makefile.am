@@ -13,17 +13,23 @@ else
 AM_LDFLAGS += -no-undefined -static-libtool-libs
 endif
 
-check_PROGRAMS    = test_lua
-TESTS             = $(check_PROGRAMS)
-test_lua_SOURCES  = test_lua.cpp \
-                    test_lua_json.cpp \
-		    $(top_srcdir)/tests/gtest/gtest_main.cc \
-		    $(top_srcdir)/tests/gtest/gtest-all.cc
-test_lua_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
-		    -I$(top_srcdir)/tests \
-		    -DTOP_SRCDIR=$(top_srcdir) \
-		    -DFFI_FILE=$(top_srcdir)/lua/ironbee-ffi.lua
-test_lua_LDFLAGS  = $(LDFLAGS) \
-		    -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
-test_lua_LDADD    = -lluajit-ironbee
+# Define GTest source files.
+GTEST_SRC = $(top_srcdir)/tests/gtest/gtest_main.cc \
+            $(top_srcdir)/tests/gtest/gtest-all.cc
 
+CPPFLAGS += -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+            -I$(top_srcdir)/tests \
+            -DTOP_SRCDIR=$(top_srcdir) \
+            -DFFI_FILE=$(top_srcdir)/lua/ironbee-ffi.lua
+LDFLAGS  += -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
+LDADD     = -lluajit-ironbee
+
+TESTS             = $(check_PROGRAMS)
+
+check_PROGRAMS    = test_lua
+test_lua_SOURCES  = test_lua.cpp $(GTEST_SRC)
+
+if ENABLE_JSON
+check_PROGRAMS += test_lua_json
+test_lua_json_SOURCES  = test_lua_json.cpp $(GTEST_SRC)
+endif
