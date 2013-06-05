@@ -21,7 +21,7 @@
  *
  * Simple HTTP parsers.
  *
- * XXX
+ * @sa IronBee::ParserSuite.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
