@@ -292,7 +292,7 @@ struct parse_response_result_t
  **/
 parse_response_result_t parse_response(span_t& input);
 
-//! Ostream output operator for @ref parse_response_result_t
+//! Ostream output operator for @ref parse_response_result_t.
 std::ostream& operator<<(
     std::ostream&                  o,
     const parse_response_result_t& R

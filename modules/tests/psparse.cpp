@@ -19,7 +19,7 @@
  * @file
  * @brief IronBee --- ParserSuite Command Line Tool
  *
- * XXX
+ * Simple command line tool to feed input through ParserSuite.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
