@@ -38,7 +38,7 @@ struct mock_module_conf_t {
 typedef struct mock_module_conf_t mock_module_conf_t;
 
 /**
- * @param[in] ib IronBee to register this module and initalize.
+ * @param[in] ib IronBee to register this module and initialize.
  *
  * @returns Result of ib_module_init.
  */

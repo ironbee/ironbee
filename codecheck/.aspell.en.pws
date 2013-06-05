@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2072 
+personal_ws-1.1 en 2088 
 malloc'ed
 malloced
 libnet
@@ -29,6 +29,7 @@ vernum
 RuleEngineDebugLogLevel
 CMD
 CLI
+isEnd
 CCBA
 clk
 TestStringLower
@@ -113,6 +114,7 @@ IronBeeUtilIP
 ceil
 LuaLoadModule
 opflags
+OpFlags
 ibconfig
 pevents
 preload
@@ -124,6 +126,7 @@ strtok
 bintree
 strtol
 dbar
+subspans
 zero'ed
 DebugLogHandler
 matchers
@@ -184,14 +187,14 @@ irc
 Sosospider
 SubclassType
 cidr
-STDIN
+stdin
 Kew
 IPs
 ips
 htx
 RollOver
-kEY
 KeY
+kEY
 kEy
 ipv
 IPv
@@ -442,6 +445,7 @@ xaa
 xab
 alloc
 xac
+AND'ed
 xad
 README
 xae
@@ -705,6 +709,7 @@ dtor
 enum
 DSTR
 REQHDRS
+ps
 p's
 sd
 patricia
@@ -762,9 +767,9 @@ onEventResponseHeader
 IronBeeUtilLogformat
 tmpfile
 CHUNKING
-zd
 VX
 ws
+zd
 ConstTransactionData
 iobufp
 XXXXXX
@@ -778,6 +783,7 @@ partType
 xy
 ntype
 onEventTxStarted
+zu
 getTable
 fnew
 DefaultBlockStatus
@@ -1337,6 +1343,7 @@ patt
 CODESTYLE
 msie
 RuleDisable
+nLSProfile
 ConstSite
 popcount
 AuditLogBaseDir
@@ -1462,6 +1469,7 @@ ironbeepp
 fabcd
 HandleRequest
 modac
+schemeless
 ModSecAuditLogGenerator
 consts
 Tracefile
@@ -1534,6 +1542,7 @@ appendList
 ealloc
 riak
 STRFLAG
+dlevel
 vendorPrefix
 GeoLiteCity
 sblk
@@ -1645,6 +1654,7 @@ STRINGIFY
 oflags
 moduleName
 modulename
+MyParam
 ifstream
 HandleConnect
 Finalizer
@@ -1674,6 +1684,7 @@ archiver
 suboptimal
 newsgator
 NewsGator
+ParseTreeTests
 blkend
 inlined
 rset
@@ -1788,6 +1799,7 @@ simplePattern
 Ristic
 nTotal
 deallocate
+authorityless
 PcreMatchLimit
 AppleWebKit
 podness
@@ -1836,6 +1848,7 @@ RuleMarker
 bytestring
 ByteString
 subengine
+GetParser
 vlen
 VARNAME
 unum
@@ -1961,6 +1974,7 @@ ByteStr
 htonl
 nulstr
 NulStr
+configString
 tmpXXXXXX
 FreeBSD
 paramName
@@ -1969,6 +1983,7 @@ htree
 referants
 endian
 trimLeft
+ParseTreeTest
 invis
 perror
 IronBeeEngineLog
@@ -1999,6 +2014,7 @@ NetSeer
 netseer
 perfp
 metatypes
+ParserSuite
 CommonSemantics
 pxyscand
 bbbb

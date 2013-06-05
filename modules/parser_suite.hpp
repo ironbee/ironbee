@@ -236,7 +236,7 @@ struct parse_request_result_t
     span_t                      raw_request_line;
     //! The request line as parsed by parse_request_line().
     parse_request_line_result_t request_line;
-    //! The URI as parsed by parse_ur().
+    //! The URI as parsed by parse_uri().
     parse_uri_result_t          uri;
     //! The headers as parsed by parse_headers().
     parse_headers_result_t      headers;
@@ -270,7 +270,7 @@ struct parse_response_result_t
 {
     //! The response line.
     span_t                       raw_response_line;
-    //! The reponse line as parsed by parse_response_line().
+    //! The response line as parsed by parse_response_line().
     parse_response_line_result_t response_line;
     //! The headers as parsed by parse_headers().
     parse_headers_result_t       headers;
