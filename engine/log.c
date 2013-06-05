@@ -25,9 +25,10 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/log.h>
-#include <ironbee/string.h>
 
 #include "engine_private.h"
+
+#include <ironbee/string.h>
 
 #include <assert.h>
 #include <stdio.h>
