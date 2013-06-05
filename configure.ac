@@ -465,13 +465,13 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="tests util engine servers automata fast modules tools etc docs packaging"
+TOPLEVEL_SUBDIRS="servers automata fast modules tools etc docs packaging"
 LIBS_SUBDIRS="libhtp sqltfn"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver nginx"
 
 dnl Enable lua subdir if enabled
 if test "$enable_lua" != "no"; then
-    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} lua"
+    TOPLEVEL_SUBDIRS="lua ${TOPLEVEL_SUBDIRS}"
 fi
 
 dnl Enable C++ subdirs if enabled
@@ -486,6 +486,9 @@ fi
 
 dnl Example modules should go last.
 TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} example_modules"
+
+dnl Some subdirectories should go very early.
+TOPLEVEL_SUBDIRS="tests util engine ${TOPLEVEL_SUBDIRS}"
 
 dnl Make sure abs_top_builddir is available
 AC_MSG_CHECKING([abs_top_builddir is available])

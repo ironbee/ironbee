@@ -84,7 +84,6 @@ ibmod_lua_la_SOURCES = lua.c \
 ibmod_lua_la_CPPFLAGS = $(AM_CPPFLAGS) \
                         -I$(top_srcdir)/libs/luajit-2.0-ironbee/src -I$(top_srcdir)
 ibmod_lua_la_LIBADD = $(AM_LIBADD) \
-                      $(top_builddir)/lua/libironbee-lua.la \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
                       $(LIBM_LDFLAGS)
@@ -106,8 +105,7 @@ ibmod_rules_la_CPPFLAGS += \
 	$(AM_CPPFLAGS) \
     -I$(top_srcdir)/libs/luajit-2.0-ironbee/src
 ibmod_rules_la_LIBADD += -lluajit-ironbee \
-                        -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
-                         $(top_builddir)/lua/libironbee-lua.la
+                        -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
 endif
 
 if ENABLE_JSON
