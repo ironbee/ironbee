@@ -36,8 +36,11 @@ namespace ParserSuite {
 
 namespace  {
 
+#ifndef DOXYGEN_SKIP
+// Doxygen currently can't handle this.
 //! Parser matching horizontal whitespace only.
 const static auto sp = boost::spirit::ascii::char_(" \t");
+#endif
 
 }
 

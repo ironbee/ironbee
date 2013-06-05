@@ -198,8 +198,6 @@ public:
      *
      * @param[in] buffer Buffer to parse.
      * @param[in] length Length of @a buffer.
-     * @param[in] file   Name of configuration file being parsed
-     * @param[in] lineno Line number of text in @a buffer
      * @param[in] more   True iff more input in future.
      * @throw IronBee++ exception on error.
      **/

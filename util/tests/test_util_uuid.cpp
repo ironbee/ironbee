@@ -30,9 +30,11 @@
 
 #include <string.h>
 
+#ifndef DOXYGEN_SKIP
 namespace OSSPUUID {
 #include <uuid.h>
 }
+#endif
 
 struct testval {
     const char    *str;

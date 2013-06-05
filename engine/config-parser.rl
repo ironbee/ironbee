@@ -64,7 +64,7 @@ typedef struct {
 } fsm_vars_t;
 
 /**
- * Append @a c to the internal buffer of @a cp. 
+ * Append @a c to the internal buffer of @a cp.
  * @param[in] cp Configuration parser.
  * @param[in] c Char to append.
  * @returns
@@ -149,7 +149,6 @@ typedef struct parse_directive_entry_t parse_directive_entry_t;
  * Ensure that the node's file:line has not been encountered before.
  *
  * @param[in] cp Configuration parser.
- * @param[in] tmp_mp Temporary memory pool. 
  * @param[in] node The current parse node.
  * @returns
  * - IB_OK if the directive represented by @a node is new (not a dup).
@@ -185,7 +184,7 @@ static ib_status_t detect_file_loop(
                  node3 != NULL;
                  node3 = node3->parent)
             {
-                /* Skip nodes that are not parse directives, 
+                /* Skip nodes that are not parse directives,
                  * such as the root node and file nodes. */
                 if (node3->type == IB_CFGPARSER_NODE_PARSE_DIRECTIVE) {
                     ib_cfg_log_error(
@@ -238,7 +237,7 @@ static ib_status_t include_parse_directive_impl(
     const ib_list_node_t *list_node;
 
     /* A temporary local value to store the parser state in.
-     * We allocate this from local_mp to avoid putting the very large 
+     * We allocate this from local_mp to avoid putting the very large
      * buffer variable in fsm on the stack. */
     ib_cfgparser_fsm_t *fsm;
 
@@ -529,7 +528,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Out of memory.");
         }
-        
+
         /* Handle parse directives using the parse_directive_table. */
         for (int i = 0; parse_directive_table[i].directive != NULL; ++i) {
             if (
