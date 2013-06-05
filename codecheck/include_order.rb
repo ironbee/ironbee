@@ -179,6 +179,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/format.hpp>',
   '<boost/function.hpp>',
   '<boost/function_output_iterator.hpp>',
+  '<boost/fusion/adapted.hpp>',
   '<boost/iterator/iterator_facade.hpp>',
   '<boost/iterator/transform_iterator.hpp>',
   '<boost/lexical_cast.hpp>',
@@ -192,9 +193,11 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/preprocessor/iteration/local.hpp>',
   '<boost/preprocessor/repetition.hpp>',
   '<boost/program_options.hpp>',
+  '<boost/range/iterator_range.hpp>',
   '<boost/scoped_array.hpp>',
   '<boost/scoped_ptr.hpp>',
   '<boost/shared_ptr.hpp>',
+  '<boost/spirit/include/qi.hpp>',
   '<boost/static_assert.hpp>',
   '<boost/thread.hpp>',
   '<boost/tuple/tuple.hpp>',
@@ -311,7 +314,7 @@ all_ironbee_code do |path|
       "(ironbee|ironautomata|predicate)/(.+/)?" + File.basename(path, $1) + '\.h' + ($2 || "")
     )
     private_name = Regexp.new(
-      '^"' + File.basename(path, $1) + '_private\.h' + ($2 || "")
+      '^"' + File.basename(path, $1) + '(_private)?\.h' + ($2 || "")
     )
   end
   extract_includes(path).each do |i|
