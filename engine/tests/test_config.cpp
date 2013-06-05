@@ -25,10 +25,10 @@
 
 using std::string;
 
-/////////////////////////////// Fixture /////////////////////////////// 
+/////////////////////////////// Fixture ///////////////////////////////
 
 /**
- * Base for configuration tests. 
+ * Base for configuration tests.
  *
  * It provides a ib_cfgparser_t and a way to pass strings into it.
  *
@@ -98,7 +98,7 @@ class TestConfig : public BaseFixture
 
     /**
      * Push a configuration string through the parser.
-     * 
+     *
      * @param[in] configString The string to pass in.
      * @param[in] isEnd True if we are done configuring for this test.
      *            This is forwarded to Ragel so it knows how to parse.
@@ -136,7 +136,7 @@ class TestConfig : public BaseFixture
     }
 };
 
-/////////////////////////////// Passing Parses /////////////////////////////// 
+/////////////////////////////// Passing Parses ///////////////////////////////
 
 class PassingParseTest :
    public TestConfig,
@@ -161,7 +161,7 @@ INSTANTIATE_TEST_CASE_P(
         "IncludeIfExists Missing.conf"
     ));
 
-/////////////////////////////// Failing Parses /////////////////////////////// 
+/////////////////////////////// Failing Parses ///////////////////////////////
 
 class FailingParseTest :
    public TestConfig,
@@ -207,7 +207,7 @@ INSTANTIATE_TEST_CASE_P(
         "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
 ));
 
-/////////////////////////////// ParseTreeTests /////////////////////////////// 
+/////////////////////////////// ParseTreeTests ///////////////////////////////
 
 class ParseTreeTest :
    public TestConfig,
@@ -224,7 +224,7 @@ class ParseTreeTest :
         if (setup_rc != IB_OK) {
             return;
         }
-        
+
         setup_rc = config(GetParam(), 1);
     }
 
@@ -244,7 +244,7 @@ TEST_P(ParseTreeTest, ConfigurationApplied) {
     ib_module_t *module;
     ib_context_t *ctx = ib_context_main(ib_engine);
     mock_module_conf_t *conf;
-    
+
     const ib_list_node_t *node;
 
     ASSERT_EQ(
@@ -302,4 +302,3 @@ INSTANTIATE_TEST_CASE_P(
     "<Sblk1 MyParam1>\n"
     "</Sblk1>\n"
 ));
-

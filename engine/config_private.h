@@ -31,10 +31,10 @@
  * @param[in] cp Configuration parser.
  * @param[in] file The file to parse.
  * @param[in] eof_mask This is boolean AND'ed with the EOF flag sent to ragel.
- *            If @a eof_mask if false, then ragel will never know that the 
- *            input stream has ended. This is the case when including 
+ *            If @a eof_mask if false, then ragel will never know that the
+ *            input stream has ended. This is the case when including
  *            files. Only the top-level file parser will
- *            set this to true so Ragel is told when the 
+ *            set this to true so Ragel is told when the
  *            top-level file is done being parsed.
  * @returns
  * - IB_OK on success.

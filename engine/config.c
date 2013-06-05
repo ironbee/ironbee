@@ -221,7 +221,7 @@ ib_status_t ib_cfgparser_parse_private(
 
     /* Local memory pool. This is released at the end of this function. */
     ib_mpool_t *local_mp;
-    
+
     /* Store the current file and path in the save_ stack variables */
     save_cwd = cp->cur_cwd;
 
