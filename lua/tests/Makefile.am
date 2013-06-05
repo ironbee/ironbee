@@ -1,6 +1,4 @@
-ACLOCAL_AMFLAGS = -I ../../acinclude
-
-include $(top_srcdir)/build/common.mk
+include $(top_srcdir)/build/tests.mk
 
 if DARWIN
 if ENABLE_LUA
@@ -18,6 +16,7 @@ endif
 check_PROGRAMS    = test_lua
 TESTS             = $(check_PROGRAMS)
 test_lua_SOURCES  = test_lua.cpp \
+                    test_lua_json.cpp \
 		    $(top_srcdir)/tests/gtest/gtest_main.cc \
 		    $(top_srcdir)/tests/gtest/gtest-all.cc
 test_lua_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \

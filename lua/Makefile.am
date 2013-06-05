@@ -74,12 +74,12 @@ libironbee_lua_la_CFLAGS = $(LUA_CFLAGS)
 libironbee_lua_la_LIBADD = $(LUA_LIBADD)
 
 if ENABLE_JSON
-nobase_pkglib_LTLIBRARIES       += ironbee/util/json.la
-ironbee_util_json_la_SOURCES     = ironbee/util/ljson.c
-ironbee_util_json_la_CPPFLAGS    = $(LUA_CPPFLAGS)
-ironbee_util_json_la_CFLAGS      = $(LUA_CFLAGS)
-ironbee_util_json_la_LIBADD      = $(LUA_LIBADD)
-ironbee_util_json_la_LDFLAGS     = $(LDFLAGS) \
+nobase_pkglib_LTLIBRARIES       += ironbee/util/ibjson.la
+ironbee_util_ibjson_la_SOURCES     = ironbee/util/ibjson.c
+ironbee_util_ibjson_la_CPPFLAGS    = $(LUA_CPPFLAGS)
+ironbee_util_ibjson_la_CFLAGS      = $(LUA_CFLAGS)
+ironbee_util_ibjson_la_LIBADD      = $(LUA_LIBADD)
+ironbee_util_ibjson_la_LDFLAGS     = $(LDFLAGS) \
                                    -module -avoid-version -shared
 endif
 
