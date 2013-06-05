@@ -298,6 +298,35 @@ std::ostream& operator<<(
     const parse_response_result_t& R
 );
 
+//! Result of parse_authority().
+struct parse_authority_result_t
+{
+    //! Username.
+    span_t username;
+    //! Password.
+    span_t password;
+    //! Host.
+    span_t host;
+    //! Port.
+    span_t port;
+};
+
+/**
+ * Parse @a input as an authority.
+ *
+ * @param[in, out] input Span to parse; will be updated such that beginning
+ *                       is just after successful parse, i.e., the beginning
+ *                       of the body.
+ * @return Result.
+ **/
+parse_authority_result_t parse_authority(span_t& input);
+
+//! Ostream output operator for @ref parse_authority_result_t.
+std::ostream& operator<<(
+    std::ostream&                   o,
+    const parse_authority_result_t& R
+);
+
 } // ParserSuite
 } // IronBee
 

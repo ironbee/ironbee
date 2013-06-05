@@ -55,6 +55,14 @@ BOOST_FUSION_ADAPT_STRUCT(
     (::IronBee::ParserSuite::span_t, fragment)
 )
 
+BOOST_FUSION_ADAPT_STRUCT(
+    ::IronBee::ParserSuite::parse_authority_result_t,
+    (::IronBee::ParserSuite::span_t, username)
+    (::IronBee::ParserSuite::span_t, password)
+    (::IronBee::ParserSuite::span_t, host)
+    (::IronBee::ParserSuite::span_t, port)
+)
+
 namespace IronBee {
 namespace ParserSuite {
 
@@ -101,12 +109,12 @@ parse_headers_result_t parse_headers(span_t& input)
     auto begin = input.begin();
     auto end   = input.end();
 
-    auto push_value = [&](const span_t& value)
+    static const auto push_value = [&](const span_t& value)
     {
         R.headers.back().value.push_back(value);
     };
 
-    auto new_header = [&](const span_t& key)
+    static const auto new_header = [&](const span_t& key)
     {
         R.headers.push_back(parse_headers_result_t::header_t {key, {}});
     };
@@ -346,6 +354,67 @@ const parse_response_result_t& R
       << R.response_line << endl
       << R.headers      << endl
       ;
+
+    return o;
+}
+
+parse_authority_result_t parse_authority(span_t& input)
+{
+    using namespace boost::spirit::qi;
+    using ascii::char_;
+
+    parse_authority_result_t R;
+
+    auto begin = input.begin();
+    auto end   = input.end();
+
+    static const auto word = raw[*(char_-char_("@: \t\r\n"))];
+    auto set_username = [&](span_t s) {R.username = s;};
+    auto set_password = [&](span_t s) {R.password = s;};
+    auto set_host     = [&](span_t s) {R.host     = s;};
+    auto set_port     = [&](span_t s) {R.port     = s;};
+    auto only_host = [&](span_t s)
+    {
+        R = parse_authority_result_t();
+        set_host(s);
+    };
+
+    static const auto grammar =
+        (
+            (
+                   -word [set_username]
+                >> -(omit[lit(":")] >> word [set_password])
+                >> omit[lit("@")] >> word [set_host]
+            ) |
+            word [only_host]
+        )
+        >> -(omit[lit(":")] >> word [set_port])
+        ;
+
+    auto success = parse(begin, end, grammar);
+    // Note: begin updated.
+
+    if (! success) {
+        BOOST_THROW_EXCEPTION(error()
+            << errinfo_what("Incomplete authority.")
+            << errinfo_location(begin)
+        );
+    }
+
+    input = span_t(begin, end);
+    return move(R);
+}
+
+std::ostream& operator<<(
+    std::ostream&                   o,
+    const parse_authority_result_t& R
+)
+{
+    o  << "username=" << R.username << endl
+       << "password=" << R.password << endl
+       << "host="     << R.host     << endl
+       << "port="     << R.port     << endl
+       ;
 
     return o;
 }

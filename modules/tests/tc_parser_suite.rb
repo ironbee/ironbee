@@ -53,11 +53,11 @@ else
       assert(! result.nil?, "Parse failed: #{parser}(#{text})")
       expected.each do |k, v|
         r = result[k.to_s]
-        assert(v == result[k.to_s], "Expect #{k} to be #{v} but was #{r}.")
+        assert(v == result[k.to_s], "Expect #{k} to be #{v} but was #{r} on input #{text}")
         result.delete(k.to_s)
       end
       result.each do |k, v|
-        assert(v.empty?, "Result unexpected: #{k} = #{v}")
+        assert(v.empty?, "Result unexpected: #{k} = #{v} on input #{text}")
       end
     end
 
@@ -145,6 +145,65 @@ else
       )
     end
 
+    def test_parse_authority
+      assert_parse('authority',
+        "foo.com",
+        :host => 'foo.com'
+      )
+
+      assert_parse('authority',
+        "foo.com:1000",
+        :host => 'foo.com',
+        :port => '1000'
+      )
+
+      assert_parse('authority',
+        "user@foo.com",
+        :username => 'user',
+        :host => 'foo.com'
+      )
+
+      assert_parse('authority',
+        "user:password@foo.com",
+        :username => 'user',
+        :password => 'password',
+        :host => 'foo.com'
+      )
+
+      assert_parse('authority',
+        "user:password@foo.com:1000",
+        :username => 'user',
+        :password => 'password',
+        :host => 'foo.com',
+        :port => '1000'
+      )
+
+      assert_parse('authority',
+        "user:@foo.com:1000",
+        :username => 'user',
+        :host => 'foo.com',
+        :port => '1000'
+      )
+
+      assert_parse('authority',
+        ":password@foo.com:1000",
+        :password => 'password',
+        :host => 'foo.com',
+        :port => '1000'
+      )
+
+      assert_parse('authority',
+        "@foo.com:1000",
+        :host => 'foo.com',
+        :port => '1000'
+      )
+
+      assert_parse('authority',
+        "@:1000",
+        :port => '1000'
+      )
+    end
+
     def test_parse_headers
       assert_parse('headers',
         'Foo: Bar',
@@ -223,5 +282,4 @@ EOS
     end
 
   end
-
 end
