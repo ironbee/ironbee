@@ -78,7 +78,8 @@ nobase_pkglib_LTLIBRARIES       += ironbee/util/ibjson.la
 ironbee_util_ibjson_la_SOURCES     = ironbee/util/ibjson.c
 ironbee_util_ibjson_la_CPPFLAGS    = $(LUA_CPPFLAGS)
 ironbee_util_ibjson_la_CFLAGS      = $(LUA_CFLAGS)
-ironbee_util_ibjson_la_LIBADD      = $(LUA_LIBADD)
+ironbee_util_ibjson_la_LIBADD      = $(LUA_LIBADD) \
+                                     $(top_builddir)/util/libibutil.la
 ironbee_util_ibjson_la_LDFLAGS     = $(LDFLAGS) \
                                    -module -avoid-version -shared
 endif
