@@ -253,7 +253,7 @@ parse_uri_result_t parse_uri(span_t& input)
     auto begin = input.begin();
     auto end   = input.end();
 
-    static const rule<const char*, parse_uri_result_t()> grammar =
+    static const auto grammar =
            -(raw[+char_("-A-Za-z0-9+.")] >> omit[char_(":")])     // scheme
         >> -(omit[lit("//")] >> (raw[*(char_-char_("/?#\r\n"))])) // authority
         >> -(raw[*(char_-char_("?#\r\n"))])                       // path
