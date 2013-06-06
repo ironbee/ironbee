@@ -36,7 +36,7 @@ namespace ibtesting {
 /**
  * Unless commit() is called, this resets the Lua stack at desruction time.
  *
- * This object *only* resets the Lua stack size. It does not 
+ * This object *only* resets the Lua stack size. It does not
  * consider the Lua runtime state.
  */
 class LuaStackTx {
@@ -113,7 +113,7 @@ class LuaTest : public ::testing::Test {
             default:
                 assert(0 && "Unhandled error condition.");
         }
-        
+
         rc = lua_pcall(L, 0, LUA_MULTRET, 0);
         switch(rc) {
             case 0:
