@@ -63,7 +63,8 @@ int main(int argc, char **argv)
         {"headers",       simple_parser(&parse_headers)},
         {"request",       simple_parser(&parse_request)},
         {"response",      simple_parser(&parse_response)},
-        {"authority",     simple_parser(&parse_authority)}
+        {"authority",     simple_parser(&parse_authority)},
+        {"path",          simple_parser(&parse_path)}
     };
 
     if (argc != 2) {

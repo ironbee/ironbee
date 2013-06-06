@@ -327,6 +327,47 @@ std::ostream& operator<<(
     const parse_authority_result_t& R
 );
 
+//! Result of parse_path()
+struct parse_path_result_t
+{
+    //! Directory.  Everything up to but not including final /.
+    span_t directory;
+    //! File.  Everything after but not including final /.
+    span_t file;
+    //! Base.  File up to but not including final period.
+    span_t base;
+    //! Extension.  File after but not including final period.
+    span_t extension;
+
+    //! Absolute path?  True iff directory begins with /.
+    bool absolute() const
+    {
+        return ! directory.empty() && *directory.begin() == '/';
+    }
+
+    //! Relative path?  True iff absolute() is false.
+    bool relative() const
+    {
+        return ! absolute();
+    }
+};
+
+/**
+ * Parse @a input as a path
+ *
+ * @param[in, out] input Span to parse; will be updated such that beginning
+ *                       is just after successful parse, i.e., the beginning
+ *                       of the body.
+ * @return Result.
+ **/
+parse_path_result_t parse_path(span_t& input);
+
+//! Ostream output operator for @ref parse_path_result_t.
+std::ostream& operator<<(
+    std::ostream&              o,
+    const parse_path_result_t& R
+);
+
 } // ParserSuite
 } // IronBee
 

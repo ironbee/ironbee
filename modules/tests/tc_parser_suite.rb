@@ -281,5 +281,51 @@ EOS
       )
     end
 
+    def test_parse_path
+      assert_parse('path',
+        'foo',
+        :file => 'foo',
+        :base => 'foo'
+      )
+      assert_parse('path',
+        'foo/bar',
+        :directory => 'foo',
+        :file => 'bar',
+        :base => 'bar'
+      )
+      assert_parse('path',
+        '/foo/bar',
+        :directory => '/foo',
+        :file => 'bar',
+        :base => 'bar'
+      )
+      assert_parse('path',
+        '/foo/bar/baz',
+        :directory => '/foo/bar',
+        :file => 'baz',
+        :base => 'baz'
+      )
+      assert_parse('path',
+        '/foo/bar/baz.txt',
+        :directory => '/foo/bar',
+        :file => 'baz.txt',
+        :base => 'baz',
+        :extension => 'txt'
+      )
+      assert_parse('path',
+        '/foo/bar/baz.txt.zip',
+        :directory => '/foo/bar',
+        :file => 'baz.txt.zip',
+        :base => 'baz.txt',
+        :extension => 'zip'
+      )
+      assert_parse('path',
+        'baz.txt.zip',
+        :file => 'baz.txt.zip',
+        :base => 'baz.txt',
+        :extension => 'zip'
+      )
+    end
+
   end
 end

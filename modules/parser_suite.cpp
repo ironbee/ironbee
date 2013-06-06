@@ -438,5 +438,60 @@ ostream& operator<<(
     return o;
 }
 
+parse_path_result_t parse_path(span_t& input)
+{
+    using namespace boost::spirit::qi;
+    using ascii::char_;
+
+    parse_path_result_t R;
+
+    R.directory = span_t(input.begin(), input.begin());
+
+    boost::tie(R.directory, R.base, R.extension) =
+        parse_direct<boost::tuple<span_t,span_t,span_t>>(
+            "path", input,
+            // directory
+               raw[*(-lit("/") >> *(char_-char_("/")) >> &lit("/"))]
+            // final /
+            >> -omit[lit("/")]
+            // base
+            >> raw[
+                   // base before first .
+                      *(char_-char_("."))
+                   // pieces of base enclosed by .
+                   >> *(
+                           lit(".")
+                        >> *(char_-char_("."))
+                        >> &lit(".")
+                      )
+               ]
+            // extension
+            >> -(omit[lit(".")] >> raw[*char_])
+        );
+
+    if (R.extension.empty()) {
+        R.file = R.base;
+    }
+    else {
+        R.file = span_t(R.base.begin(), R.extension.end());
+    }
+
+    return move(R);
+}
+
+ostream& operator<<(
+    ostream&                   o,
+    const parse_path_result_t& R
+)
+{
+    o << "directory=" << R.directory << endl
+      << "file="      << R.file      << endl
+      << "base="      << R.base      << endl
+      << "extension=" << R.extension << endl
+      ;
+
+    return o;
+}
+
 } // ParserSuite
 } // IronBee
