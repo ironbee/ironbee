@@ -16,6 +16,7 @@
  ****************************************************************************/
 
 #include <lua.hpp>
+#include <ibtest_lua.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
@@ -25,56 +26,23 @@
 #define FFI_FILE_STR TOSTR2(FFI_FILE)
 #define TOP_SRCDIR_STR TOSTR2(TOP_SRCDIR)
 
-class LuaJsonTest : public ::testing::Test {
-    protected:
-    lua_State *L;
-
+class LuaJsonTest : public ::ibtesting::LuaTest {
     public:
 
     virtual void SetUp()
     {
-        L = luaL_newstate();
-        luaL_openlibs(L);
+        cpathAppend("../ironbee/util/.libs/?.so");
 
-        ASSERT_EQ(0, cpathAppend("../ironbee/util/.libs/?.so"));
+        pathAppend("../?.lua");
+        pathAppend(TOP_SRCDIR_STR "/lua/?.lua");
 
-        ASSERT_EQ(0, pathAppend("../?.lua"));
-        ASSERT_EQ(0, pathAppend(TOP_SRCDIR_STR "/lua/?.lua"));
-
-        ASSERT_EQ(0, doString("return pcall(require, 'ibjson')"));
-        ASSERT_TRUE(lua_isboolean(L, -2));
-        if (!lua_toboolean(L, -2)) {
-            std::cerr << lua_tostring(L, -1) << std::endl;
-        }
-
-        ASSERT_TRUE(lua_istable(L, -1));
-        lua_setglobal(L, "ibjson");
+        doString("ibjson = require('ibjson')");
 
         // Clear stack.
         lua_settop(L, 0);
     }
 
-    virtual void TearDown()
-    {
-        lua_settop(L, 0);
-        lua_close(L);
-    }
-
-    int doString(std::string path) {
-        return luaL_dostring(L, path.c_str());
-    }
-
-    int cpathAppend(std::string cpath) {
-        return doString("package.cpath = package.cpath .. \";" + cpath + "\"");
-    }
-
-    int pathAppend(std::string path) {
-        return doString("package.path = package.path .. \";" + path + "\"");
-    }
-
-    virtual ~LuaJsonTest()
-    {
-    }
+    virtual ~LuaJsonTest() { }
 };
 
 TEST_F(LuaJsonTest, LoadingLibrary) {
