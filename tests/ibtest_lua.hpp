@@ -34,7 +34,7 @@
 namespace ibtesting {
 
 /**
- * Unless commit() is called, this resets the Lua stack at desruction time.
+ * Unless commit() is called, this resets the Lua stack at destruction time.
  *
  * This object *only* resets the Lua stack size. It does not
  * consider the Lua runtime state.
@@ -44,7 +44,7 @@ private:
     //! Lua stack to operate on.
     lua_State *m_L;
 
-    //! The hight to set the Lua stack to on object destruction or commit().
+    //! The height to set the Lua stack to on object destruction or commit().
     int m_stack_top;
 public:
     //! Record this stack and its size in order to rollback.
@@ -86,7 +86,7 @@ class LuaTest : public ::testing::Test {
      * If a runtime error is detected, it is wrapped in a std::runtime_error
      * object and thrown with the Lua error string as the message..
      *
-     * @param[in] code Lua code to evalaluate. This should expect no
+     * @param[in] code Lua code to evaluate. This should expect no
      *            arguments but may return any number of arguments.
      *            All arguments are cleared off the stack when returning.
      * @throws std::runtime_error.
