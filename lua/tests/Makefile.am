@@ -4,6 +4,7 @@ if DARWIN
 if ENABLE_LUA
 # On Darwin (OSX) this is necessary for LuaJIT to run properly.
 LDFLAGS += -pagezero_size 10000 -image_base 100000000
+export DYLD_LIBRARY_PATH+=":$(top_builddir)/util/.libs"
 endif
 endif
 
@@ -20,8 +21,7 @@ CPPFLAGS += -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
 LDFLAGS  += -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
             -L$(top_builddir)/util
 LDADD     = -lluajit-ironbee \
-            $(top_builddir)/tests/ibtest_util.o \
-            $(top_builddir)/util/libibutil.la
+            $(top_builddir)/tests/ibtest_util.o
 
 TESTS             = $(check_PROGRAMS)
 

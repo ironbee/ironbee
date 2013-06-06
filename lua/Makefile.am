@@ -75,14 +75,14 @@ libironbee_lua_la_LIBADD = $(LUA_LIBADD)
 
 if ENABLE_JSON
 nobase_pkglib_LTLIBRARIES       += ironbee/util/ibjson.la
-ironbee_util_ibjson_la_SOURCES     = ironbee/util/ibjson.c
-ironbee_util_ibjson_la_CPPFLAGS    = $(LUA_CPPFLAGS)
-ironbee_util_ibjson_la_CFLAGS      = $(LUA_CFLAGS)
-ironbee_util_ibjson_la_LIBADD      = $(LUA_LIBADD)
-ironbee_util_ibjson_la_LDFLAGS     = $(LDFLAGS) \
-                                     -libutil \
-                                     -L$(top_builddir)/util \
-                                     -module -avoid-version -shared
+ironbee_util_ibjson_la_SOURCES   = ironbee/util/ibjson.c
+ironbee_util_ibjson_la_CPPFLAGS  = $(LUA_CPPFLAGS)
+ironbee_util_ibjson_la_CFLAGS    = $(LUA_CFLAGS)
+ironbee_util_ibjson_la_LIBADD    = $(LUA_LIBADD)
+ironbee_util_ibjson_la_LDFLAGS   = $(LDFLAGS) \
+                                   -L$(top_builddir)/util \
+                                   -libutil \
+                                   -module -avoid-version -shared
 endif
 
 ironbee-ffi.h: $(FFI_FILES)
