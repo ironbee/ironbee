@@ -74,6 +74,77 @@ namespace  {
 const static auto sp = boost::spirit::ascii::char_(" \t");
 #endif
 
+/**
+ * Parse directly into a structure.
+ *
+ * @tparam Result Type of result.
+ * @tparam Grammar Type of @a grammar.
+ *
+ * @param[in]      name    Name to use in exception messages.
+ * @param[in, out] input   Input to parse; modified to begin just after parse.
+ * @param[in]      grammar Grammar to parse input as.
+ * @return Result of parse.
+ * @throw @ref error on unsuccessful parse.
+ **/
+template <typename Result, typename Grammar>
+Result parse_direct(
+    const string&  name,
+    span_t&        input,
+    const Grammar& grammar
+)
+{
+    Result R;
+
+    auto begin = input.begin();
+    auto end   = input.end();
+
+    auto success = boost::spirit::qi::parse(begin, end, grammar, R);
+    // Note: begin updated.
+
+    if (! success) {
+        BOOST_THROW_EXCEPTION(error()
+            << errinfo_what("Incomplete " + name + ".")
+            << errinfo_location(begin)
+        );
+    }
+
+    input = span_t(begin, end);
+    return move(R);
+}
+
+/**
+ * Parse indirectly, i.e., via semantic actions.
+ *
+ * @tparam Grammar Type of @a grammar.
+ *
+ * @param[in]      name    Name to use in exception messages.
+ * @param[in, out] input   Input to parse; modified to begin just after parse.
+ * @param[in]      grammar Grammar to parse input as.
+ * @throw @ref error on unsuccessful parse.
+ **/
+template <typename Grammar>
+void parse_indirect(
+    const string&  name,
+    span_t&        input,
+    const Grammar& grammar
+)
+{
+    auto begin = input.begin();
+    auto end   = input.end();
+
+    auto success = boost::spirit::qi::parse(begin, end, grammar);
+    // Note: begin updated.
+
+    if (! success) {
+        BOOST_THROW_EXCEPTION(error()
+            << errinfo_what("Incomplete " + name + ".")
+            << errinfo_location(begin)
+        );
+    }
+
+    input = span_t(begin, end);
+}
+
 }
 
 ostream& operator<<(
@@ -106,22 +177,19 @@ parse_headers_result_t parse_headers(span_t& input)
 
     parse_headers_result_t R;
 
-    auto begin = input.begin();
-    auto end   = input.end();
-
-    static const auto push_value = [&](const span_t& value)
+    const auto push_value = [&](const span_t& value)
     {
         R.headers.back().value.push_back(value);
     };
 
-    static const auto new_header = [&](const span_t& key)
+    const auto new_header = [&](const span_t& key)
     {
         R.headers.push_back(parse_headers_result_t::header_t {key, {}});
     };
 
-    static const auto value = raw[+(char_-char_("\r\n"))];
-    static const auto key = raw[*(char_-char_(" :\r\n"))] >> omit[lit(":")];
-    static const auto header =
+    const auto value = raw[+(char_-char_("\r\n"))];
+    const auto key = raw[*(char_-char_(" \t:\r\n"))] >> omit[lit(":")];
+    const auto header =
         (
               key                           [new_header]
            >> *sp
@@ -129,7 +197,7 @@ parse_headers_result_t parse_headers(span_t& input)
            >> (eol|eoi)
         ) |
         (
-              +char_(" ")
+              +char_(" \t")
            >> value                        [push_value]
            >> (eol|eoi)
         )
@@ -141,18 +209,9 @@ parse_headers_result_t parse_headers(span_t& input)
         >> -terminator [([&]() {R.terminated = true;})]
         ;
 
-    auto success = parse(begin, end, grammar);
-    // Note: begin updated.
+    parse_indirect("headers", input, grammar);
 
-    if (! success) {
-        BOOST_THROW_EXCEPTION(error()
-            << errinfo_what("Incomplete headers.")
-            << errinfo_location(begin)
-        );
-    }
-
-    input = span_t(begin, end);
-    return move(R);
+    return R;
 }
 
 parse_request_line_result_t parse_request_line(span_t& input)
@@ -160,13 +219,10 @@ parse_request_line_result_t parse_request_line(span_t& input)
     using namespace boost::spirit::qi;
     using ascii::char_;
 
-    parse_request_line_result_t R;
+    const auto word = raw[+(char_-char_(" \t\r\n"))];
 
-    auto begin = input.begin();
-    auto end   = input.end();
-
-    static const auto word = raw[+(char_-char_(" \r\n"))];
-    static const auto grammar =
+    return parse_direct<parse_request_line_result_t>(
+        "request line", input,
            omit[*sp]
         >> word  // method
         >> omit[*sp]
@@ -174,20 +230,7 @@ parse_request_line_result_t parse_request_line(span_t& input)
         >> omit[*sp]
         >> -word // version
         >> omit[eol|eoi]
-        ;
-
-    auto success = parse(begin, end, grammar, R);
-    // Note: begin updated.
-
-    if (! success) {
-        BOOST_THROW_EXCEPTION(error()
-            << errinfo_what("Incomplete request line.")
-            << errinfo_location(begin)
-        );
-    }
-
-    input = span_t(begin, end);
-    return move(R);
+    );
 }
 
 ostream& operator<<(
@@ -208,13 +251,10 @@ parse_response_line_result_t parse_response_line(span_t& input)
     using namespace boost::spirit::qi;
     using ascii::char_;
 
-    parse_response_line_result_t R;
+    const auto word = raw[+(char_-char_(" \t\r\n"))];
 
-    auto begin = input.begin();
-    auto end   = input.end();
-
-    static const auto word = raw[+(char_-char_(" \r\n"))];
-    static const auto grammar =
+    return parse_direct<parse_response_line_result_t>(
+        "response line", input,
            omit[*sp]
         >> word                        // version
         >> omit[*sp]
@@ -222,20 +262,7 @@ parse_response_line_result_t parse_response_line(span_t& input)
         >> omit[*sp]
         >> raw[*(char_-char_("\r\n"))] // message
         >> omit[eol|eoi]
-        ;
-
-    auto success = parse(begin, end, grammar, R);
-    // Note: begin updated.
-
-    if (! success) {
-        BOOST_THROW_EXCEPTION(error()
-            << errinfo_what("Incomplete response line.")
-            << errinfo_location(begin)
-        );
-    }
-
-    input = span_t(begin, end);
-    return move(R);
+    );
 }
 
 ostream& operator<<(
@@ -262,11 +289,16 @@ parse_uri_result_t parse_uri(span_t& input)
     auto end   = input.end();
 
     static const auto grammar =
-           -(raw[+char_("-A-Za-z0-9+.")] >> omit[char_(":")])     // scheme
-        >> -(omit[lit("//")] >> (raw[*(char_-char_("/?#\r\n"))])) // authority
-        >> -(raw[*(char_-char_("?#\r\n"))])                       // path
-        >> -(omit[char_("?")] >> raw[*(char_-char_("#\r\n"))])    // query
-        >> -(omit[char_("#")] >> raw[*(char_-char_("\r\n"))])     // fragment
+        // scheme
+           -(raw[+char_("-A-Za-z0-9+.")] >> omit[char_(":")])
+        // authority
+        >> -(omit[lit("//")] >> (raw[*(char_-char_(" \t/?#\r\n"))]))
+        // path
+        >> -(raw[*(char_-char_(" \t?#\r\n"))])
+        // query
+        >> -(omit[char_("?")] >> raw[*(char_-char_("  #\r\n"))])
+        // fragment
+        >> -(omit[char_("#")] >> raw[*(char_-char_("  \r\n"))])
         >> omit[eol|eoi]
         ;
 
@@ -319,8 +351,8 @@ parse_request_result_t parse_request(span_t& input)
 }
 
 ostream& operator<<(
-    ostream& o,
-const parse_request_result_t& R
+    ostream&                      o,
+    const parse_request_result_t& R
 )
 {
     o << "raw_request_line=" << R.raw_request_line << endl
@@ -346,8 +378,8 @@ parse_response_result_t parse_response(span_t& input)
 }
 
 ostream& operator<<(
-    ostream& o,
-const parse_response_result_t& R
+    ostream&                       o,
+    const parse_response_result_t& R
 )
 {
     o << "raw_response_line=" << R.raw_response_line << endl
@@ -365,10 +397,7 @@ parse_authority_result_t parse_authority(span_t& input)
 
     parse_authority_result_t R;
 
-    auto begin = input.begin();
-    auto end   = input.end();
-
-    static const auto word = raw[*(char_-char_("@: \t\r\n"))];
+    const auto word = raw[*(char_-char_("@: \t\r\n"))];
     auto set_username = [&](span_t s) {R.username = s;};
     auto set_password = [&](span_t s) {R.password = s;};
     auto set_host     = [&](span_t s) {R.host     = s;};
@@ -379,7 +408,8 @@ parse_authority_result_t parse_authority(span_t& input)
         set_host(s);
     };
 
-    static const auto grammar =
+    parse_indirect(
+        "authority", input,
         (
             (
                    -word [set_username]
@@ -389,24 +419,13 @@ parse_authority_result_t parse_authority(span_t& input)
             word [only_host]
         )
         >> -(omit[lit(":")] >> word [set_port])
-        ;
+    );
 
-    auto success = parse(begin, end, grammar);
-    // Note: begin updated.
-
-    if (! success) {
-        BOOST_THROW_EXCEPTION(error()
-            << errinfo_what("Incomplete authority.")
-            << errinfo_location(begin)
-        );
-    }
-
-    input = span_t(begin, end);
     return move(R);
 }
 
-std::ostream& operator<<(
-    std::ostream&                   o,
+ostream& operator<<(
+    ostream&                        o,
     const parse_authority_result_t& R
 )
 {
