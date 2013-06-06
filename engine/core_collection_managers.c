@@ -52,7 +52,6 @@ typedef struct {
     const pcre                    *pattern;   /**< Compiled PCRE */
     const ib_collection_manager_t *manager;   /**< The manager object */
 } core_vars_manager_t;
-static core_vars_manager_t core_vars_manager = { NULL, NULL };
 
 /** Core InitCollection vars parameter data */
 typedef struct {
@@ -103,8 +102,11 @@ static ib_status_t core_managed_collection_vars_register_fn(
     assert(mp != NULL);
     assert(collection_name != NULL);
     assert(params != NULL);
+    assert(register_data != NULL);
     assert(pmanager_inst_data != NULL);
 
+    core_vars_manager_t *core_vars_manager =
+        (core_vars_manager_t *)register_data;
     const ib_list_node_t *node;
     ib_list_t *vars_list;
     ib_list_t *field_list;
@@ -132,7 +134,7 @@ static ib_status_t core_managed_collection_vars_register_fn(
         core_vars_t *vars;
         int pcre_rc;
 
-        pcre_rc = pcre_exec(core_vars_manager.pattern, NULL,
+        pcre_rc = pcre_exec(core_vars_manager->pattern, NULL,
                             param, strlen(param),
                             0, 0, ovector, ovecsize);
         if (pcre_rc < 0) {
@@ -206,7 +208,7 @@ static ib_status_t core_managed_collection_vars_register_fn(
 }
 
 /**
- * Handle managed collection vars populate function
+ * Populate function for core vars.
  *
  * @param[in] ib Engine (unused)
  * @param[in] tx Transaction to populate
@@ -245,6 +247,22 @@ static ib_status_t core_managed_collection_vars_populate_fn(
 
     rc = ib_collection_manager_populate_from_list(tx, field_list, collection);
     return rc;
+}
+
+/**
+ * Cleanup callback for core vars, used to free the compiled regex.
+ *
+ * @param[in] data Callback data
+ */
+void core_managed_collection_vars_cleanup_fn(
+    void                           *data)
+{
+    core_vars_manager_t *core_vars_manager = (core_vars_manager_t *)data;
+
+    if (core_vars_manager->pattern != NULL) {
+        pcre_free((void *)core_vars_manager->pattern);
+        core_vars_manager->pattern = NULL;
+    }
 }
 
 #if ENABLE_JSON
@@ -569,11 +587,19 @@ ib_status_t ib_core_collection_managers_register(
     int eoff;
     ib_status_t rc;
     const ib_collection_manager_t *manager;
+    core_vars_manager_t *core_vars_manager;
+
+    /* Allocate a 'core vars manager' object */
+    core_vars_manager = ib_mpool_alloc(ib_engine_pool_main_get(ib),
+                                       sizeof(*core_vars_manager));
+    if (core_vars_manager == NULL) {
+        return IB_EALLOC;
+    }
 
     /* Register the name/value pair InitCollection manager */
     rc = ib_collection_manager_register(
         ib, module, "core name/value pair", "vars:",
-        core_managed_collection_vars_register_fn, NULL,
+        core_managed_collection_vars_register_fn, core_vars_manager,
         NULL, NULL,
         core_managed_collection_vars_populate_fn, NULL,
         NULL, NULL,
@@ -591,8 +617,15 @@ ib_status_t ib_core_collection_managers_register(
                      error ? error : "(null)");
         return IB_EUNKNOWN;
     }
-    core_vars_manager.pattern = compiled;
-    core_vars_manager.manager = manager;
+
+    /* Populate the 'core vars manager' object */
+    core_vars_manager->pattern = compiled;
+    core_vars_manager->manager = manager;
+
+    /* Register a cleanup function to free the regex */
+    ib_mpool_cleanup_register(ib_engine_pool_main_get(ib),
+                              core_managed_collection_vars_cleanup_fn,
+                              core_vars_manager);
 
 #if ENABLE_JSON
     /* Register the JSON file InitCollection manager */
@@ -620,9 +653,5 @@ ib_status_t ib_core_collection_managers_finish(
     assert(ib != NULL);
     assert(module != NULL);
 
-    if (core_vars_manager.pattern != NULL) {
-        pcre_free((void *)core_vars_manager.pattern);
-        core_vars_manager.pattern = NULL;
-    }
     return IB_OK;
 }
