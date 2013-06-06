@@ -18,7 +18,9 @@ CPPFLAGS += -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
             -DTOP_SRCDIR=$(top_srcdir) \
             -DFFI_FILE=$(top_srcdir)/lua/ironbee-ffi.lua
 LDFLAGS  += -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
-LDADD     = -lluajit-ironbee $(top_builddir)/tests/ibtest_util.o
+LDADD     = -lluajit-ironbee \
+            $(top_builddir)/tests/ibtest_util.o \
+            $(top_builddir)/util/libibutil.la
 
 TESTS             = $(check_PROGRAMS)
 
