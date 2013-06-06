@@ -32,6 +32,7 @@ using namespace std;
 // Tell Fusion about the result structures.
 // These must be in the top namespace.
 
+#ifndef DOXYGEN_SKIP
 BOOST_FUSION_ADAPT_STRUCT(
     ::IronBee::ParserSuite::parse_request_line_result_t,
     (::IronBee::ParserSuite::span_t, method)
@@ -62,17 +63,15 @@ BOOST_FUSION_ADAPT_STRUCT(
     (::IronBee::ParserSuite::span_t, host)
     (::IronBee::ParserSuite::span_t, port)
 )
+#endif
 
 namespace IronBee {
 namespace ParserSuite {
 
 namespace  {
 
-#ifndef DOXYGEN_SKIP
-// Doxygen currently can't handle this.
 //! Parser matching horizontal whitespace only.
 const static auto sp = boost::spirit::ascii::char_(" \t");
-#endif
 
 /**
  * Parse directly into a structure.
