@@ -4,7 +4,7 @@ if DARWIN
 if ENABLE_LUA
 # On Darwin (OSX) this is necessary for LuaJIT to run properly.
 LDFLAGS += -pagezero_size 10000 -image_base 100000000
-export DYLD_LIBRARY_PATH+=":$(top_builddir)/util/.libs"
+export DYLD_LIBRARY_PATH=$(abs_top_builddir)/util/.libs
 endif
 endif
 
