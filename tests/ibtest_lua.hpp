@@ -90,9 +90,11 @@ class LuaTest : public ::testing::Test {
      *            arguments but may return any number of arguments.
      *            All arguments are cleared off the stack when returning.
      * @throws std::runtime_error.
+     * @returns The number of new arguments on the Lua stack.
      */
-    void doString(std::string code) {
+    int doString(std::string code) {
         int rc;
+        int new_args;
 
         /* When this is destroyed, clear/reset the stack top. */
         LuaStackTx ltx(L);
@@ -131,7 +133,9 @@ class LuaTest : public ::testing::Test {
         }
 
         // Success! Leave the Lua stack alone.
+        new_args = ltx.growth();
         ltx.commit();
+        return new_args;
     }
 
     void cpathAppend(std::string cpath) {
