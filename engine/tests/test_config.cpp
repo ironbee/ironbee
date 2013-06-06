@@ -46,7 +46,7 @@ class TestConfig : public BaseFixture
     /**
      * Return the member parser pointer.
      */
-    const ib_cfgparser_t *GetParser() const
+    ib_cfgparser_t *GetParser() const
     {
         return cfgparser;
     }
@@ -195,7 +195,6 @@ INSTANTIATE_TEST_CASE_P(
         "<Site default>\n"
         "   Hostname *\n"
         "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
-
         "</Site",
 
         "<Site defau",

@@ -113,7 +113,7 @@ static void cpbuf_clear(ib_cfgparser_t *cp) {
  *         larger than the string stored in it if the length of the string is
  *         reduced by Javascript unescaping.
  */
-static char* qstrdup(ib_cfgparser_t *cp, ib_mpool_t* mp)
+static char *qstrdup(ib_cfgparser_t *cp, ib_mpool_t* mp)
 {
     const char *start = cp->buffer;
     const char *end = cp->buffer + cp->buffer_len - 1;
@@ -397,8 +397,19 @@ static ib_status_t include_parse_directive_impl(
         rc = IB_EALLOC;
         goto cleanup;
     }
+
+    /* Store current fsm. */
     *fsm = cp->fsm;
+
+    /* Initialize new fsm in cp. */
+    rc = ib_cfgparser_ragel_init(cp);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not initialize new parser.");
+        return rc;
+    }
+
     rc = ib_cfgparser_parse_private(cp, incfile, false);
+    /* Restore fsm. */
     cp->fsm = *fsm;
     cp->curr = current_node;
     if (rc != IB_OK) {
@@ -477,18 +488,20 @@ static parse_directive_entry_t parse_directive_table[] = {
 
     # Parameter
     action push_param {
-        pval = qstrdup(cp, config_mp);
-        if (pval == NULL) {
+        cp->fsm.pval = qstrdup(cp, config_mp);
+        if (cp->fsm.pval == NULL) {
             return IB_EALLOC;
         }
-        ib_list_push(plist, pval);
+        ib_list_push(plist, cp->fsm.pval);
+        cpbuf_clear(cp);
     }
     action push_blkparam {
-        pval = qstrdup(cp, config_mp);
-        if (pval == NULL) {
+        cp->fsm.pval = qstrdup(cp, config_mp);
+        if (cp->fsm.pval == NULL) {
             return IB_EALLOC;
         }
-        ib_list_push(plist, pval);
+        ib_list_push(plist, cp->fsm.pval);
+        cpbuf_clear(cp);
     }
 
     action newline {
@@ -497,8 +510,9 @@ static parse_directive_entry_t parse_directive_table[] = {
 
     # Directives
     action start_dir {
-        directive = ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
-        if (directive == NULL) {
+        cp->fsm.directive =
+            ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
+        if (cp->fsm.directive == NULL) {
             return IB_EALLOC;
         }
         ib_list_clear(plist);
@@ -511,8 +525,8 @@ static parse_directive_entry_t parse_directive_table[] = {
             ib_cfg_log_error(cp, "Cannot create node.");
             return rc;
         }
-        node->directive = directive;
-        directive = NULL;
+        node->directive = cp->fsm.directive;
+        cp->fsm.directive = NULL;
         node->file = ib_mpool_strdup(cp->mp, cp->curr->file);
         if (node->file == NULL) {
             return IB_EALLOC;
@@ -563,14 +577,11 @@ static parse_directive_entry_t parse_directive_table[] = {
         }
     }
 
-    action cpbuf_clear {
-        cpbuf_clear(cp);
-    }
-
     # Blocks
     action start_block {
-        blkname = ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
-        if (blkname == NULL) {
+        cp->fsm.blkname =
+            ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
+        if (cp->fsm.blkname == NULL) {
             return IB_EALLOC;
         }
         ib_list_clear(plist);
@@ -583,7 +594,8 @@ static parse_directive_entry_t parse_directive_table[] = {
             ib_cfg_log_error(cp, "Cannot create node.");
             return rc;
         }
-        node->directive = blkname;
+        node->directive = cp->fsm.blkname;
+        /* NOTE: We do not clear blkname now. */
         node->file = ib_mpool_strdup(cp->mp, cp->curr->file);
         if (node->file == NULL) {
             return IB_EALLOC;
@@ -612,7 +624,8 @@ static parse_directive_entry_t parse_directive_table[] = {
     }
     action pop_block {
         ib_cfgparser_pop_node(cp);
-        blkname = NULL;
+        cpbuf_clear(cp);
+        cp->fsm.blkname = NULL;
     }
 
     # include file logic
@@ -644,8 +657,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         CONT  $newline;
         EOL   $newline
               @push_dir { fret; };
-        param >cpbuf_clear
-              $cpbuf_append
+        param $cpbuf_append
               %push_param
               $/push_param
               $/push_dir
@@ -658,8 +670,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         CONT  $newline;
         ">"   @push_block
               { fret; };
-        param >cpbuf_clear
-              $cpbuf_append
+        param $cpbuf_append
               %push_blkparam
               $err{ fhold; fret; };
     *|;
@@ -670,8 +681,7 @@ static parse_directive_entry_t parse_directive_table[] = {
                $!error_action { fhold; fret; };
         EOL    $newline
                $!error_action { fhold; fret; };
-        token  >cpbuf_clear
-               $cpbuf_append
+        token  $cpbuf_append
                %start_block
                $!error_action
                { fcall block_parameters; };
@@ -683,8 +693,7 @@ static parse_directive_entry_t parse_directive_table[] = {
                 $eof(error_action);
 	EOL     $newline
                 $eof(error_action);
-        token   >cpbuf_clear
-                $cpbuf_append
+        token   $cpbuf_append
                 $!error_action
                 %pop_block
                 $eof(error_action);
@@ -696,8 +705,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         comment;
 
         #  A directive.
-        token >cpbuf_clear
-              $cpbuf_append
+        token $cpbuf_append
               %start_dir
               { fcall parameters; };
 
@@ -721,6 +729,20 @@ static parse_directive_entry_t parse_directive_table[] = {
 
 %% write data;
 
+ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+
+    ib_cfg_log_info(cp, "Initializing Ragel state machine.");
+
+    /* Access all ragel state variables via structure. */
+    %% access cp->fsm.;
+
+    %% write init;
+
+    return IB_OK;
+}
+
 ib_status_t ib_cfgparser_ragel_parse_chunk(
     ib_cfgparser_t *cp,
     const char *buf,
@@ -740,15 +762,6 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 
     /* Error actions will update this. */
     ib_status_t rc = IB_OK;
-
-    /* Directive name being parsed. */
-    char *directive = NULL;
-
-    /* Block name being parsed. */
-    char *blkname = NULL;
-
-    /* Parameter value being added to the plist. */
-    char *pval = NULL;
 
     /* Temporary list for storing values before they are committed to the
      * configuration. */
@@ -774,13 +787,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
     %% variable pe fsm_vars.pe;
     %% variable eof fsm_vars.eof;
 
-    %% write init;
     %% write exec;
 
-    /* Ensure that our block is always empty on last chunk. */
-    if ( is_last_chunk && blkname != NULL ) {
-        ib_cfg_log_error(cp, "Block name is not empty at end of config input");
-        return IB_EINVAL;
+    /* On the last chunk, sanity check things. */
+    if (is_last_chunk) {
+        if (cp->fsm.blkname != NULL) {
+            ib_cfg_log_error(
+                cp,
+                "Block name is not empty at end of config input");
+            return IB_EINVAL;
+        }
     }
 
     return rc;

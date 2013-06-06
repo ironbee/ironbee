@@ -53,12 +53,32 @@ extern "C" {
  * @{
  */
 
+/**
+ * Parse a chunk of data.
+ *
+ * @param[in] cp Configuration parser.
+ * @param[in] buf Configuration text to parse.
+ * @param[in] blen Length of buffer.
+ * @param[in] is_last_block True when Ragel should flush all its values
+ *            and conclude the parsing.
+ */
 ib_status_t DLL_PUBLIC ib_cfgparser_ragel_parse_chunk(
     ib_cfgparser_t *cp,
     const char     *buf,
     const size_t    blen,
     const int       is_last_block
 );
+
+/**
+ * Initialize the Ragel state machine contianed in cp.
+ *
+ * This initializes, specifically, cp->fsm.
+ *
+ * @param[in] cp Configuration parser. Used for logging.
+ *
+ * @returns Currently always IB_OK.
+ */
+ib_status_t DLL_PUBLIC ib_cfgparser_ragel_init(ib_cfgparser_t *cp);
 
 /**
  * @} IronBeeConfigParser

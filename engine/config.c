@@ -144,6 +144,12 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
     cp->buffer_len = 0;
     cp->buffer = ib_mpool_alloc(mp, cp->buffer_sz);
 
+    /* Initialize the Ragel state machine state. */
+    rc = ib_cfgparser_ragel_init(cp);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     /* Other fields are NULLed via calloc */
     *pcp = cp;
     return IB_OK;
