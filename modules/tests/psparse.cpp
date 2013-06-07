@@ -28,17 +28,29 @@
 
 #include <boost/scoped_array.hpp>
 
+#include <chrono>
 #include <fstream>
 
 using namespace std;
 using namespace IronBee::ParserSuite;
 
-using parser_t = function<void(ostream&, span_t&)>;
+using parser_t = function<void(ostream&, span_t&, uint64_t&)>;
 
 template <typename F>
 parser_t simple_parser(F f)
 {
-    return [f](ostream& o, span_t& input) {o << f(input);};
+    return [f](ostream& o, span_t& input, uint64_t& elapsed)
+    {
+        chrono::time_point<chrono::high_resolution_clock> start;
+        chrono::time_point<chrono::high_resolution_clock> end;
+        start = chrono::high_resolution_clock::now();
+        auto result = f(input);
+        end = chrono::high_resolution_clock::now();
+
+        elapsed +=
+            chrono::duration_cast<chrono::microseconds>(end-start).count();
+        o <<  result;
+    };
 };
 
 void read_all(istream& in, vector<char>& data)
@@ -85,14 +97,28 @@ int main(int argc, char **argv)
     read_all(cin, raw_data);
     span_t input(raw_data.data(), raw_data.data() + raw_data.size());
 
-    try {
-        i->second(cout, input);
+    const uint64_t total_bytes = input.end() - input.begin();
+    uint64_t total_elapsed = 0;
+    uint64_t num_runs = 0;
+    const char* old_begin = input.begin();
+    while (! input.empty()) {
+        uint64_t elapsed = 0;
+        try {
+            i->second(cout, input, elapsed);
+        }
+        catch (const IronBee::ParserSuite::error& e) {
+            cout << "Error: " << endl;
+            cout << diagnostic_information(e);
+            return 1;
+        }
+        ++num_runs;
+        total_elapsed += elapsed;
+        cout << "elapsed: " << elapsed << " us" << endl;
+        cout << "consumed: " << input.begin() - old_begin << " bytes" << endl;
+        old_begin = input.begin();
     }
-    catch (const IronBee::ParserSuite::error& e) {
-        cout << "Error: " << endl;
-        cout << diagnostic_information(e);
-        return 1;
-    }
-
+    cout << "total_elapsed: " << total_elapsed << " us" << endl;
+    cout << "mean_elapsed: " << total_elapsed / num_runs << " us" << endl;
+    cout << "rate: " << total_bytes / (double(total_elapsed) / 1e6) << " bps" << endl;
     return 0;
 }
