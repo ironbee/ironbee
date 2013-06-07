@@ -245,6 +245,7 @@ public
   # +consumer+:: Consumer chain.  IRONBEE_CONFIG will be replaced with the
   #              path to the evaluation of +template+.  Defaults to
   #              DEFAULT_CONSUMER.
+  # +id+::       Identifier to use in generated files. Defaults to random.
   #
   # The entire configuration hash is made available to the ERB template via
   # +config+.  The following options are used by the default template:
@@ -262,19 +263,21 @@ public
       CLIPPTestCase::fatal "Must have :input or :input_hashes."
     end
 
+    config[:id] ||= rand(10000);
+
     if config[:input_hashes]
       input_content = ""
       config[:input_hashes].each do |h|
         input_content +=
           IronBee::CLIPP::HashToPB::hash_to_pb(h)
       end
-      input_path = write_temp_file("clipp_test_RAND.pb", input_content)
+      input_path = write_temp_file("clipp_test_#{config[:id]}.pb", input_content)
       config[:input] ||= "pb:INPUT_PATH @parse"
       config[:input].gsub!("INPUT_PATH", input_path)
     end
 
     config_path = write_temp_file(
-      "clipp_test_RAND.config",
+      "clipp_test_#{config[:id]}.config",
       generate_ironbee_configuration(binding, config[:template])
     )
 
@@ -283,7 +286,7 @@ public
     )
 
     clipp_config = write_temp_file(
-      "clipp_test_RAND.clipp",
+      "clipp_test_#{config[:id]}.clipp",
       "#{config[:input]} #{consumer_chain}\n"
     )
 
