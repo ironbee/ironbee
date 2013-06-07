@@ -214,6 +214,11 @@ public:
             );
         }
 
+        // Don't give IronBee empty data.
+        if (event.data.length == 0) {
+            return;
+        }
+
         // Copy because IronBee needs mutable input.
         char* mutable_data = strndup(event.data.data, event.data.length);
         m_connection.memory_pool().register_cleanup(
@@ -296,6 +301,11 @@ public:
                 "RESPONSE_BODY event fired outside "
                 "of connection lifetime."
             );
+        }
+
+        // Don't give IronBee empty data.
+        if (event.data.length == 0) {
+            return;
         }
 
         // Copy because IronBee needs mutable input.
