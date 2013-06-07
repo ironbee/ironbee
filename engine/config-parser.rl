@@ -492,7 +492,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         if (cp->fsm.pval == NULL) {
             return IB_EALLOC;
         }
-        ib_list_push(plist, cp->fsm.pval);
+        ib_list_push(cp->fsm.plist, cp->fsm.pval);
         cpbuf_clear(cp);
     }
     action push_blkparam {
@@ -500,7 +500,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         if (cp->fsm.pval == NULL) {
             return IB_EALLOC;
         }
-        ib_list_push(plist, cp->fsm.pval);
+        ib_list_push(cp->fsm.plist, cp->fsm.pval);
         cpbuf_clear(cp);
     }
 
@@ -515,7 +515,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         if (cp->fsm.directive == NULL) {
             return IB_EALLOC;
         }
-        ib_list_clear(plist);
+        ib_list_clear(cp->fsm.plist);
         cpbuf_clear(cp);
     }
     action push_dir {
@@ -535,7 +535,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         node->line = cp->curr->line;
         node->type = IB_CFGPARSER_NODE_DIRECTIVE;
         ib_list_node_t *lst_node;
-        IB_LIST_LOOP(plist, lst_node) {
+        IB_LIST_LOOP(cp->fsm.plist, lst_node) {
             ib_list_push(node->params, ib_list_node_data(lst_node));
         }
         ib_list_push(cp->curr->children, node);
@@ -584,7 +584,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         if (cp->fsm.blkname == NULL) {
             return IB_EALLOC;
         }
-        ib_list_clear(plist);
+        ib_list_clear(cp->fsm.plist);
         cpbuf_clear(cp);
     }
     action push_block {
@@ -603,7 +603,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         node->line = cp->curr->line;
         node->type = IB_CFGPARSER_NODE_BLOCK;
         ib_list_node_t *lst_node;
-        IB_LIST_LOOP(plist, lst_node) {
+        IB_LIST_LOOP(cp->fsm.plist, lst_node) {
             ib_cfg_log_debug(
                 cp,
                 "Adding param \"%s\" to SBLK1 %s (node = %p)",
@@ -732,6 +732,9 @@ static parse_directive_entry_t parse_directive_table[] = {
 ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
     assert(cp != NULL);
     assert(cp->ib != NULL);
+    assert(cp->mp != NULL);
+
+    ib_status_t rc;
 
     ib_cfg_log_debug(cp, "Initializing Ragel state machine.");
 
@@ -739,6 +742,17 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
     %% access cp->fsm.;
 
     %% write init;
+
+    ib_cfg_log_info(cp, "Initializing IronBee parse values.");
+
+    rc = ib_list_create(&(cp->fsm.plist), cp->mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    cp->fsm.directive = NULL;
+    cp->fsm.blkname = NULL;
+    cp->fsm.pval = NULL;
 
     return IB_OK;
 }
@@ -763,23 +777,12 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
     /* Error actions will update this. */
     ib_status_t rc = IB_OK;
 
-    /* Temporary list for storing values before they are committed to the
-     * configuration. */
-    ib_list_t *plist;
-
     /* Create a finite state machine type. */
     fsm_vars_t fsm_vars;
 
     fsm_vars.p = buf;
     fsm_vars.pe = buf + blen;
     fsm_vars.eof = (is_last_chunk ? fsm_vars.pe : NULL);
-
-    /* Create a temporary list for storing parameter values. */
-    ib_list_create(&plist, temp_mp);
-    if (plist == NULL) {
-        ib_cfg_log_error(cp, "Cannot allocate parameter list.");
-        return IB_EALLOC;
-    }
 
     /* Access all ragel state variables via structure. */
     %% access cp->fsm.;

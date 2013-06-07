@@ -676,15 +676,18 @@ static const int ironbee_config_en_main = 16;
 ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
     assert(cp != NULL);
     assert(cp->ib != NULL);
+    assert(cp->mp != NULL);
+
+    ib_status_t rc;
 
     ib_cfg_log_info(cp, "Initializing Ragel state machine.");
 
     /* Access all ragel state variables via structure. */
     
-#line 740 "config-parser.rl"
+#line 743 "config-parser.rl"
 
     
-#line 688 "config-parser.c"
+#line 691 "config-parser.c"
 	{
 	 cp->fsm.cs = ironbee_config_start;
 	 cp->fsm.top = 0;
@@ -693,7 +696,18 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
 	 cp->fsm.act = 0;
 	}
 
-#line 742 "config-parser.rl"
+#line 745 "config-parser.rl"
+
+    ib_cfg_log_info(cp, "Initializing IronBee parse values.");
+
+    rc = ib_list_create(&(cp->fsm.plist), cp->mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    cp->fsm.directive = NULL;
+    cp->fsm.blkname = NULL;
+    cp->fsm.pval = NULL;
 
     return IB_OK;
 }
@@ -718,10 +732,6 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
     /* Error actions will update this. */
     ib_status_t rc = IB_OK;
 
-    /* Temporary list for storing values before they are committed to the
-     * configuration. */
-    ib_list_t *plist;
-
     /* Create a finite state machine type. */
     fsm_vars_t fsm_vars;
 
@@ -729,25 +739,18 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
     fsm_vars.pe = buf + blen;
     fsm_vars.eof = (is_last_chunk ? fsm_vars.pe : NULL);
 
-    /* Create a temporary list for storing parameter values. */
-    ib_list_create(&plist, temp_mp);
-    if (plist == NULL) {
-        ib_cfg_log_error(cp, "Cannot allocate parameter list.");
-        return IB_EALLOC;
-    }
-
     /* Access all ragel state variables via structure. */
     
-#line 786 "config-parser.rl"
-    
-#line 787 "config-parser.rl"
-    
-#line 788 "config-parser.rl"
-    
 #line 789 "config-parser.rl"
+    
+#line 790 "config-parser.rl"
+    
+#line 791 "config-parser.rl"
+    
+#line 792 "config-parser.rl"
 
     
-#line 751 "config-parser.c"
+#line 754 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -768,7 +771,7 @@ _resume:
 #line 1 "NONE"
 	{ cp->fsm.ts = ( fsm_vars.p);}
 	break;
-#line 772 "config-parser.c"
+#line 775 "config-parser.c"
 		}
 	}
 
@@ -852,7 +855,7 @@ _eof_trans:
         if (cp->fsm.pval == NULL) {
             return IB_EALLOC;
         }
-        ib_list_push(plist, cp->fsm.pval);
+        ib_list_push(cp->fsm.plist, cp->fsm.pval);
         cpbuf_clear(cp);
     }
 	break;
@@ -863,7 +866,7 @@ _eof_trans:
         if (cp->fsm.pval == NULL) {
             return IB_EALLOC;
         }
-        ib_list_push(plist, cp->fsm.pval);
+        ib_list_push(cp->fsm.plist, cp->fsm.pval);
         cpbuf_clear(cp);
     }
 	break;
@@ -881,7 +884,7 @@ _eof_trans:
         if (cp->fsm.directive == NULL) {
             return IB_EALLOC;
         }
-        ib_list_clear(plist);
+        ib_list_clear(cp->fsm.plist);
         cpbuf_clear(cp);
     }
 	break;
@@ -904,7 +907,7 @@ _eof_trans:
         node->line = cp->curr->line;
         node->type = IB_CFGPARSER_NODE_DIRECTIVE;
         ib_list_node_t *lst_node;
-        IB_LIST_LOOP(plist, lst_node) {
+        IB_LIST_LOOP(cp->fsm.plist, lst_node) {
             ib_list_push(node->params, ib_list_node_data(lst_node));
         }
         ib_list_push(cp->curr->children, node);
@@ -956,7 +959,7 @@ _eof_trans:
         if (cp->fsm.blkname == NULL) {
             return IB_EALLOC;
         }
-        ib_list_clear(plist);
+        ib_list_clear(cp->fsm.plist);
         cpbuf_clear(cp);
     }
 	break;
@@ -978,7 +981,7 @@ _eof_trans:
         node->line = cp->curr->line;
         node->type = IB_CFGPARSER_NODE_BLOCK;
         ib_list_node_t *lst_node;
-        IB_LIST_LOOP(plist, lst_node) {
+        IB_LIST_LOOP(cp->fsm.plist, lst_node) {
             ib_cfg_log_debug(
                 cp,
                 "Adding param \"%s\" to SBLK1 %s (node = %p)",
@@ -1211,7 +1214,7 @@ _eof_trans:
 #line 710 "config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 21; goto _again;} }}
 	break;
-#line 1215 "config-parser.c"
+#line 1218 "config-parser.c"
 		}
 	}
 
@@ -1224,7 +1227,7 @@ _again:
 #line 1 "NONE"
 	{ cp->fsm.ts = 0;}
 	break;
-#line 1228 "config-parser.c"
+#line 1231 "config-parser.c"
 		}
 	}
 
@@ -1261,7 +1264,7 @@ _again:
         if (cp->fsm.pval == NULL) {
             return IB_EALLOC;
         }
-        ib_list_push(plist, cp->fsm.pval);
+        ib_list_push(cp->fsm.plist, cp->fsm.pval);
         cpbuf_clear(cp);
     }
 	break;
@@ -1284,7 +1287,7 @@ _again:
         node->line = cp->curr->line;
         node->type = IB_CFGPARSER_NODE_DIRECTIVE;
         ib_list_node_t *lst_node;
-        IB_LIST_LOOP(plist, lst_node) {
+        IB_LIST_LOOP(cp->fsm.plist, lst_node) {
             ib_list_push(node->params, ib_list_node_data(lst_node));
         }
         ib_list_push(cp->curr->children, node);
@@ -1332,7 +1335,7 @@ _again:
 #line 675 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }
 	break;
-#line 1336 "config-parser.c"
+#line 1339 "config-parser.c"
 		}
 	}
 	}
@@ -1340,7 +1343,7 @@ _again:
 	_out: {}
 	}
 
-#line 791 "config-parser.rl"
+#line 794 "config-parser.rl"
 
     /* On the last chunk, sanity check things. */
     if (is_last_chunk) {

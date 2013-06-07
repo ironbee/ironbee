@@ -475,7 +475,7 @@ static ib_status_t cfgparser_apply_node_helper(
                 (ib_list_elements(node->children) == 0) &&
                 "Directives may not have children.");
 
-            ib_log_debug(ib, "Applying directive %s", node->directive);
+            ib_log_debug(ib, "Applying directive \"%s\"", node->directive);
 
             /* Store previous current node. */
             prev_curr = cp->curr;
@@ -743,6 +743,59 @@ ib_status_t ib_config_register_directive(
     return rc;
 }
 
+/**
+ * Log a debug message followed by the directive.
+ *
+ * Note that quoting, spacing and &lt;, &gt; decoration is removed.
+ *
+ * @param[in] cp Configuration parser.
+ * @param[in] name Name of the directive.
+ * @param[in] args The list of arguments.
+ * @param[in] msg The message that prefixes the printed directive.
+ */
+static ib_status_t print_directive(ib_cfgparser_t *cp,
+                                   const char *name,
+                                   ib_list_t *args,
+                                   const char *msg)
+{
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(args != NULL);
+
+    int loglen = 0;
+    const ib_list_node_t *node;
+    char *directive;
+
+    loglen += strlen(name) + 2;  /* Name + 1 space + \0. */
+
+    IB_LIST_LOOP_CONST(args, node) {
+        /* Name + 1 space. */
+        loglen += strlen((const char *)ib_list_node_data_const(node)) + 1;
+    }
+
+    directive = malloc(loglen);
+    if (directive == NULL) {
+        return IB_EALLOC;
+    }
+
+    directive[0] = '\0';
+
+    strcat(directive, name);
+    strcat(directive, " ");
+
+    IB_LIST_LOOP_CONST(args, node) {
+        strcat(directive, (const char *)ib_list_node_data_const(node));
+        strcat(directive, " ");
+    }
+
+    //ib_cfg_log_debug(cp, "%s%s", msg, directive);
+    ib_log_error(cp->ib, "%s%s", msg, directive);
+
+    free(directive);
+    return IB_OK;
+}
+
 ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                                         const char *name,
                                         ib_list_t *args)
@@ -759,7 +812,18 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
     const char *p2;
     ib_status_t rc;
 
+    if (ib_log_get_level(ib) >= IB_LOG_DEBUG) {
+        rc = print_directive(cp, name, args, "Processing directive: ");
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     rc = ib_hash_get(ib->dirmap, &rec, name);
+    if (rc == IB_ENOENT) {
+        ib_cfg_log_error(cp, "Directive \"%s\" not defined.", name);
+        return rc;
+    }
     if (rc != IB_OK) {
         return rc;
     }

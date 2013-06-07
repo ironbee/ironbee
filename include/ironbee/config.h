@@ -67,9 +67,10 @@ struct ib_cfgparser_fsm_t {
     int         act;         /**< Track the last successful match. */
     int         stack[1024]; /**< Stack of states. */
  
-    char *directive;         /**< Current directive being parsed, or NULL. */
-    char *blkname;           /**< Current block name being parsed, or NULL. */
-    char *pval;              /**< Current parmeter being parsed, or NULL. */
+    char      *directive;    /**< Current directive being parsed, or NULL. */
+    char      *blkname;      /**< Current block name being parsed, or NULL. */
+    char      *pval;         /**< Current parmeter being parsed, or NULL. */
+    ib_list_t *plist;        /**< Current parameter list. */
 
 };
 typedef struct ib_cfgparser_fsm_t ib_cfgparser_fsm_t;
