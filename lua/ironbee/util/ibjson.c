@@ -15,8 +15,27 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @addtogroup Lua
+ * @{
+ *
+ * @defgroup LuaIbJson JSON Bindings
+ * @{
+ */
+
+/**
+ * @file
+ *
+ * Bindings to IronBee's JSON services.
+ * 
+ * @author Sam Baskinger <sbaskinger@qualys.com>
+ */
+
+//! Lua module requirement.
 #define LUA_LIB
+//! Lua module requirement.
 #include "lua.h"
+//! Lua module requirement.
 #include "lauxlib.h"
 
 #include <ironbee/mpool.h>
@@ -34,14 +53,19 @@
 #pragma clang diagnostic pop
 #endif
 
+//! Module Name
 static const char *LUA_IBJSONLIB_NAME = "ibjson";
+//! Module Version
 static const char *LUA_IBJSONLIB_VERSION = "1.0";
 
-/* Forward declare the callback type. */
+/**
+ * Forward declaration of callback data for parsing.
+ * This is used as the Yajl @c ctx value.
+ */
 typedef struct ibjson_cbdata_t ibjson_cbdata_t;
 
 /**
- * Function callback to push a value.
+ * Callback that pushes (in a parsing sense, not a Lua stack sense) values.
  *
  * When parsing JSON different values may be assigned differently.
  * For example, a number parsed after a map key should be assigned to a 
@@ -63,7 +87,7 @@ struct ibjson_cbdata_t {
 /**
  * Nop.
  *
- * @param[in] cbata Callback data.
+ * @param[in] cbdata Callback data.
  */
 static void ibjson_pushval(ibjson_cbdata_t *cbdata) {
     /* Nop. The value on the stack is final. */
@@ -72,7 +96,7 @@ static void ibjson_pushval(ibjson_cbdata_t *cbdata) {
 /**
  * Append a value to the list at index -2 in the Lua list.
  *
- * @param[in] cbata Callback data.
+ * @param[in] cbdata Callback data.
  */
 static void ibjson_pushlist(ibjson_cbdata_t *cbdata) {
     int i = lua_objlen(cbdata->L, -2) + 1;
@@ -91,7 +115,7 @@ static void ibjson_pushlist(ibjson_cbdata_t *cbdata) {
 /**
  * Assign the value at index -1 to the key at -2 into the table at -3.
  *
- * @param[in] cbata Callback data.
+ * @param[in] cbdata Callback data.
  */
 static void ibjson_pushmap(ibjson_cbdata_t *cbdata) {
     lua_settable(cbdata->L, -3);
@@ -243,6 +267,36 @@ static yajl_callbacks g_yajl_callbacks = {
  * End YAJL callback definitions.
  ****************************************************************************/
 
+/**
+ * Parse a string and push the results onto the Lua stack.
+ *
+ * This parses using YAJL, a callback-based parser. As such, the parsing
+ * logic is distributed across all the callbacks. This documentation
+ * unites that documentation.
+ *
+ * When a value that is not a map or a list is parsed, it is
+ * pushed onto the Lua stack (@c lua_pushX(L, x)), but then 
+ * a second "push" function is called which is of type @ref ibjson_push_fn_t.
+ *
+ * The second push function takes the value at the top of the Lua stack
+ * and, if a JSON map is being parsed, pushes the new value into the JSON map,
+ * if a JSON list is being parsed, pushes the new value into the JSON list.
+ *
+ * When YAJL signals that a map or list is going to be parsed, first
+ * the previous @ref ibjson_push_fn_t is pushed to the Lua stack and
+ * ibjson_pushmap() or ibjson_pushlist() is set at the current push function.
+ * Then the empty map or list is pushed and parsing continues as described
+ * above.
+ *
+ * When a map or list is signaled as complete, the old @ref ibjson_push_fn_t
+ * is pulled off the stack from below the newly constructed map or list
+ * and made the current push function. The new map or list remains at the
+ * top of the stack and is pushed as normal by the now-current
+ * @ref ibjson_push_fn_t.
+ *
+ * @param[in] L Lua stack.
+ * @returns the number of elements returned from the Lua call.
+ */
 LUALIB_API int ibjson_parse_string(lua_State *L) {
 
     ibjson_cbdata_t cbdata;
@@ -321,11 +375,29 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
     return 1;
 }
 
+/**
+ * The table of mappings from Lua function names to C implementations.
+ */
 static const luaL_reg jsonlib[] = {
     {"parse_string", ibjson_parse_string},
     {NULL, NULL}
 };
 
+/**
+ * Register the Lua bindings.
+ *
+ * This is called on load by Lua and, in turn, calls luaL_register().
+ *
+ * @code{.lua}
+ * package.cpath = "my/path/?.so"
+ * require "ibjson"
+ * local t = ibjson.parse_string("{}")
+ * @endcode
+ *
+ * @param[in] L The Lua Stack to load the module into.
+ *
+ * @returns 1 for success.
+ */
 LUALIB_API int luaopen_ibjson(lua_State *L) {
     luaL_register(L, LUA_IBJSONLIB_NAME, jsonlib);
 
@@ -344,3 +416,8 @@ LUALIB_API int luaopen_ibjson(lua_State *L) {
 
     return 1;
 }
+
+/**
+ * @}
+ * @}
+ */
