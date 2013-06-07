@@ -5,7 +5,7 @@ SensorName ClippTests
 SensorHostname clipp.tests
 
 ModuleBasePath "<%= TOP_BUILDDIR %>/modules/.libs"
-LoadModule "ibmod_htp.so"
+<%= config[:modhtp] ? "LoadModule \"ibmod_htp.so\"" : "" %>
 LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_rules.so"
 LoadModule "ibmod_user_agent.so"

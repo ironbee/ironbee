@@ -99,6 +99,13 @@ IronBee v0.8.0
   common test code. Module tests now in `modules/tests`, engine tests in
   `engine/tests`, and utility tests in `util/tests`.
 
+* CLIPP based tests now use more meaningful filenames.  Filenames for the
+  same test now use the same identifier.  Numbers in identifiers are
+  incremental rather than random and identifiers now include the name of the
+  test.
+
+* CLIPP based tests no longer require modhtp.
+
 * Various clean up and bug fixes.
 
 IronBee v0.7.0

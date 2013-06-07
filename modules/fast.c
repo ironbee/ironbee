@@ -145,7 +145,7 @@ struct fast_collection_spec_t
 /** Bytestrings to feed during REQUEST_HEADER phase. */
 static const char *c_request_header_bytestrings[] = {
     "REQUEST_METHOD",
-    "REQUEST_URI",
+    "REQUEST_URI_RAW",
     "REQUEST_PROTOCOL",
     NULL
 };

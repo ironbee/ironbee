@@ -14,7 +14,7 @@ class TestFast < Test::Unit::TestCase
     clipp(
       :input_hashes => [make_request('foobar')],
       :default_site_config => <<-EOS
-        Rule REQUEST_URI @rx foobar id:1 phase:REQUEST_HEADER clipp_announce:basic_rule
+        Rule REQUEST_URI_RAW @rx foobar id:1 phase:REQUEST_HEADER clipp_announce:basic_rule
       EOS
     )
     assert_no_issues
@@ -26,7 +26,7 @@ class TestFast < Test::Unit::TestCase
       :input_hashes => [make_request('foobar')],
       :config => 'LoadModule "ibmod_fast.so"',
       :default_site_config => <<-EOS
-        Rule REQUEST_URI @rx foobar id:1 phase:REQUEST_HEADER clipp_announce:basic_rule
+        Rule REQUEST_LINE @rx foobar id:1 phase:REQUEST_HEADER clipp_announce:basic_rule
       EOS
     )
     assert_no_issues
