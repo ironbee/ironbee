@@ -56,6 +56,8 @@ void read_all(istream& in, vector<char>& data)
 
 int main(int argc, char **argv)
 {
+    using namespace placeholders;
+
     static const map<string, parser_t> parsers {
         {"uri",           simple_parser(&parse_uri)},
         {"request_line",  simple_parser(&parse_request_line)},
@@ -64,7 +66,7 @@ int main(int argc, char **argv)
         {"request",       simple_parser(&parse_request)},
         {"response",      simple_parser(&parse_response)},
         {"authority",     simple_parser(&parse_authority)},
-        {"path",          simple_parser(&parse_path)}
+        {"path",          simple_parser(bind(&parse_path, _1, '/', '.'))}
     };
 
     if (argc != 2) {

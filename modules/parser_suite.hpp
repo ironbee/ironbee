@@ -339,10 +339,17 @@ struct parse_path_result_t
     //! Extension.  File after but not including final period.
     span_t extension;
 
+    //! Directory separator used in parse.
+    char directory_separator;
+
+    //! Extension separator used in parse.
+    char extension_separator;
+
     //! Absolute path?  True iff directory begins with /.
     bool absolute() const
     {
-        return ! directory.empty() && *directory.begin() == '/';
+        return ! directory.empty() &&
+               *directory.begin() == directory_separator;
     }
 
     //! Relative path?  True iff absolute() is false.
@@ -358,9 +365,15 @@ struct parse_path_result_t
  * @param[in, out] input Span to parse; will be updated such that beginning
  *                       is just after successful parse, i.e., the beginning
  *                       of the body.
+ * @param[in]      directory_separator Character that separates directories.
+ * @param[in]      extension_separator Character that separates extension.
  * @return Result.
  **/
-parse_path_result_t parse_path(span_t& input);
+parse_path_result_t parse_path(
+    span_t& input,
+    char    directory_separator = '/',
+    char    extension_separator = '.'
+);
 
 //! Ostream output operator for @ref parse_path_result_t.
 std::ostream& operator<<(

@@ -437,7 +437,11 @@ ostream& operator<<(
     return o;
 }
 
-parse_path_result_t parse_path(span_t& input)
+parse_path_result_t parse_path(
+    span_t& input,
+    char    directory_separator,
+    char    extension_separator
+)
 {
     using namespace boost::spirit::qi;
     using ascii::char_;
@@ -445,27 +449,34 @@ parse_path_result_t parse_path(span_t& input)
     parse_path_result_t R;
 
     R.directory = span_t(input.begin(), input.begin());
+    R.directory_separator = directory_separator;
+    R.extension_separator = extension_separator;
+
+    // parse a directory separator
+    auto dirsep = lit(directory_separator);
+    // parse a string not containing a directory_separator
+    auto dirstr = *(char_-char_(directory_separator));
+    // parse a extension separator
+    auto extsep = lit(extension_separator);
+    // parse a string not containing a extension_separator
+    auto extstr = *(char_-char_(extension_separator));
 
     boost::tie(R.directory, R.base, R.extension) =
         parse_direct<boost::tuple<span_t,span_t,span_t>>(
             "path", input,
             // directory
-               raw[*(-lit("/") >> *(char_-char_("/")) >> &lit("/"))]
+               raw[*(-dirsep >> dirstr >> &dirsep)]
             // final /
-            >> -omit[lit("/")]
+            >> -omit[dirsep]
             // base
             >> raw[
                    // base before first .
-                      *(char_-char_("."))
+                      extstr
                    // pieces of base enclosed by .
-                   >> *(
-                           lit(".")
-                        >> *(char_-char_("."))
-                        >> &lit(".")
-                      )
+                   >> *(extsep >> extstr >> &extsep)
                ]
             // extension
-            >> -(omit[lit(".")] >> raw[*char_])
+            >> -(omit[extsep] >> raw[*char_])
         );
 
     if (R.extension.empty()) {
