@@ -176,7 +176,17 @@ IB_DIRMAP_INIT_STRUCTURE(mock_module_directives) = {
     IB_DIRMAP_INIT_LAST
 };
 
-static mock_module_conf_t g_conf;
+static mock_module_conf_t g_conf = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    false,
+    0,
+    NULL,
+    0,
+    0
+};
 
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,           /* Default metadata */

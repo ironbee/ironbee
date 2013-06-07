@@ -2292,4 +2292,13 @@ void *ib_mpool_memdup(
     return ptr;
 }
 
+ib_mpool_t *ib_mpool_parent(
+    ib_mpool_t *mp
+)
+{
+    assert(mp != NULL);
+
+    return mp->parent;
+}
+
 /**@}*/

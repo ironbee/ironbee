@@ -443,6 +443,15 @@ char DLL_PUBLIC *ib_mpool_debug_report(const ib_mpool_t *mp);
  */
 char DLL_PUBLIC *ib_mpool_analyze(const ib_mpool_t *mp);
 
+/**
+ * Return the memory pool parent.
+ *
+ * @param[in] mp The child memory pool whose parent will be returned.
+ *
+ * @returns Memory pool parent.
+ */
+ib_mpool_t DLL_PUBLIC *ib_mpool_parent(ib_mpool_t *mp);
+
 /** @} IronBeeUtilMemPool */
 
 #ifdef __cplusplus

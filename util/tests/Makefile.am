@@ -39,6 +39,7 @@ check_PROGRAMS = \
 	test_util_strval \
 	test_util_unescape_string \
 	test_util_uuid \
+	test_util_vector \
 	test_util_types
 
 
@@ -115,6 +116,8 @@ test_util_escape_SOURCES = test_util_escape.cpp
 test_util_decode_SOURCES = test_util_decode.cpp
 
 test_util_stream_SOURCES = test_util_stream.cpp
+
+test_util_vector_SOURCES = test_util_vector.cpp
 
 test_util_log_SOURCES = test_util_log.cpp
 test_util_log_LDADD = $(LDADD) -lboost_regex$(BOOST_SUFFIX)

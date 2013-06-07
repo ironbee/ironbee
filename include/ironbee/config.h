@@ -30,6 +30,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/log.h>
 #include <ironbee/strval.h>
+#include <ironbee/vector.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus
@@ -62,16 +63,21 @@ typedef struct ib_cfgparser_node_t ib_cfgparser_node_t;
 struct ib_cfgparser_fsm_t {
     const char *ts;          /**< Pointer to character data for Ragel. */
     const char *te;          /**< Pointer to character data for Ragel. */
-    int         cs;          /**< Current state. */
-    int         top;         /**< Top of the stack. */
-    int         act;         /**< Track the last successful match. */
-    int         stack[1024]; /**< Stack of states. */
+    /**
+     * Buffer for maintaining partial match prefix information across parses.
+     * See section 6.3 of the Ragel Guide, "Scanners," for a discussion
+     * of how this buffer is maintained.
+     */
+    ib_vector_t *ts_buffer;
+    int          cs;          /**< Current state. */
+    int          top;         /**< Top of the stack. */
+    int          act;         /**< Track the last successful match. */
+    /// TODO - srb - make dynamic using vector.
+    int          stack[1024]; /**< Stack of states. */
  
-    char      *directive;    /**< Current directive being parsed, or NULL. */
-    char      *blkname;      /**< Current block name being parsed, or NULL. */
-    char      *pval;         /**< Current parmeter being parsed, or NULL. */
-    ib_list_t *plist;        /**< Current parameter list. */
-
+    char        *directive;   /**< Current directive being parsed, or NULL. */
+    char        *blkname;     /**< Current block name being parsed, or NULL. */
+    ib_list_t   *plist;       /**< Current parameter list. */
 };
 typedef struct ib_cfgparser_fsm_t ib_cfgparser_fsm_t;
 
@@ -119,6 +125,8 @@ struct ib_cfgparser_t {
      */
     ib_cfgparser_fsm_t fsm;
 
+    /// TODO - srb - move this to ib_cfgparser_fsm_t as tok_buffer?
+    /// TODO - srb - replace with a vector.
     size_t  buffer_sz;  /**< Size of buffer. */
     size_t  buffer_len; /**< Length of string stored in buffer. */
     char   *buffer;     /**< Buffer for building tokens. */

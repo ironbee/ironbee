@@ -39,6 +39,7 @@ libibutil_la_SOURCES = array.c \
                        strval.c \
                        strwspc.c \
                        types.c \
+		       vector.c \
                        util.c \
                        uuid.c
 if BUILD_RIAK

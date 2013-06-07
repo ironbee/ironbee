@@ -85,6 +85,14 @@ static ib_status_t cpbuf_append(ib_cfgparser_t *cp, char c)
     cp->buffer[cp->buffer_len] = c;
     ++(cp->buffer_len);
 
+    ib_cfg_log_trace(cp, "Current character is '%c'", c);
+    ib_cfg_log_trace(
+        cp,
+        "Token buffer is (len=%zu): [[[[%.*s]]]]",
+        cp->buffer_len,
+        (int)cp->buffer_len,
+        cp->buffer);
+
     return IB_OK;
 }
 
@@ -484,23 +492,26 @@ static parse_directive_entry_t parse_directive_table[] = {
             "parser error near %s:%zu.",
             cp->curr->file,
             cp->curr->line);
+        ib_cfg_log_debug(cp, "Current buffer is [[[[%.*s]]]]", (int)blen, buf);
     }
 
     # Parameter
     action push_param {
-        cp->fsm.pval = qstrdup(cp, config_mp);
-        if (cp->fsm.pval == NULL) {
+        tmp_str = qstrdup(cp, config_mp);
+        if (tmp_str == NULL) {
             return IB_EALLOC;
         }
-        ib_list_push(cp->fsm.plist, cp->fsm.pval);
+        ib_list_push(cp->fsm.plist, tmp_str);
+        tmp_str = NULL;
         cpbuf_clear(cp);
     }
     action push_blkparam {
-        cp->fsm.pval = qstrdup(cp, config_mp);
-        if (cp->fsm.pval == NULL) {
+        tmp_str = qstrdup(cp, config_mp);
+        if (tmp_str == NULL) {
             return IB_EALLOC;
         }
-        ib_list_push(cp->fsm.plist, cp->fsm.pval);
+        ib_list_push(cp->fsm.plist, tmp_str);
+        tmp_str = NULL;
         cpbuf_clear(cp);
     }
 
@@ -510,6 +521,10 @@ static parse_directive_entry_t parse_directive_table[] = {
 
     # Directives
     action start_dir {
+        if (cp->buffer_len == 0) {
+            ib_cfg_log_error(cp, "Directive name is 0 length.");
+            return IB_EOTHER;
+        }
         cp->fsm.directive =
             ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
         if (cp->fsm.directive == NULL) {
@@ -572,6 +587,13 @@ static parse_directive_entry_t parse_directive_table[] = {
     }
 
     action cpbuf_append {
+        ib_cfg_log_trace(
+            cp,
+            "Text buffer is (len=%zu) (offset=%d): [[[[%.*s]]]]",
+            blen,
+            (int)(fsm_vars.p - buf),
+            (int)blen,
+            buf);
         if (cpbuf_append(cp, *fpc) != IB_OK) {
             return IB_EALLOC;
         }
@@ -579,6 +601,10 @@ static parse_directive_entry_t parse_directive_table[] = {
 
     # Blocks
     action start_block {
+        if (cp->buffer_len == 0) {
+            ib_cfg_log_error(cp, "Block name is 0 length.");
+            return IB_EOTHER;
+        }
         cp->fsm.blkname =
             ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
         if (cp->fsm.blkname == NULL) {
@@ -635,21 +661,15 @@ static parse_directive_entry_t parse_directive_table[] = {
     EOL = '\r'? '\n';
     # Continuation.
     CONT = '\\' EOL;
-    # Non-breaking space. Space that does not terminate a statement.
-    NBSP = ( WS | '\\' EOL );
-
 
     qchar = '\\' any;
     qtoken = '"' ( qchar | ( any - ["\\] ) )* '"';
-    token = (qchar | (any - (WS | EOL | [<>#"\\])))
-            (qchar | (any - (WS | EOL | [<>"\\])))*;
+    token = (qchar | (any - (WS | '\r' | '\n' | [<>#"\\])))
+            (qchar | (any - (WS | '\r' | '\n' | [<>"\\])))*;
     param = qtoken | token;
-    keyval = token '=' param;
-    iparam = ( '"' (any - (EOL | '"'))+ '"' ) | (any - (WS | EOL) )+;
 
     # A comment is any string starting with # and not including a newline.
-    # Notice that we do *not* make allowances for NBSP used in line comments.
-    comment = '#' (any -- EOL)*;
+    comment = '#' (any - ('\r' | '\n'))*;
 
     # The parameters machine pull in parameter.
     parameters := |*
@@ -752,7 +772,87 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
 
     cp->fsm.directive = NULL;
     cp->fsm.blkname = NULL;
-    cp->fsm.pval = NULL;
+
+    rc = ib_vector_create(&(cp->fsm.ts_buffer), cp->mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+/**
+ * If Ragel has a partial match we must preserve the buffer
+ * until next time to continue the match.
+ * This effects how the machine is restarted on
+ * the next call to ib_cfgparser_ragel_parse_chunk.
+ */
+static ib_status_t cfgparser_partial_match_maintenance(
+    ib_cfgparser_t *cp,
+    const char *buf,
+    const size_t blen
+)
+{
+    ib_status_t rc;
+    size_t buffer_remaining = buf + blen - cp->fsm.ts;
+
+    /* Distance that the ts and te pointers will be shifted when
+     * copied into the vector. */
+    ssize_t delta;
+
+    rc = ib_vector_truncate(cp->fsm.ts_buffer, 0);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+
+    rc = ib_vector_append(cp->fsm.ts_buffer, cp->fsm.ts, buffer_remaining);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    delta = (char *)cp->fsm.ts_buffer->data - cp->fsm.ts;
+
+    /* Relocate ts and te into the buffer. */
+    cp->fsm.te += delta;
+    cp->fsm.ts += delta;
+
+    return IB_OK;
+}
+
+/**
+ * If Ragel has a partial match we must resume parsing in 
+ * a special buffer we are maintaining.
+ * @param[in] cp Configuration parser. The cp->fsm structure is updated.
+ * @param[in] buf Buffer to append to cp->fsm.ts_buffer.
+ * @param[in] blen Length of the buffer to append to cp->fsm.ts_buffer.
+ * @param[out] fsm_vars The p field is updated to point to 
+ *             the new location of buffer.
+ */
+static ib_status_t cfgparser_partial_match_resume(
+    ib_cfgparser_t *cp,
+    const char *buf,
+    const size_t blen
+)
+{
+    ib_status_t rc;
+
+    /* Store the previous data pointer so we can detect if it moves. */
+    void *orig_data = cp->fsm.ts_buffer->data;
+
+    /* Append the input buffer. */
+    rc = ib_vector_append(cp->fsm.ts_buffer, (uint8_t *)buf, blen);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    if (orig_data != cp->fsm.ts_buffer->data) {
+        /* Update ts and te */
+        ssize_t delta = cp->fsm.ts_buffer->data - orig_data;
+
+        cp->fsm.ts   += delta;
+        cp->fsm.te   += delta;
+    }
 
     return IB_OK;
 }
@@ -778,10 +878,27 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
     ib_status_t rc = IB_OK;
 
     /* Create a finite state machine type. */
-    fsm_vars_t fsm_vars;
+    fsm_vars_t fsm_vars = { buf, NULL, 0 };
 
-    fsm_vars.p = buf;
-    fsm_vars.pe = buf + blen;
+    /* A temporary string. This is used to fetch values, check them
+     * for NULL, and then pass them on to an owning collection (list). */
+    char *tmp_str = NULL;
+
+    /* Point the machine at the current buffer to parse.
+     */
+    if (cp->fsm.ts != NULL) {
+        rc = cfgparser_partial_match_resume(cp, buf, blen);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        /* Buffer start = prev buffer end. */
+        fsm_vars.p = cp->fsm.te;
+    }
+    else {
+        fsm_vars.p = buf;
+    }
+    fsm_vars.pe  = fsm_vars.p + blen;
     fsm_vars.eof = (is_last_chunk ? fsm_vars.pe : NULL);
 
     /* Access all ragel state variables via structure. */
@@ -792,12 +909,30 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 
     %% write exec;
 
+    assert(tmp_str == NULL && "tmp_str must be cleared after every use");
+
+    /* Buffer maintenance code. */
+    if (cp->fsm.ts != NULL) {
+        rc = cfgparser_partial_match_maintenance(cp, buf, blen);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     /* On the last chunk, sanity check things. */
     if (is_last_chunk) {
         if (cp->fsm.blkname != NULL) {
             ib_cfg_log_error(
                 cp,
-                "Block name is not empty at end of config input");
+                "Unpushed block \"%s\" at end of config input",
+                cp->fsm.blkname);
+            return IB_EINVAL;
+        }
+        if (cp->fsm.directive != NULL) {
+            ib_cfg_log_error(
+                cp,
+                "Unpushed directive \"%s\" end of config input",
+                cp->fsm.directive);
             return IB_EINVAL;
         }
     }
