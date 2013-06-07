@@ -201,9 +201,9 @@ parse_headers_result_t parse_headers(span_t& input)
            >> (eol|eoi)
         )
         ;
-    static const auto terminator = *sp >> eol;
+    const auto terminator = *sp >> eol;
 
-    static const auto grammar =
+    const auto grammar =
            +header
         >> -terminator [([&]() {R.terminated = true;})]
         ;
@@ -287,7 +287,7 @@ parse_uri_result_t parse_uri(span_t& input)
     auto begin = input.begin();
     auto end   = input.end();
 
-    static const auto grammar =
+    const auto grammar =
         // scheme
            -(raw[+char_("-A-Za-z0-9+.")] >> omit[char_(":")])
         // authority
