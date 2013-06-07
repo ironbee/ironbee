@@ -173,7 +173,34 @@ private
     binding
   end
 
+  # Construct an identifier for use in filenames.
+  #
+  # This routine is highly specific to clipp tests.
+  def generate_id
+    test = nil
+    caller.each do |s|
+      if s =~ /in `test_(.+)'/
+        test = $1
+        break
+      end
+    end
+
+    if test
+      prefix = "#{test}_"
+    else
+      prefix = ""
+    end
+
+    i = 1
+    while File.exists?(File.join(BUILDDIR, "clipp_test_#{prefix}#{i}.clipp"))
+      i += 1
+    end
+
+    "#{prefix}#{i}"
+  end
+
 public
+
 
   # Evaluate ERB with specific context.
   #
@@ -263,7 +290,7 @@ public
       CLIPPTestCase::fatal "Must have :input or :input_hashes."
     end
 
-    config[:id] ||= rand(10000);
+    config[:id] ||= generate_id
 
     if config[:input_hashes]
       input_content = ""
