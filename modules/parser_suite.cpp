@@ -186,8 +186,8 @@ parse_headers_result_t parse_headers(span_t& input)
         R.headers.push_back(parse_headers_result_t::header_t {key, {}});
     };
 
-    const auto value = raw[+(char_-char_("\r\n"))];
-    const auto key = raw[*(char_-char_(" \t:\r\n"))] >> omit[lit(":")];
+    const auto value = raw[+(byte_-char_("\r\n"))];
+    const auto key = raw[*(byte_-char_(" \t:\r\n"))] >> omit[lit(":")];
     const auto header =
         (
               key                           [new_header]
@@ -218,7 +218,7 @@ parse_request_line_result_t parse_request_line(span_t& input)
     using namespace boost::spirit::qi;
     using ascii::char_;
 
-    const auto word = raw[+(char_-char_(" \t\r\n"))];
+    const auto word = raw[+(byte_-char_(" \t\r\n"))];
 
     return parse_direct<parse_request_line_result_t>(
         "request line", input,
@@ -250,7 +250,7 @@ parse_response_line_result_t parse_response_line(span_t& input)
     using namespace boost::spirit::qi;
     using ascii::char_;
 
-    const auto word = raw[+(char_-char_(" \t\r\n"))];
+    const auto word = raw[+(byte_-char_(" \t\r\n"))];
 
     return parse_direct<parse_response_line_result_t>(
         "response line", input,
@@ -259,7 +259,7 @@ parse_response_line_result_t parse_response_line(span_t& input)
         >> omit[*sp]
         >> word                        // status
         >> omit[*sp]
-        >> raw[*(char_-char_("\r\n"))] // message
+        >> raw[*(byte_-char_("\r\n"))] // message
         >> omit[eol|eoi]
     );
 }
@@ -291,13 +291,13 @@ parse_uri_result_t parse_uri(span_t& input)
         // scheme
            -(raw[+char_("-A-Za-z0-9+.")] >> omit[char_(":")])
         // authority
-        >> -(omit[lit("//")] >> (raw[*(char_-char_(" \t/?#\r\n"))]))
+        >> -(omit[lit("//")] >> (raw[*(byte_-char_(" \t/?#\r\n"))]))
         // path
-        >> -(raw[*(char_-char_(" \t?#\r\n"))])
+        >> -(raw[*(byte_-char_(" \t?#\r\n"))])
         // query
-        >> -(omit[char_("?")] >> raw[*(char_-char_("  #\r\n"))])
+        >> -(omit[char_("?")] >> raw[*(byte_-char_("  #\r\n"))])
         // fragment
-        >> -(omit[char_("#")] >> raw[*(char_-char_("  \r\n"))])
+        >> -(omit[char_("#")] >> raw[*(byte_-char_("  \r\n"))])
         >> omit[eol|eoi]
         ;
 
@@ -396,7 +396,7 @@ parse_authority_result_t parse_authority(span_t& input)
 
     parse_authority_result_t R;
 
-    const auto word = raw[*(char_-char_("@: \t\r\n"))];
+    const auto word = raw[*(byte_-char_("@: \t\r\n"))];
     auto set_username = [&](span_t s) {R.username = s;};
     auto set_password = [&](span_t s) {R.password = s;};
     auto set_host     = [&](span_t s) {R.host     = s;};
@@ -455,11 +455,11 @@ parse_path_result_t parse_path(
     // parse a directory separator
     auto dirsep = lit(directory_separator);
     // parse a string not containing a directory_separator
-    auto dirstr = *(char_-char_(directory_separator));
+    auto dirstr = *(byte_-char_(directory_separator));
     // parse a extension separator
     auto extsep = lit(extension_separator);
     // parse a string not containing a extension_separator
-    auto extstr = *(char_-char_(extension_separator));
+    auto extstr = *(byte_-char_(extension_separator));
 
     boost::tie(R.directory, R.base, R.extension) =
         parse_direct<boost::tuple<span_t,span_t,span_t>>(
@@ -476,7 +476,7 @@ parse_path_result_t parse_path(
                    >> *(extsep >> extstr >> &extsep)
                ]
             // extension
-            >> -(omit[extsep] >> raw[*char_])
+            >> -(omit[extsep] >> raw[*byte_])
         );
 
     if (R.extension.empty()) {
