@@ -733,7 +733,7 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
     assert(cp != NULL);
     assert(cp->ib != NULL);
 
-    ib_cfg_log_info(cp, "Initializing Ragel state machine.");
+    ib_cfg_log_debug(cp, "Initializing Ragel state machine.");
 
     /* Access all ragel state variables via structure. */
     %% access cp->fsm.;
