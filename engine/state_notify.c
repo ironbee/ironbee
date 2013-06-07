@@ -612,7 +612,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
 
     /* We should never get NULL data */
     if ( (txdata->data == NULL) || (txdata->dlen == 0) ) {
-        ib_log_info_tx(tx, "Request body data with no data.  Ignoring.");
+        ib_log_debug_tx(tx, "Request body data with no data.  Ignoring.");
         return IB_OK;
     }
 
@@ -858,7 +858,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
 
     /* We should never get NULL data */
     if ( (txdata->data == NULL) || (txdata->dlen == 0) ) {
-        ib_log_info_tx(tx, "Response body data with no data.  Ignoring.");
+        ib_log_debug_tx(tx, "Response body data with no data.  Ignoring.");
         return IB_OK;
     }
 
