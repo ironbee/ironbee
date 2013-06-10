@@ -17,14 +17,14 @@
 
 Summary:        IronBee WAF Base files
 Name:           ironbee
-Version:        %{_version} 
+Version:        %{_version}
 Release:        %{_release}
 License:        ASL 2.0
 Group:          System Environment/Daemons
 Source0:        %{name}-%{version}.tar.gz
 URL:            http://www.ironbee.com
 
-BuildRequires: autoconf, automake, libtool, gcc, gcc-c++ 
+BuildRequires: autoconf, automake, libtool, gcc, gcc-c++
 BuildRequires: pcre-devel, zlib-devel, libxml2-devel
 
 %if %{with trafficserver}
@@ -32,7 +32,7 @@ BuildRequires: trafficserver-devel >= 3.1.4
 %endif
 
 %if %{with httpd}
-BuildRequires: httpd-devel 
+BuildRequires: httpd-devel
 %endif
 
 %description
@@ -41,18 +41,18 @@ monitoring and defense.
 
 %package devel
 Summary: IronBee Development files
-Group: Development/Libraries 
+Group: Development/Libraries
 
 %description devel
 Ironbee Development files.
 
 %if %{with trafficserver}
-%package trafficserver 
-Summary: IronBee Apache Trafficserver Plugin 
+%package trafficserver
+Summary: IronBee Apache Trafficserver Plugin
 Group: Applications/Internet
 Requires: %{name} = %{version}-%{release}, trafficserver
 
-%description trafficserver 
+%description trafficserver
 Ironbee Apache Trafficserver Plugin
 %endif
 
@@ -62,7 +62,7 @@ Summary: IronBee Apache HTTPD Plugin
 Group: Applications/Internet
 Requires: %{name} = %{version}-%{release}, httpd
 
-%description httpd 
+%description httpd
 Ironbee Apache HTTPD Plugin
 %endif
 
@@ -158,9 +158,9 @@ fi
 %attr(0755,root,root) %{_libdir}/libibpp.la
 %attr(0755,root,root) %{_libdir}/libibpp.a
 
-%attr(0755,root,root) %{_libdir}/*.lua
+%attr(0755,root,root) %{_libexecdir}/*.lua
 %attr(0755,root,root) %{_libdir}/ironbee
-%attr(0755,root,root) %{_libdir}/ibmod_*
+%attr(0755,root,root) %{_libexecdir}/ibmod_*
 %attr(0755,root,root) %{_libdir}/pkgconfig/*.*
 %attr(0644,root,root) %{_sysconfdir}/ironbee.conf.example
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/ironbee.conf
