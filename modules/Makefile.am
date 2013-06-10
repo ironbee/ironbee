@@ -25,10 +25,11 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_libinjection.la \
                      ibmod_log_pipe.la \
                      ibmod_sqltfn.la
+noinst_LTLIBRARIES =
 
 if CPP11
 if CPP
-pkglib_LTLIBRARIES += libparser_suite.la
+noinst_LTLIBRARIES += libparser_suite.la
 libparser_suite_la_SOURCES = parser_suite.cpp
 libparser_suite_la_CXXFLAGS = -std=c++11
 if DARWIN
