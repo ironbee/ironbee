@@ -55,14 +55,15 @@ EXTRA_DIST = ironbee-ffi-h.lua \
              qa.lua
 
 
-lua_DATA   = ironbee-ffi-h.lua \
-             ironbee-ffi.lua \
-             ironbee/api.lua \
-             ironbee/module.lua \
-             example.lua \
-             threat_level.lua \
-             event_processor.lua \
-             qa.lua
+nobase_lua_DATA = \
+	ironbee-ffi-h.lua \
+    ironbee-ffi.lua \
+    ironbee/api.lua \
+    ironbee/module.lua \
+    example.lua \
+    threat_level.lua \
+    event_processor.lua \
+    qa.lua
 
 lua_LTLIBRARIES =
 noinst_LTLIBRARIES = libironbee-lua.la
