@@ -51,9 +51,9 @@ IB_MODULE_DECLARE();
 static
 ib_status_t sqltfn_normalize_pg_tfn(ib_engine_t *ib,
                                     ib_mpool_t *mp,
-                                    void *tfn_data,
                                     const ib_field_t *field_in,
-                                    const ib_field_t **field_out)
+                                    const ib_field_t **field_out,
+                                    void *tfn_data)
 {
     assert(ib != NULL);
     assert(mp != NULL);
@@ -161,8 +161,8 @@ static ib_status_t sqltfn_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     ib_log_debug(ib, "Initializing %s module.", MODULE_NAME_STR);
 
-    rc = ib_tfn_register(ib, "normalizeSqlPg", sqltfn_normalize_pg_tfn,
-                         IB_TFN_FLAG_NONE, NULL);
+    rc = ib_tfn_register(ib, "normalizeSqlPg", IB_TFN_FLAG_NONE,
+                         sqltfn_normalize_pg_tfn, NULL);
     if (rc != IB_OK) {
         return rc;
     }

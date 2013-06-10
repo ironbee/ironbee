@@ -41,9 +41,9 @@
 
 ib_status_t ib_tfn_register(ib_engine_t *ib,
                             const char *name,
-                            ib_tfn_fn_t fn_execute,
                             ib_flags_t flags,
-                            void *fndata)
+                            ib_tfn_fn_t fn_execute,
+                            void *cbdata)
 {
     assert(ib != NULL);
     assert(name != NULL);
@@ -66,7 +66,7 @@ ib_status_t ib_tfn_register(ib_engine_t *ib,
     tfn->name = name_copy;
     tfn->fn_execute = fn_execute;
     tfn->tfn_flags = flags;
-    tfn->fndata = fndata;
+    tfn->cbdata = cbdata;
 
     rc = ib_hash_set(tfn_hash, name_copy, tfn);
     if (rc != IB_OK) {
@@ -101,7 +101,7 @@ ib_status_t ib_tfn_transform(ib_engine_t *ib,
     assert(fin != NULL);
     assert(fout != NULL);
 
-    ib_status_t rc = tfn->fn_execute(ib, mp, tfn->fndata, fin, fout);
+    ib_status_t rc = tfn->fn_execute(ib, mp, fin, fout, tfn->cbdata);
 
     return rc;
 }

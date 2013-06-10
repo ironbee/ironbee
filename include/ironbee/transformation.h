@@ -59,10 +59,11 @@ extern "C" {
  *  -# Allocate out of the given @a mp so that if you do assign @a fin
  *     to @a fout their lifetimes will be the same.
  *
- * @param[in] fndata Transformation function data (config).
+ * @param[in] ib Engine.
  * @param[in] pool Memory pool to use for allocations.
  * @param[in] fin Input field. This may be assigned to @a fout.
- * @param[out] data_out Output field. This may point to @a fin.
+ * @param[out] fout Output field. This may point to @a fin.
+ * @param[in] cbdata Callback data.
  *
  * @returns
  *   - IB_OK On success.
@@ -72,9 +73,9 @@ extern "C" {
  */
 typedef ib_status_t (*ib_tfn_fn_t)(ib_engine_t *ib,
                                    ib_mpool_t *pool,
-                                   void *fndata,
                                    const ib_field_t *fin,
-                                   const ib_field_t **data_out);
+                                   const ib_field_t **fout,
+                                   void *cbdata);
 
 /* Transformation flags */
 #define IB_TFN_FLAG_NONE        (0x0)      /**< No flags */
@@ -96,7 +97,7 @@ struct ib_tfn_t {
     const char         *name;              /**< Tfn name */
     ib_tfn_fn_t         fn_execute;        /**< Tfn execute function */
     ib_flags_t          tfn_flags;         /**< Tfn flags */
-    void               *fndata;            /**< Tfn function data */
+    void               *cbdata;            /**< Tfn function data */
 };
 /** @endcond **/
 
@@ -105,18 +106,17 @@ struct ib_tfn_t {
  *
  * @param ib Engine handle
  * @param name Transformation name
- * @param fn_execute Transformation execute function
  * @param flags Transformation flags
- * @param fndata Transformation function data
+ * @param fn_execute Transformation execute function
+ * @param cbdata Callback data for @a fn_execute.
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_tfn_register(ib_engine_t *ib,
                                        const char *name,
-                                       ib_tfn_fn_t fn_execute,
                                        ib_flags_t flags,
-                                       void *fndata);
-
+                                       ib_tfn_fn_t fn_execute,
+                                       void *cbdata);
 /**
  * Lookup a transformation by name (extended version).
  *

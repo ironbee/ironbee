@@ -84,9 +84,9 @@ TEST(TestIronBee, test_engine_config_basic)
 
 static ib_status_t foo2bar(ib_engine_t *ib,
                            ib_mpool_t *mp,
-                           void *fndata,
                            const ib_field_t *fin,
-                           const ib_field_t **fout)
+                           const ib_field_t **fout,
+                           void *fndata)
 {
     ib_status_t rc = IB_OK;
     ib_field_t *fnew;
@@ -177,8 +177,8 @@ TEST(TestIronBee, test_tfn)
 
     ibtest_engine_create(&ib);
 
-    ASSERT_EQ(IB_OK, ib_tfn_register(ib, "foo2bar", foo2bar,
-                                     IB_TFN_FLAG_NONE, NULL));
+    ASSERT_EQ(IB_OK, ib_tfn_register(ib, "foo2bar", IB_TFN_FLAG_NONE,
+                                     foo2bar, NULL));
     ASSERT_EQ(IB_OK, ib_tfn_lookup(ib, "foo2bar", &tfn));
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_TRUE(tfn);
