@@ -26,10 +26,10 @@
 #include <predicate/merge_graph.hpp>
 
 #include <ironbeepp/operator.hpp>
+#include <ironbeepp/transformation.hpp>
 
 #include <ironbee/data.h>
 #include <ironbee/engine.h>
-#include <ironbee/transformation.h>
 
 #include <boost/foreach.hpp>
 
@@ -598,7 +598,7 @@ string Transformation::name() const
 
 struct Transformation::data_t
 {
-    ib_tfn_t *transformation;
+    ConstTransformation transformation;
 };
 
 void Transformation::pre_eval(Environment environment, NodeReporter reporter)
@@ -616,19 +616,9 @@ void Transformation::pre_eval(Environment environment, NodeReporter reporter)
         return;
     }
 
-    try {
-        IronBee::throw_if_error(
-            ib_tfn_lookup_ex(
-                environment.ib(),
-                name.const_data(), name.length(),
-                &(m_data->transformation)
-            )
-        );
-    }
-    catch (IronBee::enoent) {
-        reporter.error("No such transformation: " + name.to_s());
-        return;
-    }
+    m_data->transformation = ConstTransformation::lookup(
+        environment, string(name.const_data(), name.length()).c_str()
+    );
 }
 
 Value Transformation::calculate(EvalContext context)
@@ -639,24 +629,11 @@ Value Transformation::calculate(EvalContext context)
         return Value();
     }
 
-    const ib_field_t* ib_output = NULL;
-
-    IronBee::throw_if_error(
-        ib_tfn_execute(
-            context.engine().ib(),
-            context.memory_pool().ib(),
-            m_data->transformation,
-            input.ib(),
-            &ib_output
-        )
+    return m_data->transformation.execute(
+        context.engine(),
+        context.memory_pool(),
+        input
     );
-
-    if (ib_output) {
-        return Value(ib_output);
-    }
-    else {
-        return Value();
-    }
 }
 
 SpecificTransformation::SpecificTransformation(const std::string& tfn) :
