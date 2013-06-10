@@ -79,27 +79,72 @@ typedef ib_status_t (*ib_tfn_fn_t)(
 );
 
 /**
- * Create and register a new transformation.
+ * Create a transformation.
  *
- * @param[in] ib          Engine.
- * @param[in] name        Transformation name.
- * @param[in] handle_list If true, list values will be passed in whole.  If
- *                        false, list values will be passed in element by
- *                        element.
- * @param[in] fn_execute  Transformation execute function.
- * @param[in] cbdata      Callback data for @a fn_execute.
+ * @param[out] ptfn        Created transformation.
+ * @param[in]  mp          Memory pool to use.
+ * @param[in]  name        Name.
+ * @param[in]  handle_list If true, list values will be passed in whole.  If
+ *                         false, list values will be passed in element by
+ *                         element.
+ * @param[in]  fn_execute  Transformation execute function.
+ * @param[in]  cbdata      Callback data for @a fn_execute.
+ *
+ * @returns
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ **/
+ib_status_t DLL_PUBLIC ib_tfn_create(
+    const ib_tfn_t **ptfn,
+    ib_mpool_t      *mp,
+    const char      *name,
+    bool             handle_list,
+    ib_tfn_fn_t      fn_execute,
+    void            *cbdata
+);
+
+/**
+ * Register a transformation with @a ib.
+ *
+ * @param[in] ib  Engine to register with.
+ * @parma[in] tfn Transformation to register.
  *
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on memory allocation errors.
  * - IB_EINVAL if a transformation with same name exists.
- */
+ **/
 ib_status_t DLL_PUBLIC ib_tfn_register(
-    ib_engine_t *ib,
-    const char  *name,
-    bool         handle_list,
-    ib_tfn_fn_t  fn_execute,
-    void        *cbdata
+    ib_engine_t    *ib,
+    const ib_tfn_t *tfn
+);
+
+/**
+ * Create and register a transformation.
+ *
+ * @sa ib_tfn_create()
+ * @sa ib_tfn_register()
+ *
+ * @param[out] ptfn        Created transformation.  May be NULL.
+ * @param[in]  ib          Engine to register with.
+ * @param[in]  name        Name.
+ * @param[in]  handle_list If true, list values will be passed in whole.  If
+ *                         false, list values will be passed in element by
+ *                         element.
+ * @param[in]  fn_execute  Transformation execute function.
+ * @param[in]  cbdata      Callback data for @a fn_execute.
+ * @returns
+ * - IB_OK on success.
+ * - IB_EALLOC on memory allocation errors.
+ * - IB_EINVAL if a transformation with same name exists.
+ **/
+ib_status_t DLL_PUBLIC ib_tfn_create_and_register(
+    const ib_tfn_t **ptfn,
+    ib_engine_t     *ib,
+    const char      *name,
+    bool             handle_list,
+    ib_tfn_fn_t      fn_execute,
+    void            *cbdata
 );
 
 /**

@@ -161,7 +161,7 @@ static ib_status_t sqltfn_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     ib_log_debug(ib, "Initializing %s module.", MODULE_NAME_STR);
 
-    rc = ib_tfn_register(ib, "normalizeSqlPg", false,
+    rc = ib_tfn_create_and_register(NULL, ib, "normalizeSqlPg", false,
                          sqltfn_normalize_pg_tfn, NULL);
     if (rc != IB_OK) {
         return rc;

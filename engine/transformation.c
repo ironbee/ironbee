@@ -49,28 +49,29 @@ struct ib_tfn_t {
 
 /* -- Transformation Routines -- */
 
-ib_status_t ib_tfn_register(
-    ib_engine_t *ib,
-    const char  *name,
-    bool         handle_list,
-    ib_tfn_fn_t  fn_execute,
-    void        *cbdata
+ib_status_t ib_tfn_create(
+    const ib_tfn_t **ptfn,
+    ib_mpool_t      *mp,
+    const char      *name,
+    bool             handle_list,
+    ib_tfn_fn_t      fn_execute,
+    void            *cbdata
 )
 {
-    assert(ib         != NULL);
+    assert(ptfn       != NULL);
+    assert(mp         != NULL);
     assert(name       != NULL);
     assert(fn_execute != NULL);
 
-    ib_status_t rc;
     ib_tfn_t *tfn;
     char *name_copy;
 
-    name_copy = ib_mpool_strdup(ib->mp, name);
+    name_copy = ib_mpool_strdup(mp, name);
     if (name_copy == NULL) {
         return IB_EALLOC;
     }
 
-    tfn = (ib_tfn_t *)ib_mpool_alloc(ib->mp, sizeof(*tfn));
+    tfn = (ib_tfn_t *)ib_mpool_alloc(mp, sizeof(*tfn));
     if (tfn == NULL) {
         return IB_EALLOC;
     }
@@ -79,17 +80,70 @@ ib_status_t ib_tfn_register(
     tfn->handle_list = handle_list;
     tfn->cbdata      = cbdata;
 
-    rc = ib_hash_get(ib->tfns, NULL, name_copy);
+    *ptfn = tfn;
+
+    return IB_OK;
+}
+
+ib_status_t ib_tfn_register(
+    ib_engine_t    *ib,
+    const ib_tfn_t *tfn
+)
+{
+    assert(ib  != NULL);
+    assert(tfn != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_hash_get(ib->tfns, NULL, ib_tfn_name(tfn));
     if (rc != IB_ENOENT) {
         /* Already exists. */
         return IB_EINVAL;
     }
 
-    rc = ib_hash_set(ib->tfns, name_copy, tfn);
+    rc = ib_hash_set(ib->tfns, ib_tfn_name(tfn), (void *)tfn);
     if (rc != IB_OK) {
         return rc;
     }
 
+    return IB_OK;
+}
+
+ib_status_t ib_tfn_create_and_register(
+    const ib_tfn_t **ptfn,
+    ib_engine_t     *ib,
+    const char      *name,
+    bool             handle_list,
+    ib_tfn_fn_t      fn_execute,
+    void            *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(name != NULL);
+    assert(fn_execute != NULL);
+
+    const ib_tfn_t *tfn;
+    ib_status_t rc;
+
+    rc = ib_tfn_create(
+        &tfn,
+        ib->mp,
+        name,
+        handle_list,
+        fn_execute, cbdata
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_tfn_register(ib, tfn);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    if (ptfn != NULL) {
+        *ptfn = tfn;
+    }
     return IB_OK;
 }
 
