@@ -1,5 +1,7 @@
 include $(top_srcdir)/build/common.mk
 
+pkglibdir = $(libdir)
+
 SUBDIRS = tests
 
 AM_LDFLAGS += \
