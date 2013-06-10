@@ -91,6 +91,8 @@ IronBee v0.8.0
   be used to improve the log message.  Also, logging can be prevented by not
   attaching an `errinfo_what`.
 
+* IronBee++ includes full support for transformations.
+
 **CLIPP**
 
 * Added `-e path` which causes `clipp` to handle consumer errors differently.
