@@ -169,7 +169,7 @@ TEST(TestIronBee, test_tfn)
 {
     ib_engine_t *ib;
     ib_status_t rc;
-    ib_tfn_t *tfn = (ib_tfn_t *)-1;
+    const ib_tfn_t *tfn = (ib_tfn_t *)-1;
     uint8_t data_in[128];
     ib_field_t *fin;
     const ib_field_t *fout;

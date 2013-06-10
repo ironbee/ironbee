@@ -4807,7 +4807,7 @@ ib_status_t ib_rule_target_add_tfn(ib_engine_t *ib,
                                    const char *name)
 {
     ib_status_t rc;
-    ib_tfn_t *tfn;
+    const ib_tfn_t *tfn;
 
     assert(ib != NULL);
     assert(target != NULL);
@@ -4827,7 +4827,7 @@ ib_status_t ib_rule_target_add_tfn(ib_engine_t *ib,
     }
 
     /* Add the transformation to the list */
-    rc = ib_list_push(target->tfn_list, tfn);
+    rc = ib_list_push(target->tfn_list, (void *)tfn);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error adding transformation \"%s\" to list: %s",
@@ -4844,7 +4844,7 @@ ib_status_t ib_rule_add_tfn(ib_engine_t *ib,
                             const char *name)
 {
     ib_status_t rc;
-    ib_tfn_t *tfn;
+    const ib_tfn_t *tfn;
     ib_list_node_t *node = NULL;
 
     assert(ib != NULL);

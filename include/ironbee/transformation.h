@@ -176,10 +176,10 @@ bool DLL_PUBLIC ib_tfn_handle_list(const ib_tfn_t *tfn);
  * - IB_ENOENT if transformation not found.
  */
 ib_status_t DLL_PUBLIC ib_tfn_lookup_ex(
-    ib_engine_t  *ib,
-    const char   *name,
-    size_t        nlen,
-    ib_tfn_t    **ptfn
+    ib_engine_t     *ib,
+    const char      *name,
+    size_t           nlen,
+    const ib_tfn_t **ptfn
 );
 
 /**
@@ -194,9 +194,9 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup_ex(
  * - IB_ENOENT if transformation not found.
  */
 ib_status_t DLL_PUBLIC ib_tfn_lookup(
-    ib_engine_t  *ib,
-    const char   *name,
-    ib_tfn_t    **ptfn
+    ib_engine_t     *ib,
+    const char      *name,
+    const ib_tfn_t **ptfn
 );
 
 /**

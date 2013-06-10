@@ -158,19 +158,19 @@ bool DLL_PUBLIC ib_tfn_handle_list(const ib_tfn_t *tfn)
 }
 
 ib_status_t ib_tfn_lookup_ex(
-    ib_engine_t  *ib,
-    const char   *name,
-    size_t        nlen,
-    ib_tfn_t    **ptfn
+    ib_engine_t     *ib,
+    const char      *name,
+    size_t           nlen,
+    const ib_tfn_t **ptfn
 )
 {
     return ib_hash_get_ex(ib->tfns, ptfn, name, nlen);
 }
 
 ib_status_t ib_tfn_lookup(
-    ib_engine_t  *ib,
-    const char   *name,
-    ib_tfn_t    **ptfn
+    ib_engine_t     *ib,
+    const char      *name,
+    const ib_tfn_t **ptfn
 )
 {
     return ib_tfn_lookup_ex(ib, name, strlen(name), ptfn);
