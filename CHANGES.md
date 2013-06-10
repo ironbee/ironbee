@@ -54,7 +54,7 @@ IronBee v0.8.0
 
 * Transformations have been simplified: output flags have been removed;
   callback data is now the final argument; input flags have been changed to
-  a single bool.
+  a single bool; added accessors.
 
 **Util**
 

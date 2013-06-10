@@ -757,14 +757,14 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
      * we'll need to unroll it and recurse.
      */
     if (value->type == IB_FTYPE_LIST) {
-        if (! tfn->handle_list) {
+        if (! ib_tfn_handle_list(tfn)) {
             unroll = true;
         }
         else {
             ib_rule_log_trace(rule_exec,
                               "Not unrolling list \"%.*s\" "
                               "for transformation \"%s\"",
-                              (int)value->nlen, value->name, tfn->name);
+                              (int)value->nlen, value->name, ib_tfn_name(tfn));
         }
     }
 
@@ -779,7 +779,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
 
         ib_rule_log_trace(rule_exec,
                           "Unrolling list \"%.*s\" for transformation \"%s\"",
-                          (int)value->nlen, value->name, tfn->name);
+                          (int)value->nlen, value->name, ib_tfn_name(tfn));
 
         rc = ib_field_value(value, ib_ftype_list_out(&value_list));
         if (rc != IB_OK) {
@@ -794,7 +794,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
             ib_rule_log_error(rule_exec,
                               "Error creating list to unroll \"%.*s\" "
                               "for transformation \"%s\": %s",
-                              (int)value->nlen, value->name, tfn->name,
+                              (int)value->nlen, value->name, ib_tfn_name(tfn),
                               ib_status_to_string(rc));
             return rc;
         }
@@ -813,7 +813,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
             if (tfn_out == NULL) {
                 ib_rule_log_error(rule_exec,
                                   "Target transformation %s returned NULL",
-                                  tfn->name);
+                                  ib_tfn_name(tfn));
                 return IB_EINVAL;
             }
             ib_rule_log_exec_tfn_value(rule_exec->exec_log, in, tfn_out, rc);
@@ -846,7 +846,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Error executing transformation \"%s\": %s",
-                              tfn->name, ib_status_to_string(rc));
+                              ib_tfn_name(tfn), ib_status_to_string(rc));
             return rc;
         }
 
@@ -910,14 +910,14 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
         const ib_tfn_t  *tfn = (const ib_tfn_t *)node->data;
 
         /* Run it */
-        ib_rule_log_trace(rule_exec, "Executing transformation %s", tfn->name);
+        ib_rule_log_trace(rule_exec, "Executing transformation %s", ib_tfn_name(tfn));
         ib_rule_log_exec_tfn_add(rule_exec->exec_log, tfn);
         rc = execute_tfn_single(rule_exec, tfn, in_field,
                                 MAX_TFN_RECURSION, &out);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Error executing target transformation %s: %s",
-                              tfn->name, ib_status_to_string(rc));
+                              ib_tfn_name(tfn), ib_status_to_string(rc));
         }
         ib_rule_log_exec_tfn_fin(rule_exec->exec_log, tfn, in_field, out, rc);
 
@@ -925,7 +925,7 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
         if (out == NULL) {
             ib_rule_log_error(rule_exec,
                               "Target transformation %s returned NULL",
-                              tfn->name);
+                              ib_tfn_name(tfn));
             return IB_EINVAL;
         }
 

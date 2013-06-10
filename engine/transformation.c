@@ -37,13 +37,25 @@
 #include <assert.h>
 #include <string.h>
 
+/**
+ * Transformation.
+ */
+struct ib_tfn_t {
+    const char  *name;        /**< Name */
+    bool         handle_list; /**< Handle list */
+    ib_tfn_fn_t  fn_execute;  /**< Function */
+    void        *cbdata;      /**< Callback data. */
+};
+
 /* -- Transformation Routines -- */
 
-ib_status_t ib_tfn_register(ib_engine_t *ib,
-                            const char *name,
-                            bool handle_list,
-                            ib_tfn_fn_t fn_execute,
-                            void *cbdata)
+ib_status_t ib_tfn_register(
+    ib_engine_t *ib,
+    const char  *name,
+    bool         handle_list,
+    ib_tfn_fn_t  fn_execute,
+    void        *cbdata
+)
 {
     assert(ib != NULL);
     assert(name != NULL);
@@ -63,10 +75,16 @@ ib_status_t ib_tfn_register(ib_engine_t *ib,
     if (tfn == NULL) {
         return IB_EALLOC;
     }
-    tfn->name = name_copy;
-    tfn->fn_execute = fn_execute;
+    tfn->name        = name_copy;
+    tfn->fn_execute  = fn_execute;
     tfn->handle_list = handle_list;
-    tfn->cbdata = cbdata;
+    tfn->cbdata      = cbdata;
+
+    rc = ib_hash_get(tfn_hash, NULL, name_copy);
+    if (rc != IB_ENOENT) {
+        /* Already exists. */
+        return IB_EINVAL;
+    }
 
     rc = ib_hash_set(tfn_hash, name_copy, tfn);
     if (rc != IB_OK) {
@@ -76,10 +94,22 @@ ib_status_t ib_tfn_register(ib_engine_t *ib,
     return IB_OK;
 }
 
-ib_status_t ib_tfn_lookup_ex(ib_engine_t *ib,
-                             const char *name,
-                             size_t nlen,
-                             ib_tfn_t **ptfn)
+const char DLL_PUBLIC *ib_tfn_name(const ib_tfn_t *tfn)
+{
+    return tfn->name;
+}
+
+bool DLL_PUBLIC ib_tfn_handle_list(const ib_tfn_t *tfn)
+{
+    return tfn->handle_list;
+}
+
+ib_status_t ib_tfn_lookup_ex(
+    ib_engine_t  *ib,
+    const char   *name,
+    size_t        nlen,
+    ib_tfn_t    **ptfn
+)
 {
     assert(ib != NULL);
     assert(name != NULL);
@@ -90,11 +120,22 @@ ib_status_t ib_tfn_lookup_ex(ib_engine_t *ib,
     return rc;
 }
 
-ib_status_t ib_tfn_transform(ib_engine_t *ib,
-                             ib_mpool_t *mp,
-                             const ib_tfn_t *tfn,
-                             const ib_field_t *fin,
-                             const ib_field_t **fout)
+ib_status_t ib_tfn_lookup(
+    ib_engine_t  *ib,
+    const char   *name,
+    ib_tfn_t    **ptfn
+)
+{
+    return ib_tfn_lookup_ex(ib, name, strlen(name), ptfn);
+}
+
+ib_status_t ib_tfn_transform(
+    ib_engine_t       *ib,
+    ib_mpool_t        *mp,
+    const ib_tfn_t    *tfn,
+    const ib_field_t  *fin,
+    const ib_field_t **fout
+)
 {
     assert(tfn != NULL);
     assert(mp != NULL);
@@ -107,12 +148,12 @@ ib_status_t ib_tfn_transform(ib_engine_t *ib,
 }
 
 ib_status_t ib_tfn_data_get_ex(
-    ib_engine_t *ib,
-    ib_data_t   *data,
-    const char  *name,
-    size_t       nlen,
+    ib_engine_t       *ib,
+    ib_data_t         *data,
+    const char        *name,
+    size_t             nlen,
     const ib_field_t **pf,
-    const char  *tfn
+    const char        *tfn
 )
 {
     assert(data != NULL);
@@ -203,11 +244,11 @@ ib_status_t ib_tfn_data_get_ex(
 }
 
 ib_status_t ib_tfn_data_get(
-    ib_engine_t *ib,
-    ib_data_t   *data,
-    const char  *name,
+    ib_engine_t       *ib,
+    ib_data_t         *data,
+    const char        *name,
     const ib_field_t **pf,
-    const char  *tfn
+    const char        *tfn
 )
 {
     return ib_tfn_data_get_ex(ib, data, name, strlen(name), pf, tfn);

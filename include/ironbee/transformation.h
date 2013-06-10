@@ -42,7 +42,6 @@
 extern "C" {
 #endif
 
-
 /**
  * The definition of a transformation function.
  *
@@ -59,102 +58,126 @@ extern "C" {
  *  -# Allocate out of the given @a mp so that if you do assign @a fin
  *     to @a fout their lifetimes will be the same.
  *
- * @param[in] ib Engine.
- * @param[in] pool Memory pool to use for allocations.
- * @param[in] fin Input field. This may be assigned to @a fout.
- * @param[out] fout Output field. This may point to @a fin.
- * @param[in] cbdata Callback data.
+ * @param[in]  ib     Engine.
+ * @param[in]  pool   Memory pool to use for allocations.
+ * @param[in]  fin    Input field. This may be assigned to @a fout.
+ * @param[out] fout   Output field. This may point to @a fin.
+ * @param[in]  cbdata Callback data.
  *
  * @returns
- *   - IB_OK On success.
- *   - IB_EALLOC On memory allocation errors.
- *   - IB_EINVAL If input field type is incompatible with this.
- *   - IB_EOTHER Something very unexpected happened.
+ * - IB_OK on success.
+ * - IB_EALLOC on memory allocation errors.
+ * - IB_EINVAL if input field type is incompatible with this.
+ * - IB_EOTHER something very unexpected happened.
  */
-typedef ib_status_t (*ib_tfn_fn_t)(ib_engine_t *ib,
-                                   ib_mpool_t *pool,
-                                   const ib_field_t *fin,
-                                   const ib_field_t **fout,
-                                   void *cbdata);
-
-/** @cond Internal */
-/**
- * Transformation.
- */
-struct ib_tfn_t {
-    const char  *name;              /**< Name */
-    bool         handle_list;       /**< Handle list */
-    ib_tfn_fn_t  fn_execute;        /**< Function */
-    void        *cbdata;            /**< Callback data. */
-};
-/** @endcond **/
+typedef ib_status_t (*ib_tfn_fn_t)(
+    ib_engine_t       *ib,
+    ib_mpool_t        *pool,
+    const ib_field_t  *fin,
+    const ib_field_t **fout,
+    void              *cbdata
+);
 
 /**
  * Create and register a new transformation.
  *
- * @param ib Engine handle
- * @param name Transformation name
- * @param handle_list If true, list values will be passed in whole.  If false,
- *                    list values will be passed in element by element.
- * @param fn_execute Transformation execute function
- * @param cbdata Callback data for @a fn_execute.
+ * @param[in] ib          Engine.
+ * @param[in] name        Transformation name.
+ * @param[in] handle_list If true, list values will be passed in whole.  If
+ *                        false, list values will be passed in element by
+ *                        element.
+ * @param[in] fn_execute  Transformation execute function.
+ * @param[in] cbdata      Callback data for @a fn_execute.
  *
- * @returns Status code
+ * @returns
+ * - IB_OK on success.
+ * - IB_EALLOC on memory allocation errors.
+ * - IB_EINVAL if a transformation with same name exists.
  */
-ib_status_t DLL_PUBLIC ib_tfn_register(ib_engine_t *ib,
-                                       const char *name,
-                                       bool handle_list,
-                                       ib_tfn_fn_t fn_execute,
-                                       void *cbdata);
+ib_status_t DLL_PUBLIC ib_tfn_register(
+    ib_engine_t *ib,
+    const char  *name,
+    bool         handle_list,
+    ib_tfn_fn_t  fn_execute,
+    void        *cbdata
+);
+
+/**
+ * Name accessor.
+ *
+ * @param[in] tfn Transformation to access.
+ * @return Name of transformation.
+ **/
+const char DLL_PUBLIC *ib_tfn_name(const ib_tfn_t *tfn);
+
+/**
+ * Handle list accessor.
+ *
+ * @param[in] tfn Transformation to access.
+ * @return Handle list setting of transformation.
+ **/
+bool DLL_PUBLIC ib_tfn_handle_list(const ib_tfn_t *tfn);
+
 /**
  * Lookup a transformation by name (extended version).
  *
- * @param ib Engine
- * @param name Transformation name
- * @param nlen Transformation name length
- * @param ptfn Address where new tfn will be written
+ * @param[in]  ib   Engine.
+ * @param[in]  name Name.
+ * @param[in]  nlen Length of @a name.
+ * @param[out] ptfn Transformation if found.
  *
- * @returns Status code
+ * @returns
+ * - IB_OK on success.
+ * - IB_ENOENT if transformation not found.
  */
-ib_status_t DLL_PUBLIC ib_tfn_lookup_ex(ib_engine_t *ib,
-                                        const char *name,
-                                        size_t nlen,
-                                        ib_tfn_t **ptfn);
+ib_status_t DLL_PUBLIC ib_tfn_lookup_ex(
+    ib_engine_t  *ib,
+    const char   *name,
+    size_t        nlen,
+    ib_tfn_t    **ptfn
+);
 
 /**
  * Lookup a transformation by name.
  *
- * @param ib Engine
- * @param name Transformation name
- * @param ptfn Address where new tfn will be written
+ * @param[in]  ib   Engine.
+ * @param[in]  name Transformation name.
+ * @param[out] ptfn Transformation if found.
  *
- * @returns Status code
+ * @returns
+ * - IB_OK on success.
+ * - IB_ENOENT if transformation not found.
  */
-ib_status_t DLL_PUBLIC ib_tfn_lookup(ib_engine_t *ib,
-                                     const char *name,
-                                     ib_tfn_t **ptfn);
-
-#define ib_tfn_lookup(ib, name, ptfn) \
-    ib_tfn_lookup_ex(ib, name, strlen(name), ptfn)
+ib_status_t DLL_PUBLIC ib_tfn_lookup(
+    ib_engine_t  *ib,
+    const char   *name,
+    ib_tfn_t    **ptfn
+);
 
 /**
  * Transform data.
  *
- * @note Some transformations may destroy/overwrite the original data.
+ * @note Does not currently respect @a handle_list.  Stay tuned.
+ * @todo Handle lists.
  *
- * @param ib IronBee Engine object
- * @param mp Pool to use if memory needs to be allocated
- * @param tfn Transformation
- * @param fin Input data field
- * @param fout Address of output data field
+ * @param[in]  ib   Engine.
+ * @param[in]  mp   Memory pool to use.
+ * @param[in]  tfn  Transformation to apply.
+ * @param[in]  fin  Input data field.
+ * @param[out] fout Output data field; may be set to @a fin.
  *
- * @returns Status code
+ * @returns
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - Status code of transformation on other failure.
  */
-ib_status_t DLL_PUBLIC ib_tfn_transform(ib_engine_t *ib,
-                                        ib_mpool_t *mp,
-                                        const ib_tfn_t *tfn,
-                                        const ib_field_t *fin,
-                                        const ib_field_t **fout);
+ib_status_t DLL_PUBLIC ib_tfn_transform(
+    ib_engine_t       *ib,
+    ib_mpool_t        *mp,
+    const ib_tfn_t    *tfn,
+    const ib_field_t  *fin,
+    const ib_field_t **fout
+);
 
 /**
  * Get a data field with a transformation (extended version).
@@ -169,12 +192,12 @@ ib_status_t DLL_PUBLIC ib_tfn_transform(ib_engine_t *ib,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_tfn_data_get_ex(
-    ib_engine_t *ib,
-    ib_data_t   *data,
-    const char  *name,
-    size_t       nlen,
+    ib_engine_t       *ib,
+    ib_data_t         *data,
+    const char        *name,
+    size_t             nlen,
     const ib_field_t **pf,
-    const char  *tfn
+    const char        *tfn
 );
 
 /**
@@ -189,11 +212,11 @@ ib_status_t DLL_PUBLIC ib_tfn_data_get_ex(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_tfn_data_get(
-    ib_engine_t *ib,
-    ib_data_t   *data,
-    const char  *name,
+    ib_engine_t       *ib,
+    ib_data_t         *data,
+    const char        *name,
     const ib_field_t **pf,
-    const char  *tfn
+    const char        *tfn
 );
 
 #ifdef __cplusplus
