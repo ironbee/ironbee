@@ -86,8 +86,7 @@ static ib_status_t foo2bar(ib_engine_t *ib,
                            ib_mpool_t *mp,
                            void *fndata,
                            const ib_field_t *fin,
-                           const ib_field_t **fout,
-                           ib_flags_t *pflags)
+                           const ib_field_t **fout)
 {
     ib_status_t rc = IB_OK;
     ib_field_t *fnew;
@@ -116,7 +115,6 @@ static ib_status_t foo2bar(ib_engine_t *ib,
             if (data_out == NULL) {
                 return IB_EINVAL;
             }
-            *pflags = (IB_TFN_FMODIFIED);
             *(data_out+0) = 'b';
             *(data_out+1) = 'a';
             *(data_out+2) = 'r';
@@ -145,7 +143,6 @@ static ib_status_t foo2bar(ib_engine_t *ib,
                 return IB_EINVAL;
             }
 
-            *pflags = (IB_TFN_FMODIFIED);
             *(out+0) = 'b';
             *(out+1) = 'a';
             *(out+2) = 'r';
@@ -173,7 +170,6 @@ TEST(TestIronBee, test_tfn)
     ib_engine_t *ib;
     ib_status_t rc;
     ib_tfn_t *tfn = (ib_tfn_t *)-1;
-    ib_flags_t flags;
     uint8_t data_in[128];
     ib_field_t *fin;
     const ib_field_t *fout;
@@ -194,11 +190,9 @@ TEST(TestIronBee, test_tfn)
         IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs)
     );
     fout = NULL;
-    flags = 0;
-    rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout, &flags);
+    rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout);
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
-    ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags));
     ASSERT_NE(fin, fout);
 
     strcpy((char *)data_in, "foo");
@@ -209,11 +203,9 @@ TEST(TestIronBee, test_tfn)
         ib_ftype_nulstr_in((char *)data_in)
     );
     fout = NULL;
-    flags = 0;
-    rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout, &flags);
+    rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout);
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
-    ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags));
     ASSERT_NE(fin, fout);
 
     ibtest_engine_destroy(ib);

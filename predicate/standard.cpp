@@ -640,7 +640,6 @@ Value Transformation::calculate(EvalContext context)
     }
 
     const ib_field_t* ib_output = NULL;
-    ib_flags_t flags;
 
     IronBee::throw_if_error(
         ib_tfn_transform(
@@ -648,8 +647,7 @@ Value Transformation::calculate(EvalContext context)
             context.memory_pool().ib(),
             m_data->transformation,
             input.ib(),
-            &ib_output,
-            &flags
+            &ib_output
         )
     );
 

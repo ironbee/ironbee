@@ -841,9 +841,8 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
 
     /* OK, no unrolling required.  Just execute the transformation. */
     else {
-        ib_flags_t flags;
         rc = ib_tfn_transform(rule_exec->ib, rule_exec->tx->mp,
-                              tfn, value, &out, &flags);
+                              tfn, value, &out);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Error executing transformation \"%s\": %s",

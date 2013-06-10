@@ -53,14 +53,12 @@ ib_status_t sqltfn_normalize_pg_tfn(ib_engine_t *ib,
                                     ib_mpool_t *mp,
                                     void *tfn_data,
                                     const ib_field_t *field_in,
-                                    const ib_field_t **field_out,
-                                    ib_flags_t *pflags)
+                                    const ib_field_t **field_out)
 {
     assert(ib != NULL);
     assert(mp != NULL);
     assert(field_in != NULL);
     assert(field_out != NULL);
-    assert(pflags != NULL);
 
     ib_bytestr_t *bs_in;
     ib_bytestr_t *bs_out;
@@ -134,11 +132,6 @@ ib_status_t sqltfn_normalize_pg_tfn(ib_engine_t *ib,
     if (ret < 0) {
         return IB_EALLOC;
     }
-    else if (ret > 0) {
-        /* Mark as modified. */
-        *pflags = IB_TFN_FMODIFIED;
-    }
-
 
     /* Create the output field wrapping bs_out. */
     buf_out_len += lead_len;

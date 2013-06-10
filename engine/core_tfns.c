@@ -51,7 +51,6 @@
  * @param[in] ex_fn EX (string/length) transformation function
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -60,8 +59,7 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
                               ib_strmod_fn_t str_fn,
                               ib_strmod_ex_fn_t ex_fn,
                               const ib_field_t *fin,
-                              const ib_field_t **fout,
-                              ib_flags_t *pflags)
+                              const ib_field_t **fout)
 {
     ib_status_t rc;
     ib_flags_t result;
@@ -73,7 +71,6 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
     assert(ex_fn != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
     /* Initialize the output field pointer */
     *fout = NULL;
@@ -144,14 +141,6 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
         return IB_EINVAL;
     } /* switch(fin->type) */
 
-    /* Check the flags */
-    if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
-        *pflags = IB_TFN_FMODIFIED;
-    }
-    else {
-        *pflags = IB_TFN_NONE;
-    }
-
     return IB_OK;
 }
 
@@ -163,7 +152,6 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -171,12 +159,11 @@ static ib_status_t tfn_lowercase(ib_engine_t *ib,
                                  ib_mpool_t *mp,
                                  void *fndata,
                                  const ib_field_t *fin,
-                                 const ib_field_t **fout,
-                                 ib_flags_t *pflags)
+                                 const ib_field_t **fout)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_strlower, ib_strlower_ex,
-                                fin, fout, pflags);
+                                fin, fout);
 
     return rc;
 }
@@ -189,7 +176,6 @@ static ib_status_t tfn_lowercase(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -197,12 +183,11 @@ static ib_status_t tfn_trim_left(ib_engine_t *ib,
                                  ib_mpool_t *mp,
                                  void *fndata,
                                  const ib_field_t *fin,
-                                 const ib_field_t **fout,
-                                 ib_flags_t *pflags)
+                                 const ib_field_t **fout)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_strtrim_left, ib_strtrim_left_ex,
-                                fin, fout, pflags);
+                                fin, fout);
 
     return rc;
 }
@@ -215,7 +200,6 @@ static ib_status_t tfn_trim_left(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -223,12 +207,11 @@ static ib_status_t tfn_trim_right(ib_engine_t *ib,
                                   ib_mpool_t *mp,
                                   void *fndata,
                                   const ib_field_t *fin,
-                                  const ib_field_t **fout,
-                                  ib_flags_t *pflags)
+                                  const ib_field_t **fout)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_strtrim_right, ib_strtrim_right_ex,
-                                fin, fout, pflags);
+                                fin, fout);
 
     return rc;
 }
@@ -241,7 +224,6 @@ static ib_status_t tfn_trim_right(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -249,12 +231,11 @@ static ib_status_t tfn_trim(ib_engine_t *ib,
                             ib_mpool_t *mp,
                             void *fndata,
                             const ib_field_t *fin,
-                            const ib_field_t **fout,
-                            ib_flags_t *pflags)
+                            const ib_field_t **fout)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_strtrim_lr, ib_strtrim_lr_ex,
-                                fin, fout, pflags);
+                                fin, fout);
 
     return rc;
 }
@@ -267,7 +248,6 @@ static ib_status_t tfn_trim(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -275,12 +255,11 @@ static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
                                    ib_mpool_t *mp,
                                    void *fndata,
                                    const ib_field_t *fin,
-                                   const ib_field_t **fout,
-                                   ib_flags_t *pflags)
+                                   const ib_field_t **fout)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_str_wspc_remove, ib_str_wspc_remove_ex,
-                                fin, fout, pflags);
+                                fin, fout);
 
     return rc;
 }
@@ -293,7 +272,6 @@ static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -301,12 +279,11 @@ static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
                                      ib_mpool_t *mp,
                                      void *fndata,
                                      const ib_field_t *fin,
-                                     const ib_field_t **fout,
-                                     ib_flags_t *pflags)
+                                     const ib_field_t **fout)
 {
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_str_wspc_compress, ib_str_wspc_compress_ex,
-                                fin, fout, pflags);
+                                fin, fout);
 
     return rc;
 }
@@ -319,7 +296,6 @@ static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -327,13 +303,11 @@ static ib_status_t tfn_length(ib_engine_t *ib,
                               ib_mpool_t *mp,
                               void *fndata,
                               const ib_field_t *fin,
-                              const ib_field_t **fout,
-                              ib_flags_t *pflags)
+                              const ib_field_t **fout)
 {
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
     ib_status_t rc = IB_OK;
     ib_field_t *fnew;
@@ -405,9 +379,8 @@ static ib_status_t tfn_length(ib_engine_t *ib,
         IB_LIST_LOOP_CONST(ilist, node) {
             const ib_field_t *ifield = (ib_field_t *)node->data;
             const ib_field_t *ofield = NULL;
-            ib_flags_t flags = 0;
 
-            rc = tfn_length(ib, mp, NULL, ifield, &ofield, &flags);
+            rc = tfn_length(ib, mp, NULL, ifield, &ofield);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -426,7 +399,6 @@ static ib_status_t tfn_length(ib_engine_t *ib,
     }
 
     if (rc == IB_OK) {
-        (*pflags) |= IB_TFN_FMODIFIED;
         *fout = fnew;
     }
     return rc;
@@ -440,7 +412,6 @@ static ib_status_t tfn_length(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -448,13 +419,11 @@ static ib_status_t tfn_count(ib_engine_t *ib,
                              ib_mpool_t *mp,
                              void *fndata,
                              const ib_field_t *fin,
-                             const ib_field_t **fout,
-                             ib_flags_t *pflags)
+                             const ib_field_t **fout)
 {
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
     ib_status_t rc = IB_OK;
     ib_num_t value = 0;
@@ -484,7 +453,6 @@ static ib_status_t tfn_count(ib_engine_t *ib,
     );
 
     if (rc == IB_OK) {
-        (*pflags) |= IB_TFN_FMODIFIED;
         *fout = fnew;
     }
 
@@ -623,7 +591,6 @@ static ib_status_t list_minmax(bool is_max,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -631,13 +598,11 @@ static ib_status_t tfn_max(ib_engine_t *ib,
                            ib_mpool_t *mp,
                            void *fndata,
                            const ib_field_t *fin,
-                           const ib_field_t **fout,
-                           ib_flags_t *pflags)
+                           const ib_field_t **fout)
 {
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
     ib_status_t rc = IB_OK;
 
@@ -651,7 +616,6 @@ static ib_status_t tfn_max(ib_engine_t *ib,
 
         case IB_FTYPE_LIST:
             rc = list_minmax(true, mp, fin, fout);
-            (*pflags) |= IB_TFN_FMODIFIED;
             break;
 
         default:
@@ -669,7 +633,6 @@ static ib_status_t tfn_max(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -677,15 +640,13 @@ static ib_status_t tfn_min(ib_engine_t *ib,
                            ib_mpool_t *mp,
                            void *fndata,
                            const ib_field_t *fin,
-                           const ib_field_t **fout,
-                           ib_flags_t *pflags)
+                           const ib_field_t **fout)
 {
     ib_status_t rc = IB_OK;
 
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
     /* Initialize the output field pointer */
     *fout = NULL;
@@ -698,7 +659,6 @@ static ib_status_t tfn_min(ib_engine_t *ib,
 
         case IB_FTYPE_LIST:
             rc = list_minmax(true, mp, fin, fout);
-            (*pflags) |= IB_TFN_FMODIFIED;
             break;
 
         default:
@@ -716,7 +676,6 @@ static ib_status_t tfn_min(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -724,14 +683,12 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
                                   ib_mpool_t *mp,
                                   void *fndata,
                                   const ib_field_t *fin,
-                                  const ib_field_t **fout,
-                                  ib_flags_t *pflags)
+                                  const ib_field_t **fout)
 {
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
     ib_status_t rc;
     ib_flags_t result;
@@ -806,14 +763,6 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
     /* When we reach this point rc==IB_OK. Commit the output value. */
     *fout = fnew;
 
-    /* Check the flags */
-    if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
-        *pflags = IB_TFN_FMODIFIED;
-    }
-    else {
-        *pflags = IB_TFN_NONE;
-    }
-
     return IB_OK;
 }
 
@@ -825,7 +774,6 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -833,14 +781,12 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
                                           ib_mpool_t *mp,
                                           void *fndata,
                                           const ib_field_t *fin,
-                                          const ib_field_t **fout,
-                                          ib_flags_t *pflags)
+                                          const ib_field_t **fout)
 {
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
     ib_status_t rc;
     ib_flags_t result;
@@ -915,14 +861,6 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
     /* When we reach this point, rc==IB_OK. Commit the output values. */
     *fout = fnew;
 
-    /* Check the flags */
-    if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
-        *pflags = IB_TFN_FMODIFIED;
-    }
-    else {
-        *pflags = IB_TFN_NONE;
-    }
-
     return IB_OK;
 }
 
@@ -934,7 +872,6 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
  * @param[in] fin Input field.
  * @param[in] win Handle windows-style '\'?
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -942,14 +879,12 @@ static ib_status_t normalize_path(ib_engine_t *ib,
                                   ib_mpool_t *mp,
                                   const ib_field_t *fin,
                                   bool win,
-                                  const ib_field_t **fout,
-                                  ib_flags_t *pflags)
+                                  const ib_field_t **fout)
 {
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
     ib_status_t rc;
     ib_flags_t result;
@@ -1024,14 +959,6 @@ static ib_status_t normalize_path(ib_engine_t *ib,
     /* When we reach here, rc == IB_OK. Commit the output values. */
     *fout = fnew;
 
-    /* Check the flags */
-    if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
-        *pflags = IB_TFN_FMODIFIED;
-    }
-    else {
-        *pflags = IB_TFN_NONE;
-    }
-
     return IB_OK;
 }
 
@@ -1043,7 +970,6 @@ static ib_status_t normalize_path(ib_engine_t *ib,
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -1051,18 +977,16 @@ static ib_status_t tfn_normalize_path(ib_engine_t *ib,
                                       ib_mpool_t *mp,
                                       void *fndata,
                                       const ib_field_t *fin,
-                                      const ib_field_t **fout,
-                                      ib_flags_t *pflags)
+                                      const ib_field_t **fout)
 {
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
     ib_status_t rc;
 
-    rc = normalize_path(ib, mp, fin, false, fout, pflags);
+    rc = normalize_path(ib, mp, fin, false, fout);
 
     return rc;
 }
@@ -1124,7 +1048,6 @@ static ib_status_t tfn_to_type(
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns
  *   - IB_OK If successful.
@@ -1135,8 +1058,7 @@ static ib_status_t tfn_to_float(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    const ib_field_t **fout,
-    ib_flags_t *pflags)
+    const ib_field_t **fout)
 {
     return tfn_to_type(ib, mp, IB_FTYPE_FLOAT, fin, fout);
 }
@@ -1149,7 +1071,6 @@ static ib_status_t tfn_to_float(
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns
  *   - IB_OK If successful.
@@ -1160,8 +1081,7 @@ static ib_status_t tfn_to_integer(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    const ib_field_t **fout,
-    ib_flags_t *pflags)
+    const ib_field_t **fout)
 {
     return tfn_to_type(ib, mp, IB_FTYPE_NUM, fin, fout);
 }
@@ -1174,7 +1094,6 @@ static ib_status_t tfn_to_integer(
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns
  *   - IB_OK If successful.
@@ -1185,8 +1104,7 @@ static ib_status_t tfn_to_string(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    const ib_field_t **fout,
-    ib_flags_t *pflags)
+    const ib_field_t **fout)
 {
     return tfn_to_type(ib, mp, IB_FTYPE_BYTESTR, fin, fout);
 }
@@ -1206,7 +1124,6 @@ typedef ib_float_t (*ib_float_op_t) (ib_float_t);
  *            return a long double.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns
  *   - IB_OK If successful.
@@ -1217,8 +1134,7 @@ static ib_status_t tfn_float_op(
     ib_mpool_t *mp,
     ib_float_op_t op,
     const ib_field_t *fin,
-    const ib_field_t **fout,
-    ib_flags_t *pflags)
+    const ib_field_t **fout)
 {
     ib_float_t flt;
     ib_num_t num;
@@ -1292,7 +1208,6 @@ static ib_status_t tfn_float_op(
         IB_FTYPE_FLOAT,
         ib_ftype_float_in(&flt));
     if (rc == IB_OK) {
-        *pflags |= IB_TFN_FMODIFIED;
         *fout = fnew;
     }
 
@@ -1307,7 +1222,6 @@ static ib_status_t tfn_float_op(
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns
  *   - IB_OK If successful.
@@ -1318,10 +1232,9 @@ static ib_status_t tfn_floor(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    const ib_field_t **fout,
-    ib_flags_t *pflags)
+    const ib_field_t **fout)
 {
-    return tfn_float_op(mp, floorl, fin, fout, pflags);
+    return tfn_float_op(mp, floorl, fin, fout);
 }
 
 /**
@@ -1332,7 +1245,6 @@ static ib_status_t tfn_floor(
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns
  *   - IB_OK If successful.
@@ -1343,10 +1255,9 @@ static ib_status_t tfn_ceil(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    const ib_field_t **fout,
-    ib_flags_t *pflags)
+    const ib_field_t **fout)
 {
-    return tfn_float_op(mp, ceill, fin, fout, pflags);
+    return tfn_float_op(mp, ceill, fin, fout);
 }
 
 /**
@@ -1357,7 +1268,6 @@ static ib_status_t tfn_ceil(
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns
  *   - IB_OK If successful.
@@ -1368,10 +1278,9 @@ static ib_status_t tfn_round(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    const ib_field_t **fout,
-    ib_flags_t *pflags)
+    const ib_field_t **fout)
 {
-    return tfn_float_op(mp, roundl, fin, fout, pflags);
+    return tfn_float_op(mp, roundl, fin, fout);
 }
 
 /**
@@ -1446,7 +1355,6 @@ static ib_status_t tfn_to_name_common(
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns
  *   - IB_OK if successful.
@@ -1457,8 +1365,7 @@ static ib_status_t tfn_to_name(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    const ib_field_t **fout,
-    ib_flags_t *pflags)
+    const ib_field_t **fout)
 {
     return tfn_to_name_common(ib, mp, fin, fout);
 }
@@ -1480,7 +1387,6 @@ static ib_status_t tfn_to_name(
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns
  *   - IB_OK If successful.
@@ -1492,8 +1398,7 @@ static ib_status_t tfn_to_names(
     ib_mpool_t *mp,
     void *fndata,
     const ib_field_t *fin,
-    const ib_field_t **fout,
-    ib_flags_t *pflags)
+    const ib_field_t **fout)
 {
     assert(ib != NULL);
     assert(mp != NULL);
@@ -1569,7 +1474,6 @@ static ib_status_t tfn_to_names(
  * @param[in] fndata Function specific data.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[out] pflags Transformation flags.
  *
  * @returns IB_OK if successful.
  */
@@ -1577,18 +1481,16 @@ static ib_status_t tfn_normalize_path_win(ib_engine_t *ib,
                                           ib_mpool_t *mp,
                                           void *fndata,
                                           const ib_field_t *fin,
-                                          const ib_field_t **fout,
-                                          ib_flags_t *pflags)
+                                          const ib_field_t **fout)
 {
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
     ib_status_t rc;
 
-    rc = normalize_path(ib, mp, fin, true, fout, pflags);
+    rc = normalize_path(ib, mp, fin, true, fout);
 
     return rc;
 }

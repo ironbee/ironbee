@@ -63,7 +63,6 @@ extern "C" {
  * @param[in] pool Memory pool to use for allocations.
  * @param[in] fin Input field. This may be assigned to @a fout.
  * @param[out] data_out Output field. This may point to @a fin.
- * @param[in,out] pflags Address of flags set by transformation.
  *
  * @returns
  *   - IB_OK On success.
@@ -75,15 +74,21 @@ typedef ib_status_t (*ib_tfn_fn_t)(ib_engine_t *ib,
                                    ib_mpool_t *pool,
                                    void *fndata,
                                    const ib_field_t *fin,
-                                   const ib_field_t **data_out,
-                                   ib_flags_t *pflags);
-
-/** @cond Internal */
+                                   const ib_field_t **data_out);
 
 /* Transformation flags */
 #define IB_TFN_FLAG_NONE        (0x0)      /**< No flags */
+/**
+ * Transformation can handle lists.
+ *
+ * Controls how transformations are applied to list values.  If set,
+ * transformation is passed list field.  If not set, transformation is called
+ * for each value of list.
+ **/
 #define IB_TFN_FLAG_HANDLE_LIST (1 << 0)   /**< Tfn can handle lists */
 
+
+/** @cond Internal */
 /**
  * Transformation.
  */
@@ -94,20 +99,6 @@ struct ib_tfn_t {
     void               *fndata;            /**< Tfn function data */
 };
 /** @endcond **/
-
-/** Set if transformation modified the value. */
-#define IB_TFN_NONE                (0x0)
-#define IB_TFN_FMODIFIED          (1<<0)
-
-/**
- * Check if FMODIFIED flag is set.
- *
- * @param f Transformation flags
- *
- * @returns True if FMODIFIED flag is set
- */
-#define IB_TFN_CHECK_FMODIFIED(f) ((f) & IB_TFN_FMODIFIED)
-
 
 /**
  * Create and register a new transformation.
@@ -167,7 +158,6 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(ib_engine_t *ib,
  * @param tfn Transformation
  * @param fin Input data field
  * @param fout Address of output data field
- * @param pflags Address of flags set by transformation
  *
  * @returns Status code
  */
@@ -175,8 +165,7 @@ ib_status_t DLL_PUBLIC ib_tfn_transform(ib_engine_t *ib,
                                         ib_mpool_t *mp,
                                         const ib_tfn_t *tfn,
                                         const ib_field_t *fin,
-                                        const ib_field_t **fout,
-                                        ib_flags_t *pflags);
+                                        const ib_field_t **fout);
 
 /**
  * Get a data field with a transformation (extended version).

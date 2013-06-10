@@ -94,16 +94,14 @@ ib_status_t ib_tfn_transform(ib_engine_t *ib,
                              ib_mpool_t *mp,
                              const ib_tfn_t *tfn,
                              const ib_field_t *fin,
-                             const ib_field_t **fout,
-                             ib_flags_t *pflags)
+                             const ib_field_t **fout)
 {
     assert(tfn != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(pflags != NULL);
 
-    ib_status_t rc = tfn->fn_execute(ib, mp, tfn->fndata, fin, fout, pflags);
+    ib_status_t rc = tfn->fn_execute(ib, mp, tfn->fndata, fin, fout);
 
     return rc;
 }
@@ -174,14 +172,13 @@ ib_status_t ib_tfn_data_get_ex(
         tname = tfn;
         for (i = 0; i <= tlen; ++i) {
             ib_tfn_t *t;
-            ib_flags_t flags;
 
             if ((tfn[i] == ',') || (i == tlen)) {
                 size_t len = (tfn + i) - tname;
 
                 rc = ib_tfn_lookup_ex(ib, tname, len, &t);
                 if (rc == IB_OK) {
-                    rc = ib_tfn_transform(ib, ib_data_pool(data), t, new_pf, (const ib_field_t**) &new_pf, &flags);
+                    rc = ib_tfn_transform(ib, ib_data_pool(data), t, new_pf, (const ib_field_t**) &new_pf);
                     if (rc != IB_OK) {
                         /// @todo What to do here?  Fail or ignore?
                     }
