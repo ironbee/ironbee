@@ -177,14 +177,12 @@ ib_status_t ib_tfn_lookup(
 }
 
 ib_status_t ib_tfn_execute(
-    ib_engine_t       *ib,
     ib_mpool_t        *mp,
     const ib_tfn_t    *tfn,
     const ib_field_t  *fin,
     const ib_field_t **fout
 )
 {
-    assert(ib   != NULL);
     assert(mp   != NULL);
     assert(tfn  != NULL);
     assert(fin  != NULL);
@@ -217,7 +215,7 @@ ib_status_t ib_tfn_execute(
             in = (const ib_field_t *)ib_list_node_data_const(node);
             assert(in != NULL);
 
-            rc = ib_tfn_execute(ib, mp, tfn, in, &tfn_out);
+            rc = ib_tfn_execute(mp, tfn, in, &tfn_out);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -242,7 +240,7 @@ ib_status_t ib_tfn_execute(
     }
     else {
         /* Don't unroll */
-        rc = tfn->fn_execute(ib, mp, fin, &out, tfn->cbdata);
+        rc = tfn->fn_execute(mp, fin, &out, tfn->cbdata);
         if (rc != IB_OK) {
             return rc;
         }

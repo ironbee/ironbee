@@ -49,13 +49,11 @@ IB_MODULE_DECLARE();
  *********************************/
 
 static
-ib_status_t sqltfn_normalize_pg_tfn(ib_engine_t *ib,
-                                    ib_mpool_t *mp,
+ib_status_t sqltfn_normalize_pg_tfn(ib_mpool_t *mp,
                                     const ib_field_t *field_in,
                                     const ib_field_t **field_out,
                                     void *tfn_data)
 {
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(field_in != NULL);
     assert(field_out != NULL);

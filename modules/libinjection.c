@@ -79,13 +79,11 @@ typedef int (*sqli_tokenize_fn_t)(sfilter * sf, stoken_t * sout);
  *********************************/
 
 static
-ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
-                               ib_mpool_t *mp,
+ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
                                const ib_field_t *field_in,
                                const ib_field_t **field_out,
                                void *tfn_data)
 {
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(field_in != NULL);
     assert(field_out != NULL);
@@ -171,7 +169,6 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
     for (size_t i = 0; i < pat_len; ++i) {
         stoken_t current = sf.tokenvec[i];
         size_t token_len = strlen(current.val);
-        ib_log_debug2(ib, "SQLi TOKEN: %c \"%s\"", current.type, current.val);
 
         /* Add in the space if required. */
         if ((buf_out_end != buf_out) &&

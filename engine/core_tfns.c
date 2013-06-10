@@ -45,7 +45,6 @@
 /**
  * String modification transformation core
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] str_fn NUL-terminated string transformation function
  * @param[in] ex_fn EX (string/length) transformation function
@@ -54,8 +53,7 @@
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_strmod(ib_engine_t *ib,
-                              ib_mpool_t *mp,
+static ib_status_t tfn_strmod(ib_mpool_t *mp,
                               ib_strmod_fn_t str_fn,
                               ib_strmod_ex_fn_t ex_fn,
                               const ib_field_t *fin,
@@ -65,7 +63,6 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
     ib_flags_t result;
     ib_field_t *fnew;
 
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(str_fn != NULL);
     assert(ex_fn != NULL);
@@ -147,7 +144,6 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
 /**
  * Simple ASCII lowercase function.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -155,13 +151,12 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_lowercase(ib_engine_t *ib,
-                                 ib_mpool_t *mp,
+static ib_status_t tfn_lowercase(ib_mpool_t *mp,
                                  const ib_field_t *fin,
                                  const ib_field_t **fout,
                                  void *fndata)
 {
-    ib_status_t rc = tfn_strmod(ib, mp,
+    ib_status_t rc = tfn_strmod(mp,
                                 ib_strlower, ib_strlower_ex,
                                 fin, fout);
 
@@ -171,7 +166,6 @@ static ib_status_t tfn_lowercase(ib_engine_t *ib,
 /**
  * Simple ASCII trim (left) transformation.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -179,13 +173,12 @@ static ib_status_t tfn_lowercase(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_trim_left(ib_engine_t *ib,
-                                 ib_mpool_t *mp,
+static ib_status_t tfn_trim_left(ib_mpool_t *mp,
                                  const ib_field_t *fin,
                                  const ib_field_t **fout,
                                  void *fndata)
 {
-    ib_status_t rc = tfn_strmod(ib, mp,
+    ib_status_t rc = tfn_strmod(mp,
                                 ib_strtrim_left, ib_strtrim_left_ex,
                                 fin, fout);
 
@@ -195,7 +188,6 @@ static ib_status_t tfn_trim_left(ib_engine_t *ib,
 /**
  * Simple ASCII trim (right) transformation.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -203,13 +195,12 @@ static ib_status_t tfn_trim_left(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_trim_right(ib_engine_t *ib,
-                                  ib_mpool_t *mp,
+static ib_status_t tfn_trim_right(ib_mpool_t *mp,
                                   const ib_field_t *fin,
                                   const ib_field_t **fout,
                                   void *fndata)
 {
-    ib_status_t rc = tfn_strmod(ib, mp,
+    ib_status_t rc = tfn_strmod(mp,
                                 ib_strtrim_right, ib_strtrim_right_ex,
                                 fin, fout);
 
@@ -219,7 +210,6 @@ static ib_status_t tfn_trim_right(ib_engine_t *ib,
 /**
  * Simple ASCII trim transformation.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -227,13 +217,12 @@ static ib_status_t tfn_trim_right(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_trim(ib_engine_t *ib,
-                            ib_mpool_t *mp,
+static ib_status_t tfn_trim(ib_mpool_t *mp,
                             const ib_field_t *fin,
                             const ib_field_t **fout,
                             void *fndata)
 {
-    ib_status_t rc = tfn_strmod(ib, mp,
+    ib_status_t rc = tfn_strmod(mp,
                                 ib_strtrim_lr, ib_strtrim_lr_ex,
                                 fin, fout);
 
@@ -243,7 +232,6 @@ static ib_status_t tfn_trim(ib_engine_t *ib,
 /**
  * Remove all whitespace from a string
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -251,13 +239,12 @@ static ib_status_t tfn_trim(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
-                                   ib_mpool_t *mp,
+static ib_status_t tfn_wspc_remove(ib_mpool_t *mp,
                                    const ib_field_t *fin,
                                    const ib_field_t **fout,
                                    void *fndata)
 {
-    ib_status_t rc = tfn_strmod(ib, mp,
+    ib_status_t rc = tfn_strmod(mp,
                                 ib_str_wspc_remove, ib_str_wspc_remove_ex,
                                 fin, fout);
 
@@ -267,7 +254,6 @@ static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
 /**
  * Compress whitespace in a string
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -275,13 +261,12 @@ static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
-                                     ib_mpool_t *mp,
+static ib_status_t tfn_wspc_compress(ib_mpool_t *mp,
                                      const ib_field_t *fin,
                                      const ib_field_t **fout,
                                      void *fndata)
 {
-    ib_status_t rc = tfn_strmod(ib, mp,
+    ib_status_t rc = tfn_strmod(mp,
                                 ib_str_wspc_compress, ib_str_wspc_compress_ex,
                                 fin, fout);
 
@@ -291,7 +276,6 @@ static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
 /**
  * Length transformation
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -299,8 +283,7 @@ static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_length(ib_engine_t *ib,
-                              ib_mpool_t *mp,
+static ib_status_t tfn_length(ib_mpool_t *mp,
                               const ib_field_t *fin,
                               const ib_field_t **fout,
                               void *fndata)
@@ -380,7 +363,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
             const ib_field_t *ifield = (ib_field_t *)node->data;
             const ib_field_t *ofield = NULL;
 
-            rc = tfn_length(ib, mp, ifield, &ofield, NULL);
+            rc = tfn_length(mp, ifield, &ofield, NULL);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -407,7 +390,6 @@ static ib_status_t tfn_length(ib_engine_t *ib,
 /**
  * Count transformation
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -415,8 +397,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_count(ib_engine_t *ib,
-                             ib_mpool_t *mp,
+static ib_status_t tfn_count(ib_mpool_t *mp,
                              const ib_field_t *fin,
                              const ib_field_t **fout,
                              void *fndata)
@@ -586,7 +567,6 @@ static ib_status_t list_minmax(bool is_max,
 /**
  * Transformation: Get the max of a list of numbers.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -594,8 +574,7 @@ static ib_status_t list_minmax(bool is_max,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_max(ib_engine_t *ib,
-                           ib_mpool_t *mp,
+static ib_status_t tfn_max(ib_mpool_t *mp,
                            const ib_field_t *fin,
                            const ib_field_t **fout,
                            void *fndata)
@@ -628,7 +607,6 @@ static ib_status_t tfn_max(ib_engine_t *ib,
 /**
  * Transformation: Get the min of a list of numbers.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -636,8 +614,7 @@ static ib_status_t tfn_max(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_min(ib_engine_t *ib,
-                           ib_mpool_t *mp,
+static ib_status_t tfn_min(ib_mpool_t *mp,
                            const ib_field_t *fin,
                            const ib_field_t **fout,
                            void *fndata)
@@ -671,7 +648,6 @@ static ib_status_t tfn_min(ib_engine_t *ib,
 /**
  * URL Decode transformation
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -679,13 +655,11 @@ static ib_status_t tfn_min(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_url_decode(ib_engine_t *ib,
-                                  ib_mpool_t *mp,
+static ib_status_t tfn_url_decode(ib_mpool_t *mp,
                                   const ib_field_t *fin,
                                   const ib_field_t **fout,
                                   void *fndata)
 {
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
@@ -769,7 +743,6 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
 /**
  * HTML entity decode transformation
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -777,13 +750,11 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
-                                          ib_mpool_t *mp,
+static ib_status_t tfn_html_entity_decode(ib_mpool_t *mp,
                                           const ib_field_t *fin,
                                           const ib_field_t **fout,
                                           void *fndata)
 {
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
@@ -867,7 +838,6 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
 /**
  * Path normalization transformation
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[in] win Handle windows-style '\'?
@@ -875,13 +845,11 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t normalize_path(ib_engine_t *ib,
-                                  ib_mpool_t *mp,
+static ib_status_t normalize_path(ib_mpool_t *mp,
                                   const ib_field_t *fin,
                                   bool win,
                                   const ib_field_t **fout)
 {
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
@@ -965,7 +933,6 @@ static ib_status_t normalize_path(ib_engine_t *ib,
 /**
  * Path normalization transformation
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -973,20 +940,18 @@ static ib_status_t normalize_path(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_normalize_path(ib_engine_t *ib,
-                                      ib_mpool_t *mp,
+static ib_status_t tfn_normalize_path(ib_mpool_t *mp,
                                       const ib_field_t *fin,
                                       const ib_field_t **fout,
                                       void *fndata)
 {
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
     ib_status_t rc;
 
-    rc = normalize_path(ib, mp, fin, false, fout);
+    rc = normalize_path(mp, fin, false, fout);
 
     return rc;
 }
@@ -996,7 +961,6 @@ static ib_status_t tfn_normalize_path(ib_engine_t *ib,
  *
  * If @a fin->type == @a type, then @a fout is set to @a fin.
  *
- * @param[in] ib IronBee engine. Used for logging.
  * @param[in] mp Memory pool. All allocations are out of here.
  * @param[in] type The target type.
  * @param[in] fin The input field.
@@ -1007,13 +971,11 @@ static ib_status_t tfn_normalize_path(ib_engine_t *ib,
  *   - IB_EINVAL If a conversion cannot be performed.
  */
 static ib_status_t tfn_to_type(
-    ib_engine_t *ib,
     ib_mpool_t *mp,
     ib_ftype_t type,
     const ib_field_t *fin,
     const ib_field_t **fout)
 {
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
@@ -1043,7 +1005,6 @@ static ib_status_t tfn_to_type(
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1054,19 +1015,17 @@ static ib_status_t tfn_to_type(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_float(
-    ib_engine_t *ib,
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_to_type(ib, mp, IB_FTYPE_FLOAT, fin, fout);
+    return tfn_to_type(mp, IB_FTYPE_FLOAT, fin, fout);
 }
 
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1077,19 +1036,17 @@ static ib_status_t tfn_to_float(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_integer(
-    ib_engine_t *ib,
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_to_type(ib, mp, IB_FTYPE_NUM, fin, fout);
+    return tfn_to_type(mp, IB_FTYPE_NUM, fin, fout);
 }
 
 /**
  * Use tfn_to_type() to convert @a fin to @a fout.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1100,13 +1057,12 @@ static ib_status_t tfn_to_integer(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_to_string(
-    ib_engine_t *ib,
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_to_type(ib, mp, IB_FTYPE_BYTESTR, fin, fout);
+    return tfn_to_type(mp, IB_FTYPE_BYTESTR, fin, fout);
 }
 
 //! Convert a float. This matches operations found in math.h intentionally.
@@ -1217,7 +1173,6 @@ static ib_status_t tfn_float_op(
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using floorl().
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1228,7 +1183,6 @@ static ib_status_t tfn_float_op(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_floor(
-    ib_engine_t *ib,
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
@@ -1240,7 +1194,6 @@ static ib_status_t tfn_floor(
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using ceill().
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1251,7 +1204,6 @@ static ib_status_t tfn_floor(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_ceil(
-    ib_engine_t *ib,
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
@@ -1263,7 +1215,6 @@ static ib_status_t tfn_ceil(
 /**
  * Convert a bytestr, nulstr, float, or num field to a float using roundl().
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1274,7 +1225,6 @@ static ib_status_t tfn_ceil(
  *   - IB_EALLOC On allocation errors.
  */
 static ib_status_t tfn_round(
-    ib_engine_t *ib,
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
@@ -1291,7 +1241,6 @@ static ib_status_t tfn_round(
  * The new field will be named as the old field, and will contain
  * a bytestr containing the field name.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1301,12 +1250,10 @@ static ib_status_t tfn_round(
  *   - IB_EALLOC if allocation error.
  */
 static ib_status_t tfn_to_name_common(
-    ib_engine_t *ib,
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout)
 {
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
@@ -1350,7 +1297,6 @@ static ib_status_t tfn_to_name_common(
  * The new field will be named as the old field, and will contain
  * a bytestr containing the field name.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1361,13 +1307,12 @@ static ib_status_t tfn_to_name_common(
  *   - IB_EALLOC if allocation error.
  */
 static ib_status_t tfn_to_name(
-    ib_engine_t *ib,
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_to_name_common(ib, mp, fin, fout);
+    return tfn_to_name_common(mp, fin, fout);
 }
 
 /**
@@ -1382,7 +1327,6 @@ static ib_status_t tfn_to_name(
  * However, the *values* of c1, c2, and c3 will be bytestrs that
  * represent the stings c1, c2, and c3.
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1394,13 +1338,11 @@ static ib_status_t tfn_to_name(
  *   - IB_EALLOC Failed allocation.
  */
 static ib_status_t tfn_to_names(
-    ib_engine_t *ib,
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
@@ -1450,7 +1392,7 @@ static ib_status_t tfn_to_names(
             (const ib_field_t *)ib_list_node_data_const(node);
         const ib_field_t *list_out_field;
 
-        rc = tfn_to_name_common(ib, mp, list_field, &list_out_field);
+        rc = tfn_to_name_common(mp, list_field, &list_out_field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -1469,7 +1411,6 @@ static ib_status_t tfn_to_names(
 /**
  * Path normalization transformation with support for Windows path separator
  *
- * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
@@ -1477,20 +1418,18 @@ static ib_status_t tfn_to_names(
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t tfn_normalize_path_win(ib_engine_t *ib,
-                                          ib_mpool_t *mp,
+static ib_status_t tfn_normalize_path_win(ib_mpool_t *mp,
                                           const ib_field_t *fin,
                                           const ib_field_t **fout,
                                           void *fndata)
 {
-    assert(ib != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
     assert(fout != NULL);
 
     ib_status_t rc;
 
-    rc = normalize_path(ib, mp, fin, true, fout);
+    rc = normalize_path(mp, fin, true, fout);
 
     return rc;
 }

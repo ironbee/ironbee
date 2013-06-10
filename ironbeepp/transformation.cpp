@@ -55,7 +55,6 @@ bool ConstTransformation::handle_list() const
 extern "C" {
 
 static ib_status_t transformation_translator(
-    ib_engine_t* ib,
     ib_mpool_t* mp,
     const ib_field_t* fin,
     const ib_field_t** fout,
@@ -66,8 +65,7 @@ static ib_status_t transformation_translator(
         ConstTransformation::transformation_t transformation =
             data_to_value<ConstTransformation::transformation_t>(cbdata);
 
-        ConstField result =
-            transformation(Engine(ib), MemoryPool(mp), ConstField(fin));
+        ConstField result = transformation(MemoryPool(mp), ConstField(fin));
 
         *fout = result.ib();
     }
@@ -124,14 +122,12 @@ void ConstTransformation::register_with(Engine engine)
 }
 
 ConstField ConstTransformation::execute(
-    Engine engine,
     MemoryPool pool,
     ConstField input
 ) const
 {
     const ib_field_t* result;
     throw_if_error(ib_tfn_execute(
-        engine.ib(),
         pool.ib(),
         ib(),
         input.ib(),

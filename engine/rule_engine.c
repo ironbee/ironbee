@@ -733,7 +733,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
     ib_status_t       rc;
     const ib_field_t *out = NULL;
 
-    rc = ib_tfn_execute(rule_exec->ib, rule_exec->tx->mp, tfn, value, &out);
+    rc = ib_tfn_execute(rule_exec->tx->mp, tfn, value, &out);
     ib_rule_log_exec_tfn_value(rule_exec->exec_log, value, out, rc);
 
     if (rc != IB_OK) {

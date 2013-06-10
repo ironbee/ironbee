@@ -40,12 +40,10 @@ class TestTransformation : public ::testing::Test, public IBPPTestFixture
 ConstField test_transform(
     ConstField output,
     ConstField expected_input,
-    Engine     ib,
     MemoryPool mp,
     ConstField input
 )
 {
-    EXPECT_TRUE(ib);
     EXPECT_TRUE(mp);
 
     EXPECT_EQ(expected_input, input);
@@ -71,7 +69,7 @@ TEST_F(TestTransformation, basic)
         pool,
         "test",
         true,
-        boost::bind(test_transform, output, input, _1, _2, _3)
+        boost::bind(test_transform, output, input, _1, _2)
     );
 
     ASSERT_NO_THROW(tfn.register_with(m_engine));
@@ -80,6 +78,6 @@ TEST_F(TestTransformation, basic)
         ConstTransformation::lookup(m_engine, "test");
     EXPECT_EQ(tfn, other_tfn);
 
-    ConstField actual_output = tfn.execute(m_engine, pool, input);
+    ConstField actual_output = tfn.execute(pool, input);
     EXPECT_EQ(output, actual_output);
 }

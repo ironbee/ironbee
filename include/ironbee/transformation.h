@@ -58,7 +58,6 @@ extern "C" {
  *  -# Allocate out of the given @a mp so that if you do assign @a fin
  *     to @a fout their lifetimes will be the same.
  *
- * @param[in]  ib     Engine.
  * @param[in]  pool   Memory pool to use for allocations.
  * @param[in]  fin    Input field. This may be assigned to @a fout.
  * @param[out] fout   Output field. This may point to @a fin.
@@ -71,7 +70,6 @@ extern "C" {
  * - IB_EOTHER something very unexpected happened.
  */
 typedef ib_status_t (*ib_tfn_fn_t)(
-    ib_engine_t       *ib,
     ib_mpool_t        *pool,
     const ib_field_t  *fin,
     const ib_field_t **fout,
@@ -214,7 +212,6 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(
  * - Status code of transformation on other failure.
  */
 ib_status_t DLL_PUBLIC ib_tfn_execute(
-    ib_engine_t       *ib,
     ib_mpool_t        *mp,
     const ib_tfn_t    *tfn,
     const ib_field_t  *fin,

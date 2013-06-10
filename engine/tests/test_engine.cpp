@@ -82,8 +82,7 @@ TEST(TestIronBee, test_engine_config_basic)
     ibtest_engine_destroy(ib);
 }
 
-static ib_status_t foo2bar(ib_engine_t *ib,
-                           ib_mpool_t *mp,
+static ib_status_t foo2bar(ib_mpool_t *mp,
                            const ib_field_t *fin,
                            const ib_field_t **fout,
                            void *fndata)
@@ -190,7 +189,7 @@ TEST(TestIronBee, test_tfn)
         IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs)
     );
     fout = NULL;
-    rc = ib_tfn_execute(ib, ib->mp, tfn, fin, &fout);
+    rc = ib_tfn_execute(ib->mp, tfn, fin, &fout);
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_NE(fin, fout);
@@ -203,7 +202,7 @@ TEST(TestIronBee, test_tfn)
         ib_ftype_nulstr_in((char *)data_in)
     );
     fout = NULL;
-    rc = ib_tfn_execute(ib, ib->mp, tfn, fin, &fout);
+    rc = ib_tfn_execute(ib->mp, tfn, fin, &fout);
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_NE(fin, fout);

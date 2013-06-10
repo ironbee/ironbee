@@ -85,10 +85,10 @@ public:
     /**
      * Transformation.
      *
-     * Arguments are IronBee engine, memory pool to use, and input field.
-     * Should return result of transformation.2
+     * Arguments are memory pool to use, and input field.
+     * Should return result of transformation.
      **/
-    typedef boost::function<ConstField(Engine, MemoryPool, ConstField)>
+    typedef boost::function<ConstField(MemoryPool, ConstField)>
         transformation_t;
 
     /**
@@ -143,13 +143,11 @@ public:
     /**
      * Execute a transformation.
      *
-     * @param[in] engine Engine.
      * @param[in] pool   Memory pool to use.
      * @param[in] input  Input to transformation.
      * @return Result.
      **/
     ConstField execute(
-        Engine     engine,
         MemoryPool pool,
         ConstField input
     ) const;

@@ -629,11 +629,7 @@ Value Transformation::calculate(EvalContext context)
         return Value();
     }
 
-    return m_data->transformation.execute(
-        context.engine(),
-        context.memory_pool(),
-        input
-    );
+    return m_data->transformation.execute(context.memory_pool(), input);
 }
 
 SpecificTransformation::SpecificTransformation(const std::string& tfn) :
