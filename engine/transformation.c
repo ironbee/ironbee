@@ -57,11 +57,10 @@ ib_status_t ib_tfn_register(
     void        *cbdata
 )
 {
-    assert(ib != NULL);
-    assert(name != NULL);
+    assert(ib         != NULL);
+    assert(name       != NULL);
     assert(fn_execute != NULL);
 
-    ib_hash_t *tfn_hash = ib->tfns;
     ib_status_t rc;
     ib_tfn_t *tfn;
     char *name_copy;
@@ -80,13 +79,13 @@ ib_status_t ib_tfn_register(
     tfn->handle_list = handle_list;
     tfn->cbdata      = cbdata;
 
-    rc = ib_hash_get(tfn_hash, NULL, name_copy);
+    rc = ib_hash_get(ib->tfns, NULL, name_copy);
     if (rc != IB_ENOENT) {
         /* Already exists. */
         return IB_EINVAL;
     }
 
-    rc = ib_hash_set(tfn_hash, name_copy, tfn);
+    rc = ib_hash_set(ib->tfns, name_copy, tfn);
     if (rc != IB_OK) {
         return rc;
     }
@@ -111,13 +110,7 @@ ib_status_t ib_tfn_lookup_ex(
     ib_tfn_t    **ptfn
 )
 {
-    assert(ib != NULL);
-    assert(name != NULL);
-    assert(ptfn != NULL);
-
-    ib_hash_t *tfn_hash = ib->tfns;
-    ib_status_t rc = ib_hash_get_ex(tfn_hash, ptfn, name, nlen);
-    return rc;
+    return ib_hash_get_ex(ib->tfns, ptfn, name, nlen);
 }
 
 ib_status_t ib_tfn_lookup(
