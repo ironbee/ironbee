@@ -179,46 +179,6 @@ ib_status_t DLL_PUBLIC ib_tfn_transform(
     const ib_field_t **fout
 );
 
-/**
- * Get a data field with a transformation (extended version).
- *
- * @param ib IronBee engine.
- * @param data Data.
- * @param name Name as byte string
- * @param nlen Name length
- * @param pf Pointer where new field is written if non-NULL
- * @param tfn Transformations (comma separated names)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_tfn_data_get_ex(
-    ib_engine_t       *ib,
-    ib_data_t         *data,
-    const char        *name,
-    size_t             nlen,
-    const ib_field_t **pf,
-    const char        *tfn
-);
-
-/**
- * Get a data field with a transformation.
- *
- * @param ib IronBee engine.
- * @param data Data.
- * @param name Name as NUL terminated string
- * @param pf Pointer where new field is written if non-NULL
- * @param tfn Transformations (comma separated names)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_tfn_data_get(
-    ib_engine_t       *ib,
-    ib_data_t         *data,
-    const char        *name,
-    const ib_field_t **pf,
-    const char        *tfn
-);
-
 #ifdef __cplusplus
 }
 #endif

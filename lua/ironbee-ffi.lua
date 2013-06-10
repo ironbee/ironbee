@@ -387,28 +387,6 @@ function ib_data_get(data, name)
 end
 
 -- ===============================================
--- Get a data field by name with a transformation.
---
--- data: Data Provider Interface (i.e. conn.data() or tx.data())
--- name: Name of data field
--- tfn: Comma separated tfn name string
--- ===============================================
-function ib_data_tfn_get(data, name, tfn)
-    local c_data = data.cvalue()
-    local c_pf = ffi.new("ib_field_t*[1]")
-    local rc
-
-    -- Get the named data field.
-    rc = c.ib_tfn_data_get_ex(c_data, name, string.len(name), c_pf, tfn)
-    if rc ~= c.IB_OK then
-        return nil
-    end
-
-    return newField(c_pf[0]);
-end
-
-
--- ===============================================
 -- Known provider types
 -- ===============================================
 IB_PROVIDER_TYPE_LOGGER    = "logger"
