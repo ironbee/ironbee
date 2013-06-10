@@ -41,7 +41,7 @@
 
 ib_status_t ib_tfn_register(ib_engine_t *ib,
                             const char *name,
-                            ib_flags_t flags,
+                            bool handle_list,
                             ib_tfn_fn_t fn_execute,
                             void *cbdata)
 {
@@ -65,7 +65,7 @@ ib_status_t ib_tfn_register(ib_engine_t *ib,
     }
     tfn->name = name_copy;
     tfn->fn_execute = fn_execute;
-    tfn->tfn_flags = flags;
+    tfn->handle_list = handle_list;
     tfn->cbdata = cbdata;
 
     rc = ib_hash_set(tfn_hash, name_copy, tfn);

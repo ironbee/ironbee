@@ -77,27 +77,15 @@ typedef ib_status_t (*ib_tfn_fn_t)(ib_engine_t *ib,
                                    const ib_field_t **fout,
                                    void *cbdata);
 
-/* Transformation flags */
-#define IB_TFN_FLAG_NONE        (0x0)      /**< No flags */
-/**
- * Transformation can handle lists.
- *
- * Controls how transformations are applied to list values.  If set,
- * transformation is passed list field.  If not set, transformation is called
- * for each value of list.
- **/
-#define IB_TFN_FLAG_HANDLE_LIST (1 << 0)   /**< Tfn can handle lists */
-
-
 /** @cond Internal */
 /**
  * Transformation.
  */
 struct ib_tfn_t {
-    const char         *name;              /**< Tfn name */
-    ib_tfn_fn_t         fn_execute;        /**< Tfn execute function */
-    ib_flags_t          tfn_flags;         /**< Tfn flags */
-    void               *cbdata;            /**< Tfn function data */
+    const char  *name;              /**< Name */
+    bool         handle_list;       /**< Handle list */
+    ib_tfn_fn_t  fn_execute;        /**< Function */
+    void        *cbdata;            /**< Callback data. */
 };
 /** @endcond **/
 
@@ -106,7 +94,8 @@ struct ib_tfn_t {
  *
  * @param ib Engine handle
  * @param name Transformation name
- * @param flags Transformation flags
+ * @param handle_list If true, list values will be passed in whole.  If false,
+ *                    list values will be passed in element by element.
  * @param fn_execute Transformation execute function
  * @param cbdata Callback data for @a fn_execute.
  *
@@ -114,7 +103,7 @@ struct ib_tfn_t {
  */
 ib_status_t DLL_PUBLIC ib_tfn_register(ib_engine_t *ib,
                                        const char *name,
-                                       ib_flags_t flags,
+                                       bool handle_list,
                                        ib_tfn_fn_t fn_execute,
                                        void *cbdata);
 /**

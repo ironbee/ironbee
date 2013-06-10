@@ -1503,134 +1503,134 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
     ib_status_t rc;
 
     /* Define transformations. */
-    rc = ib_tfn_register(ib, "lowercase", IB_TFN_FLAG_NONE, tfn_lowercase,
+    rc = ib_tfn_register(ib, "lowercase", false, tfn_lowercase,
                          NULL);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_tfn_register(ib, "lc", IB_TFN_FLAG_NONE, tfn_lowercase, NULL);
+    rc = ib_tfn_register(ib, "lc", false, tfn_lowercase, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "trimLeft", IB_TFN_FLAG_NONE, tfn_trim_left,
-                         NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_tfn_register(ib, "trimRight", IB_TFN_FLAG_NONE, tfn_trim_right,
+    rc = ib_tfn_register(ib, "trimLeft", false, tfn_trim_left,
                          NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "trim", IB_TFN_FLAG_NONE, tfn_trim, NULL);
+    rc = ib_tfn_register(ib, "trimRight", false, tfn_trim_right,
+                         NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "removeWhitespace", IB_TFN_FLAG_NONE,
+    rc = ib_tfn_register(ib, "trim", false, tfn_trim, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_tfn_register(ib, "removeWhitespace", false,
                          tfn_wspc_remove, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "compressWhitespace", IB_TFN_FLAG_NONE,
+    rc = ib_tfn_register(ib, "compressWhitespace", false,
                          tfn_wspc_compress, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "length", IB_TFN_FLAG_HANDLE_LIST,
+    rc = ib_tfn_register(ib, "length", true,
                          tfn_length, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "count", IB_TFN_FLAG_HANDLE_LIST,
+    rc = ib_tfn_register(ib, "count", true,
                          tfn_count, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "max", IB_TFN_FLAG_HANDLE_LIST,
+    rc = ib_tfn_register(ib, "max", true,
                          tfn_max, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "min", IB_TFN_FLAG_HANDLE_LIST,
+    rc = ib_tfn_register(ib, "min", true,
                          tfn_min, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "urlDecode", IB_TFN_FLAG_NONE,
+    rc = ib_tfn_register(ib, "urlDecode", false,
                          tfn_url_decode, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "htmlEntityDecode", IB_TFN_FLAG_NONE,
+    rc = ib_tfn_register(ib, "htmlEntityDecode", false,
                          tfn_html_entity_decode, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "normalizePath", IB_TFN_FLAG_NONE,
+    rc = ib_tfn_register(ib, "normalizePath", false,
                          tfn_normalize_path, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "normalizePathWin", IB_TFN_FLAG_NONE,
+    rc = ib_tfn_register(ib, "normalizePathWin", false,
                          tfn_normalize_path_win, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Math transformations. */
-    rc = ib_tfn_register(ib, "round", IB_TFN_FLAG_NONE, tfn_round, NULL);
+    rc = ib_tfn_register(ib, "round", false, tfn_round, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "ceil", IB_TFN_FLAG_NONE, tfn_ceil, NULL);
+    rc = ib_tfn_register(ib, "ceil", false, tfn_ceil, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "floor", IB_TFN_FLAG_NONE, tfn_floor, NULL);
+    rc = ib_tfn_register(ib, "floor", false, tfn_floor, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Type conversion transformations. */
-    rc = ib_tfn_register(ib, "toString", IB_TFN_FLAG_NONE,
+    rc = ib_tfn_register(ib, "toString", false,
                          tfn_to_string, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "toInteger", IB_TFN_FLAG_NONE,
+    rc = ib_tfn_register(ib, "toInteger", false,
                          tfn_to_integer, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "toFloat", IB_TFN_FLAG_NONE, tfn_to_float, NULL);
+    rc = ib_tfn_register(ib, "toFloat", false, tfn_to_float, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Name extraction transformations. */
-    rc = ib_tfn_register(ib, "name", IB_TFN_FLAG_NONE, tfn_to_name, NULL);
+    rc = ib_tfn_register(ib, "name", false, tfn_to_name, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_register(ib, "names", IB_TFN_FLAG_NONE, tfn_to_names, NULL);
+    rc = ib_tfn_register(ib, "names", false, tfn_to_names, NULL);
     if (rc != IB_OK) {
         return rc;
     }

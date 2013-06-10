@@ -757,7 +757,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
      * we'll need to unroll it and recurse.
      */
     if (value->type == IB_FTYPE_LIST) {
-        if (ib_flags_all(tfn->tfn_flags, IB_TFN_FLAG_HANDLE_LIST) == false) {
+        if (! tfn->handle_list) {
             unroll = true;
         }
         else {
