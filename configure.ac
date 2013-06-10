@@ -569,6 +569,15 @@ else
 	AC_MSG_NOTICE([Old or unknown compiler detected; limited support.])
 fi
 
+dnl Install directories
+pkglibdir='${libdir}'
+moduledir='${libexecdir}'
+plugindir='${libexecdir}'
+luadir='${libdir}/lua'
+AC_SUBST(moduledir)
+AC_SUBST(plugindir)
+AC_SUBST(luadir)
+
 dnl Substitutions
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(CONFIG_MACRO_DIR)

@@ -4,8 +4,6 @@ include $(top_srcdir)/build/common.mk
 
 SUBDIRS = . tests
 
-pkglibdir = $(libdir)
-
 AM_LIBADD = $(top_builddir)/engine/libironbee.la
 
 if FREEBSD
@@ -17,7 +15,7 @@ endif
 EXTRA_DIST = moddevel_private.h
 
 
-pkglib_LTLIBRARIES = ibmod_htp.la \
+module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
                      ibmod_rules.la \
                      ibmod_user_agent.la \
@@ -41,11 +39,11 @@ endif
 endif
 
 if ENABLE_LUA
-pkglib_LTLIBRARIES += ibmod_lua.la
+module_LTLIBRARIES += ibmod_lua.la
 endif
 
 if BUILD_GEOIP
-pkglib_LTLIBRARIES += ibmod_geoip.la
+module_LTLIBRARIES += ibmod_geoip.la
 ibmod_geoip_la_SOURCES = geoip.c
 ibmod_geoip_la_LIBADD = $(AM_LIBADD) -lGeoIP $(LIBM_LDFLAGS)
 ibmod_geoip_la_LDFLAGS = $(AM_LDFLAGS) $(GEOIP_LDFLAGS)
@@ -72,7 +70,7 @@ ibmod_pcre_la_LDFLAGS = $(AM_LDFLAGS) \
                         @PCRE_LDFLAGS@
 ibmod_pcre_la_LIBADD = $(AM_LIBADD) @PCRE_LDADD@
 
-pkglib_LTLIBRARIES += ibmod_ee.la
+module_LTLIBRARIES += ibmod_ee.la
 ibmod_ee_la_SOURCES = ee_oper.c
 ibmod_ee_la_LIBADD = $(AM_LIBADD) $(top_builddir)/automata/libiaeudoxus.la
 ibmod_ee_la_CFLAGS = ${AM_CFLAGS} -I$(top_srcdir)/automata/include
@@ -110,12 +108,12 @@ ibmod_rules_la_LIBADD += -lluajit-ironbee \
 endif
 
 if ENABLE_JSON
-pkglib_LTLIBRARIES += ibmod_persist.la
+module_LTLIBRARIES += ibmod_persist.la
 ibmod_persist_la_SOURCES = persist.c
 endif
 
 if BUILD_DEV_MODULES
-pkglib_LTLIBRARIES += ibmod_devel.la
+module_LTLIBRARIES += ibmod_devel.la
 ibmod_devel_la_SOURCES =  \
 	moddevel.c        \
 	moddevel_rules.c  \
@@ -150,7 +148,7 @@ ibmod_sqltfn_la_LDFLAGS = $(AM_LDFLAGS)
 ibmod_sqltfn_la_LIBADD = ../libs/sqltfn/src/libsqltfn.la
 
 if CPP
-pkglib_LTLIBRARIES += ibmod_engine_shutdown.la
+module_LTLIBRARIES += ibmod_engine_shutdown.la
 ibmod_engine_shutdown_la_SOURCES = \
     engine_shutdown.cpp
 ibmod_engine_shutdown_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
@@ -158,18 +156,18 @@ ibmod_engine_shutdown_la_LIBADD = $(AM_LIBADD) \
     $(top_builddir)/ironbeepp/libibpp.la
 endif
 
-install-exec-hook: $(pkglib_LTLIBRARIES)
+install-exec-hook: $(module_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
-	for m in $(pkglib_LTLIBRARIES); do \
+	for m in $(module_LTLIBRARIES); do \
 	  base=`echo $$m | sed 's/\..*//'`; \
-	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*a; \
+	  rm -f $(DESTDIR)$(moduledir)/$$base.*a; \
 	done
 
-uninstall-local: $(pkglib_LTLIBRARIES)
+uninstall-local: $(module_LTLIBRARIES)
 	@echo "Uninstalling Modules..."; \
-	for m in $(pkglib_LTLIBRARIES); do \
+	for m in $(module_LTLIBRARIES); do \
 	  base=`echo $$m | sed 's/\..*//'`; \
-	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
+	  rm -f $(DESTDIR)$(moduledir)/$$base.*so; \
 	done
 
 if ENABLE_LUA

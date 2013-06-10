@@ -3,9 +3,8 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/servers.mk
 
-pkglibdir = $(libdir)
 if BUILD_HTTPD_SERVER
-pkglib_LTLIBRARIES = mod_ironbee.la
+plugin_LTLIBRARIES = mod_ironbee.la
 
 mod_ironbee_la_SOURCES = mod_ironbee.c
 
@@ -17,18 +16,18 @@ mod_ironbee_la_LDFLAGS = -module -avoid-version \
 						 $(LIBM_LDFLAGS) \
                          @APR_LDFLAGS@ @APU_LDFLAGS@ @APXS_LDFLAGS@
 
-install-exec-hook: $(pkglib_LTLIBRARIES)
+install-exec-hook: $(plugin_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
-	for m in $(pkglib_LTLIBRARIES); do \
+	for m in $(plugin_LTLIBRARIES); do \
 	  base=`echo $$m | sed 's/\..*//'`; \
-	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*a; \
-	  echo TODO: cp -p $(DESTDIR)$(pkglibdir)/$$base.so $(APXS_MODULES); \
+	  rm -f $(DESTDIR)$(plugindir)/$$base.*a; \
+	  echo TODO: cp -p $(DESTDIR)$(plugindir)/$$base.so $(APXS_MODULES); \
 	done
 
-uninstall-local: $(pkglib_LTLIBRARIES)
+uninstall-local: $(plugin_LTLIBRARIES)
 	@echo "Uninstalling Apache Module..."; \
-	for m in $(pkglib_LTLIBRARIES); do \
+	for m in $(plugin_LTLIBRARIES); do \
 	  base=`echo $$m | sed 's/\..*//'`; \
-	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
+	  rm -f $(DESTDIR)$(plugindir)/$$base.*so; \
 	done
 endif

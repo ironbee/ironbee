@@ -1,7 +1,5 @@
 include $(top_srcdir)/build/common.mk
 
-pkglibdir = $(libdir)
-
 SUBDIRS = tests
 
 AM_LDFLAGS += \
@@ -9,7 +7,7 @@ AM_LDFLAGS += \
     -lboost_system$(BOOST_SUFFIX) \
     -lboost_thread-mt
 
-pkglib_LTLIBRARIES = ibmod_predicate.la
+module_LTLIBRARIES = ibmod_predicate.la
 noinst_LTLIBRARIES = libpredicate.la
 libpredicate_la_SOURCES = \
     dag.cpp \
@@ -22,8 +20,8 @@ libpredicate_la_SOURCES = \
     reporter.cpp \
     validate.cpp \
     transform_graph.cpp \
-		validate_graph.cpp \
-		pre_eval_graph.cpp
+	validate_graph.cpp \
+	pre_eval_graph.cpp
 
 EXTRA_DIST = \
 		bfs.hpp                 \

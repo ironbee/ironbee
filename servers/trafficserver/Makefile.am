@@ -3,9 +3,8 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/servers.mk
 
-pkglibdir = $(libdir)
 if BUILD_TS_SERVER
-pkglib_LTLIBRARIES = libloader.la ts_ironbee.la
+plugin_LTLIBRARIES = libloader.la ts_ironbee.la
 
 libloader_la_SOURCES = libloader.c
 libloader_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
@@ -15,18 +14,18 @@ ts_ironbee_la_SOURCES = ironbee.c
 ts_ironbee_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
 ts_ironbee_la_LDFLAGS = -module -avoid-version
 
-install-exec-hook: $(pkglib_LTLIBRARIES)
+install-exec-hook: $(plugin_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
-	for m in $(pkglib_LTLIBRARIES); do \
+	for m in $(plugin_LTLIBRARIES); do \
 	  base=`echo $$m | sed 's/\..*//'`; \
-	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*a; \
+	  rm -f $(DESTDIR)$(plugindir)/$$base.*a; \
 	  echo TODO: install; \
 	done
 
-uninstall-local: $(pkglib_LTLIBRARIES)
+uninstall-local: $(plugin_LTLIBRARIES)
 	@echo "Uninstalling Traffic Server Modules..."; \
-	for m in $(pkglib_LTLIBRARIES); do \
+	for m in $(plugin_LTLIBRARIES); do \
 	  base=`echo $$m | sed 's/\..*//'`; \
-	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
+	  rm -f $(DESTDIR)$(plugindir)/$$base.*so; \
 	done
 endif

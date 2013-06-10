@@ -8,6 +8,10 @@ IronBee v0.8.0
 
 * The 'ac' module (deprecated in 0.7.0) has been removed.
 
+**Build**
+
+* Modules and plugins are now installed into libexec instead of lib.
+
 **Predicate**
 
 * A new rule injection system, Predicate, was added.  Predicate provides a

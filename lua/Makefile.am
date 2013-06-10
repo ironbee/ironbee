@@ -4,8 +4,6 @@ include $(top_srcdir)/build/common.mk
 
 SUBDIRS = tests
 
-luadir = $(libdir)
-
 FFI_FILES = \
 	$(top_srcdir)/include/ironbee/engine.h \
 	$(top_srcdir)/include/ironbee/engine_state.h \
@@ -66,7 +64,7 @@ lua_DATA   = ironbee-ffi-h.lua \
              event_processor.lua \
              qa.lua
 
-nobase_pkglib_LTLIBRARIES = 
+lua_LTLIBRARIES =
 noinst_LTLIBRARIES = libironbee-lua.la
 libironbee_lua_la_SOURCES = ironbee.c ironbee.h
 libironbee_lua_la_CPPFLAGS = $(LUA_CPPFLAGS)
@@ -74,7 +72,7 @@ libironbee_lua_la_CFLAGS = $(LUA_CFLAGS)
 libironbee_lua_la_LIBADD = $(LUA_LIBADD)
 
 if ENABLE_JSON
-nobase_pkglib_LTLIBRARIES       += ironbee/util/ibjson.la
+lua_LTLIBRARIES                 += ironbee/util/ibjson.la
 ironbee_util_ibjson_la_SOURCES   = ironbee/util/ibjson.c
 ironbee_util_ibjson_la_CPPFLAGS  = $(LUA_CPPFLAGS)
 ironbee_util_ibjson_la_CFLAGS    = $(LUA_CFLAGS)

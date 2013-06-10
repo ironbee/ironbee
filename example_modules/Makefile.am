@@ -4,8 +4,6 @@ include $(top_srcdir)/build/common.mk
 
 SUBDIRS = tests
 
-pkglibdir = $(libdir)
-
 AM_LIBADD = $(top_builddir)/engine/libironbee.la
 
 if FREEBSD
@@ -14,9 +12,9 @@ else
 AM_LDFLAGS += -module -avoid-version
 endif
 
-pkglib_LTLIBRARIES = ibmod_set_c.la
+module_LTLIBRARIES = ibmod_set_c.la
 if CPP
-pkglib_LTLIBRARIES += ibmod_set_cpp.la
+module_LTLIBRARIES += ibmod_set_cpp.la
 endif
 
 ibmod_set_c_la_SOURCES = ibmod_set_c.c
