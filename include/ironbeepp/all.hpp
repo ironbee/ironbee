@@ -57,5 +57,6 @@
 #include <ironbeepp/throw.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/transaction_data.hpp>
+#include <ironbeepp/transformation.hpp>
 
 #endif

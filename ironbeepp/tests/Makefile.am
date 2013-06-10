@@ -36,7 +36,8 @@ check_PROGRAMS = \
 	test_site \
 	test_throw \
 	test_transaction \
-	test_transaction_data
+	test_transaction_data \
+	test_transformation
 
 TESTS = $(check_PROGRAMS)
 
@@ -69,3 +70,4 @@ test_site_SOURCES                     = test_site.cpp fixture.cpp
 test_throw_SOURCES                    = test_throw.cpp
 test_transaction_data_SOURCES         = test_transaction_data.cpp
 test_transaction_SOURCES              = test_transaction.cpp fixture.cpp
+test_transformation_SOURCES           = test_transformation.cpp fixture.cpp
