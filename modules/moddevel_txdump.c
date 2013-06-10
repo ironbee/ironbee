@@ -1521,7 +1521,7 @@ ib_status_t ib_moddevel_txdump_init(
     return IB_OK;
 }
 
-ib_status_t ib_moddevel_txdump_fini(
+ib_status_t ib_moddevel_txdump_cleanup(
     ib_engine_t                 *ib,
     ib_module_t                 *mod,
     ib_moddevel_txdump_config_t *config)
@@ -1562,4 +1562,12 @@ ib_status_t ib_moddevel_txdump_fini(
         }
     }
     return rc;
+}
+
+ib_status_t ib_moddevel_txdump_fini(
+    ib_engine_t                 *ib,
+    ib_module_t                 *mod)
+{
+    /* Do nothing */
+    return IB_OK;
 }

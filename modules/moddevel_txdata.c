@@ -517,10 +517,18 @@ ib_status_t ib_moddevel_txdata_init(
     return IB_OK;
 }
 
-ib_status_t ib_moddevel_txdata_fini(
+ib_status_t ib_moddevel_txdata_cleanup(
     ib_engine_t                 *ib,
     ib_module_t                 *mod,
     ib_moddevel_txdata_config_t *config)
+{
+    /* Do nothing */
+    return IB_OK;
+}
+
+ib_status_t ib_moddevel_txdata_fini(
+    ib_engine_t                 *ib,
+    ib_module_t                 *mod)
 {
     ib_hook_tx_unregister(ib,
                           request_header_finished_event,

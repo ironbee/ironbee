@@ -47,7 +47,7 @@ typedef struct ib_moddevel_txdump_config_t ib_moddevel_txdump_config_t;
  * @param[in] ib IronBee engine
  * @param[in] mod Module
  * @param[in] mp Memory pool to use for allocations
- * @param[out] pconfig TxData global configuration
+ * @param[out] pconfig TxData configuration
  *
  * @returns Return code
  */
@@ -58,18 +58,30 @@ ib_status_t ib_moddevel_txdata_init(
     ib_moddevel_txdata_config_t **pconfig);
 
 /**
+ * Cleanup the TxData sub-module
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mod Module
+ * @param[in] config TxData configuration
+ *
+ * @returns Return code
+ */
+ib_status_t ib_moddevel_txdata_cleanup(
+    ib_engine_t                  *ib,
+    ib_module_t                  *mod,
+    ib_moddevel_txdata_config_t  *config);
+
+/**
  * Un-Initialize the TxData sub-module
  *
  * @param[in] ib IronBee engine
  * @param[in] mod Module
- * @param[in] config TxDump global configuration
  *
  * @returns Return code
  */
 ib_status_t ib_moddevel_txdata_fini(
     ib_engine_t                  *ib,
-    ib_module_t                  *mod,
-    ib_moddevel_txdata_config_t  *config);
+    ib_module_t                  *mod);
 
 
 /**
@@ -81,10 +93,10 @@ ib_status_t ib_moddevel_txdata_fini(
  *
  * Registers rule development operators and actions.
  *
- * @param[in,out] ib IronBee object
+ * @param[in] ib IronBee object
  * @param[in] mod Module object
  * @param[in] mp Memory pool to use for allocations
- * @param[out] pconfig Rules global configuration
+ * @param[out] pconfig Rules configuration
  *
  * @returns Status code
  */
@@ -95,18 +107,30 @@ ib_status_t ib_moddevel_rules_init(
     ib_moddevel_rules_config_t  **pconfig);
 
 /**
+ * Cleanup the Rules sub-module
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mod Module object
+ * @param[in] config Rules configuration
+ *
+ * @returns Return code
+ */
+ib_status_t ib_moddevel_rules_cleanup(
+    ib_engine_t                  *ib,
+    ib_module_t                  *mod,
+    ib_moddevel_rules_config_t   *config);
+
+/**
  * Un-Initialize the rules sub-module
  *
  * @param[in] ib IronBee engine
  * @param[in] mod Module
- * @param[in] config Rules global configuration
  *
  * @returns Return code
  */
 ib_status_t ib_moddevel_rules_fini(
     ib_engine_t                  *ib,
-    ib_module_t                  *mod,
-    ib_moddevel_rules_config_t   *config);
+    ib_module_t                  *mod);
 
 
 /**
@@ -116,10 +140,10 @@ ib_status_t ib_moddevel_rules_fini(
 /**
  * Initialize the TxDump development sub-module
  *
- * @param[in,out] ib IronBee object
+ * @param[in] ib IronBee object
  * @param[in] mod Module object
  * @param[in] mp Memory pool to use for allocations
- * @param[out] pconfig TxDump global configuration
+ * @param[out] pconfig TxDump configuration
  *
  * @returns Status code
  */
@@ -130,18 +154,30 @@ ib_status_t ib_moddevel_txdump_init(
     ib_moddevel_txdump_config_t **pconfig);
 
 /**
+ * Cleanup the TxDump sub-module
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mod Module
+ * @param[in] config TxDump configuration
+ *
+ * @returns Return code
+ */
+ib_status_t ib_moddevel_txdump_cleanup(
+    ib_engine_t                  *ib,
+    ib_module_t                  *mod,
+    ib_moddevel_txdump_config_t  *config);
+
+/**
  * Un-Initialize the TxDump sub-module
  *
  * @param[in] ib IronBee engine
  * @param[in] mod Module
- * @param[in] config TxDump global configuration
  *
  * @returns Return code
  */
 ib_status_t ib_moddevel_txdump_fini(
     ib_engine_t                  *ib,
-    ib_module_t                  *mod,
-    ib_moddevel_txdump_config_t  *config);
+    ib_module_t                  *mod);
 
 
 #endif /* _IB_MODDEVEL_PRIVATE_H_ */

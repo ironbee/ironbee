@@ -30,7 +30,9 @@
 
 #include "moddevel_private.h"
 
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/module.h>
 
 #include <assert.h>
@@ -54,19 +56,66 @@ typedef struct {
     ib_moddevel_rules_config_t  *rules;   /**< Rules configuration */
 } ib_moddevel_config_t;
 
-static ib_moddevel_config_t moddevel_config =
+/**
+ * Called upon context destroy
+ *
+ * @param[in] ib IronBee object
+ * @param[in] ctx Context being destroyed
+ * @param[in] event Triggering event
+ * @param[in] cbdata (module data)
+ */
+static ib_status_t moddevel_context_destroy(
+    ib_engine_t           *ib,
+    ib_context_t          *ctx,
+    ib_state_event_type_t  event,
+    void                  *cbdata)
 {
-    NULL,                   /**< TxData config structure */
-    NULL,                   /**< TxDump config structure */
-    NULL,                   /**< Rules config structure */
-};
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(event == context_destroy_event);
+    assert(cbdata != NULL);
+
+    /* Ignore all contexts except for main */
+    if (ctx != ib_context_main(ib)) {
+        return IB_OK;
+    }
+
+    ib_module_t          *module;
+    ib_moddevel_config_t *config;
+    ib_status_t rc;
+
+    module = (ib_module_t *)cbdata;
+    assert(module->data != NULL);
+    config = (ib_moddevel_config_t *)module->data;
+    module->data = NULL;
+
+    /* TxData */
+    rc = ib_moddevel_txdata_cleanup(ib, module, config->txdata);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* TxDump */
+    rc = ib_moddevel_txdump_cleanup(ib, module, config->txdump);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Rule development */
+    rc = ib_moddevel_rules_cleanup(ib, module, config->rules);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
 
 /**
  * Called to initialize the development module
  *
  * Initialize sub-modules
  *
- * @param[in,out] ib IronBee object
+ * @param[in] ib IronBee object
  * @param[in] module Module object
  * @param[in] cbdata (unused)
  *
@@ -77,26 +126,42 @@ static ib_status_t moddevel_init(
     ib_module_t *module,
     void        *cbdata)
 {
-    ib_status_t rc;
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_status_t           rc;
+    ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
+    ib_moddevel_config_t *config;
+
+    /* Allocate a configuration */
+    config = ib_mpool_calloc(mp, sizeof(*config), 1);
+    if (config == NULL) {
+        return IB_EALLOC;
+    }
 
     /* TxData */
-    rc = ib_moddevel_txdata_init(ib, module, mp, &moddevel_config.txdata);
+    rc = ib_moddevel_txdata_init(ib, module, mp, &(config->txdata));
     if (rc != IB_OK) {
         return rc;
     }
 
     /* TxDump */
-    rc = ib_moddevel_txdump_init(ib, module, mp, &moddevel_config.txdump);
+    rc = ib_moddevel_txdump_init(ib, module, mp, &(config->txdump));
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Rule development */
-    rc = ib_moddevel_rules_init(ib, module, mp, &moddevel_config.rules);
+    rc = ib_moddevel_rules_init(ib, module, mp, &(config->rules));
     if (rc != IB_OK) {
         return rc;
     }
+
+    /* Store off pointer to our configuration */
+    module->data = config;
+
+    /* Register a cleanup function for upon destroy of main context. */
+    ib_hook_context_register(ib,
+                             context_destroy_event,
+                             moddevel_context_destroy,
+                             module);
 
     return IB_OK;
 }
@@ -119,17 +184,17 @@ static ib_status_t moddevel_finish(
 {
     ib_status_t rc;
 
-    rc = ib_moddevel_txdata_fini(ib, module, moddevel_config.txdata);
+    rc = ib_moddevel_txdata_fini(ib, module);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_moddevel_txdump_fini(ib, module, moddevel_config.txdump);
+    rc = ib_moddevel_txdump_fini(ib, module);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_moddevel_rules_fini(ib, module, moddevel_config.rules);
+    rc = ib_moddevel_rules_fini(ib, module);
     if (rc != IB_OK) {
         return rc;
     }
@@ -140,7 +205,7 @@ static ib_status_t moddevel_finish(
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,          /* Default metadata */
     MODULE_NAME_STR,                    /* Module name */
-    IB_MODULE_CONFIG(&moddevel_config), /* Global config data */
+    IB_MODULE_CONFIG_NULL,              /* Global config data */
     NULL,                               /* Module config map */
     NULL,                               /* Module directive map */
     moddevel_init,                      /* Initialize function */

@@ -939,10 +939,18 @@ ib_status_t ib_moddevel_rules_init(
     return IB_OK;
 }
 
-ib_status_t ib_moddevel_rules_fini(
+ib_status_t ib_moddevel_rules_cleanup(
     ib_engine_t                *ib,
     ib_module_t                *mod,
     ib_moddevel_rules_config_t *config)
+{
+    /* Do nothing */
+    return IB_OK;
+}
+
+ib_status_t ib_moddevel_rules_fini(
+    ib_engine_t                *ib,
+    ib_module_t                *mod)
 {
     return IB_OK;
 }
