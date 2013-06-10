@@ -43,7 +43,7 @@ public:
             throw std::runtime_error("Failed to create main memory pool");
         }
 
-        rc = ib_vector_create(&m_vector, m_mp);
+        rc = ib_vector_create(&m_vector, m_mp, 0);
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to create test vector.");
         }
@@ -61,39 +61,39 @@ protected:
 TEST_F(VectorTest, Append) {
     ASSERT_EQ(
         IB_OK,
-        ib_vector_append(m_vector, reinterpret_cast<const void *>("hi"), 2));
+        ib_vector_append(m_vector, "hi", 2));
     ASSERT_EQ(
         IB_OK,
-        ib_vector_append(m_vector, reinterpret_cast<const void *>("!"), 1));
+        ib_vector_append(m_vector, "!", 1));
     ASSERT_EQ(3U, m_vector->len);
     ASSERT_EQ(4U, m_vector->size);
     ASSERT_EQ(
         std::string("hi!"),
-        std::string(reinterpret_cast<const char *>(m_vector->data), 3)
+        std::string(reinterpret_cast<char *>(m_vector->data), 3)
     );
 }
 
 TEST_F(VectorTest, Truncate) {
     ASSERT_EQ(
         IB_OK,
-        ib_vector_append(m_vector, reinterpret_cast<const void *>("hi"), 2));
+        ib_vector_append(m_vector, "hi", 2));
     ASSERT_EQ(IB_OK, ib_vector_truncate(m_vector, 0));
     ASSERT_EQ(0U, m_vector->len);
     ASSERT_EQ(2U, m_vector->size);
     ASSERT_EQ(
         IB_OK,
-        ib_vector_append(m_vector, reinterpret_cast<const void *>("hi"), 2));
+        ib_vector_append(m_vector, "hi", 2));
 }
 
 TEST_F(VectorTest, Resize) {
     ASSERT_EQ(
         IB_OK,
-        ib_vector_append(m_vector, reinterpret_cast<const void *>("hi"), 2));
+        ib_vector_append(m_vector, "hi", 2));
     ASSERT_EQ(IB_OK, ib_vector_resize(m_vector, 0));
     ASSERT_EQ(0U, m_vector->len);
     ASSERT_EQ(0U, m_vector->size);
     ASSERT_EQ(ib_mpool_alloc(m_mp, 0), m_vector->data);
     ASSERT_EQ(
         IB_OK,
-        ib_vector_append(m_vector, reinterpret_cast<const void *>("hi"), 2));
+        ib_vector_append(m_vector, "hi", 2));
 }

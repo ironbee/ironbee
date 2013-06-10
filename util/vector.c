@@ -72,7 +72,8 @@ static ib_status_t buffer_size(size_t length, size_t *size)
 
 ib_status_t ib_vector_create(
     ib_vector_t **vector,
-    ib_mpool_t *mp
+    ib_mpool_t   *mp,
+    ib_flags_t    flags
 )
 {
 
@@ -95,6 +96,7 @@ ib_status_t ib_vector_create(
     v->data = ib_mpool_alloc(v->mp, DEFAULT_VECTOR_SIZE);
     v->size = DEFAULT_VECTOR_SIZE;
     v->len  = 0;
+    v->flags = flags;
 
     *vector = v;
     return IB_OK;
@@ -113,6 +115,10 @@ ib_status_t ib_vector_resize(
     void *new_data;
 
     if (size == vector->size) {
+        return IB_OK;
+    }
+
+    if (vector->flags & IB_VECTOR_NEVER_SHRINK && vector->size > size) {
         return IB_OK;
     }
 
@@ -161,6 +167,11 @@ ib_status_t ib_vector_truncate(
     }
 
     vector->len = len;
+
+    /* If we never shrink, don't check if we should shrink the buffer. */
+    if (vector->flags & IB_VECTOR_NEVER_SHRINK) {
+        return IB_OK;
+    }
 
     /* Do we need to resize things? */
     if (len < vector->size / 4) {

@@ -710,7 +710,7 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
     cp->fsm.directive = NULL;
     cp->fsm.blkname = NULL;
 
-    rc = ib_vector_create(&(cp->fsm.ts_buffer), cp->mp);
+    rc = ib_vector_create(&(cp->fsm.ts_buffer), cp->mp, 0);
     if (rc != IB_OK) {
         return rc;
     }
@@ -821,12 +821,8 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
      * for NULL, and then pass them on to an owning collection (list). */
     char *tmp_str = NULL;
 
-    /* If the ts_buffer has a length greater than 0, then we are
-     * preserving a buffered copy of input. We must copy the new input
-     * into the preservation buffer (ts_buffer) and parse against it.
-     * 
-     * This situation only happens when there is a partial match of a patter
-     * across multiple buffers. This is often a very rare occurence. */
+    /* Point the machine at the current buffer to parse.
+     */
     if (cp->fsm.ts != NULL) {
         rc = cfgparser_partial_match_resume(cp, buf, blen);
         if (rc != IB_OK) {
@@ -844,16 +840,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 
     /* Access all ragel state variables via structure. */
     
-#line 910 "config-parser.rl"
+#line 906 "config-parser.rl"
     
-#line 911 "config-parser.rl"
+#line 907 "config-parser.rl"
     
-#line 912 "config-parser.rl"
+#line 908 "config-parser.rl"
     
-#line 913 "config-parser.rl"
+#line 909 "config-parser.rl"
 
     
-#line 857 "config-parser.c"
+#line 853 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -874,7 +870,7 @@ _resume:
 #line 1 "NONE"
 	{ cp->fsm.ts = ( fsm_vars.p);}
 	break;
-#line 878 "config-parser.c"
+#line 874 "config-parser.c"
 		}
 	}
 
@@ -1335,7 +1331,7 @@ _eof_trans:
 #line 730 "config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 24; goto _again;} }}
 	break;
-#line 1339 "config-parser.c"
+#line 1335 "config-parser.c"
 		}
 	}
 
@@ -1348,7 +1344,7 @@ _again:
 #line 1 "NONE"
 	{ cp->fsm.ts = 0;}
 	break;
-#line 1352 "config-parser.c"
+#line 1348 "config-parser.c"
 		}
 	}
 
@@ -1458,7 +1454,7 @@ _again:
 #line 695 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; goto _again;} }
 	break;
-#line 1462 "config-parser.c"
+#line 1458 "config-parser.c"
 		}
 	}
 	}
@@ -1466,7 +1462,7 @@ _again:
 	_out: {}
 	}
 
-#line 915 "config-parser.rl"
+#line 911 "config-parser.rl"
 
     assert(tmp_str == NULL && "tmp_str must be cleared after every use");
 

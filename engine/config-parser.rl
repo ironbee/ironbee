@@ -773,7 +773,7 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
     cp->fsm.directive = NULL;
     cp->fsm.blkname = NULL;
 
-    rc = ib_vector_create(&(cp->fsm.ts_buffer), cp->mp);
+    rc = ib_vector_create(&(cp->fsm.ts_buffer), cp->mp, 0);
     if (rc != IB_OK) {
         return rc;
     }
