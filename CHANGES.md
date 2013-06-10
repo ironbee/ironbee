@@ -52,9 +52,9 @@ IronBee v0.8.0
   Custom data fields can be indexed via the `InitVarIndexed` and
   `InitCollectionIndexed` directives.
 
-* Transformations have been simplified: output flags have been removed;
+* Transformations have been overhauled: output flags have been removed;
   callback data is now the final argument; input flags have been changed to
-  a single bool; added accessors.
+  a single bool; added accessors; `ib_tfn_transform()` has been renamed to `ib_tfn_execute()` and now handles lists properly.
 
 **Util**
 

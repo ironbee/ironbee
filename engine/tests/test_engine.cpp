@@ -190,7 +190,7 @@ TEST(TestIronBee, test_tfn)
         IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs)
     );
     fout = NULL;
-    rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout);
+    rc = ib_tfn_execute(ib, ib->mp, tfn, fin, &fout);
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_NE(fin, fout);
@@ -203,7 +203,7 @@ TEST(TestIronBee, test_tfn)
         ib_ftype_nulstr_in((char *)data_in)
     );
     fout = NULL;
-    rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout);
+    rc = ib_tfn_execute(ib, ib->mp, tfn, fin, &fout);
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_NE(fin, fout);

@@ -157,9 +157,6 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(
 /**
  * Transform data.
  *
- * @note Does not currently respect @a handle_list.  Stay tuned.
- * @todo Handle lists.
- *
  * @param[in]  ib   Engine.
  * @param[in]  mp   Memory pool to use.
  * @param[in]  tfn  Transformation to apply.
@@ -171,7 +168,7 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(
  * - IB_EALLOC on allocation failure.
  * - Status code of transformation on other failure.
  */
-ib_status_t DLL_PUBLIC ib_tfn_transform(
+ib_status_t DLL_PUBLIC ib_tfn_execute(
     ib_engine_t       *ib,
     ib_mpool_t        *mp,
     const ib_tfn_t    *tfn,

@@ -336,7 +336,6 @@ typedef struct {
  * define the limits of the recursion depth.
  */
 #define MAX_LIST_RECURSION   (5)       /**< Max list recursion limit */
-#define MAX_TFN_RECURSION    (5)       /**< Max tfn list recursion limit */
 #define MAX_CHAIN_RECURSION  (10)      /**< Max chain recursion limit */
 
 /**
@@ -722,7 +721,6 @@ static void rule_exec_pop_value(ib_rule_exec_t *rule_exec,
  * @param[in] rule_exec The rule execution object
  * @param[in] tfn The transformation to execute
  * @param[in] value Initial value of the target field
- * @param[in] recursion Recursion limit -- won't recurse if recursion is zero
  * @param[out] result Pointer to field in which to store the result
  *
  * @returns Status code
@@ -730,141 +728,35 @@ static void rule_exec_pop_value(ib_rule_exec_t *rule_exec,
 static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
                                       const ib_tfn_t *tfn,
                                       const ib_field_t *value,
-                                      int recursion,
                                       const ib_field_t **result)
 {
     ib_status_t       rc;
     const ib_field_t *out = NULL;
-    bool              unroll = false;
 
-    assert(rule_exec != NULL);
-    assert(tfn != NULL);
-    assert(value != NULL);
-    assert(result != NULL);
+    rc = ib_tfn_execute(rule_exec->ib, rule_exec->tx->mp, tfn, value, &out);
+    ib_rule_log_exec_tfn_value(rule_exec->exec_log, value, out, rc);
 
-    *result = NULL;
-
-    /* Limit recursion */
-    --recursion;
-    if (recursion <= 0) {
+    if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
-                          "Rule engine: Unroll recursion limit reached");
-        return IB_EOTHER;
+                          "Error transforming \"%.*s\" "
+                          "for transformation \"%s\": %s",
+                          (int)value->nlen, value->name, ib_tfn_name(tfn),
+                          ib_status_to_string(rc));
+        return rc;
     }
-
-    /*
-     * If the value is a list, and the transformation can't handle lists,
-     * we'll need to unroll it and recurse.
-     */
-    if (value->type == IB_FTYPE_LIST) {
-        if (! ib_tfn_handle_list(tfn)) {
-            unroll = true;
-        }
-        else {
-            ib_rule_log_trace(rule_exec,
-                              "Not unrolling list \"%.*s\" "
-                              "for transformation \"%s\"",
-                              (int)value->nlen, value->name, ib_tfn_name(tfn));
-        }
-    }
-
-    /* If we need to unroll the list, handle it here */
-    if (unroll) {
-        const ib_list_t *value_list;
-        const ib_list_node_t *node;
-        ib_list_t *out_list;
-        ib_field_t *fnew;
-
-        assert(value->type == IB_FTYPE_LIST);
-
-        ib_rule_log_trace(rule_exec,
-                          "Unrolling list \"%.*s\" for transformation \"%s\"",
+    if (out == NULL) {
+        ib_rule_log_error(rule_exec,
+                          "Error transforming \"%.*s\" "
+                          "for transformation \"%s\": "
+                          "Transformation returned NULL",
                           (int)value->nlen, value->name, ib_tfn_name(tfn));
-
-        rc = ib_field_value(value, ib_ftype_list_out(&value_list));
-        if (rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "Error getting list from field: %s",
-                              ib_status_to_string(rc));
-            return rc;
-        }
-
-        rc = ib_list_create(&out_list, rule_exec->tx->mp);
-        if (rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "Error creating list to unroll \"%.*s\" "
-                              "for transformation \"%s\": %s",
-                              (int)value->nlen, value->name, ib_tfn_name(tfn),
-                              ib_status_to_string(rc));
-            return rc;
-        }
-
-        IB_LIST_LOOP_CONST(value_list, node) {
-            const ib_field_t *in;
-            const ib_field_t *tfn_out;
-
-            in = (const ib_field_t *)node->data;
-            assert(in != NULL);
-
-            rc = execute_tfn_single(rule_exec, tfn, in, recursion, &tfn_out);
-            if (rc != IB_OK) {
-                return rc;
-            }
-            if (tfn_out == NULL) {
-                ib_rule_log_error(rule_exec,
-                                  "Target transformation %s returned NULL",
-                                  ib_tfn_name(tfn));
-                return IB_EINVAL;
-            }
-            ib_rule_log_exec_tfn_value(rule_exec->exec_log, in, tfn_out, rc);
-
-            rc = ib_list_push(out_list, (void *)tfn_out);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec,
-                                  "Error adding tfn result to list: %s",
-                                  ib_status_to_string(rc));
-                return rc;
-            }
-        }
-
-        /* Finally, create the output field (list) and return it */
-        rc = ib_field_create(&fnew, rule_exec->tx->mp,
-                             value->name, value->nlen,
-                             IB_FTYPE_LIST, ib_ftype_list_in(out_list));
-        if (rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "Error creating output list field: %s",
-                              ib_status_to_string(rc));
-        }
-        out = fnew;
+        return IB_EINVAL;
     }
 
-    /* OK, no unrolling required.  Just execute the transformation. */
-    else {
-        rc = ib_tfn_transform(rule_exec->ib, rule_exec->tx->mp,
-                              tfn, value, &out);
-        if (rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "Error executing transformation \"%s\": %s",
-                              ib_tfn_name(tfn), ib_status_to_string(rc));
-            return rc;
-        }
+    assert(rc == IB_OK);
+    *result = out;
 
-        /* Verify that out isn't NULL */
-        if (out == NULL) {
-            ib_rule_log_error(rule_exec,
-                              "Transformation returned NULL");
-            return IB_EINVAL;
-        }
-    }
-
-    /* The output of the final operator is the result */
-    if (rc == IB_OK) {
-        *result = out;
-    }
-
-    /* Done. */
-    return rc;
+    return IB_OK;
 }
 
 /**
@@ -912,8 +804,7 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
         /* Run it */
         ib_rule_log_trace(rule_exec, "Executing transformation %s", ib_tfn_name(tfn));
         ib_rule_log_exec_tfn_add(rule_exec->exec_log, tfn);
-        rc = execute_tfn_single(rule_exec, tfn, in_field,
-                                MAX_TFN_RECURSION, &out);
+        rc = execute_tfn_single(rule_exec, tfn, in_field, &out);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Error executing target transformation %s: %s",
