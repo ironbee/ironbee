@@ -734,7 +734,14 @@ static ib_status_t cfgparser_partial_match_maintenance(
 )
 {
     ib_status_t rc;
-    size_t buffer_remaining = buf + blen - cp->fsm.ts;
+    size_t buffer_remaining;
+    
+    if (buf + blen > cp->fsm.ts) {
+        buffer_remaining = buf + blen - cp->fsm.ts;
+    }
+    else {
+        buffer_remaining = cp->fsm.ts - buf + blen;
+    }
 
     /* Distance that the ts and te pointers will be shifted when
      * copied into the vector. */
@@ -843,16 +850,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 
     /* Access all ragel state variables via structure. */
     
-#line 912 "config-parser.rl"
+#line 919 "config-parser.rl"
     
-#line 913 "config-parser.rl"
+#line 920 "config-parser.rl"
     
-#line 914 "config-parser.rl"
+#line 921 "config-parser.rl"
     
-#line 915 "config-parser.rl"
+#line 922 "config-parser.rl"
 
     
-#line 856 "config-parser.c"
+#line 863 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -873,7 +880,7 @@ _resume:
 #line 1 "NONE"
 	{ cp->fsm.ts = ( fsm_vars.p);}
 	break;
-#line 877 "config-parser.c"
+#line 884 "config-parser.c"
 		}
 	}
 
@@ -1367,7 +1374,7 @@ _eof_trans:
         }
     { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 24; goto _again;}} }}
 	break;
-#line 1371 "config-parser.c"
+#line 1378 "config-parser.c"
 		}
 	}
 
@@ -1380,7 +1387,7 @@ _again:
 #line 1 "NONE"
 	{ cp->fsm.ts = 0;}
 	break;
-#line 1384 "config-parser.c"
+#line 1391 "config-parser.c"
 		}
 	}
 
@@ -1493,7 +1500,7 @@ _again:
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
-#line 1497 "config-parser.c"
+#line 1504 "config-parser.c"
 		}
 	}
 	}
@@ -1501,7 +1508,7 @@ _again:
 	_out: {}
 	}
 
-#line 917 "config-parser.rl"
+#line 924 "config-parser.rl"
 
     assert(tmp_str == NULL && "tmp_str must be cleared after every use");
 

@@ -33,6 +33,7 @@ TEST_EXTRAS = \
        CoreActionTest.setVarSub.config \
        CoreActionTest.integration.config \
        ParseTreeTest.config \
+       Huge.config \
        RuleInjectTest.test_inject.config \
        test_ironbee_lua_modules.lua \
        test_ironbee_lua_configs.lua

@@ -135,6 +135,26 @@ class TestConfig : public BaseFixture
 
         return rc;
     }
+
+    /**
+     * Parse the given file and apply the configuration.
+     *
+     * @param[in] file The file name.
+     *
+     * @returns return code of parse function.
+     */
+    virtual ib_status_t configFile(const string& file) {
+        ib_status_t rc;
+
+        rc = ib_cfgparser_parse(cfgparser, file.c_str());
+
+        ib_log_info(
+            ib_engine,
+            "Done with configuration: %s",
+            ib_status_to_string(rc));
+
+        return rc;
+    }
 };
 
 /////////////////////////////// Passing Parses ///////////////////////////////
@@ -163,6 +183,23 @@ INSTANTIATE_TEST_CASE_P(
         "LoadModule ibmod_htp.so",
 
         "IncludeIfExists Missing.conf"
+    ));
+
+///////////////////////////// Passing File Parses /////////////////////////////
+class PassingFileParseTest :
+   public TestConfig,
+   public ::testing::WithParamInterface<const char*>
+{ };
+
+TEST_P(PassingFileParseTest, SuccessConfig) {
+    ASSERT_EQ(IB_OK, configFile(GetParam()));
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SimpleConfig,
+    PassingFileParseTest,
+    ::testing::Values(
+        "Huge.config"
     ));
 
 /////////////////////////////// Failing Parses ///////////////////////////////
@@ -395,3 +432,4 @@ INSTANTIATE_TEST_CASE_P(
     std::make_pair("Param2 value1 value2\nList value1 value2 val", "ue3\n"),
     std::make_pair("Param2 value1 value2\nList value1 value2 value3", "\n")
 ));
+

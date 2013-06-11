@@ -800,7 +800,14 @@ static ib_status_t cfgparser_partial_match_maintenance(
 )
 {
     ib_status_t rc;
-    size_t buffer_remaining = buf + blen - cp->fsm.ts;
+    size_t buffer_remaining;
+    
+    if (buf + blen > cp->fsm.ts) {
+        buffer_remaining = buf + blen - cp->fsm.ts;
+    }
+    else {
+        buffer_remaining = cp->fsm.ts - buf + blen;
+    }
 
     /* Distance that the ts and te pointers will be shifted when
      * copied into the vector. */
