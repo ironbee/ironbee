@@ -600,13 +600,6 @@ static parse_directive_entry_t parse_directive_table[] = {
     }
 
     action cpbuf_append {
-        ib_cfg_log_trace(
-            cp,
-            "Text buffer is (len=%zu) (offset=%d): [[[[%.*s]]]]",
-            blen,
-            (int)(fsm_vars.p - buf),
-            (int)blen,
-            buf);
         if (cpbuf_append(cp, *fpc) != IB_OK) {
             return IB_EALLOC;
         }
