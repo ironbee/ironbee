@@ -140,9 +140,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
     cp->curr = cp->root;
 
     /* Build a buffer for aggregating tokens into. */
-    cp->buffer_sz = 1024;
-    cp->buffer_len = 0;
-    cp->buffer = ib_mpool_alloc(mp, cp->buffer_sz);
+    rc = ib_vector_create(&(cp->buffer), mp, IB_VECTOR_NEVER_SHRINK);
 
     /* Initialize the Ragel state machine state. */
     rc = ib_cfgparser_ragel_init(cp);

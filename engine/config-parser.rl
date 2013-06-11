@@ -75,25 +75,22 @@ static ib_status_t cpbuf_append(ib_cfgparser_t *cp, char c)
 {
     assert(cp != NULL);
     assert(cp->buffer != NULL);
-    assert (cp->buffer_sz >= cp->buffer_len);
 
-    if (cp->buffer_sz == cp->buffer_len) {
-        ib_cfg_log_error(cp, "Appending past the end of our buffer.");
+    /* Protect against run-away token aggregation. 1k should be enough? */
+    if (cp->buffer->len >= 1024) {
+        ib_cfg_log_error(
+            cp,
+            "Token size limit exceeded. Will not grow past %zu characters.",
+            cp->buffer->len);
+        ib_cfg_log_trace(
+            cp,
+            "Current buffer is [[[[%.*s]]]]",
+            (int) cp->buffer->len,
+            (char *)cp->buffer->data);
         return IB_EALLOC;
     }
 
-    cp->buffer[cp->buffer_len] = c;
-    ++(cp->buffer_len);
-
-    ib_cfg_log_trace(cp, "Current character is '%c'", c);
-    ib_cfg_log_trace(
-        cp,
-        "Token buffer is (len=%zu): [[[[%.*s]]]]",
-        cp->buffer_len,
-        (int)cp->buffer_len,
-        cp->buffer);
-
-    return IB_OK;
+    return ib_vector_append(cp->buffer, &c, 1);
 }
 
 /**
@@ -103,9 +100,15 @@ static ib_status_t cpbuf_append(ib_cfgparser_t *cp, char c)
 static void cpbuf_clear(ib_cfgparser_t *cp) {
     assert(cp != NULL);
     assert(cp->buffer != NULL);
+    ib_status_t rc;
 
-    cp->buffer_len = 0;
-    cp->buffer[0] = '\0';
+    rc = ib_vector_truncate(cp->buffer, 0);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "Failed to truncate token buffer: %s",
+            ib_status_to_string(rc));
+    }
 }
 
 /**
@@ -123,9 +126,9 @@ static void cpbuf_clear(ib_cfgparser_t *cp) {
  */
 static char *qstrdup(ib_cfgparser_t *cp, ib_mpool_t* mp)
 {
-    const char *start = cp->buffer;
-    const char *end = cp->buffer + cp->buffer_len - 1;
-    size_t len = cp->buffer_len;
+    const char *start = (const char *)cp->buffer->data;
+    const char *end = (const char *)(cp->buffer->data + cp->buffer->len - 1);
+    size_t len = cp->buffer->len;
 
     /* Adjust for quoted value. */
     if ((*start == '"') && (*end == '"') && (start < end)) {
@@ -485,6 +488,16 @@ static parse_directive_entry_t parse_directive_table[] = {
 %%{
     machine ironbee_config;
 
+    prepush {
+        if (cp->fsm.top >= 1023) {
+            ib_cfg_log_debug(cp, "Recursion too deep during parse.");
+            return IB_EOTHER;
+        }
+    }
+
+    postpop {
+    }
+
     action error_action {
         rc = IB_EOTHER;
         ib_cfg_log_error(
@@ -521,12 +534,12 @@ static parse_directive_entry_t parse_directive_table[] = {
 
     # Directives
     action start_dir {
-        if (cp->buffer_len == 0) {
+        if (cp->buffer->len == 0) {
             ib_cfg_log_error(cp, "Directive name is 0 length.");
             return IB_EOTHER;
         }
         cp->fsm.directive =
-            ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
+            ib_mpool_memdup_to_str(cp->mp, cp->buffer->data, cp->buffer->len);
         if (cp->fsm.directive == NULL) {
             return IB_EALLOC;
         }
@@ -601,12 +614,12 @@ static parse_directive_entry_t parse_directive_table[] = {
 
     # Blocks
     action start_block {
-        if (cp->buffer_len == 0) {
+        if (cp->buffer->len == 0) {
             ib_cfg_log_error(cp, "Block name is 0 length.");
             return IB_EOTHER;
         }
         cp->fsm.blkname =
-            ib_mpool_memdup_to_str(cp->mp, cp->buffer, cp->buffer_len);
+            ib_mpool_memdup_to_str(cp->mp, cp->buffer->data, cp->buffer->len);
         if (cp->fsm.blkname == NULL) {
             return IB_EALLOC;
         }
