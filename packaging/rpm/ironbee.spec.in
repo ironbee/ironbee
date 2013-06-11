@@ -161,8 +161,6 @@ fi
 %attr(0755,root,root) %{_libdir}/lua/*.lua
 %attr(0755,root,root) %{_libdir}/ironbee
 %attr(0755,root,root) %{_libexecdir}/ibmod_*
-%attr(0755,root,root) %{_libexecdir}/ts_ironbee.so
-%attr(0755,root,root) %{_libexecdir}/libloader.so
 %attr(0755,root,root) %{_libdir}/pkgconfig/*.*
 %attr(0644,root,root) %{_sysconfdir}/ironbee.conf.example
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/ironbee.conf
@@ -189,8 +187,8 @@ fi
 
 %if %{with trafficserver}
 %files trafficserver
-%attr(0755,root,root) %{_libdir}/ts_ironbee.so
-%attr(0755,root,root) %{_libdir}/libloader.so
+%attr(0755,root,root) %{_libexecdir}/ts_ironbee.so
+%attr(0755,root,root) %{_libexecdir}/libloader.so
 %endif
 
 %if %{with httpd}
