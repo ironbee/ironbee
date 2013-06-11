@@ -43,10 +43,10 @@ extern "C" {
  *
  * When using vectors, be aware that any change in the 
  * length of the contents of a vector may result in the pointer 
- * @c data changing.
+ * ib_vector_t::data changing.
  *
- * It is much safer to store offsets into the buffer than to store the 
- * absolute address of a string in @ref ib_vector_t @c -> @c data.
+ * It is safer to store offsets into the buffer than to store the 
+ * absolute address of a string in ib_vector_t::data.
  *
  * @{
  */
@@ -75,12 +75,13 @@ typedef struct ib_vector_t ib_vector_t;
  * Create a vector.
  *
  * This will create a child memory pool of @a mp for allocations.
- * When vector is resized another child will be created, allocate the
- * new vector data, and the original child will be released to the parent.
+ * When vector is resized another child will be created which is
+ * used to allocate the new vector data, and the original child
+ * is released to the parent.
  *
  * There is no destroy function as the memory pool @a mp will
  * handle everything. If it is required to release most of the
- * memory heald by the ib_vector_t, call ib_vector_truncate()
+ * memory heald by the @ref ib_vector_t, call ib_vector_truncate()
  * with a length of 0.
  *
  * @param[out] vector The out pointer.
@@ -90,7 +91,7 @@ typedef struct ib_vector_t ib_vector_t;
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on memory errors.
- * - IB_EUNKNOWN on locking failures.
+ * - IB_EUNKNOWN on memory pool lock failures.
  */
 ib_status_t DLL_PUBLIC ib_vector_create(
     ib_vector_t **vector,
@@ -102,17 +103,17 @@ ib_status_t DLL_PUBLIC ib_vector_create(
  * Set the size of the vector.
  *
  * If the length of the data in the vector is longer than
- * @a size, then it will be truncated to the new
+ * @a size, then the data segment will be truncated to the new
  * size. Any append operation (except append 0 data) will cause the
- * buffer to grow.
+ * data segment to grow.
  *
  * @param[in] vector The vector.
- * @param[in] size The size to set the buffer to.
+ * @param[in] size The size to set ib_vector_t::data to.
  *
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on memory errors.
- * - IB_EUNKNOWN on locking failures.
+ * - IB_EUNKNOWN on memory pool locking failures.
  */
 ib_status_t DLL_PUBLIC ib_vector_resize(
     ib_vector_t *vector,
@@ -120,16 +121,17 @@ ib_status_t DLL_PUBLIC ib_vector_resize(
 );
 
 /**
- * Truncate the vector.
+ * Truncate the vector unless IB_VECTOR_NEVER_SHRINK is set.
  *
- * If the new length of the vector is less than, or equal to 1/4 the current
- * buffer size, the buffer is reduced by 1/2.
+ * If the new length of the vector is less than, or equal to 1/2 the current
+ * buffer size, and the IB_VECTOR_NEVER_SHRINK option is not set,
+ * the ib_vector_t::data 's size is reduced by 1/2.
  *
  * @param[in] vector The vector.
  * @param[in] len The new length of the data.
  *
  * @returns
- * - IB_OK on success.
+ * - IB_OK on success or if IB_VECTOR_NEVER_SHRINK is set.
  * - IB_EINVAL If length is greater than size.
  */
 ib_status_t DLL_PUBLIC ib_vector_truncate(
@@ -141,8 +143,10 @@ ib_status_t DLL_PUBLIC ib_vector_truncate(
  * Append data to the end of the memory pool.
  *
  * The pool is doubled in size if the append operation would exceed the
- * end of the current allocation. While this is order O(n) for a
- * particular append operation, amortized appends are O(1).
+ * end of the current allocation. While this is order O(n) (where n is
+ * the number of elements in the entire list) for a
+ * particular append operation, all appends amortize to O(1) for each
+ * element inserted.
  *
  * @param[in] vector The vector to manipulate.
  * @param[in] data The data to append to the end of the vector.
@@ -151,10 +155,9 @@ ib_status_t DLL_PUBLIC ib_vector_truncate(
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on memory errors.
- * - IB_EINVAL if the resulting length of the vector would undeflow.
- * - IB_EINVAL if we cannot store the size of a buffer a power of 2 greater
- *             then @a data_length.
- * - IB_EUNKNOWN on locking failures.
+ * - IB_EINVAL @a data_length would result in a size that is too large to fit
+ *             in a @c size_t.
+ * - IB_EUNKNOWN on memory pool locking failures.
  */
 ib_status_t DLL_PUBLIC ib_vector_append(
     ib_vector_t *vector,

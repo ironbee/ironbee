@@ -79,7 +79,7 @@ TEST_F(VectorTest, Truncate) {
         ib_vector_append(m_vector, "hi", 2));
     ASSERT_EQ(IB_OK, ib_vector_truncate(m_vector, 0));
     ASSERT_EQ(0U, m_vector->len);
-    ASSERT_EQ(2U, m_vector->size);
+    ASSERT_EQ(0U, m_vector->size);
     ASSERT_EQ(
         IB_OK,
         ib_vector_append(m_vector, "hi", 2));

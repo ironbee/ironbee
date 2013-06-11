@@ -45,8 +45,6 @@ static const size_t DEFAULT_VECTOR_SIZE = 0;
  */
 static ib_status_t buffer_size(size_t length, size_t *size)
 {
-    long double ld;
-
     /* If the high-order bit of data_length is 1, we can't
      * represent a buffer length
      * len = 2^x such that l is greater than data_length. */
@@ -58,13 +56,14 @@ static ib_status_t buffer_size(size_t length, size_t *size)
         return 0;
     }
 
-    ld = ceil(log2l(length));
+    *size = 1;
 
-    if (ld > sizeof(*size) * 8) {
-        return IB_EINVAL;
+    /* Special thanks to Sean Anderson for this code (public domain):
+     * http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogObvious
+     * The loop conditions have been slightly altered for our purposes. */
+    for (; length > 0; length >>= 0x1) {
+        (*size)<<=1;
     }
-
-    *size = 1 << (int)ld;
 
     return IB_OK;
 }
@@ -93,9 +92,9 @@ ib_status_t ib_vector_create(
         return rc;
     }
 
-    v->data = ib_mpool_alloc(v->mp, DEFAULT_VECTOR_SIZE);
-    v->size = DEFAULT_VECTOR_SIZE;
-    v->len  = 0;
+    v->data  = ib_mpool_alloc(v->mp, DEFAULT_VECTOR_SIZE);
+    v->size  = DEFAULT_VECTOR_SIZE;
+    v->len   = 0;
     v->flags = flags;
 
     *vector = v;
@@ -118,7 +117,7 @@ ib_status_t ib_vector_resize(
         return IB_OK;
     }
 
-    if (vector->flags & IB_VECTOR_NEVER_SHRINK && vector->size > size) {
+    if ((vector->flags & IB_VECTOR_NEVER_SHRINK) && (vector->size > size)) {
         return IB_OK;
     }
 
@@ -132,6 +131,9 @@ ib_status_t ib_vector_resize(
 
     /* Allocate and copy data. */
     new_data = ib_mpool_alloc(new_mp, size);
+    if (new_data == NULL) {
+        return IB_EALLOC;
+    }
     memcpy(new_data, vector->data, size);
 
     /* Destroy old data. */
@@ -202,14 +204,8 @@ ib_status_t ib_vector_append(
     size_t vector_size = 0;
     size_t new_len = data_length + vector->len;
 
+    /* Check for overflow. */
     if ( vector->size + data_length < vector->size ) {
-        return IB_EINVAL;
-    }
-
-    /* If the high-order bit of data_length is 1, we can't
-     * represent a buffer length
-     * len = 2^x such that l is greater than data_length. */
-    if (data_length & ~( ~0 >> 1 )) {
         return IB_EINVAL;
     }
 
