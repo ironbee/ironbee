@@ -62,3 +62,62 @@ TEST_F(LuaJsonTest, CallParseString) {
     ASSERT_EQ(0, lua_pcall(L, 1, 1, 0));
 }
 
+TEST_F(LuaJsonTest, ComplexMap) {
+    lua_getglobal(L, "ibjson");
+    ASSERT_TRUE(lua_istable(L, -1));
+    lua_getfield(L, -1, "parse_string");
+    ASSERT_TRUE(lua_isfunction(L, -1));
+    lua_replace(L, -2);
+    lua_pushstring(L, "{ \"a\" : 1, \"b\" : { \"c\" : \"hi\" } }");
+    ASSERT_EQ(0, lua_pcall(L, 1, 1, 0));
+    ASSERT_TRUE(lua_istable(L, -1));
+
+    /* Check "a" record in map. */
+    lua_getfield(L, -1, "a");
+    ASSERT_TRUE(lua_isnumber(L, -1));
+    ASSERT_EQ(1, lua_tonumber(L, -1));
+    lua_pop(L, 1);
+
+    /* Check "b" record in map. */
+    lua_getfield(L, -1, "b");
+    ASSERT_TRUE(lua_istable(L, -1));
+
+    /* Check "b.c" (c record in map b). */
+    lua_getfield(L, -1, "c");
+    ASSERT_TRUE(lua_isstring(L, -1));
+    ASSERT_STREQ("hi", lua_tostring(L, -1));
+    lua_pop(L, 2);
+}
+
+TEST_F(LuaJsonTest, ComplexArray) {
+    lua_getglobal(L, "ibjson");
+    ASSERT_TRUE(lua_istable(L, -1));
+    lua_getfield(L, -1, "parse_string");
+    ASSERT_TRUE(lua_isfunction(L, -1));
+    lua_replace(L, -2);
+    lua_pushstring(L, "[ \"a\",  \"b\", { \"c\" : \"hi\" } ]");
+    ASSERT_EQ(0, lua_pcall(L, 1, 1, 0));
+    ASSERT_TRUE(lua_istable(L, -1));
+    ASSERT_EQ(3U, lua_objlen(L, -1));
+
+    lua_pushnumber(L, 1);
+    lua_gettable(L, -2);
+    ASSERT_TRUE(lua_isstring(L, -1));
+    ASSERT_STREQ("a", lua_tostring(L, -1));
+    lua_pop(L, 1);
+
+    lua_pushnumber(L, 2);
+    lua_gettable(L, -2);
+    ASSERT_TRUE(lua_isstring(L, -1));
+    ASSERT_STREQ("b", lua_tostring(L, -1));
+    lua_pop(L, 1);
+
+    lua_pushnumber(L, 3);
+    lua_gettable(L, -2);
+    ASSERT_TRUE(lua_istable(L, -1));
+    lua_getfield(L, -1, "c");
+    ASSERT_TRUE(lua_isstring(L, -1));
+    ASSERT_STREQ("hi", lua_tostring(L, -1));
+    lua_pop(L, 2);
+}
+
