@@ -4320,6 +4320,12 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL
     ),
 
+    IB_DIRMAP_INIT_PARAM1(
+        "BlockingMethod",
+        core_dir_param1,
+        NULL
+    ),
+
     /* Logging */
     IB_DIRMAP_INIT_PARAM1(
         "LogLevel",
