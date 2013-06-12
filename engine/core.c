@@ -4807,8 +4807,8 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
-    /* Initialize the managed collection logic */
-    rc = ib_managed_collection_init(ib);
+    /* Initialize the collection manager */
+    rc = ib_collection_manager_init(ib);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to initialize managed collections: %s",
                      ib_status_to_string(rc));
@@ -4861,8 +4861,8 @@ ib_status_t core_finish(
                      ib_status_to_string(rc));
     }
 
-    /* Shut down the managed collection logic */
-    rc = ib_managed_collection_finish(ib);
+    /* Shut down the collection manager */
+    rc = ib_collection_manager_finish(ib);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to initialize managed collections: %s",
                      ib_status_to_string(rc));

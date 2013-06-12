@@ -183,6 +183,28 @@ typedef ib_status_t (* ib_collection_manager_persist_fn_t)(
     void                          *persist_data);
 
 /**
+ * Initialize the collection manager for an IronBee engine
+ *
+ * @param[in] ib IronBee engine
+ *
+ * @returns
+ *   - IB_OK on success
+ */
+ib_status_t ib_collection_manager_init(
+    ib_engine_t *ib);
+
+/**
+ * Shutdown collection manager for an IronBee engine
+ *
+ * @param[in] ib IronBee engine
+ *
+ * @returns
+ *   - IB_OK on success
+ */
+ib_status_t ib_collection_manager_finish(
+    ib_engine_t *ib);
+
+/**
  * Register a managed collection handler
  *
  * The register function (@a register_fn) will be invoked during the

@@ -27,25 +27,6 @@
 
 #include <ironbee/collection_manager.h>
 
-
-/**
- * A collection manager is a collection of functions and related data that can
- * be used to initialize and/or persist a TX data collection.
- */
-struct ib_collection_manager_t {
-    const char            *name;           /**< Collection manager name */
-    const char            *uri_scheme;     /**< URI scheme to ID and strip off*/
-    const ib_module_t     *module;         /**< The registering module */
-    ib_collection_manager_register_fn_t register_fn;/**< Register function */
-    void                  *register_data;  /**< Register function data */
-    ib_collection_manager_unregister_fn_t unregister_fn;/**< Unregister func */
-    void                  *unregister_data;/**< Unregister function data */
-    ib_collection_manager_populate_fn_t populate_fn;  /**< Populate function */
-    void                  *populate_data;  /**< Populate function data */
-    ib_collection_manager_persist_fn_t  persist_fn;   /**< Persist function */
-    void                  *persist_data;   /**< Persist function data */
-};
-
 /**
  * A managed collection is a collection in TX data that can be initialized
  * and/or persisted by a collection manager.
@@ -75,28 +56,6 @@ struct ib_managed_collection_inst_t {
     const ib_managed_collection_t *collection;      /**< Collection object */
 };
 typedef struct ib_managed_collection_inst_t ib_managed_collection_inst_t;
-
-/**
- * Initialize managed collection logic.
- *
- * @param[in,out] ib IronBee engine
- *
- * @returns
- *   - IB_OK on success
- */
-ib_status_t ib_managed_collection_init(
-    ib_engine_t *ib);
-
-/**
- * Shutdown managed collection logic
- *
- * @param[in,out] ib IronBee engine
- *
- * @returns
- *   - IB_OK on success
- */
-ib_status_t ib_managed_collection_finish(
-    ib_engine_t *ib);
 
 /**
  * Create a managed collection object.
