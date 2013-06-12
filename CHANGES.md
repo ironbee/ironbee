@@ -19,6 +19,15 @@ IronBee v0.8.0
   composition and reuse easier and provide performance benefits.  See
   `predicate/predicate.md` for an overview.
 
+**Engine Manager**
+
+* An engine manager has been added.  The engine manager provides the ability
+  for server plugins to easily handle reconfigurations.  Upon receiving
+  notification of the reconfigure event, the server asks the engine manager 
+  to create a new IronBee engine.  If successful, the manager will then make
+  the new engine current, and will destroy old engines once they are no longer
+  used.
+
 **Engine**
 
 * Operators have been overhauled.  They are now entirely independent of the

@@ -6,6 +6,8 @@ SUBDIRS = tests
 EXTRA_DIST =  config-parser.rl \
               engine_private.h  \
 	      config_private.h \
+              engine_manager_private.h  \
+              engine_manager_log_private.h  \
               state_notify_private.h \
               rule_engine_private.h \
               rule_logger_private.h \
@@ -39,6 +41,8 @@ libironbee_la_SOURCES = engine.c data.c \
                         rule_logger.c \
                         rule_engine.c \
                         state_notify.c \
+                        engine_manager.c \
+                        engine_manager_log.c \
                         config-parser.h \
                         $(top_builddir)/lua/ironbee.h
 libironbee_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) $(PCRE_CFLAGS)
