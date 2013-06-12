@@ -800,14 +800,7 @@ static ib_status_t cfgparser_partial_match_maintenance(
 )
 {
     ib_status_t rc;
-    size_t buffer_remaining;
-    
-    if (buf + blen > cp->fsm.ts) {
-        buffer_remaining = buf + blen - cp->fsm.ts;
-    }
-    else {
-        buffer_remaining = cp->fsm.ts - buf + blen;
-    }
+    const size_t buffer_remaining = cp->fsm.te - cp->fsm.ts;
 
     /* Distance that the ts and te pointers will be shifted when
      * copied into the vector. */
@@ -817,7 +810,6 @@ static ib_status_t cfgparser_partial_match_maintenance(
     if (rc != IB_OK) {
         return rc;
     }
-
 
     rc = ib_vector_append(cp->fsm.ts_buffer, cp->fsm.ts, buffer_remaining);
     if (rc != IB_OK) {

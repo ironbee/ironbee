@@ -734,14 +734,7 @@ static ib_status_t cfgparser_partial_match_maintenance(
 )
 {
     ib_status_t rc;
-    size_t buffer_remaining;
-    
-    if (buf + blen > cp->fsm.ts) {
-        buffer_remaining = buf + blen - cp->fsm.ts;
-    }
-    else {
-        buffer_remaining = cp->fsm.ts - buf + blen;
-    }
+    const size_t buffer_remaining = cp->fsm.te - cp->fsm.ts;
 
     /* Distance that the ts and te pointers will be shifted when
      * copied into the vector. */
@@ -751,7 +744,6 @@ static ib_status_t cfgparser_partial_match_maintenance(
     if (rc != IB_OK) {
         return rc;
     }
-
 
     rc = ib_vector_append(cp->fsm.ts_buffer, cp->fsm.ts, buffer_remaining);
     if (rc != IB_OK) {
@@ -850,16 +842,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 
     /* Access all ragel state variables via structure. */
     
-#line 919 "config-parser.rl"
+#line 911 "config-parser.rl"
     
-#line 920 "config-parser.rl"
+#line 912 "config-parser.rl"
     
-#line 921 "config-parser.rl"
+#line 913 "config-parser.rl"
     
-#line 922 "config-parser.rl"
+#line 914 "config-parser.rl"
 
     
-#line 863 "config-parser.c"
+#line 855 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -880,7 +872,7 @@ _resume:
 #line 1 "NONE"
 	{ cp->fsm.ts = ( fsm_vars.p);}
 	break;
-#line 884 "config-parser.c"
+#line 876 "config-parser.c"
 		}
 	}
 
@@ -1374,7 +1366,7 @@ _eof_trans:
         }
     { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 24; goto _again;}} }}
 	break;
-#line 1378 "config-parser.c"
+#line 1370 "config-parser.c"
 		}
 	}
 
@@ -1387,7 +1379,7 @@ _again:
 #line 1 "NONE"
 	{ cp->fsm.ts = 0;}
 	break;
-#line 1391 "config-parser.c"
+#line 1383 "config-parser.c"
 		}
 	}
 
@@ -1500,7 +1492,7 @@ _again:
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
-#line 1504 "config-parser.c"
+#line 1496 "config-parser.c"
 		}
 	}
 	}
@@ -1508,7 +1500,7 @@ _again:
 	_out: {}
 	}
 
-#line 924 "config-parser.rl"
+#line 916 "config-parser.rl"
 
     assert(tmp_str == NULL && "tmp_str must be cleared after every use");
 
