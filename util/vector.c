@@ -48,7 +48,7 @@ static ib_status_t buffer_size(size_t length, size_t *size)
     /* If the high-order bit of data_length is 1, we can't
      * represent a buffer length
      * len = 2^x such that l is greater than data_length. */
-    if (length & ~( ~0 >> 1 ) ) {
+    if (length & ~( ~0U >> 1U ) ) {
         return IB_EINVAL;
     }
 

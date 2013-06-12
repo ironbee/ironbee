@@ -97,3 +97,28 @@ TEST_F(VectorTest, Resize) {
         IB_OK,
         ib_vector_append(m_vector, "hi", 2));
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// Test many sizes that we should not allocate.
+/////////////////////////////////////////////////////////////////////////////
+
+class VectorAppendFailsTest :
+   public VectorTest,
+   public ::testing::WithParamInterface<size_t>
+{ };
+
+TEST_P(VectorAppendFailsTest, IB_EINVAL) {
+    const char *c = "This buffer is never read.";
+    ASSERT_EQ(IB_EINVAL, ib_vector_append(m_vector, c, GetParam()));
+}
+
+INSTANTIATE_TEST_CASE_P(
+    TooBig,
+    VectorAppendFailsTest,
+    ::testing::Values(
+        static_cast<size_t>(-1),
+        static_cast<size_t>(-8096),
+        static_cast<size_t>(~0U),
+        static_cast<size_t>(((~0U) >> 1U)+1U)
+    )
+);
