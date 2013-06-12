@@ -3437,7 +3437,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             return rc;
         }
 
-        if (strncasecmp(p1, "close", sizeof("close"))) {
+        if (strncasecmp(p1, "close", sizeof("close")) == 0) {
             corecfg->block_mode = IB_BLOCK_MODE_CLOSE;
         }
         /* The only argument is status=<int>.
