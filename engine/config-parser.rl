@@ -757,7 +757,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         WS      $eof(error_action);
         CONT    $newline
                 $eof(error_action);
-	EOL     $newline
+	    EOL     $newline
                 $eof(error_action);
         token   $cpbuf_append
                 $!error_action

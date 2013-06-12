@@ -340,6 +340,15 @@ INSTANTIATE_TEST_CASE_P(
     "List    value1 value2 value3\n"
     "OpFlags Flag1\n"
     "<Sblk1 MyParam1>\n"
+    "</Sblk1>\n",
+
+    "LogLevel TRACE\n"
+    "Param1  value1\n"
+    "OnOff   on\n"
+    "Param2  value1 value2\n"
+    "List    value1 \\\nvalue2 \\\nvalue3\n"
+    "OpFlags Flag1\n"
+    "<Sblk1 MyParam1>\n"
     "</Sblk1>\n"
 ));
 
