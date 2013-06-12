@@ -146,7 +146,7 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
     }
     
     connp->in_tx->request_auth_password = bstr_dup_ex(decoded, i + 1, bstr_len(decoded) - i - 1);
-    if (connp->in_tx->request_auth_password) {
+    if (connp->in_tx->request_auth_password == NULL) {
         bstr_free(decoded);
         bstr_free(connp->in_tx->request_auth_username);
         return HTP_ERROR;
