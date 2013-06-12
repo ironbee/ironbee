@@ -144,7 +144,7 @@ static char *qstrdup(ib_cfgparser_t *cp, ib_mpool_t* mp)
  */
 typedef ib_status_t(*parse_directive_fn_t)(
     ib_cfgparser_t *cp,
-    ib_mpool_t* tmp_mp,
+    ib_mpool_t* temp_mp,
     ib_cfgparser_node_t *node);
 
 /**
@@ -215,6 +215,134 @@ static ib_status_t detect_file_loop(
 }
 
 /**
+ * Log the real path of the include file.
+ *
+ * Log the real path of the file we are going to be including.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC Allocation error.
+ */
+static ib_status_t include_parse_directive_impl_log_realpath(
+    ib_cfgparser_t *cp,
+    ib_mpool_t *local_mp,
+    const char *incfile,
+    bool if_exists
+)
+{
+    char *real;
+
+    real = ib_mpool_alloc(local_mp, PATH_MAX);
+    if (real == NULL) {
+        ib_cfg_log_error(
+            cp,
+            "Failed to allocate path buffer of size %d",
+            PATH_MAX);
+        return IB_EALLOC;
+    }
+
+    /* Convert to the real path. Failure is OK. We'll use the original.
+     * NOTE: We do not error report here. Error reporting is handled 
+     *       when we try to access the file. */
+    real = realpath(incfile, real);
+    if (real == NULL) {
+        ib_cfg_log_info(cp, "Including file \"%s\"", incfile);
+    }
+    else if (strcmp(real, incfile) != 0) {
+        ib_cfg_log_info(
+            cp,
+            "Including file \"%s\" using real path \"%s\"",
+            incfile,
+            real);
+    }
+    else {
+        ib_cfg_log_info(cp, "Including file \"%s\"", incfile);
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Check the file for inclusion and report useful error messages on failure.
+ * @param[in] cp Configuration parser.
+ * @param[in] incfile File to include.
+ * @param[in] if_exists Choose the error message and log level by 
+ *            whether the file must exist or may be missing.
+ * @returns
+ * - IB_OK on success.
+ * - IB_ENOENT on failure.
+ */
+static ib_status_t include_parse_directive_impl_chk_access(
+    ib_cfgparser_t *cp,
+    const char *incfile,
+    bool if_exists
+) {
+    struct stat statbuf;
+    int statval;
+
+    /* Check if we can access the file. */
+    if (access(incfile, R_OK) != 0) {
+        if (if_exists) {
+            ib_cfg_log(
+                cp,
+                (errno == ENOENT) ? IB_LOG_DEBUG : IB_LOG_NOTICE,
+                "Ignoring include file \"%s\": %s",
+                incfile,
+                strerror(errno));
+            return IB_OK;
+        }
+        else {
+            ib_cfg_log_error(
+                cp,
+                "Cannot access included file \"%s\": %s",
+                incfile,
+                strerror(errno));
+            return IB_ENOENT;
+        }
+
+        assert(0 && "This line is never reached.");
+    }
+
+    /* Stat the file to see if we can read it. */
+    statval = stat(incfile, &statbuf);
+    if (statval != 0) {
+        if (if_exists) {
+            ib_cfg_log(
+                cp, (errno == ENOENT) ? IB_LOG_DEBUG : IB_LOG_NOTICE,
+                "Ignoring include file \"%s\": %s",
+                incfile,
+                strerror(errno));
+            return IB_OK;
+        }
+
+        ib_cfg_log_error(
+            cp,
+            "Failed to stat include file \"%s\": %s",
+            incfile,
+            strerror(errno));
+        return IB_ENOENT;
+    }
+    /* Check if this is a regular file. */
+    if (S_ISREG(statbuf.st_mode) == 0) {
+        if (if_exists) {
+            ib_cfg_log_info(
+                cp,
+                "Ignoring include file \"%s\": Not a regular file",
+                incfile);
+            return IB_OK;
+        }
+
+        ib_cfg_log_error(
+            cp,
+	        "Included file \"%s\" is not a regular file",
+            incfile);
+        return IB_ENOENT;
+    }
+
+    return IB_OK;
+}
+
+/**
  * Implementation of "Include" and "IncludeIfExists" parse directives.
  * param[in] cp Configuration parser.
  * param[in] mp Memory pool to use.
@@ -227,7 +355,7 @@ static ib_status_t detect_file_loop(
  */
 static ib_status_t include_parse_directive_impl(
     ib_cfgparser_t *cp,
-    ib_mpool_t *tmp_mp,
+    ib_mpool_t *temp_mp,
     ib_cfgparser_node_t *node,
     bool if_exists
 ) {
@@ -238,12 +366,8 @@ static ib_status_t include_parse_directive_impl(
     assert(node->params != NULL);
     assert(node->file != NULL);
 
-    struct stat statbuf;
     ib_status_t rc;
-    ib_mpool_t *mp = cp->mp;
-    int statval;
     char *incfile;
-    char *real;
     const char* pval;
     const ib_list_node_t *list_node;
 
@@ -255,7 +379,7 @@ static ib_status_t include_parse_directive_impl(
     ib_cfgparser_node_t *current_node;
     ib_mpool_t *local_mp = NULL;
 
-    rc = ib_mpool_create(&local_mp, "local_mp", tmp_mp);
+    rc = ib_mpool_create(&local_mp, "local_mp", temp_mp);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to create local memory pool.");
         goto cleanup;
@@ -281,9 +405,9 @@ static ib_status_t include_parse_directive_impl(
     pval = (const char*) ib_list_node_data_const(list_node);
     assert(pval != NULL);
 
-    if_exists = strcasecmp("IncludeIfExists", node->directive) == 0;
-
-    incfile = ib_util_relative_file(mp, node->file, pval);
+    /* If parsing file "path/ironbee.conf" and we include "other.conf",
+     * this will generate the incfile value "path/other.conf". */
+    incfile = ib_util_relative_file(local_mp, node->file, pval);
     if (incfile == NULL) {
         ib_cfg_log_error(cp, "Failed to resolve included file \"%s\": %s",
                          node->file, strerror(errno));
@@ -292,114 +416,27 @@ static ib_status_t include_parse_directive_impl(
         goto cleanup;
     }
 
-    real = ib_mpool_alloc(local_mp, PATH_MAX);
-    if (real == NULL) {
-        ib_cfg_log_error(
-            cp,
-            "Failed to allocate path buffer of size %d",
-            PATH_MAX);
-        rc = IB_EALLOC;
+    /* Log the realpath of incfile to aid in configuring IB accurately. */
+    rc = include_parse_directive_impl_log_realpath(
+        cp,
+        local_mp,
+        incfile,
+        if_exists);
+    if (rc != IB_OK) {
         goto cleanup;
     }
-    real = realpath(incfile, real);
-    if (real == NULL) {
-        if (!if_exists) {
-            ib_cfg_log_error(cp,
-                             "Failed to find real path of included file "
-                             "(using original \"%s\"): %s",
-                             incfile,
-                             strerror(errno));
-        }
-        else {
-            ib_cfg_log_warning(
-                cp,
-                "Failed to normalize path. "
-                "(using raw include path \"%s\"): %s",
-                incfile,
-                strerror(errno));
-        }
 
-        real = incfile;
-    }
-    else if (strcmp(real, incfile) != 0) {
-        ib_cfg_log_info(
-            cp,
-            "Real path of included file \"%s\" is \"%s\"",
-            incfile,
-            real);
-    }
-    else {
-        ib_cfg_log_info(
-            cp,
-            "Including file \"%s\"",
-            incfile);
-    }
-
+    /* Prevent include loops. */
     rc = detect_file_loop(cp, node);
     if (rc != IB_OK) {
         goto cleanup;
     }
 
-    if (access(incfile, R_OK) != 0) {
-        if (if_exists) {
-            ib_cfg_log(
-                cp, (errno == ENOENT) ? IB_LOG_DEBUG : IB_LOG_NOTICE,
-                "Ignoring include file \"%s\": %s",
-                incfile,
-                strerror(errno));
-            rc = IB_OK;
-            goto cleanup;
-        }
-
-        ib_cfg_log_error(
-            cp,
-            "Cannot access included file \"%s\": %s",
-            incfile,
-            strerror(errno));
-        rc = IB_ENOENT;
+    /* Check (and log) access problems in a helpful way for the user. */
+    rc = include_parse_directive_impl_chk_access(cp, incfile, if_exists);
+    if (rc != IB_OK) {
         goto cleanup;
     }
-
-    statval = stat(incfile, &statbuf);
-    if (statval != 0) {
-        if (if_exists) {
-            ib_cfg_log(
-                cp, (errno == ENOENT) ? IB_LOG_DEBUG : IB_LOG_NOTICE,
-                "Ignoring include file \"%s\": %s",
-                incfile,
-                strerror(errno));
-            rc = IB_OK;
-            goto cleanup;
-        }
-
-        ib_cfg_log_error(
-            cp,
-            "Failed to stat include file \"%s\": %s",
-            incfile,
-            strerror(errno));
-        rc = IB_ENOENT;
-        goto cleanup;
-    }
-
-    if (S_ISREG(statbuf.st_mode) == 0) {
-        if (if_exists) {
-            ib_cfg_log_info(
-                cp,
-                "Ignoring include file \"%s\": Not a regular file",
-                incfile);
-            rc = IB_OK;
-            goto cleanup;
-        }
-
-        ib_cfg_log_error(
-            cp,
-	    "Included file \"%s\" is not a regular file",
-            incfile);
-        rc = IB_ENOENT;
-        goto cleanup;
-    }
-
-    ib_cfg_log_debug(cp, "Including '%s'", incfile);
 
     /* Make the given node the current node for the file inclusion. */
     current_node = cp->curr;
@@ -419,7 +456,7 @@ static ib_status_t include_parse_directive_impl(
     rc = ib_cfgparser_ragel_init(cp);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Could not initialize new parser.");
-        return rc;
+        goto cleanup;
     }
 
     rc = ib_cfgparser_parse_private(cp, incfile, false);
@@ -448,24 +485,24 @@ cleanup:
 //! Proxy to include_parse_directive_impl with if_exists = true.
 static ib_status_t include_if_exists_parse_directive(
     ib_cfgparser_t *cp,
-    ib_mpool_t *tmp_mp,
+    ib_mpool_t *temp_mp,
     ib_cfgparser_node_t *node
 ) {
-    return include_parse_directive_impl(cp, tmp_mp, node, true);
+    return include_parse_directive_impl(cp, temp_mp, node, true);
 }
 
 //! Proxy to include_parse_directive_impl with if_exists = false.
 static ib_status_t include_parse_directive(
     ib_cfgparser_t *cp,
-    ib_mpool_t *tmp_mp,
+    ib_mpool_t *temp_mp,
     ib_cfgparser_node_t *node
 ) {
-    return include_parse_directive_impl(cp, tmp_mp, node, false);
+    return include_parse_directive_impl(cp, temp_mp, node, false);
 }
 
 static ib_status_t loglevel_parse_directive(
     ib_cfgparser_t *cp,
-    ib_mpool_t* tmp_mp,
+    ib_mpool_t* temp_mp,
     ib_cfgparser_node_t *node
 ) {
     assert(cp != NULL);
