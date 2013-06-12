@@ -307,13 +307,16 @@ static ib_status_t include_parse_directive_impl(
             ib_cfg_log_error(cp,
                              "Failed to find real path of included file "
                              "(using original \"%s\"): %s",
-                             incfile, strerror(errno));
+                             incfile,
+                             strerror(errno));
         }
         else {
             ib_cfg_log_warning(
                 cp,
-                "Failed to normalize path. Using raw include path: %s",
-                incfile);
+                "Failed to normalize path. "
+                "(using raw include path \"%s\"): %s",
+                incfile,
+                strerror(errno));
         }
 
         real = incfile;
