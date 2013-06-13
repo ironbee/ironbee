@@ -261,7 +261,7 @@ ib_status_t ib_cfgparser_parse_private(
     if (rc != IB_OK) {
         goto cleanup_create_node;
     }
-    node->file = file;
+    node->file = ib_mpool_strdup(cp->mp, file);
     node->line = 1;
     node->type = IB_CFGPARSER_NODE_FILE;
     node->directive = "[file]";
