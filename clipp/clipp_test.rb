@@ -226,9 +226,9 @@ public
             "which" => 1,
             "connection_event" => {
               "local_ip" => "1.2.3.4",
-              "local_port" => 1000,
+              "local_port" => 80,
               "remote_ip" => "5.6.7.8",
-              "remote_port" => 80
+              "remote_port" => 1000
             }
           }
         ],
