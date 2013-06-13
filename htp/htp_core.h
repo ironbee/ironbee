@@ -181,7 +181,7 @@ enum htp_transfer_coding_t {
     HTP_CODING_CHUNKED = 3,
 
     /** We could not recognize the encoding. */
-    HTP_CODING_UNRECOGNIZED = 4
+    HTP_CODING_INVALID = 4
 };
 
 enum htp_file_source_t {
