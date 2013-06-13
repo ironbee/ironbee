@@ -912,7 +912,7 @@ TEST_F(ConnectionParsing, InvalidRequest2) {
 }
 
 TEST_F(ConnectionParsing, InvalidRequest3) {
-    int rc = test_run(home, "38-invalid-request-3.t", cfg, &connp);
+    int rc = test_run(home, "38-invalid-request-3-invalid-t-e.t", cfg, &connp);
     ASSERT_LT(rc, 0);
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);

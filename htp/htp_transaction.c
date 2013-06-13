@@ -365,7 +365,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         //      presumably should have the same effect as T-E header absence. However, Apache
         //      (2.2.22 on Ubuntu 12.04 LTS) instead errors out with "Unknown Transfer-Encoding: identity".
         //      And it behaves strangely, too, sending a 501 and proceeding to process the request
-        //      (e.g., PHP is run), but without the body.
+        //      (e.g., PHP is run), but without the body. It then closes the connection.
         if (bstr_cmp_c(te->value, "chunked") != 0) {
             // Invalid T-E header value.
             tx->flags |= HTP_REQUEST_INVALID_T_E;
