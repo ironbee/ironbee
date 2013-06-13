@@ -528,195 +528,226 @@ static parse_directive_entry_t parse_directive_table[] = {
 };
 
 
-#line 794 "config-parser.rl"
+#line 798 "config-parser.rl"
 
 
 
 #line 536 "config-parser.c"
 static const char _ironbee_config_actions[] = {
 	0, 1, 0, 1, 3, 1, 6, 1, 
-	10, 1, 12, 1, 13, 1, 14, 1, 
-	18, 1, 25, 1, 32, 1, 40, 1, 
-	43, 1, 47, 1, 48, 1, 49, 1, 
-	52, 1, 53, 1, 55, 2, 0, 37, 
-	2, 0, 46, 2, 1, 21, 2, 1, 
-	22, 2, 2, 28, 2, 2, 29, 2, 
-	3, 6, 2, 3, 34, 2, 3, 42, 
-	2, 3, 51, 2, 4, 54, 2, 6, 
-	3, 2, 7, 35, 2, 7, 36, 2, 
-	8, 27, 2, 9, 44, 2, 9, 45, 
-	2, 12, 29, 2, 15, 6, 3, 0, 
-	9, 44, 3, 0, 9, 45, 3, 1, 
-	5, 11, 3, 3, 5, 20, 3, 3, 
-	19, 1, 3, 3, 26, 2, 3, 3, 
-	33, 7, 3, 3, 41, 9, 3, 4, 
-	3, 50, 3, 9, 0, 45, 3, 15, 
-	6, 3, 3, 15, 6, 17, 3, 15, 
-	6, 24, 3, 15, 6, 31, 3, 15, 
-	6, 39, 4, 1, 5, 10, 11, 4, 
-	1, 5, 11, 21, 4, 1, 5, 11, 
-	22, 4, 15, 3, 6, 17, 4, 15, 
-	3, 6, 24, 4, 15, 3, 6, 31, 
-	4, 15, 3, 6, 39, 4, 15, 3, 
-	16, 6, 4, 15, 3, 23, 6, 4, 
-	15, 3, 30, 6, 4, 15, 3, 38, 
-	6, 5, 1, 5, 10, 11, 22
+	10, 1, 12, 1, 13, 1, 15, 1, 
+	18, 1, 22, 1, 23, 1, 25, 1, 
+	29, 1, 30, 1, 31, 1, 35, 1, 
+	36, 1, 39, 1, 41, 1, 42, 1, 
+	43, 1, 44, 1, 47, 1, 48, 1, 
+	50, 2, 0, 35, 2, 0, 41, 2, 
+	1, 21, 2, 2, 28, 2, 3, 6, 
+	2, 3, 19, 2, 3, 26, 2, 3, 
+	32, 2, 3, 33, 2, 3, 37, 2, 
+	3, 38, 2, 3, 45, 2, 3, 46, 
+	2, 4, 49, 2, 6, 3, 2, 7, 
+	34, 2, 8, 27, 2, 9, 40, 2, 
+	12, 29, 2, 12, 30, 2, 13, 14, 
+	2, 16, 6, 3, 0, 9, 40, 3, 
+	1, 5, 11, 3, 3, 5, 20, 3, 
+	3, 19, 1, 3, 3, 26, 2, 3, 
+	3, 32, 7, 3, 3, 37, 9, 3, 
+	4, 3, 45, 3, 9, 0, 40, 3, 
+	16, 3, 6, 3, 16, 6, 3, 3, 
+	16, 6, 17, 3, 16, 6, 24, 4, 
+	1, 5, 10, 11, 4, 1, 5, 11, 
+	21, 5, 1, 5, 10, 11, 22, 5, 
+	1, 5, 10, 11, 23
 };
 
 static const unsigned char _ironbee_config_key_offsets[] = {
-	0, 0, 0, 1, 2, 4, 4, 5, 
-	7, 7, 9, 9, 11, 11, 13, 13, 
-	14, 16, 16, 17, 19, 28, 36, 38, 
-	46, 55, 63, 63, 71, 80, 88, 88, 
-	96, 105, 113, 121, 129, 138, 146, 154
+	0, 0, 2, 3, 4, 6, 8, 9, 
+	11, 13, 15, 19, 21, 23, 25, 27, 
+	29, 33, 35, 37, 38, 40, 42, 43, 
+	45, 54, 62, 64, 67, 69, 77, 86, 
+	94, 96, 99, 99, 101, 103, 111, 120, 
+	128, 130, 133, 133, 135, 137, 145, 154, 
+	162, 164, 167, 175, 184, 192, 194, 197
 };
 
 static const char _ironbee_config_trans_keys[] = {
-	10, 47, 10, 13, 10, 34, 92, 10, 
-	13, 34, 92, 10, 13, 10, 10, 13, 
-	10, 10, 13, 9, 10, 13, 32, 34, 
-	35, 60, 62, 92, 13, 32, 34, 60, 
-	62, 92, 9, 10, 10, 13, 9, 10, 
-	13, 32, 34, 60, 62, 92, 9, 10, 
-	13, 32, 34, 35, 60, 62, 92, 13, 
-	32, 34, 60, 62, 92, 9, 10, 9, 
+	10, 13, 10, 47, 10, 13, 10, 13, 
+	10, 34, 92, 10, 13, 34, 92, 10, 
+	13, 34, 92, 10, 13, 10, 13, 34, 
+	92, 10, 13, 34, 92, 10, 13, 34, 
+	92, 10, 13, 10, 13, 10, 10, 13, 
+	10, 13, 10, 10, 13, 9, 10, 13, 
+	32, 34, 35, 60, 62, 92, 13, 32, 
+	34, 60, 62, 92, 9, 10, 10, 92, 
+	10, 13, 92, 10, 13, 9, 10, 13, 
+	32, 34, 60, 62, 92, 9, 10, 13, 
+	32, 34, 35, 60, 62, 92, 13, 32, 
+	34, 60, 62, 92, 9, 10, 10, 92, 
+	10, 13, 92, 34, 92, 34, 92, 9, 
 	10, 13, 32, 34, 60, 62, 92, 9, 
 	10, 13, 32, 34, 35, 60, 62, 92, 
 	13, 32, 34, 60, 62, 92, 9, 10, 
-	9, 10, 13, 32, 34, 60, 62, 92, 
-	9, 10, 13, 32, 60, 62, 92, 34, 
-	35, 13, 32, 34, 60, 62, 92, 9, 
-	10, 13, 32, 34, 60, 62, 92, 9, 
-	10, 9, 10, 13, 32, 34, 60, 62, 
+	10, 92, 10, 13, 92, 34, 92, 34, 
+	92, 9, 10, 13, 32, 34, 60, 62, 
 	92, 9, 10, 13, 32, 60, 62, 92, 
 	34, 35, 13, 32, 34, 60, 62, 92, 
-	9, 10, 13, 32, 34, 60, 62, 92, 
-	9, 10, 9, 10, 13, 32, 34, 60, 
-	62, 92, 0
+	9, 10, 10, 92, 10, 13, 92, 9, 
+	10, 13, 32, 34, 60, 62, 92, 9, 
+	10, 13, 32, 60, 62, 92, 34, 35, 
+	13, 32, 34, 60, 62, 92, 9, 10, 
+	10, 92, 10, 13, 92, 9, 10, 13, 
+	32, 34, 60, 62, 92, 0
 };
 
 static const char _ironbee_config_single_lengths[] = {
-	0, 0, 1, 1, 2, 0, 1, 2, 
-	0, 2, 0, 2, 0, 2, 0, 1, 
-	2, 0, 1, 2, 9, 6, 2, 8, 
-	9, 6, 0, 8, 9, 6, 0, 8, 
-	7, 6, 6, 8, 7, 6, 6, 8
+	0, 2, 1, 1, 2, 2, 1, 2, 
+	2, 2, 4, 2, 2, 2, 2, 2, 
+	4, 2, 2, 1, 2, 2, 1, 2, 
+	9, 6, 2, 3, 2, 8, 9, 6, 
+	2, 3, 0, 2, 2, 8, 9, 6, 
+	2, 3, 0, 2, 2, 8, 7, 6, 
+	2, 3, 8, 7, 6, 2, 3, 8
 };
 
 static const char _ironbee_config_range_lengths[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 1, 0, 0, 
-	0, 1, 0, 0, 0, 1, 0, 0, 
-	1, 1, 1, 0, 1, 1, 1, 0
+	0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 1, 0, 0, 0, 0, 0, 1, 
+	0, 0, 0, 0, 0, 0, 0, 1, 
+	0, 0, 0, 0, 0, 0, 1, 1, 
+	0, 0, 0, 1, 1, 0, 0, 0
 };
 
-static const unsigned char _ironbee_config_index_offsets[] = {
-	0, 0, 1, 3, 5, 8, 9, 11, 
-	14, 15, 18, 19, 22, 23, 26, 27, 
-	29, 32, 33, 35, 38, 48, 56, 59, 
-	68, 78, 86, 87, 96, 106, 114, 115, 
-	124, 133, 141, 149, 158, 167, 175, 183
+static const short _ironbee_config_index_offsets[] = {
+	0, 0, 3, 5, 7, 10, 13, 15, 
+	18, 21, 24, 29, 32, 35, 38, 41, 
+	44, 49, 52, 55, 57, 60, 63, 65, 
+	68, 78, 86, 89, 93, 96, 105, 115, 
+	123, 126, 130, 131, 134, 137, 146, 156, 
+	164, 167, 171, 172, 175, 178, 187, 196, 
+	204, 207, 211, 220, 229, 237, 240, 244
 };
 
 static const char _ironbee_config_indicies[] = {
-	1, 2, 3, 5, 4, 6, 7, 1, 
-	9, 10, 3, 12, 13, 11, 11, 14, 
-	15, 9, 17, 19, 20, 18, 18, 21, 
-	22, 17, 24, 26, 25, 27, 28, 24, 
-	30, 31, 3, 32, 33, 30, 34, 2, 
-	35, 34, 3, 36, 37, 38, 39, 1, 
-	40, 40, 40, 40, 40, 41, 40, 1, 
-	42, 42, 36, 40, 43, 40, 40, 40, 
-	40, 40, 41, 1, 44, 10, 45, 44, 
-	11, 46, 46, 46, 47, 9, 49, 49, 
-	49, 49, 49, 50, 49, 9, 52, 52, 
-	53, 52, 52, 52, 52, 52, 50, 9, 
-	54, 55, 55, 54, 18, 55, 55, 56, 
-	57, 17, 58, 58, 58, 58, 58, 59, 
-	58, 17, 60, 60, 61, 60, 60, 60, 
-	60, 60, 59, 17, 62, 26, 63, 62, 
-	25, 25, 64, 25, 24, 65, 65, 65, 
-	65, 65, 66, 65, 24, 67, 67, 67, 
-	67, 67, 66, 67, 24, 65, 68, 65, 
-	65, 65, 65, 65, 66, 24, 69, 31, 
-	70, 69, 25, 71, 72, 25, 30, 74, 
-	74, 74, 74, 74, 75, 74, 30, 77, 
-	77, 77, 77, 77, 75, 77, 30, 74, 
-	79, 74, 74, 74, 74, 74, 75, 30, 
-	0
+	0, 2, 1, 3, 4, 6, 5, 7, 
+	8, 1, 11, 12, 10, 13, 4, 16, 
+	17, 15, 19, 15, 18, 20, 21, 15, 
+	15, 15, 22, 21, 18, 23, 24, 10, 
+	27, 28, 26, 31, 32, 30, 34, 30, 
+	33, 35, 36, 30, 30, 30, 37, 36, 
+	33, 38, 39, 26, 42, 43, 41, 45, 
+	44, 46, 47, 41, 50, 51, 49, 52, 
+	4, 53, 54, 49, 55, 3, 56, 55, 
+	4, 57, 58, 59, 60, 2, 61, 61, 
+	61, 61, 61, 62, 61, 2, 61, 63, 
+	2, 61, 2, 63, 1, 64, 64, 57, 
+	61, 65, 61, 61, 61, 61, 61, 62, 
+	2, 66, 13, 67, 66, 15, 68, 68, 
+	68, 69, 12, 71, 71, 71, 71, 71, 
+	72, 71, 12, 71, 73, 12, 71, 12, 
+	73, 10, 71, 16, 17, 15, 20, 21, 
+	15, 71, 74, 71, 71, 71, 71, 71, 
+	72, 12, 75, 76, 76, 75, 30, 76, 
+	76, 77, 78, 28, 79, 79, 79, 79, 
+	79, 80, 79, 28, 79, 81, 28, 79, 
+	28, 81, 26, 79, 31, 32, 30, 35, 
+	36, 30, 79, 82, 79, 79, 79, 79, 
+	79, 80, 28, 83, 45, 84, 83, 44, 
+	44, 85, 44, 43, 86, 86, 86, 86, 
+	86, 87, 86, 43, 86, 88, 43, 86, 
+	43, 88, 41, 86, 89, 86, 86, 86, 
+	86, 86, 87, 43, 90, 52, 91, 90, 
+	44, 92, 93, 44, 51, 95, 95, 95, 
+	95, 95, 96, 95, 51, 95, 97, 51, 
+	95, 51, 97, 49, 95, 99, 95, 95, 
+	95, 95, 95, 96, 51, 0
 };
 
 static const char _ironbee_config_trans_targs[] = {
-	20, 21, 20, 0, 20, 20, 21, 23, 
-	24, 25, 24, 7, 26, 8, 25, 27, 
-	28, 29, 11, 30, 12, 29, 31, 32, 
-	33, 0, 32, 34, 35, 36, 37, 36, 
-	38, 39, 20, 2, 22, 3, 20, 4, 
-	20, 1, 20, 20, 24, 6, 0, 9, 
-	24, 24, 5, 24, 24, 24, 28, 0, 
-	28, 13, 28, 10, 28, 28, 32, 15, 
-	16, 32, 14, 32, 32, 36, 18, 36, 
-	19, 36, 36, 17, 36, 36, 36, 36
+	24, 26, 25, 24, 0, 24, 24, 24, 
+	29, 30, 32, 30, 31, 30, 30, 7, 
+	34, 8, 9, 30, 35, 10, 36, 30, 
+	37, 38, 40, 38, 39, 38, 13, 42, 
+	14, 15, 38, 43, 16, 44, 38, 45, 
+	46, 48, 46, 47, 0, 46, 46, 50, 
+	51, 53, 51, 52, 51, 51, 55, 24, 
+	2, 28, 3, 24, 4, 24, 1, 27, 
+	24, 24, 30, 6, 0, 11, 30, 30, 
+	5, 33, 30, 38, 0, 38, 17, 38, 
+	12, 41, 38, 46, 19, 20, 46, 18, 
+	49, 46, 51, 22, 51, 23, 51, 51, 
+	21, 54, 51, 51
 };
 
 static const unsigned char _ironbee_config_trans_actions[] = {
-	35, 91, 64, 0, 25, 27, 134, 134, 
-	209, 138, 106, 5, 5, 5, 189, 169, 
-	88, 142, 5, 5, 5, 194, 174, 37, 
-	146, 1, 58, 199, 179, 40, 150, 61, 
-	204, 184, 29, 3, 0, 0, 31, 70, 
-	67, 5, 33, 126, 15, 3, 7, 55, 
-	164, 46, 5, 159, 43, 110, 17, 9, 
-	79, 55, 52, 5, 49, 114, 19, 3, 
-	55, 76, 5, 73, 118, 21, 3, 23, 
-	55, 130, 85, 5, 94, 82, 98, 122
+	47, 5, 112, 85, 0, 37, 39, 82, 
+	155, 177, 5, 17, 112, 123, 183, 5, 
+	5, 5, 5, 19, 159, 5, 159, 64, 
+	151, 103, 5, 23, 112, 106, 5, 5, 
+	5, 5, 25, 163, 5, 163, 67, 151, 
+	49, 5, 29, 112, 1, 73, 70, 151, 
+	52, 5, 35, 112, 79, 76, 151, 41, 
+	3, 0, 0, 43, 91, 88, 5, 5, 
+	45, 143, 15, 3, 7, 61, 172, 55, 
+	5, 5, 127, 21, 9, 97, 61, 58, 
+	5, 5, 131, 27, 3, 61, 94, 5, 
+	5, 135, 31, 3, 33, 61, 147, 100, 
+	5, 5, 115, 139
 };
 
 static const unsigned char _ironbee_config_to_state_actions[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 11, 0, 0, 0, 
-	11, 0, 0, 0, 11, 0, 0, 0, 
-	11, 0, 0, 0, 11, 0, 0, 0
+	0, 0, 0, 0, 0, 0, 0, 0, 
+	11, 0, 0, 0, 0, 0, 109, 0, 
+	0, 0, 0, 0, 0, 0, 109, 0, 
+	0, 0, 0, 0, 0, 0, 11, 0, 
+	0, 0, 0, 11, 0, 0, 0, 0
 };
 
 static const unsigned char _ironbee_config_from_state_actions[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 13, 0, 0, 0, 
-	13, 0, 0, 0, 13, 0, 0, 0, 
-	13, 0, 0, 0, 13, 0, 0, 0
+	0, 0, 0, 0, 0, 0, 0, 0, 
+	13, 0, 0, 0, 0, 0, 13, 0, 
+	0, 0, 0, 0, 0, 0, 13, 0, 
+	0, 0, 0, 0, 0, 0, 13, 0, 
+	0, 0, 0, 13, 0, 0, 0, 0
 };
 
 static const unsigned char _ironbee_config_eof_actions[] = {
-	0, 0, 0, 0, 0, 0, 0, 154, 
-	154, 154, 0, 9, 9, 9, 0, 1, 
-	1, 0, 1, 1, 0, 0, 0, 0, 
-	102, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 1, 0, 0, 0
+	0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 167, 0, 0, 0, 0, 
+	0, 9, 0, 1, 1, 0, 1, 1, 
+	0, 0, 0, 0, 0, 0, 119, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 1, 0, 0, 0, 0
 };
 
-static const unsigned char _ironbee_config_eof_trans[] = {
-	0, 1, 0, 0, 0, 9, 0, 0, 
-	0, 0, 17, 0, 0, 0, 24, 0, 
-	0, 30, 0, 0, 0, 41, 43, 41, 
-	0, 49, 52, 52, 0, 59, 61, 61, 
-	0, 66, 68, 66, 0, 74, 77, 79
+static const short _ironbee_config_eof_trans[] = {
+	0, 1, 0, 0, 0, 10, 0, 15, 
+	15, 15, 15, 0, 26, 30, 30, 30, 
+	30, 0, 41, 0, 0, 49, 0, 0, 
+	0, 62, 62, 62, 65, 62, 0, 71, 
+	71, 71, 71, 71, 71, 71, 0, 80, 
+	80, 80, 80, 80, 80, 80, 0, 87, 
+	87, 87, 87, 0, 95, 95, 95, 99
 };
 
-static const int ironbee_config_start = 20;
-static const int ironbee_config_first_final = 20;
+static const int ironbee_config_start = 24;
+static const int ironbee_config_first_final = 24;
 static const int ironbee_config_error = 0;
 
-static const int ironbee_config_en_parameters = 24;
-static const int ironbee_config_en_block_parameters = 28;
-static const int ironbee_config_en_newblock = 32;
-static const int ironbee_config_en_endblock = 36;
-static const int ironbee_config_en_main = 20;
+static const int ironbee_config_en_parameters = 30;
+static const int ironbee_config_en_block_parameters = 38;
+static const int ironbee_config_en_newblock = 46;
+static const int ironbee_config_en_endblock = 51;
+static const int ironbee_config_en_main = 24;
 
 
-#line 797 "config-parser.rl"
+#line 801 "config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
     assert(cp != NULL);
@@ -729,10 +760,10 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
 
     /* Access all ragel state variables via structure. */
     
-#line 809 "config-parser.rl"
+#line 813 "config-parser.rl"
 
     
-#line 736 "config-parser.c"
+#line 767 "config-parser.c"
 	{
 	 cp->fsm.cs = ironbee_config_start;
 	 cp->fsm.top = 0;
@@ -741,7 +772,7 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
 	 cp->fsm.act = 0;
 	}
 
-#line 811 "config-parser.rl"
+#line 815 "config-parser.rl"
 
     ib_cfg_log_info(cp, "Initializing IronBee parse values.");
 
@@ -882,16 +913,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 
     /* Access all ragel state variables via structure. */
     
-#line 951 "config-parser.rl"
+#line 955 "config-parser.rl"
     
-#line 952 "config-parser.rl"
+#line 956 "config-parser.rl"
     
-#line 953 "config-parser.rl"
+#line 957 "config-parser.rl"
     
-#line 954 "config-parser.rl"
+#line 958 "config-parser.rl"
 
     
-#line 895 "config-parser.c"
+#line 926 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -908,11 +939,11 @@ _resume:
 	_nacts = (unsigned int) *_acts++;
 	while ( _nacts-- > 0 ) {
 		switch ( *_acts++ ) {
-	case 14:
+	case 15:
 #line 1 "NONE"
 	{ cp->fsm.ts = ( fsm_vars.p);}
 	break;
-#line 916 "config-parser.c"
+#line 947 "config-parser.c"
 		}
 	}
 
@@ -1162,220 +1193,187 @@ _eof_trans:
     }
 	break;
 	case 10:
-#line 730 "config-parser.rl"
+#line 734 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
 	case 11:
-#line 731 "config-parser.rl"
+#line 735 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
 	case 12:
-#line 741 "config-parser.rl"
+#line 745 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
-	case 15:
+	case 16:
 #line 1 "NONE"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
-	case 16:
-#line 723 "config-parser.rl"
-	{ cp->fsm.act = 2;}
-	break;
 	case 17:
-#line 731 "config-parser.rl"
+#line 735 "config-parser.rl"
 	{ cp->fsm.act = 4;}
 	break;
 	case 18:
-#line 722 "config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p)+1;}
-	break;
-	case 19:
 #line 723 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
+	case 19:
+#line 727 "config-parser.rl"
+	{ cp->fsm.te = ( fsm_vars.p)+1;{ cpbuf_clear(cp); }}
+	break;
 	case 20:
-#line 725 "config-parser.rl"
+#line 729 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }}
 	break;
 	case 21:
-#line 731 "config-parser.rl"
+#line 735 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 22:
+#line 735 "config-parser.rl"
+	{{( fsm_vars.p) = (( cp->fsm.te))-1;}}
+	break;
+	case 23:
 #line 1 "NONE"
 	{	switch(  cp->fsm.act ) {
+	case 0:
+	{{ cp->fsm.cs = 0; goto _again;}}
+	break;
 	default:
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}}
 	break;
 	}
 	}
 	break;
-	case 23:
-#line 736 "config-parser.rl"
-	{ cp->fsm.act = 6;}
-	break;
 	case 24:
-#line 741 "config-parser.rl"
+#line 745 "config-parser.rl"
 	{ cp->fsm.act = 8;}
 	break;
 	case 25:
-#line 735 "config-parser.rl"
+#line 739 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 26:
-#line 736 "config-parser.rl"
+#line 740 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 27:
-#line 738 "config-parser.rl"
+#line 742 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }}
 	break;
 	case 28:
-#line 741 "config-parser.rl"
+#line 745 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 29:
+#line 745 "config-parser.rl"
+	{{( fsm_vars.p) = (( cp->fsm.te))-1;}}
+	break;
+	case 30:
 #line 1 "NONE"
 	{	switch(  cp->fsm.act ) {
+	case 0:
+	{{ cp->fsm.cs = 0; goto _again;}}
+	break;
 	default:
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}}
 	break;
 	}
 	}
 	break;
-	case 30:
-#line 747 "config-parser.rl"
-	{ cp->fsm.act = 10;}
-	break;
 	case 31:
-#line 753 "config-parser.rl"
-	{ cp->fsm.act = 12;}
-	break;
-	case 32:
-#line 745 "config-parser.rl"
+#line 749 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
+	case 32:
+#line 751 "config-parser.rl"
+	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
+    }goto _again;} }}
+	break;
 	case 33:
-#line 747 "config-parser.rl"
+#line 753 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }}
 	break;
 	case 34:
-#line 749 "config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
-    }goto _again;} }}
-	break;
-	case 35:
-#line 747 "config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
-    }goto _again;} }}
-	break;
-	case 36:
-#line 753 "config-parser.rl"
+#line 757 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
             return IB_EOTHER;
         }
-    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 28; goto _again;}} }}
+    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 38; goto _again;}} }}
 	break;
-	case 37:
-#line 1 "NONE"
-	{	switch(  cp->fsm.act ) {
-	case 10:
-	{{( fsm_vars.p) = (( cp->fsm.te))-1;} ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
-    }goto _again;} }
-	break;
-	case 12:
-	{{( fsm_vars.p) = (( cp->fsm.te))-1;} {
+	case 35:
+#line 757 "config-parser.rl"
+	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
             return IB_EOTHER;
         }
-    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 28; goto _again;}} }
+    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 38; goto _again;}} }}
 	break;
-	}
-	}
-	break;
-	case 38:
-#line 759 "config-parser.rl"
-	{ cp->fsm.act = 14;}
-	break;
-	case 39:
-#line 765 "config-parser.rl"
-	{ cp->fsm.act = 16;}
-	break;
-	case 40:
-#line 757 "config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p)+1;}
-	break;
-	case 41:
-#line 759 "config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p)+1;}
-	break;
-	case 42:
+	case 36:
 #line 761 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
-	case 43:
-#line 767 "config-parser.rl"
+	case 37:
+#line 763 "config-parser.rl"
+	{ cp->fsm.te = ( fsm_vars.p)+1;}
+	break;
+	case 38:
+#line 765 "config-parser.rl"
+	{ cp->fsm.te = ( fsm_vars.p)+1;}
+	break;
+	case 39:
+#line 771 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }}
 	break;
-	case 44:
-#line 759 "config-parser.rl"
+	case 40:
+#line 769 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
-	case 45:
-#line 765 "config-parser.rl"
-	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
-	break;
-	case 46:
-#line 1 "NONE"
-	{	switch(  cp->fsm.act ) {
-	default:
+	case 41:
+#line 769 "config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}}
 	break;
-	}
-	}
-	break;
-	case 47:
-#line 779 "config-parser.rl"
+	case 42:
+#line 783 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
             return IB_EOTHER;
         }
-    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 32; goto _again;}}}}
+    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 46; goto _again;}}}}
 	break;
-	case 48:
-#line 780 "config-parser.rl"
+	case 43:
+#line 784 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{        {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
             return IB_EOTHER;
         }
-    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 36; goto _again;}}}}
+    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 51; goto _again;}}}}
 	break;
-	case 49:
-#line 783 "config-parser.rl"
+	case 44:
+#line 787 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
-	case 50:
-#line 784 "config-parser.rl"
+	case 45:
+#line 788 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
-	case 51:
-#line 785 "config-parser.rl"
+	case 46:
+#line 789 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
-	case 52:
-#line 786 "config-parser.rl"
+	case 47:
+#line 790 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{
                 ib_cfg_log_error(
                     cp,
@@ -1384,29 +1382,29 @@ _eof_trans:
                 {( fsm_vars.p)++; goto _out; }
             }}
 	break;
-	case 53:
-#line 771 "config-parser.rl"
+	case 48:
+#line 775 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
-	case 54:
-#line 776 "config-parser.rl"
+	case 49:
+#line 780 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
             return IB_EOTHER;
         }
-    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 24; goto _again;}} }}
+    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 30; goto _again;}} }}
 	break;
-	case 55:
-#line 776 "config-parser.rl"
+	case 50:
+#line 780 "config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
             return IB_EOTHER;
         }
-    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 24; goto _again;}} }}
+    { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 30; goto _again;}} }}
 	break;
-#line 1410 "config-parser.c"
+#line 1408 "config-parser.c"
 		}
 	}
 
@@ -1419,7 +1417,11 @@ _again:
 #line 1 "NONE"
 	{ cp->fsm.ts = 0;}
 	break;
-#line 1423 "config-parser.c"
+	case 14:
+#line 1 "NONE"
+	{ cp->fsm.act = 0;}
+	break;
+#line 1425 "config-parser.c"
 		}
 	}
 
@@ -1518,21 +1520,21 @@ _again:
     }
 	break;
 	case 10:
-#line 730 "config-parser.rl"
+#line 734 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
 	case 11:
-#line 731 "config-parser.rl"
+#line 735 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
 	case 12:
-#line 741 "config-parser.rl"
+#line 745 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
-#line 1536 "config-parser.c"
+#line 1538 "config-parser.c"
 		}
 	}
 	}
@@ -1540,7 +1542,7 @@ _again:
 	_out: {}
 	}
 
-#line 956 "config-parser.rl"
+#line 960 "config-parser.rl"
 
     assert(tmp_str == NULL && "tmp_str must be cleared after every use");
 

@@ -708,7 +708,8 @@ static parse_directive_entry_t parse_directive_table[] = {
     # Continuation.
     CONT = '\\' EOL;
 
-    qchar = '\\' any;
+    # qchare is any escaped character except what might be a new line.
+    qchar = '\\' (any - [\r\n])? (any - '\n');
     qtoken = '"' ( qchar | ( any - ["\\] ) )* '"';
     token = (qchar | (any - (WS | '\r' | '\n' | [<>#"\\])))
             (qchar | (any - (WS | '\r' | '\n' | [<>"\\])))*;
@@ -720,7 +721,10 @@ static parse_directive_entry_t parse_directive_table[] = {
     # The parameters machine pull in parameter.
     parameters := |*
         WS;
-        CONT  $newline;
+        CONT  $newline
+              # CONT and param share a starting char of '\'.
+              # Clear the token buffer if we match a CONT.
+              { cpbuf_clear(cp); };
         EOL   $newline
               @push_dir { fret; };
         param $cpbuf_append
