@@ -380,6 +380,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         //      personality trait.
         if (tx->request_protocol_number < HTP_PROTOCOL_1_1) {
             tx->flags |= HTP_REQUEST_INVALID_T_E;
+            tx->flags |= HTP_REQUEST_SMUGGLING;
         }
 
         // If the T-E header is present we are going to use it.
