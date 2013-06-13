@@ -291,7 +291,6 @@ static ib_status_t include_parse_directive_impl_chk_access(
                 "Ignoring include file \"%s\": %s",
                 incfile,
                 strerror(errno));
-            return IB_OK;
         }
         else {
             ib_cfg_log_error(
@@ -299,10 +298,9 @@ static ib_status_t include_parse_directive_impl_chk_access(
                 "Cannot access included file \"%s\": %s",
                 incfile,
                 strerror(errno));
-            return IB_ENOENT;
         }
 
-        assert(0 && "This line is never reached.");
+        return IB_ENOENT;
     }
 
     /* Stat the file to see if we can read it. */
@@ -314,16 +312,18 @@ static ib_status_t include_parse_directive_impl_chk_access(
                 "Ignoring include file \"%s\": %s",
                 incfile,
                 strerror(errno));
-            return IB_OK;
+        }
+        else {
+            ib_cfg_log_error(
+                cp,
+                "Failed to stat include file \"%s\": %s",
+                incfile,
+                strerror(errno));
         }
 
-        ib_cfg_log_error(
-            cp,
-            "Failed to stat include file \"%s\": %s",
-            incfile,
-            strerror(errno));
         return IB_ENOENT;
     }
+
     /* Check if this is a regular file. */
     if (S_ISREG(statbuf.st_mode) == 0) {
         if (if_exists) {
@@ -331,17 +331,61 @@ static ib_status_t include_parse_directive_impl_chk_access(
                 cp,
                 "Ignoring include file \"%s\": Not a regular file",
                 incfile);
-            return IB_OK;
+        }
+        else {
+            ib_cfg_log_error(
+                cp,
+	        "Included file \"%s\" is not a regular file",
+                incfile);
         }
 
-        ib_cfg_log_error(
-            cp,
-	        "Included file \"%s\" is not a regular file",
-            incfile);
         return IB_ENOENT;
     }
 
     return IB_OK;
+}
+
+static ib_status_t include_parse_directive_impl_parse(
+    ib_cfgparser_t *cp,
+    ib_cfgparser_node_t *node,
+    ib_mpool_t *local_mp,
+    const char *incfile
+)
+{
+    /* A temporary local value to store the parser state in.
+     * We allocate this from local_mp to avoid putting the very large
+     * buffer variable in fsm on the stack. */
+    ib_cfgparser_fsm_t *fsm;
+    ib_cfgparser_node_t *current_node;
+    ib_status_t rc;
+
+    /* Make the given node the current node for the file inclusion. */
+    current_node = cp->curr;
+    cp->curr = node;
+
+    /* Allocate fsm in the heap as it contains a very large buffer. */
+    fsm = ib_mpool_alloc(local_mp, sizeof(*fsm));
+    if (fsm == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Store current fsm. */
+    *fsm = cp->fsm;
+
+    /* Initialize new fsm in cp. */
+    rc = ib_cfgparser_ragel_init(cp);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not initialize new parser.");
+        return rc;
+    }
+
+    rc = ib_cfgparser_parse_private(cp, incfile, false);
+
+    /* Restore fsm. */
+    cp->fsm = *fsm;
+    cp->curr = current_node;
+
+    return rc;
 }
 
 /**
@@ -373,12 +417,6 @@ static ib_status_t include_parse_directive_impl(
     const char* pval;
     const ib_list_node_t *list_node;
 
-    /* A temporary local value to store the parser state in.
-     * We allocate this from local_mp to avoid putting the very large
-     * buffer variable in fsm on the stack. */
-    ib_cfgparser_fsm_t *fsm;
-
-    ib_cfgparser_node_t *current_node;
     ib_mpool_t *local_mp = NULL;
 
     rc = ib_mpool_create(&local_mp, "local_mp", temp_mp);
@@ -440,31 +478,8 @@ static ib_status_t include_parse_directive_impl(
         goto cleanup;
     }
 
-    /* Make the given node the current node for the file inclusion. */
-    current_node = cp->curr;
-    cp->curr = node;
-
-    /* Allocate fsm in the heap as it contains a very large buffer. */
-    fsm = ib_mpool_alloc(local_mp, sizeof(*fsm));
-    if (fsm == NULL) {
-        rc = IB_EALLOC;
-        goto cleanup;
-    }
-
-    /* Store current fsm. */
-    *fsm = cp->fsm;
-
-    /* Initialize new fsm in cp. */
-    rc = ib_cfgparser_ragel_init(cp);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not initialize new parser.");
-        goto cleanup;
-    }
-
-    rc = ib_cfgparser_parse_private(cp, incfile, false);
-    /* Restore fsm. */
-    cp->fsm = *fsm;
-    cp->curr = current_node;
+    /* Parse the include file. */
+    rc = include_parse_directive_impl_parse(cp, node, local_mp, incfile);
     if (rc != IB_OK) {
         ib_cfg_log_error(
             cp,
@@ -481,7 +496,9 @@ cleanup:
     if (local_mp != NULL) {
         ib_mpool_release(local_mp);
     }
-    return rc;
+
+    /* IncludeIfExists never causes failure. */
+    return (if_exists)? IB_OK : rc;
 }
 
 //! Proxy to include_parse_directive_impl with if_exists = true.
@@ -528,11 +545,11 @@ static parse_directive_entry_t parse_directive_table[] = {
 };
 
 
-#line 798 "config-parser.rl"
+#line 815 "config-parser.rl"
 
 
 
-#line 536 "config-parser.c"
+#line 553 "config-parser.c"
 static const char _ironbee_config_actions[] = {
 	0, 1, 0, 1, 3, 1, 6, 1, 
 	10, 1, 12, 1, 13, 1, 15, 1, 
@@ -747,7 +764,7 @@ static const int ironbee_config_en_endblock = 51;
 static const int ironbee_config_en_main = 24;
 
 
-#line 801 "config-parser.rl"
+#line 818 "config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
     assert(cp != NULL);
@@ -760,10 +777,10 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
 
     /* Access all ragel state variables via structure. */
     
-#line 813 "config-parser.rl"
+#line 830 "config-parser.rl"
 
     
-#line 767 "config-parser.c"
+#line 784 "config-parser.c"
 	{
 	 cp->fsm.cs = ironbee_config_start;
 	 cp->fsm.top = 0;
@@ -772,7 +789,7 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
 	 cp->fsm.act = 0;
 	}
 
-#line 815 "config-parser.rl"
+#line 832 "config-parser.rl"
 
     ib_cfg_log_info(cp, "Initializing IronBee parse values.");
 
@@ -913,16 +930,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(
 
     /* Access all ragel state variables via structure. */
     
-#line 955 "config-parser.rl"
+#line 972 "config-parser.rl"
     
-#line 956 "config-parser.rl"
+#line 973 "config-parser.rl"
     
-#line 957 "config-parser.rl"
+#line 974 "config-parser.rl"
     
-#line 958 "config-parser.rl"
+#line 975 "config-parser.rl"
 
     
-#line 926 "config-parser.c"
+#line 943 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -943,7 +960,7 @@ _resume:
 #line 1 "NONE"
 	{ cp->fsm.ts = ( fsm_vars.p);}
 	break;
-#line 947 "config-parser.c"
+#line 964 "config-parser.c"
 		}
 	}
 
@@ -1010,7 +1027,7 @@ _eof_trans:
 		switch ( *_acts++ )
 		{
 	case 0:
-#line 541 "config-parser.rl"
+#line 558 "config-parser.rl"
 	{
         rc = IB_EOTHER;
         ib_cfg_log_error(
@@ -1022,7 +1039,7 @@ _eof_trans:
     }
 	break;
 	case 1:
-#line 552 "config-parser.rl"
+#line 569 "config-parser.rl"
 	{
         tmp_str = qstrdup(cp, config_mp);
         if (tmp_str == NULL) {
@@ -1034,7 +1051,7 @@ _eof_trans:
     }
 	break;
 	case 2:
-#line 561 "config-parser.rl"
+#line 578 "config-parser.rl"
 	{
         tmp_str = qstrdup(cp, config_mp);
         if (tmp_str == NULL) {
@@ -1046,13 +1063,13 @@ _eof_trans:
     }
 	break;
 	case 3:
-#line 571 "config-parser.rl"
+#line 588 "config-parser.rl"
 	{
         cp->curr->line += 1;
     }
 	break;
 	case 4:
-#line 576 "config-parser.rl"
+#line 593 "config-parser.rl"
 	{
         if (cp->buffer->len == 0) {
             ib_cfg_log_error(cp, "Directive name is 0 length.");
@@ -1068,7 +1085,7 @@ _eof_trans:
     }
 	break;
 	case 5:
-#line 589 "config-parser.rl"
+#line 606 "config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
         ib_cfgparser_node_create(&node, cp);
@@ -1123,7 +1140,7 @@ _eof_trans:
     }
 	break;
 	case 6:
-#line 642 "config-parser.rl"
+#line 659 "config-parser.rl"
 	{
         if (cpbuf_append(cp, *( fsm_vars.p)) != IB_OK) {
             return IB_EALLOC;
@@ -1131,7 +1148,7 @@ _eof_trans:
     }
 	break;
 	case 7:
-#line 649 "config-parser.rl"
+#line 666 "config-parser.rl"
 	{
         if (cp->buffer->len == 0) {
             ib_cfg_log_error(cp, "Block name is 0 length.");
@@ -1147,7 +1164,7 @@ _eof_trans:
     }
 	break;
 	case 8:
-#line 662 "config-parser.rl"
+#line 679 "config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
         rc = ib_cfgparser_node_create(&node, cp);
@@ -1185,7 +1202,7 @@ _eof_trans:
     }
 	break;
 	case 9:
-#line 697 "config-parser.rl"
+#line 714 "config-parser.rl"
 	{
         ib_cfgparser_pop_node(cp);
         cpbuf_clear(cp);
@@ -1193,17 +1210,17 @@ _eof_trans:
     }
 	break;
 	case 10:
-#line 734 "config-parser.rl"
+#line 751 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
 	case 11:
-#line 735 "config-parser.rl"
+#line 752 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
 	case 12:
-#line 745 "config-parser.rl"
+#line 762 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
@@ -1212,28 +1229,28 @@ _eof_trans:
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 17:
-#line 735 "config-parser.rl"
+#line 752 "config-parser.rl"
 	{ cp->fsm.act = 4;}
 	break;
 	case 18:
-#line 723 "config-parser.rl"
+#line 740 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 19:
-#line 727 "config-parser.rl"
+#line 744 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ cpbuf_clear(cp); }}
 	break;
 	case 20:
-#line 729 "config-parser.rl"
+#line 746 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }}
 	break;
 	case 21:
-#line 735 "config-parser.rl"
+#line 752 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 22:
-#line 735 "config-parser.rl"
+#line 752 "config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}}
 	break;
 	case 23:
@@ -1249,28 +1266,28 @@ _eof_trans:
 	}
 	break;
 	case 24:
-#line 745 "config-parser.rl"
+#line 762 "config-parser.rl"
 	{ cp->fsm.act = 8;}
 	break;
 	case 25:
-#line 739 "config-parser.rl"
+#line 756 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 26:
-#line 740 "config-parser.rl"
+#line 757 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 27:
-#line 742 "config-parser.rl"
+#line 759 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }}
 	break;
 	case 28:
-#line 745 "config-parser.rl"
+#line 762 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 29:
-#line 745 "config-parser.rl"
+#line 762 "config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}}
 	break;
 	case 30:
@@ -1286,21 +1303,21 @@ _eof_trans:
 	}
 	break;
 	case 31:
-#line 749 "config-parser.rl"
+#line 766 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 32:
-#line 751 "config-parser.rl"
+#line 768 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }}
 	break;
 	case 33:
-#line 753 "config-parser.rl"
+#line 770 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }}
 	break;
 	case 34:
-#line 757 "config-parser.rl"
+#line 774 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
@@ -1309,7 +1326,7 @@ _eof_trans:
     { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 38; goto _again;}} }}
 	break;
 	case 35:
-#line 757 "config-parser.rl"
+#line 774 "config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
@@ -1318,32 +1335,32 @@ _eof_trans:
     { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 38; goto _again;}} }}
 	break;
 	case 36:
-#line 761 "config-parser.rl"
+#line 778 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 37:
-#line 763 "config-parser.rl"
+#line 780 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 38:
-#line 765 "config-parser.rl"
+#line 782 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 39:
-#line 771 "config-parser.rl"
+#line 788 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }}
 	break;
 	case 40:
-#line 769 "config-parser.rl"
+#line 786 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 41:
-#line 769 "config-parser.rl"
+#line 786 "config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}}
 	break;
 	case 42:
-#line 783 "config-parser.rl"
+#line 800 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{ ( fsm_vars.p)--; {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
@@ -1352,7 +1369,7 @@ _eof_trans:
     { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 46; goto _again;}}}}
 	break;
 	case 43:
-#line 784 "config-parser.rl"
+#line 801 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{        {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
@@ -1361,19 +1378,19 @@ _eof_trans:
     { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 51; goto _again;}}}}
 	break;
 	case 44:
-#line 787 "config-parser.rl"
+#line 804 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 45:
-#line 788 "config-parser.rl"
+#line 805 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 46:
-#line 789 "config-parser.rl"
+#line 806 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;}
 	break;
 	case 47:
-#line 790 "config-parser.rl"
+#line 807 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p)+1;{
                 ib_cfg_log_error(
                     cp,
@@ -1383,11 +1400,11 @@ _eof_trans:
             }}
 	break;
 	case 48:
-#line 775 "config-parser.rl"
+#line 792 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;}
 	break;
 	case 49:
-#line 780 "config-parser.rl"
+#line 797 "config-parser.rl"
 	{ cp->fsm.te = ( fsm_vars.p);( fsm_vars.p)--;{ {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
@@ -1396,7 +1413,7 @@ _eof_trans:
     { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 30; goto _again;}} }}
 	break;
 	case 50:
-#line 780 "config-parser.rl"
+#line 797 "config-parser.rl"
 	{{( fsm_vars.p) = (( cp->fsm.te))-1;}{ {
         if (cp->fsm.top >= 1023) {
             ib_cfg_log_debug(cp, "Recursion too deep during parse.");
@@ -1404,7 +1421,7 @@ _eof_trans:
         }
     { cp->fsm.stack[ cp->fsm.top++] =  cp->fsm.cs;  cp->fsm.cs = 30; goto _again;}} }}
 	break;
-#line 1408 "config-parser.c"
+#line 1425 "config-parser.c"
 		}
 	}
 
@@ -1421,7 +1438,7 @@ _again:
 #line 1 "NONE"
 	{ cp->fsm.act = 0;}
 	break;
-#line 1425 "config-parser.c"
+#line 1442 "config-parser.c"
 		}
 	}
 
@@ -1441,7 +1458,7 @@ _again:
 	while ( __nacts-- > 0 ) {
 		switch ( *__acts++ ) {
 	case 0:
-#line 541 "config-parser.rl"
+#line 558 "config-parser.rl"
 	{
         rc = IB_EOTHER;
         ib_cfg_log_error(
@@ -1453,7 +1470,7 @@ _again:
     }
 	break;
 	case 1:
-#line 552 "config-parser.rl"
+#line 569 "config-parser.rl"
 	{
         tmp_str = qstrdup(cp, config_mp);
         if (tmp_str == NULL) {
@@ -1465,7 +1482,7 @@ _again:
     }
 	break;
 	case 5:
-#line 589 "config-parser.rl"
+#line 606 "config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
         ib_cfgparser_node_create(&node, cp);
@@ -1520,21 +1537,21 @@ _again:
     }
 	break;
 	case 10:
-#line 734 "config-parser.rl"
+#line 751 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
 	case 11:
-#line 735 "config-parser.rl"
+#line 752 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
 	case 12:
-#line 745 "config-parser.rl"
+#line 762 "config-parser.rl"
 	{ ( fsm_vars.p)--; { cp->fsm.cs =  cp->fsm.stack[-- cp->fsm.top]; {
     }goto _again;} }
 	break;
-#line 1538 "config-parser.c"
+#line 1555 "config-parser.c"
 		}
 	}
 	}
@@ -1542,7 +1559,7 @@ _again:
 	_out: {}
 	}
 
-#line 960 "config-parser.rl"
+#line 977 "config-parser.rl"
 
     assert(tmp_str == NULL && "tmp_str must be cleared after every use");
 

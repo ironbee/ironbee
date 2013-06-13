@@ -289,7 +289,6 @@ static ib_status_t include_parse_directive_impl_chk_access(
                 "Ignoring include file \"%s\": %s",
                 incfile,
                 strerror(errno));
-            return IB_OK;
         }
         else {
             ib_cfg_log_error(
@@ -297,10 +296,9 @@ static ib_status_t include_parse_directive_impl_chk_access(
                 "Cannot access included file \"%s\": %s",
                 incfile,
                 strerror(errno));
-            return IB_ENOENT;
         }
 
-        assert(0 && "This line is never reached.");
+        return IB_ENOENT;
     }
 
     /* Stat the file to see if we can read it. */
@@ -312,16 +310,18 @@ static ib_status_t include_parse_directive_impl_chk_access(
                 "Ignoring include file \"%s\": %s",
                 incfile,
                 strerror(errno));
-            return IB_OK;
+        }
+        else {
+            ib_cfg_log_error(
+                cp,
+                "Failed to stat include file \"%s\": %s",
+                incfile,
+                strerror(errno));
         }
 
-        ib_cfg_log_error(
-            cp,
-            "Failed to stat include file \"%s\": %s",
-            incfile,
-            strerror(errno));
         return IB_ENOENT;
     }
+
     /* Check if this is a regular file. */
     if (S_ISREG(statbuf.st_mode) == 0) {
         if (if_exists) {
@@ -329,17 +329,61 @@ static ib_status_t include_parse_directive_impl_chk_access(
                 cp,
                 "Ignoring include file \"%s\": Not a regular file",
                 incfile);
-            return IB_OK;
+        }
+        else {
+            ib_cfg_log_error(
+                cp,
+	        "Included file \"%s\" is not a regular file",
+                incfile);
         }
 
-        ib_cfg_log_error(
-            cp,
-	        "Included file \"%s\" is not a regular file",
-            incfile);
         return IB_ENOENT;
     }
 
     return IB_OK;
+}
+
+static ib_status_t include_parse_directive_impl_parse(
+    ib_cfgparser_t *cp,
+    ib_cfgparser_node_t *node,
+    ib_mpool_t *local_mp,
+    const char *incfile
+)
+{
+    /* A temporary local value to store the parser state in.
+     * We allocate this from local_mp to avoid putting the very large
+     * buffer variable in fsm on the stack. */
+    ib_cfgparser_fsm_t *fsm;
+    ib_cfgparser_node_t *current_node;
+    ib_status_t rc;
+
+    /* Make the given node the current node for the file inclusion. */
+    current_node = cp->curr;
+    cp->curr = node;
+
+    /* Allocate fsm in the heap as it contains a very large buffer. */
+    fsm = ib_mpool_alloc(local_mp, sizeof(*fsm));
+    if (fsm == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Store current fsm. */
+    *fsm = cp->fsm;
+
+    /* Initialize new fsm in cp. */
+    rc = ib_cfgparser_ragel_init(cp);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not initialize new parser.");
+        return rc;
+    }
+
+    rc = ib_cfgparser_parse_private(cp, incfile, false);
+
+    /* Restore fsm. */
+    cp->fsm = *fsm;
+    cp->curr = current_node;
+
+    return rc;
 }
 
 /**
@@ -371,12 +415,6 @@ static ib_status_t include_parse_directive_impl(
     const char* pval;
     const ib_list_node_t *list_node;
 
-    /* A temporary local value to store the parser state in.
-     * We allocate this from local_mp to avoid putting the very large
-     * buffer variable in fsm on the stack. */
-    ib_cfgparser_fsm_t *fsm;
-
-    ib_cfgparser_node_t *current_node;
     ib_mpool_t *local_mp = NULL;
 
     rc = ib_mpool_create(&local_mp, "local_mp", temp_mp);
@@ -438,31 +476,8 @@ static ib_status_t include_parse_directive_impl(
         goto cleanup;
     }
 
-    /* Make the given node the current node for the file inclusion. */
-    current_node = cp->curr;
-    cp->curr = node;
-
-    /* Allocate fsm in the heap as it contains a very large buffer. */
-    fsm = ib_mpool_alloc(local_mp, sizeof(*fsm));
-    if (fsm == NULL) {
-        rc = IB_EALLOC;
-        goto cleanup;
-    }
-
-    /* Store current fsm. */
-    *fsm = cp->fsm;
-
-    /* Initialize new fsm in cp. */
-    rc = ib_cfgparser_ragel_init(cp);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not initialize new parser.");
-        goto cleanup;
-    }
-
-    rc = ib_cfgparser_parse_private(cp, incfile, false);
-    /* Restore fsm. */
-    cp->fsm = *fsm;
-    cp->curr = current_node;
+    /* Parse the include file. */
+    rc = include_parse_directive_impl_parse(cp, node, local_mp, incfile);
     if (rc != IB_OK) {
         ib_cfg_log_error(
             cp,
@@ -479,7 +494,9 @@ cleanup:
     if (local_mp != NULL) {
         ib_mpool_release(local_mp);
     }
-    return rc;
+
+    /* IncludeIfExists never causes failure. */
+    return (if_exists)? IB_OK : rc;
 }
 
 //! Proxy to include_parse_directive_impl with if_exists = true.
