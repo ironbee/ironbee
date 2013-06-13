@@ -82,9 +82,8 @@ struct ViewDelegate :
     static
     void connection_event(const ConnectionEvent& event)
     {
-        cout << event.local_ip << ":" << event.local_port
-             << " <--> "
-             << event.remote_ip << ":" << event.remote_port
+        cout << "local: " << event.local_ip << ":" << event.local_port
+             << " remote: " << event.remote_ip << ":" << event.remote_port
              ;
     }
 
