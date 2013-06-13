@@ -24,7 +24,7 @@
 /**
  * This is a dynamic vector implementation.
  *
- * When growing, it will dyanmically double its size while tracking its
+ * When growing, it will dynamically double its size while tracking its
  * length.
  */
 

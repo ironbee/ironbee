@@ -164,7 +164,7 @@ private:
  *
  * Transformations are functions that take fields as inputs and produce
  * fields as outputs, possibly the same field.  Unlike operators, they have
- * no state or auxillary outputs.
+ * no state or auxiliary outputs.
  *
  * Transformations almost never exist in non-const form.
  *

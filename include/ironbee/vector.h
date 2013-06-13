@@ -81,7 +81,7 @@ typedef struct ib_vector_t ib_vector_t;
  *
  * There is no destroy function as the memory pool @a mp will
  * handle everything. If it is required to release most of the
- * memory heald by the @ref ib_vector_t, call ib_vector_truncate()
+ * memory held by the @ref ib_vector_t, call ib_vector_truncate()
  * with a length of 0.
  *
  * @param[out] vector The out pointer.
