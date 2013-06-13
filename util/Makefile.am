@@ -46,12 +46,6 @@ if BUILD_RIAK
   libibutil_la_SOURCES += kvstore_riak.c
 endif
 
-if BUILD_YAJL
-  libibutil_la_SOURCES += json_yajl_common.c \
-                          json_yajl_decode.c \
-                          json_yajl_encode.c
-endif
-
 EXTRA_DIST = \
         json_yajl_private.h \
         kvstore_private.h
@@ -67,5 +61,13 @@ if HAVE_LIBCURL
   libibutil_la_LDFLAGS += $(LIBCURL_LDFLAGS)
   libibutil_la_CFLAGS += $(LIBCURL_CFLAGS)
 endif
+if BUILD_YAJL
+  libibutil_la_SOURCES += json_yajl_common.c \
+                          json_yajl_decode.c \
+                          json_yajl_encode.c
+  libibutil_la_CFLAGS  += @YAJL_CFLAGS@
+  libibutil_la_LDFLAGS += @YAJL_LDFLAGS@
+endif
+
 libibutil_la_LDFLAGS += -version-info @LIBRARY_VERSION@ \
                         -release @MAJOR_VERSION@.@MINOR_VERSION@
