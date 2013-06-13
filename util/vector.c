@@ -135,7 +135,7 @@ ib_status_t ib_vector_resize(
     if (new_data == NULL) {
         return IB_EALLOC;
     }
-    memcpy(new_data, vector->data, size);
+    memcpy(new_data, vector->data, (size < vector->size)? size : vector->size);
 
     /* Destroy old data. */
     ib_mpool_release(vector->mp);
