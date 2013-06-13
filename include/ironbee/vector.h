@@ -41,11 +41,11 @@ extern "C" {
  *
  * Vector routines.
  *
- * When using vectors, be aware that any change in the 
- * length of the contents of a vector may result in the pointer 
+ * When using vectors, be aware that any change in the
+ * length of the contents of a vector may result in the pointer
  * ib_vector_t::data changing.
  *
- * It is safer to store offsets into the buffer than to store the 
+ * It is safer to store offsets into the buffer than to store the
  * absolute address of a string in ib_vector_t::data.
  *
  * @{

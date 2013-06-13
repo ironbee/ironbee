@@ -67,7 +67,7 @@ struct ib_cfgparser_fsm_t {
     int         top;         /**< Top of the stack. */
     int         act;         /**< Track the last successful match. */
     int         stack[1024]; /**< Stack of states. */
- 
+
     /**
      * Buffer for maintaining partial match prefix information across parses.
      * See section 6.3 of the Ragel Guide, "Scanners," for a discussion

@@ -37,7 +37,7 @@ class VectorTest : public ::testing::Test {
 public:
     virtual void SetUp(){
         ib_status_t rc;
-        
+
         rc = ib_mpool_create(&m_mp, "Main", NULL);
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to create main memory pool");
