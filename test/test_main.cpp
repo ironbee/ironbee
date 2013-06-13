@@ -883,7 +883,7 @@ TEST_F(ConnectionParsing, EarlyResponse) {
 }
 
 TEST_F(ConnectionParsing, InvalidRequest1) {
-    int rc = test_run(home, "36-invalid-request-1.t", cfg, &connp);
+    int rc = test_run(home, "36-invalid-request-1-invalid-c-l.t", cfg, &connp);
     ASSERT_LT(rc, 0);
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
