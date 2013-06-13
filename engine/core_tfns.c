@@ -1442,95 +1442,98 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
     ib_status_t rc;
 
     /* Define transformations. */
-    rc = ib_tfn_create_and_register(NULL, ib, "lowercase", false, tfn_lowercase,
-                         NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "lowercase", false,
+                                    tfn_lowercase, NULL);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_tfn_create_and_register(NULL, ib, "lc", false, tfn_lowercase, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_tfn_create_and_register(NULL, ib, "trimLeft", false, tfn_trim_left,
-                         NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "lc", false,
+                                    tfn_lowercase, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(NULL, ib, "trimRight", false, tfn_trim_right,
-                         NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "trimLeft", false,
+                                    tfn_trim_left, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(NULL, ib, "trim", false, tfn_trim, NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "trimRight", false,
+                                    tfn_trim_right, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_tfn_create_and_register(NULL, ib, "trim", false,
+                                    tfn_trim, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "removeWhitespace", false,
-                         tfn_wspc_remove, NULL);
+                                    tfn_wspc_remove, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "compressWhitespace", false,
-                         tfn_wspc_compress, NULL);
+                                    tfn_wspc_compress, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "length", true,
-                         tfn_length, NULL);
+                                    tfn_length, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "count", true,
-                         tfn_count, NULL);
+                                    tfn_count, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "max", true,
-                         tfn_max, NULL);
+                                    tfn_max, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "min", true,
-                         tfn_min, NULL);
+                                    tfn_min, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "urlDecode", false,
-                         tfn_url_decode, NULL);
+                                    tfn_url_decode, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "htmlEntityDecode", false,
-                         tfn_html_entity_decode, NULL);
+                                    tfn_html_entity_decode, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "normalizePath", false,
-                         tfn_normalize_path, NULL);
+                                    tfn_normalize_path, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "normalizePathWin", false,
-                         tfn_normalize_path_win, NULL);
+                                    tfn_normalize_path_win, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Math transformations. */
-    rc = ib_tfn_create_and_register(NULL, ib, "round", false, tfn_round, NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "round", false,
+                                    tfn_round, NULL);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1540,36 +1543,40 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(NULL, ib, "floor", false, tfn_floor, NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "floor", false,
+                                    tfn_floor, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Type conversion transformations. */
     rc = ib_tfn_create_and_register(NULL, ib, "toString", false,
-                         tfn_to_string, NULL);
+                                    tfn_to_string, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_tfn_create_and_register(NULL, ib, "toInteger", false,
-                         tfn_to_integer, NULL);
+                                    tfn_to_integer, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(NULL, ib, "toFloat", false, tfn_to_float, NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "toFloat", false,
+                                    tfn_to_float, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Name extraction transformations. */
-    rc = ib_tfn_create_and_register(NULL, ib, "name", false, tfn_to_name, NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "name", false,
+                                    tfn_to_name, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(NULL, ib, "names", false, tfn_to_names, NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "names", false,
+                                    tfn_to_names, NULL);
     if (rc != IB_OK) {
         return rc;
     }

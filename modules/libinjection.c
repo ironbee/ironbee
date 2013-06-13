@@ -536,7 +536,7 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     /* Register normalizeSqli transformation. */
     rc = ib_tfn_create_and_register(NULL, ib, "normalizeSqli", false,
-                         sqli_normalize_tfn, NULL);
+                                    sqli_normalize_tfn, NULL);
     if (rc != IB_OK) {
         return rc;
     }
