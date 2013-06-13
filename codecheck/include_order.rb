@@ -74,7 +74,9 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/throw.hpp>',
   '<ironbeepp/transaction.hpp>',
   '<ironbeepp/transaction_data.hpp>',
+  '<ironbeepp/transformation.hpp>',
 
+  '"collection_manager_private.h"',
   '"core_audit_private.h"',
   '"core_private.h"',
   '"engine_private.h"',
@@ -164,6 +166,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/types.h>',
   '<ironbee/util.h>',
   '<ironbee/uuid.h>',
+  '<ironbee/vector.h>',
 
   '<boost/any.hpp>',
   '<boost/assign.hpp>',

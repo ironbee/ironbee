@@ -30,8 +30,8 @@
 #include <ironbee/engine.h>
 #include <ironbee/log.h>
 #include <ironbee/strval.h>
-#include <ironbee/vector.h>
 #include <ironbee/types.h>
+#include <ironbee/vector.h>
 
 #ifdef __cplusplus
 extern "C" {

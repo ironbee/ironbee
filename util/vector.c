@@ -30,8 +30,9 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/mpool.h>
 #include <ironbee/vector.h>
+
+#include <ironbee/mpool.h>
 
 #include <assert.h>
 #include <math.h>

@@ -24,6 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/collection_manager.h>
 #include "collection_manager_private.h"
 
 #ifndef _POSIX_SOURCE
@@ -33,7 +34,6 @@
 #include "core_private.h"
 #include "engine_private.h"
 
-#include <ironbee/collection_manager.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
