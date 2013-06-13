@@ -678,7 +678,7 @@ public:
             uint32_t(const char*, size_t, uint32_t)
         >(hash);
         equal_trampoline = make_c_trampoline<
-            bool(const char*, size_t, const char*, size_t)
+            int(const char*, size_t, const char*, size_t)
         >(equal);
 
         memory_pool.register_cleanup(
