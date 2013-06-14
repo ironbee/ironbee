@@ -35,11 +35,13 @@ namespace IronBee {
 /**
  * Throw exception if @a status != IB_OK.
  *
- * The message is "Error reported from C API."
- *
  * @param[in] status Status code to base exception off of.
+ * @param[in] message Message to attach to exception.
  **/
-void throw_if_error(ib_status_t status);
+void throw_if_error(
+    ib_status_t status,
+    const char* message = "Error reported from C API."
+);
 
 } // IronBee
 

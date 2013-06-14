@@ -3,10 +3,8 @@
 
 namespace IronBee {
 
-void throw_if_error(ib_status_t status)
+void throw_if_error(ib_status_t status, const char *message)
 {
-    static const char* message = "Error reported from C API.";
-
     switch (status) {
         case IB_OK:
             return;
