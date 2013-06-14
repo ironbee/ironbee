@@ -934,3 +934,34 @@ TEST_F(ConnectionParsing, AutoDestroyCrash) {
 
     ASSERT_EQ(4, htp_list_size(connp->conn->transactions));
 }
+
+TEST_F(ConnectionParsing, AuthBasic) {
+    int rc = test_run(home, "40-auth-basic.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_TRUE(tx->request_auth_username != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_auth_username, "ivanr"));
+
+    ASSERT_TRUE(tx->request_auth_password != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_auth_password, "secret"));
+}
+
+TEST_F(ConnectionParsing, AuthDigest) {
+    int rc = test_run(home, "41-auth-digest.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_TRUE(tx->request_auth_username != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_auth_username, "ivanr"));
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);
+}
