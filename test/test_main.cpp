@@ -967,7 +967,7 @@ TEST_F(ConnectionParsing, AuthDigest) {
 }
 
 TEST_F(ConnectionParsing, Http_0_9_MethodOnly) {
-    int rc = test_run(home, "42-http_0_9_method_only.t", cfg, &connp);
+    int rc = test_run(home, "42-http_0_9-method_only.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
