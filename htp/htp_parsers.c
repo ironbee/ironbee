@@ -95,7 +95,7 @@ int htp_parse_status(bstr *status) {
 int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header) {    
     // Extract the username
     int i = bstr_index_of_c(auth_header->value, "username=");
-    if (i == -1) return HTP_ERROR;   
+    if (i == -1) return HTP_DECLINED;
 
     unsigned char *data = bstr_ptr(auth_header->value);
     size_t len = bstr_len(auth_header->value);
@@ -104,11 +104,10 @@ int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header
     // Ignore whitespace
     while ((pos < len) && (isspace((int) data[pos]))) pos++;   
 
-    if (data[pos] == '"') {
-        connp->in_tx->request_auth_username = htp_extract_quoted_string_as_bstr(data + pos, len - pos, NULL);        
-    } else {
-        return HTP_ERROR;
-    }   
+    if (data[pos] != '"') return HTP_DECLINED;
+
+    connp->in_tx->request_auth_username = htp_extract_quoted_string_as_bstr(data + pos, len - pos, NULL);
+    if (connp->in_tx->request_auth_username == NULL) return HTP_ERROR;
 
     return HTP_OK;
 }
