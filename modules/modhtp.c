@@ -1904,7 +1904,6 @@ static ib_status_t modhtp_build_context (
     /* @todo Make all these configurable??? */
     htp_config->log_level = HTP_LOG_DEBUG2;
     htp_config_set_tx_auto_destroy(htp_config, 0);
-    htp_config_set_generate_request_uri_normalized(htp_config, 0);
 
     htp_config_register_urlencoded_parser(htp_config);
     htp_config_register_multipart_parser(htp_config);
