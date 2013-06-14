@@ -121,3 +121,38 @@ TEST_F(LuaJsonTest, ComplexArray) {
     lua_pop(L, 2);
 }
 
+TEST_F(LuaJsonTest, GenerateFailNoArgs) {
+    ASSERT_THROW(doString("ibjson.to_string()"), std::runtime_error);
+}
+
+TEST_F(LuaJsonTest, GenerateFail2Args) {
+    ASSERT_THROW(doString("ibjson.to_string(1, 2)"), std::runtime_error);
+}
+
+TEST_F(LuaJsonTest, GenerateJSONInt) {
+    ASSERT_EQ(1, doString("return ibjson.to_string(1)"));
+    ASSERT_TRUE(lua_isnumber(L, -1));
+    ASSERT_EQ(1, lua_tonumber(L, -1));
+    lua_settop(L, 0);
+}
+
+TEST_F(LuaJsonTest, GenerateJSONString) {
+    ASSERT_EQ(1, doString("return ibjson.to_string('hi')"));
+    ASSERT_TRUE(lua_isstring(L, -1));
+    ASSERT_STREQ("\"hi\"\n", lua_tostring(L, -1));
+    lua_settop(L, 0);
+}
+
+TEST_F(LuaJsonTest, GenerateJSONMap) {
+    ASSERT_EQ(1, doString("return ibjson.to_string({ ['a'] = 1 })"));
+    ASSERT_TRUE(lua_isstring(L, -1));
+    ASSERT_STREQ("{\n    \"a\": 1.0\n}\n", lua_tostring(L, -1));
+    lua_settop(L, 0);
+}
+
+TEST_F(LuaJsonTest, GenerateJSONArray) {
+    ASSERT_EQ(1, doString("return ibjson.to_string( { 'a', 'b' })"));
+    ASSERT_TRUE(lua_isstring(L, -1));
+    ASSERT_STREQ("[\n    \"a\",\n    \"b\"\n]\n", lua_tostring(L, -1));
+    lua_settop(L, 0);
+}

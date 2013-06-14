@@ -375,11 +375,216 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
     return 1;
 }
 
+/* Forward declaration. to allow for mutual recursion. */
+static yajl_gen_status ibjson_gen(lua_State *L, yajl_gen gen);
+
+static yajl_gen_status ibjson_gen_list(lua_State *L, yajl_gen gen, int len) {
+    yajl_gen_status ygc;
+
+    ygc = yajl_gen_array_open(gen);
+    if (ygc != yajl_gen_status_ok) {
+        return ygc;
+    }
+
+    for (int i = 1; i <= len; ++i) {
+        lua_pushinteger(L, i);
+        lua_gettable(L, -2);
+        ygc = ibjson_gen(L, gen);
+        if (ygc != yajl_gen_status_ok) {
+            return ygc;
+        }
+    }
+
+    ygc = yajl_gen_array_close(gen);
+    if (ygc != yajl_gen_status_ok) {
+        return ygc;
+    }
+
+    lua_pop(L, 1);
+    return yajl_gen_status_ok;
+}
+
+static yajl_gen_status ibjson_gen_map(lua_State *L, yajl_gen gen) {
+    yajl_gen_status ygc;
+
+    ygc = yajl_gen_map_open(gen);
+    if (ygc != yajl_gen_status_ok) {
+        return ygc;
+    }
+
+    lua_pushnil(L);
+
+    while (lua_next(L, -2) != 0) {
+        size_t s;
+        const unsigned char* key =
+            (const unsigned char*)lua_tolstring(L, -2, &s);
+        ygc = yajl_gen_string(gen, key, s);
+        if (ygc != yajl_gen_status_ok) {
+            return ygc;
+        }
+
+        ygc = ibjson_gen(L, gen);
+        if (ygc != yajl_gen_status_ok) {
+            return ygc;
+        }
+    }
+
+    ygc = yajl_gen_map_close(gen);
+    if (ygc != yajl_gen_status_ok) {
+        return ygc;
+    }
+
+    /* Remove the table. */
+    lua_pop(L, 1);
+
+    return yajl_gen_status_ok;
+}
+
+/**
+ * Recursive helper function to generate JSON.
+ *
+ * @param[in] L Lua stack.
+ * @param[in] gen The generator that will be accumulating the JSON text.
+ *
+ * @returns 
+ * - yajl_gen_status_ok on success.
+ * - Status code retured by yajl_gen_&lt;type&gt; on error.
+ *
+ */
+static yajl_gen_status ibjson_gen(lua_State *L, yajl_gen gen) {
+    yajl_gen_status ygc;
+
+    /* Successs, when called recursively. */
+    if (lua_gettop(L) == 0) {
+        return yajl_gen_status_ok;
+    } else if (lua_isboolean(L, -1)) {
+        ygc = yajl_gen_bool(gen, lua_toboolean(L, -1));
+        if (ygc != yajl_gen_status_ok) {
+            return ygc;
+        }
+        lua_pop(L, 1);
+    }
+    else if (lua_isnil(L, -1)) {
+        ygc = yajl_gen_null(gen);
+        if (ygc != yajl_gen_status_ok) {
+            return ygc;
+        }
+        lua_pop(L, 1);
+    }
+    else if (lua_isnumber(L, -1)) {
+        lua_Number n = lua_tonumber(L, -1);
+        ygc = yajl_gen_double(gen, n);
+        if (ygc != yajl_gen_status_ok) {
+            return ygc;
+        }
+        lua_pop(L, 1);
+    }
+    else if (lua_isstring(L, -1)) {
+        size_t s;
+        const unsigned char* key =
+            (const unsigned char*)lua_tolstring(L, -1, &s);
+
+        ygc = yajl_gen_string(gen, key, s);
+        if (ygc != yajl_gen_status_ok) {
+            return ygc;
+        }
+
+        lua_pop(L, 1);
+    }
+    else if (lua_istable(L, -1)) {
+        int objlen = lua_objlen(L, -1);
+        if (objlen == 0) {
+            return ibjson_gen_map(L, gen);
+        }
+        else {
+            return ibjson_gen_list(L, gen, objlen);
+        }
+    }
+    else if (lua_iscfunction(L, -1)) {
+        luaL_error(L, "Serialization of CFunction to JSON is not supported.");
+    }
+    else if (lua_isfunction(L, -1)) {
+        luaL_error(L, "Serialization of Function to JSON is not supported.");
+    }
+    else if (lua_islightuserdata(L, -1)) {
+        luaL_error(L,
+            "Serialization of Light User Data to JSON is not supported.");
+    }
+    else if (lua_isthread(L, -1)) {
+        luaL_error(L, "Serialization of a thread to JSON is not supported.");
+    }
+    else if (lua_isuserdata(L, -1)) {
+        luaL_error(L, "Serialization of user data to JSON is not supported.");
+    }
+    else {
+        luaL_error(L,
+            "Unknown Lua type on top of stack: %s", lua_tostring(L, -1));
+    }
+
+    return yajl_gen_status_ok;
+}
+
+/**
+ * Takes the value at the top of the stack and converts it to JSON.
+ *
+ * A string is pushed back onto the top of the Lua stack.
+ *
+ * @param[in] L Lua stack.
+ * @returns the number of elements returned from the Lua call.
+ */
+LUALIB_API int ibjson_to_string(lua_State *L) {
+    assert(L != NULL);
+
+    int yc;
+    yajl_gen_status ygc;
+    const unsigned char *json_text;
+    size_t json_text_len;
+
+    if (lua_gettop(L) != 1) {
+        return luaL_error(L, "This function only accepts 1 argument.");
+    }
+
+    yajl_gen gen = yajl_gen_alloc(NULL);
+    if (gen == NULL) {
+        return luaL_error(L, "Failed to allocate JSON generator.");
+    }
+
+    yc = yajl_gen_config(gen, yajl_gen_beautify);
+    if (yc == 0) {
+        yajl_gen_free(gen);
+        return luaL_error(L, "Failed to configure JSON generator.");
+    }
+
+    ygc = ibjson_gen(L, gen);
+    if (ygc != yajl_gen_status_ok) {
+        yajl_gen_free(gen);
+        return luaL_error(L, "Failed to generate JSON: %d", ygc);
+    }
+
+    ygc = yajl_gen_get_buf(gen, &json_text, &json_text_len);
+    if (ygc != yajl_gen_status_ok) {
+        yajl_gen_free(gen);
+        return luaL_error(L, "Failed to retrieve JSON text buffer: %d", ygc);
+    }
+
+    /* Assert that if we end up here without error, we've parsed the stack. */
+    assert(lua_gettop(L) == 0 && "Lua stack was not totally consumed.");
+
+    /* Push return value. */
+    lua_pushlstring(L, (char *)json_text, json_text_len);
+
+    /* Cleanup. */
+    yajl_gen_free(gen);
+
+    return 1;
+}
+
 /**
  * The table of mappings from Lua function names to C implementations.
  */
 static const luaL_reg jsonlib[] = {
     {"parse_string", ibjson_parse_string},
+    {"to_string",    ibjson_to_string},
     {NULL, NULL}
 };
 

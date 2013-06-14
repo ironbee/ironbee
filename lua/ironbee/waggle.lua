@@ -15,8 +15,6 @@ _M._VERSION = "1.0"
 local SignatureDatabase = require('ironbee/waggle/signaturedatabase')
 local Planner = require('ironbee/waggle/planner')
 local Generator = require('ironbee/waggle/generator')
-local GeneratorJSON = require('ironbee/waggle/generatorjson')
-local LoaderJSON = require('ironbee/waggle/loaderjson')
 local Validator = require('ironbee/waggle/validator')
 
 -- Put a default rule database in place.
@@ -123,6 +121,7 @@ _M.Generate = function()
 end
 
 _M.GenerateJSON = function()
+    local GeneratorJSON = require('ironbee/waggle/generatorjson')
     local g = GeneratorJSON:new()
     return g:generate(_M.Plan(), _M.DEFAULT_RULE_DB)
 end
@@ -130,6 +129,8 @@ end
 -- Load a set of rules from a JSON string.
 -- @param[in] json The JSON string.
 _M.LoadJSON = function(self, json)
+    local LoaderJSON = require('ironbee/waggle/loaderjson')
+
     -- Allow for calling _M:LoadJSON or _M.LoadJSON.
     if type(self) == 'string' then
         json = self
