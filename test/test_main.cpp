@@ -944,6 +944,8 @@ TEST_F(ConnectionParsing, AuthBasic) {
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
 
+    ASSERT_EQ(HTP_AUTH_BASIC, tx->request_auth_type);
+
     ASSERT_TRUE(tx->request_auth_username != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_auth_username, "ivanr"));
 
@@ -959,6 +961,8 @@ TEST_F(ConnectionParsing, AuthDigest) {
     ASSERT_TRUE(tx != NULL);
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_DIGEST, tx->request_auth_type);
 
     ASSERT_TRUE(tx->request_auth_username != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_auth_username, "ivanr"));
@@ -1004,6 +1008,8 @@ TEST_F(ConnectionParsing, AuthBasicInvalid) {
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
 
+    ASSERT_EQ(HTP_AUTH_BASIC, tx->request_auth_type);
+
     ASSERT_TRUE(tx->request_auth_username == NULL);
 
     ASSERT_TRUE(tx->request_auth_password == NULL);
@@ -1019,6 +1025,8 @@ TEST_F(ConnectionParsing, AuthDigestUnquotedUsername) {
     ASSERT_TRUE(tx != NULL);
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_DIGEST, tx->request_auth_type);
 
     ASSERT_TRUE(tx->request_auth_username == NULL);
 
@@ -1036,9 +1044,27 @@ TEST_F(ConnectionParsing, AuthDigestInvalidUsername) {
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
 
+    ASSERT_EQ(HTP_AUTH_DIGEST, tx->request_auth_type);
+
     ASSERT_TRUE(tx->request_auth_username == NULL);
 
     ASSERT_TRUE(tx->request_auth_password == NULL);
 
     ASSERT_TRUE(tx->flags & HTP_AUTH_INVALID);
+}
+
+TEST_F(ConnectionParsing, AuthUnrecognized) {
+    int rc = test_run(home, "47-auth-unrecognized.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_UNRECOGNIZED, tx->request_auth_type);
+
+    ASSERT_TRUE(tx->request_auth_username == NULL);
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);   
 }
