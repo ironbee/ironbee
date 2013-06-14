@@ -112,7 +112,7 @@ Generator.generate = function(self, plan, db)
                 -- The first rule in a chain gets the ID, message, phase, etc.
                 if i == 1 then
                     local last_rule = db.db[chain[#chain].rule]
-                    s = s .. ' "id:' .. rule.data.id .. '"'
+                    s = s .. ' "id:' .. last_rule.data.id .. '"'
                     s = s .. ' "rev:' ..  last_rule.data.version .. '"'
                     if last_rule.data.phase then
                         s = s .. ' "phase:' ..  last_rule.data.phase .. '"'
