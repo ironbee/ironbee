@@ -117,10 +117,13 @@ rm -rf $RPM_BUILD_ROOT
 %post trafficserver
 if [ "$1" -ge 1 ]; then
    configfile=/etc/trafficserver/plugin.config
+   # Remove existing Ironbee plugin configuration segment.
+   sed -i.save -e '/^### START IRONBEE PLUGIN/,/^### END IRONBEE PLUGIN/d' $configfile
+
    if ! grep -q "### START IRONBEE PLUGIN" "$configfile" ; then
       echo "### START IRONBEE PLUGIN" >>$configfile
-      echo %{_libdir}/libloader.so %{_libdir}/libhtp.so %{_libdir}/libironbee.so >>$configfile
-      echo %{_libdir}/ts_ironbee.so %{_sysconfdir}/ironbee.conf >>$configfile
+      echo %{_libexecdir}/libloader.so %{_libdir}/libhtp.so %{_libdir}/libironbee.so >>$configfile
+      echo %{_libexecdir}/ts_ironbee.so %{_sysconfdir}/ironbee.conf >>$configfile
       echo "### END IRONBEE PLUGIN" >>$configfile
    fi
 fi
