@@ -25,6 +25,8 @@ local phases = {
     RESPONSE        = 1,
     POSTPROCESS     = 1
 }
+
+-- These are fields that the validator should assume exist.
 local predefined_fields = {
         ARGS                   = 1,
         AUTH_PASSWORD          = 1,
@@ -166,9 +168,7 @@ Validator.validate = function(self, db,  plan)
                 define_fields(self, rule, defined_fields)
             end
 
-            if rule_type == 'streaminspect' then
-                -- no phase required.
-            elseif rule.data.phase == nil then
+            if rule.data.phase == nil then
                 self:error(rule, string.format("Undefined phase."))
             elseif phases[rule.data.phase] == nil then
                 self:error(rule, string.format("Invalid phase %s", rule.data.phase))
