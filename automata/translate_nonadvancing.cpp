@@ -28,9 +28,24 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
+#include <list>
 #include <set>
 
 using namespace std;
+
+namespace {
+
+// push_back is often overloaded and thus tricky for bind.
+template <typename Container>
+void push_back(
+    Container&                          to,
+    typename Container::const_reference value
+)
+{
+    to.push_back(value);
+}
+
+}
 
 namespace IronAutomata {
 namespace Intermediate {
@@ -57,7 +72,7 @@ size_t translate_nonadvancing(
         nodes.clear();
         breadth_first(
             automata,
-            boost::bind(&node_list_t::push_back, boost::ref(nodes), _1)
+            boost::bind(&push_back<node_list_t>, boost::ref(nodes), _1)
         );
 
         BOOST_FOREACH(const node_p& node, nodes) {
@@ -220,7 +235,7 @@ size_t translate_nonadvancing_structural(
         nodes.clear();
         breadth_first(
             automata,
-            boost::bind(&node_list_t::push_back, boost::ref(nodes), _1)
+            boost::bind(&push_back<node_list_t>, boost::ref(nodes), _1)
         );
 
         BOOST_FOREACH(const node_p& node, nodes) {
