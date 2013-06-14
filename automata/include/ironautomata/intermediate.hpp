@@ -654,7 +654,7 @@ private:
  * @sa AutomataReader
  */
 bool read_automata(
-    Automata&   destination,
+    Automata&     destination,
     std::istream& input,
     logger_t      logger = nop_logger
 );
@@ -673,9 +673,9 @@ bool read_automata(
  * @throw invalid_argument if @a automata is invalid.
  */
 void write_automata(
-    const Automata&   automata,
-    std::ostream&       output,
-    size_t              chunk_size = 0
+    const Automata& automata,
+    std::ostream&   output,
+    size_t          chunk_size = 0
 );
 
 /**
@@ -688,7 +688,7 @@ void write_automata(
  * @param[in] callback Callback to call for each node.
  */
 void breadth_first(
-    const Automata&                    automata,
+    const Automata&                      automata,
     boost::function<void(const node_p&)> callback
 );
 

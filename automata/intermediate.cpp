@@ -647,8 +647,8 @@ private:
 
 void write_automata(
     const Automata& automata,
-    ostream&          output,
-    size_t            chunk_size
+    ostream&        output,
+    size_t          chunk_size
 )
 {
     AutomataWriter writer(output, chunk_size);
@@ -1188,7 +1188,7 @@ bool read_automata(
 }
 
 void breadth_first(
-    const Automata&                    automata,
+    const Automata&                      automata,
     boost::function<void(const node_p&)> callback
 )
 {
