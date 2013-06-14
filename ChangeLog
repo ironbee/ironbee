@@ -2,7 +2,7 @@
 0.5.3 (14 June 2013)
 --------------------
 
-- Fix stream error when a valid Basic Authentication information is provided.
+- Fix stream error when valid Basic Authentication information is provided.
 
 - Do not fail the entire stream if the Authorization header is invalid. Raise HTP_AUTH_INVALID instead.
 
