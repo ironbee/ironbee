@@ -126,7 +126,7 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
 
     // Ignore whitespace
     while ((pos < len) && (isspace((int) data[pos]))) pos++;
-    if (pos == len) return HTP_ERROR;
+    if (pos == len) return HTP_DECLINED;
 
     // Decode base64-encoded data
     bstr *decoded = htp_base64_decode_mem(data + pos, len - pos);
@@ -136,7 +136,7 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
     int i = bstr_index_of_c(decoded, ":");
     if (i == -1) {
         bstr_free(decoded);    
-        return HTP_ERROR;
+        return HTP_DECLINED;
     }
 
     connp->in_tx->request_auth_username = bstr_dup_ex(decoded, 0, i);

@@ -994,3 +994,19 @@ TEST_F(ConnectionParsing, InvalidProtocol) {
 
     ASSERT_EQ(HTP_PROTOCOL_INVALID, tx->request_protocol_number);
 }
+
+TEST_F(ConnectionParsing, AuthBasicInvalid) {
+    int rc = test_run(home, "44-auth-basic-invalid.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_TRUE(tx->request_auth_username == NULL);
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_AUTH_INVALID);
+}

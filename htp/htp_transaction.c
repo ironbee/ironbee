@@ -513,7 +513,12 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     // Parse authentication information.
     if (tx->connp->cfg->parse_request_auth) {
         rc = htp_parse_authorization(tx->connp);
-        if (rc != HTP_OK) return rc;
+        if (rc == HTP_DECLINED) {
+            // Don't fail the stream if an authorization header is invalid, just set a flag.
+            tx->flags |= HTP_AUTH_INVALID;
+        } else {
+            if (rc != HTP_OK) return rc;
+        }
     }
 
     // Finalize sending raw header data.
