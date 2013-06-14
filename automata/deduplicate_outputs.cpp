@@ -128,7 +128,7 @@ struct less_output :
     binary_function<const Output&, const Output&, bool>
 {
     //! Call operator().
-    bool operator()(const Output& a, const Output& b)
+    bool operator()(const Output& a, const Output& b) const
     {
         if (a.content() < b.content()) {
             return true;
