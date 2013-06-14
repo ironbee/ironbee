@@ -982,3 +982,15 @@ TEST_F(ConnectionParsing, Http_0_9_MethodOnly) {
 
     ASSERT_EQ(1, tx->is_protocol_0_9);
 }
+
+TEST_F(ConnectionParsing, InvalidProtocol) {
+    int rc = test_run(home, "43-invalid-protocol.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);   
+
+    ASSERT_EQ(HTP_PROTOCOL_INVALID, tx->request_protocol_number);
+}
