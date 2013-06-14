@@ -184,8 +184,6 @@ local build_rule = function(ib, ctx, chain, db)
             prule[0].flags = ffi.C.ib_set_flag(prule[0].flags, IB_RULE_FLAG_ACTION);
         end
 
-        ffi.C.ib_rule_set_id(ib.ib_engine, prule[0], rule_id)
-
         for _, action in ipairs(rule.data.actions) do
             local name, arg = action.name, action.argument
 
@@ -307,10 +305,7 @@ local build_rule = function(ib, ctx, chain, db)
             end
         end
 
-        -- Set revision
-        prule[0].meta.revision = tonumber(rule.data.version) or 1
-
-        -- Chains
+        -- If this rule is a member of a chain.
         if i < #chain then
             rc = ffi.C.ib_rule_set_chain(ib.ib_engine, prule[0])
             if rc ~= ffi.C.IB_OK then
@@ -394,13 +389,29 @@ local build_rule = function(ib, ctx, chain, db)
             is_streaming = 0
         end
 
-        -- Find the phase and set the rule's phase.
-        rc = ffi.C.ib_rule_set_phase(
-            ib.ib_engine,
-            prule[0],
-            ffi.C.ib_rule_lookup_phase(rule.data.phase, is_streaming))
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Cannot set phase %s", rule.data.phase)
+        -- If this rule is the first rule, it carries the id, rev, and phase
+        -- for the chain of rules to follow. Set those values to the 
+        -- values in the last rule in the chain. Notice that rules
+        -- that are in chains of length=1 this sets their id, rev, and phaes
+        -- correctly.
+        if i == 1 then
+            -- Get last rule in the chain.
+            local last_rule = db.db[chain[#chain].rule]
+
+            -- Set id.
+            ffi.C.ib_rule_set_id(ib.ib_engine, prule[0], last_rule.data.id)
+
+            -- Set rev.
+            prule[0].meta.revision = tonumber(last_rule.data.version) or 1
+
+            -- Lookup and set phase.
+            rc = ffi.C.ib_rule_set_phase(
+                ib.ib_engine,
+                prule[0],
+                ffi.C.ib_rule_lookup_phase(last_rule.data.phase, is_streaming))
+            if rc ~= ffi.C.IB_OK then
+                ib:logError("Cannot set phase %s", last_rule.data.phase)
+            end
         end
 
         rc = ffi.C.ib_rule_register(ib.ib_engine, ctx, prule[0])
