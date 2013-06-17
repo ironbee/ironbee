@@ -486,15 +486,8 @@ static ib_status_t cfgparser_apply_node_helper(
                 cp,
                 node->directive,
                 node->params);
-            if (tmp_rc != IB_OK) {
-                ib_cfg_log_error(
-                    cp,
-                    "Failed to process directive \"%s\" "
-                    ": %s (see preceding messages for details)",
-                    node->directive, ib_status_to_string(tmp_rc));
-                if (rc == IB_OK) {
-                    rc = tmp_rc;
-                }
+            if (tmp_rc != IB_OK && rc == IB_OK) {
+                rc = tmp_rc;
             }
 
             /* Restore current node. */
@@ -823,6 +816,11 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
         return rc;
     }
     if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "Error fetching directive definition for \"%s\": %s",
+            name,
+            ib_status_to_string(rc));
         return rc;
     }
 
@@ -901,6 +899,14 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             ib_list_shift(args, &p1);
             rc = rec->cb.fn_sblk1(cp, name, p1, rec->cbdata_cb);
             break;
+    }
+
+    if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "Error reported processing directive \"%s\": %s",
+            name,
+            ib_status_to_string(rc));
     }
 
     return rc;
