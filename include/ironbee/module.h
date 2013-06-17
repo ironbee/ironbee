@@ -285,37 +285,6 @@ ib_status_t DLL_PUBLIC ib_module_register_context(
 );
 
 /**
- * Create an IronBee rule action for use by this module.
- *
- * Actions created by this method will still need an
- * ib_rule_exec_t from the ib_tx_t object to execute.
- *
- * Actions created by this method use the main IronBee context by default.
- *
- * Actions created by this method should be destroyed
- * with ib_action_inst_destroy(ib_action_inst_t *).
- *
- * @param[in] module The module.
- * @param[in] mpool The memory pool to use to create this object.
- *            If NULL, then the main engine memory pool will be used.
- * @param[in] action_name The name of the action.
- * @param[in] action_parameters The parameter value for the action.
- * @param[in] flags Flags to create the action with. Typically 0.
- * @param[out] action_instance Where to put the newly created action.
- * @returns Values returned by ib_action_inst_create.
- *   - IB_OK success.
- *   - IB_EINVAL if the named action does not exist.
- *   - IB_EALLOC if memory could not be allocated.
- */
-ib_status_t DLL_PUBLIC ib_module_action_inst_create(
-    ib_module_t *module,
-    ib_mpool_t *mpool,
-    const char *action_name,
-    const char *action_parameters,
-    ib_flags_t flags,
-    ib_action_inst_t **action_instance);
-
-/**
  * Initialize module configuration for main context.
  *
  * This routine is an alternative to setting an initial structure in the

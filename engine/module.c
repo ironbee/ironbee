@@ -358,33 +358,6 @@ ib_status_t ib_module_register_context(ib_module_t *m,
     return rc;
 }
 
-ib_status_t ib_module_action_inst_create(
-    ib_module_t *module,
-    ib_mpool_t *mpool,
-    const char *action_name,
-    const char *action_parameters,
-    ib_flags_t flags,
-    ib_action_inst_t **action_instance)
-{
-    assert(module);
-    assert(action_name);
-    assert(action_parameters);
-    assert(action_instance);
-
-    if (!mpool) {
-        mpool = ib_engine_pool_main_get(module->ib);
-    }
-
-    ib_status_t rc = ib_action_inst_create_ex(
-        module->ib,
-        action_name,
-        action_parameters,
-        flags,
-        action_instance);
-
-    return rc;
-}
-
 ib_status_t ib_module_config_initialize(
     ib_module_t *module,
     void *cfg,

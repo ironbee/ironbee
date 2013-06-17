@@ -189,9 +189,8 @@ end
 --   then the action is destroyed cleanly.
 _M.action = function(self, name, param, flags)
     local inst = ffi.new('ib_action_inst_t*[1]')
-    local rc = ffi.C.ib_module_action_inst_create(
-        self.ib_module,
-        ffi.C.ib_engine_pool_main_get(self.ib_engine),
+    local rc = ffi.C.ib_action_inst_create(
+        self.ib_engine,
         name,
         param,
         flags,
