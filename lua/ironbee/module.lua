@@ -187,7 +187,7 @@ end
 --   If the parameter is a ib_rule_exec_t, then the
 --   action is evaluated. If ib_rule_exec_t is nil,
 --   then the action is destroyed cleanly.
-moduleapi.action = function(self, name, param, flags)
+_M.action = function(self, name, param, flags)
     local inst = ffi.new('ib_action_inst_t*[1]')
     local rc = ffi.C.ib_module_action_inst_create(
         self.ib_module,
@@ -208,55 +208,6 @@ moduleapi.action = function(self, name, param, flags)
             return tonumber(ffi.C.IB_OK)
         else
             return tonumber(ffi.C.ib_action_execute(rule_exec, inst[0]))
-        end
-    end
-end
-
--- Return a function that executes an operator instance.
--- @param[in] name The name of the operator.
--- @param[in] param The parameter to pass the operator.
--- @param[in] flags The flags to pass the operator.
--- @returns A function that takes an ib_rule_exec_t * and an ib_field_t *.
---   If the ib_rule_exec_t is nil, then the ib_operator_t this
---   wraps is destroyed cleanly. Otherwise, that operator is executed.
---   The returned function, when executed, returns 2 values.
---   First, an ib_status_t value, normally IB_OK. The second
---   value is the result of the operator execution or 0 when the
---   operator is destroyed (rule_exec was equal to nil).
-moduleapi.operator = function(self, name, param, flags)
-    local op = ffi.new('ib_rule_operator_t*[1]')
-    local inst = ffi.new('void*[1]')
-    local rc = ffi.C.ib_operator_lookup(self.ib_engine, name, op)
-    if rc ~= ffi.C.IB_OK then
-        self:logError("Failed to lookup operator %s(%d).", name, tonumber(rc))
-        return nil
-    end
-    local rc = ffi.C.ib_operator_inst_create(
-        op[0],
-        ffi.C.ib_context_main(self.ib_engine),
-        flags,
-        param,
-        inst)
-    if rc ~= ffi.C.IB_OK then
-        rc = tonumber(rc)
-        self:logError("Failed to create operator %s(%d):%s.", name, rc, param);
-        return nil
-    end
-
-    return function(tx, field)
-        if tx == nil then
-            ffi.C.ib_operator_inst_destroy(op[0], inst[0])
-            return ffi.C.IB_OK, 0
-        else
-            local res = ffi.new('ib_num_t[1]')
-            local rc = ffi.C.ib_operator_inst_execute(
-                op[0],
-                inst[0],
-                tx,
-                field, -- input field
-                nil,   -- capture field
-                res)
-            return tonumber(rc), tonumber(res[0])
         end
     end
 end
@@ -295,7 +246,7 @@ moduleapi.register_directive = function(self, name, dirtype, fn, flagmap)
             "Failed to register directive %s: %d - %s",
             name,
             rc,
-            ""--msg)
+            tostring(msg)
             )
     end
 
