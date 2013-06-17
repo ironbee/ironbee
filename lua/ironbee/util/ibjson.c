@@ -26,7 +26,7 @@
  * @file
  *
  * Bindings to IronBee's JSON services.
- * 
+ *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
@@ -46,7 +46,7 @@
 #pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 #include <yajl/yajl_tree.h>
-#include <yajl/yajl_parse.h>  
+#include <yajl/yajl_parse.h>
 #include <yajl/yajl_gen.h>
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -54,12 +54,15 @@
 
 //! Module Name
 static const char *LUA_IBJSONLIB_NAME = "ibjson";
+
 //! Module Version
 static const char *LUA_IBJSONLIB_VERSION = "1.0";
 
-static const char *LUA_IBJSON_COPYRIGHT = 
+//! Module Copyright
+static const char *LUA_IBJSON_COPYRIGHT =
     "Copyright (C) 2010-2013 Qualys, Inc.";
 
+//! Module Description
 static const char *LUA_IBJSON_DESCRIPTION = "IronBee JSON Interface.";
 
 /**
@@ -72,7 +75,7 @@ typedef struct ibjson_cbdata_t ibjson_cbdata_t;
  * Callback that pushes (in a parsing sense, not a Lua stack sense) values.
  *
  * When parsing JSON different values may be assigned differently.
- * For example, a number parsed after a map key should be assigned to a 
+ * For example, a number parsed after a map key should be assigned to a
  * table.
  *
  * @param[in] cbdata Callback data.
@@ -279,7 +282,7 @@ static const yajl_callbacks g_yajl_callbacks = {
  * unites that documentation.
  *
  * When a value that is not a map or a list is parsed, it is
- * pushed onto the Lua stack (@c lua_pushX(L, x)), but then 
+ * pushed onto the Lua stack (@c lua_pushX(L, x)), but then
  * a second "push" function is called which is of type @ref ibjson_push_fn_t.
  *
  * The second push function takes the value at the top of the Lua stack
@@ -317,7 +320,7 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
     }
     json_text = (const unsigned char*)lua_tostring(L, -1);
     json_text_sz = strlen((const char *)json_text);
-            
+
     rc = ib_mpool_create(&mp, "ibjson", NULL);
     if (rc != IB_OK) {
         return luaL_error(L, "Cannot allocate memory pool.");
@@ -326,7 +329,7 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
     cbdata.L = L;
     cbdata.mp = mp;
     cbdata.push_fn = &ibjson_pushval;
-            
+
     yajl_handle yajl = yajl_alloc(&g_yajl_callbacks, NULL, (void *)&cbdata);
     if (yajl == NULL) {
         ib_mpool_release(mp);
@@ -450,10 +453,9 @@ static yajl_gen_status ibjson_gen_map(lua_State *L, yajl_gen gen) {
  * @param[in] L Lua stack.
  * @param[in] gen The generator that will be accumulating the JSON text.
  *
- * @returns 
+ * @returns
  * - yajl_gen_status_ok on success.
  * - Status code retured by yajl_gen_&lt;type&gt; on error.
- *
  */
 static yajl_gen_status ibjson_gen(lua_State *L, yajl_gen gen) {
     yajl_gen_status ygc;
