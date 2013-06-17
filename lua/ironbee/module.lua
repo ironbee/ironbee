@@ -178,39 +178,6 @@ moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
     return setmetatable(t, self);
 end
 
--- Return a function that executes an action instance.
--- @param[in] name Name of the action.
--- @param[in] param Parameter to pass to the action.
--- @param[in] flags Flags passed to the action createion.
---
--- @returns A function that takes 1 parameter.
---   If the parameter is a ib_rule_exec_t, then the
---   action is evaluated. If ib_rule_exec_t is nil,
---   then the action is destroyed cleanly.
-_M.action = function(self, name, param, flags)
-    local inst = ffi.new('ib_action_inst_t*[1]')
-    local rc = ffi.C.ib_action_inst_create(
-        self.ib_engine,
-        name,
-        param,
-        flags,
-        inst)
-    if rc ~= ffi.C.IB_OK then
-        rc = tonumber(rc)
-        self:logError("Failed to create action %s(%d):%s.", name, rc, param);
-        return nil
-    end
-
-    return function(rule_exec)
-        if rule_exec == nil then
-            ffi.C.ib_action_inst_destroy(inst[0])
-            return tonumber(ffi.C.IB_OK)
-        else
-            return tonumber(ffi.C.ib_action_execute(rule_exec, inst[0]))
-        end
-    end
-end
-
 -- Schedule a directive to be registered after the module is done loading.
 --
 -- If the cregister_directive is nil then this call has no effect.
