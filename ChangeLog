@@ -1,0 +1,9 @@
+
+0.5.3 (14 June 2013)
+--------------------
+
+- Fix stream error when a valid Basic Authentication information is provided.
+
+- Do not fail the entire stream if the Authorization header is invalid. Raise HTP_AUTH_INVALID instead.
+
+- When a request does not contain the request URI, leave htp_tx_t::request_uri NULL.
