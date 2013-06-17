@@ -350,7 +350,6 @@ private:
      * Parses expression into expression tree and stores result in
      * @c act_inst->data.  See ownership().
      *
-     * @param[in] pool     Memory pool to use.
      * @param[in] expr_c   Expression as C string.
      * @param[in] act_inst Action instance.
      * @returns
@@ -359,7 +358,6 @@ private:
      * - Other if call factory throws an error.
      **/
     ib_status_t action_create(
-        ib_mpool_t*       pool,
         const char*       expr_c,
         ib_action_inst_t* act_inst
     );
@@ -637,12 +635,10 @@ Delegate::Delegate(IB::Module module) :
         IB::make_c_trampoline<
             ib_status_t(
                 ib_engine_t*,
-                ib_context_t*,
-                ib_mpool_t*,
                 const char*,
                 ib_action_inst_t*
             )
-        >(bind(&Delegate::action_create, this, _3, _4, _5));
+        >(bind(&Delegate::action_create, this, _2, _3));
 
     register_trampoline_data(action_create.second);
 
@@ -811,16 +807,15 @@ void Delegate::context_close(IB::Context context)
 }
 
 ib_status_t Delegate::action_create(
-    ib_mpool_t*       pool,
     const char*       expr_c,
     ib_action_inst_t* act_inst
 )
 {
-    assert(pool);
     assert(expr_c);
     assert(act_inst);
 
     try {
+        IB::MemoryPool pool = module().engine().main_memory_pool();
         string expr(expr_c);
 
         size_t i = 0;
@@ -838,7 +833,7 @@ ib_status_t Delegate::action_create(
             return IB_EINVAL;
         }
 
-        act_inst->data = IB::value_to_data(parse_tree, pool);
+        act_inst->data = IB::value_to_data(parse_tree, pool.ib());
     }
     catch (...) {
         return IB::convert_exception(module().engine());

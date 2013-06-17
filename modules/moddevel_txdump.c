@@ -1361,8 +1361,6 @@ static ib_status_t moddevel_txdump_handler(
  * Create function for the TxDump action.
  *
  * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current context.
- * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Callback data (unused)
@@ -1395,15 +1393,11 @@ static ib_status_t moddevel_txdump_handler(
  *  - <tt>TxDump:StdOut,All</tt>
  */
 static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
-                                              ib_context_t *ctx,
-                                              ib_mpool_t *mp,
                                               const char *parameters,
                                               ib_action_inst_t *inst,
                                               void *cbdata)
 {
     assert(ib != NULL);
-    assert(ctx != NULL);
-    assert(mp != NULL);
     assert(inst != NULL);
 
     ib_status_t           rc;
@@ -1415,6 +1409,9 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     int                   flagno = 0;
     ib_flags_t            flags = 0;
     ib_flags_t            mask = 0;
+    ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
+
+    assert(mp != NULL);
 
     if (parameters == NULL) {
         return IB_EINVAL;

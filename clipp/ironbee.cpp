@@ -370,8 +370,6 @@ extern "C" {
 
 ib_status_t clipp_action_create(
     ib_engine_t*      ib,
-    ib_context_t*     ctx,
-    ib_mpool_t*       mp,
     const char*       params,
     ib_action_inst_t* inst,
     void*             cbdata
@@ -416,13 +414,15 @@ ib_status_t clipp_action_execute(
 
 ib_status_t clipp_announce_action_create(
     ib_engine_t*      ib,
-    ib_context_t*     ctx,
-    ib_mpool_t*       mp,
     const char*       params,
     ib_action_inst_t* inst,
     void*             cbdata
 )
 {
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+
+    assert(mp != NULL);
+
     inst->data = ib_mpool_strdup(mp, params);
 
     return IB_OK;

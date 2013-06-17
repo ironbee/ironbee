@@ -463,7 +463,6 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
 
     /* Create a new action instance */
     rc = ib_action_inst_create(cp->ib,
-                               cp->cur_ctx,
                                name,
                                params,
                                IB_ACTINST_FLAG_NONE,

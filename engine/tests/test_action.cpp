@@ -75,7 +75,6 @@ TEST_F(ActionTest, CallAction) {
     ASSERT_EQ(IB_OK, status);
 
     status = ib_action_inst_create(ib_engine,
-                                   NULL,
                                    "test_action", "parameters",
                                    IB_ACTINST_FLAG_NONE,
                                    &act);
@@ -90,8 +89,6 @@ static ib_flags_t action_flags = IB_ACTINST_FLAG_NONE;
 static const char *action_str = NULL;
 
 static ib_status_t create_fn(ib_engine_t *ib,
-                             ib_context_t *ctx,
-                             ib_mpool_t *mp,
                              const char *params,
                              ib_action_inst_t *inst,
                              void *cbdata)
@@ -99,7 +96,7 @@ static ib_status_t create_fn(ib_engine_t *ib,
     if (strcmp(params, "INVALID") == 0) {
         return IB_EINVAL;
     }
-    inst->data = ib_mpool_strdup(mp, params);
+    inst->data = ib_mpool_strdup(ib_engine_pool_main_get(ib), params);
     return IB_OK;
 }
 
@@ -129,7 +126,6 @@ TEST_F(ActionTest, ExecuteAction) {
     ASSERT_EQ(IB_OK, status);
 
     status = ib_action_inst_create(ib_engine,
-                                   NULL,
                                    "test_action",
                                    "INVALID",
                                    flags,
@@ -137,7 +133,6 @@ TEST_F(ActionTest, ExecuteAction) {
     ASSERT_EQ(IB_EINVAL, status);
 
     status = ib_action_inst_create(ib_engine,
-                                   NULL,
                                    "test_action",
                                    params,
                                    flags,

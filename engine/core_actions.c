@@ -319,8 +319,6 @@ static ib_status_t setvar_num_op(
  * Create function for the setflags action.
  *
  * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current context.
- * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Unused.
@@ -329,8 +327,6 @@ static ib_status_t setvar_num_op(
  */
 static ib_status_t act_setflags_create(
     ib_engine_t *ib,
-    ib_context_t *ctx,
-    ib_mpool_t *mp,
     const char *parameters,
     ib_action_inst_t *inst,
     void *cbdata)
@@ -352,7 +348,10 @@ static ib_status_t act_setflags_create(
 
     for (flag = ib_core_fields_tx_flags();  flag->name != NULL;  ++flag) {
         if (strcasecmp(flag->name, parameters) == 0) {
+            ib_mpool_t *mp = ib_engine_pool_main_get(ib);
             setflag_data_t *data;
+
+            assert(mp != NULL);
 
             if (flag->read_only) {
                 return IB_EINVAL;
@@ -427,8 +426,6 @@ static ib_status_t act_setflag_execute(
  * Create function for the event action.
  *
  * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current context.
- * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Unused.
@@ -437,19 +434,18 @@ static ib_status_t act_setflag_execute(
  */
 static ib_status_t act_event_create(
     ib_engine_t *ib,
-    ib_context_t *ctx,
-    ib_mpool_t *mp,
     const char *parameters,
     ib_action_inst_t *inst,
     void *cbdata)
 {
     assert(ib != NULL);
-    assert(ctx != NULL);
-    assert(mp != NULL);
     assert(inst != NULL);
 
     event_data_t *event_data;
     ib_logevent_type_t event_type;
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+
+    assert(mp != NULL);
 
     if (parameters == NULL) {
         event_type = IB_LEVENT_TYPE_OBSERVATION;
@@ -619,8 +615,6 @@ static ib_status_t act_event_execute(
  * Create function for the setvar action.
  *
  * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current context.
- * @param[in] mp Memory pool to use for allocation
  * @param[in] params Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Unused.
@@ -629,8 +623,6 @@ static ib_status_t act_event_execute(
  */
 static ib_status_t act_setvar_create(
     ib_engine_t *ib,
-    ib_context_t *ctx,
-    ib_mpool_t *mp,
     const char *params,
     ib_action_inst_t *inst,
     void *cbdata)
@@ -643,6 +635,9 @@ static ib_status_t act_setvar_create(
     size_t vlen;                 /* Length of value */
     setvar_data_t *data;         /* Data for the execute function */
     ib_status_t rc;              /* Status code */
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+
+    assert(mp != NULL);
 
     if (params == NULL) {
         return IB_EINVAL;
@@ -1491,8 +1486,6 @@ static ib_status_t act_block_execute(
  * Create / initialize a new instance of an action.
  *
  * @param[in] ib IronBee engine.
- * @param[in] ctx Context.
- * @param[in] mp Memory pool.
  * @param[in] params Parameters. These may be "immediate", "phase", or
  *            "advise". If null, "advisory" is assumed.
  *            These select the type of block that will be put in place
@@ -1507,14 +1500,19 @@ static ib_status_t act_block_execute(
  */
 static ib_status_t act_block_create(
     ib_engine_t *ib,
-    ib_context_t *ctx,
-    ib_mpool_t *mp,
     const char *params,
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    act_block_t *act_block =
-        (act_block_t *)ib_mpool_alloc(mp, sizeof(*act_block));
+    assert(ib != NULL);
+    assert(inst != NULL);
+    act_block_t *act_block;
+    ib_mpool_t *mp;
+
+    mp = ib_engine_pool_main_get(ib);
+    assert(mp != NULL);
+
+    act_block = (act_block_t *)ib_mpool_alloc(mp, sizeof(*act_block));
     if ( act_block == NULL ) {
         return IB_EALLOC;
     }
@@ -1588,9 +1586,6 @@ static ib_status_t act_status_execute(
  * Create an action that sets the TX's block_status value.
  *
  * @param[in] ib The IronBee engine.
- * @param[in] ctx The current context. Unused.
- * @param[in] mp The memory pool that will allocate the act_status_t
- *            holder for the status value.
  * @param[in] params The parameters. This is a string representing
  *            an integer from 200 to 599, inclusive.
  * @param[out] inst The action instance that will be initialized.
@@ -1605,18 +1600,19 @@ static ib_status_t act_status_execute(
  */
 static ib_status_t act_status_create(
     ib_engine_t *ib,
-    ib_context_t *ctx,
-    ib_mpool_t *mp,
     const char *params,
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    assert(inst);
-    assert(mp);
+    assert(inst != NULL);
 
     act_status_t *act_status;
     ib_num_t block_status;
     ib_status_t rc;
+    ib_mpool_t *mp;
+
+    mp = ib_engine_pool_main_get(ib);
+    assert(mp != NULL);
 
     act_status = (act_status_t *) ib_mpool_alloc(mp, sizeof(*act_status));
     if (act_status == NULL) {
@@ -1780,8 +1776,6 @@ typedef struct act_header_data_t act_header_data_t;
  * Common create routine for delResponseHeader and delRequestHeader action.
  *
  * @param[in] ib The IronBee engine.
- * @param[in] ctx The context.
- * @param[in] mp The memory pool this is allocated out of.
  * @param[in] params Parameters of the format name=&lt;header name&gt;.
  * @param[out] inst The action instance being initialized.
  * @param[in] cbdata Unused.
@@ -1790,21 +1784,20 @@ typedef struct act_header_data_t act_header_data_t;
  */
 static ib_status_t act_del_header_create(
     ib_engine_t *ib,
-    ib_context_t *ctx,
-    ib_mpool_t *mp,
     const char *params,
     ib_action_inst_t *inst,
     void *cbdata)
 {
     assert(ib != NULL);
-    assert(ctx != NULL);
-    assert(mp != NULL);
     assert(params != NULL);
     assert(inst != NULL);
 
-    act_header_data_t *act_data =
-        (act_header_data_t *)ib_mpool_alloc(mp, sizeof(*act_data));
     ib_status_t rc;
+    act_header_data_t *act_data;
+    ib_mpool_t        *mp = ib_engine_pool_main_get(ib);
+
+    assert(mp != NULL);
+    act_data = (act_header_data_t *)ib_mpool_alloc(mp, sizeof(*act_data));
 
     if (act_data == NULL) {
         return IB_EALLOC;
@@ -1837,8 +1830,6 @@ static ib_status_t act_del_header_create(
  * Common create routine for setResponseHeader and setRequestHeader actions.
  *
  * @param[in] ib The IronBee engine.
- * @param[in] ctx The context.
- * @param[in] mp The memory pool this is allocated out of.
  * @param[in] params Parameters of the format name=&gt;header name&lt;.
  * @param[out] inst The action instance being initialized.
  * @param[in] cbdata Unused.
@@ -1847,15 +1838,11 @@ static ib_status_t act_del_header_create(
  */
 static ib_status_t act_set_header_create(
     ib_engine_t *ib,
-    ib_context_t *ctx,
-    ib_mpool_t *mp,
     const char *params,
     ib_action_inst_t *inst,
     void *cbdata)
 {
     assert(ib != NULL);
-    assert(ctx != NULL);
-    assert(mp != NULL);
     assert(params != NULL);
     assert(inst != NULL);
 
@@ -1863,11 +1850,14 @@ static ib_status_t act_set_header_create(
     size_t value_len;
     size_t params_len;
     char *equals_idx;
-    act_header_data_t *act_data =
-        (act_header_data_t *)ib_mpool_alloc(mp, sizeof(*act_data));
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    act_header_data_t *act_data;
     bool expand = false;
     ib_status_t rc;
     size_t value_offs = 1;
+
+    assert(mp != NULL);
+    act_data = (act_header_data_t *)ib_mpool_alloc(mp, sizeof(*act_data));
 
     if (act_data == NULL) {
         return IB_EALLOC;
@@ -2253,8 +2243,6 @@ static ib_status_t act_del_response_header_execute(
  * Create function for the allow action.
  *
  * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current context.
- * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Unused.
@@ -2263,14 +2251,16 @@ static ib_status_t act_del_response_header_execute(
  */
 static ib_status_t act_allow_create(
     ib_engine_t *ib,
-    ib_context_t *ctx,
-    ib_mpool_t *mp,
     const char *parameters,
     ib_action_inst_t *inst,
     void *cbdata)
 {
     ib_flags_t flags = IB_TX_FNONE;
     ib_flags_t *idata;
+    ib_mpool_t *mp;
+
+    mp = ib_engine_pool_main_get(ib);
+    assert(mp != NULL);
 
     if (parameters == NULL) {
         flags |= IB_TX_ALLOW_ALL;
@@ -2346,8 +2336,6 @@ typedef struct {
  * Create function for the AuditLogParts action
  *
  * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current context.
- * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Unused.
@@ -2356,21 +2344,20 @@ typedef struct {
  */
 static ib_status_t act_auditlogparts_create(
     ib_engine_t      *ib,
-    ib_context_t     *ctx,
-    ib_mpool_t       *mp,
     const char       *parameters,
     ib_action_inst_t *inst,
     void             *cbdata)
 {
     assert(ib != NULL);
-    assert(ctx != NULL);
-    assert(mp != NULL);
     assert(inst != NULL);
 
     ib_status_t           rc;
     act_auditlog_parts_t *idata;
     ib_list_t            *oplist;
     const ib_strval_t    *map;
+    ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
+
+    assert(mp != NULL);
 
     /* Create the list */
     rc = ib_list_create(&oplist, mp);

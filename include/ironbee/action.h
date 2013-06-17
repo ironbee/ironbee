@@ -51,8 +51,6 @@ typedef struct ib_action_inst_t ib_action_inst_t;
  * created and the actions, flags, and params fields have been initialized.
  *
  * @param[in] ib IronBee engine.
- * @param[in] ctx Current context.
- * @param[in] pool Memory pool to be used for allocating needed memory.
  * @param[in] data Unparsed string with the parameters to
  *                 initialize the action instance.
  * @param[in,out] act_inst Pointer to the action instance to be initialized.
@@ -62,8 +60,6 @@ typedef struct ib_action_inst_t ib_action_inst_t;
  */
 typedef ib_status_t (* ib_action_create_fn_t)(
     ib_engine_t      *ib,
-    ib_context_t     *ctx,
-    ib_mpool_t       *pool,
     const char       *data,
     ib_action_inst_t *act_inst,
     void             *cbdata
@@ -170,8 +166,6 @@ ib_status_t ib_action_register(
  * Looks up the action by name and executes the action creation callback.
  *
  * @param[in] ib ironbee engine.
- * @param[in] mpool Memory pool to create the action out of.
- * @param[in] ctx Current context.
  * @param[in] name The name of the action to create.
  * @param[in] parameters Parameters used to create the instance.
  * @param[in] flags Action instance flags.
@@ -181,8 +175,6 @@ ib_status_t ib_action_register(
  */
 ib_status_t ib_action_inst_create_ex(
     ib_engine_t *ib,
-    ib_mpool_t *mpool,
-    ib_context_t *ctx,
     const char *name,
     const char *parameters,
     ib_flags_t flags,
@@ -193,7 +185,6 @@ ib_status_t ib_action_inst_create_ex(
  * Looks up the action by name and executes the action creation callback.
  *
  * @param[in] ib ironbee engine.
- * @param[in] ctx Current context.
  * @param[in] name The name of the action to create.
  * @param[in] parameters Parameters used to create the instance.
  * @param[in] flags Action instance flags.
@@ -202,7 +193,6 @@ ib_status_t ib_action_inst_create_ex(
  * @returns IB_OK on success, IB_EINVAL if the named action does not exist.
  */
 ib_status_t ib_action_inst_create(ib_engine_t *ib,
-                                  ib_context_t *ctx,
                                   const char *name,
                                   const char *parameters,
                                   ib_flags_t flags,

@@ -377,8 +377,6 @@ ib_status_t ib_module_action_inst_create(
 
     ib_status_t rc = ib_action_inst_create_ex(
         module->ib,
-        mpool,
-        ib_context_main(module->ib),
         action_name,
         action_parameters,
         flags,

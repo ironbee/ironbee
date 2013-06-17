@@ -333,8 +333,6 @@ static ib_status_t op_istype_execute(
  * Create function for the DebugLog action.
  *
  * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current context.
- * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Callback data (unused)
@@ -343,8 +341,6 @@ static ib_status_t op_istype_execute(
  */
 static ib_status_t action_debuglog_create(
     ib_engine_t      *ib,
-    ib_context_t     *ctx,
-    ib_mpool_t       *mp,
     const char       *parameters,
     ib_action_inst_t *inst,
     void             *cbdata)
@@ -352,6 +348,9 @@ static ib_status_t action_debuglog_create(
     ib_status_t rc;
     bool expand;
     char *str;
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+
+    assert(mp != NULL);
 
     if (parameters == NULL) {
         return IB_EINVAL;
@@ -417,8 +416,6 @@ static ib_status_t action_debuglog_execute(
  * Create function for the 'print' action.
  *
  * @param[in] ib IronBee engine
- * @param[in] ctx Current IronBee context
- * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Unused.
@@ -427,8 +424,6 @@ static ib_status_t action_debuglog_execute(
  */
 static ib_status_t action_print_create(
     ib_engine_t      *ib,
-    ib_context_t     *ctx,
-    ib_mpool_t       *mp,
     const char       *parameters,
     ib_action_inst_t *inst,
     void             *cbdata)
@@ -436,6 +431,9 @@ static ib_status_t action_print_create(
     char *str;
     ib_status_t rc;
     bool expand;
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+
+    assert(mp != NULL);
 
     if (parameters == NULL) {
         return IB_EINVAL;
@@ -500,8 +498,6 @@ static ib_status_t action_print_execute(
  * Create function for the assert action.
  *
  * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current context.
- * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Callback data (unused)
@@ -510,8 +506,6 @@ static ib_status_t action_print_execute(
  */
 static ib_status_t action_assert_create(
     ib_engine_t      *ib,
-    ib_context_t     *ctx,
-    ib_mpool_t       *mp,
     const char       *parameters,
     ib_action_inst_t *inst,
     void             *cbdata)
@@ -519,6 +513,8 @@ static ib_status_t action_assert_create(
     ib_status_t rc;
     bool expand;
     char *str;
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    assert(mp != NULL);
 
     if (parameters == NULL) {
         parameters = "";
@@ -587,8 +583,6 @@ static const char *action_inject_name = "inject";
  * Create function for the inject action.
  *
  * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current context.
- * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  * @param[in] cbdata Callback data (configuration; unused)
@@ -597,8 +591,6 @@ static const char *action_inject_name = "inject";
  */
 static ib_status_t action_inject_create_fn(
     ib_engine_t      *ib,
-    ib_context_t     *ctx,
-    ib_mpool_t       *mp,
     const char       *parameters,
     ib_action_inst_t *inst,
     void             *cbdata)

@@ -31,6 +31,7 @@
 #include <ironbee/mpool.h>
 
 #include <string.h>
+#include <assert.h>
 
 ib_status_t ib_action_register(
     ib_engine_t            *ib,
@@ -81,16 +82,20 @@ ib_status_t ib_action_register(
 
 ib_status_t ib_action_inst_create_ex(
     ib_engine_t *ib,
-    ib_mpool_t *mpool,
-    ib_context_t *ctx,
     const char *name,
     const char *parameters,
     ib_flags_t flags,
     ib_action_inst_t **act_inst)
 {
+    assert(ib != NULL);
+    assert(name != NULL);
+
     ib_hash_t *action_hash = ib->actions;
     ib_action_t *action;
     ib_status_t rc;
+    ib_mpool_t *mpool = ib_engine_pool_main_get(ib);
+
+    assert(mpool != NULL);
 
     rc = ib_hash_get(action_hash, &action, name);
     if (rc != IB_OK) {
@@ -111,8 +116,6 @@ ib_status_t ib_action_inst_create_ex(
     if (action->fn_create != NULL) {
         rc = action->fn_create(
             ib,
-            ctx,
-            mpool,
             parameters,
             *act_inst,
             action->cbdata_create
@@ -137,7 +140,6 @@ ib_status_t ib_action_inst_create_ex(
 }
 
 ib_status_t ib_action_inst_create(ib_engine_t *ib,
-                                  ib_context_t *ctx,
                                   const char *name,
                                   const char *parameters,
                                   ib_flags_t flags,
@@ -145,8 +147,6 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
 {
     return ib_action_inst_create_ex(
         ib,
-        ib_engine_pool_main_get(ib),
-        ctx,
         name,
         parameters,
         flags,
