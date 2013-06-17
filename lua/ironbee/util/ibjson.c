@@ -16,10 +16,9 @@
  ****************************************************************************/
 
 /**
- * @addtogroup Lua
- * @{
  *
  * @defgroup LuaIbJson JSON Bindings
+ * @ingroup Lua
  * @{
  */
 
@@ -31,11 +30,11 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
-//! Lua module requirement.
+/* Lua module requirement. */
 #define LUA_LIB
-//! Lua module requirement.
+/* Lua module requirement. */
 #include "lua.h"
-//! Lua module requirement.
+/* Lua module requirement. */
 #include "lauxlib.h"
 
 #include <ironbee/mpool.h>
@@ -57,6 +56,11 @@
 static const char *LUA_IBJSONLIB_NAME = "ibjson";
 //! Module Version
 static const char *LUA_IBJSONLIB_VERSION = "1.0";
+
+static const char *LUA_IBJSON_COPYRIGHT = 
+    "Copyright (C) 2010-2013 Qualys, Inc.";
+
+static const char *LUA_IBJSON_DESCRIPTION = "IronBee JSON Interface.";
 
 /**
  * Forward declaration of callback data for parsing.
@@ -249,7 +253,7 @@ static int yajl_string(void *ctx, const unsigned char *stringVal, size_t stringL
     return 1;
 }
 
-static yajl_callbacks g_yajl_callbacks = {
+static const yajl_callbacks g_yajl_callbacks = {
     .yajl_boolean = yajl_boolean,
     .yajl_double = yajl_double,
     .yajl_end_array = yajl_end_array,
@@ -611,10 +615,10 @@ LUALIB_API int luaopen_ibjson(lua_State *L) {
     lua_pushstring(L, LUA_IBJSONLIB_VERSION);
     lua_setfield(L, -2, "_VERSION");
 
-    lua_pushstring(L, "Copyright (C) 2010-2013 Qualys, Inc.");
+    lua_pushstring(L, LUA_IBJSON_COPYRIGHT);
     lua_setfield(L, -2, "_COPYRIGHT");
 
-    lua_pushstring(L, "IronBee JSON Interface.");
+    lua_pushstring(L, LUA_IBJSON_DESCRIPTION);
     lua_setfield(L, -2, "_DESCRIPTION");
 
     lua_pop(L, 1);
@@ -623,6 +627,5 @@ LUALIB_API int luaopen_ibjson(lua_State *L) {
 }
 
 /**
- * @}
  * @}
  */
