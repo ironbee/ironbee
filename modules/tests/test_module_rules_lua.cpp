@@ -43,7 +43,7 @@ namespace {
 /**
  * Test rules.
  */
-class TestIronBeeModuleRulesLua : public BaseFixture
+class TestIronBeeModuleRulesLua : public BaseTransactionFixture
 {
     private:
 
@@ -54,11 +54,11 @@ class TestIronBeeModuleRulesLua : public BaseFixture
 
     public:
 
-    TestIronBeeModuleRulesLua() : BaseFixture() {
+    TestIronBeeModuleRulesLua() : BaseTransactionFixture() {
     }
 
     virtual void SetUp(){
-        BaseFixture::SetUp();
+        BaseTransactionFixture::SetUp();
         loadModule(&m_module, "ibmod_rules.so");
         ASSERT_IB_OK(ib_rule_create(ib_engine,
                                     ib_engine->ectx,
@@ -102,6 +102,7 @@ TEST_F(TestIronBeeModuleRulesLua, load_func_eval)
     ib_tx_t tx;
     tx.ib = ib_engine;
     tx.id = "tx_id.TestIronBeeModuleRulesLua.load_func_eval";
+    ASSERT_EQ(IB_OK, ib_conn_create(ib_engine, &tx.conn, NULL));
 
     ib_rule_exec_t rule_exec;
     memset(&rule_exec, 0, sizeof(rule_exec));
@@ -154,11 +155,6 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
 
 TEST_F(TestIronBeeModuleRulesLua, operator_test)
 {
-    ib_tx_t tx;
-
-    memset(&tx, 0, sizeof(tx));
-    tx.ib = ib_engine;
-
     const ib_operator_t *op;
     void *instance_data;
     ib_num_t result;
@@ -168,10 +164,8 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     const char* op_name = "test_module_rules_lua.lua";
     const char* rule_name = "luarule001";
 
-    char* str1 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string 1")+1));
-    strcpy(str1, "string 1");
-
-    ib_tx_generate_id(&tx, ib_engine->mp);
+    char* str1 = (char *) ib_mpool_strdup(ib_engine->mp, "string 1");
+    ASSERT_TRUE(str1);
 
     // Create field 1.
     ASSERT_EQ(IB_OK,
@@ -197,11 +191,12 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
                                              IB_OP_CAPABILITY_NON_STREAM,
                                              rule_name,
                                              &instance_data));
+    performTx();
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, ib_operator_inst_execute(op,
                                           instance_data,
-                                          &tx,
+                                          ib_tx,
                                           field1,
                                           NULL,
                                           &result));

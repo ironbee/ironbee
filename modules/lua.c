@@ -2754,6 +2754,7 @@ static ib_status_t ib_lua_func_eval_r(
 {
     assert(tx != NULL);
     assert(tx->ib != NULL);
+    assert(tx->conn != NULL);
     assert(func_name != NULL);
     assert(result != NULL);
 
@@ -2761,8 +2762,8 @@ static ib_status_t ib_lua_func_eval_r(
     ib_engine_t *ib = tx->ib;
     ib_context_t *ctx = NULL;
     int result_int;
-    lua_State *L = NULL;
     modlua_cfg_t *cfg = NULL;
+    modlua_runtime_t *luart = NULL;
 
     ctx = (tx->ctx == NULL)?  ib_context_main(ib) : tx->ctx;
 
@@ -2771,23 +2772,15 @@ static ib_status_t ib_lua_func_eval_r(
         return rc;
     }
 
-    rc = modlua_newstate(ib, cfg, &L);
+    rc = modlua_runtime_get(tx->conn, &luart);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not create Lua stack.");
+        ib_log_error_tx(tx, "Failed to retrieve Lua stack.");
         return rc;
     }
-    rc = modlua_reload(ib, L);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Could not configure Lua stack.");
-        return rc;
-    }
-
-    if (rc != IB_OK) {
-        return rc;
-    }
+    assert(luart->L != NULL);
 
     /* Call the rule in isolation. */
-    rc = ib_lua_func_eval_int(ib, tx, L, func_name, &result_int);
+    rc = ib_lua_func_eval_int(ib, tx, luart->L, func_name, &result_int);
 
     /* Convert the passed in integer type to an ib_num_t. */
     *result = result_int;
@@ -2795,8 +2788,6 @@ static ib_status_t ib_lua_func_eval_r(
     if (rc != IB_OK) {
         return rc;
     }
-
-    lua_close(L);
 
     return rc;
 }
