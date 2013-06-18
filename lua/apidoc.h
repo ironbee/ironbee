@@ -162,6 +162,76 @@
  *
  * @section LuaRuleWriting Writing a Rule in Lua
  *
+ * Choosing to write a Lua Rule involves a similar economy to that of
+ * when to write a module. Performance is a cost, but the flexibility is
+ * much greater. Perhaps this is a good way to prototype? Perhaps this is a 
+ * good way to archive all data matching a particular rule?
+ *
+ * @subsection Lua Rules are Rules all the Same
+ *
+ * Lua Rules start in the IronBee configuration file:
+ *
+ * @code
+ * RuleExt "lua:/home/myuser/myrule.lua" id:myrule rev:1 phase:RESPONSE event log action:block
+ * @endcode
+ *
+ * Some things to observe. First, the directive is not Lua-specific.
+ * @c RuleExt is for any supported external rule definition, for which 
+ * there is only, currently, Lua.  Extending the external rule
+ * languages is not covered in this guide, but is quite possible.
+ * Second, notice, that this rule has no fields, no operator, and no
+ * operator argument. It does, however, have a list of modifiers
+ * that are executed if the Lua script should return 1, success.
+ *
+ * @c RuleExt statement are real rules, and so they can be chained. Perhaps
+ * you would like to only use your Lua rule if there is a strong possibility
+ * of it finding something. You could write:
+ * 
+ * @code
+ * Rule ARGS @rx "my_check" id:myRule rev:1 phase:REQUEST chain
+ * RuleExt "lua:/my_careful_check.lua"
+ * @endcode
+ *
+ * When writing a Lua Rule realize that you are implementing the operator
+ * portion of a rule. That operator returns 1 on success, 0 on failure,
+ * but never errors. Also, it must fetch its fields as they are not provided.
+ * Finally, since Lua Rules are implemented as operators, they have
+ * no notion of the @c ib_rule_ext_t structure that an Action has 
+ * available to it. 
+ *
+ * @subsection LuaRuleScript Inside the Rule Script
+ *
+ * We've shown how to wire a Lua script into the IronBee Rule Engine. Now
+ * we will take a peak inside the @c .lua file.
+ *
+ * @code{.lua}
+ * ib = ...
+ * ib:logInfo("In a rule.")
+ * return 1
+ * @endcode
+ *
+ * Lua rule files are loaded onto the Lua stack as anonymous functions,
+ * and then stored for later retrieval. When they are run, they are
+ * given a single argument, a table, which is an instance of the
+ * @ref IronBeeLuaEngineApi "ib_engine" object. This Lua object
+ * provides the Rule Writer with access to various functions to fetch
+ * and set data fields and make a determination to fire the action set
+ * associated with this rule, or not.
+ *
+ * @code{.lua}
+ * ib = ...
+ *
+ * local a = ib:get("ARGS:a")
+ * if a and a == 'hello world' then
+ *   ib:set("FOUND_A", 1)
+ *   return 1
+ * end
+ * @endcode
+ *
+ * As a final example, the above rule will find a field @c a in the 
+ * collection @c ARGS. If @c a is set to 'hello world', the modifier list is
+ * fired.
+ *
  * @section IronBeeLuaAPIReference IronBee Lua Api Reference
  *
  * The IronBee Lua api consists of several files. You should \c require
