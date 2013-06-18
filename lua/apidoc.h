@@ -31,7 +31,138 @@
  *
  * @tableofcontents
  *
- * @section IronBeeLuaAPI IronBee Lua Api
+ * @section IronBeeLuaIntroduction Introduction
+ *
+ * IronBee ships with a copy of LuaJIT in the  @c libs directory. If you don't
+ * disable support for Lua (@c --disable-lua) then you will get the
+ * module @c ibmod_lua. This module gives you several configuration directives
+ * which will interface with the Lua library code for IronBee.
+ *
+ * 1. @c LuaLoadModule - Load a module defined in Lua.
+ * 2. @c LuaPackagePath - Set the Lua package path for Lua runtimes.
+ * 3. @c LuaPackageCPath - Set the Lua C package path for Lua runtimes.
+ * 4. @c LuaInclude - A Lua version of @c Include, this will include
+ *                    a Lua file at configuration time and interpret it
+ *                    in the context of a configuration DSL. The
+ *                    @ref Waggle rule language is part of 
+ *                    that configuration DSL.
+ * 5. @c LuaCommitRules - Take rules defined in @ref Waggle and 
+ *                       integrate them into the engine.
+ *
+ * @section LuaConfiguration Configuring IronBee through Lua
+ *
+ * Configuration IronBee is partially supported using Lua. Currently only
+ * support of specifying Rules is available using the @c LuaInclude directive.
+ *
+ * @code{.lua}
+ * LuaInclude "/usr/share/ironbee/lua/rules/myrules.lua"
+ * @endcode
+ *
+ * See @ref Waggle documentation for how to write rules in Lua. Lua rules
+ * expressed in Waggle are first-class rules when integrated with the IronBee
+ * engine, and will execute with the same speed and semantics as rules
+ * written in the configuration language. See the [IronBee Manual](https://www.ironbee.com/docs/manual/ironbee-reference-manual.html#N1011C).
+ * details about the configuration rule language.
+ *
+ * @section LuaPerformance A Note About Performance
+ *
+ * As of IronBee 0.8.0, each connection is given a single Lua stack to work 
+ * with. This means the Lua rules, and Lua modules all execute in the
+ * same environment, and can use this environment to exchange information.
+ *
+ * This does mean that every connection pays a startup penalty in 0.8.0
+ * to build the Lua stack. Future work will be to pool preallocated Lua stacks
+ * and share them out. This will increase speed but will also require
+ * the user to re-initialize any values. If you are coding Lua for IronBee
+ * 0.8.0, you should clear all values you intend to use to make your code
+ * future-compatible when shared Lua stacks are implemented.
+ *
+ * @section LuaModuleWriting Writing a Module in Lua
+ *
+ * Writing a module in Lua is an excellent way to quickly express complicated
+ * security logic, prototype ideas, or simply protect a site that only
+ * handles moderate traffic load. Modules are also the way to interface
+ * with IronBee for purposes other than connections. For example, if you 
+ * wanted to influence the engine at configuration time, there are
+ * callbacks for configuration events. If you wanted to know
+ * when IronBee's engine is going to cleanly shutdown, there is an event
+ * that notifies listeners.
+ *
+ * Modules are single Lua files that are loaded onto the Lua stack
+ * as anonymous functions, given a single argument, and evaluated.
+ *
+ * A simple module might be...
+ *
+ * @code{.lua}
+ * -- Grab the module API instance.
+ * local module = ...
+ * module:logInfo("Loading module.")
+ *
+ * module:conn_opened_event(function(ib, event)
+ *   ib:logInfo("Firing event %s.")
+ *   return 0
+ * end)
+ *
+ * module:logInfo("Done loading module!")
+ * -- Tell the configuration system that we loaded correctly. Return IB_OK .
+ * return 0
+ * @endcode
+ *
+ *
+ * The above module will log that a connection opened event is firing.
+ * Notice that when building the module we use @c module whereas when
+ * we log inside a callback we use @c ib. This is because @c ib is
+ * an IronBee object which contains information specific to the connection
+ * or transaction that is being handled at the time of the event
+ * callback.
+ *
+ * The @c ib table is always an @ref IronBeeLuaEngineApi "engine" table.
+ * But when in a transaction it will polymorphicaly specialize to a
+ * @ref IronBeeLuaTxApi "tx" table and provide functions such as
+ * @c addEvent.
+ *
+ * @code{.lua}
+ * -- Grab the module API instance.
+ * local module = ...
+ *
+ * module:tx_started_event(function(tx, event)
+ *   tx:logDebug("Block all the things.")
+ *   tx:addEvent("Block All Transactions!", { action = "block" })
+ *   return 0
+ * end)
+ *
+ * return 0
+ * @endcode
+ *
+ * The above code is very similar to the previous code, but we've
+ * changed the callback to @c tx_started_event so that the first
+ * argument to our callback function is a @c tx, a child object of @c ib.
+ *
+ * We log, but at DEBUG level, that we are blocking everything. 
+ * We do this by creating an event that has an action of "block".
+ *
+ * Moudules can also review created events and suppress them.
+ *
+ * @code{.lua}
+ * -- Grab the module API instance.
+ * local module = ...
+ *
+ * module:tx_finished_event(function(tx, event)
+ *   for index, event in tx:events do
+ *     event:setSuppress('false_positive')
+ *   end
+ *   return 0
+ * end)
+ *
+ * return 0
+ * @endcode
+ *
+ * The above code will suppress all events as @c false_positives created.
+ *
+ *
+ * @section LuaRuleWriting Writing a Rule in Lua
+ *
+ * @section IronBeeLuaAPIReference IronBee Lua Api Reference
  *
  * The IronBee Lua api consists of several files. You should \c require
  * those that you need in your Lua code.
@@ -51,9 +182,7 @@
  *                   to ib_tx_t objects.
  * - @c ironbee/util - A collection of utilty functions.
  * - @c ironbee/waggle - An alternate rule configuration language
- *                       which is exposed by @c config.lua. This
- *                       copy of the Waggle code removes support for
- *                       JSON parsing and generation.
+ *                       which is exposed by @c config.lua.
  *
  * @subsection IronBeeLuaEngineApi The Engine API
  *
