@@ -235,7 +235,17 @@ struct ib_tx_t {
     ib_num_t            auditlog_parts;  /**< Audit log parts */
     ib_num_t            block_status;    /**< TX-specific block status to use.*/
     ib_block_mode_t     block_mode;      /**< TX-specific block mode to use.*/
-    ib_rule_phase_num_t allow_phase;     /**< Phase to allow (skip) */
+
+    /**
+     * Instructs the Rule Engine to not evaluate rules in this one phase.
+     *
+     * Future phases are still evaluated normally. This is typically used
+     * by the allow action to skip futher rule evaluation in the current
+     * phase. It may have many different values during the coarse for a
+     * transaction. The default is PHASE_NONE, set at the start of
+     * each phase's rule evaluation..
+     */
+    ib_rule_phase_num_t allow_phase;
     ib_rule_exec_t     *rule_exec;       /**< Rule engine execution object */
     ib_list_t          *managed_collections;/**< ib_managed_collection_t list*/
 
