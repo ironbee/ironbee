@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Rules module.
+ */
+
 #include "ironbee_config_auto.h"
 
 #include "engine_private.h"

@@ -15,6 +15,11 @@
 // limitations under the License.
 //////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @file
+ * @brief IronBee --- KVStore tests.
+ */
+
 extern "C" {
 #include "ironbee_config_auto.h"
 

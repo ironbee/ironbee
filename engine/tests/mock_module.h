@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Mock module
+ */
+
 #ifndef _MOCK_MODULE_H_
 #define _MOCK_MODULE_H_
 

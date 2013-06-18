@@ -15,6 +15,13 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Mockup module.
+ */
+
+#include "ironbee_config_auto.h"
+
 #include "mock_module.h"
 
 #include <assert.h>

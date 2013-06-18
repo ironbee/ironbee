@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Persist to file system.
+ */
+
 #include "ironbee_config_auto.h"
 
 #include <ironbee/kvstore_filesystem.h>

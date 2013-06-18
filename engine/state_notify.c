@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- State Notification Implementation
+ */
+
 #include "ironbee_config_auto.h"
 
 #include <ironbee/state_notify.h>

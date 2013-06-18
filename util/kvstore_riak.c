@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Persist to riak.
+ */
+
 #include "ironbee_config_auto.h"
 
 #include <ironbee/kvstore_riak.h>

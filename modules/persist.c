@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Persistance module.
+ */
+
 #include "ironbee_config_auto.h"
 
 #include <ironbee/collection_manager.h>

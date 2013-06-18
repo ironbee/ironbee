@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- LuaJit test.
+ */
+
 #include "gtest/gtest.h"
 
 extern "C" {

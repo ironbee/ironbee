@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Test IronBee Lua API.
+ */
+
 #include <gtest/gtest.h>
 
 #include <iostream>

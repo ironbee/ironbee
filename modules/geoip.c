@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Module providing basic geoip services.
+ */
+
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
 #include <ironbee/context.h>

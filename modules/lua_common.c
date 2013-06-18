@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Lua modules common code.
+ */
+
 #include "lua_common_private.h"
 
 #include <ironbee/types.h>

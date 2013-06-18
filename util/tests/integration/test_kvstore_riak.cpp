@@ -15,6 +15,11 @@
 // limitations under the License.
 //////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @file
+ * @brief IronBee --- Riak kvstore tests.
+ */
+
 #include "ironbee_config_auto.h"
 #include "../gtest/gtest.h"
 #include "../gtest/gtest-spi.h"

@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Test configuration code.
+ */
+
 #include <gtest/gtest.h>
 #include <config-parser.h>
 #include <ironbee/config.h>

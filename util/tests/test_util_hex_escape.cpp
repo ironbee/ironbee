@@ -15,6 +15,11 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Test hex escape code.
+ */
+
 #include "ironbee/escape.h"
 #include <gtest/gtest.h>
 

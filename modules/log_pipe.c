@@ -16,6 +16,9 @@
  ****************************************************************************/
 
 /**
+ * @file
+ * @brief IronBee --- Pipe module.
+ *
  * This is a proof-of-concept for implementing an ironbee logger as module.
  * Tested at its simplest by just piping to cat.
  *
