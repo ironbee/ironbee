@@ -167,7 +167,7 @@ end
 --   The returned function, when executed, returns 2 values.
 --   First, an ib_status_t value, normally IB_OK. The second
 --   value is the result of the operator execution or 0 when the
---   operator is destroyed (rule_exec was equal to nil).
+--   operator is destroyed (tx was equal to nil).
 _M.operator = function(self, name, param, flags)
     local op = ffi.new('ib_rule_operator_t*[1]')
     local inst = ffi.new('void*[1]')

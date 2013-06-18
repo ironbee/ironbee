@@ -2317,11 +2317,6 @@ static ib_status_t act_allow_execute(
     /* Set the flags in the TX */
     ib_tx_flags_set(rule_exec->tx, set_flags);
 
-    /* For ALLOW_PHASE, store the current phase */
-    if (ib_flags_all(set_flags, IB_TX_ALLOW_PHASE)) {
-        rule_exec->tx->allow_phase = rule_exec->rule->meta.phase;
-    }
-
     return IB_OK;
 }
 

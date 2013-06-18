@@ -1278,6 +1278,89 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
 }
 
 /**
+ * A debugging function that logs values at trace level.
+ *
+ * This function intentionally returns nothing because log level should
+ * never impact the callers running.
+ */
+static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
+                                const ib_rule_operator_inst_t *opinst,
+                                const ib_rule_target_t *target,
+                                const ib_field_t *value)
+{
+    ib_status_t rc;
+
+    if ( value == NULL ) {
+        ib_rule_log_trace(rule_exec,
+                          "Exec of op %s on field %s = NULL",
+                          ib_operator_get_name(opinst->op),
+                          target->field_name);
+    }
+    else if (value->type == IB_FTYPE_NUM) {
+        ib_num_t num;
+        rc = ib_field_value(value, ib_ftype_num_out(&num));
+        if ( rc != IB_OK ) {
+            return;
+        }
+        ib_rule_log_trace(rule_exec,
+                          "Exec of op %s on field %s = %" PRId64,
+                          ib_operator_get_name(opinst->op),
+                          target->field_name,
+                          num);
+    }
+    else if (value->type == IB_FTYPE_NULSTR) {
+        const char* nulstr;
+        const char *escaped;
+
+        rc = ib_field_value(value, ib_ftype_nulstr_out(&nulstr));
+        if (rc != IB_OK) {
+            return;
+        }
+
+        escaped = ib_util_hex_escape(rule_exec->tx->mp,
+                                      (const uint8_t *)nulstr,
+                                      strlen(nulstr));
+        if (escaped == NULL) {
+            return;
+        }
+
+        ib_rule_log_trace(rule_exec,
+                          "Exec of op %s on field %s = %s",
+                          ib_operator_get_name(opinst->op),
+                          target->field_name,
+                          escaped);
+    }
+    else if (value->type == IB_FTYPE_BYTESTR) {
+        const char         *escaped;
+        const ib_bytestr_t *bytestr;
+
+        rc = ib_field_value(value, ib_ftype_bytestr_out(&bytestr));
+        if ( rc != IB_OK ) {
+            return;
+        }
+
+        escaped = ib_util_hex_escape(rule_exec->tx->mp,
+                                     ib_bytestr_const_ptr(bytestr),
+                                     ib_bytestr_size(bytestr));
+        if (escaped == NULL) {
+            return;
+        }
+        ib_rule_log_trace(rule_exec,
+                          "Exec of op %s on field %s = %s",
+                          ib_operator_get_name(opinst->op),
+                          target->field_name,
+                          escaped);
+    }
+    else {
+        ib_rule_log_trace(rule_exec,
+                          "Exec of op %s on field %s = %s",
+                          ib_operator_get_name(opinst->op),
+                          target->field_name,
+                          "[cannot decode field type]");
+    }
+}
+
+/**
  * Execute a rule on a list of values
  *
  * @param[in] rule_exec Rule execution object
@@ -1301,73 +1384,7 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
 
     /* This if-block is only to log operator values when tracing. */
     if (ib_rule_dlog_level(rule_exec->tx->ctx) >= IB_RULE_DLOG_TRACE) {
-        if ( value == NULL ) {
-            ib_rule_log_trace(rule_exec,
-                              "Exec of op %s on field %s = NULL",
-                              ib_operator_get_name(opinst->op),
-                              target->field_name);
-        }
-        else if (value->type == IB_FTYPE_NUM) {
-            ib_num_t num;
-            rc = ib_field_value(value, ib_ftype_num_out(&num));
-            if ( rc != IB_OK ) {
-                return rc;
-            }
-            ib_rule_log_trace(rule_exec,
-                              "Exec of op %s on field %s = %" PRId64,
-                              ib_operator_get_name(opinst->op),
-                              target->field_name,
-                              num);
-        }
-        else if (value->type == IB_FTYPE_NULSTR) {
-            const char* nulstr;
-            rc = ib_field_value(value, ib_ftype_nulstr_out(&nulstr));
-
-            if (rc != IB_OK) {
-                return rc;
-            }
-
-            const char *escaped =
-                ib_util_hex_escape(rule_exec->tx->mp,
-                                   (const uint8_t *)nulstr, strlen(nulstr));
-            if (escaped == NULL) {
-                return IB_EALLOC;
-            }
-
-            ib_rule_log_trace(rule_exec,
-                              "Exec of op %s on field %s = %s",
-                              ib_operator_get_name(opinst->op),
-                              target->field_name,
-                              escaped);
-        }
-        else if (value->type == IB_FTYPE_BYTESTR) {
-            const char         *escaped;
-            const ib_bytestr_t *bytestr;
-
-            rc = ib_field_value(value, ib_ftype_bytestr_out(&bytestr));
-            if ( rc != IB_OK ) {
-                return rc;
-            }
-
-            escaped = ib_util_hex_escape(rule_exec->tx->mp,
-                                         ib_bytestr_const_ptr(bytestr),
-                                         ib_bytestr_size(bytestr));
-            if (escaped == NULL) {
-                return IB_EALLOC;
-            }
-            ib_rule_log_trace(rule_exec,
-                              "Exec of op %s on field %s = %s",
-                              ib_operator_get_name(opinst->op),
-                              target->field_name,
-                              escaped);
-        }
-        else {
-            ib_rule_log_trace(rule_exec,
-                              "Exec of op %s on field %s = %s",
-                              ib_operator_get_name(opinst->op),
-                              target->field_name,
-                              "[cannot decode field type]");
-        }
+        exe_op_trace_values(rule_exec, opinst, target, value);
     }
 
     /* Limit recursion */
@@ -1849,9 +1866,7 @@ static bool rule_allow(const ib_tx_t *tx,
     }
 
     /* If check_phase is true, check the ALLOW_PHASE flag */
-    if ( check_phase &&
-         (tx->allow_phase == meta->phase_num) &&
-         (ib_tx_flags_isset(tx, IB_TX_ALLOW_PHASE) == 1) )
+    if ( check_phase && (ib_tx_flags_isset(tx, IB_TX_ALLOW_PHASE) == 1) )
     {
         ib_rule_log_tx_debug(tx,
                              "Skipping remaining rules phase %d/\"%s\" "
@@ -2037,15 +2052,14 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                       meta->phase_num, phase_name(meta),
                       ib_list_elements(rules));
 
-    /* Allow (skip) this phase? */
+    /* Clear the phase allow flag since we are processing a new phase. */
+    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+
+    /* Check if this phase should be skipped. Is the whole TX is allowed? */
     if (rule_allow(tx, meta, NULL, false)) {
         rc = IB_OK;
         goto finish;
     }
-
-    /* Clear the phase allow flag */
-    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
-    tx->allow_phase = PHASE_NONE;
 
     /* If we're blocking, skip processing */
     if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE | IB_TX_BLOCK_IMMEDIATE) &&
@@ -2145,7 +2159,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
             }
         }
         if ( (rc == IB_OK) && (rule_rc != IB_OK) ) {
-            /* rc = rule_rc; */
+            rc = rule_rc;
         }
     }
 
@@ -2162,6 +2176,9 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     /* Log the end of the tx event */
 finish:
     ib_rule_log_tx_event_end(rule_exec, event);
+
+    /* Clear the phase allow flag. */
+    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
 
     /*
      * @todo Eat errors for now.  Unless something Really Bad(TM) has
@@ -2415,17 +2432,9 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                       meta->phase_num, phase_name(meta),
                       ib_list_elements(rules));
 
-    /* Allow (skip) this phase? */
+    /* Allow (skip) this phase? Perhaps the whole TX is allowed? */
     if (rule_allow(tx, meta, NULL, false)) {
         return IB_OK;
-    }
-
-    /* Clear the phase allow flag if we're in a new phase */
-    if ( (ib_tx_flags_isset(tx, IB_TX_ALLOW_PHASE) == 1) &&
-         (tx->allow_phase != meta->phase_num) )
-    {
-        ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
-        tx->allow_phase = PHASE_NONE;
     }
 
     /* Sanity check */
@@ -2556,7 +2565,9 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
     ib_status_t rc = IB_OK;
 
     if (header != NULL) {
+        ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
         rc = run_stream_rules(ib, tx, event, NULL, header, meta);
+        ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
     }
     return rc;
 }
@@ -2586,7 +2597,10 @@ static ib_status_t run_stream_txdata_rules(ib_engine_t *ib,
     }
     const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
     ib_status_t rc;
+
+    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
     rc = run_stream_rules(ib, tx, event, txdata, NULL, meta);
+    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
     return rc;
 }
 
@@ -2611,6 +2625,10 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
     assert(cbdata != NULL);
+
+    const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
+
+    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
 
     /* Wrap up the request line */
     rc = ib_parsed_name_value_pair_list_wrapper_create(&hdrs, tx);
@@ -2675,8 +2693,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     /* Now, process the request line */
     if ( (hdrs != NULL) && (hdrs->head != NULL) ) {
         ib_rule_log_tx_trace(tx, "Running header line through stream header");
-        rc = run_stream_header_rules(ib, tx, event,
-                                     hdrs->head, cbdata);
+        rc = run_stream_rules(ib, tx, event, NULL, hdrs->head, meta);
         if (rc != IB_OK) {
             ib_rule_log_tx_error(tx,
                                  "Error processing tx request line: %s",
@@ -2688,9 +2705,8 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     /* Process the request header */
     if ( (tx->request_header != NULL) && (tx->request_header->head != NULL) ) {
         ib_rule_log_tx_trace(tx, "Running header through stream header");
-        rc = run_stream_header_rules(ib, tx, event,
-                                     tx->request_header->head,
-                                     cbdata);
+        rc = run_stream_rules(
+            ib, tx, event, NULL, tx->request_header->head, meta);
         if (rc != IB_OK) {
             ib_rule_log_tx_error(tx,
                                  "Error processing tx request line: %s",
@@ -2698,6 +2714,8 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
             return rc;
         }
     }
+
+    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
 
     return IB_OK;
 }
@@ -2774,6 +2792,8 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
     const char                 *hook_type = NULL;
     ib_status_t                 rc = IB_OK;
 
+
+
     /* Register specific handlers for specific events, and a
      * generic handler for the rest */
     for (meta = rule_phase_meta; meta->phase_num != PHASE_INVALID; ++meta) {
@@ -2781,7 +2801,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             continue;
         }
 
-        /* Non-phase rules all use the same callback */
+        /* Phase rules (non-stream rules) all use the same callback */
         if (! meta->is_stream) {
             rc = ib_hook_tx_register(
                 ib,
