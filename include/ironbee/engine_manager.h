@@ -181,7 +181,7 @@ ib_status_t DLL_PUBLIC ib_manager_engine_create(
 /**
  * Acquire the current IronBee engine.
  *
- * This fuction increments the reference count associated with the current
+ * This function increments the reference count associated with the current
  * engine, and then returns that engine.
  *
  * @note A matching call to ib_manager_engine_release() is required to
@@ -285,7 +285,7 @@ void DLL_PUBLIC ib_manager_set_logger(
  *
  * This function implements a logger that will log to the @c FILE pointer
  * (specified as @c logger_cbdata to ib_manager_set_vlogger()).  This is a
- * convienience function, and is intended to be used if the server doesn't
+ * convenience function, and is intended to be used if the server doesn't
  * provide a logger or the logger becomes unavailable (e.g., during shutdown).
  *
  * Example usages:
@@ -312,7 +312,7 @@ void DLL_PUBLIC ib_manager_file_vlogger(
  *
  * This function implements a logger that will log to the @c FILE pointer
  * (specified as @c logger_cbdata to ib_manager_set_logger()).  This is a
- * convienience function, and is intended to be used if the server doesn't
+ * convenience function, and is intended to be used if the server doesn't
  * provide a logger or the logger becomes unavailable (e.g., during shutdown).
  *
  * Example usages:

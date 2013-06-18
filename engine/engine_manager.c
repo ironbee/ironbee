@@ -130,7 +130,7 @@ void cleanup_locks(
  * If @a op is IB_ENGINE_DESTROY_INACTIVE, only inactive, non-current engines
  * will be destroyed.  If @a op is IB_ENGINE_DESTROY_NON_CURRENT, all
  * non-current engines will be destroyed.  If @a op is IB_ENGINE_DESTROY_ALL,
- * all engines will be destoyed.
+ * all engines will be destroyed.
  *
  * @param[in,out] manager IronBee engine manager
  * @param[in] op Destroy operation

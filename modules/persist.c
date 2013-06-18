@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee --- Persistance module.
+ * @brief IronBee --- Persistence module.
  */
 
 #include "ironbee_config_auto.h"

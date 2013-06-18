@@ -72,7 +72,7 @@ ib_status_t DLL_PUBLIC ib_manager_disable_current(
  *
  * If @a op is IB_MANAGER_DESTROY_INACTIVE, only inactive, non-current engines
  * will be destroyed.  If @a op is IB_MANAGER_DESTROY_ALL, all engines will be
- * destoyed.
+ * destroyed.
  *
  * @param[in] manager IronBee engine manager
  * @param[in] op Destroy operation (INACTIVE,ALL)
@@ -117,7 +117,7 @@ void DLL_PUBLIC ib_manager_set_logger(
  *
  * This function implements a logger that will log to the FILE pointer
  * (specified as logger_cbdata to ib_manager_set_vlogger()).  This is a
- * convienience function, and is intended to be used during shutdown and
+ * convenience function, and is intended to be used during shutdown and
  * testing.
  *
  * Example usages:
@@ -144,7 +144,7 @@ void DLL_PUBLIC ib_manager_file_vlogger(
  *
  * This function implements a logger that will log to the FILE pointer
  * (specified as logger_cbdata to ib_manager_set_logger()).  This is a
- * convienience function, and is intended to be used during shutdown and
+ * convenience function, and is intended to be used during shutdown and
  * testing.
  *
  * Example usages:
