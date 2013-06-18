@@ -29,10 +29,10 @@
 #include "state_notify_private.h"
 
 #include <ironbee/array.h>
+#include <ironbee/collection_manager.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/lock.h>
 #include <ironbee/log.h>
-#include <ironbee/collection_manager.h>
 
 #include <stdio.h>
 

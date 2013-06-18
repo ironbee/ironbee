@@ -25,8 +25,8 @@
 #include "parser_suite.hpp"
 
 #include <boost/fusion/adapted.hpp>
-#include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix.hpp>
+#include <boost/spirit/include/qi.hpp>
 
 using namespace std;
 

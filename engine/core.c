@@ -39,6 +39,7 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/clock.h>
+#include <ironbee/collection_manager.h>
 #include <ironbee/context.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/engine_types.h>
@@ -47,7 +48,6 @@
 #include <ironbee/flags.h>
 #include <ironbee/json.h>
 #include <ironbee/logevent.h>
-#include <ironbee/collection_manager.h>
 #include <ironbee/mpool.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/rule_engine.h>

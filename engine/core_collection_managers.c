@@ -31,9 +31,9 @@
 #include "core_private.h"
 #include "engine_private.h"
 
+#include <ironbee/collection_manager.h>
 #include <ironbee/core.h>
 #include <ironbee/json.h>
-#include <ironbee/collection_manager.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>

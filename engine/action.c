@@ -30,8 +30,8 @@
 
 #include <ironbee/mpool.h>
 
-#include <string.h>
 #include <assert.h>
+#include <string.h>
 
 ib_status_t ib_action_register(
     ib_engine_t            *ib,

@@ -24,12 +24,12 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/engine_manager.h>
 #include "engine_manager_private.h"
 
 #include <ironbee/config.h>
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
+#include <ironbee/engine_manager.h>
 #include <ironbee/list.h>
 #include <ironbee/log.h>
 #include <ironbee/mpool.h>

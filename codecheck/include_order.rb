@@ -80,6 +80,8 @@ CANONICAL_INCLUDE_ORDER = [
   '"core_audit_private.h"',
   '"core_private.h"',
   '"engine_private.h"',
+  '"engine_manager_log_private.h"',
+  '"engine_manager_private.h"',
   '"ironbee_private.h"',
   '"json_yajl_private.h"',
   '"kvstore_private.h"',
@@ -87,6 +89,7 @@ CANONICAL_INCLUDE_ORDER = [
   '"lua_common_private.h"',
   '"managed_collection_private.h"',
   '"moddevel_private.h"',
+  '"parser_suite.hpp"',
   '"rule_engine_private.h"',
   '"rule_logger_private.h"',
   '"rules_lua_private.h"',
@@ -118,6 +121,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/capture.h>',
   '<ironbee/cfgmap.h>',
   '<ironbee/clock.h>',
+  '<ironbee/collection_manager.h>',
   '<ironbee/config.h>',
   '<ironbee/context.h>',
   '<ironbee/context_selection.h>',
@@ -126,6 +130,8 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/decode.h>',
   '<ironbee/dso.h>',
   '<ironbee/engine.h>',
+  '<ironbee/engine_manager.h>',
+  '<ironbee/engine_manager_testapi.h>',
   '<ironbee/engine_state.h>',
   '<ironbee/engine_types.h>',
   '<ironbee/escape.h>',
@@ -143,7 +149,6 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/log.h>',
   '<ironbee/logevent.h>',
   '<ironbee/logformat.h>',
-  '<ironbee/collection_manager.h>',
   '<ironbee/module.h>',
   '<ironbee/module_sym.h>',
   '<ironbee/mpool.h>',
@@ -183,6 +188,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/function.hpp>',
   '<boost/function_output_iterator.hpp>',
   '<boost/fusion/adapted.hpp>',
+  '<boost/iterator/iterator_adaptor.hpp>',
   '<boost/iterator/iterator_facade.hpp>',
   '<boost/iterator/transform_iterator.hpp>',
   '<boost/lexical_cast.hpp>',
@@ -200,6 +206,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/scoped_array.hpp>',
   '<boost/scoped_ptr.hpp>',
   '<boost/shared_ptr.hpp>',
+  '<boost/spirit/include/phoenix.hpp>',
   '<boost/spirit/include/qi.hpp>',
   '<boost/static_assert.hpp>',
   '<boost/thread.hpp>',
@@ -333,7 +340,7 @@ all_ironbee_code do |path|
     if index.nil?
       puts "Unknown include in #{path}: #{i}"
     elsif index <= last_index
-      puts "Include out of order in #{path}: #{i}"
+      puts "Include out of order in #{path}: #{i} (#{index} vs #{last_index})"
     else
       last_index = index
     end

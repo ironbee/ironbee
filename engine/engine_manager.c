@@ -25,7 +25,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/engine_manager.h>
-#include <ironbee/engine_manager_testapi.h>
 
 #include "engine_manager_private.h"
 #include "engine_manager_log_private.h"
@@ -33,6 +32,7 @@
 #include <ironbee/config.h>
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
+#include <ironbee/engine_manager_testapi.h>
 #include <ironbee/list.h>
 #include <ironbee/lock.h>
 #include <ironbee/log.h>

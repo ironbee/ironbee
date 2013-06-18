@@ -24,10 +24,10 @@
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
-#include <ironbee/engine_manager.h>
 
 #include "engine_manager_private.h"
 
+#include <ironbee/engine_manager.h>
 #include <ironbee/log.h>
 
 #ifdef __cplusplus
