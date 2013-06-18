@@ -31,14 +31,9 @@ test_ibmod_engine_shutdown_LDADD = \
 	$(LDADD) \
 	$(top_builddir)/ironbeepp/libibpp.la
 
-
-if CPP11
 noinst_PROGRAMS = psparse
 psparse_LDADD = ../libparser_suite.la
 psparse_SOURCES = psparse.cpp
-psparse_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/..
-endif
-
 endif
 
 TESTS=$(check_PROGRAMS)

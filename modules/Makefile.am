@@ -12,7 +12,7 @@ else
 AM_LDFLAGS += -module -avoid-version
 endif
 
-EXTRA_DIST = moddevel_private.h
+EXTRA_DIST = moddevel_private.h parser_suite.hpp
 
 
 module_LTLIBRARIES = ibmod_htp.la \
@@ -28,7 +28,6 @@ noinst_LTLIBRARIES =
 if CPP
 noinst_LTLIBRARIES += libparser_suite.la
 libparser_suite_la_SOURCES = parser_suite.cpp
-libparser_suite_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 endif
 
 if ENABLE_LUA
