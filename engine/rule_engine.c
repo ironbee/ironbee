@@ -1318,8 +1318,8 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
         }
 
         escaped = ib_util_hex_escape(rule_exec->tx->mp,
-                                      (const uint8_t *)nulstr,
-                                      strlen(nulstr));
+                                     (const uint8_t *)nulstr,
+                                     strlen(nulstr));
         if (escaped == NULL) {
             return;
         }
