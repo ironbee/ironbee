@@ -28,6 +28,7 @@ noinst_LTLIBRARIES =
 if CPP
 noinst_LTLIBRARIES += libparser_suite.la
 libparser_suite_la_SOURCES = parser_suite.cpp
+libparser_suite_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)
 endif
 
 if ENABLE_LUA

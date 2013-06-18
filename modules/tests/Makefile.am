@@ -36,6 +36,7 @@ if CPP11
 noinst_PROGRAMS = psparse
 psparse_LDADD = ../libparser_suite.la
 psparse_SOURCES = psparse.cpp
+psparse_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/..
 endif
 
 endif
