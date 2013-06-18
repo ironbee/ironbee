@@ -205,7 +205,7 @@
  * we will take a peak inside the @c .lua file.
  *
  * @code{.lua}
- * ib = ...
+ * local ib = ...
  * ib:logInfo("In a rule.")
  * return 1
  * @endcode
@@ -219,7 +219,7 @@
  * associated with this rule, or not.
  *
  * @code{.lua}
- * ib = ...
+ * local ib = ...
  *
  * local a = ib:get("ARGS:a")
  * if a and a == 'hello world' then
