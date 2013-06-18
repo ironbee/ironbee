@@ -25,17 +25,9 @@ module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_sqltfn.la
 noinst_LTLIBRARIES =
 
-if CPP11
 if CPP
 noinst_LTLIBRARIES += libparser_suite.la
 libparser_suite_la_SOURCES = parser_suite.cpp
-libparser_suite_la_CXXFLAGS = -std=c++11
-if DARWIN
-if CC_IS_CLANG
-libparser_suite_la_CXXFLAGS += -stdlib=libc++
-endif
-endif
-endif
 endif
 
 if ENABLE_LUA

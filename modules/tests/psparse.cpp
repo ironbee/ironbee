@@ -26,37 +26,61 @@
 
 #include "parser_suite.hpp"
 
+#include <boost/bind.hpp>
+#include <boost/bind/protect.hpp>
+#include <boost/chrono.hpp>
+#include <boost/function.hpp>
 #include <boost/scoped_array.hpp>
+#include <boost/type_traits.hpp>
 
-#include <chrono>
 #include <fstream>
 
 using namespace std;
 using namespace IronBee::ParserSuite;
 
-using parser_t = function<void(ostream&, span_t&, uint64_t&)>;
+typedef boost::function<void(ostream&, span_t&, uint64_t&)> parser_t;
+
+template <typename R>
+void simple_parser_func(
+    boost::function<R(span_t&)> f,
+    ostream&                    o,
+    span_t&                     input,
+    uint64_t&                   elapsed
+)
+{
+    using namespace boost::chrono;
+
+    time_point<high_resolution_clock> start;
+    time_point<high_resolution_clock> end;
+    start = high_resolution_clock::now();
+    R result = f(input);
+    end = high_resolution_clock::now();
+
+    elapsed += duration_cast<microseconds>(end-start).count();
+    o <<  result;
+}
 
 template <typename F>
 parser_t simple_parser(F f)
 {
-    return [f](ostream& o, span_t& input, uint64_t& elapsed)
-    {
-        chrono::time_point<chrono::high_resolution_clock> start;
-        chrono::time_point<chrono::high_resolution_clock> end;
-        start = chrono::high_resolution_clock::now();
-        auto result = f(input);
-        end = chrono::high_resolution_clock::now();
-
-        elapsed +=
-            chrono::duration_cast<chrono::microseconds>(end-start).count();
-        o <<  result;
-    };
+    // Note use of protect.  Otherwise, bind will have type errors as it
+    // fails to disambiguate the outer _1 from the inner _1.
+    return boost::bind(
+        simple_parser_func<typename F::result_type>,
+        boost::protect(f),
+        _1, _2, _3
+    );
 };
+
+template <typename R>
+parser_t simple_parser(R (*f)(span_t&))
+{
+    return simple_parser(boost::function<R(span_t&)>(f));
+}
 
 void read_all(istream& in, vector<char>& data)
 {
-    // XXX find a better way to do this.
-    constexpr size_t c_buffer_size = 1024;
+    static const size_t c_buffer_size = 1024;
     data.clear();
     while (in) {
         size_t pre_size = data.size();
@@ -68,18 +92,18 @@ void read_all(istream& in, vector<char>& data)
 
 int main(int argc, char **argv)
 {
-    using namespace placeholders;
+    typedef map<string, parser_t> parsers_t;
+    parsers_t parsers;
 
-    static const map<string, parser_t> parsers {
-        {"uri",           simple_parser(&parse_uri)},
-        {"request_line",  simple_parser(&parse_request_line)},
-        {"response_line", simple_parser(&parse_response_line)},
-        {"headers",       simple_parser(&parse_headers)},
-        {"request",       simple_parser(&parse_request)},
-        {"response",      simple_parser(&parse_response)},
-        {"authority",     simple_parser(&parse_authority)},
-        {"path",          simple_parser(bind(&parse_path, _1, '/', '.'))}
-    };
+    parsers["uri"]           = simple_parser(parse_uri);
+    parsers["request_line"]  = simple_parser(parse_request_line);
+    parsers["response_line"] = simple_parser(parse_response_line);
+    parsers["headers"]       = simple_parser(parse_headers);
+    parsers["request"]       = simple_parser(parse_request);
+    parsers["response"]      = simple_parser(parse_response);
+    parsers["authority"]     = simple_parser(parse_authority);
+    parsers["path"] =
+        simple_parser(boost::bind(parse_path, _1, '/', '.'));
 
     if (argc != 2) {
         cerr << "Usage: " << argv[0] << " <parser>" << endl;
@@ -87,7 +111,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    auto i = parsers.find(argv[1]);
+    parsers_t::const_iterator i = parsers.find(argv[1]);
     if (i == parsers.end()) {
         cerr << "No such parser: " << argv[1] << endl;
         return 1;
@@ -111,6 +135,11 @@ int main(int argc, char **argv)
             cout << diagnostic_information(e);
             return 1;
         }
+        if (input.begin() == old_begin) {
+            cout << "Error: No progress made." << endl;
+            return 1;
+        }
+
         ++num_runs;
         total_elapsed += elapsed;
         cout << "elapsed: " << elapsed << " us" << endl;

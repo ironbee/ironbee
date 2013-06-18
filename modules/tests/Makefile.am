@@ -7,7 +7,9 @@ LDADD = \
 
 AM_LDFLAGS += \
 	-lboost_system$(BOOST_SUFFIX) \
-	-lboost_filesystem$(BOOST_SUFFIX)
+	-lboost_filesystem$(BOOST_SUFFIX) \
+	-lboost_chrono$(BOOST_SUFFIX) \
+	-lstdc++
 
 AM_CPPFLAGS += \
     -I$(top_srcdir)/modules \
@@ -34,12 +36,6 @@ if CPP11
 noinst_PROGRAMS = psparse
 psparse_LDADD = ../libparser_suite.la
 psparse_SOURCES = psparse.cpp
-psparse_CXXFLAGS = -std=c++11
-if DARWIN
-if CC_IS_CLANG
-psparse_CXXFLAGS += -stdlib=libc++
-endif
-endif
 endif
 
 endif

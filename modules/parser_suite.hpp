@@ -74,24 +74,25 @@ struct error : public boost::exception, public std::exception {};
 /**
  * Location where error occurred
  **/
-using errinfo_location =
-    boost::error_info<struct tag_errinfo_location, const char *>;
+typedef boost::error_info<struct tag_errinfo_location, const char *>
+    errinfo_location;
 
 /**
  * Error message.
  **/
-using errinfo_what =
-    boost::error_info<struct tag_errinfo_what, std::string>;
+typedef boost::error_info<struct tag_errinfo_what, std::string>
+    errinfo_what;
+
 
 /**
  * A span of bytes.
  **/
-using span_t = boost::iterator_range<const char*>;
+typedef boost::iterator_range<const char*> span_t;
 
 /**
  * A sequence of @ref span_t.
  **/
-using span_vec_t = std::vector<span_t>;
+typedef std::vector<span_t> span_vec_t;
 
 //! Result of parse_request_line()
 struct parse_request_line_result_t
@@ -192,21 +193,26 @@ std::ostream& operator<<(
 //! Result of parse_headers().
 struct parse_headers_result_t
 {
+    //! Default constructor.
+    parse_headers_result_t() : terminated(false) {}
+
     //! A single header.
     struct header_t {
+        //! Construct from key.
+        explicit header_t(const span_t& key) : key(key) {}
         //! Key.
         span_t key;
         //! Value as sequence of spans: one per line (extended headers).
         span_vec_t value;
     };
     //! Type of @ref headers.
-    using headers_t = std::vector<header_t>;
+    typedef std::vector<header_t> headers_t;
 
     //! All headers.
     headers_t headers;
 
     //! True iff a blank line was present after headers.
-    bool terminated = false;
+    bool terminated;
 };
 
 /**
