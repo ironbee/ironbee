@@ -35,7 +35,7 @@ extern "C" {
 #endif
 
 /**
-* @defgroup IronBeeEngineManagerLogPrivate Engine Manager logging 
+* @defgroup IronBeeEngineManagerLogPrivate Engine Manager logging
 * private types and API
 *
 * @ingroup IronBeeEngineManagerPrivate

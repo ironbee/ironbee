@@ -57,7 +57,7 @@ extern "C" {
  * Servers which use the engine manager will typically create a single engine
  * manager at startup, and then use the engine manager to create engines when
  * the configuration has changed via ib_manager_engine_create().
- * 
+ *
  * The engine manager will then manage the IronBee engines, with the most
  * recent one successfully created being the "current" engine.  An engine
  * managed by the manager is considered active if it is current or its
@@ -68,7 +68,7 @@ extern "C" {
  * the released engine becomes inactive (e.g., the engine is not current and
  * its reference count becomes zero), the manager will destroy all inactive
  * engines.
- * 
+ *
  */
 typedef struct ib_manager_t ib_manager_t;
 
