@@ -82,6 +82,11 @@ module CLIPPTest
 
   # CLIPP executable.
   CLIPP            = File.join(TOP_BUILDDIR, 'clipp', 'clipp')
+  if ! File.exists?(CLIPP)
+    STDERR.puts "#{CLIPP} not found.  Unable to run tests."
+    exit 1
+  end
+
   # Default IronBee configuration template.
   DEFAULT_TEMPLATE = 'CLIPPDIR/ironbee.config.erb'
   # Default consumer.
