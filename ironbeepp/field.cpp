@@ -1099,8 +1099,9 @@ std::ostream& operator<<(std::ostream& o, const ConstField& field)
         o << "IronBee::Field[!singular!]";
     }
     else {
-        o << "IronBee::Field[" << field.name() << " = "
-          << field.to_s() << "]";
+        o << "IronBee::Field["
+          << std::string(field.name(), field.name_length())
+          << " = " << field.to_s() << "]";
     }
 
     return o;
