@@ -28,6 +28,9 @@ noinst_LTLIBRARIES =
 if CPP
 noinst_LTLIBRARIES += libparser_suite.la
 libparser_suite_la_SOURCES = parser_suite.cpp
+module_LTLIBRARIES += ibmod_ps.la
+ibmod_ps_la_SOURCES = modps.cpp
+ibmod_ps_la_LIBADD = $(AM_LIBADD) libparser_suite.la
 endif
 
 if ENABLE_LUA
