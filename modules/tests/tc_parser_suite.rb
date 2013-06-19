@@ -3,7 +3,7 @@ require 'test/unit'
 PSPARSE = File.join(ENV['abs_builddir'], 'psparse')
 
 if ! File.exists?(PSPARSE) # May not be part of build.
-  puts "No psparse; probably not a C++11 build.  Skipping tests."
+  puts "No psparse; Skipping tests."
 
 else
 
