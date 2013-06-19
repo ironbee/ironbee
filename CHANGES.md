@@ -23,7 +23,7 @@ IronBee v0.8.0
 
 * An engine manager has been added.  The engine manager provides the ability
   for server plugins to easily handle reconfigurations.  Upon receiving
-  notification of the reconfigure event, the server asks the engine manager 
+  notification of the reconfigure event, the server asks the engine manager
   to create a new IronBee engine.  If successful, the manager will then make
   the new engine current, and will destroy old engines once they are no longer
   used.
@@ -127,6 +127,10 @@ IronBee v0.8.0
   test.
 
 * CLIPP based tests no longer require modhtp.
+
+* Added `ibmod_ps` ("ps" stands for ParserSuite), a module of mini parsers
+  exposed as operators.  Can be used to validate format of any string and,
+  via captures, to parse it into components.
 
 * Various clean up and bug fixes.
 

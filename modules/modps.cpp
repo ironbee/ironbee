@@ -21,6 +21,15 @@
  *
  * Exposes ParserSuite parsers as operators.  All operators are true iff
  * parse was successful and store the results in the capture field.
+ *
+ * Parsers:
+ * - `parseAuthroity ""` -- `username, password, host, port`
+ * - `parseURI ""` -- `scheme, authority, path, query, fragment`
+ * - `parseRequestLine ""` -- `method, uri, version`
+ * - `parseResponseLine ""` -- `version, status, message`
+ * - `parsePath "AB"` -- `directory, file, base, extension`.  A is used as
+ *   directory separator (default `/`) and B is used as extension separator
+ *   (default `.`).
  */
 
 #include <ironbeepp/all.hpp>
@@ -28,6 +37,7 @@
 #include "parser_suite.hpp"
 
 #include <boost/assign.hpp>
+#include <boost/bind/protect.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 
@@ -165,6 +175,39 @@ IronBee::Operator::operator_instance_t generator(
     );
 }
 
+//! parsePath generator function.
+IronBee::Operator::operator_instance_t parse_path_generator(
+    const result_list_type<
+        IronBee::ParserSuite::parse_path_result_t
+    >::type&    result_list,
+    const char* param
+)
+{
+    char directory_separator = '/';
+    char extension_separator = '.';
+
+    if (param[0]) {
+        directory_separator = param[0];
+        if (param[1]) {
+            extension_separator = param[1];
+        }
+    }
+
+    return boost::bind<int>(
+        executor<IronBee::ParserSuite::parse_path_result_t>,
+        boost::protect(
+            boost::bind(
+                IronBee::ParserSuite::parse_path,
+                _1,
+                directory_separator,
+                extension_separator
+            )
+        ),
+        boost::cref(result_list),
+        _1, _2, _3
+    );
+}
+
 Delegate::Delegate(IronBee::Module module) :
     IronBee::ModuleDelegate(module)
 {
@@ -178,9 +221,10 @@ Delegate::Delegate(IronBee::Module module) :
         IB_OP_CAPABILITY_STREAM |
         IB_OP_CAPABILITY_CAPTURE
         ;
+
     {
-        static const result_list_type<parse_uri_result_t>::type result_list =
-            map_list_of
+        static const result_list_type<parse_uri_result_t>::type
+            result_list = map_list_of
                 ("scheme",    &parse_uri_result_t::scheme)
                 ("authority", &parse_uri_result_t::authority)
                 ("path",      &parse_uri_result_t::path)
@@ -195,6 +239,91 @@ Delegate::Delegate(IronBee::Module module) :
             bind<IronBee::Operator::operator_instance_t>(
                 generator<parse_uri_result_t>,
                 &parse_uri,
+                boost::cref(result_list),
+                _2
+            )
+        ).register_with(module.engine());
+    }
+
+    {
+        static const result_list_type<parse_request_line_result_t>::type
+            result_list = map_list_of
+                ("method",  &parse_request_line_result_t::method)
+                ("uri",     &parse_request_line_result_t::uri)
+                ("version", &parse_request_line_result_t::version)
+            ;
+
+        IronBee::Operator::create(
+            pool,
+            "parseRequestLine",
+            capabilities,
+            bind<IronBee::Operator::operator_instance_t>(
+                generator<parse_request_line_result_t>,
+                &parse_request_line,
+                boost::cref(result_list),
+                _2
+            )
+        ).register_with(module.engine());
+    }
+
+    {
+        static const result_list_type<parse_response_line_result_t>::type
+            result_list = map_list_of
+                ("version", &parse_response_line_result_t::version)
+                ("status",  &parse_response_line_result_t::status)
+                ("message", &parse_response_line_result_t::message)
+            ;
+
+        IronBee::Operator::create(
+            pool,
+            "parseResponseLine",
+            capabilities,
+            bind<IronBee::Operator::operator_instance_t>(
+                generator<parse_response_line_result_t>,
+                &parse_response_line,
+                boost::cref(result_list),
+                _2
+            )
+        ).register_with(module.engine());
+    }
+
+    {
+        static const result_list_type<parse_authority_result_t>::type
+            result_list = map_list_of
+                ("username", &parse_authority_result_t::username)
+                ("password", &parse_authority_result_t::password)
+                ("host",     &parse_authority_result_t::host)
+                ("port",     &parse_authority_result_t::port)
+            ;
+
+        IronBee::Operator::create(
+            pool,
+            "parseAuthority",
+            capabilities,
+            bind<IronBee::Operator::operator_instance_t>(
+                generator<parse_authority_result_t>,
+                &parse_authority,
+                boost::cref(result_list),
+                _2
+            )
+        ).register_with(module.engine());
+    }
+
+    {
+        static const result_list_type<parse_path_result_t>::type
+            result_list = map_list_of
+                ("directory", &parse_path_result_t::directory)
+                ("file",      &parse_path_result_t::file)
+                ("base",      &parse_path_result_t::base)
+                ("extension", &parse_path_result_t::extension)
+            ;
+
+        IronBee::Operator::create(
+            pool,
+            "parsePath",
+            capabilities,
+            bind<IronBee::Operator::operator_instance_t>(
+                parse_path_generator,
                 boost::cref(result_list),
                 _2
             )
