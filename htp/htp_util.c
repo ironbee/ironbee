@@ -1446,13 +1446,13 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                 int handled = 0;
 
                 // Decode %uHHHH encoding, but only if allowed in configuration.
-                if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_decode) {
+                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].u_encoding_decode) {
                     // The next character must be a case-insensitive u.
                     if ((data[rpos + 1] == 'u') || (data[rpos + 1] == 'U')) {
                         handled = 1;
 
-                        if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_unwanted != HTP_UNWANTED_IGNORE) {
-                            tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].u_encoding_unwanted;
+                        if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].u_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                            tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].u_encoding_unwanted;
                         }
 
                         // Need at least 5 additional bytes for %uHHHH.
