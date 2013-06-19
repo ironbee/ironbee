@@ -37,29 +37,40 @@ extern "C" {
 #endif
 
 /**
+ * @defgroup IronBeeUtilLocking Locking
+ * @ingroup IronBeeUtil
+ * Locking primitives.
+ * @{
+ */
+
+/**
  * @brief The lock type for ironbee locks.
  */
 typedef pthread_mutex_t ib_lock_t;
 
 /**
- * param[in,out] lock The lock.
+ * @param[in] lock The lock.
  */
 ib_status_t DLL_PUBLIC ib_lock_init(ib_lock_t *lock);
 
 /**
- * param[in,out] lock The lock.
+ * @param[in] lock The lock.
  */
 ib_status_t DLL_PUBLIC ib_lock_lock(ib_lock_t *lock);
 
 /**
- * param[in,out] lock The lock.
+ * @param[in] lock The lock.
  */
 ib_status_t DLL_PUBLIC ib_lock_unlock(ib_lock_t *lock);
 
 /**
- * param[in,out] lock The lock.
+ * @param[in] lock The lock.
  */
 ib_status_t DLL_PUBLIC ib_lock_destroy(ib_lock_t *lock);
+
+/**
+ * @} IronBeeUtilLocking Locking
+ */
 
 #ifdef __cplusplus
 }
