@@ -31,7 +31,9 @@ libibutil_la_SOURCES = array.c \
                        modsec_compat.c \
                        mpool.c \
                        path.c \
+		       queue.c \
                        regex.c \
+                       resource_pool.c \
                        stream.c \
                        string.c \
                        strlower.c \
