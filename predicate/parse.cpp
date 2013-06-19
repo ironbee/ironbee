@@ -100,11 +100,9 @@ node_p parse_literal(
     // Number Literal
     if (num_char(text[i]) || text[i] == '-') {
         bool have_dot = false;
-        bool negative = false;
         size_t initial_i = i;
 
         if (text[i] == '-') {
-            negative = true;
             advance(i, length, "Unterminated literal");
         }
 
