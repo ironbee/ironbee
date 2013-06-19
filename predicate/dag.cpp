@@ -28,6 +28,8 @@
 
 #include <ironbeepp/engine.hpp>
 
+#include <boost/lexical_cast.hpp>
+
 using namespace std;
 
 namespace IronBee {
@@ -288,6 +290,47 @@ Value Null::calculate(EvalContext)
 {
     return Value();
 }
+
+Integer::Integer(int64_t value) :
+    m_value_as_i(value),
+    m_s(boost::lexical_cast<string>(value)),
+    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::Integer")),
+    m_value_as_field(
+        IronBee::Field::create_number(
+            *m_pool,
+            "", 0,
+            value
+        )
+    )
+{
+    // nop
+}
+
+Value Integer::calculate(EvalContext)
+{
+    return m_value_as_field;
+}
+
+Float::Float(long double value) :
+    m_value_as_f(value),
+    m_s(boost::lexical_cast<string>(value)),
+    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::Float")),
+    m_value_as_field(
+        IronBee::Field::create_float(
+            *m_pool,
+            "", 0,
+            value
+        )
+    )
+{
+    // nop
+}
+
+Value Float::calculate(EvalContext)
+{
+    return m_value_as_field;
+}
+
 
 // Don't use recalculate_s() as we don't want to update parents.
 Call::Call() :

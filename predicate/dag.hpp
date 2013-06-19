@@ -47,6 +47,8 @@ class Call;
 class Literal;
 class Null;
 class String;
+class Integer;
+class Float;
 
 // Defined in reporter.hpp
 class NodeReporter;
@@ -68,6 +70,8 @@ class Final
     // Classes to be final.
     friend class Predicate::Null;
     friend class Predicate::String;
+    friend class Predicate::Integer;
+    friend class Predicate::Float;
 private:
     //! Private constructor.
     Final() {}
@@ -418,6 +422,8 @@ class Literal :
 {
     friend class String;
     friend class Null;
+    friend class Integer;
+    friend class Float;
 
 private:
     //! Private constructor to limit subclassing.
@@ -502,6 +508,96 @@ public:
 protected:
     //! See Node::calculate()
     virtual Value calculate(EvalContext context);
+};
+
+/**
+ * Integer literal: Literal node representing integer literal.
+ *
+ * This class may not be subclassed.
+ **/
+class Integer :
+    public Literal,
+    public virtual Impl::Final
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param[in] value Value of node.
+     **/
+    explicit
+    Integer(int64_t value);
+
+    //! Value as integer.
+    int64_t value_as_i() const
+    {
+        return m_value_as_i;
+    }
+
+    //! S-expression: n
+    virtual const std::string& to_s() const
+    {
+        return m_s;
+    }
+
+protected:
+    //! See Node::calculate()
+    virtual Value calculate(EvalContext context);
+
+private:
+    //! Value as integer.
+    int64_t m_value_as_i;
+    //! S-expression.
+    const std::string m_s;
+    //! Memory pool to create field value from.
+    boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
+    //! Value returned by calculate().
+    Value m_value_as_field;
+};
+
+/**
+ * Float literal: Literal node representing float literal.
+ *
+ * This class may not be subclassed.
+ **/
+class Float :
+    public Literal,
+    public virtual Impl::Final
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param[in] value Value of node.
+     **/
+    explicit
+    Float(long double value);
+
+    //! Value as float
+    long double value_as_f() const
+    {
+        return m_value_as_f;
+    }
+
+    //! S-expression: n
+    virtual const std::string& to_s() const
+    {
+        return m_s;
+    }
+
+protected:
+    //! See Node::calculate()
+    virtual Value calculate(EvalContext context);
+
+private:
+    //! Value as integer.
+    long double m_value_as_f;
+    //! S-expression.
+    const std::string m_s;
+    //! Memory pool to create field value from.
+    boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
+    //! Value returned by calculate().
+    Value m_value_as_field;
 };
 
 } // Predicate

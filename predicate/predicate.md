@@ -54,9 +54,11 @@ The sexpr grammar is:
     expr := call | literal
     call := '(' + name + *(' ' + expr) + ')'
     name := /^[A-Z0-9_]+$/
-    literal := null | string
+    literal := null | string | float | integer
     null := 'null'
     string := '\'' + *(/[^'\\]/ | '\\\\' | '\\'') + '\''
+    integer := /^-?[0-9]+$/
+    float := /^-?[0-9]+(\.[0-9]+)?$/
 
 String literals are surrounded by single quotes and only support two escapes: backslash single quote for single quote and backslash backslash for backslash.
 

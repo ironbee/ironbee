@@ -73,6 +73,13 @@ bool name_char(char c)
         ;
 }
 
+bool num_char(char c)
+{
+    return
+        ( c >= '0' && c <= '9' )
+        ;
+}
+
 }
 
 node_p parse_literal(
@@ -84,10 +91,64 @@ node_p parse_literal(
     bool escape = false;
     string value;
 
+    // Null Literal
     if (text.substr(i, 4) == "null") {
         i += 3;
         return node_p(new Null());
     }
+
+    // Number Literal
+    if (num_char(text[i]) || text[i] == '-') {
+        bool have_dot = false;
+        bool negative = false;
+        size_t initial_i = i;
+
+        if (text[i] == '-') {
+            negative = true;
+            advance(i, length, "Unterminated literal");
+        }
+
+        while (
+            i < length &&
+            (num_char(text[i]) || text[i] == '.')
+        ) {
+            if (text[i] == '.') {
+                if (have_dot) {
+                    error(i, "Multiple dots in numeric.");
+                }
+                have_dot = true;
+            }
+            ++i;
+        }
+
+        value = text.substr(initial_i, i - initial_i);
+        // Reduce i to match caller expectation: that i points to final
+        // character of literal.
+        --i;
+
+        if (have_dot) {
+            long double fvalue;
+            try {
+                fvalue = boost::lexical_cast<long double>(value);
+            }
+            catch (boost::bad_lexical_cast) {
+                error(i, "Could not convert to float.");
+            }
+            return node_p(new Float(fvalue));
+        }
+        else {
+            int64_t ivalue;
+            try {
+                ivalue = boost::lexical_cast<int64_t>(value);
+            }
+            catch (boost::bad_lexical_cast) {
+                error(i, "Could not convert to integer.");
+            }
+            return node_p(new Integer(ivalue));
+        }
+    }
+
+    // String Literal
     if (text[i] != '\'') {
         error(i, "Expected '");
     }
@@ -162,12 +223,23 @@ node_p parse_call(
             break;
         case '\'':
         case 'n':
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+        case '-':
         {
             if (! current) {
                 error(i, "Naked literal");
             }
             current->add_child(parse_literal(text, i));
-            assert(text[i] == '\'' || text[i] == 'l');
+            assert(text[i] == '\'' || text[i] == 'l' || num_char(text[i]));
             advance(i, length, "Unterminated call");
             break;
         }

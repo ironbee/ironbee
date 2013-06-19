@@ -109,6 +109,37 @@ TEST(TestParse, ValidLiteral)
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
     EXPECT_GT(expr.length() - 1, i);
+
+    expr = "1234";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
+    EXPECT_EQ(expr.length() - 1, i);
+
+    expr = "-1234";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
+    EXPECT_EQ(expr.length() - 1, i);
+
+    expr = "1234.5678";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    // Ignore last digit to avoid floating point rounding issues.
+    EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
+    EXPECT_EQ(expr.length() - 1, i);
+
+    expr = "-1234.5678";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
+    EXPECT_EQ(expr.length() - 1, i);
+
+    expr = "-1234.5678foo";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i), r->to_s().substr(0, i));
+    EXPECT_GT(expr.length() - 1, i);
 }
 
 TEST(TestParse, InvalidLiteral)
@@ -126,6 +157,12 @@ TEST(TestParse, InvalidLiteral)
     EXPECT_THROW(parse_literal("'unfinished\\", i), IronBee::einval);
     i = 0;
     EXPECT_THROW(parse_literal("garbage", i), IronBee::einval);
+    i = 0;
+    EXPECT_THROW(parse_literal("-", i), IronBee::einval);
+    i = 0;
+    EXPECT_THROW(parse_literal("1.2.3", i), IronBee::einval);
+    i = 0;
+    EXPECT_THROW(parse_literal("1.2.", i), IronBee::einval);
 }
 
 TEST(TestParse, ValidCall)

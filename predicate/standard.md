@@ -41,7 +41,7 @@ Sub returns the first found member of the collection with the given name.  SubAl
 
 List and SetName can be used together to build collections, e.g.,
 
-    (list (set_name 'foo' 1) (set_name 'bar' 2))
+    (list (set_name 'foo' '1') (set_name 'bar' '2'))
 
 IronBee
 -------

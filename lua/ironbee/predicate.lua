@@ -67,10 +67,8 @@ function string_mt:new(value)
   local v
   if type(value) == 'string' then
     v = value
-  elseif type(value) == 'number' then
-    v = tostring(value)
   else
-    error("String argument must be string or number.")
+    error("String argument must be string.")
   end
   v = v:gsub(".", function (c)
     if c == '\\' or c == "'" then
@@ -95,6 +93,23 @@ end
 
 function string_mt:__call()
   return "'" .. self.value .. "'"
+end
+
+local numeric_mt = all_mt:new('mt')
+function numeric_mt:new(value)
+  local r = all_mt.new(self, 'numeric')
+  local v
+  if type(value) == 'number' then
+    v = value
+  else
+    error("String argument must be numeric.")
+  end
+  r.value = v
+  return r
+end
+
+function numeric_mt:__call()
+  return "" .. self.value
 end
 
 local call_mt = all_mt:new('mt')
@@ -162,6 +177,10 @@ function _M.String(value)
   return string_mt:new(value)
 end
 _M.S = _M.String
+function _M.Number(value)
+  return numeric_mt:new(value)
+end
+_M.N = _M.Number
 function _M.Call(name, ...)
   return call_mt:new(name, ...)
 end
@@ -299,8 +318,11 @@ end
 -- Utility
 
 function _M.from_lua(v)
-  if type(v) == 'string' or type(v) == 'number' then
+  if type(v) == 'string'then
     return _M.String(v)
+  end
+  if type(v) == 'number' then
+    return _M.Number(v)
   end
   if type(v) == 'boolean' then
     if v then
@@ -324,7 +346,7 @@ function _M.to_lua(v)
       return nil, false
     end
   end
-  if v.type == 'string' then
+  if v.type == 'string' or v.type == 'numeric' then
     return v.value
   end
   return nil, false

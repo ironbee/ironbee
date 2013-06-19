@@ -77,7 +77,7 @@ prints
       )
     )
 
-You may have noticed a feature of Predicate in use above, the automatic conversion of Lua types.  Numbers and Lua strings were automatically converted to Predicate strings when used as parameters to functions.  This conversion includes proper escaping:
+You may have noticed a feature of Predicate in use above, the automatic conversion of Lua types.  Numbers and Lua strings were automatically converted when used as parameters to functions.  This conversion includes proper escaping:
 
     = P.List("An 'important' example")() --> (list 'An \'important\' example')
 
@@ -240,6 +240,8 @@ Method              | Meaning                  | Sexpr        |
 `P.C(name, ...)`    | Synonym for `P.Call`     | `(name ...)` |
 `P.String(value)`   | String expression object | `'value'`    |
 `P.S(name, ...)`    | Synonym for `P.String`   | `'value'`    |
+`P.Number(value)`   | Number expression object | `value`      |
+`P.N(name, ...)`    | Synonym for `P.Number`   | `value`      |
 `P.Raw(value)`      | Raw expression object    | `value`      |
 `P.R(value)`        | Synonym for `P.Raw`      | `value`      |
 

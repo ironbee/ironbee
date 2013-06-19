@@ -27,6 +27,8 @@
 
 #include "gtest/gtest.h"
 
+#include <boost/lexical_cast.hpp>
+
 using namespace IronBee::Predicate;
 using namespace std;
 
@@ -102,6 +104,30 @@ TEST_F(TestDAG, StringEscaping)
     EXPECT_EQ("'foo\\'bar'", String("foo'bar").to_s());
     EXPECT_EQ("'foo\\\\bar'", String("foo\\bar").to_s());
     EXPECT_EQ("'foo\\\\'", String("foo\\").to_s());
+}
+
+TEST_F(TestDAG, Integer)
+{
+    Integer n(0);
+    EXPECT_EQ("0", n.to_s());
+    EXPECT_EQ(0, n.value_as_i());
+    EXPECT_EQ(
+        0,
+        n.eval(EvalContext()).value_as_number()
+    );
+    EXPECT_TRUE(n.is_literal());
+}
+
+TEST_F(TestDAG, Float)
+{
+    Float n(1.2);
+    EXPECT_FLOAT_EQ(1.2, boost::lexical_cast<long double>(n.to_s()));
+    EXPECT_FLOAT_EQ(1.2, n.value_as_f());
+    EXPECT_FLOAT_EQ(
+        1.2,
+        n.eval(EvalContext()).value_as_float()
+    );
+    EXPECT_TRUE(n.is_literal());
 }
 
 TEST_F(TestDAG, Call)
