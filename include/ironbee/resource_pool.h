@@ -135,7 +135,14 @@ typedef ib_status_t (*ib_resource_use_fn_t)(
  */
 struct ib_resource_pool_t {
     ib_mpool_t *mp;        /**< Memory pool this pool comes from. */
-    ib_queue_t *free_list; /**< List of free resources. */
+    ib_queue_t *resources; /**< List of free ib_resource_t objs. */
+    /**
+     * List of empty ib_resource_t structs.
+     *
+     * Empty ib_resource_t struts are pulled from here, if available,
+     * insetad of allocating new ones.
+     */
+    ib_queue_t *free_list;
     size_t      count;     /**< Number of created resources. */
 
     /* Callbacks. */

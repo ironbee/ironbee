@@ -41,9 +41,9 @@ static void ib_resource_pool_destroy(void *data) {
     ib_status_t rc;
     ib_resource_pool_t *rp = (ib_resource_pool_t*)data;
 
-    while (ib_queue_size(rp->free_list) > 0) {
+    while (ib_queue_size(rp->resources) > 0) {
         void *v;
-        rc = ib_queue_pop_front(rp->free_list, &v);
+        rc = ib_queue_pop_front(rp->resources, &v);
         if (rc != IB_OK) {
             return;
         }
@@ -86,7 +86,7 @@ ib_status_t DLL_PUBLIC ib_resource_pool_create(
         return IB_EALLOC;
     }
 
-    rc = ib_queue_create(&(rp->free_list), mp, IB_QUEUE_NONE);
+    rc = ib_queue_create(&(rp->resources), mp, IB_QUEUE_NONE);
     if (rc != IB_OK) {
         return rc;
     }
@@ -134,9 +134,9 @@ ib_status_t DLL_PUBLIC ib_resource_get(
 
     for (;;) {
         /* If there is a free resource, aquire it. */
-        if (ib_queue_size(resource_pool->free_list) > 0) {
+        if (ib_queue_size(resource_pool->resources) > 0) {
             rc = ib_queue_pop_front(
-                resource_pool->free_list,
+                resource_pool->resources,
                 (void**)&tmp_resource);
             if (rc != IB_OK) {
                 goto failure;
@@ -148,12 +148,24 @@ ib_status_t DLL_PUBLIC ib_resource_get(
         else if (  (resource_pool->max_count > 0) 
                 && (resource_pool->max_count > resource_pool->count) )
         {
-            tmp_resource = ib_mpool_alloc(
-                resource_pool->mp,
-                sizeof(*tmp_resource));
-            if (tmp_resource == NULL) {
-                rc = IB_EALLOC;
-                goto failure;
+            /* Attempt to get an already allocated resource struct. */
+            if (ib_queue_size(resource_pool->free_list) > 0) {
+                rc = ib_queue_pop_front(
+                    resource_pool->free_list,
+                    (void **)(&tmp_resource));
+                if (rc != IB_OK) {
+                    goto failure;
+                }
+            }
+            /* Otherwise, allocate a new one. */
+            else {
+                tmp_resource = ib_mpool_alloc(
+                    resource_pool->mp,
+                    sizeof(*tmp_resource));
+                if (tmp_resource == NULL) {
+                    rc = IB_EALLOC;
+                    goto failure;
+                }
             }
 
             tmp_resource->use = 0;
@@ -209,17 +221,21 @@ ib_status_t DLL_PUBLIC ib_resource_return(
     }
 
     if (resource->use >= resource->owner->max_use) {
+        ib_status_t rc;
         (resource->owner->destroy_fn)(
             resource->resource,
             resource->owner->destroy_data);
         resource->use = 0;
         resource->resource = NULL;
 
-        /* FIXME - return shell to recycle list. */
-
+        /* Store the empty resource struct on the free list for reused. */
+        rc = ib_queue_push_back(resource->owner->free_list, resource);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
     else {
-        ib_queue_push_back(resource->owner->free_list, resource);
+        ib_queue_push_back(resource->owner->resources, resource);
     }
 
 
