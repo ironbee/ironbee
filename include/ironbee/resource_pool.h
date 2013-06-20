@@ -28,7 +28,7 @@
 #include <ironbee/build.h>
 #include <ironbee/types.h>
 
-#include <ironbee/list.h>
+#include <ironbee/queue.h>
 
 #include <stdbool.h>
 
@@ -135,7 +135,7 @@ typedef ib_status_t (*ib_resource_use_fn_t)(
  */
 struct ib_resource_pool_t {
     ib_mpool_t *mp;        /**< Memory pool this pool comes from. */
-    ib_list_t  *free_list; /**< List of free resources. */
+    ib_queue_t *free_list; /**< List of free resources. */
     size_t      count;     /**< Number of created resources. */
 
     /* Callbacks. */

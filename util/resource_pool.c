@@ -38,14 +38,19 @@
 static void ib_resource_pool_destroy(void *data) {
     assert(data != NULL);
 
-    ib_list_node_t *node;
+    ib_status_t rc;
     ib_resource_pool_t *rp = (ib_resource_pool_t*)data;
 
-    IB_LIST_LOOP((rp->free_list), node) {
-        ib_resource_t *r = (ib_resource_t*)ib_list_node_data(node);
+    while (ib_queue_size(rp->free_list) > 0) {
+        void *v;
+        rc = ib_queue_pop_front(rp->free_list, &v);
+        if (rc != IB_OK) {
+            return;
+        }
+
+        ib_resource_t *r = (ib_resource_t*)v;
         (rp->destroy_fn)(r->resource, rp->destroy_data);
     }
-
 }
 
 ib_status_t DLL_PUBLIC ib_resource_pool_create(
@@ -81,7 +86,7 @@ ib_status_t DLL_PUBLIC ib_resource_pool_create(
         return IB_EALLOC;
     }
 
-    rc = ib_list_create(&(rp->free_list), mp);
+    rc = ib_queue_create(&(rp->free_list), mp, IB_QUEUE_NONE);
     if (rc != IB_OK) {
         return rc;
     }
@@ -129,8 +134,10 @@ ib_status_t DLL_PUBLIC ib_resource_get(
 
     for (;;) {
         /* If there is a free resource, aquire it. */
-        if (ib_list_elements(resource_pool->free_list) > 0) {
-            rc = ib_list_shift(resource_pool->free_list, &tmp_resource);
+        if (ib_queue_size(resource_pool->free_list) > 0) {
+            rc = ib_queue_pop_front(
+                resource_pool->free_list,
+                (void**)&tmp_resource);
             if (rc != IB_OK) {
                 goto failure;
             }
@@ -212,7 +219,7 @@ ib_status_t DLL_PUBLIC ib_resource_return(
 
     }
     else {
-        ib_list_push(resource->owner->free_list, resource);
+        ib_queue_push_back(resource->owner->free_list, resource);
     }
 
 
