@@ -38,9 +38,13 @@ A reference guide to the available functions (Calls) is at `standard.md`.  A gui
 Expressions
 -----------
 
-An expression in the predicate system is a tree.  Each internal node represents a pure function call.  Its children plus the current IronBee transaction are the inputs to that function.  Leaf nodes are either literal values or function calls that have no inputs besides the current transaction.  Nodes representing function calls are known as *Call* nodes.  The value of a literal node is fixed.  The value of a Call node is the return value of the corresponding function on its inputs.  Values are either *null* or an IronBee field.  IronBee fields provide a basic typing system including signed integers, floating point, strings and collections.  The null value is interpreted as false and all other values as true.  The ultimate purpose of an expression is to express the semantics: if the root node is true, run a rule.
+An expression in the predicate system is a tree.  Each internal node represents a pure function call.  Its children plus the current IronBee transaction are the inputs to that function.  Leaf nodes are either literal values or function calls that have no inputs besides the current transaction.  Nodes representing function calls are known as *Call* nodes.  Nodes can have multiple values.  The values of a literal node is fixed.  The values of a Call node is the return value of the corresponding function on its inputs.    In addition, nodes can be "finished" or "unfinished".  A finished node will never add more values.  An unfinished node may add additional values if called again (e.g., at a later phase when additional information is available).  Nodes may never remove values or change already added values.  Values are IronBee fields.  IronBee fields provide a basic typing system including signed integers, floating point, strings and collections.  A node with no values is interpreted as false; a node with any values is interpreted as true.  The ultimate purpose of an expression is to express the semantics: if the root node is true, run a rule.
 
-At present only null and string literals are supported.  In the future, other field types will be added such as integers.
+A node is said to be "simple" or "have a simple value" if it is finished and has 0 or 1 values.
+
+All literals are simple.  Currently, the empty list (written 'null'), string, and numeric (integral and floating) literals are supported.
+
+Many calls operate in a "map-compact" style, meaning that the call applies a per-value function to each value in the input which adds 0 or 1 values to the output.  For example, the 'rx' call applies a regular expression to each input and adds the capture collection to the output if a match is found.
 
 Expressions are usually represented textually via S-Expressions (sexpr).  The grammar of a predicate sexpr is given below, but first an example:
 
@@ -75,7 +79,7 @@ The predicate system comes with a set of *Standard* Calls.  Modules may define a
 Lua Front End
 -------------
 
-Coming Soon
+See frontend.md
 
 Action and Operator
 -------------------
