@@ -36,14 +36,14 @@ extern "C" {
 #endif
 
 /**
-* @defgroup IronBeeEngineManagerTestAPI Engine Manager Test API
-* @ingroup IronBeeEngineManager
-*
-* These functions are used for testing the engine manager implementation
-* and its use in servers.
-*
-* @{
-*/
+ * @defgroup IronBeeEngineManagerTestAPI Engine Manager Test API
+ * @ingroup IronBeeEngineManager
+ *
+ * These functions are used for testing the engine manager implementation
+ * and its use in servers.
+ *
+ * @{
+ */
 
 /**
  * Engine manager engine destroy operations.

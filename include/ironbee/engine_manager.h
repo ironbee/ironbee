@@ -36,16 +36,16 @@ extern "C" {
 #endif
 
 /**
-* @defgroup IronBeeEngineManager Engine Manager
-* @ingroup IronBee
-*
-* The engine manager provides services to manage multiple IronBee engines.
-*
-* In the current implementation, all of these engines run in the same process
-* space.
-*
-* @{
-*/
+ * @defgroup IronBeeEngineManager Engine Manager
+ * @ingroup IronBee
+ *
+ * The engine manager provides services to manage multiple IronBee engines.
+ *
+ * In the current implementation, all of these engines run in the same process
+ * space.
+ *
+ * @{
+ */
 
 /* Engine Manager type declarations */
 
@@ -248,13 +248,13 @@ size_t DLL_PUBLIC ib_manager_engine_count(
 );
 
 /**
-* @defgroup IronBeeEngineManagerLogging Engine Manager logging
-* @ingroup IronBeeEngineManager
-*
-* These functions can be used by servers to change the logger at run-time.
-*
-* @{
-*/
+ * @defgroup IronBeeEngineManagerLogging Engine Manager logging
+ * @ingroup IronBeeEngineManager
+ *
+ * These functions can be used by servers to change the logger at run-time.
+ *
+ * @{
+ */
 
 /**
  * Override the engine manager's vlogger.
