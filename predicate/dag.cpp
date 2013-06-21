@@ -35,11 +35,77 @@ using namespace std;
 namespace IronBee {
 namespace Predicate {
 
-Node::value_t::value_t() :
-    has_value(false)
-{
-    // nop
+namespace {
+static IronBee::ScopedMemoryPool c_static_pool;
+static const Value
+    c_empty_string(
+        IronBee::Field::create_byte_string(
+            c_static_pool,
+            "", 0,
+            IronBee::ByteString::create(c_static_pool)
+        )
+    );
+
 }
+
+class Node::value_t
+{
+public:
+    //! Constructor.
+    value_t() :
+        m_forward(NULL),
+        m_pool("node value private pool"),
+        m_finished(false),
+        m_values(ValueList::create(m_pool))
+    {
+        // nop
+    }
+
+    void forward(const value_t* to)
+    {
+        m_forward = to;
+    }
+
+    bool finished() const
+    {
+        return m_forward ? m_forward->finished() : m_finished;
+    }
+
+    bool forwarding() const
+    {
+        return m_forward;
+    }
+
+    ValueList values() const
+    {
+        return m_forward ? m_forward->values() : m_values;
+    }
+
+    void reset()
+    {
+        m_forward = NULL;
+        m_finished = false;
+        m_values.clear();
+    }
+
+    void finish()
+    {
+        if (m_forward) {
+            BOOST_THROW_EXCEPTION(
+                einval() << errinfo_what(
+                    "Can't finish a forwarded node."
+                )
+            );
+        }
+        m_finished = true;
+    }
+
+private:
+    const value_t* m_forward;
+    IronBee::ScopedMemoryPool m_pool;
+    bool m_finished;
+    ValueList m_values;
+};
 
 Node::Node()
 {
@@ -73,39 +139,120 @@ const Node::value_t& Node::lookup_value() const
     }
 }
 
-Value Node::eval(EvalContext context)
+ValueList Node::eval(EvalContext context)
 {
     value_t& v = lookup_value();
-    if (! v.has_value) {
-        v.has_value = true;
-        v.value = calculate(context);
+    if (! v.forwarding() && ! v.finished()) {
+        calculate(context);
     }
-    return v.value;
+    return v.values();
 }
 
-Value Node::value() const
+ValueList Node::values() const
 {
-    const value_t& v = lookup_value();
-    if (! v.has_value) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(
-                "Value asked of valueless node."
-            )
-        );
-    }
-    return v.value;
+    return lookup_value().values();
 }
 
 void Node::reset()
 {
-    value_t& v = lookup_value();
-    v.has_value = false;
-    v.value = IronBee::Field();
+    lookup_value().reset();
 }
 
-bool Node::has_value() const
+bool Node::finished() const
 {
-    return lookup_value().has_value;
+    return lookup_value().finished();
+}
+
+void Node::add_value(Value value)
+{
+    value_t& v = lookup_value();
+    if (v.finished()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't add value to finished node."
+            )
+        );
+    }
+    if (v.forwarding()) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Can't add value to forwarded node."
+            )
+        );
+    }
+    v.values().push_back(value);
+}
+
+void Node::finish()
+{
+    value_t& v = lookup_value();
+    if (v.finished()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't finish an already finished node."
+            )
+        );
+    }
+    if (v.forwarding()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't finish a forwarded node."
+            )
+        );
+    }
+    v.finish();
+}
+
+void Node::finish_true()
+{
+    if (! values().empty()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't finish a node as true if it already has values."
+            )
+        );
+    }
+    add_value(c_empty_string);
+    finish();
+}
+
+void Node::finish_false()
+{
+    if (! values().empty()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't finish a node as false if it already has values."
+            )
+        );
+    }
+    finish();
+}
+
+void Node::forward(const node_p& other)
+{
+    value_t& v = lookup_value();
+    if (v.forwarding()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't forward a forwarded node."
+            )
+        );
+    }
+    if (v.finished()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't finish an already finished node."
+            )
+        );
+    }
+    if (! v.values().empty()) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't combined existing values with forwarded values."
+            )
+        );
+    }
+    v.forward(&other->lookup_value());
 }
 
 void Node::add_child(const node_p& child)
@@ -275,9 +422,10 @@ string String::escape(const std::string& s)
     return escaped;
 }
 
-Value String::calculate(EvalContext)
+void String::calculate(EvalContext)
 {
-    return m_value_as_field;
+    add_value(m_value_as_field);
+    finish();
 }
 
 const string& Null::to_s() const
@@ -286,9 +434,9 @@ const string& Null::to_s() const
     return s_null;
 }
 
-Value Null::calculate(EvalContext)
+void Null::calculate(EvalContext)
 {
-    return Value();
+    finish_false();
 }
 
 Integer::Integer(int64_t value) :
@@ -306,9 +454,10 @@ Integer::Integer(int64_t value) :
     // nop
 }
 
-Value Integer::calculate(EvalContext)
+void Integer::calculate(EvalContext)
 {
-    return m_value_as_field;
+    add_value(m_value_as_field);
+    finish();
 }
 
 Float::Float(long double value) :
@@ -326,11 +475,11 @@ Float::Float(long double value) :
     // nop
 }
 
-Value Float::calculate(EvalContext)
+void Float::calculate(EvalContext)
 {
-    return m_value_as_field;
+    add_value(m_value_as_field);
+    finish();
 }
-
 
 // Don't use recalculate_s() as we don't want to update parents.
 Call::Call() :

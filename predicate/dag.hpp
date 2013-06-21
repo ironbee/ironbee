@@ -227,19 +227,30 @@ public:
         return m_parents;
     }
 
-    //! True iff has (per-thread) value.
-    bool has_value() const;
+    /**
+     * Is node finished in this thread.
+     *
+     * Finished nodes guarantee that values() will not changed until the next
+     * reset.  Unfinished nodes may add additional values (but will not change
+     * or remove existing) values if eval() is called again; in particular,
+     * if the Context changes.
+     **/
+    bool finished() const;
+
+    /**
+     * Values of node in this thread.
+     *
+     * @sa finished()
+     **/
+    ValueList values() const;
 
     //! True iff node is a literal, in which case eval(EvalContext()) is valid.
     bool is_literal() const;
 
-    //! Return (per-thread) value, calculating if needed.
-    Value eval(EvalContext context);
+    //! Call calculate() if unfinished.
+    ValueList eval(EvalContext context);
 
-    //! Return (per-thread) value, throwing if none.
-    Value value() const;
-
-    //! Reset to valueless for this thread.
+    //! Reset to no values and unfinished for this thread.
     void reset();
 
     /**
@@ -309,16 +320,71 @@ protected:
     /**
      * Calculate value.
      *
-     * Subclass classes should implement this to calculate and return the
-     * value.
+     * Subclass classes should implement this to calculate and call
+     * add_value() and finish() appropriately.
      *
      * It is important to make this thread safe if intending to use Predicate
      * in a multithreaded situation.
      *
+     * This method will be called any time eval() is called while the node is
+     * unfinished.  It will not be called on a finished node.
+     *
      * @param [in] context Context of calculation.
      * @return Value of node.
      */
-    virtual Value calculate(EvalContext context) = 0;
+    virtual void calculate(EvalContext context) = 0;
+
+    /**
+     * Add a value (thread specific).
+     *
+     * Should only be called from calculate().
+     *
+     * @sa finished()
+     * @sa values()
+     * @sa finish()
+     *
+     * @throw einval if called on a finished() node.
+     **/
+    void add_value(Value v);
+
+    /**
+     * Mark node as finished.
+     *
+     * Should only be called from calculate().
+     *
+     * @sa finished()
+     * @sa add_value()
+     *
+     * @throw einval if called on a finished() node.
+     **/
+    void finish();
+
+    /**
+     * Forward behavior to another node.
+     *
+     * May only be called if this node is unfinished and has no values.  All
+     * calls to finished() and values() will be forwarded to the other node
+     * until the next reset.  This nodes calculate will not be called.
+     *
+     * @throw einval if called on a finished() node.
+     * @throw einval if called on a node with non-empty values.
+     * @throw einval if called on a node already being forwarded.
+     **/
+    void forward(const node_p& other);
+
+    /**
+     * Finish node as true.
+     *
+     * Convenience method for finishing the current node with a truthy value.
+     **/
+    void finish_true();
+
+   /**
+    * Finish node as false.
+    *
+    * Convenience method for finishing the current node with a truthy value.
+    **/
+   void finish_false();
 
 private:
     /**
@@ -330,15 +396,7 @@ private:
     void unlink_from_child(const node_p& child) const;
 
     //! Value information.
-    struct value_t {
-        //! Constructor.
-        value_t();
-
-        //! Has value.
-        bool has_value;
-        //! Value.
-        Value value;
-    };
+    class value_t;
 
     //! Fetch value for this thread.
     value_t& lookup_value();
@@ -479,7 +537,7 @@ public:
 
 protected:
     //! See Node::calculate()
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
 
 private:
     //! Value as a C++ string.
@@ -488,7 +546,7 @@ private:
     const std::string m_s;
     //! Memory pool to create field value from.  Alias of m_value_as_s.
     boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
-    //! Value returned by calculate().
+    //! Value added by calculate().
     Value m_value_as_field;
 };
 
@@ -507,7 +565,7 @@ public:
 
 protected:
     //! See Node::calculate()
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
 };
 
 /**
@@ -542,7 +600,7 @@ public:
 
 protected:
     //! See Node::calculate()
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
 
 private:
     //! Value as integer.
@@ -551,7 +609,7 @@ private:
     const std::string m_s;
     //! Memory pool to create field value from.
     boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
-    //! Value returned by calculate().
+    //! Value added by calculate().
     Value m_value_as_field;
 };
 
@@ -587,7 +645,7 @@ public:
 
 protected:
     //! See Node::calculate()
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
 
 private:
     //! Value as integer.
@@ -596,7 +654,7 @@ private:
     const std::string m_s;
     //! Memory pool to create field value from.
     boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
-    //! Value returned by calculate().
+    //! Value added by calculate().
     Value m_value_as_field;
 };
 
