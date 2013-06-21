@@ -1140,5 +1140,25 @@ TEST_F(ConnectionParsing, Util) {
 
     fprint_raw_data(null, "test", bstr_ptr(tx->request_line), bstr_len(tx->request_line));
 
-    fprint_raw_data_ex(null, "test", bstr_ptr(tx->request_line), 0, bstr_len(tx->request_line));   
+    fprint_raw_data_ex(null, "test", bstr_ptr(tx->request_line), 0, bstr_len(tx->request_line));
+
+    // Message too long.
+    tx->connp->cfg->log_level = HTP_LOG_ERROR;
+    char long_message[1300];
+    for (size_t i = 0; i < 1299; i++) {
+        long_message[i] = 'X';
+    }
+    long_message[1299] = '\0';
+    
+    htp_log(tx->connp, __FILE__, __LINE__, HTP_LOG_ERROR, 0, long_message);
+    ASSERT_TRUE(tx->connp->last_error != NULL);
+    ASSERT_TRUE(tx->connp->last_error->msg != NULL);
+    ASSERT_EQ(1023, strlen(tx->connp->last_error->msg));
+    ASSERT_EQ('+', tx->connp->last_error->msg[1022]);
+
+    // A message that should not be logged.
+    size_t log_message_count = htp_list_size(tx->connp->conn->messages);
+    tx->connp->cfg->log_level = HTP_LOG_NONE;
+    htp_log(tx->connp, __FILE__, __LINE__, HTP_LOG_ERROR, 0, "Log message");
+    ASSERT_EQ(log_message_count, htp_list_size(tx->connp->conn->messages));
 }

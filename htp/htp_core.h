@@ -243,6 +243,7 @@ enum htp_file_source_t {
  * Enumerates all log levels.
  */
 enum htp_log_level_t {
+    HTP_LOG_NONE = 0,
     HTP_LOG_ERROR = 1,
     HTP_LOG_WARNING = 2,
     HTP_LOG_NOTICE = 3,

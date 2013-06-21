@@ -305,6 +305,7 @@ int64_t htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, i
 }
 
 #ifdef HTP_DEBUG
+
 /**
  * Prints one log message to stderr.
  *
@@ -338,28 +339,27 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
     char buf[1024];
     va_list args;
 
-    // Ignore messages below our log level
+    // Ignore messages below our log level.
     if (connp->cfg->log_level < level) {
         return;
     }
 
     va_start(args, fmt);
 
-    int r = vsnprintf(buf, 1023, fmt, args);
+    int r = vsnprintf(buf, 1024, fmt, args);
 
     va_end(args);
 
     if (r < 0) {
         snprintf(buf, 1024, "[vnsprintf returned error %d]", r);
-    }
-
-    // Indicate overflow with a '+' at the end
-    if (r > 1023) {
+    } else if (r >= 1024) {
+        // Indicate overflow with a '+' at the end.
         buf[1022] = '+';
         buf[1023] = '\0';
     }
 
-    // Create a new log entry...
+    // Create a new log entry.
+
     htp_log_t *log = calloc(1, sizeof (htp_log_t));
     if (log == NULL) return;
 
@@ -607,14 +607,14 @@ htp_status_t htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *por
  * @param[in] uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
-int htp_parse_uri(bstr *input, htp_uri_t **uri) {        
+int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     // Allow a htp_uri_t structure to be provided on input,
     // but allocate a new one if there isn't one
     if (*uri == NULL) {
         *uri = calloc(1, sizeof (htp_uri_t));
         if (*uri == NULL) return HTP_ERROR;
     }
-    
+
     if (input == NULL) {
         // Request does not contain the URI.
         return HTP_OK;
@@ -627,7 +627,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     if (len == 0) {
         // Empty string.
         return HTP_OK;
-    }   
+    }
 
     pos = 0;
 
@@ -859,7 +859,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
     uint8_t *data = bstr_ptr(path);
     if (data == NULL) return;
-    
+
     size_t len = bstr_len(path);
     size_t rpos = 0;
     size_t wpos = 0;
@@ -1177,7 +1177,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     size_t wpos = 0;
     int previous_was_separator = 0;
 
-    while ((rpos < len)&&(wpos < len)) {
+    while ((rpos < len) && (wpos < len)) {
         int c = data[rpos];
 
         // Decode encoded characters
@@ -1430,7 +1430,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
 int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
     if (input == NULL) return -1;
-    
+
     unsigned char *data = bstr_ptr(input);
     if (data == NULL) return -1;
     size_t len = bstr_len(input);
@@ -1438,7 +1438,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
     size_t rpos = 0;
     size_t wpos = 0;
 
-    while ((rpos < len)&&(wpos < len)) {
+    while ((rpos < len) && (wpos < len)) {
         int c = data[rpos];
 
         // Decode encoded characters.
@@ -1742,6 +1742,7 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
 }
 
 #if 0
+
 /**
  * Replace the URI in the structure with the one provided as the parameter
  * to this function (which will typically be supplied in a Host header).
@@ -2152,6 +2153,7 @@ char *htp_tx_response_progress_as_string(htp_tx_t *tx) {
 }
 
 #if 0
+
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
     if (uri == NULL) {
         return NULL;
