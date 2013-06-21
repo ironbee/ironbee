@@ -48,6 +48,8 @@
  * - <tt>-v @<log level@></tt>
  *   Specify the IronBee log level to use for IronBee logging (can be numeric
  *   or symbolic)
+ * - <tt>-m @<max engines@></tt>
+ *   Specify the maximum number of simultaneous IronBee engines
  * - <tt>-d @<debug file@></tt>
  *   Specify file for the engine manager debug interface.  See @sa
  *   IronBeeTrafficServerEngineManagerDebug.
@@ -152,12 +154,13 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port);
 typedef struct {
     TSTextLogObject  logger;         /**< TrafficServer log object */
     ib_manager_t    *manager;        /**< IronBee engine manager object */
+    size_t           max_engines;    /**< Max # of simultaneous engines */
     const char      *config_file;    /**< IronBee configuration file */
-    bool             shutdown;       /**< In shutdown state? */
     const char      *log_file;       /**< IronBee log file */
     int              log_level;      /**< IronBee log level */
     bool             log_disable;    /**< Disable logging? */
 #ifdef ATS_DEBUG_ENGINE_MANAGER
+    bool             shutdown;       /**< In shutdown state? */
     const char      *debug_file;     /**< Debugging file */
 #endif
 } module_data_t;
@@ -167,12 +170,13 @@ static module_data_t module_data =
 {
     NULL,                 /* .logger */
     NULL,                 /* .manager */
+    0,                    /* .max_engines */
     NULL,                 /* .config_file */
-    false,                /* .shutdown */
     NULL,                 /* .log_file */
     IB_LOG_WARNING,       /* .log_level */
     false,                /* .log_disable */
 #ifdef ATS_DEBUG_ENGINE_MANAGER
+    false,                /* .shutdown */
     NULL,                 /* .debug_file */
 #endif
 };
@@ -2273,9 +2277,6 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 TSDebug("ironbee", "TXN Close: %p\n", (void *)contp);
                 ib_txn_ctx_destroy(ctx);
             }
-            if (module_data.manager != NULL) {
-                ib_manager_engine_cleanup(module_data.manager);
-            }
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
@@ -2285,6 +2286,9 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         case TS_EVENT_HTTP_SSN_CLOSE:
             TSDebug("ironbee", "SSN Close: %p\n", (void *)contp);
             ib_ssn_ctx_destroy(TSContDataGet(contp));
+            if (module_data.manager != NULL) {
+                ib_manager_engine_cleanup(module_data.manager);
+            }
             //TSContDestroy(contp);
             TSHttpSsnReenable(ssnp, TS_EVENT_HTTP_CONTINUE);
             break;
@@ -2448,7 +2452,7 @@ static ib_status_t read_ibconf(
     mod_data->log_file = DEFAULT_LOG;
 
     /* const-ness mismatch looks like an oversight, so casting should be fine */
-    while (c = getopt(argc, (char**)argv, "l:Lv:d:"), c != -1) {
+    while (c = getopt(argc, (char**)argv, "l:Lv:d:m:"), c != -1) {
         switch(c) {
         case 'L':
             mod_data->log_disable = true;
@@ -2459,6 +2463,9 @@ static ib_status_t read_ibconf(
         case 'v':
             mod_data->log_level =
                 ib_log_string_to_level(optarg, IB_LOG_WARNING);
+            break;
+        case 'm':
+            mod_data->max_engines = atoi(optarg);
             break;
 #ifdef ATS_DEBUG_ENGINE_MANAGER
         case 'd':
@@ -2520,6 +2527,7 @@ static int ironbee_init(module_data_t *mod_data)
     /* Create the IronBee engine manager */
     TSDebug("ironbee", "Creating engine manager");
     rc = ib_manager_create(&ibplugin,             /* Server object */
+                           mod_data->max_engines, /* Default max */
                            NULL,                  /* vLogger function */
                            ironbee_logger,        /* Logger function */
                            mod_data,              /* cbdata: module data */
@@ -2766,6 +2774,7 @@ static void check_command_file(module_data_t *mod_data)
 
         TSDebug("ironbee", "Creating new engine manager\n");
         rc = ib_manager_create(&ibplugin,             /* Server object */
+                               mod_data->max_engines, /* Max # of engines */
                                NULL,                  /* vLogger function */
                                ironbee_logger,        /* Logger function */
                                mod_data,              /* cbdata: module data */

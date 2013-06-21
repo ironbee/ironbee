@@ -103,6 +103,7 @@ typedef void (*ib_logger_fn_t)(
  * Create an engine manager.
  *
  * @param[in] server IronBee server object
+ * @param[in] max_engines Maximum number of simultaneous engines (0 for default)
  * @param[in] vlogger_fn Logger function (@c va_list version)
  * @param[in] logger_fn Logger function (Formatted buffer version)
  * @param[in] logger_cbdata Data to pass to logger function
@@ -130,6 +131,7 @@ typedef void (*ib_logger_fn_t)(
  */
 ib_status_t DLL_PUBLIC ib_manager_create(
     const ib_server_t  *server,
+    size_t              max_engines,
     ib_vlogger_fn_t     vlogger_fn,
     ib_logger_fn_t      logger_fn,
     void               *logger_cbdata,

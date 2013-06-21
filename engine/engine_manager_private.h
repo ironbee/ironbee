@@ -51,21 +51,29 @@ typedef struct ib_manager_engine_t ib_manager_engine_t;
  * The Engine Manager.
  */
 struct ib_manager_t {
-    const ib_server_t   *server;          /**< Server object */
-    ib_mpool_t          *mpool;           /**< Engine Manager's Memory pool */
-    ib_lock_t            manager_lock;    /**< The manager lock */
+    const ib_server_t    *server;          /**< Server object */
+    ib_mpool_t           *mpool;           /**< Engine Manager's Memory pool */
+    size_t                max_engines;     /**< The maximum number of engines */
 
-    /* List of all managed engines, and other related items */
-    ib_list_t           *engine_list;     /**< List: @ref ib_manager_engine_t */
-    ib_manager_engine_t *engine_current;  /**< Current IronBee engine */
-    volatile size_t      inactive_count;  /**< Count of inactive engines */
-    ib_lock_t            engines_lock;    /**< The engine list lock */
+    /*
+     * List of all managed engines, and other related items.  These items are
+     * all protected by the engine list lock.
+     */
+    ib_manager_engine_t **engine_list;     /**< List of engines */
+    size_t                engine_count;    /**< Count of engines */
+    ib_manager_engine_t  *engine_current;  /**< Current IronBee engine */
+    volatile size_t       inactive_count;  /**< Count of inactive engines */
+
+    /* The locks themselves */
+    ib_lock_t             engines_lock;    /**< The engine list lock */
+    ib_lock_t             creation_lock;   /**< Serialize engine creation */
+    ib_lock_t             manager_lock;    /**< The manager lock */
 
     /* Logging */
-    ib_log_level_t       log_level;       /**< Log level for manager */
-    ib_vlogger_fn_t      vlogger_fn;      /**< @c va_list logger function */
-    ib_logger_fn_t       logger_fn;       /**< Buffer logger function */
-    void                *logger_cbdata;   /**< Logger callback data */
+    ib_log_level_t        log_level;       /**< Log level for manager */
+    ib_vlogger_fn_t       vlogger_fn;      /**< @c va_list logger function */
+    ib_logger_fn_t        logger_fn;       /**< Buffer logger function */
+    void                 *logger_cbdata;   /**< Logger callback data */
 };
 
 /** @} */
