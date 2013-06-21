@@ -34,7 +34,33 @@
 #include <ts/ts.h>
 
 /**
- * Engine manager debugging interface.
+ * @defgroup IronBeeTrafficServer Apache Traffic Server module.
+ *
+ * This module takes advantage of Traffic Server's ability to passing command
+ * line arguments to modules.  To do this, add arguments to the ts_ironbee
+ * module load in 'plugin.config'.
+ *
+ * The recognized arguments are:
+ * - <tt>-L</tt>
+ *   Disable logging
+ * - <tt>-l @<log file@></tt>
+ *   Specify the file to use for IronBee logging
+ * - <tt>-v @<log level@></tt>
+ *   Specify the IronBee log level to use for IronBee logging (can be numeric
+ *   or symbolic)
+ * - <tt>-d @<debug file@></tt>
+ *   Specify file for the engine manager debug interface.  See @sa
+ *   IronBeeTrafficServerEngineManagerDebug.
+ *
+ * Example plugin.config
+ *   /local/ib/lib64/libloader.so /local/ib/lib64/libironbee.so
+ *   /local/ib/libexec/ts_ironbee.so /local/ib/ts.conf -v trace -l ts-ironbee.log -m 10
+ */
+
+/**
+ * @defgroup IronBeeTrafficServerEngineManagerDebug
+ * Engine manager debugging interface for the Traffic Server module
+ * @ingroup IronBeeTrafficServer
  *
  * To enable a debug interface from ATS to the engine manager,
  * pass "CFLAGS=-DATS_DEBUG_ENGINE_MANAGER=1" to configure.
@@ -44,7 +70,7 @@
  *
  * Example plugin.config
  *   /local/ib/lib64/libloader.so /local/ib/lib64/libironbee.so
- *   /local/ib/ts_ironbee.so /local/ib/ts.conf -v 9 -l ts-ironbee.log -d /tmp/engine-manager-debug.txt
+ *   /local/ib/libexec/ts_ironbee.so /local/ib/ts.conf -v trace -l ts-ironbee.log -d /tmp/engine-manager-debug.txt
  *
  * To cause the plugin to perform engine manager operations, write
  * a string to the file specified above.  Upon reading the file, the
