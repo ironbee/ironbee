@@ -304,6 +304,7 @@ int64_t htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, i
     return r;
 }
 
+#ifdef HTP_DEBUG
 /**
  * Prints one log message to stderr.
  *
@@ -319,6 +320,7 @@ void htp_print_log(FILE *stream, htp_log_t *log) {
                 log->file, log->line, log->msg);
     }
 }
+#endif
 
 /**
  * Records one log message.
@@ -1739,6 +1741,7 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
     return hostname;
 }
 
+#if 0
 /**
  * Replace the URI in the structure with the one provided as the parameter
  * to this function (which will typically be supplied in a Host header).
@@ -1789,6 +1792,7 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         }
     }
 }
+#endif
 
 /**
  * Is URI character reserved?
@@ -1970,6 +1974,7 @@ void htp_normalize_uri_path_inplace(bstr *s) {
     bstr_adjust_len(s, wpos);
 }
 
+#ifdef HTP_DEBUG
 /**
  *
  */
@@ -2146,10 +2151,9 @@ char *htp_tx_response_progress_as_string(htp_tx_t *tx) {
 
     return "INVALID";
 }
+#endif
 
-/**
- *
- */
+#if 0
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
     if (uri == NULL) {
         return NULL;
@@ -2253,6 +2257,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
 
     return r;
 }
+#endif
 
 /**
  * Determine if the information provided on the response line
