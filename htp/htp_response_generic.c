@@ -195,16 +195,8 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
     }
 
     // Look for the end of field-content.
-    value_end = value_start;
-    while (value_end < len) value_end++;
-
-    // Ignore LWS after field-content.
-    prev = value_end - 1;
-    while ((prev > value_start) && (htp_is_lws(data[prev]))) {
-        prev--;
-        value_end--;
-    }
-
+    value_end = len;    
+    
     // Check that the header name is a token.
     size_t i = name_start;
     while (i < name_end) {
