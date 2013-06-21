@@ -114,7 +114,7 @@ int htp_is_token(int c) {
 }
 
 /**
- * Remove one or more line terminators (LF or CRLF) from
+ * Remove all line terminators (LF or CRLF) from
  * the end of the line provided as input.
  *
  * @return 0 if nothing was removed, 1 if one or more LF characters were removed, or

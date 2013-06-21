@@ -109,21 +109,45 @@ TEST(UtilTest, Chomp) {
 
     strcpy(data, "test\r\n");
     len = strlen(data);
-    result = htp_chomp((unsigned char*) data, &len);
+    result = htp_chomp((unsigned char *) data, &len);
     EXPECT_EQ(2, result);
     EXPECT_EQ(4, len);
 
+    strcpy(data, "test\r\n\n");
+    len = strlen(data);
+    result = htp_chomp((unsigned char *) data, &len);
+    EXPECT_EQ(2, result);
+    EXPECT_EQ(4, len);
+
+    strcpy(data, "test\r\n\r\n");
+    len = strlen(data);
+    result = htp_chomp((unsigned char *) data, &len);
+    EXPECT_EQ(2, result);
+    EXPECT_EQ(4, len);
+
+    strcpy(data, "te\nst");
+    len = strlen(data);
+    result = htp_chomp((unsigned char *) data, &len);
+    EXPECT_EQ(0, result);
+    EXPECT_EQ(5, len);
+
     strcpy(data, "foo\n");
     len = strlen(data);
-    result = htp_chomp((unsigned char*) data, &len);
+    result = htp_chomp((unsigned char *) data, &len);
     EXPECT_EQ(1, result);
     EXPECT_EQ(3, len);
 
     strcpy(data, "arfarf");
     len = strlen(data);
-    result = htp_chomp((unsigned char*) data, &len);
+    result = htp_chomp((unsigned char *) data, &len);
     EXPECT_EQ(0, result);
     EXPECT_EQ(6, len);
+
+    strcpy(data, "");
+    len = strlen(data);
+    result = htp_chomp((unsigned char *) data, &len);
+    EXPECT_EQ(0, result);
+    EXPECT_EQ(0, len);
 }
 
 TEST(UtilTest, Space) {
