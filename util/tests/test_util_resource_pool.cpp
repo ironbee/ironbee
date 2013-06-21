@@ -216,7 +216,10 @@ TEST_F(ResourcePoolTest, use_ok) {
 
 TEST_F(ResourcePoolTest, use_einval) {
     /* Set IB_OK and return IB_OK. */
-    use_fn_t use = { .rc = IB_OK, .user_rc = IB_EINVAL, .resource = NULL };
+    use_fn_t use;
+    use.rc = IB_OK;
+    use.user_rc = IB_EINVAL;
+    use.resource = NULL;
     void *cbdata = reinterpret_cast<void *>(&use);
     ib_status_t rc;
     ib_resource_t *ib_r;
@@ -235,7 +238,10 @@ TEST_F(ResourcePoolTest, use_einval) {
 
 TEST_F(ResourcePoolTest, use_corrupted_resource) {
     /* Set IB_OK and return IB_OK. */
-    use_fn_t use = { .rc = IB_EINVAL, .user_rc = IB_EOTHER, .resource = NULL };
+    use_fn_t use;
+    use.rc = IB_EINVAL;
+    use.user_rc = IB_EOTHER;
+    use.resource = NULL;
     void *cbdata = reinterpret_cast<void *>(&use);
     ib_status_t rc;
     ib_resource_t *ib_r;
