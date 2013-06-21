@@ -32,6 +32,7 @@ check_PROGRAMS = \
 	test_util_mpool \
 	test_util_path \
 	test_util_queue \
+	test_util_resource_pool \
 	test_util_stream \
 	test_util_string \
 	test_util_string_lower \
@@ -79,6 +80,8 @@ test_util_lock_SOURCES = test_util_lock.cpp
 test_util_misc_SOURCES = test_util_misc.cpp
 
 test_util_queue_SOURCES = test_util_queue.cpp
+
+test_util_resource_pool_SOURCES = test_util_resource_pool.cpp
 
 test_util_dso_SOURCES = test_util_dso.cpp
 test_util_dso_CFLAGS = -rpath $(PWD)

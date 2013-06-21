@@ -91,6 +91,11 @@ ib_status_t DLL_PUBLIC ib_resource_pool_create(
         return rc;
     }
 
+    rc = ib_queue_create(&(rp->free_list), mp, IB_QUEUE_NONE);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     rp->mp = mp;
 
     /* Assign callbacks. */
@@ -145,9 +150,20 @@ ib_status_t DLL_PUBLIC ib_resource_get(
             goto success;
         }
         /* If we may create a new resource, do so. */
-        else if (  (resource_pool->max_count > 0) 
-                && (resource_pool->max_count > resource_pool->count) )
+        else if (  (resource_pool->max_count == 0) 
+                || (resource_pool->max_count > resource_pool->count) )
         {
+            void *user_resource = NULL;
+
+            /* It is most likely that resource creation will fail.
+             * Do this first to detect most likely errors fast. */
+            rc = (resource_pool->create_fn)(
+                    &user_resource,
+                    resource_pool->create_data);
+            if (rc != IB_OK) {
+                goto failure;
+            }
+
             /* Attempt to get an already allocated resource struct. */
             if (ib_queue_size(resource_pool->free_list) > 0) {
                 rc = ib_queue_pop_front(
@@ -170,13 +186,9 @@ ib_status_t DLL_PUBLIC ib_resource_get(
 
             tmp_resource->use = 0;
             tmp_resource->owner = resource_pool;
+            tmp_resource->resource = user_resource;
 
-            rc = (resource_pool->create_fn)(
-                    &(tmp_resource->resource),
-                    resource_pool->create_data);
-            if (rc != IB_OK) {
-                goto failure;
-            }
+            ++(resource_pool->count);
 
             goto success;
         }
@@ -195,7 +207,9 @@ success:
     assert(tmp_resource != NULL);
 
     if (resource_pool->preuse_fn != NULL) {
-        (resource_pool->preuse_fn)(tmp_resource, resource_pool->preuse_data);
+        (resource_pool->preuse_fn)(
+            tmp_resource->resource,
+            resource_pool->preuse_data);
     }
 
     ++(tmp_resource->use);
@@ -207,6 +221,32 @@ failure:
     return rc;
 }
 
+static ib_status_t destroy_resource(
+    ib_resource_t *resource
+)
+{
+    assert(resource != NULL);
+    assert(resource->owner != NULL);
+
+    ib_status_t rc;
+
+    (resource->owner->destroy_fn)(
+        resource->resource,
+        resource->owner->destroy_data);
+    resource->use = 0;
+    resource->resource = NULL;
+
+    --(resource->owner->count);
+
+    /* Store the empty resource struct on the free list for reused. */
+    rc = ib_queue_push_back(resource->owner->free_list, resource);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
 ib_status_t DLL_PUBLIC ib_resource_return(
     ib_resource_t *resource
 )
@@ -216,20 +256,14 @@ ib_status_t DLL_PUBLIC ib_resource_return(
 
     if (resource->owner->postuse_fn != NULL) {
         (resource->owner->postuse_fn)(
-            resource,
+            resource->resource,
             resource->owner->postuse_data);
     }
 
     if (resource->use >= resource->owner->max_use) {
         ib_status_t rc;
-        (resource->owner->destroy_fn)(
-            resource->resource,
-            resource->owner->destroy_data);
-        resource->use = 0;
-        resource->resource = NULL;
 
-        /* Store the empty resource struct on the free list for reused. */
-        rc = ib_queue_push_back(resource->owner->free_list, resource);
+        rc = destroy_resource(resource);
         if (rc != IB_OK) {
             return rc;
         }
@@ -246,11 +280,11 @@ ib_status_t ib_resource_use(
     ib_resource_pool_t   *resource_pool,
     bool                  block,
     ib_resource_use_fn_t  fn,
-    ib_status_t          *fn_rc,
+    ib_status_t          *user_rc,
     void                 *cbdata
 )
 {
-    ib_status_t rc;
+    ib_status_t    rc;
     ib_resource_t *resource = NULL;
 
     rc = ib_resource_get(resource_pool, block, &resource);
@@ -258,7 +292,13 @@ ib_status_t ib_resource_use(
         return rc;
     }
 
-    *fn_rc = fn(resource, &rc, cbdata);
+    *user_rc = IB_OK;
+
+    rc = fn(resource, user_rc, cbdata);
+    if (rc != IB_OK) {
+        destroy_resource(resource);
+        return rc;
+    }
 
     rc = ib_resource_return(resource);
     if (rc != IB_OK) {

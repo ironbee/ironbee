@@ -53,7 +53,7 @@ extern "C" {
  */
 typedef ib_status_t (*ib_resource_create_fn_t)(
     void **resource,
-    void *cbdata
+    void  *cbdata
 );
 
 /**
@@ -101,33 +101,6 @@ typedef ib_status_t (*ib_resource_preuse_fn_t)(
 typedef ib_status_t (*ib_resource_postuse_fn_t)(
     void *resource,
     void *cbdata
-);
-
-/**
- * This callback cleanly allows a caller to use a resource.
- *
- * This callback is passed to the ib_resource_use() function
- * and facilitates signing out a resource, and signing it back in.
- * The user may use the resource between those calls.
- *
- * This is a safer use pattern than signing out a resource as it 
- * guarnatees that the resource will be returned.
- *
- * If the resource is damanged during use the user must set 
- * @a ib_resource_rc to a value that is not IB_OK. This will 
- * tell ib_resource_use() to destroy the object and replace it.
- *
- * @param[in] resource The resource to use.
- * @param[in] ib_resource_rc The return code if the resource is corrupted.
- *            This defaults to IB_OK.
- * @param[in] cbdata Callback data.
- * @returns The return status that the user would like
- *          ib_resource_use() to return.
- */
-typedef ib_status_t (*ib_resource_use_fn_t)(
-    void        *resource,
-    ib_status_t *ib_resource_rc,
-    void        *cbdata
 );
 
 /**
@@ -190,6 +163,31 @@ struct ib_resource_t {
 };
 typedef struct ib_resource_t ib_resource_t;
 
+/**
+ * This callback cleanly allows a caller to use a resource.
+ *
+ * This callback is passed to the ib_resource_use() function
+ * and facilitates signing out a resource, and signing it back in.
+ * The user may use the resource between those calls.
+ *
+ * This is a safer use pattern than signing out a resource as it 
+ * guarnatees that the resource will be returned.
+ *
+ * If the resource is damanged during use the user must set 
+ * @a ib_resource_rc to a value that is not IB_OK. This will 
+ * tell ib_resource_use() to destroy the object and replace it.
+ *
+ * @param[in] resource The resource to use.
+ * @param[in] user_rc The return code for the user to use.
+ * @param[in] cbdata Callback data.
+ * @returns The return status that the user would like
+ *          ib_resource_use() to return.
+ */
+typedef ib_status_t (*ib_resource_use_fn_t)(
+    ib_resource_t *resource,
+    ib_status_t   *user_rc,
+    void          *cbdata
+);
 
 /**
  * Create a new resource pool.
@@ -291,7 +289,9 @@ ib_status_t ib_resource_return(
  * @param[in] resource_pool The pool to take a resource from.
  * @param[in] block If true, this will block to get a resource.
  * @param[in] fn The user function that will use the resource.
- * @param[out] fn_rc The return code of @a fn.
+ * @param[out] user_rc This is passed to @a fn with the value of IB_OK set.
+ *             The user may use this to communicate success or failure
+ *             of @ fn.
  * @param[in] cbdata Callback data passed to @a fn.
  * @returns 
  * - IB_OK If @a fn was executed successfully.
@@ -301,7 +301,7 @@ ib_status_t ib_resource_use(
     ib_resource_pool_t   *resource_pool,
     bool                  block,
     ib_resource_use_fn_t  fn,
-    ib_status_t          *fn_rc,
+    ib_status_t          *user_rc,
     void                 *cbdata
 );
 
