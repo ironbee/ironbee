@@ -75,25 +75,38 @@ typedef struct ib_manager_t ib_manager_t;
 /**
  * Engine manager logger callback (@c va_list version).
  *
+ * @param[in] level IronBee log level
+ * @param[in] cbdata Callback data
  * @param[in] fmt Format string
  * @param[in] ap Variable args list
- * @param[in] cbdata Callback data
  */
-typedef void (*ib_vlogger_fn_t)(
+typedef void (*ib_manager_log_va_fn_t)(
+    ib_log_level_t      level,
+    void               *cbdata,
     const char         *fmt,
-    va_list             ap,
-    void               *cbdata
+    va_list             ap
 )
-VPRINTF_ATTRIBUTE(1);
+VPRINTF_ATTRIBUTE(3);
 
 /**
  * Engine manager logger callback (formatted buffer version).
  *
+ * @param[in] level IronBee log level
+ * @param[in] cbdata Callback data
  * @param[in] buf Formatted buffer
+ */
+typedef void (*ib_manager_log_buf_fn_t)(
+    ib_log_level_t      level,
+    void               *cbdata,
+    const char         *buf
+);
+
+/**
+ * Engine manager log flush callback
+ *
  * @param[in] cbdata Callback data
  */
-typedef void (*ib_logger_fn_t)(
-    const char         *buf,
+typedef void (*ib_manager_log_flush_fn_t)(
     void               *cbdata
 );
 
@@ -104,39 +117,44 @@ typedef void (*ib_logger_fn_t)(
  *
  * @param[in] server IronBee server object
  * @param[in] max_engines Maximum number of simultaneous engines (0 for default)
- * @param[in] vlogger_fn Logger function (@c va_list version)
- * @param[in] logger_fn Logger function (Formatted buffer version)
+ * @param[in] logger_va_fn Logger function (@c va_list version)
+ * @param[in] logger_buf_fn Logger function (Formatted buffer version)
+ * @param[in] logger_flush_fn Logger flush function (or NULL)
  * @param[in] logger_cbdata Data to pass to logger function
  * @param[in] logger_level Initial log level
  * @param[out] pmanager Pointer to IronBee engine manager object
  *
- * If @a vlogger_fn is provided, the engine manager's IronBee logger will not
+ * If @a logger_va_fn is provided, the engine manager's IronBee logger will not
  * format the log message, but will instead pass the format (@a fmt) and args
  * (@a ap) directly to the logger function.
  *
- * If @a logger_fn is provided, the engine manager will do all of
+ * If @a logger_buf_fn is provided, the engine manager will do all of
  * the formatting, and will then call the logger with a formatted buffer.
  *
- * One of @a logger_va or @a logger_buf logger functions should be specified,
- * but not both.  Behavior is undefined if both are NULL or both are non-NULL.
+ * One of @a logger_va_fn or @a logger_buf_fn logger functions should be
+ * specified, but not both.  Behavior is undefined if both are NULL or both
+ * are non-NULL.
  *
- * If the server provides a @c va_list logging facility, the @a vlogger_fn
- * should be specified.  The alternate @c formatted buffer logger function
- * @a logger_fn is provided for servers that don't provide a @c va_list logging
- * facility (e.g., Traffic Server).
+ * If the server provides a @c va_list logging facility, the @a logger_va_fn
+ * should be specified.  The alternate @c formatted buffer logger function @a
+ * logger_buf_fn is provided for servers that don't provide a @c va_list
+ * logging facility (e.g., Traffic Server).
+ *
+ * If specified, the @a logger_flush_fn function should flush the log file(s0
  *
  * @returns Status code
  * - IB_OK if all OK
  * - IB_EALLOC for allocation problems
  */
 ib_status_t DLL_PUBLIC ib_manager_create(
-    const ib_server_t  *server,
-    size_t              max_engines,
-    ib_vlogger_fn_t     vlogger_fn,
-    ib_logger_fn_t      logger_fn,
-    void               *logger_cbdata,
-    ib_log_level_t      logger_level,
-    ib_manager_t      **pmanager
+    const ib_server_t          *server,
+    size_t                      max_engines,
+    ib_manager_log_va_fn_t      logger_va_fn,
+    ib_manager_log_buf_fn_t     logger_buf_fn,
+    ib_manager_log_flush_fn_t   logger_flush_fn,
+    void                       *logger_cbdata,
+    ib_log_level_t              logger_level,
+    ib_manager_t              **pmanager
 );
 
 /**
@@ -245,93 +263,6 @@ ib_status_t DLL_PUBLIC ib_manager_engine_cleanup(
  */
 size_t DLL_PUBLIC ib_manager_engine_count(
     ib_manager_t *manager
-);
-
-/**
- * @defgroup IronBeeEngineManagerLogging Engine Manager logging
- * @ingroup IronBeeEngineManager
- *
- * These functions can be used by servers to change the logger at run-time.
- *
- * @{
- */
-
-/**
- * Override the engine manager's vlogger.
- *
- * @param[in] manager IronBee manager object
- * @param[in] vlogger_fn Logger function (@c va_list version)
- * @param[in] logger_cbdata Data to pass to logger function
- */
-void DLL_PUBLIC ib_manager_set_vlogger(
-    ib_manager_t       *manager,
-    ib_vlogger_fn_t     vlogger_fn,
-    void               *logger_cbdata
-);
-
-/**
- * Override the engine manager's logger.
- *
- * @param[in] manager IronBee manager object
- * @param[in] logger_fn Logger function (Formatted buffer version)
- * @param[in] logger_cbdata Data to pass to logger function
- */
-void DLL_PUBLIC ib_manager_set_logger(
-    ib_manager_t       *manager,
-    ib_logger_fn_t      logger_fn,
-    void               *logger_cbdata
-);
-
-/**
- * File logger for the engine manager (@c va_list version).
- *
- * This function implements a logger that will log to the @c FILE pointer
- * (specified as @c logger_cbdata to ib_manager_set_vlogger()).  This is a
- * convenience function, and is intended to be used if the server doesn't
- * provide a logger or the logger becomes unavailable (e.g., during shutdown).
- *
- * Example usages:
- * @code
- * ib_manager_set_vlogger(manager, ib_manager_file_vlogger, stderr);
- * @endcode
- * @code
- * FILE *fp = open( ... );
- * ib_manager_set_vlogger(manager, ib_manager_file_vlogger, fp);
- * @endcode
- *
- * @param[in] fmt Format string
- * @param[in] ap Var args list to match the format
- * @param[in] cbdata Callback data
- */
-void DLL_PUBLIC ib_manager_file_vlogger(
-    const char        *fmt,
-    va_list            ap,
-    void              *cbdata
-);
-
-/**
- * File logger for the engine manager.
- *
- * This function implements a logger that will log to the @c FILE pointer
- * (specified as @c logger_cbdata to ib_manager_set_logger()).  This is a
- * convenience function, and is intended to be used if the server doesn't
- * provide a logger or the logger becomes unavailable (e.g., during shutdown).
- *
- * Example usages:
- * @code
- * ib_manager_set_logger(manager, ib_manager_file_logger, stderr);
- * @endcode
- * @code
- * FILE *fp = open( ... );
- * ib_manager_set_logger(manager, ib_manager_file_logger, fp);
- * @endcode
- *
- * @param[in] buf Formatted buffer
- * @param[in] cbdata Callback data
- */
-void DLL_PUBLIC ib_manager_file_logger(
-    const char        *buf,
-    void              *cbdata
 );
 
 /** @} */

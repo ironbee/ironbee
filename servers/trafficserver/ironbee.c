@@ -2347,24 +2347,49 @@ static int check_ts_version(void)
  *
  * Performs IronBee logging for the ATS plugin.
  *
- * @param[in] buf Formatted buffer
+ * @param[in] level IronBee log level (unused)
  * @param[in] cbdata Callback data.
+ * @param[in] buf Formatted buffer
  */
 static void ironbee_logger(
-    const char        *buf,
-    void              *cbdata)
+    ib_log_level_t     level,
+    void              *cbdata,
+    const char        *buf)
 {
-    assert(buf != NULL);
     if (cbdata == NULL) {
         return;
     }
     module_data_t   *mod_data = (module_data_t *)cbdata;
-    TSTextLogObject  log = mod_data->logger;
+    TSTextLogObject  logger = mod_data->logger;
 
-    if (log == NULL) {
+    if (logger == NULL) {
         return;
     }
-    TSTextLogObjectWrite(log, "%s", buf);
+    if (buf == NULL) {
+        TSTextLogObjectFlush(logger);
+    }
+    TSTextLogObjectWrite(logger, "%s", buf);
+}
+
+/**
+ * IronBee ATS logger flush.
+ *
+ * Performs flush for IronBee ATS plugin logging.
+ *
+ * @param[in] cbdata Callback data.
+ */
+static void ironbee_logger_flush(
+    void              *cbdata)
+{
+    if (cbdata == NULL) {
+        return;
+    }
+    module_data_t   *mod_data = (module_data_t *)cbdata;
+    TSTextLogObject  logger = mod_data->logger;
+
+    if (logger != NULL) {
+        TSTextLogObjectFlush(logger);
+    }
 }
 
 /**
@@ -2528,8 +2553,9 @@ static int ironbee_init(module_data_t *mod_data)
     TSDebug("ironbee", "Creating engine manager");
     rc = ib_manager_create(&ibplugin,             /* Server object */
                            mod_data->max_engines, /* Default max */
-                           NULL,                  /* vLogger function */
-                           ironbee_logger,        /* Logger function */
+                           NULL,                  /* Logger va function */
+                           ironbee_logger,        /* Logger buf function */
+                           ironbee_logger_flush,  /* Logger flush function */
                            mod_data,              /* cbdata: module data */
                            mod_data->log_level,   /* IB log level */
                            &(mod_data->manager)); /* Engine Manager */
@@ -2775,8 +2801,9 @@ static void check_command_file(module_data_t *mod_data)
         TSDebug("ironbee", "Creating new engine manager\n");
         rc = ib_manager_create(&ibplugin,             /* Server object */
                                mod_data->max_engines, /* Max # of engines */
-                               NULL,                  /* vLogger function */
-                               ironbee_logger,        /* Logger function */
+                               NULL,                  /* Logger va function */
+                               ironbee_logger,        /* Logger buf function */
+                               ironbee_logger_flush,  /* Logger flush fn */
                                mod_data,              /* cbdata: module data */
                                mod_data->log_level,   /* IB log level */
                                &(mod_data->manager)); /* Engine Manager */

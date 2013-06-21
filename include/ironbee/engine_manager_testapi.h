@@ -87,29 +87,23 @@ ib_status_t DLL_PUBLIC ib_manager_destroy_engines(
 );
 
 /**
- * Override the engine manager's vlogger.
- *
- * @param[in] manager IronBee manager object
- * @param[in] vlogger_fn Logger function (@c va_list version)
- * @param[in] logger_cbdata Data to pass to logger function
- */
-void DLL_PUBLIC ib_manager_set_vlogger(
-    ib_manager_t       *manager,
-    ib_vlogger_fn_t     vlogger_fn,
-    void               *logger_cbdata
-);
-
-/**
  * Override the engine manager's logger.
  *
+ * See ib_manager_create() for documentation on the callback function
+ * arguments.
+ *
  * @param[in] manager IronBee manager object
- * @param[in] logger_fn Logger function (Formatted buffer version)
+ * @param[in] logger_va_fn Logger function (@c va_list version)
+ * @param[in] logger_buf_fn Logger function (Formatted buffer version)
+ * @param[in] logger_flush_fn Logger flush function (or NULL)
  * @param[in] logger_cbdata Data to pass to logger function
  */
 void DLL_PUBLIC ib_manager_set_logger(
-    ib_manager_t       *manager,
-    ib_logger_fn_t      logger_fn,
-    void               *logger_cbdata
+    ib_manager_t              *manager,
+    ib_manager_log_va_fn_t     logger_va_fn,
+    ib_manager_log_buf_fn_t    logger_buf_fn,
+    ib_manager_log_flush_fn_t  logger_flush_fn,
+    void                      *logger_cbdata
 );
 
 /**
@@ -129,14 +123,16 @@ void DLL_PUBLIC ib_manager_set_logger(
  * ib_manager_set_vlogger(manager, ib_manager_file_vlogger, fp);
  * @endcode
  *
+ * @param[in] level IronBee log level
+ * @param[in] cbdata Callback data
  * @param[in] fmt Format string
  * @param[in] ap Var args list to match the format
- * @param[in] cbdata Callback data
  */
 void DLL_PUBLIC ib_manager_file_vlogger(
+    ib_log_level_t     level,
+    void              *cbdata,
     const char        *fmt,
-    va_list            ap,
-    void              *cbdata
+    va_list            ap
 );
 
 /**
@@ -156,12 +152,14 @@ void DLL_PUBLIC ib_manager_file_vlogger(
  * ib_manager_set_logger(manager, ib_manager_file_logger, fp);
  * @endcode
  *
- * @param[in] buf Formatted buffer
+ * @param[in] level IronBee log level
  * @param[in] cbdata Callback data
+ * @param[in] buf Formatted buffer
  */
 void DLL_PUBLIC ib_manager_file_logger(
-    const char        *buf,
-    void              *cbdata
+    ib_log_level_t     level,
+    void              *cbdata,
+    const char        *buf
 );
 
 /** @} */

@@ -68,7 +68,7 @@ void DLL_LOCAL ib_engine_manager_logger(
 VPRINTF_ATTRIBUTE(5);
 
 /**
- * Internal logger for the engine manager (ex version)
+ * Internal logger for the engine manager (ex version).
  *
  * @param[in] manager IronBee engine manager
  * @param[in] level Log level.
@@ -87,13 +87,22 @@ void DLL_LOCAL ib_manager_log_ex(
 PRINTF_ATTRIBUTE(5, 6);
 
 /**
- * Internal logger for the engine manager
+ * Internal logger for the engine manager.
  *
  * @param[in] manager IronBee engine manager
  * @param[in] level Log level.
  */
 #define ib_manager_log(manager, level, ...)                               \
     ib_manager_log_ex((manager), (level), __FILE__, __LINE__, __VA_ARGS__)
+
+/**
+ * Log flush request to internal logger for the engine master.
+ *
+ * @param[in] manager IronBee engine manager
+ */
+void DLL_LOCAL ib_manager_log_flush(
+    const ib_manager_t *manager
+                                    );
 
 
 /** @} */

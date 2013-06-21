@@ -132,6 +132,40 @@ void cleanup_locks(
 }
 
 /**
+ * Set the engine manager's logger functions.
+ *
+ * Caller must assure exclusive access (e.g. call from manager initialization
+ * or with the engine lock held).
+ *
+ * See ib_manager_create() for documentation on the callback function
+ * arguments.
+ *
+ * @param[in] manager IronBee manager object
+ * @param[in] logger_va_fn Logger function (@c va_list version)
+ * @param[in] logger_buf_fn Logger function (Formatted buffer version)
+ * @param[in] logger_flush_fn Logger flush function (or NULL)
+ * @param[in] logger_cbdata Data to pass to logger function
+ */
+static void set_logger(
+    ib_manager_t              *manager,
+    ib_manager_log_va_fn_t     logger_va_fn,
+    ib_manager_log_buf_fn_t    logger_buf_fn,
+    ib_manager_log_flush_fn_t  logger_flush_fn,
+    void                      *logger_cbdata
+)
+{
+    assert(manager != NULL);
+    assert( (logger_va_fn != NULL) || (logger_buf_fn != NULL) );
+    assert( (logger_va_fn == NULL) || (logger_buf_fn == NULL) );
+
+    /* Set the logger info */
+    manager->log_va_fn    = logger_va_fn;
+    manager->log_buf_fn   = logger_buf_fn;
+    manager->log_flush_fn = logger_flush_fn;
+    manager->log_cbdata   = logger_cbdata;
+}
+
+/**
  * Log the current engine list for debugging.
  *
  * @param[in] manager IronBee engine manager
@@ -294,7 +328,9 @@ static ib_status_t destroy_engines(
     log_engines(manager, IB_LOG_DEBUG2, IB_LOG_DEBUG3, "Finished destroy");
 
     /* Confirm that all were destroyed */
-    if (op == IB_MANAGER_DESTROY_ALL) {
+    if ( (op == IB_MANAGER_DESTROY_ALL) && (manager->engine_count != 0) ) {
+        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Destroy all");
+        ib_manager_log_flush(manager);
         assert(manager->engine_count == 0);
     }
 
@@ -304,19 +340,18 @@ static ib_status_t destroy_engines(
 }
 
 ib_status_t ib_manager_create(
-    const ib_server_t  *server,
-    size_t              max_engines,
-    ib_vlogger_fn_t     vlogger_fn,
-    ib_logger_fn_t      logger_fn,
-    void               *logger_cbdata,
-    ib_log_level_t      logger_level,
-    ib_manager_t      **pmanager
+    const ib_server_t         *server,
+    size_t                     max_engines,
+    ib_manager_log_va_fn_t     logger_va_fn,
+    ib_manager_log_buf_fn_t    logger_buf_fn,
+    ib_manager_log_flush_fn_t  logger_flush_fn,
+    void                      *logger_cbdata,
+    ib_log_level_t             logger_level,
+    ib_manager_t             **pmanager
 )
 {
     assert(server != NULL);
     assert(pmanager != NULL);
-    assert( (vlogger_fn != NULL) || (logger_fn != NULL) );
-    assert( (vlogger_fn == NULL) || (logger_fn == NULL) );
 
     ib_status_t           rc;
     ib_mpool_t           *mpool;
@@ -367,9 +402,11 @@ ib_status_t ib_manager_create(
     manager->engine_list    = engine_list;
     manager->max_engines    = max_engines;
     manager->log_level      = logger_level;
-    manager->vlogger_fn     = vlogger_fn;
-    manager->logger_fn      = logger_fn;
-    manager->logger_cbdata  = logger_cbdata;
+
+    /* Set the logger */
+    set_logger(manager,
+               logger_va_fn, logger_buf_fn, logger_flush_fn,
+               logger_cbdata);
 
     /* Log */
     ib_manager_log(manager, IB_LOG_INFO,
@@ -407,7 +444,11 @@ ib_status_t ib_manager_destroy(
     }
 
     /* Any engines not destroyed? */
-    assert(manager->engine_count == 0);
+    if (manager->engine_count != 0) {
+        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Destroy manager");
+        ib_manager_log_flush(manager);
+        assert(manager->engine_count == 0);
+    }
 
     /* Done */
     ib_manager_log(manager, IB_LOG_INFO,
@@ -460,7 +501,11 @@ static ib_status_t register_engine(
     }
 
     /* Because of the creation lock, we should always have another slot */
-    assert(manager->engine_count < manager->max_engines);
+    if (manager->engine_count >= manager->max_engines) {
+        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Register engine");
+        ib_manager_log_flush(manager);
+        assert(manager->engine_count < manager->max_engines);
+    }
 
     /* Store it in the list */
     manager->engine_list[manager->engine_count] = engine;
@@ -515,7 +560,13 @@ ib_status_t ib_manager_engine_create(
         log_engines(manager, IB_LOG_DEBUG3, IB_LOG_TRACE, "Limit encountered");
         goto cleanup;
     }
-    assert(manager->engine_count < manager->max_engines);
+
+    /* Sanity check */
+    if (manager->engine_count >= manager->max_engines) {
+        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Engine create");
+        ib_manager_log_flush(manager);
+        assert(manager->engine_count < manager->max_engines);
+    }
 
     ib_manager_log(manager, IB_LOG_INFO,
                    "ENGINE MANAGER[%d,%p]: Creating IronBee engine "
@@ -695,7 +746,12 @@ ib_status_t ib_manager_engine_release(
     if ( (manager->engine_current != NULL) &&
          (engine == manager->engine_current->engine) )
     {
-        assert(manager->engine_current->ref_count > 0);
+        if (manager->engine_current->ref_count == 0) {
+            log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING,
+                        "Engine release");
+            ib_manager_log_flush(manager);
+            assert(manager->engine_current->ref_count > 0);
+        }
         engptr = manager->engine_current;
         --(engptr->ref_count);
         goto cleanup;
@@ -730,11 +786,16 @@ ib_status_t ib_manager_engine_release(
                        "Release engine %p: engine not found",
                        getpid(), manager, engine);
         log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Can't find engine");
+        ib_manager_log_flush(manager);
         assert(engptr != NULL);
     }
 
     /* Decrement the reference count. */
-    assert(engptr->ref_count > 0);
+    if (engptr->ref_count == 0) {
+        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Engine release");
+        ib_manager_log_flush(manager);
+        assert(engptr->ref_count > 0);
+    }
     --(engptr->ref_count);
 
     /* If we hit zero, update the inactive count. */
@@ -893,35 +954,12 @@ size_t ib_manager_engine_count_inactive(
     return manager->inactive_count;
 }
 
-void ib_manager_set_vlogger(
-    ib_manager_t    *manager,
-    ib_vlogger_fn_t  vlogger_fn,
-    void            *logger_cbdata
-)
-{
-    assert(manager != NULL);
-
-    ib_status_t rc;
-
-    /* Grab the manager lock */
-    rc = ib_lock_lock(&manager->manager_lock);
-    if (rc != IB_OK) {
-        return;
-    }
-
-    /* Set the vlogger and data */
-    manager->logger_fn     = NULL;
-    manager->vlogger_fn    = vlogger_fn;
-    manager->logger_cbdata = logger_cbdata;
-
-    /* Release the manager lock */
-    ib_lock_unlock(&manager->manager_lock);
-}
-
 void ib_manager_set_logger(
-    ib_manager_t   *manager,
-    ib_logger_fn_t  logger_fn,
-    void           *logger_cbdata
+    ib_manager_t              *manager,
+    ib_manager_log_va_fn_t     logger_va_fn,
+    ib_manager_log_buf_fn_t    logger_buf_fn,
+    ib_manager_log_flush_fn_t  logger_flush_fn,
+    void                      *logger_cbdata
 )
 {
     assert(manager != NULL);
@@ -934,10 +972,10 @@ void ib_manager_set_logger(
         return;
     }
 
-    /* Set the logger and data */
-    manager->logger_fn     = logger_fn;
-    manager->vlogger_fn    = NULL;
-    manager->logger_cbdata = logger_cbdata;
+    /* set_logger() does the real work */
+    set_logger(manager,
+               logger_va_fn, logger_buf_fn, logger_flush_fn,
+               logger_cbdata);
 
     /* Release the manager lock */
     ib_lock_unlock(&manager->manager_lock);

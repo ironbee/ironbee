@@ -70,10 +70,11 @@ struct ib_manager_t {
     ib_lock_t             manager_lock;    /**< The manager lock */
 
     /* Logging */
-    ib_log_level_t        log_level;       /**< Log level for manager */
-    ib_vlogger_fn_t       vlogger_fn;      /**< @c va_list logger function */
-    ib_logger_fn_t        logger_fn;       /**< Buffer logger function */
-    void                 *logger_cbdata;   /**< Logger callback data */
+    ib_log_level_t            log_level;    /**< Log level for manager */
+    ib_manager_log_va_fn_t    log_va_fn;    /**< Logger @c va_list function */
+    ib_manager_log_buf_fn_t   log_buf_fn;   /**< Logger formatted buffer fn */
+    ib_manager_log_flush_fn_t log_flush_fn; /**< Logger flush function */
+    void                     *log_cbdata;   /**< Logger callback data */
 };
 
 /** @} */

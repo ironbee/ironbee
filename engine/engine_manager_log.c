@@ -114,22 +114,22 @@ void ib_engine_manager_logger(
     strcat(fmt_buf, fmt);
 
     /* If we're using the va_list logger, use it */
-    if (manager->vlogger_fn != NULL) {
-        manager->vlogger_fn(fmt_buf, ap, manager->logger_cbdata);
+    if (manager->log_va_fn != NULL) {
+        manager->log_va_fn(level, manager->log_cbdata, fmt_buf, ap);
         goto cleanup;
     }
 
     /* Allocate the c buffer */
     log_buf = malloc(log_buf_size);
     if (log_buf == NULL) {
-        manager->logger_fn("Failed to allocate message format buffer",
-                           manager->logger_cbdata);
+        manager->log_buf_fn(level, manager->log_cbdata,
+                           "Failed to allocate message format buffer");
         goto cleanup;
     }
 
     /* Otherwise, we need to format into a buffer */
     vsnprintf(log_buf, log_buf_size, fmt_buf, ap);
-    manager->logger_fn(log_buf, manager->logger_cbdata);
+    manager->log_buf_fn(level, manager->log_cbdata, log_buf);
 
 cleanup:
     if (fmt_free != NULL) {
@@ -157,9 +157,21 @@ void ib_manager_log_ex(
     va_end(ap);
 }
 
+void ib_manager_log_flush(
+    const ib_manager_t *manager
+)
+{
+    assert(manager != NULL);
+
+    /* If there is a flush function, call it, otherwise do nothing */
+    if (manager->log_flush_fn != NULL) {
+        manager->log_flush_fn(manager->log_cbdata);
+    }
+}
+
 void ib_manager_file_logger(
-    const char *buf,
-    void       *cbdata
+    void       *cbdata,
+    const char *buf
 )
 {
     assert(buf != NULL);
@@ -171,9 +183,9 @@ void ib_manager_file_logger(
 }
 
 void ib_manager_file_vlogger(
+    void              *cbdata,
     const char        *fmt,
-    va_list            ap,
-    void              *cbdata
+    va_list            ap
 )
 {
     assert(fmt != NULL);
