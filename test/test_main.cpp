@@ -1068,3 +1068,48 @@ TEST_F(ConnectionParsing, AuthUnrecognized) {
 
     ASSERT_TRUE(tx->request_auth_password == NULL);   
 }
+
+TEST_F(ConnectionParsing, InvalidResponseHeaders1) {
+    int rc = test_run(home, "48-invalid-response-headers-1.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    ASSERT_EQ(8, htp_table_size(tx->response_headers));
+   
+    htp_header_t *h_empty = (htp_header_t *)htp_table_get_c(tx->response_headers, "");
+    ASSERT_TRUE(h_empty != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(h_empty->value, "No Colon"));
+    ASSERT_TRUE(h_empty->flags & HTP_FIELD_INVALID);
+    ASSERT_TRUE(h_empty->flags & HTP_FIELD_UNPARSEABLE);
+
+    htp_header_t *h_lws = (htp_header_t *)htp_table_get_c(tx->response_headers, "Lws");
+    ASSERT_TRUE(h_lws != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(h_lws->value, "After Header Name"));
+    ASSERT_TRUE(h_lws->flags & HTP_FIELD_INVALID);
+
+    htp_header_t *h_nottoken = (htp_header_t *)htp_table_get_c(tx->response_headers, "Header@Name");
+    ASSERT_TRUE(h_nottoken != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(h_nottoken->value, "Not Token"));
+    ASSERT_TRUE(h_nottoken->flags & HTP_FIELD_INVALID);
+}
+
+TEST_F(ConnectionParsing, InvalidResponseHeaders2) {
+    int rc = test_run(home, "49-invalid-response-headers-2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    ASSERT_EQ(6, htp_table_size(tx->response_headers));
+
+    htp_header_t *h_empty = (htp_header_t *)htp_table_get_c(tx->response_headers, "");
+    ASSERT_TRUE(h_empty != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(h_empty->value, "Empty Name"));
+    ASSERT_TRUE(h_empty->flags & HTP_FIELD_INVALID);    
+}

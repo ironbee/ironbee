@@ -444,7 +444,7 @@ struct htp_tx_t {
     /** Have we seen the server respond with a 100 response? */
     int seen_100continue;      
 
-    /** Parsed response headers. */
+    /** Parsed response headers. Contains instances of htp_header_t. */
     htp_table_t *response_headers;   
 
     /* HTTP 1.1 RFC
