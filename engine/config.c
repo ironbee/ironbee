@@ -117,14 +117,14 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
         goto failed;
     }
 
+    /* Store pointers to the engine and the memory pool */
     cp->ib = ib;
     cp->mp = mp;
 
     /* Create the stack */
     rc = ib_list_create(&(cp->stack), mp);
     if (rc != IB_OK) {
-        ib_mpool_destroy(mp);
-        return IB_EALLOC;
+        goto failed;
     }
 
     /* Create the parse tree root. */
@@ -154,7 +154,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp, ib_engine_t *ib)
 
 failed:
     /* Make sure everything is cleaned up on failure */
-    ib_engine_pool_destroy(ib, mp);
+    ib_mpool_destroy(mp);
 
     return rc;
 }
@@ -541,13 +541,13 @@ static ib_status_t cfgparser_apply_node_helper(
                 if (tmp_node->type == IB_CFGPARSER_NODE_ROOT) {
                     ib_log_debug(
                         ib,
-                        "\tincluded from [root]:%zd",
+                        "  included from [root]:%zd",
                         tmp_node->line);
                 }
                 if (tmp_node->type == IB_CFGPARSER_NODE_FILE) {
                     ib_log_debug(
                         ib,
-                        "\tincluded from %s:%zd",
+                        "  included from %s:%zd",
                         tmp_node->file,
                         tmp_node->line);
                 }
@@ -780,8 +780,7 @@ static ib_status_t print_directive(ib_cfgparser_t *cp,
         strcat(directive, " ");
     }
 
-    //ib_cfg_log_debug(cp, "%s%s", msg, directive);
-    ib_log_error(cp->ib, "%s%s", msg, directive);
+    ib_cfg_log_debug(cp, "%s%s", msg, directive);
 
     free(directive);
     return IB_OK;

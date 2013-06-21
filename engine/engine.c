@@ -568,9 +568,9 @@ ib_status_t ib_engine_config_finished(ib_engine_t *ib)
     /* Initialize (and close) the main configuration context.
      * Note: The context can be NULL for unit tests. */
     if (ib->ctx != NULL) {
-        rc = ib_context_close(ib->ctx);
-        if (rc != IB_OK) {
-            return rc;
+        ib_status_t tmp = ib_context_close(ib->ctx);
+        if (tmp != IB_OK) {
+            return tmp;
         }
     }
 
@@ -581,7 +581,7 @@ ib_status_t ib_engine_config_finished(ib_engine_t *ib)
     /* Destroy the temporary memory pool. */
     ib_engine_pool_temp_destroy(ib);
 
-    return IB_OK;
+    return rc;
 }
 
 ib_status_t ib_engine_module_get(const ib_engine_t *ib,

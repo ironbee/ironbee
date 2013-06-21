@@ -585,7 +585,7 @@ ib_status_t ib_manager_engine_create(
     /* Set the engine's logger function */
     ib_log_set_logger_fn(engine, ib_engine_manager_logger, manager);
 
-    /* This creates the main context */
+    /* Create the configuration parser */
     rc = ib_cfgparser_create(&parser, engine);
     if (rc != IB_OK) {
         ib_manager_log(manager, IB_LOG_ERROR,
@@ -595,7 +595,8 @@ ib_status_t ib_manager_engine_create(
         goto cleanup;
     }
 
-    /* Tell the engine about the new parser */
+    /* Tell the engine about the new parser.  Note that this creates the main
+     * configuration context. */
     rc = ib_engine_config_started(engine, parser);
     if (rc != IB_OK) {
         ib_manager_log(manager, IB_LOG_ERROR,
@@ -605,7 +606,7 @@ ib_status_t ib_manager_engine_create(
         goto cleanup;
     }
 
-    /* Get the main context, set some defaults */
+    /* Get the main configuration context, set default log level. */
     ctx = ib_context_main(engine);
     ib_context_set_num(ctx, "logger.log_level", (ib_num_t)IB_LOG_WARNING);
 

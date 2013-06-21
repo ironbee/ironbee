@@ -85,7 +85,6 @@ typedef struct ib_cfgparser_fsm_t ib_cfgparser_fsm_t;
  */
 struct ib_cfgparser_t {
     ib_engine_t    *ib;                /**< Engine */
-    ib_cfgparser_t *cp;                /**< Configuration parser. */
     ib_mpool_t     *mp;                /**< Memory pool */
     ib_list_t      *stack;             /**< Stack tracking contexts */
 
