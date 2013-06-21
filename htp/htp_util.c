@@ -1974,7 +1974,6 @@ void htp_normalize_uri_path_inplace(bstr *s) {
     bstr_adjust_len(s, wpos);
 }
 
-#ifdef HTP_DEBUG
 /**
  *
  */
@@ -2151,7 +2150,6 @@ char *htp_tx_response_progress_as_string(htp_tx_t *tx) {
 
     return "INVALID";
 }
-#endif
 
 #if 0
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {

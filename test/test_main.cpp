@@ -1113,3 +1113,32 @@ TEST_F(ConnectionParsing, InvalidResponseHeaders2) {
     ASSERT_EQ(0, bstr_cmp_c(h_empty->value, "Empty Name"));
     ASSERT_TRUE(h_empty->flags & HTP_FIELD_INVALID);    
 }
+
+TEST_F(ConnectionParsing, Util) {
+    int rc = test_run(home, "50-util.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    char *in_state = htp_connp_in_state_as_string(tx->connp);
+    ASSERT_TRUE(in_state != NULL);
+
+    char *out_state = htp_connp_out_state_as_string(tx->connp);
+    ASSERT_TRUE(out_state != NULL);
+
+    char *request_progress = htp_tx_request_progress_as_string(tx);
+    ASSERT_TRUE(request_progress != NULL);
+
+    char *response_progress = htp_tx_response_progress_as_string(tx);
+    ASSERT_TRUE(response_progress != NULL);
+
+    FILE *null = fopen("/dev/null", "w");
+    ASSERT_TRUE(null != NULL);
+
+    fprint_bstr(null, "test", tx->request_line);
+
+    fprint_raw_data(null, "test", bstr_ptr(tx->request_line), bstr_len(tx->request_line));
+
+    fprint_raw_data_ex(null, "test", bstr_ptr(tx->request_line), 0, bstr_len(tx->request_line));   
+}
