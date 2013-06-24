@@ -19,6 +19,9 @@
  *
  * @defgroup LuaIbJson JSON Bindings
  * @ingroup Lua
+ *
+ * Bindings of IronBee's YAJL library to a Lua module.
+ *
  * @{
  */
 
@@ -80,12 +83,13 @@ typedef struct ibjson_cbdata_t ibjson_cbdata_t;
  *
  * @param[in] cbdata Callback data.
  */
-typedef void(*ibjson_push_fn_t)(ibjson_cbdata_t *cbdata);
+typedef void (*ibjson_push_fn_t)(ibjson_cbdata_t *cbdata);
 
 /**
  * Callback data passed around a Yajl parse.
  */
-struct ibjson_cbdata_t {
+struct ibjson_cbdata_t
+{
     ib_mpool_t *mp;           /**< Memory pool. */
     lua_State *L;             /**< Lua stack. */
     ibjson_push_fn_t push_fn; /**< Current function for pushing value. */
@@ -96,7 +100,8 @@ struct ibjson_cbdata_t {
  *
  * @param[in] cbdata Callback data.
  */
-static void ibjson_pushval(ibjson_cbdata_t *cbdata) {
+static void ibjson_pushval(ibjson_cbdata_t *cbdata)
+{
     /* Nop. The value on the stack is final. */
 }
 
@@ -105,7 +110,8 @@ static void ibjson_pushval(ibjson_cbdata_t *cbdata) {
  *
  * @param[in] cbdata Callback data.
  */
-static void ibjson_pushlist(ibjson_cbdata_t *cbdata) {
+static void ibjson_pushlist(ibjson_cbdata_t *cbdata)
+{
     int i = lua_objlen(cbdata->L, -2) + 1;
 
     /* Copy the value to the top of the stack. */
@@ -124,7 +130,8 @@ static void ibjson_pushlist(ibjson_cbdata_t *cbdata) {
  *
  * @param[in] cbdata Callback data.
  */
-static void ibjson_pushmap(ibjson_cbdata_t *cbdata) {
+static void ibjson_pushmap(ibjson_cbdata_t *cbdata)
+{
     lua_settable(cbdata->L, -3);
 }
 
@@ -143,6 +150,7 @@ static int yajl_boolean(void *ctx, int boolVal)
 
     return 1;
 }
+
 static int yajl_double(void *ctx, double doubleVal)
 {
     ibjson_cbdata_t *cbdata = (ibjson_cbdata_t *)ctx;
@@ -153,6 +161,7 @@ static int yajl_double(void *ctx, double doubleVal)
 
     return 1;
 }
+
 static int yajl_end_array(void *ctx)
 {
     ibjson_cbdata_t *cbdata = (ibjson_cbdata_t *)ctx;
@@ -168,6 +177,7 @@ static int yajl_end_array(void *ctx)
 
     return 1;
 }
+
 static int yajl_end_map(void *ctx)
 {
     ibjson_cbdata_t *cbdata = (ibjson_cbdata_t *)ctx;
@@ -183,6 +193,7 @@ static int yajl_end_map(void *ctx)
 
     return 1;
 }
+
 static int yajl_integer(void *ctx, long long integerVal)
 {
     ibjson_cbdata_t *cbdata = (ibjson_cbdata_t *)ctx;
@@ -193,6 +204,7 @@ static int yajl_integer(void *ctx, long long integerVal)
 
     return 1;
 }
+
 static int yajl_map_key(void *ctx, const unsigned char *key, size_t stringLen)
 {
     ibjson_cbdata_t *cbdata = (ibjson_cbdata_t *)ctx;
@@ -201,6 +213,7 @@ static int yajl_map_key(void *ctx, const unsigned char *key, size_t stringLen)
 
     return 1;
 }
+
 static int yajl_null(void *ctx)
 {
     ibjson_cbdata_t *cbdata = (ibjson_cbdata_t *)ctx;
@@ -211,6 +224,7 @@ static int yajl_null(void *ctx)
 
     return 1;
 }
+
 static int yajl_number(void *ctx, const char *numberVal, size_t numberLen)
 {
     ibjson_cbdata_t *cbdata = (ibjson_cbdata_t *)ctx;
@@ -221,6 +235,7 @@ static int yajl_number(void *ctx, const char *numberVal, size_t numberLen)
 
     return 1;
 }
+
 static int yajl_start_array(void *ctx)
 {
     ibjson_cbdata_t *cbdata = (ibjson_cbdata_t *)ctx;
@@ -233,6 +248,7 @@ static int yajl_start_array(void *ctx)
 
     return 1;
 }
+
 static int yajl_start_map(void *ctx)
 {
     ibjson_cbdata_t *cbdata = (ibjson_cbdata_t *)ctx;
@@ -245,7 +261,12 @@ static int yajl_start_map(void *ctx)
 
     return 1;
 }
-static int yajl_string(void *ctx, const unsigned char *stringVal, size_t stringLen)
+
+static int yajl_string(
+    void *ctx,
+    const unsigned char *stringVal,
+    size_t stringLen
+)
 {
     ibjson_cbdata_t *cbdata = (ibjson_cbdata_t *)ctx;
 
