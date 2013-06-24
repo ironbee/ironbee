@@ -106,7 +106,7 @@ static void ibjson_pushval(ibjson_cbdata_t *cbdata)
 }
 
 /**
- * Append a value to the list at index -2 in the Lua list.
+ * Append a value to the Lua list at index -2 of the Lua stack.
  *
  * @param[in] cbdata Callback data.
  */
@@ -126,7 +126,7 @@ static void ibjson_pushlist(ibjson_cbdata_t *cbdata)
 }
 
 /**
- * Assign the value at index -1 to the key at -2 into the table at -3.
+ * Assign value at -1 of the Lua stack to the key at -2 into the table at -3.
  *
  * @param[in] cbdata Callback data.
  */
