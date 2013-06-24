@@ -1236,7 +1236,7 @@ static ib_status_t tfn_round(
 /**
  * Extract the name of the given field and convert it to a new field.
  *
- * This function is the common to tfn_to_names() and tfn_to_name().
+ * This function is common to tfn_to_names() and tfn_to_name().
  *
  * The new field will be named as the old field, and will contain
  * a bytestr containing the field name.
