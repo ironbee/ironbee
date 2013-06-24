@@ -123,7 +123,7 @@ ib_status_t DLL_PUBLIC ib_queue_create(
  * This implementation repacks the queue to index 0 so the 
  * repacked queue does not wrap and the head must be set to = 0.
  *
- * The size of @new_queue must be less than ib_queue_t::depth.
+ * The size of @a new_queue must be less than ib_queue_t::depth.
  *
  * @param[in] queue The queue to repack.
  * @param[out] new_queue The repacked queue.

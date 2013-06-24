@@ -128,7 +128,7 @@ struct TestEscapeJSONCStrings_t
     const char *expected;
 
     /**
-     * Constructor for use in ::testing::Values(...).
+     * Constructor for use in \::testing::Values(...).
      */
     TestEscapeJSONCStrings_t(const char *_input, const char *_expected):
         input(_input),

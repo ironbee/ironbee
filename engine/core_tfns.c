@@ -147,7 +147,7 @@ static ib_status_t tfn_strmod(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -169,7 +169,7 @@ static ib_status_t tfn_lowercase(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -191,7 +191,7 @@ static ib_status_t tfn_trim_left(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -213,7 +213,7 @@ static ib_status_t tfn_trim_right(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -235,7 +235,7 @@ static ib_status_t tfn_trim(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -257,7 +257,7 @@ static ib_status_t tfn_wspc_remove(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -279,7 +279,7 @@ static ib_status_t tfn_wspc_compress(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -393,7 +393,7 @@ static ib_status_t tfn_length(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -570,7 +570,7 @@ static ib_status_t list_minmax(bool is_max,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -610,7 +610,7 @@ static ib_status_t tfn_max(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -651,7 +651,7 @@ static ib_status_t tfn_min(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -746,7 +746,7 @@ static ib_status_t tfn_url_decode(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -936,7 +936,7 @@ static ib_status_t normalize_path(ib_mpool_t *mp,
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */
@@ -1008,7 +1008,7 @@ static ib_status_t tfn_to_type(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns
  *   - IB_OK If successful.
@@ -1029,7 +1029,7 @@ static ib_status_t tfn_to_float(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns
  *   - IB_OK If successful.
@@ -1050,7 +1050,7 @@ static ib_status_t tfn_to_integer(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns
  *   - IB_OK If successful.
@@ -1176,7 +1176,7 @@ static ib_status_t tfn_float_op(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns
  *   - IB_OK If successful.
@@ -1197,7 +1197,7 @@ static ib_status_t tfn_floor(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns
  *   - IB_OK If successful.
@@ -1218,7 +1218,7 @@ static ib_status_t tfn_ceil(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns
  *   - IB_OK If successful.
@@ -1300,7 +1300,7 @@ static ib_status_t tfn_to_name_common(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns
  *   - IB_OK if successful.
@@ -1330,7 +1330,7 @@ static ib_status_t tfn_to_name(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns
  *   - IB_OK If successful.
@@ -1414,7 +1414,7 @@ static ib_status_t tfn_to_names(
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field. This is NULL on error.
- * @param[in] cbdata Callback data
+ * @param[in] fndata Callback data
  *
  * @returns IB_OK if successful.
  */

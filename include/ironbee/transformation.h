@@ -105,7 +105,7 @@ ib_status_t DLL_PUBLIC ib_tfn_create(
  * Register a transformation with @a ib.
  *
  * @param[in] ib  Engine to register with.
- * @parma[in] tfn Transformation to register.
+ * @param[in] tfn Transformation to register.
  *
  * @returns
  * - IB_OK on success.
@@ -200,7 +200,6 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(
 /**
  * Transform data.
  *
- * @param[in]  ib   Engine.
  * @param[in]  mp   Memory pool to use.
  * @param[in]  tfn  Transformation to apply.
  * @param[in]  fin  Input data field.

@@ -472,7 +472,7 @@ static yajl_gen_status ibjson_gen_map(lua_State *L, yajl_gen gen) {
  * @param[in] gen The generator that will be accumulating the JSON text.
  *
  * @returns
- * - @ref yajl_gen_status_ok on success.
+ * - @c yajl_gen_status_ok on success.
  * - Status code retured by @c yajl_gen_&lt;type&gt; on error.
  */
 static yajl_gen_status ibjson_gen(lua_State *L, yajl_gen gen)

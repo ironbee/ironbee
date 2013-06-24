@@ -185,7 +185,7 @@ public:
      *
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
-     * @param[in] op ConstTransformation to remove const from.
+     * @param[in] transformation ConstTransformation to remove const from.
      * @returns Transformation pointing to same underlying transformation as
      *          @a transformation.
      **/
