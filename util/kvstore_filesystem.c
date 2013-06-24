@@ -919,7 +919,7 @@ static ib_status_t kvset(
     ssize_t written;
     ib_kvstore_filesystem_server_t *server;
 
-    server = (ib_kvstore_filesystem_server_t *) kvstore->server;
+    server = (ib_kvstore_filesystem_server_t *)kvstore->server;
 
     /* Build a path with expiration value in it. */
     rc = build_key_path(
@@ -1131,7 +1131,7 @@ ib_status_t ib_kvstore_filesystem_init(
         return IB_EALLOC;
     }
 
-    kvstore->server = (ib_kvstore_server_t *) server;
+    kvstore->server = (ib_kvstore_server_t *)server;
     kvstore->get = kvget;
     kvstore->set = kvset;
     kvstore->remove = kvremove;
