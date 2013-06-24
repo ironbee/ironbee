@@ -169,7 +169,7 @@ static int yajl_end_array(void *ctx)
     /* Restore the previous C function. */
     cbdata->push_fn = (ibjson_push_fn_t)lua_tocfunction(cbdata->L, -2);
 
-    /* Remove it. */
+    /* Remove it the C function from the stack. */
     lua_remove(cbdata->L, -2);
 
     /* Handle final assignment. */
@@ -185,7 +185,7 @@ static int yajl_end_map(void *ctx)
     /* Restore the previous C function. */
     cbdata->push_fn = (ibjson_push_fn_t)lua_tocfunction(cbdata->L, -2);
 
-    /* Remove it. */
+    /* Remove it the C function from the stack. */
     lua_remove(cbdata->L, -2);
 
     /* Handle final assignment. */
@@ -310,11 +310,10 @@ static const yajl_callbacks g_yajl_callbacks = {
  * and, if a JSON map is being parsed, pushes the new value into the JSON map,
  * if a JSON list is being parsed, pushes the new value into the JSON list.
  *
- * When YAJL signals that a map or list is going to be parsed, first
- * the previous @ref ibjson_push_fn_t is pushed to the Lua stack and
- * ibjson_pushmap() or ibjson_pushlist() is set at the current push function.
- * Then the empty map or list is pushed and parsing continues as described
- * above.
+ * When a map or list is parsed first, the previous @ref ibjson_push_fn_t
+ * is pushed to the Lua stack and ibjson_pushmap() or ibjson_pushlist() is
+ * set as the current push function.  Then the empty map or list is pushed
+ * and parsing continues as described above.
  *
  * When a map or list is signaled as complete, the old @ref ibjson_push_fn_t
  * is pulled off the stack from below the newly constructed map or list
@@ -375,7 +374,6 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
             ib_mpool_release(mp);
             yajl_free(yajl);
             return luaL_error(L, "Parse error.");
-            break;
         case yajl_status_ok:
             break;
     }
@@ -393,7 +391,6 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
             ib_mpool_release(mp);
             yajl_free(yajl);
             return luaL_error(L, "Parse error.");
-            break;
         case yajl_status_ok:
             break;
     }
@@ -475,10 +472,11 @@ static yajl_gen_status ibjson_gen_map(lua_State *L, yajl_gen gen) {
  * @param[in] gen The generator that will be accumulating the JSON text.
  *
  * @returns
- * - yajl_gen_status_ok on success.
- * - Status code retured by yajl_gen_&lt;type&gt; on error.
+ * - @ref yajl_gen_status_ok on success.
+ * - Status code retured by @c yajl_gen_&lt;type&gt; on error.
  */
-static yajl_gen_status ibjson_gen(lua_State *L, yajl_gen gen) {
+static yajl_gen_status ibjson_gen(lua_State *L, yajl_gen gen)
+{
     yajl_gen_status ygc;
 
     /* Successs, when called recursively. */
@@ -554,12 +552,14 @@ static yajl_gen_status ibjson_gen(lua_State *L, yajl_gen gen) {
 /**
  * Takes the value at the top of the stack and converts it to JSON.
  *
- * A string is pushed back onto the top of the Lua stack.
+ * A string representing the parsed JSON is pushed back onto the top of
+ * the Lua stack. This is the single return value to the Lua runtime.
  *
  * @param[in] L Lua stack.
  * @returns the number of elements returned from the Lua call.
  */
-LUALIB_API int ibjson_to_string(lua_State *L) {
+LUALIB_API int ibjson_to_string(lua_State *L)
+{
     assert(L != NULL);
 
     int yc;
