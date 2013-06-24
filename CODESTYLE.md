@@ -118,7 +118,7 @@ directly related to code formatting.
 * All private functions SHOULD have doxygen documentation such as above.  Any
   doxygen documentation in .c or _private.h files is automatically treated as
   private.  If a private function must be in a public header file surround it
-  and the code in question with '\@cond internal' and '\@endcond internal'.
+  and the code in question with '@cond internal' and '@endcond internal'.
 
 * All callbacks must support callback data.  Callback data is a `void *` that
   is provided with the function pointer at registration and is passed as the
