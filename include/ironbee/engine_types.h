@@ -158,10 +158,10 @@ typedef enum {
 /**
  * Enumerate the blocking mode that IronBee's core module should use.
  */
-typedef enum ib_block_mode_t {
-    IB_BLOCK_MODE_STATUS, /**< Block using an HTTP status code response. */
-    IB_BLOCK_MODE_CLOSE,  /**< Block by closing the transport (TCP) layer. */
-} ib_block_mode_t;
+typedef enum ib_block_method_t {
+    IB_BLOCK_METHOD_STATUS, /**< Block using an HTTP status code response. */
+    IB_BLOCK_METHOD_CLOSE,  /**< Block by closing the transport (TCP) layer. */
+} ib_block_method_t;
 
 /** Transaction Data Structure */
 struct ib_txdata_t {
@@ -234,7 +234,7 @@ struct ib_tx_t {
     ib_flags_t          flags;           /**< Transaction flags */
     ib_num_t            auditlog_parts;  /**< Audit log parts */
     ib_num_t            block_status;    /**< TX-specific block status to use.*/
-    ib_block_mode_t     block_mode;      /**< TX-specific block mode to use.*/
+    ib_block_method_t   block_method;    /**< TX-specific block mode to use.*/
 
     ib_rule_exec_t     *rule_exec;       /**< Rule engine execution object */
     ib_list_t          *managed_collections;/**< ib_managed_collection_t list*/

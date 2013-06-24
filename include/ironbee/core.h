@@ -63,33 +63,33 @@ typedef enum ib_audit_mode_t {
  */
 typedef struct ib_core_cfg_t ib_core_cfg_t;
 struct ib_core_cfg_t {
-    ib_num_t         log_level;         /**< Log level */
-    const char      *log_uri;           /**< Log URI */
-    FILE            *log_fp;            /**< File pointer for log. */
-    const char      *logevent;          /**< Active logevent provider key */
-    ib_list_t       *initvar_list;      /**< List of ib_field_t for InitVar */
-    ib_list_t       *mancoll_list;      /**< List of ib_managed_collection_t */
-    ib_num_t         buffer_req;        /**< Request buffering options */
-    ib_num_t         buffer_res;        /**< Response buffering options */
-    ib_audit_mode_t  audit_engine;      /**< Audit engine status */
-    ib_num_t         auditlog_dmode;    /**< Audit log dir create mode */
-    ib_num_t         auditlog_fmode;    /**< Audit log file create mode */
-    ib_num_t         auditlog_parts;    /**< Audit log parts */
-    const char      *auditlog_index_fmt;/**< Audit log index format string */
+    ib_num_t          log_level;         /**< Log level */
+    const char       *log_uri;           /**< Log URI */
+    FILE             *log_fp;            /**< File pointer for log. */
+    const char       *logevent;          /**< Active logevent provider key */
+    ib_list_t        *initvar_list;      /**< List of ib_field_t for InitVar */
+    ib_list_t        *mancoll_list;      /**< List of ib_managed_collection_t */
+    ib_num_t          buffer_req;        /**< Request buffering options */
+    ib_num_t          buffer_res;        /**< Response buffering options */
+    ib_audit_mode_t   audit_engine;      /**< Audit engine status */
+    ib_num_t          auditlog_dmode;    /**< Audit log dir create mode */
+    ib_num_t          auditlog_fmode;    /**< Audit log file create mode */
+    ib_num_t          auditlog_parts;    /**< Audit log parts */
+    const char       *auditlog_index_fmt;/**< Audit log index format string */
     const ib_logformat_t *auditlog_index_hp; /**< Audit log index fmt helper */
-    const char      *auditlog_dir;      /**< Audit log base directory */
-    const char      *auditlog_sdir_fmt; /**< Audit log sub-directory format */
-    const char      *audit;             /**< Active audit provider key */
-    const char      *data;              /**< Active data provider key */
-    const char      *module_base_path;  /**< Module base path. */
-    const char      *rule_base_path;    /**< Rule base path. */
-    ib_num_t         rule_log_flags;    /**< Rule execution logging flags */
-    ib_num_t         rule_log_level;    /**< Rule execution logging level */
-    const char      *rule_debug_str;    /**< Rule debug logging level */
-    ib_num_t         rule_debug_level;  /**< Rule debug logging level */
-    ib_block_mode_t  block_mode;        /**< What blocking method to use. */
-    //! Status code used when blocking with for @ref IB_BLOCK_MODE_STATUS mode.
-    ib_num_t         block_status;
+    const char       *auditlog_dir;      /**< Audit log base directory */
+    const char       *auditlog_sdir_fmt; /**< Audit log sub-directory format */
+    const char       *audit;             /**< Active audit provider key */
+    const char       *data;              /**< Active data provider key */
+    const char       *module_base_path;  /**< Module base path. */
+    const char       *rule_base_path;    /**< Rule base path. */
+    ib_num_t          rule_log_flags;    /**< Rule execution logging flags */
+    ib_num_t          rule_log_level;    /**< Rule execution logging level */
+    const char       *rule_debug_str;    /**< Rule debug logging level */
+    ib_num_t          rule_debug_level;  /**< Rule debug logging level */
+    ib_block_method_t block_method;     /**< What blocking method to use. */
+    //! Status code used when blocking with @ref IB_BLOCK_METHOD_STATUS.
+    ib_num_t          block_status;
     ib_num_t inspection_engine_options; /**< Inspection engine options */
 };
 

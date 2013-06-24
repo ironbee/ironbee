@@ -959,7 +959,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     tx->path = IB_DSTR_URI_ROOT_PATH;
     tx->auditlog_parts = corecfg->auditlog_parts;
     tx->block_status = corecfg->block_status;
-    tx->block_mode = corecfg->block_mode;
+    tx->block_method = corecfg->block_method;
 
     ++conn->tx_count;
     ib_tx_generate_id(tx, tx->mp);

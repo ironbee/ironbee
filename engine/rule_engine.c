@@ -1047,8 +1047,8 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
     ib_status_t  rc = IB_OK;
     ib_tx_t     *tx = rule_exec->tx;
 
-    switch(tx->block_mode) {
-        case IB_BLOCK_MODE_STATUS:
+    switch(tx->block_method) {
+        case IB_BLOCK_METHOD_STATUS:
             rc = report_status_block_to_server(rule_exec);
 
             /* Failover. */
@@ -1057,7 +1057,7 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
                 rc = report_close_block_to_server(rule_exec);
             }
             break;
-        case IB_BLOCK_MODE_CLOSE:
+        case IB_BLOCK_METHOD_CLOSE:
             rc = report_close_block_to_server(rule_exec);
 
             /* Failover */

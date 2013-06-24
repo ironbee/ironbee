@@ -7,6 +7,7 @@ IronBee v0.8.0
 **Deprecations**
 
 * The 'ac' module (deprecated in 0.7.0) has been removed.
+* Directive "DefaultBlockStatus 403" is repaced by "BlockingMethod status=403"
 
 **Build**
 
