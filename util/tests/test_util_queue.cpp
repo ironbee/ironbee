@@ -85,7 +85,7 @@ TEST_F(QueueTest, SetGet) {
 }
 
 TEST_F(QueueTest, PushBack) {
-    ASSERT_EQ(IB_OK, ib_queue_resize(m_q, 100));
+    ASSERT_EQ(IB_OK, ib_queue_reserve(m_q, 100));
 
     for (int i = 0; s[i] != NULL; ++i) {
         ASSERT_EQ(IB_OK, ib_queue_push_back(m_q, const_cast<char *>(s[i])));
@@ -99,7 +99,7 @@ TEST_F(QueueTest, PushBack) {
 }
 
 TEST_F(QueueTest, PushBackResize) {
-    ASSERT_EQ(IB_OK, ib_queue_resize(m_q, 2));
+    ASSERT_EQ(IB_OK, ib_queue_reserve(m_q, 2));
 
     for (int i = 0; s[i] != NULL; ++i) {
         ASSERT_EQ(IB_OK, ib_queue_push_back(m_q, const_cast<char *>(s[i])));
@@ -117,7 +117,7 @@ TEST_F(QueueTest, PushBackResize) {
 }
 
 TEST_F(QueueTest, PushBackOffset) {
-    ASSERT_EQ(IB_OK, ib_queue_resize(m_q, 4));
+    ASSERT_EQ(IB_OK, ib_queue_reserve(m_q, 4));
 
     /* Move the head offset by pop_front. */
     void *v;

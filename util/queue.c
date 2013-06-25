@@ -17,10 +17,9 @@
 
 /**
  * @file
- * @brief IronBee --- Queue
+ * @brief IronBee --- Queue Implementation
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
- * @nosubgrouping
  */
 
 #include "ironbee_config_auto.h"
@@ -33,43 +32,50 @@
 #include <unistd.h>
 
 /* A power of 2. */
-static const size_t DEFAULT_QUEUE_SIZE = 8;
+static const size_t DEFAULT_QUEUE_SIZE = 1 << 3;
 
 /**
  * A queue structure.
  */
 struct ib_queue_t {
-    size_t      head;  /**< Index of the first element. */
-    size_t      size;  /**< The size of the queue buffer. */
-    size_t      depth; /**< The number of elements in the queue. */
-    ib_mpool_t *mp;    /**< Pool for allocations. */
-    void      **queue; /**< The queue. */
-    ib_flags_t  flags; /**< Operation flags. */
+    size_t      head;       /**< Index of the first element. */
+    size_t      allocation; /**< The allocation of the queue buffer. */
+    size_t      size;       /**< The number of elements in the queue. */
+    ib_mpool_t *mp;         /**< Pool for allocations. */
+    void      **queue;      /**< The queue. */
+    ib_flags_t  flags;      /**< Flags. @sa IB_QUEUE_NEVER_SHRINK. */
 };
 
 /**
- * Return the index into the queue that the offset points to.
+ * Return the index into queue that the offset points to.
+ *
  * @param[in] queue The queue.
- * @param[in] offset The offset.
- * @returns The address to assign to.
+ * @param[in] offset The logical offset from the head of the queue. And
+ *            offset of 0 will return the index in the queue at which
+ *            the first element is found. This value is equal
+ *            queue->head.
+ *
+ * @returns The index in queue->queue at which the requested element resides.
  */
 static inline size_t to_index(
-    ib_queue_t *queue,
+    const ib_queue_t *queue,
     size_t offset
 )
 {
     assert(queue != NULL);
-    return (queue->head + offset) % queue->size;
+    return (queue->head + offset) % queue->allocation;
 }
 
 /**
- * Return a void ** in the queue array that may be assigned to.
+ * Return a @c void ** in the queue array that may be assigned to.
+ *
  * @param[in] queue The queue.
  * @param[in] offset The offset.
+ *
  * @returns The address to assign to.
  */
 static inline void **to_addr(
-    ib_queue_t *queue,
+    const ib_queue_t *queue,
     size_t offset
 )
 {
@@ -77,7 +83,7 @@ static inline void **to_addr(
     return (queue->queue + to_index(queue, offset));
 }
 
-ib_status_t DLL_PUBLIC ib_queue_create(
+ib_status_t ib_queue_create(
     ib_queue_t **queue,
     ib_mpool_t *mp,
     ib_flags_t flags
@@ -98,11 +104,11 @@ ib_status_t DLL_PUBLIC ib_queue_create(
         return rc;
     }
 
-    q->size  = DEFAULT_QUEUE_SIZE;
-    q->depth = 0;
+    q->allocation  = DEFAULT_QUEUE_SIZE;
+    q->size = 0;
     q->head  = 0;
     q->flags = flags;
-    q->queue = ib_mpool_alloc(q->mp, sizeof(*(q->queue)) * q->size);
+    q->queue = ib_mpool_alloc(q->mp, sizeof(*(q->queue)) * q->allocation);
     if (q->queue == NULL) {
         free(q);
         return IB_EALLOC;
@@ -114,29 +120,29 @@ ib_status_t DLL_PUBLIC ib_queue_create(
 }
 
 /**
- * Take the given @a queue and repack it's data into @a new_queue.
+ * Take the given @a queue and repack its data into @a new_queue.
  *
  * When a queue backed by an array is resized, if it wraps from the 
  * end to the beginning, that wrap point is necessarily different. Much
  * like resizing a hash, we must repack the data in the new queue.
  *
  * This implementation repacks the queue to index 0 so the 
- * repacked queue does not wrap and the head must be set to = 0.
+ * repacked queue does not wrap and the head must be set to 0.
  *
- * The size of @a new_queue must be less than ib_queue_t::depth.
+ * The allocation of @a new_queue must be less than ib_queue_t::size.
  *
  * @param[in] queue The queue to repack.
  * @param[out] new_queue The repacked queue.
  */
 static void repack(
-    ib_queue_t *queue,
-    void      **new_queue
+    ib_queue_t  *queue,
+    void       **new_queue
 )
 {
     /* If true, then the queue wraps around the end of the array. */
-    if (queue->size - queue->head < queue->depth) {
-        size_t size_1 = queue->size - queue->head;
-        size_t size_2 = queue->depth - size_1;
+    if (queue->allocation - queue->head < queue->size) {
+        size_t size_1 = queue->allocation - queue->head;
+        size_t size_2 = queue->size - size_1;
 
         /* Copy the unwrapped half. */
         memcpy(new_queue, to_addr(queue, 0), sizeof(*new_queue) * size_1);
@@ -146,23 +152,23 @@ static void repack(
     }
     /* The queue does not wrap. Simple copy case. */
     else {
-        memcpy(new_queue, to_addr(queue, 0), sizeof(*new_queue)*queue->depth);
+        memcpy(new_queue, to_addr(queue, 0), sizeof(*new_queue)*queue->size);
     }
 }
 
 /**
  * Resize the queue.
  *
- * The size must not be less than ib_queue_t::depth or this will corrupt 
+ * The allocation must not be less than ib_queue_t::size or this will corrupt 
  * memory.
  */
-static inline ib_status_t resize(
+static ib_status_t resize(
     ib_queue_t *queue,
-    size_t new_size
+    size_t      new_size
 )
 {
     assert(queue != NULL);
-    assert(new_size >= queue->depth);
+    assert(new_size >= queue->size);
 
     ib_mpool_t  *new_mp;
     void       **new_queue;
@@ -182,23 +188,27 @@ static inline ib_status_t resize(
 
     ib_mpool_release(queue->mp);
 
-    queue->size  = new_size;
+    queue->allocation  = new_size;
     queue->head  = 0;
     queue->queue = new_queue;
     queue->mp    = new_mp;
-    queue->size  = new_size;
+    queue->allocation  = new_size;
 
     return IB_OK;
 }
 
 /**
- * Shrink the queue by half.
- * @param[in] queue The queue to halve in size.
+ * Shrink the queue by half unless prevented from doing so.
+ *
+ * - If IB_QUEUE_NEVER_SHRINK is set, no action is taken.
+ * - If the queue is too small (allocation=1), no action is taken.
+ *
+ * @param[in] queue The queue to halve in allocation.
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC On allocation errors.
  */
-static inline ib_status_t shrink(
+static ib_status_t shrink(
     ib_queue_t *queue
 )
 {
@@ -211,9 +221,9 @@ static inline ib_status_t shrink(
         return IB_OK;
     }
 
-    new_size = (queue->size) / 2;
+    new_size = (queue->allocation) / 2;
 
-    /* Do nothing if the queue size is too small. */
+    /* Do nothing if the queue allocation is too small. */
     if (new_size < DEFAULT_QUEUE_SIZE || new_size == 0) {
         return IB_OK;
     }
@@ -227,14 +237,14 @@ static inline ib_status_t shrink(
 }
 
 /**
- * @param[in] queue The queue to double in size.
+ * @param[in] queue The queue to double in allocation.
  *
  * @returns 
  * - IB_OK On success.
  * - IB_EALLOC On allocation errors.
  * - IB_EINVAL If overflow is detected.
  */
-static inline ib_status_t grow(
+static ib_status_t grow(
     ib_queue_t *queue
 )
 {
@@ -243,10 +253,10 @@ static inline ib_status_t grow(
     size_t      new_size;
     ib_status_t rc;
 
-    new_size = queue->size * 2;
+    new_size = queue->allocation * 2;
 
     /* Guard against overflow. */
-    if (new_size < queue->size) {
+    if (new_size < queue->allocation) {
         return IB_EINVAL;
     }
 
@@ -258,64 +268,66 @@ static inline ib_status_t grow(
     return IB_OK;
 }
 
-ib_status_t DLL_PUBLIC ib_queue_push_back(
+ib_status_t ib_queue_push_back(
     ib_queue_t *queue,
-    void *element
+    void       *element
 )
 {
     assert(queue != NULL);
 
-    if (queue->depth == queue->size) {
+    if (queue->size == queue->allocation) {
         ib_status_t rc = grow(queue);
         if (rc != IB_OK) {
             return IB_OK;
         }
     }
 
-    *(to_addr(queue, queue->depth)) = element;
+    *(to_addr(queue, queue->size)) = element;
 
-    ++(queue->depth);
+    ++(queue->size);
 
     return IB_OK;
 }
-ib_status_t DLL_PUBLIC ib_queue_push_front(
+
+ib_status_t ib_queue_push_front(
     ib_queue_t *queue,
-    void *element
+    void       *element
 )
 {
     assert(queue != NULL);
 
-    if (queue->depth == queue->size) {
+    if (queue->size == queue->allocation) {
         ib_status_t rc = grow(queue);
         if (rc != IB_OK) {
             return IB_OK;
         }
     }
 
-    queue->head = (queue->head == 0)?  queue->size - 1 : queue->head - 1;
-    ++(queue->depth);
+    queue->head = (queue->head == 0)?  queue->allocation - 1 : queue->head - 1;
+    ++(queue->size);
 
     *(to_addr(queue, 0)) = element;
 
     return IB_OK;
 }
-ib_status_t DLL_PUBLIC ib_queue_pop_back(
-    ib_queue_t *queue,
-    void **element
+
+ib_status_t ib_queue_pop_back(
+    ib_queue_t  *queue,
+    void       **element
 )
 {
     assert(queue != NULL);
     assert(element != NULL);
 
-    if (queue->depth == 0) {
+    if (queue->size == 0) {
         return IB_EINVAL;
     }
 
-    --(queue->depth);
+    --(queue->size);
 
-    *element = *to_addr(queue, queue->depth);
+    *element = *to_addr(queue, queue->size);
 
-    if (queue->depth * 2 < queue->size) {
+    if (queue->size * 2 < queue->allocation) {
         ib_status_t rc = shrink(queue);
         if (rc != IB_OK) {
             return rc;
@@ -324,7 +336,8 @@ ib_status_t DLL_PUBLIC ib_queue_pop_back(
 
     return IB_OK;
 }
-ib_status_t DLL_PUBLIC ib_queue_pop_front(
+
+ib_status_t ib_queue_pop_front(
     ib_queue_t  *queue,
     void       **element
 )
@@ -332,16 +345,16 @@ ib_status_t DLL_PUBLIC ib_queue_pop_front(
     assert(queue != NULL);
     assert(element != NULL);
 
-    if (queue->depth == 0) {
+    if (queue->size == 0) {
         return IB_EINVAL;
     }
 
     *element = *to_addr(queue, 0);
 
-    queue->head = (queue->head == queue->size - 1)?  0 : queue->head + 1;
-    --(queue->depth);
+    queue->head = (queue->head == queue->allocation - 1)?  0 : queue->head + 1;
+    --(queue->size);
 
-    if (queue->depth * 2 < queue->size) {
+    if (queue->size * 2 < queue->allocation) {
         ib_status_t rc = shrink(queue);
         if (rc != IB_OK) {
             return rc;
@@ -350,15 +363,16 @@ ib_status_t DLL_PUBLIC ib_queue_pop_front(
 
     return IB_OK;
 }
-ib_status_t DLL_PUBLIC ib_queue_peek(
-    ib_queue_t  *queue,
-    void       **element
+
+ib_status_t ib_queue_peek(
+    const ib_queue_t  *queue,
+    void             **element
 )
 {
     assert(queue != NULL);
     assert(element != NULL);
 
-    if (queue->depth == 0) {
+    if (queue->size == 0) {
         return IB_EINVAL;
     }
 
@@ -366,16 +380,17 @@ ib_status_t DLL_PUBLIC ib_queue_peek(
 
     return IB_OK;
 }
-ib_status_t DLL_PUBLIC ib_queue_get(
-    ib_queue_t *queue,
-    size_t index,
-    void **element
+
+ib_status_t ib_queue_get(
+    const ib_queue_t  *queue,
+    size_t             index,
+    void             **element
 )
 {
     assert(queue != NULL);
     assert(element != NULL);
 
-    if (queue->depth == 0 || queue->depth <= index) {
+    if (queue->size == 0 || queue->size <= index) {
         return IB_EINVAL;
     }
 
@@ -384,7 +399,7 @@ ib_status_t DLL_PUBLIC ib_queue_get(
     return IB_OK;
 }
 
-ib_status_t DLL_PUBLIC ib_queue_set(
+ib_status_t ib_queue_set(
     ib_queue_t *queue,
     size_t index,
     void *element
@@ -392,7 +407,7 @@ ib_status_t DLL_PUBLIC ib_queue_set(
 {
     assert(queue != NULL);
 
-    if (queue->depth == 0 || queue->depth <= index) {
+    if (queue->size == 0 || queue->size <= index) {
         return IB_EINVAL;
     }
 
@@ -401,26 +416,26 @@ ib_status_t DLL_PUBLIC ib_queue_set(
     return IB_OK;
 }
 
-ib_status_t DLL_PUBLIC ib_queue_resize(
+ib_status_t ib_queue_reserve(
     ib_queue_t *queue,
-    size_t      size
+    size_t      allocation
 )
 {
     assert(queue != NULL);
 
-    if (size < queue->depth) {
-        queue->depth = size;
+    if (allocation < queue->size) {
+        queue->size = allocation;
     }
 
-    return resize(queue, size);
+    return resize(queue, allocation);
 }
 
-size_t DLL_PUBLIC ib_queue_size(
-    ib_queue_t *queue
+size_t ib_queue_size(
+    const ib_queue_t *queue
 )
 {
     assert(queue != NULL);
-    return queue->depth;
+    return queue->size;
 }
 
 /** @} */

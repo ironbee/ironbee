@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee --- Queue Functions
+ * @brief IronBee --- IronBee Queue
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
@@ -39,7 +39,10 @@ extern "C" {
  * @defgroup IronBeeUtilQueue Queue
  * @ingroup IronBeeUtil
  *
- * A queue structure that minimizes memory allocations.
+ * A queue structure that minimizes memory allocations and
+ * recycles internal structures to prevent unbounded memory use. Child
+ * memory pools are used to reclaim memory when the queue must reallocate
+ * its internal storage.
  *
  * While @ref ib_list_t may be used as a queue, it is ill suited to use
  * as a long-lived object with many elements being added and removed,
@@ -47,9 +50,8 @@ extern "C" {
  * back to the memory pool, by design, and @ref ib_list_t does not
  * recycle list nodes.
  *
- * To accommodate the need for long-lived objects. While the intent of 
- * this object is that of a queue, it provides support for un-queue like
- * operations, such as
+ * While the intent of this object is that of a queue, it provides support
+ * for un-queue like operations, such as
  * - ib_queue_push_front()
  * - ib_queue_pop_back()
  * - ib_queue_set()
@@ -63,7 +65,14 @@ extern "C" {
  */
 typedef struct ib_queue_t ib_queue_t;
 
+/**
+ * Empty flags.
+ */
 #define IB_QUEUE_NONE         (0x0)
+
+/**
+ * Never reduce the size of the allocated internal storage.
+ */
 #define IB_QUEUE_NEVER_SHRINK (1 << 0)
 
 /**
@@ -72,16 +81,15 @@ typedef struct ib_queue_t ib_queue_t;
  * @param[out] queue The created Queue.
  * @param[in] mp The memory pool that allocations will be made out of.
  *            This uses child pools to accomplish freeing memory.
- * @param[in] flags Options that influence the data structure's
- *            function's behavior.
+ * @param[in] flags Options that influence the use of this data structure.
  *
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC On allocation errors.
  */
-ib_status_t ib_queue_create(
+ib_status_t DLL_PUBLIC ib_queue_create(
     ib_queue_t **queue,
-    ib_mpool_t   *mp,
+    ib_mpool_t  *mp,
     ib_flags_t   flags
 );
 
@@ -90,13 +98,14 @@ ib_status_t ib_queue_create(
  *
  * @param[in] queue The queue.
  * @param[in] element The element to push.
+ *
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC If a resize cannot get enough memory.
  */
-ib_status_t ib_queue_push_back(
+ib_status_t DLL_PUBLIC ib_queue_push_back(
     ib_queue_t *queue,
-    void *element
+    void       *element
 );
 
 /**
@@ -108,9 +117,9 @@ ib_status_t ib_queue_push_back(
  * - IB_OK On success.
  * - IB_EALLOC If a resize cannot get enough memory.
  */
-ib_status_t ib_queue_push_front(
+ib_status_t DLL_PUBLIC ib_queue_push_front(
     ib_queue_t *queue,
-    void *element
+    void       *element
 );
 
 /**
@@ -122,7 +131,10 @@ ib_status_t ib_queue_push_front(
  * - IB_OK On success.
  * - IB_EALLOC If memory for a new queue cannot be obtained when resizing.
  */
-ib_status_t ib_queue_pop_back(ib_queue_t *queue, void **element);
+ib_status_t DLL_PUBLIC ib_queue_pop_back(
+    ib_queue_t  *queue,
+    void       **element
+);
 
 /**
  * Dequeue and element.
@@ -133,9 +145,9 @@ ib_status_t ib_queue_pop_back(ib_queue_t *queue, void **element);
  * - IB_OK On success.
  * - IB_EALLOC If memory for a new queue cannot be obtained when resizing.
  */
-ib_status_t ib_queue_pop_front(
-    ib_queue_t *queue,
-    void **element
+ib_status_t DLL_PUBLIC ib_queue_pop_front(
+    ib_queue_t  *queue,
+    void       **element
 );
 
 /**
@@ -147,9 +159,9 @@ ib_status_t ib_queue_pop_front(
  * - IB_OK On success.
  * - IB_EINVAL If the queue is empty.
  */
-ib_status_t ib_queue_peek(
-    ib_queue_t *queue,
-    void **element
+ib_status_t DLL_PUBLIC ib_queue_peek(
+    const ib_queue_t  *queue,
+    void             **element
 );
 
 /**
@@ -160,10 +172,10 @@ ib_status_t ib_queue_peek(
  * - IB_OK On success.
  * - IB_EINVAL If the element is not in the range of the queue.
  */
-ib_status_t ib_queue_get(
-    ib_queue_t *queue,
-    size_t index,
-    void **element
+ib_status_t DLL_PUBLIC ib_queue_get(
+    const ib_queue_t  *queue,
+    size_t             index,
+    void              **element
 );
 
 /**
@@ -174,36 +186,36 @@ ib_status_t ib_queue_get(
  * - IB_OK On success.
  * - IB_EINVAL If the element is not in the range of the queue.
  */
-ib_status_t ib_queue_set(
+ib_status_t DLL_PUBLIC ib_queue_set(
     ib_queue_t *queue,
-    size_t index,
-    void *element
+    size_t      index,
+    void       *element
 );
 
 /**
- * Set the size of the allocated memory in the queue. 
+ * Reserve @a allocation total spaces in the queue.
  *
- * This is useful when you know that many pushes are going to occur.
- *
- * If the new size of the queue is greater than ib_queue_size() returns,
+ * If the new allocation of the queue is greater than ib_queue_size().
  * then only the allocated memory is expanded to accommodate new
  * pushes without requesting more memory.
  *
- * If the new size of the queue is less than ib_queue_size() returns,
- * then the queue is truncated and ib_queue_size() will return @a size.
+ * If the new allocation of the queue is less than ib_queue_size().
+ * then the queue is truncated and ib_queue_size() will return @a allocation.
+ * Any push, in this situation, will cause a resizing of the queue.
  *
- * Any push will cause another resizing of the queue.
+ * If @ref IB_QUEUE_NEVER_SHRINK is set and @a allocation is less than
+ * the current allocation, no action is taken and @ref IB_OK is returned.
  *
  * @param[in] queue The queue.
- * @param[in] size The new size.
+ * @param[in] allocation The new allocation.
  *
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC On an allocation error.
  */
-ib_status_t ib_queue_resize(
+ib_status_t DLL_PUBLIC ib_queue_reserve(
     ib_queue_t *queue,
-    size_t size
+    size_t      allocation
 );
 
 /**
@@ -211,8 +223,8 @@ ib_status_t ib_queue_resize(
  * @param[in] queue The queue.
  * @returns the size (depth) of the queue.
  */
-size_t ib_queue_size(
-    ib_queue_t *queue
+size_t DLL_PUBLIC ib_queue_size(
+    const ib_queue_t *queue
 );
 
 #ifdef __cplusplus
