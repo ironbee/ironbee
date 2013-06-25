@@ -41,6 +41,7 @@
 #endif
 
 #include <ironbee/engine.h>
+#include <ironbee/engine_manager.h>
 #include <ironbee/config.h>
 #include <ironbee/context.h>
 #include <ironbee/module.h> /* Only needed while config is in here. */
@@ -107,12 +108,30 @@ typedef struct ironbee_dir_conf {
     int filter_output;
 } ironbee_dir_conf;
 
+/**
+ * Module global data
+ */
+typedef struct {
+    const char     *ib_config_file;         /**< IronBee configuration file */
+    ib_log_level_t  ib_log_level;           /**< IronBee log level */
+    bool            ib_log_active;          /**< Is IronBee logging active? */
+    ib_manager_t   *ib_manager;             /**< IronBee engine manager */
+    size_t          ib_max_engines;         /**< Max # of IronBee engines */
+    int             max_log_level;          /**< Max AP Log level to use */
+    int             log_level_is_startup;   /**< Adjust log level at startup */
+} module_data_t;
+
 /*************    GENERAL GLOBALS        *************************/
-static const char *ironbee_config_file = NULL;
-static int ironbee_log_level = 4;
-static int ironbee_log_active = 1;
-static ib_engine_t *ironbee = NULL;
-static int log_level_is_startup = APLOG_STARTUP;
+static module_data_t module_data =
+{
+    NULL,             /* .ib_config_file */
+    IB_LOG_WARNING,   /* .ib_log_level */
+    true,             /* .ib_log_active */
+    NULL,             /* .ib_manager */
+    0,                /* .ib_max_engines */
+    APLOG_NOTICE,     /* .max_log_level */
+    APLOG_STARTUP,    /* .log_level_is_startup */
+};
 
 /*************    IRONBEE-DRIVEN PROVIDERS/CALLBACKS/ETC ***********/
 
@@ -324,89 +343,66 @@ ib_server_t DLL_LOCAL ibplugin = {
 };
 
 /* BOOTSTRAP: lift logger straight from the old mod_ironbee */
+
 /**
- * IronBee callback: logger function.
+ * IronBee Apache logger.
  *
- * Performs IronBee logging for the ATS plugin.
+ * Performs IronBee logging for the Apache HTTPd plugin.
  *
- * @param[in] ib IronBee engine.
- * @param[in] level Log level
- * @param[in] ib IronBee engine
- * @param[in] file File name
- * @param[in] line Line number
- * @param[in] fmt Format string
- * @param[in] ap Var args list to match the format
+ * @param[in] level IronBee log level
  * @param[in] cbdata Callback data.
+ * @param[in] buf Formatted buffer
  */
-static
-void ironbee_logger(
-    const ib_engine_t *ib,
+static void ironbee_logger(
     ib_log_level_t     level,
-    const char        *file,
-    int                line,
-    const char        *fmt,
-    va_list            ap,
-    void              *cbdata
-)
+    void              *cbdata,
+    const char        *buf)
 {
-    char *buf = NULL;
-    int limit = 7000;
-    int ap_level = APLOG_WARNING | log_level_is_startup;
-    int ec;
-    const size_t c_buf_size = 8192 + 1;
-    buf = (char *)malloc(c_buf_size);
-    if (buf == NULL) {
+    assert(buf != NULL);
+    if (cbdata == NULL) {
         return;
     }
+    module_data_t *mod_data = (module_data_t *)cbdata;
+    int            ap_level;
 
-    /* Buffer the log line. */
-    ec = vsnprintf(buf, c_buf_size, fmt, ap);
-    if (ec >= limit) {
-        /* Mark as truncated, with a " ...". */
-        memcpy(buf + (limit - 5), " ...", 5);
-
-        /// @todo Do something about it
-        ap_log_error(APLOG_MARK, ap_level, 0, NULL,
-                     IB_PRODUCT_NAME ": Log format truncated: limit (%d/%d)",
-                     (int)ec, limit);
+    if (! mod_data->ib_log_active) {
+        fputs(buf, stderr);
+        return;
     }
 
     /* Translate the log level. */
     switch (level) {
-        case IB_LOG_EMERGENCY:
-            ap_level = APLOG_EMERG;
-            break;
-        case IB_LOG_ALERT:
-            ap_level = APLOG_ALERT;
-            break;
-        case IB_LOG_CRITICAL:
-        case IB_LOG_ERROR:
-            ap_level = APLOG_ERR;
-            break;
-        case IB_LOG_WARNING:
-            //ap_level = APLOG_WARNING;
-            ap_level = APLOG_DEBUG; /// @todo For now, so we get file/line
-            break;
-        case IB_LOG_DEBUG:
-            ap_level = APLOG_DEBUG;
-            break;
-        default:
-            ap_level = APLOG_DEBUG; /// @todo Make configurable
+    case IB_LOG_EMERGENCY:
+        ap_level = APLOG_EMERG;
+        break;
+    case IB_LOG_ALERT:
+        ap_level = APLOG_ALERT;
+        break;
+    case IB_LOG_CRITICAL:
+    case IB_LOG_ERROR:
+        ap_level = APLOG_ERR;
+        break;
+    case IB_LOG_WARNING:
+        //ap_level = APLOG_WARNING;
+        ap_level = APLOG_DEBUG; /// @todo For now, so we get file/line
+        break;
+    case IB_LOG_DEBUG:
+        ap_level = APLOG_DEBUG;
+        break;
+    default:
+        ap_level = APLOG_DEBUG; /// @todo Make configurable
     }
 
     /// @todo Make configurable
-    if (ap_level > APLOG_NOTICE) {
-        ap_level = APLOG_NOTICE;
+    if (ap_level > mod_data->max_log_level) {
+        ap_level = mod_data->max_log_level;
     }
 
-    ap_level |= log_level_is_startup;
+    /* Apply the "startup" log flag */
+    ap_level |= mod_data->log_level_is_startup;
 
     /* Write it to the error log. */
     ap_log_error(APLOG_MARK, ap_level, 0, NULL, "ironbee: %s", buf);
-
-    if (buf) {
-        free(buf);
-    }
 }
 
 /***********   APACHE PER-REQUEST FILTERS AND HOOKS  ************/
@@ -434,21 +430,19 @@ static int ironbee_sethdr(void *data, const char *key, const char *value)
  */
 static apr_status_t ib_req_cleanup(void *data)
 {
-    assert(ironbee != NULL);
-
     ib_status_t rc;
     request_rec *r = data;
     ironbee_req_ctx *ctx = ap_get_module_config(r->request_config,
                                                 &ironbee_module);
 
     if (!ib_tx_flags_isset(ctx->tx, IB_TX_FPOSTPROCESS)) {
-        rc = ib_state_notify_postprocess(ironbee, ctx->tx);
+        rc = ib_state_notify_postprocess(ctx->tx->ib, ctx->tx);
         if (rc != IB_OK) {
             return IB2AP(rc);
         }
     }
     if (!ib_tx_flags_isset(ctx->tx, IB_TX_FLOGGING)) {
-        rc = ib_state_notify_logging(ironbee, ctx->tx);
+        rc = ib_state_notify_logging(ctx->tx->ib, ctx->tx);
         if (rc != IB_OK) {
             return IB2AP(rc);
         }
@@ -526,7 +520,7 @@ static int ironbee_headers_in(request_rec *r)
             goto finished;
         }
 
-        rc = ib_state_notify_request_started(ironbee, ctx->tx, rline);
+        rc = ib_state_notify_request_started(ctx->tx->ib, ctx->tx, rline);
         if (rc != IB_OK) {
             rc_what = "ib_state_notify_request_started";
             goto finished;
@@ -542,14 +536,16 @@ static int ironbee_headers_in(request_rec *r)
         apr_table_do(ironbee_sethdr, ibhdrs, r->headers_in, NULL);
 
         if (ibhdrs->size > 0) {
-            rc = ib_state_notify_request_header_data(ironbee, ctx->tx, ibhdrs);
+            rc = ib_state_notify_request_header_data(ctx->tx->ib,
+                                                     ctx->tx,
+                                                     ibhdrs);
             if (rc != IB_OK) {
                 rc_what = "ib_state_notify_request_header_data";
                 goto finished;
             }
         }
 
-        rc = ib_state_notify_request_header_finished(ironbee, ctx->tx);
+        rc = ib_state_notify_request_header_finished(ctx->tx->ib, ctx->tx);
         if (rc != IB_OK) {
             rc_what = "ib_state_notify_request_header_finished";
             goto finished;
@@ -563,7 +559,7 @@ static int ironbee_headers_in(request_rec *r)
             hdr = apr_table_get(r->headers_in, "Transfer-Encoding");
             if (!hdr || strcasecmp(hdr, "chunked")) {
                 ctx->state |= NO_REQUEST_BODY | NOTIFY_REQ_END;
-                rc = ib_state_notify_request_finished(ironbee, ctx->tx);
+                rc = ib_state_notify_request_finished(ctx->tx->ib, ctx->tx);
                 if (rc != IB_OK) {
                     rc_what = "ib_state_notify_request_finished";
                     goto finished;
@@ -652,7 +648,7 @@ static apr_status_t ironbee_header_filter(ap_filter_t *f,
                       "ib_parsed_resp_line_create failed with %d", rc);
         goto header_filter_cleanup;
     }
-    rc = ib_state_notify_response_started(ironbee, ctx->tx, rline);
+    rc = ib_state_notify_response_started(ctx->tx->ib, ctx->tx, rline);
     if (rc != IB_OK) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
                       "ib_state_notify_response_started failed with %d", rc);
@@ -669,13 +665,13 @@ static apr_status_t ironbee_header_filter(ap_filter_t *f,
     apr_table_do(ironbee_sethdr, ibhdrs, f->r->headers_out, NULL);
     apr_table_do(ironbee_sethdr, ibhdrs, f->r->err_headers_out, NULL);
     if (ibhdrs->size > 0) {
-        rc = ib_state_notify_response_header_data(ironbee, ctx->tx, ibhdrs);
+        rc = ib_state_notify_response_header_data(ctx->tx->ib, ctx->tx, ibhdrs);
         if (rc != IB_OK) {
             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
                           "ib_state_notify_response_header_data failed with %d", rc);
         }
     }
-    rc = ib_state_notify_response_header_finished(ironbee, ctx->tx);
+    rc = ib_state_notify_response_header_finished(ctx->tx->ib, ctx->tx);
     if (rc != IB_OK) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
                       "ib_state_notify_response_header_finished failed with %d", rc);
@@ -811,9 +807,9 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
         /* Now read the bucket and feed to ironbee */
         growing = (b->length == (apr_size_t)-1) ? 1 : growing;
         apr_bucket_read(b, &buf, &itxdata.dlen, APR_BLOCK_READ);
-        itxdata.data = (uint8_t*) buf;
+        itxdata.data = (uint8_t *)buf;
         bytecount += itxdata.dlen;
-        ib_state_notify_response_body_data(ironbee, rctx->tx, &itxdata);
+        ib_state_notify_response_body_data(rctx->tx->ib, rctx->tx, &itxdata);
 
         /* If Ironbee just signalled an error, switch to discard data mode,
          * dump anything we already have buffered,
@@ -955,7 +951,7 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
             apr_bucket_read(b, &buf, &itxdata.dlen, APR_BLOCK_READ);
             itxdata.data = (uint8_t*) buf;
             bytecount += itxdata.dlen;
-            ib_state_notify_request_body_data(ironbee, rctx->tx, &itxdata);
+            ib_state_notify_request_body_data(rctx->tx->ib, rctx->tx, &itxdata);
 
             /* If Ironbee just signalled an error, switch to discard data mode,
              * and dump anything we already have buffered,
@@ -984,7 +980,7 @@ setaside_input:
     } while (!eos_seen && rctx->input_buffering == IOBUF_BUFFER);
 
     if (eos_seen && !ctx->eos_sent) {
-        ib_state_notify_request_finished(ironbee, rctx->tx);
+        ib_state_notify_request_finished(rctx->tx->ib, rctx->tx);
         ctx->eos_sent = true;
         /* We're done with the data.  Avoid risk of getting called again */
         ap_remove_input_filter(f);
@@ -1062,7 +1058,7 @@ static void ironbee_filter_insert(request_rec *r)
          * right here and now.
          */
         if (!(rctx->state & NOTIFY_REQ_END)) {
-            ib_state_notify_request_finished(ironbee, rctx->tx);
+            ib_state_notify_request_finished(rctx->tx->ib, rctx->tx);
             rctx->state |= NOTIFY_REQ_END;
         }
     }
@@ -1143,10 +1139,16 @@ static ib_status_t ironbee_conn_init(conn_rec *conn,
  */
 static apr_status_t ironbee_conn_cleanup(void *arg)
 {
-    assert(ironbee != NULL);
+    assert(arg != NULL);
+    ib_conn_t   *conn = (ib_conn_t *)arg;
+    ib_engine_t *ib = conn->ib;
 
-    ib_state_notify_conn_closed(ironbee, (ib_conn_t*)arg);
-    ib_conn_destroy((ib_conn_t*)arg);
+    ib_state_notify_conn_closed(ib, (ib_conn_t*)arg);
+    ib_conn_destroy(conn);
+
+    if (module_data.ib_manager != NULL) {
+        ib_manager_engine_release(module_data.ib_manager, ib);
+    }
     return APR_SUCCESS;
 }
 
@@ -1158,40 +1160,52 @@ static apr_status_t ironbee_conn_cleanup(void *arg)
  */
 static int ironbee_pre_conn(conn_rec *conn, void *csd)
 {
-    assert(ironbee != NULL);
-
     ib_conn_t *iconn;
+    ib_engine_t *ib;
     ib_status_t rc;
 
-    /* Create the Ironbee conn, with HTTPD conn in its app data */
-    rc = ib_conn_create(ironbee, &iconn, conn);
+    /* Attempt to acquire an engine. */
+    if (module_data.ib_manager == NULL) {
+        return DECLINED; /* TODO */
+    }
+    rc = ib_manager_engine_acquire(module_data.ib_manager, &ib);
     if (rc != IB_OK) {
+        return DECLINED; /* TODO */
+    }
+
+    /* Create the Ironbee conn, with HTTPD conn in its app data */
+    rc = ib_conn_create(ib, &iconn, conn);
+    if (rc != IB_OK) {
+        ib_manager_engine_release(module_data.ib_manager, ib);
         return IB2AP(rc); // FIXME - figure out what to do
     }
+
     /* Save it */
     ap_set_module_config(conn->conn_config, &ironbee_module, iconn);
+
     /* Tie the ib_conn lifetime to the conn */
     apr_pool_cleanup_register(conn->pool, iconn, ironbee_conn_cleanup,
                               apr_pool_cleanup_null);
 
     ironbee_conn_init(conn, iconn);
+    ib_state_notify_conn_opened(ib, iconn);
 
-    ib_state_notify_conn_opened(ironbee, iconn);
     return DECLINED;
 }
 
 /*****************  STARTUP / END  ***************************/
 
 /**
- * APR callback function to destroy Ironbee engine
+ * APR callback function to destroy Ironbee engine manager
  * @param[in] data - the Ironbee engine
  * @return APR_SUCCESS
  */
-static apr_status_t ironbee_engine_cleanup(void *data)
+static apr_status_t ironbee_manager_cleanup(void *data)
 {
-    assert(ironbee != NULL);
-
-    ib_engine_destroy(ironbee);
+    if (module_data.ib_manager != NULL) {
+        ib_manager_destroy(module_data.ib_manager);
+        module_data.ib_manager = NULL;
+    }
     return APR_SUCCESS;
 }
 
@@ -1206,11 +1220,10 @@ static apr_status_t ironbee_engine_cleanup(void *data)
 static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
                         server_rec *s)
 {
-    ib_status_t rc;
-    ib_context_t *ctx;
-    ib_cfgparser_t *cp;
+    ib_status_t    rc;
+    module_data_t *mod_data = &module_data;
 
-    if (ironbee_config_file == NULL) {
+    if (mod_data->ib_config_file == NULL) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
                      "Ironbee is loaded but not configured!");
         return OK ^ (-1);
@@ -1221,83 +1234,41 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
         return IB2AP(rc);
     }
 
-    rc = ib_engine_create(&ironbee, &ibplugin);
+    /* Create the IronBee engine manager */
+    rc = ib_manager_create(&ibplugin,                /* Server object */
+                           mod_data->ib_max_engines, /* Max number of engines */
+                           NULL,                     /* Logger va function */
+                           ironbee_logger,           /* Logger buf function */
+                           NULL,                     /* Logger flush function */
+                           mod_data,                 /* cbdata: module data */
+                           mod_data->ib_log_level,   /* IB log level */
+                           &(mod_data->ib_manager)); /* Engine Manager */
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Ironbee failed to create engine! (%d)", rc);
+                     "Ironbee failed to engine manager (%d)", rc);
+        return rc;
+    }
+
+    /* Create the initial engine */
+    rc = ib_manager_engine_create(mod_data->ib_manager,
+                                  mod_data->ib_config_file);
+    if (rc != IB_OK) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
+                     "Ironbee failed to create initial engine! (%d)", rc);
         return IB2AP(rc);
     }
 
-    assert(ironbee != NULL);
-
-    if (ironbee_log_active) {
-        ib_util_log_level(ironbee_log_level);
-        ib_log_set_logger_fn(ironbee, ironbee_logger, NULL);
-        /* Use the default log level function */
-    }
-
-    rc = ib_engine_init(ironbee);
-    if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Ironbee failed to initialize engine! (%d)", rc);
-        return IB2AP(rc);
-    }
-    /* Tie the Ironbee lifetime to the server */
-    apr_pool_cleanup_register(pool, NULL, ironbee_engine_cleanup,
+    /* Tie the Engine Manager lifetime to the server */
+    apr_pool_cleanup_register(pool, NULL, ironbee_manager_cleanup,
                               apr_pool_cleanup_null);
 
     /* TODO: TS creates logfile at this point */
-
-    /* Parse the config file. */
-    rc = ib_cfgparser_create(&cp, ironbee);
-    if ( (rc != IB_OK) || (cp == NULL) ) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Ironbee failed to create config parser! (%d)", rc);
-        return IB2AP(rc);
-    }
-    rc = ib_engine_config_started(ironbee, cp);
-    if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Ironbee failed to start configuration! (%d)", rc);
-        return IB2AP(rc);
-    }
-    ctx = ib_context_main(ironbee);
-
-    ib_context_set_num(ctx, "logger.log_level", 4);
-
-    if (ironbee_config_file == NULL) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_DEBUG, 0, s,
-                     IB_PRODUCT_NAME ": No config specified with IronBeeConfig directive");
-    }
-    rc = ib_cfgparser_parse(cp, ironbee_config_file);
-    if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     IB_PRODUCT_NAME ": Failed to parse IronBee configuration");
-        ib_engine_config_finished(ironbee);
-        ib_cfgparser_destroy(cp);
-        return IB2AP(rc);
-    }
-
-    rc = ib_engine_config_finished(ironbee);
-    if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Ironbee failed to finish configuration! (%d)", rc);
-        ib_cfgparser_destroy(cp);
-        return IB2AP(rc);
-    }
-
-    rc = ib_cfgparser_destroy(cp);
-    if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Ironbee failed to destroy config parser! (%d)", rc);
-        return IB2AP(rc);
-    }
 
     /* any more logging is no longer happening at startup */
     /* This will trigger after the first config pass.
      * But that's fine, we have the message.
      */
-    log_level_is_startup = 0;
+    mod_data->log_level_is_startup = 0;
     ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, s,
                  IB_PRODUCT_VERSION_NAME " initialized.");
     return OK;
@@ -1429,6 +1400,7 @@ static const char *reqheaders_early(cmd_parms *cmd, void *x, int flag)
     cfg->early = flag;
     return NULL;
 }
+
 /**
  * HTTPD configuration callback to specify Ironbee config file
  * @param[in] cmd - the cmd_parms struct
@@ -1443,10 +1415,11 @@ static const char *ironbee_configfile(cmd_parms *cmd, void *x, const char *fname
         return errmsg;
 
     // TODO: check the file here (for robustness against typos/etc)
-    ironbee_config_file = fname;
+    module_data.ib_config_file = fname;
 
     return NULL;
 }
+
 /**
  * HTTPD configuration callback to specify whether to log ironbee messages
  * to apache log file
@@ -1461,10 +1434,11 @@ static const char *ib_log_active(cmd_parms *cmd, void *x, int set)
     if (errmsg)
         return errmsg;
 
-    ironbee_log_active = set;
+    module_data.ib_log_active = (bool)set;
 
     return NULL;
 }
+
 /**
  * HTTPD configuration callback to specify Ironbee initial log level
  * @param[in] cmd - the cmd_parms struct
@@ -1478,7 +1452,43 @@ static const char *ib_log_level(cmd_parms *cmd, void *x, const char *level)
     if (errmsg)
         return errmsg;
 
-    ironbee_log_level = atoi(level);
+    module_data.ib_log_level = ib_log_string_to_level(level, IB_LOG_WARNING);
+
+    return NULL;
+}
+
+/**
+ * HTTPD configuration callback to specify the AP max log level
+ * @param[in] cmd - the cmd_parms struct
+ * @param[in] x - unused
+ * @param[in] level - Log level
+ * @return NULL (success)
+ */
+static const char *ap_max_log_level(cmd_parms *cmd, void *x, const char *level)
+{
+    const char *errmsg = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (errmsg)
+        return errmsg;
+
+    module_data.max_log_level = atoi(level);
+
+    return NULL;
+}
+
+/**
+ * HTTPD configuration callback to specify max # of IronBee engines
+ * @param[in] cmd - the cmd_parms struct
+ * @param[in] x - unused
+ * @param[in] num - Number of engines
+ * @return NULL (success)
+ */
+static const char *max_ironbee_engines(cmd_parms *cmd, void *x, const char *num)
+{
+    const char *errmsg = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (errmsg)
+        return errmsg;
+
+    module_data.ib_max_engines = atoi(num);
 
     return NULL;
 }
@@ -1487,8 +1497,8 @@ static const char *ib_log_level(cmd_parms *cmd, void *x, const char *level)
  * Module Directives
  */
 static const command_rec ironbee_cmds[] = {
-    AP_INIT_TAKE1("IronbeeConfigFile", ironbee_configfile, NULL, RSRC_CONF,
-                 "Ironbee configuration file"),
+    AP_INIT_TAKE1("IronbeeConfigFile", ironbee_configfile,
+                  NULL, RSRC_CONF, "Ironbee configuration file"),
     AP_INIT_FLAG("IronbeeRawHeaders", reqheaders_early, NULL, RSRC_CONF,
                  "Report incoming request headers or backend headers"),
     AP_INIT_FLAG("IronbeeFilterInput", ap_set_flag_slot,
@@ -1500,7 +1510,11 @@ static const command_rec ironbee_cmds[] = {
     AP_INIT_FLAG("IronbeeLog", ib_log_active, NULL,
                  RSRC_CONF, "Log Ironbee messages to Apache error log"),
     AP_INIT_TAKE1("IronbeeLogLevel", ib_log_level, NULL,
-                  RSRC_CONF, "Initial log level"),
+                  RSRC_CONF, "Initial IronBee log level"),
+    AP_INIT_TAKE1("IronbeeMaxLogLevel", ap_max_log_level, NULL,
+                  RSRC_CONF, "Max Apache log level for IronBee messages"),
+    AP_INIT_TAKE1("IronbeeMaxEngines", max_ironbee_engines, NULL,
+                  RSRC_CONF, "Max # of simultaneous IronBee engines"),
     {NULL, {NULL}, NULL, 0, 0, NULL}
 };
 
