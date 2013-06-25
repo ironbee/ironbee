@@ -232,8 +232,7 @@ class list_const_iterator :
 {
 public:
     //! Default constructor; all operations except assignment undefined.
-    list_const_iterator() :
-        list_const_iterator::iterator_adaptor_(0)
+    list_const_iterator()
     {
         // nop
     }
