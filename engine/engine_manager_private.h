@@ -57,9 +57,11 @@ struct ib_manager_t {
 
     /*
      * List of all managed engines, and other related items.  These items are
-     * all protected by the engine list lock.
+     * all protected by the engine list lock.  To keep the implementation
+     * simple, the latest engine is always stored at the end of the list, and
+     * the list is compacted after removing elements from it.
      */
-    ib_manager_engine_t **engine_list;     /**< List of engines */
+    ib_manager_engine_t **engine_list;     /**< Array of all engines */
     size_t                engine_count;    /**< Count of engines */
     ib_manager_engine_t  *engine_current;  /**< Current IronBee engine */
     volatile size_t       inactive_count;  /**< Count of inactive engines */
@@ -67,7 +69,6 @@ struct ib_manager_t {
     /* The locks themselves */
     ib_lock_t             engines_lock;    /**< The engine list lock */
     ib_lock_t             creation_lock;   /**< Serialize engine creation */
-    ib_lock_t             manager_lock;    /**< The manager lock */
 
     /* Logging */
     ib_log_level_t            log_level;    /**< Log level for manager */

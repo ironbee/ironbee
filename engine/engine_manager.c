@@ -88,14 +88,6 @@ static ib_status_t create_locks(
         return rc;
     }
 
-    /* Initialize the manager lock */
-    rc = ib_lock_init(&manager->manager_lock);
-    if (rc != IB_OK) {
-        ib_lock_destroy(&manager->engines_lock);
-        ib_lock_destroy(&manager->creation_lock);
-        return rc;
-    }
-
     return IB_OK;
 }
 
@@ -114,7 +106,6 @@ static void destroy_locks(
 
     ib_lock_destroy(&manager->engines_lock);
     ib_lock_destroy(&manager->creation_lock);
-    ib_lock_destroy(&manager->manager_lock);
 }
 
 /**
@@ -964,19 +955,8 @@ void ib_manager_set_logger(
 {
     assert(manager != NULL);
 
-    ib_status_t rc;
-
-    /* Grab the manager lock */
-    rc = ib_lock_lock(&manager->manager_lock);
-    if (rc != IB_OK) {
-        return;
-    }
-
     /* set_logger() does the real work */
     set_logger(manager,
                logger_va_fn, logger_buf_fn, logger_flush_fn,
                logger_cbdata);
-
-    /* Release the manager lock */
-    ib_lock_unlock(&manager->manager_lock);
 }
