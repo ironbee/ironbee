@@ -2751,7 +2751,7 @@ static void check_command_file(module_data_t *mod_data)
         }
         rc = ib_manager_destroy_engines(manager, op, &count);
         if (rc == IB_OK) {
-            TSDebug("ironbee", "Engines destoyed; count now %zd\n", count);
+            TSDebug("ironbee", "Engines destroyed; count now %zd\n", count);
             mod_data->manager = NULL;
         }
         else {
@@ -2782,11 +2782,11 @@ static void check_command_file(module_data_t *mod_data)
         }
         rc = ib_manager_destroy(manager);
         if (rc == IB_OK) {
-            TSDebug("ironbee", "Manager destoyed\n");
+            TSDebug("ironbee", "Manager destroyed\n");
             mod_data->manager = NULL;
         }
         else {
-            TSDebug("ironbee", "Manager not destoyed: %s\n",
+            TSDebug("ironbee", "Manager not destroyed: %s\n",
                     ib_status_to_string(rc));
         }
     }
@@ -2849,11 +2849,11 @@ static void check_command_file(module_data_t *mod_data)
         }
         rc = ib_manager_destroy(manager);
         if (rc == IB_OK) {
-            TSDebug("ironbee", "Manager destoyed\n");
+            TSDebug("ironbee", "Manager destroyed\n");
             mod_data->manager = NULL;
         }
         else {
-            TSDebug("ironbee", "Manager not destoyed: %s\n",
+            TSDebug("ironbee", "Manager not destroyed: %s\n",
                     ib_status_to_string(rc));
         }
     }
