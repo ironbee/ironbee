@@ -149,7 +149,7 @@ private:
     Info& m_out_info;
 };
 
-TEST_F(TestConfigurationDirectives, Registrar)
+TEST_F(TestConfigurationDirectives, DISABLED_Registrar)
 {
     ib_cfgparser_t* parser = NULL;
     ib_status_t rc;
