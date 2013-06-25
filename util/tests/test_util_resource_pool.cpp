@@ -54,44 +54,18 @@ extern "C" {
         return IB_OK;
     }
 
-    ib_status_t destroy_fn(void *resource, void *data) {
+    void destroy_fn(void *resource, void *data) {
         resource_t *r = reinterpret_cast<resource_t *>(resource);
         ++(r->destroy);
-        return IB_OK;
     }
-    ib_status_t preuse_fn(void *resource, void *data) {
+    void preuse_fn(void *resource, void *data) {
         resource_t *r = reinterpret_cast<resource_t *>(resource);
         ++(r->preuse);
-        return IB_OK;
     }
     ib_status_t postuse_fn(void *resource, void *data) {
         resource_t *r = reinterpret_cast<resource_t *>(resource);
         ++(r->postuse);
-        return IB_OK;
-    }
-
-    struct use_fn_t {
-        ib_status_t  rc;      /**< What does use_fn set rc to. */
-        ib_status_t  user_rc; /**< What is returned by use_fn. */
-        resource_t *resource; /**< Resource we get. */
-    };
-    typedef struct use_fn_t use_fn_t;
-
-    ib_status_t use_fn(
-        ib_resource_t *resource,
-        ib_status_t   *user_rc,
-        void          *cbdata
-    )
-    {
-        use_fn_t *use = reinterpret_cast<use_fn_t *>(cbdata);
-        resource_t *r = reinterpret_cast<resource_t *>(resource->resource);
-
-        *user_rc = use->user_rc;
-
-        ++(r->use);
-        use->resource = r;
-
-        return use->rc;
+        return (r->postuse >= 5)? IB_EINVAL : IB_OK;
     }
 } /* Close extern "C" */
 
@@ -109,7 +83,6 @@ public:
             m_mp,
             1,
             10,
-            5,
             &create_fn,
             cbdata,
             &destroy_fn,
@@ -136,145 +109,90 @@ TEST_F(ResourcePoolTest, create) {
     ASSERT_TRUE(m_rp);
 }
 
-TEST_F(ResourcePoolTest, get_return) {
+TEST_F(ResourcePoolTest, get_release) {
     ib_resource_t *ib_r;
     resource_t *r;
 
-    ASSERT_EQ(IB_OK, ib_resource_get(m_rp, true, &ib_r));
+    ASSERT_EQ(IB_OK, ib_resource_acquire(m_rp, &ib_r));
 
-    r = reinterpret_cast<resource_t *>(ib_r->resource);
+    r = reinterpret_cast<resource_t *>(ib_resource_get(ib_r));
     ASSERT_TRUE(r);
-    ASSERT_EQ(1U, ib_r->use);
+    ASSERT_EQ(1U, ib_resource_use_get(ib_r));
     ASSERT_EQ(1, r->preuse);
     ASSERT_EQ(0, r->use);
     ASSERT_EQ(0, r->postuse);
     ASSERT_EQ(0, r->destroy);
     ++(r->use);
 
-    ASSERT_EQ(IB_OK, ib_resource_return(ib_r));
+    ASSERT_EQ(IB_OK, ib_resource_release(ib_r));
     ASSERT_EQ(1, r->preuse);
     ASSERT_EQ(1, r->use);
     ASSERT_EQ(1, r->postuse);
     ASSERT_EQ(0, r->destroy);
 
-    ASSERT_EQ(IB_OK, ib_resource_get(m_rp, true, &ib_r));
-    ASSERT_EQ(2U, ib_r->use);
-    ASSERT_EQ(IB_OK, ib_resource_return(ib_r));
+    ASSERT_EQ(IB_OK, ib_resource_acquire(m_rp, &ib_r));
+    ASSERT_EQ(2U, ib_resource_use_get(ib_r));
+    ASSERT_EQ(IB_OK, ib_resource_release(ib_r));
     ASSERT_EQ(2, r->preuse);
     ASSERT_EQ(2, r->postuse);
     ASSERT_EQ(0, r->destroy);
 
-    ASSERT_EQ(IB_OK, ib_resource_get(m_rp, true, &ib_r));
-    ASSERT_EQ(3U, ib_r->use);
-    ASSERT_EQ(IB_OK, ib_resource_return(ib_r));
+    ASSERT_EQ(IB_OK, ib_resource_acquire(m_rp, &ib_r));
+    ASSERT_EQ(3U, ib_resource_use_get(ib_r));
+    ASSERT_EQ(IB_OK, ib_resource_release(ib_r));
     ASSERT_EQ(3, r->preuse);
     ASSERT_EQ(3, r->postuse);
     ASSERT_EQ(0, r->destroy);
 
-    ASSERT_EQ(IB_OK, ib_resource_get(m_rp, true, &ib_r));
-    ASSERT_EQ(4U, ib_r->use);
-    ASSERT_EQ(IB_OK, ib_resource_return(ib_r));
+    ASSERT_EQ(IB_OK, ib_resource_acquire(m_rp, &ib_r));
+    ASSERT_EQ(4U, ib_resource_use_get(ib_r));
+    ASSERT_EQ(IB_OK, ib_resource_release(ib_r));
     ASSERT_EQ(4, r->preuse);
     ASSERT_EQ(4, r->postuse);
     ASSERT_EQ(0, r->destroy);
 
-    ASSERT_EQ(IB_OK, ib_resource_get(m_rp, true, &ib_r));
-    ASSERT_EQ(5U, ib_r->use);
-    ASSERT_EQ(IB_OK, ib_resource_return(ib_r));
-    ASSERT_EQ(0U, ib_r->use);
+    /* FIXME - destroy after 5. */
+
+    ASSERT_EQ(IB_OK, ib_resource_acquire(m_rp, &ib_r));
+    ASSERT_EQ(5U, ib_resource_use_get(ib_r));
+    ASSERT_EQ(IB_OK, ib_resource_release(ib_r));
+    ASSERT_EQ(0U, ib_resource_use_get(ib_r));
     ASSERT_EQ(5, r->preuse);
     ASSERT_EQ(5, r->postuse);
     ASSERT_EQ(1, r->destroy);
 
     /* Get an return a resource. This should be no and NOT change r. */
-    ASSERT_EQ(IB_OK, ib_resource_get(m_rp, true, &ib_r));
-    ASSERT_EQ(IB_OK, ib_resource_return(ib_r));
-    ASSERT_EQ(1U, ib_r->use);
+    ASSERT_EQ(IB_OK, ib_resource_acquire(m_rp, &ib_r));
+    ASSERT_EQ(IB_OK, ib_resource_release(ib_r));
+    ASSERT_EQ(1U, ib_resource_use_get(ib_r));
     ASSERT_EQ(5, r->preuse);
     ASSERT_EQ(5, r->postuse);
     ASSERT_EQ(1, r->destroy);
 
     /* Get the new r and check it. */
-    r = reinterpret_cast<resource_t *>(ib_r->resource);
+    r = reinterpret_cast<resource_t *>(ib_resource_get(ib_r));
     ASSERT_EQ(1, r->preuse);
     ASSERT_EQ(0, r->use);
     ASSERT_EQ(1, r->postuse);
     ASSERT_EQ(0, r->destroy);
 }
 
-TEST_F(ResourcePoolTest, use_ok) {
-    /* Set IB_OK and return IB_OK. */
-    use_fn_t use = { IB_OK, IB_OK, NULL };
-    void *cbdata = reinterpret_cast<void *>(&use);
-    ib_status_t rc;
-
-    ASSERT_EQ(IB_OK, ib_resource_use(m_rp, false, use_fn, &rc, cbdata));
-    ASSERT_EQ(IB_OK, rc);
-
-    ASSERT_EQ(1, use.resource->use);
-}
-
-TEST_F(ResourcePoolTest, use_einval) {
-    /* Set IB_OK and return IB_OK. */
-    use_fn_t use;
-    use.rc = IB_OK;
-    use.user_rc = IB_EINVAL;
-    use.resource = NULL;
-    void *cbdata = reinterpret_cast<void *>(&use);
-    ib_status_t rc;
-    ib_resource_t *ib_r;
-    resource_t *r;
-
-    ASSERT_EQ(IB_OK, ib_resource_use(m_rp, false, use_fn, &rc, cbdata));
-    ASSERT_EQ(IB_EINVAL, rc);
-
-    ASSERT_EQ(1, use.resource->use);
-    /* Get the same resource again. */
-    ASSERT_EQ(IB_OK, ib_resource_get(m_rp, true, &ib_r));
-    r = reinterpret_cast<resource_t *>(ib_r->resource);
-    ASSERT_EQ(r, use.resource);
-    ASSERT_EQ(IB_OK, ib_resource_return(ib_r));
-}
-
-TEST_F(ResourcePoolTest, use_corrupted_resource) {
-    /* Set IB_OK and return IB_OK. */
-    use_fn_t use;
-    use.rc = IB_EINVAL;
-    use.user_rc = IB_EOTHER;
-    use.resource = NULL;
-    void *cbdata = reinterpret_cast<void *>(&use);
-    ib_status_t rc;
-    ib_resource_t *ib_r;
-    resource_t *r;
-
-    ASSERT_EQ(IB_EINVAL, ib_resource_use(m_rp, false, use_fn, &rc, cbdata));
-    ASSERT_EQ(IB_EOTHER, rc);
-
-    ASSERT_EQ(1, use.resource->use);
-
-    /* Get a new resource. */
-    ASSERT_EQ(IB_OK, ib_resource_get(m_rp, true, &ib_r));
-    r = reinterpret_cast<resource_t *>(ib_r->resource);
-    ASSERT_NE(r, use.resource);
-    ASSERT_EQ(IB_OK, ib_resource_return(ib_r));
-}
-
 TEST_F(ResourcePoolTest, limit_reached) {
     ib_resource_t *ib_r[11];
 
     for (int i = 0; i < 10; ++i) {
-        ASSERT_EQ(IB_OK, ib_resource_get(m_rp, false, &ib_r[i]));
+        ASSERT_EQ(IB_OK, ib_resource_acquire(m_rp, &ib_r[i]));
     }
 
     /* Fail to get the 11th resource. */
-    ASSERT_EQ(IB_DECLINED, ib_resource_get(m_rp, false, &ib_r[10]));
+    ASSERT_EQ(IB_DECLINED, ib_resource_acquire(m_rp, &ib_r[10]));
 
     /* Return one, and get one. */
-    ASSERT_EQ(IB_OK, ib_resource_return(ib_r[0]));
-    ASSERT_EQ(IB_OK, ib_resource_get(m_rp, false, &ib_r[0]));
+    ASSERT_EQ(IB_OK, ib_resource_release(ib_r[0]));
+    ASSERT_EQ(IB_OK, ib_resource_acquire(m_rp, &ib_r[0]));
 
     /* Return them all. */
     for (int i = 0; i < 10; ++i) {
-        ASSERT_EQ(IB_OK, ib_resource_return(ib_r[i]));
+        ASSERT_EQ(IB_OK, ib_resource_release(ib_r[i]));
     }
 }

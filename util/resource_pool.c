@@ -31,6 +31,55 @@
 #include <unistd.h>
 
 /**
+ * This represents a resource to be managed by an ib_resource_pool_t.
+ */
+struct ib_resource_t {
+    ib_resource_pool_t *owner;    /**< What pool did this come from. */
+    void               *resource; /**< Pointer to the user resource. */
+    size_t              use;      /**< Number of times this has been used. */
+};
+
+/**
+ * A pool of resources.
+ */
+struct ib_resource_pool_t {
+    ib_mpool_t *mp;        /**< Memory pool this pool comes from. */
+    ib_queue_t *resources; /**< List of free ib_resource_t objs. */
+    /**
+     * List of empty @ref ib_resource_t.
+     *
+     * Empty @ref ib_resource_t are pulled from here, if available,
+     * insetad of allocating new ones.
+     */
+    ib_queue_t *free_queue;
+    size_t      count;     /**< Number of created resources. */
+
+    /* Callbacks. */
+    ib_resource_create_fn_t    create_fn;    /**< Create a resource. */
+    void                      *create_data;  /**< Callback data. */
+    ib_resource_destroy_fn_t   destroy_fn;   /**< Destroy a resource. */
+    void                      *destroy_data; /**< Callback data. */
+    ib_resource_preuse_fn_t    preuse_fn;    /**< Pre use callback. */
+    void                      *preuse_data;  /**< Callback data. */
+    ib_resource_postuse_fn_t   postuse_fn;   /**< Post use callback. */
+    void                      *postuse_data; /**< Callback data. */
+
+    /**
+     * The total number of resources should never exceed this value.
+     */
+    const size_t max_count;
+
+    /**
+     * The total number of resource should never drop below this value.
+     *
+     * If a resource being destroyed reduce count below this value,
+     * a new resource is immediately created and inserted into the
+     * free queue.
+     */
+    const size_t min_count;
+};
+
+/**
  * This is registered with the memory pool passed to ib_resource_pool_create.
  *
  * @param[out] data The memory pool created.
@@ -53,12 +102,11 @@ static void ib_resource_pool_destroy(void *data) {
     }
 }
 
-ib_status_t DLL_PUBLIC ib_resource_pool_create(
+ib_status_t ib_resource_pool_create(
     ib_resource_pool_t       **resource_pool,
     ib_mpool_t                *mp,
     size_t                     min_count,
     size_t                     max_count,
-    size_t                     max_use,
     ib_resource_create_fn_t    create_fn,
     void                      *create_data,
     ib_resource_destroy_fn_t   destroy_fn,
@@ -91,7 +139,7 @@ ib_status_t DLL_PUBLIC ib_resource_pool_create(
         return rc;
     }
 
-    rc = ib_queue_create(&(rp->free_list), mp, IB_QUEUE_NONE);
+    rc = ib_queue_create(&(rp->free_queue), mp, IB_QUEUE_NONE);
     if (rc != IB_OK) {
         return rc;
     }
@@ -110,9 +158,10 @@ ib_status_t DLL_PUBLIC ib_resource_pool_create(
 
     /* Assign limits, initialize counters. */
     rp->count     = 0;
-    rp->max_count = max_count;
-    rp->min_count = min_count;
-    rp->max_use   = max_use;
+
+    /* Arcane casting to get around the C constness of {max,min}_count. */
+    *(size_t*)&(rp->max_count) = max_count;
+    *(size_t*)&(rp->min_count) = min_count;
 
     rc = ib_mpool_cleanup_register(mp, ib_resource_pool_destroy, rp);
     if (rc != IB_OK) {
@@ -125,9 +174,8 @@ ib_status_t DLL_PUBLIC ib_resource_pool_create(
     return IB_OK;
 }
 
-ib_status_t DLL_PUBLIC ib_resource_get(
+ib_status_t ib_resource_acquire(
     ib_resource_pool_t *resource_pool,
-    bool block,
     ib_resource_t **resource
 )
 {
@@ -135,70 +183,67 @@ ib_status_t DLL_PUBLIC ib_resource_get(
     assert(resource != NULL);
 
     ib_resource_t *tmp_resource = NULL;
+
     ib_status_t rc;
 
-    for (;;) {
-        /* If there is a free resource, aquire it. */
-        if (ib_queue_size(resource_pool->resources) > 0) {
-            rc = ib_queue_pop_front(
-                resource_pool->resources,
-                (void**)&tmp_resource);
-            if (rc != IB_OK) {
-                goto failure;
-            }
-
-            goto success;
-        }
-        /* If we may create a new resource, do so. */
-        else if (  (resource_pool->max_count == 0) 
-                || (resource_pool->max_count > resource_pool->count) )
-        {
-            void *user_resource = NULL;
-
-            /* It is most likely that resource creation will fail.
-             * Do this first to detect most likely errors fast. */
-            rc = (resource_pool->create_fn)(
-                    &user_resource,
-                    resource_pool->create_data);
-            if (rc != IB_OK) {
-                goto failure;
-            }
-
-            /* Attempt to get an already allocated resource struct. */
-            if (ib_queue_size(resource_pool->free_list) > 0) {
-                rc = ib_queue_pop_front(
-                    resource_pool->free_list,
-                    (void **)(&tmp_resource));
-                if (rc != IB_OK) {
-                    goto failure;
-                }
-            }
-            /* Otherwise, allocate a new one. */
-            else {
-                tmp_resource = ib_mpool_alloc(
-                    resource_pool->mp,
-                    sizeof(*tmp_resource));
-                if (tmp_resource == NULL) {
-                    rc = IB_EALLOC;
-                    goto failure;
-                }
-            }
-
-            tmp_resource->use = 0;
-            tmp_resource->owner = resource_pool;
-            tmp_resource->resource = user_resource;
-
-            ++(resource_pool->count);
-
-            goto success;
-        }
-        /* If we may not wait for the resource, fail w/ IB_DECLINED. */
-        else if (!block) {
-            rc = IB_DECLINED;
+    /* If there is a free resource, acquire it. */
+    if (ib_queue_size(resource_pool->resources) > 0) {
+        rc = ib_queue_pop_front(
+            resource_pool->resources,
+            (void**)&tmp_resource);
+        if (rc != IB_OK) {
             goto failure;
         }
 
-        sleep(1);
+        goto success;
+    }
+    /* If we may create a new resource, do so. */
+    else if (  (resource_pool->max_count == 0) 
+            || (resource_pool->max_count > resource_pool->count) )
+    {
+        void *user_resource = NULL;
+
+        /* It is most likely that resource creation will fail.
+        * Do this first to detect most likely errors fast. */
+        rc = (resource_pool->create_fn)(
+                &user_resource,
+                resource_pool->create_data);
+        if (rc != IB_OK) {
+            goto failure;
+        }
+
+        /* Attempt to get an already allocated resource struct. */
+        if (ib_queue_size(resource_pool->free_queue) > 0) {
+            rc = ib_queue_pop_front(
+                resource_pool->free_queue,
+                (void **)(&tmp_resource));
+            if (rc != IB_OK) {
+                goto failure;
+            }
+        }
+        /* Otherwise, allocate a new one. */
+        else {
+            tmp_resource = ib_mpool_alloc(
+                resource_pool->mp,
+                sizeof(*tmp_resource));
+            if (tmp_resource == NULL) {
+                rc = IB_EALLOC;
+                goto failure;
+            }
+        }
+
+        tmp_resource->use = 0;
+        tmp_resource->owner = resource_pool;
+        tmp_resource->resource = user_resource;
+
+        ++(resource_pool->count);
+
+        goto success;
+    }
+    /* If we may not wait for the resource, fail w/ IB_DECLINED. */
+    else {
+        rc = IB_DECLINED;
+        goto failure;
     }
 
 success:
@@ -215,12 +260,19 @@ success:
     ++(tmp_resource->use);
 
     *resource = tmp_resource;
-    return IB_OK;
+    return rc;
 
 failure:
     return rc;
 }
 
+/**
+ * Destroy the resource @a resource.
+ * @param[in] resource Destroy this resource.
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC If the empty ib_resource_t cannot be put in the free queue.
+ */
 static ib_status_t destroy_resource(
     ib_resource_t *resource
 )
@@ -238,8 +290,8 @@ static ib_status_t destroy_resource(
 
     --(resource->owner->count);
 
-    /* Store the empty resource struct on the free list for reused. */
-    rc = ib_queue_push_back(resource->owner->free_list, resource);
+    /* Store the empty resource struct on the free queue for reused. */
+    rc = ib_queue_push_back(resource->owner->free_queue, resource);
     if (rc != IB_OK) {
         return rc;
     }
@@ -247,66 +299,42 @@ static ib_status_t destroy_resource(
     return IB_OK;
 }
 
-ib_status_t DLL_PUBLIC ib_resource_return(
+ib_status_t ib_resource_release(
     ib_resource_t *resource
 )
 {
     assert(resource != NULL);
     assert(resource->owner != NULL);
 
+    ib_status_t rc;
+
+    /* If a postuse function is defined, handle it. */
     if (resource->owner->postuse_fn != NULL) {
-        (resource->owner->postuse_fn)(
+        rc = (resource->owner->postuse_fn)(
             resource->resource,
             resource->owner->postuse_data);
-    }
 
-    if (resource->use >= resource->owner->max_use) {
-        ib_status_t rc;
-
-        rc = destroy_resource(resource);
-        if (rc != IB_OK) {
-            return rc;
+        /* If the user says that the resource is invalid, destoy it. */
+        if (rc == IB_EINVAL) {
+            return destroy_resource(resource);
         }
     }
-    else {
-        ib_queue_push_back(resource->owner->resources, resource);
-    }
 
+    rc = ib_queue_push_back(resource->owner->resources, resource);
 
-    return IB_OK;
+    return rc;
 }
 
-ib_status_t ib_resource_use(
-    ib_resource_pool_t   *resource_pool,
-    bool                  block,
-    ib_resource_use_fn_t  fn,
-    ib_status_t          *user_rc,
-    void                 *cbdata
-)
+void *ib_resource_get(const ib_resource_t* resource)
 {
-    ib_status_t    rc;
-    ib_resource_t *resource = NULL;
-
-    rc = ib_resource_get(resource_pool, block, &resource);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    *user_rc = IB_OK;
-
-    rc = fn(resource, user_rc, cbdata);
-    if (rc != IB_OK) {
-        destroy_resource(resource);
-        return rc;
-    }
-
-    rc = ib_resource_return(resource);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    return IB_OK;
+    assert(resource != NULL);
+    return resource->resource;
 }
 
+size_t ib_resource_use_get(const ib_resource_t* resource)
+{
+    assert(resource != NULL);
+    return resource->use;
+}
 
 /** @} */
