@@ -217,6 +217,24 @@ static ib_status_t modlua_runtime_set(
     return IB_OK;
 }
 
+static ib_status_t modlua_runtime_clear(ib_conn_t *conn)
+{
+    assert(conn != NULL);
+    assert(conn->ib != NULL);
+
+    ib_status_t rc;
+    ib_module_t *module = NULL;
+
+    rc = ib_engine_module_get(conn->ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    ib_conn_set_module_data(conn, module, NULL);
+
+    return IB_OK;
+}
+
 /**
  * Create a near-empty module structure.
  *
@@ -1941,12 +1959,16 @@ static ib_status_t modlua_module_load_lua(
 }
 
 /**
- * A helper function that reloads the ctx into the lua stack.
+ * A helper function that reloads Lua rules and modules in a context.
  *
  * @param[in] ib IronBee engine.
  * @param[in] module Used to retrieve the configuration.
  * @param[in] ctx The context whose configuration for @a module to retrieve.
  * @param[out] L The stack the configuration will be loaded into.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error. A log message is generated.
  */
 static ib_status_t modlua_reload_ctx(
     ib_engine_t  *ib,
@@ -2876,6 +2898,12 @@ static ib_status_t modlua_conn_fini_lua_runtime(ib_engine_t *ib,
     }
 
     rc = modlua_releasestate(ib, cfg, modlua_rt);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to release Lua runtime back to pool.");
+        return rc;
+    }
+
+    rc = modlua_runtime_clear(conn);
 
     return rc;
 }
@@ -2902,65 +2930,6 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     return IB_OK;
 }
 
-/**
- * @brief Call the rule named @a func_name on a new Lua stack.
- * @details This will atomically create and destroy a lua_State*
- *          allowing for concurrent execution of @a func_name
- *          by a ib_lua_func_eval(ib_engine_t*, ib_txt_t*, const char*).
- *
- * @param[in] tx Current transaction.
- * @param[in] func_name The Lua function name to call.
- * @param[out] result The result integer value. This should be set to
- *             1 (true) or 0 (false).
- *
- * @returns IB_OK on success, IB_EUNKNOWN on semaphore locking error, and
- *          IB_EALLOC is returned if a new execution stack cannot be created.
- */
-static ib_status_t ib_lua_func_eval_r(
-    ib_tx_t *tx,
-    const char *func_name,
-    ib_num_t *result)
-{
-    assert(tx != NULL);
-    assert(tx->ib != NULL);
-    assert(tx->conn != NULL);
-    assert(func_name != NULL);
-    assert(result != NULL);
-
-    ib_status_t rc;
-    ib_engine_t *ib = tx->ib;
-    ib_context_t *ctx = NULL;
-    int result_int;
-    modlua_cfg_t *cfg = NULL;
-    modlua_runtime_t *luart = NULL;
-
-    ctx = (tx->ctx == NULL)?  ib_context_main(ib) : tx->ctx;
-
-    rc = modlua_cfg_get(ib, ctx, &cfg);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = modlua_runtime_get(tx->conn, &luart);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to retrieve Lua stack.");
-        return rc;
-    }
-    assert(luart->L != NULL);
-
-    /* Call the rule in isolation. */
-    rc = ib_lua_func_eval_int(ib, tx, luart->L, func_name, &result_int);
-
-    /* Convert the passed in integer type to an ib_num_t. */
-    *result = result_int;
-
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    return rc;
-}
-
 static ib_status_t lua_operator_create(
     ib_context_t  *ctx,
     const char    *parameters,
@@ -2984,25 +2953,66 @@ static ib_status_t lua_operator_execute(
     void *cbdata
 )
 {
-    ib_status_t ib_rc;
+    assert(tx != NULL);
+    assert(tx->ib != NULL);
+    assert(tx->ctx != NULL);
+    assert(tx->conn != NULL);
+    assert(result != NULL);
+    assert(instance_data != NULL);
+
+    ib_status_t rc;
+    ib_engine_t *ib = tx->ib;
+    ib_context_t *ctx = tx->ctx;
+    ib_module_t *module;
+    int result_int;
+    modlua_cfg_t *cfg = NULL;
+    modlua_runtime_t *luart = NULL;
     const char *func_name = (const char *)instance_data;
 
     ib_log_trace_tx(tx, "Calling lua function %s.", func_name);
 
-    ib_rc = ib_lua_func_eval_r(tx, func_name, result);
+    /* Get the lua module configuration for this context. */
+    rc = modlua_cfg_get(ib, ctx, &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
-    if (ib_rc != IB_OK) {
+    /* Get the module. */
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Failed to retrieve module.");
+        return rc;
+    }
+
+    /* conn_opened has given us a runtime to use. Go get it. */
+    rc = modlua_runtime_get(tx->conn, &luart);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Failed to retrieve Lua stack.");
+        return rc;
+    }
+
+    rc = modlua_reload_ctx_except_main(ib, module, ctx, luart->L);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Failed to reload Lua stack.");
+        return rc;
+    }
+
+    /* Call the rule. */
+    rc = ib_lua_func_eval_int(ib, tx, luart->L, func_name, &result_int);
+    if (rc != IB_OK) {
         ib_log_debug_tx(
             tx,
             "Lua operator %s failed with %s.",
             func_name,
-            ib_status_to_string(ib_rc));
+            ib_status_to_string(rc));
         *result = 0;
+        return rc;
     }
 
-    ib_log_trace_tx(tx,
-                    "Lua function %s=%"PRIu64".", func_name, *result);
+    /* Convert the passed in integer type to an ib_num_t. */
+    *result = result_int;
 
+    ib_log_trace_tx(tx, "Lua function %s=%"PRIu64".", func_name, *result);
 
     return IB_OK;
 }
@@ -3071,7 +3081,7 @@ ib_status_t modlua_rule_driver(
         return rc;
     }
 
-    /* Record the we need to reload this rule in each TX. */
+    /* Record that we need to reload this rule in each TX. */
     rc = modlua_record_reload(
         cp->ib,
         cfg,
@@ -3253,6 +3263,11 @@ static ib_status_t modlua_context_close(
         ib_log_debug(ib, "Releasing configuration Lua stack.");
         modlua_releasestate(ib, cfg, cfg->lua_runtime);
         cfg->lua_runtime = NULL;
+
+        rc = ib_resource_pool_flush(cfg->lua_pool);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     return IB_OK;
