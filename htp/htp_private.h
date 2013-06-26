@@ -208,7 +208,7 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t l
 int htp_parse_cookies_v0(htp_connp_t *connp);
 int htp_parse_authorization(htp_connp_t *connp);
 
-int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
+int htp_tx_urldecode_params_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
 
 bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t *endoffset);
 

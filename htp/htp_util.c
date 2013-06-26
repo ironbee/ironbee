@@ -1116,13 +1116,13 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
  * @param[in] data
  * @return decoded byte
  */
-static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
+static int decode_u_encoding_params(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, unsigned char *data, uint64_t *flags) {
     unsigned int c1 = x2c(data);
     unsigned int c2 = x2c(data + 2);
 
     // Check for overlong usage first.
     if (c1 == 0) {
-        tx->flags |= HTP_URLEN_OVERLONG_U;
+        (*flags) |= HTP_URLEN_OVERLONG_U;
         return c2;
     }
 
@@ -1130,12 +1130,12 @@ static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char 
 
     // Detect half-width and full-width range.
     if ((c1 == 0xff) && (c2 <= 0xef)) {
-        tx->flags |= HTP_URLEN_HALF_FULL_RANGE;
+        (*flags) |= HTP_URLEN_HALF_FULL_RANGE;
     }
 
     // Use best-fit mapping.
-    unsigned char *p = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].bestfit_map;
-    int r = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].bestfit_replacement_byte;
+    unsigned char *p = cfg->decoder_cfgs[ctx].bestfit_map;
+    int r = cfg->decoder_cfgs[ctx].bestfit_replacement_byte;
 
     // TODO Optimize lookup.
 
@@ -1166,10 +1166,10 @@ static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char 
  * @param[in] tx
  * @param[in] path
  */
-int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
-    if (path == NULL) return -1;
+htp_status_t htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
+    if (path == NULL) return HTP_ERROR;
     unsigned char *data = bstr_ptr(path);
-    if (data == NULL) return -1;
+    if (data == NULL) return HTP_ERROR;
 
     size_t len = bstr_len(path);
 
@@ -1278,7 +1278,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
                             if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].nul_encoded_terminates) {
                                 bstr_adjust_len(path, wpos);
-                                return 1;
+                                return HTP_OK;
                             }
                         }
 
@@ -1332,7 +1332,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                 break;
                             default:
                                 // Unknown setting
-                                return -1;
+                                return HTP_ERROR;
                                 break;
                         }
                     }
@@ -1376,7 +1376,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                 if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].nul_raw_terminates) {
                     // Terminate path with a raw NUL byte
                     bstr_adjust_len(path, wpos);
-                    return 1;
+                    return HTP_OK;
                     break;
                 }
             }
@@ -1425,14 +1425,23 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
     bstr_adjust_len(path, wpos);
 
-    return 1;
+    return HTP_OK;
 }
 
-int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
-    if (input == NULL) return -1;
+htp_status_t htp_tx_urldecode_params_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
+    return htp_urldecode_inplace_ex(cfg, HTP_DECODER_URLENCODED, input, &(tx->flags), &(tx->response_status_expected_number));
+}
+
+htp_status_t htp_urldecode_inplace(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, bstr *input, uint64_t *flags) {
+    int expected_status_code = 0;
+    return htp_urldecode_inplace_ex(cfg, ctx, input, flags, &expected_status_code);
+}
+
+htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, bstr *input, uint64_t *flags, int *expected_status_code) {
+    if (input == NULL) return HTP_ERROR;
 
     unsigned char *data = bstr_ptr(input);
-    if (data == NULL) return -1;
+    if (data == NULL) return HTP_ERROR;
     size_t len = bstr_len(input);
 
     size_t rpos = 0;
@@ -1448,13 +1457,13 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                 int handled = 0;
 
                 // Decode %uHHHH encoding, but only if allowed in configuration.
-                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].u_encoding_decode) {
+                if (cfg->decoder_cfgs[ctx].u_encoding_decode) {
                     // The next character must be a case-insensitive u.
                     if ((data[rpos + 1] == 'u') || (data[rpos + 1] == 'U')) {
                         handled = 1;
 
-                        if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].u_encoding_unwanted != HTP_UNWANTED_IGNORE) {
-                            tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].u_encoding_unwanted;
+                        if (cfg->decoder_cfgs[ctx].u_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                            (*expected_status_code) = cfg->decoder_cfgs[ctx].u_encoding_unwanted;
                         }
 
                         // Need at least 5 additional bytes for %uHHHH.
@@ -1462,17 +1471,17 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                             if (isxdigit(data[rpos + 2]) && (isxdigit(data[rpos + 3]))
                                     && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
                                 // Decode a valid %u encoding.
-                                c = decode_u_encoding_params(cfg, tx, &(data[rpos + 2]));
+                                c = decode_u_encoding_params(cfg, ctx, &(data[rpos + 2]), flags);
                                 rpos += 6;
                             } else {
                                 // Invalid %u encoding (could not find 4 xdigits).
-                                tx->flags |= HTP_URLEN_INVALID_ENCODING;
+                                (*flags) |= HTP_URLEN_INVALID_ENCODING;
 
-                                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
-                                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted;
+                                if (cfg->decoder_cfgs[ctx].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                                    (*expected_status_code) = cfg->decoder_cfgs[ctx].url_encoding_invalid_unwanted;
                                 }
 
-                                switch (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_handling) {
+                                switch (cfg->decoder_cfgs[ctx].url_encoding_invalid_handling) {
                                     case HTP_URL_DECODE_REMOVE_PERCENT:
                                         // Do not place anything in output; consume the %.
                                         rpos++;
@@ -1484,20 +1493,20 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                         break;
                                     case HTP_URL_DECODE_PROCESS_INVALID:
                                         // Decode invalid %u encoding.
-                                        c = decode_u_encoding_params(cfg, tx, &(data[rpos + 2]));
+                                        c = decode_u_encoding_params(cfg, ctx, &(data[rpos + 2]), flags);
                                         rpos += 6;
                                         break;
                                 }
                             }
                         } else {
                             // Invalid %u encoding; not enough data.
-                            tx->flags |= HTP_URLEN_INVALID_ENCODING;
+                            (*flags) |= HTP_URLEN_INVALID_ENCODING;
 
-                            if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
-                                tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted;
+                            if (cfg->decoder_cfgs[ctx].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                                (*expected_status_code) = cfg->decoder_cfgs[ctx].url_encoding_invalid_unwanted;
                             }
 
-                            switch (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_handling) {
+                            switch (cfg->decoder_cfgs[ctx].url_encoding_invalid_handling) {
                                 case HTP_URL_DECODE_REMOVE_PERCENT:
                                     // Do not place anything in output; consume the %.
                                     rpos++;
@@ -1527,13 +1536,13 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                         rpos += 3;
                     } else {
                         // Invalid encoding (enough bytes, but not hexadecimal digits).
-                        tx->flags |= HTP_URLEN_INVALID_ENCODING;
+                        (*flags) |= HTP_URLEN_INVALID_ENCODING;
 
-                        if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
-                            tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted;
+                        if (cfg->decoder_cfgs[ctx].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                            (*expected_status_code) = cfg->decoder_cfgs[ctx].url_encoding_invalid_unwanted;
                         }
 
-                        switch (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_handling) {
+                        switch (cfg->decoder_cfgs[ctx].url_encoding_invalid_handling) {
                             case HTP_URL_DECODE_REMOVE_PERCENT:
                                 // Do not place anything in output; consume the %.
                                 rpos++;
@@ -1553,13 +1562,13 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                 }
             } else {
                 // Invalid encoding; not enough data (at least 2 bytes required).
-                tx->flags |= HTP_URLEN_INVALID_ENCODING;
+                (*flags) |= HTP_URLEN_INVALID_ENCODING;
 
-                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
-                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_unwanted;
+                if (cfg->decoder_cfgs[ctx].url_encoding_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                    (*expected_status_code) = cfg->decoder_cfgs[ctx].url_encoding_invalid_unwanted;
                 }
 
-                switch (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].url_encoding_invalid_handling) {
+                switch (cfg->decoder_cfgs[ctx].url_encoding_invalid_handling) {
                     case HTP_URL_DECODE_REMOVE_PERCENT:
                         // Do not place anything in output; consume the %.
                         rpos++;
@@ -1580,11 +1589,13 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
             // Did we get an encoded NUL byte?
             if (c == 0) {
-                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
-                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_encoded_unwanted;
+                if (cfg->decoder_cfgs[ctx].nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
+                    (*expected_status_code) = cfg->decoder_cfgs[ctx].nul_encoded_unwanted;
                 }
 
-                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_encoded_terminates) {
+                (*flags) |= HTP_URLEN_ENCODED_NUL;
+
+                if (cfg->decoder_cfgs[ctx].nul_encoded_terminates) {
                     // Terminate the path at the raw NUL byte.
                     bstr_adjust_len(input, wpos);
                     return 1;
@@ -1602,14 +1613,16 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
             // Did we get a raw NUL byte?
             if (c == 0) {
-                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_raw_unwanted != HTP_UNWANTED_IGNORE) {
-                    tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_raw_unwanted;
+                if (cfg->decoder_cfgs[ctx].nul_raw_unwanted != HTP_UNWANTED_IGNORE) {
+                    (*expected_status_code) = cfg->decoder_cfgs[ctx].nul_raw_unwanted;
                 }
 
-                if (cfg->decoder_cfgs[HTP_DECODER_URLENCODED].nul_raw_terminates) {
+                (*flags) |= HTP_URLEN_RAW_NUL;
+
+                if (cfg->decoder_cfgs[ctx].nul_raw_terminates) {
                     // Terminate the path at the encoded NUL byte.
                     bstr_adjust_len(input, wpos);
-                    return 1;
+                    return HTP_OK;
                 }
             }
 
@@ -1619,7 +1632,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
     bstr_adjust_len(input, wpos);
 
-    return 1;
+    return HTP_OK;
 }
 
 /**
