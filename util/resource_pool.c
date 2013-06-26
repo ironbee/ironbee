@@ -167,6 +167,39 @@ static ib_status_t create_resource(
     return IB_OK;
 }
 
+/**
+ * Ensure that @a resource_pool has the minimum number of resources.
+ *
+ * @param[in] resource_pool The resource pool.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
+ * - Other on user function failures.
+ */
+static ib_status_t fill_to_min(
+    ib_resource_pool_t *resource_pool
+)
+{
+    assert(resource_pool != NULL);
+
+    /* Pre-create the minimum number of items. */
+    while (resource_pool->min_count > resource_pool->count) {
+        ib_resource_t *r;
+        ib_status_t rc;
+        rc = create_resource(resource_pool, &r);
+        if (rc != IB_OK) {
+            return rc;
+        }
+        rc = ib_queue_push_back(resource_pool->resources, r);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    return IB_OK;
+}
+
 ib_status_t ib_resource_pool_create(
     ib_resource_pool_t       **resource_pool,
     ib_mpool_t                *mp,
@@ -233,17 +266,9 @@ ib_status_t ib_resource_pool_create(
         return rc;
     }
 
-    /* Pre-create the minimum number of items. */
-    while (rp->min_count > rp->count) {
-        ib_resource_t *r;
-        rc = create_resource(rp, &r);
-        if (rc != IB_OK) {
-            return rc;
-        }
-        rc = ib_queue_push_back(rp->resources, r);
-        if (rc != IB_OK) {
-            return rc;
-        }
+    rc = fill_to_min(rp);
+    if (rc != IB_OK) {
+        return rc;
     }
 
     /* Return to user and report OK. */
@@ -380,6 +405,35 @@ size_t ib_resource_use_get(const ib_resource_t* resource)
 {
     assert(resource != NULL);
     return resource->use;
+}
+
+ib_status_t ib_resource_pool_flush(
+    ib_resource_pool_t *resource_pool
+)
+{
+    assert(resource_pool != NULL);
+
+    ib_status_t rc;
+
+    /* Destroy all the resources. */
+    while (resource_pool->count > 0) {
+        ib_resource_t *r;
+
+        rc = ib_queue_pop_front(resource_pool->resources, (void**)&r);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        destroy_resource(r);
+    }
+
+    /* Fill to the minimum. */
+    rc = fill_to_min(resource_pool);
+    if (rc != IB_OK) {
+        return rc;
+    }
+        
+    return IB_OK;
 }
 
 /** @} */

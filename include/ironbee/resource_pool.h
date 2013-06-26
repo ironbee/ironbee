@@ -184,6 +184,20 @@ ib_status_t DLL_PUBLIC ib_resource_release(
 );
 
 /**
+ * Destroy all elements in the pool and re-fill it to the minimum value.
+ *
+ * @param[in] resource_pool The resource pool
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC Allocation failures.
+ * - Other if the user create function fails when refilling the pool.
+ */
+ib_status_t DLL_PUBLIC ib_resource_pool_flush(
+    ib_resource_pool_t *resource_pool
+);
+
+/**
  * Get the user's resource from a @ref ib_resource_t.
  */
 void DLL_PUBLIC *ib_resource_get(
