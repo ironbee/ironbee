@@ -164,7 +164,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     const char* op_name = "test_module_rules_lua.lua";
     const char* rule_name = "luarule001";
 
-    char* str1 = (char *) ib_mpool_strdup(ib_engine->mp, "string 1");
+    char* str1 = (char *)ib_mpool_strdup(ib_engine->mp, "string 1");
     ASSERT_TRUE(str1);
 
     // Create field 1.
@@ -187,7 +187,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     );
 
     ASSERT_EQ(IB_OK, ib_operator_inst_create(op,
-                                             NULL,
+                                             ib_context_main(ib_engine),
                                              IB_OP_CAPABILITY_NON_STREAM,
                                              rule_name,
                                              &instance_data));
