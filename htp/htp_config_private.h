@@ -60,6 +60,9 @@ typedef struct htp_decoder_cfg_t {
 
     /** Should we URL-decode encoded path segment separators? */
     int path_separators_decode;
+
+    /** Should we decode '+' characters to spaces? */
+    int plusspace_decode;
     
     /** Reaction to encoded path separators. */
     enum htp_unwanted_t path_separators_encoded_unwanted;

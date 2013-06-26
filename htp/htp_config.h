@@ -528,6 +528,17 @@ void htp_config_set_path_separators_decode(htp_cfg_t *cfg, enum htp_decoder_ctx_
 void htp_config_set_path_separators_encoded_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
 
 /**
+ * Configures whether plus characters are converted to spaces when decoding URL-encoded strings. This
+ * is appropriate to do for parameters, but not for URLs. Only applies to contexts where decoding
+ * is taking place.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] enabled
+ */
+void htp_config_set_plusspace_decode(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
+
+/**
  * Controls whether compressed response bodies will be automatically decompressed.
  *
  * @param[in] cfg

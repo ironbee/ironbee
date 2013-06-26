@@ -1604,13 +1604,17 @@ htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx
 
             data[wpos++] = c;
         } else if (c == '+') {
-            c = 0x20;
+            // Decoding of the plus character is conditional on the configuration.
+            
+            if (cfg->decoder_cfgs[ctx].plusspace_decode) {
+                c = 0x20;
+            }
+
             rpos++;
             data[wpos++] = c;
         } else {
             // One non-encoded byte.
-            rpos++;
-
+            
             // Did we get a raw NUL byte?
             if (c == 0) {
                 if (cfg->decoder_cfgs[ctx].nul_raw_unwanted != HTP_UNWANTED_IGNORE) {
@@ -1626,6 +1630,7 @@ htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx
                 }
             }
 
+            rpos++;
             data[wpos++] = c;
         }
     }
