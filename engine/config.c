@@ -541,13 +541,13 @@ static ib_status_t cfgparser_apply_node_helper(
                 if (tmp_node->type == IB_CFGPARSER_NODE_ROOT) {
                     ib_log_debug(
                         ib,
-                        "  included from [root]:%zd",
+                        "    included from [root]:%zd",
                         tmp_node->line);
                 }
                 if (tmp_node->type == IB_CFGPARSER_NODE_FILE) {
                     ib_log_debug(
                         ib,
-                        "  included from %s:%zd",
+                        "    included from %s:%zd",
                         tmp_node->file,
                         tmp_node->line);
                 }
