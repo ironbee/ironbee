@@ -1166,12 +1166,14 @@ static int decode_u_encoding_params(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, 
  * @param[in] tx
  * @param[in] path
  */
-htp_status_t htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
+htp_status_t htp_decode_path_inplace(htp_tx_t *tx, bstr *path) {
     if (path == NULL) return HTP_ERROR;
     unsigned char *data = bstr_ptr(path);
     if (data == NULL) return HTP_ERROR;
 
     size_t len = bstr_len(path);
+
+    htp_cfg_t *cfg = tx->cfg;
 
     size_t rpos = 0;
     size_t wpos = 0;
@@ -1428,8 +1430,13 @@ htp_status_t htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_urldecode_params_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
-    return htp_urldecode_inplace_ex(cfg, HTP_DECODER_URLENCODED, input, &(tx->flags), &(tx->response_status_expected_number));
+htp_status_t htp_tx_urldecode_uri_inplace(htp_tx_t *tx, bstr *input) {
+    // XXX Convert flags.
+    return htp_urldecode_inplace_ex(tx->cfg, HTP_DECODER_URL_PATH, input, &(tx->flags), &(tx->response_status_expected_number));
+}
+
+htp_status_t htp_tx_urldecode_params_inplace(htp_tx_t *tx, bstr *input) {
+    return htp_urldecode_inplace_ex(tx->cfg, HTP_DECODER_URLENCODED, input, &(tx->flags), &(tx->response_status_expected_number));
 }
 
 htp_status_t htp_urldecode_inplace(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, bstr *input, uint64_t *flags) {
@@ -1648,7 +1655,7 @@ htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx
  * @param[in] normalized
  * @return HTP_OK or HTP_ERROR
  */
-int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_t *normalized) {
+int htp_normalize_parsed_uri(htp_tx_t *tx, htp_uri_t *incomplete, htp_uri_t *normalized) {
     // Scheme.
     if (incomplete->scheme != NULL) {
         // Duplicate and convert to lowercase.
@@ -1660,14 +1667,14 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     if (incomplete->username != NULL) {
         normalized->username = bstr_dup(incomplete->username);
         if (normalized->username == NULL) return HTP_ERROR;
-        htp_uriencoding_normalize_inplace(normalized->username);
+        htp_tx_urldecode_uri_inplace(tx, normalized->username);
     }
 
     // Password.
     if (incomplete->password != NULL) {
         normalized->password = bstr_dup(incomplete->password);
         if (normalized->password == NULL) return HTP_ERROR;
-        htp_uriencoding_normalize_inplace(normalized->password);
+        htp_tx_urldecode_uri_inplace(tx, normalized->password);
     }
 
     // Hostname.
@@ -1676,7 +1683,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         // port information, so no need to check for it here.
         normalized->hostname = bstr_dup(incomplete->hostname);
         if (normalized->hostname == NULL) return HTP_ERROR;
-        htp_uriencoding_normalize_inplace(normalized->hostname);
+        htp_tx_urldecode_uri_inplace(tx, normalized->hostname);
         htp_normalize_hostname_inplace(normalized->hostname);
     }
 
@@ -1688,14 +1695,14 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         if (port_parsed < 0) {
             // Failed to parse the port number.
             normalized->port_number = -1;
-            connp->in_tx->flags |= HTP_HOSTU_INVALID;
+            tx->flags |= HTP_HOSTU_INVALID;
         } else if ((port_parsed > 0) && (port_parsed < 65536)) {
             // Valid port number.
             normalized->port_number = (int) port_parsed;
         } else {
             // Port number out of range.
             normalized->port_number = -1;
-            connp->in_tx->flags |= HTP_HOSTU_INVALID;
+            tx->flags |= HTP_HOSTU_INVALID;
         }
     } else {
         normalized->port_number = -1;
@@ -1709,15 +1716,15 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
 
         // Decode URL-encoded (and %u-encoded) characters, as well as lowercase,
         // compress separators and convert backslashes.
-        htp_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
+        htp_decode_path_inplace(tx, normalized->path);
 
         // Handle UTF-8 in the path.
-        if (connp->cfg->decoder_cfgs[HTP_DECODER_URL_PATH].utf8_convert_bestfit) {
+        if (tx->cfg->decoder_cfgs[HTP_DECODER_URL_PATH].utf8_convert_bestfit) {
             // Decode Unicode characters into a single-byte stream, using best-fit mapping.
-            htp_utf8_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
+            htp_utf8_decode_path_inplace(tx->cfg, tx, normalized->path);
         } else {
             // No decoding, but try to validate the path as a UTF-8 stream.
-            htp_utf8_validate_path(connp->in_tx, normalized->path);
+            htp_utf8_validate_path(tx, normalized->path);
         }
 
         // RFC normalization.
@@ -1728,14 +1735,13 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     if (incomplete->query != NULL) {
         normalized->query = bstr_dup(incomplete->query);
         if (normalized->query == NULL) return HTP_ERROR;
-        // No URL-decoding can be done without loss of information.
     }
 
     // Fragment.
     if (incomplete->fragment != NULL) {
         normalized->fragment = bstr_dup(incomplete->fragment);
         if (normalized->fragment == NULL) return HTP_ERROR;
-        htp_uriencoding_normalize_inplace(normalized->fragment);
+        htp_tx_urldecode_uri_inplace(tx, normalized->fragment);
     }
 
     return HTP_OK;
@@ -1831,6 +1837,7 @@ int htp_is_uri_unreserved(unsigned char c) {
     }
 }
 
+#if 0
 /**
  * Decode a URL-encoded string, leaving the reserved
  * characters and invalid encodings alone.
@@ -1888,6 +1895,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
 
     bstr_adjust_len(s, wpos);
 }
+#endif
 
 /**
  * Normalize URL path. This function implements the remove dot segments algorithm
