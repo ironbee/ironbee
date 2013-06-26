@@ -149,7 +149,7 @@ private:
     Info& m_out_info;
 };
 
-TEST_F(TestConfigurationDirectives, DISABLED_Registrar)
+TEST_F(TestConfigurationDirectives, Registrar)
 {
     ib_cfgparser_t* parser = NULL;
     ib_status_t rc;
@@ -178,16 +178,16 @@ TEST_F(TestConfigurationDirectives, DISABLED_Registrar)
     R.op_flags("OpFlags", handler, value_map);
 
     info = Info();
-    P.parse_buffer("Param1 HelloWorld\n", true);
-    ib_cfgparser_apply(P.ib(), m_engine.ib());
+    P.parse_buffer("Param1 HelloWorld\n", false);
+    ASSERT_EQ(IB_OK, ib_cfgparser_apply(P.ib(), m_engine.ib()));
     EXPECT_EQ(1,            info.which);
     EXPECT_EQ(P,            info.parser);
     EXPECT_EQ("Param1",     info.name);
     EXPECT_EQ("HelloWorld", info.param1);
 
     info = Info();
-    P.parse_buffer("Param2 Foo Bar\n", true);
-    ib_cfgparser_apply(P.ib(), m_engine.ib());
+    P.parse_buffer("Param2 Foo Bar\n", false);
+    ASSERT_EQ(IB_OK, ib_cfgparser_apply(P.ib(), m_engine.ib()));
     EXPECT_EQ(2,        info.which);
     EXPECT_EQ(P,        info.parser);
     EXPECT_EQ("Param2", info.name);
@@ -196,8 +196,8 @@ TEST_F(TestConfigurationDirectives, DISABLED_Registrar)
 
     info = Info();
     info2 = Info();
-    P.parse_buffer("<Block Foo>\n</Block>\n", true);
-    ib_cfgparser_apply(P.ib(), m_engine.ib());
+    P.parse_buffer("<Block Foo>\n</Block>\n", false);
+    ASSERT_EQ(IB_OK, ib_cfgparser_apply(P.ib(), m_engine.ib()));
     EXPECT_EQ(1,       info.which);
     EXPECT_EQ(P,       info.parser);
     EXPECT_EQ("Block", info.name);
@@ -207,24 +207,24 @@ TEST_F(TestConfigurationDirectives, DISABLED_Registrar)
     EXPECT_EQ("Block", info2.name);
 
     info = Info();
-    P.parse_buffer("OnOff true\n", true);
-    ib_cfgparser_apply(P.ib(), m_engine.ib());
+    P.parse_buffer("OnOff true\n", false);
+    ASSERT_EQ(IB_OK, ib_cfgparser_apply(P.ib(), m_engine.ib()));
     EXPECT_EQ(4,       info.which);
     EXPECT_EQ(P,       info.parser);
     EXPECT_EQ("OnOff", info.name);
     EXPECT_TRUE(info.on);
 
     info = Info();
-    P.parse_buffer("OnOff false\n", true);
-    ib_cfgparser_apply(P.ib(), m_engine.ib());
+    P.parse_buffer("OnOff false\n", false);
+    ASSERT_EQ(IB_OK, ib_cfgparser_apply(P.ib(), m_engine.ib()));
     EXPECT_EQ(4,       info.which);
     EXPECT_EQ(P,       info.parser);
     EXPECT_EQ("OnOff", info.name);
     EXPECT_FALSE(info.on);    info = Info();
 
     info = Info();
-    P.parse_buffer("List a b c d\n", true);
-    ib_cfgparser_apply(P.ib(), m_engine.ib());
+    P.parse_buffer("List a b c d\n", false);
+    ASSERT_EQ(IB_OK, ib_cfgparser_apply(P.ib(), m_engine.ib()));
     EXPECT_EQ(5,      info.which);
     EXPECT_EQ(P,      info.parser);
     EXPECT_EQ("List", info.name);
@@ -235,8 +235,8 @@ TEST_F(TestConfigurationDirectives, DISABLED_Registrar)
     EXPECT_EQ("d",    info.nparam[3]);
 
     info = Info();
-    P.parse_buffer("OpFlags +a -b\n", true);
-    ib_cfgparser_apply(P.ib(), m_engine.ib());
+    P.parse_buffer("OpFlags +a -b\n", false);
+    ASSERT_EQ(IB_OK, ib_cfgparser_apply(P.ib(), m_engine.ib()));
     EXPECT_EQ(6,         info.which);
     EXPECT_EQ(P,         info.parser);
     EXPECT_EQ("OpFlags", info.name);
