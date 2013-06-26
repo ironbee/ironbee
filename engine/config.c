@@ -833,7 +833,8 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 rc = IB_EINVAL;
                 break;
             }
-            ib_list_shift(args, &p1);
+            p1 = (const char *)ib_list_node_data_const(
+                ib_list_first_const(args));
             if (   (strcasecmp("on", p1) == 0)
                 || (strcasecmp("yes", p1) == 0)
                 || (strcasecmp("true", p1) == 0))
@@ -853,7 +854,8 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 rc = IB_EINVAL;
                 break;
             }
-            ib_list_shift(args, &p1);
+            p1 = (const char *)ib_list_node_data_const(
+                ib_list_first_const(args));
             rc = rec->cb.fn_param1(cp, name, p1, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_PARAM2:
@@ -865,8 +867,10 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 rc = IB_EINVAL;
                 break;
             }
-            ib_list_shift(args, &p1);
-            ib_list_shift(args, &p2);
+            p1 = (const char *)ib_list_node_data_const(
+                ib_list_first_const(args));
+            p2 = (const char *)ib_list_node_data_const(
+                ib_list_last_const(args));
             rc = rec->cb.fn_param2(cp, name, p1, p2, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_LIST:
@@ -895,7 +899,8 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 rc = IB_EINVAL;
                 break;
             }
-            ib_list_shift(args, &p1);
+            p1 = (const char *)ib_list_node_data_const(
+                ib_list_first_const(args));
             rc = rec->cb.fn_sblk1(cp, name, p1, rec->cbdata_cb);
             break;
     }
