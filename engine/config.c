@@ -379,7 +379,7 @@ ib_status_t ib_cfgparser_parse_buffer(
 
     ib_cfg_log_debug(cp, "Passing \"%.*s\" to Ragel", (int)length, buffer);
 
-    rc = ib_cfgparser_ragel_parse_chunk(cp, buffer, length, (more ? 1 : 0) );
+    rc = ib_cfgparser_ragel_parse_chunk(cp, buffer, length, (more ? 0 : 1) );
 
     if (!more) {
         /* Reset the parser. */
