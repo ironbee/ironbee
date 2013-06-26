@@ -102,6 +102,71 @@ static void ib_resource_pool_destroy(void *data) {
     }
 }
 
+/**
+ * Create a new resource, always.
+ *
+ * Both ib_resource_pool_create() and ib_resource_acquire()
+ * may create new @ref ib_resource_t. This function isolates that
+ * common code.
+ *
+ * @returns 
+ * - IB_OK On success.
+ * - IB_DECLINED If the max limit is reached.
+ * - IB_EALLOC If an allocation error occures.
+ * - Other from the user create function.
+ */
+static ib_status_t create_resource(
+    ib_resource_pool_t *resource_pool,
+    ib_resource_t **resource
+)
+{
+    assert(resource_pool != NULL);
+    assert(resource != NULL);
+
+    ib_resource_t *tmp_resource = NULL;
+    ib_status_t rc;
+
+    void *user_resource = NULL;
+
+    /* It is most likely that resource creation will fail.
+    * Do this first to detect most likely errors fast. */
+    rc = (resource_pool->create_fn)(
+            &user_resource,
+            resource_pool->create_data);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Attempt to get an already allocated resource struct. */
+    if (ib_queue_size(resource_pool->free_queue) > 0) {
+        rc = ib_queue_pop_front(
+            resource_pool->free_queue,
+            (void **)(&tmp_resource));
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+    /* Otherwise, allocate a new one. */
+    else {
+        tmp_resource = ib_mpool_alloc(
+            resource_pool->mp,
+            sizeof(*tmp_resource));
+        if (tmp_resource == NULL) {
+            return IB_EALLOC;
+        }
+    }
+
+    tmp_resource->use = 0;
+    tmp_resource->owner = resource_pool;
+    tmp_resource->resource = user_resource;
+
+    ++(resource_pool->count);
+
+    *resource = tmp_resource;
+
+    return IB_OK;
+}
+
 ib_status_t ib_resource_pool_create(
     ib_resource_pool_t       **resource_pool,
     ib_mpool_t                *mp,
@@ -168,6 +233,19 @@ ib_status_t ib_resource_pool_create(
         return rc;
     }
 
+    /* Pre-create the minimum number of items. */
+    while (rp->min_count > rp->count) {
+        ib_resource_t *r;
+        rc = create_resource(rp, &r);
+        if (rc != IB_OK) {
+            return rc;
+        }
+        rc = ib_queue_push_back(rp->resources, r);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     /* Return to user and report OK. */
     *resource_pool = rp;
 
@@ -183,7 +261,6 @@ ib_status_t ib_resource_acquire(
     assert(resource != NULL);
 
     ib_resource_t *tmp_resource = NULL;
-
     ib_status_t rc;
 
     /* If there is a free resource, acquire it. */
@@ -201,42 +278,10 @@ ib_status_t ib_resource_acquire(
     else if (  (resource_pool->max_count == 0) 
             || (resource_pool->max_count > resource_pool->count) )
     {
-        void *user_resource = NULL;
-
-        /* It is most likely that resource creation will fail.
-        * Do this first to detect most likely errors fast. */
-        rc = (resource_pool->create_fn)(
-                &user_resource,
-                resource_pool->create_data);
+        rc = create_resource(resource_pool, &tmp_resource);
         if (rc != IB_OK) {
             goto failure;
         }
-
-        /* Attempt to get an already allocated resource struct. */
-        if (ib_queue_size(resource_pool->free_queue) > 0) {
-            rc = ib_queue_pop_front(
-                resource_pool->free_queue,
-                (void **)(&tmp_resource));
-            if (rc != IB_OK) {
-                goto failure;
-            }
-        }
-        /* Otherwise, allocate a new one. */
-        else {
-            tmp_resource = ib_mpool_alloc(
-                resource_pool->mp,
-                sizeof(*tmp_resource));
-            if (tmp_resource == NULL) {
-                rc = IB_EALLOC;
-                goto failure;
-            }
-        }
-
-        tmp_resource->use = 0;
-        tmp_resource->owner = resource_pool;
-        tmp_resource->resource = user_resource;
-
-        ++(resource_pool->count);
 
         goto success;
     }
