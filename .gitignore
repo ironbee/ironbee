@@ -27,8 +27,9 @@ aclocal.m4
 /config.log
 /config.status
 /config.cache
-config.guess
-config.sub
+/build/config.guess
+/build/config.sub
+/build/config.rpath
 /configure.in
 /configure
 libtool
@@ -44,7 +45,8 @@ Makefile.in
 /autom4te.cache/
 .deps/
 .libs/
-/build/config.rpath
+test-driver
+compile
 
 # Build Generated files:
 /ironbeepp/tests/**details.xml
@@ -85,4 +87,3 @@ Makefile.in
 /ironbeepp/tests/test_throw
 /modules/user_agent
 /tests/test_config
-test-driver
