@@ -251,7 +251,7 @@ public:
     ValueList eval(EvalContext context);
 
     //! Reset to no values and unfinished for this thread.
-    void reset();
+    virtual void reset();
 
     /**
      * Perform pre-transformation validations.
