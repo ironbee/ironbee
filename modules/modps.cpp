@@ -37,8 +37,8 @@
 #include "parser_suite.hpp"
 
 #include <boost/assign.hpp>
-#include <boost/bind/protect.hpp>
 #include <boost/bind.hpp>
+#include <boost/bind/protect.hpp>
 #include <boost/function.hpp>
 
 using namespace std;

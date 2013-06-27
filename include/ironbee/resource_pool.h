@@ -26,9 +26,8 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/types.h>
-
 #include <ironbee/queue.h>
+#include <ironbee/types.h>
 
 #include <stdbool.h>
 
