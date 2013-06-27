@@ -21,6 +21,7 @@ check_PROGRAMS = \
 	test_validate_graph
 
 EXTRA_TEST = parse_fixture.hpp
+EXTRA_TEST = parse_fixture.hpp standard_test.hpp
 
 TESTS = $(check_PROGRAMS)
 
