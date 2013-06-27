@@ -16,17 +16,18 @@ check_PROGRAMS = \
 	test_merge_graph \
 	test_parse \
 	test_standard \
+	test_standard_boolean \
 	test_transform_graph \
 	test_validate \
 	test_validate_graph
 
-EXTRA_TEST = parse_fixture.hpp
 EXTRA_TEST = parse_fixture.hpp standard_test.hpp
 
 TESTS = $(check_PROGRAMS)
 
 test_dag_SOURCES = test_dag.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_SOURCES = test_standard.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
+test_standard_boolean_SOURCES = test_standard_boolean.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_call_factory_SOURCES = test_call_factory.cpp
 test_parse_SOURCES = test_parse.cpp
 test_bfs_SOURCES = test_bfs.cpp
