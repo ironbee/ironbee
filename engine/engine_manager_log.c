@@ -123,7 +123,7 @@ void ib_engine_manager_logger(
     log_buf = malloc(log_buf_size);
     if (log_buf == NULL) {
         manager->log_buf_fn(level, manager->log_cbdata,
-                           "Failed to allocate message format buffer");
+                            "Failed to allocate message format buffer");
         goto cleanup;
     }
 

@@ -300,8 +300,8 @@ ib_status_t ib_resource_acquire(
         goto success;
     }
     /* If we may create a new resource, do so. */
-    else if (  (resource_pool->max_count == 0)
-            || (resource_pool->max_count > resource_pool->count) )
+    else if (   (resource_pool->max_count == 0)
+             || (resource_pool->max_count > resource_pool->count) )
     {
         rc = create_resource(resource_pool, &tmp_resource);
         if (rc != IB_OK) {
