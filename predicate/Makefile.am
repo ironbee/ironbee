@@ -14,6 +14,7 @@ libpredicate_la_SOURCES = \
     call_factory.cpp \
     parse.cpp \
     standard.cpp \
+    standard_boolean.cpp \
     dot.cpp \
     bfs.cpp \
     meta_call.cpp \
@@ -39,6 +40,7 @@ EXTRA_DIST = \
 		pre_eval_graph.hpp      \
 		reporter.hpp            \
 		standard.hpp            \
+		standard_boolean.hpp    \
 		transform_graph.hpp     \
 		validate.hpp            \
 		validate_graph.hpp

@@ -23,6 +23,7 @@
  */
 
 #include <predicate/standard.hpp>
+#include <predicate/standard_boolean.hpp>
 #include <predicate/merge_graph.hpp>
 
 #include <ironbeepp/operator.hpp>
@@ -56,226 +57,38 @@ Value simple_value(const node_cp& node)
             )
         );
     }
-string Or::name() const
-{
-    return "or";
-}
-
-Value Or::calculate(EvalContext context)
-{
-    assert(children().size() >= 2);
-    BOOST_FOREACH(const node_p& child, children()) {
-        if (child->eval(context)) {
-            // We are true.
-            return True().eval(context);
-        }
-    }
-    return False().eval(context);
-}
-
-bool Or::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
-{
-    node_p me = shared_from_this();
-    bool result = false;
-
-    node_list_t to_remove;
-    BOOST_FOREACH(const node_p& child, children()) {
-        if (child->is_literal()) {
-            if (child->eval(EvalContext())) {
-                node_p replacement = c_true;
-                merge_graph.replace(me, replacement);
-                return true;
-            }
-            else {
-                to_remove.push_back(child);
-            }
-        }
+    if (node->values().size() > 1) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Asked for simple values of non-simple node."
+            )
+        );
     }
 
-    BOOST_FOREACH(const node_p& child, to_remove) {
-        result = true;
-        merge_graph.remove(me, child);
-    }
-
-    if (children().size() == 1) {
-        node_p replacement = children().front();
-        merge_graph.replace(me, replacement);
-        return true;
-    }
-
-    if (children().size() == 0) {
-        node_p replacement = c_false;
-        merge_graph.replace(me, replacement);
-        return true;
-    }
-
-    return
-        AbelianCall::transform(merge_graph, call_factory, reporter) ||
-        result;
-
-}
-
-string And::name() const
-{
-    return "and";
-}
-
-Value And::calculate(EvalContext context)
-{
-    assert(children().size() >= 2);
-    BOOST_FOREACH(const node_p& child, children()) {
-        if (! child->eval(context)) {
-            // We are false.
-            return False().eval(context);
-        }
-    }
-    return True().eval(context);
-}
-
-bool And::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
-{
-    node_p me = shared_from_this();
-    bool result = false;
-
-    node_list_t to_remove;
-    BOOST_FOREACH(const node_p& child, children()) {
-        if (child->is_literal()) {
-            if (! child->eval(EvalContext())) {
-                node_p replacement = c_false;
-                merge_graph.replace(me, replacement);
-                return true;
-            }
-            else {
-                to_remove.push_back(child);
-            }
-        }
-    }
-
-    BOOST_FOREACH(const node_p& child, to_remove) {
-        result = true;
-        merge_graph.remove(me, child);
-    }
-
-    if (children().size() == 1) {
-        node_p replacement = children().front();
-        merge_graph.replace(me, replacement);
-        return true;
-    }
-
-    if (children().size() == 0) {
-        node_p replacement = c_true;
-        merge_graph.replace(me, replacement);
-        return true;
-    }
-
-    return
-        AbelianCall::transform(merge_graph, call_factory, reporter) ||
-        result;
-}
-
-string Not::name() const
-{
-    return "not";
-}
-
-Value Not::calculate(EvalContext context)
-{
-    assert(children().size() == 1);
-    if (children().front()->eval(context)) {
-        return False().eval(context);
+    if (node->values().empty()) {
+        return Value();
     }
     else {
-        return True().eval(context);
+        return node->values().front();
     }
 }
 
-bool Not::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
+//! Assert and extra literal value from node.
+Value literal_value(const node_p& node)
 {
-    assert(children().size() == 1);
-    const node_p& child = children().front();
-    const node_cp& me = shared_from_this();
-
-    if (child->is_literal()) {
-        node_p replacement;
-        if (child->eval(EvalContext())) {
-            replacement.reset(new Null());
-        }
-        else {
-            replacement.reset(new String(""));
-        }
-        merge_graph.replace(me, replacement);
-        return true;
+    if (! node->is_literal()) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Asked for literal value of non-literal node."
+            )
+        );
     }
-    else {
-        return false;
+    if (! node->finished()) {
+        node->eval(EvalContext());
     }
+    return simple_value(node);
 }
 
-string If::name() const
-{
-    return "if";
-}
-
-Value If::calculate(EvalContext context)
-{
-    assert(children().size() == 3);
-    node_list_t::const_iterator i;
-    i = children().begin();
-    const node_p& pred = *i;
-    ++i;
-    const node_p& true_value = *i;
-    ++i;
-    const node_p& false_value = *i;
-    if (pred->eval(context)) {
-        return true_value->eval(context);
-    }
-    else {
-        return false_value->eval(context);
-    }
-}
-
-bool If::transform(
-    MergeGraph&        merge_graph,
-    const CallFactory& call_factory,
-    NodeReporter       reporter
-)
-{
-    assert(children().size() == 3);
-    const node_cp& me = shared_from_this();
-    node_list_t::const_iterator i;
-    i = children().begin();
-    const node_p& pred = *i;
-    ++i;
-    const node_p& true_value = *i;
-    ++i;
-    const node_p& false_value = *i;
-
-    if (pred->is_literal()) {
-        node_p replacement;
-        if (pred->eval(EvalContext())) {
-            replacement = true_value;
-        }
-        else {
-            replacement = false_value;
-        }
-        merge_graph.replace(me, replacement);
-        return true;
-    }
-    else {
-        return false;
-    }
 }
 
 string Field::name() const
@@ -706,20 +519,15 @@ call_p generate_specific_transformation(const std::string& name)
 
 void load(CallFactory& to)
 {
+    load_boolean(to);
+
     to
-        .add<False>()
-        .add<True>()
-        .add<Or>()
-        .add<And>()
-        .add<Not>()
-        .add<If>()
         .add<Field>()
         .add<Operator>()
         .add<Transformation>()
         .add<SetName>()
         .add<List>()
         .add<Sub>()
-        .add<SubAll>()
     ;
 
     // IronBee SpecificOperators
