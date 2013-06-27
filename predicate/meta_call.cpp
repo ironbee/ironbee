@@ -145,7 +145,7 @@ void MaplikeCall::map_calculate(
         }
     }
 
-    if (auto_finish && input->finished()) {
+    if (auto_finish && input->is_finished()) {
         finish();
     }
 }

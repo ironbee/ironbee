@@ -64,14 +64,14 @@ public:
 
     void forward(const value_t* to)
     {
-        if (forwarding()) {
+        if (is_forwarding()) {
             BOOST_THROW_EXCEPTION(
                 IronBee::einval() << errinfo_what(
                     "Can't forward a forwarded node."
                 )
             );
         }
-        if (finished()) {
+        if (is_finished()) {
             BOOST_THROW_EXCEPTION(
                 IronBee::einval() << errinfo_what(
                     "Can't finish an already finished node."
@@ -88,12 +88,12 @@ public:
         m_forward = to;
     }
 
-    bool finished() const
+    bool is_finished() const
     {
-        return m_forward ? m_forward->finished() : m_finished;
+        return m_forward ? m_forward->is_finished() : m_finished;
     }
 
-    bool forwarding() const
+    bool is_forwarding() const
     {
         return m_forward;
     }
@@ -113,14 +113,14 @@ public:
 
     void add_value(Value value)
     {
-        if (forwarding()) {
+        if (is_forwarding()) {
             BOOST_THROW_EXCEPTION(
                 einval() << errinfo_what(
                     "Can't add value to forwarded node."
                 )
             );
         }
-        if (finished()) {
+        if (is_finished()) {
             BOOST_THROW_EXCEPTION(
                 IronBee::einval() << errinfo_what(
                     "Can't add value to finished node."
@@ -132,14 +132,14 @@ public:
 
     void finish()
     {
-        if (forwarding()) {
+        if (is_forwarding()) {
             BOOST_THROW_EXCEPTION(
                 IronBee::einval() << errinfo_what(
                     "Can't finish a forwarded node."
                 )
             );
         }
-        if (finished()) {
+        if (is_finished()) {
             BOOST_THROW_EXCEPTION(
                 IronBee::einval() << errinfo_what(
                     "Can't finish an already finished node."
@@ -151,14 +151,14 @@ public:
 
     void finish_alias(ValueList other)
     {
-        if (forwarding()) {
+        if (is_forwarding()) {
             BOOST_THROW_EXCEPTION(
                 einval() << errinfo_what(
                     "Can't alias a forwarded node."
                 )
             );
         }
-        if (finished()) {
+        if (is_finished()) {
             BOOST_THROW_EXCEPTION(
                 einval() << errinfo_what(
                     "Can't alias a finished node."
@@ -219,7 +219,7 @@ const Node::value_t& Node::lookup_value() const
 ValueList Node::eval(EvalContext context)
 {
     value_t& v = lookup_value();
-    if (! v.forwarding() && ! v.finished()) {
+    if (! v.is_forwarding() && ! v.is_finished()) {
         calculate(context);
     }
     return v.values();
@@ -235,9 +235,9 @@ void Node::reset()
     lookup_value().reset();
 }
 
-bool Node::finished() const
+bool Node::is_finished() const
 {
-    return lookup_value().finished();
+    return lookup_value().is_finished();
 }
 
 void Node::add_value(Value value)

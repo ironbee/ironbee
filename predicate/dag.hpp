@@ -235,7 +235,7 @@ public:
      * or remove existing) values if eval() is called again; in particular,
      * if the Context changes.
      **/
-    bool finished() const;
+    bool is_finished() const;
 
     /**
      * Values of node in this thread.

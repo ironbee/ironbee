@@ -50,7 +50,7 @@ bool caseless_compare(char a, char b)
 //! Assert and extract simple value from node.
 Value simple_value(const node_cp& node)
 {
-    if (! node->finished()) {
+    if (! node->is_finished()) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
                 "Asked for simple value of unfinished node."
@@ -83,7 +83,7 @@ Value literal_value(const node_p& node)
             )
         );
     }
-    if (! node->finished()) {
+    if (! node->is_finished()) {
         node->eval(EvalContext());
     }
     return simple_value(node);
@@ -406,7 +406,7 @@ void List::calculate(EvalContext context)
     // Do nothing if any unfinished children.
     BOOST_FOREACH(const node_p& child, children()) {
         child->eval(context);
-        if (! child->finished()) {
+        if (! child->is_finished()) {
             return;
         }
     }
@@ -430,7 +430,7 @@ void Sub::calculate(EvalContext context)
 {
     const node_p& collection_node = children().back();
     collection_node->eval(context);
-    if (! collection_node->finished()) {
+    if (! collection_node->is_finished()) {
         return;
     }
     Value collection = simple_value(collection_node);

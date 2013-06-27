@@ -111,7 +111,7 @@ void Or::calculate(EvalContext context)
             finish_true();
             return;
         }
-        if (! child->finished()) {
+        if (! child->is_finished()) {
             unfinished_child = true;
         }
     }
@@ -177,11 +177,11 @@ void And::calculate(EvalContext context)
     bool unfinished_child = false;
     BOOST_FOREACH(const node_p& child, children()) {
         child->eval(context);
-        if (child->finished() && child->values().empty()) {
+        if (child->is_finished() && child->values().empty()) {
             finish_false();
             return;
         }
-        if (! child->finished()) {
+        if (! child->is_finished()) {
             unfinished_child = true;
         }
     }
@@ -250,7 +250,7 @@ void Not::calculate(EvalContext context)
         assert(values().empty());
         finish_false();
     }
-    else if (child->finished()) {
+    else if (child->is_finished()) {
         finish_true();
     }
 }
@@ -301,7 +301,7 @@ void If::calculate(EvalContext context)
         true_value->eval(context);
         forward(true_value);
     }
-    else if (pred->finished()) {
+    else if (pred->is_finished()) {
         false_value->eval(context);
         forward(false_value);
     }
