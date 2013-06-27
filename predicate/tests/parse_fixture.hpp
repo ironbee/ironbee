@@ -44,11 +44,11 @@ public:
     }
 
 protected:
-    virtual IronBee::Predicate::Value calculate(
+    virtual void calculate(
         IronBee::Predicate::EvalContext
     )
     {
-        return IronBee::Predicate::Value();
+        finish();
     }
 
 private:
