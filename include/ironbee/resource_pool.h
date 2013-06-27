@@ -152,7 +152,7 @@ ib_status_t DLL_PUBLIC ib_resource_pool_create(
 
 /**
  * Acquire a resource, creating a new one if necessary.
- * 
+ *
  * All resources that are acquired through ib_resource_acquire() must be
  * retured with ib_resource_return().
  *
@@ -219,4 +219,3 @@ size_t DLL_PUBLIC ib_resource_use_get(
 #endif
 
 #endif /* _IB_RESOURCE_POOL_H_ */
-

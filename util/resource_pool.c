@@ -109,7 +109,7 @@ static void ib_resource_pool_destroy(void *data) {
  * may create new @ref ib_resource_t. This function isolates that
  * common code.
  *
- * @returns 
+ * @returns
  * - IB_OK On success.
  * - IB_DECLINED If the max limit is reached.
  * - IB_EALLOC If an allocation error occures.
@@ -300,7 +300,7 @@ ib_status_t ib_resource_acquire(
         goto success;
     }
     /* If we may create a new resource, do so. */
-    else if (  (resource_pool->max_count == 0) 
+    else if (  (resource_pool->max_count == 0)
             || (resource_pool->max_count > resource_pool->count) )
     {
         rc = create_resource(resource_pool, &tmp_resource);
@@ -432,7 +432,7 @@ ib_status_t ib_resource_pool_flush(
     if (rc != IB_OK) {
         return rc;
     }
-        
+
     return IB_OK;
 }
 

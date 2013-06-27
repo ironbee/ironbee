@@ -94,7 +94,7 @@ ib_status_t ib_queue_create(
 
     ib_queue_t *q = (ib_queue_t*)ib_mpool_alloc(mp, sizeof(*q));
     ib_status_t rc;
-    
+
     if (q == NULL) {
         return IB_EALLOC;
     }
@@ -122,11 +122,11 @@ ib_status_t ib_queue_create(
 /**
  * Take the given @a queue and repack its data into @a new_queue.
  *
- * When a queue backed by an array is resized, if it wraps from the 
+ * When a queue backed by an array is resized, if it wraps from the
  * end to the beginning, that wrap point is necessarily different. Much
  * like resizing a hash, we must repack the data in the new queue.
  *
- * This implementation repacks the queue to index 0 so the 
+ * This implementation repacks the queue to index 0 so the
  * repacked queue does not wrap and the head must be set to 0.
  *
  * The allocation of @a new_queue must be less than ib_queue_t::size.
@@ -159,7 +159,7 @@ static void repack(
 /**
  * Resize the queue.
  *
- * The allocation must not be less than ib_queue_t::size or this will corrupt 
+ * The allocation must not be less than ib_queue_t::size or this will corrupt
  * memory.
  */
 static ib_status_t resize(
@@ -239,7 +239,7 @@ static ib_status_t shrink(
 /**
  * @param[in] queue The queue to double in allocation.
  *
- * @returns 
+ * @returns
  * - IB_OK On success.
  * - IB_EALLOC On allocation errors.
  * - IB_EINVAL If overflow is detected.

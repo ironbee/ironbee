@@ -95,7 +95,7 @@ static size_t MAX_LUA_STACK_USES = 1000;
  */
 struct modlua_runtime_t {
     lua_State     *L;        /**< Lua stack */
-    size_t         uses;     /**< Number of times this stack is used. */   
+    size_t         uses;     /**< Number of times this stack is used. */
     ib_mpool_t    *mp;       /**< Memory pool for this runtime. */
     ib_resource_t *resource; /**< Bookkeeping for modlua_releasestate(). */
 };

@@ -56,7 +56,7 @@ extern "C" {
  * - ib_queue_pop_back()
  * - ib_queue_set()
  * - ib_queue_get()
- * 
+ *
  * @{
  */
 
@@ -234,4 +234,3 @@ size_t DLL_PUBLIC ib_queue_size(
 /** @} */
 
 #endif /* _IB_QUEUE_H_ */
-
