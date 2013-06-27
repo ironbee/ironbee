@@ -249,6 +249,10 @@ void Node::finish()
 {
     lookup_value().finish();
 }
+
+void Node::finish_alias(ValueList other)
+{
+    lookup_value().finish_alias(other);
 }
 
 void Node::finish_true()
