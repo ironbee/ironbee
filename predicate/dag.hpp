@@ -240,6 +240,11 @@ public:
     /**
      * Values of node in this thread.
      *
+     * Iterators from the returned list are invalidated by reset() and
+     * may be invalidated when the list goes from empty to non-empty.  Once
+     * the list is non-empty, iterators will not be invalidated except by
+     * reset().  This contract allows for forwarding (see forward()).
+     *
      * @sa finished()
      **/
     ValueList values() const;
