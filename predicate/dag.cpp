@@ -56,7 +56,8 @@ public:
         m_forward(NULL),
         m_pool("node value private pool"),
         m_finished(false),
-        m_values(ValueList::create(m_pool))
+        m_own_values(ValueList::create(m_pool)),
+        m_values(m_own_values)
     {
         // nop
     }
@@ -85,6 +86,7 @@ public:
     {
         m_forward = NULL;
         m_finished = false;
+        m_values = m_own_values;
         m_values.clear();
     }
 
@@ -100,10 +102,38 @@ public:
         m_finished = true;
     }
 
+    void finish_alias(ValueList other)
+    {
+        if (forwarding()) {
+            BOOST_THROW_EXCEPTION(
+                einval() << errinfo_what(
+                    "Can't alias a forwarded node."
+                )
+            );
+        }
+        if (finished()) {
+            BOOST_THROW_EXCEPTION(
+                einval() << errinfo_what(
+                    "Can't alias a finished node."
+                )
+            );
+        }
+        if (m_values != m_own_values) {
+            BOOST_THROW_EXCEPTION(
+                einval() << errinfo_what(
+                    "Can't alias an aliased node."
+                )
+            );
+        }
+        m_finished = true;
+        m_values = other;
+    }
+
 private:
     const value_t* m_forward;
     IronBee::ScopedMemoryPool m_pool;
     bool m_finished;
+    ValueList m_own_values;
     ValueList m_values;
 };
 
