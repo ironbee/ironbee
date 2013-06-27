@@ -27,6 +27,7 @@
 
 #include <predicate/call_factory.hpp>
 #include <predicate/dag.hpp>
+#include <predicate/meta_call.hpp>
 #include <predicate/validate.hpp>
 
 #include <boost/scoped_ptr.hpp>

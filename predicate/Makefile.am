@@ -16,6 +16,7 @@ libpredicate_la_SOURCES = \
     standard.cpp \
     dot.cpp \
     bfs.cpp \
+    meta_call.cpp \
     merge_graph.cpp \
     reporter.cpp \
     validate.cpp \
@@ -32,6 +33,7 @@ EXTRA_DIST = \
 		ironbee.hpp             \
 		leaves.hpp              \
 		less.hpp                \
+		meta_call.hpp           \
 		merge_graph.hpp         \
 		parse.hpp               \
 		pre_eval_graph.hpp      \
