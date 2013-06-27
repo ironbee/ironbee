@@ -106,7 +106,7 @@ void Field::pre_eval(Environment environment, NodeReporter reporter)
     assert(config != NULL);
 
     // Key must be static.
-    Value key_field = children().front()->eval(EvalContext());
+    Value key_field = literal_value(children().front());
     IronBee::ConstByteString key = key_field.value_as_byte_string();
 
     rc = ib_data_lookup_index_ex(
@@ -128,9 +128,9 @@ void Field::pre_eval(Environment environment, NodeReporter reporter)
     }
 }
 
-Value Field::calculate(EvalContext context)
+void Field::calculate(EvalContext context)
 {
-    Value key_field = children().front()->eval(context);
+    Value key_field = literal_value(children().front());
     IronBee::ConstByteString key = key_field.value_as_byte_string();
     ib_field_t* data_field;
     ib_status_t rc;
@@ -147,16 +147,17 @@ Value Field::calculate(EvalContext context)
             &data_field
         );
         if (rc == IB_ENOENT) {
-            return Value();
+            finish();
+            return;
         }
         else {
             IronBee::throw_if_error(rc);
         }
     }
 
-    return Value(data_field);
+    add_value(Value(data_field));
+    finish();
 }
-
 
 string Operator::name() const
 {
@@ -165,8 +166,8 @@ string Operator::name() const
 
 struct Operator::data_t
 {
-    ConstOperator op;
-    void*         instance_data;
+    ConstOperator             op;
+    void*                     instance_data;
 };
 
 void Operator::pre_eval(Environment environment, NodeReporter reporter)
@@ -177,9 +178,9 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
     // literals and thus can be evaluated with default EvalContext.
 
     node_list_t::const_iterator child_i = children().begin();
-    Value op_name_value = (*child_i)->eval(EvalContext());
+    Value op_name_value = literal_value(*child_i);
     ++child_i;
-    Value params_value = (*child_i)->eval(EvalContext());
+    Value params_value = literal_value(*child_i);
 
     ConstByteString op_name = op_name_value.value_as_byte_string();
     ConstByteString params  = params_value.value_as_byte_string();
@@ -214,7 +215,7 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
     );
 }
 
-Value Operator::calculate(EvalContext context)
+Value Operator::value_calculate(Value v, EvalContext context)
 {
     static const char* c_capture_name = "predicate_operator_capture";
 
@@ -226,7 +227,6 @@ Value Operator::calculate(EvalContext context)
         );
     }
 
-    Value input = children().back()->eval(context);
     IronBee::Field capture = IronBee::Field::create_no_copy_list<void *>(
         context.memory_pool(),
         c_capture_name,
@@ -234,19 +234,25 @@ Value Operator::calculate(EvalContext context)
         IronBee::List<void *>::create(context.memory_pool())
     );
 
-    int result = m_data->op.execute_instance(
+    int success = m_data->op.execute_instance(
         m_data->instance_data,
         context,
-        input,
+        v,
         capture
     );
-
-    if (result) {
+    if (success) {
         return capture;
     }
     else {
         return Value();
     }
+}
+
+void Operator::calculate(EvalContext context)
+{
+    const node_p& input_node = children().back();
+
+    map_calculate(input_node, context);
 }
 
 SpecificOperator::SpecificOperator(const std::string& op) :
@@ -278,7 +284,7 @@ bool SpecificOperator::transform(
     return true;
 }
 
-Value SpecificOperator::calculate(EvalContext context)
+void SpecificOperator::calculate(EvalContext context)
 {
     BOOST_THROW_EXCEPTION(
         einval() << errinfo_what(
@@ -294,7 +300,7 @@ string Transformation::name() const
 
 struct Transformation::data_t
 {
-    ConstTransformation transformation;
+    ConstTransformation       transformation;
 };
 
 void Transformation::pre_eval(Environment environment, NodeReporter reporter)
@@ -304,7 +310,7 @@ void Transformation::pre_eval(Environment environment, NodeReporter reporter)
     // Validation guarantees that the first child is a string interval
     // and thus can be evaluated with default EvalContext.
 
-    Value name_value = children().front()->eval(EvalContext());
+    Value name_value = literal_value(children().front());
     ConstByteString name = name_value.value_as_byte_string();
 
     if (! name) {
@@ -317,15 +323,22 @@ void Transformation::pre_eval(Environment environment, NodeReporter reporter)
     );
 }
 
-Value Transformation::calculate(EvalContext context)
+Value Transformation::value_calculate(Value v, EvalContext context)
 {
-    Value input = children().back()->eval(context);
-
-    if (! input) {
-        return Value();
+    if (! m_data) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Reset without pre evaluation!"
+            )
+        );
     }
 
-    return m_data->transformation.execute(context.memory_pool(), input);
+    return m_data->transformation.execute(context.memory_pool(), v);
+}
+
+void Transformation::calculate(EvalContext context)
+{
+    map_calculate(children().back(), context);
 }
 
 SpecificTransformation::SpecificTransformation(const std::string& tfn) :
@@ -356,7 +369,7 @@ bool SpecificTransformation::transform(
     return true;
 }
 
-Value SpecificTransformation::calculate(EvalContext context)
+void SpecificTransformation::calculate(EvalContext context)
 {
     BOOST_THROW_EXCEPTION(
         einval() << errinfo_what(
@@ -370,16 +383,17 @@ string SetName::name() const
     return "set_name";
 }
 
-Value SetName::calculate(EvalContext context)
+Value SetName::value_calculate(Value v, EvalContext context)
 {
-    Value name  = children().front()->eval(context);
-    Value value = children().back()->eval(context);
-
+    Value name = literal_value(children().front());
     ConstByteString name_bs = name.value_as_byte_string();
-    return value.dup(
-        value.memory_pool(),
-        name_bs.const_data(), name_bs.length()
-    );
+
+    return v.dup(v.memory_pool(), name_bs.const_data(), name_bs.length());
+}
+
+void SetName::calculate(EvalContext context)
+{
+    map_calculate(children().back(), context);
 }
 
 string List::name() const
@@ -387,19 +401,23 @@ string List::name() const
     return "list";
 }
 
-Value List::calculate(EvalContext context)
+void List::calculate(EvalContext context)
 {
-    IronBee::List<Value> results =
-        IronBee::List<Value>::create(context.memory_pool());
+    // Do nothing if any unfinished children.
     BOOST_FOREACH(const node_p& child, children()) {
-        results.push_back(child->eval(context));
+        child->eval(context);
+        if (! child->finished()) {
+            return;
+        }
     }
 
-    return IronBee::Field::create_no_copy_list(
-        context.memory_pool(),
-        "", 0,
-        results
-    );
+    // All children finished, concatenate values.
+    BOOST_FOREACH(const node_p& child, children()) {
+        BOOST_FOREACH(Value v, child->values()) {
+            add_value(v);
+        }
+    }
+    finish();
 }
 
 string Sub::name() const
@@ -407,15 +425,21 @@ string Sub::name() const
     return "sub";
 }
 
-Value Sub::calculate(EvalContext context)
+// XXX This doesn't work right.  Additional values might get added.
+void Sub::calculate(EvalContext context)
 {
-    Value collection = children().back()->eval(context);
-    if (collection.type() != Value::LIST) {
-        return Value();
+    const node_p& collection_node = children().back();
+    collection_node->eval(context);
+    if (! collection_node->finished()) {
+        return;
+    }
+    Value collection = simple_value(collection_node);
+    if (! collection || collection.type() != Value::LIST) {
+        finish();
+        return;
     }
 
-    Value subfield_name = children().front()->eval(context);
-
+    Value subfield_name = literal_value(children().front());
     ConstByteString subfield_name_bs = subfield_name.value_as_byte_string();
 
     if (collection.is_dynamic()) {
@@ -423,58 +447,13 @@ Value Sub::calculate(EvalContext context)
             subfield_name_bs.const_data(), subfield_name_bs.length()
         );
         if (! result || result.empty()) {
-            return Value();
+            finish();
         }
-        return result.front();
-    }
-    else {
-        BOOST_FOREACH(const Value& v, collection.value_as_list<Value>()) {
-            if (
-                v.name_length() == subfield_name_bs.length() &&
-                equal(
-                    v.name(), v.name() + v.name_length(),
-                    subfield_name_bs.const_data(),
-                    caseless_compare
-                )
-            )
-            {
-                return v;
-            }
-        }
-        return Value();
-    }
-}
-
-string SubAll::name() const
-{
-    return "suball";
-}
-
-Value SubAll::calculate(EvalContext context)
-{
-    Value collection = children().back()->eval(context);
-    if (collection.type() != Value::LIST) {
-        return Value();
-    }
-
-    Value subfield_name = children().front()->eval(context);
-
-    ConstByteString subfield_name_bs = subfield_name.value_as_byte_string();
-
-    IronBee::List<Value> results =
-        IronBee::List<Value>::create(context.memory_pool());
-    if (collection.is_dynamic()) {
-        ConstList<Value> const_results = collection.value_as_list<Value>(
-            subfield_name_bs.const_data(), subfield_name_bs.length()
-        );
-        if (const_results) {
-            // @todo This copy should be removable with appropriate updates to
-            // IronBee const correctness.  All we need is fields of const
-            // lists.
-            copy(
-                const_results.begin(), const_results.end(),
-                back_inserter(results)
-            );
+        else {
+            /* As we are finished, we promise not to modify list even
+             * though we are discarding const.
+             */
+            finish_alias(ValueList::remove_const(result));
         }
     }
     else {
@@ -488,19 +467,10 @@ Value SubAll::calculate(EvalContext context)
                 )
             )
             {
-                results.push_back(v);
+                add_value(v);
             }
         }
-    }
-    if (results.empty()) {
-        return Value();
-    }
-    else {
-        return IronBee::Field::create_no_copy_list<Value>(
-            context.memory_pool(),
-            "", 0,
-            results
-        );
+        finish();
     }
 }
 

@@ -50,7 +50,7 @@ public:
     virtual std::string name() const;
 
 protected:
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
     virtual void pre_eval(Environment environment, NodeReporter reporter);
 
 private:
@@ -67,6 +67,7 @@ private:
  * collection will be empty for operators that do not support capture.
  **/
 class Operator :
+    public MaplikeCall,
     public Validate::Call<Operator>,
     public Validate::NChildren<3,
            Validate::NthChildIsString<0,
@@ -81,7 +82,8 @@ public:
     virtual void pre_eval(Environment environment, NodeReporter reporter);
 
 protected:
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
+    virtual Value value_calculate(Value v, EvalContext context);
 
 private:
     typedef Validate::Call<Operator> parent_t;
@@ -129,7 +131,7 @@ public:
    );
 
 protected:
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
 
 private:
     const std::string m_operator;
@@ -142,6 +144,7 @@ private:
  * literal naming the transformation.  The second child is the input.
  **/
 class Transformation :
+    public MaplikeCall,
     public Validate::Call<Transformation>,
     public Validate::NChildren<2,
            Validate::NthChildIsString<0
@@ -155,7 +158,8 @@ public:
     virtual void pre_eval(Environment environment, NodeReporter reporter);
 
 protected:
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
+    virtual Value value_calculate(Value v, EvalContext context);
 
 private:
     typedef Validate::Call<Operator> parent_t;
@@ -200,7 +204,7 @@ public:
    );
 
 protected:
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
 
 private:
     const std::string m_transformation;
@@ -210,6 +214,7 @@ private:
  * Construct a named value from a name (string) and value.
  **/
 class SetName :
+    public MaplikeCall,
     public Validate::Call<SetName>,
     public Validate::NChildren<2,
            Validate::NthChildIsString<0,
@@ -221,7 +226,8 @@ public:
     virtual std::string name() const;
 
 protected:
-    virtual Value calculate(EvalContext context);
+    virtual Value value_calculate(Value v, EvalContext context);
+    virtual void calculate(EvalContext context);
 };
 
 /**
@@ -235,14 +241,20 @@ public:
     virtual std::string name() const;
 
 protected:
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
 };
 
 /**
- * First subfield of name from first child in second child.
+ * Subfields of given name from first child in collection of second child.
  *
- * Is null if second child is not a list or has no such subfield.
- * If all subfields of a given name are wanted, use SubAll.
+ * First child must be a string literal.  Second child must be a simple value.
+ * If second child is empty or not a collection (Value of type list), no
+ * outputs are produced.
+ *
+ * If you want to choose values of a (non-simple) child of a given name,
+ * see Choose.
+ *
+ * @sa Choose
  **/
 class Sub :
     public Validate::Call<Sub>,
@@ -255,27 +267,7 @@ public:
     virtual std::string name() const;
 
 protected:
-    virtual Value calculate(EvalContext context);
-};
-
-/**
- * All subfield of name from first child in second child.
- *
- * Is null if second child is not a list or result would be empty.
- * If only one subfield of a given name is wanted, use Sub.
- **/
-class SubAll :
-    public Validate::Call<SubAll>,
-    public Validate::NChildren<2,
-           Validate::NthChildIsString<0
-           > >
-{
-public:
-    //! See Call:name()
-    virtual std::string name() const;
-
-protected:
-    virtual Value calculate(EvalContext context);
+    virtual void calculate(EvalContext context);
 };
 
 /**
