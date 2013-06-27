@@ -125,7 +125,7 @@ namespace Validate {
  **/
 template <class Subclass>
 class Call :
-    public Predicate::Call
+    virtual public Predicate::Call
 {
 public:
     //! Dynamic cast to @a Subclass and call Base::validate().
