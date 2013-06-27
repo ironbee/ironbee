@@ -111,10 +111,25 @@ public:
         m_values.clear();
     }
 
+    void add_value(Value value)
     {
-        if (m_forward) {
+        if (forwarding()) {
             BOOST_THROW_EXCEPTION(
                 einval() << errinfo_what(
+                    "Can't add value to forwarded node."
+                )
+            );
+        }
+        if (finished()) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << errinfo_what(
+                    "Can't add value to finished node."
+                )
+            );
+        }
+        values().push_back(value);
+    }
+
     void finish()
     {
         if (forwarding()) {
@@ -227,22 +242,7 @@ bool Node::finished() const
 
 void Node::add_value(Value value)
 {
-    value_t& v = lookup_value();
-    if (v.finished()) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "Can't add value to finished node."
-            )
-        );
-    }
-    if (v.forwarding()) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(
-                "Can't add value to forwarded node."
-            )
-        );
-    }
-    v.values().push_back(value);
+    lookup_value().add_value(value);
 }
 
 void Node::finish()
