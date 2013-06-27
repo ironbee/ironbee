@@ -64,6 +64,27 @@ public:
 
     void forward(const value_t* to)
     {
+        if (forwarding()) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << errinfo_what(
+                    "Can't forward a forwarded node."
+                )
+            );
+        }
+        if (finished()) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << errinfo_what(
+                    "Can't finish an already finished node."
+                )
+            );
+        }
+        if (! m_values.empty()) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << errinfo_what(
+                    "Can't combine existing values with forwarded values."
+                )
+            );
+        }
         m_forward = to;
     }
 
@@ -90,12 +111,23 @@ public:
         m_values.clear();
     }
 
-    void finish()
     {
         if (m_forward) {
             BOOST_THROW_EXCEPTION(
                 einval() << errinfo_what(
+    void finish()
+    {
+        if (forwarding()) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << errinfo_what(
                     "Can't finish a forwarded node."
+                )
+            );
+        }
+        if (finished()) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << errinfo_what(
+                    "Can't finish an already finished node."
                 )
             );
         }
@@ -215,22 +247,8 @@ void Node::add_value(Value value)
 
 void Node::finish()
 {
-    value_t& v = lookup_value();
-    if (v.finished()) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "Can't finish an already finished node."
-            )
-        );
-    }
-    if (v.forwarding()) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "Can't finish a forwarded node."
-            )
-        );
-    }
-    v.finish();
+    lookup_value().finish();
+}
 }
 
 void Node::finish_true()
@@ -260,29 +278,7 @@ void Node::finish_false()
 
 void Node::forward(const node_p& other)
 {
-    value_t& v = lookup_value();
-    if (v.forwarding()) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "Can't forward a forwarded node."
-            )
-        );
-    }
-    if (v.finished()) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "Can't finish an already finished node."
-            )
-        );
-    }
-    if (! v.values().empty()) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "Can't combined existing values with forwarded values."
-            )
-        );
-    }
-    v.forward(&other->lookup_value());
+    lookup_value().forward(&other->lookup_value());
 }
 
 void Node::add_child(const node_p& child)
