@@ -88,7 +88,7 @@ static void ib_resource_pool_destroy(void *data) {
     assert(data != NULL);
 
     ib_status_t rc;
-    ib_resource_pool_t *rp = (ib_resource_pool_t*)data;
+    ib_resource_pool_t *rp = (ib_resource_pool_t *)data;
 
     while (ib_queue_size(rp->resources) > 0) {
         void *v;
@@ -97,7 +97,7 @@ static void ib_resource_pool_destroy(void *data) {
             return;
         }
 
-        ib_resource_t *r = (ib_resource_t*)v;
+        ib_resource_t *r = (ib_resource_t *)v;
         (rp->destroy_fn)(r->resource, rp->destroy_data);
     }
 }
@@ -258,8 +258,8 @@ ib_status_t ib_resource_pool_create(
     rp->count     = 0;
 
     /* Arcane casting to get around the C constness of {max,min}_count. */
-    *(size_t*)&(rp->max_count) = max_count;
-    *(size_t*)&(rp->min_count) = min_count;
+    *(size_t *)&(rp->max_count) = max_count;
+    *(size_t *)&(rp->min_count) = min_count;
 
     rc = ib_mpool_cleanup_register(mp, ib_resource_pool_destroy, rp);
     if (rc != IB_OK) {

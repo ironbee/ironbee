@@ -92,7 +92,7 @@ ib_status_t ib_queue_create(
     assert(queue != NULL);
     assert(mp != NULL);
 
-    ib_queue_t *q = (ib_queue_t*)ib_mpool_alloc(mp, sizeof(*q));
+    ib_queue_t *q = (ib_queue_t *)ib_mpool_alloc(mp, sizeof(*q));
     ib_status_t rc;
 
     if (q == NULL) {
