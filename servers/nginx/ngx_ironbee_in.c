@@ -28,7 +28,7 @@
 
 #include <ironbee/state_notify.h>
 
-/* Buf size for reading from tempfile and feeding to Ironbee */
+/* Buf size for reading from temp file and feeding to IronBee */
 #define BUFSIZE 65536
 
 /**
@@ -79,13 +79,13 @@ int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
 }
 
 /**
- * nginx handler to feed request body (if any) to Ironbee
+ * nginx handler to feed request body (if any) to IronBee
  *
  * @param[in] r   the nginx request object
  * @return    NGX_DECLINED for normal operation
  * @return    NGX_DONE if body is not yet available (processing will resume
  *            on new data)
- * @return    Error status if set by Ironbee on sight of request data.
+ * @return    Error status if set by IronBee on sight of request data.
  */
 ngx_int_t ngxib_handler(ngx_http_request_t *r)
 {
@@ -148,7 +148,7 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
             itxdata.data = buf;
             ib_log_debug_tx(ctx->tx, "Feeding %d bytes request data to ironbee",
                             (int)itxdata.dlen);
-            ib_state_notify_request_body_data(ngxib_engine(), ctx->tx, &itxdata);
+            ib_state_notify_request_body_data(ctx->tx->ib, ctx->tx, &itxdata);
             count += itxdata.dlen;
         }
         if ((int)itxdata.dlen == NGX_ERROR) {
@@ -162,17 +162,17 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
         ib_log_debug_tx(ctx->tx, "Feeding %d bytes request data to ironbee",
                         (int)itxdata.dlen);
         if (itxdata.dlen > 0) {
-            ib_state_notify_request_body_data(ngxib_engine(), ctx->tx, &itxdata);
+            ib_state_notify_request_body_data(ctx->tx->ib, ctx->tx, &itxdata);
         }
     }
     ctx->body_done = 1;
-    ib_state_notify_request_finished(ngxib_engine(), ctx->tx);
+    ib_state_notify_request_finished(ctx->tx->ib, ctx->tx);
 
-    /* If Ironbee signalled an error, we can return it */
+    /* If IronBee signaled an error, we can return it */
     if (STATUS_IS_ERROR(ctx->status)) {
         rv = ctx->status;
         ctx->internal_errordoc = 1;
-        ib_log_error_tx(ctx->tx, "Ironbee set %d reading request body", (int)rv);
+        ib_log_error_tx(ctx->tx, "IronBee set %d reading request body", (int)rv);
     }
 
     cleanup_return(prev_log) rv;

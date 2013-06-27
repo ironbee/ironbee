@@ -26,6 +26,8 @@
 #include <ctype.h>
 
 #include <ironbee/config.h>
+#include <ironbee/context.h>
+#include <ironbee/engine_manager.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>
 
@@ -34,46 +36,110 @@
 static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
 static ngx_http_output_body_filter_pt  ngx_http_next_body_filter;
 
-static ib_engine_t *ironbee;
-ib_engine_t *ngxib_engine(void)
-{
-    return ironbee;
-}
-
 #define STATUS_IS_ERROR(code) ( ((code) >= 200) && ((code) <  600) )
 #define IB2NG(x) x
 #define LOGGER_NAME "ironbee-nginx"
 
 typedef struct ironbee_proc_t {
     ngx_str_t config_file;
-    ngx_uint_t loglevel;
+    ngx_uint_t log_level;
     ngx_flag_t use_ngxib_logger;
+    ngx_uint_t max_engines;
 } ironbee_proc_t;
 
-static ngx_command_t  ngx_ironbee_commands[] = {
-    { ngx_string("ironbee_config_file"),
-      NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_str_slot,
-      NGX_HTTP_MAIN_CONF_OFFSET,
-      offsetof(ironbee_proc_t, config_file),
-      NULL },
+static ngx_command_t  ngx_ironbee_commands[] =
+{
+    {
+        ngx_string("ironbee_config_file"),
+        NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_MAIN_CONF_OFFSET,
+        offsetof(ironbee_proc_t, config_file),
+        NULL
+    },
 
-    { ngx_string("ironbee_logger"),
-      NGX_HTTP_MAIN_CONF|NGX_CONF_FLAG,
-      ngx_conf_set_flag_slot,
-      NGX_HTTP_MAIN_CONF_OFFSET,
-      offsetof(ironbee_proc_t, use_ngxib_logger),
-      NULL },
+    {
+        ngx_string("ironbee_logger"),
+        NGX_HTTP_MAIN_CONF|NGX_CONF_FLAG,
+        ngx_conf_set_flag_slot,
+        NGX_HTTP_MAIN_CONF_OFFSET,
+        offsetof(ironbee_proc_t, use_ngxib_logger),
+        NULL
+    },
 
-    { ngx_string("ironbee_loglevel"),
-      NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_num_slot,
-      NGX_HTTP_MAIN_CONF_OFFSET,
-      offsetof(ironbee_proc_t, loglevel),
-      NULL },
+    {
+        ngx_string("ironbee_log_level"),
+        NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+        ngx_conf_set_num_slot,
+        NGX_HTTP_MAIN_CONF_OFFSET,
+        offsetof(ironbee_proc_t, log_level),
+        NULL
+    },
+
+    {
+        ngx_string("ironbee_max_engines"),
+        NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+        ngx_conf_set_num_slot,
+        NGX_HTTP_MAIN_CONF_OFFSET,
+        offsetof(ironbee_proc_t, max_engines),
+        NULL
+    },
 
       ngx_null_command
 };
+
+/**
+ * Static module data
+ */
+typedef struct {
+    ib_manager_t   *manager;      /**< IronBee engine manager object */
+} module_data_t;
+static module_data_t module_data =
+{
+    NULL,          /* .manager */
+};
+
+ib_status_t ngxib_acquire_engine(
+    ib_engine_t  **pengine,
+    ngx_log_t     *log
+)
+{
+    module_data_t *mod_data = &module_data;
+    ib_status_t    rc;
+
+    /* No manager? Decline the request */
+    if (mod_data->manager == NULL) {
+        ngx_log_error(NGX_LOG_ERR, log, 0, "acquire_engine: No manager!");
+        return IB_DECLINED;
+    }
+
+    rc = ib_manager_engine_acquire(mod_data->manager, pengine);
+    if (rc != IB_OK) {
+        ngx_log_error(NGX_LOG_ERR, log, 0,
+                      "Failed to acquire engine from manager: %s!",
+                      ib_status_to_string(rc));
+    }
+    return rc;
+}
+
+ib_status_t ngxib_release_engine(
+    ib_engine_t  *engine,
+    ngx_log_t    *log
+)
+{
+    module_data_t *mod_data = &module_data;
+    ib_status_t    rc;
+    assert(mod_data->manager != NULL);
+
+    rc = ib_manager_engine_release(mod_data->manager, engine);
+    if (rc != IB_OK) {
+        ngx_log_error(NGX_LOG_ERR, log, 0,
+                      "Failed to release engine to manager: %s!",
+                      ib_status_to_string(rc));
+    }
+    return rc;
+}
+
 
 /**
  * Function to free a chain buffer.
@@ -97,8 +163,8 @@ static void free_chain(ngx_pool_t *pool, ngx_chain_t *chain)
 }
 
 /**
- * A body filter to intercept response body and feed it to Ironbee,
- * and to buffer the data if required by Ironbee configuration.
+ * A body filter to intercept response body and feed it to IronBee,
+ * and to buffer the data if required by IronBee configuration.
  *
  * @param[in]  r     The nginx request object.
  * @param[in]  in    The data to filter.
@@ -124,7 +190,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
     ib_log_debug_tx(ctx->tx, "ironbee_body_out");
     if (in == NULL) {
         /* FIXME: could this happen in circumstances when we should
-         * notify Ironbee of end-of-response ?
+         * notify IronBee of end-of-response ?
          */
         ib_log_debug_tx(ctx->tx, "ironbee_body_out: input was null");
         cleanup_return(prev_log) ngx_http_next_body_filter(r, in);
@@ -160,7 +226,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
                 ctx->response_buf = NULL;
             }
             else {
-                /* If we're buffering, initialise the buffer */
+                /* If we're buffering, initialize the buffer */
                 ib_log_debug_tx(ctx->tx, "ironbee_body_out: BUFFER");
                 ctx->output_buffering = IOBUF_BUFFER;
             }
@@ -176,10 +242,10 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         ib_log_debug_tx(ctx->tx, "ironbee_body_out: %d bytes",
                         (int)itxdata.dlen);
         if (itxdata.dlen > 0) {
-            ib_state_notify_response_body_data(ironbee, ctx->tx, &itxdata);
+            ib_state_notify_response_body_data(ctx->tx->ib, ctx->tx, &itxdata);
         }
 
-        /* If Ironbee just signalled an error, switch to discard data mode,
+        /* If IronBee just signaled an error, switch to discard data mode,
          * and dump anything we already have buffered,
          */
         if ( (STATUS_IS_ERROR(ctx->status)) &&
@@ -253,11 +319,11 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
     }
     if (ctx->output_filter_done) {
         ib_log_debug_tx(ctx->tx, "ironbee_body_out: notify_postprocess");
-        rc = ib_state_notify_postprocess(ironbee, ctx->tx);
+        rc = ib_state_notify_postprocess(ctx->tx->ib, ctx->tx);
         if ((rv == NGX_OK) && (rc != IB_OK)) {
             rv = NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
-        rc = ib_state_notify_logging(ironbee, ctx->tx);
+        rc = ib_state_notify_logging(ctx->tx->ib, ctx->tx);
         if ((rv == NGX_OK) && (rc != IB_OK)) {
             rv = NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
@@ -266,7 +332,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
 }
 
 /**
- * A header filter to intercept response line and headers and feed to Ironbee.
+ * A header filter to intercept response line and headers and feed to IronBee.
  *
  * @param[in]  r     The nginx request object.
  * @return     status propagated from next filter, or Error
@@ -297,7 +363,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
     prev_log = ngxib_log(r->connection->log);
     ngx_regex_malloc_init(r->pool);
 
-    /* Notify Ironbee of request line and headers */
+    /* Notify IronBee of request line and headers */
     sprintf(proto, "HTTP/%d.%d", r->http_major, r->http_minor);
     if (r->headers_out.status_line.len) {
         status = (char*)r->headers_out.status_line.data;
@@ -316,7 +382,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
         reason_len = 0;
     }
     else {
-        ib_log_error_tx(ctx->tx, "Ironbee: bogus response status %d",
+        ib_log_error_tx(ctx->tx, "IronBee: bogus response status %d",
                         (int)r->headers_out.status);
         cleanup_return(prev_log) NGX_ERROR;
     }
@@ -327,7 +393,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
     if (rc != IB_OK)
         cleanup_return(prev_log) NGX_ERROR;
 
-    ib_state_notify_response_started(ironbee, ctx->tx, rline);
+    ib_state_notify_response_started(ctx->tx->ib, ctx->tx, rline);
 
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
     if (rc != IB_OK)
@@ -345,16 +411,16 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
         }
     }
 
-    /* Ironbee currently crashes if called here with no headers,
+    /* IronBee currently crashes if called here with no headers,
      * even perfectly correctly on a 204/304 response.
      */
     if (ibhdrs->size > 0) {
-        rc = ib_state_notify_response_header_data(ironbee, ctx->tx, ibhdrs);
+        rc = ib_state_notify_response_header_data(ctx->tx->ib, ctx->tx, ibhdrs);
         if (rc != IB_OK)
             cleanup_return(prev_log) NGX_ERROR;
     }
 
-    rc = ib_state_notify_response_header_finished(ironbee, ctx->tx);
+    rc = ib_state_notify_response_header_finished(ctx->tx->ib, ctx->tx);
     if (rc != IB_OK)
         cleanup_return(prev_log) NGX_ERROR;
 
@@ -364,10 +430,10 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
 }
 
 /**
- * nginx post-read-request handler to feed request line and headers to Ironbee.
+ * nginx post-read-request handler to feed request line and headers to IronBee.
  *
  * @param[in]  r     The nginx request object.
- * @return     Declined (ignoreme) or error status.
+ * @return     Declined (ignored) or error status.
  */
 static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
 {
@@ -393,11 +459,11 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
     ctx->r = r;
     ngx_http_set_ctx(r, ctx, ngx_ironbee_module);
 
-    iconn = ngxib_conn_get(ctx, ironbee);
+    iconn = ngxib_conn_get(ctx);
 
     ib_tx_create(&ctx->tx, iconn, ctx);
 
-    /* Notify Ironbee of request line and headers */
+    /* Notify IronBee of request line and headers */
     rc = ib_parsed_req_line_create(ctx->tx, &rline,
                                    (const char*)r->request_line.data,
                                    r->request_line.len,
@@ -410,7 +476,7 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
     if (rc != IB_OK)
         cleanup_return(prev_log) NGX_ERROR;
 
-    ib_state_notify_request_started(ironbee, ctx->tx, rline);
+    ib_state_notify_request_started(ctx->tx->ib, ctx->tx, rline);
 
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
     if (rc != IB_OK)
@@ -428,16 +494,16 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
         }
     }
 
-    rc = ib_state_notify_request_header_data(ironbee, ctx->tx, ibhdrs);
+    rc = ib_state_notify_request_header_data(ctx->tx->ib, ctx->tx, ibhdrs);
     if (rc != IB_OK)
         cleanup_return(prev_log) NGX_ERROR;
 
-    rc = ib_state_notify_request_header_finished(ironbee, ctx->tx);
+    rc = ib_state_notify_request_header_finished(ctx->tx->ib, ctx->tx);
     if (rc != IB_OK)
         cleanup_return(prev_log) NGX_ERROR;
 
     if (!ngxib_has_request_body(r, ctx)) {
-        rc = ib_state_notify_request_finished(ironbee, ctx->tx);
+        rc = ib_state_notify_request_finished(ctx->tx->ib, ctx->tx);
         if (rc != IB_OK)
             cleanup_return(prev_log) NGX_ERROR;
     }
@@ -451,8 +517,8 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
 }
 
 /**
- * Ironbee initialisation function.  Sets up engine and logging,
- * and reads Ironbee config.
+ * IronBee initialization function.  Sets up engine and logging,
+ * and reads IronBee config.
  *
  * @param[in]  cf     Configuration rec
  * @return     NGX_OK or error
@@ -460,10 +526,10 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
 static ngx_int_t ironbee_init(ngx_conf_t *cf)
 {
     ngx_log_t *prev_log;
-    ib_context_t *ctx;
-    ib_cfgparser_t *cp;
     ironbee_proc_t *proc;
-    ib_status_t rc, rc1;
+    ib_status_t rc;
+    module_data_t *mod_data = &module_data;
+    char *buf;
 
     prev_log = ngxib_log(cf->log);
     ngx_regex_malloc_init(cf->pool);
@@ -471,52 +537,43 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     ngx_log_error(NGX_LOG_NOTICE, cf->log, 0, "ironbee_init %d", getpid());
 
     proc = ngx_http_conf_get_module_main_conf(cf, ngx_ironbee_module);
-    if (proc->loglevel == NGX_CONF_UNSET_UINT)
-        proc->loglevel = 4; /* default */
+    if (proc->log_level == NGX_CONF_UNSET_UINT) {
+        proc->log_level = IB_LOG_NOTICE;
+    }
+    if (proc->max_engines == NGX_CONF_UNSET_UINT) {
+        proc->max_engines = IB_MANAGER_DEFAULT_MAX_ENGINES;
+    }
 
     rc = ib_initialize();
-    if (rc != IB_OK)
+    if (rc != IB_OK) {
         cleanup_return(prev_log) IB2NG(rc);
+    }
 
-    ib_util_log_level(proc->loglevel);
-
-    rc = ib_engine_create(&ironbee, ngxib_server());
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-    if (proc->use_ngxib_logger)
-        ib_log_set_logger_fn(ironbee, ngxib_logger, NULL);
-    /* Using default log level function. */
-
-    rc = ib_engine_init(ironbee);
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-    /* TODO: TS creates logfile at this point */
-
-    ib_hook_conn_register(ironbee, conn_opened_event, ngxib_conn_init, NULL);
-
-    rc = ib_cfgparser_create(&cp, ironbee);
-    assert((cp != NULL) || (rc != IB_OK));
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-    rc = ib_engine_config_started(ironbee, cp);
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-    /* Get the main context, set some defaults */
-    ctx = ib_context_main(ironbee);
-    ib_context_set_num(ctx, "logger.log_level", proc->loglevel);
+    /* Create the IronBee engine manager */
+    rc = ib_manager_create(ngxib_server(),        /* Server object */
+                           proc->max_engines,     /* Max engines */
+                           NULL,                  /* Logger va function */
+                           ngxib_logger,          /* Logger buf function */
+                           NULL,                  /* Logger flush function */
+                           mod_data,              /* cbdata: module data */
+                           proc->log_level,       /* IB log level */
+                           &(mod_data->manager)); /* Engine Manager */
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* FIXME - use the temp pool operation for this */
-    char *buf = strndup((char*)proc->config_file.data, proc->config_file.len);
-    rc = ib_cfgparser_parse(cp, buf);
-    free(buf);
-    rc1 = ib_engine_config_finished(ironbee);
-    ib_cfgparser_destroy(cp);
+    buf = strndup((char*)proc->config_file.data, proc->config_file.len);
 
-    cleanup_return(prev_log) rc == IB_OK ? rc1 == IB_OK ? NGX_OK : IB2NG(rc1) : IB2NG(rc);
+    /* Create the initial engine */
+    rc = ib_manager_engine_create(mod_data->manager, buf);
+    if (rc != IB_OK) {
+        free(buf);
+        return rc;
+    }
+    free(buf);
+
+    cleanup_return(prev_log) rc == IB_OK ? NGX_OK : IB2NG(rc);
 }
 
 /**
@@ -592,8 +649,9 @@ static void *create_main_conf(ngx_conf_t *cf)
 {
     ironbee_proc_t *conf = ngx_pcalloc(cf->pool, sizeof(ironbee_proc_t));
     if (conf != NULL) {
-        conf->loglevel = NGX_CONF_UNSET_UINT;
+        conf->log_level = NGX_CONF_UNSET_UINT;
         conf->use_ngxib_logger = NGX_CONF_UNSET;
+        conf->max_engines = NGX_CONF_UNSET_UINT;
     }
     return conf;
 }
@@ -627,7 +685,10 @@ static void ironbee_exit(ngx_cycle_t *cycle)
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "ironbee_exit %d", getpid());
     /* FIXME: this fails under gdb */
     ngxib_log(cycle->log);
-    ib_engine_destroy(ironbee);
+    if (module_data.manager != NULL) {
+        ib_manager_destroy(module_data.manager);
+        module_data.manager = NULL;
+    }
     ngxib_log(NULL);
 }
 

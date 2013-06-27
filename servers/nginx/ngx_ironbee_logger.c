@@ -46,69 +46,43 @@ ngx_log_t *ngxib_log(ngx_log_t *log)
     return tmp;
 }
 
-/**
- * IronBee logger function.
- *
- * Performs IronBee logging for the nginx module.
- *
- * @param[in] ib IronBee engine
- * @param[in] level Debug level
- * @param[in] file File name
- * @param[in] line Line number
- * @param[in] fmt Format string
- * @param[in] ap Var args list to match the format
- * @param[in] dummy Dummy pointer
- */
-void ngxib_logger(const ib_engine_t *ib,
-                  ib_log_level_t level,
-                  const char *file,
-                  int line,
-                  const char *fmt,
-                  va_list ap,
-                  void *dummy)
+void ngxib_logger(
+    ib_log_level_t  level,
+    void           *cbdata,
+    const char     *buf)
 {
-    char buf[8192 + 1];
-    int limit = 7000;
     unsigned int ngx_level = NGX_LOG_WARN;
-    int ec;
-
-    assert(ngx_log != NULL);
-
-    /* Buffer the log line. */
-    ec = vsnprintf(buf, sizeof(buf), fmt, ap);
-    if (ec >= limit) {
-        /* Mark as truncated, with a " ...". */
-        memcpy(buf + (limit - 5), " ...", 5);
-
-        /// @todo Do something about it
-        ngx_log_error(ngx_level, ngx_log, 0,
-                      "Ironbee: Log format truncated: limit (%d/%d)",
-                      (int)ec, limit);
-    }
 
     /* Translate the log level. */
     switch (level) {
-        case 0:
-            ngx_level = NGX_LOG_EMERG;
-            break;
-        case 1:
-            ngx_level = NGX_LOG_ALERT;
-            break;
-        case 2:
-            ngx_level = NGX_LOG_ERR;
-            break;
-        case 3:
-            ngx_level = NGX_LOG_WARN;
-            break;
-        case 4:
-            ngx_level = NGX_LOG_DEBUG; /// @todo For now, so we get file/line
-            break;
-        case 9:
-            ngx_level = NGX_LOG_DEBUG;
-            break;
-        default:
-            ngx_level = NGX_LOG_DEBUG; /// @todo Make configurable
-            break;
+    case IB_LOG_EMERGENCY:
+        ngx_level = NGX_LOG_EMERG;
+        break;
+    case IB_LOG_ALERT:
+        ngx_level = NGX_LOG_ALERT;
+        break;
+    case IB_LOG_CRITICAL:
+        ngx_level = NGX_LOG_CRIT;
+        break;
+    case IB_LOG_ERROR:
+        ngx_level = NGX_LOG_ERR;
+        break;
+    case IB_LOG_WARNING:
+        ngx_level = NGX_LOG_WARN;
+        break;
+    case IB_LOG_NOTICE:
+        ngx_level = NGX_LOG_NOTICE;
+        break;
+    case IB_LOG_INFO:
+        ngx_level = NGX_LOG_INFO;
+        break;
+    case IB_LOG_DEBUG:
+    case IB_LOG_DEBUG2:
+    case IB_LOG_DEBUG3:
+    case IB_LOG_TRACE:
+    default:
+        ngx_level = NGX_LOG_DEBUG;
+        break;
     }
 
     /// @todo Make configurable

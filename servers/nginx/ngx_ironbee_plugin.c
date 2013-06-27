@@ -203,9 +203,9 @@ static ib_status_t list_edit(ngx_list_t *list, const char *entry,
     cleanup_return(prev_log) IB_OK;
 }
 /**
- * Ironbee callback function to manipulate an HTTP header
+ * IronBee callback function to manipulate an HTTP header
  *
- * @param[in] tx - Ironbee transaction
+ * @param[in] tx - IronBee transaction
  * @param[in] dir - Request/Response
  * @param[in] action - Requested header manipulation
  * @param[in] hdr - Header
@@ -230,7 +230,7 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
      *
      * That won't work for setting/unsetting a header altogether.
      * It's no use if we set the list but leave the enumerated
-     * pointers uninitialised or dangling.
+     * pointers uninitialized or dangling.
      */
     ngxib_req_ctx *ctx = tx->sctx;
 
@@ -262,10 +262,10 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
     return IB_ENOTIMPL;
 }
 /**
- * Ironbee callback function to set an HTTP error status.
+ * IronBee callback function to set an HTTP error status.
  * This will divert processing into an ErrorDocument for the status.
  *
- * @param[in] tx - Ironbee transaction
+ * @param[in] tx - IronBee transaction
  * @param[in] status - Status to set
  * @return OK, or Declined if called too late.  NOTIMPL should never happen.
  */
@@ -288,9 +288,9 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
     return IB_ENOTIMPL;
 }
 /**
- * Ironbee callback function to set an HTTP header for an ErrorDocument.
+ * IronBee callback function to set an HTTP header for an ErrorDocument.
  *
- * @param[in] tx - Ironbee transaction
+ * @param[in] tx - IronBee transaction
  * @param[in] hdr - Header to set
  * @param[in] val - Value to set
  * @return Not Implemented, or error.
@@ -307,13 +307,13 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *
 }
 
 /**
- * Ironbee callback function to set an errordocument
+ * IronBee callback function to set an ErrorDocument
  * Since httpd has its own internal ErrorDocument mechanism,
  * we use that for the time being and leave this NOTIMPL
  *
- * TODO: think about something along the lines of mod_choices's errordoc.
+ * TODO: think about something along the lines of mod_choice's errordoc.
  *
- * @param[in] tx Ironbee transaction
+ * @param[in] tx IronBee transaction
  * @param[in] data Data to set
  * @param[in] dlen Length of @a data to set.
  * @return NOTIMPL, or Declined if called too late, or EINVAL.
@@ -347,7 +347,7 @@ static ib_status_t ib_errclose_callback(
 }
 
 /**
- * Ironbee callback function to return the ib_server instance for nginx
+ * IronBee callback function to return the ib_server instance for nginx
  *
  * @return pointer to the ib_server instance for nginx
  */

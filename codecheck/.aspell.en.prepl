@@ -86,6 +86,7 @@ bae base
 varargs variable args
 occures occurs
 casted cast
+ignoreme ignored
 mutale mutable
 registerring Registering
 convertable convertible
@@ -103,6 +104,7 @@ trailser Trailer
 kstore kvstore
 contet context
 cominging combining
+ngix Nginx
 contex Context
 contex context
 lenth Length

@@ -23,7 +23,7 @@
  */
 
 
-/* The connection data we're concerned with is Ironbee's iconn
+/* The connection data we're concerned with is IronBee's iconn
  * We need a function to retrieve it in processing a request
  *
  *  Update: this is much-simplified by the fact we have no threads
@@ -31,17 +31,18 @@
  */
 
 #include <ironbee/config.h>
+#include <ironbee/engine_manager.h>
 #include "ngx_ironbee.h"
 #include <ironbee/state_notify.h>
 
 struct ngxib_conn_t {
-    ib_conn_t *iconn;
-    ib_engine_t *ironbee;
-    ngx_log_t *log;
+    ib_conn_t   *iconn;
+    ib_engine_t *engine;
+    ngx_log_t   *log;
 };
 
 /**
- * nginx connection pool cleanup function to notify Ironbee
+ * nginx connection pool cleanup function to notify IronBee
  * and destroy the ironbee connection object.
  *
  * @param[in] arg  the connection rec
@@ -50,86 +51,21 @@ static void conn_end(void *arg)
 {
     ngxib_conn_t *conn = arg;
     ngx_log_t *prev_log = ngxib_log(conn->log);
-    ib_state_notify_conn_closed(conn->ironbee, conn->iconn);
+    ib_state_notify_conn_closed(conn->engine, conn->iconn);
     ib_conn_destroy(conn->iconn);
+    ngxib_release_engine(conn->engine, conn->log);
     ngxib_log(prev_log);
 }
 
 /**
- * function to return the ironbee connection rec after ensuring it exists
+ * Initialize connection parameters
  *
- * Since nginx has no connection API, we have to hook into each request.
- * This function looks to see if the Ironbee connection rec has already
- * been initialised, and if so returns it.  If it doesn't yet exist,
- * it will be created and Ironbee notified of the new connection.
- * A cleanup is added to nginx's connection pool, and is also used
- * to search for the connection.
- *
- * @param[in] rctx  The module request ctx
- * @param[in] ib    The ironbee engine
- * @return          The ironbee connection
- */
-ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib)
-{
-    ngx_pool_cleanup_t *cln;
-    ib_status_t rc;
-    ngx_log_t *prev_log;
-
-    /* Suggested by Maxim Dounin on dev list:
-     * Look through pool cleanups for our conn
-     * No race condition because no threads!
-     */
-    for (cln = rctx->r->connection->pool->cleanup;
-         cln != NULL; cln = cln->next) {
-        if (cln->handler == conn_end) {
-            /* Our connection is already initialised and it's here */
-            rctx->conn = cln->data;
-            return rctx->conn->iconn;
-        }
-    }
-
-    /* This connection is new, so initialise our conn struct
-     * and notify Ironbee.
-     *
-     * No threads, so no race condition here
-     */
-
-    ngx_regex_malloc_init(rctx->r->connection->pool);
-    prev_log = ngxib_log(rctx->r->connection->log);
-
-    rctx->conn = ngx_palloc(rctx->r->connection->pool, sizeof(ngxib_conn_t));
-    rctx->conn->ironbee = ib;
-    rctx->conn->log = rctx->r->connection->log;
-
-    rc = ib_conn_create(rctx->conn->ironbee, &rctx->conn->iconn, rctx->r->connection);
-    if (rc != IB_OK) {
-        cleanup_return(prev_log) NULL;
-    }
-
-    ib_state_notify_conn_opened(rctx->conn->ironbee, rctx->conn->iconn);
-
-    cln = ngx_pool_cleanup_add(rctx->r->connection->pool, 0);
-    if (cln != NULL) {
-        cln->handler = conn_end;
-        cln->data = rctx->conn;
-    }
-
-    cleanup_return(prev_log) rctx->conn->iconn;
-}
-
-/**
- * Ironbee callback to initialise connection parameters
- *
- * @param[in] ib     the ironbee engine
- * @param[in] event  the ironbee event
- * @param[in] iconn  the ironbee connection event
- * @param[in] cbdata dummy
+ * @param[in] iconn The IronBee connection
  * @return    IB_OK or error
  */
-ib_status_t ngxib_conn_init(ib_engine_t *ib,
-                            ib_conn_t *iconn,
-                            ib_state_event_type_t event,
-                            void *cbdata)
+static ib_status_t conn_init(
+    ib_conn_t *iconn
+)
 {
     unsigned char buf[INET6_ADDRSTRLEN];
     ib_status_t rc1, rc2;
@@ -142,18 +78,88 @@ ib_status_t ngxib_conn_init(ib_engine_t *ib,
 
     /* Get the remote address */
     len = ngx_sock_ntop(conn->sockaddr, buf, INET6_ADDRSTRLEN, 0);
-    iconn->remote_ipstr = ngx_palloc(conn->pool, len+1);
-    strncpy((char*)iconn->remote_ipstr, (char*)buf, len);
+    iconn->remote_ipstr = ib_mpool_memdup_to_str(iconn->mp, buf, len);
+    if (iconn->remote_ipstr == NULL) {
+        return IB_EALLOC;
+    }
     rc1 = ib_data_add_bytestr(iconn->data, "remote_ip",
                               (uint8_t *)iconn->remote_ipstr, len, NULL);
 
     /* Get the local address.  Unfortunately this comes from config */
     len = ngx_sock_ntop(conn->local_sockaddr, buf, INET6_ADDRSTRLEN, 0);
-    iconn->local_ipstr = ngx_palloc(conn->pool, len+1);
-    strncpy((char*)iconn->local_ipstr, (char*)buf, len);
+    iconn->local_ipstr = ib_mpool_memdup_to_str(iconn->mp, buf, len);
+    if (iconn->local_ipstr == NULL) {
+        return IB_EALLOC;
+    }
     rc2 = ib_data_add_bytestr(iconn->data, "local_ip",
                               (uint8_t *)iconn->local_ipstr, len, NULL);
 
     return (rc1 == IB_OK) ? rc2 : rc1;
 }
 
+ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx)
+{
+    ngx_pool_cleanup_t *cln;
+    ib_status_t rc;
+    ngx_log_t *prev_log;
+    ib_engine_t *ib;
+
+    /* Suggested by Maxim Dounin on dev list:
+     * Look through pool cleanups for our conn
+     * No race condition because no threads!
+     */
+    for (cln = rctx->r->connection->pool->cleanup;
+         cln != NULL; cln = cln->next) {
+        if (cln->handler == conn_end) {
+            /* Our connection is already initialized and it's here */
+            rctx->conn = cln->data;
+            return rctx->conn->iconn;
+        }
+    }
+
+    /* This connection is new, so initialize our conn struct
+     * and notify IronBee.
+     *
+     * No threads, so no race condition here
+     */
+    prev_log = ngxib_log(rctx->r->connection->log);
+
+    /* Acquire an IronBee engine */
+    rc = ngxib_acquire_engine(&ib, rctx->r->connection->log);
+    if (rc != IB_OK) {
+        cleanup_return(prev_log) NULL;
+    }
+
+    ngx_regex_malloc_init(rctx->r->connection->pool);
+
+    rctx->conn = ngx_palloc(rctx->r->connection->pool, sizeof(ngxib_conn_t));
+    if (rctx->conn == NULL) {
+        ngxib_release_engine(ib, rctx->r->connection->log);
+        cleanup_return(prev_log) NULL;
+    }
+    rctx->conn->engine = ib;
+    rctx->conn->log = rctx->r->connection->log;
+
+    rc = ib_conn_create(rctx->conn->engine, &rctx->conn->iconn, rctx->r->connection);
+    if (rc != IB_OK) {
+        ngxib_release_engine(ib, rctx->r->connection->log);
+        cleanup_return(prev_log) NULL;
+    }
+
+    /* Initialize the connection */
+    rc = conn_init(rctx->conn->iconn);
+    if (rc != IB_OK) {
+        ngxib_release_engine(ib, rctx->r->connection->log);
+        cleanup_return(prev_log) NULL;
+    }
+
+    ib_state_notify_conn_opened(rctx->conn->engine, rctx->conn->iconn);
+
+    cln = ngx_pool_cleanup_add(rctx->r->connection->pool, 0);
+    if (cln != NULL) {
+        cln->handler = conn_end;
+        cln->data = rctx->conn;
+    }
+
+    cleanup_return(prev_log) rctx->conn->iconn;
+}

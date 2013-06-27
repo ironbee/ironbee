@@ -31,10 +31,10 @@
 #include <ironbee/engine_types.h>
 #include <ironbee/engine.h>
 
-/* HTTP statuses we'll support when Ironbee asks us to return them */
+/* HTTP statuses we'll support when IronBee asks us to return them */
 #define STATUS_IS_ERROR(code) ( ((code) >= 200) && ((code) <  600) )
 
-/* Placeholder for generic conversion of an Ironbee error to an nginx error */
+/* Placeholder for generic conversion of an IronBee error to an nginx error */
 #define IB2NG(x) x
 
 /* A struct used to track a connection across requests (required because
@@ -49,7 +49,7 @@ typedef enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } iobuf_t;
 typedef struct ngxib_req_ctx {
     ngx_http_request_t *r;        /* The nginx request struct */
     ngxib_conn_t *conn;           /* Connection tracking */
-    ib_tx_t *tx;                  /* The Ironbee request struct */
+    ib_tx_t *tx;                  /* The IronBee request struct */
     int status;                   /* Request status set by ironbee */
     iobuf_t output_buffering;     /* Output buffer management */
     ngx_chain_t *response_buf;    /* Output buffer management */
@@ -66,23 +66,74 @@ typedef struct ngxib_req_ctx {
     int internal_errordoc:1;      /* State flags */
 } ngxib_req_ctx;
 
-/* Determine whether a connection is known to Ironbee.  If yes, retrieve it;
- * if no then initialise it and retreive it.
+/**
+ * Acquire an IronBee engine
+ *
+ * @param[out] pengine Pointer to acquired engine
+ * @param[in] log Nginx log object
+ *
+ * @returns Status code
  */
-ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib);
+ib_status_t ngxib_acquire_engine(
+    ib_engine_t  **pengine,
+    ngx_log_t     *log
+);
 
-/* Ironbee's callback to initialise its connection rec */
+/**
+ * Release an IronBee engine
+ *
+ * @param[in] engine Engine to release
+ * @param[in] log Nginx log object
+ *
+ * @returns Status code
+ */
+ib_status_t ngxib_release_engine(
+    ib_engine_t   *engine,
+    ngx_log_t     *log
+);
+
+/**
+ * function to return the ironbee connection rec after ensuring it exists
+ *
+ * Determine whether a connection is known to IronBee.  If yes, retrieve it;
+ * if no then initialize it and retrieve it.
+ *
+ * This function will acquire an engine from the engine manager if required.
+ *
+ * Since nginx has no connection API, we have to hook into each request.
+ * This function looks to see if the IronBee connection rec has already
+ * been initialized, and if so returns it.  If it doesn't yet exist,
+ * it will be created and IronBee notified of the new connection.
+ * A cleanup is added to nginx's connection pool, and is also used
+ * to search for the connection.
+ *
+ * @param[in] rctx  The module request ctx
+ * @return          The ironbee connection
+ */
+ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx);
+
+/* IronBee's callback to initialize its connection rec */
 ib_status_t ngxib_conn_init(ib_engine_t *ib,
                             ib_conn_t *iconn,
                             ib_state_event_type_t event,
                             void *cbdata);
 
-/* Ironbee log function to write to nginx's error log */
-void ngxib_logger(const ib_engine_t *ib, ib_log_level_t level,
-                  const char *file, int line, const char *fmt,
-                  va_list ap, void *dummy);
+/**
+ * IronBee / Nginx logger.
+ *
+ * Performs IronBee logging for the NGX plugin.
+ *
+ * @param[in] level IronBee log level
+ * @param[in] cbdata Callback data (unused)
+ * @param[in] buf Formatted buffer
+ */
+void ngxib_logger(
+    ib_log_level_t  level,
+    void           *cbdata,
+    const char     *buf
+);
 
-/* Dummy funvtion to set Ironbee log level */
+/* Dummy function to set IronBee log level */
 ib_log_level_t ngxib_loglevel(const ib_engine_t *ib, void *cbdata);
 
 /* Set/retrieve global log descriptor.  A fudge for the absence of appdata
@@ -97,7 +148,6 @@ int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx);
 /* Misc symbols that need visibility across source files */
 extern ngx_module_t  ngx_ironbee_module;         /* The module struct */
 ngx_int_t ngxib_handler(ngx_http_request_t *r);  /* Handler for Request Data */
-ib_engine_t *ngxib_engine(void);                 /* The ironbee engine */
 ib_server_t *ngxib_server(void);                 /* The ironbee server */
 
 
