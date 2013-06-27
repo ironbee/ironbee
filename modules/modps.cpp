@@ -23,7 +23,7 @@
  * parse was successful and store the results in the capture field.
  *
  * Parsers:
- * - `parseAuthroity ""` -- `username, password, host, port`
+ * - `parseAuthority ""` -- `username, password, host, port`
  * - `parseURI ""` -- `scheme, authority, path, query, fragment`
  * - `parseRequestLine ""` -- `method, uri, version`
  * - `parseResponseLine ""` -- `version, status, message`

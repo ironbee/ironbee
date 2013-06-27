@@ -70,7 +70,7 @@ typedef void (*ib_resource_destroy_fn_t)(
 );
 
 /**
- * Callback to inform a resource that it is being aquired for use.
+ * Callback to inform a resource that it is being acquired for use.
  *
  * Use this to clear temporary values, reset counters, etc.
  *
@@ -120,7 +120,7 @@ typedef ib_status_t (*ib_resource_postuse_fn_t)(
  * @param[in] create_data Callback data.
  * @param[in] destroy_fn Destroy a resource.
  * @param[in] destroy_data Callback data.
- * @param[in] preuse_fn Called when a resource is aquired from the pool
+ * @param[in] preuse_fn Called when a resource is acquired from the pool
  *            for use by the client. This is not called when a resource
  *            is removed from the pool for destruction.
  *            This may be NULL.
@@ -153,7 +153,7 @@ ib_status_t DLL_PUBLIC ib_resource_pool_create(
  * Acquire a resource, creating a new one if necessary.
  *
  * All resources that are acquired through ib_resource_acquire() must be
- * retured with ib_resource_return().
+ * returned with ib_resource_return().
  *
  * @param[in] resource_pool The resource pool.
  * @param[out] resource The resource to get.

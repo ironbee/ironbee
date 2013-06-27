@@ -49,7 +49,7 @@ struct ib_resource_pool_t {
      * List of empty @ref ib_resource_t.
      *
      * Empty @ref ib_resource_t are pulled from here, if available,
-     * insetad of allocating new ones.
+     * instead of allocating new ones.
      */
     ib_queue_t *free_queue;
     size_t      count;     /**< Number of created resources. */
@@ -112,7 +112,7 @@ static void ib_resource_pool_destroy(void *data) {
  * @returns
  * - IB_OK On success.
  * - IB_DECLINED If the max limit is reached.
- * - IB_EALLOC If an allocation error occures.
+ * - IB_EALLOC If an allocation error occurs.
  * - Other from the user create function.
  */
 static ib_status_t create_resource(
@@ -384,7 +384,7 @@ ib_status_t ib_resource_release(
             resource->resource,
             resource->owner->postuse_data);
 
-        /* If the user says that the resource is invalid, destoy it. */
+        /* If the user says that the resource is invalid, destroy it. */
         if (rc == IB_EINVAL) {
             return destroy_resource(resource);
         }

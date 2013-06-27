@@ -69,7 +69,7 @@ extern "C" {
     }
 } /* Close extern "C" */
 
-} /* Close nonymous namespace. */
+} /* Close anonymous namespace. */
 
 class ResourcePoolTest : public ::testing::Test {
 public:
