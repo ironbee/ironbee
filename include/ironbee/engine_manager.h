@@ -192,6 +192,8 @@ ib_status_t DLL_PUBLIC ib_manager_destroy(
  * @param[in] config_file Configuration file path
  *
  * @returns Status code
+ *   - IB_OK All OK
+ *   - IB_DECLINED Max # of engines reached, no engine created
  */
 ib_status_t DLL_PUBLIC ib_manager_engine_create(
     ib_manager_t  *manager,
@@ -212,7 +214,7 @@ ib_status_t DLL_PUBLIC ib_manager_engine_create(
  *
  * @returns Status code
  *   - IB_OK All OK
- *   - IB_ENOENT No current IronBee engine exists
+ *   - IB_DECLINED No current IronBee engine exists
  */
 ib_status_t DLL_PUBLIC ib_manager_engine_acquire(
     ib_manager_t  *manager,
