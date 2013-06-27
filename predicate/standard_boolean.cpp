@@ -339,6 +339,138 @@ bool If::transform(
     }
 }
 
+string OrSC::name() const
+{
+    return "orSC";
+}
+
+void OrSC::calculate(EvalContext context)
+{
+    assert(children().size() >= 2);
+    BOOST_FOREACH(const node_p& child, children()) {
+        if (! child->eval(context).empty()) {
+            finish_true();
+            return;
+        }
+        if (! child->is_finished()) {
+            // Don't evaluate further children until we know this one is
+            // false.
+            return;
+        }
+    }
+    // Only reach here if all children are finished and false.
+    finish_false();
+}
+
+bool OrSC::transform(
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory,
+    NodeReporter       reporter
+)
+{
+    node_p me = shared_from_this();
+    bool result = false;
+
+    node_list_t to_remove;
+    BOOST_FOREACH(const node_p& child, children()) {
+        if (child->is_literal()) {
+            if (! child->eval(EvalContext()).empty()) {
+                node_p replacement = c_true;
+                merge_graph.replace(me, replacement);
+                return true;
+            }
+            else {
+                to_remove.push_back(child);
+            }
+        }
+    }
+
+    BOOST_FOREACH(const node_p& child, to_remove) {
+        result = true;
+        merge_graph.remove(me, child);
+    }
+
+    if (children().size() == 1) {
+        node_p replacement = children().front();
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    if (children().size() == 0) {
+        node_p replacement = c_false;
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    return result;
+}
+
+string AndSC::name() const
+{
+    return "andSC";
+}
+
+void AndSC::calculate(EvalContext context)
+{
+    assert(children().size() >= 2);
+    BOOST_FOREACH(const node_p& child, children()) {
+        child->eval(context);
+        if (child->is_finished() && child->values().empty()) {
+            finish_false();
+            return;
+        }
+        if (child->values().empty()) {
+            // Do not proceed until child is known to be truthy.
+            return;
+        }
+    }
+    // Only reached if all children are truthy.
+    finish_true();
+}
+
+bool AndSC::transform(
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory,
+    NodeReporter       reporter
+)
+{
+    node_p me = shared_from_this();
+    bool result = false;
+
+    node_list_t to_remove;
+    BOOST_FOREACH(const node_p& child, children()) {
+        if (child->is_literal()) {
+            if (child->eval(EvalContext()).empty()) {
+                node_p replacement = c_false;
+                merge_graph.replace(me, replacement);
+                return true;
+            }
+            else {
+                to_remove.push_back(child);
+            }
+        }
+    }
+
+    BOOST_FOREACH(const node_p& child, to_remove) {
+        result = true;
+        merge_graph.remove(me, child);
+    }
+
+    if (children().size() == 1) {
+        node_p replacement = children().front();
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    if (children().size() == 0) {
+        node_p replacement = c_true;
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    return result;
+}
+
 void load_boolean(CallFactory& to)
 {
     to
@@ -348,8 +480,9 @@ void load_boolean(CallFactory& to)
         .add<And>()
         .add<Not>()
         .add<If>()
+        .add<OrSC>()
+        .add<AndSC>()
     ;
-
 }
 
 } // Standard

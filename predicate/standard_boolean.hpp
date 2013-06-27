@@ -195,8 +195,60 @@ protected:
     virtual void calculate(EvalContext context);
 };
 
-// XXX AndSC
-// XXX OrSC
+/**
+ * True iff any children are truthy (short-circuiting).
+ **/
+class OrSC :
+    public Validate::Call<OrSC>,
+    public Validate::NOrMoreChildren<2>
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with '' if any child is true.
+    * Will **not** order children canonically.
+    **/
+   virtual bool transform(
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory,
+       NodeReporter       reporter
+   );
+
+protected:
+    virtual void calculate(EvalContext context);
+};
+
+/**
+ * True iff all children are truthy (short-circuiting).
+ **/
+class AndSC :
+    public Validate::Call<AndSC>,
+    public Validate::NOrMoreChildren<2>
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+   /**
+    * See Node::transform().
+    *
+    * Will replace self with null if any child is false.
+    * Will **not** order children canonically.
+    **/
+   virtual bool transform(
+       MergeGraph&        merge_graph,
+       const CallFactory& call_factory,
+       NodeReporter       reporter
+   );
+
+protected:
+    virtual void calculate(EvalContext context);
+};
+
 
 /**
  * Load all standard boolean calls into a CallFactory.

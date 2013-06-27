@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/standard.hpp>
+#include <predicate/standard_boolean.hpp>
 #include "standard_test.hpp"
 
 using namespace IronBee::Predicate;
@@ -105,4 +105,35 @@ TEST_F(TestStandardBoolean, If)
     EXPECT_THROW(eval_bool("(if 'a' 'b' 'c' 'd')"), IronBee::einval);
     EXPECT_EQ("'foo'", transform("(if '' 'foo' 'bar')"));
     EXPECT_EQ("'bar'", transform("(if null 'foo' 'bar')"));
+}
+
+TEST_F(TestStandardBoolean, OrSC)
+{
+    EXPECT_TRUE(eval_bool("(orSC '' null)"));
+    EXPECT_TRUE(eval_bool("(orSC '' null null)"));
+    EXPECT_FALSE(eval_bool("(orSC null null)"));
+    EXPECT_THROW(eval_bool("(orSC)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(orSC '')"), IronBee::einval);
+    EXPECT_EQ("(orSC (A) (B))", transform("(orSC (A) (B))"));
+    EXPECT_NE("(orSC (A) (B))", transform("(orSC (B) (A))"));
+    EXPECT_EQ("''", transform("(orSC (A) 'a')"));
+    EXPECT_EQ("(orSC (A) (B))", transform("(orSC (A) (B) null)"));
+    EXPECT_EQ("(A)", transform("(orSC (A) null)"));
+    EXPECT_EQ("null", transform("(orSC null null)"));
+}
+
+TEST_F(TestStandardBoolean, AndSC)
+{
+    EXPECT_FALSE(eval_bool("(andSC '' null)"));
+    EXPECT_FALSE(eval_bool("(andSC '' null '')"));
+    EXPECT_TRUE(eval_bool("(andSC '' '')"));
+    EXPECT_TRUE(eval_bool("(andSC '' '' '')"));
+    EXPECT_THROW(eval_bool("(andSC)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(andSC '')"), IronBee::einval);
+    EXPECT_EQ("(andSC (A) (B))", transform("(andSC (A) (B))"));
+    EXPECT_NE("(andSC (A) (B))", transform("(andSC (B) (A))"));
+    EXPECT_EQ("null", transform("(andSC (B) null)"));
+    EXPECT_EQ("(andSC (A) (B))", transform("(andSC (A) (B) 'foo')"));
+    EXPECT_EQ("(A)", transform("(andSC (A) 'foo')"));
+    EXPECT_EQ("''", transform("(andSC 'foo' 'bar')"));
 }
