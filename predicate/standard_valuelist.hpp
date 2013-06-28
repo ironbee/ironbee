@@ -77,6 +77,47 @@ protected:
 };
 
 /**
+ * First value.
+ **/
+class First :
+    public Validate::Call<First>,
+    public Validate::NChildren<1>
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual void calculate(EvalContext context);
+};
+
+/**
+ * All but first value.
+ **/
+class Rest :
+    public Validate::Call<Rest>,
+    public Validate::NChildren<1>
+{
+public:
+    //! Constructor.
+    Rest();
+
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual void reset();
+    virtual void calculate(EvalContext context);
+
+private:
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
+};
+
+/**
  * Load all standard valielist calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.

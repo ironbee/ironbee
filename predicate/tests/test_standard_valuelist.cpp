@@ -42,3 +42,21 @@ TEST_F(TestStandardValueList, Name)
     EXPECT_THROW(eval_bool("(setName 'a')"), IronBee::einval);
     EXPECT_THROW(eval_bool("(setName 'a' 'b' 'c')"), IronBee::einval);
 }
+
+TEST_F(TestStandardValueList, CatFirstRest)
+{
+    EXPECT_EQ("a", eval_s("(first 'a')"));
+    EXPECT_EQ("a", eval_s("(first (cat 'a'))"));
+    EXPECT_EQ("a", eval_s("(first (cat 'a' 'b'))"));
+    EXPECT_EQ("b", eval_s("(first (rest (cat 'a' 'b')))"));
+    EXPECT_EQ("b", eval_s("(first (rest (cat 'a' 'b' 'c')))"));
+    EXPECT_EQ("b", eval_s("(first (rest (cat 'a' (cat 'b' 'c'))))"));
+
+    EXPECT_THROW(eval_s("(first 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_s("(first)"), IronBee::einval);
+    EXPECT_THROW(eval_s("(rest 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_s("(rest)"), IronBee::einval);
+
+    EXPECT_FALSE(eval_bool("(cat)"));
+    EXPECT_FALSE(eval_bool("(first (cat))"));
+}

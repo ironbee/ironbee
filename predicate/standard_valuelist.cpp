@@ -79,11 +79,85 @@ void Cat::calculate(EvalContext context)
     finish();
 }
 
+string First::name() const
+{
+    return "first";
+}
+
+void First::calculate(EvalContext context)
+{
+    const node_p& child = children().front();
+    ValueList values = child->eval(context);
+    if (! values.empty()) {
+        add_value(values.front());
+        finish();
+    }
+    else if (child->is_finished()) {
+        finish();
+    }
+}
+
+struct Rest::data_t
+{
+    ValueList::const_iterator location;
+};
+
+Rest::Rest() :
+    m_data(new data_t())
+{
+    // nop
+}
+
+string Rest::name() const
+{
+    return "rest";
+}
+
+void Rest::reset()
+{
+    m_data->location = ValueList::const_iterator();
+}
+
+void Rest::calculate(EvalContext context)
+{
+    const node_p& child = children().front();
+    ValueList values = child->eval(context);
+
+    // Special case if no values yet.
+    if (values.empty()) {
+        if (child->is_finished()) {
+            finish();
+        }
+        return;
+    }
+
+    if (m_data->location == ValueList::const_iterator()) {
+        m_data->location = values.begin();
+    }
+
+    // At this point, m_data->location refers to element before next one
+    // to push.
+    ValueList::const_iterator next_location = m_data->location;
+    ++next_location;
+    const ValueList::const_iterator end = values.end();
+    while (next_location != end) {
+        add_value(*next_location);
+        m_data->location = next_location;
+        ++next_location;
+    }
+
+    if (child->is_finished()) {
+        finish();
+    }
+}
+
 void load_valuelist(CallFactory& to)
 {
     to
         .add<SetName>()
         .add<Cat>()
+        .add<First>()
+        .add<Rest>()
     ;
 }
 
