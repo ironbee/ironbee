@@ -27,6 +27,7 @@
 #include <predicate/call_helpers.hpp>
 #include <predicate/standard_boolean.hpp>
 #include <predicate/standard_valuelist.hpp>
+#include <predicate/standard_predicate.hpp>
 #include <predicate/merge_graph.hpp>
 
 #include <ironbeepp/operator.hpp>
@@ -410,6 +411,7 @@ void load(CallFactory& to)
 {
     load_boolean(to);
     load_valuelist(to);
+    load_predicate(to);
 
     to
         .add<Field>()
