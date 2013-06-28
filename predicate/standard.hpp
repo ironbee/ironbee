@@ -211,40 +211,6 @@ private:
 };
 
 /**
- * Construct a named value from a name (string) and value.
- **/
-class SetName :
-    public MaplikeCall,
-    public Validate::Call<SetName>,
-    public Validate::NChildren<2,
-           Validate::NthChildIsString<0,
-           Validate::NthChildIsNotNull<1
-           > > >
-{
-public:
-    //! See Call:name()
-    virtual std::string name() const;
-
-protected:
-    virtual Value value_calculate(Value v, EvalContext context);
-    virtual void calculate(EvalContext context);
-};
-
-/**
- * Construct list of values of children.
- **/
-class List :
-    public Call
-{
-public:
-    //! See Call:name()
-    virtual std::string name() const;
-
-protected:
-    virtual void calculate(EvalContext context);
-};
-
-/**
  * Subfields of given name from first child in collection of second child.
  *
  * First child must be a string literal.  Second child must be a simple value.

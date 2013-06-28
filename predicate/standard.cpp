@@ -26,6 +26,7 @@
 
 #include <predicate/call_helpers.hpp>
 #include <predicate/standard_boolean.hpp>
+#include <predicate/standard_valuelist.hpp>
 #include <predicate/merge_graph.hpp>
 
 #include <ironbeepp/operator.hpp>
@@ -338,48 +339,6 @@ void SpecificTransformation::calculate(EvalContext context)
     );
 }
 
-string SetName::name() const
-{
-    return "set_name";
-}
-
-Value SetName::value_calculate(Value v, EvalContext context)
-{
-    Value name = literal_value(children().front());
-    ConstByteString name_bs = name.value_as_byte_string();
-
-    return v.dup(v.memory_pool(), name_bs.const_data(), name_bs.length());
-}
-
-void SetName::calculate(EvalContext context)
-{
-    map_calculate(children().back(), context);
-}
-
-string List::name() const
-{
-    return "list";
-}
-
-void List::calculate(EvalContext context)
-{
-    // Do nothing if any unfinished children.
-    BOOST_FOREACH(const node_p& child, children()) {
-        child->eval(context);
-        if (! child->is_finished()) {
-            return;
-        }
-    }
-
-    // All children finished, concatenate values.
-    BOOST_FOREACH(const node_p& child, children()) {
-        BOOST_FOREACH(Value v, child->values()) {
-            add_value(v);
-        }
-    }
-    finish();
-}
-
 string Sub::name() const
 {
     return "sub";
@@ -450,13 +409,12 @@ call_p generate_specific_transformation(const std::string& name)
 void load(CallFactory& to)
 {
     load_boolean(to);
+    load_valuelist(to);
 
     to
         .add<Field>()
         .add<Operator>()
         .add<Transformation>()
-        .add<SetName>()
-        .add<List>()
         .add<Sub>()
     ;
 

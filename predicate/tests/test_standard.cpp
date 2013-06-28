@@ -176,16 +176,6 @@ TEST_F(TestStandard, SpecificTransformation)
     EXPECT_THROW(eval_bool("(lowercase 'a' 'b')"), IronBee::einval);
 }
 
-TEST_F(TestStandard, Name)
-{
-    EXPECT_TRUE(eval_bool("(set_name 'a' 'b')"));
-    EXPECT_EQ("b", eval_s("(set_name 'a' 'b')"));
-    EXPECT_THROW(eval_bool("(set_name)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(set_name null 'a')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(set_name 'a')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(set_name 'a' 'b' 'c')"), IronBee::einval);
-}
-
 TEST_F(TestStandard, Sub)
 {
     EXPECT_EQ("foo", eval_s("(sub 'a' (list (set_name 'a' 'foo') (set_name 'b' 'bar')))"));
