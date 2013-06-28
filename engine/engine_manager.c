@@ -46,9 +46,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/* Local definitions */
-static const size_t DEFAULT_MAX_ENGINES = 8;  /**< Default max # of engines */
-
 /**
  * The Engine Manager engine wrapper.
  *
@@ -349,6 +346,11 @@ ib_status_t ib_manager_create(
     ib_manager_t         *manager;
     ib_manager_engine_t **engine_list;
 
+    /* Max engines must be at least one */
+    if (max_engines < 1) {
+        return IB_EINVAL;
+    }
+
     /* Create our memory pool. */
     rc = ib_mpool_create(&mpool, "Engine Manager", NULL);
     if (rc != IB_OK) {
@@ -363,9 +365,6 @@ ib_status_t ib_manager_create(
     }
 
     /* Create the engine list. */
-    if (max_engines == 0) {
-        max_engines = DEFAULT_MAX_ENGINES;
-    }
     engine_list = ib_mpool_calloc(mpool,
                                   max_engines,
                                   sizeof(ib_manager_engine_t *));

@@ -47,6 +47,10 @@ extern "C" {
  * @{
  */
 
+/* Local definitions */
+#define IB_MANAGER_DEFAULT_MAX_ENGINES  8  /**< Default max # of engines */
+
+
 /* Engine Manager type declarations */
 
 /**
@@ -116,7 +120,7 @@ typedef void (*ib_manager_log_flush_fn_t)(
  * Create an engine manager.
  *
  * @param[in] server IronBee server object
- * @param[in] max_engines Maximum number of simultaneous engines (0 for default)
+ * @param[in] max_engines Maximum number of simultaneous engines
  * @param[in] logger_va_fn Logger function (@c va_list version)
  * @param[in] logger_buf_fn Logger function (Formatted buffer version)
  * @param[in] logger_flush_fn Logger flush function (or NULL)

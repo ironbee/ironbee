@@ -168,16 +168,16 @@ typedef struct {
 /* Global module data */
 static module_data_t module_data =
 {
-    NULL,                 /* .logger */
-    NULL,                 /* .manager */
-    0,                    /* .max_engines */
-    NULL,                 /* .config_file */
-    NULL,                 /* .log_file */
-    IB_LOG_WARNING,       /* .log_level */
-    false,                /* .log_disable */
+    NULL,                            /* .logger */
+    NULL,                            /* .manager */
+    IB_MANAGER_DEFAULT_MAX_ENGINES,  /* .max_engines */
+    NULL,                            /* .config_file */
+    NULL,                            /* .log_file */
+    IB_LOG_WARNING,                  /* .log_level */
+    false,                           /* .log_disable */
 #ifdef ATS_DEBUG_ENGINE_MANAGER
-    false,                /* .shutdown */
-    NULL,                 /* .debug_file */
+    false,                           /* .shutdown */
+    NULL,                            /* .debug_file */
 #endif
 };
 
