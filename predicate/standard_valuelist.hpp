@@ -135,6 +135,36 @@ protected:
 };
 
 /**
+ * Expand simple list value.
+ **/
+class Scatter :
+    public Validate::Call<Scatter>,
+    public Validate::NChildren<1>
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual void calculate(EvalContext context);
+};
+
+/**
+ * Gathers values into simple list value.
+ **/
+class Gather :
+    public Validate::Call<Gather>,
+    public Validate::NChildren<1>
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual void calculate(EvalContext context);
+};
+
+/**
  * Load all standard valielist calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.

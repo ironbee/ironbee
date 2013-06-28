@@ -76,3 +76,14 @@ TEST_F(TestStandardValueList, Nth)
     EXPECT_THROW(eval_bool("(Nth 'a' 'b')"), IronBee::einval);
     EXPECT_THROW(eval_bool("(Nth 1 'a' 'b')"), IronBee::einval);
 }
+
+TEST_F(TestStandardValueList, ScatterGather)
+{
+    EXPECT_EQ("a", eval_s("(first (scatter (gather (cat 'a' 'b'))))"));
+    EXPECT_EQ("b", eval_s("(rest (scatter (gather (cat 'a' 'b'))))"));
+
+    EXPECT_THROW(eval_bool("(scatter)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(scatter 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(gather)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(gather 'a' 'b')"), IronBee::einval);
+}

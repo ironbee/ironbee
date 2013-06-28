@@ -182,6 +182,59 @@ void Nth::calculate(EvalContext context)
     finish();
 }
 
+string Scatter::name() const
+{
+    return "scatter";
+}
+
+void Scatter::calculate(EvalContext context)
+{
+    const node_p& child = children().front();
+    child->eval(context);
+
+    if (! child->is_finished()) {
+        return;
+    }
+
+    Value value = simple_value(child);
+    if (value) {
+        BOOST_FOREACH(Value v, value.value_as_list<Value>()) {
+            add_value(v);
+        }
+        finish();
+    }
+}
+
+string Gather::name() const
+{
+    return "gather";
+}
+
+void Gather::calculate(EvalContext context)
+{
+    const node_p& child = children().front();
+    child->eval(context);
+
+    if (! child->is_finished()) {
+        return;
+    }
+
+    ValueList values = ValueList::create(context.memory_pool());
+
+    copy(
+        child->values().begin(), child->values().end(),
+        back_inserter(values)
+    );
+
+    add_value(Field::create_no_copy_list(
+        context.memory_pool(),
+        "", 0,
+        values
+    ));
+
+    finish();
+}
+
 void load_valuelist(CallFactory& to)
 {
     to
@@ -190,6 +243,8 @@ void load_valuelist(CallFactory& to)
         .add<First>()
         .add<Rest>()
         .add<Nth>()
+        .add<Scatter>()
+        .add<Gather>()
     ;
 }
 
