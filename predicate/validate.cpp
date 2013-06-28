@@ -109,6 +109,28 @@ void nth_child_is_string(NodeReporter reporter, size_t n)
     }
 }
 
+void nth_child_is_integer(NodeReporter reporter, size_t n)
+{
+    node_cp child = nth_child(reporter, n);
+    if (child && ! is_a<Integer>(child)) {
+        reporter.error(
+            "Child " + boost::lexical_cast<string>(n+1) + " must be an "
+            "integer literal."
+        );
+    }
+}
+
+void nth_child_is_float(NodeReporter reporter, size_t n)
+{
+    node_cp child = nth_child(reporter, n);
+    if (child && ! is_a<Float>(child)) {
+        reporter.error(
+            "Child " + boost::lexical_cast<string>(n+1) + " must be a "
+            "float literal."
+        );
+    }
+}
+
 void nth_child_is_null(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);

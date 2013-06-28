@@ -236,6 +236,22 @@ void n_or_fewer_children(NodeReporter reporter, size_t n);
 void nth_child_is_string(NodeReporter reporter, size_t n);
 
 /**
+ * Report error if @a nth child is not number literal.
+ *
+ * @param[in] reporter Reporter to use.
+ * @param[in] n        Which child should be a number literal.
+ **/
+void nth_child_is_integer(NodeReporter reporter, size_t n);
+
+/**
+ * Report error if @a nth child is not float literal.
+ *
+ * @param[in] reporter Reporter to use.
+ * @param[in] n        Which child should be a float literal.
+ **/
+void nth_child_is_float(NodeReporter reporter, size_t n);
+
+/**
  * Report error if @a nth child is not a null.
  *
  * @param[in] reporter Reporter to use.
@@ -302,6 +318,26 @@ template <size_t N, class Chain = Base>
 struct NthChildIsString :
     public make_validator_size<
         &nth_child_is_string
+    >::value<N, Chain>
+{};
+
+/**
+ * Validator: nth_child_is_integer()
+ **/
+template <size_t N, class Chain = Base>
+struct NthChildIsInteger :
+    public make_validator_size<
+        &nth_child_is_integer
+    >::value<N, Chain>
+{};
+
+/**
+ * Validator: nth_child_is_float()
+ **/
+template <size_t N, class Chain = Base>
+struct NthChildIsFloat :
+    public make_validator_size<
+        &nth_child_is_float
     >::value<N, Chain>
 {};
 
