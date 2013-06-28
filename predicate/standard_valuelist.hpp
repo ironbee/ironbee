@@ -25,8 +25,6 @@
 #ifndef __PREDICATE__STANDARD_VALUELIST__
 #define __PREDICATE__STANDARD_VALUELIST__
 
-#include <predicate/standard_valuelist.hpp>
-
 #include <predicate/merge_graph.hpp>
 
 #include <ironbeepp/operator.hpp>
@@ -165,7 +163,7 @@ protected:
 };
 
 /**
- * Load all standard valielist calls into a CallFactory.
+ * Load all standard valuelists calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.
  **/
