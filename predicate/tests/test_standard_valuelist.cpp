@@ -60,3 +60,19 @@ TEST_F(TestStandardValueList, CatFirstRest)
     EXPECT_FALSE(eval_bool("(cat)"));
     EXPECT_FALSE(eval_bool("(first (cat))"));
 }
+
+TEST_F(TestStandardValueList, Nth)
+{
+    EXPECT_EQ("a", eval_s("(Nth 1 'a')"));
+    EXPECT_EQ("a", eval_s("(Nth 1 (cat 'a' 'b' 'c'))"));
+    EXPECT_EQ("b", eval_s("(Nth 2 (cat 'a' 'b' 'c'))"));
+    EXPECT_EQ("c", eval_s("(Nth 3 (cat 'a' 'b' 'c'))"));
+    EXPECT_FALSE(eval_bool("(Nth 0 (cat 'a' 'b' 'c'))"));
+    EXPECT_FALSE(eval_bool("(Nth -3 (cat 'a' 'b' 'c'))"));
+    EXPECT_FALSE(eval_bool("(Nth -4 (cat 'a' 'b' 'c'))"));
+
+    EXPECT_THROW(eval_bool("(Nth)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(Nth 1)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(Nth 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(Nth 1 'a' 'b')"), IronBee::einval);
+}

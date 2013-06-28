@@ -118,6 +118,23 @@ private:
 };
 
 /**
+ * Nth value.
+ **/
+class Nth :
+    public Validate::Call<Nth>,
+    public Validate::NChildren<2,
+           Validate::NthChildIsInteger<0
+           > >
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual void calculate(EvalContext context);
+};
+
+/**
  * Load all standard valielist calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.

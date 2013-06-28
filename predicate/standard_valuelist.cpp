@@ -151,6 +151,37 @@ void Rest::calculate(EvalContext context)
     }
 }
 
+string Nth::name() const
+{
+    return "Nth";
+}
+
+void Nth::calculate(EvalContext context)
+{
+    int64_t n = literal_value(children().front()).value_as_number();
+
+    if (n <= 0) {
+        finish();
+        return;
+    }
+
+    const node_p& child = children().back();
+    ValueList values = child->eval(context);
+
+    if (values.size() < size_t(n)) {
+        if (child->is_finished()) {
+            finish();
+        }
+        return;
+    }
+
+    ValueList::const_iterator i = values.begin();
+    advance(i, n - 1);
+
+    add_value(*i);
+    finish();
+}
+
 void load_valuelist(CallFactory& to)
 {
     to
@@ -158,6 +189,7 @@ void load_valuelist(CallFactory& to)
         .add<Cat>()
         .add<First>()
         .add<Rest>()
+        .add<Nth>()
     ;
 }
 
