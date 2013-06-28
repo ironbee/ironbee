@@ -44,7 +44,7 @@ EXTRA_DIST = \
 		reporter.hpp            \
 		standard.hpp            \
 		standard_boolean.hpp    \
-		standard_valielist.hpp  \
+		standard_valuelist.hpp  \
 		transform_graph.hpp     \
 		validate.hpp            \
 		validate_graph.hpp
