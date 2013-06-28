@@ -12,6 +12,7 @@ noinst_LTLIBRARIES = libpredicate.la
 libpredicate_la_SOURCES = \
     dag.cpp \
     call_factory.cpp \
+    call_helpers.cpp \
     parse.cpp \
     standard.cpp \
     standard_boolean.cpp \
@@ -28,6 +29,7 @@ libpredicate_la_SOURCES = \
 EXTRA_DIST = \
 		bfs.hpp                 \
 		call_factory.hpp        \
+		call_helpers.hpp        \
 		dag.hpp                 \
 		dot.hpp                 \
 		ibmod_predicate.hpp     \

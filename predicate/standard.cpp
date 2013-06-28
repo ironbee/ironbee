@@ -23,6 +23,8 @@
  */
 
 #include <predicate/standard.hpp>
+
+#include <predicate/call_helpers.hpp>
 #include <predicate/standard_boolean.hpp>
 #include <predicate/merge_graph.hpp>
 
@@ -45,48 +47,6 @@ namespace {
 bool caseless_compare(char a, char b)
 {
     return (a == b || tolower(a) == tolower(b));
-}
-
-//! Assert and extract simple value from node.
-Value simple_value(const node_cp& node)
-{
-    if (! node->is_finished()) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(
-                "Asked for simple value of unfinished node."
-            )
-        );
-    }
-    if (node->values().size() > 1) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(
-                "Asked for simple values of non-simple node."
-            )
-        );
-    }
-
-    if (node->values().empty()) {
-        return Value();
-    }
-    else {
-        return node->values().front();
-    }
-}
-
-//! Assert and extra literal value from node.
-Value literal_value(const node_p& node)
-{
-    if (! node->is_literal()) {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(
-                "Asked for literal value of non-literal node."
-            )
-        );
-    }
-    if (! node->is_finished()) {
-        node->eval(EvalContext());
-    }
-    return simple_value(node);
 }
 
 }
