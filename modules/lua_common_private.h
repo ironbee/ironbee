@@ -30,7 +30,6 @@
 #include <ironbee/config.h>
 #include <ironbee/engine.h>
 #include <ironbee/list.h>
-#include <ironbee/module.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
 
@@ -148,4 +147,4 @@ void ib_lua_add_require_path(ib_engine_t *ib_engine,
                              lua_State *L,
                              const char *path);
 
-#endif // __MODULES__LUA_COMMON_H
+#endif /* __MODULES__LUA_COMMON_H */

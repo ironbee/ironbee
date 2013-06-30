@@ -21,10 +21,6 @@ AM_CPPFLAGS += \
     -DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
     -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs
 
-if ENABLE_LUA
-check_PROGRAMS += test_luajit
-endif
-
 TESTS = $(check_PROGRAMS)
 
 TEST_EXTRAS = \
@@ -64,6 +60,7 @@ test_operator_SOURCES = test_operator.cpp
 test_action_SOURCES = test_action.cpp test_core_actions.cpp
 
 if ENABLE_LUA
+check_PROGRAMS += test_luajit
 test_luajit_SOURCES = \
                       test_luajit.cpp \
                       test_ironbee_lua_api.cpp \
@@ -76,6 +73,7 @@ test_luajit_LDADD = $(LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \
                     $(top_builddir)/modules/ibmod_lua_la-lua.o \
                     $(top_builddir)/modules/ibmod_lua_la-lua_common.o \
+                    $(top_builddir)/modules/ibmod_lua_la-lua_runtime.o \
                     -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                     -lluajit-ironbee \
                     $(LIBM_LDFLAGS)

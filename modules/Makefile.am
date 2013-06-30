@@ -33,10 +33,6 @@ ibmod_ps_la_SOURCES = modps.cpp
 ibmod_ps_la_LIBADD = $(AM_LIBADD) libparser_suite.la
 endif
 
-if ENABLE_LUA
-module_LTLIBRARIES += ibmod_lua.la
-endif
-
 if BUILD_GEOIP
 module_LTLIBRARIES += ibmod_geoip.la
 ibmod_geoip_la_SOURCES = geoip.c
@@ -72,11 +68,16 @@ ibmod_ee_la_CFLAGS = ${AM_CFLAGS} -I$(top_srcdir)/automata/include
 ibmod_ee_la_LDFLAGS = $(AM_LDFLAGS)
 
 if ENABLE_LUA
+module_LTLIBRARIES += ibmod_lua.la
 ibmod_lua_la_SOURCES = lua.c \
                        lua_common.c \
+                       lua_runtime.c \
+                       lua_private.h \
+                       lua_runtime_private.h \
                        lua_common_private.h
 ibmod_lua_la_CPPFLAGS = $(AM_CPPFLAGS) \
-                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src -I$(top_srcdir)
+                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+			-I$(top_srcdir)
 ibmod_lua_la_LIBADD = $(AM_LIBADD) \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
@@ -96,10 +97,10 @@ ibmod_rules_la_SOURCES += \
     lua_common_private.h
 
 ibmod_rules_la_CPPFLAGS += \
-	$(AM_CPPFLAGS) \
+     $(AM_CPPFLAGS) \
     -I$(top_srcdir)/libs/luajit-2.0-ironbee/src
 ibmod_rules_la_LIBADD += -lluajit-ironbee \
-                        -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
+                         -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
 endif
 
 if ENABLE_JSON
@@ -110,10 +111,10 @@ endif
 if BUILD_DEV_MODULES
 module_LTLIBRARIES += ibmod_devel.la
 ibmod_devel_la_SOURCES =  \
-	moddevel.c        \
-	moddevel_rules.c  \
-	moddevel_txdata.c \
-	moddevel_txdump.c
+    moddevel.c        \
+    moddevel_rules.c  \
+    moddevel_txdata.c \
+    moddevel_txdump.c
 ibmod_devel_la_CFLAGS = ${AM_CFLAGS}
 ibmod_devel_la_LDFLAGS = $(AM_LDFLAGS)
 endif
