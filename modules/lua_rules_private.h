@@ -21,7 +21,7 @@
  *
  * IronBee Rules as Lua scripts.
  *
- * @author Sam Baskinger <basking2@yahoo.com>
+ * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 #ifndef __MODULES__LUA_RULES_PRIVATE_H
 #define __MODULES__LUA_RULES_PRIVATE_H

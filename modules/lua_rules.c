@@ -34,7 +34,7 @@
  *
  * IronBee Rules as Lua scripts.
  *
- * @author Sam Baskinger <basking2@yahoo.com>
+ * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
 static ib_status_t lua_operator_execute(

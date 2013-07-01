@@ -24,7 +24,7 @@
  * A runtime includes a little meta information and a lua_State pointer.
  *
  *
- * @author Sam Baskinger <basking2@yahoo.com>
+ * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 #ifndef __MODULES__LUA_RUNTIME_H
 #define __MODULES__LUA_RUNTIME_H
