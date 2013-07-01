@@ -35,6 +35,7 @@
 #include <ironbee/release.h>
 #include <ironbee/resource_pool.h>
 
+
 /**
  * Module configuration.
  */
@@ -79,4 +80,33 @@ ib_status_t modlua_module_load_lua(
     lua_State *L
 );
 
+/**
+ * Push a Lua table onto the stack that contains a path of configurations.
+ *
+ * IronBee supports nested configuration contexts. Configuration B may
+ * occur in configuration A. This function will push
+ * the Lua table { "A", "B" } such that t[1] = "A" and t[2] = "B".
+ *
+ * This allows the module to fetch or build the configuration table
+ * required to store any user configurations to be done.
+ *
+ * Lazy configuration table creation is done to avoid a large, unused
+ * memory footprint in situations of simple global Lua module configurations
+ * but hundreds of sites, each of which has no unique configuration.
+ *
+ * This is also used when finding the closest not-null configuration to
+ * pass to a directive handler.
+ *
+ * @param[in] ib IronBee Engine.
+ * @param[in] ctx The current / starting context.
+ * @param[in,out] L Lua stack onto which is pushed the table of configurations.
+ *
+ * @returns
+ *   - IB_OK is currently always returned.
+ */
+ib_status_t modlua_push_config_path(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    lua_State *L
+);
 #endif /* __MODULES__LUA_H */

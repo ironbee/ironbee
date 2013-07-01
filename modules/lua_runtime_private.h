@@ -197,5 +197,18 @@ ib_status_t modlua_record_reload(
     const char *rule_id,
     const char *file
 );
+
+ib_status_t modlua_releasestate(
+    ib_engine_t *ib,
+    modlua_cfg_t *cfg,
+    modlua_runtime_t *runtime
+);
+
+ib_status_t modlua_acquirestate(
+    ib_engine_t *ib,
+    modlua_cfg_t *cfg,
+    modlua_runtime_t **rt
+);
+
 #endif /* __MODULES__LUA_RUNTIME_H */
 

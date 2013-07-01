@@ -602,3 +602,66 @@ ib_status_t modlua_runtime_resource_pool_create(
         cbdata               /* Callback data is just the active engine. */
     );
 }
+
+ib_status_t modlua_releasestate(
+    ib_engine_t *ib,
+    modlua_cfg_t *cfg,
+    modlua_runtime_t *runtime)
+{
+    assert(ib != NULL);
+    assert(cfg != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_lock_lock(&(cfg->lua_pool_lock));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_resource_release(runtime->resource);
+    if (rc != IB_OK) {
+        ib_lock_unlock(&(cfg->lua_pool_lock));
+        return rc;
+    }
+
+    rc = ib_lock_unlock(&(cfg->lua_pool_lock));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t modlua_acquirestate(
+    ib_engine_t *ib,
+    modlua_cfg_t *cfg,
+    modlua_runtime_t **rt)
+{
+    assert(ib != NULL);
+    assert(cfg != NULL);
+
+    ib_status_t rc;
+    ib_resource_t *resource;
+
+    rc = ib_lock_lock(&(cfg->lua_pool_lock));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_resource_acquire(cfg->lua_pool, &resource);
+    if (rc != IB_OK) {
+        ib_lock_unlock(&(cfg->lua_pool_lock));
+        return rc;
+    }
+
+    rc = ib_lock_unlock(&(cfg->lua_pool_lock));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    *rt = (modlua_runtime_t *)ib_resource_get(resource);
+
+    (*rt)->resource = resource;
+
+    return IB_OK;
+}
