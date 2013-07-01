@@ -28,6 +28,7 @@
 
 #include "lua_private.h"
 #include "lua_runtime_private.h"
+#include "lua_rules_private.h"
 #include <ironbee/array.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/context.h>
@@ -81,14 +82,6 @@ IB_MODULE_DECLARE();
 typedef ib_status_t(*critical_section_fn_t)(ib_engine_t *ib,
                                             lua_State *parent,
                                             lua_State **out_new);
-
-ib_status_t modlua_rule_driver(
-    ib_cfgparser_t *cp,
-    ib_rule_t *rule,
-    const char *tag,
-    const char *location,
-    void *cbdata
-);
 
 /* -- Lua Routines -- */
 
@@ -2379,249 +2372,8 @@ static ib_status_t modlua_conn_fini_lua_runtime(ib_engine_t *ib,
 
 /* -- External Rule Driver -- */
 
-static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
-{
-    assert(ib != NULL);
-    assert(m != NULL);
-    ib_status_t rc;
-
-    /* Register driver. */
-    rc = ib_rule_register_external_driver(
-        ib,
-        "lua",
-        modlua_rule_driver, NULL
-    );
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to register lua rule driver.");
-        return rc;
-    }
-
-    return IB_OK;
-}
-
-static ib_status_t lua_operator_create(
-    ib_context_t  *ctx,
-    const char    *parameters,
-    void         **instance_data,
-    void          *cbdata
-)
-{
-    assert(parameters    != NULL);
-    assert(instance_data != NULL);
-
-    *instance_data = (void *)parameters;
-    return IB_OK;
-}
-
-static ib_status_t lua_operator_execute(
-    ib_tx_t *tx,
-    void *instance_data,
-    const ib_field_t *field,
-    ib_field_t *capture,
-    ib_num_t *result,
-    void *cbdata
-)
-{
-    assert(tx != NULL);
-    assert(tx->ib != NULL);
-    assert(tx->ctx != NULL);
-    assert(tx->conn != NULL);
-    assert(result != NULL);
-    assert(instance_data != NULL);
-
-    ib_status_t rc;
-    ib_engine_t *ib = tx->ib;
-    ib_context_t *ctx = tx->ctx;
-    ib_module_t *module;
-    int result_int;
-    modlua_cfg_t *cfg = NULL;
-    modlua_runtime_t *luart = NULL;
-    const char *func_name = (const char *)instance_data;
-
-    ib_log_trace_tx(tx, "Calling lua function %s.", func_name);
-
-    /* Get the lua module configuration for this context. */
-    rc = modlua_cfg_get(ib, ctx, &cfg);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Get the module. */
-    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to retrieve module.");
-        return rc;
-    }
-
-    /* conn_opened has given us a runtime to use. Go get it. */
-    rc = modlua_runtime_get(tx->conn, module, &luart);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to retrieve Lua stack.");
-        return rc;
-    }
-
-    rc = modlua_reload_ctx_except_main(ib, module, ctx, luart->L);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to reload Lua stack.");
-        return rc;
-    }
-
-    /* Call the rule. */
-    rc = ib_lua_func_eval_int(ib, tx, luart->L, func_name, &result_int);
-    if (rc != IB_OK) {
-        ib_log_debug_tx(
-            tx,
-            "Lua operator %s failed with %s.",
-            func_name,
-            ib_status_to_string(rc));
-        *result = 0;
-        return rc;
-    }
-
-    /* Convert the passed in integer type to an ib_num_t. */
-    *result = result_int;
-
-    ib_log_trace_tx(tx, "Lua function %s=%"PRIu64".", func_name, *result);
-
-    return IB_OK;
-}
-
 /* -- Module Routines -- */
 
-
-/**
- * Called by RuleExt lua:.
- *
- * @param[in] cp       Configuration parser.
- * @param[in] rule     Rule under construction.
- * @param[in] tag      Should be "lua".
- * @param[in] location What comes after "lua:".
- * @param[in] cbdata   Callback data; unused.
- * @return
- * - IB_OK on success.
- * - IB_EINVAL if Lua not available or not called for "lua" tag.
- * - Other error code if loading or registration fails.
- */
-ib_status_t modlua_rule_driver(
-    ib_cfgparser_t *cp,
-    ib_rule_t *rule,
-    const char *tag,
-    const char *location,
-    void *cbdata
-)
-{
-    assert(cp != NULL);
-    assert(cp->ib != NULL);
-    assert(tag != NULL);
-    assert(location != NULL);
-
-    ib_status_t rc;
-    const char *slash;
-    const char *name;
-    ib_operator_t *op;
-    void *instance_data;
-    ib_engine_t *ib = cp->ib;
-    modlua_cfg_t *cfg = NULL;
-    ib_context_t *ctx = NULL;
-
-    if (strncmp(tag, "lua", 3) != 0) {
-        ib_cfg_log_error(cp, "Lua rule driver called for non-lua tag.");
-        return IB_EINVAL;
-    }
-
-    rc = ib_cfgparser_context_current(cp, &ctx);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to retrieve current context.");
-        return rc;
-    }
-
-    rc = modlua_cfg_get(ib, ctx, &cfg);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_lua_load_func(
-        cp->ib,
-        cfg->L,
-        location,
-        ib_rule_id(rule));
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to load lua file \"%s\"", location);
-        return rc;
-    }
-
-    /* Record that we need to reload this rule in each TX. */
-    rc = modlua_record_reload(
-        cp->ib,
-        cfg,
-        MODLUA_RELOAD_RULE,
-        ib_rule_id(rule),
-        location);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(
-            cp,
-            "Failed to record  lua file \"%s\" to reload",
-            location);
-        return rc;
-    }
-
-    ib_cfg_log_debug3(cp, "Loaded lua file \"%s\"", location);
-    slash = strrchr(location, '/');
-    if (slash == NULL) {
-        name = location;
-    }
-    else {
-        name = slash + 1;
-    }
-
-    rc = ib_operator_create_and_register(
-        &op,
-        cp->ib,
-        name,
-        IB_OP_CAPABILITY_NON_STREAM,
-        &lua_operator_create,
-        NULL,
-        NULL,
-        NULL,
-        &lua_operator_execute,
-        NULL
-    );
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to register lua operator \"%s\": %s",
-                         name, ib_status_to_string(rc));
-        return rc;
-    }
-
-    rc = ib_operator_inst_create(op,
-                                 ctx,
-                                 ib_rule_required_op_flags(rule),
-                                 ib_rule_id(rule), /* becomes instance_data */
-                                 &instance_data);
-
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Failed to instantiate lua operator "
-                         "for rule \"%s\": %s",
-                         name, ib_status_to_string(rc));
-        return rc;
-    }
-
-    rc = ib_rule_set_operator(cp->ib, rule, op, instance_data);
-
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Failed to associate lua operator \"%s\" "
-                         "with rule \"%s\": %s",
-                         name, ib_rule_id(rule), ib_status_to_string(rc));
-        return rc;
-    }
-
-    ib_cfg_log_debug3(cp, "Set operator \"%s\" for rule \"%s\"",
-                      name,
-                      ib_rule_id(rule));
-
-    return IB_OK;
-}
 
 /**
  * Make an empty reloads list for the configuration for @a ctx.
@@ -2893,7 +2645,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     }
 
     /* Set up rule support. */
-    rc = rules_lua_init(ib, module, cbdata);
+    rc = rules_lua_init(ib, module);
     if (rc != IB_OK) {
         return rc;
     }

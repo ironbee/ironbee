@@ -72,8 +72,10 @@ module_LTLIBRARIES += ibmod_lua.la
 ibmod_lua_la_SOURCES = lua.c \
                        lua_common.c \
                        lua_runtime.c \
+                       lua_rules.c \
                        lua_private.h \
                        lua_runtime_private.h \
+                       lua_rules_private.h \
                        lua_common_private.h
 ibmod_lua_la_CPPFLAGS = $(AM_CPPFLAGS) \
                         -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \

@@ -74,6 +74,7 @@ test_luajit_LDADD = $(LDADD) \
                     $(top_builddir)/modules/ibmod_lua_la-lua.o \
                     $(top_builddir)/modules/ibmod_lua_la-lua_common.o \
                     $(top_builddir)/modules/ibmod_lua_la-lua_runtime.o \
+                    $(top_builddir)/modules/ibmod_lua_la-lua_rules.o \
                     -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                     -lluajit-ironbee \
                     $(LIBM_LDFLAGS)
