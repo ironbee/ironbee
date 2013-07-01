@@ -50,6 +50,17 @@ struct modlua_cfg_t {
 };
 typedef struct modlua_cfg_t modlua_cfg_t;
 
+/**
+ * Get the @ref modlua_cfg_t configuration from the configuration context.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] ctx The configuration context.
+ * @param[out] cfg The configuration stored in the context.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Failure codes for ib_context_module_config() or ib_engine_module_get().
+ */
 ib_status_t modlua_cfg_get(
     ib_engine_t *ib,
     ib_context_t *ctx,
