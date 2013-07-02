@@ -127,7 +127,7 @@ static ib_status_t ownership_fn(
 
     RuleInjectTest *p = static_cast<RuleInjectTest *>(cbdata);
 
-    rc = ib_rule_search_action(ib, rule, RULE_ACTION_TRUE,
+    rc = ib_rule_search_action(ib, rule, IB_RULE_ACTION_TRUE,
                                name, NULL, &count);
     if (rc != IB_OK) {
         return rc;
@@ -188,7 +188,7 @@ TEST_F(RuleInjectTest, test_inject)
     ASSERT_EQ(IB_OK, rc);
 
     // Register the injection function
-    rc = ib_rule_register_injection_fn(ib_engine, name, PHASE_REQUEST_HEADER,
+    rc = ib_rule_register_injection_fn(ib_engine, name, IB_PHASE_REQUEST_HEADER,
                                        injection_fn, this);
     ASSERT_EQ(IB_OK, rc);
 

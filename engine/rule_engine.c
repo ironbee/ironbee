@@ -106,7 +106,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
 {
     {
         false,
-        PHASE_NONE,
+        IB_PHASE_NONE,
         (ib_state_hook_type_t) -1,
         ( PHASE_FLAG_ALLOW_CHAIN |
           PHASE_FLAG_ALLOW_TFNS ),
@@ -117,7 +117,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
-        PHASE_REQUEST_HEADER,
+        IB_PHASE_REQUEST_HEADER,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_ALLOW_CHAIN |
@@ -130,7 +130,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
-        PHASE_REQUEST_BODY,
+        IB_PHASE_REQUEST_BODY,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_ALLOW_CHAIN |
@@ -143,7 +143,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
-        PHASE_RESPONSE_HEADER,
+        IB_PHASE_RESPONSE_HEADER,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_ALLOW_CHAIN |
@@ -156,7 +156,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
-        PHASE_RESPONSE_BODY,
+        IB_PHASE_RESPONSE_BODY,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_ALLOW_CHAIN |
@@ -169,7 +169,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
-        PHASE_POSTPROCESS,
+        IB_PHASE_POSTPROCESS,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_ALLOW_CHAIN |
@@ -183,7 +183,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
-        PHASE_LOGGING,
+        IB_PHASE_LOGGING,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_ALLOW_CHAIN |
@@ -199,7 +199,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     /* Stream rule phases */
     {
         true,
-        PHASE_NONE,
+        IB_PHASE_NONE,
         (ib_state_hook_type_t) -1,
         (PHASE_FLAG_IS_STREAM),
         NULL,
@@ -209,7 +209,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         true,
-        PHASE_STR_REQUEST_HEADER,
+        IB_PHASE_STR_REQUEST_HEADER,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
@@ -221,7 +221,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         true,
-        PHASE_STR_REQUEST_BODY,
+        IB_PHASE_STR_REQUEST_BODY,
         IB_STATE_HOOK_TXDATA,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
@@ -233,7 +233,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         true,
-        PHASE_STR_RESPONSE_HEADER,
+        IB_PHASE_STR_RESPONSE_HEADER,
         IB_STATE_HOOK_HEADER,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
@@ -245,7 +245,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         true,
-        PHASE_STR_RESPONSE_BODY,
+        IB_PHASE_STR_RESPONSE_BODY,
         IB_STATE_HOOK_TXDATA,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
@@ -257,7 +257,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
-        PHASE_INVALID,
+        IB_PHASE_INVALID,
         (ib_state_hook_type_t) -1,
         PHASE_FLAG_NONE,
         NULL,
@@ -282,18 +282,18 @@ typedef struct {
 static phase_lookup_t phase_lookup_table[] =
 {
     /* Standard phases */
-    { "REQUEST_HEADER",          false, PHASE_REQUEST_HEADER },
-    { "REQUEST",                 false, PHASE_REQUEST_BODY },
-    { "RESPONSE_HEADER",         false, PHASE_RESPONSE_HEADER },
-    { "RESPONSE",                false, PHASE_RESPONSE_BODY },
-    { "POSTPROCESS",             false, PHASE_POSTPROCESS },
+    { "REQUEST_HEADER",          false, IB_PHASE_REQUEST_HEADER },
+    { "REQUEST",                 false, IB_PHASE_REQUEST_BODY },
+    { "RESPONSE_HEADER",         false, IB_PHASE_RESPONSE_HEADER },
+    { "RESPONSE",                false, IB_PHASE_RESPONSE_BODY },
+    { "POSTPROCESS",             false, IB_PHASE_POSTPROCESS },
     /* Stream inspection phases */
-    { "REQUEST_HEADER_STREAM",   true,  PHASE_STR_REQUEST_HEADER },
-    { "REQUEST_BODY_STREAM",     true,  PHASE_STR_REQUEST_BODY },
-    { "RESPONSE_HEADER_STREAM",  true,  PHASE_STR_RESPONSE_HEADER },
-    { "RESPONSE_BODY_STREAM",    true,  PHASE_STR_RESPONSE_BODY },
+    { "REQUEST_HEADER_STREAM",   true,  IB_PHASE_STR_REQUEST_HEADER },
+    { "REQUEST_BODY_STREAM",     true,  IB_PHASE_STR_REQUEST_BODY },
+    { "RESPONSE_HEADER_STREAM",  true,  IB_PHASE_STR_RESPONSE_HEADER },
+    { "RESPONSE_BODY_STREAM",    true,  IB_PHASE_STR_RESPONSE_BODY },
     /* List terminator */
-    { NULL,                      false, PHASE_INVALID },
+    { NULL,                      false, IB_PHASE_INVALID },
 };
 
 ib_status_t ib_rule_set_invert(ib_rule_t *rule, bool invert)
@@ -312,12 +312,12 @@ ib_rule_phase_num_t ib_rule_lookup_phase(
     for (item = phase_lookup_table;  item->str != NULL;  ++item) {
          if (strcasecmp(str, item->str) == 0) {
              if (item->is_stream != is_stream) {
-                 return PHASE_INVALID;
+                 return IB_PHASE_INVALID;
              }
              return item->phase;
          }
     }
-    return PHASE_INVALID;
+    return IB_PHASE_INVALID;
 }
 
 
@@ -347,13 +347,13 @@ typedef struct {
  */
 static inline bool is_phase_num_valid(ib_rule_phase_num_t phase_num)
 {
-    return (phase_num >= PHASE_NONE) && (phase_num < IB_RULE_PHASE_COUNT);
+    return (phase_num >= IB_PHASE_NONE) && (phase_num < IB_RULE_PHASE_COUNT);
 }
 
 /**
  * Find a rule's matching phase meta data, matching the only the phase number.
  *
- * @param[in] phase_num Phase number (PHASE_xxx)
+ * @param[in] phase_num Phase number (IB_PHASE_xxx)
  * @param[out] phase_meta Matching rule phase meta-data
  *
  * @returns Status code
@@ -367,7 +367,7 @@ static ib_status_t find_phase_meta(ib_rule_phase_num_t phase_num,
     assert (is_phase_num_valid(phase_num));
 
     /* Loop through all parent rules */
-    for (meta = rule_phase_meta;  meta->phase_num != PHASE_INVALID;  ++meta)
+    for (meta = rule_phase_meta;  meta->phase_num != IB_PHASE_INVALID;  ++meta)
     {
         if (meta->phase_num == phase_num) {
             *phase_meta = meta;
@@ -415,7 +415,7 @@ static const char *phase_description(
  * the phase's stream type.
  *
  * @param[in] is_stream true if this is a "stream inspection" rule
- * @param[in] phase_num Phase number (PHASE_xxx)
+ * @param[in] phase_num Phase number (IB_PHASE_xxx)
  * @param[out] phase_meta Matching rule phase meta-data
  *
  * @note If @a is_stream is IB_TRI_UNSET, this function will return the
@@ -434,7 +434,7 @@ static ib_status_t find_meta(
     assert (is_phase_num_valid(phase_num));
 
     /* Loop through all parent rules */
-    for (meta = rule_phase_meta;  meta->phase_num != PHASE_INVALID;  ++meta)
+    for (meta = rule_phase_meta;  meta->phase_num != IB_PHASE_INVALID;  ++meta)
     {
         if ( (meta->phase_num == phase_num) &&
              (is_stream == meta->is_stream) )
@@ -1841,8 +1841,8 @@ static bool rule_allow(const ib_tx_t *tx,
                        bool check_phase)
 {
     /* Check the ALLOW_ALL flag */
-    if ( (meta->phase_num != PHASE_POSTPROCESS) &&
-         (meta->phase_num != PHASE_LOGGING) &&
+    if ( (meta->phase_num != IB_PHASE_POSTPROCESS) &&
+         (meta->phase_num != IB_PHASE_LOGGING) &&
          (ib_tx_flags_isset(tx, IB_TX_ALLOW_ALL) == 1) )
     {
         ib_rule_log_tx_debug(tx,
@@ -2537,7 +2537,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
      * occurred, return IB_OK to the engine.  A bigger discussion of if / how
      * such errors should be propagated needs to occur.
      */
-    rule_exec->phase = PHASE_NONE;
+    rule_exec->phase = IB_PHASE_NONE;
     return IB_OK;
 }
 
@@ -2737,7 +2737,7 @@ static ib_status_t init_ruleset(ib_engine_t *ib,
     ib_rule_phase_num_t    phase_num;
 
     /* Initialize the phase rules */
-    for (phase_num = PHASE_NONE;
+    for (phase_num = IB_PHASE_NONE;
          phase_num < IB_RULE_PHASE_COUNT;
          ++phase_num)
     {
@@ -2796,7 +2796,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
 
     /* Register specific handlers for specific events, and a
      * generic handler for the rest */
-    for (meta = rule_phase_meta; meta->phase_num != PHASE_INVALID; ++meta) {
+    for (meta = rule_phase_meta; meta->phase_num != IB_PHASE_INVALID; ++meta) {
         if (meta->event == (ib_state_event_type_t) -1) {
             continue;
         }
@@ -2928,7 +2928,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
     }
 
     /* Create the injection cb lists */
-    for (phase = PHASE_NONE; phase < IB_RULE_PHASE_COUNT; ++phase) {
+    for (phase = IB_PHASE_NONE; phase < IB_RULE_PHASE_COUNT; ++phase) {
         rc = ib_list_create(&(rule_engine->injection_cbs[phase]), mp);
         if (rc != IB_OK) {
             ib_log_error(ib,
@@ -3166,7 +3166,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
 
     switch (match->enable_type) {
 
-    case RULE_ENABLE_ALL :
+    case IB_RULE_ENABLE_ALL :
         IB_LIST_LOOP(ctx_rule_list, node) {
             ib_rule_ctx_data_t *ctx_rule;
             ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
@@ -3189,7 +3189,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
         }
         return IB_OK;
 
-    case RULE_ENABLE_ID :
+    case IB_RULE_ENABLE_ID :
         /* Note: We return from the loop before because the rule
          * IDs are unique */
         ib_cfg_log_debug3_ex(ib, match->file, match->lineno,
@@ -3218,7 +3218,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                              match->enable_str, lcname);
         return IB_ENOENT;
 
-    case RULE_ENABLE_TAG :
+    case IB_RULE_ENABLE_TAG :
         ib_cfg_log_debug3_ex(ib, match->file, match->lineno,
                              "Looking for rules with tag \"%s\" to %s",
                              match->enable_str, lcname);
@@ -3396,7 +3396,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
     IB_LIST_LOOP(ctx->rules->disable_list, node) {
         const ib_rule_enable_t *enable;
         enable = (const ib_rule_enable_t *)ib_list_node_data(node);
-        if (enable->enable_type != RULE_ENABLE_ALL) {
+        if (enable->enable_type != IB_RULE_ENABLE_ALL) {
             continue;
         }
 
@@ -3438,7 +3438,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
         const ib_rule_enable_t *enable;
 
         enable = (const ib_rule_enable_t *)ib_list_node_data(node);
-        if (enable->enable_type == RULE_ENABLE_ALL) {
+        if (enable->enable_type == IB_RULE_ENABLE_ALL) {
             continue;
         }
 
@@ -3811,7 +3811,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
 #endif
 
     /* Look up the generic rule phase */
-    rc = find_meta(is_stream, PHASE_NONE, &phase_meta);
+    rc = find_meta(is_stream, IB_PHASE_NONE, &phase_meta);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error looking up rule phase: %s",
                      ib_status_to_string(rc));
@@ -3827,7 +3827,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     }
     rule->flags = is_stream ? IB_RULE_FLAG_STREAM : IB_RULE_FLAG_NONE;
     rule->phase_meta = phase_meta;
-    rule->meta.phase = PHASE_NONE;
+    rule->meta.phase = IB_PHASE_NONE;
     rule->meta.revision = 1;
     rule->meta.config_file = file;
     rule->meta.config_line = lineno;
@@ -3976,7 +3976,7 @@ ib_status_t ib_rule_set_phase(ib_engine_t *ib,
     assert(rule != NULL);
     assert(rule->phase_meta != NULL);
 
-    if ( (rule->meta.phase != PHASE_NONE) &&
+    if ( (rule->meta.phase != IB_PHASE_NONE) &&
          (rule->meta.phase != phase_num) ) {
         ib_log_error(ib,
                      "Cannot set rule phase: already set to %d",
@@ -4390,7 +4390,7 @@ ib_status_t ib_rule_enable(const ib_engine_t *ib,
     assert(name != NULL);
 
     /* Check the string name */
-    if (etype != RULE_ENABLE_ALL) {
+    if (etype != IB_RULE_ENABLE_ALL) {
         assert(str != NULL);
         if (*str == '\0') {
             ib_log_error(ib, "Invalid %s \"\" @ \"%s\":%u: %s",
@@ -4445,7 +4445,7 @@ ib_status_t ib_rule_enable_all(const ib_engine_t *ib,
     ib_status_t rc;
 
     rc = ib_rule_enable(ib, ctx,
-                        RULE_ENABLE_ALL, "all", true,
+                        IB_RULE_ENABLE_ALL, "all", true,
                         file, lineno, NULL);
 
     return rc;
@@ -4464,7 +4464,7 @@ ib_status_t ib_rule_enable_id(const ib_engine_t *ib,
     ib_status_t rc;
 
     rc = ib_rule_enable(ib, ctx,
-                        RULE_ENABLE_ID, "id", true,
+                        IB_RULE_ENABLE_ID, "id", true,
                         file, lineno, id);
 
     return rc;
@@ -4483,7 +4483,7 @@ ib_status_t ib_rule_enable_tag(const ib_engine_t *ib,
     ib_status_t rc;
 
     rc = ib_rule_enable(ib, ctx,
-                        RULE_ENABLE_TAG, "tag", true,
+                        IB_RULE_ENABLE_TAG, "tag", true,
                         file, lineno, tag);
 
     return rc;
@@ -4500,7 +4500,7 @@ ib_status_t ib_rule_disable_all(const ib_engine_t *ib,
     ib_status_t rc;
 
     rc = ib_rule_enable(ib, ctx,
-                        RULE_ENABLE_ALL, "all", false,
+                        IB_RULE_ENABLE_ALL, "all", false,
                         file, lineno, NULL);
 
     return rc;
@@ -4519,7 +4519,7 @@ ib_status_t ib_rule_disable_id(const ib_engine_t *ib,
     ib_status_t rc;
 
     rc = ib_rule_enable(ib, ctx,
-                        RULE_ENABLE_ID, "id", false,
+                        IB_RULE_ENABLE_ID, "id", false,
                         file, lineno, id);
 
     return rc;
@@ -4538,7 +4538,7 @@ ib_status_t ib_rule_disable_tag(const ib_engine_t *ib,
     ib_status_t rc;
 
     rc = ib_rule_enable(ib, ctx,
-                        RULE_ENABLE_TAG, "tag", false,
+                        IB_RULE_ENABLE_TAG, "tag", false,
                         file, lineno, tag);
 
     return rc;
@@ -4917,10 +4917,10 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     params = action->params;
 
     /* Add the rule to the appropriate action list */
-    if (which == RULE_ACTION_TRUE) {
+    if (which == IB_RULE_ACTION_TRUE) {
         rc = ib_list_push(rule->true_actions, (void *)action);
     }
-    else if (which == RULE_ACTION_FALSE) {
+    else if (which == IB_RULE_ACTION_FALSE) {
         rc = ib_list_push(rule->false_actions, (void *)action);
     }
     else {
@@ -4966,7 +4966,7 @@ ib_status_t ib_rule_search_action(const ib_engine_t *ib,
     const ib_list_t *list;
     size_t count = 0;
 
-    list = ( (which == RULE_ACTION_TRUE) ?
+    list = ( (which == IB_RULE_ACTION_TRUE) ?
              rule->true_actions : rule->false_actions);
 
     IB_LIST_LOOP_CONST(list, node) {

@@ -624,7 +624,7 @@ static ib_status_t action_inject_ownership_fn(
     size_t count = 0;
     ib_moddevel_rules_config_t *config = (ib_moddevel_rules_config_t *)cbdata;
 
-    rc = ib_rule_search_action(ib, rule, RULE_ACTION_TRUE,
+    rc = ib_rule_search_action(ib, rule, IB_RULE_ACTION_TRUE,
                                action_inject_name,
                                NULL, &count);
     if (rc != IB_OK) {
@@ -927,7 +927,7 @@ ib_status_t ib_moddevel_rules_init(
     }
 
     /* Register the injection function */
-    for (phase = PHASE_NONE; phase < IB_RULE_PHASE_COUNT; ++phase) {
+    for (phase = IB_PHASE_NONE; phase < IB_RULE_PHASE_COUNT; ++phase) {
         rc = ib_rule_register_injection_fn(ib, action_inject_name,
                                            phase,
                                            action_inject_injection_fn, config);

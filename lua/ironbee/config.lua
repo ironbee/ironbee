@@ -233,10 +233,10 @@ local build_rule = function(ib, ctx, chain, db)
                     name = string.sub(name, 2)
 
                     -- fire false actions.
-                    is_inverted = ffi.C.RULE_ACTION_FALSE
+                    is_inverted = ffi.C.IB_RULE_ACTION_FALSE
                 else
                     -- fire true actions.
-                    is_inverted = ffi.C.RULE_ACTION_TRUE
+                    is_inverted = ffi.C.IB_RULE_ACTION_TRUE
                 end
 
                 -- Create the action instance.

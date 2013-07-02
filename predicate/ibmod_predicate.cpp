@@ -125,10 +125,10 @@ const char* c_debug_report_directive = "PredicateDebugReport";
  *          that phase as well.
  **/
 const ib_rule_phase_num_t c_phases[] = {
-    PHASE_REQUEST_HEADER,
-    PHASE_REQUEST_BODY,
-    PHASE_RESPONSE_HEADER,
-    PHASE_RESPONSE_BODY
+    IB_PHASE_REQUEST_HEADER,
+    IB_PHASE_REQUEST_BODY,
+    IB_PHASE_RESPONSE_HEADER,
+    IB_PHASE_RESPONSE_BODY
 };
 //! Number of phases in c_phases.
 const size_t c_num_phases = sizeof(c_phases) / sizeof(ib_rule_phase_num_t);
@@ -255,7 +255,7 @@ private:
  **/
 struct per_tx_t
 {
-    per_tx_t() : phase(PHASE_INVALID) {}
+    per_tx_t() : phase(IB_PHASE_INVALID) {}
 
     /**
      * Last phase evaluated.
@@ -861,7 +861,7 @@ ib_status_t Delegate::ownership(
             ib_rule_search_action(
                 engine.ib(),
                 rule,
-                RULE_ACTION_TRUE,
+                IB_RULE_ACTION_TRUE,
                 c_predicate_action,
                 actions.ib(),
                 NULL

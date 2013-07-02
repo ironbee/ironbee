@@ -791,7 +791,7 @@ ib_status_t fast_ownership(
     rc = ib_rule_search_action(
         ib,
         rule,
-        RULE_ACTION_TRUE,
+        IB_RULE_ACTION_TRUE,
         c_fast_action,
         actions,
         NULL
@@ -1277,28 +1277,28 @@ ib_status_t fast_dir_fast_automata(
     rc = ib_rule_register_injection_fn(
         ib,
         MODULE_NAME_STR,
-        PHASE_REQUEST_HEADER,
+        IB_PHASE_REQUEST_HEADER,
         fast_rule_injection_request_header, runtime
     );
     FAST_CHECK_RC("Error registering injection for request header phase.");
     rc = ib_rule_register_injection_fn(
         ib,
         MODULE_NAME_STR,
-        PHASE_REQUEST_BODY,
+        IB_PHASE_REQUEST_BODY,
         fast_rule_injection_request_body, runtime
     );
     FAST_CHECK_RC("Error registering injection for request header phase.");
     rc = ib_rule_register_injection_fn(
         ib,
         MODULE_NAME_STR,
-        PHASE_RESPONSE_HEADER,
+        IB_PHASE_RESPONSE_HEADER,
         fast_rule_injection_response_header, runtime
     );
     FAST_CHECK_RC("Error registering injection for response header phase.");
     rc = ib_rule_register_injection_fn(
         ib,
         MODULE_NAME_STR,
-        PHASE_RESPONSE_BODY,
+        IB_PHASE_RESPONSE_BODY,
         fast_rule_injection_response_body, runtime
     );
     FAST_CHECK_RC("Error registering injection for response header phase.");

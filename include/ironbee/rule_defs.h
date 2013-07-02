@@ -38,45 +38,36 @@ extern "C" {
  * Rule phase number.
  */
 typedef enum {
-    PHASE_INVALID = -1,        /**< Invalid; used to terminate list */
-    PHASE_NONE,                /**< No phase */
-    PHASE_REQUEST_HEADER,      /**< Request header available. */
-    PHASE_REQUEST_BODY,        /**< Request body available. */
-    PHASE_RESPONSE_HEADER,     /**< Response header available. */
-    PHASE_RESPONSE_BODY,       /**< Response body available. */
-    PHASE_POSTPROCESS,         /**< Post-processing phase. */
-    PHASE_LOGGING,             /**< Logging phase. */
-    PHASE_STR_REQUEST_HEADER,  /**< Stream: Req. header available. */
-    PHASE_STR_REQUEST_BODY,    /**< Stream: Req. body available. */
-    PHASE_STR_RESPONSE_HEADER, /**< Stream: Resp. header available. */
-    PHASE_STR_RESPONSE_BODY,   /**< Stream: Resp. body available. */
-    IB_RULE_PHASE_COUNT,       /**< Size of rule phase lists */
+    IB_PHASE_INVALID = -1,        /**< Invalid; used to terminate list */
+    IB_PHASE_NONE,                /**< No phase */
+    IB_PHASE_REQUEST_HEADER,      /**< Request header available. */
+    IB_PHASE_REQUEST_BODY,        /**< Request body available. */
+    IB_PHASE_RESPONSE_HEADER,     /**< Response header available. */
+    IB_PHASE_RESPONSE_BODY,       /**< Response body available. */
+    IB_PHASE_POSTPROCESS,         /**< Post-processing phase. */
+    IB_PHASE_LOGGING,             /**< Logging phase. */
+    IB_PHASE_STR_REQUEST_HEADER,  /**< Stream: Req. header available. */
+    IB_PHASE_STR_REQUEST_BODY,    /**< Stream: Req. body available. */
+    IB_PHASE_STR_RESPONSE_HEADER, /**< Stream: Resp. header available. */
+    IB_PHASE_STR_RESPONSE_BODY,   /**< Stream: Resp. body available. */
+    IB_RULE_PHASE_COUNT,          /**< Size of rule phase lists */
 } ib_rule_phase_num_t;
-
-/**
- * Rule flag update operations.
- */
-typedef enum {
-    FLAG_OP_SET,                    /**< Set the flags */
-    FLAG_OP_OR,                     /**< Or in the specified flags */
-    FLAG_OP_CLEAR,                  /**< Clear the specified flags */
-} ib_rule_flagop_t;
 
 /**
  * Rule action add operator.
  */
 typedef enum {
-    RULE_ACTION_TRUE,               /**< Add a True action */
-    RULE_ACTION_FALSE,              /**< Add a False action */
+    IB_RULE_ACTION_TRUE,          /**< Add a True action */
+    IB_RULE_ACTION_FALSE,         /**< Add a False action */
 } ib_rule_action_t;
 
 /**
  * Rule enable type
  */
 typedef enum {
-    RULE_ENABLE_ID,
-    RULE_ENABLE_TAG,
-    RULE_ENABLE_ALL,
+    IB_RULE_ENABLE_ID,            /**< Enable by Rule ID */
+    IB_RULE_ENABLE_TAG,           /**< Enable by tag */
+    IB_RULE_ENABLE_ALL,           /**< Enable by both Rule ID and tag */
 } ib_rule_enable_type_t;
 
 /**

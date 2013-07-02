@@ -2308,7 +2308,7 @@ static ib_status_t act_allow_execute(
     ib_flags_t set_flags = *pflags;
 
     /* For post process, treat ALLOW_ALL like ALLOW_PHASE */
-    if ( (rule_exec->rule->meta.phase == PHASE_POSTPROCESS) &&
+    if ( (rule_exec->rule->meta.phase == IB_PHASE_POSTPROCESS) &&
          (ib_flags_all(set_flags, IB_TX_ALLOW_ALL)) )
     {
         set_flags |= IB_TX_ALLOW_PHASE;

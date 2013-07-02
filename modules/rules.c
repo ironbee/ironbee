@@ -460,10 +460,10 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
 {
     ib_status_t        rc = IB_OK;
     ib_action_inst_t  *action;
-    ib_rule_action_t   atype = RULE_ACTION_TRUE;
+    ib_rule_action_t   atype = IB_RULE_ACTION_TRUE;
     if (*name == '!') {
         ++name;
-        atype = RULE_ACTION_FALSE;
+        atype = IB_RULE_ACTION_FALSE;
     }
 
     /* Create a new action instance */
@@ -516,8 +516,8 @@ static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp,
     }
 
     if ( (! child) &&
-         ((rule->meta.phase == PHASE_INVALID) ||
-          (rule->meta.phase == PHASE_NONE)) )
+         ((rule->meta.phase == IB_PHASE_INVALID) ||
+          (rule->meta.phase == IB_PHASE_NONE)) )
     {
         ib_cfg_log_error(cp, "Phase invalid or not specified.");
         return IB_EINVAL;
@@ -657,14 +657,14 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
     /* Phase modifiers (Not valid for stream rules) */
     if (! ib_rule_is_stream(rule)) {
-        ib_rule_phase_num_t phase = PHASE_NONE;
+        ib_rule_phase_num_t phase = IB_PHASE_NONE;
         if (strcasecmp(name, "phase") == 0) {
             if (value == NULL) {
                 ib_cfg_log_error(cp, "Modifier PHASE with no value");
                 return IB_EINVAL;
             }
             phase = ib_rule_lookup_phase(value, false);
-            if (phase == PHASE_INVALID) {
+            if (phase == IB_PHASE_INVALID) {
                 ib_cfg_log_error(cp, "Invalid phase: %s", value);
                 return IB_EINVAL;
             }
@@ -672,13 +672,13 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         else {
             ib_rule_phase_num_t tphase;
             tphase = ib_rule_lookup_phase(name, false);
-            if (tphase != PHASE_INVALID) {
+            if (tphase != IB_PHASE_INVALID) {
                 phase = tphase;
             }
         }
 
         /* If we encountered a phase modifier, set it */
-        if (phase != PHASE_NONE && phase != PHASE_INVALID) {
+        if (phase != IB_PHASE_NONE && phase != IB_PHASE_INVALID) {
             rc = ib_rule_set_phase(cp->ib, rule, phase);
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp, "Error setting rule phase: %s",
@@ -1052,7 +1052,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
 {
     ib_status_t rc;
     const ib_list_node_t *node;
-    ib_rule_phase_num_t phase = PHASE_INVALID;
+    ib_rule_phase_num_t phase = IB_PHASE_INVALID;
     const char *str;
     const char *operator;
     const char *operand;
@@ -1071,7 +1071,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
 
     /* Lookup the phase name */
     phase = ib_rule_lookup_phase(str, true);
-    if (phase == PHASE_INVALID) {
+    if (phase == IB_PHASE_INVALID) {
         ib_cfg_log_error(cp, "Invalid phase: %s", str);
         return IB_EINVAL;
     }

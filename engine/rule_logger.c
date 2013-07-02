@@ -392,7 +392,7 @@ ib_status_t ib_rule_log_tx_create(
     object->level = ib_rule_log_level(rule_exec->tx->ctx);
     object->flags = flags;
     object->filter = (flags & IB_RULE_LOG_FILTER_ALLMASK);
-    object->cur_phase = PHASE_NONE;
+    object->cur_phase = IB_PHASE_NONE;
     object->phase_name = NULL;
     object->mp = rule_exec->tx->mp;
     object->empty_tx = true;
@@ -1151,8 +1151,8 @@ void ib_rule_log_phase(
             (RULE_LOG_FLAG_PHASE_ENABLE | IB_RULE_LOG_FLAG_PHASE);
 
         if (ib_flags_all(flags, phase_flags)) {
-            bool is_postprocess = (phase_num == PHASE_POSTPROCESS);
-            bool is_logging = (phase_num == PHASE_LOGGING);
+            bool is_postprocess = (phase_num == IB_PHASE_POSTPROCESS);
+            bool is_logging = (phase_num == IB_PHASE_LOGGING);
             bool empty_tx = rule_exec->tx_log->empty_tx;
 
             /* Inhibit logging of "PHASE: postprocess/logging" for empty tx */
@@ -1164,7 +1164,7 @@ void ib_rule_log_phase(
             rule_exec->tx_log->cur_phase = phase_num;
             rule_exec->tx_log->phase_name = phase_name;
         }
-        if ( (phase_num == PHASE_LOGGING) &&
+        if ( (phase_num == IB_PHASE_LOGGING) &&
              (ib_flags_any(flags, IB_RULE_LOG_FLAG_AUDIT) == true) )
         {
             log_audit(rule_exec);
