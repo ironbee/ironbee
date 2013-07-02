@@ -474,9 +474,8 @@ ib_status_t ib_ctxsel_registration_store_finalize(
  * The registration code keeps track of the "active" module; only one module
  * is allowed to be active at any time.
  *
- * The core module is treated specially; it registers itself, and may never
- * unregister itself.  If there is no other active module, the core module is
- * treated as the active module.
+ * The core module is treated specially.  If there is no other active module,
+ * the core module is treated as the active module.
  *
  * The following are functions are required to be valid:
  *   select_fn, site_get_fn, location_get_fn
@@ -491,26 +490,6 @@ ib_status_t ib_ctxsel_registration_store_finalize(
 ib_status_t DLL_PUBLIC ib_ctxsel_registration_register(
     ib_engine_t                    *ib,
     const ib_ctxsel_registration_t *registration
-);
-
-/**
- * Unregister the active context selection function
- *
- * @param[in,out] ib Engine
- * @param[in] module Module doing the unregistration
- *   As noted in the registration function, the registration code keeps track
- *   of the "active" module.  This function provides a module with the means
- *   to "unregister".  If the module trying to perform the unregistration is
- *   not the active module, the request is denied and IB_DECLINED is
- *   returned.  It is also invalid for the core module to attempt to
- *   unregister itself.  If the unregistration of the active module is
- *   successful, the core module's functions will become active.
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_ctxsel_unregister(
-    ib_engine_t *ib,
-    const ib_module_t *module
 );
 
 /**

@@ -1526,42 +1526,8 @@ ib_status_t ib_moddevel_txdump_cleanup(
     ib_module_t                 *mod,
     ib_moddevel_txdump_config_t *config)
 {
-    ib_list_node_t *node;
-    ib_status_t     rc = IB_OK;
-
-    IB_LIST_LOOP(config->txdump_list, node) {
-        ib_moddevel_txdump_t *txdump = node->data;
-        if (txdump->fp != NULL) {
-            fclose(txdump->fp);
-            txdump->fp = NULL;
-        }
-
-        switch(txdump->hook_type) {
-        case IB_STATE_HOOK_TX:
-            ib_hook_tx_unregister(
-                ib,
-                txdump->event,
-                moddevel_txdump_tx_event);
-            break;
-        case IB_STATE_HOOK_REQLINE:
-            ib_hook_parsed_req_line_unregister(
-                ib,
-                txdump->event,
-                moddevel_txdump_reqline_event);
-            break;
-        case IB_STATE_HOOK_RESPLINE:
-            ib_hook_parsed_resp_line_unregister(
-                ib,
-                txdump->event,
-                moddevel_txdump_rspline_event);
-            break;
-        default:
-            ib_log_error(ib,
-                         "Can't unregister hook type %d", txdump->hook_type);
-            rc = IB_EINVAL;
-        }
-    }
-    return rc;
+    /* Do nothing */
+    return IB_OK;
 }
 
 ib_status_t ib_moddevel_txdump_fini(

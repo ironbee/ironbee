@@ -444,28 +444,6 @@ ib_status_t ib_ctxsel_registration_register(
 
 }
 
-ib_status_t ib_ctxsel_unregister(
-    ib_engine_t *ib,
-    const ib_module_t *module)
-{
-    assert(ib != NULL);
-    assert(ib->core_ctxsel.module == ib_core_module(ib));
-
-    /* Don't allow core to unregister. */
-    if (module == ib_core_module(ib)) {
-        return IB_DECLINED;
-    }
-    /* Verify that this is the current module */
-    else if (module != ib->act_ctxsel.module) {
-        return IB_DECLINED;
-    }
-
-    /* Revert to the the core's functions */
-    ctxsel_store(&ib->act_ctxsel, &ib->core_ctxsel);
-
-    return IB_OK;
-}
-
 ib_status_t ib_ctxsel_select_context(
     const ib_engine_t *ib,
     const ib_conn_t *conn,

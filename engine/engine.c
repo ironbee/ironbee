@@ -190,34 +190,6 @@ static ib_status_t ib_hook_register(
     return IB_OK;
 }
 
-static ib_status_t ib_hook_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_void_fn_t cb
-)
-{
-    assert(ib != NULL);
-
-    ib_list_t      *list;
-    ib_list_node_t *node;
-    ib_list_node_t *next;
-
-    list = ib->hooks[event];
-    assert(list != NULL);
-
-    /* Remove the first matching hook */
-    IB_LIST_LOOP_SAFE(list, node, next) {
-        ib_hook_t *hook = (ib_hook_t *)node->data;
-
-        if (hook->callback.as_void == cb) {
-            ib_list_node_remove(list, node);
-            return IB_OK;
-        }
-    }
-
-    return IB_ENOENT;
-}
-
 /**
  * Initialize the IronBee event table.
  *
@@ -1237,23 +1209,6 @@ ib_status_t ib_hook_null_register(
     return rc;
 }
 
-ib_status_t ib_hook_null_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_null_hook_fn_t cb
-) {
-    ib_status_t rc;
-
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
-
-    return rc;
-}
-
 ib_status_t ib_hook_conn_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
@@ -1278,23 +1233,6 @@ ib_status_t ib_hook_conn_register(
     hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
-
-    return rc;
-}
-
-ib_status_t ib_hook_conn_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_conn_hook_fn_t cb
-) {
-    ib_status_t rc;
-
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONN);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }
@@ -1326,23 +1264,6 @@ ib_status_t ib_hook_tx_register(
     return rc;
 }
 
-ib_status_t ib_hook_tx_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_tx_hook_fn_t cb
-) {
-    ib_status_t rc;
-
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_TX);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
-
-    return rc;
-}
-
 ib_status_t ib_hook_txdata_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
@@ -1366,23 +1287,6 @@ ib_status_t ib_hook_txdata_register(
     hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
-
-    return rc;
-}
-
-ib_status_t ib_hook_txdata_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_txdata_hook_fn_t cb
-) {
-    ib_status_t rc;
-
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_TXDATA);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }
@@ -1414,23 +1318,6 @@ ib_status_t ib_hook_parsed_header_data_register(
     return rc;
 }
 
-ib_status_t ib_hook_parsed_header_data_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_header_data_fn_t cb)
-{
-    ib_status_t rc;
-
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_HEADER);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
-
-    return rc;
-}
-
 ib_status_t ib_hook_parsed_req_line_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
@@ -1454,23 +1341,6 @@ ib_status_t ib_hook_parsed_req_line_register(
     hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
-
-    return rc;
-}
-
-ib_status_t ib_hook_parsed_req_line_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_request_line_fn_t cb)
-{
-    ib_status_t rc;
-
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_REQLINE);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }
@@ -1502,23 +1372,6 @@ ib_status_t ib_hook_parsed_resp_line_register(
     return rc;
 }
 
-ib_status_t ib_hook_parsed_resp_line_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_response_line_fn_t cb)
-{
-    ib_status_t rc;
-
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_RESPLINE);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
-
-    return rc;
-}
-
 ib_status_t ib_hook_context_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
@@ -1543,24 +1396,6 @@ ib_status_t ib_hook_context_register(
     hook->cbdata = cbdata;
 
     rc = ib_hook_register(ib, event, hook);
-
-    return rc;
-}
-
-ib_status_t ib_hook_context_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_ctx_hook_fn_t cb
-)
-{
-    ib_status_t rc;
-
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CTX);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }

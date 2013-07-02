@@ -315,7 +315,6 @@ ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event);
  *
  * Related registration functions:
  * - ib_hook_null_register()
- * - ib_hook_null_unregister()
  *
  * Handles events: (None)
  *
@@ -334,7 +333,6 @@ typedef ib_status_t (*ib_state_null_hook_fn_t)(
  *
  * Related registration functions:
  * - ib_hook_parsed_header_data_register()
- * - ib_hook_parsed_header_data_unregister()
  *
  * Handles events:
  * - @ref request_header_data_event
@@ -360,7 +358,6 @@ typedef ib_status_t (*ib_state_header_data_fn_t)(
  *
  * Related registration functions:
  * - ib_hook_parsed_req_line_register()
- * - ib_hook_parsed_req_line_unregister()
  *
  * Handles events:
  * - @ref request_started_event
@@ -385,7 +382,6 @@ typedef ib_status_t (*ib_state_request_line_fn_t)(
  *
  * Related registration functions:
  * - ib_hook_parsed_resp_line_register()
- * - ib_hook_parsed_resp_line_unregister()
  *
  * Handles events:
  * - @ref response_started_event
@@ -408,7 +404,6 @@ typedef ib_status_t (*ib_state_response_line_fn_t)(
  *
  * Related registration functions:
  * - ib_hook_conn_register()
- * - ib_hook_conn_unregister()
  *
  * Handles events:
  * - @ref conn_started_event
@@ -438,7 +433,6 @@ typedef ib_status_t (*ib_state_conn_hook_fn_t)(
  *
  * Related registration functions:
  * - ib_hook_tx_register()
- * - ib_hook_tx_unregister()
  *
  * Handles events:
  * - @ref tx_started_event
@@ -474,7 +468,6 @@ typedef ib_status_t (*ib_state_tx_hook_fn_t)(
  *
  * Related registration functions:
  * - ib_hook_txdata_register()
- * - ib_hook_txdata_unregister()
  *
  * Handles events:
  * - @ref request_body_data_event
@@ -499,7 +492,6 @@ typedef ib_status_t (*ib_state_txdata_hook_fn_t)(
  *
  * Related registration functions:
  * - ib_hook_context_register()
- * - ib_hook_context_unregister()
  *
  * Handles events:
  * - @ref context_open_event
@@ -539,8 +531,6 @@ const char *ib_state_event_name(ib_state_event_type_t event);
  * @{
  */
 
-/* No data */
-
 /**
  * Register a callback for a no data event.
  *
@@ -557,23 +547,6 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
     ib_state_null_hook_fn_t cb,
     void *cbdata
 );
-
-/**
- * Unregister a callback for a no data event.
- *
- * @param ib Engine handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_null_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_null_hook_fn_t cb
-);
-
-/* ib_conn_t data */
 
 /**
  * Register a callback for a connection event.
@@ -593,23 +566,6 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
 );
 
 /**
- * Unregister a callback for a connection event.
- *
- * @param ib Engine handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_conn_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_conn_hook_fn_t cb
-);
-
-/* ib_tx_t data */
-
-/**
  * Register a callback for a transaction event.
  *
  * @param ib Engine handle
@@ -625,23 +581,6 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
     ib_state_tx_hook_fn_t cb,
     void *cbdata
 );
-
-/**
- * Unregister a callback for a transaction event.
- *
- * @param ib Engine handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_tx_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_tx_hook_fn_t cb
-);
-
-/* ib_txdata_t data */
 
 /**
  * Register a callback for a transaction data event.
@@ -661,26 +600,11 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
 );
 
 /**
- * Unregister a callback for a transaction data event.
- *
- * @param ib Engine handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_txdata_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_txdata_hook_fn_t cb
-);
-
-/**
  * Register a callback for a header data event.
  *
  * @param[in] ib IronBee engine.
  * @param[in] event The specific event.
- * @param[in] cb The callback to unregister.
+ * @param[in] cb The callback to register.
  * @param[in] cbdata Data to provide to the callback.
  *
  * @returns Status code.
@@ -692,25 +616,11 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
     void *cbdata);
 
 /**
- * Unregister a callback for a header data event.
- *
- * @param[in] ib IronBee engine.
- * @param[in] event The specific event.
- * @param[in] cb The callback to unregister.
- *
- * @returns Status code.
- */
-ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_header_data_fn_t cb);
-
-/**
  * Register a callback for a request line event.
  *
  * @param[in] ib IronBee engine.
  * @param[in] event The specific event.
- * @param[in] cb The callback to unregister.
+ * @param[in] cb The callback to register.
  * @param[in] cbdata Data to provide to the callback.
  *
  * @returns Status code.
@@ -722,25 +632,11 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
     void *cbdata);
 
 /**
- * Unregister a callback for a request line event.
- *
- * @param[in] ib IronBee engine.
- * @param[in] event The specific event.
- * @param[in] cb The callback to unregister.
- *
- * @returns Status code.
- */
-ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_request_line_fn_t cb);
-
-/**
  * Register a callback for a response line event.
  *
  * @param[in] ib IronBee engine.
  * @param[in] event The specific event.
- * @param[in] cb The callback to unregister.
+ * @param[in] cb The callback to register.
  * @param[in] cbdata Data to provide to the callback.
  *
  * @returns Status code.
@@ -750,22 +646,6 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
     ib_state_event_type_t event,
     ib_state_response_line_fn_t cb,
     void *cbdata);
-
-/**
- * Unregister a callback for a response line event.
- *
- * @param[in] ib IronBee engine.
- * @param[in] event The specific event.
- * @param[in] cb The callback to unregister.
- *
- * @returns Status code.
- */
-ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_response_line_fn_t cb);
-
-/* ib_context_t data */
 
 /**
  * Register a callback for a context event.
@@ -782,21 +662,6 @@ ib_status_t DLL_PUBLIC ib_hook_context_register(
     ib_state_event_type_t event,
     ib_state_ctx_hook_fn_t cb,
     void *cbdata
-);
-
-/**
- * Unregister a callback for a context event.
- *
- * @param ib Engine handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_context_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_ctx_hook_fn_t cb
 );
 
 /**
