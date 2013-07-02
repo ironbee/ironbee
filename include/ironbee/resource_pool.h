@@ -130,7 +130,7 @@ typedef ib_status_t (*ib_resource_postuse_fn_t)(
  * @param[in] postuse_data Callback data.
  * @returns
  * - IB_OK On success.
- * - IB_EINVAL If @max_count and @a min_count are greater than 0 and
+ * - IB_EINVAL If @a max_count and @a min_count are greater than 0 and
  *             @a max_count is less than @a min_count.
  * - IB_EALLOC On allocation errors.
  */
