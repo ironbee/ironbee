@@ -164,8 +164,6 @@ protected:
 private:
     typedef Validate::Call<Operator> parent_t;
 
-    void local_validate(NodeReporter reporter) const;
-
     //! Hidden complex implementation details.
     struct data_t;
 
