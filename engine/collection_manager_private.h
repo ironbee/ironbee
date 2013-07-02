@@ -26,6 +26,7 @@
  */
 
 #include <ironbee/collection_manager.h>
+#include "managed_collection_private.h"
 
 /**
  * A collection manager is a collection of functions and related data that can
@@ -44,5 +45,16 @@ struct ib_collection_manager_t {
     ib_collection_manager_persist_fn_t  persist_fn;   /**< Persist function */
     void                  *persist_data;   /**< Persist function data */
 };
+
+/**
+ * Collection manager instance (one per managed collection / manager)
+ */
+struct ib_collection_manager_inst_t {
+    const ib_collection_manager_t *manager;    /**< Collection Manager */
+    ib_managed_collection_t *collection;       /**< The parent collection */
+    const char              *uri;              /**< Associated URI */
+    void                    *manager_inst_data;/**< Manager-specific instance */
+};
+typedef struct ib_collection_manager_inst_t ib_collection_manager_inst_t;
 
 #endif /* _IB_COLLECTION_MANAGER_PRIVATE_H_ */

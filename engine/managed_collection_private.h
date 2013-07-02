@@ -25,7 +25,9 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <ironbee/collection_manager.h>
+#include <ironbee/list.h>
+#include <ironbee/engine_types.h>
+#include <ironbee/types.h>
 
 /**
  * A managed collection is a collection in TX data that can be initialized
@@ -36,17 +38,6 @@ struct ib_managed_collection_t {
     ib_list_t               *manager_inst_list;/**< list of ..manager_inst_t */
 };
 typedef struct ib_managed_collection_t ib_managed_collection_t;
-
-/**
- * Collection manager instance (one per managed collection / manager)
- */
-struct ib_collection_manager_inst_t {
-    const ib_collection_manager_t *manager;    /**< Collection Manager */
-    ib_managed_collection_t *collection;       /**< The parent collection */
-    const char              *uri;              /**< Associated URI */
-    void                    *manager_inst_data;/**< Manager-specific instance */
-};
-typedef struct ib_collection_manager_inst_t ib_collection_manager_inst_t;
 
 /**
  * Managed collection instance (one per managed collection / tx)
