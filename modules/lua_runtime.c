@@ -172,12 +172,12 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L)
  * Create a new Lua state.
  *
  * @param[in] ib IronBee engine.
- * @param[in] cfg Configuration of the moudule.
+ * @param[in] cfg Configuration of the module.
  * @param[in] Lout The Lua stack to create.
  *
  * @reutrns
  * - IB_OK On success.
- * - IB_EUNKNOWN If @c luaL_newstate fails.
+ * - IB_EUNKNOWN If luaL_newstate() fails.
  */
 static ib_status_t modlua_newstate(
     ib_engine_t *ib,
@@ -435,7 +435,7 @@ ib_status_t lua_pool_create_fn(void **resource, void *cbdata)
     assert(resource != NULL);
     assert(cbdata != NULL);
 
-    modlua_runtime_cbdata_t *modlua_runtime_cbdata = 
+    modlua_runtime_cbdata_t *modlua_runtime_cbdata =
         (modlua_runtime_cbdata_t *)cbdata;
     ib_engine_t      *ib = modlua_runtime_cbdata->ib;
     ib_module_t      *module = modlua_runtime_cbdata->module;

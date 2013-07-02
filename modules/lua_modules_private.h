@@ -43,7 +43,7 @@
  *
  * @returns
  * - IB_OK On success.
- * - IB_EINVAL On a Lua langage error.
+ * - IB_EINVAL On a Lua language error.
  * - IB_EALLOC On a memory error.
  * - Other when interacting with registering the modules with @a ib.
  */

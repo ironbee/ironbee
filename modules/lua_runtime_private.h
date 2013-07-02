@@ -145,7 +145,7 @@ ib_status_t modlua_runtime_resource_pool_create(
  * @param[in] module The module object for the Lua module.
  * @param[in] ctx The configuration context. If this is the main context,
  *            this function does nothing. If this is a context other than
- *            the main context it's parent is recurisvely passed
+ *            the main context it's parent is recursively passed
  *            to this function until @a ctx is the main context.
  * @param[in] L The Lua State to reload Lua scripts into.
  *
@@ -165,7 +165,7 @@ ib_status_t modlua_reload_ctx_except_main(
  * Reload the main context Lua files.
  *
  * @param[in] ib IronBee engine.
- * @param[in] module The Lua module strcuture.
+ * @param[in] module The Lua module structure.
  * @param[in] L The Lua state to reload the files into.
  *
  * @returns

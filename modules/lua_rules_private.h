@@ -44,7 +44,7 @@ typedef struct modlua_rules_cbdata_t modlua_rules_cbdata_t;
  * This also builds the @ref modlua_rules_cbdata_t used.
  *
  * @param[in] ib IronBee engine.
- * @param[in] module The module structure passed in the rule calback object.
+ * @param[in] module The module structure passed in the rule callback object.
  *
  * @returns
  * - IB_OK On success.
