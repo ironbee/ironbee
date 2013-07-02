@@ -30,8 +30,8 @@
 #define __MODULES__LUA_RUNTIME_H
 
 #include "lua/ironbee.h"
-#include "lua_private.h"
 #include "lua_common_private.h"
+#include "lua_private.h"
 
 #include <ironbee/resource_pool.h>
 

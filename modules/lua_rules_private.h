@@ -27,8 +27,8 @@
 #define __MODULES__LUA_RULES_PRIVATE_H
 
 #include "lua/ironbee.h"
-#include "lua_private.h"
 #include "lua_common_private.h"
+#include "lua_private.h"
 
 /**
  * Callback data for the Lua Rules implementation.

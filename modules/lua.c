@@ -24,12 +24,13 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include "lua_private.h"
+
 #include "lua/ironbee.h"
 
-#include "lua_private.h"
-#include "lua_runtime_private.h"
-#include "lua_rules_private.h"
 #include "lua_modules_private.h"
+#include "lua_rules_private.h"
+#include "lua_runtime_private.h"
 
 #include <ironbee/array.h>
 #include <ironbee/cfgmap.h>

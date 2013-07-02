@@ -24,12 +24,12 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
-#include "lua_private.h"
 #include "lua_modules_private.h"
+#include "lua_private.h"
 #include "lua_runtime_private.h"
 
-#include <ironbee/engine_state.h>
 #include <ironbee/context.h>
+#include <ironbee/engine_state.h>
 
 #include <assert.h>
 
