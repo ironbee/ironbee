@@ -75,6 +75,7 @@ typedef struct modlua_reload_t modlua_reload_t;
  * Get the lua runtime from the connection.
  *
  * @param[in] conn Connection
+ * @param[in] module The IronBee module structure.
  * @param[out] lua Lua runtime struct. *lua must be NULL.
  *
  * @returns
@@ -91,6 +92,7 @@ ib_status_t modlua_runtime_get(
  * Set the lua runtime for the connection.
  *
  * @param[in] conn Connection
+ * @param[in] module The IronBee module structure.
  * @param[in] lua Lua runtime struct.
  *
  * @returns
@@ -107,6 +109,7 @@ ib_status_t modlua_runtime_set(
  * Clear the runtime set by modlua_runtime_set().
  *
  * @param[in] conn Connection to clear the stored value from.
+ * @param[in] module The IronBee module structure.
  *
  */
 ib_status_t modlua_runtime_clear(

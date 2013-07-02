@@ -175,7 +175,7 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L)
  * @param[in] cfg Configuration of the module.
  * @param[in] Lout The Lua stack to create.
  *
- * @reutrns
+ * @returns
  * - IB_OK On success.
  * - IB_EUNKNOWN If luaL_newstate() fails.
  */
