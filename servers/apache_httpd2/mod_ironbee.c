@@ -124,13 +124,13 @@ typedef struct {
 /*************    GENERAL GLOBALS        *************************/
 static module_data_t module_data =
 {
-    NULL,             /* .ib_config_file */
-    IB_LOG_WARNING,   /* .ib_log_level */
-    true,             /* .ib_log_active */
-    NULL,             /* .ib_manager */
-    0,                /* .ib_max_engines */
-    APLOG_NOTICE,     /* .max_log_level */
-    APLOG_STARTUP,    /* .log_level_is_startup */
+    NULL,                             /* .ib_config_file */
+    IB_LOG_WARNING,                   /* .ib_log_level */
+    true,                             /* .ib_log_active */
+    NULL,                             /* .ib_manager */
+    IB_MANAGER_DEFAULT_MAX_ENGINES,   /* .ib_max_engines */
+    APLOG_NOTICE,                     /* .max_log_level */
+    APLOG_STARTUP,                    /* .log_level_is_startup */
 };
 
 /*************    IRONBEE-DRIVEN PROVIDERS/CALLBACKS/ETC ***********/
@@ -1245,7 +1245,7 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
                            &(mod_data->ib_manager)); /* Engine Manager */
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Ironbee failed to engine manager (%d)", rc);
+                     "Failed to create IronBee Engine Manager (%d)", rc);
         return rc;
     }
 
