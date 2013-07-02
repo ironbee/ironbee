@@ -72,7 +72,7 @@ typedef struct ib_managed_collection_inst_t ib_managed_collection_inst_t;
  *
  * @returns Status code
  */
-ib_status_t ib_managed_collection_create(
+ib_status_t DLL_PUBLIC ib_managed_collection_create(
     ib_engine_t              *ib,
     ib_mpool_t               *mp,
     const char               *collection_name,
@@ -90,7 +90,7 @@ ib_status_t ib_managed_collection_create(
  *
  * @returns Status code
  */
-ib_status_t ib_managed_collection_destroy(
+ib_status_t DLL_PUBLIC ib_managed_collection_destroy(
     ib_engine_t                   *ib,
     const ib_managed_collection_t *collection);
 

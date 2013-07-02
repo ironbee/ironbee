@@ -190,7 +190,7 @@ typedef ib_status_t (* ib_collection_manager_persist_fn_t)(
  * @returns
  *   - IB_OK on success
  */
-ib_status_t ib_collection_manager_init(
+ib_status_t DLL_PUBLIC ib_collection_manager_init(
     ib_engine_t *ib);
 
 /**
@@ -201,7 +201,7 @@ ib_status_t ib_collection_manager_init(
  * @returns
  *   - IB_OK on success
  */
-ib_status_t ib_collection_manager_finish(
+ib_status_t DLL_PUBLIC ib_collection_manager_finish(
     ib_engine_t *ib);
 
 /**
@@ -246,7 +246,7 @@ ib_status_t ib_collection_manager_finish(
  *
  * @returns Status code
  */
-ib_status_t ib_collection_manager_register(
+ib_status_t DLL_PUBLIC ib_collection_manager_register(
     ib_engine_t                            *ib,
     const ib_module_t                      *module,
     const char                             *name,
