@@ -90,6 +90,11 @@ namespace Predicate {
  * }
  * @endcode
  *
+ * After all validation classes are called, Base will be reached, which will
+ * call another virtual function, local_validate().  Classes can override
+ * local_validate() to easily provide their own checks that run after
+ * all Validate checks.
+ *
  * How to write a new validator:
  *
  * - If possible, write the validator logic is a function (see, e.g.,
@@ -154,10 +159,16 @@ public:
 class Base
 {
 public:
-    //! Validate this node.  Currently nop.
-    virtual void validate(NodeReporter) const
+    //! Local validation.  Default nop.
+    virtual void local_validate(NodeReporter) const
     {
         // nop
+    }
+
+    //! Validate this node.
+    virtual void validate(NodeReporter reporter) const
+    {
+        local_validate(reporter);
     }
 };
 
