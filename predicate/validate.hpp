@@ -166,7 +166,7 @@ public:
  *
  * @tparam F Function of @c NodeReporter and @c size_t to call.
  **/
-template <void (*F)(NodeReporter, size_t)>
+template <bool (*F)(NodeReporter, size_t)>
 struct make_validator_size
 {
     //! Value; a validator.
@@ -187,7 +187,7 @@ struct make_validator_size
  *
  * @tparam F Function of @c NodeReporter to call.
  **/
-template <void (*F)(NodeReporter)>
+template <bool (*F)(NodeReporter)>
 struct make_validator
 {
     //! Value; a validator.
@@ -208,78 +208,88 @@ struct make_validator
  *
  * @param[in] reporter Reporter to use.
  * @param[in] n        How many children expected.
+ * @return true iff validation succeeded.
  **/
-void n_children(NodeReporter reporter, size_t n);
+bool n_children(NodeReporter reporter, size_t n);
 
 /**
  * Report error if not @a n or more children.
  *
  * @param[in] reporter Reporter to use.
  * @param[in] n        Minimum number of children expected.
+ * @return true iff validation succeeded.
  **/
-void n_or_more_children(NodeReporter reporter, size_t n);
+bool n_or_more_children(NodeReporter reporter, size_t n);
 
 /**
  * Report error if not @a n or fewer children.
  *
  * @param[in] reporter Reporter to use.
  * @param[in] n        Maximum number of children expected.
+ * @return true iff validation succeeded.
  **/
-void n_or_fewer_children(NodeReporter reporter, size_t n);
+bool n_or_fewer_children(NodeReporter reporter, size_t n);
 
 /**
  * Report error if @a nth child is not string literal.
  *
  * @param[in] reporter Reporter to use.
  * @param[in] n        Which child should be a string literal.
+ * @return true iff validation succeeded.
  **/
-void nth_child_is_string(NodeReporter reporter, size_t n);
+bool nth_child_is_string(NodeReporter reporter, size_t n);
 
 /**
  * Report error if @a nth child is not number literal.
  *
  * @param[in] reporter Reporter to use.
  * @param[in] n        Which child should be a number literal.
+ * @return true iff validation succeeded.
  **/
-void nth_child_is_integer(NodeReporter reporter, size_t n);
+bool nth_child_is_integer(NodeReporter reporter, size_t n);
 
 /**
  * Report error if @a nth child is not float literal.
  *
  * @param[in] reporter Reporter to use.
  * @param[in] n        Which child should be a float literal.
+ * @return true iff validation succeeded.
  **/
-void nth_child_is_float(NodeReporter reporter, size_t n);
+bool nth_child_is_float(NodeReporter reporter, size_t n);
 
 /**
  * Report error if @a nth child is not a null.
  *
  * @param[in] reporter Reporter to use.
  * @param[in] n        Which child should be a null.
+ * @return true iff validation succeeded.
  **/
-void nth_child_is_null(NodeReporter reporter, size_t n);
+bool nth_child_is_null(NodeReporter reporter, size_t n);
 
 /**
  * Report error if @a nth child is a null.
  *
  * @param[in] reporter Reporter to use.
  * @param[in] n        Which child should not be a null.
+ * @return true iff validation succeeded.
  **/
-void nth_child_is_not_null(NodeReporter reporter, size_t n);
+bool nth_child_is_not_null(NodeReporter reporter, size_t n);
 
 /**
  * Report error if any child is literal.
  *
  * @param[in] reporter Reporter to use.
+ * @return true iff validation succeeded.
  **/
-void no_child_is_literal(NodeReporter reporter);
+bool no_child_is_literal(NodeReporter reporter);
 
 /**
  * Report error if any child is null.
  *
  * @param[in] reporter Reporter to use.
+ * @return true iff validation succeeded.
  **/
-void no_child_is_null(NodeReporter reporter);
+bool no_child_is_null(NodeReporter reporter);
 
 /**
  * Validator: n_children()

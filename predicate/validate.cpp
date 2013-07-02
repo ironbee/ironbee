@@ -62,7 +62,7 @@ bool is_a(const node_cp& node)
 
 }
 
-void n_children(NodeReporter reporter, size_t n)
+bool n_children(NodeReporter reporter, size_t n)
 {
     size_t actual_children = reporter.node()->children().size();
     if (actual_children != n) {
@@ -71,10 +71,12 @@ void n_children(NodeReporter reporter, size_t n)
             "but have " + boost::lexical_cast<string>(actual_children) +
             "."
         );
+        return false;
     }
+    return true;
 }
 
-void n_or_more_children(NodeReporter reporter, size_t n)
+bool n_or_more_children(NodeReporter reporter, size_t n)
 {
     size_t actual_children = reporter.node()->children().size();
     if (actual_children < n) {
@@ -83,10 +85,12 @@ void n_or_more_children(NodeReporter reporter, size_t n)
             " children  but have " +
             boost::lexical_cast<string>(actual_children) + "."
         );
+        return false;
     }
+    return true;
 }
 
-void n_or_fewer_children(NodeReporter reporter, size_t n)
+bool n_or_fewer_children(NodeReporter reporter, size_t n)
 {
     size_t actual_children = reporter.node()->children().size();
     if (actual_children > n) {
@@ -95,10 +99,12 @@ void n_or_fewer_children(NodeReporter reporter, size_t n)
             " children but have " +
             boost::lexical_cast<string>(actual_children) + "."
         );
+        return false;
     }
+    return true;
 }
 
-void nth_child_is_string(NodeReporter reporter, size_t n)
+bool nth_child_is_string(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
     if (child && ! is_a<String>(child)) {
@@ -106,10 +112,12 @@ void nth_child_is_string(NodeReporter reporter, size_t n)
             "Child " + boost::lexical_cast<string>(n+1) + " must be a "
             "string literal."
         );
+        return false;
     }
+    return true;
 }
 
-void nth_child_is_integer(NodeReporter reporter, size_t n)
+bool nth_child_is_integer(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
     if (child && ! is_a<Integer>(child)) {
@@ -117,10 +125,12 @@ void nth_child_is_integer(NodeReporter reporter, size_t n)
             "Child " + boost::lexical_cast<string>(n+1) + " must be an "
             "integer literal."
         );
+        return false;
     }
+    return true;
 }
 
-void nth_child_is_float(NodeReporter reporter, size_t n)
+bool nth_child_is_float(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
     if (child && ! is_a<Float>(child)) {
@@ -128,55 +138,67 @@ void nth_child_is_float(NodeReporter reporter, size_t n)
             "Child " + boost::lexical_cast<string>(n+1) + " must be a "
             "float literal."
         );
+        return false;
     }
+    return true;
 }
 
-void nth_child_is_null(NodeReporter reporter, size_t n)
+bool nth_child_is_null(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
     if (child && ! is_a<Null>(child)) {
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must be a null."
         );
+        return false;
     }
+    return true;
 }
 
-void nth_child_is_not_null(NodeReporter reporter, size_t n)
+bool nth_child_is_not_null(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
     if (! child || is_a<Null>(child)) {
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must not be a null."
         );
+        return false;
     }
+    return true;
 }
 
-void no_child_is_literal(NodeReporter reporter)
+bool no_child_is_literal(NodeReporter reporter)
 {
     size_t i = 0;
+    bool result = true;
     BOOST_FOREACH(const node_cp& child, reporter.node()->children()) {
         if (is_a<Literal>(child)) {
             reporter.error(
-                "Child " + boost::lexical_cast<string>(i+1) + " must  not be"
+                "Child " + boost::lexical_cast<string>(i+1) + " must not be"
                 "literal."
             );
+            result = false;
         }
         ++i;
     }
+    return result;
 }
 
-void no_child_is_null(NodeReporter reporter)
+bool no_child_is_null(NodeReporter reporter)
 {
     size_t i = 0;
+    bool result = true;
     BOOST_FOREACH(const node_cp& child, reporter.node()->children()) {
         if (is_a<Null>(child)) {
             reporter.error(
-                "Child " + boost::lexical_cast<string>(i+1) + " must  not be"
+                "Child " + boost::lexical_cast<string>(i+1) + " must not be"
                 "null."
             );
+            result = false;
         }
         ++i;
     }
+    return result;
 }
 
 } // Validate
