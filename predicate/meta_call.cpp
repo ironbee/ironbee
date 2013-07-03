@@ -104,13 +104,13 @@ bool AbelianCall::transform(
     return true;
 }
 
-void MaplikeCall::reset()
+void MapCall::reset()
 {
     Call::reset();
     m_input_locations.clear();
 }
 
-void MaplikeCall::map_calculate(
+void MapCall::map_calculate(
     const node_p& input,
     EvalContext   eval_context,
     bool          eval_input,

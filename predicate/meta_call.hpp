@@ -75,7 +75,7 @@ private:
  * call value_calculate() on each value of the input and add the result if
  * non-NULL.
  **/
-class MaplikeCall :
+class MapCall :
     virtual public Predicate::Call
 {
 protected:

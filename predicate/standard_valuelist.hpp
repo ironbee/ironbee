@@ -43,7 +43,7 @@ namespace Standard {
  * Construct a named value from a name (string) and value.
  **/
 class SetName :
-    public MaplikeCall
+    public MapCall
 {
 public:
     //! See Call:name()

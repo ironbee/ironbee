@@ -37,7 +37,7 @@ namespace Standard {
  * Output value of first child and message of second child.
  **/
 class P :
-    public MaplikeCall
+    public MapCall
 {
 public:
     //! See Call::name()
@@ -47,7 +47,7 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-    //! See MaplikeCall::value_calculate()
+    //! See MapCall::value_calculate()
     virtual Value value_calculate(Value v, EvalContext context);
 
     //! See Node::calculate()
@@ -58,7 +58,7 @@ protected:
  * Take values of child; do not transform.
  **/
 class Identity :
-    public MaplikeCall
+    public MapCall
 {
 public:
     //! See Call::name()
@@ -68,7 +68,7 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-    //! See MaplikeCall::value_calculate()
+    //! See MapCall::value_calculate()
     virtual Value value_calculate(Value v, EvalContext context);
 
     //! See Node::calculate()
