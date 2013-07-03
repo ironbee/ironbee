@@ -28,9 +28,6 @@
 #include <predicate/merge_graph.hpp>
 #include <predicate/validate.hpp>
 
-#include <ironbeepp/operator.hpp>
-#include <ironbeepp/transformation.hpp>
-
 #include <ironbee/log.h>
 
 #include <boost/bind.hpp>
