@@ -69,7 +69,7 @@ IronBee v0.8.0
   a single bool; added accessors; `ib_tfn_transform()` has been renamed to `ib_tfn_execute()` and now handles lists properly; separated creation and
   registration similar to operators.
 
-* All ib_hook_xxx_unregister functions have been removed.
+* All `ib_hook_xxx_unregister()` functions have been removed.
 
 **Util**
 
