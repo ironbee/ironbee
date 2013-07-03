@@ -38,9 +38,9 @@ public:
     }
 
 protected:
-    virtual Value calculate(EvalContext)
+    virtual void calculate(EvalContext)
     {
-        return Value();
+        finish();
     }
 };
 

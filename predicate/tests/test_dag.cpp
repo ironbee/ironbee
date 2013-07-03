@@ -47,9 +47,10 @@ public:
     }
 
 protected:
-    virtual Value calculate(EvalContext)
+    virtual void calculate(EvalContext)
     {
-        return Value(&c_field);
+        add_value(Value(&c_field));
+        finish();
     }
 };
 
@@ -69,14 +70,14 @@ TEST_F(TestDAG, Node)
     EXPECT_EQ("(dummy_call)", n->to_s());
     EXPECT_TRUE(n->children().empty());
     EXPECT_TRUE(n->parents().empty());
-    EXPECT_FALSE(n->has_value());
-    EXPECT_THROW(n->value(), IronBee::einval);
+    EXPECT_FALSE(n->is_finished());
+    EXPECT_TRUE(n->values().empty());
 
-    EXPECT_EQ(&c_field, n->eval(m_transaction).ib());
-    EXPECT_TRUE(n->has_value());
+    EXPECT_EQ(&c_field, n->eval(m_transaction).front().ib());
+    EXPECT_TRUE(n->is_finished());
 
     n->reset();
-    EXPECT_FALSE(n->has_value());
+    EXPECT_FALSE(n->is_finished());
 
     node_p n2(new DummyCall);
     n->add_child(n2);
@@ -93,7 +94,7 @@ TEST_F(TestDAG, String)
     EXPECT_EQ("node", n.value_as_s());
     EXPECT_EQ(
         "node",
-        n.eval(EvalContext()).value_as_byte_string().to_s()
+        n.eval(EvalContext()).front().value_as_byte_string().to_s()
     );
     EXPECT_TRUE(n.is_literal());
 }
@@ -113,7 +114,7 @@ TEST_F(TestDAG, Integer)
     EXPECT_EQ(0, n.value_as_i());
     EXPECT_EQ(
         0,
-        n.eval(EvalContext()).value_as_number()
+        n.eval(EvalContext()).front().value_as_number()
     );
     EXPECT_TRUE(n.is_literal());
 }
@@ -125,7 +126,7 @@ TEST_F(TestDAG, Float)
     EXPECT_FLOAT_EQ(1.2, n.value_as_f());
     EXPECT_FLOAT_EQ(
         1.2,
-        n.eval(EvalContext()).value_as_float()
+        n.eval(EvalContext()).front().value_as_float()
     );
     EXPECT_TRUE(n.is_literal());
 }
@@ -135,8 +136,8 @@ TEST_F(TestDAG, Call)
     node_p n(new DummyCall);
 
     EXPECT_EQ("(dummy_call)", n->to_s());
-    EXPECT_EQ(&c_field, n->eval(m_transaction).ib());
-    EXPECT_TRUE(n->has_value());
+    EXPECT_EQ(&c_field, n->eval(m_transaction).front().ib());
+    EXPECT_TRUE(n->is_finished());
 
     node_p a1(new DummyCall);
     n->add_child(a1);
@@ -161,7 +162,8 @@ TEST_F(TestDAG, Null)
 {
     Null n;
     EXPECT_EQ("null", n.to_s());
-    EXPECT_FALSE(n.eval(EvalContext()));
+    EXPECT_TRUE(n.eval(EvalContext()).empty());
+    EXPECT_TRUE(n.is_finished());
     EXPECT_TRUE(n.is_literal());
 }
 
@@ -221,7 +223,7 @@ public:
     void operator()()
     {
         for (int i = 0; i < 10000; ++i) {
-            if (m_n->eval(m_c) != m_v) {
+            if (m_n->eval(m_c).front() != m_v) {
                 throw runtime_error("FAIL");
             }
             usleep(i % 100);
@@ -245,9 +247,10 @@ public:
     }
 
 protected:
-    virtual Value calculate(EvalContext context)
+    virtual void calculate(EvalContext context)
     {
-        return context ? m_a : m_b;
+        add_value(context ? m_a : m_b);
+        finish();
     }
 
 private:
