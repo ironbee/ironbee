@@ -25,8 +25,9 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <ironbee/collection_manager.h>
 #include "managed_collection_private.h"
+
+#include <ironbee/collection_manager.h>
 
 /**
  * A collection manager is a collection of functions and related data that can

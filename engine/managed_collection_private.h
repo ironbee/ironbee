@@ -25,8 +25,8 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <ironbee/list.h>
 #include <ironbee/engine_types.h>
+#include <ironbee/list.h>
 #include <ironbee/types.h>
 
 /**
