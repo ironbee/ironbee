@@ -351,8 +351,8 @@ void DLL_PUBLIC ib_mpool_release(
  * Register a function to be called when a memory pool is cleared or
  * destroyed.
  *
- * All cleanup functions associated with a memory pool are invoked before the
- * pool itself is cleared or destroyed.  Thus, it is safe for a cleanup
+ * All cleanup functions associated with a memory pool are invoked before any
+ * memory associated with @a mp is freed.  Thus, it is safe for a cleanup
  * function to access memory in the pool.
  *
  * @param[in] mp      Memory pool to associate function with.
