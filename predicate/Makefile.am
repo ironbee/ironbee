@@ -16,6 +16,7 @@ libpredicate_la_SOURCES = \
     parse.cpp \
     standard.cpp \
     standard_boolean.cpp \
+    standard_development.cpp \
     standard_valuelist.cpp \
     standard_predicate.cpp \
     dot.cpp \
@@ -29,26 +30,27 @@ libpredicate_la_SOURCES = \
 	pre_eval_graph.cpp
 
 EXTRA_DIST = \
-		bfs.hpp                 \
-		call_factory.hpp        \
-		call_helpers.hpp        \
-		dag.hpp                 \
-		dot.hpp                 \
-		ibmod_predicate.hpp     \
-		ironbee.hpp             \
-		leaves.hpp              \
-		less.hpp                \
-		meta_call.hpp           \
-		merge_graph.hpp         \
-		parse.hpp               \
-		pre_eval_graph.hpp      \
-		reporter.hpp            \
-		standard.hpp            \
-		standard_boolean.hpp    \
-		standard_valuelist.hpp  \
-		standard_predicate.hpp  \
-		transform_graph.hpp     \
-		validate.hpp            \
+		bfs.hpp                   \
+		call_factory.hpp          \
+		call_helpers.hpp          \
+		dag.hpp                   \
+		dot.hpp                   \
+		ibmod_predicate.hpp       \
+		ironbee.hpp               \
+		leaves.hpp                \
+		less.hpp                  \
+		meta_call.hpp             \
+		merge_graph.hpp           \
+		parse.hpp                 \
+		pre_eval_graph.hpp        \
+		reporter.hpp              \
+		standard.hpp              \
+		standard_boolean.hpp      \
+		standard_development.hpp  \
+		standard_valuelist.hpp    \
+		standard_predicate.hpp    \
+		transform_graph.hpp       \
+		validate.hpp              \
 		validate_graph.hpp
 
 ibmod_predicate_la_SOURCES = ibmod_predicate.cpp
