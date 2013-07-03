@@ -383,7 +383,7 @@ void Node::replace_child(const node_p& child, const node_p& with)
 
 void Node::pre_transform(NodeReporter reporter) const
 {
-    // nop
+    validate(reporter);
 }
 
 bool Node::transform(
@@ -397,7 +397,12 @@ bool Node::transform(
 
 void Node::post_transform(NodeReporter reporter) const
 {
-    // nop
+    validate(reporter);
+}
+
+bool Node::validate(NodeReporter reporter) const
+{
+    return true;
 }
 
 void Node::pre_eval(Environment environment, NodeReporter reporter)

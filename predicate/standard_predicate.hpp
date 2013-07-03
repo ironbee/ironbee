@@ -30,7 +30,6 @@
 #include <ironbeepp/operator.hpp>
 #include <ironbeepp/transformation.hpp>
 #include <predicate/meta_call.hpp>
-#include <predicate/validate.hpp>
 
 #include <boost/foreach.hpp>
 
@@ -42,10 +41,7 @@ namespace Standard {
 
 //! Does second child have more than specified values?
 class IsLonger :
-    public Validate::Call<IsLonger>,
-    public Validate::NChildren<2,
-           Validate::NthChildIsInteger<0
-           > >
+    public Call
 {
 public:
     //! See Call::name()
@@ -62,6 +58,9 @@ public:
         NodeReporter       reporter
     );
 
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
 protected:
     //! See Node::calculate()
     virtual void calculate(EvalContext);
@@ -69,8 +68,7 @@ protected:
 
 //! Is child literal?
 class IsLiteral :
-    public Validate::Call<IsLiteral>,
-    public Validate::NChildren<1>
+    public Call
 {
 public:
     //! See Call::name()
@@ -87,6 +85,9 @@ public:
         NodeReporter       reporter
     );
 
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
 protected:
     //! See Node::calculate()
     virtual void calculate(EvalContext);
@@ -94,8 +95,7 @@ protected:
 
 //! Is child simple?
 class IsSimple :
-    public Validate::Call<IsSimple>,
-    public Validate::NChildren<1>
+    public Call
 {
 public:
     //! See Call::name()
@@ -111,6 +111,9 @@ public:
         const CallFactory& call_factory,
         NodeReporter       reporter
     );
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
 
 protected:
     //! See Node::calculate()
@@ -119,8 +122,7 @@ protected:
 
 //! Is child finished?
 class IsFinished :
-    public Validate::Call<IsFinished>,
-    public Validate::NChildren<1>
+    public Call
 {
 public:
     //! See Call::name()
@@ -137,6 +139,9 @@ public:
         NodeReporter       reporter
     );
 
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
 protected:
     //! See Node::calculate()
     virtual void calculate(EvalContext);
@@ -144,8 +149,7 @@ protected:
 
 //! Do all values of child have the same type?
 class IsHomogeneous :
-    public Validate::Call<IsHomogeneous>,
-    public Validate::NChildren<1>
+    public Call
 {
 public:
     //! Constructor.
@@ -167,6 +171,9 @@ public:
 
    //! See Node::reset()
    virtual void reset();
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
 
 protected:
     //! See Node::calculate()

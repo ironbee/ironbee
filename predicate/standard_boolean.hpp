@@ -28,7 +28,6 @@
 #include <predicate/call_factory.hpp>
 #include <predicate/dag.hpp>
 #include <predicate/meta_call.hpp>
-#include <predicate/validate.hpp>
 
 namespace IronBee {
 namespace Predicate {
@@ -38,8 +37,7 @@ namespace Standard {
  * Falsy value, [].
  **/
 class False :
-    public Validate::Call<False>,
-    public Validate::NChildren<0>
+    public Call
 {
 public:
     //! See Call::name()
@@ -56,6 +54,9 @@ public:
        NodeReporter       reporter
    );
 
+   //! See Node::validate().
+   virtual bool validate(NodeReporter reporter) const;
+
 protected:
     //! See Node::calculate()
     virtual void calculate(EvalContext);
@@ -65,8 +66,7 @@ protected:
  * Truthy value, [''].
  **/
 class True :
-    public Validate::Call<True>,
-    public Validate::NChildren<0>
+    public Call
 {
 public:
     //! See Call::name()
@@ -83,6 +83,9 @@ public:
        NodeReporter       reporter
    );
 
+   //! See Node::validate().
+   virtual bool validate(NodeReporter reporter) const;
+
 protected:
     //! See Node::calculate()
     virtual void calculate(EvalContext);
@@ -92,9 +95,7 @@ protected:
  * True iff any children are truthy.
  **/
 class Or :
-    public AbelianCall,
-    public Validate::Call<Or>,
-    public Validate::NOrMoreChildren<2>
+    public AbelianCall
 {
 public:
     //! See Call::name()
@@ -112,6 +113,9 @@ public:
        NodeReporter       reporter
    );
 
+   //! See Node::validate().
+   virtual bool validate(NodeReporter reporter) const;
+
 protected:
     virtual void calculate(EvalContext context);
 };
@@ -120,9 +124,7 @@ protected:
  * True iff all children are truthy.
  **/
 class And :
-    public AbelianCall,
-    public Validate::Call<And>,
-    public Validate::NOrMoreChildren<2>
+    public AbelianCall
 {
 public:
     //! See Call::name()
@@ -139,6 +141,10 @@ public:
        const CallFactory& call_factory,
        NodeReporter       reporter
    );
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
 protected:
     virtual void calculate(EvalContext context);
 };
@@ -147,8 +153,7 @@ protected:
  * True iff child is falsy.
  **/
 class Not :
-    public Validate::Call<Not>,
-    public Validate::NChildren<1>
+    public Call
 {
 public:
     //! See Call::name()
@@ -165,6 +170,9 @@ public:
         NodeReporter       reporter
     );
 
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
 protected:
     virtual void calculate(EvalContext context);
 };
@@ -173,8 +181,7 @@ protected:
  * If first child is true, second child, else third child.
  **/
 class If :
-    public Validate::Call<If>,
-    public Validate::NChildren<3>
+    public Call
 {
 public:
     //! See Call::name()
@@ -191,6 +198,9 @@ public:
         NodeReporter       reporter
     );
 
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
 protected:
     virtual void calculate(EvalContext context);
 };
@@ -199,8 +209,7 @@ protected:
  * True iff any children are truthy (short-circuiting).
  **/
 class OrSC :
-    public Validate::Call<OrSC>,
-    public Validate::NOrMoreChildren<2>
+    public Call
 {
 public:
     //! See Call::name()
@@ -218,6 +227,9 @@ public:
        NodeReporter       reporter
    );
 
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
 protected:
     virtual void calculate(EvalContext context);
 };
@@ -226,8 +238,7 @@ protected:
  * True iff all children are truthy (short-circuiting).
  **/
 class AndSC :
-    public Validate::Call<AndSC>,
-    public Validate::NOrMoreChildren<2>
+    public Call
 {
 public:
     //! See Call::name()
@@ -244,6 +255,9 @@ public:
        const CallFactory& call_factory,
        NodeReporter       reporter
    );
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
 
 protected:
     virtual void calculate(EvalContext context);

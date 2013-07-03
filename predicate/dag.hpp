@@ -261,8 +261,8 @@ public:
     /**
      * Perform pre-transformation validations.
      *
-     * This method may be overridden by a child.  Default behavior is to do
-     * nothing.
+     * This method may be overridden by a child.  Default behavior is to
+     * call validate().
      *
      * @note Exceptions will not be immediately caught so should only be used
      *       if it is appropriate to abort the entire predicate system, e.g.,
@@ -304,10 +304,27 @@ public:
     /**
      * Perform post-transformation validations.
      *
-     * See pre_transform() for additional discussion.
+     * Default behavior is to call validate().  See pre_transform() for
+     * additional discussion.
+     *
      * @param[in] reporter Reporter to use for errors or warnings.
      **/
     virtual void post_transform(NodeReporter reporter) const;
+
+    /**
+     * Perform validation checks.
+     *
+     * By default, this is called by pre_transform() and post_transform(),
+     * although that behavior can be overridden.
+     *
+     * Default behavior is to do nothing.
+     *
+     * @sa Standard::Validate
+     *
+     * @param[in] reporter Reporter to use for errors or warnings.
+     * @return true iff no *errors* reported.
+     **/
+    virtual bool validate(NodeReporter reporter) const;
 
     /**
      * Preform any one time preparations needed for evaluation.

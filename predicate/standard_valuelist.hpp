@@ -30,7 +30,6 @@
 #include <ironbeepp/operator.hpp>
 #include <ironbeepp/transformation.hpp>
 #include <predicate/meta_call.hpp>
-#include <predicate/validate.hpp>
 
 #include <boost/foreach.hpp>
 
@@ -44,16 +43,14 @@ namespace Standard {
  * Construct a named value from a name (string) and value.
  **/
 class SetName :
-    public MaplikeCall,
-    public Validate::Call<SetName>,
-    public Validate::NChildren<2,
-           Validate::NthChildIsString<0,
-           Validate::NthChildIsNotNull<1
-           > > >
+    public MaplikeCall
 {
 public:
     //! See Call:name()
     virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
 
 protected:
     virtual Value value_calculate(Value v, EvalContext context);
@@ -78,12 +75,14 @@ protected:
  * First value.
  **/
 class First :
-    public Validate::Call<First>,
-    public Validate::NChildren<1>
+    public Call
 {
 public:
     //! See Call:name()
     virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
 
 protected:
     virtual void calculate(EvalContext context);
@@ -93,8 +92,7 @@ protected:
  * All but first value.
  **/
 class Rest :
-    public Validate::Call<Rest>,
-    public Validate::NChildren<1>
+    public Call
 {
 public:
     //! Constructor.
@@ -102,6 +100,9 @@ public:
 
     //! See Call:name()
     virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
 
 protected:
     virtual void reset();
@@ -119,14 +120,14 @@ private:
  * Nth value.
  **/
 class Nth :
-    public Validate::Call<Nth>,
-    public Validate::NChildren<2,
-           Validate::NthChildIsInteger<0
-           > >
+    public Call
 {
 public:
     //! See Call:name()
     virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
 
 protected:
     virtual void calculate(EvalContext context);
@@ -136,12 +137,14 @@ protected:
  * Expand simple list value.
  **/
 class Scatter :
-    public Validate::Call<Scatter>,
-    public Validate::NChildren<1>
+    public Call
 {
 public:
     //! See Call:name()
     virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
 
 protected:
     virtual void calculate(EvalContext context);
@@ -151,12 +154,14 @@ protected:
  * Gathers values into simple list value.
  **/
 class Gather :
-    public Validate::Call<Gather>,
-    public Validate::NChildren<1>
+    public Call
 {
 public:
     //! See Call:name()
     virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
 
 protected:
     virtual void calculate(EvalContext context);

@@ -26,6 +26,7 @@
 
 #include <predicate/call_factory.hpp>
 #include <predicate/call_helpers.hpp>
+#include <predicate/validate.hpp>
 
 using namespace std;
 
@@ -49,6 +50,15 @@ Value SetName::value_calculate(Value v, EvalContext context)
 void SetName::calculate(EvalContext context)
 {
     map_calculate(children().back(), context);
+}
+
+bool SetName::validate(NodeReporter reporter) const
+{
+    return
+        Validate::n_children(reporter, 2) &&
+        Validate::nth_child_is_string(reporter, 0) &&
+        Validate::nth_child_is_not_null(reporter, 1)
+        ;
 }
 
 string Cat::name() const
@@ -95,6 +105,11 @@ void First::calculate(EvalContext context)
     else if (child->is_finished()) {
         finish();
     }
+}
+
+bool First::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 1);
 }
 
 struct Rest::data_t
@@ -151,6 +166,11 @@ void Rest::calculate(EvalContext context)
     }
 }
 
+bool Rest::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 1);
+}
+
 string Nth::name() const
 {
     return "Nth";
@@ -182,6 +202,14 @@ void Nth::calculate(EvalContext context)
     finish();
 }
 
+bool Nth::validate(NodeReporter reporter) const
+{
+    return
+        Validate::n_children(reporter, 2) &&
+        Validate::nth_child_is_integer(reporter, 0)
+        ;
+}
+
 string Scatter::name() const
 {
     return "scatter";
@@ -203,6 +231,11 @@ void Scatter::calculate(EvalContext context)
         }
         finish();
     }
+}
+
+bool Scatter::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 1);
 }
 
 string Gather::name() const
@@ -235,6 +268,11 @@ void Gather::calculate(EvalContext context)
     finish();
 }
 
+bool Gather::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 1);
+}
+
 void load_valuelist(CallFactory& to)
 {
     to
@@ -245,7 +283,7 @@ void load_valuelist(CallFactory& to)
         .add<Nth>()
         .add<Scatter>()
         .add<Gather>()
-    ;
+        ;
 }
 
 } // Standard

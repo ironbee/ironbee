@@ -24,6 +24,7 @@
 
 #include <predicate/standard_boolean.hpp>
 #include <predicate/merge_graph.hpp>
+#include <predicate/validate.hpp>
 
 #include <ironbeepp/operator.hpp>
 #include <ironbeepp/transformation.hpp>
@@ -70,6 +71,11 @@ void False::calculate(EvalContext)
     );
 }
 
+bool False::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 0);
+}
+
 string True::name() const
 {
     return "true";
@@ -95,6 +101,11 @@ void True::calculate(EvalContext)
             "True evaluated; did you not transform?"
         )
     );
+}
+
+bool True::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 0);
 }
 
 string Or::name() const
@@ -164,6 +175,11 @@ bool Or::transform(
         AbelianCall::transform(merge_graph, call_factory, reporter) ||
         result;
 
+}
+
+bool Or::validate(NodeReporter reporter) const
+{
+    return Validate::n_or_more_children(reporter, 2);
 }
 
 string And::name() const
@@ -236,6 +252,11 @@ bool And::transform(
         result;
 }
 
+bool And::validate(NodeReporter reporter) const
+{
+    return Validate::n_or_more_children(reporter, 2);
+}
+
 string Not::name() const
 {
     return "not";
@@ -279,6 +300,11 @@ bool Not::transform(
     else {
         return false;
     }
+}
+
+bool Not::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 1);
 }
 
 string If::name() const
@@ -337,6 +363,11 @@ bool If::transform(
     else {
         return false;
     }
+}
+
+bool If::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 3);
 }
 
 string OrSC::name() const
@@ -405,6 +436,11 @@ bool OrSC::transform(
     return result;
 }
 
+bool OrSC::validate(NodeReporter reporter) const
+{
+    return Validate::n_or_more_children(reporter, 2);
+}
+
 string AndSC::name() const
 {
     return "andSC";
@@ -471,6 +507,11 @@ bool AndSC::transform(
     return result;
 }
 
+bool AndSC::validate(NodeReporter reporter) const
+{
+    return Validate::n_or_more_children(reporter, 2);
+}
+
 void load_boolean(CallFactory& to)
 {
     to
@@ -482,7 +523,7 @@ void load_boolean(CallFactory& to)
         .add<If>()
         .add<OrSC>()
         .add<AndSC>()
-    ;
+        ;
 }
 
 } // Standard

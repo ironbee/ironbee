@@ -26,6 +26,7 @@
 
 #include <predicate/call_factory.hpp>
 #include <predicate/call_helpers.hpp>
+#include <predicate/validate.hpp>
 
 using namespace std;
 
@@ -94,6 +95,14 @@ void IsLonger::calculate(EvalContext context)
     }
 }
 
+bool IsLonger::validate(NodeReporter reporter) const
+{
+    return
+        Validate::n_children(reporter, 2) &&
+        Validate::nth_child_is_integer(reporter, 0)
+        ;
+}
+
 string IsLiteral::name() const
 {
     return "isLiteral";
@@ -124,6 +133,11 @@ void IsLiteral::calculate(EvalContext context)
     );
 }
 
+bool IsLiteral::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 1);
+}
+
 string IsSimple::name() const
 {
     return "isSimple";
@@ -151,6 +165,11 @@ void IsSimple::calculate(EvalContext context)
     }
 }
 
+bool IsSimple::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 1);
+}
+
 string IsFinished::name() const
 {
     return "isFinished";
@@ -172,6 +191,11 @@ void IsFinished::calculate(EvalContext context)
     if (child->is_finished()) {
         finish_true();
     }
+}
+
+bool IsFinished::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 1);
 }
 
 struct IsHomogeneous::data_t
@@ -239,6 +263,11 @@ void IsHomogeneous::calculate(EvalContext context)
     }
 }
 
+bool IsHomogeneous::validate(NodeReporter reporter) const
+{
+    return Validate::n_children(reporter, 1);
+}
+
 void load_predicate(CallFactory& to)
 {
     to
@@ -247,7 +276,7 @@ void load_predicate(CallFactory& to)
         .add<IsSimple>()
         .add<IsFinished>()
         .add<IsHomogeneous>()
-    ;
+        ;
 }
 
 } // Standard

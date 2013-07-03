@@ -22,7 +22,10 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "predicate/standard.hpp"
+#include "predicate/reporter.hpp"
+#include "predicate/standard_boolean.hpp"
+#include "predicate/standard_predicate.hpp"
+#include "predicate/standard_valuelist.hpp"
 #include "predicate/merge_graph.hpp"
 
 #include "standard_test.hpp"
@@ -32,7 +35,9 @@ using namespace IronBee::Predicate;
 
 void StandardTest::SetUp()
 {
-    Standard::load(m_factory);
+    Standard::load_boolean(m_factory);
+    Standard::load_predicate(m_factory);
+    Standard::load_valuelist(m_factory);
     m_factory.add("A", &create);
     m_factory.add("B", &create);
 }
