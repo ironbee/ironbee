@@ -346,7 +346,6 @@ size_t DLL_PUBLIC ib_hash_size(
  * Fetch value from @a hash for key @a key.
  *
  * @sa ib_hash_get()
- * @sa ib_hash_get_nocase()
  *
  * @param[in]  hash       Hash table.
  * @param[out] value      Address which value is written.  May be NULL.
@@ -369,7 +368,6 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
  * Get value for @a key (NULL terminated char string) from @a hash.
  *
  * @sa ib_hash_get_ex()
- * @sa ib_hash_get_nocase()
  *
  * @param[in]  hash  Hash table.
  * @param[out] value Address which value is written.  May be NULL.
