@@ -78,6 +78,15 @@ bool n_or_more_children(NodeReporter reporter, size_t n);
 bool n_or_fewer_children(NodeReporter reporter, size_t n);
 
 /**
+ * Report error if @a nth child is not literal.
+ *
+ * @param[in] reporter Reporter to use.
+ * @param[in] n        Which child should not be a null.
+ * @return true iff validation succeeded.
+ **/
+bool nth_child_is_literal(NodeReporter reporter, size_t n);
+
+/**
  * Report error if @a nth child is not string literal.
  *
  * @param[in] reporter Reporter to use.

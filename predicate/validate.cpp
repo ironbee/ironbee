@@ -105,6 +105,19 @@ bool n_or_fewer_children(NodeReporter reporter, size_t n)
     return true;
 }
 
+bool nth_child_is_literal(NodeReporter reporter, size_t n)
+{
+    node_cp child = nth_child(reporter, n);
+    if (child && ! is_a<Literal>(child)) {
+        reporter.error(
+            "Child " + boost::lexical_cast<string>(n+1) + " must be a "
+            "literal."
+        );
+        return false;
+    }
+    return true;
+}
+
 bool nth_child_is_string(NodeReporter reporter, size_t n)
 {
     node_cp child = nth_child(reporter, n);
