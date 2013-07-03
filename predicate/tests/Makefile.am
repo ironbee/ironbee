@@ -15,7 +15,6 @@ check_PROGRAMS = \
 	test_less \
 	test_merge_graph \
 	test_parse \
-	test_standard \
 	test_standard_boolean \
 	test_standard_predicate \
 	test_standard_valuelist \
@@ -27,7 +26,6 @@ EXTRA_TEST = parse_fixture.hpp standard_test.hpp
 TESTS = $(check_PROGRAMS)
 
 test_dag_SOURCES = test_dag.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
-test_standard_SOURCES = test_standard.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_boolean_SOURCES = test_standard_boolean.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_predicate_SOURCES = test_standard_predicate.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_valuelist_SOURCES = test_standard_valuelist.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
