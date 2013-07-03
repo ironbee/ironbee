@@ -296,4 +296,3 @@ ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *module)
 
     return IB_OK;
 }
-

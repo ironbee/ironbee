@@ -214,4 +214,3 @@ ib_status_t modlua_acquirestate(
 );
 
 #endif /* __MODULES__LUA_RUNTIME_H */
-

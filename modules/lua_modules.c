@@ -1089,4 +1089,3 @@ ib_status_t modlua_module_load(
 
     return rc;
 }
-
