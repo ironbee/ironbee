@@ -99,7 +99,7 @@ bool IsLonger::validate(NodeReporter reporter) const
 {
     return
         Validate::n_children(reporter, 2) &&
-        Validate::nth_child_is_integer(reporter, 0)
+        Validate::nth_child_is_integer_above(reporter, 0, -1)
         ;
 }
 

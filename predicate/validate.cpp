@@ -22,6 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include <predicate/call_helpers.hpp>
 #include <predicate/validate.hpp>
 
 #include <boost/foreach.hpp>
@@ -35,9 +36,9 @@ namespace Validate {
 
 namespace  {
 
-node_cp nth_child(
+node_p nth_child(
     NodeReporter  reporter,
-    size_t         n
+    size_t        n
 )
 {
     size_t num_children = reporter.node()->children().size();
@@ -48,7 +49,7 @@ node_cp nth_child(
             "th child.  But there are only " +
             boost::lexical_cast<string>(num_children) + " children."
         );
-        return node_cp();
+        return node_p();
     }
 
     return *boost::next(reporter.node()->children().begin(), n);
@@ -124,6 +125,40 @@ bool nth_child_is_integer(NodeReporter reporter, size_t n)
         reporter.error(
             "Child " + boost::lexical_cast<string>(n+1) + " must be an "
             "integer literal."
+        );
+        return false;
+    }
+    return true;
+}
+
+bool nth_child_is_integer_below(NodeReporter reporter, size_t n, int64_t max)
+{
+    if (! nth_child_is_integer(reporter, n)) {
+        return false;
+    }
+    int64_t v = literal_value(nth_child(reporter, n)).value_as_number();
+    if (v >= max) {
+        reporter.error(
+            "Child " + boost::lexical_cast<string>(n+1) + " must be below " +
+            boost::lexical_cast<string>(max) + " but is " +
+            boost::lexical_cast<string>(v)
+        );
+        return false;
+    }
+    return true;
+}
+
+bool nth_child_is_integer_above(NodeReporter reporter, size_t n, int64_t min)
+{
+    if (! nth_child_is_integer(reporter, n)) {
+        return false;
+    }
+    int64_t v = literal_value(nth_child(reporter, n)).value_as_number();
+    if (v <= min) {
+        reporter.error(
+            "Child " + boost::lexical_cast<string>(n+1) + " must be above " +
+            boost::lexical_cast<string>(min) + " but is " +
+            boost::lexical_cast<string>(v)
         );
         return false;
     }

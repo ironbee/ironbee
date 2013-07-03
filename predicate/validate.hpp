@@ -96,6 +96,26 @@ bool nth_child_is_string(NodeReporter reporter, size_t n);
 bool nth_child_is_integer(NodeReporter reporter, size_t n);
 
 /**
+ * Report error if @a nth child is not number literal or below @a max.
+ *
+ * @param[in] reporter Reporter to use.
+ * @param[in] n        Which child should be a number literal.
+ * @param[in] max      Maximum valid value.
+ * @return true iff validation succeeded.
+ **/
+bool nth_child_is_integer_below(NodeReporter reporter, size_t n, int64_t max);
+
+/**
+ * Report error if @a nth child is not number literal or above @aa min.
+ *
+ * @param[in] reporter Reporter to use.
+ * @param[in] n        Which child should be a number literal.
+ * @param[in] min      Minimum valid value.
+ * @return true iff validation succeeded.
+ **/
+bool nth_child_is_integer_above(NodeReporter reporter, size_t n, int64_t min);
+
+/**
  * Report error if @a nth child is not float literal.
  *
  * @param[in] reporter Reporter to use.
