@@ -79,7 +79,9 @@ chain_vec_t parse(const std::string& input)
     string_rule unquoted_cfg_string =
         +(char_ - '@' - space - '"');
 
-    string_rule cfg_string = lexeme[
+    string_rule cfg_string;
+    
+    cfg_string = lexeme[
         (unquoted_cfg_string >> -cfg_string) |
         (quoted_cfg_string   >> -cfg_string)
     ];
