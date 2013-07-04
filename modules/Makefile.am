@@ -12,11 +12,14 @@ else
 AM_LDFLAGS += -module -avoid-version
 endif
 
-EXTRA_DIST = moddevel_private.h parser_suite.hpp
+EXTRA_DIST = moddevel_private.h \
+             parser_suite.hpp \
+             persistence_framework_private.h
 
 
 module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
+                     ibmod_persistence_framework.la \
                      ibmod_rules.la \
                      ibmod_user_agent.la \
                      ibmod_fast.la \
@@ -41,6 +44,8 @@ ibmod_geoip_la_LDFLAGS = $(AM_LDFLAGS) $(GEOIP_LDFLAGS)
 ibmod_geoip_la_CFLAGS = $(AM_CFLAGS) $(GEOIP_CFLAGS)
 ibmod_geoip_la_CPPFLAGS = $(AM_CPPFLAGS) $(GEOIP_CPPFLAGS)
 endif
+
+ibmod_persistence_framework_la_SOURCES = persistence_framework.c
 
 ibmod_log_pipe_la_SOURCES = log_pipe.c
 ibmod_log_pipe_la_CFLAGS = $(AM_CFLAGS) -D_GNU_SOURCE
