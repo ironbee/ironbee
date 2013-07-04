@@ -25,10 +25,7 @@
 #ifndef __PREDICATE__STANDARD__
 #define __PREDICATE__STANDARD__
 
-#include <predicate/standard_boolean.hpp>
-#include <predicate/standard_development.hpp>
-#include <predicate/standard_predicate.hpp>
-#include <predicate/standard_valuelist.hpp>
+#include <predicate/call_factory.hpp>
 
 namespace IronBee {
 namespace Predicate {

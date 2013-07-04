@@ -17,6 +17,7 @@ check_PROGRAMS = \
 	test_parse \
 	test_standard_boolean \
 	test_standard_development \
+	test_standard_filter \
 	test_standard_predicate \
 	test_standard_valuelist \
 	test_transform_graph \
@@ -29,6 +30,7 @@ TESTS = $(check_PROGRAMS)
 test_dag_SOURCES = test_dag.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_boolean_SOURCES = test_standard_boolean.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_development_SOURCES = test_standard_development.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
+test_standard_filter_SOURCES = test_standard_filter.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_predicate_SOURCES = test_standard_predicate.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_valuelist_SOURCES = test_standard_valuelist.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_call_factory_SOURCES = test_call_factory.cpp

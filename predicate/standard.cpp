@@ -24,6 +24,12 @@
 
 #include <predicate/standard.hpp>
 
+#include <predicate/standard_boolean.hpp>
+#include <predicate/standard_development.hpp>
+#include <predicate/standard_filter.hpp>
+#include <predicate/standard_predicate.hpp>
+#include <predicate/standard_valuelist.hpp>
+
 namespace IronBee {
 namespace Predicate {
 namespace Standard {
@@ -32,6 +38,7 @@ void load(CallFactory& to)
 {
     load_boolean(to);
     load_development(to);
+    load_filter(to);
     load_valuelist(to);
     load_predicate(to);
 }

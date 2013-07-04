@@ -17,6 +17,7 @@ libpredicate_la_SOURCES = \
     standard.cpp \
     standard_boolean.cpp \
     standard_development.cpp \
+    standard_filter.cpp \
     standard_valuelist.cpp \
     standard_predicate.cpp \
     dot.cpp \
@@ -47,6 +48,7 @@ EXTRA_DIST = \
 		standard.hpp              \
 		standard_boolean.hpp      \
 		standard_development.hpp  \
+		standard_filter.hpp       \
 		standard_valuelist.hpp    \
 		standard_predicate.hpp    \
 		transform_graph.hpp       \
