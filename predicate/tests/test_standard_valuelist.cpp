@@ -63,17 +63,17 @@ TEST_F(TestStandardValueList, CatFirstRest)
 
 TEST_F(TestStandardValueList, Nth)
 {
-    EXPECT_EQ("a", eval_s("(Nth 1 'a')"));
-    EXPECT_EQ("a", eval_s("(Nth 1 (cat 'a' 'b' 'c'))"));
-    EXPECT_EQ("b", eval_s("(Nth 2 (cat 'a' 'b' 'c'))"));
-    EXPECT_EQ("c", eval_s("(Nth 3 (cat 'a' 'b' 'c'))"));
-    EXPECT_FALSE(eval_bool("(Nth 0 (cat 'a' 'b' 'c'))"));
+    EXPECT_EQ("a", eval_s("(nth 1 'a')"));
+    EXPECT_EQ("a", eval_s("(nth 1 (cat 'a' 'b' 'c'))"));
+    EXPECT_EQ("b", eval_s("(nth 2 (cat 'a' 'b' 'c'))"));
+    EXPECT_EQ("c", eval_s("(nth 3 (cat 'a' 'b' 'c'))"));
+    EXPECT_FALSE(eval_bool("(nth 0 (cat 'a' 'b' 'c'))"));
 
-    EXPECT_THROW(eval_bool("(Nth -3 (cat 'a' 'b' 'c'))"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(Nth)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(Nth 1)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(Nth 'a' 'b')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(Nth 1 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(nth -3 (cat 'a' 'b' 'c'))"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(nth)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(nth 1)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(nth 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(nth 1 'a' 'b')"), IronBee::einval);
 }
 
 TEST_F(TestStandardValueList, ScatterGather)

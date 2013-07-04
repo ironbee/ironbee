@@ -173,7 +173,7 @@ bool Rest::validate(NodeReporter reporter) const
 
 string Nth::name() const
 {
-    return "Nth";
+    return "nth";
 }
 
 void Nth::calculate(EvalContext context)
