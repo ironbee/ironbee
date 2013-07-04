@@ -94,7 +94,7 @@ int64_t StandardTest::eval_n(const string& text)
     node_p n = parse(text);
     ValueList vals = eval(n);
     if (vals.size() != 1) {
-        throw runtime_error("eval_s called on invalid value.");
+        throw runtime_error("eval_n called on invalid value.");
     }
     return vals.front().value_as_number();
 }
