@@ -170,9 +170,9 @@ Value P::value_calculate(Value v, EvalContext context)
 bool P::validate(NodeReporter reporter) const
 {
     bool result = true;
-    result = result && Validate::n_or_more_children(reporter, 2);
-    result = result && Validate::n_or_fewer_children(reporter, 3);
-    result = result && Validate::nth_child_is_string(reporter, 1);
+    result = Validate::n_or_more_children(reporter, 2) && result;
+    result = Validate::n_or_fewer_children(reporter, 3) && result;
+    result = Validate::nth_child_is_string(reporter, 1) && result;
     if (children().size() == 3) {
         if (Validate::nth_child_is_string(reporter, 2)) {
             string level = literal_value(children().back())
@@ -236,14 +236,14 @@ bool Sequence::validate(NodeReporter reporter) const
 {
     bool result = true;
 
-    result = result && Validate::n_or_more_children(reporter, 1);
-    result = result && Validate::n_or_fewer_children(reporter, 3);
-    result = result && Validate::nth_child_is_integer(reporter, 0);
+    result = Validate::n_or_more_children(reporter, 1) && result;
+    result = Validate::n_or_fewer_children(reporter, 3) && result;
+    result = Validate::nth_child_is_integer(reporter, 0) && result;
     if (children().size() > 1) {
-        result = result && Validate::nth_child_is_integer(reporter, 1);
+        result = Validate::nth_child_is_integer(reporter, 1) && result;
     }
     if (children().size() > 2) {
-        result = result && Validate::nth_child_is_integer(reporter, 2);
+        result = Validate::nth_child_is_integer(reporter, 2) && result;
     }
     return result;
 }

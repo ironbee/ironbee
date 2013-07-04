@@ -123,8 +123,8 @@ Value Eq::value_calculate(Value v, EvalContext context)
 bool Eq::validate(NodeReporter reporter) const
 {
     bool result = true;
-    result = result && Validate::n_children(reporter, 2);
-    result = result && Validate::nth_child_is_literal(reporter, 0);
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_literal(reporter, 0) && result;
 
     return result;
 }
@@ -148,8 +148,8 @@ Value Ne::value_calculate(Value v, EvalContext context)
 bool Ne::validate(NodeReporter reporter) const
 {
     bool result = true;
-    result = result && Validate::n_children(reporter, 2);
-    result = result && Validate::nth_child_is_literal(reporter, 0);
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_literal(reporter, 0) && result;
 
     return result;
 }
@@ -173,8 +173,8 @@ Value Lt::value_calculate(Value v, EvalContext context)
 bool Lt::validate(NodeReporter reporter) const
 {
     bool result = true;
-    result = result && Validate::n_children(reporter, 2);
-    result = result && Validate::nth_child_is_literal(reporter, 0);
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_literal(reporter, 0) && result;
     if (! children().empty()) {
         Value::type_e type = literal_value(children().front()).type();
         if (type != Value::FLOAT && type != Value::NUMBER) {
@@ -205,8 +205,8 @@ Value Le::value_calculate(Value v, EvalContext context)
 bool Le::validate(NodeReporter reporter) const
 {
     bool result = true;
-    result = result && Validate::n_children(reporter, 2);
-    result = result && Validate::nth_child_is_literal(reporter, 0);
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_literal(reporter, 0) && result;
     if (! children().empty()) {
         Value::type_e type = literal_value(children().front()).type();
         if (type != Value::FLOAT && type != Value::NUMBER) {
@@ -237,8 +237,8 @@ Value Gt::value_calculate(Value v, EvalContext context)
 bool Gt::validate(NodeReporter reporter) const
 {
     bool result = true;
-    result = result && Validate::n_children(reporter, 2);
-    result = result && Validate::nth_child_is_literal(reporter, 0);
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_literal(reporter, 0) && result;
     if (! children().empty()) {
         Value::type_e type = literal_value(children().front()).type();
         if (type != Value::FLOAT && type != Value::NUMBER) {
@@ -269,8 +269,8 @@ Value Ge::value_calculate(Value v, EvalContext context)
 bool Ge::validate(NodeReporter reporter) const
 {
     bool result = true;
-    result = result && Validate::n_children(reporter, 2);
-    result = result && Validate::nth_child_is_literal(reporter, 0);
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_literal(reporter, 0) && result;
     if (! children().empty()) {
         Value::type_e type = literal_value(children().front()).type();
         if (type != Value::FLOAT && type != Value::NUMBER) {
@@ -343,8 +343,8 @@ void Typed::pre_eval(Environment environment, NodeReporter reporter)
 bool Typed::validate(NodeReporter reporter) const
 {
     bool result = true;
-    result = result && Validate::n_children(reporter, 2);
-    result = result && Validate::nth_child_is_string(reporter, 0);
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_string(reporter, 0) && result;
     if (! children().empty()) {
         string type_s =
             literal_value(children().front()).value_as_byte_string().to_s();
@@ -385,8 +385,8 @@ Value Named::value_calculate(Value v, EvalContext context)
 bool Named::validate(NodeReporter reporter) const
 {
     bool result = true;
-    result = result && Validate::n_children(reporter, 2);
-    result = result && Validate::nth_child_is_string(reporter, 0);
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_string(reporter, 0) && result;
 
     return result;
 }
