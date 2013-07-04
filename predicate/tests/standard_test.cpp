@@ -25,6 +25,8 @@
 #include "predicate/reporter.hpp"
 #include "predicate/standard.hpp"
 #include "predicate/merge_graph.hpp"
+#include "predicate/pre_eval_graph.hpp"
+#include "predicate/validate_graph.hpp"
 
 #include "standard_test.hpp"
 
@@ -44,11 +46,14 @@ node_p StandardTest::parse(const std::string& text) const
     return parse_call(text, i, m_factory);
 }
 
-ValueList StandardTest::eval(const node_p& n)
+ValueList StandardTest::eval(node_p n)
 {
+    MergeGraph g;
     Reporter r;
-    NodeReporter nr(r, n);
-    n->pre_transform(nr);
+
+    size_t i = g.add_root(n);
+
+    validate_graph(PRE_TRANSFORM, r, g);
     if (r.num_errors() > 0 || r.num_warnings() > 0) {
         r.write_report(cout);
         BOOST_THROW_EXCEPTION(
@@ -57,7 +62,7 @@ ValueList StandardTest::eval(const node_p& n)
             )
         );
     }
-    n->pre_eval(m_engine, nr);
+    pre_eval_graph(r, g, m_engine);
     if (r.num_errors() > 0 || r.num_warnings() > 0) {
         r.write_report(cout);
         BOOST_THROW_EXCEPTION(
@@ -66,7 +71,8 @@ ValueList StandardTest::eval(const node_p& n)
             )
         );
     }
-    return n->eval(m_transaction);
+
+    return g.root(i)->eval(m_transaction);
 }
 
 bool StandardTest::eval_bool(const string& text)

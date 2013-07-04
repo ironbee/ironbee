@@ -47,7 +47,7 @@ protected:
     ) const;
 
     IronBee::Predicate::ValueList eval(
-        const IronBee::Predicate::node_p& n
+        IronBee::Predicate::node_p n
     );
 
     // The following copy the value out and thus are safe to use text
