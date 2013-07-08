@@ -564,7 +564,7 @@ void PerContext::inject(
         PerContext::rules_by_node_t::const_reference v,
         m_rules[phase]
     ) {
-        if (v.first->eval(tx)) {
+        if (! v.first->eval(tx).empty()) {
             copy(
                 v.second.begin(), v.second.end(),
                 back_inserter(rule_list)
