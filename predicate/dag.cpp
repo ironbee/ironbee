@@ -48,6 +48,12 @@ static const Value
 
 }
 
+/**
+ * Per-Thread node information.
+ *
+ * This class holds the node information that is specific to a single thread,
+ * that is, the state of the node during an evaluation run.
+ **/
 class Node::per_thread_t
 {
 public:
@@ -61,6 +67,7 @@ public:
         // nop
     }
 
+    //! Forward values and finished queries to node @a to.
     void forward(const node_p& to)
     {
         if (is_forwarding()) {
@@ -87,11 +94,13 @@ public:
         m_forward = to;
     }
 
+    //! Read accessor for forward node.
     const node_p& forward_node() const
     {
         return m_forward;
     }
 
+    //! Is node finished?
     bool is_finished() const
     {
         return m_forward ?
@@ -99,16 +108,19 @@ public:
             m_finished;
     }
 
+    //! Is node forwarding?
     bool is_forwarding() const
     {
         return m_forward;
     }
 
+    //! Value list.
     ValueList values() const
     {
         return m_forward ? m_forward->lookup_value().values() : m_values;
     }
 
+    //! Reset node.
     void reset()
     {
         m_forward.reset();
@@ -117,6 +129,7 @@ public:
         m_values.clear();
     }
 
+    //! Add @a value to values list.
     void add_value(Value value)
     {
         if (is_forwarding()) {
@@ -136,6 +149,7 @@ public:
         values().push_back(value);
     }
 
+    //! Finish node.
     void finish()
     {
         if (is_forwarding()) {
@@ -155,6 +169,7 @@ public:
         m_finished = true;
     }
 
+    //! Finish node, aliasing value list @a other.
     void finish_alias(ValueList other)
     {
         if (is_forwarding()) {
@@ -183,10 +198,15 @@ public:
     }
 
 private:
+    //! What node forwarding to.
     node_p m_forward;
+    //! Local memory pool.
     IronBee::ScopedMemoryPool m_pool;
+    //! Is node finished.
     bool m_finished;
+    //! Value list owned by node.
     ValueList m_own_values;
+    //! Value list to use for values; might be @ref m_own_values.
     ValueList m_values;
 };
 
