@@ -3437,16 +3437,16 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             return rc;
         }
 
-        if (strncasecmp(p1, "close", sizeof("close")) == 0) {
+        if (!strcasecmp(p1, "close")) {
             corecfg->block_method = IB_BLOCK_METHOD_CLOSE;
         }
         /* The only argument is status=<int>.
          * Check for it. If OK, set status_str. */
-        else if (strncasecmp(p1, "status=", sizeof("status=")) == 0) {
+        else if (strncasecmp(p1, "status=", strlen("status=")) == 0) {
             int status;
             const char *status_str;
 
-            status_str = p1 + sizeof("status=");
+            status_str = p1 + strlen("status=");
             status  = atoi(status_str);
 
             if (!(status <= 200 && status < 600))
@@ -4316,6 +4316,11 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     /* Blocking */
     IB_DIRMAP_INIT_PARAM1(
         "DefaultBlockStatus",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "BlockingMethod",
         core_dir_param1,
         NULL
     ),
