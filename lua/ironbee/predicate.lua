@@ -102,7 +102,7 @@ function numeric_mt:new(value)
   if type(value) == 'number' then
     v = value
   else
-    error("String argument must be numeric.")
+    error("Numeric argument must be numeric.")
   end
   r.value = v
   return r
@@ -131,20 +131,51 @@ function call_mt:new(name, ...)
   return r
 end
 
-function call_mt:sub(field_name)
-  return _M.Sub(field_name, self)
+local call_members0 = {
+  "scatter",
+  "gather",
+  "first",
+  "rest",
+  "isSimple",
+  "isFinished",
+  "isHomogeneous"
+}
+for i,n in ipairs(call_members0) do
+  local capitalized = n:gsub("^%l", string.upper)
+  call_mt[n] = function (self) return _M[capitalized](self) end
 end
-function call_mt:suball(field_name)
-  return _M.Suball(field_name, self)
+
+local call_members1 = {
+  "sub",
+  "setName",
+  "streq",
+  "istreq",
+  "eq",
+  "ne",
+  "lt",
+  "gt",
+  "le",
+  "ge",
+  "nth",
+  "isLonger",
+  "isComplete",
+  "named",
+  "namedRx",
+  "waitPhase",
+  "finishPhase",
+  "ask"
+}
+for i,n in ipairs(call_members1) do
+  local capitalized = n:gsub("^%l", string.upper)
+  call_mt[n] = function (self, value) return _M[capitalized](value, self) end
 end
-function call_mt:streq(value)
-  return _M.Streq(value, self)
-end
-function call_mt:istreq(value)
-  return _M.Istreq(value, self)
-end
-function call_mt:eq(value)
-  return _M.Eq(value, self)
+
+local call_membersn = {
+  "p"
+}
+for i,n in ipairs(call_membersn) do
+  local capitalized = n:gsub("^%l", string.upper)
+  call_mt[n] = function (self, ...) return _M[capitalized](..., self) end
 end
 
 function call_mt:__call()
