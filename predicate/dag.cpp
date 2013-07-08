@@ -53,7 +53,6 @@ class Node::value_t
 public:
     //! Constructor.
     value_t() :
-        m_forward(NULL),
         m_pool("node value private pool"),
         m_finished(false),
         m_own_values(ValueList::create(m_pool)),
@@ -62,7 +61,7 @@ public:
         // nop
     }
 
-    void forward(const value_t* to)
+    void forward(const node_p& to)
     {
         if (is_forwarding()) {
             BOOST_THROW_EXCEPTION(
@@ -88,9 +87,16 @@ public:
         m_forward = to;
     }
 
+    const node_p& forward_node() const
+    {
+        return m_forward;
+    }
+
     bool is_finished() const
     {
-        return m_forward ? m_forward->is_finished() : m_finished;
+        return m_forward ?
+            m_forward->lookup_value().is_finished() :
+            m_finished;
     }
 
     bool is_forwarding() const
@@ -100,12 +106,12 @@ public:
 
     ValueList values() const
     {
-        return m_forward ? m_forward->values() : m_values;
+        return m_forward ? m_forward->lookup_value().values() : m_values;
     }
 
     void reset()
     {
-        m_forward = NULL;
+        m_forward.reset();
         m_finished = false;
         m_values = m_own_values;
         m_values.clear();
@@ -177,7 +183,7 @@ public:
     }
 
 private:
-    const value_t* m_forward;
+    node_p m_forward;
     IronBee::ScopedMemoryPool m_pool;
     bool m_finished;
     ValueList m_own_values;
@@ -219,6 +225,10 @@ const Node::value_t& Node::lookup_value() const
 ValueList Node::eval(EvalContext context)
 {
     value_t& v = lookup_value();
+    if (v.is_forwarding()) {
+        return v.forward_node()->eval(context);
+    }
+
     if (! v.is_forwarding() && ! v.is_finished()) {
         calculate(context);
     }
@@ -282,7 +292,7 @@ void Node::finish_false()
 
 void Node::forward(const node_p& other)
 {
-    lookup_value().forward(&other->lookup_value());
+    lookup_value().forward(other);
 }
 
 void Node::add_child(const node_p& child)
