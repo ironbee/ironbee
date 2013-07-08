@@ -18,7 +18,9 @@
 #include <lua.hpp>
 #include <ibtest_lua.hpp>
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <iostream>
+#include <locale>
 #include <string>
 
 #define TOSTR(x) #x
@@ -154,9 +156,24 @@ TEST_F(LuaJsonTest, GenerateJSONMap) {
     lua_settop(L, 0);
 }
 
+namespace {
+
+// Handle isspace ambiguity.
+bool my_isspace(char c)
+{
+    return std::isspace(c);
+}
+
+}
+
 TEST_F(LuaJsonTest, GenerateJSONArray) {
     ASSERT_EQ(1, doString("return ibjson.to_string( { 'a', 'b' })"));
     ASSERT_TRUE(lua_isstring(L, -1));
-    ASSERT_STREQ("[\n    \"a\",\n    \"b\"\n]\n", lua_tostring(L, -1));
+    std::string result(lua_tostring(L, -1));
+    result.erase(
+        std::remove_if(result.begin(), result.end(), my_isspace),
+        result.end()
+    );
+    ASSERT_EQ("[\"a\",\"b\"]", result);
     lua_settop(L, 0);
 }
