@@ -394,7 +394,7 @@ Finished
 Transformations
 : If `v` is a literal, will replace itself with a truthy value.
 
-**`(isHomogeneous ...)`**
+**`(isHomogeneous ...)` [Future]**
 
 Synonym
 : `(isHomogeneous (cat ...))`
@@ -572,9 +572,6 @@ Finished
 : When data field is finished, if known.
 : Else never.
 
-See Also
-: `target`
-
 **`(field N W F)` [Future]**
 
 Result
@@ -587,19 +584,6 @@ Finished
 Notes
 : See Phase section for acceptable values of `W` and `F`.
 : This function should **not** be confused with `(waitPhase W (finishPhase E (field N)))`.  The latter enforces that the value does not change after phase `E`, wheras this function indicates that it can *assume* that the field will not change after phase `E` and can thus finish.
-
-**`(target N)` [Future]**
-
-Result:
-: `[]` if no target matching string `N`.
-: `[v]` wherte `v` is the value of evaluating the target string `N`.
-
-Finished
-: Never
-
-Notes
-: Avoid if possible.  Most target strings can be more efficiently evaluated by combining `field`, `sub`, `scatter`, `gather`, and filters.
-: Primarily provided to ease automatic conversion of rules from other systems.
 
 Streaming IronBee \[Future]
 ---------------------------
