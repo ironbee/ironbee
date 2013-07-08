@@ -48,11 +48,11 @@ static const Value
 
 }
 
-class Node::value_t
+class Node::per_thread_t
 {
 public:
     //! Constructor.
-    value_t() :
+    per_thread_t() :
         m_pool("node value private pool"),
         m_finished(false),
         m_own_values(ValueList::create(m_pool)),
@@ -200,20 +200,20 @@ Node::~Node()
     // nop
 }
 
-Node::value_t& Node::lookup_value()
+Node::per_thread_t& Node::lookup_value()
 {
-    value_t* v = m_value.get();
+    per_thread_t* v = m_value.get();
     if (! v) {
-        v = new value_t();
+        v = new per_thread_t();
         m_value.reset(v);
     }
     return *v;
 }
 
-const Node::value_t& Node::lookup_value() const
+const Node::per_thread_t& Node::lookup_value() const
 {
-    static const value_t empty_value;
-    const value_t* v = m_value.get();
+    static const per_thread_t empty_value;
+    const per_thread_t* v = m_value.get();
     if (! v) {
         return empty_value;
     }
@@ -224,7 +224,7 @@ const Node::value_t& Node::lookup_value() const
 
 ValueList Node::eval(EvalContext context)
 {
-    value_t& v = lookup_value();
+    per_thread_t& v = lookup_value();
     if (v.is_forwarding()) {
         return v.forward_node()->eval(context);
     }

@@ -429,16 +429,16 @@ private:
      **/
     void unlink_from_child(const node_p& child) const;
 
-    //! Value information.
-    class value_t;
+    //! Per-thread value information.
+    class per_thread_t;
 
-    //! Fetch value for this thread.
-    value_t& lookup_value();
-    //! Fetch value for this thread.
-    const value_t& lookup_value() const;
+    //! Fetch per-thread info for this thread.
+    per_thread_t& lookup_value();
+    //! Fetch per-thread info for this thread.
+    const per_thread_t& lookup_value() const;
 
     //! Thread specific value.
-    boost::thread_specific_ptr<value_t> m_value;
+    boost::thread_specific_ptr<per_thread_t> m_value;
 
     //! List of parents (note weak pointers).
     weak_node_list_t m_parents;
