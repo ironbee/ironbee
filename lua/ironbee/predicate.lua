@@ -193,10 +193,53 @@ _M.False = _M.C("false")
 
 -- Calls
 
-local param1 = {'LLength', 'Not', 'Field'}
-local param2 = {'Sub', 'Suball', 'SetName', 'Rx', 'Transformation'}
-local param3 = {'Operator'}
-local paramn = {'Or', 'And', 'List'}
+local param1 = {
+  'Not',
+  'Scatter',
+  'Gather',
+  'First',
+  'Rest',
+  'isLiteral',
+  'IsSimple',
+  'IsFinished',
+  'StreamRequestBody',
+  'StreamResponseBody',
+  'Fast',
+  'Ref'
+}
+local param2 = {
+  'SetName',
+  'Transformation',
+  'Nth',
+  'Sub',
+  'IsComplete',
+  'Named',
+  'NamedRx',
+  'Typed',
+  'Eq',
+  'Ne',
+  'Lt',
+  'Gt',
+  'Le',
+  'Ge',
+  'WaitPhase',
+  'FinishPhase',
+  'Ask'
+}
+local param3 = {
+  'Operator'
+}
+local paramn = {
+  'Or',
+  'And',
+  'Cat',
+  'OrSC',
+  'AndSC',
+  'isHomogeneous',
+  'Field',
+  'P',
+  'Sequence',
+}
 for i,n in ipairs(param1) do
   _M[n] = function (a) return _M.C(n:lower(), a) end
 end
@@ -208,6 +251,15 @@ for i,n in ipairs(param3) do
 end
 for i,n in ipairs(paramn) do
   _M[n] = function (...) return _M.C(n:lower(), ...) end
+end
+
+local operators = {
+  'rx'
+}
+for i,n in ipairs(operators) do
+  local capitalized = n:gsub("^%l", string.upper)
+  _M[capitalized] = function (a, b) return _M.Operator(n, a, b) end
+  call_mt[n] = function (self) return _M[capitalized](self) end
 end
 
 local tfns = {
@@ -236,8 +288,8 @@ local tfns = {
   'toFloat'
 }
 for i,n in ipairs(tfns) do
-  local capitalized = n:gsub("%l", string.upper)
-  _M[capitalized] = function (a) return _M.C(n, a) end
+  local capitalized = n:gsub("^%l", string.upper)
+  _M[capitalized] = function (a) return _M.Transformation(n, a) end
   call_mt[n] = function (self) return _M[capitalized](self) end
 end
 
@@ -259,23 +311,11 @@ function _M.If(a, b, c)
 end
 
 -- Symmetric Calls -- First argument must be string literal.  Arguments can
--- be swapped, possibly with an operator change.
+-- be swapped.
 
 local sym = {
   Streq  = function (a,b) return a.value           == b.value           end,
   Istreq = function (a,b) return a.value:lower()   == b.value:lower()   end,
-  Eq     = function (a,b) return tonumber(a.value) == tonumber(b.value) end,
-  Ne     = function (a,b) return a.value           ~= b.value           end,
-  Gt     = function (a,b) return tonumber(a.value) >  tonumber(b.value) end,
-  Ge     = function (a,b) return tonumber(a.value) >= tonumber(b.value) end,
-  Lt     = function (a,b) return tonumber(a.value) <  tonumber(b.value) end,
-  Le     = function (a,b) return tonumber(a.value) <= tonumber(b.value) end
-}
-local sym_swap = {
-  Gt = 'Lt',
-  Lt = 'Gt',
-  Ge = 'Le',
-  Le = 'Ge'
 }
 for n,s in pairs(sym) do
   _M[n] = function (a, b)

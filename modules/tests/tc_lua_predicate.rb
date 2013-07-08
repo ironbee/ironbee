@@ -13,8 +13,6 @@ class TestLuaPredicate < Test::Unit::TestCase
 
   def test_basic
     lua = <<-EOS
-      print("I AM HERE")
-      print(P.Rx('GET', P.Field('REQUEST_METHOD'))())
       Action("basic1", "1"):
         phase([[REQUEST_HEADER]]):
         action([[clipp_announce:basic1]]):
