@@ -44,75 +44,6 @@ namespace Standard {
 
 namespace {
 
-void p_log_output(
-    ib_log_level_t  level,
-    const string&   output,
-    IronBee::Engine engine
-)
-{
-    ib_log(engine.ib(), level, "%s", output.c_str());
-}
-
-void p_stream_output(
-    ostream& o,
-    const string&  output
-)
-{
-    o << output << endl;
-}
-
-boost::function<void(const string&, IronBee::Engine)> p_construct_outputer(
-    const string& level
-)
-{
-    if (level == "stdout") {
-        return bind(p_stream_output, ref(cout), _1);
-    }
-    else if (level == "stderr") {
-        return bind(p_stream_output, ref(cerr), _1);
-    }
-    else if (level == "emergency") {
-        return bind(p_log_output, IB_LOG_EMERGENCY, _1, _2);
-    }
-    else if (level == "alert") {
-        return bind(p_log_output, IB_LOG_ALERT, _1, _2);
-    }
-    else if (level == "critical") {
-        return bind(p_log_output, IB_LOG_CRITICAL, _1, _2);
-    }
-    else if (level == "error") {
-        return bind(p_log_output, IB_LOG_ERROR, _1, _2);
-    }
-    else if (level == "warning") {
-        return bind(p_log_output, IB_LOG_WARNING, _1, _2);
-    }
-    else if (level == "notice") {
-        return bind(p_log_output, IB_LOG_NOTICE, _1, _2);
-    }
-    else if (level == "info") {
-        return bind(p_log_output, IB_LOG_INFO, _1, _2);
-    }
-    else if (level == "debug") {
-        return bind(p_log_output, IB_LOG_DEBUG, _1, _2);
-    }
-    else if (level == "debug2") {
-        return bind(p_log_output, IB_LOG_DEBUG2, _1, _2);
-    }
-    else if (level == "debug3") {
-        return bind(p_log_output, IB_LOG_DEBUG3, _1, _2);
-    }
-    else if (level == "trace") {
-        return bind(p_log_output, IB_LOG_TRACE, _1, _2);
-    }
-    else {
-        BOOST_THROW_EXCEPTION(
-            einval() << errinfo_what(
-                "Invalid log level: " + level
-            )
-        );
-    }
-}
-
 string p_construct_value_string(ConstList<Value> values)
 {
     list<string> string_values;
@@ -143,23 +74,16 @@ string P::name() const
 
 void P::calculate(EvalContext context)
 {
-    node_list_t::const_iterator i = children().begin();
-    const node_p& value_node = *i;
-    value_node->eval(context);
-    ++i;
-    string message = literal_value(*i).value_as_byte_string().to_s();
-    ++i;
-    string level = "debug";
-    if (i != children().end()) {
-        level = literal_value(*i).value_as_byte_string().to_s();
+    list<string> value_strings;
+    BOOST_FOREACH(const node_p& n, children()) {
+        n->eval(context);
+        value_strings.push_back(
+            p_construct_value_string(n->values())
+        );
     }
 
-    string value_string = p_construct_value_string(value_node->values());
-    string log_message = message + " : " + value_string;
-
-    p_construct_outputer(level)(log_message, context.engine());
-
-    map_calculate(children().front(), context);
+    cerr << boost::algorithm::join(value_strings, "; ") << endl;
+    map_calculate(children().back(), context);
 }
 
 Value P::value_calculate(Value v, EvalContext context)
@@ -169,27 +93,7 @@ Value P::value_calculate(Value v, EvalContext context)
 
 bool P::validate(NodeReporter reporter) const
 {
-    bool result = true;
-    result = Validate::n_or_more_children(reporter, 2) && result;
-    result = Validate::n_or_fewer_children(reporter, 3) && result;
-    result = Validate::nth_child_is_string(reporter, 1) && result;
-    if (children().size() == 3) {
-        if (Validate::nth_child_is_string(reporter, 2)) {
-            string level = literal_value(children().back())
-                .value_as_byte_string().to_s();
-            try {
-                p_construct_outputer(level);
-            }
-            catch (IronBee::einval) {
-                reporter.error("Invalid log level: " + level);
-                result = false;
-            }
-        }
-        else {
-            result = false;
-        }
-    }
-    return result;
+    return Validate::n_or_more_children(reporter, 1);
 }
 
 string Identity::name() const

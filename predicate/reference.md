@@ -625,21 +625,17 @@ Notes
 Development
 -----------
 
-**`(p v M)`**
+**`(p ...)`**
 
 Result
-: `v`
+: Value of last argument.
 
 Finished
-: `v` is finished.
+: Last argument is finished.
 
 Notes
-: Will log `M` and the value of `v` each time evaluated.
+: Will log each argument to stderr each time evaluated.
 
-**`(p v M L)`**
-
-Notes
-: As above, but at log level `L` where `L` can be: "emergency", "alert", "critical", "error", "warning", "notice", "info", "debug", "debug2", "debug3", "trace", "stdout", or "stderr".
 
 **`(sequence S E D)`**
 

@@ -22,7 +22,6 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <predicate/standard_development.hpp>
 #include "standard_test.hpp"
 
 using namespace IronBee::Predicate;
@@ -35,13 +34,10 @@ class TestStandardDevelopment :
 
 TEST_F(TestStandardDevelopment, p)
 {
-    EXPECT_EQ("foo", eval_s("(p 'foo' 'message' 'stdout')"));
-    EXPECT_TRUE(eval_bool("(p (cat 'foo' 5) 'message' 'stdout')"));
+    EXPECT_EQ("foo", eval_s("(p 'a' 5 'foo')"));
+    EXPECT_TRUE(eval_bool("(p 'foo' 5 (cat 'foo' 5))"));
 
     EXPECT_THROW(eval_bool("(p)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(p 'a')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(p 'a' 'b' 'c')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(p 'a' 'b' 'c' 'd')"), IronBee::einval);
 }
 
 TEST_F(TestStandardDevelopment, sequence)
