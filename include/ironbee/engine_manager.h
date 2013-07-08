@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeEngineManager Engine Manager
+ * @defgroup IronBeeEngineManager IronBee Engine Manager
  * @ingroup IronBee
  *
  * The engine manager provides services to manage multiple IronBee engines.
