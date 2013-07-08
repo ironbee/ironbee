@@ -90,6 +90,21 @@ Simple
 Literal
 : A Node is literal if it is a literal.  Literals are always simple and always have the same value.
 
+Lua Front End
+=============
+
+The primary front end for Predicate is written in Lua and intended to be used with Waggle.  This document includes information on how functions are exposed in the front end.
+
+All functions are exposed directly via `P.Function(...)`, e.g., `P.Eq("foo", P.Cat("foo", "bar", "baz"))`.
+
+Functions marked **String Method** are also available as string members, e.g., `P.Field("REQUEST_URI"):length()", with the string passed in as the last argument.
+
+Functions marked **Call Method** are also available as members of any function call node, e.g., `P.Field("ARGS"):scatter():eq("foo")`, with the call passed in as the last argument.
+
+Literals can be represented via `P.String(s)` and `P.Number(n)` and the `P.Null` constant.  Arbitrary call functions can be represented via `P.Call(name, ...)`.  Raw sexpr text can be directly inserted via `P.Raw(text)`.  Shortcuts for the above are available as `P.S`, `P.N`, `P.C`, and `P.R`, respectively.
+
+In many cases, Lua numbers and strings will be automatically converted to Predicate number and string nodes.
+
 Functions
 =========
 
@@ -108,6 +123,18 @@ Furthermore, some amount of simplification will occur.  `true` and `false` will 
 
 In contrast, the short circuited versions, `andSC` and `orSC` do not reorder.  They will incorporate arguments of the same function as them, but not those of the non-short-circuited versions.
 
+The front end provides some synthetic functions and operator overloads:
+
+- `a + b` is equivalent to `P.And(a, b)`.
+- `a / b` is equivalent to `P.Or(a, b)`.
+- `-a` is equivalent to `P.Not(a)`.
+- `a - b` is equivalent to `a + (-b)`
+- `P.Xor(a, b)` is equivalent to `(a - b) + (b - a)`.
+- `a ^ b` is equivalent to `P.Xor(a, b)`.
+- `P.Nand(a, b)` is equivalent to `-(a + b)`.
+- `P.Nor(a, b)` is equivalent to `-(a / b)`.
+- `P.Nxor(a, b)` is equivalent to `-(a ^ b)`.
+
 **`(true)`**
 
 Result
@@ -119,6 +146,9 @@ Finished
 Transformations
 : Always into the empty string literal.
 
+Front End
+: Available as constant `P.True`.
+
 **`(false)`**
 
 Result
@@ -129,6 +159,9 @@ Finished
 
 Transformations
 : Always into `null`.
+
+Front End
+: Available as constant `P.False`.
 
 **`(and ...)`**
 
@@ -148,6 +181,9 @@ Transformations
 : Will remove any truthy literal children.
 : If any child is itself an `and` call, will replace that child with the child's children.
 
+Front End
+: Available via `+`.
+
 **`(or ...)`**
 
 Result
@@ -162,6 +198,9 @@ Transformations
 : If any child is a truthy literal, will replace itself with a truthy value.
 : Will remove any null literal children.
 : If any child is itself an `or` call, will replace that child with the child's children.
+
+Front End
+: Available via `/`.
 
 **`(not a)`**
 
@@ -188,6 +227,9 @@ Finished
 
 Transformations
 : If `p` is literal, will replace itself with `t` or `f` as appropriate.
+
+Front End
+: If `p` is a literal, the front end will evaluate the if expression.
 
 **`(andSC ...)`**
 
@@ -234,6 +276,9 @@ Result
 Finished
 : `v` is finished.
 
+Front End
+: **Call Method**
+
 **`(cat ...)`**
 
 Result
@@ -264,6 +309,9 @@ Finished
 Transformations
 : If `a` is a literal, will replace itself with a falsy value.
 
+Front End
+: **Call Method**
+
 **`(gather a)`**
 
 Result
@@ -286,6 +334,9 @@ Finished
 Transformations
 : If `v` is literal, will replace itself with `v`.
 
+Front End
+: **Call Method**
+
 **`(rest v)`**
 
 Result
@@ -297,6 +348,9 @@ Finished
 
 Transformations
 : If `v` is a literal, will replace itself with `null`.
+
+Front End
+: **Call Method**
 
 **`(nth N v)`**
 
@@ -310,6 +364,9 @@ Finished
 
 Transformations
 : If `v` is a literal, will replace itself with null (`N > 1`) or `v` (`N == 1`).
+
+Front End
+: **Call Method**
 
 **`(sub N v)` [Future]**
 
@@ -326,6 +383,10 @@ Finished
 Notes
 : `(sub N v)` is semantically identical to `(named N (scatter v))` but is more efficient.
 : Sub will *not* do what you want with *dynamic* collections.  For those, use `ask` first.
+
+Front End
+: **Call Method**
+
 
 Predicate Predicates
 --------------------
@@ -345,6 +406,9 @@ Finished
 Transformations
 : If `v` is literal, will replace itself with a truthy or falsy literal depending on `N`.
 
+Front End
+: **Call Method**
+
 **`(isLiteral v)`**
 
 Result
@@ -355,6 +419,9 @@ Finished
 
 Transformations
 : Will replace itself with a truthy value if `v` is a literal and a falsy value otherwise.
+
+Front End
+: **Call Method**
 
 **`(isSimple v)`**
 
@@ -369,6 +436,9 @@ Finished
 Transformations
 : If `v` is a literal, will replace itself with a truthy value.
 
+Front End
+: **Call Method**
+
 **`(isFinished v)`**
 
 Result
@@ -380,6 +450,9 @@ Finished
 
 Transformations
 : If `v` is a literal, will replace itself with a truthy value.
+
+Front End
+: **Call Method**
 
 **`(isHomogeneous v)`**
 
@@ -393,6 +466,9 @@ Finished
 
 Transformations
 : If `v` is a literal, will replace itself with a truthy value.
+
+Front End
+: **Call Method**
 
 **`(isHomogeneous ...)` [Future]**
 
@@ -411,7 +487,11 @@ Finished
 : `a` is finished and `b` has more values than `a`.
 
 Notes
-: Intended use is with maplike functions to see if the per-value function succeeded on every value.  For exampe: `(isComplete v (rx 'foo' v))` is true iff every value of `v` matches thre regular expression 'foo'.
+: Intended use is with maplike functions to see if the per-value function succeeded on every value.  For example: `(isComplete v (rx 'foo' v))` is true iff every value of `v` matches the regular expression 'foo'.
+
+Front End
+: **Call Method**
+: E.g., `P.Rx('foo', v):isComplete(v)`.
 
 Filters
 -------
@@ -425,6 +505,9 @@ Result
 
 Finished
 : `v` is finished.
+
+Front End
+: **Call Method**
 
 **`(eq F v)`**
 
@@ -513,6 +596,9 @@ Notes
 : `v` is not evaluated via this path until phase `P`.  I.e., `v` will not be evaluated before phase `P` because of this expression, although it may be if used outside a `waitPhase` somewhere else.
 : This function is primarily intended for performance tweaking although it may also be used to delay values to a later phase.
 
+Front End
+: **Call Method**
+
 **`(finishPhase P v)`**
 
 Result
@@ -525,6 +611,9 @@ Finished
 
 Notes
 : This function is primarily intended for performance although it may also be used to ignore later values.
+
+Front End
+: **Call Method**
 
 IronBee
 -------
@@ -540,6 +629,9 @@ Finished
 Notes
 : Values created by other modules are allowed to define their value dynamically.  Such dynamic values are automatically used correctly by `field`, `sub`, `scatter`, etc.  However, these pass no argument in.  `ask` may be used to pass an argument in.
 
+Front End
+: **Call Method**
+
 **`(operator N S d)`**
 
 Result
@@ -551,6 +643,9 @@ Finished
 Notes
 : You will often not need to use `operator` directly.  The front end or templates will provide functions that directly call a specific IronBee operator.
 
+Front End
+: Provides most specific operators as `P.N(S, d)`.  These are also **Call Methods**.
+
 **`(transformation N d)`**
 
 Result
@@ -561,6 +656,9 @@ Finished
 
 Notes
 : You will often not need to use `transformation` directly.  The front end or templates will provide functions that directly call a specific IronBee operator.
+
+Front End
+: Provides most specific transformations as `P.N(d)`.  These are also **Call Methods**.
 
 **`(field N)`**
 
@@ -636,6 +734,8 @@ Finished
 Notes
 : Will log each argument to stderr each time evaluated.
 
+Front End
+: **Call Method**
 
 **`(sequence S E D)`**
 
