@@ -1,0 +1,927 @@
+<h1 id="introduction">Introduction</h1>
+
+<p><strong>Warning:</strong> This document represents a desired future not a realized present. Implementation is currently under active development and is incomplete.</p>
+
+<p>This document serves as the primary reference for Predicate. It describes the fundamental types involved and provides a complete list of available functions.</p>
+
+<h1 id="value">Value</h1>
+
+<p>A Value is a type, a value, and an optional name.<a href="#fn:1" id="fnref:1" title="see footnote" class="footnote">[1]</a> The types supported by Predicate are:</p>
+
+<ul>
+<li><strong>Bytestring</strong>: A string stored as a length and byte sequence. May contain embedded NULs. The type of string literals.</li>
+<li><strong>Number</strong>: A signed integer.</li>
+<li><strong>Float</strong>: A floating pointer number.</li>
+<li><strong>Collection</strong>: A map of keys to values.</li>
+<li><strong>List</strong>: A sequence of values.</li>
+</ul>
+
+<p>Numeric literals are either numbers or floats depending on whether they contain a period. Thus <code>1.0</code> is a float but <code>1</code> is a number.</p>
+
+<p>Collections and lists are not clearly distinguished. Any list may be treated as a collection (e.g., as an argument to <code>sub</code>), some collections, however, may not be treated as lists<a href="#fn:2" id="fnref:2" title="see footnote" class="footnote">[2]</a>. Collections are only accessed via key lookup. Lists are sequences. Both collections and lists may contain multiple Values with the same name. In C++ parlance, lists are like <code>std::list</code> collections are like <code>std::multimap</code>.</p>
+
+<h1 id="valuelist">ValueList</h1>
+
+<p>A Value list is a list of Values that begins empty and only has values added, never changed or removed. ValueList&#8217;s are the result type of every node type in Predicate (every literal and function call).</p>
+
+<h1 id="evalcontext">EvalContext</h1>
+
+<p>The EvalContext (evaluation context) is provided to each function as part of its call and represents the external context predicate is evaluating. In IronBee, this is the current transaction. Functions that use the EvalContext are responsible for translating the knowledge it contains into Predicate terms.</p>
+
+<p>Literals are not allowed to use EvalContext.</p>
+
+<h1 id="environment">Environment</h1>
+
+<p>The Environment is the larger environment Predicate runs in. It does not provide varying knowledge to be evaluated by Predicate, but may provide a larger context as well as the resources functions need. In IronBee, this is the engine.</p>
+
+<h1 id="developertypes">Developer Types</h1>
+
+<table>
+<colgroup>
+<col style="text-align:left;"/>
+<col style="text-align:left;"/>
+<col style="text-align:left;"/>
+<col style="text-align:left;"/>
+</colgroup>
+
+<thead>
+<tr>
+	<th style="text-align:left;">Predicate</th>
+	<th style="text-align:left;">IronBee</th>
+	<th style="text-align:left;">C Type</th>
+	<th style="text-align:left;">C++ Type</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+	<td style="text-align:left;">Value</td>
+	<td style="text-align:left;">Field</td>
+	<td style="text-align:left;"><code>const ib_field_t*</code></td>
+	<td style="text-align:left;"><code>IronBee::ConstField</code></td>
+</tr>
+<tr>
+	<td style="text-align:left;">ValueList</td>
+	<td style="text-align:left;">List</td>
+	<td style="text-align:left;"><code>ib_list_t*</code></td>
+	<td style="text-align:left;"><code>IronBee::List&lt;IronBee::ConstField&gt;</code></td>
+</tr>
+<tr>
+	<td style="text-align:left;">Environment</td>
+	<td style="text-align:left;">Engine</td>
+	<td style="text-align:left;"><code>ib_engine_t*</code></td>
+	<td style="text-align:left;"><code>IronBee::Engine</code></td>
+</tr>
+<tr>
+	<td style="text-align:left;">EvalContext</td>
+	<td style="text-align:left;">Transaction</td>
+	<td style="text-align:left;"><code>const ib_tx_t*</code></td>
+	<td style="text-align:left;"><code>IronBee::ConstTransaction</code></td>
+</tr>
+</tbody>
+</table>
+<h1 id="nodes">Nodes</h1>
+
+<p>Every literal and function call in Predicate is represented as a node in a direct acyclic graph. Literals are leaves in the graph, while function calls have out edges to the Nodes representing their arguments. Nodes may have multiple in edges due to subexpression merging. I.e., if two different Predicate rules involve the expression <code>(field 'ARGS')</code>, there will be a single node representing <code>(field 'ARGS')</code> with in edges for the expressions of both of those rules.</p>
+
+<p>Every Predicate rule has a &#8220;top node&#8221; that determines whether the rule should fire. The ultimate purpose of Predicate is to termine which top Nodes are truthy.</p>
+
+<p>Nodes have two items of state: a ValueList and a finished flag. A node is said to be &#8220;unfinished&#8221; if the finished flag is false, and &#8220;finished&#8221; if it is true.</p>
+
+<p>A Node is falsy if its ValueList is empty and truthy otherwise. As ValueLists may only add items, a Node may change from falsy to truthy but not the other way around. As such, falsy Nodes are often treated as undetermined until they are finished.</p>
+
+<p>At the beginning of each transaction, Nodes begin with an empty ValueList and unfinished. At each phase, Predicate tries to determine the truthiness of all the top Nodes. It may evaluate Nodes to do so. If a Node is unfinished, it may execute arbitrary code to add values and/or change to finished.</p>
+
+<p>Predicate tries to minimize the amount of work done. As such, there is no guarantee that a Node will be evaluated at every phase, or even at all.</p>
+
+<h1 id="notablelimitations">Notable Limitations</h1>
+
+<h2 id="functional">Functional</h2>
+
+<p>Predicate is purely functional and does badly when interacting with parts of the system that change. For example, a data field that changes value within a transaction (perhaps due to some module or via rule actions) is difficult or impossible to use in Predicate.</p>
+
+<h2 id="nounboundvariables">No Unbound Variables</h2>
+
+<p>Predicate does not provide for expressions with unbound variables and, as such has only limited operations such as map, reduce, and select (see, e.g., filters). This limitation significantly simplifies Predicate, especiall pre-evaluation optimization, but is also a major reduction in expressiveness.</p>
+
+<p>Unbound variables is an area of ongoing discussion and research.</p>
+
+<h1 id="terminology">Terminology</h1>
+<dl>
+<dt>Simple</dt>
+<dd>A Node is simple if its ValueList is empty or contains exactly one value. Functions are simple if their Node is always simple.</dd>
+
+<dt>Literal</dt>
+<dd>A Node is literal if it is a literal. Literals are always simple and always have the same value.</dd>
+</dl>
+
+
+<h1 id="functions">Functions</h1>
+
+<p><strong>Conventions</strong></p>
+<dl>
+<dt>Arguments</dt>
+<dd>Arguments that must be literal are capitalized.</dd>
+
+<dd>Arguments that may be dynamic are not.</dd>
+</dl>
+
+
+<h2 id="boolean">Boolean</h2>
+
+<p>All of these functions will evaluate at transformation time if possible. E.g., <code>(and (false) v)</code> will transform into <code>(false)</code>; <code>(if (true) t f)</code> will transform into <code>t</code>.</p>
+
+<p>Furthermore, some amount of simplification will occur. <code>true</code> and <code>false</code> will transform into <code>['']</code> and <code>[]</code>, respectively. <code>or</code> and <code>and</code> will incorporate arguments that are the same function, e.g., <code>(or (or a b) c)</code> will transform into <code>(or a b c)</code>. <code>or</code> and <code>and</code> will also reorder their arguments into a canonical order to allow further subexpression merging, e.g., <code>(or a b)</code> will merge with <code>(or b a)</code>.</p>
+
+<p>In contrast, the short circuited versions, <code>andSC</code> and <code>orSC</code> do not reorder. They will incorporate arguments of the same function as them, but not those of the non-short-circuited versions.</p>
+
+<p><strong><code>(true)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd>None (see below)</dd>
+
+<dt>Finished</dt>
+<dd>Always</dd>
+
+<dt>Transformations</dt>
+<dd>Always into the empty string literal.</dd>
+</dl>
+
+
+<p><strong><code>(false)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd>None (see below)</dd>
+
+<dt>Finished</dt>
+<dd>Always</dd>
+
+<dt>Transformations</dt>
+<dd>Always into <code>null</code>.</dd>
+</dl>
+
+
+<p><strong><code>(and ...)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd>truthy if all arguments are truthy.</dd>
+
+<dd>falsy if any child is falsy.</dd>
+
+<dt>Finished</dt>
+<dd>All arguments are truthy or all arguments are finished.</dd>
+
+<dt>See Also</dt>
+<dd><code>andSC</code></dd>
+
+<dt>Transformations</dt>
+<dd>Will reorder children into a canonical order to aid in subexpression merging.</dd>
+
+<dd>If any child is a the null literal, will replace itself with <code>null</code>.</dd>
+
+<dd>Will remove any truthy literal children.</dd>
+
+<dd>If any child is itself an <code>and</code> call, will replace that child with the child&#8217;s children.</dd>
+</dl>
+
+
+<p><strong><code>(or ...)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd>truthy if any child is truthy.</dd>
+
+<dd>falsy if all arguments are falsy.</dd>
+
+<dt>Finished</dt>
+<dd>Any child is truthy or all arguments are finished.</dd>
+
+<dt>Transformations</dt>
+<dd>Will reorder children into a canonical order to aid in subexpression merging.</dd>
+
+<dd>If any child is a truthy literal, will replace itself with a truthy value.</dd>
+
+<dd>Will remove any null literal children.</dd>
+
+<dd>If any child is itself an <code>or</code> call, will replace that child with the child&#8217;s children.</dd>
+</dl>
+
+
+<p><strong><code>(not a)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd>truthy if <code>a</code> is falsy.</dd>
+
+<dd>falsy if <code>a</code> is truthy.</dd>
+
+<dt>Finished</dt>
+<dd><code>a</code> is truthy or <code>a</code> is finished.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>a</code> is literal, will replace itself with a truthy or falsy literal value as appropriate.</dd>
+</dl>
+
+
+<p><strong><code>(if p t f)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>t</code> if <code>p</code> is truthy.</dd>
+
+<dd><code>f</code> if <code>p</code> is falsy and finished.</dd>
+
+<dd><code>[]</code> if <code>p</code> is falsy and unfinished.</dd>
+
+<dt>Finished</dt>
+<dd><code>p</code> is truthy and <code>t</code> is finished.</dd>
+
+<dd><code>p</code> is falsy and finished and <code>f</code> is finished.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>p</code> is literal, will replace itself with <code>t</code> or <code>f</code> as appropriate.</dd>
+</dl>
+
+
+<p><strong><code>(andSC ...)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>(true)</code> if all arguments are truthy.</dd>
+
+<dd><code>(false)</code> if any child is falsy.</dd>
+
+<dt>Finished</dt>
+<dd>All arguments are truthy or all arguments are finished.</dd>
+
+<dt>Notes</dt>
+<dd>Will only evaluate first argument until that argument is truthy or finished. If truthy, will then move on to second argument, and so forth.</dd>
+
+<dd>Prefer <code>and</code> except in cases when short circuiting is highly desirable, e.g., with <code>fast</code>.</dd>
+
+<dt>See Also</dt>
+<dd><code>and</code></dd>
+</dl>
+
+
+<p><strong><code>(orSC ...)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>(true)</code> if any child is truthy.</dd>
+
+<dd><code>(false)</code> if all arguments are falsy.</dd>
+
+<dt>Finished</dt>
+<dd>Any child is truthy or all arguments are finished.</dd>
+
+<dt>Notes</dt>
+<dd>Will only evaluate first argument until that argument is falsy and finished. Will then move on to second argument, and so forth.</dd>
+
+<dd>Prefer <code>or</code> except in cases when short circuiting is highly desirable.</dd>
+
+<dt>See Also</dt>
+<dd><code>or</code></dd>
+</dl>
+
+
+<h2 id="valuelist">ValueList</h2>
+
+<p>These functions are for manipulating ValueLists.</p>
+
+<p><strong><code>(setName N v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>v</code> with name of every value of <code>v</code> set to <code>N</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+</dl>
+
+
+<p><strong><code>(cat ...)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> until all arguments are finished.</dd>
+
+<dd>Concatenation of all values of all arguments once all arguments are finished.</dd>
+
+<dt>Finished</dt>
+<dd>All arguments are finished.</dd>
+
+<dt>Notes</dt>
+<dd><code>cat</code> waits until all arguments are finished as it is not allowed to add values in the middle of its value list.</dd>
+
+<dd>A future version of <code>cat</code> may begin adding values when possible. E.g., <code>(cat a b)</code> could begin adding values of <code>a</code> as soon as they appear, although it would ahve to wait for <code>a</code> to finish before adding values of <code>b</code>.</dd>
+
+<dd><code>cat</code> could add values from any argument immediately if it were not concerned with preserving order. An additional, differently named, function to do just that may be added in the future.</dd>
+
+<dt>Transformations</dt>
+<dd>If a child is itself a <code>cat</code> call, it will be replaced with its children.</dd>
+</dl>
+
+
+<p><strong><code>(scatter a)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if <code>a</code> is not finished.</dd>
+
+<dd>Else <code>[]</code> if <code>a</code> is not simple or (single) value of <code>a</code> is not a list.</dd>
+
+<dd>Else values of (single) value of <code>a</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>a</code> is finished or <code>a</code> has is not simple or <code>a</code> is simple and value if not a list.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>a</code> is a literal, will replace itself with a falsy value.</dd>
+</dl>
+
+
+<p><strong><code>(gather a)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if <code>a</code> is not finished.</dd>
+
+<dd>Else <code>[v]</code> where <code>v</code> is a list value containing the values of <code>a</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>a</code> is finished.</dd>
+</dl>
+
+
+<p><strong><code>(first v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if <code>v</code> is empty.</dd>
+
+<dd>Else <code>[x]</code> where <code>x</code> is the first value of <code>v</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dd><code>v</code> has one or more elements.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>v</code> is literal, will replace itself with <code>v</code>.</dd>
+</dl>
+
+
+<p><strong><code>(rest v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if <code>v</code> has one or fewer values.</dd>
+
+<dd><code>[...]</code> where <code>...</code> is all but the first value of <code>v</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>v</code> is a literal, will replace itself with <code>null</code>.</dd>
+</dl>
+
+
+<p><strong><code>(nth N v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if <code>v</code> has less than <code>N</code> elements.</dd>
+
+<dd><code>[x]</code> where <code>x</code> is the <code>N</code>th element of <code>v</code> (first element is index 1)`.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dd><code>v</code> has <code>N</code> or more elements.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>v</code> is a literal, will replace itself with null (<code>N &gt; 1</code>) or <code>v</code> (<code>N == 1</code>).</dd>
+</dl>
+
+
+<p><strong><code>(sub N v)</code> [Future]</strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if <code>v</code> is not finished or not simple.</dd>
+
+<dd>Else <code>[]</code> if value of <code>v</code> is not a list.</dd>
+
+<dd>Else <code>[...]</code> where <code>...</code> is members of value of <code>v</code> with name <code>N</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dd><code>v</code> is not simple.</dd>
+
+<dd><code>v</code> has value that is not a list.</dd>
+
+<dt>Notes</dt>
+<dd><code>(sub N v)</code> is semantically identical to <code>(named N (scatter v))</code> but is more efficient.</dd>
+
+<dd>Sub will <em>not</em> do what you want with <em>dynamic</em> collections. For those, use <code>ask</code> first.</dd>
+</dl>
+
+
+<h2 id="predicatepredicates">Predicate Predicates</h2>
+
+<p>These functions have <code>(true)</code> or <code>(false)</code> (aka <code>[]</code>) as their result.</p>
+
+<p><strong><code>(isLonger N v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if <code>v</code> has <code>N</code> or fewer values.</dd>
+
+<dd>Else <code>(true)</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dd><code>v</code> has more than <code>N</code> values.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>v</code> is literal, will replace itself with a truthy or falsy literal depending on <code>N</code>.</dd>
+</dl>
+
+
+<p><strong><code>(isLiteral v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd>None (see below).</dd>
+
+<dt>Finished</dt>
+<dd>Always</dd>
+
+<dt>Transformations</dt>
+<dd>Will replace itself with a truthy value if <code>v</code> is a literal and a falsy value otherwise.</dd>
+</dl>
+
+
+<p><strong><code>(isSimple v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd>Truthy if <code>v</code> has at most one value.</dd>
+
+<dd>Else falsy.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dd><code>v</code> is not simple.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>v</code> is a literal, will replace itself with a truthy value.</dd>
+</dl>
+
+
+<p><strong><code>(isFinished v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if <code>v</code> is not finished.</dd>
+
+<dd>Else <code>(true)</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>v</code> is a literal, will replace itself with a truthy value.</dd>
+</dl>
+
+
+<p><strong><code>(isHomogeneous v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if <code>v</code> is not finished or <code>v</code> has values of different types.</dd>
+
+<dd>Else <code>(true)</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dd><code>v</code> has values of different types.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>v</code> is a literal, will replace itself with a truthy value.</dd>
+</dl>
+
+
+<p><strong><code>(isHomogeneous ...)</code></strong></p>
+<dl>
+<dt>Synonym</dt>
+<dd><code>(isHomogeneous (cat ...))</code></dd>
+</dl>
+
+
+<p><strong><code>(isComplete a b)</code> [Future]</strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if <code>a</code> or <code>b</code> is unfinished.</dd>
+
+<dd>Else <code>(true)</code> if length <code>a</code> is equal to the length of <code>b</code>.</dd>
+
+<dd>Else <code>(false)</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>a</code> and <code>b</code> are finished.</dd>
+
+<dd><code>a</code> is finished and <code>b</code> has more values than <code>a</code>.</dd>
+
+<dt>Notes</dt>
+<dd>Intended use is with maplike functions to see if the per-value function succeeded on every value. For exampe: <code>(isComplete v (rx 'foo' v))</code> is true iff every value of <code>v</code> matches thre regular expression &#8216;foo&#8217;.</dd>
+</dl>
+
+
+<h2 id="filters">Filters</h2>
+
+<p>All of these functions are of the following form:</p>
+
+<p><strong><code>(X F v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[...]</code> where <code>...</code> is the values of <code>v</code> that match the filter described by <code>F</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+</dl>
+
+
+<p><strong><code>(eq F v)</code></strong></p>
+<dl>
+<dt>Filter</dt>
+<dd>Equal in type and value to filter.</dd>
+
+<dt>Notes</dt>
+<dd>Floating point equality is tricky and unlike to be what you want. A <code>near</code> filter may be added in the future.</dd>
+
+<dd>Lists are currently never equal.</dd>
+</dl>
+
+
+<p><strong><code>(ne F v)</code></strong></p>
+<dl>
+<dt>Filter</dt>
+<dd>Not equal in type or value to filter.</dd>
+
+<dt>Notes</dt>
+<dd><code>ne</code> is the exact opposite of <code>eq</code>. E.g., lists are always <code>ne</code>.</dd>
+</dl>
+
+
+<p><strong>Warning on <code>lt</code>, <code>le</code>, <code>gt</code>, <code>ge</code></strong></p>
+
+<p>Filters based on asymmetric operators are tricky. Should <code>(lt F v)</code> be elements of <code>v</code> that are less than <code>F</code> or greater than <code>F</code> (as <code>F</code> appears on the left). After much debate, the latter was chosen to facilitate more natural any-of-the-following expressions. For example, <code>(gt 100 (length (sub 'Host' (field 'REQUEST_HEADERS'))))</code> should express the notion of a long &#8216;Host&#8217; header, not a small one, and should be true if any &#8216;Host&#8217; header is long in the case of multiples.</p>
+
+<p><strong><code>(lt F v)</code></strong></p>
+<dl>
+<dt>Filter</dt>
+<dd>Number or float and filter is less than.</dd>
+</dl>
+
+
+<p><strong><code>(le F v)</code></strong></p>
+<dl>
+<dt>Filter</dt>
+<dd>Number or float and filter less than or equal.</dd>
+</dl>
+
+
+<p><strong><code>(gt F v)</code></strong></p>
+<dl>
+<dt>Filter</dt>
+<dd>Number or float and filter greater than.</dd>
+</dl>
+
+
+<p><strong><code>(ge F v)</code></strong></p>
+<dl>
+<dt>Filter</dt>
+<dd>Number or float and filter greater than or equal.</dd>
+</dl>
+
+
+<p><strong><code>(typed F v)</code></strong></p>
+<dl>
+<dt>Filter</dt>
+<dd>Type as described by <code>F</code>.</dd>
+
+<dt>Notes</dt>
+<dd><code>F</code> must be one of &#8216;number&#8217;, &#8216;float&#8217;, &#8216;list&#8217;, &#8216;string&#8217;.</dd>
+</dl>
+
+
+<p><strong><code>(named F v)</code></strong></p>
+<dl>
+<dt>Filter</dt>
+<dd>Has name equal to value of filter.</dd>
+</dl>
+
+
+<p><strong><code>(namedRx F v)</code></strong></p>
+<dl>
+<dt>Filter</dt>
+<dd>Has name matching regexp <code>F</code>.</dd>
+</dl>
+
+
+<h2 id="phase">Phase</h2>
+
+<p>In these function, <code>P</code> is a string literal describing an IronBee phase. Valid values are:</p>
+
+<ul>
+<li><code>request_header</code></li>
+<li><code>request</code></li>
+<li><code>response_header</code></li>
+<li><code>response</code></li>
+<li><code>postprocess</code></li>
+<li><code>request_header_stream</code></li>
+<li><code>request_body_stream</code></li>
+<li><code>response_header_stream</code></li>
+<li><code>response_body_stream</code></li>
+</ul>
+
+<p><strong><code>(waitPhase P v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if has not been evaluated during phase <code>P</code> yet.</dd>
+
+<dd>Else <code>v</code>.</dd>
+
+<dt>Finished</dt>
+<dd>Has been evaluated in phase <code>P</code> and <code>v</code> is finished.</dd>
+
+<dt>Notes</dt>
+<dd><code>v</code> is not evaluated via this path until phase <code>P</code>. I.e., <code>v</code> will not be evaluated before phase <code>P</code> because of this expression, although it may be if used outside a <code>waitPhase</code> somewhere else.</dd>
+
+<dd>This function is primarily intended for performance tweaking although it may also be used to delay values to a later phase.</dd>
+</dl>
+
+
+<p><strong><code>(finishPhase P v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>v</code> until evaluated at phase <code>P</code>.</dd>
+
+<dd>Else <code>w</code> where <code>w</code> is the value of <code>v</code> when evaluated at phase <code>P</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dd>Has been evaluated at phase <code>P</code>.</dd>
+
+<dt>Notes</dt>
+<dd>This function is primarily intended for performance although it may also be used to ignore later values.</dd>
+</dl>
+
+
+<h2 id="ironbee">IronBee</h2>
+
+<p><strong><code>(ask P v)</code> [Future]</strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[...]</code> where <code>...</code> is the result of asking each value of <code>v</code> for its values given parameter <code>P</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dt>Notes</dt>
+<dd>Values created by other modules are allowed to define their value dynamically. Such dynamic values are automatically used correctly by <code>field</code>, <code>sub</code>, <code>scatter</code>, etc. However, these pass no argument in. <code>ask</code> may be used to pass an argument in.</dd>
+</dl>
+
+
+<p><strong><code>(operator N S d)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd>Executes operator named <code>N</code> with static argument <code>S</code> on each value of <code>d</code>. If result is true, then adds the capture field as a value if possible and an empty string if not.</dd>
+
+<dt>Finished</dt>
+<dd><code>d</code> is finished.</dd>
+
+<dt>Notes</dt>
+<dd>You will often not need to use <code>operator</code> directly. The front end or templates will provide functions that directly call a specific IronBee operator.</dd>
+</dl>
+
+
+<p><strong><code>(transformation N d)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[...]</code> where <code>...</code> is each value of <code>d</code> transformed by the transformation named <code>N</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>d</code> is finished.</dd>
+
+<dt>Notes</dt>
+<dd>You will often not need to use <code>transformation</code> directly. The front end or templates will provide functions that directly call a specific IronBee operator.</dd>
+</dl>
+
+
+<p><strong><code>(field N)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> if no data field named <code>N</code>.</dd>
+
+<dd><code>[v]</code> where <code>v</code> is the value of the data field named <code>N</code>.</dd>
+
+<dt>Finished</dt>
+<dd>When data field is finished, if known.</dd>
+
+<dd>Else never.</dd>
+
+<dt>See Also</dt>
+<dd><code>target</code></dd>
+</dl>
+
+
+<p><strong><code>(field N W F)</code> [Future]</strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> until phase <code>W</code>.</dd>
+
+<dd>Else <code>[v]</code> where <code>v</code> is the value of the data field named <code>N</code>.</dd>
+
+<dt>Finished</dt>
+<dd>At phase <code>E</code>.</dd>
+
+<dt>Notes</dt>
+<dd>See Phase section for acceptable values of <code>W</code> and <code>F</code>.</dd>
+
+<dd>This function should <strong>not</strong> be confused with <code>(waitPhase W (finishPhase E (field N)))</code>. The latter enforces that the value does not change after phase <code>E</code>, wheras this function indicates that it can <em>assume</em> that the field will not change after phase <code>E</code> and can thus finish.</dd>
+</dl>
+
+
+<p><strong><code>(target N)</code> [Future]</strong></p>
+<dl>
+<dt>Result:</dt>
+<dd><code>[]</code> if no target matching string <code>N</code>.</dd>
+
+<dd><code>[v]</code> wherte <code>v</code> is the value of evaluating the target string <code>N</code>.</dd>
+
+<dt>Finished</dt>
+<dd>Never</dd>
+
+<dt>Notes</dt>
+<dd>Avoid if possible. Most target strings can be more efficiently evaluated by combining <code>field</code>, <code>sub</code>, <code>scatter</code>, <code>gather</code>, and filters.</dd>
+
+<dd>Primarily provided to ease automatic conversion of rules from other systems.</dd>
+</dl>
+
+
+<h2 id="streamingironbeefuture">Streaming IronBee [Future]</h2>
+
+<p><strong><code>(streamRequestBodyRx R)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[...]</code> captures of any matches of regexp <code>R</code> in the streamed request body.</dd>
+
+<dt>Finished</dt>
+<dd>Once request is finished.</dd>
+</dl>
+
+
+<p><strong><code>(streamResponseBodyRx R)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[...]</code> captures of any matches of regexp <code>R</code> in the streamed response body.</dd>
+
+<dt>Finished</dt>
+<dd>Once response is finished.</dd>
+</dl>
+
+
+<h2 id="fastfuture">Fast [Future]</h2>
+
+<p>TODO: Documentation.</p>
+
+<p><strong><code>(fast P)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> until pattern <code>P</code> appears in traffic.</dd>
+
+<dd>Then <code>(true)</code>.</dd>
+
+<dt>Finished</dt>
+<dd>When <code>(true)</code>.</dd>
+
+<dt>Notes</dt>
+<dd>At present, requires that a Fast automata is loaded via the <code>PredicateFastAutomata</code> directive. In the future, a version that generates the automata at configuration time may be present.</dd>
+
+<dd>The advantage of this function is that, properly used, all occurrences of it will have their patterns merged into a single patterned Aho-Corasick automata which will efficiently determine which occurrences are true.</dd>
+</dl>
+
+
+<h2 id="development">Development</h2>
+
+<p><strong><code>(p v M)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>v</code></dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dt>Notes</dt>
+<dd>Will log <code>M</code> and the value of <code>v</code> each time evaluated.</dd>
+</dl>
+
+
+<p><strong><code>(p v M L)</code></strong></p>
+<dl>
+<dt>Notes</dt>
+<dd>As above, but at log level <code>L</code> where <code>L</code> can be: &#8220;emergency&#8221;, &#8220;alert&#8221;, &#8220;critical&#8221;, &#8220;error&#8221;, &#8220;warning&#8221;, &#8220;notice&#8221;, &#8220;info&#8221;, &#8220;debug&#8221;, &#8220;debug2&#8221;, &#8220;debug3&#8221;, &#8220;trace&#8221;, &#8220;stdout&#8221;, or &#8220;stderr&#8221;.</dd>
+</dl>
+
+
+<p><strong><code>(sequence S E D)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[...]</code> where &#8230; is the numbers <code>S</code>, <code>S+D</code>, <code>S+2D</code>, &#8230;, <code>E</code>, inclusive.</dd>
+
+<dt>Finished</dt>
+<dd>When the entire range is produced.</dd>
+
+<dt>Notes</dt>
+<dd>Will add one value each time evaluated.</dd>
+
+<dd><code>D</code> can be negative.</dd>
+
+<dd>Infinite ranges can be done by having E be on the wrong side of <code>S</code>. E.g., <code>E</code> &lt; <code>S</code> and <code>D</code> &gt; 0.</dd>
+
+<dd>Infinite constant ranges are also possible by having <code>D</code> == 0.</dd>
+</dl>
+
+
+<p><strong><code>(sequence S E)</code></strong></p>
+<dl>
+<dt>Synonym</dt>
+<dd><code>(sequence S E 1)</code></dd>
+</dl>
+
+
+<p><strong><code>(sequence S)</code></strong></p>
+<dl>
+<dt>Synonym</dt>
+<dd><code>(sequence S E 1)</code> where <code>E</code> is some value less than <code>S</code>.</dd>
+</dl>
+
+
+<p><strong><code>(identity v)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd><code>[...]</code> where &#8230; is the result of <code>v</code>.</dd>
+
+<dt>Finished</dt>
+<dd>When <code>v</code> is finished.</dd>
+
+<dt>Notes</dt>
+<dd>Does not transform. In contrast, <code>(cat v)</code> is semantically identical, but transforms itself into <code>v</code>.</dd>
+</dl>
+
+
+<h2 id="templatesfuture">Templates [Future]</h2>
+
+<p>Templates provide basic user defined substitution transformations. They permit complex expressions to be expressed as simple expressions, allowing for improved error messages and fewer bytes in certain forms. Ultimately, they expand out to full expressions tree, have subexpressions merged with all other expressions, and are treated no differently that had they been written out fully to begin with.</p>
+
+<p>Templates are defined externally, e.g., via an IronBee directive. As an example:</p>
+
+<pre><code>PredicateDefineTemplate &quot;request_header name&quot; &quot;(sub (ref 'name') (field 'REQUEST_HEADERS'))&quot;
+</code></pre>
+
+<p>The <code>request_header</code> template then be used as a function, e.g., <code>(request_header 'Host')</code> which would be expanded to <code>(sub 'Host' (field 'REQUEST_HEADERS'))</code>.</p>
+
+<p><strong><code>(T ...)</code></strong></p>
+
+<p>Where <code>T</code> is some user defined template.</p>
+<dl>
+<dt>Result</dt>
+<dd>N/A (see below)</dd>
+
+<dt>Finished</dt>
+<dd>N/A (see below)</dd>
+
+<dt>Transformations</dt>
+<dd>Will replace itself with a deep copy of its associated expression tree. Will then go through that copy and replace any <code>ref</code> nodes with values taken from its arguments.</dd>
+</dl>
+
+
+<p><strong><code>(ref S)</code></strong></p>
+<dl>
+<dt>Result</dt>
+<dd>N/A (see below)</dd>
+
+<dt>Finished</dt>
+<dd>N/A (see below)</dd>
+
+<dt>Notes</dt>
+<dd>Will be replaced with appropriate expression during template transformations.</dd>
+</dl>
+
+
+<div class="footnotes">
+<hr />
+<ol>
+
+<li id="fn:1">
+<p>Value&#8217;s correspond to IronBee fields. However, many Value&#8217;s in Predicate &#8211; unlike in traditional IronBee &#8211; do not make use of names. There is a long term plan to separate the run-time type system and name-value pair facets of fields. If this happens, Value will split into Value and NamedValue in Predicate. <a href="#fnref:1" title="return to article" class="reversefootnote">&#160;&#8617;</a></p>
+</li>
+
+<li id="fn:2">
+<p>Collections that are not lists usually occur when modules provides collections via generator functions rather than a lists as values. <a href="#fnref:2" title="return to article" class="reversefootnote">&#160;&#8617;</a></p>
+</li>
+
+</ol>
+</div>
+

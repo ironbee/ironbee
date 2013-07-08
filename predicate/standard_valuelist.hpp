@@ -19,6 +19,8 @@
  * @file
  * @brief Predicate --- Standard ValueList.
  *
+ * See reference.md for details.
+ *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
