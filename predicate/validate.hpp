@@ -41,10 +41,11 @@ namespace Predicate {
  * @code
  * bool MyCall::validate(NodeReporter reporter) const
  * {
- *     return
- *         Validate::no_child_s_null(reporter) &&
- *         Validate::has_n_children(reporter, 3)
- *         ;
+ *     // Note arrangement to avoid short circuiting.
+ *     bool result = true;
+ *     result = Validate::no_child_s_null(reporter) && result;
+ *     result = Validate::has_n_children(reporter, 3) && result;
+ *     return result;
  * }
  * @endcode
  **/
