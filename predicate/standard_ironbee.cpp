@@ -31,6 +31,8 @@
 #include <ironbeepp/operator.hpp>
 #include <ironbeepp/transformation.hpp>
 
+#include <ironbee/rule_engine.h>
+
 using namespace std;
 
 namespace IronBee {
@@ -300,12 +302,133 @@ void Transformation::calculate(EvalContext context)
     map_calculate(children().back(), context);
 }
 
+namespace {
+
+ib_rule_phase_num_t phase_lookup(const string& phase_string)
+{
+    ib_rule_phase_num_t result;
+
+    result = ib_rule_lookup_phase(phase_string.c_str(), true);
+    if (result == IB_PHASE_INVALID) {
+        result = ib_rule_lookup_phase(phase_string.c_str(), false);
+    }
+    return result;
+}
+
+}
+
+struct WaitPhase::data_t
+{
+    ib_rule_phase_num_t phase;
+};
+
+WaitPhase::WaitPhase() :
+    m_data(new data_t())
+{
+    // nop
+}
+
+string WaitPhase::name() const
+{
+    return "waitPhase";
+}
+
+bool WaitPhase::validate(NodeReporter reporter) const
+{
+    bool result = true;
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_string(reporter, 0) && result;
+
+    if (result) {
+        string phase_string =
+            literal_value(children().front()).value_as_byte_string().to_s();
+        if (phase_lookup(phase_string) == IB_PHASE_INVALID) {
+            reporter.error("Invalid phase argument: " + phase_string);
+            result = false;
+        }
+    }
+
+    return result;
+}
+
+void WaitPhase::pre_eval(Environment environment, NodeReporter reporter)
+{
+    string phase_string =
+        literal_value(children().front()).value_as_byte_string().to_s();
+    m_data->phase = phase_lookup(phase_string);
+}
+
+void WaitPhase::calculate(EvalContext context)
+{
+    if (context.ib()->rule_exec->phase == m_data->phase) {
+        children().back()->eval(context);
+        forward(children().back());
+    }
+}
+
+struct FinishPhase::data_t
+{
+    ib_rule_phase_num_t phase;
+};
+
+FinishPhase::FinishPhase() :
+    m_data(new data_t())
+{
+    // nop
+}
+
+string FinishPhase::name() const
+{
+    return "finishPhase";
+}
+
+bool FinishPhase::validate(NodeReporter reporter) const
+{
+    bool result = true;
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_string(reporter, 0) && result;
+
+    if (result) {
+        string phase_string =
+            literal_value(children().front()).value_as_byte_string().to_s();
+        if (phase_lookup(phase_string) == IB_PHASE_INVALID) {
+            reporter.error("Invalid phase argument: " + phase_string);
+            result = false;
+        }
+    }
+
+    return result;
+}
+
+void FinishPhase::pre_eval(Environment environment, NodeReporter reporter)
+{
+    string phase_string =
+        literal_value(children().front()).value_as_byte_string().to_s();
+    m_data->phase = phase_lookup(phase_string);
+}
+
+Value FinishPhase::value_calculate(Value v, EvalContext context)
+{
+    return v;
+}
+
+void FinishPhase::calculate(EvalContext context)
+{
+    map_calculate(children().back(), context);
+
+    if (context.ib()->rule_exec->phase == m_data->phase) {
+        finish();
+    }
+}
+
 void load_ironbee(CallFactory& to)
 {
     to
         .add<Field>()
         .add<Operator>()
         .add<Transformation>()
+        .add<WaitPhase>()
+        .add<FinishPhase>()
         ;
 }
 

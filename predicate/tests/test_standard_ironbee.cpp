@@ -24,6 +24,8 @@
 
 #include "standard_test.hpp"
 
+#include <ironbee/rule_engine.h>
+
 using namespace IronBee::Predicate;
 using namespace std;
 
@@ -66,4 +68,37 @@ TEST_F(TestStandardIronBee, transformation)
     EXPECT_THROW(eval_s("(transformation 'a')"), IronBee::einval);
     EXPECT_THROW(eval_s("(transformation 'a' 'b' 'c')"), IronBee::einval);
     EXPECT_THROW(eval_s("(transformation null 'b')"), IronBee::einval);
+}
+
+TEST_F(TestStandardIronBee, phase)
+{
+    // Track old rule_exec so we can restore it.
+    ib_rule_exec_t* old_rule_exec = m_transaction.ib()->rule_exec;
+    // Test data rule exec.
+    ib_rule_exec_t rule_exec;
+    m_transaction.ib()->rule_exec = &rule_exec;
+
+    rule_exec.phase = IB_PHASE_REQUEST_HEADER;
+    EXPECT_FALSE(eval_bool("(isFinished (waitPhase 'response_header' 'foo'))"));
+    rule_exec.phase = IB_PHASE_RESPONSE_HEADER;
+    EXPECT_TRUE(eval_bool("(isFinished (waitPhase 'response_header' 'foo'))"));
+
+    rule_exec.phase = IB_PHASE_REQUEST_HEADER;
+    EXPECT_TRUE(eval_bool("(isFinished (finishPhase 'request_header' (sequence 0)))"));
+    rule_exec.phase = IB_PHASE_RESPONSE_HEADER;
+    EXPECT_FALSE(eval_bool("(isFinished (finishPhase 'request_header' (sequence 0)))"));
+
+    EXPECT_THROW(eval_s("(waitPhase)"), IronBee::einval);
+    EXPECT_THROW(eval_s("(waitPhase 'request_header')"), IronBee::einval);
+    EXPECT_THROW(eval_s("(waitPhase 'request_header' 'b' 'c')"), IronBee::einval);
+    EXPECT_THROW(eval_s("(waitPhase null 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_s("(waitPhase 'foo' 'b')"), IronBee::einval);
+
+    EXPECT_THROW(eval_s("(finishPhase)"), IronBee::einval);
+    EXPECT_THROW(eval_s("(finishPhase 'request_header')"), IronBee::einval);
+    EXPECT_THROW(eval_s("(finishPhase 'request_header' 'b' 'c')"), IronBee::einval);
+    EXPECT_THROW(eval_s("(finishPhase null 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_s("(finishPhase 'foo' 'b')"), IronBee::einval);
+
+    m_transaction.ib()->rule_exec = old_rule_exec;
 }

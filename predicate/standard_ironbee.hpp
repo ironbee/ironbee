@@ -33,7 +33,6 @@ namespace IronBee {
 namespace Predicate {
 namespace Standard {
 
-
 /**
  * Returns data field with name given by only child.
  **/
@@ -126,6 +125,67 @@ public:
 protected:
     virtual void calculate(EvalContext context);
     virtual Value value_calculate(Value v, EvalContext context);
+
+private:
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
+};
+
+/**
+ * Do no child evaluation until a certain phase.
+ **/
+class WaitPhase :
+    public Call
+{
+public:
+    //! Constructor.
+    WaitPhase();
+
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::pre_eval()
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+protected:
+    virtual void calculate(EvalContext context);
+
+private:
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
+};
+
+/**
+ * Copy childrens values but finish once given phase is reached.
+ **/
+class FinishPhase :
+    public MapCall
+{
+public:
+    //! Constructor.
+    FinishPhase();
+
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::pre_eval()
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+protected:
+    virtual Value value_calculate(Value v, EvalContext context);
+    virtual void calculate(EvalContext context);
 
 private:
     //! Hidden complex implementation details.
