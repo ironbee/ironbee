@@ -189,7 +189,7 @@ static void log_engines(
             }
             else {
                 ib_manager_log(manager, level2,
-                               "ENGINE MANAGER[%d,%p]:  #%zd: %p (%sref=%zd)",
+                               "ENGINE MANAGER[%d,%p]:  #%zd: %p (%sref=%" PRIu64 ")",
                                getpid(), manager, n,
                                engine->engine,
                                ( (engine == manager->engine_current) ?
@@ -258,7 +258,7 @@ static ib_status_t destroy_engines(
         }
         ib_manager_log(manager, IB_LOG_DEBUG,
                        "ENGINE MANAGER[%d,%p]: "
-                       "%s engine %p (%s, %s, ref=%zd)",
+                       "%s engine %p (%s, %s, ref=%" PRIu64 ")",
                        getpid(),
                        manager,
                        destroy ? "Destroying" : "Not destroying",
