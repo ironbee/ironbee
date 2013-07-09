@@ -670,10 +670,7 @@ static ib_status_t act_setvar_create(
     }
 
     /* Does the name need to be expanded? */
-    rc = ib_data_expand_test_str_ex(params, nlen, &(data->name_expand));
-    if (rc != IB_OK) {
-        return rc;
-    }
+    ib_data_expand_test_str_ex(params, nlen, &(data->name_expand));
 
     /* Copy the name */
     data->name = ib_mpool_memdup_to_str(mp, params, nlen);
@@ -732,11 +729,8 @@ static ib_status_t act_setvar_create(
             return IB_EINVAL;
         }
 
-        rc = ib_data_expand_test_str_ex(value, vlen, &expand);
-        if (rc != IB_OK) {
-            return rc;
-        }
-        else if (expand) {
+        ib_data_expand_test_str_ex(value, vlen, &expand);
+        if (expand) {
             inst->flags |= IB_ACTINST_FLAG_EXPAND;
         }
 
@@ -1792,7 +1786,6 @@ static ib_status_t act_del_header_create(
     assert(params != NULL);
     assert(inst != NULL);
 
-    ib_status_t rc;
     act_header_data_t *act_data;
     ib_mpool_t        *mp = ib_engine_pool_main_get(ib);
 
@@ -1815,11 +1808,8 @@ static ib_status_t act_del_header_create(
     }
 
     /* Does the name need to be expanded? */
-    rc = ib_data_expand_test_str_ex(params, strlen(params),
-                                    &(act_data->name_expand));
-    if (rc != IB_OK) {
-        return rc;
-    }
+    ib_data_expand_test_str_ex(params, strlen(params),
+                               &(act_data->name_expand));
 
     inst->data = act_data;
 
@@ -1853,7 +1843,6 @@ static ib_status_t act_set_header_create(
     ib_mpool_t *mp = ib_engine_pool_main_get(ib);
     act_header_data_t *act_data;
     bool expand = false;
-    ib_status_t rc;
     size_t value_offs = 1;
 
     assert(mp != NULL);
@@ -1895,11 +1884,8 @@ static ib_status_t act_set_header_create(
     ((char *)act_data->name)[name_len] = '\0';
 
     /* Does the name need to be expanded? */
-    rc = ib_data_expand_test_str_ex(act_data->name, name_len,
-                                    &(act_data->name_expand));
-    if (rc != IB_OK) {
-        return rc;
-    }
+    ib_data_expand_test_str_ex(act_data->name, name_len,
+                               &(act_data->name_expand));
 
     act_data->value = (value_len == 0)?
         ib_mpool_strdup(mp, ""):
@@ -1908,11 +1894,8 @@ static ib_status_t act_set_header_create(
         return IB_EALLOC;
     }
 
-    rc = ib_data_expand_test_str_ex(act_data->value, value_len, &expand);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    else if (expand) {
+    ib_data_expand_test_str_ex(act_data->value, value_len, &expand);
+    if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 

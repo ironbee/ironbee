@@ -556,10 +556,8 @@ ib_status_t ib_data_expand_str_ex(
  *
  * @param[in] str String to check for expansion
  * @param[out] result true if @a str would be expanded by expand_str().
- *
- * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_data_expand_test_str(
+void DLL_PUBLIC ib_data_expand_test_str(
     const char *str,
     bool       *result
 );
@@ -572,10 +570,8 @@ ib_status_t DLL_PUBLIC ib_data_expand_test_str(
  * @param[in] str String to check for expansion
  * @param[in] slen Length of string @a str to expand
  * @param[out] result true if @a str would be expanded by expand_str().
- *
- * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_data_expand_test_str_ex(
+void DLL_PUBLIC ib_data_expand_test_str_ex(
     const char *str,
     size_t      slen,
     bool       *result

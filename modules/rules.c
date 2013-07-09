@@ -587,11 +587,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     if (strcasecmp(name, "msg") == 0) {
         bool expand = false;
         rule->meta.msg = value;
-        rc = ib_data_expand_test_str(value, &expand);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Expansion test failed: %d", rc);
-            return rc;
-        }
+        ib_data_expand_test_str(value, &expand);
         if (expand) {
             rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_MSG;
         }
@@ -602,11 +598,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     if (strcasecmp(name, "logdata") == 0) {
         bool expand = false;
         rule->meta.data = value;
-        rc = ib_data_expand_test_str(value, &expand);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Expansion test failed: %d", rc);
-            return rc;
-        }
+        ib_data_expand_test_str(value, &expand);
         if (expand) {
             rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_DATA;
         }

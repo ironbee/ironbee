@@ -241,10 +241,7 @@ static ib_status_t mod_persist_register_fn(
         ib_log_error(ib, "No key specified");
     }
 
-    rc = ib_data_expand_test_str(key, &key_expand);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    ib_data_expand_test_str(key, &key_expand);
 
     /* Allocate and initialize a kvstore object */
     kvstore = ib_mpool_alloc(mp, ib_kvstore_size());

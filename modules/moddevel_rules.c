@@ -144,7 +144,6 @@ static ib_status_t op_assert_create(
     void          *cbdata
 )
 {
-    ib_status_t rc;
     char *str;
     bool expand;
     ib_mpool_t *mp = ib_context_get_mpool(ctx);
@@ -165,11 +164,8 @@ static ib_status_t op_assert_create(
     }
 
     /* Do we need expansion? */
-    rc = ib_data_expand_test_str(str, &expand);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    else if (expand) {
+    ib_data_expand_test_str(str, &expand);
+    if (expand) {
         aid->expand = true;
     }
 
@@ -345,7 +341,6 @@ static ib_status_t action_debuglog_create(
     ib_action_inst_t *inst,
     void             *cbdata)
 {
-    ib_status_t rc;
     bool expand;
     char *str;
     ib_mpool_t *mp = ib_engine_pool_main_get(ib);
@@ -362,11 +357,8 @@ static ib_status_t action_debuglog_create(
     }
 
     /* Do we need expansion? */
-    rc = ib_data_expand_test_str(str, &expand);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    else if (expand) {
+    ib_data_expand_test_str(str, &expand);
+    if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
@@ -429,7 +421,6 @@ static ib_status_t action_print_create(
     void             *cbdata)
 {
     char *str;
-    ib_status_t rc;
     bool expand;
     ib_mpool_t *mp = ib_engine_pool_main_get(ib);
 
@@ -445,11 +436,8 @@ static ib_status_t action_print_create(
     }
 
     /* Do we need expansion? */
-    rc = ib_data_expand_test_str(str, &expand);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    else if (expand) {
+    ib_data_expand_test_str(str, &expand);
+    if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
@@ -510,7 +498,6 @@ static ib_status_t action_assert_create(
     ib_action_inst_t *inst,
     void             *cbdata)
 {
-    ib_status_t rc;
     bool expand;
     char *str;
     ib_mpool_t *mp = ib_engine_pool_main_get(ib);
@@ -526,11 +513,8 @@ static ib_status_t action_assert_create(
     }
 
     /* Do we need expansion? */
-    rc = ib_data_expand_test_str(str, &expand);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    else if (expand) {
+    ib_data_expand_test_str(str, &expand);
+    if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 

@@ -1093,30 +1093,38 @@ ib_status_t ib_data_expand_str_ex(
     );
 }
 
-ib_status_t ib_data_expand_test_str(
+void ib_data_expand_test_str(
     const char *str,
     bool       *result
 )
 {
-    return ib_expand_test_str(
+    ib_status_t rc;
+    
+    rc = ib_expand_test_str(
         str,
         IB_VARIABLE_EXPANSION_PREFIX,
         IB_VARIABLE_EXPANSION_POSTFIX,
         result
     );
+
+    assert(rc == IB_OK);
 }
 
-ib_status_t ib_data_expand_test_str_ex(
+void ib_data_expand_test_str_ex(
     const char *str,
     size_t      slen,
     bool       *result
 )
 {
-    return ib_expand_test_str_ex(
+    ib_status_t rc;
+    
+    rc = ib_expand_test_str_ex(
         str,
         slen,
         IB_VARIABLE_EXPANSION_PREFIX,
         IB_VARIABLE_EXPANSION_POSTFIX,
         result
     );
+
+    assert(rc == IB_OK);
 }

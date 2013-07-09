@@ -347,10 +347,7 @@ ib_status_t strop_create(
         return rc;
     }
 
-    rc = ib_data_expand_test_str(str, &expand);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    ib_data_expand_test_str(str, &expand);
 
     strop_instance_data_t *data =
         (strop_instance_data_t *)ib_mpool_alloc(mp, sizeof(*data));
@@ -1905,10 +1902,7 @@ ib_status_t op_numcmp_create(
     *instance_data = data;
 
     /* Is the string expandable? */
-    rc = ib_data_expand_test_str(params_unesc, &expandable);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    ib_data_expand_test_str(params_unesc, &expandable);
     if (expandable) {
         data->expand = true;
         rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
