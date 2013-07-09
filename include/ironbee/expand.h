@@ -55,7 +55,9 @@ extern "C" {
  * @param[in] nlen Length of @a name
  * @param[out] pf Pointer to field from hash or NULL
  *
- * @returns IB_OK if successful; IB_ENOENT if not found
+ * @returns
+ * - IB_OK if successful
+ * - IB_ENOENT if not found
  */
 
 typedef ib_status_t (* ib_expand_lookup_fn_t)(const void *data,
@@ -215,7 +217,9 @@ ib_status_t DLL_PUBLIC ib_expand_str_gen_ex(ib_mpool_t *mp,
  * @param[in] suffix Suffix string (e.g. "}")
  * @param[out] result true if @a str would be expanded by expand_str().
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If prefix or suffix is a zero-length string.
  */
 ib_status_t DLL_PUBLIC ib_expand_test_str(const char *str,
                                           const char *prefix,
@@ -234,7 +238,9 @@ ib_status_t DLL_PUBLIC ib_expand_test_str(const char *str,
  * @param[in] suffix Suffix string (e.g. "}")
  * @param[out] result true if @a str would be expanded by expand_str().
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If prefix or suffix is a zero-length string.
  */
 ib_status_t DLL_PUBLIC ib_expand_test_str_ex(const char *str,
                                              size_t str_len,
