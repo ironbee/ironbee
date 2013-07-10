@@ -187,7 +187,9 @@ ib_status_t ib_engine_context_create_main(ib_engine_t *ib);
  * @param name Module name
  * @param pm Address which module will be written
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_ENOENT If the named module is not found.
  */
 ib_status_t DLL_PUBLIC ib_engine_module_get(const ib_engine_t *ib,
                                             const char * name,
