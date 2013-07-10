@@ -1,24 +1,25 @@
 include $(top_srcdir)/build/tests.mk
 
 LDADD = \
-	$(top_builddir)/util/libibutil.la \
-	$(top_builddir)/engine/libironbee.la \
+    $(top_builddir)/util/libibutil.la \
+    $(top_builddir)/engine/libironbee.la \
     $(top_builddir)/libs/libhtp/htp/libhtp.la
 
 AM_LDFLAGS += \
-	-lboost_system$(BOOST_SUFFIX) \
-	-lboost_filesystem$(BOOST_SUFFIX) \
-	-lboost_chrono$(BOOST_SUFFIX) \
-	-lstdc++
+    -lboost_system$(BOOST_SUFFIX) \
+    -lboost_filesystem$(BOOST_SUFFIX) \
+    -lboost_chrono$(BOOST_SUFFIX) \
+    -lstdc++
 
 AM_CPPFLAGS += \
     -I$(top_srcdir)/modules \
-	-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
+    -DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
     -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs
 
 check_PROGRAMS = \
-	test_module_ee_oper \
-	test_module_pcre
+    test_module_ee_oper \
+    test_persistence \
+    test_module_pcre
 
 if ENABLE_LUA
 check_PROGRAMS += test_module_rules_lua
@@ -28,8 +29,8 @@ if CPP
 check_PROGRAMS += test_ibmod_engine_shutdown
 test_ibmod_engine_shutdown_SOURCES = test_ibmod_engine_shutdown.cpp
 test_ibmod_engine_shutdown_LDADD = \
-	$(LDADD) \
-	$(top_builddir)/ironbeepp/libibpp.la
+    $(LDADD) \
+    $(top_builddir)/ironbeepp/libibpp.la
 
 noinst_PROGRAMS = psparse
 psparse_LDADD = ../libparser_suite.la
@@ -54,17 +55,17 @@ if ENABLE_LUA
 CLEANFILES += *.lua
 test_module_rules_lua_SOURCES = test_module_rules_lua.cpp
 test_module_rules_lua_CPPFLAGS = \
-	$(AM_CPPFLAGS) \
-	-I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
-	-D_XOPEN_SOURCE=1 \
-	-DTEST_LUA_FILE=\"$(abs_srcdir)/test_module_rules_lua.lua\" \
-	-DTEST_FFI_FILE=\"$(abs_top_srcdir)/lua/ironbee-ffi.lua\"
+    $(AM_CPPFLAGS) \
+    -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+    -D_XOPEN_SOURCE=1 \
+    -DTEST_LUA_FILE=\"$(abs_srcdir)/test_module_rules_lua.lua\" \
+    -DTEST_FFI_FILE=\"$(abs_top_srcdir)/lua/ironbee-ffi.lua\"
 test_module_rules_lua_LDADD = \
-	$(LDADD) \
-	$(top_builddir)/lua/libironbee-lua.la \
-	$(top_builddir)/modules/ibmod_rules_la-lua_common.o \
-	-L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
-	-lluajit-ironbee
+    $(LDADD) \
+    $(top_builddir)/lua/libironbee-lua.la \
+    $(top_builddir)/modules/ibmod_rules_la-lua_common.o \
+    -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
+    -lluajit-ironbee
 endif
 
 EXTRA_DIST = $(TEST_EXTRAS)
@@ -81,5 +82,8 @@ test_module_pcre_SOURCES = test_module_pcre.cpp test_module_dfa.cpp
 
 test_module_ee_oper_SOURCES = test_module_ee_oper.cpp
 test_module_ee_oper_LDADD = $(LDADD) $(top_builddir)/automata/libiaeudoxus.la
+
+test_persistence_SOURCES = test_persistence.cpp
+test_persistence_LDADD = $(LDADD)
 
 check-local: check-ruby
