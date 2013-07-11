@@ -15,15 +15,16 @@
  * limitations under the License.
  ****************************************************************************/
 
+#include <ironbee_config_auto.h>
 
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/module.h>
-#include <ironbee_config_auto.h>
 #if ENABLE_JSON
 #include <ironbee/json.h>
 #endif
+#include <ironbee/uuid.h>
 
 #include <persistence_framework.h>
 
@@ -33,6 +34,90 @@
 #define MODULE_NAME init_collection
 #define MODULE_NAME_STR IB_XSTRINGIFY(MODULE_NAME)
 IB_MODULE_DECLARE();
+
+static const char *JSON_TYPE = "json";
+static const char *VAR_TYPE  = "var";
+
+#ifdef ENABLE_JSON
+static ib_status_t json_store_fn(
+    void            *impl,
+    ib_tx_t         *tx,
+    const char      *key,
+    const ib_list_t *fields,
+    void            *cbdata
+)
+{
+    return IB_OK;
+}
+#endif
+#ifdef ENABLE_JSON
+static ib_status_t json_load_fn(
+        void       *impl,
+        ib_tx_t    *tx,
+        const char *key,
+        ib_list_t  *fields,
+        void       *cbdata
+)
+{
+    return IB_OK;
+}
+#endif
+#ifdef ENABLE_JSON
+static ib_status_t json_create_fn(
+    ib_engine_t      *ib,
+    const ib_list_t  *params,
+    void            **impl,
+    void             *cbdata
+)
+{
+    return IB_OK;
+}
+#endif
+#ifdef ENABLE_JSON
+static void json_destroy_fn(
+    void *impl,
+    void *cbdata
+)
+{
+}
+#endif
+
+static ib_status_t var_store_fn(
+        void            *impl,
+        ib_tx_t         *tx,
+        const char      *key,
+        const ib_list_t *fields,
+        void            *cbdata
+)
+{
+    return IB_OK;
+}
+static ib_status_t var_load_fn(
+        void       *impl,
+        ib_tx_t    *tx,
+        const char *key,
+        ib_list_t  *fields,
+        void       *cbdata
+)
+{
+    return IB_OK;
+}
+static ib_status_t var_create_fn(
+    ib_engine_t      *ib,
+    const ib_list_t  *params,
+    void            **impl,
+    void             *cbdata
+)
+{
+    return IB_OK;
+}
+
+static void var_destroy_fn(
+    void *impl,
+    void *cbdata
+)
+{
+}
 
 /**
  * Module configuration.
@@ -44,38 +129,64 @@ struct init_collection_cfg_t {
 typedef struct init_collection_cfg_t init_collection_cfg_t;
 
 /**
- * Module destruction.
- *
- * @param[in] ib IronBee engine.
- * @param[in] module Module structure.
- * @param[in] cbdata Callback data.
- *
- * @returns
- * - IB_OK On success.
+ * @params[in] params List of parameters.
+ *                    The first element is the name of the collection.
+ *                    The second element is the URI.
+ *                    The rest are options.
  */
-static ib_status_t init_collection_fini(
-    ib_engine_t *ib,
-    ib_module_t *module,
-    void *cbdata
+static ib_status_t domap(
+    ib_cfgparser_t        *cp,
+    ib_context_t          *ctx,
+    const char            *type,
+    init_collection_cfg_t *cfg,
+    const char            *collection_name,
+    const ib_list_t       *params
 )
 {
-    return IB_OK;
-}
+    ib_uuid_t uuid;
+    char store_name[37];
+    ib_status_t rc;
 
-static ib_status_t map_vars(
-)
-{
-    return IB_OK;
-}
+    rc = ib_uuid_create_v4(&uuid);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to create UUIDv4 store.");
+        return rc;
+    }
 
-/* Include / exclude JSON support. */
-#ifdef ENABLE_JSON
-static ib_status_t map_json(
-)
-{
+    rc = ib_uuid_bin_to_ascii(store_name, &uuid);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to convert UUIDv4 to string.");
+        return rc;
+    }
+
+    rc = ib_pstnsfw_create_store(
+        cfg->pstnsfw,
+        ctx,
+        type,
+        store_name,
+        params);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to create store %s", store_name);
+        return rc;
+    }
+
+    rc = ib_pstnsfw_map_collection(
+        cfg->pstnsfw,
+        ctx,
+        collection_name,
+        "no key",
+        store_name);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "Failed to map store %s to collection %s.",
+            store_name,
+            collection_name);
+        return rc;
+    }
+
     return IB_OK;
 }
-#endif
 
 /**
  * vars: key1=val1 key2=val2 ... keyN=valN
@@ -112,8 +223,15 @@ static ib_status_t init_collection_common(
 
     ib_status_t            rc;
     const ib_list_node_t  *node;
-    const char            *name;  /* The name of the collection. */
-    const char            *uri;   /* The URI to the resource. */
+    const char            *name;   /* The name of the collection. */
+    const char            *uri;    /* The URI to the resource. */
+    ib_context_t          *ctx;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to retrieve current config context.");
+        return rc;
+    }
 
     /* Get the collection name string */
     node = ib_list_first_const(vars);
@@ -132,14 +250,14 @@ static ib_status_t init_collection_common(
     uri = (const char *)ib_list_node_data_const(node);
 
     if (strncmp(uri, "vars:", sizeof("vars:")) == 0) {
-        rc = map_vars();
+        rc = domap(cp, ctx, VAR_TYPE, cfg, name, vars);
         if (rc != IB_OK) {
             return rc;
         }
     }
 #ifdef ENABLE_JSON
     else if (strncmp(uri, "json-file:", sizeof("json-file:")) == 0) {
-        rc = map_json();
+        rc = domap(cp, ctx, JSON_TYPE, cfg, name, vars);
         if (rc != IB_OK) {
             return rc;
         }
@@ -274,9 +392,64 @@ static ib_status_t init_collection_init(
         ib_log_error(ib, "Failed to dynamically register directives.");
         return rc;
     }
+    rc = ib_pstnsfw_register_type(
+        cfg->pstnsfw,
+        ib_context_main(ib),
+        VAR_TYPE,
+        var_create_fn,
+        cfg,
+        var_destroy_fn,
+        cfg,
+        var_load_fn,
+        cfg,
+        var_store_fn,
+        cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to register var type.");
+        return rc;
+    }
+
+#if ENABLE_JSON
+    rc = ib_pstnsfw_register_type(
+        cfg->pstnsfw,
+        ib_context_main(ib),
+        JSON_TYPE,
+        json_create_fn,
+        cfg,
+        json_destroy_fn,
+        cfg,
+        json_load_fn,
+        cfg,
+        json_store_fn,
+        cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to register json type.");
+        return rc;
+    }
+#endif
 
     return IB_OK;
 }
+
+/**
+ * Module destruction.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] module Module structure.
+ * @param[in] cbdata Callback data.
+ *
+ * @returns
+ * - IB_OK On success.
+ */
+static ib_status_t init_collection_fini(
+    ib_engine_t *ib,
+    ib_module_t *module,
+    void *cbdata
+)
+{
+    return IB_OK;
+}
+
 
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,    /* Headeer defaults. */

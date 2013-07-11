@@ -752,11 +752,11 @@ ib_status_t ib_pstnsfw_register_type(
 }
 
 ib_status_t ib_pstnsfw_create_store(
-    ib_pstnsfw_t *pstnsfw,
-    ib_context_t *ctx,
-    const char   *type,
-    const char   *name,
-    ib_list_t    *params
+    ib_pstnsfw_t       *pstnsfw,
+    ib_context_t       *ctx,
+    const char         *type,
+    const char         *name,
+    const ib_list_t    *params
 )
 {
     assert(pstnsfw != NULL);

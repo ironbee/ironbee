@@ -56,10 +56,10 @@ extern "C" {
 typedef struct ib_pstnsfw_t ib_pstnsfw_t;
 
 typedef ib_status_t (* ib_pstnsfw_create_fn_t)(
-    ib_engine_t *ib,
-    ib_list_t   *params,
-    void       **impl,
-    void        *cbdata
+    ib_engine_t       *ib,
+    const ib_list_t   *params,
+    void             **impl,
+    void              *cbdata
 );
 typedef void (* ib_pstnsfw_destroy_fn_t)(
     void *impl,
@@ -156,11 +156,11 @@ ib_status_t DLL_PUBLIC ib_pstnsfw_register_type(
  * - Other
  */
 ib_status_t DLL_PUBLIC ib_pstnsfw_create_store(
-    ib_pstnsfw_t *pstnsfw,
-    ib_context_t *ctx,
-    const char   *type,
-    const char   *name,
-    ib_list_t    *params
+    ib_pstnsfw_t       *pstnsfw,
+    ib_context_t       *ctx,
+    const char         *type,
+    const char         *name,
+    const ib_list_t    *params
 );
 
 /**
