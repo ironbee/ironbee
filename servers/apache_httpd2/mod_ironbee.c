@@ -1217,8 +1217,11 @@ static apr_status_t ironbee_manager_cleanup(void *data)
  * @param[in] plog - Log pool
  * @param[in] s - Base server
  */
-static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
-                        server_rec *s)
+static int ironbee_init(
+    apr_pool_t *pool,
+    apr_pool_t *ptmp,
+    apr_pool_t *plog,
+    server_rec *s)
 {
     ib_status_t    rc;
     module_data_t *mod_data = &module_data;
@@ -1245,8 +1248,9 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
                            &(mod_data->ib_manager)); /* Engine Manager */
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Failed to create IronBee Engine Manager (%d)", rc);
-        return rc;
+                     "Failed to create IronBee Engine Manager (%s)",
+                     ib_status_to_string(rc));
+        return IB2AP(rc);
     }
 
     /* Create the initial engine */
@@ -1254,7 +1258,8 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
                                   mod_data->ib_config_file);
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Ironbee failed to create initial engine! (%d)", rc);
+                     "Ironbee failed to create initial engine! (%s)",
+                     ib_status_to_string(rc));
         return IB2AP(rc);
     }
 
