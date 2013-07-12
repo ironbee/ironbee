@@ -51,7 +51,8 @@ ibmod_persistence_framework_la_SOURCES = persistence_framework.c
 
 ibmod_init_collection_la_SOURCES = init_collection.c
 ibmod_init_collection_la_LDFLAGS = $(AM_LDFLAGS)
-ibmod_init_collection_la_LIBADD  = $(AM_LIBADD)
+ibmod_init_collection_la_LIBADD  = $(AM_LIBADD) \
+                                   ibmod_persistence_framework.la
 ibmod_init_collection_la_CFLAGS  = $(AM_CFLAGS)
 
 ibmod_log_pipe_la_SOURCES = log_pipe.c

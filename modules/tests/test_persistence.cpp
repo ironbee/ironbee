@@ -71,3 +71,32 @@ TEST_F(PersistenceTest, Load) {
 
     ASSERT_TRUE(true);
 }
+
+TEST_F(PersistenceTest, LoadInitColl) {
+    configureIronBeeByString(
+        "# A basic ironbee configuration\n"
+        "# for getting an engine up-and-running.\n"
+        "LogLevel 9\n"
+
+        "LoadModule \"ibmod_htp.so\"\n"
+        "LoadModule \"ibmod_rules.so\"\n"
+        "LoadModule \"ibmod_persistence_framework.so\"\n"
+        "LoadModule \"ibmod_init_collection.so\"\n"
+
+        "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+        "SensorName UnitTesting\n"
+        "SensorHostname unit-testing.sensor.tld\n"
+
+        "# Disable audit logs\n"
+        "AuditEngine Off\n"
+
+        "<Site test-site>\n"
+        "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+        "   Hostname somesite.com\n"
+        "</Site>\n"
+    );
+
+    performTx();
+
+    ASSERT_TRUE(true);
+}

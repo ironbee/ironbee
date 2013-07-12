@@ -77,7 +77,7 @@ static ib_status_t get_ctx_pstnsfw(
         pstnsfw_main->pstnsfw_module,
         &configs);
     if (rc != IB_OK) {
-        ib_log_error(
+        ib_log_warning(
             pstnsfw_main->ib,
             "Failed to fetch per-context persistence mappings.");
         return rc;
@@ -88,13 +88,13 @@ static ib_status_t get_ctx_pstnsfw(
         pstnsfw_main->user_module->idx,
         &pstnsfw_tmp);
     if (rc == IB_EINVAL || pstnsfw_tmp == NULL) {
-        ib_log_error(
+        ib_log_warning(
             pstnsfw_main->ib,
             "No module registration in persistence framework.");
         return IB_ENOENT;
     }
     if (rc != IB_OK) {
-        ib_log_error(
+        ib_log_warning(
             pstnsfw_main->ib,
             "Failed to fetch per-context persistence mappings.");
         return rc;
@@ -486,6 +486,11 @@ static ib_status_t cpy_pstnsfw(
     IB_ARRAY_LOOP(src_cfg->configs, ne, idx, pstnsfw_src) {
         ib_pstnsfw_cfg_t *pstnsfw_dst = NULL;
 
+        /* Skip unregistered modules. They have a NULL configuration. */
+        if (pstnsfw_src == NULL) {
+            continue;
+        }
+
         rc = cpy_psntsfw_cfg(ib, mp, local_mp, pstnsfw_src, &pstnsfw_dst);
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to copy configuration into new context.");
@@ -527,7 +532,7 @@ static ib_status_t destroy_stores(
 
     rc = get_ctx_pstnsfw(pstnsfw, ctx, &pstnsfw_cfg);
     if (rc != IB_OK) {
-        return rc;
+        return IB_OK;
     }
 
     for (
@@ -629,6 +634,7 @@ ib_status_t ib_pstnsfw_create(
         return IB_EALLOC;
     }
 
+    pstnsfw_out->ib          = ib;
     pstnsfw_out->user_module = user_module;
 
     /* Assign pstnsfw_out->pstnsfw_module. */
