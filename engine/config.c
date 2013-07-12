@@ -674,6 +674,25 @@ ib_status_t ib_cfgparser_context_current(const ib_cfgparser_t *cp,
     return IB_OK;
 }
 
+
+const char *ib_cfgparser_curr_file(const ib_cfgparser_t *cp)
+{
+    assert(cp != NULL);
+    assert(cp->curr != NULL);
+    assert(cp->curr->file != NULL);
+
+    return cp->curr->file;
+}
+
+size_t ib_cfgparser_curr_line(const ib_cfgparser_t *cp)
+{
+    assert(cp != NULL);
+    assert(cp->curr != NULL);
+
+    return cp->curr->line;
+}
+
+
 ib_status_t ib_cfgparser_destroy(ib_cfgparser_t *cp)
 {
     assert(cp != NULL);
