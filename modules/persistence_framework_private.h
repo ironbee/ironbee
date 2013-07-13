@@ -18,6 +18,9 @@
 #ifndef _ENGINE__PERSISTENCE_FRAMEWORK_PRIVATE_H_
 #define _ENGINE__PERSISTENCE_FRAMEWORK_PRIVATE_H_
 
+#define PERSISTENCE_FRAMEWORK_MODULE_NAME persistence_framework
+#define PERSISTENCE_FRAMEWORK_MODULE_NAME_STR IB_XSTRINGIFY(PERSISTENCE_FRAMEWORK_MODULE_NAME)
+
 /**
  * @file
  * @brief IronBee Engine --- Persistence Framework
@@ -153,6 +156,21 @@ struct ib_pstnsfw_modlist_t {
     ib_array_t *configs;
 };
 typedef struct ib_pstnsfw_modlist_t ib_pstnsfw_modlist_t;
+
+/**
+ * Initialize @a pstnsfw.
+ *
+ * @params[in] mp Allocate out of this memory pool.
+ * @params[out] pstnsfw Initialize this.
+ *
+ * @returns
+ * - IB_OK
+ * - IB_EALLOC
+ */
+ib_status_t ib_pstnsfw_cfg_create(
+    ib_mpool_t       *mp,
+    ib_pstnsfw_cfg_t **pstnsfw
+);
 
 #ifdef __cplusplus
 }
