@@ -52,20 +52,22 @@ static const char *VAR_TYPE  = "var";
  * - IB_EOTHER On an unexpected read error.
  */
 static ib_status_t read_file(
-    ib_mpool_t  *mp,
+    ib_tx_t     *tx,
     const char  *file,
     const void **out,
     size_t      *sz
 )
 {
-    assert(mp != NULL);
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
     assert(file != NULL);
     assert(out != NULL);
 
-    int     fd    = open(file, O_RDONLY);
-    size_t  bufsz = 1024; /* Size of buffer. */
-    size_t  fill  = 0;     /* Total bytes in buf. */
-    void   *buf   = ib_mpool_alloc(mp, bufsz);
+    ib_mpool_t *mp    = tx->mp;
+    int         fd    = open(file, O_RDONLY);
+    size_t      bufsz = 1024; /* Size of buffer. */
+    size_t      fill  = 0;     /* Total bytes in buf. */
+    void       *buf   = ib_mpool_alloc(mp, bufsz);
 
     if (buf == NULL) {
         return IB_EALLOC;
@@ -74,6 +76,8 @@ static ib_status_t read_file(
     if (fd == -1) {
         return IB_ENOENT;
     }
+
+    ib_log_debug_tx(tx, "Loading file %s.", file);
 
     for (;;) {
         ssize_t r = read(fd, buf + fill, bufsz - fill);
@@ -87,6 +91,7 @@ static ib_status_t read_file(
 
         /* Read error. */
         if (r < 0) {
+            ib_log_debug_tx(tx, "Error reading file %s.", file);
             return IB_EOTHER;
         }
 
@@ -154,8 +159,10 @@ static ib_status_t json_load_fn(
     const void  *buf = NULL;
     size_t       sz;
 
+    ib_log_debug_tx(tx, "Loading JSON file %s.", json_cfg->file); 
+
     /* Load the file into a buffer. */
-    rc = read_file(tx->mp, json_cfg->file, &buf, &sz);
+    rc = read_file(tx, json_cfg->file, &buf, &sz);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Failed to read JSON file %s", json_cfg->file);
         return rc;
@@ -216,6 +223,13 @@ static ib_status_t json_create_fn(
         return IB_EINVAL;
     }
     json_file = (const char *)ib_list_node_data_const(node);
+    if (strstr(json_file, "json://") == NULL) {
+        ib_log_error(ib, "JSON URI Malformed: %s", json_file);
+        return IB_EINVAL;
+    }
+
+    /* Move the character pointer past the prefix so only the file remains. */
+    json_file += sizeof("json://");
 
     json_cfg->file = ib_util_relative_file(mp, cfg->config_file, json_file);
     if (json_cfg->file == NULL) {
@@ -245,7 +259,7 @@ static ib_status_t var_create_fn(
     assert(ib != NULL);
     assert(params != NULL);
     assert(impl != NULL);
-    assert(cbdata != NULL);
+    assert(cbdata == NULL);
 
     ib_mpool_t            *mp = ib_engine_pool_main_get(ib);
     var_t                 *var;
@@ -253,9 +267,11 @@ static ib_status_t var_create_fn(
     const ib_list_node_t  *node;
     ib_status_t            rc;
 
+    ib_log_debug(ib, "Creating vars-backed collection.");
+
     var = ib_mpool_alloc(mp, sizeof(*var));
     if (var == NULL) {
-        ib_log_error(ib, "Failed to allocate JSON configuration.");
+        ib_log_error(ib, "Failed to allocate VAR configuration.");
         return IB_EALLOC;
     }
 
@@ -265,22 +281,27 @@ static ib_status_t var_create_fn(
         return rc;
     }
 
-    /* Skip the collection name. */
+    /* The collection name. */
     node = ib_list_first_const(params);
     if (node == NULL) {
-        ib_log_error(ib, "JSON requires at least 2 arguments: name and uri.");
+        ib_log_error(ib, "VAR requires at least 2 arguments: name and uri.");
         return IB_EINVAL;
     }
 
-    /* Skip the URI. */
+    /* The URI. */
     node = ib_list_node_next_const(node);
     if (node == NULL) {
-        ib_log_error(ib, "JSON requires at least 2 arguments: name and uri.");
+        ib_log_error(ib, "VAR requires at least 2 arguments: name and uri.");
         return IB_EINVAL;
     }
 
     /* For the rest of the nodes... */
-    for (; node != NULL; node = ib_list_node_next_const(node)) {
+    for (
+          node = ib_list_node_next_const(node);
+          node != NULL;
+          node = ib_list_node_next_const(node)
+        )
+    {
         const char *assignment =
             (const char *)ib_list_node_data_const(node);
         const char *eqsign = index(assignment, '=');
@@ -288,6 +309,7 @@ static ib_status_t var_create_fn(
 
         /* Assume an empty assignment if no equal sign is included. */
         if (eqsign == NULL) {
+            ib_log_debug(ib, "Creating empty var: %s", assignment);
             /* The whole assignment is just a variable name. */
             rc = ib_field_create(
                 &field,
@@ -298,6 +320,7 @@ static ib_status_t var_create_fn(
                 ib_ftype_nulstr_in(""));
         }
         else if (*(eqsign + 1) == '\0') {
+            ib_log_debug(ib, "Creating empty var: %s", assignment);
             /* The assignment is a var name + '='. */
             rc = ib_field_create(
                 &field,
@@ -308,6 +331,12 @@ static ib_status_t var_create_fn(
                 ib_ftype_nulstr_in(""));
         }
         else {
+            ib_log_debug(
+                ib,
+                "Creating empty var: %.*s=%s",
+                (int)(eqsign - assignment),
+                assignment,
+                eqsign+1);
             /* Normal assignment. eqsign is the end of the name.
              * eqsign + 1 is the start of the assigned value. */
             rc = ib_field_create(
@@ -483,6 +512,8 @@ static ib_status_t init_collection_common(
     const char            *uri;    /* The URI to the resource. */
     ib_context_t          *ctx;
 
+    ib_cfg_log_debug(cp, "Initializing collection.");
+
     /* Set the configuration file before doing much else. */
     cfg->config_file = ib_cfgparser_curr_file(cp);
 
@@ -508,6 +539,7 @@ static ib_status_t init_collection_common(
     }
     uri = (const char *)ib_list_node_data_const(node);
 
+    ib_cfg_log_debug(cp, "Initializing collection %s.", uri);
     if (strncmp(uri, "vars:", sizeof("vars:")) == 0) {
         rc = domap(cp, ctx, VAR_TYPE, cfg, name, vars);
         if (rc != IB_OK) {
@@ -551,7 +583,7 @@ exit_EINVAL:
     return IB_EINVAL;
 }
 
-static ib_status_t init_collection(
+static ib_status_t init_collection_fn(
     ib_cfgparser_t *cp,
     const char *directive,
     const ib_list_t *vars,
@@ -566,7 +598,7 @@ static ib_status_t init_collection(
         false);
 }
 
-static ib_status_t init_collection_indexed(
+static ib_status_t init_collection_indexed_fn(
     ib_cfgparser_t *cp,
     const char *directive,
     const ib_list_t *vars,
@@ -597,21 +629,37 @@ static ib_status_t register_directives(
     assert(ib != NULL);
     assert(cbdata != NULL);
 
-    IB_DIRMAP_INIT_STRUCTURE(dirmap) = {
-        IB_DIRMAP_INIT_LIST(
-            "InitCollection",
-            init_collection,
-            cbdata
-        ),
-        IB_DIRMAP_INIT_LIST(
-            "InitCollectionIndexed",
-            init_collection_indexed,
-            cbdata
-        ),
-        IB_DIRMAP_INIT_LAST
-    };
+    ib_status_t rc;
 
-    return ib_config_register_directives(ib, dirmap);
+    rc = ib_config_register_directive(
+        ib,
+        "InitCollection",
+        IB_DIRTYPE_LIST,
+        (ib_void_fn_t)init_collection_fn,
+        NULL,
+        cbdata,
+        NULL,
+        NULL
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_config_register_directive(
+        ib,
+        "InitCollectionIndexed",
+        IB_DIRTYPE_LIST,
+        (ib_void_fn_t)init_collection_indexed_fn,
+        NULL,
+        cbdata,
+        NULL,
+        NULL
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
 }
 
 /**
@@ -657,12 +705,14 @@ static ib_status_t init_collection_init(
 
     cfg->module = module;
 
+    ib_log_debug(ib, "Registering directives.");
     rc = register_directives(ib, cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to dynamically register directives.");
         return rc;
     }
 
+    ib_log_debug(ib, "Registering vars: handlers.");
     rc = ib_pstnsfw_register_type(
         cfg->pstnsfw,
         ib_context_main(ib),
@@ -681,6 +731,7 @@ static ib_status_t init_collection_init(
     }
 
 #if ENABLE_JSON
+    ib_log_debug(ib, "Registering json: handlers.");
     rc = ib_pstnsfw_register_type(
         cfg->pstnsfw,
         ib_context_main(ib),

@@ -236,7 +236,7 @@ static ib_status_t populate_context(
         /* Alias some values. */
         const char         *name   = mapping->name;
         ib_pstnsfw_store_t *store  = mapping->store;
-        const char         *key    = NULL;
+        const char         *key    = mapping->key;
         bool                expand = false;
 
         ib_data_expand_test_str(key, &expand);
@@ -342,7 +342,7 @@ static ib_status_t persist_context(
         /* Alias some values. */
         const char         *name   = mapping->name;
         ib_pstnsfw_store_t *store  = mapping->store;
-        const char         *key    = NULL;
+        const char         *key    = mapping->key;
         bool                expand = false;
 
         ib_data_expand_test_str(key, &expand);
@@ -445,7 +445,10 @@ static ib_status_t destroy_stores(
 
         /* When a store is destroyed, the handler is NULLed.
          * Check that this store is not destroyed. */
-        if (store != NULL && store->handler != NULL) {
+        if ( store != NULL
+          && store->handler != NULL
+          && store->handler->destroy_fn != NULL
+          ){
             store->handler->destroy_fn(
                 store->impl,
                 store->handler->destroy_data);
