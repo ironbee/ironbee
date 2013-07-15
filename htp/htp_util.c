@@ -609,14 +609,15 @@ htp_status_t htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *por
  */
 int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     // Allow a htp_uri_t structure to be provided on input,
-    // but allocate a new one if there isn't one
+    // but allocate a new one if the structure is NULL.
     if (*uri == NULL) {
         *uri = calloc(1, sizeof (htp_uri_t));
         if (*uri == NULL) return HTP_ERROR;
     }
 
     if (input == NULL) {
-        // Request does not contain the URI.
+        // The input might be NULL on requests that don't actually
+        // contain the URI. We allow that.
         return HTP_OK;
     }
 
