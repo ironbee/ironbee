@@ -224,7 +224,7 @@ struct ib_field_t {
 typedef int64_t ib_num_t;
 
 /**
- * Field float unsigned value type
+ * Field float value type
  */
 typedef long double ib_float_t;
 
@@ -634,8 +634,8 @@ ib_status_t DLL_PUBLIC ib_field_create(
 /**
  * Create a field without copying data.
  *
- * This will place @a mutable_in_pval directly into the field value  without
- * creating any copying.  This is different than ib_field_create_alias() which
+ * This will place @a mutable_in_pval directly into the field value without
+ * any copying.  This is different than ib_field_create_alias() which
  * uses a user provided pointer for where to store the field value.
  *
  * @param[out] pf              Address to write new field to.
