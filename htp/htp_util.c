@@ -971,12 +971,12 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
  * @param[in] path
  */
 void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
-    unsigned char *data = (unsigned char *) bstr_ptr(path);
+    unsigned char *data = bstr_ptr(path);
     size_t len = bstr_len(path);
     size_t rpos = 0;
     uint32_t codepoint = 0;
     uint32_t state = HTP_UTF8_ACCEPT;
-    uint32_t counter = 0;
+    uint32_t counter = 0; // How many bytes used by a UTF-8 character.
     uint8_t seen_valid = 0;
 
     while (rpos < len) {
@@ -984,14 +984,14 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
 
         switch (htp_utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
             case HTP_UTF8_ACCEPT:
-                // ASCII character
+                // We have a valid character.
 
                 if (counter > 1) {
-                    // A valid UTF-8 character
+                    // A valid UTF-8 character, consisting of 2 or more bytes.
+                    
                     seen_valid = 1;
 
-                    // Check for overlong characters and set the
-                    // flag accordingly
+                    // Check for overlong characters and set the flag accordingly.
                     switch (counter) {
                         case 2:
                             if (codepoint < 0x80) {
@@ -1011,37 +1011,33 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
                     }
                 }
 
-                // Special flag for fullwidth form evasion
+                // Special flag for half-width/full-width evasion.
                 if ((codepoint > 0xfeff) && (codepoint < 0x010000)) {
                     tx->flags |= HTP_PATH_HALF_FULL_RANGE;
                 }
 
-                // Advance over the consumed byte
+                // Advance over the consumed byte and reset the byte counter.
                 rpos++;
-
-                // Prepare for the next character
                 counter = 0;
 
                 break;
 
             case HTP_UTF8_REJECT:
-                // Invalid UTF-8 character
+                // Invalid UTF-8 character.
+
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
-                // Override the state in the UTF-8 decoder because
-                // we want to ignore invalid characters
+                // Override the decoder state because we want to continue decoding.
                 state = HTP_UTF8_ACCEPT;
 
-                // Advance over the consumed byte
+                // Advance over the consumed byte and reset the byte counter.
                 rpos++;
-
-                // Prepare for the next character
                 counter = 0;
 
                 break;
 
             default:
-                // Keep going; the character is not yet formed
+                // Keep going; the character is not yet formed.
                 rpos++;
                 break;
         }

@@ -1206,3 +1206,90 @@ TEST_F(ConnectionParsing, InvalidPath) {
     ASSERT_TRUE(tx->parsed_uri->path != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "invalid/path"));    
 }
+
+TEST_F(ConnectionParsing, PathUtf8_None) {
+    int rc = test_run(home, "53-path-utf8-none.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_FALSE(tx->flags & HTP_PATH_UTF8_VALID);
+    ASSERT_FALSE(tx->flags & HTP_PATH_UTF8_OVERLONG);
+    ASSERT_FALSE(tx->flags & HTP_PATH_HALF_FULL_RANGE);
+}
+
+TEST_F(ConnectionParsing, PathUtf8_Valid) {
+    int rc = test_run(home, "54-path-utf8-valid.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_UTF8_VALID);
+}
+
+TEST_F(ConnectionParsing, PathUtf8_Overlong2) {
+    int rc = test_run(home, "55-path-utf8-overlong-2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_UTF8_OVERLONG);
+}
+
+TEST_F(ConnectionParsing, PathUtf8_Overlong3) {
+    int rc = test_run(home, "56-path-utf8-overlong-3.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_UTF8_OVERLONG);
+}
+
+TEST_F(ConnectionParsing, PathUtf8_Overlong4) {
+    int rc = test_run(home, "57-path-utf8-overlong-4.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_UTF8_OVERLONG);
+}
+
+TEST_F(ConnectionParsing, PathUtf8_Invalid) {
+    int rc = test_run(home, "58-path-utf8-invalid.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_UTF8_INVALID);
+    ASSERT_FALSE(tx->flags & HTP_PATH_UTF8_VALID);
+}
+
+TEST_F(ConnectionParsing, PathUtf8_FullWidth) {
+    int rc = test_run(home, "59-path-utf8-fullwidth.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_HALF_FULL_RANGE);
+}
