@@ -503,7 +503,7 @@ TEST_F(TestIBUtilField, Alias)
      * Alias a numeric field
      */
     num1 = 1;
-    //pnum = &num1;
+    pnum = &num1;
     rc = ib_field_create_alias(&f, MemPool(), "num", 3,
                                IB_FTYPE_NUM,
                                ib_ftype_num_in(&num1));
