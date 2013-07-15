@@ -1164,3 +1164,45 @@ TEST_F(ConnectionParsing, Util) {
     htp_log(tx->connp, __FILE__, __LINE__, HTP_LOG_ERROR, 0, "Log message");
     ASSERT_EQ(log_message_count, htp_list_size(tx->connp->conn->messages));
 }
+
+TEST_F(ConnectionParsing, GetIPv6Invalid) {
+    int rc = test_run(home, "51-get-ipv6-invalid.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->request_method != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
+
+    ASSERT_TRUE(tx->request_uri != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "http://[::1:8080/?p=%20"));
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+
+    ASSERT_TRUE(tx->parsed_uri->hostname != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->hostname, "[::1:8080"));    
+}
+
+TEST_F(ConnectionParsing, InvalidPath) {
+    int rc = test_run(home, "52-invalid-path.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->request_method != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
+
+    ASSERT_TRUE(tx->request_uri != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "invalid/path?p=%20"));
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "invalid/path"));    
+}
