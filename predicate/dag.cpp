@@ -61,7 +61,7 @@ public:
     per_thread_t() :
         m_pool("node value private pool"),
         m_finished(false),
-        m_own_values(ValueList::create(m_pool)),
+        m_own_values(List<Value>::create(m_pool)),
         m_values(m_own_values)
     {
         // nop
@@ -117,7 +117,9 @@ public:
     //! Value list.
     ValueList values() const
     {
-        return m_forward ? m_forward->lookup_value().values() : m_values;
+        return m_forward ?
+            m_forward->lookup_value().values() :
+            ValueList(m_values);
     }
 
     //! Reset node.
@@ -126,7 +128,7 @@ public:
         m_forward.reset();
         m_finished = false;
         m_values = m_own_values;
-        m_values.clear();
+        m_own_values.clear();
     }
 
     //! Add @a value to values list.
@@ -146,7 +148,8 @@ public:
                 )
             );
         }
-        values().push_back(value);
+        assert(m_own_values.ib() == m_values.ib());
+        m_own_values.push_back(value);
     }
 
     //! Finish node.
@@ -205,7 +208,7 @@ private:
     //! Is node finished.
     bool m_finished;
     //! Value list owned by node.
-    ValueList m_own_values;
+    List<Value> m_own_values;
     //! Value list to use for values; might be @ref m_own_values.
     ValueList m_values;
 };

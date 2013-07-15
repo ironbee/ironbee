@@ -54,7 +54,7 @@ typedef IronBee::ConstField Value;
 /**
  * List of values.
  **/
-typedef IronBee::List<Value> ValueList;
+typedef IronBee::ConstList<Value> ValueList;
 
 /**
  * Context a node is evaluated in.

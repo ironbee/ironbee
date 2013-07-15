@@ -217,7 +217,7 @@ Value Operator::value_calculate(Value v, EvalContext context)
         context.memory_pool(),
         c_capture_name,
         sizeof(c_capture_name) - 1,
-        IronBee::List<void *>::create(context.memory_pool())
+        List<void *>::create(context.memory_pool())
     );
 
     int success = m_data->op.execute_instance(

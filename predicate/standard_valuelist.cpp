@@ -252,7 +252,8 @@ void Gather::calculate(EvalContext context)
         return;
     }
 
-    ValueList values = ValueList::create(context.memory_pool());
+    List<Value> values =
+        List<Value>::create(context.memory_pool());
 
     copy(
         child->values().begin(), child->values().end(),
