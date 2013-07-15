@@ -1431,8 +1431,23 @@ htp_status_t htp_decode_path_inplace(htp_tx_t *tx, bstr *path) {
 }
 
 htp_status_t htp_tx_urldecode_uri_inplace(htp_tx_t *tx, bstr *input) {
-    // XXX Convert flags.
-    return htp_urldecode_inplace_ex(tx->cfg, HTP_DECODER_URL_PATH, input, &(tx->flags), &(tx->response_status_expected_number));
+    uint64_t flags;
+    
+    htp_status_t rc = htp_urldecode_inplace_ex(tx->cfg, HTP_DECODER_URL_PATH, input, &flags, &(tx->response_status_expected_number));
+
+    if (flags & HTP_URLEN_INVALID_ENCODING) {
+        tx->flags |= HTP_PATH_INVALID_ENCODING;
+    }
+    
+    if (flags & HTP_URLEN_ENCODED_NUL) {
+        tx->flags |= HTP_PATH_ENCODED_NUL;
+    }
+    
+    if (flags & HTP_URLEN_RAW_NUL) {
+        tx->flags |= HTP_PATH_RAW_NUL;
+    }
+
+    return rc;
 }
 
 htp_status_t htp_tx_urldecode_params_inplace(htp_tx_t *tx, bstr *input) {
