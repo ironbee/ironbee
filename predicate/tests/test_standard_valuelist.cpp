@@ -86,3 +86,14 @@ TEST_F(TestStandardValueList, ScatterGather)
     EXPECT_THROW(eval_bool("(gather)"), IronBee::einval);
     EXPECT_THROW(eval_bool("(gather 'a' 'b')"), IronBee::einval);
 }
+
+TEST_F(TestStandardValueList, Sub)
+{
+    EXPECT_EQ("1", eval_s("(sub 'a' (gather (cat (setName 'a' '1') (setName 'b' 2) (setName 'c' 3))))"));
+    EXPECT_TRUE(eval_bool("(isLonger 1 (sub 'a' (gather (cat (setName 'a' '1') (setName 'b' 2) (setName 'a' 3)))))"));
+
+    EXPECT_THROW(eval_bool("(sub)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(sub 1 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(sub 'a')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(sub 'a' 'b' 'c')"), IronBee::einval);
+}

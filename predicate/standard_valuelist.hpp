@@ -170,6 +170,23 @@ protected:
 };
 
 /**
+ * Select named subfield of simple list value.
+ **/
+class Sub :
+    public Call
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+protected:
+    virtual void calculate(EvalContext context);
+};
+
+/**
  * Load all standard valuelists calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.
