@@ -1832,7 +1832,6 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         }
     }
 }
-#endif
 
 /**
  * Is URI character reserved?
@@ -1852,7 +1851,6 @@ int htp_is_uri_unreserved(unsigned char c) {
     }
 }
 
-#if 0
 /**
  * Decode a URL-encoded string, leaving the reserved
  * characters and invalid encodings alone.
