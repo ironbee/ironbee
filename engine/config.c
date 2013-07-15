@@ -692,6 +692,21 @@ ib_status_t ib_config_register_directives(ib_engine_t *ib,
     ib_status_t rc;
 
     while ((rec != NULL) && (rec->name != NULL)) {
+
+        rc = ib_hash_get(ib->dirmap, NULL, rec->name);
+        if (rc == IB_OK) {
+            ib_log_error(ib, "Redefining directive %s.", rec->name);
+            return IB_EOTHER;
+        }
+        else if (rc != IB_ENOENT) {
+            ib_log_error(
+                ib,
+                "Error checking for redefinition of directive %s: %s",
+                rec->name,
+                ib_status_to_string(rc));
+            return rc;
+        }
+
         rc = ib_hash_set(ib->dirmap, rec->name, (void *)rec);
         if (rc != IB_OK) {
             return rc;
@@ -728,6 +743,20 @@ ib_status_t ib_config_register_directive(
     rec->cbdata_cb = cbdata_config;
     rec->cbdata_blkend = cbdata_blkend;
     rec->valmap = valmap;
+
+    rc = ib_hash_get(ib->dirmap, NULL, rec->name);
+    if (rc == IB_OK) {
+        ib_log_warning(ib, "Redefining directive %s.", rec->name);
+        return IB_EOTHER;
+    }
+    else if (rc != IB_ENOENT) {
+        ib_log_error(
+            ib,
+            "Error checking for redefinition of directive %s: %s",
+            rec->name,
+            ib_status_to_string(rc));
+        return rc;
+    }
 
     rc = ib_hash_set(ib->dirmap, rec->name, (void *)rec);
 
