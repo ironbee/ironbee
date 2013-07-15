@@ -25,12 +25,13 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+#include "persistence_framework.h"
+
 #include <ironbee/build.h>
 #include <ironbee/engine_types.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
 #include <ironbee/module.h>
-#include "persistence_framework.h"
 
 #include <stdarg.h>
 #include <stdbool.h>

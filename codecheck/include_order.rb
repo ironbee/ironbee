@@ -94,6 +94,7 @@ CANONICAL_INCLUDE_ORDER = [
   '"managed_collection_private.h"',
   '"moddevel_private.h"',
   '"parser_suite.hpp"',
+  '"persistence_framework.h"',
   '"rule_engine_private.h"',
   '"rule_logger_private.h"',
   '"rules_lua_private.h"',
