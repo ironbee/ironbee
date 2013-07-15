@@ -1136,6 +1136,8 @@ TEST_F(ConnectionParsing, Util) {
     FILE *null = fopen("/dev/null", "w");
     ASSERT_TRUE(null != NULL);
 
+    fprint_bstr(null, "test", NULL);
+
     fprint_bstr(null, "test", tx->request_line);
 
     fprint_raw_data(null, "test", bstr_ptr(tx->request_line), bstr_len(tx->request_line));
