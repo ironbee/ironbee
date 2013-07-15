@@ -21,6 +21,8 @@
 
 <p>The easiest way to use in IronBee is via waggle. Add <code>predicate(...)</code> to your signatures and then <code>LuaInclude</code> the file. Predicate will be available as both <code>P</code> and <code>Predicate</code>. Be sure to load <code>ibmod_predicate</code> before the <code>LuaInclude</code>. If you are using it outside of IronBee, then load <code>../lua/ironbee/predicate.lua</code> as a module.</p>
 
+<p>This document describes various aspects of the frontend. Documentation of the available calls and frontend specific details of them are described in reference.md.</p>
+
 <h2 id="examples">Examples</h2>
 
 <pre><code>local long_uri = P.Gt(P.Length(P.Field('REQUEST_URI')), 1000)
@@ -28,12 +30,12 @@
 
 <p>The variable <code>long_uri</code> is an object that can be called to produce an sexpr.</p>
 
-<pre><code>= long_uri() --&gt; (gt (length (field 'REQUEST_URI')) '1000')
+<pre><code>= long_uri() --&gt; (gt (length (field 'REQUEST_URI')) 1000)
 </code></pre>
 
 <p>In this simple example, the front end may not appear to be very helpful; the Lua code is longer than the sexpr it produces. Indeed, for short expressions it may be faster/easier to write them out directly. The front end supports this with <code>P.Raw</code>:</p>
 
-<pre><code>= P.Raw(&quot;(gt (length (field 'REQUEST_URI')) '1000')&quot;)() --&gt; (gt (length (field 'REQUEST_URI')) '1000')
+<pre><code>= P.Raw(&quot;(gt (length (field 'REQUEST_URI')) 1000)&quot;)() --&gt; (gt (length (field 'REQUEST_URI')) 1000)
 </code></pre>
 
 <p>The value of the front end increases with expression complexity. Consider, e.g., a parameter expression:</p>
@@ -47,16 +49,16 @@ end
 <p>Here we define a function, <code>long</code>, that produces an expression. This function can now be reused, e.g.:</p>
 
 <pre><code>local function header(header_name)
-  return P.Sub(P.Field('REQUEST_HEADERS'), header_name)
+  return P.Sub(header_name, P.Field('REQUEST_HEADERS'))
 end
 local long_request = P.Or(
   long(header('Content-Type')),
   long(header('Host'))
 )
-= long_request() --&gt; (or (lt '1000' (length (sub (field 'REQUEST_HEADERS') 'Content-Type'))) (lt '1000' (length (sub (field 'REQUEST_HEADERS') 'Host'))))
+= long_request() --&gt; (or (lt 1000 (length (sub  'Content-Type' (field 'REQUEST_HEADERS')))) (lt 1000 (length (sub 'HOST' (field 'REQUEST_HEADERS')))))
 </code></pre>
 
-<p>The result sexpr is significantly longer.</p>
+<p>The resulting sexpr is significantly longer.</p>
 
 <p>The front end provides a method for formatting sexprs for human consumption.</p>
 
@@ -67,34 +69,34 @@ local long_request = P.Or(
 
 <pre><code>(or
   (lt
-    '1000'
+    1000
     (length
       (sub
-        (field 'REQUEST_HEADERS')
         'Content-Type'
+        (field 'REQUEST_HEADERS')
       )
     )
   )
   (lt
-    '1000'
+    1000
     (length
       (sub
-        (field 'REQUEST_HEADERS')
         'Host'
+        (field 'REQUEST_HEADERS')
       )
     )
   )
 )
 </code></pre>
 
-<p>You may have noticed a feature of Predicate in use above, the automatic conversion of Lua types. Numbers and Lua strings were automatically converted to Predicate strings when used as parameters to functions. This conversion includes proper escaping:</p>
+<p>The above example illustrates another feature of Predicate, the automatic conversion of Lua types. Numbers and Lua strings were automatically converted when used as parameters to functions. This conversion includes proper escaping:</p>
 
-<pre><code>= P.List(&quot;An 'important' example&quot;)() --&gt; (list 'An \'important\' example')
+<pre><code>= P.Cat(&quot;An 'important' example&quot;)() --&gt; (cat 'An \'important\' example')
 </code></pre>
 
 <p>Boolean types are also converted:</p>
 
-<pre><code>= P.List(true, false)() --&gt; (list (true) (false))
+<pre><code>= P.Cat(true, false)() --&gt; (list (true) (false))
 </code></pre>
 
 <p>Boolean expressions can be written using operators:</p>
@@ -103,19 +105,6 @@ local long_request = P.Or(
 </code></pre>
 
 <p>Note that addition was transformed into <code>and</code>.</p>
-
-<p>In the long function, we used <code>Lt</code> becomes the static value must be the first argument in Predicate. However, the following would have been clearer:</p>
-
-<pre><code>local function long(a, long_length)
-  long_length = long_length or 1000
-  return P.Gt(P.length(a), long_length)
-end
-</code></pre>
-
-<p>This version is actually legal because the front end understands <code>Gt</code> and automatically switches it to <code>Lt</code> with the static argument first:</p>
-
-<pre><code>= long(P.Field('A'))() --&gt; (lt '1000' (length (field 'A')))
-</code></pre>
 
 <p>Some calls such as <code>Length</code> make sense as methods. The front end provides a number of these as alternatives:</p>
 
@@ -129,11 +118,6 @@ local function header(header_name)
 end
 </code></pre>
 
-<p>The front end will also evaluate some functions at configuration time, if possible:</p>
-
-<pre><code>= P.Gt(100, 50)() --&gt; (true)
-</code></pre>
-
 <p>Finally, the front end adds a number of calls that do not exist in the back end but can be implemented in terms of other calls:</p>
 
 <pre><code>= P.Xor(P.Field('A'), P.Field('B'))() --&gt; (or (and (field 'A') (not (field 'B'))) (and (field 'B') (not (field 'A'))))
@@ -145,12 +129,12 @@ end
 
 <p><strong>Expression Objects</strong></p>
 
-<p>Most <code>P.*</code> methods return an expression object. All expression objects support conversion to an sexpr string by calling and the operators (see below). Expression objects are further divided into String, Call, Null, and Raw.</p>
+<p>Most <code>P.*</code> methods return an expression object. All expression objects support conversion to an sexpr string by calling and the operators (see below). Expression objects are further divided into String, Float, Integer, Call, Null, and Raw.</p>
 
 <ul>
 <li>String expression objects support String methods (see below).</li>
 <li>Call expression objects support String method and Call methods (see below).</li>
-<li>Null and Raw expression objects do not have any additional methods.</li>
+<li>Float, Integer, Null and Raw expression objects do not have any additional methods.</li>
 </ul>
 
 <p><strong>Naming Conventions</strong></p>
@@ -225,97 +209,6 @@ a = P.from_lua(&quot;foo&quot;) + &quot;bar&quot;
 </tr>
 </tbody>
 </table>
-<p><strong>String Methods</strong></p>
-
-<p>String expression objects support the following methods:</p>
-
-<table>
-<colgroup>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-</colgroup>
-
-<thead>
-<tr>
-	<th style="text-align:left;">Form</th>
-	<th style="text-align:left;">Meaning</th>
-	<th style="text-align:left;">Example</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-	<td style="text-align:left;"><code>s:length()</code></td>
-	<td style="text-align:left;">Length(s) of value</td>
-	<td style="text-align:left;"><code>P.S(&quot;foo&quot;):length()() --&gt; '3'</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Call Methods</strong></p>
-
-<p>Call expression objects support the following methods:</p>
-
-<table>
-<colgroup>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-</colgroup>
-
-<thead>
-<tr>
-	<th style="text-align:left;">Form</th>
-	<th style="text-align:left;">Meaning</th>
-	<th style="text-align:left;">Equivalent</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-	<td style="text-align:left;"><code>c:length()</code></td>
-	<td style="text-align:left;">Length of value</td>
-	<td style="text-align:left;"><code>P.Length(c)</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>c:sub(name)</code></td>
-	<td style="text-align:left;">First subfield named <code>name</code></td>
-	<td style="text-align:left;"><code>P.Sub(name, c)</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>c:suball(name)</code></td>
-	<td style="text-align:left;">All subfields named <code>name</code></td>
-	<td style="text-align:left;"><code>P.Suball(name, c)</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>c:streq(other)</code></td>
-	<td style="text-align:left;">Value string equal to <code>other</code></td>
-	<td style="text-align:left;"><code>P.Streq(other, c)</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>c:istreq(other)</code></td>
-	<td style="text-align:left;">Case insensitive of previous</td>
-	<td style="text-align:left;"><code>P.Istreq(other, c)</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>c:eq(other)</code></td>
-	<td style="text-align:left;">Value number equal to <code>other</code></td>
-	<td style="text-align:left;"><code>P.Eq(other, c)</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>c:ne(other)</code></td>
-	<td style="text-align:left;">Value number not equal to <code>other</code></td>
-	<td style="text-align:left;"><code>P.Ne(other, c)</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>c:T()</code></td>
-	<td style="text-align:left;">Run transformation <code>T</code></td>
-	<td style="text-align:left;"><code>P.T(c)</code></td>
-</tr>
-</tbody>
-</table>
-<p>In the last row, replace <code>T</code> with any transformation described below.</p>
-
 <p><strong>Introspection</strong></p>
 
 <p>It is possible to look inside expression objects.</p>
@@ -339,7 +232,7 @@ a = P.from_lua(&quot;foo&quot;) + &quot;bar&quot;
 <tr>
 	<td style="text-align:left;">All</td>
 	<td style="text-align:left;"><code>type</code></td>
-	<td style="text-align:left;">Type of object: <code>null</code>, <code>raw</code>, <code>call</code>, <code>string</code></td>
+	<td style="text-align:left;">Type of object: <code>null</code>, <code>raw</code>, <code>call</code>, <code>string</code>, <code>float</code>, <code>integer</code></td>
 </tr>
 <tr>
 	<td style="text-align:left;">String, Raw</td>
@@ -431,399 +324,7 @@ a = P.from_lua(&quot;foo&quot;) + &quot;bar&quot;
 </tr>
 </tbody>
 </table>
-<p><strong>Methods</strong></p>
 
-<p>Fundamentals:</p>
-
-<table>
-<colgroup>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-</colgroup>
-
-<thead>
-<tr>
-	<th style="text-align:left;">Method</th>
-	<th style="text-align:left;">Meaning</th>
-	<th style="text-align:left;">Sexpr</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-	<td style="text-align:left;"><code>P.Call(name, ...)</code></td>
-	<td style="text-align:left;">Call expression object</td>
-	<td style="text-align:left;"><code>(name ...)</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.C(name, ...)</code></td>
-	<td style="text-align:left;">Synonym for <code>P.Call</code></td>
-	<td style="text-align:left;"><code>(name ...)</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.String(value)</code></td>
-	<td style="text-align:left;">String expression object</td>
-	<td style="text-align:left;"><code>'value'</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.S(name, ...)</code></td>
-	<td style="text-align:left;">Synonym for <code>P.String</code></td>
-	<td style="text-align:left;"><code>'value'</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Raw(value)</code></td>
-	<td style="text-align:left;">Raw expression object</td>
-	<td style="text-align:left;"><code>value</code></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.R(value)</code></td>
-	<td style="text-align:left;">Synonym for <code>P.Raw</code></td>
-	<td style="text-align:left;"><code>value</code></td>
-</tr>
-</tbody>
-</table>
-<p>Boolean:</p>
-
-<table>
-<colgroup>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-</colgroup>
-
-<thead>
-<tr>
-	<th style="text-align:left;">Method</th>
-	<th style="text-align:left;">Meaning</th>
-	<th style="text-align:left;">Notes</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-	<td style="text-align:left;"><code>P.And(...)</code></td>
-	<td style="text-align:left;">Boolean and</td>
-	<td style="text-align:left;"></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Or(...)</code></td>
-	<td style="text-align:left;">Boolean or</td>
-	<td style="text-align:left;"></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Xor(a, b)</code></td>
-	<td style="text-align:left;">Boolean xor</td>
-	<td style="text-align:left;">1</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Not(a)</code></td>
-	<td style="text-align:left;">Boolean not</td>
-	<td style="text-align:left;"></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Nand(...)</code></td>
-	<td style="text-align:left;">Boolean nand</td>
-	<td style="text-align:left;">1</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Nor(...)</code></td>
-	<td style="text-align:left;">Boolean nor</td>
-	<td style="text-align:left;">1</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Nxor(a, b)</code></td>
-	<td style="text-align:left;">Boolean nxor</td>
-	<td style="text-align:left;">1</td>
-</tr>
-</tbody>
-</table>
-<p>Comparison:</p>
-
-<table>
-<colgroup>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-</colgroup>
-
-<thead>
-<tr>
-	<th style="text-align:left;">Method</th>
-	<th style="text-align:left;">Meaning</th>
-	<th style="text-align:left;">Notes</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-	<td style="text-align:left;"><code>P.Streq(a, b)</code></td>
-	<td style="text-align:left;">String equality</td>
-	<td style="text-align:left;">2, 3, 4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Istreq(a, b)</code></td>
-	<td style="text-align:left;">Case insensitive string equality</td>
-	<td style="text-align:left;">2, 3, 4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Eq(a, b)</code></td>
-	<td style="text-align:left;"><code>a == b</code> as numbers</td>
-	<td style="text-align:left;">2, 3, 4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Ne(a, b)</code></td>
-	<td style="text-align:left;"><code>a ~= b</code> as numbers</td>
-	<td style="text-align:left;">2, 3, 4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Gt(a, b)</code></td>
-	<td style="text-align:left;"><code>a &gt; b</code></td>
-	<td style="text-align:left;">2, 3, 4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Lt(a, b)</code></td>
-	<td style="text-align:left;"><code>a &lt; b</code></td>
-	<td style="text-align:left;">2, 3, 4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Ge(a, b)</code></td>
-	<td style="text-align:left;"><code>a &gt;= b</code></td>
-	<td style="text-align:left;">2, 3, 4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Le(a, b)</code></td>
-	<td style="text-align:left;"><code>a &lt;= b</code></td>
-	<td style="text-align:left;">2, 3, 4</td>
-</tr>
-</tbody>
-</table>
-<p>Decision:</p>
-
-<table>
-<colgroup>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-</colgroup>
-
-<thead>
-<tr>
-	<th style="text-align:left;">Method</th>
-	<th style="text-align:left;">Meaning</th>
-	<th style="text-align:left;">Notes</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-	<td style="text-align:left;"><code>P.If(pred, if_true, if_false)</code></td>
-	<td style="text-align:left;">Choose value based on <code>pred</code></td>
-	<td style="text-align:left;">3</td>
-</tr>
-</tbody>
-</table>
-<p>Data:</p>
-
-<table>
-<colgroup>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-</colgroup>
-
-<thead>
-<tr>
-	<th style="text-align:left;">Method</th>
-	<th style="text-align:left;">Meaning</th>
-	<th style="text-align:left;">Notes</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-	<td style="text-align:left;"><code>P.Length(collection)</code></td>
-	<td style="text-align:left;">Number of items</td>
-	<td style="text-align:left;"></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Sub(name, collection)</code></td>
-	<td style="text-align:left;">First subfield <code>name</code> in <code>collection</code></td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Suball(name, collection)</code></td>
-	<td style="text-align:left;">All subfields <code>name</code> in <code>collection</code></td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.SetName(name, value)</code></td>
-	<td style="text-align:left;">Construct named value</td>
-	<td style="text-align:left;"></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.List(...)</code></td>
-	<td style="text-align:left;">Construct list</td>
-	<td style="text-align:left;"></td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Field(name)</code></td>
-	<td style="text-align:left;">Data field <code>name</code></td>
-	<td style="text-align:left;"></td>
-</tr>
-</tbody>
-</table>
-<p>IronBee Operators:</p>
-
-<p>See IronBee manual for details. All operators take a static argument passed to them at configuration time and a dynamic argument passed to them at evaluation time. The static argument must be a string literal.</p>
-
-<table>
-<colgroup>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-</colgroup>
-
-<thead>
-<tr>
-	<th style="text-align:left;">Method</th>
-	<th style="text-align:left;">Meaning</th>
-	<th style="text-align:left;">Notes</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-	<td style="text-align:left;"><code>P.Operator(name, static, dynamic)</code></td>
-	<td style="text-align:left;">Use operator <code>name</code></td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Rx(pattern, data)</code></td>
-	<td style="text-align:left;">Regular expression</td>
-	<td style="text-align:left;">4</td>
-</tr>
-</tbody>
-</table>
-<p>IronBee Transformations:</p>
-
-<p>See IronBee manual for details.</p>
-
-<table>
-<colgroup>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-<col style="text-align:left;"/>
-</colgroup>
-
-<thead>
-<tr>
-	<th style="text-align:left;">Method</th>
-	<th style="text-align:left;">Meaning</th>
-	<th style="text-align:left;">Notes</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-	<td style="text-align:left;"><code>P.Transformation(name,  dynamic)</code></td>
-	<td style="text-align:left;">Use transformation <code>name</code></td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.NormalizePathWin(path)</code></td>
-	<td style="text-align:left;">Normalize windows path</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.NormalizePath(path)</code></td>
-	<td style="text-align:left;">Normalize path</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.HtmlEntityDecode(s)</code></td>
-	<td style="text-align:left;">Decode <code>s</code> as HTML</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.UrlDecode(url)</code></td>
-	<td style="text-align:left;">Decode <code>url</code></td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Min(list)</code></td>
-	<td style="text-align:left;">Smallest number in list</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Max(list)</code></td>
-	<td style="text-align:left;">Largest number in list</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Count(list)</code></td>
-	<td style="text-align:left;">Number of elements of list</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Length(list_or_s)</code></td>
-	<td style="text-align:left;">Length(s) of value</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.CompressWhitespace(s)</code></td>
-	<td style="text-align:left;">Compress whitespace</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.RemoveWhitespace(s)</code></td>
-	<td style="text-align:left;">Remove all whitespace</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Trim(s)</code></td>
-	<td style="text-align:left;">Remove edge whitespace</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.TrimRight(s)</code></td>
-	<td style="text-align:left;">Remove whitespace suffix</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.TrimLeft(s)</code></td>
-	<td style="text-align:left;">Remove whitespace prefix</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Lowercase(s)</code></td>
-	<td style="text-align:left;">Convert to lowercase</td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Name(f)</code></td>
-	<td style="text-align:left;">Name of <code>f</code></td>
-	<td style="text-align:left;">4</td>
-</tr>
-<tr>
-	<td style="text-align:left;"><code>P.Names(list)</code></td>
-	<td style="text-align:left;">Name of items of <code>list      | 4     |
-</code>P.floor(n)<code>| Round</code>n<code>down.             | 4     |
-</code>P.ceil(n)<code>| Round</code>n<code>up.               | 4     |
-</code>P.round(n)<code>| Round</code>n<code>to nearest.       | 4     |
-</code>P.toString(n)<code>| Convert</code>n<code>to string.      | 4     |
-</code>P.toInteger(s)<code>| Convert</code>s<code>to integer.     | 4     |
-</code>P.toFloat(s)<code>| Convert</code>s` to float.</td>
-	<td style="text-align:left;">4</td>
-</tr>
-</tbody>
-</table>
-<ol>
-<li>Implemented in terms of other calls.</li>
-<li>Requires one static argument. If second argument is the static argument, will swap, possibly changing operator. E.g., <code>P.Gt(P.Field('a'), 5)</code> becomes <code>P.Lt(5, P.Field('a'))</code>.</li>
-<li>Will evaluate at configuration time if possible.</li>
-<li>Implemented via an IronBee operator or transformation (see <code>P.Operator</code>, <code>P.Transformation</code>, and IronBee manual).</li>
-</ol>
 
 </body>
 </html>
