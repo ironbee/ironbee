@@ -375,10 +375,20 @@ static ib_status_t var_load_fn(
 }
 
 /**
- * @params[in] params List of parameters.
- *                    The first element is the name of the collection.
- *                    The second element is the URI.
- *                    The rest are options.
+ * Instantiate an instance of @a type and map @a collection_name with it.
+ *
+ * @param[in] cp The configuration parser.
+ * @param[in] ctx The configuration context.
+ * @param[in] type The type being mapped.
+ * @param[in] cfg The configuration used in this module.
+ * @param[in] collection_name The name of the collection.
+ * @param[in] params List of parameters.
+ *                   The first element is the name of the collection.
+ *                   The second element is the URI.
+ *                   The rest are options.
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure of ib_uuid_create_v4() or @c ib_pstnsfw_* calls.
  */
 static ib_status_t domap(
     ib_cfgparser_t        *cp,

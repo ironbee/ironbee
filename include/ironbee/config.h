@@ -527,7 +527,7 @@ ib_status_t ib_cfgparser_context_current(const ib_cfgparser_t *cp,
 /**
  * Get the current file being parsed.
  * 
- * @param[in] ctx The parse context.
+ * @param[in] cp The parser.
  *
  * @returns The current file name.
  */
@@ -536,7 +536,7 @@ const char DLL_PUBLIC *ib_cfgparser_curr_file(const ib_cfgparser_t *cp);
 /**
  * Get the current line number being parsed.
  * 
- * @param[in] ctx The parse context.
+ * @param[in] cp The parser.
  *
  * @returns The current file line number.
  */

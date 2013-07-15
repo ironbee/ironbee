@@ -160,8 +160,8 @@ typedef struct ib_pstnsfw_modlist_t ib_pstnsfw_modlist_t;
 /**
  * Initialize @a pstnsfw.
  *
- * @params[in] mp Allocate out of this memory pool.
- * @params[out] pstnsfw Initialize this.
+ * @param[in] mp Allocate out of this memory pool.
+ * @param[out] pstnsfw Initialize this.
  *
  * @returns
  * - IB_OK
