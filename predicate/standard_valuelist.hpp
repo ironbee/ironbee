@@ -187,7 +187,7 @@ protected:
 };
 
 /**
- * Load all standard valuelists calls into a CallFactory.
+ * Load all standard ValueList calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.
  **/

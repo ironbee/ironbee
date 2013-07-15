@@ -96,10 +96,10 @@ protected:
      *
      * By default, will evaluate @a input at the beginning and will finish
      * this node if input is finished at the end.  These behaviors can be
-     * overriden with @a eval_input and @a auto_finish.
+     * overridden with @a eval_input and @a auto_finish.
      *
      * This routine does understand unfinished nodes.  If @a input is
-     * unfinished, it will remeber which values of @a input it has processed
+     * unfinished, it will remember which values of @a input it has processed
      * and look for new ones the next time it is called.
      *
      * @param[in] input        Node whose values should be used as inputs.

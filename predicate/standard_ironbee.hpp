@@ -167,7 +167,7 @@ private:
 };
 
 /**
- * Copy childrens values but finish once given phase is reached.
+ * Copy children's values but finish once given phase is reached.
  **/
 class FinishPhase :
     public MapCall

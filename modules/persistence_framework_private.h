@@ -41,10 +41,10 @@ extern "C" {
 #endif
 
 /**
- * This structure contains handlers for a paritcular type.
+ * This structure contains handlers for a particular type.
  *
  * A handler cannot store data, though. A handler must first be used
- * to create an implmenetation instance. The implmemetnation instance
+ * to create an implementation instance. The implementation instance
  * plus its associated handler structure is a @ref ib_pstnsfw_store_t.
  */
 struct ib_pstnsfw_handler_t {
@@ -63,7 +63,7 @@ typedef struct ib_pstnsfw_handler_t ib_pstnsfw_handler_t;
 /**
  * A store is an instances of a @ref ib_pstnsfw_handler_t.
  *
- * A @ref ib_pstnsfw_handler_t plus the implmementation data
+ * A @ref ib_pstnsfw_handler_t plus the implementation data
  * created by ib_pstnsfw_handler_t::create_fn is a @ref ib_pstnsfw_store_t.
  */
 struct ib_pstnsfw_store_t {
@@ -144,7 +144,7 @@ struct ib_pstnsfw_modlist_t {
      * Array of NULL or @ref ib_pstnsfw_cfg_t.
      *
      * The index is the client module's index value. The stored
-     * @ref ib_pstsnfw_cfg_t is the configuration for that
+     * @ref ib_pstnsfw_cfg_t is the configuration for that
      * context and that module managed by the persistence module
      * on behalf of the user module.
      *

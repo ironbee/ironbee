@@ -662,7 +662,7 @@ ib_status_t DLL_PUBLIC ib_field_create_no_copy(
  * When the field is set @a *storage_pval is changed and any get
  * reflects the value of @a *storage_pval.
  *
- * @note For null string and byestring types, @a storage_pval should be
+ * @note For null string and bytestring types, @a storage_pval should be
  * treated as a pointer to a `char *`.  Thus, use the
  * @c ib_ftype_T_mutable_out() functions for this parameter for these types.
  * For numeric and related types, @a storage_pval should be treated as a

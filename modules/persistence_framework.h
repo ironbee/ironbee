@@ -47,7 +47,7 @@ extern "C" {
  * writer to...
  *
  * - register persistence implementations at configuration time,
- * - instantiate named instances of those implmentations,
+ * - instantiate named instances of those implementations,
  * - link those named instances to collections or instantiate anonymous
  *   instances of an implementation,
  * @{
@@ -168,7 +168,7 @@ ib_status_t DLL_PUBLIC ib_pstnsfw_create_store(
  *
  * @param[in] pstnsfw The persistence instance.
  * @param[in] ctx The configuration context this will be in.
- * @param[in] name The name of the collectioin to map.
+ * @param[in] name The name of the collection to map.
  * @param[in] key The key to store the collection under in the store.
  *            This will be expanded against the transaction fields.
  * @param[in] store The store name.

@@ -41,6 +41,7 @@ ocur occurred
 backwars backwards
 ponse response
 successfun successful
+cpy copy
 copyrighash copyright
 dflt Default
 nullt null
@@ -52,6 +53,7 @@ siteservice site service
 interator iterator
 suppor support
 retuned returned
+valuelists ValueList
 inits initializes
 tranformation transformation
 seach Search
@@ -79,6 +81,7 @@ ctrl variable
 wirte Write
 enval EINVAL
 byestring ByteString
+byestring bytestring
 htis this
 mutext mutex
 staus Status
@@ -92,6 +95,7 @@ registerring Registering
 convertable convertible
 curr cur
 otheres others
+referece reference
 hlpr helper
 nul NUL
 thie This

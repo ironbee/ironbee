@@ -68,7 +68,7 @@ string Cat::name() const
 
 void Cat::calculate(EvalContext context)
 {
-    // @todo Change to be opportunitistic.  I.e., add values of first
+    // @todo Change to be opportunistic.  I.e., add values of first
     // child immediately.  Once that child is finished, do same for next,
     // and so on.
 

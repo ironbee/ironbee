@@ -39,7 +39,7 @@ IB_MODULE_DECLARE();
 /**
  * Get the per-context pstnsfw_cfg.
  *
- * @a pstnsfw_main and @c *pstnsfw_cfg may referece the same address.
+ * @a pstnsfw_main and @c *pstnsfw_cfg may reference the same address.
  * @a pstnsfw_cfg will not be written too until the correct @ref ib_pstnsfw_cfg_t
  * has been retrieved.
  *
@@ -556,7 +556,7 @@ static ib_status_t destroy_stores(
 }
 
 /**
- * Called by ib_psntsfw_create() to add a user's module config.
+ * Called by ib_pstnsfw_create() to add a user's module config.
  *
  * The persistence framework keeps configuration information about
  * a user's module. This function adds space in the persistence
@@ -799,7 +799,7 @@ ib_status_t ib_pstnsfw_create_store(
     store->impl = NULL;
     store->name = ib_mpool_strdup(mp, name);
     if (store->name == NULL) {
-        ib_log_error(ib, "Failed to cpy store name %s", name);
+        ib_log_error(ib, "Failed to copy store name %s", name);
         return IB_EALLOC;
     }
 
@@ -963,9 +963,9 @@ static ib_status_t persistence_framework_fini(
 
 
 IB_MODULE_INIT(
-    IB_MODULE_HEADER_DEFAULTS,    /* Headeer defaults. */
+    IB_MODULE_HEADER_DEFAULTS,    /* Header defaults. */
     MODULE_NAME_STR,              /* Module name. */
-    NULL,                         /* Configuration. Dyanmically set in init. */
+    NULL,                         /* Configuration. Dynamically set in init. */
     0,                            /* Config length is 0. */
     cpy_pstnsfw,                  /* Configuration copy function. */
     NULL,                         /* Callback data. */
