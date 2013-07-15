@@ -28,26 +28,37 @@
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/module.h>
+#include <ironbee/mpool.h>
 
 #include <GeoIP.h>
 
 #include <assert.h>
 #include <math.h>
 #include <strings.h>
+#include <unistd.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        geoip
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
+/**
+ * Data used by each module instance, associated with an IronBee engine.
+ */
+typedef struct {
+    GeoIP       *geoip_db;         /**< The GeoIP database */
+} module_data_t;
 
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
 /**
- * The GeoIP database.
+ * Lookup the IP address in the GeoIP database
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] tx Transaction
+ * @param[in] event Event
+ * @param[in] data callback data (Module configuration)
  */
-static GeoIP *geoip_db = NULL;
-
 static ib_status_t geoip_lookup(
     ib_engine_t *ib,
     ib_tx_t *tx,
@@ -55,7 +66,12 @@ static ib_status_t geoip_lookup(
     void *data
 )
 {
+    assert(ib != NULL);
+    assert(event == handle_context_tx_event);
+    assert(data != NULL);
+
     const char *ip = tx->er_ipstr;
+    const module_data_t *mod_data = (const module_data_t *)data;
 
     if (ip == NULL) {
         ib_log_alert_tx(tx, "Trying to lookup NULL IP in GEOIP");
@@ -92,13 +108,12 @@ static ib_status_t geoip_lookup(
 
     /* NOTICE: Called before GeoIP_record_by_addr allocates a
      * GeoIPRecord. */
-    if (rc != IB_OK)
-    {
+    if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Unable to add GEOIP list to DPI.");
         return IB_EINVAL;
     }
 
-    if (geoip_db == NULL) {
+    if (mod_data->geoip_db == NULL) {
         ib_log_alert_tx(tx,
                         "GeoIP database was never opened. Perhaps the "
                         "configuration file needs a GeoIPDatabaseFile "
@@ -106,10 +121,9 @@ static ib_status_t geoip_lookup(
         return IB_EINVAL;
     }
 
-    geoip_id = GeoIP_id_by_addr(geoip_db, ip);
+    geoip_id = GeoIP_id_by_addr(mod_data->geoip_db, ip);
 
-    if (geoip_id > 0)
-    {
+    if (geoip_id > 0) {
         const char *tmp_str;
 
         ib_log_debug_tx(tx, "GeoIP record found.");
@@ -139,7 +153,7 @@ static ib_status_t geoip_lookup(
             ib_field_list_add(geoip_lst, tmp_field);
         }
 
-        tmp_str = GeoIP_country_name_by_id(geoip_db, geoip_id);
+        tmp_str = GeoIP_country_name_by_id(mod_data->geoip_db, geoip_id);
         if (tmp_str)
         {
             ib_field_create(&tmp_field,
@@ -193,21 +207,32 @@ static ib_status_t geoip_lookup(
     return IB_OK;
 }
 
+
+/**
+ * Handle a GeoIPDatabaseFile directive.
+ *
+ * @param[in] cp Configuration parser
+ * @param[in] directive The directive name.
+ * @param[in] vars The list of variables passed to @a directive.
+ * @param[in] cbdata User data (module configuration)
+ */
 static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
                                                   const char *name,
                                                   const char *p1,
                                                   void *cbdata)
 {
-    assert(cp!=NULL);
-    assert(name!=NULL);
-    assert(p1!=NULL);
+    assert(cp != NULL);
+    assert(name != NULL);
+    assert(p1 != NULL);
+    assert(cbdata != NULL);
 
     ib_status_t rc;
     size_t p1_len = strlen(p1);
     size_t p1_unescaped_len;
     char *p1_unescaped = malloc(p1_len+1);
+    module_data_t *mod_data = (module_data_t *)cbdata;
 
-    if ( p1_unescaped == NULL ) {
+    if (p1_unescaped == NULL) {
         return IB_EALLOC;
     }
 
@@ -223,36 +248,44 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
                         "GeoIP Database File \"%s\" contains nulls." :
                         "GeoIP Database File \"%s\" is an invalid string.";
 
-        ib_log_debug(cp->ib, msg, p1);
+        ib_cfg_log_debug(cp, msg, p1);
         free(p1_unescaped);
         return rc;
     }
 
-    if (geoip_db != NULL)
-    {
-        GeoIP_delete(geoip_db);
-        geoip_db = NULL;
+    if (mod_data->geoip_db != NULL) {
+        GeoIP_delete(mod_data->geoip_db);
+        mod_data->geoip_db = NULL;
     }
 
-            geoip_db = GeoIP_open(p1_unescaped, GEOIP_MMAP_CACHE);
+    mod_data->geoip_db = GeoIP_open(p1_unescaped, GEOIP_MMAP_CACHE);
+
+    if (mod_data->geoip_db == NULL) {
+        int status = access(p1_unescaped, R_OK);
+        if (status != 0) {
+            ib_cfg_log_error(cp, "Unable to read GeoIP database file \"%s\"",
+                             p1_unescaped);
+            rc = IB_ENOENT;
+        }
+        else {
+            ib_cfg_log_error(cp,
+                             "Unknown error opening GeoIP database file \"%s\"",
+                             p1_unescaped);
+            rc = IB_EUNKNOWN;
+        }
+    }
 
     free(p1_unescaped);
-
-    if (geoip_db == NULL)
-    {
-                return IB_EUNKNOWN;
-    }
-
-    return IB_OK;
+    return rc;
 }
 
-static IB_DIRMAP_INIT_STRUCTURE(geoip_directive_map) = {
+static ib_dirmap_init_t geoip_directive_map[] = {
 
     /* Give the config parser a callback for the directive GeoIPDatabaseFile */
     IB_DIRMAP_INIT_PARAM1(
         "GeoIPDatabaseFile",
         geoip_database_file_dir_param1,
-        NULL
+        NULL                            /* Filled in by the init function */
     ),
 
     /* signal the end of the list */
@@ -262,28 +295,36 @@ static IB_DIRMAP_INIT_STRUCTURE(geoip_directive_map) = {
 /* Called when module is loaded. */
 static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    ib_status_t rc;
+    ib_status_t    rc;
+    GeoIP         *geoip_db = NULL;
+    module_data_t *mod_data;
 
-    if (geoip_db == NULL)
-    {
-        ib_log_debug(ib, "Initializing default GeoIP database...");
-        geoip_db = GeoIP_new(GEOIP_MMAP_CACHE);
+    mod_data = ib_mpool_calloc(ib_engine_pool_main_get(ib),
+                               sizeof(*mod_data), 1);
+    if (mod_data == NULL) {
+        return IB_EALLOC;
     }
 
-    if (geoip_db == NULL)
-    {
+    ib_log_debug(ib, "Initializing default GeoIP database...");
+    geoip_db = GeoIP_new(GEOIP_MMAP_CACHE);
+    if (geoip_db == NULL) {
         ib_log_debug(ib, "Failed to initialize GeoIP database.");
         return IB_EUNKNOWN;
     }
 
     ib_log_debug(ib, "Initializing GeoIP database complete.");
-
     ib_log_debug(ib, "Registering handler...");
+
+    /* Store off pointer to our module data structure */
+    mod_data->geoip_db = geoip_db;
+
+    /* And point the generic module data at it */
+    m->data = mod_data;
 
     rc = ib_hook_tx_register(ib,
                              handle_context_tx_event,
                              geoip_lookup,
-                             NULL);
+                             mod_data);
     if (rc != IB_OK) {
         ib_log_debug(
             ib,
@@ -303,11 +344,12 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         /* Continue */
     }
 
-    if (rc != IB_OK)
-    {
+    if (rc != IB_OK) {
         ib_log_debug(ib, "Failed to load GeoIP module.");
         return rc;
     }
+
+    geoip_directive_map[0].cbdata_cb = mod_data;
 
     ib_log_debug(ib, "GeoIP module loaded.");
     return IB_OK;
@@ -316,9 +358,15 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 /* Called when module is unloaded. */
 static ib_status_t geoip_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    if (geoip_db!=NULL)
-    {
-        GeoIP_delete(geoip_db);
+    assert(ib != NULL);
+    assert(m != NULL);
+    assert(m->data != NULL);
+
+    module_data_t *mod_data = (module_data_t *)m->data;
+
+    if (mod_data->geoip_db != NULL) {
+        GeoIP_delete(mod_data->geoip_db);
+        mod_data->geoip_db = NULL;
     }
     ib_log_debug(ib, "GeoIP module unloaded.");
     return IB_OK;
