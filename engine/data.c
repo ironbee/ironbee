@@ -1099,7 +1099,7 @@ void ib_data_expand_test_str(
 )
 {
     ib_status_t rc;
-    
+
     rc = ib_expand_test_str(
         str,
         IB_VARIABLE_EXPANSION_PREFIX,
@@ -1117,7 +1117,7 @@ void ib_data_expand_test_str_ex(
 )
 {
     ib_status_t rc;
-    
+
     rc = ib_expand_test_str_ex(
         str,
         slen,

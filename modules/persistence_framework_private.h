@@ -96,7 +96,7 @@ typedef struct ib_pstnsfw_mapping_t ib_pstnsfw_mapping_t;
 /**
  * Persistence framework structure given to a user module.
  *
- * The user's module keeps this handle and returns it to the 
+ * The user's module keeps this handle and returns it to the
  * persistence module API to fetch the configuration information.
  */
 struct ib_pstnsfw_t {
@@ -142,7 +142,7 @@ struct ib_pstnsfw_modlist_t {
     /**
      * Array of NULL or @ref ib_pstnsfw_cfg_t.
      *
-     * The index is the client module's index value. The stored 
+     * The index is the client module's index value. The stored
      * @ref ib_pstsnfw_cfg_t is the configuration for that
      * context and that module managed by the persistence module
      * on behalf of the user module.

@@ -34,7 +34,7 @@ IB_MODULE_DECLARE();
  * Get the per-context pstnsfw_cfg.
  *
  * @a pstnsfw_main and @c *pstnsfw_cfg may referece the same address.
- * @a pstnsfw_cfg will not be written too until the correct @ref ib_pstnsfw_cfg_t 
+ * @a pstnsfw_cfg will not be written too until the correct @ref ib_pstnsfw_cfg_t
  * has been retrieved.
  *
  * @param[in] pstnsfw_main Any ib_pstnsfw_cfg_t for this module. This is
@@ -138,7 +138,7 @@ static ib_status_t populate_context(
     if (rc != IB_OK) {
         return rc;
     }
-    
+
     IB_LIST_LOOP_CONST(pstnsfw_cfg->coll_list, list_node) {
         const ib_pstnsfw_mapping_t *mapping =
             (const ib_pstnsfw_mapping_t *)ib_list_node_data_const(list_node);
@@ -202,7 +202,7 @@ static ib_status_t populate_context(
                 ib,
                 "Mapping for collection %s has no load handler. Skipping.",
                 name);
-        }        
+        }
     }
 
     return IB_OK;
@@ -244,7 +244,7 @@ static ib_status_t persist_context(
     if (rc != IB_OK) {
         return rc;
     }
-    
+
     IB_LIST_LOOP_CONST(pstnsfw_cfg->coll_list, list_node) {
         const ib_pstnsfw_mapping_t *mapping =
             (const ib_pstnsfw_mapping_t *)ib_list_node_data_const(list_node);
@@ -545,7 +545,7 @@ static ib_status_t destroy_stores(
             store->handler = NULL;
         }
     }
-    
+
     return IB_OK;
 }
 
@@ -782,7 +782,7 @@ ib_status_t ib_pstnsfw_create_store(
             name);
         return rc;
     }
-    
+
     store = (ib_pstnsfw_store_t *)ib_mpool_alloc(mp, sizeof(*store));
     if (store == NULL) {
         ib_log_error(ib, "Failed to allocate store.");
