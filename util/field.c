@@ -1197,7 +1197,9 @@ ib_status_t ib_field_convert(
 
         /* Extract string.  Note that a zero-length nulstr field can
          * have a NULL value in the union. */
-        if (in_field->val->u.nulstr == NULL) {
+        if ( (in_field->val->u.nulstr == NULL) &&
+             (in_field->val->pval == NULL) )
+        {
             str = "";
         }
         else {
