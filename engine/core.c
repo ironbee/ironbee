@@ -3801,173 +3801,6 @@ static ib_status_t core_dir_inspection_engine_options(ib_cfgparser_t *cp,
 }
 
 /**
- * Parse a InitCollection directive.
- *
- * Register a InitCollection directive to the engine.
- *
- * @param[in] cp Configuration parser
- * @param[in] directive The directive name.
- * @param[in] vars The list of variables passed to @c name.
- * @param[in] cbdata User data.  Index key if not null.
- */
-static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
-                                           const char *directive,
-                                           const ib_list_t *vars,
-                                           void *cbdata)
-{
-    assert(cp != NULL);
-    assert(directive != NULL);
-    assert(vars != NULL);
-
-    ib_status_t              rc;
-    ib_mpool_t              *mp;
-    const ib_list_node_t    *node;
-    ib_list_node_t          *mcnode;
-    ib_list_t               *params;
-    const char              *collection_name;
-    const char              *collection_uri;
-    ib_core_cfg_t           *cfg;
-    ib_managed_collection_t *collection = NULL;
-    bool                     new_collection = false;
-    ib_list_t               *managers_debug = NULL;
-    bool                     index = (cbdata != NULL);
-
-    mp = ib_engine_pool_config_get(cp->ib);
-
-    /* Get the configuration */
-    rc = ib_core_context_config(cp->cur_ctx, &cfg);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to get core module configuration: %s",
-                         ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Initialize the context's managed collection list on the first run */
-    if (cfg->mancoll_list == NULL) {
-        rc = ib_list_create(&(cfg->mancoll_list), mp);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "%s: Failed to create list: %s",
-                             directive, ib_status_to_string(rc));
-            return rc;
-        }
-    }
-
-    /* Get the collection name string */
-    node = ib_list_first_const(vars);
-    if ( (node == NULL) || (node->data == NULL) ) {
-        ib_cfg_log_error(cp, " %s: No collection name specified", directive);
-        return IB_EINVAL;
-    }
-    collection_name = (const char *)(node->data);
-
-    /* The next node is the URI */
-    node = ib_list_node_next_const(node);
-    if ( (node == NULL) || (node->data == NULL) ) {
-        ib_cfg_log_error(cp, " %s: No collection URI specified", directive);
-        return IB_EINVAL;
-    }
-    collection_uri = (const char *)(node->data);
-
-    /* Parameters */
-    rc = ib_list_create(&params, mp);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, " %s: Error allocation parameter list", directive);
-        return IB_EINVAL;
-    }
-
-    /* Loop through the remaining parameters */
-    while( (node = ib_list_node_next_const(node)) != NULL) {
-        const char *nodestr = (const char *)node->data;
-        rc = ib_list_push(params, (char *)nodestr);
-        if (rc != IB_OK) {
-            break;
-        }
-    }
-
-    /* Check if this collection name is already registered */
-    IB_LIST_LOOP(cfg->mancoll_list, mcnode) {
-        ib_managed_collection_t *mc = (ib_managed_collection_t *)mcnode->data;
-        if (strcmp(mc->collection_name, collection_name) == 0) {
-            collection = mc;
-            break;
-        }
-    }
-
-    /* Create a new collection if required */
-    if (collection == NULL) {
-        rc = ib_managed_collection_create(cp->ib, mp,
-                                          collection_name,
-                                          &collection);
-        if (rc != IB_OK) {
-            return rc;
-        }
-        new_collection = true;
-    }
-
-    /* For logging, create a list of manager objects */
-    if (ib_log_get_level(cp->ib) >= IB_LOG_DEBUG) {
-        ib_list_create(&managers_debug, mp);
-    }
-
-    /* Select a collection manager */
-    rc = ib_managed_collection_select(cp->ib, mp,
-                                      collection_name,
-                                      collection_uri,
-                                      params,
-                                      collection,
-                                      managers_debug);
-    if (rc == IB_ENOENT) {
-        ib_cfg_log_error(cp,
-                         "%s: No matching collection manager found "
-                         "for \"%s\" URI \"%s\"",
-                         directive, collection_name, collection_uri);
-        return IB_EINVAL;
-    }
-    else if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "%s: Failed to create managed collection \"%s\": %s",
-                         directive, collection_name, ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Add the collection (if it's new) to the managed collection list */
-    if (new_collection) {
-        rc = ib_list_push(cfg->mancoll_list, collection);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp,
-                             "%s: Error adding managed collection to list: %s",
-                             directive, ib_status_to_string(rc));
-            return rc;
-        }
-    }
-
-    if (managers_debug != NULL) {
-        IB_LIST_LOOP_CONST(managers_debug, node) {
-            const ib_collection_manager_t *manager =
-                (const ib_collection_manager_t *)node->data;
-            ib_cfg_log_debug(cp,
-                             "%s: %s collection \"%s\" managed by \"%s\" "
-                             "for context \"%s\"",
-                             directive,
-                             new_collection ? "New" : "Existing",
-                             collection_name,
-                             ib_collection_manager_name(manager),
-                             ib_context_full_get(cp->cur_ctx));
-        }
-    }
-
-    /* Index if desired */
-    if (index) {
-        rc = ib_data_register_indexed(ib_engine_data_config_get(cp->ib), collection_name);
-        /* Only known error is already registered; ignore. */
-        assert(rc == IB_OK || rc == IB_EINVAL);
-    }
-
-    /* Done */
-    return IB_OK;
-}
-
-/**
  * Perform any extra duties when certain config parameters are "Set".
  *
  * @param cp Config parser
@@ -4325,12 +4158,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL
     ),
 
-    IB_DIRMAP_INIT_PARAM1(
-        "BlockingMethod",
-        core_dir_param1,
-        NULL
-    ),
-
     /* Logging */
     IB_DIRMAP_INIT_PARAM1(
         "LogLevel",
@@ -4466,18 +4293,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_PARAM2(
         "InitVarIndexed",
         core_dir_initvar,
-        (void *)1
-    ),
-
-    /* TX Initialized Collection */
-    IB_DIRMAP_INIT_LIST(
-        "InitCollection",
-        core_dir_initcollection,
-        NULL
-    ),
-    IB_DIRMAP_INIT_LIST(
-        "InitCollectionIndexed",
-        core_dir_initcollection,
         (void *)1
     ),
 
