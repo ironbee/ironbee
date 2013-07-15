@@ -481,18 +481,212 @@ TEST_F(TestIBUtilField, test_dyn_field)
 
 TEST_F(TestIBUtilField, Alias)
 {
+    ib_num_t   num1;
+    ib_num_t   num2;
+    ib_float_t flt1;
+    ib_float_t flt2;
     char *s = NULL;
     const char *v;
     ib_field_t *f;
     ib_status_t rc;
 
-    rc = ib_field_create_alias(&f, MemPool(), "foo", 3, IB_FTYPE_NULSTR,
-        ib_ftype_nulstr_mutable_out(&s));
+    rc = ib_field_create_alias(&f, MemPool(), "foo", 3,
+                               IB_FTYPE_NULSTR,
+                               ib_ftype_nulstr_mutable_out(&s));
     ASSERT_EQ(IB_OK, rc);
     v = "hello";
     rc = ib_field_setv(f, ib_ftype_nulstr_in(v));
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(std::string(v), std::string(s));
+    ASSERT_STREQ(v, s);
+
+    /*
+     * Alias a numeric field
+     */
+    num1 = 1;
+    //pnum = &num1;
+    rc = ib_field_create_alias(&f, MemPool(), "num", 3,
+                               IB_FTYPE_NUM,
+                               ib_ftype_num_in(&num1));
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_field_value(f, ib_ftype_num_out(&num2));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(num1, num2);
+
+    num1 = 3;
+    rc = ib_field_value(f, ib_ftype_num_out(&num2));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(num1, num2);
+
+
+    /*
+     * Alias a floating point field
+     */
+    flt1 = 1.1;
+    rc = ib_field_create_alias(&f, MemPool(), "flt", 3,
+                               IB_FTYPE_FLOAT,
+                               ib_ftype_float_in(&flt1));
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_field_value(f, ib_ftype_float_out(&flt2));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(flt1, flt2);
+
+    flt1 = 1.5;
+    rc = ib_field_value(f, ib_ftype_float_out(&flt2));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(flt1, flt2);
+}
+
+TEST_F(TestIBUtilField, ConvertString)
+{
+    ib_field_t *f1;
+    ib_field_t *f2;
+    ib_status_t rc;
+    ib_num_t    num;
+    ib_float_t  flt;
+
+    /*
+     * Convert numeric string to number
+     */
+
+    /* Create the field */
+    rc = ib_field_create(&f1, MemPool(), "one", 3,
+                         IB_FTYPE_NULSTR, ib_ftype_nulstr_in("1"));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_NUM, f1, &f2);
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Pull out param value for check. */
+    rc = ib_field_value(f2, ib_ftype_num_out(&num));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(1, num);
+
+    /*
+     * Convert floating-point string to float
+     */
+
+    /* Create the field */
+    rc = ib_field_create(&f1, MemPool(), "one", 3,
+                         IB_FTYPE_NULSTR, ib_ftype_nulstr_in("1.1"));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_FLOAT, f1, &f2);
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Pull out param value for check. */
+    rc = ib_field_value(f2, ib_ftype_float_out(&flt));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_FLOAT_EQ(1.1, flt);
+
+    /*
+     * Convert non-numeric string to number
+     */
+
+    /* Create the field */
+    rc = ib_field_create(&f1, MemPool(), "one", 3,
+                         IB_FTYPE_NULSTR, ib_ftype_nulstr_in("x1"));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_NUM, f1, &f2);
+    ASSERT_EQ(IB_EINVAL, rc);
+
+    /*
+     * Convert floating-point string to number
+     */
+
+    /* Create the field */
+    rc = ib_field_create(&f1, MemPool(), "one", 3,
+                         IB_FTYPE_NULSTR, ib_ftype_nulstr_in("1.1"));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_NUM, f1, &f2);
+    ASSERT_EQ(IB_EINVAL, rc);
+
+
+    /*
+     * Convert non-numeric string to float
+     */
+
+    /* Create the field */
+    rc = ib_field_create(&f1, MemPool(), "one", 3,
+                         IB_FTYPE_NULSTR, ib_ftype_nulstr_in("x1.1"));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_FLOAT, f1, &f2);
+    ASSERT_EQ(IB_EINVAL, rc);
+}
+
+TEST_F(TestIBUtilField, ConvertNumbers)
+{
+    ib_field_t *f1;
+    ib_field_t *f2;
+    ib_status_t rc;
+    ib_num_t    num;
+    ib_float_t  flt;
+
+    /*
+     * Convert numeric to a float
+     */
+
+    /* Create the field */
+    num = 1;
+    rc = ib_field_create(&f1, MemPool(), "one", 3,
+                         IB_FTYPE_NUM, ib_ftype_num_in(&num));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_FLOAT, f1, &f2);
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Pull out param value for check. */
+    rc = ib_field_value(f2, ib_ftype_float_out(&flt));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_FLOAT_EQ(1.0, flt);
+
+    /*
+     * Convert floating-point to num
+     */
+
+    /* Create the field */
+    flt = 1.0;
+    rc = ib_field_create(&f1, MemPool(), "one", 3,
+                         IB_FTYPE_FLOAT, ib_ftype_float_in(&flt));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_NUM, f1, &f2);
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Pull out param value for check. */
+    rc = ib_field_value(f2, ib_ftype_num_in(&num));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(1, num);
+
+    /*
+     * Convert floating-point to num
+     */
+
+    /* Create the field */
+    flt = 1.1;
+    rc = ib_field_create(&f1, MemPool(), "one", 3,
+                         IB_FTYPE_FLOAT, ib_ftype_float_in(&flt));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_NUM, f1, &f2);
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Pull out param value for check. */
+    rc = ib_field_value(f2, ib_ftype_num_in(&num));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(1, num);
 }
 
 TEST_F(TestIBUtilField, AliasBytestr)
@@ -529,4 +723,120 @@ TEST_F(TestIBUtilField, AliasBytestr)
     ASSERT_EQ(strlen(s2), ib_bytestr_length(obs));
     ASSERT_EQ(0, memcmp(s2,
                         ib_bytestr_const_ptr(obs), ib_bytestr_length(obs)) );
+}
+
+TEST_F(TestIBUtilField, AliasConvert)
+{
+    char       *str;
+    ib_field_t *f1;
+    ib_field_t *f2;
+    ib_status_t rc;
+    ib_num_t    num;
+    ib_float_t  flt;
+
+    /*
+     * Convert numeric string to number
+     */
+
+    /* Copy a number into the string */
+    str = ib_mpool_strdup(MemPool(), "1");
+    ASSERT_TRUE(str != NULL);
+
+    /* Create the aliased field */
+    rc = ib_field_create_alias(&f1, MemPool(), "one", 3,
+                               IB_FTYPE_NULSTR,
+                               ib_ftype_nulstr_mutable_out(&str));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_NUM, f1, &f2);
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Pull out param value for check. */
+    rc = ib_field_value(f2, ib_ftype_num_out(&num));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(1, num);
+
+    /*
+     * Convert floating-point string to float
+     */
+
+    /* Copy a number into the string */
+    str = ib_mpool_strdup(MemPool(), "1.1");
+    ASSERT_TRUE(str != NULL);
+
+    /* Create the aliased field */
+    rc = ib_field_create_alias(&f1, MemPool(), "one", 3,
+                               IB_FTYPE_NULSTR,
+                               ib_ftype_nulstr_mutable_out(&str));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_FLOAT, f1, &f2);
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Pull out param value for check. */
+    rc = ib_field_value(f2, ib_ftype_float_out(&flt));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_FLOAT_EQ(1.1, flt);
+
+    /*
+     * Convert non-numeric string to number
+     */
+
+    /* Copy a number into the string */
+    str = ib_mpool_strdup(MemPool(), "x1");
+    ASSERT_TRUE(str != NULL);
+
+    /* Create the aliased field */
+    rc = ib_field_create_alias(&f1, MemPool(), "one", 3,
+                               IB_FTYPE_NULSTR,
+                               ib_ftype_nulstr_mutable_out(&str));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_NUM, f1, &f2);
+    ASSERT_EQ(IB_EINVAL, rc);
+
+    /*
+     * Convert floating-point string to number
+     */
+
+    /* Copy a number into the string */
+    str = ib_mpool_strdup(MemPool(), "1.1");
+    ASSERT_TRUE(str != NULL);
+
+    /* Create the aliased field */
+    rc = ib_field_create_alias(&f1, MemPool(), "one", 3,
+                               IB_FTYPE_NULSTR,
+                               ib_ftype_nulstr_mutable_out(&str));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_NUM, f1, &f2);
+    ASSERT_EQ(IB_EINVAL, rc);
+
+
+    /*
+     * Convert non-numeric string to float
+     */
+
+    /* Copy a number into the string */
+    str = ib_mpool_strdup(MemPool(), "1.1");
+    ASSERT_TRUE(str != NULL);
+
+    /* Create the aliased field */
+    rc = ib_field_create_alias(&f1, MemPool(), "one", 3,
+                               IB_FTYPE_NULSTR,
+                               ib_ftype_nulstr_mutable_out(&str));
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Attempt a numeric conversion. */
+    rc = ib_field_convert(MemPool(), IB_FTYPE_FLOAT, f1, &f2);
+    ASSERT_EQ(IB_OK, rc);
+
+    /* Pull out param value for check. */
+    rc = ib_field_value(f2, ib_ftype_float_out(&flt));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_FLOAT_EQ(1.1, flt);
 }
