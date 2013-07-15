@@ -171,7 +171,7 @@ htp_status_t htp_list_array_push(htp_list_array_t *l, void *e) {
 htp_status_t htp_list_array_replace(htp_list_array_t *l, size_t idx, void *e) {
     if (l == NULL) return HTP_ERROR;
     
-    if (idx + 1 > l->current_size) return HTP_ERROR;
+    if (idx + 1 > l->current_size) return HTP_DECLINED;
 
     size_t i = l->first;
 
