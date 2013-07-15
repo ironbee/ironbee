@@ -302,7 +302,7 @@ static ib_status_t tx_header_finished(
  * @param[in] cp Configuration parser
  * @param[in] directive The directive name.
  * @param[in] vars The list of variables passed to @a directive.
- * @param[in] cbdata User data. Unused.
+ * @param[in] cbdata User data (module configuration)
  */
 static ib_status_t moddevel_fieldtx_handler(
     ib_cfgparser_t  *cp,
@@ -460,7 +460,7 @@ static ib_dirmap_init_t moddevel_txdata_directive_map[] = {
     IB_DIRMAP_INIT_LIST(
         "TxData",
         moddevel_fieldtx_handler,
-        NULL
+        NULL                        /* Filled in by the init function */
     ),
 
     /* signal the end of the list */

@@ -1468,7 +1468,7 @@ static ib_dirmap_init_t moddevel_txdump_directive_map[] = {
     IB_DIRMAP_INIT_LIST(
         "TxDump",
         moddevel_txdump_handler,
-        NULL
+        NULL                        /* Filled in by the init function */
     ),
 
     /* signal the end of the list */
