@@ -1297,3 +1297,143 @@ TEST_F(UrlencodedParser, Partial6) {
 
     ASSERT_EQ(2, htp_table_size(urlenp->params));
 }
+
+TEST(List, Misc) {
+    htp_list_t *l = htp_list_create(16);
+
+    htp_list_push(l, (void *)"1");
+    htp_list_push(l, (void *)"2");
+    htp_list_push(l, (void *)"3");
+
+    ASSERT_EQ(3, htp_list_size(l));
+
+    char *p = (char *)htp_list_pop(l);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("3", p));
+
+    ASSERT_EQ(2, htp_list_size(l));
+
+    p = (char *)htp_list_shift(l);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("1", p));
+
+    ASSERT_EQ(1, htp_list_size(l));
+
+    p = (char *)htp_list_shift(l);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("2", p));
+
+    p = (char *)htp_list_shift(l);
+    ASSERT_TRUE(p == NULL);
+
+    p = (char *)htp_list_pop(l);
+    ASSERT_TRUE(p == NULL);
+
+    htp_list_destroy(l);
+}
+
+TEST(List, Misc2) {
+    htp_list_t *l = htp_list_create(1);
+
+    htp_list_push(l, (void *)"1");    
+
+    char *p = (char *)htp_list_shift(l);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("1", p));
+
+    htp_list_push(l, (void *)"2");
+
+    p = (char *)htp_list_shift(l);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("2", p));
+
+    ASSERT_EQ(0, htp_list_size(l));
+    
+    htp_list_destroy(l);
+}
+
+TEST(List, Misc3) {
+    htp_list_t *l = htp_list_create(2);
+
+    htp_list_push(l, (void *)"1");
+    htp_list_push(l, (void *)"2");
+
+    char *p = (char *)htp_list_shift(l);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("1", p));
+
+    htp_list_push(l, (void *)"3");
+
+    p = (char *)htp_list_get(l, 1);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("3", p));
+
+    ASSERT_EQ(2, htp_list_size(l));
+
+    htp_list_replace(l, 1, (void *)"4");
+
+    p = (char *)htp_list_pop(l);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("4", p));    
+
+    htp_list_destroy(l);
+}
+
+TEST(List, Expand1) {
+    htp_list_t *l = htp_list_create(2);
+
+    htp_list_push(l, (void *)"1");
+    htp_list_push(l, (void *)"2");
+
+    ASSERT_EQ(2, htp_list_size(l));
+
+    htp_list_push(l, (void *)"3");
+
+    ASSERT_EQ(3, htp_list_size(l));
+
+    char *p = (char *)htp_list_get(l, 0);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("1", p));
+
+    p = (char *)htp_list_get(l, 1);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("2", p));
+
+    p = (char *)htp_list_get(l, 2);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("3", p));
+
+    htp_list_destroy(l);
+}
+
+TEST(List, Expand2) {
+    htp_list_t *l = htp_list_create(2);
+
+    htp_list_push(l, (void *)"1");
+    htp_list_push(l, (void *)"2");
+
+    ASSERT_EQ(2, htp_list_size(l));
+
+    htp_list_shift(l);
+
+    ASSERT_EQ(1, htp_list_size(l));
+
+    htp_list_push(l, (void *)"3");
+    htp_list_push(l, (void *)"4");
+
+    ASSERT_EQ(3, htp_list_size(l));
+
+    char *p = (char *)htp_list_get(l, 0);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("2", p));
+
+    p = (char *)htp_list_get(l, 1);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("3", p));
+
+    p = (char *)htp_list_get(l, 2);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("4", p));
+
+    htp_list_destroy(l);
+}
