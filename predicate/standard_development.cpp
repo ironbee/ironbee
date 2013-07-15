@@ -30,8 +30,8 @@
 
 #include <ironbee/log.h>
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
 using namespace std;

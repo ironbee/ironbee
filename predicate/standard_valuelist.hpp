@@ -28,10 +28,10 @@
 #define __PREDICATE__STANDARD_VALUELIST__
 
 #include <predicate/merge_graph.hpp>
+#include <predicate/meta_call.hpp>
 
 #include <ironbeepp/operator.hpp>
 #include <ironbeepp/transformation.hpp>
-#include <predicate/meta_call.hpp>
 
 #include <boost/foreach.hpp>
 

@@ -22,8 +22,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <predicate/call_helpers.hpp>
 #include <predicate/validate.hpp>
+
+#include <predicate/call_helpers.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
