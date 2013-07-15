@@ -223,13 +223,13 @@ static ib_status_t json_create_fn(
         return IB_EINVAL;
     }
     json_file = (const char *)ib_list_node_data_const(node);
-    if (strstr(json_file, "json://") == NULL) {
+    if (strstr(json_file, "json-file://") == NULL) {
         ib_log_error(ib, "JSON URI Malformed: %s", json_file);
         return IB_EINVAL;
     }
 
     /* Move the character pointer past the prefix so only the file remains. */
-    json_file += sizeof("json://");
+    json_file += sizeof("json-file://")-1;
 
     json_cfg->file = ib_util_relative_file(mp, cfg->config_file, json_file);
     if (json_cfg->file == NULL) {
@@ -309,6 +309,13 @@ static ib_status_t var_create_fn(
 
         /* Assume an empty assignment if no equal sign is included. */
         if (eqsign == NULL) {
+            ib_bytestr_t *bs = NULL;
+            rc = ib_bytestr_dup_nulstr(&bs, mp, "");
+            if (rc != IB_OK) {
+                ib_log_error(ib, "Failed to create byte string.");
+                return rc;
+            }
+
             ib_log_debug(ib, "Creating empty var: %s", assignment);
             /* The whole assignment is just a variable name. */
             rc = ib_field_create(
@@ -316,10 +323,17 @@ static ib_status_t var_create_fn(
                 mp,
                 assignment,
                 strlen(assignment),
-                IB_FTYPE_NULSTR,
-                ib_ftype_nulstr_in(""));
+                IB_FTYPE_BYTESTR,
+                ib_ftype_bytestr_in(bs));
         }
         else if (*(eqsign + 1) == '\0') {
+            ib_bytestr_t *bs = NULL;
+            rc = ib_bytestr_dup_nulstr(&bs, mp, "");
+            if (rc != IB_OK) {
+                ib_log_error(ib, "Failed to create byte string.");
+                return rc;
+            }
+
             ib_log_debug(ib, "Creating empty var: %s", assignment);
             /* The assignment is a var name + '='. */
             rc = ib_field_create(
@@ -327,10 +341,23 @@ static ib_status_t var_create_fn(
                 mp,
                 assignment,
                 strlen(assignment) - 1, /* -1 drops the '=' from the name. */
-                IB_FTYPE_NULSTR,
-                ib_ftype_nulstr_in(""));
+                IB_FTYPE_BYTESTR,
+                ib_ftype_bytestr_in(bs));
         }
         else {
+            ib_bytestr_t *bs = NULL;
+            size_t value_sz = strlen(eqsign+1);
+            rc = ib_bytestr_create(&bs, mp, value_sz);
+            if (rc != IB_OK) {
+                ib_log_error(ib, "Failed to create byte string.");
+                return rc;
+            }
+            rc = ib_bytestr_append_mem(bs, (uint8_t *)(eqsign+1), value_sz);
+            if (rc != IB_OK) {
+                ib_log_error(ib, "Failed to append to byte string.");
+                return rc;
+            }
+
             ib_log_debug(
                 ib,
                 "Creating empty var: %.*s=%s",
@@ -344,8 +371,8 @@ static ib_status_t var_create_fn(
                 mp,
                 assignment,
                 eqsign - assignment,
-                IB_FTYPE_NULSTR,
-                ib_ftype_nulstr_in(eqsign+1));
+                IB_FTYPE_BYTESTR,
+                ib_ftype_bytestr_in(bs));
         }
 
         /* Check the field creation in the above if-ifelse-else. */
@@ -547,7 +574,7 @@ static ib_status_t init_collection_common(
         }
     }
 #ifdef ENABLE_JSON
-    else if (strncmp(uri, "json-file:", sizeof("json-file:")) == 0) {
+    else if (strncmp(uri, "json-file:", sizeof("json-file:")-1) == 0) {
         rc = domap(cp, ctx, JSON_TYPE, cfg, name, vars);
         if (rc != IB_OK) {
             goto exit_rc;
@@ -731,7 +758,7 @@ static ib_status_t init_collection_init(
     }
 
 #if ENABLE_JSON
-    ib_log_debug(ib, "Registering json: handlers.");
+    ib_log_debug(ib, "Registering json-file: handlers.");
     rc = ib_pstnsfw_register_type(
         cfg->pstnsfw,
         ib_context_main(ib),

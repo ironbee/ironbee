@@ -43,6 +43,8 @@ TEST_EXTRAS = \
        DfaModuleTest.matches.config \
        EeOperModuleTest.config \
        eudoxus_pattern1.e \
+       init_collection_1.json \
+       init_collection_2.json \
        PcreModuleTest.test_load_module.config \
        PcreModuleTest.test_pcre_operator.config \
        PcreModuleTest.test_match_basic.config \
