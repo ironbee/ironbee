@@ -821,7 +821,7 @@ static uint8_t bestfit_codepoint(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, uin
         return (uint8_t) codepoint;
     }
 
-    // Our current implementation only converts the 2-byte codepoints
+    // Our current implementation converts only the 2-byte codepoints.
     if (codepoint > 0xffff) {
         return cfg->decoder_cfgs[ctx].bestfit_replacement_byte;
     }
@@ -863,8 +863,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
     size_t len = bstr_len(path);
     size_t rpos = 0;
-    size_t wpos = 0;
-    size_t charpos = 0;
+    size_t wpos = 0;    
     uint32_t codepoint = 0;
     uint32_t state = HTP_UTF8_ACCEPT;
     uint32_t counter = 0;
@@ -875,15 +874,15 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
         switch (htp_utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
             case HTP_UTF8_ACCEPT:
-                if (counter == 1) {
-                    // ASCII character
+                if (counter == 1) {                    
+                    // ASCII character, which we just copy.
                     data[wpos++] = (uint8_t) codepoint;
                 } else {
-                    // A valid UTF-8 character
+                    // A valid UTF-8 character, which we need to convert.
+                    
                     seen_valid = 1;
 
-                    // Check for overlong characters and set the
-                    // flag accordingly
+                    // Check for overlong characters and set the flag accordingly.
                     switch (counter) {
                         case 2:
                             if (codepoint < 0x80) {
@@ -902,26 +901,24 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                             break;
                     }
 
-                    // Special flag for fullwidth form evasion
+                    // Special flag for half-width/full-width evasion.
                     if ((codepoint >= 0xff00) && (codepoint <= 0xffef)) {
                         tx->flags |= HTP_PATH_HALF_FULL_RANGE;
                     }
 
-                    // Use best-fit mapping to convert to a single byte
+                    // Use best-fit mapping to convert to a single byte.
                     data[wpos++] = bestfit_codepoint(cfg, HTP_DECODER_URL_PATH, codepoint);
                 }
 
-                // Advance over the consumed byte
+                // Advance over the consumed byte and reset the byte counter.
                 rpos++;
-
-                // Prepare for the next character
                 counter = 0;
-                charpos = rpos;
 
                 break;
 
             case HTP_UTF8_REJECT:
-                // Invalid UTF-8 character
+                // Invalid UTF-8 character.
+                
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
                 // Is the server expected to respond with 400?
@@ -929,26 +926,20 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].utf8_invalid_unwanted;
                 }
 
-                // Override the state in the UTF-8 decoder because
-                // we want to ignore invalid characters
+                // Override the decoder state because we want to continue decoding.
                 state = HTP_UTF8_ACCEPT;
 
-                // Copy the invalid bytes into the output stream
-                while (charpos <= rpos) {
-                    data[wpos++] = data[charpos++];
-                }
+                // Output the replacement byte, replacing the invalid byte sequence.
+                data[wpos++] = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].bestfit_replacement_byte;               
 
-                // Advance over the consumed byte
+                // Advance over the consumed byte and reset the byte counter.
                 rpos++;
-
-                // Prepare for the next character
                 counter = 0;
-                charpos = rpos;
 
                 break;
 
             default:
-                // Keep going; the character is not yet formed
+                // Keep going; the character is not yet formed.
                 rpos++;
                 break;
         }

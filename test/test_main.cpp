@@ -1293,3 +1293,111 @@ TEST_F(ConnectionParsing, PathUtf8_FullWidth) {
 
     ASSERT_TRUE(tx->flags & HTP_PATH_HALF_FULL_RANGE);
 }
+
+TEST_F(ConnectionParsing, PathUtf8_Decode_Valid) {
+    htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
+    
+    int rc = test_run(home, "54-path-utf8-valid.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/Ristic.txt"));
+}
+
+TEST_F(ConnectionParsing, PathUtf8_Decode_Overlong2) {
+    htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
+
+    int rc = test_run(home, "55-path-utf8-overlong-2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_UTF8_OVERLONG);
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/&.txt"));
+}
+
+TEST_F(ConnectionParsing, PathUtf8_Decode_Overlong3) {
+    htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
+
+    int rc = test_run(home, "56-path-utf8-overlong-3.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_UTF8_OVERLONG);
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/&.txt"));
+}
+
+TEST_F(ConnectionParsing, PathUtf8_Decode_Overlong4) {
+    htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
+
+    int rc = test_run(home, "57-path-utf8-overlong-4.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_UTF8_OVERLONG);
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/&.txt"));
+}
+
+TEST_F(ConnectionParsing, PathUtf8_Decode_Invalid) {
+    htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
+    
+    int rc = test_run(home, "58-path-utf8-invalid.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_UTF8_INVALID);
+    ASSERT_FALSE(tx->flags & HTP_PATH_UTF8_VALID);
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/Ristic?.txt"));
+}
+
+TEST_F(ConnectionParsing, PathUtf8_Decode_FullWidth) {
+    htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
+
+    int rc = test_run(home, "59-path-utf8-fullwidth.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_PATH_HALF_FULL_RANGE);
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/&.txt"));
+}

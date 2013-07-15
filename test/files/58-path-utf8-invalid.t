@@ -1,5 +1,5 @@
 >>>
-GET /%80.txt HTTP/1.0
+GET /Risti%C4%87%80.txt HTTP/1.0
 Host: www.example.com
 User-Agent: Mozilla
 
