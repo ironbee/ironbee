@@ -1495,3 +1495,27 @@ TEST_F(ConnectionParsing, PostChunkedSplitChunk) {
     ASSERT_TRUE(p->value != NULL);   
     ASSERT_EQ(0, bstr_cmp_c(p->value, "0123456789"));
 }
+
+TEST_F(ConnectionParsing, LongRequestLine1) {    
+    int rc = test_run(home, "67-long-request-line.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/0123456789/0123456789/"));
+}
+
+TEST_F(ConnectionParsing, LongRequestLine2) {
+    htp_config_set_field_limits(cfg, 0, 16);
+
+    int rc = test_run(home, "67-long-request-line.t", cfg, &connp);
+    ASSERT_LT(rc, 0); // Expect error.
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_LINE, tx->request_progress);
+}

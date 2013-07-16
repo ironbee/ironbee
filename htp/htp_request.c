@@ -193,7 +193,7 @@ static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
     size_t len = connp->in_current_read_offset - connp->in_current_consume_offset;
 
     // Check the hard (buffering) limit.
-
+   
     size_t newlen = connp->in_buf_size + len;
 
     // When calculating the size of the buffer, take into account the
@@ -204,7 +204,7 @@ static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
 
     if (newlen > connp->in_tx->cfg->field_limit_hard) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request buffer over the limit: size %zd limit %zd.",
-                newlen, connp->in_tx->cfg->field_limit_hard);
+                newlen, connp->in_tx->cfg->field_limit_hard);        
         return HTP_ERROR;
     }
 
@@ -248,7 +248,9 @@ static htp_status_t htp_connp_req_consolidate_data(htp_connp_t *connp, unsigned 
     } else {
         // We already have some data in the buffer. Add the data from the current
         // chunk to it, and point to the consolidated buffer.
-        htp_connp_req_buffer(connp);
+        if (htp_connp_req_buffer(connp) != HTP_OK) {
+            return HTP_ERROR;
+        }
 
         *data = connp->in_buf;
         *len = connp->in_buf_size;
@@ -422,7 +424,9 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             unsigned char *data;
             size_t len;
 
-            htp_connp_req_consolidate_data(connp, &data, &len);
+            if (htp_connp_req_consolidate_data(connp, &data, &len) != HTP_OK) {
+                return HTP_ERROR;
+            }
 
             connp->in_tx->request_message_len += len;
 
@@ -554,7 +558,9 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             unsigned char *data;
             size_t len;
 
-            htp_connp_req_consolidate_data(connp, &data, &len);
+            if (htp_connp_req_consolidate_data(connp, &data, &len) != HTP_OK) {
+                return HTP_ERROR;
+            }
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, __FUNCTION__, data, len);
@@ -668,7 +674,9 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
             unsigned char *data;
             size_t len;
 
-            htp_connp_req_consolidate_data(connp, &data, &len);
+            if (htp_connp_req_consolidate_data(connp, &data, &len) != HTP_OK) {
+                return HTP_ERROR;
+            }
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, __FUNCTION__, data, len);
@@ -859,7 +867,10 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
                 htp_connp_req_receiver_send_data(connp, 0 /* not last */);
 
                 if (rc == HTP_DATA_BUFFER) {
-                    htp_connp_req_buffer(connp);
+                    if (htp_connp_req_buffer(connp) != HTP_OK) {
+                        connp->in_status = HTP_STREAM_ERROR;
+                        return HTP_STREAM_ERROR;
+                    }
                 }
 
                 #ifdef HTP_DEBUG
