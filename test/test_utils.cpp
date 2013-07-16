@@ -1437,3 +1437,25 @@ TEST(List, Expand2) {
 
     htp_list_destroy(l);
 }
+
+TEST(Table, Misc) {
+    htp_table_t *t = htp_table_create(2);
+
+    bstr *pkey = bstr_dup_c("p");
+    bstr *qkey = bstr_dup_c("q");
+
+    htp_table_addk(t, pkey, "1");
+    htp_table_addk(t, qkey, "2");
+
+    char *p = (char *)htp_table_get_mem(t, "z", 1);
+    ASSERT_TRUE(p == NULL);
+
+    p = (char *)htp_table_get(t, pkey);
+    ASSERT_TRUE(p != NULL);
+    ASSERT_EQ(0, strcmp("1", p));
+
+    htp_table_clear_ex(t);
+
+    bstr_free(qkey);
+    bstr_free(pkey);
+}
