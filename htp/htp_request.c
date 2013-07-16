@@ -372,8 +372,10 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     // Determine how many bytes we can consume.
     size_t bytes_to_consume;
     if (connp->in_current_len - connp->in_current_read_offset >= connp->in_chunked_length) {
+        // Entire chunk available in the buffer; read all of it.
         bytes_to_consume = connp->in_chunked_length;
     } else {
+        // Partial chunk available in the buffer; read as much as we can.
         bytes_to_consume = connp->in_current_len - connp->in_current_read_offset;
     }
 
@@ -384,8 +386,8 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     // If the input buffer is empty, ask for more data.
     if (bytes_to_consume == 0) return HTP_DATA;
 
-    // Consume data.
-    int rc = htp_tx_req_process_body_data_ex(connp->in_tx, connp->in_current_data + connp->in_current_read_offset, bytes_to_consume);
+    // Consume the data.
+    htp_status_t rc = htp_tx_req_process_body_data_ex(connp->in_tx, connp->in_current_data + connp->in_current_read_offset, bytes_to_consume);
     if (rc != HTP_OK) return rc;
 
     // Adjust counters.
