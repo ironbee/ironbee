@@ -175,7 +175,7 @@ static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
 
 /**
  * If there is any data left in the outbound data chunk, this function will preserve
- * it for consumption later. The maximum amount accepted for buffering is controlled
+ * it for later consumption. The maximum amount accepted for buffering is controlled
  * by htp_config_t::field_limit_hard.
  *
  * @param[in] connp
@@ -189,8 +189,10 @@ static htp_status_t htp_connp_res_buffer(htp_connp_t *connp) {
 
     // Check the hard (buffering) limit.
 
-    size_t newlen = connp->out_buf_size + len;
+    size_t newlen = connp->out_buf_size + len;   
 
+    // When calculating the size of the buffer, take into account the
+    // space we're using for the response header buffer.
     if (connp->out_header != NULL) {
         newlen += bstr_len(connp->out_header);
     }

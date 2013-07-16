@@ -194,8 +194,10 @@ static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
 
     // Check the hard (buffering) limit.
 
-    size_t newlen = connp->in_buf_size + len;
+    size_t newlen = connp->in_buf_size + len;   
 
+    // When calculating the size of the buffer, take into account the
+    // space we're using for the request header buffer.
     if (connp->in_header != NULL) {
         newlen += bstr_len(connp->in_header);
     }
@@ -244,9 +246,10 @@ static htp_status_t htp_connp_req_consolidate_data(htp_connp_t *connp, unsigned 
         *data = connp->in_current_data + connp->in_current_consume_offset;
         *len = connp->in_current_read_offset - connp->in_current_consume_offset;
     } else {
-        // We do have data in the buffer. Add data from the current
-        // chunk, and point to the consolidated buffer.
+        // We already have some data in the buffer. Add the data from the current
+        // chunk to it, and point to the consolidated buffer.
         htp_connp_req_buffer(connp);
+        
         *data = connp->in_buf;
         *len = connp->in_buf_size;
     }
