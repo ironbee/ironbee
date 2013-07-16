@@ -110,7 +110,7 @@ static htp_status_t htp_connp_req_receiver_send_data(htp_connp_t *connp, int is_
  * @param[in] data_receiver_hook
  * @return HTP_OK, or a value returned from a callback.
  */
-static htp_status_t htp_connp_req_receiver_set(htp_connp_t *connp, htp_hook_t *data_receiver_hook) {    
+static htp_status_t htp_connp_req_receiver_set(htp_connp_t *connp, htp_hook_t *data_receiver_hook) {
     htp_connp_req_receiver_finalize_clear(connp);
 
     connp->in_data_receiver_hook = data_receiver_hook;
@@ -188,13 +188,13 @@ static htp_status_t htp_req_handle_state_change(htp_connp_t *connp) {
  */
 static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
     if (connp->in_current_data == NULL) return HTP_OK;
-    
+
     unsigned char *data = connp->in_current_data + connp->in_current_consume_offset;
     size_t len = connp->in_current_read_offset - connp->in_current_consume_offset;
 
     // Check the hard (buffering) limit.
 
-    size_t newlen = connp->in_buf_size + len;   
+    size_t newlen = connp->in_buf_size + len;
 
     // When calculating the size of the buffer, take into account the
     // space we're using for the request header buffer.
@@ -203,7 +203,7 @@ static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
     }
 
     if (newlen > connp->in_tx->cfg->field_limit_hard) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request field size over the buffer limit: size %zd limit %zd.",
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request buffer over the limit: size %zd limit %zd.",
                 newlen, connp->in_tx->cfg->field_limit_hard);
         return HTP_ERROR;
     }
@@ -249,7 +249,7 @@ static htp_status_t htp_connp_req_consolidate_data(htp_connp_t *connp, unsigned 
         // We already have some data in the buffer. Add the data from the current
         // chunk to it, and point to the consolidated buffer.
         htp_connp_req_buffer(connp);
-        
+
         *data = connp->in_buf;
         *len = connp->in_buf_size;
     }
@@ -294,7 +294,7 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
         htp_tx_state_request_complete_partial(connp->in_tx);
 
         connp->in_state = htp_connp_REQ_CONNECT_WAIT_RESPONSE;
-        connp->in_status = HTP_STREAM_DATA_OTHER;       
+        connp->in_status = HTP_STREAM_DATA_OTHER;
 
         return HTP_DATA_OTHER;
     }
@@ -522,7 +522,7 @@ htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
                 connp->in_tx->connp->in_state = htp_connp_REQ_FINALIZE;
             }
             break;
-            
+
         case HTP_CODING_NO_BODY:
             // This request does not have a body, which
             // means that we're done with it
@@ -660,7 +660,7 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
 htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
     for (;;) {
         // Get one byte
-        IN_COPY_BYTE_OR_RETURN(connp);       
+        IN_COPY_BYTE_OR_RETURN(connp);
 
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
@@ -707,7 +707,7 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
     return HTP_ERROR;
 }
 
-htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {    
+htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
     return htp_tx_state_request_complete(connp->in_tx);
 }
 
@@ -788,7 +788,7 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     // only if the stream has been closed. We do not allow zero-sized
     // chunks in the API, but we use them internally to force the parsers
     // to finalize parsing.
-    if (((data == NULL)||(len == 0)) && (connp->in_status != HTP_STREAM_CLOSED)) {
+    if (((data == NULL) || (len == 0)) && (connp->in_status != HTP_STREAM_CLOSED)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Zero-length data chunks are not allowed");
 
         #ifdef HTP_DEBUG
@@ -922,6 +922,6 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
 
     // Permanent stream error.
     connp->in_status = HTP_STREAM_ERROR;
-    
+
     return HTP_STREAM_ERROR;
 }
