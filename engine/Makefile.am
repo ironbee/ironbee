@@ -11,8 +11,6 @@ EXTRA_DIST =  config-parser.rl \
               state_notify_private.h \
               rule_engine_private.h \
               rule_logger_private.h \
-              collection_manager_private.h \
-              managed_collection_private.h \
               core_private.h \
               core_audit_private.h
 
@@ -20,8 +18,6 @@ EXTRA_DIST =  config-parser.rl \
 lib_LTLIBRARIES = libironbee.la
 libironbee_la_SOURCES = engine.c data.c \
                         context_selection.c site.c \
-                        collection_manager.c \
-                        managed_collection.c \
                         config.c config-parser.c config-parser.h \
                         filter.c \
                         operator.c action.c transformation.c \
@@ -30,7 +26,6 @@ libironbee_la_SOURCES = engine.c data.c \
                         capture.c \
                         core.c \
                         core_context_selection.c \
-                        core_collection_managers.c \
                         core_fields.c \
                         core_tfns.c \
                         core_operators.c \

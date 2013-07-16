@@ -33,13 +33,11 @@
 #include "core_private.h"
 #include "core_audit_private.h"
 #include "engine_private.h"
-#include "managed_collection_private.h"
 #include "state_notify_private.h"
 
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/clock.h>
-#include <ironbee/collection_manager.h>
 #include <ironbee/context.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/engine_types.h>
@@ -2184,56 +2182,6 @@ static ib_status_t core_initvar(ib_engine_t *ib,
 }
 
 /**
- * Populate @a tx's collections using the associated context's list of managed
- * collections.
- *
- * @param[in] ib Engine.
- * @param[in] tx Transaction.
- * @param[in] mancoll_list List of the managed collections
- *
- * @returns Status code.
- */
-static ib_status_t core_managed_collection_populate_tx(
-    ib_engine_t *ib,
-    ib_tx_t *tx,
-    const ib_list_t *mancoll_list)
-{
-    const ib_list_node_t *node;
-    ib_status_t rc = IB_OK;
-    size_t count;
-
-    /* If there are no managed collections, done */
-    count = (mancoll_list == NULL) ? 0 : ib_list_elements(mancoll_list);
-    if (count == 0) {
-        ib_log_debug_tx(tx,
-                        "No managed collections defined for context \"%s\"",
-                        ib_context_full_get(tx->ctx));
-        return IB_OK;
-    }
-
-    /* Walk through the list of collections & populate them. */
-    IB_LIST_LOOP_CONST(mancoll_list, node) {
-        const ib_managed_collection_t *collection =
-            (const ib_managed_collection_t *)node->data;
-
-        rc = ib_managed_collection_populate(ib, tx, collection);
-        if (rc != IB_OK) {
-            ib_log_warning_tx(tx,
-                              "Error creating managed collection \"%s\": %s",
-                              collection->collection_name,
-                              ib_status_to_string(rc));
-            return rc;
-        }
-        ib_log_trace_tx(tx, "Created managed collection \"%s\"",
-                        collection->collection_name);
-    }
-    ib_log_debug_tx(tx,
-                    "Created %zd managed collections for context \"%s\"",
-                    count, ib_context_full_get(tx->ctx));
-    return IB_OK;
-}
-
-/**
  * Handle the transaction context selected
  *
  * @param ib Engine.
@@ -2265,14 +2213,6 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
     rc = core_initvar(ib, tx, corecfg->initvar_list);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failure executing InitVar(s): %s",
-                        ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Handle InitCollection list */
-    rc = core_managed_collection_populate_tx(ib, tx, corecfg->mancoll_list);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Failure executing InitCollection(s): %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -2337,28 +2277,6 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     }
 
     return IB_OK;
-}
-
-/**
- * Handle the tx logging event.
- *
- * @param ib Engine.
- * @param tx Transaction.
- * @param event Event type.
- * @param cbdata Callback data.
- *
- * @returns Status code.
- */
-static ib_status_t core_hook_logging(ib_engine_t *ib,
-                                     ib_tx_t *tx,
-                                     ib_state_event_type_t event,
-                                     void *cbdata)
-{
-    assert(event == handle_logging_event);
-    ib_status_t rc;
-
-    rc = ib_managed_collection_persist_tx(ib, tx);
-    return rc;
 }
 
 static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
@@ -4394,51 +4312,6 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
     return IB_OK;
 }
 
-static ib_status_t core_ctx_managed_collection_destroy(
-    ib_engine_t *ib,
-    ib_module_t *mod,
-    ib_context_t *ctx,
-    ib_core_cfg_t *corecfg)
-{
-    assert(ib != NULL);
-    assert(mod != NULL);
-    assert(ctx != NULL);
-    assert(corecfg != NULL);
-
-    const ib_list_node_t *node;
-    ib_status_t rc = IB_OK;
-
-    /* If there are no collections, do nothing */
-    if (corecfg->mancoll_list == NULL) {
-        return IB_OK;
-    }
-
-    /* Walk through the list of collections & destroy. */
-    IB_LIST_LOOP_CONST(corecfg->mancoll_list, node) {
-        const ib_managed_collection_t *collection =
-            (const ib_managed_collection_t *)node->data;
-        ib_status_t tmprc;
-
-        tmprc = ib_managed_collection_destroy(ib, collection);
-        if (tmprc != IB_OK) {
-            ib_log_warning(ib,
-                           "Error creating managed collection \"%s\": %s",
-                           collection->collection_name,
-                           ib_status_to_string(tmprc));
-            if (rc == IB_OK) {
-                rc = tmprc;
-            }
-        }
-        else {
-            ib_log_trace(ib, "Unregistered managed collection \"%s\"",
-                         collection->collection_name);
-        }
-    }
-    ib_list_clear(corecfg->mancoll_list);
-
-    return rc;
-}
-
 /**
  * Destroy the core module context
  *
@@ -4460,8 +4333,6 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     assert(cbdata != NULL);
 
     ib_core_cfg_t *config;
-    ib_core_cfg_t *main_config;
-    ib_module_t *mod = (ib_module_t *)cbdata;
     ib_status_t rc;
 
     /* Get the current context config. */
@@ -4473,17 +4344,8 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
         return rc;
     }
 
-    /* Tell the collection manager about this context going away */
-    rc = core_ctx_managed_collection_destroy(ib, mod, ctx, config);
-    if (rc != IB_OK) {
-        ib_log_alert(ib,
-                     "Failed to shut down managed collections for \"%s\": %s",
-                     ib_context_full_get(ctx), ib_status_to_string(rc));
-    }
-
     /* Close the log file in the main configuration only */
-    main_config = core_get_main_config(ib, false);
-    if (config == main_config) {
+    if (config == core_get_main_config(ib, false)) {
         core_log_file_close(ib, config);
     }
 
@@ -4570,7 +4432,6 @@ static ib_status_t core_init(ib_engine_t *ib,
                         core_hook_context_tx, NULL);
     ib_hook_conn_register(ib, conn_started_event, core_hook_conn_started, NULL);
     ib_hook_tx_register(ib, tx_started_event, core_hook_tx_started, NULL);
-    ib_hook_tx_register(ib, handle_logging_event, core_hook_logging, NULL);
 
     /* Register auditlog body buffering hooks. */
     ib_hook_txdata_register(ib, request_body_data_event,
@@ -4633,22 +4494,6 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
-    /* Initialize the collection manager */
-    rc = ib_collection_manager_init(ib);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize managed collections: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Initialize the core collection managers */
-    rc = ib_core_collection_managers_register(ib, m);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to register core collection managers: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
     /* Register CAPTURE */
     rc = ib_data_register_indexed(ib_engine_data_config_get(ib), IB_TX_CAPTURE);
     if (rc != IB_OK) {
@@ -4678,22 +4523,7 @@ ib_status_t core_finish(
     void        *cbdata
 )
 {
-    ib_status_t rc;
-
-    /* Shut down the core collection managers */
-    rc = ib_core_collection_managers_finish(ib, m);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to shut down core collection managers: %s",
-                     ib_status_to_string(rc));
-    }
-
-    /* Shut down the collection manager */
-    rc = ib_collection_manager_finish(ib);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize managed collections: %s",
-                     ib_status_to_string(rc));
-    }
-
+    /* Nop. */
     return IB_OK;
 }
 

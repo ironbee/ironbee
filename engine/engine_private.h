@@ -25,11 +25,9 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include "managed_collection_private.h"
 #include "state_notify_private.h"
 
 #include <ironbee/array.h>
-#include <ironbee/collection_manager.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/lock.h>
 #include <ironbee/log.h>
@@ -138,7 +136,6 @@ struct ib_engine_t {
     ib_hash_t             *operators;       /**< Hash tracking operators */
     ib_hash_t             *actions;         /**< Hash tracking rules */
     ib_rule_engine_t      *rule_engine;     /**< Rule engine data */
-    ib_list_t             *collection_managers; /**< List of managers */
     ib_log_logger_fn_t     logger_fn;       /**< Logger function. */
     void                  *logger_cbdata;   /**< Logger callback data. */
     ib_log_level_fn_t      loglevel_fn;     /**< Log level function. */
