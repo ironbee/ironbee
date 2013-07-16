@@ -243,7 +243,10 @@ static htp_status_t htp_connp_res_consolidate_data(htp_connp_t *connp, unsigned 
     } else {
         // We do have data in the buffer. Add data from the current
         // chunk, and point to the consolidated buffer.
-        htp_connp_res_buffer(connp);
+        if (htp_connp_res_buffer(connp) != HTP_OK) {
+            return HTP_ERROR;
+        }
+
         *data = connp->out_buf;
         *len = connp->out_buf_size;
     }
@@ -343,7 +346,9 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             unsigned char *data;
             size_t len;
 
-            htp_connp_res_consolidate_data(connp, &data, &len);
+            if (htp_connp_res_consolidate_data(connp, &data, &len) != HTP_OK) {
+                return HTP_ERROR;
+            }
 
             connp->out_tx->response_message_len += len;
 
@@ -634,7 +639,9 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
             unsigned char *data;
             size_t len;
 
-            htp_connp_res_consolidate_data(connp, &data, &len);
+            if (htp_connp_res_consolidate_data(connp, &data, &len) != HTP_OK) {
+                return HTP_ERROR;
+            }
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, __FUNCTION__, data, len);
@@ -747,7 +754,9 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             unsigned char *data;
             size_t len;
 
-            htp_connp_res_consolidate_data(connp, &data, &len);
+            if (htp_connp_res_consolidate_data(connp, &data, &len) != HTP_OK) {
+                return HTP_ERROR;
+            }
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, __FUNCTION__, data, len);
@@ -976,7 +985,10 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
                 htp_connp_res_receiver_send_data(connp, 0 /* not last */);
 
                 if (rc == HTP_DATA_BUFFER) {
-                    htp_connp_res_buffer(connp);
+                    if (htp_connp_res_buffer(connp) != HTP_OK) {
+                        connp->out_status = HTP_STREAM_ERROR;
+                        return HTP_STREAM_ERROR;
+                    }
                 }
 
                 #ifdef HTP_DEBUG
