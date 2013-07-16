@@ -253,12 +253,13 @@ int64_t htp_parse_content_length(bstr *b) {
 }
 
 /**
- * Parses chunk length (positive hexadecimal number).
- * White space is allowed before and after the number.
+ * Parses chunk length (positive hexadecimal number). White space is allowed before
+ * and after the number. An error will be returned if the chunk length is greater than
+ * INT32_MAX.
  *
  * @param[in] data
  * @param[in] len
- * @return Chunk length, or -1 on error.
+ * @return Chunk length, or a negative number on error.
  */
 int64_t htp_parse_chunked_length(unsigned char *data, size_t len) {
     int64_t chunk_len = htp_parse_positive_integer_whitespace(data, len, 16);

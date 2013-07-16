@@ -1465,3 +1465,18 @@ TEST_F(ConnectionParsing, PostNoBody) {
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx2->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx2->response_progress);
 }
+
+TEST_F(ConnectionParsing, PostChunkedInvalid1) {
+    int rc = test_run(home, "63-post-chunked-invalid-1.t", cfg, &connp);
+    ASSERT_LT(rc, 0); // Expect error.
+}
+
+TEST_F(ConnectionParsing, PostChunkedInvalid2) {
+    int rc = test_run(home, "64-post-chunked-invalid-2.t", cfg, &connp);
+    ASSERT_LT(rc, 0); // Expect error.
+}
+
+TEST_F(ConnectionParsing, PostChunkedInvalid3) {
+    int rc = test_run(home, "65-post-chunked-invalid-3.t", cfg, &connp);
+    ASSERT_LT(rc, 0); // Expect error.
+}
