@@ -1401,3 +1401,36 @@ TEST_F(ConnectionParsing, PathUtf8_Decode_FullWidth) {
     ASSERT_TRUE(tx->parsed_uri->path != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/&.txt"));
 }
+
+TEST_F(ConnectionParsing, RequestCookies) {
+    int rc = test_run(home, "60-request-cookies.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(3, htp_table_size(tx->request_cookies));
+
+    bstr *key = NULL;
+    bstr *value = NULL;
+    
+    value = (bstr *)htp_table_get_index(tx->request_cookies, 0, &key);
+    ASSERT_TRUE(key != NULL);
+    ASSERT_TRUE(value != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(key, "p"));
+    ASSERT_EQ(0, bstr_cmp_c(value, "1"));
+
+    value = (bstr *)htp_table_get_index(tx->request_cookies, 1, &key);
+    ASSERT_TRUE(key != NULL);
+    ASSERT_TRUE(value != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(key, "q"));
+    ASSERT_EQ(0, bstr_cmp_c(value, "2"));
+
+    value = (bstr *)htp_table_get_index(tx->request_cookies, 2, &key);
+    ASSERT_TRUE(key != NULL);
+    ASSERT_TRUE(value != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(key, "z"));
+    ASSERT_EQ(0, bstr_cmp_c(value, ""));
+}
