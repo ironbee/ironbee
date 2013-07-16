@@ -180,7 +180,7 @@ static htp_status_t htp_req_handle_state_change(htp_connp_t *connp) {
 
 /**
  * If there is any data left in the inbound data chunk, this function will preserve
- * it for consumption later. The maximum amount accepted for buffering is controlled
+ * it for later consumption. The maximum amount accepted for buffering is controlled
  * by htp_config_t::field_limit_hard.
  *
  * @param[in] connp
@@ -767,7 +767,6 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     // Return if the connection is in stop state.
     if (connp->in_status == HTP_STREAM_STOP) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_INFO, 0, "Inbound parser is in HTP_STREAM_STOP");
-
         return HTP_STREAM_STOP;
     }
 
