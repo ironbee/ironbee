@@ -1434,3 +1434,15 @@ TEST_F(ConnectionParsing, RequestCookies) {
     ASSERT_EQ(0, bstr_cmp_c(key, "z"));
     ASSERT_EQ(0, bstr_cmp_c(value, ""));
 }
+
+TEST_F(ConnectionParsing, EmptyLineBetweenRequests) {
+    int rc = test_run(home, "61-empty-line-between-requests.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(2, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(1, tx->request_ignored_lines);
+}

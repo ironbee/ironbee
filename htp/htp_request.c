@@ -678,8 +678,6 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
                 // We have an empty/whitespace line, which we'll note, ignore and move on.
                 connp->in_tx->request_ignored_lines++;
 
-                // TODO How many empty lines are we willing to accept?
-
                 htp_connp_req_clear_buffer(connp);
 
                 return HTP_OK;
