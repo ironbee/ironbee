@@ -44,7 +44,10 @@
 #define MODULE_NAME_STR IB_XSTRINGIFY(MODULE_NAME)
 IB_MODULE_DECLARE();
 
+/* JSON handlers are registered under this type. */
 static const char *JSON_TYPE = "json";
+
+/* VAR handlers are registered under this type. */
 static const char *VAR_TYPE  = "var";
 
 /**
@@ -68,22 +71,36 @@ typedef struct init_collection_cfg_t init_collection_cfg_t;
  * JSON configuration type.
  */
 struct json_t {
-    const char *file;
+    const char *file; /**< The file containing the JSON. */
 };
 typedef struct json_t json_t;
 #endif
 #ifdef ENABLE_JSON
+/**
+ * JSON Load callback.
+ *
+ * @param[in] impl The implementation created by json_create_fn().
+ * @param[in] tx The transaction.
+ * @param[in] key Unused.
+ * @param[in] fields The output fields.
+ * @param[in] cbdata Callback data. Unused.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure.
+ */
 static ib_status_t json_load_fn(
-        void       *impl,
-        ib_tx_t    *tx,
-        const char *key,
-        ib_list_t  *fields,
-        void       *cbdata
+    void       *impl,
+    ib_tx_t    *tx,
+    const char *key,
+    ib_list_t  *fields,
+    void       *cbdata
 )
 {
     assert(impl != NULL);
     assert(tx != NULL);
     assert(tx->mp != NULL);
+    assert(fields != NULL);
 
     json_t      *json_cfg = (json_t *)impl;
     ib_status_t  rc;
@@ -124,6 +141,19 @@ static ib_status_t json_load_fn(
 }
 #endif
 #ifdef ENABLE_JSON
+/**
+ * Create a new @a impl which is passed to json_load_fn().
+ *
+ * @param[in] ib IronBee Engine.
+ * @param[in] params Parameters to constructor.
+ * @param[out] impl Implementation output.
+ * @param[in] cbdata Callback data. An init_collection_cfg_t.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL On invalid entry.
+ * - IB_EALLOC On allocation error.
+ */
 static ib_status_t json_create_fn(
     ib_engine_t      *ib,
     const ib_list_t  *params,
@@ -187,9 +217,23 @@ static ib_status_t json_create_fn(
  * Var implemintation data.
  */
 struct var_t {
-    const ib_list_t *fields;
+    const ib_list_t *fields; /**< Fields to return. */
 };
 typedef struct var_t var_t;
+/**
+ * Create vars.
+ * 
+ * @param[in] ib IronBee engine.
+ * @param[in] params Parameters.
+ * @param[out] impl The implementation out variable.
+ * @param[in] cbdata Callback data. Unused.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL On an invalid input from the config file.
+ * - IB_EALLOC On allocation errors.
+ * - Other on sub call errors.
+ */
 static ib_status_t var_create_fn(
     ib_engine_t      *ib,
     const ib_list_t  *params,
@@ -340,6 +384,19 @@ static ib_status_t var_create_fn(
     return IB_OK;
 }
 
+/**
+ * Load fields created by var_create_fn().
+ *
+ * @param[in] impl The @ref var_t created by var_create_fn().
+ * @param[in] tx The current transaction.
+ * @param[in] key Unused.
+ * @param[in] fields The output fields.
+ * @param[in] cbdata Callback data. Unused.
+ *
+ * @return
+ * - IB_OK On success.
+ * - IB_EOTHER On unexepcted list manipulation errors.
+ */
 static ib_status_t var_load_fn(
         void       *impl,
         ib_tx_t    *tx,
@@ -442,22 +499,20 @@ static ib_status_t domap(
 }
 
 /**
- * vars: key1=val1 key2=val2 ... keyN=valN
+ * Implement the InitCollection and InitCollectionIndexed directives.
  *
- * The vars URI allows initializing a collection of simple key/value pairs.
+ * @param[in] cp Configuration parser.
+ * @param[in] directive InitCollection or InitCollectionIndexed.
+ * @param[in] vars List of char * types making up the parameters.
+ * @param[in] cfg The module configuration.
+ * @param[in] indexed True of @a directive is InitCollectionIndexed. False
+ *            otherwise.
  *
- * InitCollection MY_VARS vars: key1=value1 key2=value2
- * json-file:///path/file.json [persist]
- *
- * The json-file URI allows loading a more complex collection from a JSON
- * formatted file. If the optional persist parameter is specified, then
- * anything changed is persisted back to the file at the end of the
- * transaction. Next time the collection is initialized, it will be from
- * the persisted data.
- *
- * InitCollection MY_JSON_COLLECTION json-file:///tmp/ironbee/persist/test1.json
- *
- * InitCollection MY_PERSISTED_JSON_COLLECTION json-file:///tmp/ironbee/persist/test2.json persist
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If an error in the configuration parameters is detected.
+ * - IB_EALLOC On memory allocation errors.
+ * - Other when interacting with IronBee API.
  */
 static ib_status_t init_collection_common(
     ib_cfgparser_t *cp,
@@ -551,6 +606,16 @@ exit_EINVAL:
     return IB_EINVAL;
 }
 
+/**
+ * Facade to init_collection_common().
+ *
+ * param[in] cp The configuration parser.
+ * param[in] directive InitCollection.
+ * param[in] vars Argument list to the directive.
+ * param[in] cbdata An @ref init_collection_cfg_t.
+ *
+ * @returns results of init_collection_common();
+ */
 static ib_status_t init_collection_fn(
     ib_cfgparser_t *cp,
     const char *directive,
@@ -566,6 +631,16 @@ static ib_status_t init_collection_fn(
         false);
 }
 
+/**
+ * Facade to init_collection_common().
+ *
+ * param[in] cp The configuration parser.
+ * param[in] directive InitCollectionIndexed.
+ * param[in] vars Argument list to the directive.
+ * param[in] cbdata An @ref init_collection_cfg_t.
+ *
+ * @returns results of init_collection_common();
+ */
 static ib_status_t init_collection_indexed_fn(
     ib_cfgparser_t *cp,
     const char *directive,
@@ -585,7 +660,8 @@ static ib_status_t init_collection_indexed_fn(
  * Register directives dynamically so as to define a callback data struct.
  *
  * @param[in] ib IronBee engine.
- * @param[in] cbdata The module global configuration.
+ * @param[in] cbdata The module configuration.
+ *
  * @returns
  * - IB_OK On Success.
  * - Other on failure of ib_config_register_directives().
