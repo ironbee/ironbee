@@ -121,14 +121,15 @@ typedef struct htp_decoder_cfg_t {
 
 struct htp_cfg_t {
     /**
-     * Hard field limit length. If the parser encounters a line that's longer
-     * than this value it will give up parsing.
+     * The maximum size of the buffer that is used when the current
+     * input chunk does not contain all the necessary data (e.g., a very header
+     * line that spans several packets).
      */
     size_t field_limit_hard;
 
     /**
      * Soft field limit length. If this limit is reached the parser will issue
-     * a warning but continue to run.
+     * a warning but continue to run. NOT IMPLEMENTED.
      */
     size_t field_limit_soft;
 
