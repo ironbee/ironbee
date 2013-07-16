@@ -153,7 +153,7 @@ htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {
         }
     }
 
-    return HTP_ERROR;
+    return HTP_DECLINED;
 }
 
 void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, const htp_time_t *timestamp) {
