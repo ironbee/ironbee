@@ -2632,6 +2632,13 @@ void TSPluginInit(int argc, const char *argv[])
 
     /* connection initialization & cleanup */
     TSHttpHookAdd(TS_HTTP_SSN_START_HOOK, cont);
+
+    /* Register our continuation for management update for traffic_line -x
+     * Note that this requires Trafficserver 3.3.5 or later, or else
+     * apply the patch from bug TS-2036
+     */
+    TSMgmtUpdateRegister(cont, "ironbee");
+
     return;
 
 Lerror:
