@@ -20,6 +20,7 @@
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
+#include <ironbee/file.h>
 #include <ironbee/module.h>
 #include <ironbee/path.h>
 #if ENABLE_JSON
@@ -30,6 +31,8 @@
 #include <persistence_framework.h>
 
 #include <assert.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -43,77 +46,6 @@ IB_MODULE_DECLARE();
 
 static const char *JSON_TYPE = "json";
 static const char *VAR_TYPE  = "var";
-
-/**
- * @returns
- * - IB_OK On success.
- * - IB_ENOENT If the file is not found.
- * - IB_EALLOC On allocation errror.
- * - IB_EOTHER On an unexpected read error.
- */
-static ib_status_t read_file(
-    ib_tx_t     *tx,
-    const char  *file,
-    const void **out,
-    size_t      *sz
-)
-{
-    assert(tx != NULL);
-    assert(tx->mp != NULL);
-    assert(file != NULL);
-    assert(out != NULL);
-
-    ib_mpool_t *mp    = tx->mp;
-    int         fd    = open(file, O_RDONLY);
-    size_t      bufsz = 1024; /* Size of buffer. */
-    size_t      fill  = 0;     /* Total bytes in buf. */
-    void       *buf   = ib_mpool_alloc(mp, bufsz);
-
-    if (buf == NULL) {
-        return IB_EALLOC;
-    }
-
-    if (fd == -1) {
-        return IB_ENOENT;
-    }
-
-    ib_log_debug_tx(tx, "Loading file %s.", file);
-
-    for (;;) {
-        ssize_t r = read(fd, buf + fill, bufsz - fill);
-
-        /* EOF. */
-        if (r == 0) {
-            *sz = fill;
-            *out = buf;
-            return IB_OK;
-        }
-
-        /* Read error. */
-        if (r < 0) {
-            ib_log_debug_tx(tx, "Error reading file %s.", file);
-            return IB_EOTHER;
-        }
-
-        /* We read something. */
-        fill += r;
-
-        /* Buffer is full. Resize. */
-        if (fill == bufsz) {
-            size_t  new_bufsz = 2 * bufsz;
-            char   *new_buf   = ib_mpool_alloc(mp, new_bufsz);
-            if (new_buf == NULL) {
-                return IB_EALLOC;
-            }
-            memcpy(new_buf, buf, bufsz);
-            buf   = new_buf;
-            bufsz = new_bufsz;
-        }
-    }
-
-    /* Technically unreachable code. */
-    assert(0 && "Unreachable code.");
-}
 
 /**
  * Module configuration.
@@ -162,9 +94,18 @@ static ib_status_t json_load_fn(
     ib_log_debug_tx(tx, "Loading JSON file %s.", json_cfg->file); 
 
     /* Load the file into a buffer. */
-    rc = read_file(tx, json_cfg->file, &buf, &sz);
+    rc = ib_file_readall(tx->mp, json_cfg->file, &buf, &sz);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to read JSON file %s", json_cfg->file);
+        if (rc == IB_EOTHER || rc == IB_EINVAL) {
+            ib_log_error_tx(
+                tx,
+                "Failed to read file %s: %s",
+                json_cfg->file,
+                strerror(errno));
+        }
+        else {
+            ib_log_error_tx(tx, "Failed to read JSON file %s", json_cfg->file);
+        }
         return rc;
     }
 
