@@ -163,13 +163,31 @@ TEST_F(ConnectionParsing, PostUrlencoded) {
 
     ASSERT_EQ(2, htp_list_size(connp->conn->transactions));
 
-    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
-    ASSERT_TRUE(tx != NULL);
-
-    htp_param_t *p = htp_tx_req_get_param(tx, "p", 1);
+    htp_tx_t *tx1 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx1 != NULL);
+    htp_param_t *p = htp_tx_req_get_param(tx1, "p", 1);
     ASSERT_TRUE(p != NULL);
 
     ASSERT_EQ(0, bstr_cmp_c(p->value, "0123456789"));
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx1->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx1->response_progress);
+
+    htp_header_t *h = (htp_header_t *)htp_table_get_c(tx1->response_headers, "Server");
+    ASSERT_TRUE(h != NULL);
+    ASSERT_TRUE(h->value != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(h->value, "Apache"));
+
+    htp_tx_t *tx2 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
+    ASSERT_TRUE(tx2 != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx2->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx2->response_progress);
+
+    h = (htp_header_t *)htp_table_get_c(tx2->response_headers, "Server");
+    ASSERT_TRUE(h != NULL);
+    ASSERT_TRUE(h->value != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(h->value, "Apache"));
 }
 
 TEST_F(ConnectionParsing, PostUrlencodedChunked) {
@@ -1651,10 +1669,42 @@ TEST_F(ConnectionParsing, ResponseNoBody) {
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx1->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx1->response_progress);
 
-    htp_tx_t *tx2 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    htp_header_t *h = (htp_header_t *)htp_table_get_c(tx1->response_headers, "Server");
+    ASSERT_TRUE(h != NULL);
+    ASSERT_TRUE(h->value != NULL);
+    
+    ASSERT_EQ(0, bstr_cmp_c(h->value, "Apache"));
+
+    htp_tx_t *tx2 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
+    ASSERT_TRUE(tx2 != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx2->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx2->response_progress);
+
+    ASSERT_TRUE(tx1 != tx2);
+}
+
+TEST_F(ConnectionParsing, ResponseFoldedHeaders) {
+    int rc = test_run(home, "77-response-folded-headers.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(2, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx1 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx1 != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx1->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx1->response_progress);
+
+    htp_header_t *h = (htp_header_t *)htp_table_get_c(tx1->response_headers, "Server");
+    ASSERT_TRUE(h != NULL);
+    ASSERT_TRUE(h->value != NULL);
+    
+    ASSERT_EQ(0, bstr_cmp_c(h->value, "Apache Server"));
+
+    htp_tx_t *tx2 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
     ASSERT_TRUE(tx2 != NULL);
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx2->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx2->response_progress);
 }
-

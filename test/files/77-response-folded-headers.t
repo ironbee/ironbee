@@ -1,5 +1,5 @@
 >>>
-POST /?qsp1=1&%20p%20q=2&u=Ivan+Risti%C4%87_Ivan+Risti%C4%87_Ivan+Risti%C4%87_Ivan+Risti%C4%87_Ivan+Risti%C4%87_Ivan+Risti%C4%87_ HTTP/1.0
+POST / HTTP/1.0
 Content-Length: 12
 Content-Type: application/x-www-form-urlencoded
 User-Agent: Mozilla
@@ -9,6 +9,7 @@ p=0123456789
 HTTP/1.0 200 OK
 Date: Mon, 31 Aug 2009 20:25:50 GMT
 Server: Apache
+ Server
 Connection: close
 Content-Type: text/html
 Content-Length: 0
@@ -21,7 +22,7 @@ GET / HTTP/1.0
 <<<
 HTTP/1.0 200 OK
 Date: Mon, 31 Aug 2009 20:25:50 GMT
-Server: Apache
+Server: Apach2
 Connection: close
 Content-Type: text/html
 Transfer-Encoding: chunked

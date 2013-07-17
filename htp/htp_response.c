@@ -584,7 +584,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
                 if (connp->out_content_length != 0) {
                     connp->out_state = htp_connp_RES_BODY_IDENTITY_CL_KNOWN;
                     connp->out_tx->response_progress = HTP_RESPONSE_BODY;
-                } else {
+                } else {                    
                     connp->out_state = htp_connp_RES_FINALIZE;
                 }
             }
