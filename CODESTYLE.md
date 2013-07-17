@@ -123,4 +123,8 @@ directly related to code formatting.
 * All callbacks must support callback data.  Callback data is a `void *` that
   is provided with the function pointer at registration and is passed as the
   *last* argument to the callback function.  It is important that it is the
-  last argument as this consistency allows easy trampoline creation (see `include/ironbeepp/c_trampoline.hpp`).
+  last argument as this consistency allows easy trampoline creation (see
+  `include/ironbeepp/c_trampoline.hpp`).
+
+* `void **` is not allowed.  Use `void *` for any generic pointer and clearly
+  document any requirements on its use such as the level of indirection.
