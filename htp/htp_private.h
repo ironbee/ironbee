@@ -119,9 +119,9 @@ htp_status_t htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_
 htp_status_t htp_parse_request_line_apache_2_2(htp_connp_t *connp);
 htp_status_t htp_process_request_header_apache_2_2(htp_connp_t *, unsigned char *data, size_t len);
 
-int htp_parse_response_line_generic(htp_connp_t *connp);
-int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
-int htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len);
+htp_status_t htp_parse_response_line_generic(htp_connp_t *connp);
+htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
+htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len);
 
 
 // Private transaction functions
