@@ -530,10 +530,10 @@ ib_status_t ib_persist_fw_register_type(
 
 ib_status_t DLL_PUBLIC ib_persist_fw_map_collection(
     ib_persist_fw_t *persist_fw,
-    ib_context_t *ctx,
-    const char   *name,
-    const char   *key,
-    const char   *store_name
+    ib_context_t    *ctx,
+    const char      *name,
+    const char      *key,
+    const char      *store_name
 )
 {
     assert(persist_fw != NULL);
@@ -545,12 +545,12 @@ ib_status_t DLL_PUBLIC ib_persist_fw_map_collection(
     assert(key != NULL);
     assert(store_name != NULL);
 
-    ib_status_t           rc;
-    ib_engine_t          *ib = persist_fw->ib;
+    ib_status_t              rc;
+    ib_engine_t             *ib             = persist_fw->ib;
     ib_persist_fw_cfg_t     *persist_fw_cfg = NULL;
-    ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
-    ib_persist_fw_store_t   *store = NULL;
-    ib_persist_fw_mapping_t *mapping;
+    ib_mpool_t              *mp             = ib_engine_pool_main_get(ib);
+    ib_persist_fw_store_t   *store          = NULL;
+    ib_persist_fw_mapping_t *mapping        = NULL;
 
     rc = get_ctx_persist_fw(persist_fw, ctx, &persist_fw_cfg);
     if (rc != IB_OK) {

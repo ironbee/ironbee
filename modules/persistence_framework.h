@@ -152,6 +152,7 @@ ib_status_t DLL_PUBLIC ib_persist_fw_register_type(
  *
  * @returns
  * - IB_OK On success.
+ * - IB_ENOENT Store is not found.
  * - IB_EEXIST If @a name is already defined.
  * - Other
  */

@@ -95,7 +95,7 @@ ibmod_lua_la_SOURCES = lua.c \
                        lua_common_private.h
 ibmod_lua_la_CPPFLAGS = $(AM_CPPFLAGS) \
                         -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
-			-I$(top_srcdir)
+                        -I$(top_srcdir)
 ibmod_lua_la_LIBADD = $(AM_LIBADD) \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
@@ -123,7 +123,8 @@ endif
 
 if ENABLE_JSON
 module_LTLIBRARIES += ibmod_persist.la
-ibmod_persist_la_SOURCES = persist.c
+ibmod_persist_la_SOURCES = persist.c \
+                           persistence_framework_api.c
 endif
 
 if BUILD_DEV_MODULES

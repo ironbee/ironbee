@@ -31,6 +31,8 @@
 #include <ironbee/field.h>
 #include <ironbee/bytestr.h>
 
+#include <boost/filesystem.hpp>
+
 class PersistenceLoadModuleTest :
     public BaseTransactionFixture,
     public ::testing::WithParamInterface<const char *> { };
@@ -66,10 +68,21 @@ INSTANTIATE_TEST_CASE_P(
     WithConfiguration,
     PersistenceLoadModuleTest,
     ::testing::Values(
+        /* Load the framework. */
         "LoadModule \"ibmod_persistence_framework.so\"\n",
 
+        /* Load init_collection. */
         "LoadModule \"ibmod_persistence_framework.so\"\n"
         "LoadModule \"ibmod_init_collection.so\"\n"
+
+        /* Load persist */
+        "LoadModule \"ibmod_persistence_framework.so\"\n"
+        "LoadModule \"ibmod_persist.so\"\n",
+
+        /* Load everything (just incase there might be conflicts). */
+        "LoadModule \"ibmod_persistence_framework.so\"\n"
+        "LoadModule \"ibmod_init_collection.so\"\n"
+        "LoadModule \"ibmod_persist.so\"\n"
     )
 );
 
@@ -188,3 +201,49 @@ INSTANTIATE_TEST_CASE_P(
             "InitCollection COL2 json-file://init_collection_2.json\n")
     )
 );
+
+/* Make a test for persist.c. */
+class PersistencePersistTest : public BaseTransactionFixture {
+public:
+    boost::filesystem::path m_path;
+
+    virtual void SetUp() {
+        BaseTransactionFixture::SetUp();
+
+        using namespace boost::filesystem;
+
+        m_path = unique_path();
+        create_directories(m_path);
+    }
+    virtual void TearDown() {
+        using namespace boost::filesystem;
+        BaseTransactionFixture::TearDown();
+        remove_all(m_path);
+    }
+
+};
+
+TEST_F(PersistencePersistTest, LoadStore) {
+    std::string config(
+        "LogLevel DEBUG\n"
+        "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+        "SensorName UnitTesting\n"
+        "SensorHostname unit-testing.sensor.tld\n"
+        "LoadModule \"ibmod_rules.so\"\n"
+        "LoadModule \"ibmod_persistence_framework.so\"\n"
+        "LoadModule \"ibmod_persist.so\"\n"
+    );
+
+    config += "PersistenceStore ASTORE persist-fs://"+m_path.string()+"\n";
+    config +=
+        "PersistenceMap A ASTORE\n"
+        "<Site test-site>\n"
+        "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+        "   Hostname *\n"
+        "   Rule ARGS @ne 1 phase:REQUEST id:a1 rev:1 setvar:A=1\n"
+        "   RuleEnable all\n"
+        "</Site>\n"
+    ;
+    configureIronBeeByString(config.c_str());
+    performTx();
+}
