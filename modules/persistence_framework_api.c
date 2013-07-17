@@ -66,7 +66,7 @@ ib_status_t ib_persist_fw_cfg_create(
 /**
  * Get the per-context persist_fw_cfg.
  *
- * @a persist_fw_main and @c *persist_fw_cfg may referece the same address.
+ * @a persist_fw_main and @c *persist_fw_cfg may reference the same address.
  * @a persist_fw_cfg will not be written too until the correct @ref ib_persist_fw_cfg_t
  * has been retrieved.
  *
@@ -716,7 +716,7 @@ ib_status_t ib_persist_fw_create_store(
     store->impl = NULL;
     store->name = ib_mpool_strdup(mp, name);
     if (store->name == NULL) {
-        ib_log_error(ib, "Failed to cpy store name %s", name);
+        ib_log_error(ib, "Failed to copy store name %s", name);
         return IB_EALLOC;
     }
 

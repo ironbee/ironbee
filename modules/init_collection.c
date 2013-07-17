@@ -147,7 +147,7 @@ static ib_status_t json_load_fn(
     if (rc != IB_OK) {
         ib_log_error_tx(
             tx,
-            "Faile to decode JSON file %s: %s",
+            "Failed to decode JSON file %s: %s",
             json_cfg->file,
             err_msg);
         return rc;
@@ -229,7 +229,7 @@ static ib_status_t json_create_fn(
 #endif /* ENABLE_JSON */
 
 /**
- * Var implemintation data.
+ * Var implementation data.
  */
 struct var_t {
     const ib_list_t *fields; /**< Fields to return. */
@@ -373,7 +373,7 @@ static ib_status_t var_create_fn(
                 ib_ftype_bytestr_in(bs));
         }
 
-        /* Check the field creation in the above if-ifelse-else. */
+        /* Check the field creation in the above if-then-else. */
         if (rc != IB_OK) {
             ib_log_error(
                 ib,
@@ -408,7 +408,7 @@ static ib_status_t var_create_fn(
  *
  * @return
  * - IB_OK On success.
- * - IB_EOTHER On unexepcted list manipulation errors.
+ * - IB_EOTHER On unexpected list manipulation errors.
  */
 static ib_status_t var_load_fn(
         void       *impl,
@@ -444,7 +444,7 @@ static ib_status_t var_load_fn(
 /**
  * Instantiate an instance of @a type and map @a collection_name with it.
  *
- * This function requests that the persitence framework create
+ * This function requests that the persistence framework create
  * a new named store using a random UUID as the name can calling
  * ib_persist_fw_create_store(). That collection named @a collection_name
  * is then mapped to that store, meaning that it will be populated
@@ -605,7 +605,7 @@ static ib_status_t init_collection_common(
     }
 #endif
     else {
-        ib_cfg_log_error(cp, "URI %s not supported for persitence.", uri);
+        ib_cfg_log_error(cp, "URI %s not supported for persistence.", uri);
         goto exit_EINVAL;
     }
 
@@ -823,7 +823,7 @@ static ib_status_t init_collection_init(
 }
 
 IB_MODULE_INIT(
-    IB_MODULE_HEADER_DEFAULTS,    /* Headeer defaults. */
+    IB_MODULE_HEADER_DEFAULTS,    /* Header defaults. */
     MODULE_NAME_STR,              /* Module name. */
     IB_MODULE_CONFIG_NULL,        /* NULL Configuration: NULL, 0, NULL, NULL */
     NULL,                         /* Config map. */
