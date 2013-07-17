@@ -1549,3 +1549,16 @@ TEST_F(ConnectionParsing, TestGenericPersonality) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 }
+
+TEST_F(ConnectionParsing, LongResponseHeader) {
+    htp_config_set_field_limits(cfg, 0, 16);
+
+    int rc = test_run(home, "69-long-response-header.t", cfg, &connp);
+    ASSERT_LT(rc, 0); // Expect error.
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_HEADERS, tx->response_progress);
+}
