@@ -1638,3 +1638,23 @@ TEST_F(ConnectionParsing, ResponseInvalidCl) {
 
     ASSERT_FALSE(tx->flags & HTP_REQUEST_SMUGGLING);
 }
+
+TEST_F(ConnectionParsing, ResponseNoBody) {
+    int rc = test_run(home, "76-response-no-body.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(2, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx1 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx1 != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx1->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx1->response_progress);
+
+    htp_tx_t *tx2 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx2 != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx2->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx2->response_progress);
+}
+
