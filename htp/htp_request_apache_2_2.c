@@ -114,81 +114,104 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, uns
 
     name_start = 0;
 
-    // Look for the colon
+    // Look for the colon.
     size_t colon_pos = 0;
     while ((colon_pos < len) && (data[colon_pos] != '\0') && (data[colon_pos] != ':')) colon_pos++;
 
     if ((colon_pos == len) || (data[colon_pos] == '\0')) {
-        // Missing colon
+        // Missing colon.
+        
         h->flags |= HTP_FIELD_UNPARSEABLE;
 
+        // Log only once per transaction.
         if (!(connp->in_tx->flags & HTP_FIELD_UNPARSEABLE)) {
-            connp->in_tx->flags |= HTP_FIELD_UNPARSEABLE;
-            // Only log once per transaction
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request field invalid: colon missing");
+            connp->in_tx->flags |= HTP_FIELD_UNPARSEABLE;            
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request field invalid: colon missing");
         }
 
-        return HTP_ERROR;
+        // We handle this case as a header with an empty name, with the value equal
+        // to the entire input string.
+
+        // TODO Apache will respond to this problem with a 400.
+
+        // Now extract the name and the value
+        h->name = bstr_dup_c("");
+        if (h->name == NULL) return HTP_ERROR;
+
+        h->value = bstr_dup_mem(data, len);
+        if (h->value == NULL) {
+            bstr_free(h->name);
+            return HTP_ERROR;
+        }
+
+        return HTP_OK;
     }
 
     if (colon_pos == 0) {
-        // Empty header name
+        // Empty header name.
+
         h->flags |= HTP_FIELD_INVALID;
 
+        // Log only once per transaction.
         if (!(connp->in_tx->flags & HTP_FIELD_INVALID)) {
-            connp->in_tx->flags |= HTP_FIELD_INVALID;
-            // Only log once per transaction
+            connp->in_tx->flags |= HTP_FIELD_INVALID;            
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request field invalid: empty name");
         }
     }
 
     name_end = colon_pos;
 
-    // Ignore LWS after field-name
+    // Ignore LWS after field-name.
     size_t prev = name_end;
     while ((prev > name_start) && (htp_is_lws(data[prev - 1]))) {
+        // LWS after header name.
+
         prev--;
         name_end--;
 
         h->flags |= HTP_FIELD_INVALID;
 
+        // Log only once per transaction.
         if (!(connp->in_tx->flags & HTP_FIELD_INVALID)) {
-            connp->in_tx->flags |= HTP_FIELD_INVALID;
+            connp->in_tx->flags |= HTP_FIELD_INVALID;            
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request field invalid: LWS after name");
         }
     }
 
-    // Value
+    // Header value.
 
     value_start = colon_pos;
 
-    // Go over the colon
+    // Go over the colon.
     if (value_start < len) {
         value_start++;
     }
 
-    // Ignore LWS before field-content
+    // Ignore LWS before field-content.
     while ((value_start < len) && (htp_is_lws(data[value_start]))) {
         value_start++;
     }
 
-    // Look for the end of field-content
+    // Look for the end of field-content.
     value_end = value_start;
     while ((value_end < len) && (data[value_end] != '\0')) value_end++;
 
-    // Ignore LWS after field-content
+    // Ignore LWS after field-content.
     prev = value_end - 1;
     while ((prev > value_start) && (htp_is_lws(data[prev]))) {
         prev--;
         value_end--;
     }
 
-    // Check that the header name is a token
+    // Check that the header name is a token.
     size_t i = name_start;
     while (i < name_end) {
         if (!htp_is_token(data[i])) {
+            // Incorrectly formed header name.
+            
             h->flags |= HTP_FIELD_INVALID;
 
+            // Log only once per transaction.
             if (!(connp->in_tx->flags & HTP_FIELD_INVALID)) {
                 connp->in_tx->flags |= HTP_FIELD_INVALID;
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request header name is not a token");
