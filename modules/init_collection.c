@@ -124,7 +124,7 @@ static ib_status_t json_load_fn(
     const void  *buf = NULL;
     size_t       sz;
 
-    ib_log_debug_tx(tx, "Loading JSON file %s.", json_cfg->file); 
+    ib_log_debug_tx(tx, "Loading JSON file %s.", json_cfg->file);
 
     /* Load the file into a buffer. */
     rc = ib_file_readall(tx->mp, json_cfg->file, &buf, &sz);
@@ -237,7 +237,7 @@ struct var_t {
 typedef struct var_t var_t;
 /**
  * Create vars.
- * 
+ *
  * @param[in] ib IronBee engine.
  * @param[in] params Parameters.
  * @param[out] impl A new @ref var_t to be constructed.
@@ -445,7 +445,7 @@ static ib_status_t var_load_fn(
  * Instantiate an instance of @a type and map @a collection_name with it.
  *
  * This function requests that the persitence framework create
- * a new named store using a random UUID as the name can calling 
+ * a new named store using a random UUID as the name can calling
  * ib_persist_fw_create_store(). That collection named @a collection_name
  * is then mapped to that store, meaning that it will be populated
  * and persisted in the course of a transaction.
@@ -634,7 +634,7 @@ exit_EINVAL:
 }
 
 /**
- * Implement the IndexCollection directive. 
+ * Implement the IndexCollection directive.
  *
  * param[in] cp The configuration parser.
  * param[in] directive InitCollection.
@@ -659,7 +659,7 @@ static ib_status_t init_collection_fn(
 }
 
 /**
- * Implement the IndexCollectionIndexed directive. 
+ * Implement the IndexCollectionIndexed directive.
  *
  * param[in] cp The configuration parser.
  * param[in] directive InitCollectionIndexed.

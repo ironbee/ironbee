@@ -68,7 +68,7 @@ ib_status_t ib_persist_fw_cfg_create(
  * Get the per-context persist_fw_cfg.
  *
  * @a persist_fw_main and @c *persist_fw_cfg may referece the same address.
- * @a persist_fw_cfg will not be written too until the correct @ref ib_persist_fw_cfg_t 
+ * @a persist_fw_cfg will not be written too until the correct @ref ib_persist_fw_cfg_t
  * has been retrieved.
  *
  * @param[in] persist_fw_main Any ib_persist_fw_cfg_t for this module. This is
@@ -228,7 +228,7 @@ static ib_status_t populate_context(
     if (rc != IB_OK) {
         return rc;
     }
-    
+
     IB_LIST_LOOP_CONST(persist_fw_cfg->coll_list, list_node) {
         const ib_persist_fw_mapping_t *mapping =
             (const ib_persist_fw_mapping_t *)ib_list_node_data_const(list_node);
@@ -292,7 +292,7 @@ static ib_status_t populate_context(
                 ib,
                 "Mapping for collection %s has no load handler. Skipping.",
                 name);
-        }        
+        }
     }
 
     return IB_OK;
@@ -334,7 +334,7 @@ static ib_status_t persist_context(
     if (rc != IB_OK) {
         return rc;
     }
-    
+
     IB_LIST_LOOP_CONST(persist_fw_cfg->coll_list, list_node) {
         const ib_persist_fw_mapping_t *mapping =
             (const ib_persist_fw_mapping_t *)ib_list_node_data_const(list_node);
@@ -455,7 +455,7 @@ static ib_status_t destroy_stores(
             store->handler = NULL;
         }
     }
-    
+
     return IB_OK;
 }
 
@@ -706,7 +706,7 @@ ib_status_t ib_persist_fw_create_store(
             name);
         return rc;
     }
-    
+
     store = (ib_persist_fw_store_t *)ib_mpool_alloc(mp, sizeof(*store));
     if (store == NULL) {
         ib_log_error(ib, "Failed to allocate store.");
@@ -747,4 +747,3 @@ ib_status_t ib_persist_fw_create_store(
 
     return IB_OK;
 }
-
