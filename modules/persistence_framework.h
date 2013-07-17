@@ -92,8 +92,8 @@ typedef ib_status_t (* ib_persist_fw_store_fn_t)(
  * - IB_EALLOC On Allocation error.
  */
 ib_status_t DLL_PUBLIC ib_persist_fw_create(
-    ib_engine_t   *ib,
-    ib_module_t   *module,
+    ib_engine_t      *ib,
+    ib_module_t      *module,
     ib_persist_fw_t **persist_fw
 );
 
@@ -125,16 +125,16 @@ ib_status_t DLL_PUBLIC ib_persist_fw_create(
  */
 ib_status_t DLL_PUBLIC ib_persist_fw_register_type(
     ib_persist_fw_t            *persist_fw,
-    ib_context_t             *ctx,
-    const char              *type,
+    ib_context_t                *ctx,
+    const char                 *type,
     ib_persist_fw_create_fn_t   create_fn,
-    void                    *create_data,
+    void                       *create_data,
     ib_persist_fw_destroy_fn_t  destroy_fn,
-    void                    *destroy_data,
+    void                       *destroy_data,
     ib_persist_fw_load_fn_t     load_fn,
-    void                    *load_data,
+    void                       *load_data,
     ib_persist_fw_store_fn_t    store_fn,
-    void                    *store_data
+    void                       *store_data
 );
 
 /**
@@ -156,11 +156,11 @@ ib_status_t DLL_PUBLIC ib_persist_fw_register_type(
  * - Other
  */
 ib_status_t DLL_PUBLIC ib_persist_fw_create_store(
-    ib_persist_fw_t       *persist_fw,
-    ib_context_t       *ctx,
-    const char         *type,
-    const char         *name,
-    const ib_list_t    *params
+    ib_persist_fw_t *persist_fw,
+    ib_context_t    *ctx,
+    const char      *type,
+    const char      *name,
+    const ib_list_t *params
 );
 
 /**
@@ -179,10 +179,10 @@ ib_status_t DLL_PUBLIC ib_persist_fw_create_store(
  */
 ib_status_t DLL_PUBLIC ib_persist_fw_map_collection(
     ib_persist_fw_t *persist_fw,
-    ib_context_t *ctx,
-    const char   *name,
-    const char   *key,
-    const char   *store
+    ib_context_t    *ctx,
+    const char      *name,
+    const char      *key,
+    const char      *store
 );
 
 /**

@@ -37,9 +37,9 @@
 IB_MODULE_DECLARE();
 
 static ib_status_t cpy_psntsfw_cfg(
-    ib_engine_t             *ib,
-    ib_mpool_t              *mp,
-    ib_mpool_t              *local_mp,
+    ib_engine_t                *ib,
+    ib_mpool_t                 *mp,
+    ib_mpool_t                 *local_mp,
     const ib_persist_fw_cfg_t  *persist_fw_src,
     ib_persist_fw_cfg_t       **persist_fw_dst
 )
@@ -106,7 +106,9 @@ static ib_status_t cpy_psntsfw_cfg(
 
     /* Copy the list of mappings. */
     IB_LIST_LOOP(persist_fw_src->coll_list, list_node) {
-        rc = ib_list_push(persist_fw_out->coll_list, ib_list_node_data(list_node));
+        rc = ib_list_push(
+            persist_fw_out->coll_list,
+            ib_list_node_data(list_node));
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to append to collection list.");
             return rc;
@@ -145,11 +147,11 @@ static ib_status_t cpy_persist_fw(
 
     const ib_persist_fw_modlist_t *src_cfg = (ib_persist_fw_modlist_t *)src;
     ib_persist_fw_modlist_t       *dst_cfg = (ib_persist_fw_modlist_t *)dst;
-    ib_mpool_t                 *mp = ib_engine_pool_main_get(ib);
-    ib_status_t                 rc;
-    ib_mpool_t                 *local_mp;
-    size_t                      ne;
-    size_t                      idx;
+    ib_mpool_t                    *mp = ib_engine_pool_main_get(ib);
+    ib_status_t                    rc;
+    ib_mpool_t                    *local_mp;
+    size_t                         ne;
+    size_t                         idx;
     ib_persist_fw_cfg_t           *persist_fw_src = NULL;
 
 

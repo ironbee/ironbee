@@ -51,15 +51,15 @@ extern "C" {
  * plus its associated handler structure is a @ref ib_persist_fw_store_t.
  */
 struct ib_persist_fw_handler_t {
-    const char              *type;         /**< The type this handles. */
+    const char                 *type;         /**< The type this handles. */
     ib_persist_fw_create_fn_t   create_fn;    /**< Create an instance. */
-    void                    *create_data;  /**< Callback data. */
+    void                       *create_data;  /**< Callback data. */
     ib_persist_fw_destroy_fn_t  destroy_fn;   /**< Destroy an instance. */
-    void                    *destroy_data; /**< Callback data. */
+    void                       *destroy_data; /**< Callback data. */
     ib_persist_fw_load_fn_t     load_fn;      /**< Load data from an instance. */
-    void                    *load_data;    /**< Callback data. */
+    void                       *load_data;    /**< Callback data. */
     ib_persist_fw_store_fn_t    store_fn;     /**< Store data in an instance. */
-    void                    *store_data;   /**< Callback data. */
+    void                       *store_data;   /**< Callback data. */
 };
 typedef struct ib_persist_fw_handler_t ib_persist_fw_handler_t;
 
@@ -168,7 +168,7 @@ typedef struct ib_persist_fw_modlist_t ib_persist_fw_modlist_t;
  * - IB_EALLOC
  */
 ib_status_t ib_persist_fw_cfg_create(
-    ib_mpool_t       *mp,
+    ib_mpool_t           *mp,
     ib_persist_fw_cfg_t **persist_fw
 );
 

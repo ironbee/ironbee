@@ -77,9 +77,10 @@ static ib_status_t mod_persist_init(
     return IB_OK;
 }
 
-static ib_status_t mod_persist_fini(ib_engine_t *ib,
-                                    ib_module_t *module,
-                                    void *cbdata)
+static ib_status_t mod_persist_fini(
+    ib_engine_t *ib,
+    ib_module_t *module,
+    void        *cbdata)
 {
     return IB_OK;
 }
