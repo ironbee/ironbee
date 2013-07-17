@@ -2524,3 +2524,7 @@ htp_uri_t *htp_uri_alloc() {
 
     return u;
 }
+
+char *htp_get_version(void) {
+    return HTP_VERSION_STRING_FULL;
+}

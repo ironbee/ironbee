@@ -59,10 +59,11 @@ typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
 typedef struct timeval htp_time_t;
 
-// Free-form version string
-#define HTP_VERSION_STRING          "master"
+// Free-form version strings.
+#define HTP_VERSION_STRING          "0.5.x"
+#define HTP_VERSION_STRING_FULL     "LibHTP v" HTP_VERSION_STRING
 
-// In the form of x.y.z, with two positions for each component; for example, 400 means 0.4.0
+// In the form of x.y.z, with two positions for each component; for example, 400 means 0.4.0.
 #define HTP_VERSION_NUMBER          500
 
 // Below are all htp_status_t return codes used by LibHTP. Enum is not

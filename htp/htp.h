@@ -654,6 +654,13 @@ htp_status_t htp_urldecode_inplace(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, b
  */
 htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, bstr *input, uint64_t *flags, int *expected_status_code);
 
+/**
+ * Returns the LibHTP version string.
+ * 
+ * @return LibHTP version, for example "LibHTP v0.5.x".
+ */
+char *htp_get_version(void);
+
 #ifdef __cplusplus
 }
 #endif
