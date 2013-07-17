@@ -26,10 +26,10 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <string.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 ib_status_t ib_file_readall(
     ib_mpool_t  *mp,

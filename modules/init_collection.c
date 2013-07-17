@@ -24,28 +24,28 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
-#include <ironbee_config_auto.h>
+#include "ironbee_config_auto.h"
+
+#include "persistence_framework.h"
 
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/file.h>
-#include <ironbee/module.h>
-#include <ironbee/path.h>
 #if ENABLE_JSON
 #include <ironbee/json.h>
 #endif
+#include <ironbee/module.h>
+#include <ironbee/path.h>
 #include <ironbee/uuid.h>
-
-#include <persistence_framework.h>
 
 #include <assert.h>
 #include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 /* Module boilerplate */
 #define MODULE_NAME init_collection

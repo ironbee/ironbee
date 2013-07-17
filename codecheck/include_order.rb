@@ -18,7 +18,7 @@ CANONICAL_INCLUDE_ORDER = [
 
   '"config-parser.h"',
 
-  # Dirt hack section
+  # Dirty hack section
   '"user_agent_private.h"',
   '<ironbee/module_sym.h>',
 
@@ -103,6 +103,7 @@ CANONICAL_INCLUDE_ORDER = [
   '"moddevel_private.h"',
   '"parser_suite.hpp"',
   '"persistence_framework.h"',
+  '"persistence_framework_private.h"',
   '"rule_engine_private.h"',
   '"rule_logger_private.h"',
   '"rules_lua_private.h"',
@@ -150,6 +151,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/escape.h>',
   '<ironbee/expand.h>',
   '<ironbee/field.h>',
+  '<ironbee/file.h>',
   '<ironbee/flags.h>',
   '<ironbee/hash.h>',
   '<ironbee/ip.h>',

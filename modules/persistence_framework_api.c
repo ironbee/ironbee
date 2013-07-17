@@ -16,7 +16,6 @@
  ****************************************************************************/
 
 #include "persistence_framework_private.h"
-#include "persistence_framework.h"
 
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
