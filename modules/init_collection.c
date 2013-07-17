@@ -65,7 +65,7 @@ IB_MODULE_DECLARE();
  * Module configuration.
  */
 struct init_collection_cfg_t {
-    ib_pstnsfw_t *pstnsfw; /**< Handle to the persistence framework. */
+    ib_persist_fw_t *persist_fw; /**< Handle to the persistence framework. */
 
     /**
      * The current configuration value.
@@ -446,7 +446,7 @@ static ib_status_t var_load_fn(
  *
  * This function requests that the persitence framework create
  * a new named store using a random UUID as the name can calling 
- * ib_pstnsfw_create_store(). That collection named @a collection_name
+ * ib_persist_fw_create_store(). That collection named @a collection_name
  * is then mapped to that store, meaning that it will be populated
  * and persisted in the course of a transaction.
  *
@@ -461,7 +461,7 @@ static ib_status_t var_load_fn(
  *                   The rest are options.
  * @returns
  * - IB_OK On success.
- * - Other on failure of ib_uuid_create_v4() or @c ib_pstnsfw_* calls.
+ * - Other on failure of ib_uuid_create_v4() or @c ib_persist_fw_* calls.
  */
 static ib_status_t domap(
     ib_cfgparser_t        *cp,
@@ -488,8 +488,8 @@ static ib_status_t domap(
         return rc;
     }
 
-    rc = ib_pstnsfw_create_store(
-        cfg->pstnsfw,
+    rc = ib_persist_fw_create_store(
+        cfg->persist_fw,
         ctx,
         type,
         store_name,
@@ -499,8 +499,8 @@ static ib_status_t domap(
         return rc;
     }
 
-    rc = ib_pstnsfw_map_collection(
-        cfg->pstnsfw,
+    rc = ib_persist_fw_map_collection(
+        cfg->persist_fw,
         ctx,
         collection_name,
         "no key",
@@ -545,7 +545,7 @@ static ib_status_t init_collection_common(
     assert(directive != NULL);
     assert(vars != NULL);
     assert(cfg != NULL);
-    assert(cfg->pstnsfw != NULL);
+    assert(cfg->persist_fw != NULL);
 
     ib_status_t            rc;
     const ib_list_node_t  *node;
@@ -762,9 +762,9 @@ static ib_status_t init_collection_init(
         return IB_EALLOC;
     }
 
-    cfg->pstnsfw = NULL;
+    cfg->persist_fw = NULL;
 
-    rc = ib_pstnsfw_create(ib, module, &(cfg->pstnsfw));
+    rc = ib_persist_fw_create(ib, module, &(cfg->persist_fw));
     if (rc != IB_OK) {
         ib_log_error(
             ib,
@@ -782,8 +782,8 @@ static ib_status_t init_collection_init(
     }
 
     ib_log_debug(ib, "Registering vars: handlers.");
-    rc = ib_pstnsfw_register_type(
-        cfg->pstnsfw,
+    rc = ib_persist_fw_register_type(
+        cfg->persist_fw,
         ib_context_main(ib),
         VAR_TYPE,
         var_create_fn,
@@ -801,8 +801,8 @@ static ib_status_t init_collection_init(
 
 #if ENABLE_JSON
     ib_log_debug(ib, "Registering json-file: handlers.");
-    rc = ib_pstnsfw_register_type(
-        cfg->pstnsfw,
+    rc = ib_persist_fw_register_type(
+        cfg->persist_fw,
         ib_context_main(ib),
         JSON_TYPE,
         json_create_fn,

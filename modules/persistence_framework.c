@@ -40,24 +40,24 @@ static ib_status_t cpy_psntsfw_cfg(
     ib_engine_t             *ib,
     ib_mpool_t              *mp,
     ib_mpool_t              *local_mp,
-    const ib_pstnsfw_cfg_t  *pstnsfw_src,
-    ib_pstnsfw_cfg_t       **pstnsfw_dst
+    const ib_persist_fw_cfg_t  *persist_fw_src,
+    ib_persist_fw_cfg_t       **persist_fw_dst
 )
 {
     assert(ib != NULL);
     assert(mp != NULL);
     assert(local_mp != NULL);
-    assert(pstnsfw_src != NULL);
-    assert(pstnsfw_dst != NULL);
+    assert(persist_fw_src != NULL);
+    assert(persist_fw_dst != NULL);
 
     ib_list_t      *list = NULL;
     ib_list_node_t *list_node;
     ib_status_t     rc;
-    ib_pstnsfw_cfg_t *pstnsfw_out;
+    ib_persist_fw_cfg_t *persist_fw_out;
 
-    rc = ib_pstnsfw_cfg_create(mp, &pstnsfw_out);
+    rc = ib_persist_fw_cfg_create(mp, &persist_fw_out);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to create new pstnsfw_cfg.");
+        ib_log_error(ib, "Failed to create new persist_fw_cfg.");
         return rc;
     }
 
@@ -67,16 +67,16 @@ static ib_status_t cpy_psntsfw_cfg(
     }
 
     /* Copy the src store hash to the dst store hash. */
-    if (ib_hash_size(pstnsfw_src->stores) > 0) {
-        rc = ib_hash_get_all(pstnsfw_src->stores, list);
+    if (ib_hash_size(persist_fw_src->stores) > 0) {
+        rc = ib_hash_get_all(persist_fw_src->stores, list);
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to get entries from hash.");
             return rc;
         }
         IB_LIST_LOOP(list, list_node) {
-            ib_pstnsfw_store_t *store =
-                (ib_pstnsfw_store_t *)ib_list_node_data_const(list_node);
-            rc = ib_hash_set(pstnsfw_out->stores, store->name, store);
+            ib_persist_fw_store_t *store =
+                (ib_persist_fw_store_t *)ib_list_node_data_const(list_node);
+            rc = ib_hash_set(persist_fw_out->stores, store->name, store);
             if (rc != IB_OK) {
                 ib_log_error(ib, "Failed to set store %s", store->name);
                 return rc;
@@ -85,17 +85,17 @@ static ib_status_t cpy_psntsfw_cfg(
         ib_list_clear(list);
     }
 
-    if (ib_hash_size(pstnsfw_src->handlers) > 0) {
+    if (ib_hash_size(persist_fw_src->handlers) > 0) {
         /* Copy the src handlers hash to the dst handlers hash. */
-        rc = ib_hash_get_all(pstnsfw_src->handlers, list);
+        rc = ib_hash_get_all(persist_fw_src->handlers, list);
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to get entries from hash.");
             return rc;
         }
         IB_LIST_LOOP(list, list_node) {
-            ib_pstnsfw_handler_t *handler =
-                (ib_pstnsfw_handler_t *)ib_list_node_data_const(list_node);
-            rc = ib_hash_set(pstnsfw_out->handlers, handler->type, handler);
+            ib_persist_fw_handler_t *handler =
+                (ib_persist_fw_handler_t *)ib_list_node_data_const(list_node);
+            rc = ib_hash_set(persist_fw_out->handlers, handler->type, handler);
             if (rc != IB_OK) {
                 ib_log_error(ib, "Failed to set handler %s.", handler->type);
                 return rc;
@@ -105,20 +105,20 @@ static ib_status_t cpy_psntsfw_cfg(
     }
 
     /* Copy the list of mappings. */
-    IB_LIST_LOOP(pstnsfw_src->coll_list, list_node) {
-        rc = ib_list_push(pstnsfw_out->coll_list, ib_list_node_data(list_node));
+    IB_LIST_LOOP(persist_fw_src->coll_list, list_node) {
+        rc = ib_list_push(persist_fw_out->coll_list, ib_list_node_data(list_node));
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to append to collection list.");
             return rc;
         }
     }
 
-    *pstnsfw_dst = pstnsfw_out;
+    *persist_fw_dst = persist_fw_out;
     return IB_OK;
 }
 
 /**
- * Copy a @ref ib_pstnsfw_cfg_t.
+ * Copy a @ref ib_persist_fw_cfg_t.
  *
  * Because the persistence framework must be configuration context aware,
  * it registers every instance of itself as a module.
@@ -128,7 +128,7 @@ static ib_status_t cpy_psntsfw_cfg(
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t cpy_pstnsfw(
+static ib_status_t cpy_persist_fw(
     ib_engine_t *ib,
     ib_module_t *module,
     void *dst,
@@ -141,16 +141,16 @@ static ib_status_t cpy_pstnsfw(
     assert(module != NULL);
     assert(src != NULL);
     assert(dst != NULL);
-    assert(length == sizeof(ib_pstnsfw_modlist_t));
+    assert(length == sizeof(ib_persist_fw_modlist_t));
 
-    const ib_pstnsfw_modlist_t *src_cfg = (ib_pstnsfw_modlist_t *)src;
-    ib_pstnsfw_modlist_t       *dst_cfg = (ib_pstnsfw_modlist_t *)dst;
+    const ib_persist_fw_modlist_t *src_cfg = (ib_persist_fw_modlist_t *)src;
+    ib_persist_fw_modlist_t       *dst_cfg = (ib_persist_fw_modlist_t *)dst;
     ib_mpool_t                 *mp = ib_engine_pool_main_get(ib);
     ib_status_t                 rc;
     ib_mpool_t                 *local_mp;
     size_t                      ne;
     size_t                      idx;
-    ib_pstnsfw_cfg_t           *pstnsfw_src = NULL;
+    ib_persist_fw_cfg_t           *persist_fw_src = NULL;
 
 
     /* Shallow copy. Now we overwrite bits we need to manually duplicate. */
@@ -167,21 +167,21 @@ static ib_status_t cpy_pstnsfw(
         return rc;
     }
 
-    IB_ARRAY_LOOP(src_cfg->configs, ne, idx, pstnsfw_src) {
-        ib_pstnsfw_cfg_t *pstnsfw_dst = NULL;
+    IB_ARRAY_LOOP(src_cfg->configs, ne, idx, persist_fw_src) {
+        ib_persist_fw_cfg_t *persist_fw_dst = NULL;
 
         /* Skip unregistered modules. They have a NULL configuration. */
-        if (pstnsfw_src == NULL) {
+        if (persist_fw_src == NULL) {
             continue;
         }
 
-        rc = cpy_psntsfw_cfg(ib, mp, local_mp, pstnsfw_src, &pstnsfw_dst);
+        rc = cpy_psntsfw_cfg(ib, mp, local_mp, persist_fw_src, &persist_fw_dst);
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to copy configuration into new context.");
             goto exit;
         }
 
-        rc = ib_array_setn(dst_cfg->configs, idx, pstnsfw_dst);
+        rc = ib_array_setn(dst_cfg->configs, idx, persist_fw_dst);
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to copy configuration into new context.");
             goto exit;
@@ -214,7 +214,7 @@ static ib_status_t persistence_framework_init(
 
     ib_status_t   rc;
     ib_mpool_t   *mp = ib_engine_pool_main_get(ib);
-    ib_pstnsfw_modlist_t *cfg;
+    ib_persist_fw_modlist_t *cfg;
 
     cfg = ib_mpool_alloc(mp, sizeof(*cfg));
     if (cfg == NULL) {
@@ -263,7 +263,7 @@ IB_MODULE_INIT(
     MODULE_NAME_STR,              /* Module name. */
     NULL,                         /* Configuration. Dynamically set in init. */
     0,                            /* Config length is 0. */
-    cpy_pstnsfw,                  /* Configuration copy function. */
+    cpy_persist_fw,                  /* Configuration copy function. */
     NULL,                         /* Callback data. */
     NULL,                         /* Config map. */
     NULL,                         /* Directive map. */

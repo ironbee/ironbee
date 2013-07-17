@@ -53,26 +53,26 @@ extern "C" {
  * @{
  */
 
-typedef struct ib_pstnsfw_t ib_pstnsfw_t;
+typedef struct ib_persist_fw_t ib_persist_fw_t;
 
-typedef ib_status_t (* ib_pstnsfw_create_fn_t)(
+typedef ib_status_t (* ib_persist_fw_create_fn_t)(
     ib_engine_t       *ib,
     const ib_list_t   *params,
     void             **impl,
     void              *cbdata
 );
-typedef void (* ib_pstnsfw_destroy_fn_t)(
+typedef void (* ib_persist_fw_destroy_fn_t)(
     void *impl,
     void *cbdata
 );
-typedef ib_status_t (* ib_pstnsfw_load_fn_t)(
+typedef ib_status_t (* ib_persist_fw_load_fn_t)(
     void *impl,
     ib_tx_t *tx,
     const char *key,
     ib_list_t *list,
     void *cbdata
 );
-typedef ib_status_t (* ib_pstnsfw_store_fn_t)(
+typedef ib_status_t (* ib_persist_fw_store_fn_t)(
     void *impl,
     ib_tx_t *tx,
     const char *key,
@@ -86,15 +86,15 @@ typedef ib_status_t (* ib_pstnsfw_store_fn_t)(
  *                created from and registered to.
  *                The main memory pool of @a ib is used.
  * @param[in] module The user's module.
- * @param[out] pstnsfw The persistence framework object.
+ * @param[out] persist_fw The persistence framework object.
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC On Allocation error.
  */
-ib_status_t DLL_PUBLIC ib_pstnsfw_create(
+ib_status_t DLL_PUBLIC ib_persist_fw_create(
     ib_engine_t   *ib,
     ib_module_t   *module,
-    ib_pstnsfw_t **pstnsfw
+    ib_persist_fw_t **persist_fw
 );
 
 /**
@@ -104,10 +104,10 @@ ib_status_t DLL_PUBLIC ib_pstnsfw_create(
  * function is skipped. For example, read-only persistence stores
  * may pass in a NULL @a store_fn.
  *
- * @param[in] pstnsfw The persistence instance.
+ * @param[in] persist_fw The persistence instance.
  * @param[in] ctx Configuration context the handler is defined in.
  * @param[in] type The name of the type this handles.
- *            Calls to ib_pstnsfw_create_store() should pass in this
+ *            Calls to ib_persist_fw_create_store() should pass in this
  *            type to create an store that uses this registration.
  * @param[in] create_fn Create callback.
  * @param[in] create_data Callback data.
@@ -123,40 +123,40 @@ ib_status_t DLL_PUBLIC ib_pstnsfw_create(
  * - IB_EEXIST If @a name is already defined.
  * - Other
  */
-ib_status_t DLL_PUBLIC ib_pstnsfw_register_type(
-    ib_pstnsfw_t            *pstnsfw,
+ib_status_t DLL_PUBLIC ib_persist_fw_register_type(
+    ib_persist_fw_t            *persist_fw,
     ib_context_t             *ctx,
     const char              *type,
-    ib_pstnsfw_create_fn_t   create_fn,
+    ib_persist_fw_create_fn_t   create_fn,
     void                    *create_data,
-    ib_pstnsfw_destroy_fn_t  destroy_fn,
+    ib_persist_fw_destroy_fn_t  destroy_fn,
     void                    *destroy_data,
-    ib_pstnsfw_load_fn_t     load_fn,
+    ib_persist_fw_load_fn_t     load_fn,
     void                    *load_data,
-    ib_pstnsfw_store_fn_t    store_fn,
+    ib_persist_fw_store_fn_t    store_fn,
     void                    *store_data
 );
 
 /**
  * Fetch a registered type handler and create and instance of that type.
  *
- * @param[in] pstnsfw The persistence instance.
+ * @param[in] persist_fw The persistence instance.
  * @param[in] ctx Configuration context the store is defined in.
  * @param[in] type The type.
  * @param[in] name The name to store the newly created type under.
  * @param[in] params A list of strings (null-terminated @c char @c *)
- *            passed to the @ref ib_pstnsfw_create_fn_t for the
+ *            passed to the @ref ib_persist_fw_create_fn_t for the
  *            given type.
  *
- * @sa ib_pstnsfw_register_type()
+ * @sa ib_persist_fw_register_type()
  *
  * @returns
  * - IB_OK On success.
  * - IB_EEXIST If @a name is already defined.
  * - Other
  */
-ib_status_t DLL_PUBLIC ib_pstnsfw_create_store(
-    ib_pstnsfw_t       *pstnsfw,
+ib_status_t DLL_PUBLIC ib_persist_fw_create_store(
+    ib_persist_fw_t       *persist_fw,
     ib_context_t       *ctx,
     const char         *type,
     const char         *name,
@@ -164,9 +164,9 @@ ib_status_t DLL_PUBLIC ib_pstnsfw_create_store(
 );
 
 /**
- * Map a collection to a named store created by ib_pstnsfw_create_store().
+ * Map a collection to a named store created by ib_persist_fw_create_store().
  *
- * @param[in] pstnsfw The persistence instance.
+ * @param[in] persist_fw The persistence instance.
  * @param[in] ctx The configuration context this will be in.
  * @param[in] name The name of the collection to map.
  * @param[in] key The key to store the collection under in the store.
@@ -177,8 +177,8 @@ ib_status_t DLL_PUBLIC ib_pstnsfw_create_store(
  * - IB_EINVAL If @a name is already defined.
  * - Other on failure.
  */
-ib_status_t DLL_PUBLIC ib_pstnsfw_map_collection(
-    ib_pstnsfw_t *pstnsfw,
+ib_status_t DLL_PUBLIC ib_persist_fw_map_collection(
+    ib_persist_fw_t *persist_fw,
     ib_context_t *ctx,
     const char   *name,
     const char   *key,
