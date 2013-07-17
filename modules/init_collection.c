@@ -684,7 +684,7 @@ static ib_status_t init_collection_indexed_fn(
 }
 
 /**
- * Register directives dynamically so as to define a callback data struct.
+ * Register directives so as to define a callback data struct.
  *
  * @param[in] ib IronBee engine.
  * @param[in] cfg The module configuration.
