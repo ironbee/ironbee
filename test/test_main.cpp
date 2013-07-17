@@ -1527,7 +1527,11 @@ TEST_F(ConnectionParsing, InvalidRequestHeader) {
     ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
-    ASSERT_TRUE(tx != NULL);   
+    ASSERT_TRUE(tx != NULL);
+
+    htp_header_t *h = (htp_header_t *)htp_table_get_c(tx->request_headers, "Header-With-NUL");
+    ASSERT_TRUE(h != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(h->value, "BEFORE"));
 }
 
 TEST_F(ConnectionParsing, TestGenericPersonality) {
