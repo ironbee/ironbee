@@ -199,6 +199,10 @@ TEST_F(ConnectionParsing, Expect) {
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
+
+    // The interim header from the 100 response should not be among the final headers.
+    htp_header_t *h = (htp_header_t *) htp_table_get_c(tx->request_headers, "Header1");
+    ASSERT_TRUE(h == NULL);
 }
 
 TEST_F(ConnectionParsing, UriNormal) {
@@ -789,14 +793,14 @@ TEST_F(ConnectionParsing, GetIPv6) {
     ASSERT_TRUE(tx != NULL);
 
     ASSERT_TRUE(tx->request_method != NULL);
-    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));   
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
 
     ASSERT_TRUE(tx->request_uri != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "http://[::1]:8080/?p=%20"));
 
     ASSERT_TRUE(tx->parsed_uri != NULL);
-    
-    ASSERT_TRUE(tx->parsed_uri->hostname != NULL);   
+
+    ASSERT_TRUE(tx->parsed_uri->hostname != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->hostname, "[::1]"));
     ASSERT_EQ(8080, tx->parsed_uri->port_number);
 
@@ -804,7 +808,7 @@ TEST_F(ConnectionParsing, GetIPv6) {
     ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->query, "p=%20"));
 
     htp_param_t *p = htp_tx_req_get_param(tx, "p", 1);
-    ASSERT_TRUE(p != NULL);    
+    ASSERT_TRUE(p != NULL);
     ASSERT_TRUE(p->value != NULL);
     ASSERT_EQ(0, bstr_cmp_c(p->value, " "));
 }
@@ -812,15 +816,15 @@ TEST_F(ConnectionParsing, GetIPv6) {
 TEST_F(ConnectionParsing, GetRequestLineNul) {
     int rc = test_run(home, "31-get-request-line-nul.t", cfg, &connp);
     ASSERT_GE(rc, 0);
-    
+
     ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
-    
-    ASSERT_TRUE(tx->request_uri != NULL);   
 
-    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=%20"));   
+    ASSERT_TRUE(tx->request_uri != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=%20"));
 }
 
 TEST_F(ConnectionParsing, InvalidHostname1) {
@@ -905,7 +909,7 @@ TEST_F(ConnectionParsing, InvalidRequest2) {
     ASSERT_TRUE(tx != NULL);
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
-    
+
     ASSERT_TRUE(tx->flags & HTP_REQUEST_SMUGGLING);
 
     ASSERT_TRUE(tx->request_hostname != NULL);
@@ -921,14 +925,14 @@ TEST_F(ConnectionParsing, InvalidRequest3) {
     ASSERT_EQ(HTP_REQUEST_HEADERS, tx->request_progress);
 
     ASSERT_TRUE(tx->flags & HTP_REQUEST_INVALID);
-    ASSERT_TRUE(tx->flags & HTP_REQUEST_INVALID_T_E);    
+    ASSERT_TRUE(tx->flags & HTP_REQUEST_INVALID_T_E);
 
     ASSERT_TRUE(tx->request_hostname != NULL);
 }
 
 TEST_F(ConnectionParsing, AutoDestroyCrash) {
     htp_config_set_tx_auto_destroy(cfg, 1);
-    
+
     int rc = test_run(home, "39-auto-destroy-crash.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
@@ -994,7 +998,7 @@ TEST_F(ConnectionParsing, InvalidProtocol) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);   
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
 
     ASSERT_EQ(HTP_PROTOCOL_INVALID, tx->request_protocol_number);
 }
@@ -1066,7 +1070,7 @@ TEST_F(ConnectionParsing, AuthUnrecognized) {
 
     ASSERT_TRUE(tx->request_auth_username == NULL);
 
-    ASSERT_TRUE(tx->request_auth_password == NULL);   
+    ASSERT_TRUE(tx->request_auth_password == NULL);
 }
 
 TEST_F(ConnectionParsing, InvalidResponseHeaders1) {
@@ -1075,23 +1079,23 @@ TEST_F(ConnectionParsing, InvalidResponseHeaders1) {
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
-    
+
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 
     ASSERT_EQ(8, htp_table_size(tx->response_headers));
-   
-    htp_header_t *h_empty = (htp_header_t *)htp_table_get_c(tx->response_headers, "");
+
+    htp_header_t *h_empty = (htp_header_t *) htp_table_get_c(tx->response_headers, "");
     ASSERT_TRUE(h_empty != NULL);
     ASSERT_EQ(0, bstr_cmp_c(h_empty->value, "No Colon"));
     ASSERT_TRUE(h_empty->flags & HTP_FIELD_INVALID);
     ASSERT_TRUE(h_empty->flags & HTP_FIELD_UNPARSEABLE);
 
-    htp_header_t *h_lws = (htp_header_t *)htp_table_get_c(tx->response_headers, "Lws");
+    htp_header_t *h_lws = (htp_header_t *) htp_table_get_c(tx->response_headers, "Lws");
     ASSERT_TRUE(h_lws != NULL);
     ASSERT_EQ(0, bstr_cmp_c(h_lws->value, "After Header Name"));
     ASSERT_TRUE(h_lws->flags & HTP_FIELD_INVALID);
 
-    htp_header_t *h_nottoken = (htp_header_t *)htp_table_get_c(tx->response_headers, "Header@Name");
+    htp_header_t *h_nottoken = (htp_header_t *) htp_table_get_c(tx->response_headers, "Header@Name");
     ASSERT_TRUE(h_nottoken != NULL);
     ASSERT_EQ(0, bstr_cmp_c(h_nottoken->value, "Not Token"));
     ASSERT_TRUE(h_nottoken->flags & HTP_FIELD_INVALID);
@@ -1108,10 +1112,10 @@ TEST_F(ConnectionParsing, InvalidResponseHeaders2) {
 
     ASSERT_EQ(6, htp_table_size(tx->response_headers));
 
-    htp_header_t *h_empty = (htp_header_t *)htp_table_get_c(tx->response_headers, "");
+    htp_header_t *h_empty = (htp_header_t *) htp_table_get_c(tx->response_headers, "");
     ASSERT_TRUE(h_empty != NULL);
     ASSERT_EQ(0, bstr_cmp_c(h_empty->value, "Empty Name"));
-    ASSERT_TRUE(h_empty->flags & HTP_FIELD_INVALID);    
+    ASSERT_TRUE(h_empty->flags & HTP_FIELD_INVALID);
 }
 
 TEST_F(ConnectionParsing, Util) {
@@ -1120,7 +1124,7 @@ TEST_F(ConnectionParsing, Util) {
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
-    
+
     char *in_state = htp_connp_in_state_as_string(tx->connp);
     ASSERT_TRUE(in_state != NULL);
 
@@ -1151,7 +1155,7 @@ TEST_F(ConnectionParsing, Util) {
         long_message[i] = 'X';
     }
     long_message[1299] = '\0';
-    
+
     htp_log(tx->connp, __FILE__, __LINE__, HTP_LOG_ERROR, 0, long_message);
     ASSERT_TRUE(tx->connp->last_error != NULL);
     ASSERT_TRUE(tx->connp->last_error->msg != NULL);
@@ -1183,7 +1187,7 @@ TEST_F(ConnectionParsing, GetIPv6Invalid) {
     ASSERT_TRUE(tx->parsed_uri != NULL);
 
     ASSERT_TRUE(tx->parsed_uri->hostname != NULL);
-    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->hostname, "[::1:8080"));    
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->hostname, "[::1:8080"));
 }
 
 TEST_F(ConnectionParsing, InvalidPath) {
@@ -1204,7 +1208,7 @@ TEST_F(ConnectionParsing, InvalidPath) {
     ASSERT_TRUE(tx->parsed_uri != NULL);
 
     ASSERT_TRUE(tx->parsed_uri->path != NULL);
-    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "invalid/path"));    
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "invalid/path"));
 }
 
 TEST_F(ConnectionParsing, PathUtf8_None) {
@@ -1296,7 +1300,7 @@ TEST_F(ConnectionParsing, PathUtf8_FullWidth) {
 
 TEST_F(ConnectionParsing, PathUtf8_Decode_Valid) {
     htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
-    
+
     int rc = test_run(home, "54-path-utf8-valid.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
@@ -1366,7 +1370,7 @@ TEST_F(ConnectionParsing, PathUtf8_Decode_Overlong4) {
 
 TEST_F(ConnectionParsing, PathUtf8_Decode_Invalid) {
     htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
-    
+
     int rc = test_run(home, "58-path-utf8-invalid.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
@@ -1405,7 +1409,7 @@ TEST_F(ConnectionParsing, PathUtf8_Decode_FullWidth) {
 TEST_F(ConnectionParsing, RequestCookies) {
     int rc = test_run(home, "60-request-cookies.t", cfg, &connp);
     ASSERT_GE(rc, 0);
-    
+
     ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
@@ -1415,20 +1419,20 @@ TEST_F(ConnectionParsing, RequestCookies) {
 
     bstr *key = NULL;
     bstr *value = NULL;
-    
-    value = (bstr *)htp_table_get_index(tx->request_cookies, 0, &key);
+
+    value = (bstr *) htp_table_get_index(tx->request_cookies, 0, &key);
     ASSERT_TRUE(key != NULL);
     ASSERT_TRUE(value != NULL);
     ASSERT_EQ(0, bstr_cmp_c(key, "p"));
     ASSERT_EQ(0, bstr_cmp_c(value, "1"));
 
-    value = (bstr *)htp_table_get_index(tx->request_cookies, 1, &key);
+    value = (bstr *) htp_table_get_index(tx->request_cookies, 1, &key);
     ASSERT_TRUE(key != NULL);
     ASSERT_TRUE(value != NULL);
     ASSERT_EQ(0, bstr_cmp_c(key, "q"));
     ASSERT_EQ(0, bstr_cmp_c(value, "2"));
 
-    value = (bstr *)htp_table_get_index(tx->request_cookies, 2, &key);
+    value = (bstr *) htp_table_get_index(tx->request_cookies, 2, &key);
     ASSERT_TRUE(key != NULL);
     ASSERT_TRUE(value != NULL);
     ASSERT_EQ(0, bstr_cmp_c(key, "z"));
@@ -1492,11 +1496,11 @@ TEST_F(ConnectionParsing, PostChunkedSplitChunk) {
 
     htp_param_t *p = htp_tx_req_get_param(tx, "p", 1);
     ASSERT_TRUE(p != NULL);
-    ASSERT_TRUE(p->value != NULL);   
+    ASSERT_TRUE(p->value != NULL);
     ASSERT_EQ(0, bstr_cmp_c(p->value, "0123456789"));
 }
 
-TEST_F(ConnectionParsing, LongRequestLine1) {    
+TEST_F(ConnectionParsing, LongRequestLine1) {
     int rc = test_run(home, "67-long-request-line.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
@@ -1529,7 +1533,7 @@ TEST_F(ConnectionParsing, InvalidRequestHeader) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    htp_header_t *h = (htp_header_t *)htp_table_get_c(tx->request_headers, "Header-With-NUL");
+    htp_header_t *h = (htp_header_t *) htp_table_get_c(tx->request_headers, "Header-With-NUL");
     ASSERT_TRUE(h != NULL);
     ASSERT_EQ(0, bstr_cmp_c(h->value, "BEFORE"));
 }

@@ -466,7 +466,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         if ((connp->out_tx->response_status_number >= 200)
                 && (connp->out_tx->response_status_number <= 299)) {
             // This is a successful CONNECT stream, which means
-            // we need to switch into tunnelling mode.
+            // we need to switch into tunneling mode.
             connp->in_status = HTP_STREAM_TUNNEL;
             connp->out_status = HTP_STREAM_TUNNEL;
             connp->out_state = htp_connp_RES_FINALIZE;
@@ -483,7 +483,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         }
     }
 
-    // Check for an interim "100 Continue" response. Ignore it if found, and revert back to RES_FIRST_LINE.
+    // Check for an interim "100 Continue" response. Ignore it if found, and revert back to RES_LINE.
     if (connp->out_tx->response_status_number == 100) {
         if (connp->out_tx->seen_100continue != 0) {
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Already seen 100-Continue.");
@@ -492,7 +492,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
         // Ignore any response headers seen so far.
         htp_header_t *h = NULL;
-        for (int i = 0, n = htp_table_size(connp->out_tx->response_headers); i < n; i++) {
+        for (size_t i = 0, n = htp_table_size(connp->out_tx->response_headers); i < n; i++) {
             h = htp_table_get_index(connp->out_tx->response_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
