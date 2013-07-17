@@ -1529,3 +1529,15 @@ TEST_F(ConnectionParsing, InvalidRequestHeader) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);   
 }
+
+TEST_F(ConnectionParsing, TestGenericPersonality) {
+    htp_config_set_server_personality(cfg, HTP_SERVER_IDS);
+
+    int rc = test_run(home, "02-header-test-apache2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+}

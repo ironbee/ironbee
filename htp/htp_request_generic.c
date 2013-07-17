@@ -47,13 +47,13 @@
  * @param[in] len
  * @return HTP_OK or HTP_ERROR
  */
-int htp_process_request_header_generic(htp_connp_t *connp, unsigned char *data, size_t len) {
+htp_status_t htp_process_request_header_generic(htp_connp_t *connp, unsigned char *data, size_t len) {
     // Create a new header structure.
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;
 
     // Now try to parse the header.
-    if (htp_parse_request_header_apache_2_2(connp, h, data, len) != HTP_OK) {
+    if (htp_parse_request_header_generic(connp, h, data, len) != HTP_OK) {
         free(h);
         return HTP_ERROR;
     }
@@ -79,7 +79,7 @@ int htp_process_request_header_generic(htp_connp_t *connp, unsigned char *data, 
         }
 
         h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, (unsigned char *) ", ", 2);
+        bstr_add_mem_noex(h_existing->value, ", ", 2);
         bstr_add_noex(h_existing->value, h->value);
 
         // The new header structure is no longer needed.
@@ -106,7 +106,7 @@ int htp_process_request_header_generic(htp_connp_t *connp, unsigned char *data, 
  * @param[in] len
  * @return HTP_OK or HTP_ERROR
  */
-int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len) {
+htp_status_t htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len) {
     size_t name_start, name_end;
     size_t value_start, value_end;
 
@@ -218,64 +218,95 @@ int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsign
  * @param[in] connp
  * @return HTP_OK or HTP_ERROR
  */
-int htp_parse_request_line_generic(htp_connp_t *connp) {
+htp_status_t htp_parse_request_line_generic(htp_connp_t *connp) {
+    return htp_parse_request_line_generic_ex(connp, 0 /* NUL does not terminates line */);
+}
+
+htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_terminates) {
     htp_tx_t *tx = connp->in_tx;
-    unsigned char *data = (unsigned char *)bstr_ptr(tx->request_line);
+    unsigned char *data = bstr_ptr(tx->request_line);
     size_t len = bstr_len(tx->request_line);
     size_t pos = 0;
 
+    if (nul_terminates) {
+        // The line ends with the first NUL byte.
+        
+        size_t newlen = 0;
+        while ((pos < len) && (data[pos] != '\0')) {
+            pos++;
+            newlen++;
+        }
+
+        // Start again, with the new length.
+        len = newlen;
+        pos = 0;
+    }
+
     // The request method starts at the beginning of the
     // line and ends with the first whitespace character.
-    while ((pos < len) && (!htp_is_space(data[pos]))) {
-        pos++;
-    }
+    while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
 
     // No, we don't care if the method is empty.
 
     tx->request_method = bstr_dup_mem(data, pos);
-    if (tx->request_method == NULL) {
-        return HTP_ERROR;
-    }
+    if (tx->request_method == NULL) return HTP_ERROR;
+
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(tx->request_method), bstr_len(tx->request_method));
+    #endif
 
     tx->request_method_number = htp_convert_method_to_number(tx->request_method);
 
     // Ignore whitespace after request method. The RFC allows
     // for only one SP, but then suggests any number of SP and HT
-    // should be permitted.
-    while ((pos < len) && (isspace(data[pos]))) {
-        pos++;
+    // should be permitted. Apache uses isspace(), which is even
+    // more permitting, so that's what we use here.
+    while ((pos < len) && (isspace(data[pos]))) pos++;
+
+    // Is there anything after the request method?
+    if (pos == len) {
+        // No, this looks like a HTTP/0.9 request.
+
+        tx->is_protocol_0_9 = 1;
+        tx->request_protocol_number = HTP_PROTOCOL_0_9;
+
+        return HTP_OK;
     }
 
     size_t start = pos;
 
     // The URI ends with the first whitespace.
-    while ((pos < len) && (!htp_is_space(data[pos]))) {
-        pos++;
-    }
+    while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
 
     tx->request_uri = bstr_dup_mem(data + start, pos - start);
-    if (tx->request_uri == NULL) {
-        return HTP_ERROR;
-    }
+    if (tx->request_uri == NULL) return HTP_ERROR;
 
-    // Ignore whitespace after URI
-    while ((pos < len) && (htp_is_space(data[pos]))) {
-        pos++;
-    }
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(tx->request_uri), bstr_len(tx->request_uri));
+    #endif
+
+    // Ignore whitespace after URI.
+    while ((pos < len) && (htp_is_space(data[pos]))) pos++;
 
     // Is there protocol information available?
     if (pos == len) {
         // No, this looks like a HTTP/0.9 request.
+
         tx->is_protocol_0_9 = 1;
         tx->request_protocol_number = HTP_PROTOCOL_0_9;
+
         return HTP_OK;
     }
 
-    // The protocol information spreads until the end of the line.
+    // The protocol information continues until the end of the line.
     tx->request_protocol = bstr_dup_mem(data + pos, len - pos);
     if (tx->request_protocol == NULL) return HTP_ERROR;
 
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);
+
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(tx->request_protocol), bstr_len(tx->request_protocol));
+    #endif
 
     return HTP_OK;
 }
