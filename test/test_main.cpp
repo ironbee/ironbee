@@ -1562,3 +1562,8 @@ TEST_F(ConnectionParsing, LongResponseHeader) {
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_HEADERS, tx->response_progress);
 }
+
+TEST_F(ConnectionParsing, ResponseInvalidChunkLength) {
+    int rc = test_run(home, "70-response-invalid-chunk-length.t", cfg, &connp);
+    ASSERT_LT(rc, 0); // Expect error.
+}
