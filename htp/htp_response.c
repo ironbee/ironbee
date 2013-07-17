@@ -808,7 +808,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             // If the response line is invalid, determine if it _looks_ like
             // a response line. If it does not look like a line, process the
             // data as a response body because that is what browsers do.
-
+           
             if (htp_treat_response_line_as_body(connp->out_tx)) {
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
 
@@ -820,7 +820,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 // the end of the stream.
                 connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
                 connp->out_tx->response_progress = HTP_RESPONSE_BODY;
-                connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
+                connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;               
                 connp->out_body_data_left = -1;
 
                 return HTP_OK;
