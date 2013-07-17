@@ -15,6 +15,15 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee --- Init Collection Module
+ *
+ * This module provides the InitCollection and InitCollectionIndexed directives.
+ *
+ * @author Sam Baskinger <sbaskinger@qualys.com>
+ */
+
 #include <ironbee_config_auto.h>
 
 #include <ironbee/context.h>
@@ -38,35 +47,43 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-
-/* Module boiler plate */
+/* Module boilerplate */
 #define MODULE_NAME init_collection
 #define MODULE_NAME_STR IB_XSTRINGIFY(MODULE_NAME)
 IB_MODULE_DECLARE();
 
 /* JSON handlers are registered under this type. */
-static const char *JSON_TYPE = "json";
+#define JSON_TYPE "json"
+
+/* JSON URI Prefix. */
+#define JSON_URI_PREFIX "json-file://"
 
 /* VAR handlers are registered under this type. */
-static const char *VAR_TYPE  = "var";
+#define VAR_TYPE "var"
 
 /**
  * Module configuration.
  */
 struct init_collection_cfg_t {
-    ib_pstnsfw_t *pstnsfw; /**< Module configuration. */
-    ib_module_t  *module;  /**< Our module structure at init time. */
+    ib_pstnsfw_t *pstnsfw; /**< Handle to the persistence framework. */
+
     /**
      * The current configuration value.
      *
      * This pointer is a value-passing field and is changed often
-     * during configuration time. It is idle at runtime.
+     * during configuration time. It is used by the JSON
+     * support code to find JSON files relative to the current
+     * configuration file. This field is idle at runtime.
      */
     const char   *config_file;
 };
 typedef struct init_collection_cfg_t init_collection_cfg_t;
 
+/* All JSON-related static functions and types are located here.
+ * Do not move JSON code outside of the #ifdef or builds disabling
+ * JSON will probably fail. */
 #ifdef ENABLE_JSON
+
 /**
  * JSON configuration type.
  */
@@ -74,8 +91,7 @@ struct json_t {
     const char *file; /**< The file containing the JSON. */
 };
 typedef struct json_t json_t;
-#endif
-#ifdef ENABLE_JSON
+
 /**
  * JSON Load callback.
  *
@@ -139,15 +155,14 @@ static ib_status_t json_load_fn(
 
     return IB_OK;
 }
-#endif
-#ifdef ENABLE_JSON
+
 /**
  * Create a new @a impl which is passed to json_load_fn().
  *
  * @param[in] ib IronBee Engine.
  * @param[in] params Parameters to constructor.
- * @param[out] impl Implementation output.
- * @param[in] cbdata Callback data. An init_collection_cfg_t.
+ * @param[out] impl The @ref json_t to be constructed.
+ * @param[in] cbdata Callback data. An @ref init_collection_cfg_t.
  *
  * @returns
  * - IB_OK On success.
@@ -194,13 +209,13 @@ static ib_status_t json_create_fn(
         return IB_EINVAL;
     }
     json_file = (const char *)ib_list_node_data_const(node);
-    if (strstr(json_file, "json-file://") == NULL) {
+    if (strstr(json_file, JSON_URI_PREFIX) == NULL) {
         ib_log_error(ib, "JSON URI Malformed: %s", json_file);
         return IB_EINVAL;
     }
 
     /* Move the character pointer past the prefix so only the file remains. */
-    json_file += sizeof("json-file://")-1;
+    json_file += (sizeof(JSON_URI_PREFIX)-1);
 
     json_cfg->file = ib_util_relative_file(mp, cfg->config_file, json_file);
     if (json_cfg->file == NULL) {
@@ -211,7 +226,7 @@ static ib_status_t json_create_fn(
     *impl = json_cfg;
     return IB_OK;
 }
-#endif
+#endif /* ENABLE_JSON */
 
 /**
  * Var implemintation data.
@@ -225,7 +240,7 @@ typedef struct var_t var_t;
  * 
  * @param[in] ib IronBee engine.
  * @param[in] params Parameters.
- * @param[out] impl The implementation out variable.
+ * @param[out] impl A new @ref var_t to be constructed.
  * @param[in] cbdata Callback data. Unused.
  *
  * @returns
@@ -266,27 +281,25 @@ static ib_status_t var_create_fn(
         return rc;
     }
 
-    /* The collection name. */
+    /* The collection name. We will skip this. */
     node = ib_list_first_const(params);
     if (node == NULL) {
         ib_log_error(ib, "VAR requires at least 2 arguments: name and uri.");
         return IB_EINVAL;
     }
 
-    /* The URI. */
+    /* The URI. We will skip this. */
     node = ib_list_node_next_const(node);
     if (node == NULL) {
         ib_log_error(ib, "VAR requires at least 2 arguments: name and uri.");
         return IB_EINVAL;
     }
 
+    /* Skip the URI parameter. */
+    node = ib_list_node_next_const(node);
+
     /* For the rest of the nodes... */
-    for (
-          node = ib_list_node_next_const(node);
-          node != NULL;
-          node = ib_list_node_next_const(node)
-        )
-    {
+    for ( ; node != NULL; node = ib_list_node_next_const(node)) {
         const char *assignment =
             (const char *)ib_list_node_data_const(node);
         const char *eqsign = index(assignment, '=');
@@ -431,6 +444,12 @@ static ib_status_t var_load_fn(
 /**
  * Instantiate an instance of @a type and map @a collection_name with it.
  *
+ * This function requests that the persitence framework create
+ * a new named store using a random UUID as the name can calling 
+ * ib_pstnsfw_create_store(). That collection named @a collection_name
+ * is then mapped to that store, meaning that it will be populated
+ * and persisted in the course of a transaction.
+ *
  * @param[in] cp The configuration parser.
  * @param[in] ctx The configuration context.
  * @param[in] type The type being mapped.
@@ -503,9 +522,9 @@ static ib_status_t domap(
  *
  * @param[in] cp Configuration parser.
  * @param[in] directive InitCollection or InitCollectionIndexed.
- * @param[in] vars List of char * types making up the parameters.
+ * @param[in] vars List of `char *` types making up the parameters.
  * @param[in] cfg The module configuration.
- * @param[in] indexed True of @a directive is InitCollectionIndexed. False
+ * @param[in] indexed True if @a directive is InitCollectionIndexed. False
  *            otherwise.
  *
  * @returns
@@ -515,18 +534,17 @@ static ib_status_t domap(
  * - Other when interacting with IronBee API.
  */
 static ib_status_t init_collection_common(
-    ib_cfgparser_t *cp,
-    const char *directive,
-    const ib_list_t *vars,
+    ib_cfgparser_t        *cp,
+    const char            *directive,
+    const ib_list_t       *vars,
     init_collection_cfg_t *cfg,
-    bool indexed
+    bool                   indexed
 )
 {
     assert(cp != NULL);
     assert(directive != NULL);
     assert(vars != NULL);
     assert(cfg != NULL);
-    assert(cfg->module != NULL);
     assert(cfg->pstnsfw != NULL);
 
     ib_status_t            rc;
@@ -553,6 +571,10 @@ static ib_status_t init_collection_common(
         goto exit_EINVAL;
     }
     name = (const char *)ib_list_node_data_const(node);
+    if (name == NULL) {
+        ib_cfg_log_error(cp, "Name parameter unexpectedly NULL.");
+        goto exit_EINVAL;
+    }
 
     /* Get the collection uri. */
     node = ib_list_node_next_const(node);
@@ -561,6 +583,11 @@ static ib_status_t init_collection_common(
         goto exit_EINVAL;
     }
     uri = (const char *)ib_list_node_data_const(node);
+    if (uri == NULL) {
+        ib_cfg_log_error(cp, "URI parameter unexpectedly NULL.");
+        goto exit_EINVAL;
+    }
+
 
     ib_cfg_log_debug(cp, "Initializing collection %s.", uri);
     if (strncmp(uri, "vars:", sizeof("vars:")) == 0) {
@@ -570,7 +597,7 @@ static ib_status_t init_collection_common(
         }
     }
 #ifdef ENABLE_JSON
-    else if (strncmp(uri, "json-file:", sizeof("json-file:")-1) == 0) {
+    else if (strncmp(uri, JSON_URI_PREFIX, sizeof(JSON_URI_PREFIX)-3) == 0) {
         rc = domap(cp, ctx, JSON_TYPE, cfg, name, vars);
         if (rc != IB_OK) {
             goto exit_rc;
@@ -607,7 +634,7 @@ exit_EINVAL:
 }
 
 /**
- * Facade to init_collection_common().
+ * Implement the IndexCollection directive. 
  *
  * param[in] cp The configuration parser.
  * param[in] directive InitCollection.
@@ -632,7 +659,7 @@ static ib_status_t init_collection_fn(
 }
 
 /**
- * Facade to init_collection_common().
+ * Implement the IndexCollectionIndexed directive. 
  *
  * param[in] cp The configuration parser.
  * param[in] directive InitCollectionIndexed.
@@ -660,18 +687,18 @@ static ib_status_t init_collection_indexed_fn(
  * Register directives dynamically so as to define a callback data struct.
  *
  * @param[in] ib IronBee engine.
- * @param[in] cbdata The module configuration.
+ * @param[in] cfg The module configuration.
  *
  * @returns
  * - IB_OK On Success.
  * - Other on failure of ib_config_register_directives().
  */
 static ib_status_t register_directives(
-    ib_engine_t *ib,
-    init_collection_cfg_t *cbdata)
+    ib_engine_t           *ib,
+    init_collection_cfg_t *cfg)
 {
     assert(ib != NULL);
-    assert(cbdata != NULL);
+    assert(cfg != NULL);
 
     ib_status_t rc;
 
@@ -681,7 +708,7 @@ static ib_status_t register_directives(
         IB_DIRTYPE_LIST,
         (ib_void_fn_t)init_collection_fn,
         NULL,
-        cbdata,
+        cfg,
         NULL,
         NULL
     );
@@ -695,7 +722,7 @@ static ib_status_t register_directives(
         IB_DIRTYPE_LIST,
         (ib_void_fn_t)init_collection_indexed_fn,
         NULL,
-        cbdata,
+        cfg,
         NULL,
         NULL
     );
@@ -747,12 +774,10 @@ static ib_status_t init_collection_init(
         return rc;
     }
 
-    cfg->module = module;
-
     ib_log_debug(ib, "Registering directives.");
     rc = register_directives(ib, cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to dynamically register directives.");
+        ib_log_error(ib, "Failed to register directives.");
         return rc;
     }
 
@@ -797,26 +822,6 @@ static ib_status_t init_collection_init(
     return IB_OK;
 }
 
-/**
- * Module destruction.
- *
- * @param[in] ib IronBee engine.
- * @param[in] module Module structure.
- * @param[in] cbdata Callback data.
- *
- * @returns
- * - IB_OK On success.
- */
-static ib_status_t init_collection_fini(
-    ib_engine_t *ib,
-    ib_module_t *module,
-    void *cbdata
-)
-{
-    return IB_OK;
-}
-
-
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,    /* Headeer defaults. */
     MODULE_NAME_STR,              /* Module name. */
@@ -825,6 +830,6 @@ IB_MODULE_INIT(
     NULL,                         /* Directive map. Dynamically built. */
     init_collection_init,         /* Initialization. */
     NULL,                         /* Callback data. */
-    init_collection_fini,         /* Finalization. */
+    NULL,                         /* Finalization. */
     NULL,                         /* Callback data. */
 );
