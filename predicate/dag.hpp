@@ -416,7 +416,7 @@ protected:
    /**
     * Finish node as false.
     *
-    * Convenience method for finishing the current node with a truthy value.
+    * Convenience method for finishing the current node with a falsy value.
     **/
    void finish_false();
 
