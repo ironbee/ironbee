@@ -1101,9 +1101,9 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
             tx->connp->out_decompressor = NULL;
         }
 
-        tx->connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(tx->connp,
-                tx->response_content_encoding_processing);
+        tx->connp->out_decompressor = htp_gzip_decompressor_create(tx->connp, tx->response_content_encoding_processing);
         if (tx->connp->out_decompressor == NULL) return HTP_ERROR;
+        
         tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
     } else if (tx->response_content_encoding_processing != HTP_COMPRESSION_NONE) {
         return HTP_ERROR;
