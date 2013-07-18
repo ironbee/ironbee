@@ -137,7 +137,8 @@ ib_status_t DLL_PUBLIC ib_mpool_create(
     ib_mpool_t **pmp,
     const char  *name,
     ib_mpool_t  *parent
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Create a new memory pool with predefined page size.
@@ -172,7 +173,8 @@ ib_status_t DLL_PUBLIC ib_mpool_create_ex(
     size_t                 pagesize,
     ib_mpool_malloc_fn_t   malloc_fn,
     ib_mpool_free_fn_t     free_fn
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Set the name of a memory pool.
@@ -186,7 +188,8 @@ ib_status_t DLL_PUBLIC ib_mpool_create_ex(
 ib_status_t DLL_PUBLIC ib_mpool_setname(
     ib_mpool_t *mp,
     const char *name
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Get the name of a memory pool.
@@ -196,7 +199,8 @@ ib_status_t DLL_PUBLIC ib_mpool_setname(
  */
 const char DLL_PUBLIC *ib_mpool_name(
     const ib_mpool_t *mp
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Get the amount of memory allocated by a memory pool.
@@ -209,7 +213,8 @@ const char DLL_PUBLIC *ib_mpool_name(
  */
 size_t DLL_PUBLIC ib_mpool_inuse(
     const ib_mpool_t* mp
- );
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Allocate memory from a memory pool.
@@ -225,7 +230,8 @@ size_t DLL_PUBLIC ib_mpool_inuse(
 void DLL_PUBLIC *ib_mpool_alloc(
     ib_mpool_t *mp,
     size_t     size
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Allocate memory from a memory pool and initialize to zero.
@@ -243,7 +249,8 @@ void DLL_PUBLIC *ib_mpool_calloc(
     ib_mpool_t *mp,
     size_t      nelem,
     size_t      size
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Duplicate a NUL terminated string.
@@ -256,7 +263,8 @@ void DLL_PUBLIC *ib_mpool_calloc(
 char DLL_PUBLIC *ib_mpool_strdup(
     ib_mpool_t *mp,
     const char *src
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Duplicate a buffer, returning a NUL terminated string.
@@ -271,7 +279,8 @@ char DLL_PUBLIC *ib_mpool_memdup_to_str(
     ib_mpool_t *mp,
     const void *src,
     size_t      size
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Duplicate a memory block using memory pool.
@@ -289,7 +298,8 @@ void DLL_PUBLIC *ib_mpool_memdup(
     ib_mpool_t *mp,
     const void *src,
     size_t      size
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Deallocate all memory allocated from the pool and any descendant pools.
@@ -306,7 +316,8 @@ void DLL_PUBLIC *ib_mpool_memdup(
  */
 void DLL_PUBLIC ib_mpool_clear(
     ib_mpool_t *mp
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Destroy pool and any descendant pools.
@@ -322,7 +333,8 @@ void DLL_PUBLIC ib_mpool_clear(
  */
 void DLL_PUBLIC ib_mpool_destroy(
     ib_mpool_t *mp
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Clear pool and release to parent.
@@ -345,7 +357,8 @@ void DLL_PUBLIC ib_mpool_destroy(
  */
 void DLL_PUBLIC ib_mpool_release(
     ib_mpool_t *mp
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Register a function to be called when a memory pool is cleared or
@@ -367,7 +380,8 @@ ib_status_t DLL_PUBLIC ib_mpool_cleanup_register(
     ib_mpool_t            *mp,
     ib_mpool_cleanup_fn_t  cleanup,
     void                  *data
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Full path of a memory pool.
@@ -379,7 +393,8 @@ ib_status_t DLL_PUBLIC ib_mpool_cleanup_register(
  */
 char DLL_PUBLIC *ib_mpool_path(
     const ib_mpool_t *mp
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Validate internal consistency of memory pool.
@@ -401,7 +416,8 @@ char DLL_PUBLIC *ib_mpool_path(
 ib_status_t DLL_PUBLIC ib_mpool_validate(
     const ib_mpool_t  *mp,
     char             **message
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Dump debugging information on memory pool.
@@ -416,7 +432,10 @@ ib_status_t DLL_PUBLIC ib_mpool_validate(
  * @param[in] mp Memory pool to dump.
  * @returns Debug report.
  */
-char DLL_PUBLIC *ib_mpool_debug_report(const ib_mpool_t *mp);
+char DLL_PUBLIC *ib_mpool_debug_report(
+    const ib_mpool_t *mp
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Analyze memory pool usage and return a human consumable report.
@@ -445,7 +464,10 @@ char DLL_PUBLIC *ib_mpool_debug_report(const ib_mpool_t *mp);
  * @param[in] mp Memory pool to analyze.
  * @returns Usage report.
  */
-char DLL_PUBLIC *ib_mpool_analyze(const ib_mpool_t *mp);
+char DLL_PUBLIC *ib_mpool_analyze(
+    const ib_mpool_t *mp
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Return the memory pool parent.
@@ -454,7 +476,10 @@ char DLL_PUBLIC *ib_mpool_analyze(const ib_mpool_t *mp);
  *
  * @returns Memory pool parent.
  */
-ib_mpool_t DLL_PUBLIC *ib_mpool_parent(ib_mpool_t *mp);
+ib_mpool_t DLL_PUBLIC *ib_mpool_parent(
+    ib_mpool_t *mp
+)
+NONNULL_ATTRIBUTE(1);
 
 /** @} IronBeeUtilMemPool */
 
