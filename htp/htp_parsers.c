@@ -165,6 +165,8 @@ int htp_parse_authorization(htp_connp_t *connp) {
         return HTP_OK;
     }
 
+    // TODO Need a flag to raise when failing to parse authentication headers.
+
     if (bstr_begins_with_c_nocase(auth_header->value, "basic")) {
         // Basic authentication
         connp->in_tx->request_auth_type = HTP_AUTH_BASIC;

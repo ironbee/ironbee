@@ -2425,6 +2425,8 @@ htp_status_t htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, 
 
     pos = 1;
     while ((pos < len) && (outpos < outlen)) {
+        // TODO We are not properly unescaping test here, we're only
+        //      handling escaped double quotes.
         if (data[pos] == '\\') {
             if (pos + 1 < len) {
                 outptr[outpos++] = data[pos + 1];
