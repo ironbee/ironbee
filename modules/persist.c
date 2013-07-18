@@ -72,7 +72,7 @@ static ib_status_t mod_persist_init(
     assert(ib != NULL);
     assert(module != NULL);
 
-    ib_log_debug(ib, "Default expiration time: %zd", default_expiration);
+    ib_log_debug(ib, "Default expiration time: %" PRId64, default_expiration);
 
     return IB_OK;
 }
