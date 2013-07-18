@@ -1742,3 +1742,16 @@ TEST_F(ConnectionParsing, HostnameInvalid2) {
 
     ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
 }
+
+TEST_F(ConnectionParsing, Put) {
+    int rc = test_run(home, "82-put.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+    
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->request_hostname != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_hostname, "www.example.com"));
+}

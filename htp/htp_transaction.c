@@ -439,14 +439,15 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     if (tx->request_method_number == HTP_M_PUT) {
         if (htp_tx_req_has_body(tx)) {
             // Prepare to treat PUT request body as a file.
+            
             tx->connp->put_file = calloc(1, sizeof (htp_file_t));
             if (tx->connp->put_file == NULL) return HTP_ERROR;
+
+            tx->connp->put_file->fd = -1;
             tx->connp->put_file->source = HTP_FILE_PUT;
         } else {
             // TODO Warn about PUT request without a body.
         }
-
-        return HTP_OK;
     }
 
     // Determine hostname.

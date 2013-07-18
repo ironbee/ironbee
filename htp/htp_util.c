@@ -2346,11 +2346,11 @@ htp_status_t htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
         file_data.file = connp->put_file;
         file_data.file->len += d->len;
 
-        htp_hook_run_all(connp->cfg->hook_request_file_data, &file_data);
+        rc = htp_hook_run_all(connp->cfg->hook_request_file_data, &file_data);
         if (rc != HTP_OK) return rc;
     }
 
-    return rc;
+    return HTP_OK;
 }
 
 /**
