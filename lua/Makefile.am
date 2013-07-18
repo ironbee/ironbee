@@ -93,7 +93,7 @@ ironbee-ffi.h: $(FFI_FILES)
 	$(CPP) -I$(top_srcdir)/include -I$(top_builddir)/include $(CPPFLAGS) tmp.h > "$@"
 	rm tmp.h
 
-ironbee-ffi-h.lua: ironbee-ffi.h
+ironbee-ffi-h.lua: ironbee-ffi.h $(srcdir)/Makefile.am
 	echo "#!/usr/bin/lua"                           > $@
 	echo "local ffi = require('ffi')"              >> $@
 	echo "ffi.cdef [["                             >> $@
