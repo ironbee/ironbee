@@ -1250,33 +1250,34 @@ ib_status_t ib_field_convert(
         if (rc != IB_OK){
             return rc;
         }
+        str = (const char *)ib_bytestr_const_ptr(bstr);
         sz = ib_bytestr_length(bstr);
 
         /* Convert byte str. */
         switch(desired_type) {
         case IB_FTYPE_NULSTR:
-            str = ib_mpool_memdup_to_str(mp, bstr, sz);
+            str = ib_mpool_memdup_to_str(mp, str, sz);
             if (!str) {
                 return rc;
             }
             new_field_value = ib_ftype_nulstr_in(str);
             break;
         case IB_FTYPE_TIME:
-            rc = ib_string_to_time_ex((char *)bstr, sz, &tme);
+            rc = ib_string_to_time_ex(str, sz, &tme);
             if (rc != IB_OK) {
                 return rc;
             }
             new_field_value = ib_ftype_time_in(&tme);
             break;
         case IB_FTYPE_NUM:
-            rc = ib_string_to_num_ex((char *)bstr, sz, 0, &num);
+            rc = ib_string_to_num_ex(str, sz, 0, &num);
             if (rc != IB_OK) {
                 return rc;
             }
             new_field_value = ib_ftype_num_in(&num);
             break;
         case IB_FTYPE_FLOAT:
-            rc = ib_string_to_float_ex((char *)bstr, sz, &flt);
+            rc = ib_string_to_float_ex(str, sz, &flt);
             if (rc != IB_OK) {
                 return rc;
             }
