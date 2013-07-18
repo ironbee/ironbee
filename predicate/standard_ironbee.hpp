@@ -198,6 +198,23 @@ private:
 };
 
 /**
+ * Ask a dynamic collection a question.
+ **/
+class Ask :
+    public Call
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+protected:
+    virtual void calculate(EvalContext context);
+};
+
+/**
  * Load all standard filter calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.

@@ -24,6 +24,8 @@
 
 #include "standard_test.hpp"
 
+#include <predicate/reporter.hpp>
+
 #include <ironbee/rule_engine.h>
 
 using namespace IronBee::Predicate;
@@ -101,4 +103,85 @@ TEST_F(TestStandardIronBee, phase)
     EXPECT_THROW(eval_s("(finishPhase 'foo' 'b')"), IronBee::einval);
 
     m_transaction.ib()->rule_exec = old_rule_exec;
+}
+
+class TestAsk :
+    public Call
+{
+public:
+    virtual std::string name() const
+    {
+        return "test_ask";
+    }
+
+    virtual void pre_eval(Environment environment, NodeReporter reporter)
+    {
+        m_value =
+            IronBee::Field::create_dynamic_list<Value>(
+                environment.main_memory_pool(),
+                "", 0,
+                getter,
+                boost::function<
+                    void(
+                        IronBee::Field,
+                        const char*, size_t,
+                        IronBee::ConstList<Value>
+                    )
+                >()
+            );
+    }
+
+protected:
+    virtual void calculate(EvalContext context)
+    {
+        add_value(m_value);
+        finish();
+    }
+
+private:
+    static
+    IronBee::ConstList<Value> getter(
+        IronBee::ConstField f,
+        const char*         param,
+        size_t              n
+    )
+    {
+        cout << "getter called with param = " << string(param, n) << endl;
+
+        using namespace IronBee;
+        typedef List<Value> result_t;
+
+        result_t result = result_t::create(f.memory_pool());
+        result.push_back(
+            IronBee::Field::create_byte_string(
+                f.memory_pool(),
+                param, n,
+                IronBee::ByteString::create(
+                    f.memory_pool(),
+                    param, n
+                )
+            )
+        );
+
+        return result;
+    }
+
+    Value m_value;
+};
+
+TEST_F(TestStandardIronBee, Ask)
+{
+    m_factory.add<TestAsk>();
+
+    /* Test dynamic behavior. */
+    EXPECT_EQ("foo", eval_s("(ask 'foo' (test_ask))"));
+
+    /* Test sublike behavior. */
+    EXPECT_EQ("1", eval_s("(ask 'a' (gather (cat (setName 'a' '1') (setName 'b' 2) (setName 'c' 3))))"));
+    EXPECT_TRUE(eval_bool("(isLonger 1 (ask 'a' (gather (cat (setName 'a' '1') (setName 'b' 2) (setName 'a' 3)))))"));
+
+    EXPECT_THROW(eval_bool("(ask)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(ask 1 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(ask 'a')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(ask 'a' 'b' 'c')"), IronBee::einval);
 }

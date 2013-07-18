@@ -421,6 +421,72 @@ void FinishPhase::calculate(EvalContext context)
     }
 }
 
+namespace {
+
+bool ask_caseless_compare(char a, char b)
+{
+    return (a == b || tolower(a) == tolower(b));
+}
+
+}
+
+string Ask::name() const
+{
+    return "ask";
+}
+
+bool Ask::validate(NodeReporter reporter) const
+{
+    bool result = true;
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_string(reporter, 0) && result;
+
+    return result;
+}
+
+void Ask::calculate(EvalContext context)
+{
+    Value param_field = literal_value(children().front());
+    IronBee::ConstByteString param = param_field.value_as_byte_string();
+
+    children().back()->eval(context);
+    Value collection = simple_value(children().back());
+
+    if (collection.type() != Value::LIST) {
+        finish();
+    }
+    else {
+        if (collection.is_dynamic()) {
+            ConstList<Value> result = collection.value_as_list<Value>(
+                param.const_data(), param.length()
+            );
+            if (! result || result.empty()) {
+                finish();
+            }
+            else {
+                finish_alias(result);
+            }
+        }
+        else {
+            // Fall back to Sub like behavior.
+            BOOST_FOREACH(const Value& v, collection.value_as_list<Value>()) {
+                if (
+                    v.name_length() == param.length() &&
+                    equal(
+                        v.name(), v.name() + v.name_length(),
+                        param.const_data(),
+                        ask_caseless_compare
+                    )
+                )
+                {
+                    add_value(v);
+                }
+            }
+            finish();
+        }
+    }
+}
+
 void load_ironbee(CallFactory& to)
 {
     to
@@ -429,6 +495,7 @@ void load_ironbee(CallFactory& to)
         .add<Transformation>()
         .add<WaitPhase>()
         .add<FinishPhase>()
+        .add<Ask>()
         ;
 }
 

@@ -618,7 +618,7 @@ Front End
 IronBee
 -------
 
-**`(ask P v)` [Future]**
+**`(ask P v)`**
 
 Result
 : `[...]` where `...` is the result of asking each value of `v` for its values given parameter `P`.
