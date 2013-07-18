@@ -1057,7 +1057,7 @@ TEST_F(ConnectionParsing, AuthDigestUnquotedUsername) {
     ASSERT_TRUE(tx->flags & HTP_AUTH_INVALID);
 }
 
-TEST_F(ConnectionParsing, AuthDigestInvalidUsername) {
+TEST_F(ConnectionParsing, AuthDigestInvalidUsername1) {
     int rc = test_run(home, "46-auth-digest-invalid-username.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
@@ -1754,4 +1754,22 @@ TEST_F(ConnectionParsing, Put) {
     
     ASSERT_TRUE(tx->request_hostname != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_hostname, "www.example.com"));
+}
+
+TEST_F(ConnectionParsing, AuthDigestInvalidUsername2) {
+    int rc = test_run(home, "83-auth-digest-invalid-username-2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_DIGEST, tx->request_auth_type);
+
+    ASSERT_TRUE(tx->request_auth_username == NULL);
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_AUTH_INVALID);
 }

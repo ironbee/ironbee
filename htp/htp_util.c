@@ -2374,18 +2374,31 @@ htp_status_t htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     return HTP_OK;
 }
 
-bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t *endoffset) {
+/**
+ * Parses the provided memory region, extracting the double-quoted string.
+ *
+ * @param[in] data
+ * @param[in] len
+ * @param[out] out
+ * @param[out] endoffset
+ * @return HTP_OK on success, HTP_DECLINED if the input is not well formed, and HTP_ERROR on fatal errors.
+ */
+htp_status_t htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, bstr **out, size_t *endoffset) {
+    if ((data == NULL)||(out == NULL)) return HTP_ERROR;
+
+    if (len == 0) return HTP_DECLINED;
+
     size_t pos = 0;
-    size_t escaped_chars = 0;
+    
+    // Check that the first character is a double quote.
+    if (data[pos] != '"') return HTP_DECLINED;
 
-    // Check the first character
-    if (data[pos] != '"') return NULL;
-
-    // Step over double quote
+    // Step over the double quote.
     pos++;
-    if (pos == len) return NULL;
+    if (pos == len) return HTP_DECLINED;
 
-    // Calculate length
+    // Calculate the length of the resulting string.
+    size_t escaped_chars = 0;
     while (pos < len) {
         if (data[pos] == '\\') {
             if (pos + 1 < len) {
@@ -2400,15 +2413,14 @@ bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t 
         pos++;
     }
 
-    if (pos == len) {
-        return NULL;
-    }
+    // Have we reached the end of input without seeing the terminating double quote?
+    if (pos == len) return HTP_DECLINED;
 
-    // Copy the data and unescape the escaped characters
+    // Copy the data and unescape it as necessary.
     size_t outlen = pos - 1 - escaped_chars;
-    bstr *result = bstr_alloc(outlen);
-    if (result == NULL) return NULL;
-    unsigned char *outptr = bstr_ptr(result);
+    *out = bstr_alloc(outlen);
+    if (*out == NULL) return HTP_ERROR;
+    unsigned char *outptr = bstr_ptr(*out);
     size_t outpos = 0;
 
     pos = 1;
@@ -2426,13 +2438,13 @@ bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t 
         outptr[outpos++] = data[pos++];
     }
 
-    bstr_adjust_len(result, outlen);
+    bstr_adjust_len(*out, outlen);
 
     if (endoffset != NULL) {
         *endoffset = pos;
     }
 
-    return result;
+    return HTP_OK;
 }
 
 htp_status_t htp_parse_ct_header(bstr *header, bstr **ct) {

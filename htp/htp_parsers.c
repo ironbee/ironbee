@@ -106,10 +106,7 @@ int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header
 
     if (data[pos] != '"') return HTP_DECLINED;
 
-    connp->in_tx->request_auth_username = htp_extract_quoted_string_as_bstr(data + pos, len - pos, NULL);
-    if (connp->in_tx->request_auth_username == NULL) return HTP_ERROR;
-
-    return HTP_OK;
+    return htp_extract_quoted_string_as_bstr(data + pos, len - pos, &(connp->in_tx->request_auth_username), NULL);
 }
 
 /**
