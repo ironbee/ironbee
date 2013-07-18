@@ -72,7 +72,7 @@
 #endif
 
 /* Have compiler check for null pointer. */
-#if defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#ifdef __clang__
 #define ALL_NONNULL_ATTRIBUTE __attribute__((nonnull))
 #define NONNULL_ATTRIBUTE(...) __attribute__((nonnull (__VA_ARGS__)))
 #else
