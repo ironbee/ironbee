@@ -13,6 +13,10 @@ IronBee v0.8.0
 
 * Modules and plugins are now installed into libexec instead of lib.
 
+* New macros are available, `NONULL` and `ALL_NONNULL_ATTRIBUTE`, for telling
+  gcc and clang that certain parameters should never be NULL.  Some APIs
+  (e.g., mpool, hash) make use of these new macros.
+
 **Predicate**
 
 * A new rule injection system, Predicate, was added.  Predicate provides a
@@ -66,7 +70,8 @@ IronBee v0.8.0
 
 * Transformations have been overhauled: output flags have been removed;
   callback data is now the final argument; input flags have been changed to
-  a single bool; added accessors; `ib_tfn_transform()` has been renamed to `ib_tfn_execute()` and now handles lists properly; separated creation and
+  a single bool; added accessors; `ib_tfn_transform()` has been renamed to
+  `ib_tfn_execute()` and now handles lists properly; separated creation and
   registration similar to operators.
 
 * All `ib_hook_xxx_unregister()` functions have been removed.
