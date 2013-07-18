@@ -71,18 +71,8 @@
 #endif
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/// @todo Implement
-
 /**
  * @} IronBeeBuild
  */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _IB_BUILD_H_ */
