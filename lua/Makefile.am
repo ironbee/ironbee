@@ -97,7 +97,7 @@ ironbee-ffi-h.lua: ironbee-ffi.h
 	echo "#!/usr/bin/lua"                           > $@
 	echo "local ffi = require('ffi')"              >> $@
 	echo "ffi.cdef [["                             >> $@
-	cat $< | grep -v -e '^# ' | grep -v __typeof__ >> $@
+	cat $< | grep -v -e '^# ' | grep -v __typeof__ | sed -e 's/__attribute__ *((nonnull ([0-9, ]*)))//g' | sed -e 's/__attribute__ *((nonnull))//g' >> $@
 	echo "]]"                                      >> $@
 
 CLEANFILES = ironbee-ffi.h ironbee-ffi-h.lua
