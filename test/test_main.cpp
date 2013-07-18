@@ -1721,3 +1721,24 @@ TEST_F(ConnectionParsing, ResponseNoStatusHeaders) {
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
+
+TEST_F(ConnectionParsing, ConnectInvalidHostport) {
+    int rc = test_run(home, "79-connect-invalid-hostport.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(2, htp_list_size(connp->conn->transactions));
+}
+
+TEST_F(ConnectionParsing, HostnameInvalid1) {
+    int rc = test_run(home, "80-hostname-invalid-1.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));   
+}
+
+TEST_F(ConnectionParsing, HostnameInvalid2) {
+    int rc = test_run(home, "81-hostname-invalid-2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+}

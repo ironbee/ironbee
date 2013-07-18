@@ -399,7 +399,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
                 tx->flags |= HTP_REQUEST_SMUGGLING;
             }
         }
-    } else if (cl != NULL) {        
+    } else if (cl != NULL) {
         // Check for a folded C-L header.
         if (cl->flags & HTP_FIELD_FOLDED) {
             tx->flags |= HTP_REQUEST_SMUGGLING;
@@ -478,22 +478,33 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         rc = htp_parse_header_hostport(h->value, &hostname, &port, &(tx->flags));
         if (rc != HTP_OK) return rc;
 
-        // Is there host information in the URI?
-        if (tx->request_hostname == NULL) {
-            // There is no host information in the URI. Place the
-            // hostname from the headers into the parsed_uri structure.
-            tx->request_hostname = hostname;
-            tx->request_port_number = port;
+        if (hostname != NULL) {
+            // The host information in the headers is valid.
+
+            // Is there host information in the URI?
+            if (tx->request_hostname == NULL) {
+                // There is no host information in the URI. Place the
+                // hostname from the headers into the parsed_uri structure.
+                tx->request_hostname = hostname;
+                tx->request_port_number = port;
+            } else {
+                // The host information appears in the URI and in the headers. It's
+                // OK if both have the same thing, but we want to check for differences.
+                if ((bstr_cmp_nocase(hostname, tx->request_hostname) != 0) || (port != tx->request_port_number)) {
+                    // The host information is different in the headers and the URI. The
+                    // HTTP RFC states that we should ignore the header copy.
+                    tx->flags |= HTP_HOST_AMBIGUOUS;
+                }
+
+                bstr_free(hostname);
+            }
         } else {
-            // The host information appears in the URI and in the headers. It's
-            // OK if both have the same thing, but we want to check for differences.
-            if ((bstr_cmp_nocase(hostname, tx->request_hostname) != 0) || (port != tx->request_port_number)) {
-                // The host information is different in the headers and the URI. The
-                // HTTP RFC states that we should ignore the header copy.
+            // Invalid host information in the headers.
+
+            if (tx->request_hostname != NULL) {
+                // Raise the flag, even though the host information in the headers is invalid.
                 tx->flags |= HTP_HOST_AMBIGUOUS;
             }
-
-            bstr_free(hostname);
         }
     }
 
