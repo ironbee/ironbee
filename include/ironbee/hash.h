@@ -150,7 +150,8 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2(
     size_t      key_length,
     uint32_t    randomizer,
     void       *cbdata
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * DJB2 Hash Function (Dan Bernstein) plus randomizer.  Case insensitive
@@ -178,7 +179,8 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
     size_t      key_length,
     uint32_t    randomizer,
     void       *cbdata
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Byte for byte equality predicate.
@@ -202,7 +204,8 @@ int DLL_PUBLIC ib_hashequal_default(
     const char *b,
     size_t      b_length,
     void       *cbdata
-);
+)
+NONNULL_ATTRIBUTE(1, 3);
 
 /**
  * Byte for byte equality predicate.
@@ -226,7 +229,8 @@ int DLL_PUBLIC ib_hashequal_nocase(
     const char *b,
     size_t      b_length,
     void       *cbdata
-);
+)
+NONNULL_ATTRIBUTE(1, 3);
 
 /*@}*/
 
@@ -264,7 +268,8 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(
     void                *hash_cbdata,
     ib_hash_equal_t      equal_predicate,
     void                *equal_cbdata
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Create a hash table with ib_hashfunc_djb2(), ib_hashequal_default(), and a
@@ -282,7 +287,8 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(
 ib_status_t DLL_PUBLIC ib_hash_create(
     ib_hash_t  **hash,
     ib_mpool_t  *pool
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Create a hash table with ib_hashfunc_djb2_nocase(), ib_hashequal_nocase()
@@ -300,7 +306,8 @@ ib_status_t DLL_PUBLIC ib_hash_create(
 ib_status_t DLL_PUBLIC ib_hash_create_nocase(
     ib_hash_t  **hash,
     ib_mpool_t  *pool
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /*@}*/
 
@@ -320,7 +327,8 @@ ib_status_t DLL_PUBLIC ib_hash_create_nocase(
  **/
 ib_mpool_t DLL_PUBLIC *ib_hash_pool(
     const ib_hash_t *hash
-);
+)
+NONNULL_ATTRIBUTE(1);
 
  /**
   * Number of elements in @a hash.
@@ -331,7 +339,8 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(
   **/
 size_t DLL_PUBLIC ib_hash_size(
     const ib_hash_t* hash
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /*@}*/
 
@@ -362,7 +371,8 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
     void             *value,
     const char       *key,
     size_t            key_length
-);
+)
+NONNULL_ATTRIBUTE(1, 3);
 
 /**
  * Get value for @a key (NULL terminated char string) from @a hash.
@@ -382,7 +392,8 @@ ib_status_t DLL_PUBLIC ib_hash_get(
     const ib_hash_t   *hash,
     void              *value,
     const char        *key
-);
+)
+NONNULL_ATTRIBUTE(1, 3);
 
 /**
  * Push every entry from @a hash onto @a list.
@@ -400,7 +411,8 @@ ib_status_t DLL_PUBLIC ib_hash_get(
 ib_status_t DLL_PUBLIC ib_hash_get_all(
     const ib_hash_t *hash,
     ib_list_t       *list
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /*@}*/
 
@@ -432,7 +444,8 @@ ib_status_t DLL_PUBLIC ib_hash_set_ex(
     const char *key,
     size_t      key_length,
     void       *value
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Set value of @a key (NULL terminated char string) in @a hash to @a value.
@@ -453,7 +466,8 @@ ib_status_t DLL_PUBLIC ib_hash_set(
     ib_hash_t  *hash,
     const char *key,
     void       *value
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Clear hash table @a hash.
@@ -464,7 +478,8 @@ ib_status_t DLL_PUBLIC ib_hash_set(
  */
 void DLL_PUBLIC ib_hash_clear(
      ib_hash_t *hash
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Remove value for @a key from @a data.
@@ -486,7 +501,8 @@ ib_status_t DLL_PUBLIC ib_hash_remove_ex(
     void       *value,
     const char *key,
     size_t      key_length
-);
+)
+NONNULL_ATTRIBUTE(1, 3);
 
 /**
  * Remove value for @a key (NULL terminated char string) from @a data.
@@ -506,7 +522,8 @@ ib_status_t DLL_PUBLIC ib_hash_remove(
     ib_hash_t   *hash,
     void        *value,
     const char  *key
-);
+)
+NONNULL_ATTRIBUTE(1, 3);
 
 /*@}*/
 
@@ -527,7 +544,10 @@ ib_status_t DLL_PUBLIC ib_hash_remove(
  * @param[in] mp Memory pool to use.
  * @return New iterator or NULL on allocation error.
  **/
-ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator_create(ib_mpool_t *mp);
+ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator_create(
+    ib_mpool_t *mp
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Create a hash iterator with malloc.
@@ -546,7 +566,10 @@ ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator_create_malloc();
  * @param[in] iterator Iterator to check.
  * @return true iff iterator is at end of hash.
  **/
-bool DLL_PUBLIC ib_hash_iterator_at_end(const ib_hash_iterator_t *iterator);
+bool DLL_PUBLIC ib_hash_iterator_at_end(
+    const ib_hash_iterator_t *iterator
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Fetch value of hash.
@@ -566,7 +589,8 @@ void DLL_PUBLIC ib_hash_iterator_fetch(
     size_t                    *key_length,
     void                      *value,
     const ib_hash_iterator_t  *iterator
-);
+)
+NONNULL_ATTRIBUTE(4);
 
 /**
  * Return iterator pointing to first entry of @a hash.
@@ -577,7 +601,8 @@ void DLL_PUBLIC ib_hash_iterator_fetch(
 void DLL_PUBLIC ib_hash_iterator_first(
     ib_hash_iterator_t *iterator,
     const ib_hash_t    *hash
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Move @a iterator to the next entry.
@@ -589,7 +614,8 @@ void DLL_PUBLIC ib_hash_iterator_first(
  */
 void DLL_PUBLIC ib_hash_iterator_next(
     ib_hash_iterator_t *iterator
-);
+)
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Copy @a from iterator to @a to iterator.
@@ -600,7 +626,8 @@ void DLL_PUBLIC ib_hash_iterator_next(
 void DLL_PUBLIC ib_hash_iterator_copy(
     ib_hash_iterator_t       *to,
     const ib_hash_iterator_t *from
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /**
  * Compare two iterators.
@@ -612,7 +639,8 @@ void DLL_PUBLIC ib_hash_iterator_copy(
 bool DLL_PUBLIC ib_hash_iterator_equal(
     const ib_hash_iterator_t *a,
     const ib_hash_iterator_t *b
-);
+)
+NONNULL_ATTRIBUTE(1, 2);
 
 /*@}*/
 
