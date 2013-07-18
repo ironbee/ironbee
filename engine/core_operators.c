@@ -1201,7 +1201,7 @@ ib_status_t op_ipmatch6_execute(
  *   - Other returned by ib_data_expand_str.
  */
 static
-ib_status_t expand_field(
+ib_status_t expand_field_num(
     const ib_tx_t     *tx,
     const ib_field_t  *in_field,
     ib_field_t       **out_field
@@ -1213,6 +1213,7 @@ ib_status_t expand_field(
 
     const char *original;
     char *expanded;
+    size_t expanded_len;
     ib_field_t *tmp_field;
     ib_status_t rc;
 
@@ -1223,7 +1224,12 @@ ib_status_t expand_field(
     }
 
     /* Expand the string */
-    rc = ib_data_expand_str(tx->data, original, false, &expanded);
+    rc = ib_data_expand_str_ex(
+        tx->data,
+        original, strlen(original),
+        false,                /* No NUL required */
+        false,                /* No recursion */
+        &expanded, &expanded_len);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1231,13 +1237,11 @@ ib_status_t expand_field(
     /* Wrap the string into a field and set it to the tmp_field.
      * We will not try to expand tmp_field into a number. If we
      * fail, we return tmp_field in *out_field. */
-    rc = ib_field_create_alias(
+    rc = ib_field_create_bytestr_alias(
         &tmp_field,
         tx->mp,
-        in_field->name,
-        in_field->nlen,
-        IB_FTYPE_NULSTR,
-        ib_ftype_nulstr_mutable_out(&expanded));
+        in_field->name, in_field->nlen,
+        (uint8_t *)expanded, expanded_len);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1458,7 +1462,7 @@ ib_status_t prepare_math_operands(
 
     /* First, expand the right hand input. */
     if (expand) {
-        rc = expand_field(tx, rh_in, &tmp_field);
+        rc = expand_field_num(tx, rh_in, &tmp_field);
         if (rc != IB_OK) {
             return rc;
         }
