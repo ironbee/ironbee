@@ -1476,3 +1476,52 @@ TEST(Util, ExtractQuotedString) {
     ASSERT_EQ(0, bstr_cmp_c(s, "te\"st"));
     ASSERT_EQ(7, end_offset);
 }
+
+TEST(Util, NormalizeUriPath) {
+    bstr *s = NULL;
+
+    s = bstr_dup_c("/a/b/c/./../../g");
+    htp_normalize_uri_path_inplace(s);
+    ASSERT_EQ(0, bstr_cmp_c(s, "/a/g"));
+    bstr_free(s);
+
+    s = bstr_dup_c("mid/content=5/../6");
+    htp_normalize_uri_path_inplace(s);
+    ASSERT_EQ(0, bstr_cmp_c(s, "mid/6"));
+    bstr_free(s);
+
+    s = bstr_dup_c("./one");
+    htp_normalize_uri_path_inplace(s);    
+    ASSERT_EQ(0, bstr_cmp_c(s, "one"));
+    bstr_free(s);
+    
+    s = bstr_dup_c("../one");
+    htp_normalize_uri_path_inplace(s);    
+    ASSERT_EQ(0, bstr_cmp_c(s, "one"));
+    bstr_free(s);
+
+    s = bstr_dup_c(".");
+    htp_normalize_uri_path_inplace(s);    
+    ASSERT_EQ(0, bstr_cmp_c(s, ""));
+    bstr_free(s);
+
+    s = bstr_dup_c("..");
+    htp_normalize_uri_path_inplace(s);    
+    ASSERT_EQ(0, bstr_cmp_c(s, ""));
+    bstr_free(s);
+    
+    s = bstr_dup_c("one/.");
+    htp_normalize_uri_path_inplace(s);    
+    ASSERT_EQ(0, bstr_cmp_c(s, "one"));
+    bstr_free(s);
+    
+    s = bstr_dup_c("one/..");
+    htp_normalize_uri_path_inplace(s);    
+    ASSERT_EQ(0, bstr_cmp_c(s, ""));
+    bstr_free(s);
+
+    s = bstr_dup_c("one/../");
+    htp_normalize_uri_path_inplace(s);    
+    ASSERT_EQ(0, bstr_cmp_c(s, ""));
+    bstr_free(s);    
+}
