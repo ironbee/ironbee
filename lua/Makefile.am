@@ -90,14 +90,14 @@ ironbee-ffi.h: $(FFI_FILES)
 	for i in $+; do \
 		echo "#include \"$$i\"" >> tmp.h; \
 	done
-	$(CPP) -I$(top_srcdir)/include -I$(top_builddir)/include $(CPPFLAGS) tmp.h > "$@"
+	$(CPP) -DLUA_FFI -I$(top_srcdir)/include -I$(top_builddir)/include $(CPPFLAGS) tmp.h > "$@"
 	rm tmp.h
 
 ironbee-ffi-h.lua: ironbee-ffi.h $(srcdir)/Makefile.am
 	echo "#!/usr/bin/lua"                           > $@
 	echo "local ffi = require('ffi')"              >> $@
 	echo "ffi.cdef [["                             >> $@
-	cat $< | grep -v -e '^# ' | grep -v __typeof__ | sed -e 's/__attribute__ *((nonnull ([0-9, ]*)))//g' | sed -e 's/__attribute__ *((nonnull))//g' >> $@
+	cat $< | grep -v -e '^# ' | grep -v __typeof__ >> $@
 	echo "]]"                                      >> $@
 
 CLEANFILES = ironbee-ffi.h ironbee-ffi-h.lua

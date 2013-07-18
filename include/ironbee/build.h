@@ -72,7 +72,7 @@
 #endif
 
 /* Have compiler check for null pointers */
-#ifdef __GNUC__
+#if (defined(__GNUC__) && !defined(LUA_FFI))
 #define ALL_NONNULL_ATTRIBUTE __attribute__((nonnull))
 #define NONNULL_ATTRIBUTE(...) __attribute__((nonnull (__VA_ARGS__)))
 #else
