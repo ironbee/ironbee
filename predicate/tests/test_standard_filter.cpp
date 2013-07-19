@@ -111,3 +111,13 @@ TEST_F(TestStandardFilter, named)
     EXPECT_THROW(eval_bool("(named 'a' 2 3)"), IronBee::einval);
     EXPECT_THROW(eval_bool("(named 5 'b')"), IronBee::einval);
 }
+
+TEST_F(TestStandardFilter, namedRx)
+{
+    EXPECT_EQ(2, eval_n("(namedRx '^.foo' (cat (setName 'nopey' 1) (setName 'afoobaz' 2) (setName 'nope' 3)))"));
+
+    EXPECT_THROW(eval_bool("(namedRx)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(namedRx 'a' 2 3)"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(namedRx 5 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(namedRx '(' 'b')"), IronBee::einval);
+}

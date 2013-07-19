@@ -220,6 +220,40 @@ protected:
 };
 
 /**
+ * Output elements of second child with name matching first child.
+ **/
+class NamedRx :
+    public MapCall
+{
+public:
+    //! Constructor.
+    NamedRx();
+
+    //! See Call::name()
+    virtual std::string name() const;
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::pre_eval().
+    virtual void pre_eval(Environment environment, NodeReporter reporter);
+
+protected:
+    //! See MapCall::value_calculate()
+    virtual Value value_calculate(Value v, EvalContext context);
+
+    //! See Node::calculate()
+    virtual void calculate(EvalContext context);
+
+private:
+    //! Hidden complex implementation details.
+    struct data_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<data_t> m_data;
+};
+
+/**
  * Load all standard filter calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.

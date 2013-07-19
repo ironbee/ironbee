@@ -29,6 +29,7 @@
 #include <predicate/validate.hpp>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 using namespace std;
 
@@ -391,6 +392,65 @@ bool Named::validate(NodeReporter reporter) const
     return result;
 }
 
+struct NamedRx::data_t
+{
+    boost::regex re;
+};
+
+NamedRx::NamedRx() :
+    m_data(new data_t())
+{
+    // nop
+}
+
+string NamedRx::name() const
+{
+    return "namedRx";
+}
+
+void NamedRx::calculate(EvalContext context)
+{
+    map_calculate(children().back(), context);
+}
+
+Value NamedRx::value_calculate(Value v, EvalContext context)
+{
+    if (
+        regex_search(
+            v.name(), v.name() + v.name_length(),
+            m_data->re
+        )
+    ) {
+        return v;
+    }
+    return Value();
+}
+
+void NamedRx::pre_eval(Environment environment, NodeReporter reporter)
+{
+    ConstByteString re =
+        literal_value(children().front()).value_as_byte_string();
+
+    try {
+        m_data->re = boost::regex(
+            re.const_data(), re.const_data() + re.length()
+        );
+    }
+    catch (const boost::bad_expression& e) {
+        reporter.error(
+            "Error compiling regexp: " + re.to_s() + " (" + e.what() + ")"
+        );
+    }
+}
+
+bool NamedRx::validate(NodeReporter reporter) const
+{
+    bool result = true;
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_string(reporter, 0) && result;
+
+    return result;
+}
 
 void load_filter(CallFactory& to)
 {
@@ -403,6 +463,7 @@ void load_filter(CallFactory& to)
         .add<Ge>()
         .add<Typed>()
         .add<Named>()
+        .add<NamedRx>()
         ;
 }
 
