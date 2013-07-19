@@ -56,3 +56,4 @@ extras/ruby/*.gem
 /docs/Makefile.in
 /test/test_main
 /test/coverage.info
+/htp/htp_version.h
