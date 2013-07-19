@@ -36,6 +36,7 @@
  * @brief Tests for various utility functions.
  *
  * @author Craig Forbes <cforbes@qualys.com>
+ * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
 #include <iostream>
@@ -1524,4 +1525,44 @@ TEST(Util, NormalizeUriPath) {
     htp_normalize_uri_path_inplace(s);    
     ASSERT_EQ(0, bstr_cmp_c(s, ""));
     bstr_free(s);    
+}
+
+TEST_F(UrlencodedParser, UrlDecode1) {
+    bstr *s = NULL;
+    uint64_t flags;
+    
+    s = bstr_dup_c("/one/tw%u006f/three/%u123");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URLENCODED, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URLENCODED, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_urldecode_inplace(cfg, HTP_DECODER_URLENCODED, s, &flags);
+    ASSERT_EQ(0, bstr_cmp_c(s, "/one/two/three/%u123"));
+    bstr_free(s);
+
+    s = bstr_dup_c("/one/tw%u006f/three/%uXXXX");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URLENCODED, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URLENCODED, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_urldecode_inplace(cfg, HTP_DECODER_URLENCODED, s, &flags);
+    ASSERT_EQ(0, bstr_cmp_c(s, "/one/two/three/%uXXXX"));
+    bstr_free(s);
+
+    s = bstr_dup_c("/one/tw%u006f/three/%u123");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URLENCODED, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URLENCODED, HTP_URL_DECODE_REMOVE_PERCENT);
+    htp_urldecode_inplace(cfg, HTP_DECODER_URLENCODED, s, &flags);
+    ASSERT_EQ(0, bstr_cmp_c(s, "/one/two/three/u123"));
+    bstr_free(s);
+
+    s = bstr_dup_c("/one/tw%u006f/three/%3");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URLENCODED, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URLENCODED, HTP_URL_DECODE_REMOVE_PERCENT);
+    htp_urldecode_inplace(cfg, HTP_DECODER_URLENCODED, s, &flags);
+    ASSERT_EQ(0, bstr_cmp_c(s, "/one/two/three/3"));
+    bstr_free(s);
+
+    s = bstr_dup_c("/one/tw%u006f/three/%3");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URLENCODED, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URLENCODED, HTP_URL_DECODE_PROCESS_INVALID);
+    htp_urldecode_inplace(cfg, HTP_DECODER_URLENCODED, s, &flags);
+    ASSERT_EQ(0, bstr_cmp_c(s, "/one/two/three/%3"));
+    bstr_free(s);
 }
