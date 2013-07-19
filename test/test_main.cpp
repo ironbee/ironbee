@@ -1773,3 +1773,16 @@ TEST_F(ConnectionParsing, AuthDigestInvalidUsername2) {
 
     ASSERT_TRUE(tx->flags & HTP_AUTH_INVALID);
 }
+
+TEST_F(ConnectionParsing, ResponseNoStatusHeaders2) {
+    int rc = test_run(home, "84-response-no-status-headers-2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+}
