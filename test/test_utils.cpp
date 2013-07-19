@@ -1028,6 +1028,7 @@ TEST_F(DecodingTest, DecodePathInplace1_UrlencodedInvalidNotEnoughBytes) {
     htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PROCESS_INVALID);
     htp_decode_path_inplace(tx, i);
     ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
     bstr_free(e);
     bstr_free(i);
 }
@@ -1037,6 +1038,239 @@ TEST_F(DecodingTest, DecodePathInplace2_UencodedInvalidNotEnoughBytes) {
     bstr *e = bstr_dup_c("/%uX");
     htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
     htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PROCESS_INVALID);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace3_UencodedValid) {
+    bstr *i = bstr_dup_c("/%u0107");
+    bstr *e = bstr_dup_c("/c");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PROCESS_INVALID);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace4_UencodedInvalidNotHexDigits_Remove) {
+    bstr *i = bstr_dup_c("/%uXXXX");
+    bstr *e = bstr_dup_c("/uXXXX");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_REMOVE_PERCENT);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace5_UencodedInvalidNotHexDigits_Preserve) {
+    bstr *i = bstr_dup_c("/%uXXXX");
+    bstr *e = bstr_dup_c("/%uXXXX");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace6_UencodedInvalidNotHexDigits_Process) {
+    bstr *i = bstr_dup_c("/%u00}9");
+    bstr *e = bstr_dup_c("/i");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PROCESS_INVALID);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace7_UencodedNul) {
+    bstr *i = bstr_dup_c("/%u0000");
+    bstr *e = bstr_dup_mem("/\0", 2);
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PROCESS_INVALID);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_ENCODED_NUL);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace8_UencodedNotEnough_Remove) {
+    bstr *i = bstr_dup_c("/%uXXX");
+    bstr *e = bstr_dup_c("/uXXX");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_REMOVE_PERCENT);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace9_UencodedNotEnough_Preserve) {
+    bstr *i = bstr_dup_c("/%uXXX");
+    bstr *e = bstr_dup_c("/%uXXX");
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace10_UrlencodedNul) {
+    bstr *i = bstr_dup_c("/%00123");
+    bstr *e = bstr_dup_mem("/\000123", 5);
+    htp_decode_path_inplace(tx, i);    
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_ENCODED_NUL);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace11_UrlencodedNul_Terminates) {
+    bstr *i = bstr_dup_c("/%00123");
+    bstr *e = bstr_dup_mem("/", 1);
+    htp_config_set_nul_encoded_terminates(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_decode_path_inplace(tx, i);    
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_ENCODED_NUL);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace12_EncodedSlash) {
+    bstr *i = bstr_dup_c("/one%2ftwo");
+    bstr *e = bstr_dup_c("/one%2ftwo");
+    htp_config_set_path_separators_decode(cfg, HTP_DECODER_DEFAULTS, 0);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_ENCODED_SEPARATOR);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace13_EncodedSlash_Decode) {
+    bstr *i = bstr_dup_c("/one%2ftwo");
+    bstr *e = bstr_dup_c("/one/two");
+    htp_config_set_path_separators_decode(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_ENCODED_SEPARATOR);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace14_Urlencoded_Invalid_Preserve) {
+    bstr *i = bstr_dup_c("/%HH");
+    bstr *e = bstr_dup_c("/%HH");
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace15_Urlencoded_Invalid_Remove) {
+    bstr *i = bstr_dup_c("/%HH");
+    bstr *e = bstr_dup_c("/HH");
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_REMOVE_PERCENT);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace16_Urlencoded_Invalid_Process) {
+    bstr *i = bstr_dup_c("/%}9");
+    bstr *e = bstr_dup_c("/i");
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PROCESS_INVALID);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace17_Urlencoded_NotEnough_Remove) {
+    bstr *i = bstr_dup_c("/%H");
+    bstr *e = bstr_dup_c("/H");
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_REMOVE_PERCENT);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace18_Urlencoded_NotEnough_Preserve) {
+    bstr *i = bstr_dup_c("/%H");
+    bstr *e = bstr_dup_c("/%H");
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace19_Urlencoded_NotEnough_Process) {
+    bstr *i = bstr_dup_c("/%H");
+    bstr *e = bstr_dup_c("/%H");
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PROCESS_INVALID);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    ASSERT_TRUE(tx->flags & HTP_PATH_INVALID_ENCODING);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace20_RawNul1) {
+    bstr *i = bstr_dup_mem("/\000123", 5);
+    bstr *e = bstr_dup_c("/");
+    htp_config_set_nul_raw_terminates(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);    
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace21_RawNul1) {
+    bstr *i = bstr_dup_mem("/\000123", 5);
+    bstr *e = bstr_dup_mem("/\000123", 5);
+    htp_config_set_nul_raw_terminates(cfg, HTP_DECODER_DEFAULTS, 0);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace22_ConvertBackslash1) {
+    bstr *i = bstr_dup_c("/one\\two");
+    bstr *e = bstr_dup_c("/one/two");
+    htp_config_set_backslash_convert_slashes(cfg, HTP_DECODER_DEFAULTS, 1);
+    htp_decode_path_inplace(tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST_F(DecodingTest, DecodePathInplace23_ConvertBackslash2) {
+    bstr *i = bstr_dup_c("/one\\two");
+    bstr *e = bstr_dup_c("/one\\two");
+    htp_config_set_backslash_convert_slashes(cfg, HTP_DECODER_DEFAULTS, 0);
     htp_decode_path_inplace(tx, i);
     ASSERT_TRUE(bstr_cmp(i, e) == 0);
     bstr_free(e);
