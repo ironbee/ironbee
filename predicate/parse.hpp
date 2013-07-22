@@ -59,7 +59,11 @@ node_p parse_literal(
  * @code
  * call       := " "* "(" name ( " "* + expression )* ")"
  * expression := call | literal
- * literal    := "'" ( [^\'] | \\ | \' )* "'" | null
+ * literal    := null | string | float | integer
+ * null       := 'null'
+ * string     := '\'' + *(/[^'\\]/ | '\\\\' | '\\'') + '\''
+ * integer    := /^-?[0-9]+$/
+ * float      := /^-?[0-9]+(\.[0-9]+)?$/
  * name       := [_A-Za-z0-9]+
  * @endcode
  *
