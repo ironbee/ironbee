@@ -3,9 +3,9 @@ dnl ----------------------
 dnl Initialization macros
 dnl ----------------------
 
-AC_INIT([LibHTP],
-        m4_esyscmd([./get-version.sh VERSION]),
-        [ironbee-team@ironbee.com])
+AC_INIT([LibHTP], m4_esyscmd([./get-version.sh VERSION]))
+AM_INIT_AUTOMAKE
+
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([htp/htp_version.h])
 
@@ -37,8 +37,6 @@ AC_SUBST(GENERIC_RELEASE)
 AC_SUBST(GENERIC_VERSION)
 
 VERSION=$GENERIC_VERSION
-
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
 AC_CONFIG_MACRO_DIR([m4])
 

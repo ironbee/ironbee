@@ -29,4 +29,4 @@ if test -z $PKG_VERSION; then
 fi
 
 # Omit the trailing newline
-echo -n "$PKG_VERSION"
+echo "$PKG_VERSION" | tr -d "$nl"
