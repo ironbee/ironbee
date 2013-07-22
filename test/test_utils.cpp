@@ -1691,6 +1691,8 @@ TEST(Table, Misc) {
 
     bstr_free(qkey);
     bstr_free(pkey);
+
+    htp_table_destroy(t);
 }
 
 TEST(Util, ExtractQuotedString) {
