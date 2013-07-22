@@ -127,6 +127,7 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
     bstr_free(tx->request_hostname);
     htp_uri_free(tx->parsed_uri_raw);
     htp_uri_free(tx->parsed_uri);
+    bstr_free(tx->request_auth_username);
 
     // Request_headers.
     if (tx->request_headers != NULL) {
