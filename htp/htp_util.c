@@ -1424,7 +1424,7 @@ htp_status_t htp_decode_path_inplace(htp_tx_t *tx, bstr *path) {
 }
 
 htp_status_t htp_tx_urldecode_uri_inplace(htp_tx_t *tx, bstr *input) {
-    uint64_t flags;
+    uint64_t flags = 0;
 
     htp_status_t rc = htp_urldecode_inplace_ex(tx->cfg, HTP_DECODER_URL_PATH, input, &flags, &(tx->response_status_expected_number));
 
