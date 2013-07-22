@@ -71,4 +71,17 @@ class TestPredicate < Test::Unit::TestCase
     assert_no_issues
     assert_log_no_match /NOTICE/
   end
+
+  def test_define
+    clipp(CONFIG.merge(
+      :input_hashes => [make_request('foobar')],
+      :default_site_config => <<-EOS
+        PredicateDefine "foo" "name" "(field (ref 'name'))"
+        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(foo 'REQUEST_URI')"
+      EOS
+    ))
+    assert_no_issues
+    assert_log_no_match /NOTICE/
+    assert_log_match /CLIPP ANNOUNCE: field_present/
+  end
 end

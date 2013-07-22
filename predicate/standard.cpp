@@ -29,6 +29,7 @@
 #include <predicate/standard_filter.hpp>
 #include <predicate/standard_ironbee.hpp>
 #include <predicate/standard_predicate.hpp>
+#include <predicate/standard_template.hpp>
 #include <predicate/standard_valuelist.hpp>
 
 namespace IronBee {
@@ -41,6 +42,7 @@ void load(CallFactory& to)
     load_development(to);
     load_filter(to);
     load_ironbee(to);
+    load_template(to);
     load_valuelist(to);
     load_predicate(to);
 }

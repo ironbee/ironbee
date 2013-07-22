@@ -20,6 +20,7 @@ libpredicate_la_SOURCES = \
     standard_development.cpp \
     standard_filter.cpp \
     standard_ironbee.cpp \
+    standard_template.cpp \
     standard_valuelist.cpp \
     standard_predicate.cpp \
     dot.cpp \
@@ -53,6 +54,7 @@ EXTRA_DIST = \
 		standard_development.hpp  \
 		standard_filter.hpp       \
 		standard_ironbee.hpp      \
+		standard_template.hpp     \
 		standard_valuelist.hpp    \
 		standard_predicate.hpp    \
 		tree_copy.hpp             \

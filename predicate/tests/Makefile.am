@@ -20,6 +20,7 @@ check_PROGRAMS = \
 	test_standard_filter \
 	test_standard_ironbee \
 	test_standard_predicate \
+	test_standard_template \
 	test_standard_valuelist \
 	test_transform_graph \
 	test_validate_graph
@@ -34,6 +35,7 @@ test_standard_development_SOURCES = test_standard_development.cpp standard_test.
 test_standard_filter_SOURCES = test_standard_filter.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_ironbee_SOURCES = test_standard_ironbee.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_predicate_SOURCES = test_standard_predicate.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
+test_standard_template_SOURCES = test_standard_template.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_standard_valuelist_SOURCES = test_standard_valuelist.cpp standard_test.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
 test_call_factory_SOURCES = test_call_factory.cpp
 test_parse_SOURCES = test_parse.cpp

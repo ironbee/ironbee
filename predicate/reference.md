@@ -573,12 +573,12 @@ Phase
 
 In these function, `P` is a string literal describing an IronBee phase.  Valid values are:
 
-- `request_header`
+- `requestHeader`
 - `request`
 - `response_header`
 - `response`
 - `postprocess`
-- `request_header_stream`
+- `requestHeader_stream`
 - `request_body_stream`
 - `response_header_stream`
 - `response_body_stream`
@@ -772,16 +772,16 @@ Finished
 Notes
 : Does not transform.  In contrast, `(cat v)` is semantically identical, but transforms itself into `v`.
 
-Templates \[Future]
--------------------
+Templates
+---------
 
 Templates provide basic user defined substitution transformations.  They permit complex expressions to be expressed as simple expressions, allowing for improved error messages and fewer bytes in certain forms.  Ultimately, they expand out to full expressions tree, have subexpressions merged with all other expressions, and are treated no differently that had they been written out fully to begin with.
 
 Templates are defined externally, e.g., via an IronBee directive.  As an example:
 
-    PredicateDefineTemplate "request_header name" "(sub (ref 'name') (field 'REQUEST_HEADERS'))"
+    PredicateDefine "requestHeader" "name" "(sub (ref 'name') (field 'REQUEST_HEADERS'))"
 
-The `request_header` template then be used as a function, e.g., `(request_header 'Host')` which would be expanded to `(sub 'Host' (field 'REQUEST_HEADERS'))`.
+The `requestHeader` template then be used as a function, e.g., `(requestHeader 'Host')` which would be expanded to `(sub 'Host' (field 'REQUEST_HEADERS'))`.
 
 **`(T ...)`**
 

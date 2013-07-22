@@ -73,6 +73,7 @@
 #include <predicate/parse.hpp>
 #include <predicate/pre_eval_graph.hpp>
 #include <predicate/standard.hpp>
+#include <predicate/standard_template.hpp>
 #include <predicate/transform_graph.hpp>
 #include <predicate/validate_graph.hpp>
 
@@ -113,6 +114,9 @@ const char* c_assert_valid_directive = "PredicateAssertValid";
 
 //! Directive to write output a debug report.
 const char* c_debug_report_directive = "PredicateDebugReport";
+
+//! Directive to define a template.
+const char* c_define_directive = "PredicateDefine";
 
 /**
  * Phases supported by predicate.
@@ -372,7 +376,7 @@ private:
     void request_started(IB::Transaction tx) const;
 
     /**
-     * Handle c_assert_valid_directive.
+     * Handle @ref c_assert_valid_directive.
      *
      * See MergeGraph::write_validation_report().
      *
@@ -383,7 +387,7 @@ private:
     void assert_valid(IB::ConfigurationParser& cp, const char* to) const;
 
     /**
-     * Handle c_debug_report_directive.
+     * Handle @ref c_debug_report_directive.
      *
      * See MergeGraph::write_debug_report().
      *
@@ -393,7 +397,17 @@ private:
     void debug_report(IB::ConfigurationParser& cp, const char* to);
 
     /**
-     * Handle reports for Predicate::Node life cycle routines.
+     * Handle @ref c_define_directive.
+     *
+     * See Template section of reference.md.
+     *
+     * @param[in] cp     Configuration parser.
+     * @param[in] params Parameters of directive.
+     **/
+    void define(IB::ConfigurationParser& cp, IB::List<const char*> params);
+
+    /**
+     * Handle @ref reports for Predicate::Node life cycle routines.
      *
      * Warnings and errors are translated into log messages.  Errors also
      * increment @a num_errors.
@@ -663,7 +677,7 @@ Delegate::Delegate(IB::Module module) :
         )
         ;
 
-    // Introspection directives.
+    // Directives.
     module.engine().register_configuration_directives()
         .param1(
             c_assert_valid_directive,
@@ -672,6 +686,10 @@ Delegate::Delegate(IB::Module module) :
         .param1(
             c_debug_report_directive,
             bind(&Delegate::debug_report, this, _1, _3)
+        )
+        .list(
+            c_define_directive,
+            bind(&Delegate::define, this, _1, _3)
         )
         ;
 }
@@ -996,6 +1014,84 @@ void Delegate::debug_report(
     }
     m_write_debug_report = true;
     m_debug_report_to = to;
+}
+
+void Delegate::define(
+    IB::ConfigurationParser& cp,
+    IB::List<const char*>    params
+)
+{
+    if (params.size() != 3) {
+        ib_cfg_log_error(
+            cp.ib(),
+            "%s must have three arguments: name, args, and body.",
+            c_define_directive
+        );
+        BOOST_THROW_EXCEPTION(IB::einval());
+    }
+
+    IB::List<const char*>::const_iterator i = params.begin();
+    string name = *i;
+    ++i;
+    string args = *i;
+    ++i;
+    string body = *i;
+
+    P::node_p body_node;
+    try {
+        size_t i = 0;
+        if (body[0] == '(') {
+            body_node = P::parse_call(body, i, m_call_factory);
+        }
+        else {
+            body_node = P::parse_literal(body, i);
+        }
+    }
+    catch (const IB::einval& e) {
+        string message = "none reported";
+        if (boost::get_error_info<IB::errinfo_what>(e)) {
+            message = *boost::get_error_info<IB::errinfo_what>(e);
+        }
+
+        ib_cfg_log_error(
+            cp.ib(),
+            "%s: Error parsing body: %s",
+            c_define_directive,
+            message.c_str()
+        );
+        BOOST_THROW_EXCEPTION(IB::einval());
+    }
+
+    bool duplicate = true;
+    try {
+        m_call_factory(name);
+    }
+    catch (IB::enoent) {
+        duplicate = false;
+    }
+    if (duplicate) {
+        ib_cfg_log_error(
+            cp.ib(),
+            "%s: Already have function named %s",
+            c_define_directive,
+            name.c_str()
+        );
+    }
+
+    P::Standard::template_arg_list_t arg_list;
+    {
+        size_t i = 0;
+        while (i != string::npos) {
+            size_t next_i = args.find_first_of(' ', i);
+            arg_list.push_back(args.substr(i, next_i - i));
+            i = args.find_first_not_of(' ', next_i);
+        }
+    }
+
+    m_call_factory.add(
+        name,
+        P::Standard::define_template(arg_list, body_node)
+    );
 }
 
 void Delegate::report(
