@@ -279,6 +279,7 @@ cleanup:
         *path = path_base;
     }
     else {
+        *path = NULL;
         if (path_base) {
             kvstore->free(kvstore, path_base, kvstore->free_cbdata);
         }
@@ -868,7 +869,7 @@ static ib_status_t kvget(
 failure2:
     kvstore->free(kvstore, build_val.values, kvstore->free_cbdata);
 failure1:
-    if (path) {
+    if (path != NULL) {
         kvstore->free(kvstore, path, kvstore->free_cbdata);
     }
     return rc;
