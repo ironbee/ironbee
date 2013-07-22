@@ -67,15 +67,16 @@ ib_status_t ib_persist_fw_cfg_create(
  * Get the per-context persist_fw_cfg.
  *
  * @a persist_fw_main and @c *persist_fw_cfg may reference the same address.
- * @a persist_fw_cfg will not be written too until the correct @ref ib_persist_fw_cfg_t
- * has been retrieved.
+ * @a persist_fw_cfg will not be written too until the correct @ref
+ * ib_persist_fw_cfg_t has been retrieved.
  *
  * @param[in] persist_fw_main Any ib_persist_fw_cfg_t for this module. This is
  *            used to find the correct per-context @ref ib_persist_fw_cfg_t.
  * @param[in] ctx The context that the proper @ref ib_persist_fw_cfg_t is
  *            found in.
  * @param[out] persist_fw_cfg This may be @c &persist_fw_main. This pointer will
- *             not be overwritten until the proper @ref ib_persist_fw_cfg_t is found.
+ *             not be overwritten until the proper @ref ib_persist_fw_cfg_t
+ *             is found.
  * @returns
  * - IB_OK On success.
  * - IB_ENOENT If no module is registered.
@@ -416,11 +417,11 @@ static ib_status_t destroy_stores(
     assert(event == context_destroy_event);
     assert(cbdata != NULL);
 
-    ib_persist_fw_t       *persist_fw     = (ib_persist_fw_t *)cbdata;
-    ib_persist_fw_cfg_t   *persist_fw_cfg = NULL;
-    ib_mpool_t         *mp          = ib_engine_pool_main_get(ib);
-    ib_status_t         rc;
-    ib_hash_iterator_t *itr         = ib_hash_iterator_create(mp);
+    ib_persist_fw_t     *persist_fw     = (ib_persist_fw_t *)cbdata;
+    ib_persist_fw_cfg_t *persist_fw_cfg = NULL;
+    ib_mpool_t          *mp             = ib_engine_pool_main_get(ib);
+    ib_status_t          rc;
+    ib_hash_iterator_t  *itr            = ib_hash_iterator_create(mp);
     if (itr == NULL) {
         return IB_EALLOC;
     }
@@ -669,11 +670,11 @@ ib_status_t ib_persist_fw_create(
 }
 
 ib_status_t ib_persist_fw_create_store(
-    ib_persist_fw_t       *persist_fw,
-    ib_context_t       *ctx,
-    const char         *type,
-    const char         *name,
-    const ib_list_t    *params
+    ib_persist_fw_t *persist_fw,
+    ib_context_t    *ctx,
+    const char      *type,
+    const char      *name,
+    const ib_list_t *params
 )
 {
     assert(persist_fw != NULL);
