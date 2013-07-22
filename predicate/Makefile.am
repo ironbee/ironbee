@@ -30,7 +30,8 @@ libpredicate_la_SOURCES = \
     validate.cpp \
     transform_graph.cpp \
 	validate_graph.cpp \
-	pre_eval_graph.cpp
+	pre_eval_graph.cpp \
+	tree_copy.cpp
 
 EXTRA_DIST = \
 		bfs.hpp                   \
@@ -54,6 +55,7 @@ EXTRA_DIST = \
 		standard_ironbee.hpp      \
 		standard_valuelist.hpp    \
 		standard_predicate.hpp    \
+		tree_copy.hpp             \
 		transform_graph.hpp       \
 		validate.hpp              \
 		validate_graph.hpp
