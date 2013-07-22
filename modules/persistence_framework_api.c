@@ -730,6 +730,7 @@ ib_status_t ib_persist_fw_create_store(
         if (rc != IB_OK) {
             ib_log_error(
                 ib, "Failed to instantiate store %s of type %s.", name, type);
+            return rc;
         }
     }
 
