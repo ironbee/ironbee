@@ -1702,7 +1702,6 @@ TEST(Util, ExtractQuotedString) {
     ASSERT_TRUE(s != NULL);
     ASSERT_EQ(0, bstr_cmp_c(s, "test"));
     ASSERT_EQ(5, end_offset);
-
     bstr_free(s);
 
     rc = htp_extract_quoted_string_as_bstr((unsigned char *) "\"te\\\"st\"", 8, &s, &end_offset);
@@ -1710,6 +1709,7 @@ TEST(Util, ExtractQuotedString) {
     ASSERT_TRUE(s != NULL);
     ASSERT_EQ(0, bstr_cmp_c(s, "te\"st"));
     ASSERT_EQ(7, end_offset);
+    bstr_free(s);
 }
 
 TEST(Util, NormalizeUriPath) {
