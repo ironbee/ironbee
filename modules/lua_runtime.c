@@ -25,6 +25,7 @@
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
+#include "ironbee_config_auto_gen.h"
 
 #include "lua_runtime_private.h"
 
@@ -473,6 +474,12 @@ ib_status_t lua_pool_create_fn(void **resource, void *cbdata)
         ib_log_error(ib, "Could not create Lua stack.");
         return rc;
     }
+
+    /* Inject some constants so we know we are in the IronBee Lua Module. */
+    lua_pushboolean(modlua_rt->L, 1);
+    lua_setglobal(modlua_rt->L, "IRONBEE_MODLUA");
+    lua_pushstring(modlua_rt->L, VERSION);
+    lua_setglobal(modlua_rt->L, "IRONBEE_VERSION");
 
     /* Preload the user's main context. */
     rc = modlua_reload_ctx_main(ib, module, modlua_rt->L);
