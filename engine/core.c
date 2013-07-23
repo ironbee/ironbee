@@ -79,7 +79,7 @@ static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-0000000
 
 #ifndef MODULE_BASE_PATH
 /* Always define a module base path. */
-#define MODULE_BASE_PATH /usr/local/ironbee/lib
+#define MODULE_BASE_PATH /usr/local/ironbee/libexec
 #endif
 
 #ifndef RULE_BASE_PATH
