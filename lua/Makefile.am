@@ -46,6 +46,7 @@ EXTRA_DIST = ironbee-ffi-h.lua \
              ironbee/engine.lua \
              ironbee/logevent.lua \
              ironbee/module.lua \
+             ironbee/predicate.lua \
              ironbee/rules.lua \
              ironbee/tx.lua \
              ironbee/util.lua \
