@@ -200,19 +200,6 @@ function newMpool(val)
         cvalue = function() return c_val end,
     }
 end
-function newProvider(val)
-    local c_val = ffi.cast("ib_provider_t *", val)
-    return {
-        cvalue = function() return c_val end,
-    }
-end
-
-function newProviderInst(val)
-    local c_val = ffi.cast("ib_provider_inst_t *", val)
-    return {
-        cvalue = function() return c_val end,
-    }
-end
 
 function newData(val)
     local c_val = ffi.cast("ib_data_t *", val)
@@ -384,34 +371,6 @@ function ib_data_get(data, name)
     end
 
     return newField(c_pf[0]);
-end
-
--- ===============================================
--- Known provider types
--- ===============================================
-IB_PROVIDER_TYPE_LOGGER    = "logger"
-IB_PROVIDER_TYPE_PARSER    = "parser"
-IB_PROVIDER_TYPE_LOGEVENT  = "logevent"
-
--- ===============================================
--- Lookup a provider by type and key.
---
--- ib: Engine
--- type: Provider type
--- key: Provider key
--- ===============================================
-function ib_provider_lookup(ib, type, key)
-    local c_ib = ib.cvalue()
-    local c_ppr = ffi.new("ib_provider_t*[1]")
-    local rc
-
-    -- Get the named data field.
-    rc = c.ib_provider_lookup(c_ib, type, key, c_ppr)
-    if rc ~= c.IB_OK then
-        return nil
-    end
-
-    return newProvider(c_ppr[0]);
 end
 
 function ib_logevent_type_name(num)
