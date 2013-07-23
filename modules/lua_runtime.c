@@ -194,6 +194,12 @@ static ib_status_t modlua_newstate(
     ib_log_debug(ib, "Opening shared Lua state common libs.");
     luaL_openlibs(L);
 
+    /* Inject some constants so we know we are in the IronBee Lua Module. */
+    lua_pushboolean(modlua_rt->L, 1);
+    lua_setglobal(modlua_rt->L, "IRONBEE_MODLUA");
+    lua_pushstring(modlua_rt->L, VERSION);
+    lua_setglobal(modlua_rt->L, "IRONBEE_VERSION");
+
     /* Setup search paths before ffi, api, etc loading. */
     rc = modlua_setup_searchpath(ib, L);
     if (rc != IB_OK) {
@@ -472,12 +478,6 @@ ib_status_t lua_pool_create_fn(void **resource, void *cbdata)
         ib_log_error(ib, "Could not create Lua stack.");
         return rc;
     }
-
-    /* Inject some constants so we know we are in the IronBee Lua Module. */
-    lua_pushboolean(modlua_rt->L, 1);
-    lua_setglobal(modlua_rt->L, "IRONBEE_MODLUA");
-    lua_pushstring(modlua_rt->L, VERSION);
-    lua_setglobal(modlua_rt->L, "IRONBEE_VERSION");
 
     /* Preload the user's main context. */
     rc = modlua_reload_ctx_main(ib, module, modlua_rt->L);
