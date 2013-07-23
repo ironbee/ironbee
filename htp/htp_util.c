@@ -2182,12 +2182,8 @@ char *htp_tx_response_progress_as_string(htp_tx_t *tx) {
     return "INVALID";
 }
 
-#if 0
-
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
-    if (uri == NULL) {
-        return NULL;
-    }
+    if (uri == NULL) return NULL;    
 
     // On the first pass determine the length of the final string
     size_t len = 0;
@@ -2236,9 +2232,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
 
     // On the second pass construct the string
     bstr *r = bstr_alloc(len);
-    if (r == NULL) {
-        return NULL;
-    }
+    if (r == NULL) return NULL;    
 
     if (uri->scheme != NULL) {
         bstr_add_noex(r, uri->scheme);
@@ -2250,7 +2244,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
             bstr_add_noex(r, uri->username);
         }
 
-        bstr_add_c(r, ":");
+        bstr_add_c_noex(r, ":");
 
         if (uri->password != NULL) {
             bstr_add_noex(r, uri->password);
@@ -2264,7 +2258,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
     }
 
     if (uri->port != NULL) {
-        bstr_add_c(r, ":");
+        bstr_add_c_noex(r, ":");
         bstr_add_noex(r, uri->port);
     }
 
@@ -2273,11 +2267,23 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
     }
 
     if (uri->query != NULL) {
+        bstr_add_c_noex(r, "?");
+        bstr_add_noex(r, uri->query);
+
+        /*
         bstr *query = bstr_dup(uri->query);
+        if (query == NULL) {
+            bstr_free(r);
+            return NULL;
+        }
+
         htp_uriencoding_normalize_inplace(query);
+
         bstr_add_c_noex(r, "?");
         bstr_add_noex(r, query);
+
         bstr_free(query);
+        */
     }
 
     if (uri->fragment != NULL) {
@@ -2287,7 +2293,6 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
 
     return r;
 }
-#endif
 
 /**
  * Determine if the information provided on the response line

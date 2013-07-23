@@ -160,8 +160,6 @@ int htp_is_uri_unreserved(unsigned char c);
 
 int htp_decode_path_inplace(htp_tx_t *tx, bstr *path);
 
-void htp_uriencoding_normalize_inplace(bstr *s);
-
  int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive, int backslash, int decode_separators, int remove_consecutive);
 void htp_normalize_uri_path_inplace(bstr *s);
 
