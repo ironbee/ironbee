@@ -65,7 +65,9 @@ ibmod_htp_la_SOURCES = modhtp.c
 ibmod_htp_la_LDFLAGS = $(AM_LDFLAGS)
 ibmod_htp_la_LIBADD = $(AM_LIBADD) \
                       $(top_builddir)/libs/libhtp/htp/libhtp.la
-ibmod_htp_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/libs/libhtp/htp
+ibmod_htp_la_CPPFLAGS = $(AM_CPPFLAGS) \
+                        -I$(top_builddir)/libs/libhtp/htp \
+                        -I$(top_srcdir)/libs/libhtp/htp
 ibmod_htp_la_CFLAGS = $(AM_CFLAGS)
 
 ibmod_pcre_la_SOURCES = pcre.c
