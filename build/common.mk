@@ -7,7 +7,7 @@ AM_CPPFLAGS += @IB_DEBUG@ \
              -I$(top_builddir)/include \
              -I$(top_srcdir)/util \
              -I$(top_srcdir)/engine \
-             -DMODULE_BASE_PATH=$(libdir) \
+             -DMODULE_BASE_PATH=$(libexecdir) \
              -DRULE_BASE_PATH=$(libdir) \
              -Wno-unused-parameter
 
