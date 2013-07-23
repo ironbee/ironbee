@@ -25,8 +25,6 @@
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
-#include "ironbee_config_auto_gen.h"
-
 #include "lua_runtime_private.h"
 
 #include "lua_private.h"
