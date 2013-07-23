@@ -195,10 +195,10 @@ static ib_status_t modlua_newstate(
     luaL_openlibs(L);
 
     /* Inject some constants so we know we are in the IronBee Lua Module. */
-    lua_pushboolean(modlua_rt->L, 1);
-    lua_setglobal(modlua_rt->L, "IRONBEE_MODLUA");
-    lua_pushstring(modlua_rt->L, VERSION);
-    lua_setglobal(modlua_rt->L, "IRONBEE_VERSION");
+    lua_pushboolean(L, 1);
+    lua_setglobal(L, "IRONBEE_MODLUA");
+    lua_pushstring(L, VERSION);
+    lua_setglobal(L, "IRONBEE_VERSION");
 
     /* Setup search paths before ffi, api, etc loading. */
     rc = modlua_setup_searchpath(ib, L);
