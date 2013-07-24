@@ -960,7 +960,7 @@ static ib_status_t modlua_module_load_wire_callbacks(
 
     ibmod_modules_cbdata =
         ib_mpool_calloc(mp, 1, sizeof(*ibmod_modules_cbdata));
-    if (ibmod_modules_cbdata != NULL) {
+    if (ibmod_modules_cbdata == NULL) {
         ib_log_error(ib, "Failed to allocate callback data.");
         return IB_EALLOC;
     }
