@@ -89,7 +89,7 @@ _M.fieldToLua = function(self, field)
     elseif field.type == ffi.C.IB_FTYPE_LIST then
         local t = {}
         local value = ffi.new("ib_list_t*[1]")
-        
+
         ffi.C.ib_field_value(field, value)
         ibutil.each_list_node(
             value[0],
@@ -111,30 +111,30 @@ _M.fieldToLua = function(self, field)
 end
 
 -- Log an error.
-_M.logError = function(self, msg, ...) 
+_M.logError = function(self, msg, ...)
     self:log(ffi.C.IB_LOG_ERROR, "LuaAPI - [ERROR]", msg, ...)
 end
 
 -- Log a warning.
-_M.logWarn = function(self, msg, ...) 
+_M.logWarn = function(self, msg, ...)
     -- Note: Extra space after "INFO " is for text alignment.
     -- It should be there.
     self:log(ffi.C.IB_LOG_WARNING, "LuaAPI - [WARN ]", msg, ...)
 end
 
 -- Log an info message.
-_M.logInfo = function(self, msg, ...) 
+_M.logInfo = function(self, msg, ...)
     -- Note: Extra space after "INFO " is for text alignment.
     -- It should be there.
     self:log(ffi.C.IB_LOG_INFO, "LuaAPI - [INFO ]", msg, ...)
 end
 
 -- Log debug information at level 3.
-_M.logDebug = function(self, msg, ...) 
+_M.logDebug = function(self, msg, ...)
     self:log(ffi.C.IB_LOG_DEBUG, "LuaAPI - [DEBUG]", msg, ...)
 end
 
-_M.log = function(self, level, prefix, msg, ...) 
+_M.log = function(self, level, prefix, msg, ...)
     local debug_table = debug.getinfo(3, "Sl")
     local file = debug_table.short_src
     local line = debug_table.currentline
@@ -237,6 +237,48 @@ _M.action = function(self, name, param, flags)
             return tonumber(ffi.C.ib_action_execute(rule_exec, inst[0]))
         end
     end
+end
+
+
+-- ===============================================
+-- Call a configuration directive.
+--
+-- name: Name of directive.
+-- ...: Arguments of directive.  Must be strings.
+-- ===============================================
+_M.config_directive_process = function(self, name, ...)
+    if CP == nil then
+      ib:logError(
+          "config_directive_process() called in environment without CP."
+      )
+      return nil
+    end
+    local args = ffi.new("ib_list_t*[1]")
+    rc = ffi.C.ib_list_create(
+        args,
+        ffi.C.ib_engine_pool_main_get(self.ib_engine)
+    )
+    if rc ~= ffi.C.IB_OK then
+        ib:logError("Failed to create new ib_list_t.")
+        return rc
+    end
+
+    for _,v in ipairs({...}) do
+        ffi.C.ib_list_push(args[0], ffi.cast("char*", v))
+    end
+
+    rc = ffi.C.ib_config_directive_process(
+        ffi.cast("ib_cfgparser_t*", CP),
+        ffi.cast("char*", name),
+        args[0]
+    )
+    if rc ~= ffi.C.IB_OK then
+        ib:logError(
+            "Failed to execute directive %s",
+            name
+        )
+    end
+    return rc
 end
 
 -- ###########################################################################
