@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>IronBee Predicate Rules Manual</title>
+	<meta name="author" content="Christopher Alfeld &lt;calfeld@qualys.com&gt;"/>
+</head>
+<body>
+
+<h1 id="predicatesnotes:templates">Predicates Notes: Templates</h1>
+
+<p>Christopher Alfeld <a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#58;&#99;&#x61;&#x6c;&#102;&#x65;&#108;&#100;&#x40;&#x71;&#x75;&#x61;&#108;&#121;&#x73;&#x2e;&#x63;&#x6f;&#109;">&#x63;&#x61;&#108;&#102;&#x65;&#x6c;&#100;&#64;&#x71;&#117;&#x61;&#x6c;&#x79;&#x73;&#x2e;&#x63;&#111;&#x6d;</a><br></p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Predicate includes a feature called templates which allows users to define new Predicate functions in terms of existing functions via simple substitutions. Such templating can also be done in the frontend directly. This document explores both approaches and their differences.</p>
+
+<p>As a running example, consider a function that takes a header name and a length and is true if the value of that header is longer than the length. In the front end, we could write:</p>
+
+<pre><code>local function longHeader(name, length)
+  return P.Gt(P.Field('REQUEST_HEADERS'):sub(name):length(), length)
+end
+</code></pre>
+
+<p>The <code>longHeader</code> function could then be called in a predicate rule:</p>
+
+<pre><code>predicate(longHeader('Content-Type', 1000))
+</code></pre>
+
+<p>Which would provide the sexpr:</p>
+
+<pre><code>(gt (transformation 'length' (sub 'Content-Type' (field 'REQUEST_HEADERS'))) 1000)
+</code></pre>
+
+<p>To the Predicate backend.</p>
+
+<p>The same functionality could, instead, be done via templates:</p>
+
+<pre><code>P.define('longHeader', {'name', 'length'},
+  P.Gt(P.Field('REQUEST_HEADERS'):sub(P.Ref('name')):length(), P.Ref('length'))
+)
+</code></pre>
+
+<p>The define function would, when run in IronBee, call the <code>PredicateDefine</code> directive, giving it the following, templated sexpr:</p>
+
+<pre><code>(gt (transformation 'length' (sub (ref 'name') (field 'REQUEST_HEADERS'))) (ref 'length'))
+</code></pre>
+
+<p>It would also add <code>P.longHeader</code> as a function, allowing us to use it in a rule as:</p>
+
+<pre><code>predicate(P.longHeader('Content-Type', 1000))
+</code></pre>
+
+<p>Which would provide the sexpr:</p>
+
+<pre><code>(longHeader 'Content-Type' 1000)
+</code></pre>
+
+<p>To the Predicate backend. At the transformation phase, the Predicate backend would transform the corresponding node into the expanded form, replacing all <code>(ref 'name')</code> nodes with <code>'content-type'</code> and <code>(ref 'length')</code> with <code>1000</code>, resulting in</p>
+
+<pre><code>(gt (transformation 'length' (sub 'Content-Type' (field 'REQUEST_HEADERS'))) 1000)
+</code></pre>
+
+<p>The same as in the first approach.</p>
+
+<p>Thus, after the transform phase, both approaches yield the same graph.</p>
+
+<p>The second approach, using templates, has two main advantages:</p>
+
+<ol>
+<li>Used properly it can significantly reduce the complexity of the sexprs sent to the Predicate backend. Templates can be used in other templates, so for complex and much used logic, the savings can add up rapidly and provide noticeably reduced memory usage.</li>
+<li>The pre-transform graph is both simpler and more meaningful, as general concepts such as &#8220;long header&#8221; are represented as calls rather than extensive expressions. This allows for more meaningful error messages, introspection, and easier debugging.</li>
+</ol>
+
+<p>The main disadvantages of using templates are:</p>
+
+<ol>
+<li>It adds a name to the call namespace and Predicate module. Managing this, effectively global, namespace can be challenging, especially if templates are being added by multiple pieces of code. See Scoping below.</li>
+<li>There is a small amount of overhead associated with calling the directive. This overhead is usually negligible, but can be significant if programmatically generating templates that are then used a small number of times.</li>
+</ol>
+
+<p>Templates also have the limitation of only allowing for direct substitution whereas Lua functions can do more complex computations for generating the sexpr. As a simple example, for the Lua function approach, we could make the length optional:</p>
+
+<pre><code>local function longHeader(name, length)
+  length = length or 1000
+  return P.Gt(P.Field('REQUEST_HEADERS'):sub(name):length(), length)
+end
+</code></pre>
+
+<p>A similar effect could be done with the template, e.g., via.</p>
+
+<pre><code>P.define('longHeader', {'name', 'length'},
+  P.Gt(
+    P.Field('REQUEST_HEADERS'):sub(P.Ref('name')):length(),
+    P.If(P.IsNull(P.Ref('length')), 1000, P.Ref('length'))
+  )
+)
+</code></pre>
+
+<p>And then called via <code>P.longHeader('Content-Length', P.Null)</code>, but this is not as elegant as the Lua approach.</p>
+
+<h2 id="scoping">Scoping</h2>
+
+<p>There is effectively a single namespace for templates names which is shared with all other defined Predicate functions. Managing this namespace when defining templates requires care.</p>
+
+<p>One approach is to, for each collection (e.g., file) of templates, choose a unique prefix to used for all templates names. <code>P.define</code> returns a function that generates the appropriate call. This returned function can be stored for easy alternate access. For example, for a Lua module of templates, the returned function could be stored in the module table; for a file primarily defining rules that wants to use templates, the returned function could be stored in local variables.</p>
+
+<p>E.g.,</p>
+
+<pre><code>local longHeader = P.define('templateNotes_longHeader', {'length'},
+  P.Gt(P.Field('REQUEST_HEADERS'):sub(P.Ref('name')):length(), P.Ref('length'))
+)
+</code></pre>
+
+<p>And then use as</p>
+
+<pre><code>predicate(longHeader('Content-Length', 1000))
+</code></pre>
+
+<p>With the corresponding sexpr:</p>
+
+<pre><code>(templateNotes_longHeader 'Content-Length' 1000)
+</code></pre>
+
+<h2 id="recommendations">Recommendations</h2>
+
+<p>It is suggested that rule writers default to using templates for common pieces of logic. Doing so keeps the complexity of front end to back end communication down and allows for superior error messages and debugging. The directive costs are, except in unusual cases, negligible. However, where a Lua function would allow for greater expressiveness, it should be used instead.</p>
+
+<p>For each body (e.g., file) of templates, choose a globally unique prefix to use for all template names. Store the return of <code>P.define</code> either in the module table (if the file defines a library of templates) or in local variables (if the file also defines rules).</p>
+
+</body>
+</html>
