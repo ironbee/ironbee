@@ -130,7 +130,6 @@ static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
  * This will attempt to run...
  *   - waggle  = require("ironbee/waggle")
  *   - ffi     = require("ffi")
- *   - ironbee = require("ironbee-ffi")
  *   - ibapi   = require("ironbee/api")
  *   - modlua  = require("ironbee/module")
  *
@@ -146,7 +145,6 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L)
     const char *lua_preloads[][2] = { { "waggle", "ironbee/waggle" },
                                       { "ibconfig", "ironbee/config" },
                                       { "ffi", "ffi" },
-                                      { "ironbee", "ironbee-ffi" },
                                       { "ibapi", "ironbee/api" },
                                       { "modlua", "ironbee/module" },
                                       { NULL, NULL } };

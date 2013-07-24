@@ -23,6 +23,8 @@
 -- =========================================================================
 
 local ibutil = require('ironbee/util')
+local ffi = require('ffi')
+require('ironbee-ffi-h')
 
 local _M = {}
 _M.__index = _M
@@ -123,7 +125,7 @@ end
 
 -- Iteration function used by e:tags.
 -- Given a table with an element "node" of type ib_list_node_t*
--- this will iterate across the nodes extracting the 
+-- this will iterate across the nodes extracting the
 -- ib_list_node_data as a string.
 --
 -- This is used by e:tags() and e:fields().

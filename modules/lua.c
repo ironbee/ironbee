@@ -88,9 +88,6 @@ typedef ib_status_t(*critical_section_fn_t)(ib_engine_t *ib,
 
 /* -- Lua Routines -- */
 
-#define IB_FFI_MODULE  ironbee-ffi
-#define IB_FFI_MODULE_STR IB_XSTRINGIFY(IB_FFI_MODULE)
-
 #define IB_FFI_MODULE_WRAPPER     _IRONBEE_CALL_MODULE_HANDLER
 #define IB_FFI_MODULE_WRAPPER_STR IB_XSTRINGIFY(IB_FFI_MODULE_WRAPPER)
 
