@@ -138,10 +138,31 @@ TEST_F(LuaJsonTest, GenerateJSONInt) {
     lua_settop(L, 0);
 }
 
+namespace {
+
+// Handle isspace ambiguity.
+bool my_isspace(char c)
+{
+    return std::isspace(c);
+}
+
+std::string normalize_json_result(const char* in)
+{
+    std::string result(in);
+    result.erase(
+        std::remove_if(result.begin(), result.end(), my_isspace),
+        result.end()
+    );
+
+    return result;
+}
+
+}
+
 TEST_F(LuaJsonTest, GenerateJSONString) {
     ASSERT_EQ(1, doString("return ibjson.to_string('hi')"));
     ASSERT_TRUE(lua_isstring(L, -1));
-    ASSERT_STREQ("\"hi\"\n", lua_tostring(L, -1));
+    ASSERT_EQ("\"hi\"", normalize_json_result(lua_tostring(L, -1)));
     lua_settop(L, 0);
 }
 
@@ -156,24 +177,9 @@ TEST_F(LuaJsonTest, GenerateJSONMap) {
     lua_settop(L, 0);
 }
 
-namespace {
-
-// Handle isspace ambiguity.
-bool my_isspace(char c)
-{
-    return std::isspace(c);
-}
-
-}
-
 TEST_F(LuaJsonTest, GenerateJSONArray) {
     ASSERT_EQ(1, doString("return ibjson.to_string( { 'a', 'b' })"));
     ASSERT_TRUE(lua_isstring(L, -1));
-    std::string result(lua_tostring(L, -1));
-    result.erase(
-        std::remove_if(result.begin(), result.end(), my_isspace),
-        result.end()
-    );
-    ASSERT_EQ("[\"a\",\"b\"]", result);
+    ASSERT_EQ("[\"a\",\"b\"]", normalize_json_result(lua_tostring(L, -1)));
     lua_settop(L, 0);
 }
