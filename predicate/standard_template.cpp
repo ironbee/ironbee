@@ -199,7 +199,7 @@ bool Template::transform(
         }
     }
 
-    // Make list of all descendents.  We don't want to iterate over the
+    // Make list of all descendants.  We don't want to iterate over the
     // replacements, so we make the entire list in advance.
     list<node_p> to_transform;
     bfs_down(replacement, back_inserter(to_transform));

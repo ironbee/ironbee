@@ -58,7 +58,7 @@ static const char JSON_TYPE[] = "application/json";
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
-//! Module configuratioin.
+//! Module configuration.
 struct persist_cfg_t {
     ib_persist_fw_t *persist_fw; /**< Handle to the persistence framework. */
 };
@@ -87,7 +87,7 @@ typedef struct file_rw_t file_rw_t;
  * The value is not found then NULL is returned.
  *
  * @param[in] config The configuration value.
- * @param[in] opt The option string which contans the value.
+ * @param[in] opt The option string which contains the value.
  *
  * @returns Pointer to configuration value or NULL.
  */
@@ -182,7 +182,7 @@ static ib_status_t file_rw_create_fn(
         if (val != NULL) {
             rc = ib_string_to_time(val, &(file_rw->expiration));
             if (rc != IB_OK) {
-                ib_log_warning(ib, "Failed to conver \"%s\" to time.", val);
+                ib_log_warning(ib, "Failed to convert \"%s\" to time.", val);
             }
         }
     }
@@ -375,7 +375,7 @@ static ib_status_t persistence_create_store_fn(
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to retrieve configuraton context.");
+        ib_cfg_log_error(cp, "Failed to retrieve configuration context.");
         return rc;
     }
 
@@ -430,7 +430,7 @@ static ib_status_t persistence_create_store_fn(
  * @param[in] ctx Configuration context.
  * @param[in] cfg Module configuration.
  * @param[in] vars Parameter list.
- * @param[out] name The UUID of the store if it was created successfuly.
+ * @param[out] name The UUID of the store if it was created successfully.
  *             This value is a null-terminated string.
  *             This value is not set unless IB_OK is returned.
  * @returns
@@ -525,7 +525,7 @@ static ib_status_t persistence_map_fn(
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to retrieve configuraton context.");
+        ib_cfg_log_error(cp, "Failed to retrieve configuration context.");
         return rc;
     }
 

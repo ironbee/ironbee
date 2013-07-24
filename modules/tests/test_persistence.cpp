@@ -79,7 +79,7 @@ INSTANTIATE_TEST_CASE_P(
         "LoadModule \"ibmod_persistence_framework.so\"\n"
         "LoadModule \"ibmod_persist.so\"\n",
 
-        /* Load everything (just incase there might be conflicts). */
+        /* Load everything (just in case there might be conflicts). */
         "LoadModule \"ibmod_persistence_framework.so\"\n"
         "LoadModule \"ibmod_init_collection.so\"\n"
         "LoadModule \"ibmod_persist.so\"\n"
