@@ -2590,9 +2590,9 @@ static int ironbee_init(module_data_t *mod_data)
  */
 void TSPluginInit(int argc, const char *argv[])
 {
-    int rv;
     TSPluginRegistrationInfo info;
     TSCont cont;
+    ib_status_t rc;
 
     /* FIXME - check why these are char*, not const char* */
     info.plugin_name = (char *)"ironbee";
@@ -2609,15 +2609,16 @@ void TSPluginInit(int argc, const char *argv[])
         goto Lerror;
     }
 
-    rv = read_ibconf(&module_data, argc, argv);
-    if (rv != IB_OK) {
+    rc = read_ibconf(&module_data, argc, argv);
+    if (rc != IB_OK) {
         /* we already logged the error */
         goto Lerror;
     }
 
-    rv = ironbee_init(&module_data);
-    if (rv != IB_OK) {
-        TSError("[ironbee] initialization failed with %d\n", rv);
+    rc = ironbee_init(&module_data);
+    if (rc != IB_OK) {
+        TSError("[ironbee] initialization failed: %s\n",
+                ib_status_to_string(rc));
         goto Lerror;
     }
 
