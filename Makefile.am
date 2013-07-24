@@ -43,7 +43,7 @@ rpm-package: dist
 		cd SOURCES ; \
 		ln -s ../../../$(distdir).tar.gz ; \
 		cd .. ; \
-		rpmbuild --define "_topdir $(rpm_topdir)" --define "_release $(RPM_RELEASE)" -ba ironbee.spec && \
+		rpmbuild $(RPM_OPTS) --define "_topdir $(rpm_topdir)" --define "_release $(RPM_RELEASE)" -ba ironbee.spec && \
 		echo "Package successfully built in `pwd`/RPMS." ; \
 	else \
 		echo "Error: RPM executable and/or source directory not found." ; \
