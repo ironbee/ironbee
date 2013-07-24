@@ -42,8 +42,10 @@ CANONICAL_INCLUDE_ORDER = [
   '<predicate/standard_filter.hpp>',
   '<predicate/standard_ironbee.hpp>',
   '<predicate/standard_predicate.hpp>',
+  '<predicate/standard_template.hpp>',
   '<predicate/standard_valuelist.hpp>',
   '<predicate/transform_graph.hpp>',
+  '<predicate/tree_copy.hpp>',
   '<predicate/validate.hpp>',
   '<predicate/validate_graph.hpp>',
 
@@ -222,6 +224,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/preprocessor/repetition.hpp>',
   '<boost/program_options.hpp>',
   '<boost/range/iterator_range.hpp>',
+  '<boost/regex.hpp>',
   '<boost/scoped_array.hpp>',
   '<boost/scoped_ptr.hpp>',
   '<boost/shared_ptr.hpp>',
