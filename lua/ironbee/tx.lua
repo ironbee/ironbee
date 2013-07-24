@@ -24,7 +24,6 @@
 
 local engine = require('ironbee/engine')
 local ffi = require('ffi')
-local ironbee = require('ironbee-ffi')
 local ibutil = require('ironbee/util')
 local ib_logevent = require('ironbee/logevent')
 
@@ -77,11 +76,11 @@ _M.getFieldList = function(self)
 
     ibutil.each_list_node(ib_list[0], function(field)
         fields[#fields+1] = ffi.string(field.name, field.nlen)
-    
+
         ib_list_node = ffi.C.ib_list_node_next(ib_list_node)
     end)
 
-    return fields 
+    return fields
 end
 
 -- Add a string, number, or table to the transaction data.
@@ -112,9 +111,9 @@ _M.add = function(self, name, value)
                              name,
                              string.len(name),
                              ib_field)
-        
+
         -- If there is a value, but it is not a list, make a new table.
-        if ib_field[0] == nil or 
+        if ib_field[0] == nil or
            ib_field[0].type ~= ffi.C.IB_FTYPE_LIST then
             ffi.C.ib_data_add_list_ex(tx.data,
                                       ffi.cast("char*", name),
@@ -260,7 +259,7 @@ end
 -- The table t must have a function skip_node defined that
 -- takes a list node and returns true if it is should be skipped.
 --
--- The table t must have a c pointer to ib_tx_t to retrieve the initial 
+-- The table t must have a c pointer to ib_tx_t to retrieve the initial
 -- list of events.
 --
 -- Skipped nodes do not increment the index.
@@ -292,7 +291,7 @@ local event_next_fn = function(t, idx)
     end
 
     -- Get event and convert it to lua.
-    local event = 
+    local event =
         ib_logevent:new(ffi.cast("ib_logevent_t*",
             ffi.C.ib_list_node_data(t.node)))
 
@@ -373,7 +372,7 @@ _M.appendToList = function(self, listName, fieldName, fieldValue)
     ffi.C.ib_field_list_add(list, field[0])
 end
 
--- Add an event. 
+-- Add an event.
 -- The msg argument is typically a string that is the message to log,
 -- followed by a table of options.
 --
@@ -428,7 +427,7 @@ _M.addEvent = function(self, msg, options)
     local severity        = options.severity or 0
 
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
-    
+
     ffi.C.ib_logevent_create(event,
                              tx.mp,
                              rulename,

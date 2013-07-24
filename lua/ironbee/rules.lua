@@ -25,7 +25,6 @@
 
 local ibutil = require('ironbee/util')
 local ffi = require('ffi')
-local ironbee = require('ironbee-ffi')
 local tx = require('ironbee/tx')
 
 local _M = {}
@@ -49,7 +48,7 @@ end
 -- by self:logError(...) or self:logDebug(...) or the file and line
 -- number will not be accurage because the call stack will be at an
 -- unexpected depth.
-_M.log = function(self, level, prefix, msg, ...) 
+_M.log = function(self, level, prefix, msg, ...)
     local debug_table = debug.getinfo(3, "Sl")
     local file = debug_table.short_src
     local line = debug_table.currentline
@@ -70,26 +69,26 @@ _M.log = function(self, level, prefix, msg, ...)
 end
 
 -- Log an error.
-_M.logError = function(self, msg, ...) 
+_M.logError = function(self, msg, ...)
     self:log(ffi.C.IB_RULE_DLOG_ERROR, "LuaAPI - [ERROR]", msg, ...)
 end
 
 -- Log a warning.
-_M.logWarn = function(self, msg, ...) 
+_M.logWarn = function(self, msg, ...)
     -- Note: Extra space after "INFO " is for text alignment.
     -- It should be there.
     self:log(ffi.C.IB_RULE_DLOG_WARNING, "LuaAPI - [WARN ]", msg, ...)
 end
 
 -- Log an info message.
-_M.logInfo = function(self, msg, ...) 
+_M.logInfo = function(self, msg, ...)
     -- Note: Extra space after "INFO " is for text alignment.
     -- It should be there.
     self:log(ffi.C.IB_RULE_DLOG_INFO, "LuaAPI - [INFO ]", msg, ...)
 end
 
 -- Log debug information at level 3.
-_M.logDebug = function(self, msg, ...) 
+_M.logDebug = function(self, msg, ...)
     self:log(ffi.C.IB_RULE_DLOG_DEBUG, "LuaAPI - [DEBUG]", msg, ...)
 end
 

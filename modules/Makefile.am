@@ -188,7 +188,7 @@ uninstall-local: $(module_LTLIBRARIES)
 	done
 
 if ENABLE_LUA
-all-local: $(abs_top_builddir)/lua/ironbee-ffi-h.lua $(abs_top_srcdir)/lua/ironbee-ffi.lua
+all-local: $(abs_top_builddir)/lua/ironbee-ffi-h.lua
 	mkdir -p $(abs_top_builddir)/modules/.libs
 	for f in $(+); do \
 		cp "$$f" $(abs_top_builddir)/modules/.libs/`basename "$$f"` ; \

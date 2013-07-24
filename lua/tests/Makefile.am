@@ -10,9 +10,7 @@ AM_LDFLAGS += \
 AM_CPPFLAGS += \
 	-I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
     -I$(top_srcdir)/tests \
-    -DTOP_SRCDIR=$(top_srcdir) \
-    -DFFI_FILE=$(top_srcdir)/lua/ironbee-ffi.lua
-
+    -DTOP_SRCDIR=$(top_srcdir)
 
 if DARWIN
 if ENABLE_LUA

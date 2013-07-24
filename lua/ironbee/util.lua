@@ -23,7 +23,6 @@
 -- =========================================================================
 
 local ffi = require('ffi')
-local ironbee = require('ironbee-ffi')
 
 local _M = {}
 _M.__index = _M
@@ -33,9 +32,9 @@ _M._VERSION = "1.0"
 
 
 -- This is a replacement for __index in a table's metatable.
--- It will, when receiving an index it does not have an entry for, 
+-- It will, when receiving an index it does not have an entry for,
 -- return the 'unknown' entry in the table.
-_M.returnUnknown = function(self, key) 
+_M.returnUnknown = function(self, key)
     if key == 'unknown' then
         return nil
     else
@@ -43,12 +42,12 @@ _M.returnUnknown = function(self, key)
     end
 end
 
--- Iterate over the ib_list (of type ib_list_t *) calling the 
+-- Iterate over the ib_list (of type ib_list_t *) calling the
 -- function func on each ib_field_t* contained in the elements of ib_list.
 -- The resulting list data is passed to the callback function
 -- as a "ib_field_t*" or if cast_type is specified, as that type.
 _M.each_list_node = function(ib_list, func, cast_type)
-    local ib_list_node = ffi.cast("ib_list_node_t*", 
+    local ib_list_node = ffi.cast("ib_list_node_t*",
                                   ffi.C.ib_list_first(ib_list))
     if cast_type == nil then
       cast_type = "ib_field_t*"

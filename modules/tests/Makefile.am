@@ -60,8 +60,7 @@ test_module_rules_lua_CPPFLAGS = \
     $(AM_CPPFLAGS) \
     -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
     -D_XOPEN_SOURCE=1 \
-    -DTEST_LUA_FILE=\"$(abs_srcdir)/test_module_rules_lua.lua\" \
-    -DTEST_FFI_FILE=\"$(abs_top_srcdir)/lua/ironbee-ffi.lua\"
+    -DTEST_LUA_FILE=\"$(abs_srcdir)/test_module_rules_lua.lua\"
 test_module_rules_lua_LDADD = \
     $(LDADD) \
     $(top_builddir)/lua/libironbee-lua.la \

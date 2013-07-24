@@ -24,7 +24,6 @@
 
 local ibutil = require('ironbee/util')
 local ffi = require('ffi')
-local ironbee = require('ironbee-ffi')
 
 local _M = {}
 _M.__index = _M
