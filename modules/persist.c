@@ -83,7 +83,7 @@ typedef struct file_rw_t file_rw_t;
 /**
  * Return a pointer to the configuration value if @a opt is prefixed with
  * @config.
- * 
+ *
  * The value is not found then NULL is returned.
  *
  * @param[in] config The configuration value.
@@ -188,7 +188,7 @@ static ib_status_t file_rw_create_fn(
     }
 
     file_rw->kvstore = ib_mpool_alloc(mp, ib_kvstore_size());
-    
+
     if (strncmp(uri, FILE_URI_PREFIX, sizeof(FILE_URI_PREFIX)-1) == 0) {
         const char *dir = uri + sizeof(FILE_URI_PREFIX);
         ib_log_debug(ib, "Creating key-value store in directory: %s", dir);
@@ -423,8 +423,8 @@ static ib_status_t persistence_create_store_fn(
 
 /**
  * Create a store using a random UUID.
- * 
- * This name is not given to the user, so it is considered an anonymous store. 
+ *
+ * This name is not given to the user, so it is considered an anonymous store.
  *
  * @param[in] cp Configuration parser.
  * @param[in] ctx Configuration context.
@@ -611,7 +611,7 @@ static ib_status_t persistence_map_fn(
         "Constructed anonymous store named %s. Attempting to map %s to it.",
         store_name,
         collection_name);
-    
+
     /* Try to map the against the store. */
     rc = ib_persist_fw_map_collection(
         cfg->persist_fw,
