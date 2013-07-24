@@ -15,6 +15,13 @@
  * limitations under the License.
  ****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee Engine --- Persistence Framework API Implementation
+ *
+ * @author Sam Baskinger <sbaskinger@qualys.com>
+ */
+
 #include "persistence_framework_private.h"
 
 #include <ironbee/context.h>
