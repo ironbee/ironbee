@@ -573,7 +573,7 @@ dnl Install directories
 pkglibdir='${libdir}'
 moduledir='${libexecdir}'
 plugindir='${libexecdir}'
-luadir='${libdir}/lua'
+luadir='${libdir}/ironbee/lua'
 AC_SUBST(moduledir)
 AC_SUBST(plugindir)
 AC_SUBST(luadir)

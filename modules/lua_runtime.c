@@ -38,6 +38,14 @@
 #include <assert.h>
 #include <stdlib.h>
 
+/* If LUA_BASE_PATH was not set as part of autoconf, define a default. */
+#ifndef LUA_BASE_PATH
+#define LUA_BASE_PATH /usr/local/ironbee/lib/lua
+#endif
+
+#define LUA_BASE_PATH_STR IB_XSTRINGIFY(LUA_BASE_PATH)
+
+
 //! Maximum number of times a resource pool Lua stack should be used.
 static size_t MAX_LUA_STACK_USES = 1000;
 
@@ -99,8 +107,7 @@ static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
 
     ib_core_cfg_t *corecfg = NULL;
     /* Null terminated list of search paths. */
-    const char *lua_search_paths[3];
-
+    const char *lua_search_paths[4];
 
     rc = ib_core_context_config(ib_context_main(ib), &corecfg);
     if (rc != IB_OK) {
@@ -109,9 +116,10 @@ static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
     }
 
     /* Initialize the search paths list. */
-    lua_search_paths[0] = corecfg->module_base_path;
-    lua_search_paths[1] = corecfg->rule_base_path;
-    lua_search_paths[2] = NULL;
+    lua_search_paths[0] = LUA_BASE_PATH_STR;
+    lua_search_paths[1] = corecfg->module_base_path;
+    lua_search_paths[2] = corecfg->rule_base_path;
+    lua_search_paths[3] = NULL;
 
     for (int i = 0; lua_search_paths[i] != NULL; ++i)
     {

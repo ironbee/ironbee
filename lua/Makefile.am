@@ -5,13 +5,13 @@ include $(top_srcdir)/build/common.mk
 SUBDIRS = tests
 
 FFI_FILES = \
-	$(top_srcdir)/include/ironbee/engine.h \
-	$(top_srcdir)/include/ironbee/engine_state.h \
-	$(top_srcdir)/include/ironbee/core.h \
-	$(top_srcdir)/include/ironbee/context.h \
-	$(top_srcdir)/include/ironbee/rule_defs.h \
-	$(top_srcdir)/include/ironbee/rule_engine.h \
-	$(top_srcdir)/include/ironbee/logevent.h
+    $(top_srcdir)/include/ironbee/engine.h \
+    $(top_srcdir)/include/ironbee/engine_state.h \
+    $(top_srcdir)/include/ironbee/core.h \
+    $(top_srcdir)/include/ironbee/context.h \
+    $(top_srcdir)/include/ironbee/rule_defs.h \
+    $(top_srcdir)/include/ironbee/rule_engine.h \
+    $(top_srcdir)/include/ironbee/logevent.h
 
 BUILT_SOURCES = ironbee-ffi.h \
                 ironbee-ffi-h.lua
@@ -21,7 +21,7 @@ LUA_LIBADD = -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
              -lluajit-ironbee \
              -lm
 LUA_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
-	       $(AM_CPPFLAGS)
+               $(AM_CPPFLAGS)
 
 if DARWIN
 if ENABLE_LUA
@@ -39,30 +39,24 @@ endif
 WAGGLE_FILES=ironbee/waggle.lua \
              $(shell find $(srcdir)/ironbee/waggle -name \*lua)
 
-EXTRA_DIST = ironbee-ffi-h.lua \
-             ironbee/api.lua \
-             ironbee/config.lua \
-             ironbee/engine.lua \
-             ironbee/logevent.lua \
-             ironbee/module.lua \
-             ironbee/predicate.lua \
-             ironbee/rules.lua \
-             ironbee/tx.lua \
-             ironbee/util.lua \
-             example.lua \
-             threat_level.lua \
-             event_processor.lua \
-             $(WAGGLE_FILES)
-
-nobase_lua_DATA = \
-	ironbee-ffi-h.lua \
+LUA_FILES = \
+    ironbee-ffi-h.lua \
     ironbee/api.lua \
+    ironbee/config.lua \
+    ironbee/engine.lua \
+    ironbee/logevent.lua \
     ironbee/module.lua \
-    example.lua \
-    threat_level.lua \
-    event_processor.lua
+    ironbee/rules.lua \
+    ironbee/tx.lua \
+    ironbee/util.lua \
+    $(WAGGLE_FILES)
 
-lua_LTLIBRARIES =
+EXTRA_DIST = $(LUA_FILES)
+
+nobase_lua_DATA = $(LUA_FILES)
+
+ironbee_luadir=${luadir}/ironbee/util
+ironbee_lua_LTLIBRARIES =
 noinst_LTLIBRARIES = libironbee-lua.la
 libironbee_lua_la_SOURCES = ironbee.c ironbee.h
 libironbee_lua_la_CPPFLAGS = $(LUA_CPPFLAGS)
@@ -70,7 +64,7 @@ libironbee_lua_la_CFLAGS = $(LUA_CFLAGS)
 libironbee_lua_la_LIBADD = $(LUA_LIBADD)
 
 if ENABLE_JSON
-lua_LTLIBRARIES                 += ironbee/util/ibjson.la
+ironbee_lua_LTLIBRARIES         += ironbee/util/ibjson.la
 ironbee_util_ibjson_la_SOURCES   = ironbee/util/ibjson.c
 ironbee_util_ibjson_la_CPPFLAGS  = $(LUA_CPPFLAGS)
 ironbee_util_ibjson_la_CFLAGS    = $(LUA_CFLAGS)
@@ -97,10 +91,4 @@ ironbee-ffi-h.lua: ironbee-ffi.h $(srcdir)/Makefile.am
 	echo "]]"                                      >> $@
 
 CLEANFILES = ironbee-ffi.h ironbee-ffi-h.lua
-
-install-data-hook:
-	cd $(top_srcdir)/lua && tar cf - ironbee | tar xf - -C $(DESTDIR)$(libdir)
-
-uninstall-hook:
-	rm -fr $(DESTDIR)$(libdir)/ironbee
 

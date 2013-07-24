@@ -9,6 +9,7 @@ AM_CPPFLAGS += @IB_DEBUG@ \
              -I$(top_srcdir)/engine \
              -DMODULE_BASE_PATH=$(libexecdir) \
              -DRULE_BASE_PATH=$(libdir) \
+             -DLUA_BASE_PATH=$(luadir) \
              -Wno-unused-parameter
 
 # Alias for "check"

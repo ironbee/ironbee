@@ -162,10 +162,6 @@ fi
 %attr(0755,root,root) %{_libdir}/libibpp.la
 %attr(0755,root,root) %{_libdir}/libibpp.a
 
-%attr(0755,root,root) %{_libdir}/lua/*.lua
-%attr(0755,root,root) %{_libdir}/lua/ironbee/*.lua
-%attr(0755,root,root) %{_libdir}/lua/ibjson.la
-%attr(0755,root,root) %{_libdir}/lua/ibjson.so
 %attr(0755,root,root) %{_libdir}/ironbee
 %attr(0755,root,root) %{_libexecdir}/ibmod_*
 %attr(0755,root,root) %{_libdir}/pkgconfig/*.*
