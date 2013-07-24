@@ -146,7 +146,6 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L)
     const char *lua_preloads[][2] = { { "waggle", "ironbee/waggle" },
                                       { "ibconfig", "ironbee/config" },
                                       { "ffi", "ffi" },
-                                      { "ffi", "ffi" },
                                       { "ironbee", "ironbee-ffi" },
                                       { "ibapi", "ironbee/api" },
                                       { "modlua", "ironbee/module" },
