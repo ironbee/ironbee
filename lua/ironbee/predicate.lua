@@ -21,6 +21,9 @@ _M._COPYRIGHT = "Copyright (C) 2013 Qualys, Inc."
 _M._DESCRIPTION = "IronBee Lua Predicate Frontend"
 _M._VERSION = "1.0"
 
+-- Template define directive name.
+local PREDICATE_DEFINE = 'PredicateDefine'
+
 -- Private helpers
 
 local function merge(name, a, b)
@@ -457,6 +460,33 @@ function _M.pp(s)
     end
   end
   return r
+end
+
+-- Template Support
+function _M.declare(name, predicate_name)
+  predicate_name = predicate_name or name
+  _M[name] = function (...)
+    return _M.C(predicate_name, ...)
+  end
+  return nil
+end
+
+function _M.define(name, args, body)
+  if type(body) ~= 'string' then
+    body = body()
+  end
+  local args_string = table.concat(args, ' ')
+  _M.declare(name)
+
+  if IB == nil then
+    print("Not running in IronBee?")
+    print("Define " .. name .. "(" .. args_string .. "): " .. body)
+  else
+    IB:config_directive_process(PREDICATE_DEFINE, name, args_string, body)
+  end
+  return function (...)
+    return _M[name](...)
+  end
 end
 
 return _M
