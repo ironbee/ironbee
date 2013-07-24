@@ -22,13 +22,15 @@ local IB_OP_CAPABILITY_NON_STREAM = 2
 local IB_OP_CAPABILITY_STREAM = 4
 
 -- (IB_RULE_FLAG_FORCE_EN|IB_RULE_FLAG_NO_TGT) or (256 + 512)
-local IB_RULE_FLAG_ACTION = 768 
+local IB_RULE_FLAG_ACTION = 768
 
 -- Setup the configuration DLS, run the function provided, tear down the DSL.
 --
 -- param[in] f Function to run after the DSL is installed in _G.
+-- param[in] cp Configuration parser.
 --
-local DoInDSL = function(f)
+local DoInDSL = function(f, cp)
+    local ib = ibapi.engineapi:new(ffi.cast("ib_cfgparser_t*", cp).ib)
 
     local SkipTable = {
         _DESCRIPTION = 1,
@@ -47,11 +49,15 @@ local DoInDSL = function(f)
         end
     end
     _G['P'] = Predicate
+    _G['IB'] = ib
+    _G['CP'] = cp
 
     f()
 
     -- Teardown.
-    _G[P] = nil
+    _G['P'] = nil
+    _G['IB'] = nil
+    _G['CP'] = nil
     for _, k in ipairs(to_nil) do
         _G[k] = nil
     end
@@ -67,15 +73,11 @@ end
 _M.include = function(cp, file)
     local ib = ibapi.engineapi:new(ffi.cast("ib_cfgparser_t*", cp).ib)
 
-    -- Not an absolute path, it is a candidate for searching.
-    if string.sub(file, 1, 1) ~= '/' then
-    end
-
     DoInDSL(function()
         ib:logInfo("Loading file %s", file)
         dofile(file)
         ib:logInfo("Done loading file %s", file)
-    end)
+    end, cp)
 
     return ffi.C.IB_OK
 end
@@ -341,7 +343,7 @@ local build_rule = function(ib, ctx, chain, db)
 
         rc = ffi.C.ib_operator_lookup(
             ib.ib_engine,
-            opname, 
+            opname,
             ffi.cast("const ib_operator_t**", op))
         if rc ~= ffi.C.IB_OK then
             ib:logError("Could not locate operator %s", opname)
@@ -389,7 +391,7 @@ local build_rule = function(ib, ctx, chain, db)
         end
 
         -- If this rule is the first rule, it carries the id, rev, and phase
-        -- for the chain of rules to follow. Set those values to the 
+        -- for the chain of rules to follow. Set those values to the
         -- values in the last rule in the chain. Notice that rules
         -- that are in chains of length=1 this sets their id, rev, and phaes
         -- correctly.
