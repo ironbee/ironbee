@@ -196,6 +196,6 @@ fi
 
 %if %{with httpd}
 %files httpd
-%attr(0755,root,root) %{_libdir}/mod_ironbee.so
+%attr(0755,root,root) %{_libexec}/mod_ironbee.so
 %endif
 
