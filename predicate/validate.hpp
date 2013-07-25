@@ -116,7 +116,7 @@ bool nth_child_is_integer(NodeReporter reporter, size_t n);
 bool nth_child_is_integer_below(NodeReporter reporter, size_t n, int64_t max);
 
 /**
- * Report error if @a nth child is not number literal or above @aa min.
+ * Report error if @a nth child is not number literal or above @a min.
  *
  * @param[in] reporter Reporter to use.
  * @param[in] n        Which child should be a number literal.

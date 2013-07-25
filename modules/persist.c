@@ -82,7 +82,7 @@ typedef struct file_rw_t file_rw_t;
 
 /**
  * Return a pointer to the configuration value if @a opt is prefixed with
- * @config.
+ * @a config.
  *
  * The value is not found then NULL is returned.
  *

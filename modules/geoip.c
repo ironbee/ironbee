@@ -212,8 +212,8 @@ static ib_status_t geoip_lookup(
  * Handle a GeoIPDatabaseFile directive.
  *
  * @param[in] cp Configuration parser
- * @param[in] directive The directive name.
- * @param[in] vars The list of variables passed to @a directive.
+ * @param[in] name The directive name.
+ * @param[in] p1 The directive parameter.
  * @param[in] cbdata User data (module configuration)
  */
 static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,

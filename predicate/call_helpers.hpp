@@ -44,7 +44,7 @@ Value simple_value(const node_cp& node);
 /**
  * Check and extract literal value from literal node.
  *
- * @node Node does not to be evaluated first.
+ * @note Node does not to be evaluated first.
  *
  * @param[in] node Node to extract value from.
  * @return Only value or Value() if Null.
