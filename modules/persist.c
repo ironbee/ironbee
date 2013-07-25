@@ -738,6 +738,10 @@ static ib_status_t mod_persist_init(
     }
 
     rc = register_directives(ib, cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot register directive.");
+        return rc;
+    }
 
     return IB_OK;
 }

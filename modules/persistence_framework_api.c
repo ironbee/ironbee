@@ -640,6 +640,9 @@ ib_status_t ib_persist_fw_create(
 
     /* Add the user's module to the persistence module's config. */
     rc = add_module_config(mp, persist_fw_out);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Register the callback for when the context is selected. */
     rc = ib_hook_tx_register(

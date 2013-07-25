@@ -147,7 +147,9 @@ int main(int argc, char **argv)
         old_begin = input.begin();
     }
     cout << "total_elapsed: " << total_elapsed << " us" << endl;
-    cout << "mean_elapsed: " << total_elapsed / num_runs << " us" << endl;
+    if (num_runs > 0) {
+        cout << "mean_elapsed: " << total_elapsed / num_runs << " us" << endl;
+    }
     cout << "rate: " << total_bytes / (double(total_elapsed) / 1e6) << " bps" << endl;
     return 0;
 }
