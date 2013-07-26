@@ -80,9 +80,9 @@ struct init_collection_cfg_t {
 typedef struct init_collection_cfg_t init_collection_cfg_t;
 
 /* All JSON-related static functions and types are located here.
- * Do not move JSON code outside of the #ifdef or builds disabling
+ * Do not move JSON code outside of the #if or builds disabling
  * JSON will probably fail. */
-#ifdef ENABLE_JSON
+#if ENABLE_JSON
 
 /**
  * JSON configuration type.
@@ -596,7 +596,7 @@ static ib_status_t init_collection_common(
             goto exit_rc;
         }
     }
-#ifdef ENABLE_JSON
+#if ENABLE_JSON
     else if (strncmp(uri, JSON_URI_PREFIX, sizeof(JSON_URI_PREFIX)-3) == 0) {
         rc = domap(cp, ctx, JSON_TYPE, cfg, name, vars);
         if (rc != IB_OK) {
