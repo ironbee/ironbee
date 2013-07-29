@@ -34,7 +34,7 @@
 typedef struct {
     const char      *name;          /**< Flag name */
     const char      *tx_name;       /**< Name in the TX "FLAGS" collection */
-    ib_flags_t       tx_flag;       /**< TX flag value */
+    ib_flags64_t     tx_flag;       /**< TX flag value */
     bool             read_only;     /**< Is setflag valid for this flag? */
     bool             default_value; /**< The flag's default value? */
 } ib_tx_flag_map_t;

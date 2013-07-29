@@ -109,38 +109,40 @@ typedef enum {
 #define IB_CONN_FCLOSED         (1 << 5) /**< Connection closed */
 
 /* Transaction Flags */
-#define IB_TX_FNONE             (0)
-#define IB_TX_FERROR            (1 <<  0) /**< Transaction had an error */
-#define IB_TX_FHTTP09           (1 <<  1) /**< Transaction is HTTP/0.9 */
-#define IB_TX_FPIPELINED        (1 <<  2) /**< Transaction is pipelined */
-#define IB_TX_FREQ_STARTED      (1 <<  3) /**< Request started */
-#define IB_TX_FREQ_SEENLINE     (1 <<  4) /**< Request line seen */
-#define IB_TX_FREQ_SEENHEADER   (1 <<  5) /**< Request header seen */
-#define IB_TX_FREQ_NOBODY       (1 <<  6) /**< Request should not have body */
-#define IB_TX_FREQ_SEENBODY     (1 <<  7) /**< Request body seen */
-#define IB_TX_FREQ_SEENTRAILER  (1 <<  8) /**< Request trailer seen */
-#define IB_TX_FREQ_FINISHED     (1 <<  9) /**< Request finished */
-#define IB_TX_FREQ_HAS_DATA     (1 << 10) /**< Non-empty request */
-#define IB_TX_FRES_STARTED      (1 << 11) /**< Response started */
-#define IB_TX_FRES_SEENLINE     (1 << 12) /**< Response line seen */
-#define IB_TX_FRES_SEENHEADER   (1 << 13) /**< Response header seen */
-#define IB_TX_FRES_SEENBODY     (1 << 14) /**< Response body seen */
-#define IB_TX_FRES_SEENTRAILER  (1 << 15) /**< Response trailer seen */
-#define IB_TX_FRES_FINISHED     (1 << 16) /**< Response finished  */
-#define IB_TX_FRES_HAS_DATA     (1 << 17) /**< Non-empty response */
-#define IB_TX_FSUSPICIOUS       (1 << 18) /**< Transaction is suspicious */
-#define IB_TX_BLOCK_ADVISORY    (1 << 19) /**< Blocking this tx is advised */
-#define IB_TX_BLOCK_PHASE       (1 << 20) /**< Block tx after this phase */
-#define IB_TX_BLOCK_IMMEDIATE   (1 << 21) /**< Block tx ASAP */
-#define IB_TX_ALLOW_PHASE       (1 << 22) /**< Allow current phase */
-#define IB_TX_ALLOW_REQUEST     (1 << 23) /**< Allow all request phases */
-#define IB_TX_ALLOW_ALL         (1 << 24) /**< Allow transaction */
-#define IB_TX_FPOSTPROCESS      (1 << 25) /**< Post-processing occurred */
-#define IB_TX_FLOGGING          (1 << 26) /**< Logging occurred */
-#define IB_TX_FINSPECT_REQHDR   (1 << 27) /**< Inspect request header */
-#define IB_TX_FINSPECT_REQBODY  (1 << 28) /**< Inspect request body */
-#define IB_TX_FINSPECT_RSPHDR   (1 << 29) /**< Inspect response header */
-#define IB_TX_FINSPECT_RSPBODY  (1 << 30) /**< Inspect response body */
+#define IB_TX_FNONE              (0ULL)
+#define IB_TX_FERROR             (1ULL <<  0) /**< Transaction had an error */
+#define IB_TX_FHTTP09            (1ULL <<  1) /**< Transaction is HTTP/0.9 */
+#define IB_TX_FPIPELINED         (1ULL <<  2) /**< Transaction is pipelined */
+#define IB_TX_FREQ_STARTED       (1ULL <<  3) /**< Request started */
+#define IB_TX_FREQ_SEENLINE      (1ULL <<  4) /**< Request line seen */
+#define IB_TX_FREQ_SEENHEADER    (1ULL <<  5) /**< Request header seen */
+#define IB_TX_FREQ_NOBODY        (1ULL <<  6) /**< Req should not have body */
+#define IB_TX_FREQ_SEENBODY      (1ULL <<  7) /**< Request body seen */
+#define IB_TX_FREQ_SEENTRAILER   (1ULL <<  8) /**< Request trailer seen */
+#define IB_TX_FREQ_FINISHED      (1ULL <<  9) /**< Request finished */
+#define IB_TX_FREQ_HAS_DATA      (1ULL << 10) /**< Non-empty request */
+#define IB_TX_FRES_STARTED       (1ULL << 11) /**< Response started */
+#define IB_TX_FRES_SEENLINE      (1ULL << 12) /**< Response line seen */
+#define IB_TX_FRES_SEENHEADER    (1ULL << 13) /**< Response header seen */
+#define IB_TX_FRES_SEENBODY      (1ULL << 14) /**< Response body seen */
+#define IB_TX_FRES_SEENTRAILER   (1ULL << 15) /**< Response trailer seen */
+#define IB_TX_FRES_FINISHED      (1ULL << 16) /**< Response finished  */
+#define IB_TX_FRES_HAS_DATA      (1ULL << 17) /**< Non-empty response */
+#define IB_TX_FSUSPICIOUS        (1ULL << 18) /**< Transaction is suspicious */
+#define IB_TX_BLOCK_ADVISORY     (1ULL << 19) /**< Blocking is advised */
+#define IB_TX_BLOCK_PHASE        (1ULL << 20) /**< Block tx after this phase */
+#define IB_TX_BLOCK_IMMEDIATE    (1ULL << 21) /**< Block tx ASAP */
+#define IB_TX_ALLOW_PHASE        (1ULL << 22) /**< Allow current phase */
+#define IB_TX_ALLOW_REQUEST      (1ULL << 23) /**< Allow all request phases */
+#define IB_TX_ALLOW_ALL          (1ULL << 24) /**< Allow transaction */
+#define IB_TX_FPOSTPROCESS       (1ULL << 25) /**< Post-processing occurred */
+#define IB_TX_FLOGGING           (1ULL << 26) /**< Logging occurred */
+#define IB_TX_FINSPECT_REQHDR    (1ULL << 27) /**< Inspect request header */
+#define IB_TX_FINSPECT_REQBODY   (1ULL << 28) /**< Inspect request body */
+#define IB_TX_FINSPECT_RSPHDR    (1ULL << 29) /**< Inspect response header */
+#define IB_TX_FINSPECT_RSPBODY   (1ULL << 30) /**< Inspect response body */
+#define IB_TX_FINSPECT_REQURI    (1ULL << 31) /**< Inspect request uri. */
+#define IB_TX_FINSPECT_REQPARAMS (1ULL << 32) /**< Inspect request params. */
 
 /** Capture collection name */
 #define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */
@@ -231,7 +233,7 @@ struct ib_tx_t {
     const char         *hostname;        /**< Hostname used in the request */
     const char         *er_ipstr;        /**< Effective remote IP as string */
     const char         *path;            /**< Path used in the request */
-    ib_flags_t          flags;           /**< Transaction flags */
+    ib_flags64_t        flags;           /**< Transaction flags */
     ib_num_t            auditlog_parts;  /**< Audit log parts */
     ib_num_t            block_status;    /**< TX-specific block status to use.*/
     ib_block_method_t   block_method;    /**< TX-specific block mode to use.*/

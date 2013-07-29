@@ -120,6 +120,20 @@ static const ib_tx_flag_map_t core_tx_flag_map[] = {
         false,
         false
     },
+    {
+        "inspectRequestParams",
+        "FLAGS:inspectRequestParams",
+        IB_TX_FINSPECT_REQPARAMS,
+        false,
+        false
+    },
+    {
+        "inspectRequestUri",
+        "FLAGS:inspectRequestUri",
+        IB_TX_FINSPECT_REQURI,
+        false,
+        false
+    },
 
     /* End */
     { NULL, NULL, IB_TX_FNONE, true, false },
