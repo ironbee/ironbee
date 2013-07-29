@@ -327,7 +327,7 @@ ib_status_t fast_feed_data_bytestring(
     const ib_bytestr_t *bs;
     ib_status_t         rc;
 
-    rc = ib_data_get(data, bytestring_field_name, &field);
+    rc = ib_data_get(data, bytestring_field_name, strlen(bytestring_field_name), &field);
     if (rc == IB_ENOENT) {
         ib_log_error(
             ib,
@@ -407,7 +407,7 @@ ib_status_t fast_feed_data_collection(
     const ib_bytestr_t   *bs;
     ib_status_t           rc;
 
-    rc = ib_data_get(data, collection->name, &field);
+    rc = ib_data_get(data, collection->name, strlen(collection->name), &field);
     if (rc == IB_ENOENT) {
         ib_log_error(
             ib,

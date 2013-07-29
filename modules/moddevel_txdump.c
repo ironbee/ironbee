@@ -850,7 +850,7 @@ static ib_status_t moddevel_txdump_tx(
         const ib_list_t *lst;
         ib_field_t *field;
         moddevel_txdump(tx, txdump, 2, "ARGS:");
-        rc = ib_data_get(tx->data, "ARGS", &field);
+        rc = ib_data_get(tx->data, "ARGS", strlen("ARGS"), &field);
         if (rc == IB_OK) {
             moddevel_txdump_field(tx, txdump, 4, "ARGS", field, 0);
 

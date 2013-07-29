@@ -134,7 +134,7 @@ ib_status_t ib_capture_acquire(
 
     /* Look up the capture list */
     collection_name = get_collection_name(collection_name);
-    rc = ib_data_get(tx->data, collection_name, field);
+    rc = ib_data_get(tx->data, collection_name, strlen(collection_name), field);
     if (rc == IB_ENOENT) {
         rc = ib_data_add_list(tx->data, collection_name, field);
     }

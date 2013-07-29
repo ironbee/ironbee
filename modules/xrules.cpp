@@ -1029,7 +1029,7 @@ namespace {
                 m_country.c_str());
 
             IronBee::throw_if_error(
-                ib_data_get_ex(
+                ib_data_get(
                     tx.ib()->data,
                     GEOIP_FIELD,
                     strlen(GEOIP_FIELD),
@@ -1133,7 +1133,8 @@ namespace {
                 IronBee::throw_if_error(
                     ib_data_get(
                         tx.ib()->data,
-                        m_field.c_str(),
+                        m_field.data(),
+                        m_field.length(),
                         &cfield),
                     "Failed to retrieve content type field.");
 

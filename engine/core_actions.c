@@ -410,6 +410,7 @@ static ib_status_t act_setflag_execute(
     rc = ib_data_get(
         rule_exec->tx->data,
         opdata->flag->tx_name,
+        strlen(opdata->flag->tx_name),
         &existing_field);
     if (rc == IB_ENOENT) {
         rc = ib_data_add_num(
@@ -575,7 +576,7 @@ static ib_status_t act_event_execute(
 
     /* Populate fields */
     if (! ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT)) {
-        rc = ib_data_get(tx->data, "FIELD_NAME_FULL", &field);
+        rc = ib_data_get(tx->data, "FIELD_NAME_FULL", strlen("FIELD_NAME_FULL"), &field);
         if ( (rc == IB_OK) && (field->type == IB_FTYPE_NULSTR) ) {
             const char *name = NULL;
             rc = ib_field_value(field, ib_ftype_nulstr_out(&name));
@@ -837,7 +838,7 @@ static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
     size_t elements;
     ib_tx_t *tx = rule_exec->tx;
 
-    rc = ib_data_get_ex(tx->data, name, namelen, &cur);
+    rc = ib_data_get(tx->data, name, namelen, &cur);
     if ( (rc == IB_ENOENT) || (cur == NULL) ) {
         *field = NULL;
         return IB_OK;

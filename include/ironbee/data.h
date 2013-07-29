@@ -300,7 +300,7 @@ ib_status_t DLL_PUBLIC ib_data_add_stream_ex(
  *
  * @returns IB_OK on success or IB_ENOENT if the element is not found.
  */
-ib_status_t DLL_PUBLIC ib_data_get_ex(
+ib_status_t DLL_PUBLIC ib_data_get(
     const ib_data_t  *data,
     const char       *name,
     size_t            nlen,
@@ -421,21 +421,6 @@ ib_status_t DLL_PUBLIC ib_data_add_stream(
 );
 
 /**
- * Get a data field.
- *
- * @param[in] data Data.
- * @param[in] name Name as NUL terminated string
- * @param[out] pf Pointer where new field is written if non-NULL
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_data_get(
-    const ib_data_t  *data,
-    const char       *name,
-    ib_field_t      **pf
-);
-
-/**
  * Remove a data field.
  * @param[in] data Data.
  * @param[in] name Name as NUL terminated string
@@ -459,38 +444,6 @@ ib_status_t ib_data_remove(
     ib_data_t   *data,
     const char  *name,
     ib_field_t **pf
-);
-
-/**
- * Set a data field.
- * @param[in] data Data.
- * @param[in] f    Field to set to.
- * @param[in] name Name of data field.
- * @param[in] nlen Length of @a name
- * @returns Status code.
- */
-ib_status_t DLL_PUBLIC ib_data_set(
-    ib_data_t  *data,
-    ib_field_t *f,
-    const char *name,
-    size_t      nlen
-);
-
-/**
- * Set a relative data field value.
- *
- * @param[in] data Data
- * @param[in] name Field name
- * @param[in] nlen Field length
- * @param[in] adjval Value to adjust (add or subtract a numeric value)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_data_set_relative(
-    ib_data_t  *data,
-    const char *name,
-    size_t      nlen,
-    intmax_t    adjval
 );
 
 /**

@@ -107,7 +107,7 @@ _M.add = function(self, name, value)
                                  nil)
     elseif type(value) == 'table' then
         local ib_field = ffi.new("ib_field_t*[1]")
-        ffi.C.ib_data_get_ex(tx.data,
+        ffi.C.ib_data_get(tx.data,
                              name,
                              string.len(name),
                              ib_field)
@@ -466,7 +466,7 @@ _M.getDataField = function(self, name)
 
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
 
-    ffi.C.ib_data_get_ex(tx.data,
+    ffi.C.ib_data_get(tx.data,
                          name,
                          string.len(name),
                          ib_field)

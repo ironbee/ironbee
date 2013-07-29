@@ -1268,7 +1268,7 @@ static ib_status_t get_or_create_field(
     ib_status_t rc;
 
     /* Fetch field. */
-    rc = ib_data_get(tx->data, field_name, field);
+    rc = ib_data_get(tx->data, field_name, strlen(field_name), field);
     /* Success. */
     if (rc == IB_OK) {
         return IB_OK;
@@ -1782,7 +1782,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
             getrc = ib_data_get_indexed(tx->data, target->index, &value);
         }
         else {
-            getrc = ib_data_get(tx->data, fname, &value);
+            getrc = ib_data_get(tx->data, fname, strlen(fname), &value);
         }
         if (getrc == IB_ENOENT) {
             bool allow = ib_flags_all(
@@ -5123,7 +5123,7 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     }
     actions = *pactions;
 
-    /* Some actions require IB_RULE_FLAG_FIELDS to be set. 
+    /* Some actions require IB_RULE_FLAG_FIELDS to be set.
      * FIXME: This is fragile code. Event should be able to construct
      *        the current field name from the provided rule_exec. */
     if (strcasestr(action->action->name, "event") == 0) {

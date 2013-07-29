@@ -98,7 +98,7 @@ struct ib_data_t
  *  - Other if a dynamic field fails.
  */
 static
-ib_status_t ib_data_get_subfields(
+ib_status_t ib_data_get_ex_subfields(
     const ib_data_t   *data,
     const ib_field_t  *parent_field,
     const char        *name,
@@ -198,7 +198,7 @@ ib_status_t ib_data_get_subfields(
  *  - IB_ENOENT if the field name is not found.
  */
 static
-ib_status_t ib_data_get_filtered_list(
+ib_status_t ib_data_get_ex_filtered_list(
     const ib_data_t           *data,
     const ib_field_t          *parent_field,
     const char                *pattern,
@@ -352,7 +352,7 @@ ib_status_t ib_data_add_internal(
 
         /* Get or create the parent field. */
 
-        rc = ib_data_get_ex(data, parent_name, parent_nlen, &parent);
+        rc = ib_data_get(data, parent_name, parent_nlen, &parent);
         /* If the field does not exist, make one. */
         if (rc == IB_ENOENT) {
 
@@ -424,7 +424,7 @@ ib_status_t expand_lookup_fn(
     ib_status_t rc;
     const ib_data_t *data = (const ib_data_t *)raw_data;
 
-    rc = ib_data_get_ex(data, name, nlen, pf);
+    rc = ib_data_get(data, name, nlen, pf);
     return rc;
 }
 
@@ -770,7 +770,7 @@ ib_status_t ib_data_add_stream_ex(
     return rc;
 }
 
-ib_status_t ib_data_get_ex(
+ib_status_t ib_data_get(
     const ib_data_t  *data,
     const char       *name,
     size_t            name_len,
@@ -839,7 +839,7 @@ ib_status_t ib_data_get_ex(
             }
 
             /* Validated that filter_start and filter_end are sane. */
-            rc = ib_data_get_filtered_list(
+            rc = ib_data_get_ex_filtered_list(
                 data,
                 parent_field,
                 filter_start+1,
@@ -852,7 +852,7 @@ ib_status_t ib_data_get_ex(
         else {
 
             /* Handle extracting a subfield for a list of a dynamic field. */
-            rc = ib_data_get_subfields(
+            rc = ib_data_get_ex_subfields(
                 data,
                 parent_field,
                 filter_marker+1,
@@ -972,15 +972,6 @@ ib_status_t ib_data_add_stream(
     return ib_data_add_stream_ex(data, name, strlen(name), pf);
 }
 
-ib_status_t ib_data_get(
-    const ib_data_t  *data,
-    const char       *name,
-    ib_field_t      **pf
-)
-{
-    return ib_data_get_ex(data, name, strlen(name), pf);
-}
-
 ib_status_t ib_data_remove(
     ib_data_t   *data,
     const char  *name,
@@ -998,51 +989,6 @@ ib_status_t ib_data_remove_ex(ib_data_t *data,
     assert(data != NULL);
 
     return ib_hash_remove_ex(data->hash, pf, name, nlen);
-}
-
-ib_status_t ib_data_set(
-    ib_data_t  *data,
-    ib_field_t *f,
-    const char *name,
-    size_t      nlen
-)
-{
-    assert(data != NULL);
-    return ib_hash_set_ex(data->hash, name, nlen, f);
-}
-
-ib_status_t ib_data_set_relative(
-    ib_data_t  *data,
-    const char *name,
-    size_t      nlen,
-    intmax_t    adjval
-)
-{
-    ib_field_t *f;
-    ib_status_t rc;
-    ib_num_t num;
-
-    rc = ib_data_get_ex(data, name, nlen, &f);
-    if (rc != IB_OK) {
-        return IB_ENOENT;
-    }
-
-    switch (f->type) {
-        case IB_FTYPE_NUM:
-            /// @todo Make sure this is atomic
-            /// @todo Check for overflow
-            rc = ib_field_value(f, ib_ftype_num_out(&num));
-            if (rc != IB_OK) {
-                return rc;
-            }
-            num += adjval;
-            rc = ib_field_setv(f, ib_ftype_num_in(&num));
-            break;
-        default:
-            return IB_EINVAL;
-    }
-
-    return rc;
 }
 
 ib_status_t ib_data_expand_str(

@@ -509,7 +509,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     const ib_bytestr_t *bs;
 
     /* Extract the User-Agent header field from the provider instance */
-    rc = ib_data_get(tx->data, "request_headers:User-Agent", &req_agent);
+    rc = ib_data_get(tx->data, "request_headers:User-Agent", strlen("request_headers:User-Agent"), &req_agent);
     if ( (req_agent == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx, "request_header_finished_event: No user agent");
         return IB_OK;
@@ -597,7 +597,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     ib_log_debug3_tx(tx, "Checking for alternate remote address");
 
     /* Extract the X-Forwarded-For from the provider instance */
-    rc = ib_data_get(tx->data, "request_headers:X-Forwarded-For", &field);
+    rc = ib_data_get(tx->data, "request_headers:X-Forwarded-For", strlen("request_headers:X-Forwarded-For"), &field);
     if ( (field == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx, "No X-Forwarded-For field");
         return IB_OK;

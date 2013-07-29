@@ -117,7 +117,7 @@ void Field::calculate(EvalContext context)
         );
     }
     else {
-        rc = ib_data_get_ex(
+        rc = ib_data_get(
             context.ib()->data,
             key.const_data(), key.size(),
             &data_field

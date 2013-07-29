@@ -942,7 +942,7 @@ static ib_status_t modhtp_field_gen_bytestr(
     /* First lookup the field to see if there is already one
      * that needs the value set.
      */
-    rc = ib_data_get(tx->data, name, &f);
+    rc = ib_data_get(tx->data, name, strlen(name), &f);
     if (rc == IB_OK) {
         rc = ib_field_mutable_value(f, ib_ftype_bytestr_mutable_out(&ibs));
         if (rc != IB_OK) {
@@ -1028,7 +1028,7 @@ static void modhtp_parser_flag(
 
     (*pflags) ^= flagbit;
 
-    rc = ib_data_get(itx->data, collection, &field);
+    rc = ib_data_get(itx->data, collection, strlen(collection), &field);
     if (rc == IB_ENOENT) {
         rc = ib_data_add_list(itx->data, collection, &field);
         if (rc != IB_OK) {

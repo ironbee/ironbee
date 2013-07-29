@@ -282,7 +282,7 @@ TEST_F(IronBeeLuaApi, add_list)
 
   eval("ib:add(\"MyList1\", {})");
 
-  ib_data_get(ib_tx->data, "MyList1", &list_field);
+  ib_data_get(ib_tx->data, "MyList1", strlen("MyList1"), &list_field);
   ASSERT_TRUE(NULL!=list_field);
 
   eval("ib:add(\"MyList1\", { { \"a\", \"b\" }, { \"c\", 21 } } )");

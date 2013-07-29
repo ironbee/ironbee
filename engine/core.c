@@ -1303,7 +1303,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
         /* Check if THREAT_LEVEL is available, or if we need to calculate
          * it here.
          */
-        rc = ib_data_get_ex(tx->data, IB_S2SL("THREAT_LEVEL"), &f);
+        rc = ib_data_get(tx->data, IB_S2SL("THREAT_LEVEL"), &f);
         if ((rc == IB_OK) && (f->type == IB_FTYPE_NUM)) {
             rc = ib_field_value(f, ib_ftype_num_out(&threat_level));
             if (rc == IB_OK) {
@@ -1538,7 +1538,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
             ib_list_push(list, f);
         }
 
-        rc = ib_data_get_ex(tx->data, IB_S2SL("request_protocol"), &f);
+        rc = ib_data_get(tx->data, IB_S2SL("request_protocol"), &f);
         if (rc == IB_OK) {
             ib_list_push(list, f);
         }
@@ -1547,7 +1547,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                             ib_status_to_string(rc));
         }
 
-        rc = ib_data_get_ex(tx->data, IB_S2SL("request_method"), &f);
+        rc = ib_data_get(tx->data, IB_S2SL("request_method"), &f);
         if (rc == IB_OK) {
             ib_list_push(list, f);
         }
@@ -1606,7 +1606,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
                                   strlen(tstamp));
     ib_list_push(list, f);
 
-    rc = ib_data_get_ex(tx->data, IB_S2SL("response_status"), &f);
+    rc = ib_data_get(tx->data, IB_S2SL("response_status"), &f);
     if (rc == IB_OK) {
         ib_list_push(list, f);
     }
@@ -1615,7 +1615,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
                         ib_status_to_string(rc));
     }
 
-    rc = ib_data_get_ex(tx->data, IB_S2SL("response_protocol"), &f);
+    rc = ib_data_get(tx->data, IB_S2SL("response_protocol"), &f);
     if (rc == IB_OK) {
         ib_list_push(list, f);
     }

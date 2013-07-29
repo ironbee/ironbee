@@ -45,7 +45,7 @@ TEST_F(CoreActionTest, setVarAdd) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "a", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "a", strlen("a"), &f));
 
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
 
@@ -58,7 +58,7 @@ TEST_F(CoreActionTest, setVarSub) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "b", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "b", strlen("b"), &f));
 
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
 
@@ -71,7 +71,7 @@ TEST_F(CoreActionTest, setVarMult) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "c", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "c", strlen("c"), &f));
 
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
 
@@ -87,22 +87,22 @@ TEST_F(CoreActionTest, integration) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r1", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r1", strlen("r1"), &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r2", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r2", strlen("r2"), &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r3", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r3", strlen("r3"), &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r4", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r4", strlen("r4"), &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);

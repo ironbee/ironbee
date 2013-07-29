@@ -68,7 +68,7 @@ TEST_F(EeOperModuleTest, test_ee_match_any_success)
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "request_matched", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "request_matched", strlen("request_matched"), &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     EXPECT_EQ(1, n);
@@ -78,7 +78,7 @@ TEST_F(EeOperModuleTest, test_ee_match_any_success)
     ib_field_t *ib_field;
     const ib_list_t *ib_list;
     const ib_bytestr_t *bs;
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, IB_TX_CAPTURE":0", &ib_field));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, IB_TX_CAPTURE":0", strlen(IB_TX_CAPTURE":0"), &ib_field));
     ASSERT_TRUE(ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
@@ -96,7 +96,7 @@ TEST_F(EeOperModuleTest, test_ee_match_any_fail)
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "response_matched", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "response_matched", strlen("response_matched"), &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     EXPECT_EQ(0, n);

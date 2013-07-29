@@ -355,7 +355,7 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     }
 
     /* ARGS collection */
-    rc = ib_data_get(tx->data, "ARGS", &tmp);
+    rc = ib_data_get(tx->data, "ARGS", strlen("ARGS"), &tmp);
     if (rc == IB_ENOENT) {
         rc = ib_data_add_list(tx->data, "ARGS", NULL);
         if (rc != IB_OK) {
@@ -367,7 +367,7 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     }
 
     /* Flags collection */
-    rc = ib_data_get(tx->data, "FLAGS", &tmp);
+    rc = ib_data_get(tx->data, "FLAGS", strlen("FLAGS"), &tmp);
     if (rc == IB_ENOENT) {
         rc = ib_data_add_list(tx->data, "FLAGS", NULL);
         if (rc != IB_OK) {
@@ -540,7 +540,7 @@ static ib_status_t create_header_alias_list(
     assert(header != NULL);
 
     /* Create the list */
-    rc = ib_data_get(tx->data, name, &f);
+    rc = ib_data_get(tx->data, name, strlen(name), &f);
     if (rc == IB_ENOENT) {
         rc = ib_data_add_list(tx->data, name, &f);
         if (rc != IB_OK) {
@@ -636,7 +636,7 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
      * Alias connection remote and server addresses
      */
 
-    rc = ib_data_get(tx->conn->data, "server_addr", &f);
+    rc = ib_data_get(tx->conn->data, "server_addr", strlen("server_addr"), &f);
     if (rc != IB_OK) {
         return rc;
     }
@@ -645,7 +645,7 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_data_get(tx->conn->data, "server_port", &f);
+    rc = ib_data_get(tx->conn->data, "server_port", strlen("server_port"), &f);
     if (rc != IB_OK) {
         return rc;
     }
@@ -654,7 +654,7 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_data_get(tx->conn->data, "remote_addr", &f);
+    rc = ib_data_get(tx->conn->data, "remote_addr", strlen("remote_addr"), &f);
     if (rc != IB_OK) {
         return rc;
     }
@@ -663,7 +663,7 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_data_get(tx->conn->data, "remote_port", &f);
+    rc = ib_data_get(tx->conn->data, "remote_port", strlen("remote_port"), &f);
     if (rc != IB_OK) {
         return rc;
     }
@@ -690,12 +690,12 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
     }
 
     /* Populate the ARGS collection. */
-    rc = ib_data_get(tx->data, "ARGS", &f);
+    rc = ib_data_get(tx->data, "ARGS", strlen("ARGS"), &f);
     if (rc == IB_OK) {
         ib_field_t *param_list;
 
         /* Add request URI parameters to ARGS collection. */
-        rc = ib_data_get(tx->data, "request_uri_params", &param_list);
+        rc = ib_data_get(tx->data, "request_uri_params", strlen("request_uri_params"), &param_list);
         if (rc == IB_OK) {
             ib_list_t *field_list;
             ib_list_node_t *node = NULL;
@@ -753,12 +753,12 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
     assert(event == request_finished_event);
 
     /* Populate the ARGS collection. */
-    rc = ib_data_get(tx->data, "ARGS", &f);
+    rc = ib_data_get(tx->data, "ARGS", strlen("ARGS"), &f);
     if (rc == IB_OK) {
         ib_field_t *param_list;
 
         /* Add request body parameters to ARGS collection. */
-        rc = ib_data_get(tx->data, "request_body_params", &param_list);
+        rc = ib_data_get(tx->data, "request_body_params", strlen("request_body_params"), &param_list);
         if (rc == IB_OK) {
             ib_list_t *field_list;
             ib_list_node_t *node = NULL;

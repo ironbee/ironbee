@@ -378,7 +378,7 @@ static ib_status_t persist_data_in_context(
             const ib_list_t *list = NULL;
             ib_field_t *list_field = NULL;
 
-            rc = ib_data_get(tx->data, name, &list_field);
+            rc = ib_data_get(tx->data, name, strlen(name), &list_field);
             if (rc != IB_OK) {
                 ib_log_error(ib, "Failed to get list to store.");
                 continue;

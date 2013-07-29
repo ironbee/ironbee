@@ -48,9 +48,9 @@ public:
         int          num,
         ib_field_t **pfield)
     {
-        return ib_data_get(ib_tx->data,
-                           ib_capture_fullname(ib_tx, NULL, num),
-                           pfield);
+        const char *capture_name = ib_capture_fullname(ib_tx, NULL, num);
+        return ib_data_get(ib_tx->data, capture_name, strlen(capture_name),
+                              pfield);
     };
 
     ib_status_t CaptureGet(
@@ -58,9 +58,9 @@ public:
         int          num,
         ib_field_t **pfield)
     {
-        return ib_data_get(ib_tx->data,
-                           ib_capture_fullname(ib_tx, capture, num),
-                           pfield);
+        const char *capture_name = ib_capture_fullname(ib_tx, capture, num);
+        return ib_data_get(ib_tx->data, capture_name, strlen(capture_name),
+                              pfield);
     };
 
     ib_status_t CaptureBytestr(
@@ -300,7 +300,7 @@ TEST_F(CaptureTest, collection_type)
     rc = ib_data_add_num(ib_tx->data, CAP_NAME, 666, &ifield);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_data_get(ib_tx->data, CAP_NAME, &ofield);
+    rc = ib_data_get(ib_tx->data, CAP_NAME, strlen(CAP_NAME), &ofield);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(IB_FTYPE_NUM, ofield->type);
 

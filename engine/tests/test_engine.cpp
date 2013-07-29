@@ -286,12 +286,12 @@ TEST(TestIronBee, test_data_dynf)
     ASSERT_EQ(IB_OK, ib_data_add(data, dynf));
 
     /* Fetch the field from the data store */
-    ASSERT_EQ(IB_OK, ib_data_get(data, "test_dynf", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(data, "test_dynf", strlen("test_dynf"), &f));
     ASSERT_TRUE(f);
     ASSERT_EQ(dynf, f);
 
     /* Fetch a dynamic field from the data store */
-    ASSERT_EQ(IB_OK, ib_data_get(data, "test_dynf:dyn_subkey", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(data, "test_dynf:dyn_subkey", strlen("test_dynf:dyn_subkey"), &f));
     ASSERT_TRUE(f);
     ASSERT_EQ(9UL, f->nlen);
 
@@ -309,7 +309,7 @@ TEST(TestIronBee, test_data_dynf)
     ASSERT_EQ(5, n);
 
     /* Fetch a another subkey */
-    ASSERT_EQ(IB_OK, ib_data_get(data, "test_dynf:dyn_subkey2", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(data, "test_dynf:dyn_subkey2", strlen("test_dynf:dyn_subkey2"), &f));
     ASSERT_TRUE(f);
     ASSERT_EQ(9UL, f->nlen);
 
@@ -344,10 +344,10 @@ TEST(TestIronBee, test_data_name)
     ASSERT_TRUE(data);
 
     ASSERT_IB_OK(ib_data_add_list(data, "ARGV", &list_field));
-    ASSERT_IB_OK(ib_data_get(data, "ARGV", &out_field));
+    ASSERT_IB_OK(ib_data_get(data, "ARGV", strlen("ARGV"), &out_field));
     ASSERT_TRUE(out_field);
     out_field = NULL;
-    ASSERT_IB_OK(ib_data_get_ex(data, "ARGV:/.*(1|3)/", 4, &out_field));
+    ASSERT_IB_OK(ib_data_get(data, "ARGV:/.*(1|3)/", 4, &out_field));
     ASSERT_TRUE(out_field);
     ibtest_engine_destroy(ib);
 }
@@ -382,14 +382,14 @@ TEST(TestIronBee, test_data_pcre)
     ASSERT_IB_OK(
         ib_field_create(&field3, ib_data_pool(data), "field3", 6, IB_FTYPE_NUM, &num3));
     ASSERT_IB_OK(ib_data_add_list(data, "ARGV", &list_field));
-    ASSERT_IB_OK(ib_data_get(data, "ARGV", &out_field));
+    ASSERT_IB_OK(ib_data_get(data, "ARGV", strlen("ARGV"), &out_field));
 
     ASSERT_IB_OK(ib_field_value(list_field, &list));
     ASSERT_IB_OK(ib_list_push(list, field1));
     ASSERT_IB_OK(ib_list_push(list, field2));
     ASSERT_IB_OK(ib_list_push(list, field3));
 
-    ASSERT_IB_OK(ib_data_get(data, "ARGV:/.*(1|3)/", &out_field));
+    ASSERT_IB_OK(ib_data_get(data, "ARGV:/.*(1|3)/", strlen("ARGV:/.*(1|3)/"), &out_field));
 
     ASSERT_IB_OK(ib_field_value(out_field, &out_list));
     ASSERT_NE(list, out_list); /* Make sure it's a different list. */
@@ -432,7 +432,7 @@ TEST(TestIronBee, test_data_indexed)
     ASSERT_EQ(IB_OK, ib_data_get_indexed(data, i, &f));
     ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_num_out(&n)));
     ASSERT_EQ(5, n);
-    ASSERT_EQ(IB_OK, ib_data_get(data, "foo", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(data, "foo", strlen("foo"), &f));
     ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_num_out(&n)));
     ASSERT_EQ(5, n);
 }
