@@ -49,6 +49,7 @@
 namespace IronBee {
 
 class Engine;
+class ConstModule;
 class Context;
 class MemoryPool;
 class Transaction;
@@ -362,6 +363,27 @@ public:
 
     ///@}
 
+
+    /**
+     * Copy @a t into the T module data.
+     *
+     * ConstTransaction::memory_pool() will be charged with
+     * destroying the copy of @a t when the transaction is over.
+     *
+     * @param[in] m The module to store @a t for.
+     * @param[in] t The module data.
+     * @throws IronBee errors on C API failures.
+     */
+    template<typename T> void set_module_data(ConstModule m, T t);
+
+    /**
+     * Return a reference to the stored module transaction data.
+     *
+     * @param[in] m The module that the data is stored for.
+     * @throws IronBee errors on C API failures.
+     */
+    template<typename T> T& get_module_data(ConstModule m);
+    
     /**
      * Create a new transaction.
      *

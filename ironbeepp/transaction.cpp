@@ -3,6 +3,7 @@
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/module.hpp>
 #include <ironbeepp/clock.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
@@ -183,6 +184,24 @@ Transaction Transaction::create(Connection connection)
     );
 
     return Transaction(ib_tx);
+}
+
+template<typename T> void Transaction::set_module_data(ConstModule m, T t) {
+    void *v = value_to_data(t, memory_pool().ib());
+
+    throw_if_error(
+        ib_tx_set_module_data(ib(), m.ib(), v)
+    );
+}
+
+template<typename T> T& Transaction::get_module_data(ConstModule m) {
+    void *v = NULL;
+    
+    throw_if_error(
+        ib_tx_get_module_data(ib(), m.ib(), &v)
+    );
+
+    return data_to_value<T>(v);
 }
 
 void Transaction::destroy() const
