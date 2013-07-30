@@ -39,6 +39,7 @@ libironbee_la_SOURCES = engine.c data.c \
                         engine_manager.c \
                         engine_manager_log.c \
                         config-parser.h \
+						var.c \
                         $(top_builddir)/lua/ironbee.h
 libironbee_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) $(PCRE_CFLAGS)
 libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la $(PCRE_LDADD)

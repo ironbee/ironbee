@@ -3,6 +3,7 @@ include $(top_srcdir)/build/tests.mk
 LDADD = \
 	$(top_builddir)/util/libibutil.la \
 	$(top_builddir)/engine/libironbee.la \
+	$(top_builddir)/ironbeepp/libibpp.la \
     $(top_builddir)/libs/libhtp/htp/libhtp.la
 
 check_PROGRAMS = \
@@ -11,7 +12,8 @@ check_PROGRAMS = \
 	test_engine \
 	test_kvstore \
 	test_operator \
-	test_rule_inject
+	test_rule_inject \
+	test_var
 
 AM_LDFLAGS += \
 	-lboost_system$(BOOST_SUFFIX) \
@@ -58,6 +60,8 @@ test_config_SOURCES = test_config.cpp \
 test_operator_SOURCES = test_operator.cpp
 
 test_action_SOURCES = test_action.cpp test_core_actions.cpp
+
+test_var_SOURCES = test_var.cpp
 
 if ENABLE_LUA
 check_PROGRAMS += test_luajit
