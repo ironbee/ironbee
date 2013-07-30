@@ -133,8 +133,13 @@ namespace {
 
         /**
          * Apply the transaction.
+         *
+         * This function must be overridden.
          */
-        virtual void apply_impl(IronBee::Transaction& tx) const = 0;
+        virtual void apply_impl(IronBee::Transaction& tx) const {
+            throw IronBee::enotimpl() <<
+                IronBee::errinfo_what("Action::apply_impl must be overridden.");
+        }
 
     protected:
         int m_priority;
@@ -183,9 +188,17 @@ namespace {
             apply_impl(tx);
         }
 
-        const std::string& id() const
-        {
-            return m_id;
+        /**
+         * Defined comparison of Actions to allow use in std::map.
+         *
+         * Compare Action::m_id of the two objects to find the result.
+         *
+         * @param[in] that The other Action to compare.
+         *
+         * @returns True if @c *this is less than @a that.
+         */
+        bool operator<(const Action &that) const {
+            return m_id < that.m_id;
         }
 
         virtual ~Action() {}
@@ -257,7 +270,7 @@ namespace {
             int priority
         )
         :
-            Action("SetFlag", priority),
+            Action("SetFlag_" + field_name, priority),
             m_field_name(field_name),
             m_flag(flag),
             m_clear(clear)
@@ -600,10 +613,10 @@ namespace {
         std::list<xrule_ptr> resp_xrules;
 
         //! Actions to perform on a TX based on the request.
-        std::map<std::string, action_ptr > req_actions;
+        std::map<Action, action_ptr > req_actions;
     
         //! Actions to perform on a TX based on the response.
-        std::map<std::string, action_ptr > resp_actions;
+        std::map<Action, action_ptr > resp_actions;
     
         /**
         * Set an action to be evaluated when the response headers are done.
@@ -642,15 +655,14 @@ namespace {
         *            then @a action is left unchanged.
         */
         void set_action(
-            std::map<std::string, action_ptr >& actions,
+            std::map<Action, action_ptr >& actions,
             action_ptr& action
         )
         {
-            std::map<std::string, action_ptr>::iterator itr =
-                actions.find(action->id());
+            std::map<Action, action_ptr>::iterator itr = actions.find(*action);
     
             if (itr == actions.end()) {
-                actions[action->id()].swap(action);
+                actions[*action].swap(action);
             }
             else if (itr->second->overrides(*action)) {
                 itr->second.swap(action);
