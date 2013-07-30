@@ -446,3 +446,88 @@ INSTANTIATE_TEST_CASE_P(
     std::make_pair("Param2 value1 value2\nList value1 value2 val", "ue3\n"),
     std::make_pair("Param2 value1 value2\nList value1 value2 value3", "\n")
 ));
+
+/////////////////////////////// Quoted String /////////////////////////////
+
+class QuotedStrTest :
+   public TestConfig,
+   public ::testing::WithParamInterface<std::pair<const char*, const char *> >
+{
+    public:
+    ib_status_t setup_rc;
+
+    virtual void SetUp()
+    {
+        TestConfig::SetUp();
+
+        setup_rc = mock_module_register(ib_engine);
+        if (setup_rc != IB_OK) {
+            return;
+        }
+
+        setup_rc = config("LogLevel TRACE\n", 0);
+        if (setup_rc != IB_OK) {
+            return;
+        }
+
+        setup_rc = config(GetParam().first, 0);
+        if (setup_rc != IB_OK) {
+            return;
+        }
+
+        setup_rc = config(GetParam().second, 1);
+    }
+
+};
+
+TEST_P(QuotedStrTest, IB_OK) {
+    ASSERT_EQ(IB_OK, setup_rc);
+}
+
+/* Did the configuration get applied to our mock module? */
+TEST_P(QuotedStrTest, ConfigurationApplied) {
+    ib_module_t *module;
+    ib_context_t *ctx = ib_context_main(ib_engine);
+    mock_module_conf_t *conf;
+
+    const ib_list_node_t *node;
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_engine_module_get(ib_engine, mock_module_name(), &module));
+
+    ASSERT_EQ(IB_OK, ib_context_module_config(ctx, module, &conf));
+
+    ASSERT_FALSE(NULL == module->dm_init);
+    ASSERT_FALSE(NULL == conf);
+
+    ASSERT_STREQ("value1\\b", conf->param2_p1);
+    ASSERT_STREQ("value2\\b", conf->param2_p2);
+
+    node = ib_list_first_const(conf->list_params);
+    ASSERT_STREQ(
+        "value1\\b",
+        reinterpret_cast<const char *>(ib_list_node_data_const(node)));
+    node = ib_list_node_next_const(node);
+    ASSERT_STREQ(
+        "value2\\b",
+        reinterpret_cast<const char *>(ib_list_node_data_const(node)));
+    node = ib_list_node_next_const(node);
+    ASSERT_STREQ(
+        "value3\\b",
+        reinterpret_cast<const char *>(ib_list_node_data_const(node)));
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(NULL == node);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SpanTests,
+    QuotedStrTest,
+    ::testing::Values(
+    std::make_pair("Param2 value1\\b value2\\b\n", "List value1\\b value2\\b value3\\b\n"),
+    std::make_pair("Param2 \"value1\\b\" \"value2\\b\"\n", "List \"value1\\b\" \"value2\\b\" \"value3\\b\"\n"),
+    std::make_pair("Param2 value1\\b \"value2\\b\"\n", "List value1\\b \"value2\\b\" \"value3\\b\"\n"),
+    std::make_pair("Param2 \"value1\\b\" value2\\b\n", "List \"value1\\b\" value2\\b \"value3\\b\"\n"),
+    std::make_pair("Param2 \"value1\\b\" \"value2\\b\"\n", "List \"value1\\b\" \"value2\\b\" value3\\b\n"),
+    std::make_pair("Param2 \"value1\\b\" \"value2\\b\"\n", "List \"value1\\b\" \"value2\\b\" \"value3\\b\"\n")
+));

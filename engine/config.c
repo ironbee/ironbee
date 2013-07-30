@@ -786,7 +786,7 @@ ib_status_t ib_config_register_directive(
 }
 
 /**
- * Log a debug message followed by the directive.
+ * Log a debug message followed by the directive and its parameters.
  *
  * Note that quoting, spacing and &lt;, &gt; decoration is removed.
  *
@@ -805,35 +805,30 @@ static ib_status_t print_directive(ib_cfgparser_t *cp,
     assert(name != NULL);
     assert(args != NULL);
 
-    int loglen = 0;
+    int params_len = 1; /* At least a \0 char. */
+    char *params;
     const ib_list_node_t *node;
-    char *directive;
-
-    loglen += strlen(name) + 2;  /* Name + 1 space + \0. */
 
     IB_LIST_LOOP_CONST(args, node) {
-        /* Name + 1 space. */
-        loglen += strlen((const char *)ib_list_node_data_const(node)) + 1;
+        /* "; p=" + val */
+        params_len += 4 + strlen((const char *)ib_list_node_data_const(node));
     }
 
-    directive = malloc(loglen);
-    if (directive == NULL) {
+    params = malloc(params_len);
+    if (params == NULL) {
         return IB_EALLOC;
     }
 
-    directive[0] = '\0';
-
-    strcat(directive, name);
-    strcat(directive, " ");
+    params[0] = '\0';
 
     IB_LIST_LOOP_CONST(args, node) {
-        strcat(directive, (const char *)ib_list_node_data_const(node));
-        strcat(directive, " ");
+        strcat(params, "; p=");
+        strcat(params, (const char *)ib_list_node_data_const(node));
     }
 
-    ib_cfg_log_debug(cp, "%s%s", msg, directive);
+    ib_cfg_log_debug(cp, "%sname=%s%s", msg, name, params);
 
-    free(directive);
+    free(params);
     return IB_OK;
 }
 

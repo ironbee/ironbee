@@ -77,7 +77,7 @@ static ib_status_t cpbuf_append(ib_cfgparser_t *cp, char c)
     assert(cp->buffer != NULL);
 
     /* Protect against run-away token aggregation. 1k should be enough? */
-    if (cp->buffer->len >= 1024) {
+    if (cp->buffer->len >= 8192) {
         ib_cfg_log_error(
             cp,
             "Token size limit exceeded. Will not grow past %zu characters.",
@@ -725,8 +725,8 @@ static parse_directive_entry_t parse_directive_table[] = {
     # Continuation.
     CONT = '\\' EOL;
 
-    # qchare is any escaped character except what might be a new line.
-    qchar = '\\' (any - [\r\n])? (any - '\n');
+    # qchar is any escaped character except what might be a line ending
+    qchar = '\\' (any - [\r\n]);
     qtoken = '"' ( qchar | ( any - ["\\] ) )* '"';
     token = (qchar | (any - (WS | '\r' | '\n' | [<>#"\\])))
             (qchar | (any - (WS | '\r' | '\n' | [<>"\\])))*;
