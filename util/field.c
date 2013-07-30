@@ -892,12 +892,16 @@ ib_status_t ib_field_setv_no_copy(
     void *mutable_in_pval
 )
 {
-    if (f->type == IB_FTYPE_NUM || ib_field_is_dynamic(f)) {
+    if (
+        f->type == IB_FTYPE_NUM ||
+        f->type == IB_FTYPE_FLOAT ||
+        f->type == IB_FTYPE_TIME ||
+        ib_field_is_dynamic(f)
+    ) {
         return ib_field_setv(f, mutable_in_pval);
     }
 
     *(void **)(f->val->pval) = mutable_in_pval;
-
 
     return IB_OK;
 }
