@@ -385,7 +385,7 @@ public:
      * @throws IronBee errors on C API failures.
      */
     template<typename T>
-    T& get_module_data(ConstModule m);
+    T get_module_data(ConstModule m);
     
     /**
      * Create a new transaction.
@@ -419,7 +419,7 @@ void Transaction::set_module_data(ConstModule m, T t) {
 }
 
 template<typename T>
-T& Transaction::get_module_data(ConstModule m)
+T Transaction::get_module_data(ConstModule m)
 {
     void *v = NULL;
 

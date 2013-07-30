@@ -206,6 +206,49 @@ namespace {
     typedef boost::shared_ptr<Action> action_ptr;
 
     /**
+     * A collection of actions to be applied.
+     */
+    class ActionSet {
+    public:
+        void set(action_ptr& action) {
+            std::map<Action, action_ptr>::iterator itr =
+                m_actions.find(*action);
+    
+            if (itr == m_actions.end()) {
+                m_actions[*action].swap(action);
+            }
+            else if (itr->second->overrides(*action)) {
+                itr->second.swap(action);
+            }
+        }
+
+        void apply(IronBee::Transaction& tx) {
+            for(
+                std::map<Action, action_ptr>::iterator itr = m_actions.begin();
+                itr != m_actions.end();
+                ++itr
+            )
+            {
+                (*(itr->second))(tx);
+            }
+        }
+
+        bool overrides(action_ptr action) {
+            std::map<Action, action_ptr>::iterator itr =
+                m_actions.find(*action);
+
+            if (itr == m_actions.end()) {
+                return true;
+            }
+            else {
+                return itr->second->overrides(*action);
+            }
+        }
+    private:
+        std::map<Action, action_ptr > m_actions;
+    };
+
+    /**
      * Defines how to block a transaction.
      */
     class BlockAllow : public Action {
@@ -281,10 +324,12 @@ namespace {
     private:
         //! The name of the field to set.
         std::string m_field_name;
+
         //! The flag to set in ib_tx_t::flags.
-        ib_flags64_t  m_flag;
+        ib_flags64_t m_flag;
+
         //! Should the flag be cleared, rather than set.
-        bool        m_clear;
+        bool m_clear;
 
         /**
          * Set the field to 0 or 1 and set or clear the flag in @ref ib_tx_t.
@@ -309,8 +354,18 @@ namespace {
         }
     };
 
+    /**
+     * Set @c XRULES:SCALE_THREAT in tx.
+     */
     class ScaleThreat : public Action {
     public:
+
+        /**
+         * Constructor.
+         *
+         * @param[in] fnum The floating point number to be store in tx.
+         * @param[in] priority The priority of this action.
+         */
         ScaleThreat(
             ib_float_t fnum,
             int priority
@@ -319,11 +374,20 @@ namespace {
             Action("SetBlockingMode", priority),
             m_fnum(fnum)
         {}
-        ~ScaleThreat(){}
+
+        //! Destructor.
+        virtual ~ScaleThreat(){}
     private:
+
+        //! The value set in the transaction.
         ib_float_t m_fnum; 
+
+        //! The field that is assigned a value in tx.
         static const std::string FIELD_NAME;
 
+        /**
+         * Set ScaleThreat::FIELD_NAME to ScaleThreat::m_fnum.
+         */
         virtual void apply_impl(IronBee::Transaction& tx) const {
             IronBee::Field f = IronBee::Field::create_float(
                 tx.memory_pool(),
@@ -362,7 +426,7 @@ namespace {
         virtual ~SetBlockingMode(){}
     private:
         //! Set the field to enabled or disabled.
-        bool        m_enabled;
+        bool m_enabled;
 
         static const std::string FIELD_NAME;
 
@@ -372,8 +436,6 @@ namespace {
          * @param[in] tx The transaction to be modified.
          */
         virtual void apply_impl(IronBee::Transaction& tx) const {
-
-            // String is aliased, not copied, so we use string constants.
 
             IronBee::ByteString bs = IronBee::ByteString::create(
                 tx.memory_pool(),
@@ -560,12 +622,13 @@ namespace {
      */
     class XRule {
     private:
-        virtual void xrule_impl(IronBee::Transaction& tx) {
-            ib_log_info_tx(tx.ib(), "XRule with no predicate called.");
-
-            if (m_action.get() != NULL) {
-                (*m_action)(tx);
-            }
+        virtual void xrule_impl(
+            IronBee::Transaction& tx,
+            ActionSet&            actions
+        )
+        {
+            throw IronBee::enotimpl()
+                << IronBee::errinfo_what("XRules must implement xrule_impl.");
         }
 
     protected:
@@ -576,29 +639,35 @@ namespace {
          *
          * @param[in] action The action to execute.
          */
-        XRule(action_ptr action) {
+        explicit XRule(action_ptr action) {
             m_action.swap(action);
         }
 
-        XRule() {
-        }
+        /**
+         * Empty constructor.
+         */
+        XRule() {}
 
     public:
 
         /**
          * Evaluate the rule against the given transaction.
          *
-         * @param[in] tx The Transcation to check and optionally modify.
+         * @param[in] tx The Transaction. 
+         * @param[in] actions The set of actions to update according to
+         *            the rule results.
+         *
+         * @returns The action to execute.
          */
-        void operator()(IronBee::Transaction &tx) {
-            xrule_impl(tx);
+        void operator()(IronBee::Transaction &tx, ActionSet &actions) {
+            xrule_impl(tx, actions);
         }
 
         virtual ~XRule() { }
     };
     typedef boost::shared_ptr<XRule> xrule_ptr;
 
-    /**
+   /**
     * Module configuration.
     */
     class XRulesModuleConfig {
@@ -609,66 +678,25 @@ namespace {
         //! List of IPv6 configurations.
         std::vector<ib_ipset6_entry_t> ipv6_list;
 
+        //! List of xrules to execute for the request.
         std::list<xrule_ptr> req_xrules;
+
+        //! List of xrules to execute for the response.
         std::list<xrule_ptr> resp_xrules;
-
-        //! Actions to perform on a TX based on the request.
-        std::map<Action, action_ptr > req_actions;
-    
-        //! Actions to perform on a TX based on the response.
-        std::map<Action, action_ptr > resp_actions;
-    
-        /**
-        * Set an action to be evaluated when the response headers are done.
-        *
-        * @param[in] action Contains the Action to be stored. 
-        *            This may be left empty if the action is accepted.
-        *            If the action cannot replace an existing of
-        *            an action (using Action::id() to identify the action)
-        *            then @a action is left unchanged.
-        */
-        void set_response_action(action_ptr action) {
-            set_action(resp_actions, action);
-        }
-
-        /**
-        * Set an action to be evaluated when the request headers are done.
-        *
-        * @param[in] action Contains the Action to be stored. 
-        *            This may be left empty if the action is accepted.
-        *            If the action cannot replace an existing of
-        *            an action (using Action::id() to identify the action)
-        *            then @a action is left unchanged.
-        */
-        void set_request_action(action_ptr action) {
-            set_action(req_actions, action);
-        }
-    private:
-        /**
-        * Set an action to be evaluated when the request headers are done.
-        *
-        * @param[in] actions The map to manipulate.
-        * @param[in] action Contains the Action to be stored. 
-        *            This may be left empty if the action is accepted.
-        *            If the action cannot replace an existing of
-        *            an action (using Action::id() to identify the action)
-        *            then @a action is left unchanged.
-        */
-        void set_action(
-            std::map<Action, action_ptr >& actions,
-            action_ptr& action
-        )
-        {
-            std::map<Action, action_ptr>::iterator itr = actions.find(*action);
-    
-            if (itr == actions.end()) {
-                actions[*action].swap(action);
-            }
-            else if (itr->second->overrides(*action)) {
-                itr->second.swap(action);
-            }
-        }
     };
+
+
+    /**
+     * This class stores the current transaction-level data for this module.
+     *
+     * This class is mostly responsible for managing Actions that may
+     * or may not be applied to a transaction.
+     */
+    struct XRulesModuleTxData {
+        ActionSet request_actions;
+        ActionSet response_actions;
+    };
+    typedef boost::shared_ptr<XRulesModuleTxData> xrules_module_tx_data_ptr;
 
     /**
      * An XRule that checks the two-character country code.
@@ -693,7 +721,11 @@ namespace {
 
         std::string m_country;
 
-        virtual void xrule_impl(IronBee::Transaction& tx) {
+        virtual void xrule_impl(
+            IronBee::Transaction& tx,
+            ActionSet&            actions
+        )
+        {
             ib_field_t *cfield;
             ib_log_debug_tx(
                 tx.ib(),
@@ -713,7 +745,7 @@ namespace {
             IronBee::ConstByteString bs(field.value_as_byte_string());
 
             if (bs.index_of(m_country.c_str()) == 0) {
-                (*m_action)(tx);
+                actions.set(m_action);
             }
         }
 
@@ -767,9 +799,13 @@ namespace {
         std::string           m_field;
         std::set<std::string> m_content_types;
 
-        virtual void xrule_impl(IronBee::Transaction& tx) {
+        virtual void xrule_impl(
+            IronBee::Transaction& tx,
+            ActionSet&            actions
+        )
+        {
             if (m_any) {
-                (*m_action)(tx);
+                actions.set(m_action);
             }
             else {
                 ib_field_t         *field;
@@ -797,7 +833,7 @@ namespace {
                 if (
                     m_content_types.find(content_type) != m_content_types.end()
                 ) {
-                    (*m_action)(tx);
+                    actions.set(m_action);
                 }
             }
         }
@@ -817,9 +853,13 @@ namespace {
         virtual ~XRulePath(){}
     private:
         std::string m_path;
-        virtual void xrule_impl(IronBee::Transaction& tx) {
+        virtual void xrule_impl(
+            IronBee::Transaction& tx,
+            ActionSet&            actions
+        )
+        {
             if (m_path.find(tx.path()) == 0) {
-                (*m_action)(tx);
+                actions.set(m_action);
             }
         }
     };
@@ -947,7 +987,11 @@ namespace {
          * If the rule check is true, then the associated action is executed.
          * Otherwise the action is not executed.
          */
-        virtual void xrule_impl(IronBee::Transaction& tx) {
+        virtual void xrule_impl(
+            IronBee::Transaction& tx,
+            ActionSet&            actions
+        )
+        {
             boost::posix_time::ptime tx_start = tx.started_time();
 
             bool in_window =
@@ -966,7 +1010,7 @@ namespace {
             // If we are in the window specified (considering the 
             // m_invert member) then execute the associated action.
             if (in_window ^ m_invert) {
-                (*m_action)(tx);
+                actions.set(m_action);
             }
         }
     };
@@ -1029,8 +1073,11 @@ namespace {
          *
          * @param[in] tx The transaction to check.
          */
-        virtual void xrule_impl(IronBee::Transaction& tx) {
-
+        virtual void xrule_impl(
+            IronBee::Transaction& tx,
+            ActionSet&            actions
+        )
+        {
             const char *remote_ip = tx.effective_remote_ip_string();
             ib_ip4_t    ipv4;
             ib_ip6_t    ipv6;
@@ -1049,7 +1096,7 @@ namespace {
                 if (rc == IB_OK) {
                     action_ptr action =
                         IronBee::data_to_value<action_ptr>(entry->data);
-                    (*action)(tx);
+                    actions.set(action);
                 }
                 else {
                     ib_log_debug_tx(
@@ -1065,7 +1112,7 @@ namespace {
                 if (rc == IB_OK) {
                     action_ptr action =
                         IronBee::data_to_value<action_ptr>(entry->data);
-                    (*action)(tx);
+                    actions.set(action);
                 }
                 else {
                     ib_log_debug_tx(
@@ -1111,6 +1158,14 @@ public:
             .handle_response_header(
                 boost::bind(
                     &XRulesModule::on_handle_response_header,
+                    this,
+                    _1,
+                    _2
+                )
+            )
+            .transaction_started(
+                boost::bind(
+                    &XRulesModule::on_transaction_started,
                     this,
                     _1,
                     _2
@@ -1351,6 +1406,22 @@ private:
     }
 
     /**
+     * Create transaction data for the given transaction.
+     *
+     * @param[in] ib IronBee engine.
+     * @param[in] tx The transaction being started.
+     */
+    void on_transaction_started(
+        IronBee::Engine      ib,
+        IronBee::Transaction tx
+    )
+    {
+        xrules_module_tx_data_ptr txdata(new XRulesModuleTxData());
+
+        tx.set_module_data(module(), txdata);
+    }
+
+    /**
      * Run resp_xrules agianst responses.
      *
      * @param[in] ib IronBee engine.
@@ -1368,14 +1439,19 @@ private:
         IronBee::Context ctx = tx.context();
         XRulesModuleConfig &cfg =
             module().configuration_data<XRulesModuleConfig>(ctx);
+        ActionSet &actions = 
+            tx.get_module_data<xrules_module_tx_data_ptr>(module())
+                ->response_actions;
 
         for (
             std::list<xrule_ptr>::iterator itr = cfg.resp_xrules.begin();
             itr != cfg.resp_xrules.end();
             ++itr)
         {
-            (**itr)(tx);
+            (**itr)(tx, actions);
         }
+
+        actions.apply(tx);
     }
 
     /**
@@ -1396,16 +1472,20 @@ private:
         IronBee::Context ctx = tx.context();
         XRulesModuleConfig &cfg =
             module().configuration_data<XRulesModuleConfig>(ctx);
+        ActionSet &actions = 
+            tx.get_module_data<xrules_module_tx_data_ptr>(module())
+                ->request_actions;
 
         for (
             std::list<xrule_ptr>::iterator itr = cfg.req_xrules.begin();
             itr != cfg.req_xrules.end();
             ++itr)
         {
-            (**itr)(tx);
+            (**itr)(tx, actions);
         }
-    }
 
+        actions.apply(tx);
+    }
 };
 
 IBPP_BOOTSTRAP_MODULE_DELEGATE("XRulesModule", XRulesModule);
