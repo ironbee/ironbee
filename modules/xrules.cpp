@@ -650,6 +650,16 @@ namespace {
      */
     class XRule {
     private:
+
+        /**
+         * Throws IronBee::enotimpl and must be overridden by child classes.
+         *
+         * @param[in] tx Transaction to check.
+         * @param[in] actions The set of current actions.
+         *            Implementors may inspect this (such as using
+         *            ActionSet::overrides()) to check if
+         *            a XRule should even execute.
+         */
         virtual void xrule_impl(
             IronBee::Transaction& tx,
             ActionSet&            actions
@@ -660,6 +670,19 @@ namespace {
         }
 
     protected:
+        /**
+         * An action that this XRule may choose to use if a XRule succeeds.
+         *
+         * Child classes of XRule should use this if they carry a single
+         * action as a result of the XRule succeeding.
+         *
+         * Other classes, such as XRuleIP, do not use this filed,
+         * and it remains empty.
+         *
+         * This action is not implicitly added to any ActionSet. 
+         * An descendant of XRule must explicitly add m_action
+         * to an ActionSet in XRule::xrule_impl().
+         */
         action_ptr m_action;
 
         /**
@@ -721,7 +744,14 @@ namespace {
      * or may not be applied to a transaction.
      */
     struct XRulesModuleTxData {
+        /**
+         * Actions executed at the beginning of a request.
+         */
         ActionSet request_actions;
+
+        /**
+         * Actions executed at the beginning of a response.
+         */
         ActionSet response_actions;
     };
     typedef boost::shared_ptr<XRulesModuleTxData> xrules_module_tx_data_ptr;
@@ -744,11 +774,22 @@ namespace {
 
         //! Destructor.
         virtual ~XRuleGeo(){}
+
+        //! The field that is set.
         static const char *GEOIP_FIELD;
     private:
 
+        //! The country that will cause this rule to succeed if it matches.
         std::string m_country;
 
+        /**
+         * Check if GEOIP_FIELD is set to the value in m_country.
+         *
+         * If it is, the XRule succeeds and m_action is added to @a actions.
+         *
+         * @param[in] tx The transaction to check.
+         * @param[in] actions The current set of actions.
+         */
         virtual void xrule_impl(
             IronBee::Transaction& tx,
             ActionSet&            actions
@@ -788,6 +829,9 @@ namespace {
     };
     const char *XRuleGeo::GEOIP_FIELD = "GEOIP:country_code";
 
+    /**
+     * Check if a content type matches.
+     */
     class XRuleContentType : public XRule {
     public:
 
