@@ -34,14 +34,12 @@
 #include <ironbeepp/transaction.hpp>
 
 /* C includes. */
-extern "C" {
 #include <ironbee/engine.h>
 #include <ironbee/flags.h>
 #include <ironbee/ip.h>
 #include <ironbee/ipset.h>
 #include <ironbee/server.h>
 #include <ironbee/string.h>
-}
 
 #include <list>
 #include <vector>
@@ -142,6 +140,12 @@ namespace {
         }
 
     protected:
+        /**
+         * The priority of this action.
+         *
+         * The priority, if a lower number, (a higher priority), allows
+         * actions with the same Action::m_id to override others.
+         */
         int m_priority;
 
         /**
@@ -207,9 +211,21 @@ namespace {
 
     /**
      * A collection of actions to be applied.
+     * 
+     * Since Actions can override each other if their IDs match,
+     * this container of Actions is provided.
      */
     class ActionSet {
     public:
+        /**
+         * Set an action in this ActionSet.
+         *
+         * If @a action has a higher or equal priority than an existing
+         * action with the same ID, it is added. Otherwise, it is
+         * not added.
+         *
+         * @param[in] action The action to add.
+         */
         void set(action_ptr& action) {
             std::map<Action, action_ptr>::iterator itr =
                 m_actions.find(*action);
@@ -222,6 +238,11 @@ namespace {
             }
         }
 
+        /**
+         * Apply all actions in this ActionSet to @a tx.
+         *
+         * @param[in] tx The transaction to affect.
+         */
         void apply(IronBee::Transaction& tx) {
             for(
                 std::map<Action, action_ptr>::iterator itr = m_actions.begin();
@@ -233,6 +254,13 @@ namespace {
             }
         }
 
+        /**
+         * Check if a given action overrides an action in this set.
+         * This may be used to avoid executing a rule if it will not
+         * override an action.
+         *
+         * @param[in] action The action to check.
+         */
         bool overrides(action_ptr action) {
             std::map<Action, action_ptr>::iterator itr =
                 m_actions.find(*action);
@@ -245,7 +273,7 @@ namespace {
             }
         }
     private:
-        std::map<Action, action_ptr > m_actions;
+        std::map<Action, action_ptr> m_actions;
     };
 
     /**
@@ -726,27 +754,35 @@ namespace {
             ActionSet&            actions
         )
         {
-            ib_field_t *cfield;
-            ib_log_debug_tx(
-                tx.ib(),
-                "Running GEO Check for %s",
-                m_country.c_str());
+            if (actions.overrides(m_action)) {
+                ib_field_t *cfield;
+                ib_log_debug_tx(
+                    tx.ib(),
+                    "Running GEO Check for %s",
+                    m_country.c_str());
 
-            IronBee::throw_if_error(
-                ib_data_get_ex(
-                    tx.ib()->data,
-                    GEOIP_FIELD,
-                    strlen(GEOIP_FIELD),
-                    &cfield),
-                "Failed to retrieve GeoIP field.");
+                IronBee::throw_if_error(
+                    ib_data_get_ex(
+                        tx.ib()->data,
+                        GEOIP_FIELD,
+                        strlen(GEOIP_FIELD),
+                        &cfield),
+                    "Failed to retrieve GeoIP field.");
 
-            IronBee::ConstField field(cfield);
+                IronBee::ConstField field(cfield);
 
-            IronBee::ConstByteString bs(field.value_as_byte_string());
+                IronBee::ConstByteString bs(field.value_as_byte_string());
 
-            if (bs.index_of(m_country.c_str()) == 0) {
-                actions.set(m_action);
+                if (bs.index_of(m_country.c_str()) == 0) {
+                    actions.set(m_action);
+                }
             }
+            else {
+                ib_log_debug_tx(
+                    tx.ib(),
+                    "Skipping rule as action does not override tx actions.");
+            }
+
         }
 
     };
@@ -804,37 +840,47 @@ namespace {
             ActionSet&            actions
         )
         {
-            if (m_any) {
-                actions.set(m_action);
-            }
-            else {
-                ib_field_t         *field;
-                const ib_bytestr_t *bs;
-
-                // Fetch field.
-                IronBee::throw_if_error(
-                    ib_data_get(
-                        tx.ib()->data,
-                        m_field.c_str(),
-                        &field),
-                    "Failed to retrieve content type field.");
-
-                // Extract bs from field.
-                IronBee::throw_if_error(
-                    ib_field_value(field, ib_ftype_bytestr_out(&bs)),
-                    "Failed to extract byte string from content type field.");
-    
-                // Build a content type string.
-                const std::string content_type(
-                    reinterpret_cast<const char *>(ib_bytestr_const_ptr(bs)),
-                    ib_bytestr_length(bs));
-    
-                // Is the content type in the set.
-                if (
-                    m_content_types.find(content_type) != m_content_types.end()
-                ) {
+            if (actions.overrides(m_action)) {
+                if (m_any) {
                     actions.set(m_action);
                 }
+                else {
+                    ib_field_t         *field;
+                    const ib_bytestr_t *bs;
+
+                    // Fetch field.
+                    IronBee::throw_if_error(
+                        ib_data_get(
+                            tx.ib()->data,
+                            m_field.c_str(),
+                            &field),
+                        "Failed to retrieve content type field.");
+
+                    // Extract bs from field.
+                    IronBee::throw_if_error(
+                        ib_field_value(field, ib_ftype_bytestr_out(&bs)),
+                        "Failed to extract byte string from content type "
+                        "field.");
+    
+                    // Build a content type string.
+                    const std::string content_type(
+                        reinterpret_cast<const char *>(
+                            ib_bytestr_const_ptr(bs)),
+                        ib_bytestr_length(bs));
+    
+                    // Is the content type in the set.
+                    if (
+                        m_content_types.find(content_type) !=
+                            m_content_types.end()
+                    ) {
+                        actions.set(m_action);
+                    }
+                }
+            }
+            else {
+                ib_log_debug_tx(
+                    tx.ib(),
+                    "Skipping rule as action does not override tx actions.");
             }
         }
     };
@@ -858,8 +904,15 @@ namespace {
             ActionSet&            actions
         )
         {
-            if (m_path.find(tx.path()) == 0) {
-                actions.set(m_action);
+            if (actions.overrides(m_action)) {
+                if (m_path.find(tx.path()) == 0) {
+                    actions.set(m_action);
+                }
+            }
+            else {
+                ib_log_debug_tx(
+                    tx.ib(),
+                    "Skipping rule as action does not override tx actions.");
             }
         }
     };
@@ -992,25 +1045,34 @@ namespace {
             ActionSet&            actions
         )
         {
-            boost::posix_time::ptime tx_start = tx.started_time();
 
-            bool in_window =
-                m_start_time <= tx_start && m_end_time > tx_start;
+            if (actions.overrides(m_action)) {
+                boost::posix_time::ptime tx_start = tx.started_time();
+    
+                bool in_window =
+                    m_start_time <= tx_start && m_end_time > tx_start;
             
-            // If any days of the week are specified in our window...
-            if (m_days.size() > 0) {
-                // ...get the day of the week...
-                short dow = boost::gregorian::gregorian_calendar::day_of_week(
-                    tx_start.date().year_month_day());
+                // If any days of the week are specified in our window...
+                if (m_days.size() > 0) {
+                    // ...get the day of the week...
+                    short dow =
+                        boost::gregorian::gregorian_calendar::day_of_week(
+                            tx_start.date().year_month_day());
+    
+                    // ...and update the in_window boolean.
+                    in_window &= (m_days.find(dow) != m_days.end());
+                }
 
-                // ...and update the in_window boolean.
-                in_window &= (m_days.find(dow) != m_days.end());
+                // If we are in the window specified (considering the 
+                // m_invert member) then execute the associated action.
+                if (in_window ^ m_invert) {
+                    actions.set(m_action);
+                }
             }
-
-            // If we are in the window specified (considering the 
-            // m_invert member) then execute the associated action.
-            if (in_window ^ m_invert) {
-                actions.set(m_action);
+            else {
+                ib_log_debug_tx(
+                    tx.ib(),
+                    "Skipping rule as action does not override tx actions.");
             }
         }
     };
