@@ -1127,7 +1127,9 @@ static void modhtp_set_parser_flags(
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_ENCODED_NUL);
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_INVALID_ENCODING);
     MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_OVERLONG_U);
-    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, URLEN_HALF_FULL_RANGE);
+
+    /* HTP_AUTH_INVALID */
+    MODHTP_PROCESS_PARSER_FLAG(itx, collection, flags, AUTH_INVALID);
 
     /* If flags is not 0 we did not handle one (or more) of the bits. */
     if (flags != 0) {
