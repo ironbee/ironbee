@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee Modules --- EngineShutdown
+ * @brief IronBee Modules --- XRules
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
