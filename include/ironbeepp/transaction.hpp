@@ -32,6 +32,7 @@
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
+#include <ironbeepp/module.hpp>
 
 #include <ironbee/engine.h>
 
@@ -374,7 +375,8 @@ public:
      * @param[in] t The module data.
      * @throws IronBee errors on C API failures.
      */
-    template<typename T> void set_module_data(ConstModule m, T t);
+    template<typename T>
+    void set_module_data(ConstModule m, T t);
 
     /**
      * Return a reference to the stored module transaction data.
@@ -382,7 +384,8 @@ public:
      * @param[in] m The module that the data is stored for.
      * @throws IronBee errors on C API failures.
      */
-    template<typename T> T& get_module_data(ConstModule m);
+    template<typename T>
+    T& get_module_data(ConstModule m);
     
     /**
      * Create a new transaction.
@@ -405,6 +408,28 @@ public:
 private:
     ib_type m_ib;
 };
+
+template<typename T>
+void Transaction::set_module_data(ConstModule m, T t) {
+    void *v = value_to_data(t, memory_pool().ib());
+
+    throw_if_error(
+        ib_tx_set_module_data(ib(), m.ib(), v)
+    );
+}
+
+template<typename T>
+T& Transaction::get_module_data(ConstModule m)
+{
+    void *v = NULL;
+
+    throw_if_error(
+        ib_tx_get_module_data(ib(), m.ib(), &v)
+    );
+
+    return data_to_value<T>(v);
+}
+    
 
 /**
  * Output operator for Transaction.
