@@ -32,6 +32,14 @@ test_ibmod_engine_shutdown_LDADD = \
     $(LDADD) \
     $(top_builddir)/ironbeepp/libibpp.la
 
+check_PROGRAMS       += test_xrules
+test_xrules_SOURCES   = test_xrules.cpp
+test_xrules_CPPFLAGS  = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
+test_xrules_LDFLAGS   = $(AM_LDFLAGS) $(BOOST_LDFLAGS)
+test_xrules_LDADD     = \
+    $(LDADD) \
+    $(top_builddir)/ironbeepp/libibpp.la
+
 noinst_PROGRAMS = psparse
 psparse_LDADD = ../libparser_suite.la
 psparse_SOURCES = psparse.cpp

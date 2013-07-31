@@ -607,7 +607,7 @@ namespace {
     };
 
     /* ActionFactory Impl */
-    boost::regex ActionFactory::name_val_re("\\s*[^\\s]+(?:=([^\\s]*)\\s*");
+    boost::regex ActionFactory::name_val_re("\\s*[^\\s]+(?:=([^\\s]*))\\s*");
 
     ActionFactory::ActionFactory() {}
 
