@@ -214,8 +214,10 @@ namespace {
     }
 
     void Action::apply_impl(IronBee::Transaction& tx) const {
-        throw IronBee::enotimpl() <<
-            IronBee::errinfo_what("Action::apply_impl must be overridden.");
+        BOOST_THROW_EXCEPTION(
+            IronBee::enotimpl() <<
+                IronBee::errinfo_what("Action::apply_impl must be overridden.")
+        );
     }
     /* End Action Impl. */
 
@@ -578,8 +580,10 @@ namespace {
     action_ptr ActionFactory::build(const char *arg, int priority) {
         boost::cmatch mr;
         if (!boost::regex_match(arg, mr, m_re)) {
-            throw IronBee::einval()
-                << IronBee::errinfo_what("Cannot parse action.");
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval()
+                    << IronBee::errinfo_what("Cannot parse action.")
+            );
         }
 
         if (has_action(ACTION_BLOCK, mr)) {
@@ -700,9 +704,11 @@ namespace {
                     priority));
         }
         
-        throw IronBee::einval()
-            << IronBee::errinfo_what(
-                "Unknown action: "+std::string(mr[1]));
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval()
+                << IronBee::errinfo_what(
+                    "Unknown action: "+std::string(mr[1]))
+        );
     }
 
     bool ActionFactory::has_action(const char action[], boost::cmatch& m) {
@@ -784,8 +790,10 @@ namespace {
 
     void XRule::xrule_impl(IronBee::Transaction& tx, ActionSet& actions)
     {
-        throw IronBee::enotimpl()
-            << IronBee::errinfo_what("XRules must implement xrule_impl.");
+        BOOST_THROW_EXCEPTION(
+            IronBee::enotimpl()
+                << IronBee::errinfo_what("XRules must implement xrule_impl.")
+        );
     }
 
     typedef boost::shared_ptr<XRule> xrule_ptr;
@@ -1159,8 +1167,10 @@ namespace {
         boost::local_time::time_zone_ptr zone_info;
 
         if (!boost::regex_match(time, mr, re)) {
-            throw IronBee::einval()
-                << IronBee::errinfo_what("Cannot parse time.");
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval()
+                    << IronBee::errinfo_what("Cannot parse time.")
+            );
         }
 
         if (mr[1] == "!") {
@@ -1336,8 +1346,10 @@ namespace {
 
         // Check IP lists.
         if (remote_ip == NULL) {
-            throw IronBee::einval() 
-                << IronBee::errinfo_what("No remote IP available.");
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() 
+                    << IronBee::errinfo_what("No remote IP available.")
+            );
         }
         else if (IB_OK == ib_ip4_str_to_ip(remote_ip, &ipv4)) {
             const ib_ipset4_entry_t *entry;
@@ -1372,8 +1384,10 @@ namespace {
             }
         }
         else {
-            throw IronBee::enoent() 
-                << IronBee::errinfo_what("Cannot convert IP to v4 or v6.");
+            BOOST_THROW_EXCEPTION(
+                IronBee::enoent() 
+                    << IronBee::errinfo_what("Cannot convert IP to v4 or v6.")
+            );
         }
     }
     /* End RuleIP Impl */
@@ -1656,8 +1670,10 @@ action_ptr XRulesModule::parse_action(
     }
 
     if (action_text == NULL) {
-        throw IronBee::einval()
-            << IronBee::errinfo_what("No action text.");
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval()
+                << IronBee::errinfo_what("No action text.")
+        );
     }
 
     ib_cfg_log_debug(
