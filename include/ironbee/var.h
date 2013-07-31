@@ -124,7 +124,7 @@ NONNULL_ATTRIBUTE(1);
 /**@}*/
 
 /**
- * @defgroup IronBeeEngineVarStore Data Store
+ * @defgroup IronBeeEngineVarStore Var Store
  *
  * Map source to values.
  *
@@ -407,6 +407,98 @@ ib_status_t DLL_PUBLIC ib_var_source_initialize(
     ib_ftype_t        ftype
 )
 NONNULL_ATTRIBUTE(1, 3);
+
+/** @} */
+
+/**
+ * @defgroup IronBeeEngineVarStore Var Filter
+ *
+ * Select subkeys of a source.
+ *
+ * Filters reduced a list source to a shorter list.  They do this is one of
+ * three ways:
+ *
+ * 1. The filter may be a regexp filter (indicated by enclosing in slashes)
+ *    in which case, the result is all elements of the list whose name
+ *    matches the regexp.
+ * 2. The filter may be a string, in which case, the result is all elements
+ *    of the list whose name matches the string, case insensitive.
+ * 3. The field may be a dynamic list field, in which case the filter is
+ *    passed to it without interpretation.  If the result is a list, it is
+ *    provided.  Otherwise, an error results.
+ *
+ * @{
+ **/
+
+/**
+ * A filter.
+ *
+ * A selection criteria to apply to a list of fields.
+ **/
+typedef struct ib_var_filter_t ib_var_filter_t;
+
+/**
+ * Prepare a filter
+ *
+ * This function prepares a filter for later use.  At present, the primary
+ * advantage of for regexp filters, but future filter functionality may also
+ * take advantage of it.  As such, this should be called at configuration time
+ * whenever possible.
+ *
+ * If @a filter_string begins and ends with a forward slash, the text between
+ * the slashes will be  compiled as a regular expression.
+ *
+ * @param[out] filter               Filter prepared.  Filter will have
+ *                                  lifetime equal to  @a mp.
+ * @param[in]  mp                   Memory pool to use.
+ * @param[in]  filter_string        Filter string to prepare.
+ * @param[in]  filter_string_length Length of @a filter_string.
+ * @param[out] error_message        Where to store an error message on
+ *                                  regexp compile failure.  May be NULL;
+ *                                  should not be freed.
+ * @param[out] error_offset         Where in regexp, error occurred.  May be
+ *                                  NULL.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL if @a filter_string is invalid.  Invalid strings include the
+ *   empty string, an invalid regexp specification.
+ **/
+ib_status_t DLL_PUBLIC ib_var_filter_prepare(
+    ib_var_filter_t **filter,
+    ib_mpool_t       *mp,
+    const char       *filter_string,
+    size_t            filter_string_length,
+    const char      **error_message,
+    int              *error_offset
+)
+NONNULL_ATTRIBUTE(1, 2, 3);
+
+/**
+ * Apply a filter, read only version.
+ *
+ * Apply @a filter to the collection @a field and store results in
+ * @a result.
+ *
+ * @param[in]  filter Filter to apply.
+ * @param[out] result Results.  Value is `const ib_field_t *`.  Lifetime is
+ *                    equal to @a mp.
+ * @parma[in]  mp     Memory pool to use.
+ * @param[in]  field  Field to apply filter to.  Must be a field with value a
+ *                    list of `const ib_field_t *`.
+ * @result
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL if @a field is not of type list.
+ * - IB_EOTHER if @a field is dynamic and dynamic query results in error.
+ **/
+ib_status_t DLL_PUBLIC ib_var_filter_apply(
+    const ib_var_filter_t  *filter,
+    const ib_list_t       **result,
+    ib_mpool_t             *mp,
+    const ib_field_t       *field
+)
+NONNULL_ATTRIBUTE(1, 2, 3);
 
 /** @} */
 
