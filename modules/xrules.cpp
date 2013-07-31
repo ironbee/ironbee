@@ -65,7 +65,6 @@ namespace {
     //! Enable Blocking Mode action text.
     const char ACTION_ENABLEBLOCKINGMODE[] = "EnableBlockingMode";
 
-
     //! Disable Blocking Mode action text.
     const char ACTION_DISABLEBLOCKINGMODE[] = "DisableBlockingMode";
 
@@ -121,12 +120,15 @@ namespace {
         "DisableResponseBodyInspection";
 
     /**
-     * An action is a change to a transaction data object.
+     * An action is a change to a transaction object.
      *
-     * This includes a priority. If a particular priority is higher than
-     * that which set a previous value, then no action is taken.
+     * Actions have priorities and ids. If two actions have the same ID, then
+     * they have conflicting effects and only one should be executed. The
+     * one with the lower value for m_priority (or, the higher priority)
+     * is preferred. The lower priority action should be discarded.
      */
     class Action {
+
     private:
 
         /**
@@ -134,7 +136,7 @@ namespace {
          *
          * This function must be overridden.
          */
-        virtual void apply_impl(IronBee::Transaction& tx) const;
+        virtual void apply_impl(IronBee::Transaction tx) const;
 
     protected:
         /**
@@ -143,14 +145,16 @@ namespace {
          * The priority, if a lower number, (a higher priority), allows
          * actions with the same Action::m_id to override others.
          */
-        int m_priority;
+        const int m_priority;
 
         /**
-         * Unique identifier of this action type.
+         * Unique identifier of what this action affects.
          *
-         * Class name is sufficient.
+         * Actions that have conflicting results should have conflicting IDs.
+         *
+         * Actions with unrelated results should not different IDs.
          */
-        std::string m_id;
+        const std::string m_id;
 
         /**
          * Constructor of an action.
@@ -164,23 +168,32 @@ namespace {
     public:
 
         /**
-         * Return if the given Action overrides @c this action.
+         * Return if the given Action overrides @c *this action.
+         *
+         * Actions of the same id and equal priority may override each
+         * other. That is, it is possible to have two actions,
+         * {{action1}} and {{action2}} with the same ID and equal priority:
+         *
+         * @code
+         * action1.overrides(action2) == true;
+         * action2.overrides(action1) == true;
+         * @endcode
          *
          * @param[in] that The Action we would like to use to 
          *            update this action.
          *
-         * @returns True if @a that should superceed @c *this.
+         * @returns True if @a that should override @c *this.
          */
         bool overrides(const Action& that);
 
         /**
          * Apply this action to the transaction.
          *
-         * Decendants must implement this.
+         * Descendants must implement this.
          *
          * @param[in] tx Transaction.
          */
-        void operator()(IronBee::Transaction& tx);
+        void operator()(IronBee::Transaction tx);
 
         /**
          * Defined comparison of Actions to allow use in std::map.
@@ -193,27 +206,35 @@ namespace {
          */
         bool operator<(const Action &that) const;
 
+        //! Destructor.
         virtual ~Action();
     };
     typedef boost::shared_ptr<Action> action_ptr;
 
     /* Action Impl. */
-    Action::Action(std::string id, int priority) : m_priority(priority) {}
-    Action::~Action() {}
+    Action::Action(std::string id, int priority) : m_priority(priority)
+    {}
 
-    void Action::operator()(IronBee::Transaction& tx) {
+    Action::~Action()
+    {}
+
+    void Action::operator()(IronBee::Transaction tx)
+    {
         apply_impl(tx);
     }
 
-    bool Action::operator<(const Action &that) const {
+    bool Action::operator<(const Action &that) const
+    {
         return m_id < that.m_id;
     }
 
-    bool Action::overrides(const Action& that) {
+    bool Action::overrides(const Action& that)
+    {
         return (m_priority >= that.m_priority && m_id == that.m_id);
     }
 
-    void Action::apply_impl(IronBee::Transaction& tx) const {
+    void Action::apply_impl(IronBee::Transaction tx) const
+    {
         BOOST_THROW_EXCEPTION(
             IronBee::enotimpl() <<
                 IronBee::errinfo_what("Action::apply_impl must be overridden.")
@@ -245,7 +266,7 @@ namespace {
          *
          * @param[in] tx The transaction to affect.
          */
-        void apply(IronBee::Transaction& tx);
+        void apply(IronBee::Transaction tx);
 
         /**
          * Check if a given action overrides an action in this set.
@@ -255,12 +276,14 @@ namespace {
          * @param[in] action The action to check.
          */
         bool overrides(action_ptr action);
+
     private:
         std::map<Action, action_ptr> m_actions;
     };
 
     /* ActionSet Impl */
-    void ActionSet::set(action_ptr& action) {
+    void ActionSet::set(action_ptr& action)
+    {
         std::map<Action, action_ptr>::iterator itr =
             m_actions.find(*action);
 
@@ -272,18 +295,19 @@ namespace {
         }
     }
 
-    void ActionSet::apply(IronBee::Transaction& tx) {
+    void ActionSet::apply(IronBee::Transaction tx)
+    {
         for(
             std::map<Action, action_ptr>::iterator itr = m_actions.begin();
             itr != m_actions.end();
             ++itr
-        )
-        {
+        ) {
             (*(itr->second))(tx);
         }
     }
 
-    bool ActionSet::overrides(action_ptr action) {
+    bool ActionSet::overrides(action_ptr action)
+    {
         std::map<Action, action_ptr>::iterator itr =
             m_actions.find(*action);
 
@@ -310,15 +334,16 @@ namespace {
          */
         BlockAllow(bool block, int priority);
 
-        virtual ~BlockAllow();
     private:
         //! Block or allow the transaction.
         bool m_block;
 
         /**
-         * Apply the transaction.
+         * Set the block or allow flags in the @a tx.
+         *
+         * @param[in] tx The transaction to modify.
          */
-        virtual void apply_impl(IronBee::Transaction& tx) const;
+        virtual void apply_impl(IronBee::Transaction tx) const;
     };
 
     /* BlockAllow Impl */
@@ -328,9 +353,8 @@ namespace {
         m_block(block)
     {}
 
-    BlockAllow::~BlockAllow(){}
-
-    void BlockAllow::apply_impl(IronBee::Transaction& tx) const {
+    void BlockAllow::apply_impl(IronBee::Transaction tx) const
+    {
         if (m_block) {
             tx.ib()->flags |= IB_TX_BLOCK_IMMEDIATE;
             tx.ib()->flags &= ~(IB_TX_ALLOW_ALL);
@@ -343,20 +367,25 @@ namespace {
     /* End BlockAllow Impl */
 
     /**
-     * Mimics the setvar action in IronBee's core rule actions.
+     * Set a particular flag in ib_tx_t::flags.
      *
      * This is done by setting a flag in ib_tx_t::flags and setting
      * a numeric value in ib_tx_t::data to 1 or 0.
      */
     class SetFlag : public Action {
+
     public:
 
         /**
          * Constructor.
          *
-         * @param[in] field_name The name of the field to set to 1 or 0
+         * @param[in] field_name The name of the var to set to 1 or 0
          *            depending on if the flag is turned on or off.
-         * @param[in] flag The flag in ib_tx_t::flags to set or clear.
+         * @param[in] flag A field of bits to be set or cleared.
+         *            Typical usage should be to set a single 
+         *            bit in the bit field (a single flag),
+         *            but treating multiple bits being set or cleared
+         *            is not prevented from working.
          * @param[in] clear If true, then the flag is cleared. If false, the
          *            flag is set.
          * @param[in] priority Sets the priority of this action to control
@@ -368,9 +397,7 @@ namespace {
             bool clear,
             int priority
         );
-        
-        //! Destructor.
-        virtual ~SetFlag();
+
     private:
         //! The name of the field to set.
         std::string m_field_name;
@@ -386,7 +413,7 @@ namespace {
          *
          * @param[in] tx The transaction to be modified.
          */
-        virtual void apply_impl(IronBee::Transaction& tx) const;
+        virtual void apply_impl(IronBee::Transaction tx) const;
     };
 
     /* SetFlag Impl */
@@ -402,9 +429,9 @@ namespace {
         m_flag(flag),
         m_clear(clear)
     {}
-    SetFlag::~SetFlag(){}
 
-    void SetFlag::apply_impl(IronBee::Transaction& tx) const {
+    void SetFlag::apply_impl(IronBee::Transaction tx) const
+    {
         ib_num_t val;
 
         if (m_clear) {
@@ -426,6 +453,7 @@ namespace {
      * Set @c XRULES:SCALE_THREAT in tx.
      */
     class ScaleThreat : public Action {
+
     public:
 
         /**
@@ -439,8 +467,6 @@ namespace {
             int priority
         );
 
-        //! Destructor.
-        virtual ~ScaleThreat();
     private:
 
         //! The value set in the transaction.
@@ -451,8 +477,10 @@ namespace {
 
         /**
          * Set ScaleThreat::FIELD_NAME to ScaleThreat::m_fnum.
+         *
+         * @param[in] tx The transaction to modify.
          */
-        virtual void apply_impl(IronBee::Transaction& tx) const;
+        virtual void apply_impl(IronBee::Transaction tx) const;
     };
     const std::string ScaleThreat::FIELD_NAME = "XRULES:SCALE_THREAT";
 
@@ -466,9 +494,8 @@ namespace {
         m_fnum(fnum)
     {}
 
-    ScaleThreat::~ScaleThreat(){}
-
-    void ScaleThreat::apply_impl(IronBee::Transaction& tx) const {
+    void ScaleThreat::apply_impl(IronBee::Transaction tx) const
+    {
         IronBee::Field f = IronBee::Field::create_float(
             tx.memory_pool(),
             FIELD_NAME.c_str(),
@@ -485,6 +512,7 @@ namespace {
      * Sets XRULE:BLOCKING_MODE = ENABLED | DISABLED.
      */
     class SetBlockingMode : public Action {
+
     public:
 
         /**
@@ -496,13 +524,12 @@ namespace {
          *            if it may be overridden.
          */
         SetBlockingMode(bool enabled, int priority);
-        
-        //! Destructor.
-        virtual ~SetBlockingMode();
+
     private:
         //! Set the field to enabled or disabled.
         bool m_enabled;
 
+        //! The name of the field to mark as blocked.
         static const std::string FIELD_NAME;
 
         /**
@@ -510,8 +537,9 @@ namespace {
          *
          * @param[in] tx The transaction to be modified.
          */
-        virtual void apply_impl(IronBee::Transaction& tx) const;
+        virtual void apply_impl(IronBee::Transaction tx) const;
     };
+
     /* SetBlockingMode Impl */
     SetBlockingMode::SetBlockingMode(bool enabled, int priority)
     :
@@ -519,8 +547,8 @@ namespace {
         m_enabled(enabled)
     {}
         
-    SetBlockingMode::~SetBlockingMode(){}
-    void SetBlockingMode::apply_impl(IronBee::Transaction& tx) const {
+    void SetBlockingMode::apply_impl(IronBee::Transaction tx) const
+    {
 
         IronBee::ByteString bs = IronBee::ByteString::create(
             tx.memory_pool(),
@@ -536,7 +564,7 @@ namespace {
             ib_data_add(tx.ib()->data, f.ib()),
             "Failed to set XRULES:BLOCKING_MODE.");
     }
-    const std::string SetBlockingMode::FIELD_NAME = "XRULES:SCALE_THREAT";
+    const std::string SetBlockingMode::FIELD_NAME = "XRULES:BLOCKING_MODE";
     /* End SetBlockingMode Impl */
 
 
@@ -544,6 +572,7 @@ namespace {
      * Parses and builds appropriate actions.
      */
     class ActionFactory {
+
     public:
         //! Constructor.
         ActionFactory();
@@ -556,9 +585,10 @@ namespace {
          * @param[out] action A concrete action derived from Action.
          */
         action_ptr build(const char *arg, int priority);
+
     private:
         //! The regular expression used to parse out action name and param.
-        boost::regex m_re;
+        static boost::regex name_val_re;
 
         /**
          * Check if the given match has an action.
@@ -572,14 +602,14 @@ namespace {
     };
 
     /* ActionFactory Impl */
-    ActionFactory::ActionFactory() 
-    :
-        m_re("\\s*[^\\s]+(?:=([^\\s]*)\\s*")
-    {}
+    boost::regex ActionFactory::name_val_re("\\s*[^\\s]+(?:=([^\\s]*)\\s*");
 
-    action_ptr ActionFactory::build(const char *arg, int priority) {
+    ActionFactory::ActionFactory() {}
+
+    action_ptr ActionFactory::build(const char *arg, int priority)
+    {
         boost::cmatch mr;
-        if (!boost::regex_match(arg, mr, m_re)) {
+        if (!boost::regex_match(arg, mr, name_val_re)) {
             BOOST_THROW_EXCEPTION(
                 IronBee::einval()
                     << IronBee::errinfo_what("Cannot parse action.")
@@ -711,7 +741,8 @@ namespace {
         );
     }
 
-    bool ActionFactory::has_action(const char action[], boost::cmatch& m) {
+    bool ActionFactory::has_action(const char action[], boost::cmatch& m)
+    {
         return action == m[1];
     }
     /* End ActionFactory Impl */
@@ -720,10 +751,11 @@ namespace {
      * A rule is a check (defined by the XRule class) and an action.
      */
     class XRule {
+
     private:
 
         /**
-         * Throws IronBee::enotimpl and must be overridden by child classes.
+         * Throws IronBee::enotimpl() and must be overridden by child classes.
          *
          * @param[in] tx Transaction to check.
          * @param[in] actions The set of current actions.
@@ -731,7 +763,7 @@ namespace {
          *            ActionSet::overrides()) to check if
          *            a XRule should even execute.
          */
-        virtual void xrule_impl(IronBee::Transaction& tx, ActionSet& actions);
+        virtual void xrule_impl(IronBee::Transaction tx, ActionSet& actions);
 
     protected:
         /**
@@ -750,7 +782,7 @@ namespace {
         action_ptr m_action;
 
         /**
-         * Constructor only decendants can call.
+         * Constructor only descendants can call.
          *
          * @param[in] action The action to execute.
          */
@@ -770,17 +802,18 @@ namespace {
          *
          * @returns The action to execute.
          */
-        void operator()(IronBee::Transaction &tx, ActionSet &actions);
+        void operator()(IronBee::Transaction tx, ActionSet &actions);
 
         //! Destructor.
-        ~XRule();
+        virtual ~XRule();
     };
 
     /* XRule Impl */
     XRule::~XRule() {}
+
     XRule::XRule() {}
 
-    void XRule::operator()(IronBee::Transaction &tx, ActionSet &actions) {
+    void XRule::operator()(IronBee::Transaction tx, ActionSet &actions) {
         xrule_impl(tx, actions);
     }
 
@@ -788,7 +821,7 @@ namespace {
         m_action.swap(action);
     }
 
-    void XRule::xrule_impl(IronBee::Transaction& tx, ActionSet& actions)
+    void XRule::xrule_impl(IronBee::Transaction tx, ActionSet& actions)
     {
         BOOST_THROW_EXCEPTION(
             IronBee::enotimpl()
@@ -799,10 +832,11 @@ namespace {
     typedef boost::shared_ptr<XRule> xrule_ptr;
     /* End XRule Impl */
 
-   /**
-    * Module configuration.
-    */
+    /**
+     * Module configuration.
+     */
     class XRulesModuleConfig {
+
     public:
         //! List of IPv4 configurations.
         std::vector<ib_ipset4_entry_t> ipv4_list;
@@ -841,6 +875,7 @@ namespace {
      * An XRule that checks the two-character country code.
      */
     class XRuleGeo : public XRule {
+
     public:
         /**
          * Constructor.
@@ -849,11 +884,9 @@ namespace {
          */
         XRuleGeo(const char *country, action_ptr action);
 
-        //! Destructor.
-        virtual ~XRuleGeo();
-
         //! The field that is set.
         static const char *GEOIP_FIELD;
+
     private:
 
         //! The country that will cause this rule to succeed if it matches.
@@ -867,7 +900,7 @@ namespace {
          * @param[in] tx The transaction to check.
          * @param[in] actions The current set of actions.
          */
-        virtual void xrule_impl(IronBee::Transaction& tx, ActionSet& actions);
+        virtual void xrule_impl(IronBee::Transaction tx, ActionSet& actions);
     };
 
     /* XRuleGeo Impl */
@@ -877,9 +910,7 @@ namespace {
         m_country(country)
     {}
 
-    XRuleGeo::~XRuleGeo(){}
-
-    void XRuleGeo::xrule_impl(IronBee::Transaction& tx, ActionSet& actions) {
+    void XRuleGeo::xrule_impl(IronBee::Transaction tx, ActionSet& actions) {
         if (actions.overrides(m_action)) {
             ib_field_t *cfield;
             ib_log_debug_tx(
@@ -917,6 +948,7 @@ namespace {
      * Check if a content type matches.
      */
     class XRuleContentType : public XRule {
+
     public:
 
         /**
@@ -928,7 +960,6 @@ namespace {
             const std::string field
         );
 
-        virtual ~XRuleContentType();
     private:
         bool                  m_any;
         action_ptr            m_action;
@@ -936,7 +967,7 @@ namespace {
         std::set<std::string> m_content_types;
 
         virtual void xrule_impl(
-            IronBee::Transaction& tx,
+            IronBee::Transaction tx,
             ActionSet&            actions
         );
     };
@@ -972,10 +1003,8 @@ namespace {
         }
     }
 
-    XRuleContentType::~XRuleContentType(){}
-
     void XRuleContentType::xrule_impl(
-        IronBee::Transaction& tx,
+        IronBee::Transaction tx,
         ActionSet&            actions
     )
     {
@@ -1002,16 +1031,12 @@ namespace {
                     "field.");
 
                 // Build a content type string.
-                const std::string content_type(
-                    reinterpret_cast<const char *>(
-                        ib_bytestr_const_ptr(bs)),
-                    ib_bytestr_length(bs));
+                const std::string content_type = 
+                    IronBee::ConstByteString(bs).to_s();
 
                 // Is the content type in the set.
-                if (
-                    m_content_types.find(content_type) !=
-                        m_content_types.end()
-                ) {
+                if (m_content_types.count(content_type) > 0)
+                {
                     actions.set(m_action);
                 }
             }
@@ -1028,6 +1053,7 @@ namespace {
      * Check that the request path prefix starts with a known string.
      */
     class XRulePath : public XRule {
+
     public:
         /**
          * Constructor.
@@ -1036,8 +1062,6 @@ namespace {
          */
         XRulePath(const char *path, action_ptr action);
 
-        //! Destructor.
-        virtual ~XRulePath();
     private:
         //! Path to check the HTTP request for.
         std::string m_path;
@@ -1049,7 +1073,7 @@ namespace {
          * @param[in] actions The action set to modify if a match is found.
          */
         virtual void xrule_impl(
-            IronBee::Transaction& tx,
+            IronBee::Transaction tx,
             ActionSet&            actions
         );
     };
@@ -1060,15 +1084,15 @@ namespace {
         m_path(path)
     {}
 
-    XRulePath::~XRulePath(){}
-
     void XRulePath::xrule_impl(
-        IronBee::Transaction& tx,
+        IronBee::Transaction tx,
         ActionSet&            actions
     )
     {
         if (actions.overrides(m_action)) {
-            if (m_path.find(tx.path()) == 0) {
+            const std::string tx_path(tx.path());
+
+            if (m_path.compare(0, tx_path.length(), tx_path) == 0) {
                 actions.set(m_action);
             }
         }
@@ -1084,20 +1108,20 @@ namespace {
      * Check if the start time of a tx falls in (or out of) a time window.
      */
     class XRuleTime : public XRule {
+
     public:
         /**
          * Constructor.
          * @param[in] time Time window string.
          *            This should be of the format
-         *            - !1,2,3,4,5@08:00-17:00-0600
+         *            // FIXME - document format.
+         *            - !1,2,3,4,5@08:00-17:00-0600 
          *            - 1@08:00-17:00+0200
          * @param[in] action The action executed if a given 
          *            IronBee::Transaction started in the @a time window.
          */
         XRuleTime(const char *time, action_ptr action);
 
-        //! Destructor.
-        virtual ~XRuleTime();
     private:
         //! A set of days of the week (0 through 6 where 0 is Sunday).
         std::set<int> m_days;
@@ -1148,7 +1172,7 @@ namespace {
          * Otherwise the action is not executed.
          */
         virtual void xrule_impl(
-            IronBee::Transaction& tx,
+            IronBee::Transaction tx,
             ActionSet&            actions
         );
     };
@@ -1158,10 +1182,10 @@ namespace {
         XRule(action),
         m_invert(false)
     {
-        assert(time != NULL);
+        assert(time);
 
         boost::cmatch mr;
-        boost::regex re(
+        static const boost::regex re(
             "(?:(!?)([\\d,]+)@)?"
             "(\\d\\d:\\d\\d)-(\\d\\d:\\d\\d)([+-]\\d\\d\\d\\d)");
         boost::local_time::time_zone_ptr zone_info;
@@ -1200,8 +1224,6 @@ namespace {
         m_end_time   += zone_info->base_utc_offset();
     }
 
-    XRuleTime::~XRuleTime(){}
-
     void XRuleTime::parse_time_zone(
         const char*                       str,
         boost::local_time::time_zone_ptr& zone
@@ -1229,7 +1251,7 @@ namespace {
     }
 
     void XRuleTime::xrule_impl(
-        IronBee::Transaction& tx,
+        IronBee::Transaction tx,
         ActionSet&            actions
     )
     {
@@ -1285,20 +1307,18 @@ namespace {
          *            context. The IPv4 and IPv6 lists are used from
          *            this configuration context to build the final rule.
          */
-        XRuleIP(XRulesModuleConfig& cfg);
+        explicit XRuleIP(XRulesModuleConfig& cfg);
 
-        //! Destructor.
-        virtual ~XRuleIP();
     private:
 
-        //! Built searching of the positive ipv4_list.
+        //! IPv4 set holding pointers to Actions.
         ib_ipset4_t m_ipset4;
 
-        //! Built searching of the positive ipv6_list.
+        //! IPv6 set holding pointers to Actions.
         ib_ipset6_t m_ipset6;
 
         /**
-         * Check if the @a tx's remote ip is mapped to an action.
+         * Check if @a tx's remote ip is mapped to an action.
          *
          * This is done by taking 
          * IronBee::Transaction::effective_remote_ip_string()
@@ -1307,9 +1327,10 @@ namespace {
          * XRuleIP::m_ipset4 or XRuleIP::m_ipset6, respectively.
          *
          * @param[in] tx The transaction to check.
+         * @param[in] actions The ActionSet to edit.
          */
         virtual void xrule_impl(
-            IronBee::Transaction& tx,
+            IronBee::Transaction tx,
             ActionSet&            actions
         );
     };
@@ -1331,10 +1352,8 @@ namespace {
             cfg.ipv6_list.size());
     }
 
-    XRuleIP::~XRuleIP() {}
-
     void XRuleIP::xrule_impl(
-        IronBee::Transaction& tx,
+        IronBee::Transaction tx,
         ActionSet&            actions
     )
     {
@@ -1435,91 +1454,11 @@ private:
     );
 
     /**
-     * Response content type xrule.
-     *
      * @param[in] cp Configuration parser.
      * @param[in] name Directive name.
      * @param[in] params List of const char * parameters.
      */
-    void rule_respct_directive(
-        IronBee::ConfigurationParser      cp,
-        const char *                      name,
-        IronBee::ConstList<const char *>  params
-    );
-
-    /**
-     * Request content type xrule.
-     *
-     * @param[in] cp Configuration parser.
-     * @param[in] name Directive name.
-     * @param[in] params List of const char * parameters.
-     */
-    void rule_reqct_directive(
-        IronBee::ConfigurationParser      cp,
-        const char *                      name,
-        IronBee::ConstList<const char *>  params
-    );
-
-    /**
-     * Time window xrule.
-     *
-     * @param[in] cp Configuration parser.
-     * @param[in] name Directive name.
-     * @param[in] params List of const char * parameters.
-     */
-    void rule_time_directive(
-        IronBee::ConfigurationParser      cp,
-        const char *                      name,
-        IronBee::ConstList<const char *>  params
-    );
-
-    /**
-     * Path prefix xrule.
-     *
-     * @param[in] cp Configuration parser.
-     * @param[in] name Directive name.
-     * @param[in] params List of const char * parameters.
-     */
-    void rule_path_directive(
-        IronBee::ConfigurationParser      cp,
-        const char *                      name,
-        IronBee::ConstList<const char *>  params
-    );
-
-    /**
-     * Geo xrule.
-     *
-     * @param[in] cp Configuration parser.
-     * @param[in] name Directive name.
-     * @param[in] params List of const char * parameters.
-     */
-    void rule_geo_directive(
-        IronBee::ConfigurationParser      cp,
-        const char *                      name,
-        IronBee::ConstList<const char *>  params
-    );
-
-    /**
-     * Client's IP address, version 4 xrule.
-     *
-     * @param[in] cp Configuration parser.
-     * @param[in] name Directive name.
-     * @param[in] params List of const char * parameters.
-     */
-    void rule_ipv4_directive(
-        IronBee::ConfigurationParser      cp,
-        const char *                      name,
-        IronBee::ConstList<const char *>  params
-    );
-
-    /**
-     * Client's IP address, version 6 xrule.
-     *
-     * @param[in] cp Configuration parser.
-     * @param[in] name Directive name.
-     * @param[in] params List of const char * parameters.
-     */
-    void rule_ipv6_directive(
+    void xrule_directive(
         IronBee::ConfigurationParser      cp,
         const char *                      name,
         IronBee::ConstList<const char *>  params
@@ -1612,31 +1551,31 @@ XRulesModule::XRulesModule(IronBee::Module module) :
         list(
             "XRuleIpv4",
             boost::bind(
-                &XRulesModule::rule_ipv4_directive, this, _1, _2, _3)).
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
         list(
             "XRuleIpv6",
             boost::bind(
-                &XRulesModule::rule_ipv6_directive, this, _1, _2, _3)).
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
         list(
             "XRuleGeo",
             boost::bind(
-                &XRulesModule::rule_geo_directive, this, _1, _2, _3)).
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
         list(
             "XRulePath",
             boost::bind(
-                &XRulesModule::rule_path_directive, this, _1, _2, _3)).
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
         list(
             "XRuleTime",
             boost::bind(
-                &XRulesModule::rule_time_directive, this, _1, _2, _3)).
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
         list(
             "XRuleRequestContentType",
             boost::bind(
-                &XRulesModule::rule_reqct_directive, this, _1, _2, _3)).
+                &XRulesModule::xrule_directive, this, _1, _2, _3)).
         list(
             "XRuleResponseContentType",
             boost::bind(
-                &XRulesModule::rule_respct_directive, this, _1, _2, _3));
+                &XRulesModule::xrule_directive, this, _1, _2, _3));
 
     module.set_configuration_data<XRulesModuleConfig>();
 }
@@ -1664,7 +1603,7 @@ action_ptr XRulesModule::parse_action(
 
     for (++itr; itr != list.end(); ++itr)
     {
-        if (strncmp("priority=", *itr, sizeof("priority="))==0) {
+        if (std::string("priority=") == *itr) {
             priority = atoi(*itr);
         }
     }
@@ -1685,133 +1624,86 @@ action_ptr XRulesModule::parse_action(
     return m_action_factory.build(action_text, priority);
 }
 
-void XRulesModule::rule_respct_directive(
+void XRulesModule::xrule_directive(
     IronBee::ConfigurationParser      cp,
     const char *                      name,
     IronBee::ConstList<const char *>  params
 )
 {
-    IronBee::Context ctx = cp.current_context();
-    XRulesModuleConfig &cfg =
-        module().configuration_data<XRulesModuleConfig>(ctx);
-
-    cfg.resp_xrules.push_back(
-        xrule_ptr(
-            new XRuleContentType(
-                params.front(),
-                parse_action(cp, params),
-                "RESPONSE_CONTENT_TYPE")));
-}
-
-void XRulesModule::rule_reqct_directive(
-    IronBee::ConfigurationParser      cp,
-    const char *                      name,
-    IronBee::ConstList<const char *>  params
-)
-{
-    IronBee::Context ctx = cp.current_context();
-    XRulesModuleConfig &cfg =
-        module().configuration_data<XRulesModuleConfig>(ctx);
-
-    cfg.req_xrules.push_back(
-        xrule_ptr(
-            new XRuleContentType(
-                params.front(),
-                parse_action(cp, params),
-                "REQUEST_CONTENT_TYPE")));
-}
-
-void XRulesModule::rule_time_directive(
-    IronBee::ConfigurationParser      cp,
-    const char *                      name,
-    IronBee::ConstList<const char *>  params
-)
-{
-    IronBee::Context ctx = cp.current_context();
+    std::string        name_str(name);
+    IronBee::Context   ctx = cp.current_context();
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
     
-    cfg.req_xrules.push_back(
-        xrule_ptr(
-            new XRuleTime(params.front(), parse_action(cp, params))));
-}
+    if (name_str == "XRuleIpv4") {
+        // Copy in an empty, uninitialized ipset entry.
+        cfg.ipv4_list.push_back(ib_ipset4_entry_t());
+        ib_ipset4_entry_t &ipset_entry = cfg.ipv4_list.back();
 
-void XRulesModule::rule_path_directive(
-    IronBee::ConfigurationParser      cp,
-    const char *                      name,
-    IronBee::ConstList<const char *>  params
-)
-{
-    IronBee::Context ctx = cp.current_context();
-    XRulesModuleConfig &cfg =
-        module().configuration_data<XRulesModuleConfig>(ctx);
-    
-    cfg.req_xrules.push_back(
-        xrule_ptr(
-            new XRulePath(params.front(), parse_action(cp, params))));
-}
+        IronBee::throw_if_error(
+            ib_ip4_str_to_net(params.front(), &(ipset_entry.network)),
+            "Failed to get net from string.");
 
-void XRulesModule::rule_geo_directive(
-    IronBee::ConfigurationParser      cp,
-    const char *                      name,
-    IronBee::ConstList<const char *>  params
-)
-{
-    IronBee::Context ctx = cp.current_context();
-    XRulesModuleConfig &cfg =
-        module().configuration_data<XRulesModuleConfig>(ctx);
-    
-    cfg.req_xrules.push_back(
-        xrule_ptr(
-            new XRuleGeo(params.front(), parse_action(cp, params))));
-}
+        /* Put that action in the ip set. */
+        ipset_entry.data = IronBee::value_to_data(
+            parse_action(cp, params),
+            cp.memory_pool().ib());
+    }
+    else if (name_str =="XRuleIpv6") {
+        // Copy in an empty, uninitialized ipset entry.
+        cfg.ipv6_list.push_back(ib_ipset6_entry_t());
+        ib_ipset6_entry_t &ipset_entry = cfg.ipv6_list.back();
 
-void XRulesModule::rule_ipv4_directive(
-    IronBee::ConfigurationParser      cp,
-    const char *                      name,
-    IronBee::ConstList<const char *>  params
-)
-{
-    IronBee::Context ctx = cp.current_context();
-    XRulesModuleConfig &cfg =
-        module().configuration_data<XRulesModuleConfig>(ctx);
+        IronBee::throw_if_error(
+            ib_ip6_str_to_net(params.front(), &(ipset_entry.network)),
+            "Failed to get net from string.");
 
-    // Copy in an empty, uninitialized ipset entry.
-    cfg.ipv4_list.push_back(ib_ipset4_entry_t());
-    ib_ipset4_entry_t &ipset_entry = cfg.ipv4_list.back();
-
-    IronBee::throw_if_error(
-        ib_ip4_str_to_net(params.front(), &(ipset_entry.network)),
-        "Failed to get net from string.");
-
-    /* Put that action in the ip set. */
-    ipset_entry.data = IronBee::value_to_data(
-        parse_action(cp, params),
-        cp.memory_pool().ib());
-}
-
-void XRulesModule::rule_ipv6_directive(
-    IronBee::ConfigurationParser      cp,
-    const char *                      name,
-    IronBee::ConstList<const char *>  params
-)
-{
-    IronBee::Context ctx = cp.current_context();
-    XRulesModuleConfig &cfg =
-        module().configuration_data<XRulesModuleConfig>(ctx);
-
-    // Copy in an empty, uninitialized ipset entry.
-    cfg.ipv6_list.push_back(ib_ipset6_entry_t());
-    ib_ipset6_entry_t &ipset_entry = cfg.ipv6_list.back();
-
-    IronBee::throw_if_error(
-        ib_ip6_str_to_net(params.front(), &(ipset_entry.network)),
-        "Failed to get net from string.");
-
-    /* Put that action in the ip set. */
-    ipset_entry.data = IronBee::value_to_data(
-        parse_action(cp, params),
-        cp.memory_pool().ib());
+        /* Put that action in the ip set. */
+        ipset_entry.data = IronBee::value_to_data(
+            parse_action(cp, params),
+            cp.memory_pool().ib());
+    }
+    else if (name_str =="XRuleGeo") {
+        cfg.req_xrules.push_back(
+            xrule_ptr(
+                new XRuleGeo(params.front(), parse_action(cp, params))));
+    }
+    else if (name_str =="XRulePath") {
+        cfg.req_xrules.push_back(
+            xrule_ptr(
+                new XRulePath(params.front(), parse_action(cp, params))));
+    }
+    else if (name_str =="XRuleTime") {
+        cfg.req_xrules.push_back(
+            xrule_ptr(
+                new XRuleTime(params.front(), parse_action(cp, params))));
+    }
+    else if (name_str =="XRuleRequestContentType") {
+        cfg.req_xrules.push_back(
+            xrule_ptr(
+                new XRuleContentType(
+                    params.front(),
+                    parse_action(cp, params),
+                    "REQUEST_CONTENT_TYPE")));
+    }
+    else if (name_str =="XRuleResponseContentType") {
+        cfg.resp_xrules.push_back(
+            xrule_ptr(
+                new XRuleContentType(
+                    params.front(),
+                    parse_action(cp, params),
+                    "RESPONSE_CONTENT_TYPE")));
+    }
+    else {
+        ib_cfg_log_error(
+            cp.ib(),
+            "Unknown directive: %s",
+            name);
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() <<
+                IronBee::errinfo_what("Unknown directive.")
+        );
+    }
 }
 
 void XRulesModule::on_transaction_started(
