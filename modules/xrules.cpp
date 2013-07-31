@@ -179,7 +179,7 @@ namespace {
          * action2.overrides(action1) == true;
          * @endcode
          *
-         * @param[in] that The Action we would like to use to 
+         * @param[in] that The Action we would like to use to
          *            update this action.
          *
          * @returns True if @a that should override @c *this.
@@ -244,12 +244,14 @@ namespace {
 
     /**
      * A collection of actions to be applied.
-     * 
+     *
      * Since Actions can override each other if their IDs match,
      * this container of Actions is provided.
      */
     class ActionSet {
+
     public:
+
         /**
          * Set an action in this ActionSet.
          *
@@ -324,7 +326,9 @@ namespace {
      * Defines how to block a transaction.
      */
     class BlockAllow : public Action {
+
     public:
+
         /**
          * Construct a new BlockAllow.
          *
@@ -382,7 +386,7 @@ namespace {
          * @param[in] field_name The name of the var to set to 1 or 0
          *            depending on if the flag is turned on or off.
          * @param[in] flag A field of bits to be set or cleared.
-         *            Typical usage should be to set a single 
+         *            Typical usage should be to set a single
          *            bit in the bit field (a single flag),
          *            but treating multiple bits being set or cleared
          *            is not prevented from working.
@@ -470,7 +474,7 @@ namespace {
     private:
 
         //! The value set in the transaction.
-        ib_float_t m_fnum; 
+        ib_float_t m_fnum;
 
         //! The field that is assigned a value in tx.
         static const std::string FIELD_NAME;
@@ -518,7 +522,7 @@ namespace {
         /**
          * Constructor.
          *
-         * @param[in] enabled If true, set the XRULES:BLOCKING_MODE to 
+         * @param[in] enabled If true, set the XRULES:BLOCKING_MODE to
          *            ENABLED. Set it it to DISABLED otherwise.
          * @param[in] priority Sets the priority of this action to control
          *            if it may be overridden.
@@ -546,7 +550,7 @@ namespace {
         Action("SetBlockingMode", priority),
         m_enabled(enabled)
     {}
-        
+
     void SetBlockingMode::apply_impl(IronBee::Transaction tx) const
     {
 
@@ -574,6 +578,7 @@ namespace {
     class ActionFactory {
 
     public:
+
         //! Constructor.
         ActionFactory();
 
@@ -733,7 +738,7 @@ namespace {
                     true,
                     priority));
         }
-        
+
         BOOST_THROW_EXCEPTION(
             IronBee::einval()
                 << IronBee::errinfo_what(
@@ -775,7 +780,7 @@ namespace {
          * Other classes, such as XRuleIP, do not use this filed,
          * and it remains empty.
          *
-         * This action is not implicitly added to any ActionSet. 
+         * This action is not implicitly added to any ActionSet.
          * An descendant of XRule must explicitly add m_action
          * to an ActionSet in XRule::xrule_impl().
          */
@@ -796,7 +801,7 @@ namespace {
         /**
          * Evaluate the rule against the given transaction.
          *
-         * @param[in] tx The Transaction. 
+         * @param[in] tx The Transaction.
          * @param[in] actions The set of actions to update according to
          *            the rule results.
          *
@@ -813,11 +818,13 @@ namespace {
 
     XRule::XRule() {}
 
-    void XRule::operator()(IronBee::Transaction tx, ActionSet &actions) {
+    void XRule::operator()(IronBee::Transaction tx, ActionSet &actions)
+    {
         xrule_impl(tx, actions);
     }
 
-    XRule::XRule(action_ptr action) {
+    XRule::XRule(action_ptr action)
+    {
         m_action.swap(action);
     }
 
@@ -838,6 +845,7 @@ namespace {
     class XRulesModuleConfig {
 
     public:
+
         //! List of IPv4 configurations.
         std::vector<ib_ipset4_entry_t> ipv4_list;
 
@@ -877,6 +885,7 @@ namespace {
     class XRuleGeo : public XRule {
 
     public:
+
         /**
          * Constructor.
          *
@@ -910,7 +919,8 @@ namespace {
         m_country(country)
     {}
 
-    void XRuleGeo::xrule_impl(IronBee::Transaction tx, ActionSet& actions) {
+    void XRuleGeo::xrule_impl(IronBee::Transaction tx, ActionSet& actions)
+    {
         if (actions.overrides(m_action)) {
             ib_field_t *cfield;
             ib_log_debug_tx(
@@ -1031,7 +1041,7 @@ namespace {
                     "field.");
 
                 // Build a content type string.
-                const std::string content_type = 
+                const std::string content_type =
                     IronBee::ConstByteString(bs).to_s();
 
                 // Is the content type in the set.
@@ -1055,6 +1065,7 @@ namespace {
     class XRulePath : public XRule {
 
     public:
+
         /**
          * Constructor.
          *
@@ -1110,14 +1121,20 @@ namespace {
     class XRuleTime : public XRule {
 
     public:
+
         /**
          * Constructor.
-         * @param[in] time Time window string.
-         *            This should be of the format
-         *            // FIXME - document format.
-         *            - !1,2,3,4,5@08:00-17:00-0600 
-         *            - 1@08:00-17:00+0200
-         * @param[in] action The action executed if a given 
+         * @param[in] time Time window string. This string has a
+         *            specific format.
+         *            - 08:00-17:00-600 This is the most simple format,
+         *              8am to 5pm offset from GMT by -6 hours.
+         *            - !08:00-17:00-600 Prefixing the string with a !
+         *              will invert the window; "Not in this time window."
+         *            - !1,2,3,4,5@08:00-17:00-0600 A list of days
+         *            (as integers where 0 is Sunday) may be added
+         *            to denote a particular day that the time window should
+         *            apply to.
+         * @param[in] action The action executed if a given
          *            IronBee::Transaction started in the @a time window.
          */
         XRuleTime(const char *time, action_ptr action);
@@ -1242,7 +1259,7 @@ namespace {
         boost::posix_time::ptime& p
     )
     {
-        boost::posix_time::time_input_facet *facet = 
+        boost::posix_time::time_input_facet *facet =
             new boost::posix_time::time_input_facet("%H:%M");
         std::istringstream is(str);
         std::locale loc(is.getloc(), facet);
@@ -1260,7 +1277,7 @@ namespace {
 
             bool in_window =
                 m_start_time <= tx_start && m_end_time > tx_start;
-        
+
             // If any days of the week are specified in our window...
             if (m_days.size() > 0) {
                 // ...get the day of the week...
@@ -1272,7 +1289,7 @@ namespace {
                 in_window &= (m_days.find(dow) != m_days.end());
             }
 
-            // If we are in the window specified (considering the 
+            // If we are in the window specified (considering the
             // m_invert member) then execute the associated action.
             if (in_window ^ m_invert) {
                 actions.set(m_action);
@@ -1292,12 +1309,13 @@ namespace {
      *
      * Unlike a normal XRule that maps a single check to a single action,
      * for efficient evaluation, this XRule is constructed
-     * after the IronBee configuration phase and wraps all IPs into 
+     * after the IronBee configuration phase and wraps all IPs into
      * a @ref ib_ipset4_t or @ref ib_set6_t and does a single check
      * for the most precise match. That match results in a pointer
      * to an Action wrapped by IronBee::value_to_data().
      */
     class XRuleIP : public XRule {
+
     public:
 
         /**
@@ -1320,10 +1338,10 @@ namespace {
         /**
          * Check if @a tx's remote ip is mapped to an action.
          *
-         * This is done by taking 
+         * This is done by taking
          * IronBee::Transaction::effective_remote_ip_string()
          * and checking if it can be converted to a @ref ib_ip4_t or
-         * an @ref ib_ip6_t and checking if that value is in 
+         * an @ref ib_ip6_t and checking if that value is in
          * XRuleIP::m_ipset4 or XRuleIP::m_ipset6, respectively.
          *
          * @param[in] tx The transaction to check.
@@ -1366,7 +1384,7 @@ namespace {
         // Check IP lists.
         if (remote_ip == NULL) {
             BOOST_THROW_EXCEPTION(
-                IronBee::einval() 
+                IronBee::einval()
                     << IronBee::errinfo_what("No remote IP available.")
             );
         }
@@ -1404,7 +1422,7 @@ namespace {
         }
         else {
             BOOST_THROW_EXCEPTION(
-                IronBee::enoent() 
+                IronBee::enoent()
                     << IronBee::errinfo_what("Cannot convert IP to v4 or v6.")
             );
         }
@@ -1418,6 +1436,7 @@ namespace {
  */
 class XRulesModule : public IronBee::ModuleDelegate
 {
+
 public:
 
     /**
@@ -1634,7 +1653,7 @@ void XRulesModule::xrule_directive(
     IronBee::Context   ctx = cp.current_context();
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
-    
+
     if (name_str == "XRuleIpv4") {
         // Copy in an empty, uninitialized ipset entry.
         cfg.ipv4_list.push_back(ib_ipset4_entry_t());
@@ -1724,7 +1743,7 @@ void XRulesModule::on_handle_response_header(
     IronBee::Context ctx = tx.context();
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
-    ActionSet &actions = 
+    ActionSet &actions =
         tx.get_module_data<xrules_module_tx_data_ptr>(module())
             ->response_actions;
 
@@ -1747,7 +1766,7 @@ void XRulesModule::on_handle_request_header(
     IronBee::Context ctx = tx.context();
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
-    ActionSet &actions = 
+    ActionSet &actions =
         tx.get_module_data<xrules_module_tx_data_ptr>(module())
             ->request_actions;
 
