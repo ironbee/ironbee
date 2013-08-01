@@ -1133,8 +1133,7 @@ namespace {
                 IronBee::throw_if_error(
                     ib_data_get(
                         tx.ib()->data,
-                        m_field.data(),
-                        m_field.length(),
+                        m_field.data(), m_field.length(),
                         &cfield),
                     "Failed to retrieve content type field.");
 
