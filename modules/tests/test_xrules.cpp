@@ -57,3 +57,23 @@ TEST_F(XRulesTest, Load) {
     ASSERT_TRUE(ib_tx);
 }
 
+TEST_F(XRulesTest, IP) {
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleIpv4 \"1.0.0.2/32\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+}
+

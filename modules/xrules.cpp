@@ -45,6 +45,7 @@
 #include <vector>
 
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -580,7 +581,7 @@ namespace {
     public:
 
         //! Constructor.
-        ActionFactory();
+        ActionFactory(IronBee::Engine ib);
 
         /**
          * Build an action object based on the @a arg.
@@ -595,6 +596,9 @@ namespace {
         //! The regular expression used to parse out action name and param.
         static boost::regex name_val_re;
 
+        //! Engine. Used primarily for logging.
+        IronBee::Engine m_ib;
+
         /**
          * Check if the given match has an action.
          *
@@ -607,9 +611,9 @@ namespace {
     };
 
     /* ActionFactory Impl */
-    boost::regex ActionFactory::name_val_re("\\s*[^\\s]+(?:=([^\\s]*))\\s*");
+    boost::regex ActionFactory::name_val_re("\\s*([^\\s]+)(?:=([^\\s]*))?\\s*");
 
-    ActionFactory::ActionFactory() {}
+    ActionFactory::ActionFactory(IronBee::Engine ib) : m_ib(ib) {}
 
     action_ptr ActionFactory::build(const char *arg, int priority)
     {
@@ -620,6 +624,10 @@ namespace {
                     << IronBee::errinfo_what("Cannot parse action.")
             );
         }
+
+        ib_log_debug(m_ib.ib(), "Building action %*.s",
+            (int)(mr[2].first - mr[1].first),
+            mr[1].first);
 
         if (has_action(ACTION_BLOCK, mr)) {
             return action_ptr(new BlockAllow(true, priority));
@@ -748,7 +756,7 @@ namespace {
 
     bool ActionFactory::has_action(const char action[], boost::cmatch& m)
     {
-        return action == m[1];
+        return boost::iequals(std::string(action), std::string(m[1]));
     }
     /* End ActionFactory Impl */
 
@@ -1527,7 +1535,8 @@ private:
 
 /* XRulesModule Impl */
 XRulesModule::XRulesModule(IronBee::Module module) :
-    IronBee::ModuleDelegate(module)
+    IronBee::ModuleDelegate(module),
+    m_action_factory(module.engine())
 {
     assert(module);
 
@@ -1622,12 +1631,15 @@ action_ptr XRulesModule::parse_action(
 
     for (++itr; itr != list.end(); ++itr)
     {
-        if (std::string("priority=") == *itr) {
-            priority = atoi(*itr);
+        ib_cfg_log_debug(cp.ib(), "Parsing arg %s.", *itr);
+        if (boost::istarts_with(*itr, "priority="))
+        {
+            priority = atoi((*itr) + sizeof("priority=")-1);
         }
     }
 
-    if (action_text == NULL) {
+    if (action_text == NULL)
+    {
         BOOST_THROW_EXCEPTION(
             IronBee::einval()
                 << IronBee::errinfo_what("No action text.")
@@ -1636,7 +1648,7 @@ action_ptr XRulesModule::parse_action(
 
     ib_cfg_log_debug(
         cp.ib(),
-        "Building action %s with priority %d.",
+        "Building action \"%s\" with priority %d.",
         action_text,
         priority);
 
@@ -1644,9 +1656,9 @@ action_ptr XRulesModule::parse_action(
 }
 
 void XRulesModule::xrule_directive(
-    IronBee::ConfigurationParser      cp,
-    const char *                      name,
-    IronBee::ConstList<const char *>  params
+    IronBee::ConfigurationParser     cp,
+    const char *                     name,
+    IronBee::ConstList<const char *> params
 )
 {
     std::string        name_str(name);
@@ -1656,31 +1668,35 @@ void XRulesModule::xrule_directive(
 
     if (name_str == "XRuleIpv4") {
         // Copy in an empty, uninitialized ipset entry.
-        cfg.ipv4_list.push_back(ib_ipset4_entry_t());
-        ib_ipset4_entry_t &ipset_entry = cfg.ipv4_list.back();
+        ib_ipset4_entry_t entry;
+        action_ptr action = parse_action(cp, params);
 
         IronBee::throw_if_error(
-            ib_ip4_str_to_net(params.front(), &(ipset_entry.network)),
+            ib_ip4_str_to_net(params.front(), &(entry.network)),
             "Failed to get net from string.");
 
         /* Put that action in the ip set. */
-        ipset_entry.data = IronBee::value_to_data(
-            parse_action(cp, params),
-            cp.memory_pool().ib());
+        entry.data = IronBee::value_to_data<action_ptr>(
+            action,
+            cp.engine().main_memory_pool().ib());
+
+        cfg.ipv4_list.push_back(entry);
     }
     else if (name_str =="XRuleIpv6") {
         // Copy in an empty, uninitialized ipset entry.
-        cfg.ipv6_list.push_back(ib_ipset6_entry_t());
-        ib_ipset6_entry_t &ipset_entry = cfg.ipv6_list.back();
+        ib_ipset6_entry_t entry;
+        action_ptr action = parse_action(cp, params);
 
         IronBee::throw_if_error(
-            ib_ip6_str_to_net(params.front(), &(ipset_entry.network)),
+            ib_ip6_str_to_net(params.front(), &(entry.network)),
             "Failed to get net from string.");
 
         /* Put that action in the ip set. */
-        ipset_entry.data = IronBee::value_to_data(
-            parse_action(cp, params),
-            cp.memory_pool().ib());
+        entry.data = IronBee::value_to_data<action_ptr>(
+            action,
+            cp.engine().main_memory_pool().ib());
+
+        cfg.ipv6_list.push_back(entry);
     }
     else if (name_str =="XRuleGeo") {
         cfg.req_xrules.push_back(
