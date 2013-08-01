@@ -324,9 +324,9 @@ ib_status_t DLL_PUBLIC ib_var_source_get_const(
  *
  * This function is *slow*.
  *
- * @param[in]  source Source to set value for.
- * @param[in]  store  Store to set value in.
- * @param[out] field  Value to set.  May be NULL.
+ * @param[in] source Source to set value for.
+ * @param[in] store  Store to set value in.
+ * @param[in] field  Value to set.  May be NULL.
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
