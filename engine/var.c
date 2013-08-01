@@ -446,12 +446,12 @@ ib_status_t ib_var_source_lookup(
             return IB_EALLOC;
         }
 
-        local_source->name = name;
-        local_source->name_length = name_length;
-        local_source->config = config;
+        local_source->name          = name;
+        local_source->name_length   = name_length;
+        local_source->config        = config;
         local_source->initial_phase = IB_PHASE_NONE;
-        local_source->final_phase = IB_PHASE_NONE;
-        local_source->is_indexed = false;
+        local_source->final_phase   = IB_PHASE_NONE;
+        local_source->is_indexed    = false;
         /* Intentionally leaving index uninitialized so that valgrind can
          * catch invalid uses of it. */
     }
@@ -672,7 +672,7 @@ ib_status_t ib_var_filter_apply(
         }
 
         /* case-insensitive string search */
-        const ib_list_t *answer;
+        const ib_list_t      *answer;
         const ib_list_node_t *node;
 
         rc = ib_field_value(field, ib_ftype_list_out(&answer));
