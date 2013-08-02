@@ -1211,7 +1211,7 @@ namespace {
 
         boost::cmatch mr;
         static const boost::regex re(
-            "(?:(!?)([\\d,]+)@)?"
+            "(!?)(?:([\\d,]+)@)?"
             "(\\d\\d:\\d\\d)-(\\d\\d:\\d\\d)([+-]\\d\\d\\d\\d)");
         boost::local_time::time_zone_ptr zone_info;
 
@@ -1269,22 +1269,33 @@ namespace {
     {
         boost::posix_time::time_input_facet *facet =
             new boost::posix_time::time_input_facet("%H:%M");
-        std::istringstream is(str);
+        std::string time_str(str, 5);
+        std::istringstream is(time_str);
         std::locale loc(is.getloc(), facet);
         is.imbue(loc);
         is>>p;
     }
 
     void XRuleTime::xrule_impl(
-        IronBee::Transaction tx,
+        IronBee::Transaction  tx,
         ActionSet&            actions
     )
     {
         if (actions.overrides(m_action)) {
+
+            ib_log_debug_tx(
+                tx.ib(),
+                "Checking current time %s against window %s-%s.",
+                to_simple_string(tx.started_time()).c_str(),
+                to_simple_string(m_start_time).c_str(),
+                to_simple_string(m_end_time).c_str());
+
             boost::posix_time::ptime tx_start = tx.started_time();
 
-            bool in_window =
-                m_start_time <= tx_start && m_end_time > tx_start;
+            bool in_window = (
+                m_start_time.time_of_day() <= tx_start.time_of_day() &&
+                tx_start.time_of_day()     <  m_end_time.time_of_day()
+            );
 
             // If any days of the week are specified in our window...
             if (m_days.size() > 0) {

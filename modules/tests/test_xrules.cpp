@@ -57,7 +57,7 @@ TEST_F(XRulesTest, Load) {
     ASSERT_TRUE(ib_tx);
 }
 
-TEST_F(XRulesTest, IP) {
+TEST_F(XRulesTest, IPv4) {
     std::string config =
         std::string(
             "LogLevel DEBUG\n"
@@ -75,5 +75,131 @@ TEST_F(XRulesTest, IP) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
 }
 
+TEST_F(XRulesTest, IPv6) {
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleIpv6 \"::1/128\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_FALSE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
+
+TEST_F(XRulesTest, Path) {
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRulePath \"/\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
+
+TEST_F(XRulesTest, Time1) {
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleTime \"00:00-23:59+0000\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
+
+TEST_F(XRulesTest, Time2) {
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleTime \"!00:00-23:59+0000\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_FALSE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
+
+TEST_F(XRulesTest, Time3) {
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleTime \"0,1,2,3,4,5,6,7@00:00-23:59+0000\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
+
+TEST_F(XRulesTest, Time4) {
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleTime \"!0,1,2,3,4,5,6,7@00:00-23:59+0000\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_FALSE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
