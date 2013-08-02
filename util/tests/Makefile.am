@@ -9,6 +9,9 @@ endif
 
 LDADD = \
 	$(top_builddir)/util/libibutil.la
+if CPP
+LDADD += $(top_builddir)/ironbeepp/libibpp.la
+endif
 
 check_PROGRAMS = \
 	test_util_array \
@@ -44,6 +47,10 @@ check_PROGRAMS = \
 	test_util_vector \
 	test_util_types
 
+if CPP
+check_PROGRAMS += \
+	test_util_string_assembly
+endif
 
 if ENABLE_JSON
   check_PROGRAMS += test_util_json
@@ -106,6 +113,8 @@ test_util_path_SOURCES = test_util_path.cpp
 test_util_json_SOURCES = test_util_json.cpp
 
 test_util_string_SOURCES = test_util_string.cpp
+
+test_util_string_assembly_SOURCES = test_util_string_assembly.cpp
 
 test_util_string_lower_SOURCES = test_util_string_lower.cpp
 

@@ -32,17 +32,18 @@ libibutil_la_SOURCES = array.c \
                        modsec_compat.c \
                        mpool.c \
                        path.c \
-		       queue.c \
+				       queue.c \
                        regex.c \
                        resource_pool.c \
                        stream.c \
                        string.c \
+					   string_assembly.c \
                        strlower.c \
                        strtrim.c \
                        strval.c \
                        strwspc.c \
                        types.c \
-		       vector.c \
+				       vector.c \
                        util.c \
                        uuid.c
 if BUILD_RIAK
