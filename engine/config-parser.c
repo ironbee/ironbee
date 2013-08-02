@@ -800,8 +800,6 @@ static ib_status_t cfgparser_partial_match_maintenance(
  * @param[in] cp Configuration parser. The cp->fsm structure is updated.
  * @param[in] buf Buffer to append to cp->fsm.ts_buffer.
  * @param[in] blen Length of the buffer to append to cp->fsm.ts_buffer.
- * @param[out] fsm_vars The p field is updated to point to 
- *             the new location of buffer.
  */
 static ib_status_t cfgparser_partial_match_resume(
     ib_cfgparser_t *cp,
