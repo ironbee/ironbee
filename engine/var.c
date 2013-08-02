@@ -109,6 +109,21 @@ struct ib_var_filter_t
     pcre_extra *re_extra;
 };
 
+struct ib_var_target_t
+{
+    /**
+     * Source.  May not be NULL.
+     **/
+    ib_var_source_t *source;
+
+    /**
+     * Filter.  May be NULL.
+     *
+     * A NULL filter is considered trivial and results in the field from
+     * the source being wrapped in a list of size 1.
+     **/
+    const ib_var_filter_t *filter;
+};
 
 /* var_config */
 
@@ -717,3 +732,180 @@ ib_status_t ib_var_filter_apply(
 
     return IB_OK;
 }
+
+/* var_target */
+
+ib_status_t ib_var_target_create(
+    ib_var_target_t       **target,
+    ib_mpool_t             *mp,
+    ib_var_source_t        *source,
+    const ib_var_filter_t  *filter
+)
+{
+    assert(target != NULL);
+    assert(mp     != NULL);
+    assert(source != NULL);
+
+    ib_var_target_t *local_target;
+
+    local_target = ib_mpool_alloc(mp, sizeof(*local_target));
+    if (local_target == NULL) {
+        return IB_EALLOC;
+    }
+
+    local_target->source = source;
+    local_target->filter = filter;
+
+    *target = local_target;
+
+    return IB_OK;
+}
+
+ib_status_t ib_var_target_prepare(
+    ib_var_target_t       **target,
+    ib_mpool_t             *mp,
+    const ib_var_config_t  *config,
+    const char             *target_string,
+    size_t                  target_string_length,
+    const char            **error_message,
+    int                    *error_offset
+)
+{
+    assert(target        != NULL);
+    assert(mp            != NULL);
+    assert(config        != NULL);
+    assert(target_string != NULL);
+
+    ib_status_t      rc;
+    ib_var_source_t *source;
+    ib_var_filter_t *filter;
+    size_t           split_at;
+    const char      *split;
+
+    split  = memchr(target_string, ':', target_string_length);
+    if (split == NULL) {
+        split_at = target_string_length;
+    }
+    else {
+        split_at = split - target_string;
+    }
+
+    if (split_at == 0) {
+        return IB_EINVAL;
+    }
+
+    rc = ib_var_source_lookup(
+        &source,
+        mp,
+        config,
+        target_string, split_at
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* The -1 allows for trivial filters as "FOO:" */
+    if (split_at < target_string_length - 1) {
+        rc = ib_var_filter_prepare(
+            &filter,
+            mp,
+            target_string + split_at + 1, target_string_length - split_at - 1,
+            error_message, error_offset
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+    else {
+        filter = NULL;
+    }
+
+    return ib_var_target_create(target, mp, source, filter);
+}
+
+ib_status_t ib_var_target_get(
+    ib_var_target_t  *target,
+    const ib_list_t **result,
+    ib_mpool_t       *mp,
+    ib_var_store_t   *store
+)
+{
+    assert(target != NULL);
+    assert(result != NULL);
+    assert(mp     != NULL);
+    assert(store  != NULL);
+
+    ib_status_t      rc;
+    ib_field_t      *field;
+    const ib_list_t *local_result;
+
+    rc = ib_var_source_get(
+        target->source,
+        &field,
+        store
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    if (target->filter != NULL) {
+        /* Filter list field. */
+        rc = ib_var_filter_apply(
+            target->filter,
+            &local_result,
+            mp,
+            field
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+    else if (field->type == IB_FTYPE_LIST) {
+        /* Directly return list field. */
+        rc = ib_field_value(field, ib_ftype_list_out(&local_result));
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+    else {
+        /* Wrap non-list field in list. */
+        ib_list_t *local_result_mutable;
+        rc = ib_list_create(&local_result_mutable, mp);
+        if (rc != IB_OK) {
+            assert(rc == IB_EALLOC);
+            return rc;
+        }
+
+        rc = ib_list_push(local_result_mutable, field);
+        if (rc != IB_OK) {
+            assert(rc == IB_EALLOC);
+            return rc;
+        }
+        local_result = local_result_mutable;
+    }
+
+    *result = local_result;
+    return IB_OK;
+}
+
+ib_status_t ib_var_target_get_const(
+    const ib_var_target_t  *target,
+    const ib_list_t       **result,
+    ib_mpool_t             *mp,
+    const ib_var_store_t   *store
+)
+{
+    assert(target != NULL);
+    assert(result != NULL);
+    assert(mp     != NULL);
+    assert(store  != NULL);
+
+    /* Use non-const version; okay, as caller storing result in const. */
+    return ib_var_target_get(
+        (ib_var_target_t *)target,
+        result,
+        mp,
+        (ib_var_store_t *)store
+    );
+}
+

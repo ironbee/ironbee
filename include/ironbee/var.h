@@ -503,6 +503,133 @@ NONNULL_ATTRIBUTE(1, 2, 3);
 /** @} */
 
 /**
+ * @defgroup IronBeeEngineVarStore Var Target
+ *
+ * Source and filter.
+ *
+ * A target is a source and a filter, possibly trivial.  It can pe created
+ * from such or prepared from a string.  At evaluation time, it can be
+ * be used to get a list of fields.  As such, it provides an abstraction,
+ * turning a user specification of a target into appropriate fields to act
+ * on while hiding details such as the presence of a filter.
+ *
+ * @{
+ **/
+
+/**
+ * A target.
+ *
+ * A source and (possibly trivial) filter.
+ **/
+typedef struct ib_var_target_t ib_var_target_t;
+
+/**
+ * Create a target from a source and a filter.
+ *
+ * @sa ib_var_target_prepare()
+ *
+ * @param[out] target Created target.  Lifetime will be equal to @a mp.
+ * @param[in]  mp     Memory pool to use for allocations.
+ * @param[in]  source Source to fetch field from.
+ * @param[in]  filter Filter to apply to field.  May be NULL to indicate
+ *                    a trivial field.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ **/
+ib_status_t DLL_PUBLIC ib_var_target_create(
+    ib_var_target_t       **target,
+    ib_mpool_t             *mp,
+    ib_var_source_t        *source,
+    const ib_var_filter_t  *filter
+)
+NONNULL_ATTRIBUTE(1, 2, 3);
+
+/**
+ * Create a target from a specification string.
+ *
+ * A specification string is a source name, optionally followed by a :
+ * and a filter string, i.e., `^[^:]+(:.+)?$`.
+ *
+ * @sa ib_var_target_split()
+ *
+ * @param[out] target               Created target.  Lifetime will be equal
+ *                                  to @a mp.
+ * @param[in]  mp                   Memory pool to use for allocations.
+ * @param[in]  config               Config to find sources in.
+ * @param[in]  target_string        Target string to prepare from.
+ * @param[in]  target_string_length Length of @a target_string.
+ * @param[out] error_message        Where to store an error message on
+ *                                  regexp compile failure.  May be NULL;
+ *                                  should not be freed.
+ * @param[out] error_offset         Where in regexp, error occurred.  May be
+ *                                  NULL.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL if @a target_string is invalid (see ib_var_filter_prepare()).
+ **/
+ib_status_t DLL_PUBLIC ib_var_target_prepare(
+    ib_var_target_t       **target,
+    ib_mpool_t             *mp,
+    const ib_var_config_t  *config,
+    const char             *target_string,
+    size_t                  target_string_length,
+    const char            **error_message,
+    int                    *error_offset
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4);
+
+/**
+ * Fetch values of target; read-only.
+ *
+ * This function always outputs to a list stored in @a result.  For list
+ * fields, this will either be the filtered list value of the field (possibly
+ * via a trivial filter).  For non-list filters, this will either be a list
+ * with a single element, the value; or an error if the filter is non-trivial.
+ *
+ * The lifetime of @a result will depend on the value.  For non-filtered
+ * list fields, the underlying value will be reported directly and @a result
+ * will have lifetime equal to that field.  For all other results, the
+ * lifetime will equal that of @a mp.
+ *
+ * @param[in]  target Target to fetch values of.
+ * @param[out] result Fetched values.  Lifetime will vary.  See above.
+ *                    Value is `ib_field_t *`.
+ * @param[in]  mp     Memory pool to use for allocations.
+ * @param[in]  store  Store holding values.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL if target and store have different configs.
+ * - IB_EINVAL if filter is non-trivial and value of source is not a list.
+ * - IB_ENOENT if source does not exist in store.
+ * - IB_EOTHER if source value is dynamic and query results in error.
+ **/
+ib_status_t DLL_PUBLIC ib_var_target_get(
+    ib_var_target_t  *target,
+    const ib_list_t **result,
+    ib_mpool_t       *mp,
+    ib_var_store_t   *store
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4);
+
+/**
+ * Const version of ib_var_target_get().
+ *
+ * Value of @a result: `const ib_field_t *`.
+ **/
+ib_status_t DLL_PUBLIC ib_var_target_get_const(
+    const ib_var_target_t  *target,
+    const ib_list_t       **result,
+    ib_mpool_t             *mp,
+    const ib_var_store_t   *store
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4);
+
+/** @} */
+
+/**
  * @} IronBeeEngineVar
  */
 
