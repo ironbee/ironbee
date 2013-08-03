@@ -718,6 +718,7 @@ public:
     virtual void generateRequestHeader()
     {
         addRequestHeader("Host", "UnitTest");
+        addRequestHeader("Content-Type", "text/html");
         addRequestHeader("X-MyHeader", "header1");
         addRequestHeader("X-MyHeader", "header2");
     }

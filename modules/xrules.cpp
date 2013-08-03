@@ -311,8 +311,7 @@ namespace {
 
     bool ActionSet::overrides(action_ptr action)
     {
-        std::map<Action, action_ptr>::iterator itr =
-            m_actions.find(*action);
+        std::map<Action, action_ptr>::iterator itr = m_actions.find(*action);
 
         if (itr == m_actions.end()) {
             return true;
@@ -801,8 +800,12 @@ namespace {
          */
         explicit XRule(action_ptr action);
 
-        //! Empty constructor.
+        /**
+         * Empty constructor. The action is invalid.
+         */
         XRule();
+
+        //! Empty constructor.
 
     public:
 
@@ -822,18 +825,20 @@ namespace {
     };
 
     /* XRule Impl */
-    XRule::~XRule() {}
+    XRule::XRule(action_ptr action)
+    :
+        m_action(action)
+    {
+        assert(m_action.get());
+    }
 
-    XRule::XRule() {}
+    XRule::XRule(){}
+
+    XRule::~XRule() {}
 
     void XRule::operator()(IronBee::Transaction tx, ActionSet &actions)
     {
         xrule_impl(tx, actions);
-    }
-
-    XRule::XRule(action_ptr action)
-    {
-        m_action.swap(action);
     }
 
     void XRule::xrule_impl(IronBee::Transaction tx, ActionSet& actions)
@@ -980,7 +985,6 @@ namespace {
 
     private:
         bool                  m_any;
-        action_ptr            m_action;
         std::string           m_field;
         std::set<std::string> m_content_types;
 
@@ -996,6 +1000,10 @@ namespace {
         action_ptr action,
         const std::string field
     )
+    :
+        XRule(action),
+        m_any(false),
+        m_field(field)
     {
         std::string content_type_str(content_type);
         std::list<std::string> result;
@@ -1023,7 +1031,7 @@ namespace {
 
     void XRuleContentType::xrule_impl(
         IronBee::Transaction tx,
-        ActionSet&            actions
+        ActionSet&           actions
     )
     {
         if (actions.overrides(m_action)) {
@@ -1031,26 +1039,44 @@ namespace {
                 actions.set(m_action);
             }
             else {
-                ib_field_t         *field;
-                const ib_bytestr_t *bs;
+                ib_field_t         *cfield;
+                const ib_list_t          *clist = NULL;
 
-                // Fetch field.
+                // Fetch list of fields.
                 IronBee::throw_if_error(
                     ib_data_get(
                         tx.ib()->data,
                         m_field.c_str(),
-                        &field),
+                        &cfield),
                     "Failed to retrieve content type field.");
+
+                if (cfield->type != IB_FTYPE_LIST) {
+                    ib_log_error_tx(
+                        tx.ib(),
+                        "Expected type list(%d) but field type was %d.",
+                        IB_FTYPE_LIST,
+                        cfield->type);
+
+                    BOOST_THROW_EXCEPTION(
+                        IronBee::eother()
+                            << IronBee::errinfo_what("Expected list."));
+                }
 
                 // Extract bs from field.
                 IronBee::throw_if_error(
-                    ib_field_value(field, ib_ftype_bytestr_out(&bs)),
+                    ib_field_value(cfield, ib_ftype_list_out(&clist)),
                     "Failed to extract byte string from content type "
                     "field.");
 
-                // Build a content type string.
+                IronBee::ConstList<ib_field_t *> list(clist);
+
                 const std::string content_type =
-                    IronBee::ConstByteString(bs).to_s();
+                    IronBee::ConstField(list.front()).to_s();
+
+                ib_log_debug_tx(
+                    tx.ib(),
+                    "Got string %s",
+                    content_type.c_str());
 
                 // Is the content type in the set.
                 if (m_content_types.count(content_type) > 0)
@@ -1373,7 +1399,8 @@ namespace {
     };
 
     /* RuleIP Impl */
-    XRuleIP::XRuleIP(XRulesModuleConfig& cfg) {
+    XRuleIP::XRuleIP(XRulesModuleConfig& cfg)
+    {
         ib_ipset4_init(
             &m_ipset4,
             NULL,
@@ -1730,7 +1757,8 @@ void XRulesModule::xrule_directive(
                 new XRuleContentType(
                     params.front(),
                     parse_action(cp, params),
-                    "REQUEST_CONTENT_TYPE")));
+                    //"REQUEST_CONTENT_TYPE")));
+                    "request_headers:Content-Type")));
     }
     else if (name_str =="XRuleResponseContentType") {
         cfg.resp_xrules.push_back(
@@ -1738,7 +1766,8 @@ void XRulesModule::xrule_directive(
                 new XRuleContentType(
                     params.front(),
                     parse_action(cp, params),
-                    "RESPONSE_CONTENT_TYPE")));
+                    //"RESPONSE_CONTENT_TYPE")));
+                    "response_headers:Content-Type")));
     }
     else {
         ib_cfg_log_error(
