@@ -630,6 +630,102 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
 /** @} */
 
 /**
+ * @defgroup IronBeeEngineVarStore Var Expand
+ *
+ * Expand string by substituting references to vars.
+ *
+ * An expandable string may containing var references via `%{target}`.  When
+ * expanded, all targets are replaced with stringified versions of their
+ * values, or the empty string if they do not exist.
+ *
+ * Expandable strings should be converted, as early as possible, to
+ * @ref ib_var_expand_t.  These can then be executed to gain expanded strings
+ * when needed.
+ *
+ * @{
+ **/
+
+/**
+ * Prepared string expansion.
+ **/
+typedef struct ib_var_expand_t ib_var_expand_t;
+
+/**
+ * Prepare a string expansion.
+ *
+ * When executed with ib_var_expand_execute(), any references to targets of
+ * the form `%{target}` will be replaced with the result of that target
+ * (if possible).
+ *
+ * @param[out] expand        Resulting string expansion preparation.  Lifetime
+ *                           will equal @a mp.
+ * @param[in]  mp            Memory pool to use.
+ * @param[in]  str           String to expand.
+ * @param[in]  str_length    Length of @a str.
+ * @param[in]  config        Config to expand from.
+ * @param[out] error_message Error message from filter preparation.  May be
+ *                           NULL.
+ * @param[out] error_offset  Error offset from filter preparation. May be
+ *                           NULL.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation error.
+ * - IB_EINVAL if @a target_string is invalid (see ib_var_filter_prepare()).
+ **/
+ib_status_t DLL_PUBLIC ib_var_expand_prepare(
+    ib_var_expand_t       **expand,
+    ib_mpool_t             *mp,
+    const char             *str,
+    size_t                  str_length,
+    const ib_var_config_t  *config,
+    const char            **error_message,
+    int                    *error_offset
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 5);
+
+/**
+ * Execute prepared string expansion to get expanded string.
+ *
+ * @note Errors that occur during target expansion do not cause this method
+ * to fail.  Instead, they result in expansion of the target at issue into
+ * an error message in the string.
+ *
+ * @param[in]  expand     String expansion to expand.
+ * @param[out] dst        Expanded string.  Lifetime will equal @a mp.
+ * @param[out] dst_length Length of @a dst.
+ * @param[in]  mp         Memory pool to use.
+ * @param[in]  store      Store to use.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ **/
+ib_status_t DLL_PUBLIC ib_var_expand_execute(
+    const ib_var_expand_t  *expand,
+    const char            **dst,
+    size_t                 *dst_length,
+    ib_mpool_t             *mp,
+    const ib_var_store_t   *store
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4, 5);
+
+/**
+ * Check if @a str has expasions.
+ *
+ * This looks for a substring of the form `%{...}` for any `...`.
+ *
+ * @param[in] str String to test.
+ * @parma[in] str_length Length of @a str.
+ * @return true iff string contains target expansion expression.
+ **/
+bool DLL_PUBLIC ib_var_expand_test(
+    const char *str,
+    size_t      str_length
+)
+NONNULL_ATTRIBUTE(1);
+
+/** @} */
+
+/**
  * @} IronBeeEngineVar
  */
 

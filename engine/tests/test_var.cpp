@@ -485,3 +485,87 @@ TEST(TestVar, Target)
     EXPECT_EQ(1UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
 }
+
+TEST(TestVar, Expand)
+{
+    using namespace IronBee;
+
+    ScopedMemoryPool smp;
+    ib_status_t rc;
+    ib_mpool_t* mp = MemoryPool(smp).ib();
+
+    ib_var_config_t* config = make_config(mp);
+    ASSERT_TRUE(config);
+
+    typedef List<IronBee::Field> field_list_t;
+    typedef ConstList<IronBee::Field> field_clist_t;
+    field_list_t data_list = field_list_t::create(smp);
+
+    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
+
+    ib_var_source_t* a = make_source(config, "a");
+    ib_var_source_t* b = make_source(config, "b");
+    ib_var_source_t* c = make_source(config, "c");
+    ib_var_source_t* d = make_source(config, "d");
+
+    ASSERT_TRUE(a);
+    ASSERT_TRUE(b);
+    ASSERT_TRUE(c);
+    ASSERT_TRUE(d);
+
+    ib_var_store_t* store = make_store(config);
+
+    Field fa = Field::create_number(smp, "a", 1, 17);
+    Field fb = Field::create_float(smp, "b", 1, 1.234);
+    Field fc = Field::create_byte_string(smp, "c", 1,
+        ByteString::create(smp, "foo")
+    );
+    Field fd = Field::Field::create_no_copy_list<Field>(
+        smp,
+        "d", 1,
+        data_list
+    );
+
+    rc = ib_var_source_set(a, store, fa.ib());
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_var_source_set(b, store, fb.ib());
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_var_source_set(c, store, fc.ib());
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_var_source_set(d, store, fd.ib());
+    ASSERT_EQ(IB_OK, rc);
+
+    static const string c_expand_string("a = %{a} b = %{b} c = %{c} d1 = %{d} d2 = %{d:fooA}");
+
+    ASSERT_TRUE(
+        ib_var_expand_test(c_expand_string.data(), c_expand_string.length())
+    );
+    ASSERT_FALSE(ib_var_expand_test("foo", 3));
+
+    ib_var_expand_t *expand = NULL;
+    rc = ib_var_expand_prepare(
+        &expand,
+        mp,
+        c_expand_string.data(), c_expand_string.length(),
+        config,
+        NULL, NULL
+    );
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(expand);
+
+    const char *result = NULL;
+    size_t result_length;
+    rc = ib_var_expand_execute(
+        expand,
+        &result, &result_length,
+        mp,
+        store
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    EXPECT_EQ(
+        "a = 17 b = 1.234000 c = foo d1 = 5, 6 d2 = 5",
+        string(result, result_length)
+    );
+}

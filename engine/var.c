@@ -28,10 +28,13 @@
 
 #include <ironbee/array.h>
 #include <ironbee/hash.h>
+#include <ironbee/string_assembly.h>
 
 #include <pcre.h>
 
 #include <assert.h>
+#include <inttypes.h>
+#include <stdio.h>
 
 /* types */
 
@@ -124,6 +127,65 @@ struct ib_var_target_t
      **/
     const ib_var_filter_t *filter;
 };
+
+struct ib_var_expand_t
+{
+    /** Text before expansion.  May be NULL. */
+    const char *prefix;
+    /** Length of @a prefix. */
+    size_t prefix_length;
+    /** Target after prefix.  May be NULL. */
+    const ib_var_target_t *target;
+    /** Next expansion chunk. */
+    ib_var_expand_t *next;
+};
+
+/* helpers */
+
+/**
+ * Convert a field to a string.
+ *
+ * Any errors will result in an expansion of "ERROR".  Only bytestring, num
+ * and float fields are supported.  All others are expanded into
+ * "UNSUPPORTED".
+ *
+ * @param[out] dst        Result.  For bytestring fields, lifetime will equal
+ *                        value of bytestring.  For other fields, lifetime
+ *                        will at least be as long as @a mp.
+ * @param[out] dst_length Length of @a dst.
+ * @param[in]  field      Field to convert.
+ * @param[in]  mp         Memory pool to use.
+ **/
+static void field_to_string(
+    const char       **dst,
+    size_t            *dst_length,
+    const ib_field_t  *field,
+    ib_mpool_t        *mp
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4);
+
+/**
+ * Find expansion substring in @a s.
+ *
+ * Looks for "%{" in @a s.  If found, looks for "}" after that.  If found,
+ * outputs locations to @a a and @a b and returns true.
+ *
+ * The prefix will be `[s, a)`; expansion will be `[a + 2, b)`, and suffix
+ * will be `[b + 1, s + l)`.
+ *
+ * @param[out] a Will point to '%' in first "%{".
+ * @param[out] b Will point to '}' in following "}".
+ * @param[in]  s String to search.
+ * @param[in]  l Length of @a s.
+ * @return true iff an expansion substring was found in @a s.
+ **/
+bool find_expand_string(
+    const char **a,
+    const char **b,
+    const char  *s,
+    size_t       l
+)
+NONNULL_ATTRIBUTE(1, 2, 3);
 
 /* var_config */
 
@@ -909,3 +971,306 @@ ib_status_t ib_var_target_get_const(
     );
 }
 
+/* var_expand */
+
+void field_to_string(
+    const char       **dst,
+    size_t            *dst_length,
+    const ib_field_t  *field,
+    ib_mpool_t        *mp
+)
+{
+    assert(dst        != NULL);
+    assert(dst_length != NULL);
+    assert(field      != NULL);
+    assert(mp         != NULL);
+
+    /* Length sufficient for number or float. */
+    static const size_t c_numeric_width = 45;
+
+    ib_status_t rc;
+    char *local_dst;
+
+    switch (field->type) {
+    case IB_FTYPE_BYTESTR: {
+        const ib_bytestr_t *bs;
+        rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            goto error;
+        }
+        *dst = (const char *)ib_bytestr_const_ptr(bs);
+        *dst_length = ib_bytestr_length(bs);
+        return;
+    }
+    case IB_FTYPE_NUM: {
+        int printed;
+        ib_num_t n;
+
+        rc = ib_field_value(field, ib_ftype_num_out(&n));
+        if (rc != IB_OK) {
+            goto error;
+        }
+
+        local_dst = ib_mpool_alloc(mp, c_numeric_width);
+        if (local_dst == NULL) {
+            goto error;
+        }
+        printed = snprintf(local_dst, c_numeric_width, "%" PRIu64, n);
+        if (printed < 0) {
+            goto error;
+        }
+        *dst = local_dst;
+        *dst_length = printed;
+        return;
+    }
+    case IB_FTYPE_FLOAT: {
+        int printed;
+        ib_float_t n;
+
+        rc = ib_field_value(field, ib_ftype_float_out(&n));
+        if (rc != IB_OK) {
+            goto error;
+        }
+
+        local_dst = ib_mpool_alloc(mp, c_numeric_width);
+        if (local_dst == NULL) {
+            goto error;
+        }
+        printed = snprintf(local_dst, c_numeric_width, "%Lf", n);
+        if (printed < 0) {
+            goto error;
+        }
+        *dst = local_dst;
+        *dst_length = printed;
+        return;
+    }
+    default:
+        *dst        = "UNSUPPORTED";
+        *dst_length = sizeof("UNSUPPORTED");
+        return;
+    }
+
+    return;
+
+error:
+    *dst = "ERROR";
+    *dst_length = sizeof("ERROR");
+}
+
+bool find_expand_string(
+    const char **a,
+    const char **b,
+    const char  *s,
+    size_t       l
+)
+{
+    assert(a != NULL);
+    assert(b != NULL);
+    assert(s != NULL);
+
+    const char *la = s;
+    const char *lb;
+    while (la < s + l) {
+        la = memchr(la, '%', l - (la - s));
+        if (la == NULL) {
+            return false;
+        }
+        if (la < s + l && *(la + 1) == '{') {
+            break;
+        }
+    }
+    /* %{ at end of string leaves no room for }; hence the '- 1' */
+    if (la >= s + l - 1) {
+        return false;
+    }
+
+    /* Current now points to % of first %{ in string. */
+    lb = memchr(la + 2, '}', l - (la - s));
+    if (lb == NULL) {
+        return false;
+    }
+
+    *a = la;
+    *b = lb;
+
+    return true;
+}
+
+ib_status_t ib_var_expand_prepare(
+    ib_var_expand_t       **expand,
+    ib_mpool_t             *mp,
+    const char             *str,
+    size_t                  str_length,
+    const ib_var_config_t  *config,
+    const char            **error_message,
+    int                    *error_offset
+)
+{
+    assert(expand != NULL);
+    assert(mp     != NULL);
+    assert(str    != NULL);
+    assert(config != NULL);
+
+    ib_status_t rc;
+    ib_var_expand_t *first;
+    ib_var_expand_t **parent_next = &first;
+    const char *suffix;
+
+    suffix = str;
+    while (suffix < str + str_length) {
+        size_t suffix_length = str_length - (suffix - str);
+        const char *a;
+        const char *b;
+        ib_var_expand_t *current;
+        bool found;
+
+        /* note calloc */
+        current = ib_mpool_calloc(mp, 1, sizeof(*current));
+        if (current == NULL) {
+            return IB_EALLOC;
+        }
+        *parent_next = current;
+        parent_next = &(current->next);
+
+        found = find_expand_string(&a, &b, suffix, suffix_length);
+        if (! found) {
+            current->prefix = suffix;
+            current->prefix_length = suffix_length;
+            break;
+        }
+        else {
+            const char *target_string = a + 2;
+            size_t target_string_length = b - target_string;
+
+            if (a != suffix) {
+                current->prefix = suffix;
+                current->prefix_length = a - suffix;
+            }
+
+            ib_var_target_t *target;
+            rc = ib_var_target_prepare(
+                &target,
+                mp,
+                config,
+                target_string,
+                target_string_length,
+                error_message,
+                error_offset
+            );
+            if (rc != IB_OK) {
+                return rc;
+            }
+            current->target = target;
+
+            suffix = b + 1;
+        }
+    }
+
+    *expand = first;
+
+    return IB_OK;
+}
+
+ib_status_t ib_var_expand_execute(
+    const ib_var_expand_t  *expand,
+    const char            **dst,
+    size_t                 *dst_length,
+    ib_mpool_t             *mp,
+    const ib_var_store_t   *store
+)
+{
+    assert(expand     != NULL);
+    assert(dst        != NULL);
+    assert(dst_length != NULL);
+    assert(mp         != NULL);
+    assert(store      != NULL);
+
+    ib_status_t rc;
+    ib_sa_t *sa;
+
+    /* Check for trivial case. */
+    if (expand->next == NULL && expand->target == NULL) {
+        *dst = expand->prefix;
+        *dst_length = expand->prefix_length;
+        return IB_OK;
+    }
+
+    rc = ib_sa_begin(&sa, mp);
+    if (rc != IB_OK) {goto finish_ealloc;}
+
+    /* Construct temporary memory pool. */
+    ib_mpool_t *temp_mp;
+    rc = ib_mpool_create(&temp_mp, "ib_var_expand_execute", mp);
+    if (rc != IB_OK) {
+        assert(rc == IB_EALLOC);
+        return rc;
+    }
+
+    for (
+        const ib_var_expand_t *current = expand;
+        current != NULL;
+        current = current->next
+    ) {
+        if (current->prefix != NULL) {
+            rc = ib_sa_append(sa, current->prefix, current->prefix_length);
+            if (rc != IB_OK) {goto finish_ealloc;}
+        }
+        if (current->target != NULL) {
+            const ib_list_t *result;
+
+            rc = ib_var_target_get_const(
+                current->target,
+                &result,
+                temp_mp,
+                store
+            );
+            if (rc != IB_OK) {
+                goto finish;
+            }
+
+            bool first = true;
+            const ib_list_node_t *node;
+            IB_LIST_LOOP_CONST(result, node) {
+                const char *value;
+                size_t value_length;
+                const ib_field_t *field = ib_list_node_data_const(node);
+                field_to_string(&value, &value_length, field, temp_mp);
+                if (first) {
+                    first = false;
+                }
+                else {
+                    rc = ib_sa_append(sa, ", ", 2);
+                    if (rc != IB_OK) {goto finish_ealloc;}
+                }
+                rc = ib_sa_append(sa, value, value_length);
+                if (rc != IB_OK) {goto finish_ealloc;}
+            }
+        }
+    }
+
+    rc = ib_sa_finish(&sa, dst, dst_length, mp);
+    if (rc != IB_OK) {goto finish_ealloc;}
+
+    rc = IB_OK;
+    goto finish;
+
+finish_ealloc:
+    assert(rc == IB_EALLOC);
+    /* fall through */
+finish:
+    ib_mpool_destroy(temp_mp);
+    return rc;
+}
+
+bool ib_var_expand_test(
+    const char *str,
+    size_t      str_length
+)
+{
+    assert(str != NULL);
+
+    const char *a;
+    const char *b;
+
+    return find_expand_string(&a, &b, str, str_length);
+}
