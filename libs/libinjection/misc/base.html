@@ -4,18 +4,29 @@
 <meta charset="utf-8">
 <title>{% block title %}CLIENT9{% end %}</title>
 <meta name="viewport" content="width=device-width" />
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/gif" href="/static/favicon.gif" />
 <style>
 body { font-family: sans-serif; width: 640px; }
 textarea { width: 100% }
 table { width: 100% }
 td { font-family: monospace; vertical-align: top }
 th { text-align: left }
-.red { background: #FFEEEE }
-.green { background: #EEFFEE }
+.red { background-color: #FFaaaa; overflow: hidden }
+.green { background-color: #aaFFaa }
 </style>
 </head>
 <body>
+<a href="http://www.client9.com/">client9.com</a> &#10056;
+<a href="/">libinjection</a> &#10056;
+<a href="/diagnostics">diagnostics</a> &#10056;
+<a href="/days-since-last-bypass">bypass</a> &#10056;
+<a href="/cicada/">cicada</a> &#10056;
+<a href="/doc">doc</a>
+<hr/>
 {% block body %}
 {% end %}
+<hr />
+{{ ssl_protocol }} {{ ssl_cipher }}
 </body>
 </html>

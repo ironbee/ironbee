@@ -2,15 +2,284 @@
 
 import sys
 
-def main():
-    """
-     this "doubles all parathensis"
-     to make new fingerprints
-     """
+class PermuteFingerprints(object):
+    def __init__(self):
+        self.fingerprints = set()
+        self.blacklist = set([
+            'E1n', 'sns', '1&n', 's1s', '1n1', '1o1', '1os', 'sn1',
+            'sonc', 'so1', 'n&n', 'son','nov', 'n&s','E1s', 'nos',
+            'nkn&n', '1sn', 'n&nkn', 's1n', 'n&nEn', 's&sn', '1os1o',
+            'sU', 'nU', 'n,(n)', 'n&n&n', 'Enkn', 'nk1;',
+            '1os1o', '1n1;', 's*1s', '1s1', 'nknEn', 'n&sn',
+            'so1', 'nkn;', 'n&n;', 'von', 'n&nc', 'sonkn',
+            'n)o1','Enn;', 'nBn', 'Ennc', 'n&En', 'nEnEn', 'Esn',
+            'n1s', 'n(1)s', 'En1', 'En(1)', 'n(1)n', 'n1v',
+            'n(1)1', 'n&EUE', 'n&EkU', 's&EUE', 's&EkU', 'v&EUE', 'v&EkU',
+            'n&nTn', 'nA', 'nos;n', 'UEn', 'so1no', '1)on', '1k(1)',
+            's)on'
+            ])
+        self.whitelist = set([
+            'T(vv)', 'Tnvos', 's&1s', 'Tnv;', '1UEnn'
+            ])
 
-    for line in sys.stdin:
-        fp = line.strip()
-        print fp
+    def aslist(self):
+        return sorted(list(self.fingerprints))
+
+    def insert(self, s):
+        if len(s) > 5:
+            s = s[0:5]
+        if self.validate(s):
+            self.fingerprints.add(s)
+
+    def validate(self, s):
+        if len(s) == 0:
+            return False
+        if s in self.whitelist:
+            return True
+        if s in self.blacklist:
+            return False
+
+        # only 1 special case for this
+        # 1;foo:goto foo
+        # 1;n:k
+        # the 'foo' can only be a 'n' type
+        if ':' in s and not 'n:' in s:
+            return False
+
+        if '11' in s:
+            return False
+
+        if '))' in s:
+            return False
+        if '((' is s:
+            return False
+        if 'v1' in s:
+            return False
+
+        if 'nv' in s and ';T' not in s:
+            return False
+        if 'nn' in s and ';T' not in s:
+            return False
+
+        # select @version foo is legit
+        # but unlikely anywhere else
+        if 'vn' in s and 'Evn' not in s:
+            return False
+
+        if 'oE' in s:
+            return False
+
+        if 'A1' in s:
+            return False
+        if 'An' in s:
+            return False
+        if 'A(1' in s:
+            return False
+
+        if 'vov' in s:
+            return False
+        if 'vo1' in s:
+            return False
+        if 'von' in s:
+            return False
+
+        if 'ns' in s:
+            if 'U' in s:
+                return True
+            if 'T' in s:
+                return True
+            return False
+
+        if 'sn' in s:
+            # that is... Tsn is ok
+            if s.find('T') != -1 and s.find('T') < s.find('sn'):
+                return True
+            return False
+
+        # select foo (as) bar is only nn type i know
+        if 'nn' in s and 'Enn' not in s and ';T' not in s:
+            return False
+
+        if ',o' in s:
+            return False
+
+        if 'kk' in s and 'Tkk' not in s:
+            return False
+
+        if 'ss' in s:
+            return False
+
+        if 'ff' in s:
+            return False
+
+        if '1no' in s:
+            return False
+
+        if 'kno' in s:
+            return False
+
+        if 'nEk' in s:
+            return False
+
+        if 'n(n' in s:
+            return False
+        if '1so' in s:
+            return False
+        if '1s1' in s:
+            return False
+        if 'noo' in s:
+            return False
+        if 'ooo' in s:
+            return False
+
+        if 'vvv' in s:
+            return False
+
+        if '1vn' in s:
+            return False
+        if '1n1' in s:
+            return False
+        if '&1n' in s:
+            return False
+        if '&1v' in s:
+            return False
+        if '&1s' in s:
+            return False
+        if 'nnk' in s:
+            return False
+
+        # folded away
+        if s.startswith('('):
+            return False
+
+        if '&o' in s:
+            return False
+
+        if '1,1' in s:
+            return False
+        if '1,s' in s:
+            return False
+        if '1,n' in s:
+            return False
+        if 's,1' in s:
+            return False
+        if 's,s' in s:
+            return False
+        if 's,n' in s:
+            return False
+        if 'n,1' in s:
+            return False
+        if 'n,s' in s:
+            return False
+        if 'n,n' in s:
+            return False
+        if '1o1' in s:
+            return False
+        if '1on' in s:
+            return False
+        if 'no1' in s:
+            return False
+        if 'non' in s:
+            return False
+        if '1(v' in s:
+            return False
+        if '1(n' in s:
+            return False
+        if '1(s' in s:
+            return False
+        if '1(1' in s:
+            return False
+        if 's(s' in s:
+            return False
+        if 's(n' in s:
+            return False
+        if 's(1' in s:
+            return False
+        if 's(v' in s:
+            return False
+        if 'v(s' in s:
+            return False
+        if 'v(n' in s:
+            return False
+        if 'v(1' in s:
+            return False
+        if 'v(v' in s:
+            return False
+
+        if s.startswith('vs'):
+            return False
+
+        if ')(' in s:
+            return False
+
+        # need to investigate T(vv) to see
+        # if it's correct
+        if 'vv' in s and s != 'T(vv)':
+            return False
+
+        # unlikely to be sqli but case FP
+        if s in ('so1n)', 'sonoE'):
+            return False
+
+        return True
+
+    def permute(self, fp):
+
+        self.insert(fp)
+
+        # do this for safety
+        if len(fp) > 1 and len(fp) < 5 and fp[-1] != ';' and fp[-1] != 'c':
+            self.insert(fp + ";")
+            self.insert(fp + ";c")
+
+        # do this for safety
+        if len(fp) > 1 and len(fp) < 5 and fp[-1] != 'c':
+            self.insert(fp + "c")
+
+        for i in range(len(fp)):
+            if fp[i] == '1':
+                self.insert(fp[0:i] + 'n'    + fp[i+1:])
+                self.insert(fp[0:i] + 'v'    + fp[i+1:])
+                self.insert(fp[0:i] + 's'    + fp[i+1:])
+                self.insert(fp[0:i] + 'f(1)' + fp[i+1:])
+                self.insert(fp[0:i] + 'f()'  + fp[i+1:])
+                self.insert(fp[0:i] + '1os'  + fp[i+1:])
+                self.insert(fp[0:i] + '1ov'  + fp[i+1:])
+                self.insert(fp[0:i] + '1on'  + fp[i+1:])
+                self.insert(fp[0:i] + '(1)'  + fp[i+1:])
+            elif fp[i] == 's':
+                self.insert(fp[0:i] + 'v'    + fp[i+1:])
+                self.insert(fp[0:i] + '1'    + fp[i+1:])
+                self.insert(fp[0:i] + 'f(1)' + fp[i+1:])
+                self.insert(fp[0:i] + 'f()'  + fp[i+1:])
+                self.insert(fp[0:i] + 'so1'  + fp[i+1:])
+                self.insert(fp[0:i] + 'sov'  + fp[i+1:])
+                self.insert(fp[0:i] + 'son'  + fp[i+1:])
+                self.insert(fp[0:i] + '(s)'  + fp[i+1:])
+            elif fp[i] == 'v':
+                self.insert(fp[0:i] + 's'    + fp[i+1:])
+                self.insert(fp[0:i] + '1'    + fp[i+1:])
+                self.insert(fp[0:i] + 'f(1)' + fp[i+1:])
+                self.insert(fp[0:i] + 'f()'  + fp[i+1:])
+                self.insert(fp[0:i] + 'vo1'  + fp[i+1:])
+                self.insert(fp[0:i] + 'vos'  + fp[i+1:])
+                self.insert(fp[0:i] + 'von'  + fp[i+1:])
+                self.insert(fp[0:i] + '(v)'  + fp[i+1:])
+            elif fp[i] == 'E':
+                # Select top, select distinct, case when
+                self.insert(fp[0:i] + 'Ek'   + fp[i+1:])
+            elif fp[i] == ')':
+                self.insert(fp[0:i] + '))'   + fp[i+1:])
+                self.insert(fp[0:i] + ')))'  + fp[i+1:])
+                self.insert(fp[0:i] + '))))' + fp[i+1:])
+        if ';E' in fp:
+            self.insert(fp.replace(';E', ';T'))
+        if fp.startswith('T'):
+            self.insert('1;' + fp)
+            self.insert('1);' + fp)
+
+        if 'At' in fp:
+            self.insert(fp.replace('At', 'As'))
 
         if '(' in fp:
 
@@ -21,8 +290,8 @@ def main():
                     parts.append(c)
                     done = True
                 parts.append(c)
-            newline = ''.join(parts)[0:5]
-            print newline
+            newline = ''.join(parts)
+            self.insert(newline)
 
             done = False
             parts = []
@@ -33,8 +302,8 @@ def main():
                     else:
                         done = True
                 parts.append(c)
-            newline = ''.join(parts)[0:5]
-            print newline
+            newline = ''.join(parts)
+            self.insert(newline)
 
             done = False
             parts = []
@@ -42,11 +311,18 @@ def main():
                 if c == '(':
                     parts.append(c)
                 parts.append(c)
-            newline = ''.join(parts)[0:5]
-            print newline
+            newline = ''.join(parts)
+            self.insert(newline)
 
 
 if __name__ == '__main__':
-    main()
+
+    mutator = PermuteFingerprints()
+
+    for line in sys.stdin:
+        mutator.permute(line.strip())
+
+    for fp in mutator.aslist():
+        print fp
 
 
