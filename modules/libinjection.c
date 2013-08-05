@@ -74,6 +74,49 @@ static sqli_module_config_t sqli_initial_config = { NULL };
 /* Normalization function prototype. */
 typedef int (*sqli_tokenize_fn_t)(sfilter * sf, stoken_t * sout);
 
+static
+int sqli_cmp(const void *a, const void *b)
+{
+    return strcmp((const char *)a, (const char *)b);
+}
+
+static
+int sqli_is_sqli_fingerprint(const char *fingerprint, size_t len, void *cbdata)
+{
+    assert(len <= LIBINJECTION_SQLI_MAX_TOKENS);
+
+    const sqli_pattern_set_t *ps = (const sqli_pattern_set_t *)cbdata;
+    char pattern[LIBINJECTION_SQLI_MAX_TOKENS + 1];
+    void *result = NULL;
+
+    /* Create a NUL terminated string. */
+    memcpy(pattern, fingerprint, len);
+    pattern[len] = '\0';
+
+    if (ps != NULL && ps->num_patterns > 0) {
+        result = bsearch(
+            pattern,
+            *ps->patterns, ps->num_patterns, sizeof(*ps->patterns),
+            &sqli_cmp
+        );
+    }
+
+    return result != NULL;
+}
+
+static
+char sqli_lookup_word(sfilter *sf, int lookup_type,
+                      const char* str, size_t len)
+{
+    /* Only care about fingerprint lookups. */
+    if (lookup_type != LOOKUP_FINGERPRINT) {
+        return libinjection_sqli_lookup_word(sf, lookup_type, str, len);
+    }
+
+    /* Must return 'X' or '\0' as true or false. */
+    return sqli_is_sqli_fingerprint(str, len, sf->userdata) ? 'X' : '\0';
+}
+
 /*********************************
  * Transformations
  *********************************/
@@ -88,6 +131,7 @@ ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
     assert(field_in != NULL);
     assert(field_out != NULL);
 
+    const sqli_pattern_set_t *ps = (const sqli_pattern_set_t *)tfn_data;
     sfilter sf;
     ib_bytestr_t *bs_in;
     ib_bytestr_t *bs_out;
@@ -101,7 +145,7 @@ ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
     char prev_token_type;
     ib_field_t *field_new;
     ib_status_t rc;
-    size_t pat_len;
+    size_t fingerprint_len;
 
     /* Currently only bytestring types are supported.
      * Other types will just get passed through. */
@@ -123,6 +167,11 @@ ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
         return IB_EALLOC;
     }
 
+/* TODO: With the latest libinjection, we will need to do something like the
+ * following, but more robust, instead of just calling is_sqli. This seems
+ * to be because folding is now called, which removes some tokens.
+ */
+#if 0
     /* As SQL can be injected into a string, the normalization
      * needs to start after the first quote character if one
      * exists.
@@ -155,6 +204,9 @@ ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
         memcpy(buf_out, buf_in, lead_len);
         buf_out_end += lead_len;
     }
+#endif
+    buf_in_start = (char *)buf_in;
+    buf_in_len = ib_bytestr_length(bs_in);
 
     /* Copy the normalized tokens as a space separated list. Since
      * the tokenizer does not backtrack, and the normalized values
@@ -162,11 +214,21 @@ ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
      * tokens are written back to the beginning of the original
      * buffer.
      */
-    libinjection_is_sqli(&sf, buf_in_start, buf_in_len, NULL, NULL);
+    libinjection_sqli_init(&sf,buf_in_start, buf_in_len, FLAG_NONE);
+    libinjection_sqli_callback(&sf, sqli_lookup_word, (void *)ps);
+
+    /* NOTE: We do not care if it is sqli, but just want the tokens. */
+    libinjection_is_sqli(&sf);
+
+    if (sf.fingerprint == NULL) {
+        *field_out = field_in;
+        return IB_OK;
+    }
+
     buf_out_len = 0;
     prev_token_type = 0;
-    pat_len = strlen(sf.pat);
-    for (size_t i = 0; i < pat_len; ++i) {
+    fingerprint_len = strlen(sf.fingerprint);
+    for (size_t i = 0; i < fingerprint_len; ++i) {
         stoken_t current = sf.tokenvec[i];
         size_t token_len = strlen(current.val);
 
@@ -266,25 +328,6 @@ ib_status_t sqli_op_create(
 }
 
 static
-int sqli_cmp(const void *a, const void *b)
-{
-    return strcmp((const char *)a, (const char *)b);
-}
-
-static
-int sqli_is_sqli_pattern(const char *pattern, void *cbdata)
-{
-    const sqli_pattern_set_t *ps = (const sqli_pattern_set_t *)cbdata;
-
-    void *result = bsearch(
-        pattern,
-        *ps->patterns, ps->num_patterns, sizeof(*ps->patterns),
-        &sqli_cmp
-    );
-    return result != NULL;
-}
-
-static
 ib_status_t sqli_op_execute(
     ib_tx_t *tx,
     void *instance_data,
@@ -317,16 +360,17 @@ ib_status_t sqli_op_execute(
     }
 
     /* Run through libinjection. */
-    // TODO: Support alternative SQLi pattern lookup
-    if (
-        libinjection_is_sqli(
-            &sf,
-            (const char *)ib_bytestr_const_ptr(bs), ib_bytestr_length(bs),
-            (ps != NULL ? sqli_is_sqli_pattern : NULL),
-            (void *)ps
-        )
-    ) {
-        ib_log_debug_tx(tx, "Matched SQLi pattern: %s", sf.pat);
+    libinjection_sqli_init(
+        &sf,
+        (const char *)ib_bytestr_const_ptr(bs),
+        ib_bytestr_length(bs),
+        FLAG_NONE
+    );
+    if (ps != NULL ) {
+        libinjection_sqli_callback(&sf, sqli_lookup_word, (void *)ps);
+    }
+    if ( libinjection_is_sqli(&sf) ) {
+        ib_log_debug_tx(tx, "Matched SQLi fingerprint: %s", sf.fingerprint);
         *result = 1;
     }
 
