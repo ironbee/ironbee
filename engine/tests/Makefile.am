@@ -3,8 +3,11 @@ include $(top_srcdir)/build/tests.mk
 LDADD = \
 	$(top_builddir)/util/libibutil.la \
 	$(top_builddir)/engine/libironbee.la \
-	$(top_builddir)/ironbeepp/libibpp.la \
     $(top_builddir)/libs/libhtp/htp/libhtp.la
+
+if CPP
+LDADD += $(top_builddir)/ironbeepp/libibpp.la
+endif
 
 check_PROGRAMS = \
 	test_action \
@@ -12,8 +15,12 @@ check_PROGRAMS = \
 	test_engine \
 	test_kvstore \
 	test_operator \
-	test_rule_inject \
+	test_rule_inject
+
+if CPP
+check_PROGRAMS += \
 	test_var
+endif
 
 AM_LDFLAGS += \
 	-lboost_system$(BOOST_SUFFIX) \
