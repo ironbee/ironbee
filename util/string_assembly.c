@@ -146,11 +146,10 @@ ib_status_t ib_sa_finish(
         cur += chunk->length;
     }
 
-    ib_mpool_destroy((*sa)->mp);
-
     *dst        = buffer;
     *dst_length = (*sa)->length;
 
+    ib_mpool_destroy((*sa)->mp);
     *sa         = NULL;
 
     return IB_OK;
