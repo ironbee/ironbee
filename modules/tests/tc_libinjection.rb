@@ -36,7 +36,7 @@ class TestLibInjection < Test::Unit::TestCase
 
   def test_negative
     clipp(
-      :input_hashes => [make_request('Not SQLi')],
+      :input_hashes => [make_request('Not.SQLi')],
       :config => CONFIG,
       :default_site_config => <<-EOS
         Rule REQUEST_HEADERS:Host @is_sqli 'default' id:1 phase:REQUEST_HEADER clipp_announce:YES
@@ -80,6 +80,6 @@ class TestLibInjection < Test::Unit::TestCase
     )
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: YES/
-    assert_log_match /clipp_print \[result\]: ISISISISIS/
+    assert_log_match /clipp_print \[result\]: IS/
   end
 end
