@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
 #include "libinjection.h"
 
 int main(int argc, const char* argv[])
@@ -34,25 +35,27 @@ int main(int argc, const char* argv[])
     /*
      * "plain" context.. test string "as-is"
      */
-    ok = libinjection_is_string_sqli(&sf, argv[offset], slen, CHAR_NULL,
-                                     NULL, NULL);
-    if (strlen(sf.pat) > 1) {
-        fprintf(stdout, "plain\t%s\t%s\n", sf.pat, ok ? "true": "false");
-    }
-    if (memchr(argv[offset], CHAR_SINGLE, slen)) {
-        ok = libinjection_is_string_sqli(&sf, argv[offset], slen, CHAR_SINGLE,
-                                         NULL, NULL);
-        if (strlen(sf.pat) > 1 && strcmp(sf.pat, "sns") != 0) {
-            fprintf(stdout, "single\t%s\t%s\n", sf.pat, ok ? "true": "false");
-        }
-    }
+    libinjection_sqli_init(&sf, argv[offset], slen, 0);
 
-    if (memchr(argv[offset], CHAR_DOUBLE, slen)) {
-        ok = libinjection_is_string_sqli(&sf, argv[offset], slen, CHAR_DOUBLE,
-                                         NULL, NULL);
-        if (strlen(sf.pat) > 1 &&  strcmp(sf.pat, "sns") != 0) {
-            fprintf(stdout, "double\t%s\t%s\n", sf.pat, ok ? "true": "false");
-        }
-    }
+    libinjection_sqli_fingerprint(&sf, FLAG_QUOTE_NONE | FLAG_SQL_ANSI);
+    ok = libinjection_sqli_check_fingerprint(&sf);
+    fprintf(stdout, "plain-asni\t%s\t%s\n", sf.fingerprint, ok ? "true": "false");
+
+    libinjection_sqli_fingerprint(&sf, FLAG_QUOTE_NONE | FLAG_SQL_MYSQL);
+    ok = libinjection_sqli_check_fingerprint(&sf);
+    fprintf(stdout, "plain-mysql\t%s\t%s\n", sf.fingerprint, ok ? "true": "false");
+
+    libinjection_sqli_fingerprint(&sf, FLAG_QUOTE_SINGLE | FLAG_SQL_ANSI);
+    ok = libinjection_sqli_check_fingerprint(&sf);
+    fprintf(stdout, "single-ansi\t%s\t%s\n", sf.fingerprint, ok ? "true": "false");
+
+    libinjection_sqli_fingerprint(&sf, FLAG_QUOTE_SINGLE | FLAG_SQL_MYSQL);
+    ok = libinjection_sqli_check_fingerprint(&sf);
+    fprintf(stdout, "single-mysql\t%s\t%s\n", sf.fingerprint, ok ? "true": "false");
+
+    libinjection_sqli_fingerprint(&sf, FLAG_QUOTE_DOUBLE | FLAG_SQL_MYSQL);
+    ok = libinjection_sqli_check_fingerprint(&sf);
+    fprintf(stdout, "double-mysql\t%s\t%s\n", sf.fingerprint, ok ? "true": "false");
+
     return 0;
 }

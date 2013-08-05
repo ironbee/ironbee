@@ -3,9 +3,10 @@ Word merging for operators
 --INPUT--
 SELECT 1 NOT LIKE 2;
 --EXPECTED--
-k SELECT
+E SELECT
 1 1
-o NOT LIKE
+o NOT
+o LIKE
 1 2
 ; ;
 

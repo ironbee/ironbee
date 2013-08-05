@@ -12,9 +12,46 @@ added to the data directly (JSON doesn't support comments).
 """
 
 KEYWORDS = {
+'_BIG5': 't',
+'_DEC8': 't',
+'_CP850': 't',
+'_HP8': 't',
+'_KOI8R': 't',
+'_LATIN1': 't',
+'_LATIN2': 't',
+'_SWE7': 't',
+'_ASCII': 't',
+'_UJIS': 't',
+'_SJIS': 't',
+'_HEBREW': 't',
+'_TIS620': 't',
+'_EUCKR': 't',
+'_KOI8U': 't',
+'_GB2312': 't',
+'_GREEK': 't',
+'_CP1250': 't',
+'_GBK': 't',
+'_LATIN5': 't',
+'_ARMSCII8': 't',
+'_UTF8': 't',
+'_USC2': 't',
+'_CP866': 't',
+'_KEYBCS2': 't',
+'_MACCE': 't',
+'_MACROMAN': 't',
+'_CP852': 't',
+'_LATIN7': 't',
+'_CP1251': 't',
+'_CP1257': 't',
+'_BINARY': 't',
+'_GEOSTD8': 't',
+'_CP932': 't',
+'_EUCJPMS': 't',
+
 'AUTOINCREMENT'              : 'k',
 'UTL_INADDR.GET_HOST_ADDRESS': 'f',
-
+'UTL_INADDR.GET_HOST_NAME'   : 'f',
+'UTL_HTTP.REQUEST'           : 'f',
 # ORACLE
 # http://blog.red-database-security.com/
 #  /2009/01/17/tutorial-oracle-sql-injection-in-webapps-part-i/print/
@@ -24,6 +61,7 @@ KEYWORDS = {
 'SYS.FN_BUILTIN_PERMISSIONS'  : 'f',
 'SYS.FN_GET_AUDIT_FILE'       : 'f',
 'SYS.FN_MY_PERMISSIONS'       : 'f',
+'SYS.DATABASE_NAME'           : 'n',
 'ABORT'                       : 'k',
 'ABS'                         : 'f',
 'ACCESSIBLE'                  : 'k',
@@ -42,6 +80,13 @@ KEYWORDS = {
 
 'ANALYZE'                     : 'k',
 'AND'                         : '&',
+
+# pgsql
+'ANYELEMENT'                  : 't',
+'ANYARRAY'                    : 't',
+'ANYNONARRY'                  : 't',
+'CSTRING'                     : 't',
+
 # array_... pgsql
 'ARRAY_AGG'                   : 'f',
 'ARRAY_CAT'                   : 'f',
@@ -68,12 +113,14 @@ KEYWORDS = {
 'ATAN2'                       : 'f',
 'AVG'                         : 'f',
 'BEFORE'                      : 'k',
-'BEGIN'                       : 'k',
+'BEGIN'                       : 'T',
 'BENCHMARK'                   : 'f',
-'BETWEEN'                     : 'k',
-'BIGINT'                      : 'k',
+'BETWEEN'                     : 'o',
+'BIGINT'                      : 't',
+'BIGSERIAL'                   : 't',
 'BIN'                         : 'f',
-'BINARY'                      : 'k',
+# "select binary 1"  forward type operator
+'BINARY'                      : 't',
 'BINARY_DOUBLE_INFINITY'      : '1',
 'BINARY_DOUBLE_NAN'           : '1',
 'BINARY_FLOAT_INFINITY'       : '1',
@@ -89,11 +136,12 @@ KEYWORDS = {
 'BOOL_AND'                    : 'f',
 # pgsql
 'BOOL_OR'                     : 'f',
-'BOOLEAN'                     : 'k',
+'BOOLEAN'                     : 't',
 'BOTH'                        : 'k',
 # pgsql
 'BTRIM'                       : 'f',
 'BY'                          : 'n',
+'BYTEA'                       : 't',
 
 # MS ACCESS
 #
@@ -126,9 +174,12 @@ KEYWORDS = {
 'DMIN'                        : 'f',
 'DSUM'                        : 'f',
 
-'CALL'                        : 'k',
+# TBD
+'DO'                          : 'n',
+
+'CALL'                        : 'T',
 'CASCADE'                     : 'k',
-'CASE'                        : 'o',
+'CASE'                        : 'E',
 'CAST'                        : 'f',
 # pgsql 'cube root' lol
 'CBRT'                        : 'f',
@@ -142,9 +193,10 @@ KEYWORDS = {
 
 # 'CHAR'
 # sometimes a function too
+# TBD
 'CHAR'                        : 'f',
 
-'CHARACTER'                   : 'k',
+'CHARACTER'                   : 't',
 'CHARACTER_LENGTH'            : 'f',
 'CHARINDEX'                   : 'f',
 'CHARSET'                     : 'f',
@@ -154,14 +206,17 @@ KEYWORDS = {
 'CHOOSE'                      : 'f',
 'CHR'                         : 'f',
 'CLOCK_TIMESTAMP'             : 'f',
-'COALESCE'                    : 'k',
+'COALESCE'                    : 'f',
 'COERCIBILITY'                : 'f',
 'COL_LENGTH'                  : 'f',
 'COL_NAME'                    : 'f',
-'COLLATE'                     : 'k',
+'COLLATE'                     : 'A',
 'COLLATION'                   : 'f',
 'COLLATIONPROPERTY'           : 'f',
+
+# TBD
 'COLUMN'                      : 'k',
+
 'COLUMNPROPERTY'              : 'f',
 'COLUMNS_UPDATED'             : 'f',
 'COMPRESS'                    : 'f',
@@ -183,26 +238,60 @@ KEYWORDS = {
 'COUNT'                       : 'f',
 'COUNT_BIG'                   : 'k',
 'CRC32'                       : 'f',
-'CREATE'                      : 'k',
+'CREATE'                      : 'E',
+'CREATE OR'                   : 'n',
+'CREATE OR REPLACE'           : 'T',
 'CROSS'                       : 'n',
 'CUME_DIST'                   : 'f',
 'CURDATE'                     : 'f',
-'CURRENT_DATE'                : 'k',
 'CURRENT_DATABASE'            : 'f',
-'CURRENT_TIME'                : 'k',
-'CURRENT_TIMESTAMP'           : 'k',
+
+
+# MYSQL Dual, function or variable-like
+# And IBM
+# http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic=%2Fsqlp%2Frbafykeyu.htm
+'CURRENT_DATE'                : 'v',
+'CURRENT_TIME'                : 'v',
+'CURRENT_TIMESTAMP'           : 'v',
+
 'CURRENT_QUERY'               : 'f',
 'CURRENT_SCHEMA'              : 'f',
 'CURRENT_SCHEMAS'             : 'f',
-'CURRENT_SETTING'             : 'p',
-'CURRENT_USER'                : 'k',
+'CURRENT_SETTING'             : 'f',
+# current_user sometimes acts like a variable
+# other times it acts like a function depending
+# on database.  This is converted in the right
+# type in the folding code
+# mysql = function
+# ??    = variable
+'CURRENT_USER'                : 'v',
 'CURRENTUSER'                 : 'f',
+
+#
+# DB2 'Special Registers'
+# These act like variables
+# http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic=%2Fsqlp%2Frbafykeyu.htm
+'CURRENT DATE'         : 'v',
+'CURRENT DEGREE'       : 'v',
+'CURRENT_PATH'         : 'v',
+'CURRENT PATH'         : 'v',
+'CURRENT FUNCTION'     : 'v',
+'CURRENT SCHEMA'       : 'v',
+'CURRENT_SERVER'       : 'v',
+'CURRENT SERVER'       : 'v',
+'CURRENT TIME'         : 'v',
+'CURRENT_TIMEZONE'     : 'v',
+'CURRENT TIMEZONE'     : 'v',
+'CURRENT FUNCTION PATH': 'v',
+
 # pgsql
 'CURRVAL'                     : 'f',
 'CURSOR'                      : 'k',
 'CURSOR_STATUS'               : 'f',
 'CURTIME'                     : 'f',
-'DATABASE'                    : 'k',
+
+# this might be a function
+'DATABASE'                    : 'n',
 'DATABASE_PRINCIPAL_ID'       : 'f',
 'DATABASEPROPERTYEX'          : 'f',
 'DATABASES'                   : 'k',
@@ -238,8 +327,9 @@ KEYWORDS = {
 'DB_ID'                       : 'f',
 'DB_NAME'                     : 'f',
 'DEC'                         : 'k',
-'DECIMAL'                     : 'k',
-'DECLARE'                     : 'k',
+'DECIMAL'                     : 't',
+# can only be used after a ';'
+'DECLARE'                     : 'T',
 'DECODE'                      : 'f',
 'DECRYPTBYASMKEY'             : 'f',
 'DECRYPTBYCERT'               : 'f',
@@ -250,7 +340,7 @@ KEYWORDS = {
 'DEGREES'                     : 'f',
 'DELAY'                       : 'k',
 'DELAYED'                     : 'k',
-'DELETE'                      : 'k',
+'DELETE'                      : 'T',
 'DENSE_RANK'                  : 'f',
 'DESC'                        : 'k',
 'DESCRIBE'                    : 'k',
@@ -258,11 +348,12 @@ KEYWORDS = {
 'DES_ENCRYPT'                 : 'f',
 'DETERMINISTIC'               : 'k',
 'DIFFERENCE'                  : 'f',
-'DISTINCROW'                  : 'k',
+'DISTINCTROW'                  : 'k',
 'DISTINCT'                    : 'k',
 'DIV'                         : 'o',
-'DROP'                        : 'k',
-'DUAL'                        : 'k',
+'DOUBLE'                      : 't',
+'DROP'                        : 'T',
+'DUAL'                        : 'n',
 'EACH'                        : 'k',
 'ELSE'                        : 'k',
 'ELSEIF'                      : 'k',
@@ -284,16 +375,24 @@ KEYWORDS = {
 'ENUM_LAST'                   : 'f',
 'ENUM_RANGE'                  : 'f',
 
+# special MS-ACCESS operator
+# http://office.microsoft.com/en-001/access-help/table-of-operators-HA010235862.aspx
+'EQV'                         : 'o',
+
 'ESCAPED'                     : 'k',
+
+# DB2, others..
+# http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic=%2Fsqlp%2Frbafykeyu.htm
+'EXCEPT'                       : 'U',
 
 # TBD
 #'END'                         : 'k',
 
-# 'EXEC' - MSSQL
-#
-'EXEC'                        : 'k',
-'EXECUTE'                     : 'k',
-'EXISTS'                      : 'k',
+# 'EXEC', 'EXECUTE' - MSSQL
+#  http://msdn.microsoft.com/en-us/library/ms175046.aspx
+'EXEC'                        : 'T',
+'EXECUTE'                     : 'T',
+'EXISTS'                      : 'f',
 'EXIT'                        : 'k',
 'EXP'                         : 'f',
 'EXPLAIN'                     : 'k',
@@ -314,6 +413,9 @@ KEYWORDS = {
 'FILEPROPERTY'                : 'f',
 'FIND_IN_SET'                 : 'f',
 'FIRST_VALUE'                 : 'f',
+'FLOAT'                       : 't',
+'FLOAT4'                       : 't',
+'FLOAT8'                       : 't',
 'FLOOR'                       : 'f',
 'FN_VIRTUALFILESTATS'         : 'f',
 'FORCE'                       : 'k',
@@ -324,6 +426,7 @@ KEYWORDS = {
 'FROM'                        : 'k',
 'FROM_DAYS'                   : 'f',
 'FROM_UNIXTIME'               : 'f',
+'FUNCTION'                    : 'k',
 'FULLTEXT'                    : 'k',
 'FULLTEXTCATALOGPROPERTY'     : 'f',
 'FULLTEXTSERVICEPROPERTY'     : 'f',
@@ -341,7 +444,8 @@ KEYWORDS = {
 'GET_BYTE'                    : 'f',
 'GET_FORMAT'                  : 'f',
 'GET_LOCK'                    : 'f',
-'GOTO'                        : 'k',
+'GO'                          : 'T',
+'GOTO'                        : 'T',
 'GRANT'                       : 'k',
 'GREATEST'                    : 'f',
 'GROUP'                       : 'n',
@@ -349,11 +453,14 @@ KEYWORDS = {
 'GROUPING_ID'                 : 'f',
 'GROUP_CONCAT'                : 'f',
 
+# MYSQL http://dev.mysql.com/doc/refman/5.6/en/handler.html
+'HANDLER'                     : 'T',
+
 'HAS_PERMS_BY_NAME'           : 'f',
 'HASHBYTES'                   : 'f',
 #
 # 'HAVING' - MSSQL
-'HAVING'                      : 'k',
+'HAVING'                      : 'B',
 
 'HEX'                         : 'f',
 'HIGH_PRIORITY'               : 'k',
@@ -372,7 +479,9 @@ KEYWORDS = {
 
 # 'IF - if is normally a function, except in TSQL
 # http://msdn.microsoft.com/en-us/library/ms182717.aspx
-'IF'                          : 'k',
+'IF'                          : 'f',
+
+'IF EXISTS'                   : 'f',
 
 'IFF'                         : 'f',
 'IFNULL'                      : 'f',
@@ -380,7 +489,8 @@ KEYWORDS = {
 'IIF'                         : 'f',
 
 # IN is a special case.. sometimes a function, sometimes a keyword
-'IN'                          : 'n',
+# corrected inside the folding code
+'IN'                          : 'k',
 
 'INDEX'                       : 'k',
 'INDEX_COL'                   : 'f',
@@ -394,16 +504,28 @@ KEYWORDS = {
 'INNER'                       : 'k',
 'INOUT'                       : 'k',
 'INSENSITIVE'                 : 'k',
-'INSERT'                      : 'k',
+'INSERT'                      : 'E',
+'INSERT INTO'                 : 'T',
+'INSERT IGNORE'               : 'E',
+'INSERT LOW_PRIORITY INTO'    : 'T',
+'INSERT LOW_PRIORITY'         : 'E',
+'INSERT DELAYED INTO'         : 'T',
+'INSERT DELAYED'              : 'E',
+'INSERT HIGH_PRIORITY INTO'   : 'T',
+'INSERT HIGH_PRIORITY'        : 'E',
+'INSERT IGNORE INTO'          : 'T',
 'INSTR'                       : 'f',
 'INSTRREV'                    : 'f',
-'INT'                         : 'k',
-'INT1'                        : 'k',
-'INT2'                        : 'k',
-'INT3'                        : 'k',
-'INT4'                        : 'k',
-'INT8'                        : 'k',
-'INTEGER'                     : 'k',
+'INT'                         : 't',
+'INT1'                        : 't',
+'INT2'                        : 't',
+'INT3'                        : 't',
+'INT4'                        : 't',
+'INT8'                        : 't',
+'INTEGER'                     : 't',
+# INTERSECT - IBM DB2, others
+# http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic=%2Fsqlp%2Frbafykeyu.htm
+'INTERSECT'                   : 'U',
 'INTERVAL'                    : 'k',
 'INTO'                        : 'k',
 'IS'                          : 'o',
@@ -447,15 +569,21 @@ KEYWORDS = {
 'LEFT'                        : 'n',
 'LENGTH'                      : 'f',
 'LIKE'                        : 'o',
-'LIMIT'                       : 'k',
+'LIMIT'                       : 'B',
 'LINEAR'                      : 'k',
 'LINES'                       : 'k',
 'LN'                          : 'f',
 'LOAD'                        : 'k',
 'LOAD_EXTENSION'              : 'f',
 'LOAD_FILE'                   : 'f',
-'LOCALTIME'                   : 'k',
-'LOCALTIMESTAMP'              : 'k',
+
+# MYSQL http://dev.mysql.com/doc/refman/5.6/en/load-data.html
+'LOAD DATA'                   : 'T',
+'LOAD XML'                    : 'T',
+# MYSQL function vs. variable
+'LOCALTIME'                   : 'v',
+'LOCALTIMESTAMP'              : 'v',
+
 'LOCATE'                      : 'f',
 'LOCK'                        : 'n',
 'LOG'                         : 'f',
@@ -494,6 +622,7 @@ KEYWORDS = {
 'MOD'                         : 'o',
 'MODE'                        : 'n',
 'MODIFIES'                    : 'k',
+'MONEY'                       : 't',
 'MONTH'                       : 'f',
 'MONTHNAME'                   : 'f',
 'NAME_CONST'                  : 'f',
@@ -503,12 +632,25 @@ KEYWORDS = {
 'NOT'                         : 'o',
 'NOTNULL'                     : 'k',
 'NOW'                         : 'f',
+# oracle http://www.shift-the-oracle.com/sql/select-for-update.html
+'NOWAIT'                      : 'k',
 'NO_WRITE_TO_BINLOG'          : 'k',
 'NTH_VALUE'                   : 'f',
 'NTILE'                       : 'f',
-'NULL'                        : '1',
+
+# NULL is treated as "variable" type
+# Sure it's a keyword, but it's really more
+# like a number or value.
+# but we don't want it folded away
+# since it's a good indicator of SQL
+# ('true' and 'false' are also similar)
+'NULL'                        : 'v',
+# unknown is mysql keyword, again treat
+# as 'v' type
+'UNKNOWN'                     : 'v',
+
 'NULLIF'                      : 'f',
-'NUMERIC'                     : 'k',
+'NUMERIC'                     : 't',
 # MSACCESS
 'NZ'                          : 'f',
 'OBJECT_DEFINITION'           : 'f',
@@ -520,6 +662,7 @@ KEYWORDS = {
 'OCT'                         : 'f',
 'OCTET_LENGTH'                : 'f',
 'OFFSET'                      : 'k',
+'OID'                         : 't',
 'OLD_PASSWORD'                : 'f',
 
 # need to investigate how used
@@ -555,9 +698,11 @@ KEYWORDS = {
 'OVERLAY'                     : 'f',
 'PARSENAME'                   : 'f',
 'PARTITION'                   : 'k',
-
+# 'PARTITION BY' IBM DB2
+# http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic=%2Fsqlp%2Frbafykeyu.htm
+'PARTITION BY'                : 'B',
 # keyword "SET PASSWORD", and a function
-'PASSWORD'                    : 'k',
+'PASSWORD'                    : 'n',
 'PATINDEX'                    : 'f',
 'PATHINDEX'                   : 'f',
 'PERCENT_RANK'                : 'f',
@@ -596,8 +741,12 @@ KEYWORDS = {
 'POW'                         : 'f',
 'POWER'                       : 'f',
 'PRECISION'                   : 'k',
+# http://msdn.microsoft.com/en-us/library/ms176047.aspx
+'PRINT'                       : 'T',
+
 'PRIMARY'                     : 'k',
 'PROCEDURE'                   : 'k',
+'PROCEDURE ANALYSE'           : 'f',
 'PUBLISHINGSERVERNAME'        : 'f',
 'PURGE'                       : 'k',
 'PWDCOMPARE'                  : 'f',
@@ -614,7 +763,8 @@ KEYWORDS = {
 'RADIANS'                     : 'f',
 'RAND'                        : 'f',
 'RANDOM'                      : 'f',
-
+# http://msdn.microsoft.com/en-us/library/ms178592.aspx
+'RAISEERROR'                  : 'E',
 # 'RANDOMBLOB' - sqlite3
 'RANDOMBLOB'                  : 'f',
 'RANGE'                       : 'k',
@@ -624,7 +774,7 @@ KEYWORDS = {
 'READ_WRITE'                  : 'k',
 
 # 'REAL' only used in data definition
-'REAL'                        : 'n',
+'REAL'                        : 't',
 'REFERENCES'                  : 'k',
 'REGEXP'                      : 'o',
 # pgsql
@@ -632,6 +782,14 @@ KEYWORDS = {
 'REGEXP_MATCHES'              : 'f',
 'REGEXP_SPLIT_TO_TABLE'       : 'f',
 'REGEXP_SPLIT_TO_ARRAY'       : 'f',
+'REGPROC'                     : 't',
+'REGPROCEDURE'                : 't',
+'REGOPER'                     : 't',
+'REGOPERATOR'                 : 't',
+'REGCLASS'                    : 't',
+'REGTYPE'                     : 't',
+'REGCONFIG'                   : 't',
+'REGDICTIONARY'               : 't',
 'RELEASE'                     : 'k',
 'RELEASE_LOCK'                : 'f',
 'RENAME'                      : 'k',
@@ -652,7 +810,7 @@ KEYWORDS = {
 'RIGHT'                       : 'n',
 'RLIKE'                       : 'o',
 'ROUND'                       : 'f',
-'ROW'                         : 'f',
+'ROW'                        : 'f',
 'ROW_COUNT'                   : 'f',
 'ROW_NUMBER'                  : 'f',
 'ROW_TO_JSON'                 : 'f',
@@ -665,11 +823,16 @@ KEYWORDS = {
 'SCOPE_IDENTITY'              : 'f',
 'SECOND_MICROSECOND'          : 'k',
 'SEC_TO_TIME'                 : 'f',
-'SELECT'                      : 'k',
+'SELECT'                      : 'E',
 'SENSITIVE'                   : 'k',
 'SEPARATOR'                   : 'k',
+'SERIAL'                      : 't',
+'SERIAL2'                     : 't',
+'SERIAL4'                     : 't',
+'SERIAL8'                     : 't',
+'SERVERPROPERTY'              : 'f',
 'SESSION_USER'                : 'f',
-'SET'                         : 'k',
+'SET'                         : 'E',
 'SETSEED'                     : 'f',
 'SETVAL'                      : 'f',
 'SET_BIT'                     : 'f',
@@ -680,7 +843,7 @@ KEYWORDS = {
 'SHA1'                        : 'f',
 'SHA2'                        : 'f',
 'SHOW'                        : 'n',
-'SHUTDOWN'                    : 'k',
+'SHUTDOWN'                    : 'T',
 'SIGN'                        : 'f',
 'SIGNBYASMKEY'                : 'f',
 'SIGNBYCERT'                  : 'f',
@@ -691,7 +854,8 @@ KEYWORDS = {
 #
 # sqlserver
 'SMALLDATETIMEFROMPARTS'      : 'f',
-'SMALLINT'                    : 'k',
+'SMALLINT'                    : 't',
+'SMALLSERIAL'                 : 't',
 'SOUNDEX'                     : 'f',
 'SOUNDS'                      : 'o',
 'SPACE'                       : 'f',
@@ -703,7 +867,10 @@ KEYWORDS = {
 'SQLSTATE'                    : 'k',
 'SQLWARNING'                  : 'k',
 'SQL_BIG_RESULT'              : 'k',
+'SQL_BUFFER_RESULT'           : 'k',
+'SQL_CACHE'                   : 'k',
 'SQL_CALC_FOUND_ROWS'         : 'k',
+'SQL_NO_CACHE'                : 'k',
 'SQL_SMALL_RESULT'            : 'k',
 'SQL_VARIANT_PROPERTY'        : 'f',
 'SQRT'                        : 'f',
@@ -717,6 +884,8 @@ KEYWORDS = {
 'STDDEV_SAMP'                 : 'f',
 'STRAIGHT_JOIN'               : 'k',
 'STRCMP'                      : 'f',
+# STRCOMP: MS ACCESS
+'STRCOMP'                     : 'f',
 'STRCONV'                     : 'f',
 # pgsql
 'STRING_AGG'                  : 'f',
@@ -748,6 +917,7 @@ KEYWORDS = {
 'SYSOBJECTS'                  : 'k',
 
 # 'SYSUSERS' - MSSQL
+# TBD
 'SYSUSERS'                    : 'k',
 # sqlserver
 'SYSUTCDATETME'               : 'f',
@@ -760,6 +930,7 @@ KEYWORDS = {
 'TAN'                         : 'f',
 'TERMINATED'                  : 'k',
 'TERTIARY_WEIGHTS'            : 'f',
+'TEXT'                        : 't',
 # TEXTPOS PGSQL 6.0
 # remnamed to strpos in 7.0
 # http://www.postgresql.org/message-id/20000601091055.A20245@rice.edu
@@ -767,6 +938,7 @@ KEYWORDS = {
 'TEXTPTR'                     : 'f',
 'TEXTVALID'                   : 'f',
 'THEN'                        : 'k',
+# TBD
 'TIME'                        : 'k',
 'TIMEDIFF'                    : 'f',
 'TIMEFROMPARTS'               : 'f',
@@ -775,7 +947,7 @@ KEYWORDS = {
 # ms access
 'TIMESERIAL'                  : 'f',
 'TIMEVALUE'                   : 'f',
-'TIMESTAMP'                   : 'f',
+'TIMESTAMP'                   : 't',
 'TIMESTAMPADD'                : 'f',
 'TIME_FORMAT'                 : 'f',
 'TIME_TO_SEC'                 : 'f',
@@ -822,6 +994,10 @@ KEYWORDS = {
 'TYPEOF'                      : 'f',
 'TYPEPROPERTY'                : 'f',
 'UCASE'                       : 'f',
+
+# pgsql -- used in weird unicode string
+# it's an operator so its' gets folded away
+'UESCAPE'                     : 'o',
 'UNCOMPRESS'                  : 'f',
 'UNCOMPRESS_LENGTH'           : 'f',
 'UNDO'                        : 'k',
@@ -838,27 +1014,28 @@ KEYWORDS = {
 
 'UNIX_TIMESTAMP'              : 'f',
 'UNLOCK'                      : 'k',
-# pgsql
-'UNKNOWN'                     : 'k',
 'UNNEST'                      : 'f',
 'UNSIGNED'                    : 'k',
-'UPDATE'                      : 'k',
+'UPDATE'                      : 'E',
 'UPDATEXML'                   : 'f',
 'UPPER'                       : 'f',
 'UPPER_INC'                   : 'f',
 'UPPER_INF'                   : 'f',
 'USAGE'                       : 'k',
-'USE'                         : 'k',
+'USE'                         : 'T',
 
 # transact-sql function
 # however treating as a 'none' type
 # since 'user_id' is such a common column name
+# TBD
 'USER_ID'                     : 'n',
-'USER_NAME'                   : 'f',
-# 'USER' -- a MySQL function?
-#'USER'                       : 'k',
+'USER_NAME'                   : 'n',
+# 'USER' -- a MySQL function
+# handled in folding step
+'USER'                       : 'n',
 
 'USING'                       : 'f',
+# next 3 TBD
 'UTC_DATE'                    : 'k',
 'UTC_TIME'                    : 'k',
 'UTC_TIMESTAMP'               : 'k',
@@ -866,7 +1043,7 @@ KEYWORDS = {
 'UUID_SHORT'                  : 'f',
 'VALUES'                      : 'k',
 'VARBINARY'                   : 'k',
-'VARCHAR'                     : 'k',
+'VARCHAR'                     : 't',
 'VARCHARACTER'                : 'k',
 'VARIANCE'                    : 'f',
 'VAR'                         : 'f',
@@ -877,17 +1054,23 @@ KEYWORDS = {
 'VERIFYSIGNEDBYASMKEY'        : 'f',
 'VERIFYSIGNEDBYCERT'          : 'f',
 'VERSION'                     : 'f',
-'WAITFOR'                     : 'k',
+'VOID'                        : 't',
+# oracle http://www.shift-the-oracle.com/sql/select-for-update.html
+'WAIT'                        : 'k',
+'WAITFOR'                     : 'n',
 'WEEK'                        : 'f',
 'WEEKDAY'                     : 'f',
 'WEEKDAYNAME'                 : 'f',
 'WEEKOFYEAR'                  : 'f',
 'WHEN'                        : 'k',
 'WHERE'                       : 'k',
-'WHILE'                       : 'k',
+'WHILE'                       : 'T',
 # pgsql
 'WIDTH_BUCKET'                : 'f',
-'WITH'                        : 'k',
+
+# it's a keyword, but it's too ordinary in English
+'WITH'                        : 'n',
+
 # XML... oracle, pgsql
 'XMLAGG'                      : 'f',
 'XMLELEMENT'                  : 'f',
@@ -902,48 +1085,158 @@ KEYWORDS = {
 'XML_IS_WELL_FORMED'          : 'f',
 'XPATH'                       : 'f',
 'XPATH_EXISTS'                : 'f',
-'XOR'                         : 'o',
+'XOR'                         : '&',
 'XP_EXECRESULTSET'            : 'k',
 'YEAR'                        : 'f',
 'YEARWEEK'                    : 'f',
 'YEAR_MONTH'                  : 'k',
 'ZEROBLOB'                    : 'f',
-'ZEROFILL'                    : 'k'
-}
+'ZEROFILL'                    : 'k',
+'DBMS_LOCK.SLEEP'             : 'f',
+'USER_LOCK.SLEEP'             : 'f',
 
+#
+    '!=': 'o',   # oracle
+    '||': '&',
+    '&&': '&',
+    '>=': 'o',
+    '>>': 'o',
+    '<=': 'o',
+    '<>': 'o',
+    ':=': 'o',
+    '::': 'o',
+    '<<': 'o',
+    '!<': 'o',  # http://msdn.microsoft.com/en-us/library/ms188074.aspx
+    '!>': 'o',  # http://msdn.microsoft.com/en-us/library/ms188074.aspx
+    '+=': 'o',
+    '-=': 'o',
+    '*=': 'o',
+    '/=': 'o',
+    '%=': 'o',
+    '|=': 'o',
+    '&=': 'o',
+    '^=': 'o',
+    '|/': 'o',  # http://www.postgresql.org/docs/9.1/static/functions-math.html
+    '!!': 'o',  # http://www.postgresql.org/docs/9.1/static/functions-math.html
+    '~*': 'o',  # http://www.postgresql.org/docs/9.1/static/functions-matching.html
 
-# special in that single char is a valid operator
-# special case in that '<=' might also be '<=>'
-# ":" isn't an operator in mysql, but other dialects
-#   use it.
-OPERATORS2 = (
-    '!=',   # oracle
-    '||',
-    '&&',
-    '>=',
-    '>>',
-    '<=',
-    '<>',
-    ':=',
-    '<<',
-    '!<', # http://msdn.microsoft.com/en-us/library/ms188074.aspx
-    '!>', # http://msdn.microsoft.com/en-us/library/ms188074.aspx
-    '+=',
-    '-=',
-    '*=',
-    '/=',
-    '%=',
-    '|=',
-    '&=',
-    '^=',
-    '|/', # http://www.postgresql.org/docs/9.1/static/functions-math.html
-    '!!', # http://www.postgresql.org/docs/9.1/static/functions-math.html
-    '~*', # http://www.postgresql.org/docs/9.1/static/functions-matching.html
-    '!~', # http://www.postgresql.org/docs/9.1/static/functions-matching.html
-    '@>',
-    '<@'
+# problematic since ! and ~ are both unary operators in other db engines
+# converting to one unary operator is probably ok
+#    '!~', # http://www.postgresql.org/docs/9.1/static/functions-matching.html
+
+    '@>': 'o',
+    '<@': 'o',
     # '!~*'
-    )
+
+    # pgsql "AT TIME ZONE"
+    'AT TIME'           : 'n',
+    'AT TIME ZONE'      : 'k',
+    'IN BOOLEAN'        : 'n',
+    'IN BOOLEAN MODE'   : 'k',
+# IS DISTINCT - IBM DB2
+# http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic=%2Fsqlp%2Frbafykeyu.htm
+    'IS DISTINCT FROM'     : 'o',
+    'IS DISTINCT'          : 'n',
+    'IS NOT DISTINCT FROM' : 'o',
+    'IS NOT DISTINCT'      : 'n',
+    'CROSS JOIN'        : 'k',
+    'INNER JOIN'        : 'k',
+    'ALTER DOMAIN'      : 'k',
+    'ALTER TABLE'       : 'k',
+    'GROUP BY'          : 'B',
+    'ORDER BY'          : 'B',
+    'OWN3D BY'          : 'B',
+    'READ WRITE'        : 'k',
+
+    # 'LOCAL TABLE' pgsql/oracle
+    # http://www.postgresql.org/docs/current/static/sql-lock.html
+    'LOCK TABLE'        : 'k',
+
+    # 'LOCK TABLES' MYSQL
+    #  http://dev.mysql.com/doc/refman/4.1/en/lock-tables.html
+    'LOCK TABLES'       : 'k',
+    'LEFT OUTER'        : 'k',
+    'LEFT OUTER JOIN'   : 'k',
+    'LEFT JOIN'         : 'k',
+    'RIGHT OUTER'       : 'k',
+    'RIGHT OUTER JOIN'  : 'k',
+    'RIGHT JOIN'        : 'k',
+    'FULL OUTER'        : 'k',
+    'FULL OUTER JOIN'   : 'k',
+    'NATURAL JOIN'      : 'k',
+    'NATURAL INNER'     : 'k',
+    'NATURAL OUTER'     : 'k',
+    'NATURAL LEFT'      : 'k',
+    'NATURAL LEFT OUTER': 'k',
+    'NATURAL LEFT OUTER JOIN': 'k',
+    'NATURAL RIGHT'     : 'k',
+    'NATURAL FULL'      : 'k',
+    'SOUNDS LIKE'       : 'o',
+    'IS NOT'            : 'o',
+# IBM DB2
+# http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic=%2Fsqlp%2Frbafykeyu.htm
+    'NEXT VALUE'            : 'n',
+    'NEXT VALUE FOR'        : 'k',
+    'PREVIOUS VALUE'        : 'n',
+    'PREVIOUS VALUE FOR'    : 'k',
+    'NOT LIKE'          : 'o',
+    'NOT BETWEEN'       : 'o',
+    'NOT SIMILAR'       : 'o',
+
+    # 'NOT RLIKE' -- MySQL
+    'NOT RLIKE'         : 'o',
+
+    'NOT REGEXP'        : 'o',
+    'NOT IN'            : 'k',
+    'SIMILAR TO'        : 'o',
+    'NOT SIMILAR TO'    : 'o',
+    'SELECT DISTINCT'   : 'E',
+    'UNION ALL'         : 'U',
+    'UNION DISTINCT'    : 'U',
+    'UNION DISTINCT ALL'  : 'U',
+    'UNION ALL DISTINCT'  : 'U',
+# INTO..
+# http://dev.mysql.com/doc/refman/5.0/en/select.html
+    'INTO OUTFILE'      : 'k',
+    'INTO DUMPFILE'     : 'k',
+    'WAITFOR DELAY'     : 'E',
+    'WAITFOR TIME'      : 'E',
+    'WAITFOR RECEIVE'   : 'E',
+    'WITH ROLLUP'       : 'k',
+    # 'INTERSECT ALL' -- ORACLE
+    'INTERSECT ALL'     : 'U',
+
+    # hacker mistake
+    'SELECT ALL' : 'E',
+
+    # types
+    'DOUBLE PRECISION': 't',
+    'CHARACTER VARYING': 't',
+
+    # MYSQL
+    # http://dev.mysql.com/doc/refman/5.1/en/innodb-locking-reads.html
+    'LOCK IN': 'n',
+    'LOCK IN SHARE': 'n',
+    'LOCK IN SHARE MODE': 'k',
+
+    # MYSQL
+    # http://dev.mysql.com/doc/refman/5.1/en/innodb-locking-reads.html
+    'FOR UPDATE': 'k',
+
+    # TSQL (MS)
+    # http://msdn.microsoft.com/en-us/library/ms175046.aspx
+    'EXECUTE AS': 'E',
+    'EXECUTE AS LOGIN': 'E',
+
+    # ORACLE
+    # http://www.shift-the-oracle.com/sql/select-for-update.html
+    'FOR UPDATE OF': 'k',
+    'FOR UPDATE WAIT': 'k',
+    'FOR UPDATE NOWAIT': 'k',
+    'FOR UPDATE SKIP': 'k',
+    'FOR UPDATE SKIP LOCKED': 'k'
+
+}
 
 CHARMAP = [
     'CHAR_WHITE', # 0
@@ -981,7 +1274,7 @@ CHARMAP = [
     'CHAR_WHITE', # 32
     'CHAR_OP2',   # 33 !
     'CHAR_STR',   # 34 "
-    'CHAR_COM1',  # 35 "#"
+    'CHAR_HASH',  # 35 "#"
     'CHAR_MONEY', # 36 $
     'CHAR_OP1',   # 37 %
     'CHAR_OP2',   # 38 &
@@ -1004,135 +1297,77 @@ CHARMAP = [
     'CHAR_NUM',   # 55 7
     'CHAR_NUM',   # 56 8
     'CHAR_NUM',   # 57 9
-    'CHAR_CHAR',  # 58 : colon
+    'CHAR_OP2',   # 58 : colon
     'CHAR_CHAR',  # 59 ; semiclon
     'CHAR_OP2',   # 60 <
     'CHAR_OP2',   # 61 =
     'CHAR_OP2',   # 62 >
     'CHAR_OTHER', # 63 ?   BEEP BEEP
-    'CHAR_VAR',   # 64 @
-    'CHAR_WORD',  # 65 A
-    'CHAR_WORD',  # 66 B
-    'CHAR_WORD',  # @
-    'CHAR_WORD',  # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # Z
-    'CHAR_OTHER',           # [
-    'CHAR_BACK',            # \\
-        'CHAR_OTHER',           # ]
-    'CHAR_OP1',             # ^
-    'CHAR_WORD',            # _
-    'CHAR_WORD',            # backtick
-    'CHAR_WORD',            # A
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # @
-    'CHAR_WORD',            # z
-    'CHAR_OTHER',            # 123 { left brace
+    'CHAR_VAR',             # 64  @
+    'CHAR_WORD',            # 65  A
+    'CHAR_BSTRING',         # 66  B
+    'CHAR_WORD',            # 67  C
+    'CHAR_WORD',            # 68  D
+    'CHAR_ESTRING',         # 69  E
+    'CHAR_WORD',            # 70  F
+    'CHAR_WORD',            # 71  G
+    'CHAR_WORD',            # 72  H
+    'CHAR_WORD',            # 73  I
+    'CHAR_WORD',            # 74  J
+    'CHAR_WORD',            # 75  K
+    'CHAR_WORD',            # 76  L
+    'CHAR_WORD',            # 77  M
+    'CHAR_NQSTRING',        # 78  N
+    'CHAR_WORD',            # 79  O
+    'CHAR_WORD',            # 80  P
+    'CHAR_QSTRING',         # 81  Q
+    'CHAR_WORD',            # 82  R
+    'CHAR_WORD',            # 83  S
+    'CHAR_WORD',            # 84  T
+    'CHAR_USTRING',         # 85  U special pgsql unicode
+    'CHAR_WORD',            # 86  V
+    'CHAR_WORD',            # 87  W
+    'CHAR_XSTRING',         # 88  X
+    'CHAR_WORD',            # 89  Y
+    'CHAR_WORD',            # 90  Z
+    'CHAR_OTHER',           # 91  [
+    'CHAR_BACK',            # 92  \\
+    'CHAR_OTHER',           # 93  ]
+    'CHAR_OP1',             # 94  ^
+    'CHAR_WORD',            # 95  _ underscore
+    'CHAR_TICK',            # 96  ` backtick
+    'CHAR_WORD',            # 97  a
+    'CHAR_BSTRING',         # 98  b
+    'CHAR_WORD',            # 99  c
+    'CHAR_WORD',            # 100 d
+    'CHAR_ESTRING',         # 101 e
+    'CHAR_WORD',            # 102 f
+    'CHAR_WORD',            # 103 g
+    'CHAR_WORD',            # 104 h
+    'CHAR_WORD',            # 105 i
+    'CHAR_WORD',            # 106 j
+    'CHAR_WORD',            # 107 k
+    'CHAR_WORD',            # 108 l
+    'CHAR_WORD',            # 109 m
+    'CHAR_NQSTRING',        # 110 n special oracle code
+    'CHAR_WORD',            # 111 o
+    'CHAR_WORD',            # 112 p
+    'CHAR_QSTRING',         # 113 q special oracle code
+    'CHAR_WORD',            # 114 r
+    'CHAR_WORD',            # 115 s
+    'CHAR_WORD',            # 116 t
+    'CHAR_USTRING',         # 117 u  special pgsql unicode
+    'CHAR_WORD',            # 118 v
+    'CHAR_WORD',            # 119 w
+    'CHAR_XSTRING',         # 120 x
+    'CHAR_WORD',            # 121 y
+    'CHAR_WORD',            # 122 z
+    'CHAR_OTHER',           # 123 { left brace
     'CHAR_OP2',             # 124 | pipe
-    'CHAR_OTHER',            # 125 } right brace
-    'CHAR_OP1',             # 126  ~
-    'CHAR_WHITE'
+    'CHAR_OTHER',           # 125 } right brace
+    'CHAR_OP1',             # 126 ~
+    'CHAR_WHITE'            # 127
 ]
-
-PHRASES = {
-    # pgsql "AT TIME ZONE"
-    'AT TIME'           : 'n',
-    'AT TIME ZONE'      : 'k',
-    'IN BOOLEAN'        : 'n',
-    'IN BOOLEAN MODE'   : 'k',
-    'IS DISTINCT FROM'  : 'k',
-    'IS DISTINCT'       : 'n',
-    'IS NOT DISTINCT FROM' : 'k',
-    'IS NOT DISTINCT':     'n',
-    'CROSS JOIN'        : 'k',
-    'ALTER DOMAIN'      : 'k',
-    'ALTER TABLE'       : 'k',
-    'GROUP BY'          : 'B',
-    'ORDER BY'          : 'B',
-    'OWN3D BY'          : 'B',
-    'SELECT ALL'        : 'k',
-    'READ WRITE'        : 'k',
-
-    # 'LOCAL TABLE' pgsql/oracle
-    # http://www.postgresql.org/docs/current/static/sql-lock.html
-    'LOCK TABLE'        : 'k',
-
-    # 'LOCK TABLES' MYSQL
-    #  http://dev.mysql.com/doc/refman/4.1/en/lock-tables.html
-    'LOCK TABLES'       : 'k',
-    'LEFT OUTER'        : 'k',
-    'LEFT JOIN'         : 'k',
-    'RIGHT OUTER'       : 'k',
-    'RIGHT JOIN'        : 'k',
-    'FULL OUTER'        : 'k',
-    'NATURAL JOIN'      : 'k',
-    'NATURAL INNER'     : 'k',
-    'NATURAL OUTER'     : 'k',
-    'NATURAL LEFT'      : 'k',
-    'NATURAL RIGHT'     : 'k',
-    'NATURAL FULL'      : 'k',
-    'SOUNDS LIKE'       : 'o',
-    'IS NOT'            : 'o',
-    'NEXT VALUE'        : 'n',
-    'NEXT VALUE FOR'    : 'k',
-    'NOT LIKE'          : 'o',
-    'NOT BETWEEN'       : 'o',
-    'NOT SIMILAR'       : 'o',
-
-    # 'NOT RLIKE' -- MySQL
-    'NOT RLIKE'         : 'o',
-
-    'NOT REGEXP'        : 'o',
-    'NOT IN'            : 'o',
-    'SIMILAR TO'        : 'o',
-    'NOT SIMILAR TO'    : 'o',
-    'UNION ALL'         : 'U',
-
-    # 'INTERSECT ALL' -- ORACLE
-    'INTERSECT ALL'     : 'o'
-    }
 
 import json
 
@@ -1155,8 +1390,6 @@ def dump():
     objs = {
         'keywords': KEYWORDS,
         'charmap': CHARMAP,
-        'operators2': OPERATORS2,
-        'phrases': PHRASES,
         'fingerprints': get_fingerprints()
         }
     return json.dumps(objs, sort_keys=True, indent=4)

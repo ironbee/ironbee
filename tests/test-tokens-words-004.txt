@@ -3,8 +3,9 @@ keyword parsing, bogus SQL, but testing keyword merging
 --INPUT--
 SELECT 1 CROSS JOIN 2;
 --EXPECTED--
-k SELECT
+E SELECT
 1 1
-k CROSS JOIN
+n CROSS
+k JOIN
 1 2
 ; ;

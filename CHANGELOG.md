@@ -1,4 +1,97 @@
-# vNext
+
+v3.NEXT
+* Bug fix for libinjection_sqli_reset @brianrectanus
+  https://github.com/client9/libinjection/pull/50
+* Non-critical parser fix for numbers with oracle's ending
+  suffix.  "SELECT 1FROM .." -> (SELECT, 1, FROM) not
+  (SELECT, 1F, ROM)
+* Change sizing of some static arrays to have a length >= 8
+  For GCC based applications, this allows -fstack-protector to work
+  and -Wstack-protector will now not emit errors.
+* Added '-fstack-protector -D_FORTIFY_SOURCE=2' to default CFLAGS.
+  No change in performance
+* Improvements in reducing false positives, HT modsecurity team
+* Add fingerprint, HT @FluxReiners
+* Add fingerprints, https://groups.google.com/forum/?hl=en#!topic/libinjection/xgwSTn_faRk
+* Fix libinjection_sqli_reset, thanks to @brianrectanus of IronBee
+
+# v3.4.1 2013-07-18
+* Fingerprint update only HT @LightOS
+
+# v3.4.0 2013-07-18
+
+* Fix regression with COLLATE
+* Handle "procedure analyze" under MySQL
+* Make API most robust when setting flags
+* Add folding API
+* Add new all-C test driver to improve testing speed
+* Makefile cleanups
+* Fired Jenkins!  Using in-house system.
+* Fixed bypass reported by @FluxReiners
+
+# v3.3.0 2013-07-13
+
+* change how backslash is handled to catch old MSSQL servers sqli
+  See http://websec.ca/kb/sql_injection#MSSQL_Allowed_Intermediary_Chars_AND-OR
+  for details
+* Reworking of COLLATE to handle MySQL, TSQL types automatically
+* Handle bizarro world TSQL '\%1' which is parsed as "0 % 1"
+* Better stacked query detection, fixing some regressions
+* Folding improvements
+* False positive improvements
+
+
+# v3.2.0 2013-07-12
+
+* Parse binary litterals "0b010101" used by at least mysql and pgsql
+* Add fingerprints '1&EUE', '1&EkU' to work around ambiguous parsing rules
+  "-1.for" == '-1.f OR' vs. '-1. FOR'  CREDIT @LightOS
+* Add parsing rules for COLLATION in MySQL, CREDIT @LightOS
+* Reduce false positives by removing all fingerprints that contained "sn"
+* Improvement in handling MySQL 'binary' quasi-operator/type
+* Improvements in folding
+* Removed dependency on SWIG for installing python module
+
+# v3.1.0 2013-07-02
+
+* Fix for parsing Oracle numeric literals
+* Fix for oracle whitespace with null char.
+* Add unusual SQL join types to keywords lists
+* Minor fixes to python API examples
+
+# v3.0.0 2013-06-23
+
+Big Release and Big Engine change.  Highly recommened
+
+* Numerous evasions and false positives fixed!
+* Tokenizer is now really dumb, and publically exposed.  See `libinjection_sqli_tokenize`.
+* Folding engine completely rewritten to be simpler and easier to extend, debug, port.
+* MySQL `backticks` now handled correctly
+* @"var" and @'var' parsed correctly (mysql)
+* ":=" operator parsed correctly
+* non-ascii SQL variables and barewords handled correctly
+* less false positives and those that are false positives
+  are more "indeterminate cases" and are only in a few
+  fingerprints
+* autogeneration of fingerprints with trivial SQL variations
+* support for pgsql $ strings
+* support for oracle's q and nq strings
+* support for mysql's n strings
+* parsing stats exposed
+* new swig bindings for python and lua, with callbacks into original scripting
+  language for accept/reject of fingerprints (i.e. manage fingerprints in
+  script, not C code)
+* Imporved parsing of various special cases in MySQL
+* Ban MySQL conditional comments.  If we find them, it's marked as SQLi immediately.
+* Probably a bunch of other stuff too
+
+# v2.0.4 2013-05-21 IMPORTANT
+
+All users are advised to upgrade due to risk of DOS
+
+## security
+* more fingerprints, more tests
+* Issue 34: fix infinite loop
 
 # v2.0.3 2013-05-21
 
