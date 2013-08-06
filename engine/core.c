@@ -4779,6 +4779,28 @@ ib_status_t ib_core_auditlog_parts_map(
     return IB_OK;
 }
 
+ib_status_t ib_core_limits_get(
+    ib_context_t *ctx,
+    const ib_core_cfg_limits_t **limits
+)
+{
+    assert(ctx != NULL);
+    assert(limits != NULL);
+
+    ib_core_cfg_t *corecfg = NULL;
+    ib_status_t    rc;
+
+    rc = ib_core_context_config(ctx, &corecfg);
+    if (rc != IB_OK) { 
+        ib_log_error(ctx->ib, "Cannot retrieve core configuration.");
+        return rc;
+    }
+
+    *limits = &(corecfg->limits);
+
+    return IB_OK;
+}
+
 /**
  * Static core module structure.
  */

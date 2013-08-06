@@ -170,6 +170,20 @@ ib_status_t DLL_PUBLIC ib_core_context_config(
 
 
 /**
+ * Retrieve the limits section of the core configuration for @a ctx.
+ *
+ * @param[in] ctx The current configuration context.
+ * @param[out] limits Writes a pointer to the current limits.
+ *
+ * @return 
+ * - IB_OK On success.
+ * - Other on error fetching the context configuration for core.
+ */
+ib_status_t DLL_PUBLIC ib_core_limits_get(
+    ib_context_t *ctx,
+    const ib_core_cfg_limits_t **limits);
+
+/**
  * @} IronBeeCore
  */
 
