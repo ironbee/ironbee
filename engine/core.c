@@ -3543,6 +3543,82 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         return IB_OK;
 
     }
+    else if (strcasecmp("RequestBodyBufferLimit", name) == 0) {
+        rc = ib_core_context_config(ctx, &corecfg);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Could not fetch core module config.");
+            return rc;
+        }
+
+        corecfg->limits.request_body_buffer_limit = atoll(p1_unescaped);
+    }
+    else if (strcasecmp("RequestBodyBufferLimitAction", name) == 0) {
+        rc = ib_core_context_config(ctx, &corecfg);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Could not fetch core module config.");
+            return rc;
+        }
+
+        if (strcasecmp(p1_unescaped, "ROLLOVER") == 0) {
+            corecfg->limits.request_body_buffer_limit_action =
+                IB_CORE_LIMIT_ROLLOVER;
+        }
+        else if (strcasecmp(p1_unescaped, "REJECT") == 0) {
+            corecfg->limits.request_body_buffer_limit_action =
+                IB_CORE_LIMIT_REJECT;
+        }
+        else {
+            ib_cfg_log_error(cp, "Unknown limit action: %s", p1);
+            return IB_EINVAL;
+        }
+    }
+    else if (strcasecmp("ResponseBodyBufferLimit", name) == 0) {
+        rc = ib_core_context_config(ctx, &corecfg);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Could not fetch core module config.");
+            return rc;
+        }
+
+        corecfg->limits.response_body_buffer_limit = atoll(p1_unescaped);
+    }
+    else if (strcasecmp("ResponseBodyBufferLimitAction", name) == 0) {
+        rc = ib_core_context_config(ctx, &corecfg);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Could not fetch core module config.");
+            return rc;
+        }
+
+        if (strcasecmp(p1_unescaped, "ROLLOVER") == 0) {
+            corecfg->limits.response_body_buffer_limit_action =
+                IB_CORE_LIMIT_ROLLOVER;
+        }
+        else if (strcasecmp(p1_unescaped, "REJECT") == 0) {
+            corecfg->limits.response_body_buffer_limit_action =
+                IB_CORE_LIMIT_REJECT;
+        }
+        else {
+            ib_cfg_log_error(cp, "Unknown limit action: %s", p1);
+            return IB_EINVAL;
+        }
+    }
+    else if (strcasecmp("ResponseBodyLogLimit", name) == 0) {
+        rc = ib_core_context_config(ctx, &corecfg);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Could not fetch core module config.");
+            return rc;
+        }
+
+        corecfg->limits.response_body_log_limit = atoll(p1_unescaped);
+    }
+    else if (strcasecmp("RequestBodyLogLimit", name) == 0) {
+        rc = ib_core_context_config(ctx, &corecfg);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Could not fetch core module config.");
+            return rc;
+        }
+
+        corecfg->limits.request_body_log_limit = atoll(p1_unescaped);
+    }
 
     ib_log_error(ib, "Unhandled directive: %s %s", name, p1_unescaped);
     return IB_EINVAL;
@@ -4063,6 +4139,26 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         core_dir_param1,
         NULL
     ),
+    IB_DIRMAP_INIT_PARAM1(
+        "RequestBodyBufferLimit",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "RequestBodyBufferLimitAction",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "ResponseBodyBufferLimit",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "ResponseBodyBufferLimitAction",
+        core_dir_param1,
+        NULL
+    ),
 
     /* Blocking */
     IB_DIRMAP_INIT_PARAM1(
@@ -4165,6 +4261,16 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     ),
     IB_DIRMAP_INIT_PARAM1(
         "AuditLogFileMode",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+    "RequestBodyLogLimit",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+    "ResponseBodyLogLimit",
         core_dir_param1,
         NULL
     ),
@@ -4401,6 +4507,14 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->block_status         = 403;
     corecfg->block_method         = IB_BLOCK_METHOD_STATUS;
     corecfg->inspection_engine_options = IB_IEOPT_DEFAULT;
+
+    /* Initialize core module limits to "off." */
+    corecfg->limits.request_body_buffer_limit         = -1;
+    corecfg->limits.request_body_buffer_limit_action  = IB_CORE_LIMIT_ROLLOVER;
+    corecfg->limits.response_body_buffer_limit        = -1;
+    corecfg->limits.response_body_buffer_limit_action = IB_CORE_LIMIT_ROLLOVER;
+    corecfg->limits.request_body_log_limit            = -1;
+    corecfg->limits.response_body_log_limit           = -1;
 
     /* Register logger functions. */
     ib_log_set_logger_fn(ib, core_vlogmsg, NULL);
