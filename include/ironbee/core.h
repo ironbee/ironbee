@@ -59,58 +59,6 @@ typedef enum ib_audit_mode_t {
 } ib_audit_mode_t;
 
 /**
- * Actions available in @ref ib_core_cfg_limits_t when a limit is exceeded.
- */
-typedef enum ib_core_cfg_limit_actions_t {
-    IB_CORE_LIMIT_ROLLOVER, /**< Continue processing. */
-    IB_CORE_LIMIT_REJECT    /**< Reject the extra data. */
-} ib_core_cfg_limit_actions_t;
-
-/**
- * Structure used in @ref ib_core_cft_t to hold all limit values.
- */
-struct ib_core_cfg_limits_t {
-    /**
-     * Limit the size of the request body, in bytes.
-     *
-     * A value of < 0 indicates no limit.
-     */
-    ssize_t request_body_buffer_limit;
-
-    /**
-     * Reject or RollOver.
-     */
-    ib_core_cfg_limit_actions_t request_body_buffer_limit_action;
-
-    /**
-     * Limit the size of the response body, in bytes.
-     *
-     * A value of < 0 indicates no limit.
-     */
-    ssize_t response_body_buffer_limit;
-
-    /**
-     * Reject or RollOver.
-     */
-    ib_core_cfg_limit_actions_t response_body_buffer_limit_action;
-
-    /**
-     * Limit the size of the request body logged, in bytes.
-     *
-     * A value of < 0 indicates no limit.
-     */
-    ssize_t request_body_log_limit;
-
-    /**
-     * Limit the size of the response body logged, in bytes.
-     *
-     * A value of < 0 indicates no limit.
-     */
-    ssize_t response_body_log_limit;
-};
-typedef struct ib_core_cfg_limits_t ib_core_cfg_limits_t;
-
-/**
  * Core configuration.
  */
 typedef struct ib_core_cfg_t ib_core_cfg_t;
@@ -143,7 +91,7 @@ struct ib_core_cfg_t {
     //! Status code used when blocking with @ref IB_BLOCK_METHOD_STATUS.
     ib_num_t          block_status;
     ib_num_t inspection_engine_options; /**< Inspection engine options */
-    ib_core_cfg_limits_t limits;         /**< Limits used by this core. */
+    ib_tx_limits_t    limits;            /**< Limits used by this core. */
 };
 
 /**
@@ -181,7 +129,7 @@ ib_status_t DLL_PUBLIC ib_core_context_config(
  */
 ib_status_t DLL_PUBLIC ib_core_limits_get(
     ib_context_t *ctx,
-    const ib_core_cfg_limits_t **limits);
+    const ib_tx_limits_t **limits);
 
 /**
  * @} IronBeeCore

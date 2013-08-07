@@ -202,6 +202,58 @@ struct ib_conn_t {
     ib_flags_t          flags;           /**< Connection flags */
 };
 
+/**
+ * Actions available in @ref ib_core_cfg_limits_t when a limit is exceeded.
+ */
+typedef enum ib_tx_limits_actions_t {
+    IB_CORE_LIMIT_ROLLOVER, /**< Continue processing. */
+    IB_CORE_LIMIT_REJECT    /**< Reject the extra data. */
+} ib_tx_limits_actions_t;
+
+/**
+ * Structure used in @ref ib_core_cft_t to hold all limit values.
+ */
+struct ib_tx_limits_t {
+    /**
+     * Limit the size of the request body, in bytes.
+     *
+     * A value of < 0 indicates no limit.
+     */
+    ssize_t request_body_buffer_limit;
+
+    /**
+     * Reject or RollOver.
+     */
+    ib_tx_limits_actions_t request_body_buffer_limit_action;
+
+    /**
+     * Limit the size of the response body, in bytes.
+     *
+     * A value of < 0 indicates no limit.
+     */
+    ssize_t response_body_buffer_limit;
+
+    /**
+     * Reject or RollOver.
+     */
+    ib_tx_limits_actions_t response_body_buffer_limit_action;
+
+    /**
+     * Limit the size of the request body logged, in bytes.
+     *
+     * A value of < 0 indicates no limit.
+     */
+    ssize_t request_body_log_limit;
+
+    /**
+     * Limit the size of the response body logged, in bytes.
+     *
+     * A value of < 0 indicates no limit.
+     */
+    ssize_t response_body_log_limit;
+};
+typedef struct ib_tx_limits_t ib_tx_limits_t;
+
 /** Transaction Structure */
 struct ib_tx_t {
     ib_engine_t        *ib;              /**< Engine handle */
