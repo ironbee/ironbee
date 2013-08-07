@@ -293,6 +293,15 @@ struct ib_tx_t {
     ib_rule_exec_t     *rule_exec;       /**< Rule engine execution object */
     ib_list_t          *managed_collections;/**< ib_managed_collection_t list*/
 
+    /* Limits. */
+
+    /**
+     * Limits on tx.
+     *
+     * Set after site selected.
+     */
+    ib_tx_limits_t      limits;
+
     /* Request */
     ib_parsed_req_line_t *request_line;  /**< Request line */
     ib_parsed_header_wrapper_t *request_header;/**< Request header */

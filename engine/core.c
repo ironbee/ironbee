@@ -2217,6 +2217,9 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
         return rc;
     }
 
+    /* Copy the configuration limits into the tx. */
+    memcpy(&(tx->limits), &(corecfg->limits), sizeof(corecfg->limits));
+
     return IB_OK;
 }
 
