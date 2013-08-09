@@ -57,6 +57,9 @@
 
 namespace {
 
+    struct XRulesModuleTxData;
+    typedef boost::shared_ptr<XRulesModuleTxData> xrules_module_tx_data_ptr;
+
     //! Block action text.
     const char ACTION_BLOCK[] = "Block";
 
@@ -136,8 +139,14 @@ namespace {
          * Apply the transaction.
          *
          * This function must be overridden.
+         *
+         * @param[in] mdata The module.
+         * @param[in] tx The current transaction.
          */
-        virtual void apply_impl(IronBee::Transaction tx) const;
+        virtual void apply_impl(
+            xrules_module_tx_data_ptr mdata,
+            IronBee::Transaction tx
+        ) const;
 
     protected:
         /**
@@ -192,9 +201,13 @@ namespace {
          *
          * Descendants must implement this.
          *
+         * @param[in] mdata The module data.
          * @param[in] tx Transaction.
          */
-        void operator()(IronBee::Transaction tx);
+        void operator()(
+            xrules_module_tx_data_ptr mdata,
+            IronBee::Transaction tx
+        );
 
         /**
          * Defined comparison of Actions to allow use in std::map.
@@ -219,9 +232,12 @@ namespace {
     Action::~Action()
     {}
 
-    void Action::operator()(IronBee::Transaction tx)
+    void Action::operator()(
+        xrules_module_tx_data_ptr mdata,
+        IronBee::Transaction tx
+    )
     {
-        apply_impl(tx);
+        apply_impl(mdata, tx);
     }
 
     bool Action::operator<(const Action &that) const
@@ -234,7 +250,10 @@ namespace {
         return (m_priority >= that.m_priority && m_id == that.m_id);
     }
 
-    void Action::apply_impl(IronBee::Transaction tx) const
+    void Action::apply_impl(
+        xrules_module_tx_data_ptr mdata,
+        IronBee::Transaction tx
+    ) const
     {
         BOOST_THROW_EXCEPTION(
             IronBee::enotimpl() <<
@@ -267,9 +286,10 @@ namespace {
         /**
          * Apply all actions in this ActionSet to @a tx.
          *
+         * @param[in] mdata The module data.
          * @param[in] tx The transaction to affect.
          */
-        void apply(IronBee::Transaction tx);
+        void apply(xrules_module_tx_data_ptr mdata, IronBee::Transaction tx);
 
         /**
          * Check if a given action overrides an action in this set.
@@ -298,14 +318,17 @@ namespace {
         }
     }
 
-    void ActionSet::apply(IronBee::Transaction tx)
+    void ActionSet::apply(
+        xrules_module_tx_data_ptr mdata,
+        IronBee::Transaction tx
+    )
     {
         for(
             std::map<Action, action_ptr>::iterator itr = m_actions.begin();
             itr != m_actions.end();
             ++itr
         ) {
-            (*(itr->second))(tx);
+            (*(itr->second))(mdata, tx);
         }
     }
 
@@ -321,6 +344,34 @@ namespace {
         }
     }
     /* End ActionSet Impl */
+
+    /**
+     * This class stores the current transaction-level data for this module.
+     *
+     * This class is mostly responsible for managing Actions that may
+     * or may not be applied to a transaction.
+     */
+    struct XRulesModuleTxData {
+        /**
+         * Actions executed at the beginning of a request.
+         */
+        ActionSet request_actions;
+
+        /**
+         * Actions executed at the beginning of a response.
+         */
+        ActionSet response_actions;
+
+        /**
+         * ScaleThreat actions manipulates this when they are executed.
+         */
+        ib_float_t scale_threat;
+        
+        /**
+         * Constructor to set defaults.
+         */
+        XRulesModuleTxData() : scale_threat(0.0) {}
+    };
 
     /**
      * Defines how to block a transaction.
@@ -345,9 +396,13 @@ namespace {
         /**
          * Set the block or allow flags in the @a tx.
          *
+         * @param[in] mdata The module.
          * @param[in] tx The transaction to modify.
          */
-        virtual void apply_impl(IronBee::Transaction tx) const;
+        virtual void apply_impl(
+            xrules_module_tx_data_ptr mdata,
+            IronBee::Transaction tx
+        ) const;
     };
 
     /* BlockAllow Impl */
@@ -357,7 +412,10 @@ namespace {
         m_block(block)
     {}
 
-    void BlockAllow::apply_impl(IronBee::Transaction tx) const
+    void BlockAllow::apply_impl(
+        xrules_module_tx_data_ptr mdata,
+        IronBee::Transaction tx
+    ) const
     {
         if (m_block) {
             tx.ib()->flags |= IB_TX_BLOCK_IMMEDIATE;
@@ -415,9 +473,13 @@ namespace {
         /**
          * Set the field to 0 or 1 and set or clear the flag in @ref ib_tx_t.
          *
+         * @param[in] mdata The module.
          * @param[in] tx The transaction to be modified.
          */
-        virtual void apply_impl(IronBee::Transaction tx) const;
+        virtual void apply_impl(
+            xrules_module_tx_data_ptr mdata,
+            IronBee::Transaction tx
+        ) const;
     };
 
     /* SetFlag Impl */
@@ -434,7 +496,10 @@ namespace {
         m_clear(clear)
     {}
 
-    void SetFlag::apply_impl(IronBee::Transaction tx) const
+    void SetFlag::apply_impl(
+        xrules_module_tx_data_ptr mdata,
+        IronBee::Transaction tx
+    ) const
     {
         ib_num_t val;
 
@@ -463,10 +528,17 @@ namespace {
         /**
          * Constructor.
          *
+         * @param[in] unique_id To ensure that each ScaleThreat
+         *            action is always executed, they
+         *            need unique ids.
          * @param[in] fnum The floating point number to be store in tx.
+         * @param[in] results The calling application 
+         *            must provide a pointer to a float that
+         *            this action may manipulate when it is executed.
          * @param[in] priority The priority of this action.
          */
         ScaleThreat(
+            std::string unique_id,
             ib_float_t fnum,
             int priority
         );
@@ -476,39 +548,35 @@ namespace {
         //! The value set in the transaction.
         ib_float_t m_fnum;
 
-        //! The field that is assigned a value in tx.
-        static const std::string FIELD_NAME;
-
         /**
-         * Set ScaleThreat::FIELD_NAME to ScaleThreat::m_fnum.
+         * Scale the threat value in the tx data.
          *
+         * @param[in] mdata Module data.
          * @param[in] tx The transaction to modify.
          */
-        virtual void apply_impl(IronBee::Transaction tx) const;
+        virtual void apply_impl(
+            xrules_module_tx_data_ptr mdata,
+            IronBee::Transaction tx
+        ) const;
     };
-    const std::string ScaleThreat::FIELD_NAME = "XRULES:SCALE_THREAT";
 
     /* ScaleThreat Impl */
     ScaleThreat::ScaleThreat(
+        std::string unique_id,
         ib_float_t fnum,
         int priority
     )
     :
-        Action("SetBlockingMode", priority),
+        Action(std::string("SetBlockingMode") + unique_id, priority),
         m_fnum(fnum)
     {}
 
-    void ScaleThreat::apply_impl(IronBee::Transaction tx) const
+    void ScaleThreat::apply_impl(
+        xrules_module_tx_data_ptr mdata,
+        IronBee::Transaction tx
+    ) const
     {
-        IronBee::Field f = IronBee::Field::create_float(
-            tx.memory_pool(),
-            FIELD_NAME.c_str(),
-            FIELD_NAME.length(),
-            m_fnum);
-
-        IronBee::throw_if_error(
-            ib_data_add(tx.ib()->data, f.ib()),
-            "Failed to add Scale Threat field to tx.");
+        (mdata->scale_threat) += m_fnum;
     }
     /* End ScaleThreat Impl */
 
@@ -539,9 +607,13 @@ namespace {
         /**
          * Set @c XRULES:BLOCKING_MODE = @c ENABLED or @c DISABLED.
          *
+         * @param[in] mdata The module.
          * @param[in] tx The transaction to be modified.
          */
-        virtual void apply_impl(IronBee::Transaction tx) const;
+        virtual void apply_impl(
+            xrules_module_tx_data_ptr mdata,
+            IronBee::Transaction tx
+        ) const;
     };
 
     /* SetBlockingMode Impl */
@@ -551,7 +623,10 @@ namespace {
         m_enabled(enabled)
     {}
 
-    void SetBlockingMode::apply_impl(IronBee::Transaction tx) const
+    void SetBlockingMode::apply_impl(
+        xrules_module_tx_data_ptr mdata,
+        IronBee::Transaction tx
+    ) const
     {
 
         IronBee::ByteString bs = IronBee::ByteString::create(
@@ -641,13 +716,25 @@ namespace {
             return action_ptr(new SetBlockingMode(false, priority));
         }
         else if (has_action(ACTION_SCALETHREAT, mr)) {
+            ib_uuid_t uuid;
+            std::vector<char> uuid_str(37);
             ib_float_t fnum;
 
+            IronBee::throw_if_error(
+                ib_uuid_create_v4(&uuid),
+                "Cannot initialize v4 UUID.");
+            IronBee::throw_if_error(
+                ib_uuid_bin_to_ascii(&(uuid_str[0]), &uuid),
+                "Cannot generate v4 UUID.");
             IronBee::throw_if_error(
                 ib_string_to_float(arg, &fnum),
                 "Cannot convert string to float.");
 
-            return action_ptr(new ScaleThreat(fnum, priority));
+            return action_ptr(
+                new ScaleThreat(
+                    std::string(&(uuid_str[0]), 37),
+                    fnum,
+                    priority));
         }
         else if (has_action(ACTION_ENABLEREQUESTHEADERINSPECTION, mr)) {
             return action_ptr(
@@ -871,26 +958,6 @@ namespace {
         //! List of xrules to execute for the response.
         std::list<xrule_ptr> resp_xrules;
     };
-
-
-    /**
-     * This class stores the current transaction-level data for this module.
-     *
-     * This class is mostly responsible for managing Actions that may
-     * or may not be applied to a transaction.
-     */
-    struct XRulesModuleTxData {
-        /**
-         * Actions executed at the beginning of a request.
-         */
-        ActionSet request_actions;
-
-        /**
-         * Actions executed at the beginning of a response.
-         */
-        ActionSet response_actions;
-    };
-    typedef boost::shared_ptr<XRulesModuleTxData> xrules_module_tx_data_ptr;
 
     /**
      * An XRule that checks the two-character country code.
@@ -1786,9 +1853,9 @@ void XRulesModule::on_transaction_started(
     IronBee::Transaction tx
 )
 {
-    xrules_module_tx_data_ptr txdata(new XRulesModuleTxData());
+    xrules_module_tx_data_ptr mdata(new XRulesModuleTxData());
 
-    tx.set_module_data(module(), txdata);
+    tx.set_module_data(module(), mdata);
 }
 
 void XRulesModule::on_handle_response_header(
@@ -1799,9 +1866,9 @@ void XRulesModule::on_handle_response_header(
     IronBee::Context ctx = tx.context();
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
-    ActionSet &actions =
-        tx.get_module_data<xrules_module_tx_data_ptr>(module())
-            ->response_actions;
+    xrules_module_tx_data_ptr mdata =
+        tx.get_module_data<xrules_module_tx_data_ptr>(module());
+    ActionSet &actions = mdata->response_actions;
 
     for (
         std::list<xrule_ptr>::iterator itr = cfg.resp_xrules.begin();
@@ -1811,7 +1878,18 @@ void XRulesModule::on_handle_response_header(
         (**itr)(tx, actions);
     }
 
-    actions.apply(tx);
+    actions.apply(mdata, tx);
+
+    /* After applying the TX, set the value. */
+    IronBee::Field f = IronBee::Field::create_float(
+        tx.memory_pool(),
+        "XRULES:SCALE_THREAT",
+        sizeof("XRULES:SCALE_THREAT"),
+        mdata->scale_threat);
+
+    IronBee::throw_if_error(
+        ib_data_add(tx.ib()->data, f.ib()),
+        "Failed to add Scale Threat field to tx.");
 }
 
 void XRulesModule::on_handle_request_header(
@@ -1822,9 +1900,9 @@ void XRulesModule::on_handle_request_header(
     IronBee::Context ctx = tx.context();
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
-    ActionSet &actions =
-        tx.get_module_data<xrules_module_tx_data_ptr>(module())
-            ->request_actions;
+    xrules_module_tx_data_ptr mdata =
+        tx.get_module_data<xrules_module_tx_data_ptr>(module());
+    ActionSet &actions = mdata->request_actions;
 
     for (
         std::list<xrule_ptr>::iterator itr = cfg.req_xrules.begin();
@@ -1834,7 +1912,7 @@ void XRulesModule::on_handle_request_header(
             (**itr)(tx, actions);
     }
 
-    actions.apply(tx);
+    actions.apply(mdata, tx);
 }
 
 /* End XRulesModule Impl */
