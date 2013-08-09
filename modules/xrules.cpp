@@ -304,47 +304,6 @@ namespace {
         std::map<Action, action_ptr> m_actions;
     };
 
-    /* ActionSet Impl */
-    void ActionSet::set(action_ptr& action)
-    {
-        std::map<Action, action_ptr>::iterator itr =
-            m_actions.find(*action);
-
-        if (itr == m_actions.end()) {
-            m_actions[*action].swap(action);
-        }
-        else if (itr->second->overrides(*action)) {
-            itr->second.swap(action);
-        }
-    }
-
-    void ActionSet::apply(
-        xrules_module_tx_data_ptr mdata,
-        IronBee::Transaction tx
-    )
-    {
-        for(
-            std::map<Action, action_ptr>::iterator itr = m_actions.begin();
-            itr != m_actions.end();
-            ++itr
-        ) {
-            (*(itr->second))(mdata, tx);
-        }
-    }
-
-    bool ActionSet::overrides(action_ptr action)
-    {
-        std::map<Action, action_ptr>::iterator itr = m_actions.find(*action);
-
-        if (itr == m_actions.end()) {
-            return true;
-        }
-        else {
-            return itr->second->overrides(*action);
-        }
-    }
-    /* End ActionSet Impl */
-
     /**
      * This class stores the current transaction-level data for this module.
      *
@@ -372,6 +331,58 @@ namespace {
          */
         XRulesModuleTxData() : scale_threat(0.0) {}
     };
+
+    /* ActionSet Impl */
+    void ActionSet::set(action_ptr& action)
+    {
+        std::map<Action, action_ptr>::iterator itr =
+            m_actions.find(*action);
+
+        if (itr == m_actions.end()) {
+            m_actions[*action].swap(action);
+        }
+        else if (itr->second->overrides(*action)) {
+            itr->second.swap(action);
+        }
+    }
+
+    void ActionSet::apply(
+        xrules_module_tx_data_ptr mdata,
+        IronBee::Transaction tx
+    )
+    {
+        for(
+            std::map<Action, action_ptr>::iterator itr = m_actions.begin();
+            itr != m_actions.end();
+            ++itr
+        ) {
+            (*(itr->second))(mdata, tx);
+        }
+
+        /* After applying the TX, set the value. */
+        IronBee::Field f = IronBee::Field::create_float(
+            tx.memory_pool(),
+            "XRULES:SCALE_THREAT",
+            sizeof("XRULES:SCALE_THREAT"),
+            mdata->scale_threat);
+
+        IronBee::throw_if_error(
+            ib_data_add(tx.ib()->data, f.ib()),
+            "Failed to add Scale Threat field to tx.");
+    }
+
+    bool ActionSet::overrides(action_ptr action)
+    {
+        std::map<Action, action_ptr>::iterator itr = m_actions.find(*action);
+
+        if (itr == m_actions.end()) {
+            return true;
+        }
+        else {
+            return itr->second->overrides(*action);
+        }
+    }
+    /* End ActionSet Impl */
 
     /**
      * Defines how to block a transaction.
@@ -1879,17 +1890,6 @@ void XRulesModule::on_handle_response_header(
     }
 
     actions.apply(mdata, tx);
-
-    /* After applying the TX, set the value. */
-    IronBee::Field f = IronBee::Field::create_float(
-        tx.memory_pool(),
-        "XRULES:SCALE_THREAT",
-        sizeof("XRULES:SCALE_THREAT"),
-        mdata->scale_threat);
-
-    IronBee::throw_if_error(
-        ib_data_add(tx.ib()->data, f.ib()),
-        "Failed to add Scale Threat field to tx.");
 }
 
 void XRulesModule::on_handle_request_header(
