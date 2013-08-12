@@ -172,14 +172,13 @@ static ib_status_t list_edit(ngx_list_t *list, const char *entry,
     char *oldval;
     ngxib_req_ctx *ctx = tx->sctx;
 
-    ngx_log_t *prev_log = ngxib_log(ctx->r->connection->log);
     ngx_regex_malloc_init(ctx->r->pool);
 
     /* Check we were passed something valid */
     if (rx == NULL) {
         if (rx = ib_rx_compile(tx->mp, val), rx == NULL) {
             ib_log_error_tx(ctx->tx, "Failed to compile %s as regexp", val);
-            cleanup_return(prev_log) IB_EINVAL;
+            cleanup_return IB_EINVAL;
         }
     }
     for (part = &list->part; part; part = part->next) {
@@ -200,7 +199,7 @@ static ib_status_t list_edit(ngx_list_t *list, const char *entry,
         if (part == list->last)
             break;
     }
-    cleanup_return(prev_log) IB_OK;
+    cleanup_return IB_OK;
 }
 /**
  * IronBee callback function to manipulate an HTTP header

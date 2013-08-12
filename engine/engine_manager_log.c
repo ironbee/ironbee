@@ -56,6 +56,7 @@ void ib_engine_manager_logger(
     int                line,
     const char        *fmt,
     va_list            ap,
+    ib_log_call_data_t *calldata,
     void              *cbdata
 )
 {
@@ -123,13 +124,14 @@ void ib_engine_manager_logger(
     log_buf = malloc(log_buf_size);
     if (log_buf == NULL) {
         manager->log_buf_fn(level, manager->log_cbdata,
-                            "Failed to allocate message format buffer");
+                            "Failed to allocate message format buffer",
+                            calldata);
         goto cleanup;
     }
 
     /* Otherwise, we need to format into a buffer */
     vsnprintf(log_buf, log_buf_size, fmt_buf, ap);
-    manager->log_buf_fn(level, manager->log_cbdata, log_buf);
+    manager->log_buf_fn(level, manager->log_cbdata, log_buf, calldata);
 
 cleanup:
     if (fmt_free != NULL) {
@@ -145,6 +147,7 @@ void ib_manager_log_ex(
     ib_log_level_t      level,
     const char         *file,
     int                 line,
+    ib_log_call_data_t *calldata,
     const char         *fmt,
     ...
 )
@@ -153,7 +156,8 @@ void ib_manager_log_ex(
     va_list      ap;
 
     va_start(ap, fmt);
-    ib_engine_manager_logger(NULL, level, file, line, fmt, ap, (void *)manager);
+    ib_engine_manager_logger(NULL, level, file, line, fmt, ap, calldata,
+                            (void *)manager);
     va_end(ap);
 }
 

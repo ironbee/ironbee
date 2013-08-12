@@ -239,8 +239,17 @@ void DLL_PUBLIC ib_log_tx_vex(
      va_list         ap
 )
 {
-    char *new_fmt = malloc(strlen(fmt) + 45);
-    const char *which_fmt = new_fmt;
+    char *new_fmt;
+    const char *which_fmt;
+
+    /* Check the log level, return if we're not interested. */
+    ib_log_level_t logger_level = ib_log_get_level(tx->ib);
+    if (level > logger_level) {
+        return;
+    }
+
+    new_fmt = malloc(strlen(fmt) + 45);
+    which_fmt = new_fmt;
     if (! new_fmt) {
         /* Do our best */
         which_fmt = fmt;
@@ -250,9 +259,18 @@ void DLL_PUBLIC ib_log_tx_vex(
         strcat(new_fmt, fmt);
     }
 
-    ib_log_vex_ex(tx->ib, level, file, line, which_fmt, ap);
+    if (tx->ib->logger_fn != NULL) {
+        tx->ib->logger_fn(tx->ib, level, file, line, fmt, ap,
+                          &(ib_log_call_data_t) {IBLOG_TX, {.t = tx}},
+                          tx->ib->logger_cbdata);
+    }
+    else {
+        default_logger(stderr, level, tx->ib, file, line, fmt, ap);
+    }
 
-    free(new_fmt);
+    if (new_fmt) {
+        free(new_fmt);
+    }
 
     return;
 }
@@ -273,7 +291,9 @@ void DLL_PUBLIC ib_log_vex_ex(
     }
 
     if (ib->logger_fn != NULL) {
-        ib->logger_fn(ib, level, file, line, fmt, ap, ib->logger_cbdata);
+        ib->logger_fn(ib, level, file, line, fmt, ap,
+                      &(ib_log_call_data_t) {IBLOG_ENGINE, {.e=ib}},
+                      ib->logger_cbdata);
     }
     else {
         default_logger(stderr, level, ib, file, line, fmt, ap);

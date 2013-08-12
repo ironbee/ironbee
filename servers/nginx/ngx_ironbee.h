@@ -105,7 +105,7 @@ ib_status_t ngxib_release_engine(
  * been initialized, and if so returns it.  If it doesn't yet exist,
  * it will be created and IronBee notified of the new connection.
  * A cleanup is added to nginx's connection pool, and is also used
- * to search for the connection.
+ * in ngxib_conn_get to search for the connection.
  *
  * @param[in] rctx  The module request ctx
  * @return          The ironbee connection
@@ -126,11 +126,13 @@ ib_status_t ngxib_conn_init(ib_engine_t *ib,
  * @param[in] level IronBee log level
  * @param[in] cbdata Callback data (unused)
  * @param[in] buf Formatted buffer
+ * @param[in] calldata Context-sensitive data descriptor
  */
 void ngxib_logger(
-    ib_log_level_t  level,
-    void           *cbdata,
-    const char     *buf
+    ib_log_level_t      level,
+    void               *cbdata,
+    const char         *buf,
+    ib_log_call_data_t *calldata
 );
 
 /* Dummy function to set IronBee log level */
@@ -155,7 +157,8 @@ ib_server_t *ngxib_server(void);                 /* The ironbee server */
  * globals are tidied up after use.  An ugly but necessary hack.
  * Would become completely untenable if a threaded nginx happens.
  */
-#define cleanup_return(log) return ngxib_log(log),ngx_regex_malloc_done(),
+//#define cleanup_return(log) return ngxib_log(log),ngx_regex_malloc_done(),
+#define cleanup_return return ngx_regex_malloc_done(),
 
 
 #endif

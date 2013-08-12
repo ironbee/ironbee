@@ -40,9 +40,7 @@ static void ngxib_post_handler(ngx_http_request_t *r)
 {
     ngxib_req_ctx *ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
     if (ctx->body_wait) {
-        ngx_log_t *prev_log = ngxib_log(r->connection->log);
         ib_log_debug_tx(ctx->tx, "Waiting for more input body data");
-        ngxib_log(prev_log);
         ctx->body_wait = 0;
         ngx_http_core_run_phases(r);
     }
@@ -89,7 +87,6 @@ int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
  */
 ngx_int_t ngxib_handler(ngx_http_request_t *r)
 {
-    ngx_log_t *prev_log;
     ib_txdata_t itxdata;
     ngx_chain_t *link;
     ngxib_req_ctx *ctx;
@@ -109,7 +106,6 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
     if (!ngxib_has_request_body(r, ctx))
         return rv;
 
-    prev_log = ngxib_log(r->connection->log);
     ngx_regex_malloc_init(r->pool);
 
     /* We can now read the body.
@@ -122,14 +118,14 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
     rv = ngx_http_read_client_request_body(r, ngxib_post_handler);
     if (rv == NGX_AGAIN) {
         ctx->body_wait = 1;
-        cleanup_return(prev_log) NGX_DONE;
+        cleanup_return NGX_DONE;
     }
 
     /* We now have the request body.  Feed it to ironbee */
     rb = r->request_body;
     if (!rb) {
         ib_log_error_tx(ctx->tx, "Error reading request body");
-        cleanup_return(prev_log) NGX_HTTP_INTERNAL_SERVER_ERROR;
+        cleanup_return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
     if (!rb->bufs) {
         /* I think this shouldn't happen */
@@ -175,5 +171,5 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
         ib_log_error_tx(ctx->tx, "IronBee set %d reading request body", (int)rv);
     }
 
-    cleanup_return(prev_log) rv;
+    cleanup_return rv;
 }

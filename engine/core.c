@@ -465,16 +465,18 @@ static void core_vlogmsg_fp(
  * @param line Source code line number (typically __LINE__)
  * @param fmt Printf like format string
  * @param ap Variable length parameter list
+ * @param calldata unused.
  * @param cbdata Callback data.
  */
 static void core_vlogmsg(
-    const ib_engine_t *ib,
-    ib_log_level_t     level,
-    const char        *file,
-    int                line,
-    const char        *fmt,
-    va_list            ap,
-    void              *cbdata)
+    const ib_engine_t  *ib,
+    ib_log_level_t      level,
+    const char         *file,
+    int                 line,
+    const char         *fmt,
+    va_list             ap,
+    ib_log_call_data_t *calldata,
+    void               *cbdata)
 {
     ib_log_level_t log_level;
     ib_core_cfg_t *config;

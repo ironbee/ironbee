@@ -132,10 +132,12 @@ static ib_status_t log_pipe_restart(const ib_engine_t *ib, ib_module_t *m,
  * @param[in] fmt Format string
  * @param[in] ap  Var args list to match the format
  * @param[in] dummy
+ * @param[in] calldata Unused
+ * @param[in] calltype Unused
  */
 static void log_pipe_logger(const ib_engine_t *ib, ib_log_level_t level,
                             const char *file, int line, const char *fmt,
-                            va_list ap, void *dummy)
+                            va_list ap, ib_log_call_data_t *calldata, void *x)
 {
     /* Just duplicate what's in all the server loggers */
     char buf[8192 + 1];

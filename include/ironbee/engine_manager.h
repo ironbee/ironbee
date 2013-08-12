@@ -98,11 +98,13 @@ VPRINTF_ATTRIBUTE(3);
  * @param[in] level IronBee log level
  * @param[in] cbdata Callback data
  * @param[in] buf Formatted buffer
+ * @param[in] calldata Context-dependent data.
  */
 typedef void (*ib_manager_log_buf_fn_t)(
     ib_log_level_t      level,
     void               *cbdata,
-    const char         *buf
+    const char         *buf,
+    ib_log_call_data_t *calldata
 );
 
 /**
@@ -126,6 +128,7 @@ typedef void (*ib_manager_log_flush_fn_t)(
  * @param[in] logger_flush_fn Logger flush function (or NULL)
  * @param[in] logger_cbdata Data to pass to logger function
  * @param[in] logger_level Initial log level
+ * @param[in] callback Optional callback for maintenance under mutex
  * @param[out] pmanager Pointer to IronBee engine manager object
  *
  * If @a logger_va_fn is provided, the engine manager's IronBee logger will not
@@ -158,6 +161,7 @@ ib_status_t DLL_PUBLIC ib_manager_create(
     ib_manager_log_flush_fn_t   logger_flush_fn,
     void                       *logger_cbdata,
     ib_log_level_t              logger_level,
+    void                      (*callback)(void*),
     ib_manager_t              **pmanager
 );
 

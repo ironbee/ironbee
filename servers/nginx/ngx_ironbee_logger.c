@@ -47,11 +47,14 @@ ngx_log_t *ngxib_log(ngx_log_t *log)
 }
 
 void ngxib_logger(
-    ib_log_level_t  level,
-    void           *cbdata,
-    const char     *buf)
+    ib_log_level_t      level,
+    void               *cbdata,
+    const char         *buf,
+    ib_log_call_data_t *calldata)
 {
     unsigned int ngx_level = NGX_LOG_WARN;
+
+    assert(buf != NULL);
 
     /* Translate the log level. */
     switch (level) {
@@ -91,5 +94,28 @@ void ngxib_logger(
     }
 
     /* Write it to the error log. */
-    ngx_log_error(ngx_level, ngx_log, 0, "ironbee: %s", buf);
+    switch (calldata->type) {
+      case IBLOG_ENGINE:
+        /* At startup, this is just fine */
+        ngx_log_error(ngx_level, ngx_log, 0, "ironbee: %s", buf);
+        break;
+      case IBLOG_MANAGER:
+        /* This should use the connection log from the calling func,
+         * but not sure if that could lead to race conditions.  Whoops!
+         */
+        ngx_log_error(ngx_level, ngx_log, 0, "ironbee: %s", buf);
+        break;
+      case IBLOG_CONN:
+      {
+        ngx_connection_t *nconn = calldata->data.c->server_ctx;
+        ngx_log_error(ngx_level, nconn->log, 0, "ironbee: %s", buf);
+        break;
+      }
+      case IBLOG_TX:
+      {
+        ngxib_req_ctx *ctx = calldata->data.t->sctx;
+        ngx_log_error(ngx_level, ctx->r->connection->log, 0, "ironbee: %s", buf);
+        break;
+      }
+    }
 }

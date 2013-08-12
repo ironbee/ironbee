@@ -172,7 +172,6 @@ static void free_chain(ngx_pool_t *pool, ngx_chain_t *chain)
  */
 static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
 {
-    ngx_log_t *prev_log;
     ngxib_req_ctx *ctx;
     ngx_chain_t *link;
     ib_status_t rc;
@@ -183,8 +182,6 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
     if (r->internal)
         return ngx_http_next_body_filter(r, in);
 
-    prev_log = ngxib_log(r->connection->log);
-
     ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
     assert((ctx != NULL) && (ctx->tx != NULL));
     ib_log_debug_tx(ctx->tx, "ironbee_body_out");
@@ -193,12 +190,12 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
          * notify IronBee of end-of-response ?
          */
         ib_log_debug_tx(ctx->tx, "ironbee_body_out: input was null");
-        cleanup_return(prev_log) ngx_http_next_body_filter(r, in);
+        cleanup_return ngx_http_next_body_filter(r, in);
     }
     ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
     if (ctx->output_filter_done) {
         ib_log_debug_tx(ctx->tx, "ironbee_body_out: already done");
-        cleanup_return(prev_log) ngx_http_next_body_filter(r, in);
+        cleanup_return ngx_http_next_body_filter(r, in);
     }
     if (!ctx->output_filter_init) {
         ctx->output_filter_init = 1;
@@ -328,7 +325,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
             rv = NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
     }
-    cleanup_return(prev_log) rv;
+    cleanup_return rv;
 }
 
 /**
@@ -339,7 +336,6 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
  */
 static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
 {
-    ngx_log_t *prev_log;
     ngxib_req_ctx *ctx;
     ib_parsed_resp_line_t *rline;
     ib_parsed_header_wrapper_t *ibhdrs;
@@ -360,7 +356,6 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
     ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
     assert((ctx != NULL) && (ctx->tx != NULL));
 
-    prev_log = ngxib_log(r->connection->log);
     ngx_regex_malloc_init(r->pool);
 
     /* Notify IronBee of request line and headers */
@@ -384,20 +379,20 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
     else {
         ib_log_error_tx(ctx->tx, "IronBee: bogus response status %d",
                         (int)r->headers_out.status);
-        cleanup_return(prev_log) NGX_ERROR;
+        cleanup_return NGX_ERROR;
     }
     rc = ib_parsed_resp_line_create(ctx->tx, &rline, NULL, 0,
                                     proto, strlen(proto),
                                     status, status_len,
                                     reason, reason_len);
     if (rc != IB_OK)
-        cleanup_return(prev_log) NGX_ERROR;
+        cleanup_return NGX_ERROR;
 
     ib_state_notify_response_started(ctx->tx->ib, ctx->tx, rline);
 
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
     if (rc != IB_OK)
-        cleanup_return(prev_log) NGX_ERROR;
+        cleanup_return NGX_ERROR;
 
     for (part = &r->headers_out.headers.part; part != NULL; part = part->next) {
         hdr = part->elts;
@@ -417,16 +412,16 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
     if (ibhdrs->size > 0) {
         rc = ib_state_notify_response_header_data(ctx->tx->ib, ctx->tx, ibhdrs);
         if (rc != IB_OK)
-            cleanup_return(prev_log) NGX_ERROR;
+            cleanup_return NGX_ERROR;
     }
 
     rc = ib_state_notify_response_header_finished(ctx->tx->ib, ctx->tx);
     if (rc != IB_OK)
-        cleanup_return(prev_log) NGX_ERROR;
+        cleanup_return NGX_ERROR;
 
     ctx->hdrs_out = 1;
 
-    cleanup_return(prev_log) ngx_http_next_header_filter(r);
+    cleanup_return ngx_http_next_header_filter(r);
 }
 
 /**
@@ -437,7 +432,6 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
  */
 static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
 {
-    ngx_log_t *prev_log;
     ngxib_req_ctx *ctx;
     ib_conn_t *iconn;
     ib_parsed_req_line_t *rline;
@@ -452,7 +446,6 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
     if (r->internal)
         return NGX_DECLINED;
 
-    prev_log = ngxib_log(r->connection->log);
     ngx_regex_malloc_init(r->pool);
 
     ctx = ngx_pcalloc(r->pool, sizeof(ngxib_req_ctx));
@@ -474,13 +467,13 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
                                    (const char*)r->http_protocol.data,
                                    r->http_protocol.len);
     if (rc != IB_OK)
-        cleanup_return(prev_log) NGX_ERROR;
+        cleanup_return NGX_ERROR;
 
     ib_state_notify_request_started(ctx->tx->ib, ctx->tx, rline);
 
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
     if (rc != IB_OK)
-        cleanup_return(prev_log) NGX_ERROR;
+        cleanup_return NGX_ERROR;
 
     for (part = &r->headers_in.headers.part; part != NULL; part = part->next) {
         hdr = part->elts;
@@ -496,24 +489,24 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
 
     rc = ib_state_notify_request_header_data(ctx->tx->ib, ctx->tx, ibhdrs);
     if (rc != IB_OK)
-        cleanup_return(prev_log) NGX_ERROR;
+        cleanup_return NGX_ERROR;
 
     rc = ib_state_notify_request_header_finished(ctx->tx->ib, ctx->tx);
     if (rc != IB_OK)
-        cleanup_return(prev_log) NGX_ERROR;
+        cleanup_return NGX_ERROR;
 
     if (!ngxib_has_request_body(r, ctx)) {
         rc = ib_state_notify_request_finished(ctx->tx->ib, ctx->tx);
         if (rc != IB_OK)
-            cleanup_return(prev_log) NGX_ERROR;
+            cleanup_return NGX_ERROR;
     }
     ctx->hdrs_in = 1;
     if (STATUS_IS_ERROR(ctx->status)) {
         ctx->internal_errordoc = 1;
-        cleanup_return(prev_log) ctx->status;
+        cleanup_return ctx->status;
     }
 
-    cleanup_return(prev_log) NGX_DECLINED;
+    cleanup_return NGX_DECLINED;
 }
 
 /**
@@ -525,13 +518,13 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
  */
 static ngx_int_t ironbee_init(ngx_conf_t *cf)
 {
-    ngx_log_t *prev_log;
     ironbee_proc_t *proc;
     ib_status_t rc;
     module_data_t *mod_data = &module_data;
     char *buf;
 
-    prev_log = ngxib_log(cf->log);
+    /* We still use the global-log hack to initialise */
+    ngxib_log(cf->log);
     ngx_regex_malloc_init(cf->pool);
 
     ngx_log_error(NGX_LOG_NOTICE, cf->log, 0, "ironbee_init %d", getpid());
@@ -546,7 +539,7 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
 
     rc = ib_initialize();
     if (rc != IB_OK) {
-        cleanup_return(prev_log) IB2NG(rc);
+        cleanup_return IB2NG(rc);
     }
 
     /* Create the IronBee engine manager */
@@ -557,10 +550,13 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
                            NULL,                  /* Logger flush function */
                            mod_data,              /* cbdata: module data */
                            proc->log_level,       /* IB log level */
+                           NULL,                  /* Maintenance callback */
                            &(mod_data->manager)); /* Engine Manager */
     if (rc != IB_OK) {
-        return rc;
+        cleanup_return IB2NG(rc);
     }
+    /* Null manager here would be a bug, as per RNS-CR-143 comments */
+    assert(mod_data->manager != NULL);
 
     /* FIXME - use the temp pool operation for this */
     buf = strndup((char*)proc->config_file.data, proc->config_file.len);
@@ -569,11 +565,11 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     rc = ib_manager_engine_create(mod_data->manager, buf);
     if (rc != IB_OK) {
         free(buf);
-        return rc;
+        cleanup_return IB2NG(rc);
     }
     free(buf);
 
-    cleanup_return(prev_log) rc == IB_OK ? NGX_OK : IB2NG(rc);
+    cleanup_return rc == IB_OK ? NGX_OK : IB2NG(rc);
 }
 
 /**

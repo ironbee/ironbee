@@ -1452,7 +1452,7 @@ cleanup:
  * @param[out] pline_buf Pointer to line buffer
  * @param[out] pline_len Pointer to line length
  *
- * @returns IronBee Status Code
+ * @returns Ironbee Status Code
  */
 static ib_status_t fixup_request_line(
     TSMBuffer         hdr_bufp,
@@ -1528,7 +1528,15 @@ static ib_status_t fixup_request_line(
      */
     line_method_len = (bad_line_url - line_buf);
     line_proto_off = line_method_len + url_len;
-    assert(line_len >= line_proto_off);
+    if (line_len < line_proto_off) {
+        /* line_len was computed using our parser, which forgivingly
+         * treats a lone \r or \n as line end.
+         * url_len and hence line_proto_off was computed by TS, which is
+         * less forgiving.  Hence a malformed line may trigger this.
+         */
+        TSError("Malformed request line!");
+        return IB_EOTHER;
+    }
     line_proto_len = line_len - line_proto_off;
 
     /* Advance the pointer into the URL buffer, shorten it... */
@@ -1728,8 +1736,9 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         ib_rc = fixup_request_line(bufp, hdr_loc, data->tx,
                                    rline_buf, rline_len,
                                    &rline_buf, &rline_len);
-        if (ib_rc != IB_OK) {
+        if (ib_rc != 0) {
             TSError("Failed to fixup request line");
+            /* We can't bail out here 'cos modhtp then asserts at modhtp.c:786 */
         }
 
         ib_rc = start_ib_request(data->tx, rline_buf, rline_len);
@@ -2350,11 +2359,13 @@ static int check_ts_version(void)
  * @param[in] level IronBee log level (unused)
  * @param[in] cbdata Callback data.
  * @param[in] buf Formatted buffer
+ * @param[in] calldata unused
  */
 static void ironbee_logger(
-    ib_log_level_t     level,
-    void              *cbdata,
-    const char        *buf)
+    ib_log_level_t      level,
+    void               *cbdata,
+    const char         *buf,
+    ib_log_call_data_t *calldata)
 {
     if (cbdata == NULL) {
         return;
@@ -2558,6 +2569,7 @@ static int ironbee_init(module_data_t *mod_data)
                            ironbee_logger_flush,  /* Logger flush function */
                            mod_data,              /* cbdata: module data */
                            mod_data->log_level,   /* IB log level */
+                           NULL,                  /* No maintenance callback */
                            &(mod_data->manager)); /* Engine Manager */
     if (rc != IB_OK) {
         return rc;

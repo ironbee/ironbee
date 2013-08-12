@@ -54,16 +54,18 @@ extern "C" {
  * @param[in] line Line number
  * @param[in] fmt Format string
  * @param[in] ap Var args list to match the format
+ * @param[in] calldata Context-specific data
  * @param[in] cbdata Callback data (engine manager handle)
  */
 void DLL_LOCAL ib_engine_manager_logger(
-    const ib_engine_t *ib,
-    ib_log_level_t     level,
-    const char        *file,
-    int                line,
-    const char        *fmt,
-    va_list            ap,
-    void              *cbdata
+    const ib_engine_t  *ib,
+    ib_log_level_t      level,
+    const char         *file,
+    int                 line,
+    const char         *fmt,
+    va_list             ap,
+    ib_log_call_data_t *calldata,
+    void               *cbdata
 )
 VPRINTF_ATTRIBUTE(5);
 
@@ -74,6 +76,7 @@ VPRINTF_ATTRIBUTE(5);
  * @param[in] level Log level.
  * @param[in] file Filename.
  * @param[in] line Line number.
+ * @param[in] calldata Context-specific data
  * @param[in] fmt Printf-like format string
  */
 void DLL_LOCAL ib_manager_log_ex(
@@ -81,10 +84,11 @@ void DLL_LOCAL ib_manager_log_ex(
     ib_log_level_t      level,
     const char         *file,
     int                 line,
+    ib_log_call_data_t *calldata,
     const char         *fmt,
     ...
 )
-PRINTF_ATTRIBUTE(5, 6);
+PRINTF_ATTRIBUTE(6, 7);
 
 /**
  * Internal logger for the engine manager.
@@ -93,7 +97,7 @@ PRINTF_ATTRIBUTE(5, 6);
  * @param[in] level Log level.
  */
 #define ib_manager_log(manager, level, ...)                               \
-    ib_manager_log_ex((manager), (level), __FILE__, __LINE__, __VA_ARGS__)
+    ib_manager_log_ex((manager), (level), __FILE__, __LINE__, &(ib_log_call_data_t) {IBLOG_MANAGER, {.m=(manager)}}, __VA_ARGS__)
 
 /**
  * Log flush request to internal logger for the engine master.

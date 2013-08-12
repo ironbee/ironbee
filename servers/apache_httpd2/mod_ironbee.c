@@ -119,6 +119,7 @@ typedef struct {
     size_t          ib_max_engines;         /**< Max # of IronBee engines */
     int             max_log_level;          /**< Max AP Log level to use */
     int             log_level_is_startup;   /**< Adjust log level at startup */
+    apr_pool_t     *pool;                   /**< for logging without leaking */
 } module_data_t;
 
 /*************    GENERAL GLOBALS        *************************/
@@ -131,6 +132,7 @@ static module_data_t module_data =
     IB_MANAGER_DEFAULT_MAX_ENGINES,   /* .ib_max_engines */
     APLOG_NOTICE,                     /* .max_log_level */
     APLOG_STARTUP,                    /* .log_level_is_startup */
+    NULL                              /* .pool needs init later */
 };
 
 /*************    IRONBEE-DRIVEN PROVIDERS/CALLBACKS/ETC ***********/
@@ -352,19 +354,23 @@ ib_server_t DLL_LOCAL ibplugin = {
  * @param[in] level IronBee log level
  * @param[in] cbdata Callback data.
  * @param[in] buf Formatted buffer
+ * @param[in] calldata Ironbee engine, conn, or tx
+ * @param[in] calltype Enum of calldata type
  */
 static void ironbee_logger(
-    ib_log_level_t     level,
-    void              *cbdata,
-    const char        *buf)
+    ib_log_level_t      level,
+    void               *cbdata,
+    const char         *buf,
+    ib_log_call_data_t *calldata)
 {
-    assert(buf != NULL);
-    if (cbdata == NULL) {
-        return;
-    }
     module_data_t *mod_data = (module_data_t *)cbdata;
     int            ap_level;
 
+    assert(buf != NULL);
+    assert(calldata != NULL);
+    if (cbdata == NULL) {
+        return;
+    }
     if (! mod_data->ib_log_active) {
         fputs(buf, stderr);
         return;
@@ -402,7 +408,28 @@ static void ironbee_logger(
     ap_level |= mod_data->log_level_is_startup;
 
     /* Write it to the error log. */
-    ap_log_error(APLOG_MARK, ap_level, 0, NULL, "ironbee: %s", buf);
+    switch (calldata->type) {
+      case IBLOG_ENGINE: /* still an ugly hack */
+        ap_log_perror(APLOG_MARK, ap_level, 0, mod_data->pool,
+                      "ironbee: %s", buf);
+        break;
+      case IBLOG_MANAGER: /* still an ugly hack */
+        ap_log_perror(APLOG_MARK, ap_level, 0, mod_data->pool,
+                      "ironbee: %s", buf);
+        break;
+      case IBLOG_CONN:
+      {
+        ap_log_cerror(APLOG_MARK, ap_level, 0,
+                      calldata->data.c->server_ctx, "ironbee: %s", buf);
+        break;
+      }
+      case IBLOG_TX:
+      {
+        ironbee_req_ctx *ctx = calldata->data.t->sctx;
+        ap_log_rerror(APLOG_MARK, ap_level, 0, ctx->r, "ironbee: %s", buf);
+        break;
+      }
+    }
 }
 
 /***********   APACHE PER-REQUEST FILTERS AND HOOKS  ************/
@@ -1166,11 +1193,13 @@ static int ironbee_pre_conn(conn_rec *conn, void *csd)
 
     /* Attempt to acquire an engine. */
     if (module_data.ib_manager == NULL) {
-        return DECLINED; /* TODO */
+        return DECLINED; /* Ironbee loaded but not configured */
     }
     rc = ib_manager_engine_acquire(module_data.ib_manager, &ib);
     if (rc != IB_OK) {
-        return DECLINED; /* TODO */
+        ap_log_cerror(APLOG_MARK, APLOG_CRIT, 0, conn,
+                      "Ironbee error %d: failed to acquire engine!", rc);
+        return HTTP_INTERNAL_SERVER_ERROR;
     }
 
     /* Create the Ironbee conn, with HTTPD conn in its app data */
@@ -1206,7 +1235,14 @@ static apr_status_t ironbee_manager_cleanup(void *data)
         ib_manager_destroy(module_data.ib_manager);
         module_data.ib_manager = NULL;
     }
+    apr_pool_destroy(module_data.pool);
     return APR_SUCCESS;
+}
+
+static void ironbee_manager_callback(void *data)
+{
+    module_data_t *mod_data = data;
+    apr_pool_clear(mod_data->pool);
 }
 
 /* Bootstrap: copy initialisation from trafficserver plugin */
@@ -1225,6 +1261,9 @@ static int ironbee_init(
 {
     ib_status_t    rc;
     module_data_t *mod_data = &module_data;
+
+    /* Create our own pool to live forever but be cleaned up regularly */
+    apr_pool_create(&module_data.pool, pool);
 
     if (mod_data->ib_config_file == NULL) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
@@ -1245,6 +1284,7 @@ static int ironbee_init(
                            NULL,                     /* Logger flush function */
                            mod_data,                 /* cbdata: module data */
                            mod_data->ib_log_level,   /* IB log level */
+                           ironbee_manager_callback, /* Callback to flush pool */
                            &(mod_data->ib_manager)); /* Engine Manager */
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,

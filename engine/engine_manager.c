@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define CALLBACK(manager) if (manager->callback) (manager)->callback((manager)->log_cbdata)
 /**
  * The Engine Manager engine wrapper.
  *
@@ -336,6 +337,7 @@ ib_status_t ib_manager_create(
     ib_manager_log_flush_fn_t  logger_flush_fn,
     void                      *logger_cbdata,
     ib_log_level_t             logger_level,
+    void                     (*callback)(void*),
     ib_manager_t             **pmanager
 )
 {
@@ -393,6 +395,7 @@ ib_status_t ib_manager_create(
     manager->engine_list    = engine_list;
     manager->max_engines    = max_engines;
     manager->log_level      = logger_level;
+    manager->callback       = callback;
 
     /* Set the logger */
     set_logger(manager,
@@ -514,7 +517,7 @@ static ib_status_t register_engine(
     if (manager->engine_count > 1) {
         destroy_engines(manager, IB_MANAGER_DESTROY_INACTIVE, "INACTIVE");
     }
-
+    CALLBACK(manager);
     ib_lock_unlock(&manager->engines_lock);
     return rc;
 }
@@ -715,6 +718,7 @@ cleanup:
                    ib_status_to_string(rc));
 
     /* Release any locks */
+    CALLBACK(manager);
     ib_lock_unlock(&manager->engines_lock);
     return rc;
 }
@@ -815,6 +819,7 @@ cleanup:
                    ib_status_to_string(rc));
 
     /* Release any locks */
+    CALLBACK(manager);
     ib_lock_unlock(&manager->engines_lock);
     return rc;
 }
@@ -850,6 +855,7 @@ ib_status_t ib_manager_disable_current(
     manager->engine_current = NULL;
 
     /* Done */
+    CALLBACK(manager);
     ib_lock_unlock(&manager->engines_lock);
     return rc;
 }
@@ -908,6 +914,7 @@ cleanup:
     }
 
     /* Release the engine list lock */
+    CALLBACK(manager);
     ib_lock_unlock(&manager->engines_lock);
 
     return rc;

@@ -80,6 +80,22 @@ ib_log_level_t DLL_PUBLIC ib_log_string_to_level(
  */
 const char DLL_PUBLIC *ib_log_level_to_string(ib_log_level_t level);
 
+/* Descriptor to pass user data to log functions, according to call context */
+typedef struct {
+    enum {
+        IBLOG_ENGINE,
+        IBLOG_CONN,
+        IBLOG_TX,
+        IBLOG_MANAGER
+    } type;
+    union {
+        const ib_engine_t *e;
+        const ib_conn_t *c;
+        const ib_tx_t *t;
+        const struct ib_manager_t *m;
+    } data;
+} ib_log_call_data_t;
+
 /**
  * Logger callback.
  *
@@ -89,16 +105,18 @@ const char DLL_PUBLIC *ib_log_level_to_string(ib_log_level_t level);
  * @param line Optional source line number (or 0)
  * @param fmt Formatting string
  * @param ap Variable args list
+ * @param calldata Context-sensitive call data.
  * @param cbdata Callback data
  */
 typedef void (*ib_log_logger_fn_t)(
-    const ib_engine_t *ib,
-    ib_log_level_t     level,
-    const char        *file,
-    int                line,
-    const char        *fmt,
-    va_list            ap,
-    void              *cbdata
+    const ib_engine_t  *ib,
+    ib_log_level_t      level,
+    const char         *file,
+    int                 line,
+    const char         *fmt,
+    va_list             ap,
+    ib_log_call_data_t *calldata,
+    void               *cbdata
 )
 VPRINTF_ATTRIBUTE(5);
 

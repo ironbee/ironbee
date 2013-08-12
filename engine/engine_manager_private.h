@@ -76,6 +76,7 @@ struct ib_manager_t {
     ib_manager_log_buf_fn_t   log_buf_fn;   /**< Logger formatted buffer fn */
     ib_manager_log_flush_fn_t log_flush_fn; /**< Logger flush function */
     void                     *log_cbdata;   /**< Logger callback data */
+    void (*callback)(void* cbdata);         /**< Function to callback under mutex */
 };
 
 /** @} */

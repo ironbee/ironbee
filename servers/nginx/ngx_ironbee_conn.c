@@ -82,6 +82,7 @@ static ib_status_t conn_init(
     if (iconn->remote_ipstr == NULL) {
         return IB_EALLOC;
     }
+    // FIXME: calfield says "Don't create fields"
     rc1 = ib_data_add_bytestr(iconn->data, "remote_ip",
                               (uint8_t *)iconn->remote_ipstr, len, NULL);
 
@@ -101,7 +102,6 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx)
 {
     ngx_pool_cleanup_t *cln;
     ib_status_t rc;
-    ngx_log_t *prev_log;
     ib_engine_t *ib;
 
     /* Suggested by Maxim Dounin on dev list:
@@ -122,20 +122,21 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx)
      *
      * No threads, so no race condition here
      */
-    prev_log = ngxib_log(rctx->r->connection->log);
 
     /* Acquire an IronBee engine */
+    /* n.b. pool cleanup for this and the ib_conn is conn_end, added below */
     rc = ngxib_acquire_engine(&ib, rctx->r->connection->log);
     if (rc != IB_OK) {
-        cleanup_return(prev_log) NULL;
+        cleanup_return NULL;
     }
 
     ngx_regex_malloc_init(rctx->r->connection->pool);
 
     rctx->conn = ngx_palloc(rctx->r->connection->pool, sizeof(ngxib_conn_t));
     if (rctx->conn == NULL) {
+        ib_log_emerg_tx(rctx->tx, "Failed to alloc.  Probably crashing!");
         ngxib_release_engine(ib, rctx->r->connection->log);
-        cleanup_return(prev_log) NULL;
+        cleanup_return NULL;
     }
     rctx->conn->engine = ib;
     rctx->conn->log = rctx->r->connection->log;
@@ -143,14 +144,14 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx)
     rc = ib_conn_create(rctx->conn->engine, &rctx->conn->iconn, rctx->r->connection);
     if (rc != IB_OK) {
         ngxib_release_engine(ib, rctx->r->connection->log);
-        cleanup_return(prev_log) NULL;
+        cleanup_return NULL;
     }
 
     /* Initialize the connection */
     rc = conn_init(rctx->conn->iconn);
     if (rc != IB_OK) {
         ngxib_release_engine(ib, rctx->r->connection->log);
-        cleanup_return(prev_log) NULL;
+        cleanup_return NULL;
     }
 
     ib_state_notify_conn_opened(rctx->conn->engine, rctx->conn->iconn);
@@ -161,5 +162,5 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx)
         cln->data = rctx->conn;
     }
 
-    cleanup_return(prev_log) rctx->conn->iconn;
+    cleanup_return rctx->conn->iconn;
 }
