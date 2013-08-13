@@ -931,7 +931,9 @@ ib_status_t DLL_PUBLIC ib_field_value_ex(
  * @param[in]  arg      Arbitrary argument.  Use NULL for non-dynamic fields.
  * @param[in]  alen     Argument length.
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If the type does not match @a t or the field is invalid.
  */
 ib_status_t DLL_PUBLIC ib_field_value_type_ex(
     const ib_field_t *f,
@@ -961,7 +963,9 @@ ib_status_t DLL_PUBLIC ib_field_value(
  * @param[out] out_pval Where to store value.
  * @param[in]  t        Expected type.
  *
- * @returns Status code.
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If the type does not match @a t or the field is invalid.
  */
 ib_status_t DLL_PUBLIC ib_field_value_type(
     const ib_field_t *f,
