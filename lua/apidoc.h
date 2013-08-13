@@ -256,20 +256,69 @@
  *
  * @subsection IronBeeLuaEngineApi The Engine API
  *
+ * - @c ib:action(name, param, flags) - Return a Lua function
+ *      that executes an action instance.
+ *
+ *      The argument @c name is a string that is the name of the action,
+ *      such as "rx". The @c param is also a string
+ *      that is passed to the operator as its single argument.
+ *      The @c flags is the flags that can be passed to
+ *      ib_action_inst_create().
+ *
+ *      The function returned takes a single argumen, an ib_rule_exec_t*.
+ *      If the function is not called with this argument it destroys
+ *      the ib_action_t *.
+ * - @c ib:config_directive_process(name, ...) - Process a configuration
+ *      directive with the list of parameters given.
+ *      This should only be used during IronBee configuration phases,
+ *      such as evaluating a Lua module. This should not be used
+ *      during transaction handlers or rule execution.
+ * - @c ib:fieldToLua(field) - Convert an ib_field_t* to an equivalent
+ *      Lua type. Lists become tables. IB_FTYPE_SBUFFER types are not
+ *      supported.
  * - @c ib:logError(msg, ...)
  * - @c ib:logWarn(msg, ...)
  * - @c ib:logInfo(msg, ...)
  * - @c ib:logDebug(msg, ...)
+ * - @c ib:operator(name, param, flags) - Return a Lua function
+ *      that executes an operator instance.
+ *
+ *      The argument @c name is a string that is the name of the operator,
+ *      such as "rx". The @c param is also a string
+ *      that is passed to the operator as its single argument.
+ *      The @c flags is the flags that can be passed to
+ *      ib_operator_inst_create().
+ *
+ *      The function returned takes two arguments, an ib_tx_t * and
+ *      an ib_field_t *. If no arguments are passed to this
+ *      function the operator instances is destroyed.
  *
  * @subsection IronBeeLuaTxApi The Transaction API
  *
+ * - @c tx:add(name, value) - Add a value to the transaction data.
+ *      Name is a string and value is a Lua value.
  * - @c tx:addEvent([msg], options) - Add a new event.
+ *   The @c msg option may be omitted, in which case the @c options
+ *   table should contain a field @c msg continaing the message.
+ *
+ *   The options available are:
+ *   - recommended_action with a value of @c block, @c ignore, @c log, 
+ *     or @c unknown (the default).
+ *   - action set to one of the values in recommended_action.
+ *   - type which may be @c observation or @c unknown.
+ *   - confidence - An integer. The default is 0. 
+ *   - severity - An integer. The default is 0.
+ *   - msg - Defines the message if the @c msg argument is omitted.
+ *   - tags - A Lua list of tags.
+ *   - fields - A Lua list of field names.
  * - @c tx:appendToList(list_name, name, value) - append a value to a list.
  * - @c tx:get(name) - return a string, number or table.
+ * - @c tx:getDataField(name) - Return an ib_field_t * for the named field.
  * - @c tx:getFieldList() - Return a list of defined fields.
  * - @c tx:getNames(field) - Returns a list of names in this field.
  * - @c tx:getValues(field) - Returns a list of values in this field.
- * - @c tx:set(name, value) - set a string, number or table.
+ * - @c tx:set(name, value) - Set a string, number or table. This operates
+ *      like add(name, value) but will remove existing values first.
  * - @c tx:forEachEvent(function(event)...) - Call the given function on each
  *                                            event.
  *                                            See Event Manipulation.
