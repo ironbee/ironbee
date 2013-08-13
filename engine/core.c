@@ -3948,6 +3948,19 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
         return rc;
     }
 
+    /* Convert NULSTR created by ib_field_from_string to a BYTESTR. */
+    if (field->type == IB_FTYPE_NULSTR) {
+        ib_field_t *new_field = NULL;
+        rc = ib_field_convert(mp, IB_FTYPE_BYTESTR, field, &new_field);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(
+                cp,
+                "Error converting nulstr to bytestr field: %s",
+                ib_status_to_string(rc));
+        }
+        field = new_field;
+    }
+
     /* Index if desired */
     if (index) {
         rc = ib_data_register_indexed(ib_engine_data_config_get(cp->ib), name);
