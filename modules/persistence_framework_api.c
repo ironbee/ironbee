@@ -32,7 +32,7 @@
 #include <assert.h>
 
 ib_status_t ib_persist_fw_cfg_create(
-    ib_mpool_t       *mp,
+    ib_mpool_t           *mp,
     ib_persist_fw_cfg_t **persist_fw
 )
 {
@@ -91,8 +91,8 @@ ib_status_t ib_persist_fw_cfg_create(
  *   using ib_persist_fw_cfg_t::ib.
  */
 static ib_status_t get_ctx_persist_fw(
-    ib_persist_fw_t  *persist_fw_main,
-    ib_context_t  *ctx,
+    ib_persist_fw_t      *persist_fw_main,
+    ib_context_t         *ctx,
     ib_persist_fw_cfg_t **persist_fw_cfg
 )
 {
@@ -211,7 +211,7 @@ static ib_status_t add_module_config(
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t populate_context(
+static ib_status_t populate_data_in_context(
     ib_engine_t           *ib,
     ib_tx_t               *tx,
     ib_state_event_type_t  event,
@@ -274,7 +274,7 @@ static ib_status_t populate_context(
 
             rc = ib_data_add_list(tx->data, name, &list_field);
             if (rc != IB_OK) {
-                ib_log_error(ib, "Failed to create list to populate.");
+                ib_log_error(ib, "Failed to list to populate.");
                 continue;
             }
 
@@ -311,7 +311,7 @@ static ib_status_t populate_context(
  * @param[in] ib IronBee engine.
  * @param[in] tx The transaction to populate.
  * @param[in] event The particular event.
- * @param[in] cbdata The original ib_persist_fw_cfg_t instance. We need
+ * @param[in] cbdata The original @ref ib_persist_fw_cfg_t instance. We need
  *                   to use this to fetch the per-context
  *                   instance of @ref ib_persist_fw_cfg_t using
  *                   ib_persist_fw_cfg_t::module.
@@ -319,7 +319,7 @@ static ib_status_t populate_context(
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t persist_context(
+static ib_status_t persist_data_in_context(
     ib_engine_t           *ib,
     ib_tx_t               *tx,
     ib_state_event_type_t  event,
@@ -412,6 +412,18 @@ static ib_status_t persist_context(
     return IB_OK;
 }
 
+/**
+ * Destroy persistence stores when their enclosing context is destroyed.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] ctx Context being destroyed.
+ * @param[in] event The specific event type. This is @ref context_destroy_event.
+ * @paramin] cbdata An @ref ib_persist_fw_t.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
 static ib_status_t destroy_stores(
     ib_engine_t           *ib,
     ib_context_t          *ctx,
@@ -452,10 +464,10 @@ static ib_status_t destroy_stores(
 
         /* When a store is destroyed, the handler is NULLed.
          * Check that this store is not destroyed. */
-        if ( store != NULL
-          && store->handler != NULL
-          && store->handler->destroy_fn != NULL
-          ){
+        if ( (store != NULL) &&
+             (store->handler != NULL) &&
+             (store->handler->destroy_fn != NULL))
+        {
             store->handler->destroy_fn(
                 store->impl,
                 store->handler->destroy_data);
@@ -469,16 +481,16 @@ static ib_status_t destroy_stores(
 
 ib_status_t ib_persist_fw_register_type(
     ib_persist_fw_t            *persist_fw,
-    ib_context_t            *ctx,
-    const char              *type,
+    ib_context_t               *ctx,
+    const char                 *type,
     ib_persist_fw_create_fn_t   create_fn,
-    void                    *create_data,
+    void                       *create_data,
     ib_persist_fw_destroy_fn_t  destroy_fn,
-    void                    *destroy_data,
+    void                       *destroy_data,
     ib_persist_fw_load_fn_t     load_fn,
-    void                    *load_data,
+    void                       *load_data,
     ib_persist_fw_store_fn_t    store_fn,
-    void                    *store_data
+    void                       *store_data
 )
 {
     assert(persist_fw != NULL);
@@ -535,7 +547,7 @@ ib_status_t ib_persist_fw_register_type(
     return IB_OK;
 }
 
-ib_status_t DLL_PUBLIC ib_persist_fw_map_collection(
+ib_status_t ib_persist_fw_map_collection(
     ib_persist_fw_t *persist_fw,
     ib_context_t    *ctx,
     const char      *name,
@@ -648,7 +660,7 @@ ib_status_t ib_persist_fw_create(
     rc = ib_hook_tx_register(
         ib,
         handle_context_tx_event,
-        populate_context,
+        populate_data_in_context,
         persist_fw_out);
     if (rc != IB_OK) {
         return rc;
@@ -658,7 +670,7 @@ ib_status_t ib_persist_fw_create(
     rc = ib_hook_tx_register(
         ib,
         handle_postprocess_event,
-        persist_context,
+        persist_data_in_context,
         persist_fw_out);
     if (rc != IB_OK) {
         return rc;
