@@ -34,6 +34,7 @@
 #include <ironbee/list.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
+#include <ironbee/release.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/site.h>
 #include <ironbee/state_notify.h>
@@ -747,6 +748,7 @@ static ib_status_t moddevel_txdump_tx(
         char         buf[30];
 
         ib_clock_timestamp(buf, &tx->tv_created);
+        moddevel_txdump(tx, txdump, 2, "IronBee Version = %s", IB_VERSION);
         moddevel_txdump(tx, txdump, 2, "Started = %s", buf);
         moddevel_txdump(tx, txdump, 2, "Hostname = %s", tx->hostname);
         moddevel_txdump(tx, txdump, 2, "Effective IP = %s", tx->er_ipstr);
