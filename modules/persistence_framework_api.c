@@ -122,12 +122,6 @@ static ib_status_t get_ctx_persist_fw(
         configs->configs,
         persist_fw_main->user_module->idx,
         &persist_fw_tmp);
-    if (rc == IB_EINVAL || persist_fw_tmp == NULL) {
-        ib_log_warning(
-            persist_fw_main->ib,
-            "No module registration in persistence framework.");
-        return IB_ENOENT;
-    }
     if (rc != IB_OK) {
         ib_log_warning(
             persist_fw_main->ib,

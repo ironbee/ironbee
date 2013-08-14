@@ -15,11 +15,8 @@
  * limitations under the License.
  ****************************************************************************/
 
-#ifndef _ENGINE__PERSISTENCE_FRAMEWORK_PRIVATE_H_
-#define _ENGINE__PERSISTENCE_FRAMEWORK_PRIVATE_H_
-
-#define PERSISTENCE_FRAMEWORK_MODULE_NAME persistence_framework
-#define PERSISTENCE_FRAMEWORK_MODULE_NAME_STR IB_XSTRINGIFY(PERSISTENCE_FRAMEWORK_MODULE_NAME)
+#ifndef _MODULE__PERSISTENCE_FRAMEWORK_PRIVATE_H_
+#define _MODULE__PERSISTENCE_FRAMEWORK_PRIVATE_H_
 
 /**
  * @file
@@ -27,6 +24,10 @@
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
+
+#define PERSISTENCE_FRAMEWORK_MODULE_NAME persistence_framework
+#define PERSISTENCE_FRAMEWORK_MODULE_NAME_STR IB_XSTRINGIFY(PERSISTENCE_FRAMEWORK_MODULE_NAME)
+
 
 #include "persistence_framework.h"
 
@@ -176,4 +177,4 @@ ib_status_t ib_persist_fw_cfg_create(
 }
 #endif
 
-#endif /* _ENGINE__PERSISTENCE_FRAMEWORK_PRIVATE_H_ */
+#endif /* _MODULE__PERSISTENCE_FRAMEWORK_PRIVATE_H_ */
