@@ -130,6 +130,9 @@ void ib_log_set_logger_fn(
 
     ib->logger_fn = logger;
     ib->logger_cbdata = cbdata;
+
+    ib_log_ex(ib, IB_LOG_INFO, NULL, 0,
+              "%s: Starting", IB_PRODUCT_VERSION_NAME);
 }
 
 void ib_log_set_loglevel_fn(

@@ -37,6 +37,7 @@
 #include <ironbee/lock.h>
 #include <ironbee/log.h>
 #include <ironbee/mpool.h>
+#include <ironbee/release.h>
 #include <ironbee/server.h>
 
 #include <assert.h>
@@ -583,6 +584,8 @@ ib_status_t ib_manager_engine_create(
 
     /* Set the engine's logger function */
     ib_log_set_logger_fn(engine, ib_engine_manager_logger, manager);
+    ib_manager_log(manager, IB_LOG_INFO,
+                   "Starting %s", IB_PRODUCT_VERSION_NAME);
 
     /* Create the configuration parser */
     rc = ib_cfgparser_create(&parser, engine);
