@@ -79,17 +79,22 @@ struct ib_persist_fw_store_t {
      * When a store is destroyed this is set to NULL.
      */
     ib_persist_fw_handler_t *handler;
-    void                 *impl;    /**< User implementation data. */
+
+    /**
+     * User implementation data.
+     *
+     * This is set by the user's create function and used
+     * by the load/store functions.
+     */
+    void                 *impl;
 };
 typedef struct ib_persist_fw_store_t ib_persist_fw_store_t;
 
 /**
- * A mapping is a key, a collection name, and a @ref ib_persist_fw_store_t.
- *
  * This represents a mapping of a collection to persisted data via key.
  *
- * The key may be string constant or may be a variable to be expanded
- * when storing or loading data.
+ * The key may be literal string or may be a variable to be expanded
+ * if ib_data_expand_test_str() returns true.
  */
 struct ib_persist_fw_mapping_t {
     const char *name;          /**< Collection Name. */
@@ -117,31 +122,38 @@ struct ib_persist_fw_cfg_t {
     /**
      * Map of type to ib_persist_fw_handler_t.
      *
-     * This is copied in new configuration contexts.
+     * This is deep copied in new configuration contexts.
      */
     ib_hash_t   *handlers;
 
     /**
-     * A map of named @ref ib_persist_fw_store_t.
+     * A map of @ref ib_persist_fw_store_t.
      *
      * Names stores are looked up here and linked to named collections
      * in ib_persist_fw_t::coll_list.
      *
-     * This is copied in new configuration contexts.
+     * This is deep copied in new configuration contexts.
      */
     ib_hash_t   *stores;
 
     /**
-     * A list of ib_persist_fw_mapping_t.
+     * All ib_persist_fw_mapping_t in this context.
      *
-     * This is copied in new configuration contexts.
+     * This list is iterated over to do populate and store collections.
+     *
+     * This is deep copied in new configuration contexts.
      */
     ib_list_t   *coll_list;
 };
 typedef struct ib_persist_fw_cfg_t ib_persist_fw_cfg_t;
 
 /**
- * An array of @ref ib_persist_fw_cfg_t indexed by the user module number.
+ * This is the module configuration date for this module.
+ *
+ * It is a wrapper for an array of @ref ib_persist_fw_cfg_t
+ * indexed by the client module's index in the IronBee engine. Configurations
+ * for client modules are stored and retrieved much like they are
+ * in the IronBee engine.
  */
 struct ib_persist_fw_modlist_t {
     /**
@@ -152,14 +164,15 @@ struct ib_persist_fw_modlist_t {
      * context and that module managed by the persistence module
      * on behalf of the user module.
      *
-     * If an entry is NULL, then it means that no module has registered.
+     * If an entry is NULL, then it means that no module with that
+     * index has registered with this module.
      */
     ib_array_t *configs;
 };
 typedef struct ib_persist_fw_modlist_t ib_persist_fw_modlist_t;
 
 /**
- * Initialize @a persist_fw.
+ * Allocate and initialize and empty @ref ib_persist_fw_cfg_t.
  *
  * @param[in] mp Allocate out of this memory pool.
  * @param[out] persist_fw Initialize this.
