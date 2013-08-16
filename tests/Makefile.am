@@ -5,6 +5,8 @@ noinst_LIBRARIES = libibtest.a
 # Turn off Werror for gtest.
 if HAVE_NO_UNUSED_PRIVATE_FIELD
 libibtest_a_CPPFLAGS = $(AM_CPPFLAGS) -Wno-unused-private-field
+else
+libibtest_a_CPPFLAGS = $(AM_CPPFLAGS)
 endif
 libibtest_a_SOURCES = \
 	ibtest_util.cpp \
