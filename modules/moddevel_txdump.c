@@ -393,6 +393,8 @@ static void moddevel_txdump_field(
     const ib_field_t           *field,
     size_t                      maxlen)
 {
+    ib_status_t rc;
+
     /* Check the field name
      * Note: field->name is not always a null ('\0') terminated string */
     if (field == NULL) {
@@ -405,30 +407,36 @@ static void moddevel_txdump_field(
     case IB_FTYPE_GENERIC :      /**< Generic data */
     {
         void *v;
-        ib_field_value(field, ib_ftype_generic_out(&v));
-        moddevel_txdump(tx, txdump, nspaces, "%s = %p", label, v);
+        rc = ib_field_value(field, ib_ftype_generic_out(&v));
+        if (rc == IB_OK) {
+            moddevel_txdump(tx, txdump, nspaces, "%s = %p", label, v);
+        }
         break;
     }
 
     case IB_FTYPE_NUM :          /**< Numeric value */
     {
         ib_num_t n;
-        ib_field_value(field, ib_ftype_num_out(&n));
-        moddevel_txdump(tx, txdump, nspaces, "%s = %"PRId64"", label, n);
+        rc = ib_field_value(field, ib_ftype_num_out(&n));
+        if (rc == IB_OK) {
+            moddevel_txdump(tx, txdump, nspaces, "%s = %"PRId64"", label, n);
+        }
         break;
     }
 
     case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
     {
         const char *s;
-        ib_field_value(field, ib_ftype_nulstr_out(&s));
-        if (maxlen > 0) {
-            moddevel_txdump(tx, txdump, nspaces,
-                            "%s = \"%.*s...\"", label, (int)maxlen, s);
-        }
-        else {
-            moddevel_txdump(tx, txdump, nspaces,
-                            "%s = \"%s\"", label, s);
+        rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
+        if (rc == IB_OK) {
+            if (maxlen > 0) {
+                moddevel_txdump(tx, txdump, nspaces,
+                                "%s = \"%.*s...\"", label, (int)maxlen, s);
+            }
+            else {
+                moddevel_txdump(tx, txdump, nspaces,
+                                "%s = \"%s\"", label, s);
+            }
         }
         break;
     }
@@ -436,18 +444,22 @@ static void moddevel_txdump_field(
     case IB_FTYPE_BYTESTR :      /**< Byte string value */
     {
         const ib_bytestr_t *bs;
-        ib_field_value(field, ib_ftype_bytestr_out(&bs));
-        moddevel_txdump_bs(tx, txdump, nspaces, label, bs, maxlen);
+        rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+        if (rc == IB_OK) {
+            moddevel_txdump_bs(tx, txdump, nspaces, label, bs, maxlen);
+        }
         break;
     }
 
     case IB_FTYPE_LIST :         /**< List */
     {
         const ib_list_t *lst;
-        ib_field_value(field, ib_ftype_list_out(&lst));
-        size_t len = IB_LIST_ELEMENTS(lst);
-        moddevel_txdump(tx, txdump, nspaces,
-                        "%s = [%zd]", label, len);
+        rc = ib_field_value(field, ib_ftype_list_out(&lst));
+        if (rc == IB_OK) {
+            size_t len = IB_LIST_ELEMENTS(lst);
+            moddevel_txdump(tx, txdump, nspaces,
+                            "%s = [%zd]", label, len);
+        }
         break;
     }
 

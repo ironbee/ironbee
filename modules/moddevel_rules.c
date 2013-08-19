@@ -79,8 +79,10 @@ static ib_status_t op_true_execute(
     void *cbdata
 )
 {
+    /* Always return true */
     *result = 1;
 
+    /* Set the capture */
     if (capture != NULL && *result) {
         ib_capture_clear(capture);
         ib_capture_set_item(capture, 0, tx->mp, field);
@@ -247,6 +249,7 @@ static ib_status_t op_exists_execute(
     /* Return true of field is not NULL */
     *result = (field != NULL);
 
+    /* Set the capture */
     if (capture != NULL && *result) {
         ib_capture_clear(capture);
         ib_capture_set_item(capture, 0, tx->mp, field);
