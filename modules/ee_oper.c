@@ -658,7 +658,11 @@ ib_status_t ee_module_init(ib_engine_t *ib,
     config = ee_get_config(ib);
     assert(config != NULL);
 
-    ib_mpool_create(&mod_mp, "ee_module", main_mp);
+    rc = ib_mpool_create(&mod_mp, "ee_module", main_mp);
+    if (rc != IB_OK ) {
+        ib_log_error(ib, MODULE_NAME_STR ": Error allocating module mpool.");
+        return rc;
+    }
     if (config->eudoxus_pattern_hash == NULL) {
         rc = ib_hash_create_nocase(&(config->eudoxus_pattern_hash), mod_mp);
         if (rc != IB_OK ) {
