@@ -129,7 +129,7 @@ ib_status_t ib_hook_check(
         sizeof(ib_event_table) / sizeof(ib_event_type_data_t);
     ib_state_hook_type_t expected_hook_type;
 
-    if (event > num_events) {
+    if (event >= num_events) {
         ib_log_error( ib,
             "Event/hook mismatch: Unknown event type: %d", event
         );
@@ -1174,7 +1174,7 @@ ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event)
     static const size_t num_events =
         sizeof(ib_event_table) / sizeof(ib_event_type_data_t);
 
-    if (event > num_events) {
+    if (event >= num_events) {
         return IB_STATE_HOOK_INVALID;
     }
 
