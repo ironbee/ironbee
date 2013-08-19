@@ -503,7 +503,7 @@ ib_status_t ee_match_any_operator_execute(
     ia_eudoxus_result_t ia_rc;
     ee_operator_data_t *operator_data = instance_data;
     ia_eudoxus_t* eudoxus = operator_data->eudoxus;
-    ia_eudoxus_state_t* state;
+    ia_eudoxus_state_t* state = NULL;
     const char *input;
     size_t input_len;
     ee_callback_data_t *ee_cbdata;
@@ -552,6 +552,10 @@ ib_status_t ee_match_any_operator_execute(
                                         ee_first_match_callback,
                                         (void *)ee_cbdata);
         if (ia_rc != IA_EUDOXUS_OK) {
+            if (state != NULL) {
+                ia_eudoxus_destroy_state(state);
+                state = NULL;
+            }
             return IB_EINVAL;
         }
         set_ee_tx_data(m, tx, operator_data, state);
