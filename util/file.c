@@ -64,6 +64,7 @@ ib_status_t ib_file_readall(
     bufsz = stat_data.st_size;
     buf = ib_mpool_alloc(mp, bufsz);
     if (buf == NULL) {
+        close(fd);
         return IB_EALLOC;
     }
 
@@ -75,11 +76,13 @@ ib_status_t ib_file_readall(
             assert(fill == bufsz);
             *sz = fill;
             *out = buf;
+            close(fd);
             return IB_OK;
         }
 
         /* Read error. */
         if (r < 0) {
+            close(fd);
             return IB_EOTHER;
         }
 
