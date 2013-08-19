@@ -75,18 +75,6 @@ struct ib_moddevel_txdata_config_t {
 };
 
 /**
- * static data
- */
-const char *g_type_names [ ] =
-{
-    "GENERIC",
-    "NUM",
-    "NULSTR",
-    "BYTESTR",
-    "LIST",
-};
-
-/**
  * @param[in] cp Configuration parser
  * @param[in] mp Memory pool to use for allocations
  * @param[in] str String to parse as a type name
@@ -288,7 +276,7 @@ static ib_status_t tx_header_finished(
         }
         ib_log_debug_tx(tx, "Added field \"%.*s\" (type %s)",
                         (int)field->nlen, field->name,
-                        g_type_names[field->type]);
+                        ib_field_type_name(field->type));
     }
 
     return rc;
@@ -393,8 +381,8 @@ static ib_status_t moddevel_fieldtx_handler(
         ib_cfg_log_debug(cp,
                          "Field %s: type %s / %s",
                          name_str,
-                         g_type_names[type_num],
-                         g_type_names[element_type]);
+                         ib_field_type_name(type_num),
+                         ib_field_type_name(element_type));
 
         /* Parse the values */
         element_num = 1;
@@ -412,7 +400,7 @@ static ib_status_t moddevel_fieldtx_handler(
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp, "Error parsing value \"%s\" type %s: %d",
                                  (char *)value_node->data,
-                                 g_type_names[element_type],
+                                 ib_field_type_name(element_type),
                                  rc);
                 return rc;
             }
