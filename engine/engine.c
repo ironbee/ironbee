@@ -753,6 +753,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     ib_mpool_t *pool;
     ib_status_t rc;
     char namebuf[64];
+    ib_conn_t *conn = NULL;
 
     /* Create a sub-pool for each connection and allocate from it */
     /// @todo Need to tune the pool size
@@ -765,49 +766,51 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
         rc = IB_EALLOC;
         goto failed;
     }
-    *pconn = (ib_conn_t *)ib_mpool_calloc(pool, 1, sizeof(**pconn));
-    if (*pconn == NULL) {
+    conn = (ib_conn_t *)ib_mpool_calloc(pool, 1, sizeof(*conn));
+    if (conn == NULL) {
         ib_log_alert(ib, "Failed to allocate memory for connection");
         rc = IB_EALLOC;
         goto failed;
     }
 
     /* Mark time. */
-    ib_clock_gettimeofday(&(*pconn)->tv_created);
-    (*pconn)->t.started = ib_clock_get_time();
+    ib_clock_gettimeofday(&(conn->tv_created));
+    conn->t.started = ib_clock_get_time();
 
     /* Name the connection pool */
-    snprintf(namebuf, sizeof(namebuf), "conn[%p]", (void *)(*pconn));
+    snprintf(namebuf, sizeof(namebuf), "conn[%p]", (void *)conn);
     ib_mpool_setname(pool, namebuf);
 
-    (*pconn)->ib = ib;
-    (*pconn)->mp = pool;
-    (*pconn)->ctx = ib->ctx;
-    (*pconn)->server_ctx = server_ctx;
+    conn->ib = ib;
+    conn->mp = pool;
+    conn->ctx = ib->ctx;
+    conn->server_ctx = server_ctx;
 
     /* Data */
-    rc = ib_data_create(ib->data_config, (*pconn)->mp, &(*pconn)->data);
+    rc = ib_data_create(ib->data_config, conn->mp, &conn->data);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to create conn data: %s",
                      ib_status_to_string(rc));
-        return rc;
+        goto failed;
     }
 
     /* Create the per-module data data store. */
-    rc = ib_array_create(&((*pconn)->module_data), pool, 16, 8);
+    rc = ib_array_create(&(conn->module_data), pool, 16, 8);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
     }
 
+    *pconn = conn;
+
     return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure */
-    if (*pconn != NULL) {
-        ib_engine_pool_destroy(ib, (*pconn)->mp);
+    if (conn != NULL) {
+        ib_engine_pool_destroy(ib, conn->mp);
     }
-    *pconn = NULL;
+    conn = NULL;
 
     return rc;
 }
