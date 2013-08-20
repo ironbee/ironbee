@@ -41,7 +41,7 @@ namespace {
 
 extern "C" {
 
-void cleanup(
+void ibpp_memory_pool_cleanup(
     void* cbdata
 )
 {
@@ -215,7 +215,7 @@ void MemoryPool::register_cleanup(cleanup_t f) const
     // itself will free it's own data.
     ib_status_t rc = ib_mpool_cleanup_register(
         ib(),
-        Hooks::cleanup,
+        Hooks::ibpp_memory_pool_cleanup,
         value_to_data(
             f,
             NULL // See above

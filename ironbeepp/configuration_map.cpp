@@ -36,7 +36,7 @@ namespace Hooks {
 
 extern "C" {
 
-ib_status_t cfgmap_get(
+ib_status_t ibpp_cfgmap_get(
     const void*       base,
     void*             out_value,
     const ib_field_t* field,
@@ -58,7 +58,7 @@ ib_status_t cfgmap_get(
     return IB_OK;
 }
 
-ib_status_t cfgmap_set(
+ib_status_t ibpp_cfgmap_set(
     void*       base,
     ib_field_t* field,
     void*       in_value,
@@ -80,7 +80,7 @@ ib_status_t cfgmap_set(
     return IB_OK;
 }
 
-ib_status_t cfgmap_handle_get(
+ib_status_t ibpp_cfgmap_handle_get(
     const void*       handle,
     void*             out_value,
     const ib_field_t* field,
@@ -89,7 +89,7 @@ ib_status_t cfgmap_handle_get(
 {
     assert(handle != NULL);
 
-    return cfgmap_get(
+    return ibpp_cfgmap_get(
         *reinterpret_cast<const void* const*>(handle),
         out_value,
         field,
@@ -97,7 +97,7 @@ ib_status_t cfgmap_handle_get(
     );
 }
 
-ib_status_t cfgmap_handle_set(
+ib_status_t ibpp_cfgmap_handle_set(
     void*       handle,
     ib_field_t* field,
     void*       value,
@@ -106,7 +106,7 @@ ib_status_t cfgmap_handle_set(
 {
     assert(handle != NULL);
 
-    return cfgmap_set(
+    return ibpp_cfgmap_set(
         *reinterpret_cast<void**>(handle),
         field,
         value,
@@ -127,12 +127,12 @@ void set_configuration_map_init_translators(
 )
 {
     if (data_is_handle) {
-        init.fn_get = Hooks::cfgmap_handle_get;
-        init.fn_set = Hooks::cfgmap_handle_set;
+        init.fn_get = Hooks::ibpp_cfgmap_handle_get;
+        init.fn_set = Hooks::ibpp_cfgmap_handle_set;
     }
     else {
-        init.fn_get = Hooks::cfgmap_get;
-        init.fn_set = Hooks::cfgmap_set;
+        init.fn_get = Hooks::ibpp_cfgmap_get;
+        init.fn_set = Hooks::ibpp_cfgmap_set;
     }
     init.cbdata_get = value_to_data(
         getter_translator,

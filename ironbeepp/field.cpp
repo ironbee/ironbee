@@ -106,7 +106,7 @@ void set_value_no_copy(ib_field_t* f, void* mutable_in_value)
 namespace Hooks {
 extern "C" {
 
-ib_status_t field_dynamic_get(
+ib_status_t ibpp_field_dynamic_get(
     const ib_field_t* field,
     void*             out_val,
     const void*       arg,
@@ -195,7 +195,7 @@ ib_status_t field_dynamic_get(
     return rc;
 }
 
-ib_status_t field_dynamic_set(
+ib_status_t ibpp_field_dynamic_set(
     ib_field_t* field,
     const void* arg,
     size_t      arg_length,
@@ -359,9 +359,9 @@ Field create_dynamic_field(
         pool.ib(),
         name, name_length,
         static_cast<ib_ftype_t>(type),
-        Hooks::field_dynamic_get,
+        Hooks::ibpp_field_dynamic_get,
         cbdata_get,
-        Hooks::field_dynamic_set,
+        Hooks::ibpp_field_dynamic_set,
         cbdata_set
     );
     throw_if_error(rc);

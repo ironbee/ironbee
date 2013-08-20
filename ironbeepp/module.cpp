@@ -91,7 +91,7 @@ namespace Hooks {
 
 extern "C" {
 
-ib_status_t initialize(
+ib_status_t ibpp_module_initialize(
     ib_engine_t* ib_engine,
     ib_module_t* ib_module,
     void*        cbdata
@@ -110,7 +110,7 @@ ib_status_t initialize(
     return IB_OK;
 }
 
-ib_status_t finalize(
+ib_status_t ibpp_module_finalize(
       ib_engine_t* ib_engine,
       ib_module_t* ib_module,
       void*        cbdata
@@ -130,7 +130,7 @@ ib_status_t finalize(
     return IB_OK;
 }
 
-ib_status_t configuration_copy(
+ib_status_t ibpp_module_configuration_copy(
     ib_engine_t* ib_engine,
     ib_module_t* ib_module,
     void*        dst,
@@ -287,7 +287,7 @@ void Module::set_initialize(initialize_t f) const
             f,
             engine().main_memory_pool().ib()
         );
-        ib()->fn_init = Internal::Hooks::initialize;
+        ib()->fn_init = Internal::Hooks::ibpp_module_initialize;
     }
 }
 
@@ -332,7 +332,7 @@ void Module::set_finalize(finalize_t f) const
             f,
             engine().main_memory_pool().ib()
         );
-        ib()->fn_fini = Internal::Hooks::finalize;
+        ib()->fn_fini = Internal::Hooks::ibpp_module_finalize;
     }
 }
 
@@ -344,7 +344,7 @@ void Module::set_configuration_copier_translator(
         f,
         engine().main_memory_pool().ib()
     );
-    ib()->fn_cfg_copy = Internal::Hooks::configuration_copy;
+    ib()->fn_cfg_copy = Internal::Hooks::ibpp_module_configuration_copy;
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstModule& module)

@@ -55,7 +55,7 @@ extern "C" {
  * You should never need to use this directly.
  * @param[in] data Data to clean up (delete).
  **/
-void data_cleanup(void* data);
+void ibpp_data_cleanup(void* data);
 
 } // extern "C"
 
@@ -116,7 +116,7 @@ void* value_to_data(
     if (mpool) {
         ib_mpool_cleanup_register(
             mpool,
-            Internal::data_cleanup,
+            Internal::ibpp_data_cleanup,
             reinterpret_cast<void*>(value_any)
         );
     }

@@ -30,7 +30,7 @@ namespace Internal {
 
 extern "C" {
 
-void data_cleanup(void* data)
+void ibpp_data_cleanup(void* data)
 {
     boost::any* data_any = reinterpret_cast<boost::any*>(data);
     delete data_any;

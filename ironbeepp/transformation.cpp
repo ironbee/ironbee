@@ -54,7 +54,7 @@ bool ConstTransformation::handle_list() const
 
 extern "C" {
 
-static ib_status_t transformation_translator(
+static ib_status_t ibpp_transformation_translator(
     ib_mpool_t* mp,
     const ib_field_t* fin,
     const ib_field_t** fout,
@@ -106,7 +106,7 @@ ConstTransformation ConstTransformation::create(
         memory_pool.ib(),
         name,
         handle_list,
-        transformation_translator,
+        ibpp_transformation_translator,
         value_to_data(transformation, memory_pool.ib())
     ));
 
