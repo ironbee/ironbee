@@ -302,6 +302,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     ib_mpool_t *pool;
     ib_status_t rc;
     ib_state_event_type_t event;
+    ib_engine_t *ib = NULL;
 
     /* Create primary memory pool */
     rc = ib_mpool_create(&pool, "engine", NULL);
@@ -311,31 +312,31 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     }
 
     /* Create the main structure in the primary memory pool */
-    *pib = (ib_engine_t *)ib_mpool_calloc(pool, 1, sizeof(**pib));
-    if (*pib == NULL) {
+    ib = (ib_engine_t *)ib_mpool_calloc(pool, 1, sizeof(*ib));
+    if (ib == NULL) {
         rc = IB_EALLOC;
         goto failed;
     }
-    (*pib)->mp = pool;
+    ib->mp = pool;
 
     /* Create temporary memory pool */
-    rc = ib_mpool_create(&((*pib)->temp_mp),
+    rc = ib_mpool_create(&(ib->temp_mp),
                          "temp",
-                         (*pib)->mp);
+                         ib->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create the config memory pool */
-    rc = ib_mpool_create(&((*pib)->config_mp),
+    rc = ib_mpool_create(&(ib->config_mp),
                          "config",
-                         (*pib)->mp);
+                         ib->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a list to hold config contexts */
-    rc = ib_list_create(&((*pib)->contexts), (*pib)->mp);
+    rc = ib_list_create(&(ib->contexts), ib->mp);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -343,29 +344,29 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     /* Create an engine config context and use it as the
      * main context until the engine can be configured.
      */
-    rc = ib_context_create(*pib, NULL, IB_CTYPE_ENGINE,
-                           "engine", "engine", &((*pib)->ectx));
+    rc = ib_context_create(ib, NULL, IB_CTYPE_ENGINE,
+                           "engine", "engine", &(ib->ectx));
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Set the context's CWD */
-    rc = ib_context_set_cwd((*pib)->ectx, NULL);
+    rc = ib_context_set_cwd(ib->ectx, NULL);
     if (rc != IB_OK) {
         goto failed;
     }
 
-    (*pib)->ctx = (*pib)->ectx;
-    (*pib)->cfg_state = CFG_NOT_STARTED;
+    ib->ctx = ib->ectx;
+    ib->cfg_state = CFG_NOT_STARTED;
 
     /* Check server for ABI compatibility with this engine */
     if (server == NULL) {
-        ib_log_error(*pib,  "Error in ib_create: server info required");
+        ib_log_error(ib,  "Error in ib_create: server info required");
         rc = IB_EINVAL;
         goto failed;
     }
     if (server->vernum > IB_VERNUM) {
-        ib_log_alert(*pib,
+        ib_log_alert(ib,
                      "Server %s (built against engine version %s) is not "
                      "compatible with this engine (version %s): "
                      "ABI %d > %d",
@@ -374,91 +375,93 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
         rc = IB_EINCOMPAT;
         goto failed;
     }
-    (*pib)->server = server;
+    ib->server = server;
 
     /* Sensor info. */
-    (*pib)->sensor_name = IB_DSTR_UNKNOWN;
-    (*pib)->sensor_version = IB_PRODUCT_VERSION_NAME;
-    (*pib)->sensor_hostname = IB_DSTR_UNKNOWN;
+    ib->sensor_name = IB_DSTR_UNKNOWN;
+    ib->sensor_version = IB_PRODUCT_VERSION_NAME;
+    ib->sensor_hostname = IB_DSTR_UNKNOWN;
 
     /* Create an array to hold loaded modules */
     /// @todo Need good defaults here
-    rc = ib_array_create(&((*pib)->modules), (*pib)->mp, 16, 8);
+    rc = ib_array_create(&(ib->modules), ib->mp, 16, 8);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create an array to hold filters */
     /// @todo Need good defaults here
-    rc = ib_array_create(&((*pib)->filters), (*pib)->mp, 16, 8);
+    rc = ib_array_create(&(ib->filters), ib->mp, 16, 8);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold configuration directive mappings by name */
-    rc = ib_hash_create_nocase(&((*pib)->dirmap), (*pib)->mp);
+    rc = ib_hash_create_nocase(&(ib->dirmap), ib->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold transformations by name */
-    rc = ib_hash_create_nocase(&((*pib)->tfns), (*pib)->mp);
+    rc = ib_hash_create_nocase(&(ib->tfns), ib->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold operators by name */
-    rc = ib_hash_create_nocase(&((*pib)->operators), (*pib)->mp);
+    rc = ib_hash_create_nocase(&(ib->operators), ib->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold actions by name */
-    rc = ib_hash_create_nocase(&((*pib)->actions), (*pib)->mp);
+    rc = ib_hash_create_nocase(&(ib->actions), ib->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Initialize the hook lists */
     for(event = conn_started_event; event < IB_STATE_EVENT_NUM; ++event) {
-        rc = ib_list_create(&((*pib)->hooks[event]), (*pib)->mp);
+        rc = ib_list_create(&(ib->hooks[event]), ib->mp);
         if (rc != IB_OK) {
             goto failed;
         }
     }
 
     /* Initialize the rule engine */
-    rc = ib_rule_engine_init(*pib);
+    rc = ib_rule_engine_init(ib);
     if (rc != IB_OK) {
-        ib_log_alert(*pib, "Failed to initialize rule engine: %s",
+        ib_log_alert(ib, "Failed to initialize rule engine: %s",
                      ib_status_to_string(rc));
-        return rc;
+        goto failed;
     }
 
     /* Initialize the data configuration. */
-    rc = ib_data_config_create((*pib)->mp, &(*pib)->data_config);
+    rc = ib_data_config_create(ib->mp, &ib->data_config);
     if (rc != IB_OK) {
-        ib_log_alert(*pib, "Failed to create data configuration: %s",
+        ib_log_alert(ib, "Failed to create data configuration: %s",
                      ib_status_to_string(rc));
-        return rc;
+        goto failed;
     }
 
     /* Initialize the core static module. */
     /// @todo Probably want to do this in a less hard-coded manner.
-    rc = ib_module_init(ib_core_module_sym(), *pib);
+    rc = ib_module_init(ib_core_module_sym(), ib);
     if (rc != IB_OK) {
-        ib_log_alert(*pib,  "Error in ib_module_init");
+        ib_log_alert(ib,  "Error in ib_module_init");
         goto failed;
     }
+
+    *pib = ib;
 
     return rc;
 
 failed:
     /* Make sure everything is cleaned up on failure */
-    if (*pib != NULL) {
-        ib_engine_pool_destroy(*pib, (*pib)->mp);
+    if (ib != NULL) {
+        ib_engine_pool_destroy(ib, ib->mp);
     }
-    *pib = NULL;
+    ib = NULL;
 
     return rc;
 }

@@ -37,7 +37,7 @@
 /// @test Test ironbee library - ib_engine_create()
 TEST(TestIronBee, test_engine_create_null_server)
 {
-    ib_engine_t *ib;
+    ib_engine_t *ib = NULL;
     ib_status_t rc;
 
     rc = ib_initialize();
