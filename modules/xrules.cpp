@@ -22,9 +22,9 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
-#include <ironbeepp/connection.hpp>
-#include <ironbeepp/configuration_parser.hpp>
 #include <ironbeepp/configuration_directives.hpp>
+#include <ironbeepp/configuration_parser.hpp>
+#include <ironbeepp/connection.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/list.hpp>
@@ -41,19 +41,19 @@
 #include <ironbee/server.h>
 #include <ironbee/string.h>
 
-#include <list>
-#include <vector>
-
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/time_zone_base.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
-#include <boost/smart_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <list>
+#include <vector>
 
 namespace {
 
