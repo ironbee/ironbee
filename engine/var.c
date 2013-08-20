@@ -62,7 +62,7 @@ struct ib_var_source_t
      *
      * For indexed sources, this will be a copy of the name passed to
      * ib_var_source_register().  For unindexed sources, this will be an alias
-     * of the name passed to ib_var_source_lookup().  This difference reflects
+     * of the name passed to ib_var_source_acquire().  This difference reflects
      * the performance and lifetime issues of each use.
      **/
     const char *name;
@@ -189,7 +189,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
 
 /* var_config */
 
-ib_status_t ib_var_config_create(
+ib_status_t ib_var_config_acquire(
     ib_var_config_t **config,
     ib_mpool_t       *mp
 )
@@ -228,7 +228,7 @@ ib_mpool_t *ib_var_config_pool(
 
 /* var_store */
 
-ib_status_t ib_var_store_create(
+ib_status_t ib_var_store_acquire(
     ib_var_store_t        **store,
     ib_mpool_t             *mp,
     const ib_var_config_t  *config
@@ -489,7 +489,7 @@ ib_status_t ib_var_source_set(
     );
 }
 
-ib_status_t ib_var_source_lookup(
+ib_status_t ib_var_source_acquire(
     ib_var_source_t       **source,
     ib_mpool_t             *mp,
     const ib_var_config_t  *config,
@@ -622,7 +622,7 @@ ib_status_t ib_var_source_initialize(
 
 /* var_filter */
 
-ib_status_t ib_var_filter_prepare(
+ib_status_t ib_var_filter_acquire(
     ib_var_filter_t **filter,
     ib_mpool_t       *mp,
     const char       *filter_string,
@@ -797,7 +797,7 @@ ib_status_t ib_var_filter_apply(
 
 /* var_target */
 
-ib_status_t ib_var_target_create(
+ib_status_t ib_var_target_acquire(
     ib_var_target_t       **target,
     ib_mpool_t             *mp,
     ib_var_source_t        *source,
@@ -823,7 +823,7 @@ ib_status_t ib_var_target_create(
     return IB_OK;
 }
 
-ib_status_t ib_var_target_prepare(
+ib_status_t ib_var_target_acquire_from_string(
     ib_var_target_t       **target,
     ib_mpool_t             *mp,
     const ib_var_config_t  *config,
@@ -856,7 +856,7 @@ ib_status_t ib_var_target_prepare(
         return IB_EINVAL;
     }
 
-    rc = ib_var_source_lookup(
+    rc = ib_var_source_acquire(
         &source,
         mp,
         config,
@@ -866,9 +866,9 @@ ib_status_t ib_var_target_prepare(
         return rc;
     }
 
-    /* The -1 allows for trivial filters as "FOO:" */
+    /* The -1 allows for trivial filters such as "FOO:" */
     if (split_at < target_string_length - 1) {
-        rc = ib_var_filter_prepare(
+        rc = ib_var_filter_acquire(
             &filter,
             mp,
             target_string + split_at + 1, target_string_length - split_at - 1,
@@ -882,7 +882,7 @@ ib_status_t ib_var_target_prepare(
         filter = NULL;
     }
 
-    return ib_var_target_create(target, mp, source, filter);
+    return ib_var_target_acquire(target, mp, source, filter);
 }
 
 ib_status_t ib_var_target_get(
@@ -1096,7 +1096,7 @@ bool find_expand_string(
     return true;
 }
 
-ib_status_t ib_var_expand_prepare(
+ib_status_t ib_var_expand_acquire(
     ib_var_expand_t       **expand,
     ib_mpool_t             *mp,
     const char             *str,
@@ -1148,7 +1148,7 @@ ib_status_t ib_var_expand_prepare(
             }
 
             ib_var_target_t *target;
-            rc = ib_var_target_prepare(
+            rc = ib_var_target_acquire_from_string(
                 &target,
                 mp,
                 config,

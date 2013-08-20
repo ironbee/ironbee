@@ -53,14 +53,14 @@ extern "C" {
  *
  * The API is divided into six sections:
  *
- * - @c ib_var_config -- Create a configuration.
- * - @c ib_var_store  -- Create a store.
- * - @c ib_var_source -- Register, lookup, get, or set sources.  This API is
+ * - @c ib_var_config -- Acquire a configuration.
+ * - @c ib_var_store  -- Acquire a store.
+ * - @c ib_var_source -- Register, acquire, get, or set sources.  This API is
  *   the fundamental service provided by the var code.  All later APIs are
  *   defined in terms of it as the field API.
- * - @c ib_var_filter -- Create and apply filters to fields; parse filter
+ * - @c ib_var_filter -- Acquire and apply filters to fields; parse filter
  *   specification strings.
- * - @c ib_var_target -- Create and apply targets; parse target specification
+ * - @c ib_var_target -- Acquire and apply targets; parse target specification
  *   strings.
  * - @c ib_var_expand -- Expand strings containing embeded target references.
  *
@@ -71,7 +71,9 @@ extern "C" {
  * example, when the source name is known at configuration time, it can be
  * converted into an @ref ib_var_source_t allowing gets (but not sets) to
  * be executed at evaluation time in constant time.  Similar behavior is
- * available for filters and targets.
+ * available for filters and targets.  All such pre-computation routines have
+ * `acquire` in the name, e.g., ib_var_store_acquire().  Whenever possible,
+ * acquire at configuration time.
  *
  * **Performance:**
  *
@@ -79,6 +81,8 @@ extern "C" {
  * and/or the number of registered var sources.
  *
  * A *fast* function has constant runtime.
+ *
+ * Generally, acquisition is *slow* but use of an acquired object is *fast*.
  *
  * @{
  */
@@ -99,7 +103,7 @@ extern "C" {
 typedef struct ib_var_config_t ib_var_config_t;
 
 /**
- * Create new var configuration.
+ * Acquire new var configuration.
  *
  * @param[out] config The new var configuration.
  * @param[in]  mp     Memory pool to use.
@@ -107,7 +111,7 @@ typedef struct ib_var_config_t ib_var_config_t;
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
  **/
-ib_status_t DLL_PUBLIC ib_var_config_create(
+ib_status_t DLL_PUBLIC ib_var_config_acquire(
     ib_var_config_t **config,
     ib_mpool_t       *mp
 )
@@ -144,7 +148,7 @@ NONNULL_ATTRIBUTE(1);
 typedef struct ib_var_store_t ib_var_store_t;
 
 /**
- * Create new var store.
+ * Acquire new var store.
  *
  * @param[out] store  The new var store.
  * @param[in]  mp     Memory pool to use.
@@ -153,7 +157,7 @@ typedef struct ib_var_store_t ib_var_store_t;
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
  */
-ib_status_t DLL_PUBLIC ib_var_store_create(
+ib_status_t DLL_PUBLIC ib_var_store_acquire(
     ib_var_store_t        **store,
     ib_mpool_t             *mp,
     const ib_var_config_t  *config
@@ -205,7 +209,7 @@ typedef struct ib_var_source_t ib_var_source_t;
  * This function registers a var source and establishes it as indexed.  It
  * should only be called at configuration time.  It should never be called
  * at evaluation time.  To get a var source at evaluation time, use
- * ib_var_source_lookup().
+ * ib_var_source_acquire().
  *
  * The phase argument specify the first phase the source will be meaningful
  * at and the last phase its value will change at.  Either or both may be
@@ -221,9 +225,9 @@ typedef struct ib_var_source_t ib_var_source_t;
  *
  * This function is *slow*.
  *
- * @param[out] source        Source created.  Will have lifetime equal to
+ * @param[out] source        Source acquired.  Will have lifetime equal to
  *                           @a config.  May be NULL.
- * @param[in]  config        Data configuration to create source for.
+ * @param[in]  config        Data configuration to acquire source for.
  * @param[in]  name          Name of source.
  * @param[in]  name_length   Length of @a name.
  * @param[in]  initial_phase First phase source has meaningful value in.
@@ -343,7 +347,7 @@ ib_status_t DLL_PUBLIC ib_var_source_set(
 NONNULL_ATTRIBUTE(1, 2);
 
 /**
- * Lookup a var source at config time.
+ * Acquire a var source.
  *
  * If the name of the var source is known at configuration time, call this
  * then and store the var source somewhere.  For indexed var sources, this
@@ -367,7 +371,7 @@ NONNULL_ATTRIBUTE(1, 2);
  * - IB_ENOENT if source if unindexed and @a mp is NULL.
  * - IB_EALLOC if source is unindexed and allocation fails.
  **/
-ib_status_t DLL_PUBLIC ib_var_source_lookup(
+ib_status_t DLL_PUBLIC ib_var_source_acquire(
     ib_var_source_t       **source,
     ib_mpool_t             *mp,
     const ib_var_config_t  *config,
@@ -438,7 +442,7 @@ NONNULL_ATTRIBUTE(1, 3);
 typedef struct ib_var_filter_t ib_var_filter_t;
 
 /**
- * Prepare a filter
+ * Acquire a filter
  *
  * This function prepares a filter for later use.  At present, the primary
  * advantage of for regexp filters, but future filter functionality may also
@@ -464,7 +468,7 @@ typedef struct ib_var_filter_t ib_var_filter_t;
  * - IB_EINVAL if @a filter_string is invalid.  Invalid strings include the
  *   empty string, an invalid regexp specification.
  **/
-ib_status_t DLL_PUBLIC ib_var_filter_prepare(
+ib_status_t DLL_PUBLIC ib_var_filter_acquire(
     ib_var_filter_t **filter,
     ib_mpool_t       *mp,
     const char       *filter_string,
@@ -507,7 +511,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  *
  * Source and filter.
  *
- * A target is a source and a filter, possibly trivial.  It can pe created
+ * A target is a source and a filter, possibly trivial.  It can be acquired
  * from such or prepared from a string.  At evaluation time, it can be
  * be used to get a list of fields.  As such, it provides an abstraction,
  * turning a user specification of a target into appropriate fields to act
@@ -524,9 +528,9 @@ NONNULL_ATTRIBUTE(1, 2, 3);
 typedef struct ib_var_target_t ib_var_target_t;
 
 /**
- * Create a target from a source and a filter.
+ * Acquire a target from a source and a filter.
  *
- * @sa ib_var_target_prepare()
+ * @sa ib_var_target_acquire()
  *
  * @param[out] target Created target.  Lifetime will be equal to @a mp.
  * @param[in]  mp     Memory pool to use for allocations.
@@ -537,7 +541,7 @@ typedef struct ib_var_target_t ib_var_target_t;
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
  **/
-ib_status_t DLL_PUBLIC ib_var_target_create(
+ib_status_t DLL_PUBLIC ib_var_target_acquire(
     ib_var_target_t       **target,
     ib_mpool_t             *mp,
     ib_var_source_t        *source,
@@ -546,7 +550,7 @@ ib_status_t DLL_PUBLIC ib_var_target_create(
 NONNULL_ATTRIBUTE(1, 2, 3);
 
 /**
- * Create a target from a specification string.
+ * Acquire a target from a specification string.
  *
  * A specification string is a source name, optionally followed by a :
  * and a filter string, i.e., `^[^:]+(:.+)?$`.
@@ -567,9 +571,9 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
- * - IB_EINVAL if @a target_string is invalid (see ib_var_filter_prepare()).
+ * - IB_EINVAL if @a target_string is invalid (see ib_var_filter_acquire()).
  **/
-ib_status_t DLL_PUBLIC ib_var_target_prepare(
+ib_status_t DLL_PUBLIC ib_var_target_acquire_from_string(
     ib_var_target_t       **target,
     ib_mpool_t             *mp,
     const ib_var_config_t  *config,
@@ -651,7 +655,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
 typedef struct ib_var_expand_t ib_var_expand_t;
 
 /**
- * Prepare a string expansion.
+ * Acquire a string expansion.
  *
  * When executed with ib_var_expand_execute(), any references to targets of
  * the form `%{target}` will be replaced with the result of that target
@@ -670,9 +674,9 @@ typedef struct ib_var_expand_t ib_var_expand_t;
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation error.
- * - IB_EINVAL if @a target_string is invalid (see ib_var_filter_prepare()).
+ * - IB_EINVAL if @a target_string is invalid (see ib_var_filter_acquire()).
  **/
-ib_status_t DLL_PUBLIC ib_var_expand_prepare(
+ib_status_t DLL_PUBLIC ib_var_expand_acquire(
     ib_var_expand_t       **expand,
     ib_mpool_t             *mp,
     const char             *str,

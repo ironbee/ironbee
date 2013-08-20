@@ -41,7 +41,7 @@ ib_var_config_t* make_config(ib_mpool_t *mp)
     ib_var_config_t* config = NULL;
     ib_status_t rc;
 
-    rc = ib_var_config_create(&config, mp);
+    rc = ib_var_config_acquire(&config, mp);
     EXPECT_EQ(IB_OK, rc);
     EXPECT_TRUE(config);
     if (! config) {return NULL;}
@@ -56,7 +56,7 @@ ib_var_store_t* make_store(ib_var_config_t* config)
     ib_status_t rc;
     ib_mpool_t* mp = ib_var_config_pool(config);
 
-    rc = ib_var_store_create(&store, mp, config);
+    rc = ib_var_store_acquire(&store, mp, config);
     EXPECT_EQ(IB_OK, rc);
     EXPECT_TRUE(store);
     if (! store) {return NULL;}
@@ -215,10 +215,10 @@ TEST(TestVar, SourceSetGet)
     ASSERT_EQ(&fa, f2);
 
     ib_var_source_t* source;
-    rc = ib_var_source_lookup(&source, mp, config, "a", 1);
+    rc = ib_var_source_acquire(&source, mp, config, "a", 1);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(a, source);
-    rc = ib_var_source_lookup(&source, mp, config, "b", 1);
+    rc = ib_var_source_acquire(&source, mp, config, "b", 1);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(b, source);
 }
@@ -248,7 +248,7 @@ TEST(TestVar, SourceSetAndGetInvalid)
 
     ib_field_t* f2 = NULL;
     ib_var_source_t* unindexed;
-    rc = ib_var_source_lookup(&unindexed, mp, config, "c", 1);
+    rc = ib_var_source_acquire(&unindexed, mp, config, "c", 1);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_source_get(unindexed, &f2, store);
     ASSERT_EQ(IB_ENOENT, rc);
@@ -280,7 +280,7 @@ TEST(TestVar, SourceUnindexed)
     ib_var_store_t* store = make_store(config);
 
     ib_var_source_t* source = NULL;
-    rc = ib_var_source_lookup(
+    rc = ib_var_source_acquire(
         &source,
         mp,
         config,
@@ -315,12 +315,12 @@ TEST(TestVar, LookupWithoutPool)
     ASSERT_TRUE(a);
 
     ib_var_source_t* source;
-    rc = ib_var_source_lookup(&source, NULL, config, "a", 1);
+    rc = ib_var_source_acquire(&source, NULL, config, "a", 1);
     EXPECT_EQ(IB_OK, rc);
     EXPECT_EQ(a, source);
 
     source = NULL;
-    rc = ib_var_source_lookup(&source, NULL, config, "b", 1);
+    rc = ib_var_source_acquire(&source, NULL, config, "b", 1);
     EXPECT_EQ(IB_ENOENT, rc);
     EXPECT_FALSE(source);
 }
@@ -385,7 +385,7 @@ TEST(TestVar, Filter)
         Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
 
     ib_var_filter_t *filter;
-    rc = ib_var_filter_prepare(&filter, mp, "fooa", 4, NULL, NULL);
+    rc = ib_var_filter_acquire(&filter, mp, "fooa", 4, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
 
     const ib_list_t *result = NULL;
@@ -395,7 +395,7 @@ TEST(TestVar, Filter)
     EXPECT_EQ(1UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
 
-    rc = ib_var_filter_prepare(&filter, mp, "/foo/", 5, NULL, NULL);
+    rc = ib_var_filter_acquire(&filter, mp, "/foo/", 5, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_filter_apply(filter, &result, mp, data_field.ib());
     ASSERT_EQ(IB_OK, rc);
@@ -436,14 +436,14 @@ TEST(TestVar, Target)
     ASSERT_EQ(IB_OK, rc);
 
     ib_var_filter_t *filter;
-    rc = ib_var_filter_prepare(&filter, mp, "fooa", 4, NULL, NULL);
+    rc = ib_var_filter_acquire(&filter, mp, "fooa", 4, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
 
     ib_var_target_t *target;
     const ib_list_t *result = NULL;
     field_clist_t result_list;
 
-    rc = ib_var_target_create(&target, mp, source, filter);
+    rc = ib_var_target_acquire(&target, mp, source, filter);
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_var_target_get(target, &result, mp, store);
@@ -452,7 +452,7 @@ TEST(TestVar, Target)
     EXPECT_EQ(1UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
 
-    rc = ib_var_target_prepare(&target, mp, config, "data:fooa", 9, NULL, NULL);
+    rc = ib_var_target_acquire_from_string(&target, mp, config, "data:fooa", 9, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_var_target_get(target, &result, mp, store);
@@ -461,7 +461,7 @@ TEST(TestVar, Target)
     EXPECT_EQ(1UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
 
-    rc = ib_var_target_prepare(&target, mp, config, "data:/foo/", 10, NULL, NULL);
+    rc = ib_var_target_acquire_from_string(&target, mp, config, "data:/foo/", 10, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_target_get(target, &result, mp, store);
     ASSERT_EQ(IB_OK, rc);
@@ -470,14 +470,14 @@ TEST(TestVar, Target)
     EXPECT_EQ("fooA", result_list.front().name_as_s());
     EXPECT_EQ("fooB", result_list.back().name_as_s());
 
-    rc = ib_var_target_prepare(&target, mp, config, "data", 4, NULL, NULL);
+    rc = ib_var_target_acquire_from_string(&target, mp, config, "data", 4, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_target_get(target, &result, mp, store);
     ASSERT_EQ(IB_OK, rc);
     result_list = field_clist_t(result);
     EXPECT_EQ(3UL, result_list.size());
 
-    rc = ib_var_target_prepare(&target, mp, config, "fooA", 4, NULL, NULL);
+    rc = ib_var_target_acquire_from_string(&target, mp, config, "fooA", 4, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_var_target_get(target, &result, mp, store);
     ASSERT_EQ(IB_OK, rc);
@@ -544,7 +544,7 @@ TEST(TestVar, Expand)
     ASSERT_FALSE(ib_var_expand_test("foo", 3));
 
     ib_var_expand_t *expand = NULL;
-    rc = ib_var_expand_prepare(
+    rc = ib_var_expand_acquire(
         &expand,
         mp,
         c_expand_string.data(), c_expand_string.length(),
