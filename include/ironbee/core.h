@@ -123,7 +123,7 @@ ib_status_t DLL_PUBLIC ib_core_context_config(
  * @param[in] ctx The current configuration context.
  * @param[out] limits Writes a pointer to the current limits.
  *
- * @return 
+ * @return
  * - IB_OK On success.
  * - Other on error fetching the context configuration for core.
  */

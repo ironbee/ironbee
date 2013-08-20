@@ -325,7 +325,7 @@ namespace {
          * ScaleThreat actions manipulates this when they are executed.
          */
         ib_float_t scale_threat;
-        
+
         /**
          * Constructor to set defaults.
          */
@@ -543,7 +543,7 @@ namespace {
          *            action is always executed, they
          *            need unique ids.
          * @param[in] fnum The floating point number to be store in tx.
-         * @param[in] results The calling application 
+         * @param[in] results The calling application
          *            must provide a pointer to a float that
          *            this action may manipulate when it is executed.
          * @param[in] priority The priority of this action.

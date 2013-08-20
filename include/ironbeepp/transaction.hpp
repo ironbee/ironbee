@@ -386,7 +386,7 @@ public:
      */
     template<typename T>
     T get_module_data(ConstModule m);
-    
+
     /**
      * Create a new transaction.
      *
@@ -429,7 +429,7 @@ T Transaction::get_module_data(ConstModule m)
 
     return data_to_value<T>(v);
 }
-    
+
 
 /**
  * Output operator for Transaction.

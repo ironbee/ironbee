@@ -4807,7 +4807,7 @@ ib_status_t DLL_PUBLIC ib_core_limits_get(
     ib_status_t    rc;
 
     rc = ib_core_context_config(ctx, &corecfg);
-    if (rc != IB_OK) { 
+    if (rc != IB_OK) {
         ib_log_error(ctx->ib, "Cannot retrieve core configuration.");
         return rc;
     }
