@@ -5,6 +5,7 @@ tempory temporary
 tranformations Transformations
 tranformations transformations
 faile Failed
+cft cfg
 parseable parsable
 signalled signaled
 heald held
@@ -96,6 +97,7 @@ casted cast
 ignoreme ignored
 mutale mutable
 registerring Registering
+ib_core_cfg_t cfg
 convertable convertible
 curr cur
 otheres others

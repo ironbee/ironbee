@@ -211,7 +211,7 @@ typedef enum ib_tx_limits_actions_t {
 } ib_tx_limits_actions_t;
 
 /**
- * Structure used in @ref ib_core_cft_t to hold all limit values.
+ * Structure used in @ref ib_core_cfg_t to hold all limit values.
  */
 struct ib_tx_limits_t {
     /**

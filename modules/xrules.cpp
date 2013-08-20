@@ -170,7 +170,7 @@ namespace {
          * Constructor of an action.
          *
          * @param[in] id ID under which actions of this type are stored.
-         *            Decendant class name is sufficient.
+         *            Descendant class name is sufficient.
          * @param[in] priority The priority of this action.
          */
         Action(std::string id, int priority);
@@ -1619,7 +1619,7 @@ private:
     );
 
     /**
-     * Run resp_xrules agianst responses.
+     * Run resp_xrules against responses.
      *
      * @param[in] ib IronBee engine.
      * @param[in] tx The current transaction.
@@ -1634,7 +1634,7 @@ private:
     );
 
     /**
-     * Run req_xrules agianst requests.
+     * Run req_xrules against requests.
      *
      * @param[in] ib IronBee engine.
      * @param[in] tx The current transaction.
