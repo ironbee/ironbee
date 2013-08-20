@@ -97,7 +97,7 @@ ib_status_t ibpp_module_initialize(
     void*        cbdata
 )
 {
-    assert(ib_engine = ib_module->ib);
+    assert(ib_engine == ib_module->ib);
 
     try {
         data_to_value<Module::initialize_t>(cbdata)(
@@ -117,7 +117,7 @@ ib_status_t ibpp_module_finalize(
 )
 
 {
-    assert(ib_engine = ib_module->ib);
+    assert(ib_engine == ib_module->ib);
 
     try {
         data_to_value<Module::finalize_t>(cbdata)(
@@ -139,7 +139,7 @@ ib_status_t ibpp_module_configuration_copy(
     void*        cbdata
 )
 {
-    assert(ib_engine = ib_module->ib);
+    assert(ib_engine == ib_module->ib);
     assert(dst != NULL);
     assert(src != NULL);
 
