@@ -39,8 +39,6 @@ string DefaultNodeDecorator::operator()(const node_cp& node) const
     else {
         return "label=\"" + node->to_s() + "\"";
     }
-
-    return "label=\"unknown node type\"";
 }
 
 namespace Impl {
