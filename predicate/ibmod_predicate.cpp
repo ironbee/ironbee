@@ -481,7 +481,8 @@ private:
 
 // Implementation
 
-PerContext::PerContext()
+PerContext::PerContext() :
+    m_delegate(NULL)
 {
     // nop
 }
