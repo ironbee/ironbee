@@ -106,9 +106,13 @@ bool ib_ipset4_is_prefix(
     ib_ip4_network_t b_net
 )
 {
+    /* Note that use of a_net.size on both sides is correct. */
     return
-        (b_net.ip & ib_ipset4_mask(a_net.size)) ==
-        (a_net.ip & ib_ipset4_mask(a_net.size))
+        a_net.size <= b_net.size &&
+        (
+            (b_net.ip & ib_ipset4_mask(a_net.size)) ==
+            (a_net.ip & ib_ipset4_mask(a_net.size))
+        )
         ;
 }
 
