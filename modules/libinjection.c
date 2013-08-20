@@ -77,7 +77,8 @@ typedef int (*sqli_tokenize_fn_t)(sfilter * sf, stoken_t * sout);
 static
 int sqli_cmp(const void *a, const void *b)
 {
-    return strcmp((const char *)a, (const char *)b);
+    /* a and b are pointers to pointers */
+    return strcmp(*(const char **)a, *(const char **)b);
 }
 
 static
@@ -93,10 +94,15 @@ int sqli_is_sqli_fingerprint(const char *fingerprint, size_t len, void *cbdata)
     memcpy(pattern, fingerprint, len);
     pattern[len] = '\0';
 
+    /* Calling bsearch on an array of *pointers*, thus a pointer to an
+       element is a pointer to a pointer.
+
+       Note that &pattern is different than &pattern_p. */
     if (ps != NULL && ps->num_patterns > 0) {
+        const char *pattern_p = pattern;
         result = bsearch(
-            pattern,
-            *ps->patterns, ps->num_patterns, sizeof(*ps->patterns),
+            &pattern_p,
+            ps->patterns, ps->num_patterns, sizeof(*ps->patterns),
             &sqli_cmp
         );
     }
