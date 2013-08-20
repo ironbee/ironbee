@@ -951,6 +951,7 @@ bool ib_mpool_debug_report_helper(
     assert(mp     != NULL);
     assert(report != NULL);
 
+    bool result;
     char *path = ib_mpool_path(mp);
 
     if (path == NULL) {
@@ -961,8 +962,6 @@ bool ib_mpool_debug_report_helper(
         "Debug Report for %p [%s]\n",
         mp, path
     );
-
-    free(path);
 
     IMR_PRINTF("%s", "Attributes:\n");
     IMR_PRINTF("  pagesize               = %zd\n", mp->pagesize);
@@ -1065,10 +1064,18 @@ bool ib_mpool_debug_report_helper(
         }
     }
 
-    return true;
+    result = true;
+    goto finished;
 
 failure:
-    return false;
+    result = false;
+    goto finished;
+
+finished:
+    if (path != NULL) {
+        free(path);
+    }
+    return result;
 }
 
 /**
@@ -1180,6 +1187,8 @@ bool ib_mpool_analyze_helper(
     size_t free_cleanup      = 0;
     size_t free_pointer_page = 0;
 
+    bool result;
+
     const size_t unit_page_cost =
         mp->pagesize + sizeof(ib_mpool_page_t) - 1;
     char *path = ib_mpool_path(mp);
@@ -1192,8 +1201,6 @@ bool ib_mpool_analyze_helper(
         "Analysis of mpool %p [%s]\n",
         mp, path
     );
-
-    free(path);
 
     IMR_PRINTF("%s", "Tracks:\n");
     for (size_t track_num = 0; track_num < IB_MPOOL_NUM_TRACKS; ++track_num) {
@@ -1266,7 +1273,10 @@ bool ib_mpool_analyze_helper(
         "efficiency=%4.1f%%\n",
         pointer_page_use, pointer_page_cost,
         pointer_page_cost - pointer_page_use, free_pointer_page,
-        100*(double)pointer_page_use / pointer_page_cost
+        (pointer_page_cost == 0 ?
+            100 :
+            100*(double)pointer_page_use / pointer_page_cost
+        )
     );
     IMR_PRINTF(
         "LargeAllocations: use=%12zd (all others N/A)\n",
@@ -1277,7 +1287,10 @@ bool ib_mpool_analyze_helper(
         "efficiency=%4.1f%%\n",
         cleanup_use, cleanup_cost,
         cleanup_cost - cleanup_use, free_cleanup,
-        100*(double)cleanup_use / cleanup_cost
+        (cleanup_cost == 0 ?
+            100 :
+            100*(double)cleanup_use / cleanup_cost
+        )
     );
     {
         size_t total_use = page_use + pointer_page_use + cleanup_use +
@@ -1290,7 +1303,10 @@ bool ib_mpool_analyze_helper(
             "Total:            use=%12zd cost=%12zd waste=%12zd "
             "free=%12zd efficiency=%4.1f%%\n",
             total_use, total_cost, total_cost - total_use, total_free_cost,
-            100*(double)total_use / total_cost
+            (total_cost == 0 ?
+                100 :
+                100*(double)total_use / total_cost
+            )
         );
     }
 
@@ -1333,10 +1349,20 @@ bool ib_mpool_analyze_helper(
         }
     }
 
-    return true;
+
+    result = true;
+    goto finished;
 
 failure:
-    return false;
+    result = false;
+    goto finished;
+
+finished:
+    if (path != NULL) {
+        free(path);
+    }
+
+    return result;
 }
 
 #undef IMR_PRINTF
