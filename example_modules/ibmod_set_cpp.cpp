@@ -144,6 +144,11 @@ class PerContext
 {
 public:
     /**
+     * Constructor.
+     **/
+    PerContext();
+
+    /**
      * Add a set for this context.
      *
      * @warning Will overwrite any existing set with name @a name.
@@ -394,6 +399,12 @@ IBPP_BOOTSTRAP_MODULE_DELEGATE("set", Delegate)
 // This reopening of the anonymous namespace is required to keep doxygen
 // happy.  C++ doesn't care.
 namespace {
+
+PerContext::PerContext() :
+    m_debug(false)
+{
+    // nop
+}
 
 void PerContext::add_set(const string& name, set_t set)
 {
