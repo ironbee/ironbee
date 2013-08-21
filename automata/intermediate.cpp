@@ -65,13 +65,15 @@ size_t find_one(const vector<uint8_t>& bm, size_t i)
 } // Anonymous
 
 Edge::const_iterator::const_iterator() :
-    m_edge(NULL)
+    m_edge(NULL),
+    m_bitmap_i(0)
 {
     // nop
 }
 
 Edge::const_iterator::const_iterator(const Edge& edge) :
-    m_edge(&edge)
+    m_edge(&edge),
+    m_bitmap_i(0)
 {
     if (m_edge->m_vector.empty() && ! m_edge->m_bitmap.empty()) {
         m_bitmap_i = find_one(m_edge->m_bitmap, 0);
