@@ -106,51 +106,57 @@ int main(int argc, char **argv)
         do_translate_nonadvancing_structural = true;
     }
 
-    Intermediate::Automata automata;
-    ostream_logger logger(cerr);
+    try {
+        Intermediate::Automata automata;
+        ostream_logger logger(cerr);
 
-    Intermediate::read_automata(automata, cin, logger);
+        Intermediate::read_automata(automata, cin, logger);
 
-    if (do_translate_nonadvancing_conservative) {
-        cerr << "Translate Nonadvancing [conservative]: ";
-        cerr.flush();
-        size_t num_fixes = Intermediate::translate_nonadvancing(
-            automata,
-            false
-        );
-        cerr << num_fixes << endl;
-    }
-    if (do_translate_nonadvancing_aggressive) {
-        cerr << "Translate Nonadvancing [aggressive]: ";
-        cerr.flush();
-        size_t num_fixes = Intermediate::translate_nonadvancing(
-            automata,
-            true
-        );
-        cerr << num_fixes << endl;
-    }
-    if (do_translate_nonadvancing_structural) {
-        cerr << "Translate Nonadvancing [structural]: ";
-        cerr.flush();
-        size_t num_fixes = Intermediate::translate_nonadvancing_structural(
-            automata
-        );
-        cerr << num_fixes << endl;
-    }
-    if (do_deduplicate_outputs) {
-        cerr << "Deduplicate Outputs: ";
-        cerr.flush();
-        size_t num_removes = Intermediate::deduplicate_outputs(automata);
-        cerr << num_removes << endl;
-    }
-    if (do_optimize_edges) {
-        cerr << "Optimize Edges: ";
-        cerr.flush();
-        Intermediate::breadth_first(automata, Intermediate::optimize_edges);
-        cerr << "done" << endl;
-    }
+        if (do_translate_nonadvancing_conservative) {
+            cerr << "Translate Nonadvancing [conservative]: ";
+            cerr.flush();
+            size_t num_fixes = Intermediate::translate_nonadvancing(
+                automata,
+                false
+            );
+            cerr << num_fixes << endl;
+        }
+        if (do_translate_nonadvancing_aggressive) {
+            cerr << "Translate Nonadvancing [aggressive]: ";
+            cerr.flush();
+            size_t num_fixes = Intermediate::translate_nonadvancing(
+                automata,
+                true
+            );
+            cerr << num_fixes << endl;
+        }
+        if (do_translate_nonadvancing_structural) {
+            cerr << "Translate Nonadvancing [structural]: ";
+            cerr.flush();
+            size_t num_fixes = Intermediate::translate_nonadvancing_structural(
+                automata
+            );
+            cerr << num_fixes << endl;
+        }
+        if (do_deduplicate_outputs) {
+            cerr << "Deduplicate Outputs: ";
+            cerr.flush();
+            size_t num_removes = Intermediate::deduplicate_outputs(automata);
+            cerr << num_removes << endl;
+        }
+        if (do_optimize_edges) {
+            cerr << "Optimize Edges: ";
+            cerr.flush();
+            Intermediate::breadth_first(automata, Intermediate::optimize_edges);
+            cerr << "done" << endl;
+        }
 
-    Intermediate::write_automata(automata, cout);
+        Intermediate::write_automata(automata, cout);
+    }
+    catch (const exception& e) {
+        cerr << "Error: " << e.what() << endl;
+        return 1;
+    }
 
     return 0;
 }

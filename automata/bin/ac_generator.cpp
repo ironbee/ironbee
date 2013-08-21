@@ -130,36 +130,44 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    ia::Intermediate::Automata a;
-    ia::Generator::aho_corasick_begin(a);
+    try {
+        ia::Intermediate::Automata a;
+        ia::Generator::aho_corasick_begin(a);
 
-    string s;
-    while (cin) {
-        getline(cin, s);
-        if (! s.empty()) {
-            if (! pattern) {
-                ia::Generator::aho_corasick_add_length(a, s);
-            }
-            else {
-                ia::Intermediate::byte_vector_t data;
-                copy(s.begin(), s.end(), back_inserter(data));
-                ia::Generator::aho_corasick_add_pattern(a, s, data);
+        string s;
+        while (cin) {
+            getline(cin, s);
+            if (! s.empty()) {
+                if (! pattern) {
+                    ia::Generator::aho_corasick_add_length(a, s);
+                }
+                else {
+                    ia::Intermediate::byte_vector_t data;
+                    copy(s.begin(), s.end(), back_inserter(data));
+                    ia::Generator::aho_corasick_add_pattern(a, s, data);
+                }
             }
         }
+
+        ia::Generator::aho_corasick_finish(a);
+
+        ia::Intermediate::breadth_first(a, ia::Intermediate::optimize_edges);
+        ia::Intermediate::deduplicate_outputs(a);
+
+        if (pattern) {
+            a.metadata()[c_output_type_key] = c_output_type_string;
+        }
+        else {
+            a.metadata()[c_output_type_key] = c_output_type_length;
+        }
+
+
+        ia::Intermediate::write_automata(a, cout, chunk_size);
+    }
+    catch (const exception& e) {
+        cerr << "Error: " << e.what() << endl;
+        return 1;
     }
 
-    ia::Generator::aho_corasick_finish(a);
-
-    ia::Intermediate::breadth_first(a, ia::Intermediate::optimize_edges);
-    ia::Intermediate::deduplicate_outputs(a);
-
-    if (pattern) {
-        a.metadata()[c_output_type_key] = c_output_type_string;
-    }
-    else {
-        a.metadata()[c_output_type_key] = c_output_type_length;
-    }
-
-
-    ia::Intermediate::write_automata(a, cout, chunk_size);
+    return 0;
 }

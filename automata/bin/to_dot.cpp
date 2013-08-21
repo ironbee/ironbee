@@ -130,84 +130,92 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    cout << "digraph A {" << endl;
-    PB::Chunk chunk;
-    bool first_node = true;
-    for (;;) {
-        bool at_eof = false;
-        try {
-            at_eof = ! read_chunk(input, chunk);
-        }
-        catch (const exception& e) {
-            cerr << e.what() << endl;
-            return 1;
-        }
-
-        if (at_eof) {
-            break;
-        }
-
-        Edge edge;
-        BOOST_FOREACH(const PB::Node& node, chunk.nodes()) {
-            cout << "  " << node.id() << " [label=\"" << node.id() << "\"";
-
-            if (first_node) {
-                first_node = false;
-                cout << ", shape=diamond";
+    try {
+        cout << "digraph A {" << endl;
+        PB::Chunk chunk;
+        bool first_node = true;
+        for (;;) {
+            bool at_eof = false;
+            try {
+                at_eof = ! read_chunk(input, chunk);
             }
-            cout << "];" << endl;
-
-            BOOST_FOREACH(const PB::Edge& pb_edge, node.edges()) {
-                try {
-                    pb_edge_to_edge(pb_edge, edge);
-                }
-                catch (const exception& e) {
-                    cerr << e.what() << endl;
-                    return 1;
-                }
-                cout << "  " << node.id() << " -> " << pb_edge.target()
-                     << " [weight=1000, label=\"";
-                if (edge.epsilon()) {
-                    cout << "&epsilon;";
-                }
-                else {
-                    BOOST_FOREACH(uint8_t c, edge) {
-                        output_content(cout, (boost::format("%c") % c).str());
-                    }
-                }
-                if (pb_edge.has_advance() && ! pb_edge.advance()) {
-                    cout << "\", color=red";
-                }
-                cout << "\"];" << endl;
+            catch (const exception& e) {
+                cerr << e.what() << endl;
+                return 1;
             }
 
-            if (node.has_default_target()) {
-                cout << "  " << node.id() << " -> " << node.default_target()
-                     << " [style=dashed, label=\"default\"";
-                if (
-                    node.has_advance_on_default() &&
-                    ! node.advance_on_default()
-                ) {
-                    cout << ", color=red";
+            if (at_eof) {
+                break;
+            }
+
+            Edge edge;
+            BOOST_FOREACH(const PB::Node& node, chunk.nodes()) {
+                cout << "  " << node.id() << " [label=\"" << node.id() << "\"";
+
+                if (first_node) {
+                    first_node = false;
+                    cout << ", shape=diamond";
                 }
                 cout << "];" << endl;
+
+                BOOST_FOREACH(const PB::Edge& pb_edge, node.edges()) {
+                    try {
+                        pb_edge_to_edge(pb_edge, edge);
+                    }
+                    catch (const exception& e) {
+                        cerr << e.what() << endl;
+                        return 1;
+                    }
+                    cout << "  " << node.id() << " -> " << pb_edge.target()
+                         << " [weight=1000, label=\"";
+                    if (edge.epsilon()) {
+                        cout << "&epsilon;";
+                    }
+                    else {
+                        BOOST_FOREACH(uint8_t c, edge) {
+                            output_content(cout, (boost::format("%c") % c).str());
+                        }
+                    }
+                    if (pb_edge.has_advance() && ! pb_edge.advance()) {
+                        cout << "\", color=red";
+                    }
+                    cout << "\"];" << endl;
+                }
+
+                if (node.has_default_target()) {
+                    cout << "  " << node.id() << " -> " << node.default_target()
+                         << " [style=dashed, label=\"default\"";
+                    if (
+                        node.has_advance_on_default() &&
+                        ! node.advance_on_default()
+                    ) {
+                        cout << ", color=red";
+                    }
+                    cout << "];" << endl;
+                }
+
+                if (node.has_first_output()) {
+                    cout << "  " << node.id() << " -> output"
+                         << node.first_output() << " [style=dotted];" << endl;
+                }
             }
 
-            if (node.has_first_output()) {
-                cout << "  " << node.id() << " -> output"
-                     << node.first_output() << " [style=dotted];" << endl;
+            BOOST_FOREACH(const PB::Output& output, chunk.outputs()) {
+                cout << "  output" << output.id() << " [shape=box, label=\"";
+                output_content(cout, output.content());
+                cout << "\"];" << endl;
+                if (output.has_next()) {
+                    cout << "  output" << output.id() << " -> output"
+                         << output.next() << " [style=dotted];" << endl;
+                }
             }
         }
-
-        BOOST_FOREACH(const PB::Output& output, chunk.outputs()) {
-            cout << "  output" << output.id() << " [shape=box, label=\"";
-            output_content(cout, output.content());
-            cout << "\"];" << endl;
-            if (output.has_next()) {
-                cout << "  output" << output.id() << " -> output"
-                     << output.next() << " [style=dotted];" << endl;
-            }
-        }
+        cout << "}" << endl;
     }
-    cout << "}" << endl;
+    catch (const exception& e) {
+        cerr << "Error: " << e.what() << endl;
+        return 1;
+    }
+
+    return 0;
 }

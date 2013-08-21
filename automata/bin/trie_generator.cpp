@@ -116,28 +116,36 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    size_t chunk_size = 0;
-    if (argc == 2) {
-        chunk_size = boost::lexical_cast<size_t>(argv[1]);
-    }
-
-    Automata a;
-
-    list<string> words;
-    string s;
-    while (cin) {
-        getline(cin, s);
-        if (! s.empty()) {
-            add_word(a, s);
+    try {
+        size_t chunk_size = 0;
+        if (argc == 2) {
+            chunk_size = boost::lexical_cast<size_t>(argv[1]);
         }
+
+        Automata a;
+
+        list<string> words;
+        string s;
+        while (cin) {
+            getline(cin, s);
+            if (! s.empty()) {
+                add_word(a, s);
+            }
+        }
+
+        assert(a.start_node());
+
+        breadth_first(a, optimize_edges);
+        deduplicate_outputs(a);
+
+        a.metadata()["Output-Type"] = "string";
+
+        write_automata(a, cout, chunk_size);
+    }
+    catch (const exception& e) {
+        cerr << "Error: " << e.what() << endl;
+        return 1;
     }
 
-    assert(a.start_node());
-
-    breadth_first(a, optimize_edges);
-    deduplicate_outputs(a);
-
-    a.metadata()["Output-Type"] = "string";
-
-    write_automata(a, cout, chunk_size);
+    return 0;
 }

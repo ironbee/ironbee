@@ -424,229 +424,235 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // for memory management only
-    boost::scoped_ptr<istream> input_mem;
-    boost::scoped_ptr<ostream> output_mem;
+    try {
+        // for memory management only
+        boost::scoped_ptr<istream> input_mem;
+        boost::scoped_ptr<ostream> output_mem;
 
-    ostream* output   = &cout;
+        ostream* output   = &cout;
 
-    if (! output_s.empty()) {
-        output_mem.reset(new ofstream(output_s.c_str()));
-        output = output_mem.get();
-        if (! *output) {
-            cout << "Error: Could not open " << output_s << " for writing."
-                 << endl;
-            return 1;
-        }
-    }
-
-    // Load automata
-    ia_eudoxus_result_t rc;
-    ia_eudoxus_t* eudoxus;
-
-    TimingInfo ti;
-    rc = ia_eudoxus_create_from_path(&eudoxus, automata_s.c_str());
-    if (rc != IA_EUDOXUS_OK) {
-        output_eudoxus_result(NULL, rc);
-        return 1;
-    }
-    cout << "Loaded automata in " << ti.elapsed_ms() << endl;
-
-    // Figure out output.
-    output_transform_t output_transform;
-    if (output_type_s == "auto") {
-        const uint8_t* value = NULL;
-        size_t length = 0;
-        rc = ia_eudoxus_metadata_with_key(
-            eudoxus,
-            reinterpret_cast<const uint8_t*>(c_output_type_key.data()),
-            c_output_type_key.length(),
-            &value, &length
-        );
-        if (rc == IA_EUDOXUS_END) {
-            cerr << "Error: Automata does not contain "
-                 << c_output_type_key << ".  "
-                 << "Must specify explicitly with --type."
-                 << endl;
-            return 1;
-        }
-        if (rc != IA_EUDOXUS_OK) {
-            cerr << "Error: Could not read metadata." << endl;
-            return 1;
-        }
-        output_type_s = string(reinterpret_cast<const char*>(value), length);
-        cout << "Read Output-Type of " << output_type_s << endl;
-    }
-
-    if (output_type_s == "string") {
-        output_transform = output_transform_string;
-    }
-    else if (output_type_s == "length") {
-        output_transform = output_transform_length;
-    }
-    else if (output_type_s == "integer") {
-        output_transform = output_transform_integer;
-    }
-    else if (output_type_s == "nop") {
-        no_output = true;
-        output_transform = output_transform_nop;
-    }
-    else {
-        cout << "Error: Unknown output type: " << output_type_s << endl;
-        return 1;
-    }
-
-    // Construct callback.
-    vector<uint8_t> input_buffer(block_size);
-    size_t pre_block = 0;
-    output_record_map_t counts;
-    output_callback_t output_callback;
-    if (list_output) {
-        output_callback = boost::bind(
-            output_record_raw,
-            _1,
-            _2,
-            static_cast<const unsigned char*>(NULL),
-            0,
-            boost::ref(*output)
-        );
-    }
-    else if (record_s == "list") {
-        output_callback = boost::bind(
-            output_record_list,
-            _1,
-            _2,
-            &input_buffer[overlap_size],
-            boost::ref(pre_block),
-            boost::ref(*output)
-        );
-    }
-    else if (record_s == "count") {
-        output_callback = boost::bind(
-            output_record_count,
-            _1,
-            boost::ref(counts)
-        );
-    }
-    else if (record_s == "nop") {
-        no_output = true;
-        output_callback = output_record_nop;
-    }
-    else {
-        cout << "Error: Unknown output record " << record_s << endl;
-        return 1;
-    }
-    OutputHandler output_handler(ti, output_transform, output_callback);
-
-    // Check for -L
-    if (list_output) {
-        rc = ia_eudoxus_all_outputs(
-            eudoxus,
-            c_output_callback,
-            reinterpret_cast<void*>(&output_handler)
-        );
-        if (rc != IA_EUDOXUS_OK) {
-            output_eudoxus_result(eudoxus, rc);
-            return 1;
-        }
-        return 0;
-    }
-
-    // Run Engine
-    for (size_t i = 0; i < n || n == 0; ++i) {
-        ia_eudoxus_state_t* state;
-        rc = ia_eudoxus_create_state(
-            &state,
-            eudoxus,
-            c_output_callback,
-            reinterpret_cast<void*>(&output_handler)
-        );
-        if (rc != IA_EUDOXUS_OK) {
-            output_eudoxus_result(eudoxus, rc);
-            return 1;
-        }
-
-        bool at_end = false;
-        pre_block = 0;
-
-        istream* input = &cin;
-        if (! input_s.empty()) {
-            input_mem.reset(new ifstream(input_s.c_str()));
-            input = input_mem.get();
-            if (! *input) {
-                cout << "Error: Could not open " << input_s << " for reading."
+        if (! output_s.empty()) {
+            output_mem.reset(new ofstream(output_s.c_str()));
+            output = output_mem.get();
+            if (! *output) {
+                cout << "Error: Could not open " << output_s << " for writing."
                      << endl;
                 return 1;
             }
         }
 
-        while (! at_end && *input) {
-            TimingInfo local_ti;
-            // Shift overlap to front.
-            copy(
-                &input_buffer[block_size - overlap_size], &input_buffer[block_size],
-                &input_buffer[0]
-            );
-            input->read(
-                reinterpret_cast<char*>(&input_buffer[overlap_size]),
-                block_size - overlap_size
-            );
+        // Load automata
+        ia_eudoxus_result_t rc;
+        ia_eudoxus_t* eudoxus;
 
-            size_t read = input->gcount();
-            if (read == 0) {
-                break;
+        TimingInfo ti;
+        rc = ia_eudoxus_create_from_path(&eudoxus, automata_s.c_str());
+        if (rc != IA_EUDOXUS_OK) {
+            output_eudoxus_result(NULL, rc);
+            return 1;
+        }
+        cout << "Loaded automata in " << ti.elapsed_ms() << endl;
+
+        // Figure out output.
+        output_transform_t output_transform;
+        if (output_type_s == "auto") {
+            const uint8_t* value = NULL;
+            size_t length = 0;
+            rc = ia_eudoxus_metadata_with_key(
+                eudoxus,
+                reinterpret_cast<const uint8_t*>(c_output_type_key.data()),
+                c_output_type_key.length(),
+                &value, &length
+            );
+            if (rc == IA_EUDOXUS_END) {
+                cerr << "Error: Automata does not contain "
+                     << c_output_type_key << ".  "
+                     << "Must specify explicitly with --type."
+                     << endl;
+                return 1;
             }
-            ti.switch_event(TimingInfo::EUDOXUS);
-            if (no_output || final) {
-                rc = ia_eudoxus_execute_without_output(
-                    state,
-                    &input_buffer[overlap_size],
-                    read
-                );
+            if (rc != IA_EUDOXUS_OK) {
+                cerr << "Error: Could not read metadata." << endl;
+                return 1;
             }
-            else {
-                rc = ia_eudoxus_execute(
-                    state,
-                    &input_buffer[overlap_size],
-                    read
-                );
+            output_type_s = string(reinterpret_cast<const char*>(value), length);
+            cout << "Read Output-Type of " << output_type_s << endl;
+        }
+
+        if (output_type_s == "string") {
+            output_transform = output_transform_string;
+        }
+        else if (output_type_s == "length") {
+            output_transform = output_transform_length;
+        }
+        else if (output_type_s == "integer") {
+            output_transform = output_transform_integer;
+        }
+        else if (output_type_s == "nop") {
+            no_output = true;
+            output_transform = output_transform_nop;
+        }
+        else {
+            cout << "Error: Unknown output type: " << output_type_s << endl;
+            return 1;
+        }
+
+        // Construct callback.
+        vector<uint8_t> input_buffer(block_size);
+        size_t pre_block = 0;
+        output_record_map_t counts;
+        output_callback_t output_callback;
+        if (list_output) {
+            output_callback = boost::bind(
+                output_record_raw,
+                _1,
+                _2,
+                static_cast<const unsigned char*>(NULL),
+                0,
+                boost::ref(*output)
+            );
+        }
+        else if (record_s == "list") {
+            output_callback = boost::bind(
+                output_record_list,
+                _1,
+                _2,
+                &input_buffer[overlap_size],
+                boost::ref(pre_block),
+                boost::ref(*output)
+            );
+        }
+        else if (record_s == "count") {
+            output_callback = boost::bind(
+                output_record_count,
+                _1,
+                boost::ref(counts)
+            );
+        }
+        else if (record_s == "nop") {
+            no_output = true;
+            output_callback = output_record_nop;
+        }
+        else {
+            cout << "Error: Unknown output record " << record_s << endl;
+            return 1;
+        }
+        OutputHandler output_handler(ti, output_transform, output_callback);
+
+        // Check for -L
+        if (list_output) {
+            rc = ia_eudoxus_all_outputs(
+                eudoxus,
+                c_output_callback,
+                reinterpret_cast<void*>(&output_handler)
+            );
+            if (rc != IA_EUDOXUS_OK) {
+                output_eudoxus_result(eudoxus, rc);
+                return 1;
             }
-            ti.switch_event(TimingInfo::DEFAULT);
-            switch (rc) {
-            case IA_EUDOXUS_OK:
-                // nop
-                break;
-            case IA_EUDOXUS_END:
-                cout << "Reached end of automata." << endl;
-                at_end = true;
-                break;
-            default:
+            return 0;
+        }
+
+        // Run Engine
+        for (size_t i = 0; i < n || n == 0; ++i) {
+            ia_eudoxus_state_t* state;
+            rc = ia_eudoxus_create_state(
+                &state,
+                eudoxus,
+                c_output_callback,
+                reinterpret_cast<void*>(&output_handler)
+            );
+            if (rc != IA_EUDOXUS_OK) {
                 output_eudoxus_result(eudoxus, rc);
                 return 1;
             }
 
-            pre_block += read;
+            bool at_end = false;
+            pre_block = 0;
+
+            istream* input = &cin;
+            if (! input_s.empty()) {
+                input_mem.reset(new ifstream(input_s.c_str()));
+                input = input_mem.get();
+                if (! *input) {
+                    cout << "Error: Could not open " << input_s << " for reading."
+                         << endl;
+                    return 1;
+                }
+            }
+
+            while (! at_end && *input) {
+                TimingInfo local_ti;
+                // Shift overlap to front.
+                copy(
+                    &input_buffer[block_size - overlap_size], &input_buffer[block_size],
+                    &input_buffer[0]
+                );
+                input->read(
+                    reinterpret_cast<char*>(&input_buffer[overlap_size]),
+                    block_size - overlap_size
+                );
+
+                size_t read = input->gcount();
+                if (read == 0) {
+                    break;
+                }
+                ti.switch_event(TimingInfo::EUDOXUS);
+                if (no_output || final) {
+                    rc = ia_eudoxus_execute_without_output(
+                        state,
+                        &input_buffer[overlap_size],
+                        read
+                    );
+                }
+                else {
+                    rc = ia_eudoxus_execute(
+                        state,
+                        &input_buffer[overlap_size],
+                        read
+                    );
+                }
+                ti.switch_event(TimingInfo::DEFAULT);
+                switch (rc) {
+                case IA_EUDOXUS_OK:
+                    // nop
+                    break;
+                case IA_EUDOXUS_END:
+                    cout << "Reached end of automata." << endl;
+                    at_end = true;
+                    break;
+                default:
+                    output_eudoxus_result(eudoxus, rc);
+                    return 1;
+                }
+
+                pre_block += read;
+            }
+            if (final) {
+                ia_eudoxus_execute(state, NULL, 0);
+            }
+            ia_eudoxus_destroy_state(state);
         }
-        if (final) {
-            ia_eudoxus_execute(state, NULL, 0);
+
+        // If counts, report output.
+        if (record_s == "count") {
+            BOOST_FOREACH(const output_record_map_t::value_type& v, counts) {
+                cout << boost::format("%20s %d\n") % v.first % v.second;
+            }
         }
-        ia_eudoxus_destroy_state(state);
+
+        // Report timing.
+        cout << "Timing: eudoxus="
+             << ti.elapsed_ms(TimingInfo::EUDOXUS)
+             << " output=" << ti.elapsed_ms(TimingInfo::OUTPUT)
+             << endl;
+
+        ia_eudoxus_destroy(eudoxus);
     }
-
-    // If counts, report output.
-    if (record_s == "count") {
-        BOOST_FOREACH(const output_record_map_t::value_type& v, counts) {
-            cout << boost::format("%20s %d\n") % v.first % v.second;
-        }
+    catch (const exception& e) {
+        cerr << "Error: " << e.what() << endl;
+        return 1;
     }
-
-    // Report timing.
-    cout << "Timing: eudoxus="
-         << ti.elapsed_ms(TimingInfo::EUDOXUS)
-         << " output=" << ti.elapsed_ms(TimingInfo::OUTPUT)
-         << endl;
-
-    ia_eudoxus_destroy(eudoxus);
 
     return 0;
 }
