@@ -534,8 +534,8 @@ public:
     template <typename T>
     id_t acquire_id(map<T, id_t>& to_id_map, const T& object)
     {
-        typename map<T, id_t>::iterator iter = to_id_map.find(object);
-        if (iter == to_id_map.end()) {
+        typename map<T, id_t>::iterator iter = to_id_map.lower_bound(object);
+        if (iter == to_id_map.end() || iter->first != object) {
             iter = to_id_map.insert(iter, make_pair(object, m_next_id));
             ++m_next_id;
         }
