@@ -230,6 +230,9 @@ ia_eudoxus_result_t ia_eudoxus_create_from_file(
 
     off_t file_size = lseek(fileno(fp), 0, SEEK_END);
     lseek(fileno(fp), 0, SEEK_SET);
+    if (file_size < 0) {
+        return IA_EUDOXUS_EINVAL;
+    }
 
     buffer = (char *)malloc(file_size);
     if (! buffer) {
