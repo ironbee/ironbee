@@ -255,7 +255,11 @@ ia_eudoxus_result_t ia_eudoxus_create_from_path(
         return IA_EUDOXUS_EINVAL;
     }
 
-    return ia_eudoxus_create_from_file(out_eudoxus, fp);
+    ia_eudoxus_result_t result = ia_eudoxus_create_from_file(out_eudoxus, fp);
+
+    fclose(fp);
+
+    return result;
 }
 
 void ia_eudoxus_destroy(
