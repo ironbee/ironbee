@@ -802,6 +802,7 @@ Compiler<id_width>::Compiler(
     m_result(result),
     m_configuration(configuration),
     m_assembler(result.buffer),
+    m_e_automata_index(0),
     m_max_index(numeric_limits<e_id_t>::max())
 {
     // nop
