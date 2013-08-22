@@ -22,7 +22,7 @@
  * This module can be used to create fields in the TX Data.  These fields are
  * defined through the use of the TxData configuration directive.
  *
- * Below is an example configuration snippet that uses the FieldTx directive
+ * Below is an example configuration snippet that uses the TxData directive
  * to create number, unsigned number, NUL-terminated string, Byte-string and
  * List.  The named fields "Num1", "Num2", ... will be created for every
  * transaction processed by the engine.
@@ -292,7 +292,7 @@ static ib_status_t tx_header_finished(
  * @param[in] vars The list of variables passed to @a directive.
  * @param[in] cbdata User data (module configuration)
  */
-static ib_status_t moddevel_fieldtx_handler(
+static ib_status_t moddevel_txdata_handler(
     ib_cfgparser_t  *cp,
     const char      *directive,
     const ib_list_t *vars,
@@ -314,8 +314,8 @@ static ib_status_t moddevel_fieldtx_handler(
     ib_ftype_t type_num;
     ib_ftype_t element_type = IB_FTYPE_GENERIC;
     ib_num_t element_num;
-    const ib_moddevel_txdata_config_t *config =
-        (const ib_moddevel_txdata_config_t *)cbdata;
+    ib_moddevel_txdata_config_t *config =
+        (ib_moddevel_txdata_config_t *)cbdata;
 
     /* Get the field name string */
     name_node = ib_list_first_const(vars);
@@ -447,7 +447,7 @@ static ib_status_t moddevel_fieldtx_handler(
 static ib_dirmap_init_t moddevel_txdata_directive_map[] = {
     IB_DIRMAP_INIT_LIST(
         "TxData",
-        moddevel_fieldtx_handler,
+        moddevel_txdata_handler,
         NULL                        /* Filled in by the init function */
     ),
 
