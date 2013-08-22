@@ -69,6 +69,13 @@ static void default_logger(FILE *fp, ib_log_level_t level,
 
     /* 100 is more than sufficient. */
     new_fmt = (char *)malloc(strlen(time_info) + strlen(fmt) + 100);
+    if (new_fmt == NULL) {
+        /* panic */
+        fprintf(fp, "Out of memory.  Unable to log.");
+        fflush(fp);
+        return;
+    }
+
     sprintf(new_fmt, "%s %-10s- ", time_info, ib_log_level_to_string(level));
 
     if ( (file != NULL) && (line > 0) ) {
