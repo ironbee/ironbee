@@ -1227,136 +1227,134 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                     ib_ftype_num_in(&tx_time));
     ib_list_push(list, f);
 
-    if (tx != NULL) {
-        ib_list_t *events;
+    ib_list_t *events;
 
-        ib_field_create_bytestr_alias(&f, pool,
-                                      IB_FIELD_NAME("tx-id"),
-                                      (uint8_t *)tx->id,
-                                      strlen(tx->id));
-        ib_list_push(list, f);
+    ib_field_create_bytestr_alias(&f, pool,
+                                  IB_FIELD_NAME("tx-id"),
+                                  (uint8_t *)tx->id,
+                                  strlen(tx->id));
+    ib_list_push(list, f);
 
-        /* Add all unsuppressed alert event tags as well
-         * as the last alert message and action. */
-        rc = ib_logevent_get_all(tx, &events);
-        if (rc == IB_OK) {
-            ib_list_node_t *enode;
-            ib_field_t *tx_action;
-            ib_field_t *tx_msg;
-            ib_field_t *tx_tags;
-            ib_field_t *tx_threat_level;
-            ib_num_t threat_level = 0;
-            bool do_threat_calc = true;
-            int num_events = 0;
+    /* Add all unsuppressed alert event tags as well
+     * as the last alert message and action. */
+    rc = ib_logevent_get_all(tx, &events);
+    if (rc == IB_OK) {
+        ib_list_node_t *enode;
+        ib_field_t *tx_action;
+        ib_field_t *tx_msg;
+        ib_field_t *tx_tags;
+        ib_field_t *tx_threat_level;
+        ib_num_t threat_level = 0;
+        bool do_threat_calc = true;
+        int num_events = 0;
 
-            ib_field_create(&tx_action, pool,
-                            IB_FIELD_NAME("tx-action"),
-                            IB_FTYPE_NULSTR,
-                            NULL);
+        ib_field_create(&tx_action, pool,
+                        IB_FIELD_NAME("tx-action"),
+                        IB_FTYPE_NULSTR,
+                        NULL);
 
-            ib_field_create(&tx_msg, pool,
-                            IB_FIELD_NAME("tx-msg"),
-                            IB_FTYPE_NULSTR,
-                            NULL);
+        ib_field_create(&tx_msg, pool,
+                        IB_FIELD_NAME("tx-msg"),
+                        IB_FTYPE_NULSTR,
+                        NULL);
 
-            ib_field_create(&tx_threat_level, pool,
-                            IB_FIELD_NAME("tx-threatlevel"),
-                            IB_FTYPE_NUM,
-                            NULL);
+        ib_field_create(&tx_threat_level, pool,
+                        IB_FIELD_NAME("tx-threatlevel"),
+                        IB_FTYPE_NUM,
+                        NULL);
 
-            ib_field_create(&tx_tags, pool,
-                            IB_FIELD_NAME("tx-tags"),
-                            IB_FTYPE_LIST,
-                            NULL);
+        ib_field_create(&tx_tags, pool,
+                        IB_FIELD_NAME("tx-tags"),
+                        IB_FTYPE_LIST,
+                        NULL);
 
-            /* Determine transaction action (block/log) via flags. */
-            if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) {
-                ib_field_setv(tx_action, ib_ftype_nulstr_in(
-                    ib_logevent_action_name(IB_LEVENT_ACTION_BLOCK))
-                );
-            }
-            else {
-                ib_field_setv(tx_action, ib_ftype_nulstr_in(
-                    ib_logevent_action_name(IB_LEVENT_ACTION_LOG))
-                );
-            }
-
-            /* Check if THREAT_LEVEL is available, or if we need to calculate
-             * it here.
-             */
-            rc = ib_data_get_ex(tx->data, IB_S2SL("THREAT_LEVEL"), &f);
-            if ((rc == IB_OK) && (f->type == IB_FTYPE_NUM)) {
-                rc = ib_field_value(f, ib_ftype_num_out(&threat_level));
-                if (rc == IB_OK) {
-                    ib_log_debug_tx(tx, "Using THREAT_LEVEL as threat level value.");
-                    do_threat_calc = false;
-                }
-                else {
-                    ib_log_debug_tx(tx, "No numeric THREAT_LEVEL to use as threat level value.");
-                }
-            }
-            else {
-                ib_log_debug_tx(tx, "No THREAT_LEVEL to use as threat level value.");
-            }
-
-            /* It is more important to write out what is possible
-             * than to fail here. So, some error codes are ignored.
-             *
-             * TODO: Simplify by not using collections
-             */
-            IB_LIST_LOOP(events, enode) {
-                ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(enode);
-                ib_list_node_t *tnode;
-
-                /* Only unsuppressed. */
-                if (   (e == NULL)
-                    || (e->suppress != IB_LEVENT_SUPPRESS_NONE))
-                {
-                    continue;
-                }
-
-                if (do_threat_calc) {
-                    /* The threat_level is average severity. */
-                    if (e->severity > 0) {
-                        threat_level += e->severity;
-                        ++num_events;
-                    }
-                }
-
-                /* Only alerts. */
-                if (e->type != IB_LEVENT_TYPE_ALERT) {
-                    continue;
-                }
-
-                /* Use the last event message, if there is one. */
-                if ((e->msg != NULL) && (strlen(e->msg) > 0)) {
-                    ib_field_setv(tx_msg, ib_ftype_nulstr_in(e->msg));
-                }
-
-                IB_LIST_LOOP(e->tags, tnode) {
-                    char *tag = (char *)ib_list_node_data(tnode);
-
-                    if (tag != NULL) {
-                        ib_field_create(&f, pool,
-                                        IB_FIELD_NAME("tag"),
-                                        IB_FTYPE_NULSTR,
-                                        ib_ftype_nulstr_in(tag));
-                        ib_field_list_add(tx_tags, f);
-                    }
-                }
-            }
-
-            /* Use the average threat level. */
-            if ((do_threat_calc) && (num_events > 0)) {
-                threat_level /= num_events;
-            }
-            ib_field_setv(tx_threat_level, ib_ftype_num_in(&threat_level));
-
-            ib_list_push(list, tx_action);
-            ib_list_push(list, tx_msg);
-            ib_list_push(list, tx_tags);
-            ib_list_push(list, tx_threat_level);
+        /* Determine transaction action (block/log) via flags. */
+        if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) {
+            ib_field_setv(tx_action, ib_ftype_nulstr_in(
+                ib_logevent_action_name(IB_LEVENT_ACTION_BLOCK))
+            );
         }
+        else {
+            ib_field_setv(tx_action, ib_ftype_nulstr_in(
+                ib_logevent_action_name(IB_LEVENT_ACTION_LOG))
+            );
+        }
+
+        /* Check if THREAT_LEVEL is available, or if we need to calculate
+         * it here.
+         */
+        rc = ib_data_get_ex(tx->data, IB_S2SL("THREAT_LEVEL"), &f);
+        if ((rc == IB_OK) && (f->type == IB_FTYPE_NUM)) {
+            rc = ib_field_value(f, ib_ftype_num_out(&threat_level));
+            if (rc == IB_OK) {
+                ib_log_debug_tx(tx, "Using THREAT_LEVEL as threat level value.");
+                do_threat_calc = false;
+            }
+            else {
+                ib_log_debug_tx(tx, "No numeric THREAT_LEVEL to use as threat level value.");
+            }
+        }
+        else {
+            ib_log_debug_tx(tx, "No THREAT_LEVEL to use as threat level value.");
+        }
+
+        /* It is more important to write out what is possible
+         * than to fail here. So, some error codes are ignored.
+         *
+         * TODO: Simplify by not using collections
+         */
+        IB_LIST_LOOP(events, enode) {
+            ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(enode);
+            ib_list_node_t *tnode;
+
+            /* Only unsuppressed. */
+            if (   (e == NULL)
+                || (e->suppress != IB_LEVENT_SUPPRESS_NONE))
+            {
+                continue;
+            }
+
+            if (do_threat_calc) {
+                /* The threat_level is average severity. */
+                if (e->severity > 0) {
+                    threat_level += e->severity;
+                    ++num_events;
+                }
+            }
+
+            /* Only alerts. */
+            if (e->type != IB_LEVENT_TYPE_ALERT) {
+                continue;
+            }
+
+            /* Use the last event message, if there is one. */
+            if ((e->msg != NULL) && (strlen(e->msg) > 0)) {
+                ib_field_setv(tx_msg, ib_ftype_nulstr_in(e->msg));
+            }
+
+            IB_LIST_LOOP(e->tags, tnode) {
+                char *tag = (char *)ib_list_node_data(tnode);
+
+                if (tag != NULL) {
+                    ib_field_create(&f, pool,
+                                    IB_FIELD_NAME("tag"),
+                                    IB_FTYPE_NULSTR,
+                                    ib_ftype_nulstr_in(tag));
+                    ib_field_list_add(tx_tags, f);
+                }
+            }
+        }
+
+        /* Use the average threat level. */
+        if ((do_threat_calc) && (num_events > 0)) {
+            threat_level /= num_events;
+        }
+        ib_field_setv(tx_threat_level, ib_ftype_num_in(&threat_level));
+
+        ib_list_push(list, tx_action);
+        ib_list_push(list, tx_msg);
+        ib_list_push(list, tx_tags);
+        ib_list_push(list, tx_threat_level);
     }
 
     ib_field_create_bytestr_alias(&f, pool,
