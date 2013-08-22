@@ -2257,10 +2257,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
      * returns an error.  This needs further discussion to determine what
      * the correct behavior should be.
      */
-    if (op_rc != IB_OK) {
-        actions = NULL;
-    }
-    else if (result != 0) {
+    if (result != 0) {
         actions = rule_exec->rule->true_actions;
     }
     else {
