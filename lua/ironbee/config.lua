@@ -197,10 +197,7 @@ local build_rule = function(ib, ctx, chain, db)
                         ffi.C.ib_engine_pool_main_get(ib.ib_engine),
                         arg,
                         #arg+1)
-                rc = ffi.C.ib_data_expand_test_str(arg, expand)
-                if rc ~= ffi.C.IB_OK then
-                    ib:logError("Cannot expand logdata %d.", rc)
-                end
+                ffi.C.ib_data_expand_test_str(arg, expand)
 
                 if expand[0] ~= 0 then
                     prule[0].meta.flags = ffi.C.ib_set_flag(
@@ -294,10 +291,7 @@ local build_rule = function(ib, ctx, chain, db)
 
             -- Check if the string is expandable.
             local expand = ffi.new("bool[1]")
-            rc = ffi.C.ib_data_expand_test_str(rule.data.message, expand)
-            if rc ~= ffi.C.IB_OK then
-                ib:logError("Expansion test failed")
-            end
+            ffi.C.ib_data_expand_test_str(rule.data.message, expand)
 
             if expand[0] then
                 prule[0].meta.flags = ffi.C.ib_set_flag(
