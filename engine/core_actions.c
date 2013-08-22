@@ -631,7 +631,6 @@ static ib_status_t act_setvar_create(
     const char *eq;              /* '=' character in @a params */
     const char *mod;             /* '+'/'-'/'*' character in params */
     const char *value;           /* Value in params */
-    bool compat_syntax = false;  /* Using old 0.5.x =+ compatibility? */
     size_t vlen;                 /* Length of value */
     setvar_data_t *data;         /* Data for the execute function */
     ib_status_t rc;              /* Status code */
@@ -719,12 +718,7 @@ static ib_status_t act_setvar_create(
     else {
         bool expand = false;
 
-        /* Special case for handling =+ compatibility */
-        if (compat_syntax) {
-            --value;
-            ++vlen;
-        }
-        else if (mod != NULL) {
+        if (mod != NULL) {
             ib_log_error(ib, "setvar: '%c' not supported for strings", *mod);
             return IB_EINVAL;
         }
