@@ -9,6 +9,8 @@
 Converts a libinjection JSON data file to a C header (.h) file
 """
 
+import sys
+
 def toc(obj):
     """ main routine """
 
@@ -87,22 +89,26 @@ static size_t parse_estring(sfilter * sf);
     #  load them
     keywords = obj['keywords']
 
-    for  fp in list(obj[u'fingerprints']):
-        fp = '0' + fp.upper()
-        keywords[fp] = 'F'
+    for  fingerprint in list(obj[u'fingerprints']):
+        fingerprint = '0' + fingerprint.upper()
+        keywords[fingerprint] = 'F'
 
     needhelp = []
-    for k, v in keywords.iteritems():
-        if k != k.upper():
-            needhelp.append(k)
+    for key  in keywords.iterkeys():
+        if key != key.upper():
+            needhelp.append(key)
 
-    for k in needhelp:
-        v = keywords[k]
-        del keywords[k]
-        keywords[k.upper()] = v
+    for key in needhelp:
+        tmpv = keywords[key]
+        del keywords[key]
+        keywords[key.upper()] = tmpv
 
     print "static const keyword_t sql_keywords[] = {"
     for k in sorted(keywords.keys()):
+        if len(k) > 31:
+            sys.stderr.write("ERROR: keyword greater than 32 chars\n")
+            sys.exit(1)
+
         print "    {\"%s\", '%s'}," % (k, keywords[k])
     print "};"
     print "static const size_t sql_keywords_sz = %d;" % (len(keywords), )
@@ -111,7 +117,6 @@ static size_t parse_estring(sfilter * sf);
     return 0
 
 if __name__ == '__main__':
-    import sys
     import json
     sys.exit(toc(json.load(sys.stdin)))
 
