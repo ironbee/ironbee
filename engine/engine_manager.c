@@ -505,8 +505,9 @@ static ib_status_t register_engine(
     /* Make this engine current */
     manager->engine_current = engine;
     ib_manager_log(manager, IB_LOG_INFO,
-                   "ENGINE MANAGER[%d,%p]: Current IronBee engine -> %p",
-                   getpid(), manager, engine->engine);
+                   "ENGINE MANAGER[%d,%p]: Current IronBee engine -> %p %s",
+                   getpid(), manager, engine->engine,
+                   ib_engine_instance_uuid_str(engine->engine));
     log_engines(manager, IB_LOG_DEBUG, IB_LOG_DEBUG2, "Created engine");
 
     /* Destroy all non-current engines with zero reference count */
@@ -705,10 +706,11 @@ ib_status_t ib_manager_engine_acquire(
 cleanup:
     ib_manager_log(manager, IB_LOG_TRACE,
                    "ENGINE MANAGER[%d,%p]: "
-                   "Acquire engine %p [ref=%"PRIu64"]: %s",
+                   "Acquire engine %p %s [ref=%"PRIu64"]: %s",
                    getpid(),
                    manager,
                    (engine == NULL) ? NULL : engine->engine,
+                   (engine == NULL) ? "" : ib_engine_instance_uuid_str(engine->engine),
                    (engine == NULL) ? 0 : engine->ref_count,
                    ib_status_to_string(rc));
 
