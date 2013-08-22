@@ -4716,7 +4716,7 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
     /* Allocate a rule field structure */
     *target = (ib_rule_target_t *)
         ib_mpool_calloc(ib_rule_mpool(ib), sizeof(**target), 1);
-    if (target == NULL) {
+    if (*target == NULL) {
         ib_log_error(ib,
                      "Error allocating rule target object \"%s\"", name);
         return IB_EALLOC;
