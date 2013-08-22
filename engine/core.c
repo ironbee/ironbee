@@ -2024,7 +2024,7 @@ static ib_status_t filter_buffer(ib_filter_t *f,
 
     if (buf == NULL) {
         fdata->state = ib_mpool_calloc(pool, 1, sizeof(*buf));
-        if (buf == NULL) {
+        if (fdata->state == NULL) {
             return IB_EALLOC;
         }
         buf = (ib_stream_t *)fdata->state;
