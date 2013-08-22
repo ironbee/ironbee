@@ -62,7 +62,6 @@ TEST_EXTRAS = \
        TestIronBeeModuleRulesLua.operator_test.config
 
 if ENABLE_LUA
-CLEANFILES += *.lua
 test_module_rules_lua_SOURCES = test_module_rules_lua.cpp
 test_module_rules_lua_CPPFLAGS = \
     $(AM_CPPFLAGS) \
