@@ -155,6 +155,14 @@ Signature.predicate = function(self, expression)
     error("Signatures can have at most one predicate expression.")
   end
 
+  if #self.data.fields ~= 0 then
+    error("Signatures can have fields OR predicates, but not both.")
+  end
+
+  if self.data.op and self.data.op ~= "" then
+    error("Signatures can have an operator OR predicates, but not both: op=" .. tostring(self.data.op))
+  end
+
   if type(expression) == 'string' then
     sexpr = expression
   else

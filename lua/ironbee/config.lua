@@ -308,8 +308,15 @@ local build_rule = function(ib, ctx, chain, db)
             end
         end
 
-        for _, field in ipairs(rule.data.fields) do
-            add_fields(ib, rule, prule, field)
+        if rule.data.has_predicate then
+            -- Predicates do not have targets
+            prule[0].flags = ffi.C.ib_set_flag(
+                prule[0].flags,
+                IB_RULE_FLAG_ACTION)
+        else
+            for _, field in ipairs(rule.data.fields) do
+                add_fields(ib, rule, prule, field)
+            end
         end
 
         -- Create operator instance.

@@ -150,11 +150,11 @@ Validator.validate = function(self, db,  plan)
             local rule = db.db[rule_id]
             local rule_type = Util.type(rule)
 
-            if rule_type == 'signature' and #rule.data.fields == 0 then
+            if rule_type == 'signature' and #rule.data.fields == 0 and not rule.data.has_predicate then
                 self:warning(rule, "Missing fields")
             end
 
-            if rule_type == 'signature' and (rule.data.op == nil or rule.data.op == '') then
+            if rule_type == 'signature' and (rule.data.op == nil or rule.data.op == '') and not rule.data.has_predicate then
                 self:warning(rule, "Missing operator. Eg :op(\"rx\", \".*\").")
             end
 
