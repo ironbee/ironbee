@@ -303,6 +303,9 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     ib_status_t rc;
     ib_state_event_type_t event;
     ib_engine_t *ib = NULL;
+    ib_uuid_t *uuid;
+    char *str;
+
 
     /* Create primary memory pool */
     rc = ib_mpool_create(&pool, "engine", NULL);
@@ -381,6 +384,31 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     ib->sensor_name = IB_DSTR_UNKNOWN;
     ib->sensor_version = IB_PRODUCT_VERSION_NAME;
     ib->sensor_hostname = IB_DSTR_UNKNOWN;
+
+    /* Create the instance UUID */
+    uuid = ib_mpool_alloc(ib->mp, sizeof(*uuid));
+    if (uuid == NULL) {
+        return IB_EALLOC;
+    }
+    rc = ib_uuid_create_v4(uuid);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Convert to a hex-string representation */
+    str = ib_mpool_alloc(ib->mp, IB_UUID_HEX_SIZE);
+    if (str == NULL) {
+        return IB_EALLOC;
+    }
+    rc = ib_uuid_bin_to_ascii(str, uuid);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Store off the UUID info */
+    ib->instance_uuid = uuid;
+    ib->instance_id_str = str;
+
 
     /* Create an array to hold loaded modules */
     /// @todo Need good defaults here
@@ -748,6 +776,18 @@ void ib_engine_destroy(ib_engine_t *ib)
     ib_mpool_destroy(ib->mp);
 
     return;
+}
+
+const ib_uuid_t *ib_engine_instance_uuid(
+    const ib_engine_t *ib)
+{
+    return ib->instance_uuid;
+}
+
+const char *ib_engine_instance_uuid_str(
+    const ib_engine_t *ib)
+{
+    return ib->instance_id_str;
 }
 
 ib_status_t ib_conn_create(ib_engine_t *ib,

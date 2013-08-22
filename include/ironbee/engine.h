@@ -136,6 +136,24 @@ ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib,
 ib_status_t DLL_PUBLIC ib_engine_init(ib_engine_t *ib);
 
 /**
+ * Get the engine's instance UUID
+ *
+ * @param ib Engine handle
+ *
+ * @returns Pointer to engine's instance UUID
+ */
+const ib_uuid_t DLL_PUBLIC *ib_engine_instance_uuid(const ib_engine_t *ib);
+
+/**
+ * Get the string form of the engine's instance UUID
+ *
+ * @param ib Engine handle
+ *
+ * @returns The engine's instance UUID string
+ */
+const char DLL_PUBLIC *ib_engine_instance_uuid_str(const ib_engine_t *ib);
+
+/**
  * Inform the engine that the configuration phase is starting
  *
  * @param[in] ib Engine handle
