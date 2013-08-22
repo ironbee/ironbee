@@ -1,19 +1,31 @@
+# v3.5.2 -- 2013-08-21
+* Fingerprint update.  Credit: Reto Ischi
 
-v3.NEXT
+# v3.5.1 -- 2013-08-21
+* found regression in handling of PHP/MySQL backticks.  Tests added
+* Dead code removed.
+* Improved test coverage to [97.7%](https://libinjection.client9.com/cicada/artifacts/libinjection-coverage-unittest/lcov-html/c/libinjection_sqli.c.gcov.html)
+
+# v3.5.0 -- 2013-08-21
 * Bug fix for libinjection_sqli_reset @brianrectanus
   https://github.com/client9/libinjection/pull/50
 * Non-critical parser fix for numbers with oracle's ending
   suffix.  "SELECT 1FROM .." -> (SELECT, 1, FROM) not
   (SELECT, 1F, ROM)
+* Yet another fix for disambiguating Oracle's "f" suffix for numbers HT  @LightOS
+* Better parsing of generated number forms of "10.e" and "10.10e"
+  (these are actually table specifiers!) HT @LightOS
 * Change sizing of some static arrays to have a length >= 8
   For GCC based applications, this allows -fstack-protector to work
   and -Wstack-protector will now not emit errors.
-* Added '-fstack-protector -D_FORTIFY_SOURCE=2' to default CFLAGS.
-  No change in performance
+* Added '-fstack-protector-all -D_FORTIFY_SOURCE=2' to default CFLAGS.
+  About 10% performance loss with -fstack-protector-all
 * Improvements in reducing false positives, HT modsecurity team
 * Add fingerprint, HT @FluxReiners
-* Add fingerprints, https://groups.google.com/forum/?hl=en#!topic/libinjection/xgwSTn_faRk
-* Fix libinjection_sqli_reset, thanks to @brianrectanus of IronBee
+* Support for parsing of old ODBC-style typing, e.g. 'select {foo 1};' (valid in MySQL)
+* Fix tokenization of "IF EXISTS(....", "IF NOT EXISTS(..."
+* Fi possible stack over-read, and improve detection of "sp_password" flag
+  in short sqli HT modsecurity team
 
 # v3.4.1 2013-07-18
 * Fingerprint update only HT @LightOS

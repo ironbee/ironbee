@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# pylint: disable=C0301,C0302
+# Turn off line-too-long, and too-many-lines warnings
 #
 #  Copyright 2012, 2013 Nick Galbreath
 #  nickg@client9.com
@@ -482,6 +484,8 @@ KEYWORDS = {
 'IF'                          : 'f',
 
 'IF EXISTS'                   : 'f',
+'IF NOT'                      :'n',
+'IF NOT EXISTS'               : 'f',
 
 'IFF'                         : 'f',
 'IFNULL'                      : 'f',
@@ -1161,6 +1165,9 @@ KEYWORDS = {
     'RIGHT OUTER'       : 'k',
     'RIGHT OUTER JOIN'  : 'k',
     'RIGHT JOIN'        : 'k',
+
+# http://technet.microsoft.com/en-us/library/ms187518(v=sql.105).aspx
+    'FULL JOIN'         : 'k',
     'FULL OUTER'        : 'k',
     'FULL OUTER JOIN'   : 'k',
     'NATURAL JOIN'      : 'k',
@@ -1169,6 +1176,8 @@ KEYWORDS = {
     'NATURAL LEFT'      : 'k',
     'NATURAL LEFT OUTER': 'k',
     'NATURAL LEFT OUTER JOIN': 'k',
+    'NATURAL RIGHT OUTER JOIN': 'k',
+    'NATURAL FULL OUTER JOIN': 'k',
     'NATURAL RIGHT'     : 'k',
     'NATURAL FULL'      : 'k',
     'SOUNDS LIKE'       : 'o',
@@ -1362,9 +1371,9 @@ CHARMAP = [
     'CHAR_XSTRING',         # 120 x
     'CHAR_WORD',            # 121 y
     'CHAR_WORD',            # 122 z
-    'CHAR_OTHER',           # 123 { left brace
+    'CHAR_CHAR',           # 123 { left brace
     'CHAR_OP2',             # 124 | pipe
-    'CHAR_OTHER',           # 125 } right brace
+    'CHAR_CHAR',           # 125 } right brace
     'CHAR_OP1',             # 126 ~
     'CHAR_WHITE'            # 127
 ]
@@ -1397,3 +1406,4 @@ def dump():
 if __name__ == '__main__':
     print dump()
 
+# pylint: disable=C0301,C0302

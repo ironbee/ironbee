@@ -1,9 +1,20 @@
 #!/usr/bin/env python
+# pylint: disable=C0103,R0911,R0912,R0915
+# disable short-variable-names, too many branches, returns, statements
+"""
+fingerprint fuzzer and generator
+
+Given a fingerprint, this generates other similar fingerprints
+that are functionally equivalent for SQLi detection
+"""
 
 import sys
 
 class PermuteFingerprints(object):
+    """ class to mutate / fuzz fingerprints to find new SQLi """
+
     def __init__(self):
+        """ initialization """
         self.fingerprints = set()
         self.blacklist = set([
             'E1n', 'sns', '1&n', 's1s', '1n1', '1o1', '1os', 'sn1',
@@ -16,22 +27,31 @@ class PermuteFingerprints(object):
             'n1s', 'n(1)s', 'En1', 'En(1)', 'n(1)n', 'n1v',
             'n(1)1', 'n&EUE', 'n&EkU', 's&EUE', 's&EkU', 'v&EUE', 'v&EkU',
             'n&nTn', 'nA', 'nos;n', 'UEn', 'so1no', '1)on', '1k(1)',
-            's)on'
+            's)on', '1;TnE', 's&1s'
             ])
         self.whitelist = set([
-            'T(vv)', 'Tnvos', 's&1s', 'Tnv;', '1UEnn'
+            'T(vv)', 'Tnvos', 'Tnv;', '1UEnn', '1;Tvk'
             ])
 
     def aslist(self):
+        """
+        return the fingerprints as a sorted list
+        """
         return sorted(list(self.fingerprints))
 
-    def insert(self, s):
-        if len(s) > 5:
-            s = s[0:5]
-        if self.validate(s):
-            self.fingerprints.add(s)
+    def insert(self, fingerprint):
+        """
+        insert a new fingerprint, with possible variations
+        """
+        if len(fingerprint) > 5:
+            fingerprint = fingerprint[0:5]
+        if self.validate(fingerprint):
+            self.fingerprints.add(fingerprint)
 
     def validate(self, s):
+        """
+        detemines if a fingerprint could be used a SQLi
+        """
         if len(s) == 0:
             return False
         if s in self.whitelist:
@@ -224,7 +244,9 @@ class PermuteFingerprints(object):
         return True
 
     def permute(self, fp):
-
+        """
+        generate alternative (possiblely invalid) fingerprints
+        """
         self.insert(fp)
 
         # do this for safety
@@ -285,44 +307,47 @@ class PermuteFingerprints(object):
 
             done = False
             parts = []
-            for c in fp:
-                if c == '(' and done is False:
-                    parts.append(c)
+            for char in fp:
+                if char == '(' and done is False:
+                    parts.append(char)
                     done = True
-                parts.append(c)
+                parts.append(char)
             newline = ''.join(parts)
             self.insert(newline)
 
             done = False
             parts = []
-            for c in fp:
-                if c == '(':
+            for char in fp:
+                if char == '(':
                     if done is True:
-                        parts.append(c)
+                        parts.append(char)
                     else:
                         done = True
-                parts.append(c)
+                parts.append(char)
             newline = ''.join(parts)
             self.insert(newline)
 
             done = False
             parts = []
-            for c in fp:
-                if c == '(':
-                    parts.append(c)
-                parts.append(c)
+            for char in fp:
+                if char == '(':
+                    parts.append(char)
+                parts.append(char)
             newline = ''.join(parts)
             self.insert(newline)
 
 
-if __name__ == '__main__':
-
+def main():
+    """ main entrance """
     mutator = PermuteFingerprints()
 
     for line in sys.stdin:
         mutator.permute(line.strip())
 
-    for fp in mutator.aslist():
-        print fp
+    for fingerprint in mutator.aslist():
+        print fingerprint
 
+
+if __name__ == '__main__':
+    main()
 
