@@ -361,11 +361,7 @@ AX_BOOST_BASE(1.49,
 if test "$have_boost_low" = "no"; then
     AC_MSG_WARN("Boost required for testing.")
 fi
-AC_ARG_WITH([boost-suffix],
-            [  --with-boost-suffix=suffix suffix name for boost libraries],
-            [boostsuffix="$withval"],[boostsuffix=""])
-
-BOOST_SUFFIX=${boostsuffix}
+AX_BOOST_SUFFIX()
 
 # Clang does not support -pthread or variants.
 if test "$cc_is_clang" = "yes"; then
