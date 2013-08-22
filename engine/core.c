@@ -3863,7 +3863,10 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
         void *val;
         ib_ftype_t type;
 
-        ib_context_get(ctx, p1, &val, &type);
+        rc = ib_context_get(ctx, p1, &val, &type);
+        if (rc != IB_OK) {
+            return rc;
+        }
         switch(type) {
             case IB_FTYPE_NULSTR:
                 ib_context_set_string(ctx, p1, p2);
