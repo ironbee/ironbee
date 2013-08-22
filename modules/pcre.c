@@ -1450,8 +1450,10 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
     assert(ib != NULL);
     assert(m != NULL);
 
+    ib_status_t rc;
+
     /* Register operators. */
-    ib_operator_create_and_register(
+    rc = ib_operator_create_and_register(
         NULL,
         ib,
         "pcre",
@@ -1460,9 +1462,12 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         NULL, NULL,
         pcre_operator_execute, m
     );
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* An alias of pcre. The same callbacks are registered. */
-    ib_operator_create_and_register(
+    rc = ib_operator_create_and_register(
         NULL,
         ib,
         "rx",
@@ -1471,9 +1476,12 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         NULL, NULL,
         pcre_operator_execute, m
     );
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Register a pcre operator that uses pcre_dfa_exec to match streams. */
-    ib_operator_create_and_register(
+    rc = ib_operator_create_and_register(
         NULL,
         ib,
         "dfa",
@@ -1482,6 +1490,9 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         NULL, NULL,
         dfa_operator_execute, m
     );
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     return IB_OK;
 }
