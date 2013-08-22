@@ -36,6 +36,7 @@
 typedef struct ib_moddevel_rules_config_t  ib_moddevel_rules_config_t;
 typedef struct ib_moddevel_txdata_config_t ib_moddevel_txdata_config_t;
 typedef struct ib_moddevel_txdump_config_t ib_moddevel_txdump_config_t;
+typedef struct ib_moddevel_txresp_config_t ib_moddevel_txresp_config_t;
 
 /**
  * TxData sub-module definitions
@@ -176,6 +177,53 @@ ib_status_t ib_moddevel_txdump_cleanup(
  * @returns Return code
  */
 ib_status_t ib_moddevel_txdump_fini(
+    ib_engine_t                  *ib,
+    ib_module_t                  *mod);
+
+
+/**
+ * TxResp sub-module definitions
+ */
+
+/**
+ * Initialize the TxResp development sub-module
+ *
+ * @param[in] ib IronBee object
+ * @param[in] mod Module object
+ * @param[in] mp Memory pool to use for allocations
+ * @param[out] pconfig TxResp configuration
+ *
+ * @returns Status code
+ */
+ib_status_t ib_moddevel_txresp_init(
+    ib_engine_t                  *ib,
+    ib_module_t                  *mod,
+    ib_mpool_t                   *mp,
+    ib_moddevel_txresp_config_t **pconfig);
+
+/**
+ * Cleanup the TxResp sub-module
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mod Module
+ * @param[in] config TxResp configuration
+ *
+ * @returns Return code
+ */
+ib_status_t ib_moddevel_txresp_cleanup(
+    ib_engine_t                  *ib,
+    ib_module_t                  *mod,
+    ib_moddevel_txresp_config_t  *config);
+
+/**
+ * Un-Initialize the TxResp sub-module
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mod Module
+ *
+ * @returns Return code
+ */
+ib_status_t ib_moddevel_txresp_fini(
     ib_engine_t                  *ib,
     ib_module_t                  *mod);
 

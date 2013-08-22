@@ -135,7 +135,8 @@ ibmod_devel_la_SOURCES =  \
     moddevel.c        \
     moddevel_rules.c  \
     moddevel_txdata.c \
-    moddevel_txdump.c
+    moddevel_txdump.c \
+    moddevel_txresp.c
 ibmod_devel_la_CFLAGS = ${AM_CFLAGS}
 ibmod_devel_la_LDFLAGS = $(AM_LDFLAGS)
 endif

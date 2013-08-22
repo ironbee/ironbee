@@ -51,9 +51,10 @@ IB_MODULE_DECLARE();
  * Module configuration data
  */
 typedef struct {
+    ib_moddevel_rules_config_t  *rules;   /**< Rules configuration */
     ib_moddevel_txdata_config_t *txdata;  /**< TxData configuration */
     ib_moddevel_txdump_config_t *txdump;  /**< TxDump configuration */
-    ib_moddevel_rules_config_t  *rules;   /**< Rules configuration */
+    ib_moddevel_txresp_config_t *txresp;  /**< TxResp configuration */
 } ib_moddevel_config_t;
 
 /**
@@ -89,6 +90,12 @@ static ib_status_t moddevel_context_destroy(
     config = (ib_moddevel_config_t *)module->data;
     module->data = NULL;
 
+    /* Rule development */
+    rc = ib_moddevel_rules_cleanup(ib, module, config->rules);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     /* TxData */
     rc = ib_moddevel_txdata_cleanup(ib, module, config->txdata);
     if (rc != IB_OK) {
@@ -101,8 +108,8 @@ static ib_status_t moddevel_context_destroy(
         return rc;
     }
 
-    /* Rule development */
-    rc = ib_moddevel_rules_cleanup(ib, module, config->rules);
+    /* TxResp */
+    rc = ib_moddevel_txresp_cleanup(ib, module, config->txresp);
     if (rc != IB_OK) {
         return rc;
     }
@@ -136,6 +143,12 @@ static ib_status_t moddevel_init(
         return IB_EALLOC;
     }
 
+    /* Rule development */
+    rc = ib_moddevel_rules_init(ib, module, mp, &(config->rules));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     /* TxData */
     rc = ib_moddevel_txdata_init(ib, module, mp, &(config->txdata));
     if (rc != IB_OK) {
@@ -148,8 +161,8 @@ static ib_status_t moddevel_init(
         return rc;
     }
 
-    /* Rule development */
-    rc = ib_moddevel_rules_init(ib, module, mp, &(config->rules));
+    /* TxResp */
+    rc = ib_moddevel_txresp_init(ib, module, mp, &(config->txresp));
     if (rc != IB_OK) {
         return rc;
     }
@@ -184,6 +197,11 @@ static ib_status_t moddevel_finish(
 {
     ib_status_t rc;
 
+    rc = ib_moddevel_rules_fini(ib, module);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     rc = ib_moddevel_txdata_fini(ib, module);
     if (rc != IB_OK) {
         return rc;
@@ -194,7 +212,7 @@ static ib_status_t moddevel_finish(
         return rc;
     }
 
-    rc = ib_moddevel_rules_fini(ib, module);
+    rc = ib_moddevel_txresp_fini(ib, module);
     if (rc != IB_OK) {
         return rc;
     }
