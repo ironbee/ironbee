@@ -299,7 +299,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
         if (sys_rc != 0) {
             ib_log_error(log->ib,
                          "Could not create piped audit log index: %s (%d)",
-                         strerror(sys_rc), sys_rc);
+                         strerror(errno), errno);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
             return IB_EINVAL;
         }
