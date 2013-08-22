@@ -3858,7 +3858,8 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
     ib_status_t rc;
 
     if (strcasecmp("Set", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        assert(cp->cur_ctx != NULL);
+        ib_context_t *ctx = cp->cur_ctx;
         void *val;
         ib_ftype_t type;
 
