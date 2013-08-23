@@ -169,7 +169,7 @@ TEST_F(LuaJsonTest, GenerateJSONString) {
 TEST_F(LuaJsonTest, GenerateJSONMap) {
     ASSERT_EQ(1, doString("return ibjson.to_string({ ['a'] = 1 })"));
     ASSERT_TRUE(lua_isstring(L, -1));
-    ASSERT_TRUE(
+    EXPECT_TRUE(
         0 == strcmp("{\n    \"a\": 1\n}\n", lua_tostring(L, -1))
         ||
         0 == strcmp("{\n    \"a\": 1.0\n}\n", lua_tostring(L, -1))
