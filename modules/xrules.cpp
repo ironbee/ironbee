@@ -613,7 +613,7 @@ namespace {
         bool m_enabled;
 
         //! The name of the field to mark as blocked.
-        static const std::string FIELD_NAME;
+        static const std::string BLOCKING_MODE_FIELD_NAME;
 
         /**
          * Set @c XRULES:BLOCKING_MODE = @c ENABLED or @c DISABLED.
@@ -639,22 +639,31 @@ namespace {
         IronBee::Transaction tx
     ) const
     {
+        typedef IronBee::ByteString BS;
 
-        IronBee::ByteString bs = IronBee::ByteString::create(
-            tx.memory_pool(),
-            (m_enabled)? "ENABLED" : "DISABLED");
+        BS bs;
+
+        if (m_enabled) {
+            ib_tx_flags_set(tx.ib(), IB_TX_FBLOCKING_MODE);
+            bs = BS::create(tx.memory_pool(), "ENABLED");
+        }
+        else {
+            ib_tx_flags_unset(tx.ib(), IB_TX_FBLOCKING_MODE);
+            bs = BS::create(tx.memory_pool(), "DISABLED");
+        }
 
         IronBee::Field f = IronBee::Field::create_byte_string(
             tx.memory_pool(),
-            FIELD_NAME.c_str(),
-            FIELD_NAME.length(),
+            BLOCKING_MODE_FIELD_NAME.c_str(),
+            BLOCKING_MODE_FIELD_NAME.length(),
             bs);
 
         IronBee::throw_if_error(
             ib_data_add(tx.ib()->data, f.ib()),
             "Failed to set XRULES:BLOCKING_MODE.");
     }
-    const std::string SetBlockingMode::FIELD_NAME = "XRULES:BLOCKING_MODE";
+    const std::string SetBlockingMode::BLOCKING_MODE_FIELD_NAME =
+        "XRULES:BLOCKING_MODE";
     /* End SetBlockingMode Impl */
 
 
