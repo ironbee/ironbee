@@ -200,7 +200,7 @@ bool IsFinished::validate(NodeReporter reporter) const
 
 struct IsHomogeneous::data_t
 {
-    ValueList::const_iterator location;
+    boost::thread_specific_ptr<ValueList::const_iterator> location;
 };
 
 IsHomogeneous::IsHomogeneous() :
@@ -225,13 +225,19 @@ bool IsHomogeneous::transform(
 
 void IsHomogeneous::reset()
 {
-    m_data->location = ValueList::const_iterator();
+    if (m_data->location.get()) {
+        *(m_data->location) = ValueList::const_iterator();
+    }
+    else {
+        m_data->location.reset(new ValueList::const_iterator());
+    }
 }
 
 void IsHomogeneous::calculate(EvalContext context)
 {
     const node_p& child = children().back();
     ValueList values = child->eval(context);
+    ValueList::const_iterator& location = *m_data->location.get();
 
     // Special case if no values yet.
     if (values.empty()) {
@@ -241,21 +247,21 @@ void IsHomogeneous::calculate(EvalContext context)
         return;
     }
 
-    if (m_data->location == ValueList::const_iterator()) {
-        m_data->location = values.begin();
+    if (location == ValueList::const_iterator()) {
+        location = values.begin();
     }
 
     // Assuming all elements from begin to location are the same type.
-    Value::type_e type = m_data->location->type();
+    Value::type_e type = location->type();
     ValueList::const_iterator end = values.end();
-    ++m_data->location;
+    ++location;
 
-    while (m_data->location != end) {
-        if (m_data->location->type() != type) {
+    while (location != end) {
+        if (location->type() != type) {
             finish_false();
             return;
         }
-        ++m_data->location;
+        ++location;
     }
 
     if (child->is_finished()) {
