@@ -255,7 +255,15 @@ public:
     //! Call calculate() if unfinished.
     ValueList eval(EvalContext context);
 
-    //! Reset to no values and unfinished for this thread.
+    /**
+     * Reset to no values and unfinished for this thread.
+     *
+     * If a child class overrides it, it probably wants to store the data it
+     * resets in thread local data.  That is, as a node may be in use by
+     * multiple threads simultaneously, represented distinct evaluations, any
+     * calculation dependent data should be thread local, just as the values
+     * of the node are.
+     **/
     virtual void reset();
 
     /**
