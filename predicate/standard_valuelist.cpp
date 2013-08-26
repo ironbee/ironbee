@@ -114,7 +114,7 @@ bool First::validate(NodeReporter reporter) const
 
 struct Rest::data_t
 {
-    ValueList::const_iterator location;
+    boost::thread_specific_ptr<ValueList::const_iterator> location;
 };
 
 Rest::Rest() :
@@ -130,13 +130,19 @@ string Rest::name() const
 
 void Rest::reset()
 {
-    m_data->location = ValueList::const_iterator();
+    if (m_data->location.get()) {
+        *(m_data->location) = ValueList::const_iterator();
+    }
+    else {
+        m_data->location.reset(new ValueList::const_iterator());
+    }
 }
 
 void Rest::calculate(EvalContext context)
 {
     const node_p& child = children().front();
     ValueList values = child->eval(context);
+    ValueList::const_iterator& location = *(m_data->location.get());
 
     // Special case if no values yet.
     if (values.empty()) {
@@ -146,18 +152,18 @@ void Rest::calculate(EvalContext context)
         return;
     }
 
-    if (m_data->location == ValueList::const_iterator()) {
-        m_data->location = values.begin();
+    if (location == ValueList::const_iterator()) {
+        location = values.begin();
     }
 
-    // At this point, m_data->location refers to element before next one
+    // At this point, location refers to element before next one
     // to push.
-    ValueList::const_iterator next_location = m_data->location;
+    ValueList::const_iterator next_location = location;
     ++next_location;
     const ValueList::const_iterator end = values.end();
     while (next_location != end) {
         add_value(*next_location);
-        m_data->location = next_location;
+        location = next_location;
         ++next_location;
     }
 
