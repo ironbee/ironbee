@@ -127,13 +127,14 @@ void MapCall::map_calculate(
     }
 
     ValueList inputs = input->values();
+    input_locations_t& input_locations = *m_input_locations.get();
 
     // Check empty check is necessary as an empty list is allowed to change
     // to a different list to support values forwarding.
     if (! inputs.empty()) {
-        input_locations_t::iterator i = m_input_locations->lower_bound(input);
-        if (i == m_input_locations->end() || i->first != input) {
-            i = m_input_locations->insert(
+        input_locations_t::iterator i = input_locations.lower_bound(input);
+        if (i == input_locations.end() || i->first != input) {
+            i = input_locations.insert(
                 i,
                 make_pair(input, inputs.begin())
             );
