@@ -52,10 +52,10 @@ TEST_F(TestStandardDevelopment, sequence)
         v = eval(n);
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(n->is_finished());
-        v = eval(n);
+        v = n->eval(m_transaction);
         ASSERT_EQ(2UL, v.size());
         ASSERT_FALSE(n->is_finished());
-        v = eval(n);
+        v = n->eval(m_transaction);
         ASSERT_EQ(3UL, v.size());
         ASSERT_TRUE(n->is_finished());
 
@@ -75,10 +75,10 @@ TEST_F(TestStandardDevelopment, sequence)
         v = eval(n);
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(n->is_finished());
-        v = eval(n);
+        v = n->eval(m_transaction);
         ASSERT_EQ(2UL, v.size());
         ASSERT_FALSE(n->is_finished());
-        v = eval(n);
+        v = n->eval(m_transaction);
         ASSERT_EQ(3UL, v.size());
         ASSERT_TRUE(n->is_finished());
 
@@ -98,10 +98,10 @@ TEST_F(TestStandardDevelopment, sequence)
         v = eval(n);
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(n->is_finished());
-        v = eval(n);
+        v = n->eval(m_transaction);
         ASSERT_EQ(2UL, v.size());
         ASSERT_FALSE(n->is_finished());
-        v = eval(n);
+        v = n->eval(m_transaction);
         ASSERT_EQ(3UL, v.size());
         ASSERT_TRUE(n->is_finished());
 
@@ -121,10 +121,10 @@ TEST_F(TestStandardDevelopment, sequence)
         v = eval(n);
         ASSERT_EQ(1UL, v.size());
         ASSERT_FALSE(n->is_finished());
-        v = eval(n);
+        v = n->eval(m_transaction);
         ASSERT_EQ(2UL, v.size());
         ASSERT_FALSE(n->is_finished());
-        v = eval(n);
+        v = n->eval(m_transaction);
         ASSERT_EQ(3UL, v.size());
         ASSERT_FALSE(n->is_finished());
 
