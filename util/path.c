@@ -59,10 +59,10 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
      * But this is simpler.
      */
     path_work = strdup(path);
-    path_end = path_work + strlen(path_work);
     if (path_work == NULL) {
         return IB_EALLOC;
     }
+    path_end = path_work + strlen(path_work);
 
     /* Find portion of path that already exists. */
     exists_end = path_work;
