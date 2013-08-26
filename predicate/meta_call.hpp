@@ -126,7 +126,7 @@ private:
     //! Type of @ref m_input_locations.
     typedef std::map<node_p, ValueList::const_iterator> input_locations_t;
     //! Map of node to location in its value list calculated so far.
-    input_locations_t m_input_locations;
+    boost::thread_specific_ptr<input_locations_t> m_input_locations;
 };
 
 } // Predicate

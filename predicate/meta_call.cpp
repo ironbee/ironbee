@@ -107,7 +107,12 @@ bool AbelianCall::transform(
 void MapCall::reset()
 {
     Call::reset();
-    m_input_locations.clear();
+    if (m_input_locations.get()) {
+        m_input_locations->clear();
+    }
+    else {
+        m_input_locations.reset(new input_locations_t());
+    }
 }
 
 void MapCall::map_calculate(
@@ -126,9 +131,9 @@ void MapCall::map_calculate(
     // Check empty check is necessary as an empty list is allowed to change
     // to a different list to support values forwarding.
     if (! inputs.empty()) {
-        input_locations_t::iterator i = m_input_locations.lower_bound(input);
-        if (i == m_input_locations.end() || i->first != input) {
-            i = m_input_locations.insert(
+        input_locations_t::iterator i = m_input_locations->lower_bound(input);
+        if (i == m_input_locations->end() || i->first != input) {
+            i = m_input_locations->insert(
                 i,
                 make_pair(input, inputs.begin())
             );
