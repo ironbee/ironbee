@@ -81,7 +81,7 @@ ib_status_t ib_string_to_num(
 ) {
     assert(result != NULL);
 
-    size_t slen = strlen(s);
+    size_t slen;
     char *end;
     long int value;
     size_t vlen;
@@ -90,6 +90,8 @@ ib_status_t ib_string_to_num(
     if ( (s == NULL) || (*s == '\0') ) {
         return IB_EINVAL;
     }
+
+    slen = strlen(s);
 
     /* Do the conversion, check for errors */
     value = strtol(s, &end, base);
@@ -142,7 +144,7 @@ ib_status_t ib_string_to_time(
 ) {
     assert(result != NULL);
 
-    size_t slen = strlen(s);
+    size_t slen;
     char *end;
     unsigned long int value;
     size_t vlen;
@@ -151,6 +153,8 @@ ib_status_t ib_string_to_time(
     if ( (s == NULL) || (*s == '\0') ) {
         return IB_EINVAL;
     }
+
+    slen = strlen(s);;
 
     /* Do the conversion, check for errors */
     value = strtoul(s, &end, 0);
