@@ -576,7 +576,7 @@ LUALIB_API int ibjson_to_string(lua_State *L)
         return luaL_error(L, "Failed to allocate JSON generator.");
     }
 
-    yc = yajl_gen_config(gen, yajl_gen_beautify);
+    yc = yajl_gen_config(gen, yajl_gen_beautify, 1);
     if (yc == 0) {
         yajl_gen_free(gen);
         return luaL_error(L, "Failed to configure JSON generator.");
