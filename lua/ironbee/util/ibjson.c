@@ -56,17 +56,17 @@
 #endif
 
 //! Module Name
-static const char *LUA_IBJSONLIB_NAME = "ibjson";
+static const char LUA_IBJSONLIB_NAME[] = "ibjson";
 
 //! Module Version
-static const char *LUA_IBJSONLIB_VERSION = "1.0";
+static const char LUA_IBJSONLIB_VERSION[] = "1.0";
 
 //! Module Copyright
-static const char *LUA_IBJSON_COPYRIGHT =
+static const char LUA_IBJSON_COPYRIGHT[] =
     "Copyright (C) 2010-2013 Qualys, Inc.";
 
 //! Module Description
-static const char *LUA_IBJSON_DESCRIPTION = "IronBee JSON Interface.";
+static const char LUA_IBJSON_DESCRIPTION[] = "IronBee JSON Interface.";
 
 /**
  * Forward declaration of callback data for parsing.
@@ -631,9 +631,9 @@ static const luaL_reg jsonlib[] = {
  * @returns 1 for success.
  */
 LUALIB_API int luaopen_ibjson(lua_State *L) {
-    luaL_register(L, LUA_IBJSONLIB_NAME, jsonlib);
 
-    lua_getglobal(L, LUA_IBJSONLIB_NAME);
+    luaL_register(L, LUA_IBJSONLIB_NAME, jsonlib);
+    assert(lua_istable(L, -1));
 
     lua_pushstring(L, LUA_IBJSONLIB_VERSION);
     lua_setfield(L, -2, "_VERSION");
@@ -643,8 +643,6 @@ LUALIB_API int luaopen_ibjson(lua_State *L) {
 
     lua_pushstring(L, LUA_IBJSON_DESCRIPTION);
     lua_setfield(L, -2, "_DESCRIPTION");
-
-    lua_pop(L, 1);
 
     return 1;
 }

@@ -33,6 +33,8 @@ class LuaJsonTest : public ::ibtesting::LuaTest {
 
     virtual void SetUp()
     {
+        LuaTest::SetUp();
+
         cpathAppend("../ironbee/util/.libs/?.so");
 
         pathAppend("../?.lua");
