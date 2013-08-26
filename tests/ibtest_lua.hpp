@@ -68,13 +68,16 @@ class LuaTest : public ::testing::Test {
     lua_State *L;
 
     public:
-    LuaTest()
+    LuaTest() {}
+    ~LuaTest() {}
+
+    virtual void SetUp()
     {
         L = luaL_newstate();
         luaL_openlibs(L);
     }
 
-    virtual ~LuaTest()
+    virtual void TearDown()
     {
         lua_settop(L, 0);
         lua_close(L);
