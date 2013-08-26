@@ -38,7 +38,7 @@
 
 #include <string>
 
-class PcreModuleTest : public BaseModuleFixture
+class PcreModuleTest : public BaseTransactionFixture
 {
 public:
 
@@ -49,17 +49,14 @@ public:
     ib_field_t* field1;
     ib_field_t* field2;
 
-    PcreModuleTest() : BaseModuleFixture("ibmod_pcre.so")
-    {
-    }
-
     virtual void SetUp()
     {
         ib_status_t rc;
         const char *s1 = "string 1";
         const char *s2 = "string 2";
 
-        BaseModuleFixture::SetUp();
+        BaseTransactionFixture::SetUp();
+        configureIronBee();
         performTx();
 
         ib_mpool_t *mp = ib_engine_pool_main_get(ib_engine);
