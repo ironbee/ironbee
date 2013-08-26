@@ -30,6 +30,8 @@
 
 #include "standard_test.hpp"
 
+#include <boost/iterator/transform_iterator.hpp>
+
 using namespace std;
 using namespace IronBee::Predicate;
 
@@ -72,6 +74,12 @@ ValueList StandardTest::eval(node_p n)
         );
     }
 
+    bfs_down(
+        g.root(i),
+        boost::make_function_output_iterator(
+            bind(&Node::reset, _1)
+        )
+    );
     return g.root(i)->eval(m_transaction);
 }
 
