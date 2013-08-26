@@ -134,6 +134,13 @@ static const ib_tx_flag_map_t core_tx_flag_map[] = {
         false,
         false
     },
+    {
+        "blockingMode",
+        "FLAGS:blockingMode",
+        IB_TX_FBLOCKING_MODE,
+        false,                /* Blocking mode is mutable. */
+        true                  /* Blocking mode is on, by default. */
+    },
 
     /* End */
     { NULL, NULL, IB_TX_FNONE, true, false },
