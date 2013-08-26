@@ -130,9 +130,13 @@ int main(int argc, char **argv)
         try {
             i->second(cout, input, elapsed);
         }
-        catch (const IronBee::ParserSuite::error& e) {
+        catch (const boost::exception& e) {
             cout << "Error: " << endl;
             cout << diagnostic_information(e);
+            return 1;
+        }
+        catch (const exception& e) {
+            cout << "Error: " << e.what() << endl;
             return 1;
         }
         if (input.begin() == old_begin) {
