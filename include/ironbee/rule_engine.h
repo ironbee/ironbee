@@ -500,6 +500,18 @@ ib_status_t DLL_PUBLIC ib_rule_set_phase(
 ib_status_t DLL_PUBLIC ib_rule_set_invert(ib_rule_t *rule, bool invert);
 
 /**
+ * Set the parameters in this rule so that they may be used for logging.
+ * 
+ * @param[in] rule Rule to operate on.
+ * @param[in] params The string constant to be copied.
+ *
+ * @reurns
+ * - IB_OK on success.
+ * - IB_EALLOC on a copy error.
+ */
+ib_status_t DLL_PUBLIC ib_rule_set_op_params(ib_rule_t *rule, const char *params);
+
+/**
  * A utility function that converts a string to the appropriate phase number.
  *
  * This is used when developers are trying to create and register a new rule

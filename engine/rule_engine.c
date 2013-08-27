@@ -299,7 +299,40 @@ static phase_lookup_t phase_lookup_table[] =
 ib_status_t ib_rule_set_invert(ib_rule_t *rule, bool invert)
 {
     assert(rule != NULL);
+    assert(rule->opinst != NULL);
+
     rule->opinst->invert = invert;
+
+    return IB_OK;
+}
+
+ib_status_t ib_rule_set_op_params(ib_rule_t *rule, const char *params)
+{
+    assert(rule != NULL);
+    assert(rule->ctx != NULL);
+    assert(rule->ctx->mp != NULL);
+    assert(rule->opinst != NULL);
+    assert(params != NULL);
+
+    ib_status_t rc;
+
+    rule->opinst->params = ib_mpool_strdup(rule->ctx->mp, params);
+    if (rule->opinst->params == NULL) {
+        return IB_EALLOC;
+    }
+
+    rc = ib_field_create_bytestr_alias(
+        &(rule->opinst->fparam),
+        rule->ctx->mp,
+        "",
+        0, 
+        (uint8_t *)rule->opinst->params,
+        strlen(rule->opinst->params));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+
     return IB_OK;
 }
 

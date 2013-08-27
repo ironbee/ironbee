@@ -351,15 +351,18 @@ local build_rule = function(ib, ctx, chain, db)
             return rc
         end
 
+        -- C operator parameter copy. This is passed to the operater inst constructor and set in the rule.
+        local cop_params = ffi.C.ib_mpool_memdup(
+            ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+            tostring(rule.data.op_arg),
+            #(tostring(rule.data.op_arg)) + 1)
+
         -- Create the operator.
         rc = ffi.C.ib_operator_inst_create(
             op[0],
             ctx,
             op_inst_create_stream_flags,
-            ffi.C.ib_mpool_memdup(
-                ffi.C.ib_engine_pool_main_get(ib.ib_engine),
-                tostring(rule.data.op_arg),
-                #(tostring(rule.data.op_arg)) + 1),
+            cop_params,
             opinst)
         if rc ~= ffi.C.IB_OK then
             ib:logError("Failed to create operator instance for %s.", op)
@@ -374,6 +377,14 @@ local build_rule = function(ib, ctx, chain, db)
             opinst[0])
         if rc ~= ffi.C.IB_OK then
             ib:logError("Failed to set rule operator.")
+            return rc
+        end
+
+        -- Copy the parameters used to construct the operator instance into the rule for logging.
+        ib:logInfo("Setting rule op inst params: %s", ffi.string(cop_params));
+        rc = ffi.C.ib_rule_set_op_params(prule[0], cop_params);
+        if rc ~= ffi.C.IB_OK then
+            ib:logError("Failed to copy params %s.", ffi.string(cop_params))
             return rc
         end
 
