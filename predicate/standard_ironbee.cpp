@@ -127,8 +127,17 @@ void Field::calculate(EvalContext context)
         }
     }
 
-    add_value(Value(data_field));
-    finish();
+    Value value(data_field);
+    if (
+        value.is_dynamic() ||
+        value.type() != Value::LIST
+    ) {
+        add_value(value);
+        finish();
+    }
+    else {
+        alias(value.value_as_list<Value>());
+    }
 }
 
 struct Operator::data_t

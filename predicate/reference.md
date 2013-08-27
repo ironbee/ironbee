@@ -664,11 +664,11 @@ Front End
 
 Result
 : `[]` if no data field named `N`.
-: `[v]` where `v` is the value of the data field named `N`.
+: `[v]` where `v` is the value of the data field named `N` and 'v' is either a dynamic list or not a list.
+: `[...]` where '...' is the values of the list field named `N`.
 
 Finished
-: When data field is finished, if known.
-: Else never.
+: Except for non-dynamic lists, as soon as field has a value.  For dynamic lists, it will be finished if that is known and otherwise, never.
 
 **`(field N W F)` [Future]**
 
