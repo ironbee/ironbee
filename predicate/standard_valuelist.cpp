@@ -280,61 +280,6 @@ bool Gather::validate(NodeReporter reporter) const
     return Validate::n_children(reporter, 1);
 }
 
-
-namespace {
-
-bool sub_caseless_compare(char a, char b)
-{
-    return (a == b || tolower(a) == tolower(b));
-}
-
-}
-
-string Sub::name() const
-{
-    return "sub";
-}
-
-void Sub::calculate(EvalContext context)
-{
-    ConstByteString subfield_name_bs =
-        literal_value(children().front()).value_as_byte_string();
-
-    const node_p& collection_node = children().back();
-    collection_node->eval(context);
-    if (! collection_node->is_finished()) {
-        return;
-    }
-    Value collection = simple_value(collection_node);
-    if (! collection || collection.type() != Value::LIST) {
-        finish();
-        return;
-    }
-
-    BOOST_FOREACH(const Value& v, collection.value_as_list<Value>()) {
-        if (
-            v.name_length() == subfield_name_bs.length() &&
-            equal(
-                v.name(), v.name() + v.name_length(),
-                subfield_name_bs.const_data(),
-                sub_caseless_compare
-            )
-        )
-        {
-            add_value(v);
-        }
-    }
-    finish();
-}
-
-bool Sub::validate(NodeReporter reporter) const
-{
-    bool result = true;
-    result = Validate::n_children(reporter, 2) && result;
-    result = Validate::nth_child_is_string(reporter, 0) && result;
-    return result;
-}
-
 void load_valuelist(CallFactory& to)
 {
     to
@@ -345,7 +290,6 @@ void load_valuelist(CallFactory& to)
         .add<Nth>()
         .add<Scatter>()
         .add<Gather>()
-        .add<Sub>()
         ;
 }
 

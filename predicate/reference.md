@@ -368,26 +368,6 @@ Transformations
 Front End
 : **Call Method**
 
-**`(sub N v)` [Future]**
-
-Result
-: `[]` if `v` is not finished or not simple.
-: Else `[]` if value of `v` is not a list.
-: Else `[...]` where `...` is members of value of `v` with name `N`.
-
-Finished
-: `v` is finished.
-: `v` is not simple.
-: `v` has value that is not a list.
-
-Notes
-: `(sub N v)` is semantically identical to `(named N (scatter v))` but is more efficient.
-: Sub will *not* do what you want with *dynamic* collections.  For those, use `ask` first.
-
-Front End
-: **Call Method**
-
-
 Predicate Predicates
 --------------------
 
@@ -562,6 +542,16 @@ Notes
 
 Filter
 : Has name equal to value of filter.
+
+**`(namedi F v)`**
+
+Filter
+: Has name equal to value of filter, case insensitive.
+
+** `(sub F v)`**
+
+Synonym
+: `(namedi F v)`
 
 **`(namedRx F v)`**
 

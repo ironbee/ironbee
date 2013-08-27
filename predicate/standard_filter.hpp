@@ -220,6 +220,38 @@ protected:
 };
 
 /**
+ * Case insensitive version of Named.
+ **/
+class NamedI :
+    public MapCall
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+    //! See Node::validate().
+    virtual bool validate(NodeReporter reporter) const;
+
+protected:
+    //! See MapCall::value_calculate()
+    virtual Value value_calculate(Value v, EvalContext context);
+
+    //! See Node::calculate()
+    virtual void calculate(EvalContext context);
+};
+
+/**
+ * Synonym for NamedI.
+ **/
+class Sub :
+    public NamedI
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+};
+
+/**
  * Output elements of second child with name matching first child.
  **/
 class NamedRx :

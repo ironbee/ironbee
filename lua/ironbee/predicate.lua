@@ -163,6 +163,7 @@ local call_members1 = {
   "isLonger",
   "isComplete",
   "named",
+  "namedI",
   "namedRx",
   "waitPhase",
   "finishPhase",

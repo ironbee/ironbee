@@ -478,7 +478,7 @@ void Ask::calculate(EvalContext context)
             }
         }
         else {
-            // Fall back to Sub like behavior.
+            // Fall back to namedi like behavior.
             BOOST_FOREACH(const Value& v, collection.value_as_list<Value>()) {
                 if (
                     v.name_length() == param.length() &&

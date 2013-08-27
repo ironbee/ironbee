@@ -392,6 +392,56 @@ bool Named::validate(NodeReporter reporter) const
     return result;
 }
 
+string NamedI::name() const
+{
+    return "namedi";
+}
+
+void NamedI::calculate(EvalContext context)
+{
+    map_calculate(children().back(), context);
+}
+
+namespace {
+
+bool namedi_caseless_compare(char a, char b)
+{
+    return (a == b || tolower(a) == tolower(b));
+}
+
+}
+
+Value NamedI::value_calculate(Value v, EvalContext context)
+{
+    ConstByteString name =
+        literal_value(children().front()).value_as_byte_string();
+    if (
+        v.name_length() == name.length() &&
+        equal(
+            name.const_data(), name.const_data() + name.length(),
+            v.name(),
+            namedi_caseless_compare
+        )
+    ) {
+        return v;
+    }
+    return Value();
+}
+
+bool NamedI::validate(NodeReporter reporter) const
+{
+    bool result = true;
+    result = Validate::n_children(reporter, 2) && result;
+    result = Validate::nth_child_is_string(reporter, 0) && result;
+
+    return result;
+}
+
+string Sub::name() const
+{
+    return "sub";
+}
+
 struct NamedRx::data_t
 {
     boost::regex re;
@@ -463,6 +513,8 @@ void load_filter(CallFactory& to)
         .add<Ge>()
         .add<Typed>()
         .add<Named>()
+        .add<NamedI>()
+        .add<Sub>()
         .add<NamedRx>()
         ;
 }
