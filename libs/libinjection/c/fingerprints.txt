@@ -232,6 +232,7 @@
 1&1&v
 1&1)&
 1&1)U
+1&1)o
 1&1;
 1&1;E
 1&1;T
@@ -339,6 +340,7 @@
 1&n&v
 1&n)&
 1&n)U
+1&n)o
 1&n;
 1&n;E
 1&n;T
@@ -377,6 +379,7 @@
 1&s&v
 1&s)&
 1&s)U
+1&s)o
 1&s1
 1&s1;
 1&s1c
@@ -433,6 +436,7 @@
 1&v&v
 1&v)&
 1&v)U
+1&v)o
 1&v;
 1&v;E
 1&v;T
@@ -1321,6 +1325,7 @@
 1f(((
 1f(()
 1f((1
+1f((E
 1f((f
 1f((n
 1f((s
@@ -1336,6 +1341,13 @@
 1f(1)
 1f(1n
 1f(1o
+1f(E(
+1f(E1
+1f(Ef
+1f(Ek
+1f(En
+1f(Es
+1f(Ev
 1f(f(
 1f(n)
 1f(n,
@@ -3288,6 +3300,7 @@ f(E(f
 f(E(n
 f(E(s
 f(E(v
+f(E1)
 f(E1k
 f(E1o
 f(Ef(
@@ -3297,10 +3310,13 @@ f(Ekf
 f(Ekn
 f(Eks
 f(Ekv
+f(En)
 f(Enk
 f(Eno
+f(Es)
 f(Esk
 f(Eso
+f(Ev)
 f(Evk
 f(Evo
 f(f((
@@ -3726,6 +3742,7 @@ n&1&s
 n&1&v
 n&1)&
 n&1)U
+n&1)o
 n&1;
 n&1;E
 n&1;T
@@ -3829,6 +3846,7 @@ n&n&s
 n&n&v
 n&n)&
 n&n)U
+n&n)o
 n&n;E
 n&n;T
 n&n;c
@@ -3861,6 +3879,7 @@ n&s&s
 n&s&v
 n&s)&
 n&s)U
+n&s)o
 n&s1
 n&s1;
 n&s1c
@@ -3917,6 +3936,7 @@ n&v&s
 n&v&v
 n&v)&
 n&v)U
+n&v)o
 n&v;
 n&v;E
 n&v;T
@@ -4884,6 +4904,7 @@ nf()v
 nf(1)
 nf(1n
 nf(1o
+nf(E1
 nf(f(
 nf(n)
 nf(n,
@@ -5539,6 +5560,7 @@ s&1&s
 s&1&v
 s&1)&
 s&1)U
+s&1)o
 s&1;
 s&1;E
 s&1;T
@@ -5645,6 +5667,7 @@ s&n&s
 s&n&v
 s&n)&
 s&n)U
+s&n)o
 s&n;
 s&n;E
 s&n;T
@@ -5683,6 +5706,7 @@ s&s&s
 s&s&v
 s&s)&
 s&s)U
+s&s)o
 s&s1
 s&s1;
 s&s1c
@@ -5739,6 +5763,7 @@ s&v&s
 s&v&v
 s&v)&
 s&v)U
+s&v)o
 s&v;
 s&v;E
 s&v;T
@@ -6666,6 +6691,7 @@ sc
 sf(((
 sf(()
 sf((1
+sf((E
 sf((f
 sf((n
 sf((s
@@ -6681,6 +6707,13 @@ sf()v
 sf(1)
 sf(1n
 sf(1o
+sf(E(
+sf(E1
+sf(Ef
+sf(Ek
+sf(En
+sf(Es
+sf(Ev
 sf(f(
 sf(n)
 sf(n,
@@ -7492,6 +7525,7 @@ v&1&s
 v&1&v
 v&1)&
 v&1)U
+v&1)o
 v&1;
 v&1;E
 v&1;T
@@ -7598,6 +7632,7 @@ v&n&s
 v&n&v
 v&n)&
 v&n)U
+v&n)o
 v&n;
 v&n;E
 v&n;T
@@ -7636,6 +7671,7 @@ v&s&s
 v&s&v
 v&s)&
 v&s)U
+v&s)o
 v&s1
 v&s1;
 v&s1c
@@ -7692,6 +7728,7 @@ v&v&s
 v&v&v
 v&v)&
 v&v)U
+v&v)o
 v&v;
 v&v;E
 v&v;T
@@ -8622,6 +8659,7 @@ vc
 vf(((
 vf(()
 vf((1
+vf((E
 vf((f
 vf((n
 vf((s
@@ -8637,6 +8675,13 @@ vf()v
 vf(1)
 vf(1n
 vf(1o
+vf(E(
+vf(E1
+vf(Ef
+vf(Ek
+vf(En
+vf(Es
+vf(Ev
 vf(f(
 vf(n)
 vf(n,
