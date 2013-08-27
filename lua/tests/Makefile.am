@@ -28,3 +28,5 @@ if ENABLE_JSON
 check_PROGRAMS += test_lua_json
 test_lua_json_SOURCES  = test_lua_json.cpp
 endif
+
+check-local: check-ruby
