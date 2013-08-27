@@ -464,7 +464,8 @@ void Ask::calculate(EvalContext context)
                 finish();
             }
             else {
-                finish_alias(result);
+                alias(result);
+                finish();
             }
         }
         else {

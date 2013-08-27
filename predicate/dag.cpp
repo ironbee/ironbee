@@ -148,7 +148,13 @@ public:
                 )
             );
         }
-        assert(m_own_values.ib() == m_values.ib());
+        if (m_own_values != m_values) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << errinfo_what(
+                    "Can't add value to aliased node."
+                )
+            );
+        }
         m_own_values.push_back(value);
     }
 
@@ -172,8 +178,8 @@ public:
         m_finished = true;
     }
 
-    //! Finish node, aliasing value list @a other.
-    void finish_alias(ValueList other)
+    //! Alias value list @a other.
+    void alias(ValueList other)
     {
         if (is_forwarding()) {
             BOOST_THROW_EXCEPTION(
@@ -196,7 +202,6 @@ public:
                 )
             );
         }
-        m_finished = true;
         m_values = other;
     }
 
@@ -283,9 +288,9 @@ void Node::finish()
     lookup_value().finish();
 }
 
-void Node::finish_alias(ValueList other)
+void Node::alias(ValueList other)
 {
-    lookup_value().finish_alias(other);
+    lookup_value().alias(other);
 }
 
 void Node::finish_true()

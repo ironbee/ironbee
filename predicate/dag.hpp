@@ -403,16 +403,18 @@ protected:
     void forward(const node_p& other);
 
     /**
-     * Finish as alias of a list.
+     * Alias a list.
      *
      * May only be called if this node is unfinished and has no values.  Sets
-     * values to an alias of the given list and calls finish.
+     * values to an alias of the given list.  It is up to the caller to
+     * guarantee that the list only grows and to call finish once the list is
+     * done growing.
      *
      * @throw einval if called on a finished() node.
      * @throw einval if called on a node with non-empty values.
      * @throw einval if called on a forwarded node.
      **/
-    void finish_alias(ValueList list);
+    void alias(ValueList list);
 
     /**
      * Finish node as true.
