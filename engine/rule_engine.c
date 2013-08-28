@@ -2197,7 +2197,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     }
 
     if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE) ) {
-        ib_rule_log_tx_debug(tx, "Rule resulted in phase block");
+        ib_rule_log_tx_debug(tx, "Rule(s) resulted in phase block");
         rc = report_block_to_server(rule_exec);
         if (rc != IB_OK) {
             ib_rule_log_tx_error(tx,
