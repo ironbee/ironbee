@@ -4,7 +4,7 @@ class TestPredicate < Test::Unit::TestCase
   include CLIPPTest
 
   CONFIG = {
-    :config => 'LoadModule "' + BUILDDIR + '/../.libs/ibmod_predicate.so"'
+    :config => 'LoadModule "' + BUILDDIR + '/../.libs/ibmod_predicate.so"' + "\n" + 'LoadModule "ibmod_htp.so"'
   }
 
   def make_request(s)
@@ -78,6 +78,18 @@ class TestPredicate < Test::Unit::TestCase
       :default_site_config => <<-EOS
         PredicateDefine "foo" "name" "(field (ref 'name'))"
         Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(foo 'REQUEST_URI')"
+      EOS
+    ))
+    assert_no_issues
+    assert_log_no_match /NOTICE/
+    assert_log_match /CLIPP ANNOUNCE: field_present/
+  end
+
+  def test_params
+    clipp(CONFIG.merge(
+      :input_hashes => [make_request('hello?a=foo&b=bar')],
+      :default_site_config => <<-EOS
+        Action id:1 phase:REQUEST_HEADER clipp_announce:field_present "predicate:(operator 'rx' 'foo|bar' (p 'args=' (field 'request_uri_params')))"
       EOS
     ))
     assert_no_issues
