@@ -149,7 +149,7 @@ struct ib_rule_log_tx_t {
  * @return The configured rule log execution flags.
  */
 ib_flags_t ib_rule_log_flags(
-    ib_context_t               *ctx);
+    const ib_context_t           *ctx);
 
 /**
  * Dump the enabled rule log flags
@@ -158,8 +158,8 @@ ib_flags_t ib_rule_log_flags(
  * @param[in] ctx The context that we're looking the level up for
  */
 void ib_rule_log_flags_dump(
-    ib_engine_t                *ib,
-    ib_context_t               *ctx);
+    const ib_engine_t           *ib,
+    const ib_context_t          *ctx);
 
 /**
  * Create a rule transaction logging object

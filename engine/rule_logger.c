@@ -304,8 +304,8 @@ static void rule_log_exec(
     return;
 }
 
-void ib_rule_log_flags_dump(ib_engine_t *ib,
-                            ib_context_t *ctx)
+void ib_rule_log_flags_dump(const ib_engine_t *ib,
+                            const ib_context_t *ctx)
 {
     const ib_strval_t *rec;
     ib_flags_t flags;
@@ -332,7 +332,7 @@ void ib_rule_log_flags_dump(ib_engine_t *ib,
     return;
 }
 
-ib_flags_t ib_rule_log_flags(ib_context_t *ctx)
+ib_flags_t ib_rule_log_flags(const ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
@@ -345,7 +345,7 @@ ib_flags_t ib_rule_log_flags(ib_context_t *ctx)
     return corecfg->rule_log_flags;
 }
 
-ib_log_level_t ib_rule_log_level(ib_context_t *ctx)
+ib_log_level_t ib_rule_log_level(const ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
@@ -359,7 +359,7 @@ ib_log_level_t ib_rule_log_level(ib_context_t *ctx)
     return corecfg->rule_log_level;
 }
 
-ib_rule_dlog_level_t ib_rule_dlog_level(ib_context_t *ctx)
+ib_rule_dlog_level_t ib_rule_dlog_level(const ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;

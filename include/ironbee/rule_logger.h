@@ -56,7 +56,7 @@ extern "C" {
  * @return The log level configured.
  */
 ib_log_level_t ib_rule_log_level(
-    ib_context_t               *ctx);
+    const ib_context_t         *ctx);
 
 /**
  * Return the configured rule debug logging level.
@@ -69,7 +69,7 @@ ib_log_level_t ib_rule_log_level(
  * @return The log level configured.
  */
 ib_rule_dlog_level_t ib_rule_dlog_level(
-    ib_context_t               *ctx);
+    const ib_context_t         *ctx);
 
 /**
  * Add an event to a rule execution logging object
