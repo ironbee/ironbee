@@ -187,8 +187,8 @@ typedef enum {
     HDR_HTTP_100,
     HDR_HTTP_STATUS
 } ib_hdr_outcome;
-#define IB_HDR_OUTCOME_IS_HTTP(outcome, data) \
-    ((outcome) == HDR_HTTP_STATUS && (data)->status >= 200 && (data)->status < 600)
+#define IB_HDR_OUTCOME_IS_HTTP_OR_ERROR(outcome, data) \
+    (((outcome) == HDR_HTTP_STATUS  || (outcome) == HDR_ERROR) && (data)->status >= 200 && (data)->status < 600)
 #define IB_HTTP_CODE(num) ((num) >= 200 && (num) < 600)
 
 typedef struct {
@@ -1694,7 +1694,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     const ib_site_t *site;
     ib_status_t ib_rc;
     int nhdrs = 0;
-    bool has_body = false;
+    int body_len = 0;
     ib_parsed_header_wrapper_t *ibhdrs;
 
     if (data->tx == NULL) {
@@ -1713,6 +1713,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv != 0) {
         TSError ("couldn't retrieve %s header: %d\n", ibd->type_label, rv);
+        ib_rc = ib_error_callback(data->tx, 500, NULL);
         return HDR_ERROR;
     }
 
@@ -1727,7 +1728,9 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     if (ib_rc != IB_OK) {
         TSError("couldn't get %s header: %s\n", ibd->type_label,
                 ib_status_to_string(ib_rc));
-        return HDR_ERROR;
+        ib_rc = ib_error_callback(data->tx, 500, NULL);
+        ret = HDR_ERROR;
+        goto process_hdr_cleanup;
     }
 
     /* Handle the request / response line */
@@ -1738,13 +1741,18 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                                    &rline_buf, &rline_len);
         if (ib_rc != 0) {
             TSError("Failed to fixup request line");
-            /* We can't bail out here 'cos modhtp then asserts at modhtp.c:786 */
+            ib_rc = ib_error_callback(data->tx, 400, NULL);
+            ret = HDR_ERROR;
+            goto process_hdr_cleanup;
         }
 
         ib_rc = start_ib_request(data->tx, rline_buf, rline_len);
         if (ib_rc != IB_OK) {
             TSError("Failed to start IronBee request: %s",
                     ib_status_to_string(ib_rc));
+            ib_rc = ib_error_callback(data->tx, 500, NULL);
+            ret = HDR_ERROR;
+            goto process_hdr_cleanup;
         }
         break;
     }
@@ -1785,6 +1793,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
      */
     rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
     if (rv != IB_OK) {
+        ib_rc = ib_error_callback(data->tx, 500, NULL);
         TSError("Error creating ironbee header wrapper.  Disabling checks!");
         ret = HDR_ERROR;
         goto process_hdr_cleanup;
@@ -1808,13 +1817,33 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         rv = ib_parsed_name_value_pair_list_add(ibhdrs,
                                                 line, n_len,
                                                 lptr, v_len);
-        if (!has_body && (ibd->dir == IBD_REQ)) {
+        if (!body_len && (ibd->dir == IBD_REQ)) {
             /* Check for expectation of a request body */
-            if (((n_len == 14) && !strncasecmp(line, "Content-Length", n_len))
-               || ((n_len == 17) && (v_len == 7)
+            if ((n_len == 14) && !strncasecmp(line, "Content-Length", n_len)) {
+                /* lptr should contain a number.
+                 * If it's positive we get normal processing, including body.
+                 * If it's zero, we have a special case.
+                 * If it's blank or malformed, log an error.
+                 *
+                 * FIXME: should we be more aggressive in malformed case?
+                 * Shouldn't really be the plugin's problem.
+                 */
+                int i;
+                for (i=0; i < v_len; ++i) {
+                    if (isdigit(lptr[i])) {
+                        body_len = 10*body_len + lptr[i] - '0';
+                    }
+                    else if (!isspace(lptr[i])) {
+                        TSError("Malformed Content-Length: %.*s",
+                                (int)v_len, lptr);
+                        break;
+                    }
+                }
+            }
+            else if (((n_len == 17) && (v_len == 7)
                    && !strncasecmp(line, "Transfer-Encoding", n_len)
                    && !strncasecmp(lptr, "chunked", v_len))) {
-                has_body = true;
+                body_len = -1;  /* nonzero - body and length yet to come */
             }
         }
         if (rv != IB_OK)
@@ -1843,8 +1872,9 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         goto process_hdr_cleanup;
     }
 
-    /* If there's no body in a Request, notify end-of-request */
-    if ((ibd->dir == IBD_REQ) && !has_body) {
+    /* If there's no or zero-length body in a Request, notify end-of-request */
+    if ((ibd->dir == IBD_REQ) && !body_len) {
+        ib_tx_flags_unset(data->tx, IB_TX_FREQ_HAS_DATA);
         rv = (*ibd->ib_notify_end)(data->tx->ib, data->tx);
         if (rv != IB_OK)
             TSError("Error notifying Ironbee end of request");
@@ -2247,8 +2277,20 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             txndata = TSContDataGet(contp);
             status = process_hdr(txndata, txnp, &ib_direction_client_req);
             txndata->state |= HDRS_IN;
-            if (IB_HDR_OUTCOME_IS_HTTP(status, txndata)) {
-                TSDebug("ironbee", "HTTP code %d contp=%p", txndata->status, contp);
+            if (IB_HDR_OUTCOME_IS_HTTP_OR_ERROR(status, txndata)) {
+                if (status == HDR_HTTP_STATUS) {
+                    TSDebug("ironbee", "HTTP code %d contp=%p", txndata->status, contp);
+                 }
+                 else {
+                    TSDebug("ironbee", "Internal error %d contp=%p", txndata->status, contp);
+                    /* Ugly hack: notifications to stop modhtp bombing out */
+                    if (!ib_tx_flags_isset(txndata->tx, IB_TX_FREQ_STARTED) ) {
+                        ib_state_notify_request_started(txndata->tx->ib, txndata->tx, NULL);
+                    }
+                    if (!ib_tx_flags_isset(txndata->tx, IB_TX_FREQ_FINISHED) ) {
+                        ib_state_notify_request_finished(txndata->tx->ib, txndata->tx);
+                    }
+                 }
                 TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
             }
