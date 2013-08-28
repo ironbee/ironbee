@@ -239,24 +239,10 @@ void DLL_PUBLIC ib_log_tx_vex(
      va_list         ap
 )
 {
-    char *new_fmt;
-    const char *which_fmt;
-
     /* Check the log level, return if we're not interested. */
     ib_log_level_t logger_level = ib_log_get_level(tx->ib);
     if (level > logger_level) {
         return;
-    }
-
-    new_fmt = malloc(strlen(fmt) + 45);
-    which_fmt = new_fmt;
-    if (! new_fmt) {
-        /* Do our best */
-        which_fmt = fmt;
-    }
-    else {
-        sprintf(new_fmt, "[tx:%.36s] ", tx->id);
-        strcat(new_fmt, fmt);
     }
 
     if (tx->ib->logger_fn != NULL) {
@@ -266,10 +252,6 @@ void DLL_PUBLIC ib_log_tx_vex(
     }
     else {
         default_logger(stderr, level, tx->ib, file, line, fmt, ap);
-    }
-
-    if (new_fmt) {
-        free(new_fmt);
     }
 
     return;

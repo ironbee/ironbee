@@ -1828,7 +1828,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                  * FIXME: should we be more aggressive in malformed case?
                  * Shouldn't really be the plugin's problem.
                  */
-                int i;
+                size_t i;
                 for (i=0; i < v_len; ++i) {
                     if (isdigit(lptr[i])) {
                         body_len = 10*body_len + lptr[i] - '0';
