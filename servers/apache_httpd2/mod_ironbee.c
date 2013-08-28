@@ -409,26 +409,25 @@ static void ironbee_logger(
 
     /* Write it to the error log. */
     switch (calldata->type) {
-      case IBLOG_ENGINE: /* still an ugly hack */
+    case IBLOG_ENGINE: /* still an ugly hack */
         ap_log_perror(APLOG_MARK, ap_level, 0, mod_data->pool,
                       "ironbee: %s", buf);
         break;
-      case IBLOG_MANAGER: /* still an ugly hack */
+    case IBLOG_MANAGER: /* still an ugly hack */
         ap_log_perror(APLOG_MARK, ap_level, 0, mod_data->pool,
                       "ironbee: %s", buf);
         break;
-      case IBLOG_CONN:
-      {
+    case IBLOG_CONN:
         ap_log_cerror(APLOG_MARK, ap_level, 0,
-                      calldata->data.c->server_ctx, "ironbee: %s", buf);
+                      (const conn_rec *)calldata->data.c->server_ctx,
+                      "ironbee: %s", buf);
         break;
-      }
-      case IBLOG_TX:
-      {
+    case IBLOG_TX:
+    {
         ironbee_req_ctx *ctx = calldata->data.t->sctx;
         ap_log_rerror(APLOG_MARK, ap_level, 0, ctx->r, "ironbee: %s", buf);
         break;
-      }
+    }
     }
 }
 
