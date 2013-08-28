@@ -246,31 +246,6 @@ private:
 };
 
 /**
- * Per transaction data.
- *
- * Initialize on transaction started and read and updated by the injection
- * function.  Used to determine when a new phase has begun; an event which
- * requires the DAG to be reset.
- *
- * The same problem could be solved by registering appropriate hooks that
- * reset the DAG at the beginning of each phase.  But such a solution would
- * require adding hooks to add additional phases.  This solution allows easy
- * control of which phases to run in via injection and @ref c_phases.
- **/
-struct per_tx_t
-{
-    per_tx_t() : phase(IB_PHASE_INVALID) {}
-
-    /**
-     * Last phase evaluated.
-     *
-     * This is used to detect when the evaluation context has changed and the
-     * DAG needs to be reset.
-     **/
-    ib_rule_phase_num_t phase;
-};
-
-/**
  * Module delegate implementing the Predicate module.
  *
  * @sa ibmod_predicate.cpp
@@ -369,7 +344,7 @@ private:
     /**
      * Transaction start handler.
      *
-     * Sets @ref per_tx_t data for transaction.
+     * Resets DAG.
      *
      * @param[in] tx Current transaction.
      **/
@@ -473,6 +448,15 @@ private:
      **/
     scoped_ptr<P::MergeGraph> m_graph;
 
+    /**
+     * All roots.
+     *
+     * Used to reset DAG at request_started().
+     *
+     * @sa request_started()
+     **/
+    list<P::node_p> m_roots;
+
     //! Whether to output a debug report.
     bool m_write_debug_report;
     //! Where to write a debug report.
@@ -557,23 +541,6 @@ void PerContext::inject(
     ib_rule_phase_num_t phase = rule_exec->phase;
     IB::Transaction tx(rule_exec->tx);
     assert(tx);
-
-    per_tx_t* per_tx = NULL;
-    IB::throw_if_error(
-        ib_tx_get_module_data(tx.ib(), m_delegate->module().ib(), &per_tx)
-    );
-    assert(per_tx);
-
-    if (per_tx->phase != phase) {
-        P::bfs_down(
-            roots(phase).first, roots(phase).second,
-            boost::make_function_output_iterator(
-                bind(&P::Node::reset, _1)
-            )
-        );
-    }
-
-    per_tx->phase = phase;
 
     BOOST_FOREACH(
         PerContext::rules_by_node_t::const_reference v,
@@ -820,6 +787,12 @@ void Delegate::context_close(IB::Context context)
             per_context.convert_rules();
         }
 
+        // Copy roots off.
+        copy(
+            graph().roots().first, graph().roots().second,
+            back_inserter(m_roots)
+        );
+
         // Release graph.
         m_graph.reset();
     }
@@ -955,14 +928,11 @@ void Delegate::request_started(
     IB::Transaction tx
 ) const
 {
-    per_tx_t* per_tx = new (tx.memory_pool().allocate<per_tx_t>()) per_tx_t();
-    // Know  per_tx has trivial destructor so not going to register it
-    // with memory pool.
-    if (! per_tx) {
-        BOOST_THROW_EXCEPTION(IB::ealloc());
-    }
-    IB::throw_if_error(
-        ib_tx_set_module_data(tx.ib(), module().ib(), per_tx)
+    P::bfs_down(
+        m_roots.begin(), m_roots.end(),
+        boost::make_function_output_iterator(
+            bind(&P::Node::reset, _1)
+        )
     );
 }
 
