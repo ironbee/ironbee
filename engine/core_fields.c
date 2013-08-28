@@ -97,7 +97,7 @@ static const ib_tx_flag_map_t core_tx_flag_map[] = {
         "FLAGS:inspectRequestHeader",
         IB_TX_FINSPECT_REQHDR,
         false,
-        true
+        false
     },
     {
         "inspectRequestBody",
