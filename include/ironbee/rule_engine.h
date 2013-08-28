@@ -501,7 +501,7 @@ ib_status_t DLL_PUBLIC ib_rule_set_invert(ib_rule_t *rule, bool invert);
 
 /**
  * Set the parameters in this rule so that they may be used for logging.
- * 
+ *
  * @param[in] rule Rule to operate on.
  * @param[in] params The string constant to be copied.
  *

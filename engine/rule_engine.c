@@ -325,7 +325,7 @@ ib_status_t ib_rule_set_op_params(ib_rule_t *rule, const char *params)
         &(rule->opinst->fparam),
         rule->ctx->mp,
         "",
-        0, 
+        0,
         (uint8_t *)rule->opinst->params,
         strlen(rule->opinst->params));
     if (rc != IB_OK) {
