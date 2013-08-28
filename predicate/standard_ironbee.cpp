@@ -103,6 +103,10 @@ void Field::calculate(EvalContext context)
     ib_field_t* data_field;
     ib_status_t rc;
 
+    if (is_aliased()) {
+        return;
+    }
+
     if (m_data->is_indexed) {
         IronBee::throw_if_error(
             ib_data_get_indexed(
