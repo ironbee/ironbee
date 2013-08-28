@@ -4929,6 +4929,32 @@ ib_status_t ib_rule_add_tfn(ib_engine_t *ib,
     return IB_OK;
 }
 
+/* Check a rule (action) parameters */
+ib_status_t ib_rule_check_params(ib_engine_t *ib,
+                                 ib_rule_t *rule,
+                                 const char *params)
+{
+    assert(ib != NULL);
+    assert(rule != NULL);
+
+    /* No parameters -> Nothing to do */
+    if (params == NULL) {
+        return IB_OK;
+    }
+
+    /* Look for a FIELD string in the action's parameters string */
+    if ( (strcasestr(params, "%{FIELD") != NULL) ||
+         (strcasecmp(params, "FIELD") == 0) ||
+         (strcasecmp(params, "FIELD_TARGET") == 0) ||
+         (strcasecmp(params, "FIELD_TFN") == 0) ||
+         (strcasecmp(params, "FIELD_NAME") == 0) ||
+         (strcasecmp(params, "FIELD_NAME_FULL") == 0) )
+    {
+        ib_flags_set(rule->flags, IB_RULE_FLAG_FIELDS);
+    }
+    return IB_OK;
+}
+
 /* Add an action to a rule */
 ib_status_t ib_rule_add_action(ib_engine_t *ib,
                                ib_rule_t *rule,
@@ -4957,16 +4983,14 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
         rc = IB_EINVAL;
     }
 
-    /* Look for a FIELD string in the action's parameters string */
-    if (  (params != NULL) &&
-          ( (strcasestr(params, "%{FIELD") != NULL) ||
-            (strcasecmp(params, "FIELD") == 0) ||
-            (strcasecmp(params, "FIELD_TARGET") == 0) ||
-            (strcasecmp(params, "FIELD_TFN") == 0) ||
-            (strcasecmp(params, "FIELD_NAME") == 0) ||
-            (strcasecmp(params, "FIELD_NAME_FULL") == 0) )  )
-    {
-        ib_flags_set(rule->flags, IB_RULE_FLAG_FIELDS);
+    /* Check the parameters */
+    rc = ib_rule_check_params(ib, rule, params);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Action \"%s\" parameter check failed for \"%s\": %s",
+                     action->action->name,
+                     params == NULL ? "" : params,
+                     ib_status_to_string(rc));
+        return rc;
     }
 
     /* Problems? */

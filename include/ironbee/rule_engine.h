@@ -761,6 +761,22 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(
     ib_action_inst_t           *action,
     ib_rule_action_t            which);
 
+
+/**
+ * Check a rule (action) parameters
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] rule Rule to operate on
+ * @param[in] params Parameters to check
+ *
+ * @returns Status code
+ *   - IB_OK
+ */
+ib_status_t ib_rule_check_params(ib_engine_t *ib,
+                                 ib_rule_t *rule,
+                                 const char *params);
+
+
 /**
  * Search for actions associated with a rule.
  *

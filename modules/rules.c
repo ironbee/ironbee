@@ -584,23 +584,38 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Message modifier */
-    if (strcasecmp(name, "msg") == 0) {
+    if ( (strcasecmp(name, "msg") == 0) ||
+         (strcasecmp(name, "logdata") == 0) )
+    {
         bool expand = false;
-        rule->meta.msg = value;
-        ib_data_expand_test_str(value, &expand);
-        if (expand) {
-            rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_MSG;
-        }
-        return IB_OK;
-    }
+        bool is_msg = toupper(*name) == 'M';
 
-    /* LogData modifier */
-    if (strcasecmp(name, "logdata") == 0) {
-        bool expand = false;
-        rule->meta.data = value;
+        /* Check the parameter */
+        rc = ib_rule_check_params(cp->ib, rule, value);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp,
+                             "%s parameter check failed on \"%s\": %s",
+                             name,
+                             value == NULL ? "" : value,
+                             ib_status_to_string(rc));
+            return rc;
+        }
+
+        /* Check for expansion */
         ib_data_expand_test_str(value, &expand);
-        if (expand) {
-            rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_DATA;
+
+        /* Store the results in the rule */
+        if (is_msg) {
+            rule->meta.msg = value;
+            if (expand) {
+                rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_MSG;
+            }
+        }
+        else {
+            rule->meta.data = value;
+            if (expand) {
+                rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_DATA;
+            }
         }
         return IB_OK;
     }
