@@ -33,6 +33,7 @@
 
 #include <map>
 #include <vector>
+#include <set>
 
 namespace IronBee {
 namespace Predicate {
@@ -72,6 +73,9 @@ public:
     typedef roots_t::const_iterator root_iterator;
     //! Pair of @ref root_iterator.
     typedef std::pair<root_iterator, root_iterator> root_iterators;
+
+    //! List of indicies.
+    typedef std::set<size_t> indices_t;
 
     /**
      * Add a new tree rooted at @a root.
@@ -113,15 +117,15 @@ public:
     const node_p& root(size_t index) const;
 
     /**
-     * Find index of tree equivalent to @a root.
+     * Find indices of tree equivalent to @a root.
      *
      * @param[in] root Root of tree to find index of.
-     * @return index.
+     * @return indices.
      * @throw IronBee::enoent if no equivalent tree has been added via
      *        add_root().
      * @throw IronBee::einval() if @a root is singular.
      **/
-    size_t root_index(const node_cp& root) const;
+    const indices_t& root_indices(const node_cp& root) const;
 
     /**
      * True iff @a node is a root.
@@ -324,7 +328,7 @@ private:
     bool unlearn(const node_cp& which);
 
     //! Type of m_root_indices.
-    typedef std::map<node_cp, size_t> root_indices_t;
+    typedef std::map<node_cp, indices_t> root_indices_t;
 
     //! Type of m_transform_record.
     typedef std::map<node_cp, node_p> transform_record_t;

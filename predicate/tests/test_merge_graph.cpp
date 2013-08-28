@@ -61,7 +61,8 @@ TEST_F(TestMergeGraph, Easy)
     EXPECT_TRUE(g.empty());
     EXPECT_NO_THROW(n_i = g.add_root(n));
     EXPECT_EQ(n, g.root(n_i));
-    EXPECT_EQ(n_i, g.root_index(n));
+    EXPECT_EQ(1UL, g.root_indices(n).size());
+    EXPECT_EQ(n_i, *g.root_indices(n).begin());
     EXPECT_FALSE(g.empty());
 
     EXPECT_TRUE(g.write_validation_report(cerr));
@@ -75,7 +76,8 @@ TEST_F(TestMergeGraph, Basic)
 
     EXPECT_NO_THROW(n_i = g.add_root(n));
     EXPECT_EQ(n, g.root(n_i));
-    EXPECT_EQ(n_i, g.root_index(n));
+    EXPECT_EQ(1UL, g.root_indices(n).size());
+    EXPECT_EQ(n_i, *g.root_indices(n).begin());
 
     EXPECT_EQ(3UL, num_descendants(n));
 
@@ -93,9 +95,11 @@ TEST_F(TestMergeGraph, MultipleRoots)
     EXPECT_NO_THROW(n_i = g.add_root(n));
     EXPECT_NO_THROW(m_i = g.add_root(m));
     EXPECT_EQ(n, g.root(n_i));
-    EXPECT_EQ(n_i, g.root_index(n));
+    EXPECT_EQ(1UL, g.root_indices(n).size());
+    EXPECT_EQ(n_i, *g.root_indices(n).begin());
     EXPECT_EQ(m, g.root(m_i));
-    EXPECT_EQ(m_i, g.root_index(m));
+    EXPECT_EQ(1UL, g.root_indices(m).size());
+    EXPECT_EQ(m_i, *g.root_indices(m).begin());
 
     EXPECT_EQ(2UL, g.size());
     EXPECT_EQ(n, *g.roots().first);

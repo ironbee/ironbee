@@ -61,7 +61,7 @@ size_t MergeGraph::add_root(node_p& root)
     m_roots.push_back(root);
     size_t index = m_roots.size() - 1;
 
-    m_root_indices[root] = index;
+    m_root_indices[root].insert(index);
     return index;
 }
 
@@ -78,7 +78,7 @@ const node_p& MergeGraph::root(size_t index) const
     return m_roots[index];
 }
 
-size_t MergeGraph::root_index(const node_cp& root) const
+const MergeGraph::indices_t& MergeGraph::root_indices(const node_cp& root) const
 {
     if (! root) {
         BOOST_THROW_EXCEPTION(
@@ -250,13 +250,19 @@ void MergeGraph::replace(const node_cp& which, node_p& with)
 
     // If replacing a root, need to update root datastructures, preserving
     // existing index.
-    root_indices_t::iterator root_index_i =
+    root_indices_t::iterator root_indices_i =
         m_root_indices.find(known_which);
-    if (root_index_i != m_root_indices.end()) {
-        size_t index = root_index_i->second;
-        m_root_indices.erase(root_index_i);
-        m_roots[index] = with;
-        m_root_indices[with] = index;
+    if (root_indices_i != m_root_indices.end()) {
+        indices_t indices;
+        indices.swap(root_indices_i->second);
+        m_root_indices.erase(root_indices_i);
+        BOOST_FOREACH(size_t index, indices) {
+            m_roots[index] = with;
+        }
+        copy(
+            indices.begin(), indices.end(),
+            inserter(m_root_indices[with], m_root_indices[with].begin())
+        );
     }
 
     // Update transform record.
@@ -399,15 +405,19 @@ string debug_node_decorator(const MergeGraph& g, const node_cp& node)
 {
     stringstream r;
     bool isroot = true;
-    size_t index;
+    const MergeGraph::indices_t* indices;
     try {
-        index = g.root_index(node);
+        indices = &g.root_indices(node);
     }
     catch (IronBee::enoent) {
         isroot = false;
     }
     if (isroot) {
-        r << "shape=box,label=\"root " << index << "\\n";
+        r << "shape=box,label=\"root" ;
+        BOOST_FOREACH(size_t index, *indices) {
+            r << " " << index;
+        }
+        r << "\\n";
     }
     else {
         r << "label=\"";
@@ -430,7 +440,11 @@ void MergeGraph::write_debug_report(std::ostream& out)
 
     out << "root_indices: " << endl;
     BOOST_FOREACH(root_indices_t::const_reference v, m_root_indices) {
-        out << v.first->to_s() << " @ " << v.first << " -> " << v.second << endl;
+        out << v.first->to_s() << " @ " << v.first << " ->";
+        BOOST_FOREACH(size_t index, v.second) {
+            out << " " << index;
+        }
+        out << endl;
     }
 
     out << endl << "Graph: " << endl;
@@ -521,12 +535,16 @@ bool MergeGraph::write_validation_report(std::ostream& out)
                 << " not in indices." << endl;
             has_no_error = false;
         }
-        else if (m_roots[i->second] != root) {
-            out << "ERROR: Root " << root->to_s() << " @ " << root
-                << " has index " << i->second << " which is root "
-                << m_roots[i->second]->to_s() << " @ " << m_roots[i->second]
-                << endl;
-            has_no_error = false;
+        else {
+            BOOST_FOREACH(size_t index, i->second) {
+                if (m_roots[index] != root) {
+                    out << "ERROR: Root " << root->to_s() << " @ " << root
+                        << " has index " << index << " which is root "
+                        << m_roots[index]->to_s() << " @ " << m_roots[index]
+                        << endl;
+                    has_no_error = false;
+                }
+            }
         }
     }
 
@@ -544,11 +562,14 @@ bool MergeGraph::write_validation_report(std::ostream& out)
     }
 
     BOOST_FOREACH(root_indices_t::const_reference v, m_root_indices) {
-        if (m_roots[v.second] != v.first) {
-            out << "ERROR: Root index " << v.second << " should be "
-                << v.first->to_s() << " @ " << v.first
-                << " but is " << m_roots[v.second]->to_s() << " @ "
-                << m_roots[v.second] << endl;
+        BOOST_FOREACH(size_t index, v.second) {
+            if (m_roots[index] != v.first) {
+                out << "ERROR: Root index " << index << " should be "
+                    << v.first->to_s() << " @ " << v.first
+                    << " but is " << m_roots[index]->to_s() << " @ "
+                    << m_roots[index] << endl;
+                has_no_error = false;
+            }
         }
     }
 
