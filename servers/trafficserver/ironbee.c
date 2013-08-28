@@ -2868,6 +2868,7 @@ static void check_command_file(module_data_t *mod_data)
                                ironbee_logger_flush,  /* Logger flush fn */
                                mod_data,              /* cbdata: module data */
                                mod_data->log_level,   /* IB log level */
+                               NULL,                  /* No maintenance cb */
                                &(mod_data->manager)); /* Engine Manager */
         if (rc != IB_OK) {
             TSError("Failed to create new manager: %s\n",
