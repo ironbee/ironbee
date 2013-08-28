@@ -2603,7 +2603,7 @@ static int ironbee_init(module_data_t *mod_data)
     }
 
     /* Create the IronBee engine manager */
-    TSDebug("ironbee", "Creating engine manager");
+    TSDebug("ironbee", "Creating IronBee engine manager");
     rc = ib_manager_create(&ibplugin,             /* Server object */
                            mod_data->max_engines, /* Default max */
                            NULL,                  /* Logger va function */
@@ -2614,23 +2614,28 @@ static int ironbee_init(module_data_t *mod_data)
                            NULL,                  /* No maintenance callback */
                            &(mod_data->manager)); /* Engine Manager */
     if (rc != IB_OK) {
+        TSError("Failed to create IronBee engine manager: %s",
+                ib_status_to_string(rc));
         return rc;
     }
 
     /* Create the initial engine */
-    TSDebug("ironbee", "Creating initial engine");
+    TSDebug("ironbee", "Creating initial IronBee engine");
     rc = ib_manager_engine_create(mod_data->manager, mod_data->config_file);
     if (rc != IB_OK) {
+        TSError("Failed to create initial IronBee engine: %s",
+                ib_status_to_string(rc));
         return rc;
     }
 
     /* Register our at exit function */
     rv = atexit(ibexit);
     if (rv != 0) {
+        TSError("Failed to register IronBee exit handler: %s", strerror(rv));
         return IB_EOTHER;
     }
 
-    TSDebug("ironbee", "Ready");
+    TSDebug("ironbee", "IronBee Ready");
     return rc;
 }
 
