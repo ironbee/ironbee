@@ -2377,7 +2377,7 @@ ib_status_t ib_core_module_data(
     return IB_OK;
 }
 
-ib_status_t ib_core_context_config(ib_context_t *ctx,
+ib_status_t ib_core_context_config(const ib_context_t *ctx,
                                    ib_core_cfg_t **pcfg)
 {
     assert(ctx != NULL);

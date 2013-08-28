@@ -113,8 +113,8 @@ ib_module_t *ib_core_module(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_core_context_config(
-    ib_context_t   *ctx,
-    ib_core_cfg_t **pcfg);
+    const ib_context_t  *ctx,
+    ib_core_cfg_t      **pcfg);
 
 
 /**
