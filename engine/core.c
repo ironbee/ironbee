@@ -176,22 +176,33 @@ static ib_core_cfg_t core_global_cfg;
 
 
 /* Inspection Engine Options */
-#define IB_IEOPT_REQUEST_HEADER           IB_TX_FINSPECT_REQHDR
+#define IB_IEOPT_REQUEST_URI              IB_TX_FINSPECT_REQURI
+#define IB_IEOPT_REQUEST_PARAMS           IB_TX_FINSPECT_REQPARAMS
+#define IB_IEOPT_REQUEST_HEADER \
+    ( IB_TX_FINSPECT_REQHDR | \
+      IB_TX_FINSPECT_REQURI )
 #define IB_IEOPT_REQUEST_BODY             IB_TX_FINSPECT_REQBODY
 #define IB_IEOPT_RESPONSE_HEADER          IB_TX_FINSPECT_RSPHDR
+#define IB_IEOPT_RESPONSE_BODY            IB_TX_FINSPECT_RSPBODY
 #define IB_IEOPT_RESPONSE_BODY            IB_TX_FINSPECT_RSPBODY
 
 /* NOTE: Make sure to add new options from above to any groups below. */
 #define IB_IEOPT_DEFAULT \
-    ( IB_IEOPT_REQUEST_HEADER )
+    ( IB_IEOPT_REQUEST_HEADER | \
+      IB_IEOPT_REQUEST_URI | \
+      IB_IEOPT_REQUEST_PARAMS )
 #define IB_IEOPT_ALL \
     ( IB_IEOPT_REQUEST_HEADER | \
       IB_IEOPT_REQUEST_BODY | \
       IB_IEOPT_RESPONSE_HEADER | \
-      IB_IEOPT_RESPONSE_BODY )
+      IB_IEOPT_RESPONSE_BODY | \
+      IB_IEOPT_REQUEST_URI | \
+      IB_IEOPT_REQUEST_PARAMS )
 #define IB_IEOPT_REQUEST \
     ( IB_IEOPT_REQUEST_HEADER | \
-      IB_IEOPT_REQUEST_BODY )
+      IB_IEOPT_REQUEST_BODY | \
+      IB_IEOPT_REQUEST_URI | \
+      IB_IEOPT_REQUEST_PARAMS )
 #define IB_IEOPT_RESPONSE \
     ( IB_IEOPT_RESPONSE_HEADER | \
       IB_IEOPT_RESPONSE_BODY )
@@ -4104,6 +4115,8 @@ static IB_STRVAL_MAP(core_inspection_engine_options_map) = {
     /* Individual Inspection Engine Options */
     IB_STRVAL_PAIR("requestheader", IB_IEOPT_REQUEST_HEADER),
     IB_STRVAL_PAIR("requestbody", IB_IEOPT_REQUEST_BODY),
+    IB_STRVAL_PAIR("requesturi", IB_IEOPT_REQUEST_URI),
+    IB_STRVAL_PAIR("requestparams", IB_IEOPT_REQUEST_PARAMS),
     IB_STRVAL_PAIR("responseheader", IB_IEOPT_RESPONSE_HEADER),
     IB_STRVAL_PAIR("responsebody", IB_IEOPT_RESPONSE_BODY),
 
