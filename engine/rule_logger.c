@@ -214,7 +214,6 @@ void ib_rule_log_tx(
     ib_rule_dlog_level_t rule_log_level,
     const ib_tx_t *tx,
     const char *file,
-
     int line,
     const char *fmt, ...
 )
@@ -222,6 +221,7 @@ void ib_rule_log_tx(
     va_list ap;
     ib_core_cfg_t *corecfg = NULL;
     ib_log_level_t ib_log_level;
+    ib_status_t rc;
 
 
     switch(rule_log_level) {
@@ -245,8 +245,8 @@ void ib_rule_log_tx(
         break;
     case IB_RULE_DLOG_ALWAYS:
     default:
-        ib_core_context_config(tx->ctx, &corecfg);
-        ib_log_level = corecfg->rule_log_level;
+        rc = ib_core_context_config(tx->ctx, &corecfg);
+        ib_log_level = (rc == IB_OK) ?  corecfg->rule_log_level : IB_LOG_DEBUG;
         break;
     }
 
