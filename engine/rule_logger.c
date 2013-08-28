@@ -335,21 +335,41 @@ void ib_rule_log_flags_dump(ib_engine_t *ib,
 ib_flags_t ib_rule_log_flags(ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
-    ib_core_context_config(ctx, &corecfg);
+    ib_status_t rc;
+    
+    rc = ib_core_context_config(ctx, &corecfg);
+    if (rc != IB_OK) {
+        /* Don't crash / assert if logging fails. Try to recover. */
+        return 0;
+    }
     return corecfg->rule_log_flags;
 }
 
 ib_log_level_t ib_rule_log_level(ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
-    ib_core_context_config(ctx, &corecfg);
+    ib_status_t rc;
+    
+    rc = ib_core_context_config(ctx, &corecfg);
+    if (rc != IB_OK) {
+        /* Don't crash / assert if logging fails. Try to recover. */
+        return IB_RULE_DLOG_ALWAYS;
+    }
+
     return corecfg->rule_log_level;
 }
 
 ib_rule_dlog_level_t ib_rule_dlog_level(ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
-    ib_core_context_config(ctx, &corecfg);
+    ib_status_t rc;
+    
+    rc = ib_core_context_config(ctx, &corecfg);
+    if (rc != IB_OK) {
+        /* Don't crash / assert if logging fails. Try to recover. */
+        return IB_RULE_DLOG_ALWAYS;
+    }
+
     return corecfg->rule_debug_level;
 }
 
