@@ -353,7 +353,7 @@ ib_log_level_t ib_rule_log_level(ib_context_t *ctx)
     rc = ib_core_context_config(ctx, &corecfg);
     if (rc != IB_OK) {
         /* Don't crash / assert if logging fails. Try to recover. */
-        return IB_RULE_DLOG_ALWAYS;
+        return IB_LOG_DEBUG;
     }
 
     return corecfg->rule_log_level;
