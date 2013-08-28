@@ -11,7 +11,8 @@ require 'all-code'
 
 PATH_EXCEPTIONS = [
   /rule_dev.c/,
-  /ahocorasick/
+  /ahocorasick/,
+  /xrules.cpp/
 ]
 PREVIOUS_EXCEPTIONS = [
   # General.
