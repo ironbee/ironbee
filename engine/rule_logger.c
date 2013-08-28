@@ -1176,8 +1176,15 @@ void ib_rule_log_phase(
             bool empty_tx = rule_exec->tx_log->empty_tx;
 
             /* Inhibit logging of "PHASE: postprocess/logging" for empty tx */
-            if ( (!is_postprocess) || (!is_logging) ||
-                 (num_rules != 0) || (!empty_tx) )
+            if
+            (
+                /* Log if we are not in post processing or logging phases. */
+                ((!is_postprocess) && (!is_logging)) || 
+
+                /* If we are in post processing or logging, do not
+                 * log empty transactions. */
+                ((num_rules != 0) || (!empty_tx))
+            )
             {
                 rule_log_exec(rule_exec, "PHASE %s", phase_name);
             }
