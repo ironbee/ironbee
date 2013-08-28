@@ -161,7 +161,7 @@ ib_status_t DLL_PUBLIC ib_manager_create(
     ib_manager_log_flush_fn_t   logger_flush_fn,
     void                       *logger_cbdata,
     ib_log_level_t              logger_level,
-    void                      (*callback)(void*),
+    void                      (*callback)(void *),
     ib_manager_t              **pmanager
 );
 
