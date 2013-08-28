@@ -114,6 +114,12 @@ public:
         return m_forward;
     }
 
+    //! Is node aliased?
+    bool is_aliased() const
+    {
+        return m_values != m_own_values;
+    }
+
     //! Value list.
     ValueList values() const
     {
@@ -125,6 +131,7 @@ public:
     //! Reset node.
     void reset()
     {
+        cout << "Node::reset()" << endl;
         m_forward.reset();
         m_finished = false;
         m_values = m_own_values;
@@ -276,6 +283,16 @@ void Node::reset()
 bool Node::is_finished() const
 {
     return lookup_value().is_finished();
+}
+
+bool Node::is_forwarding() const
+{
+    return lookup_value().is_forwarding();
+}
+
+bool Node::is_aliased() const
+{
+    return lookup_value().is_aliased();
 }
 
 void Node::add_value(Value value)

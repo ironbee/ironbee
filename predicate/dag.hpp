@@ -410,11 +410,25 @@ protected:
      * guarantee that the list only grows and to call finish once the list is
      * done growing.
      *
+     * Once a node is aliased, it unlikely there is any more to do with the
+     * value besides finish.  Thus, if you call alias(), be sure to check if
+     * already aliased() in subsequent calls.
+     *
      * @throw einval if called on a finished() node.
      * @throw einval if called on a node with non-empty values.
      * @throw einval if called on a forwarded node.
      **/
     void alias(ValueList list);
+
+    /**
+     * Is node forwarding?
+     **/
+    bool is_forwarding() const;
+
+    /**
+     * Is node aliased?
+     **/
+    bool is_aliased() const;
 
     /**
      * Finish node as true.
