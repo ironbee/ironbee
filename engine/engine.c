@@ -1020,9 +1020,6 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
         goto failed;
     }
 
-    /* Blocking mode is on, by default. */
-    ib_tx_flags_set(tx, IB_TX_FBLOCKING_MODE);
-
     /**
      * After this, we have generally succeeded and are now outputting
      * the transaction to the conn object and the ptx pointer.

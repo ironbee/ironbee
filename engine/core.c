@@ -207,6 +207,13 @@ static ib_core_cfg_t core_global_cfg;
     ( IB_IEOPT_RESPONSE_HEADER | \
       IB_IEOPT_RESPONSE_BODY )
 
+/* Protection Engine Options */
+#define IB_PEOPT_BLOCKING_MODE            IB_TX_FBLOCKING_MODE
+
+/* NOTE: Make sure to add new options from above to any groups below. */
+#define IB_PEOPT_DEFAULT                  0
+#define IB_PEOPT_ALL \
+    ( IB_PEOPT_BLOCKING_MODE )
 
 /* -- Utilities -- */
 
@@ -2267,8 +2274,9 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
         return rc;
     }
 
-    /* Set default inspection options. */
+    /* Set default options. */
     tx->flags |= corecfg->inspection_engine_options;
+    tx->flags |= corecfg->protection_engine_options;
 
     /* Copy config to transaction for potential runtime changes. */
     core_txdata =
@@ -3809,6 +3817,44 @@ static ib_status_t core_dir_inspection_engine_options(ib_cfgparser_t *cp,
 }
 
 /**
+ * Handle ProtectionEngineOptions directive.
+ *
+ * @param cp Config parser
+ * @param name Directive name
+ * @param flags Flags
+ * @param fmask Flags mask (which bits were actually set)
+ * @param cbdata Callback data (from directive registration)
+ *
+ * @returns Status code
+ */
+static ib_status_t core_dir_protection_engine_options(ib_cfgparser_t *cp,
+                                                      const char *name,
+                                                      ib_flags_t flags,
+                                                      ib_flags_t fmask,
+                                                      void *cbdata)
+{
+    ib_engine_t *ib = cp->ib;
+    ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    ib_num_t options = 0;
+    ib_status_t rc;
+
+    rc = ib_context_get(ctx, "protection_engine_options",
+                        ib_ftype_num_out(&options), NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Merge the set flags with the previous value. */
+    options = ib_flags_merge(options, flags, fmask);
+
+    ib_log_debug2(ib, "PROTECTION_ENGINE_OPTIONS: 0x%08lx",
+                  (unsigned long)options);
+
+    rc = ib_context_set_num(ctx, "protection_engine_options", options);
+    return rc;
+}
+
+/**
  * Perform any extra duties when certain config parameters are "Set".
  *
  * @param cp Config parser
@@ -4127,6 +4173,22 @@ static IB_STRVAL_MAP(core_inspection_engine_options_map) = {
 };
 
 /**
+ * Mapping of valid protection engine options
+ */
+static IB_STRVAL_MAP(core_protection_engine_options_map) = {
+    /* Protection Engine Options Groups */
+    IB_STRVAL_PAIR("none", 0),
+    IB_STRVAL_PAIR("all", IB_PEOPT_ALL),
+    IB_STRVAL_PAIR("default", IB_PEOPT_DEFAULT),
+
+    /* Individual Protection Engine Options */
+    IB_STRVAL_PAIR("blockingmode", IB_PEOPT_BLOCKING_MODE),
+
+    /* End */
+    IB_STRVAL_PAIR_LAST
+};
+
+/**
  * Directive initialization structure.
  */
 static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
@@ -4259,6 +4321,14 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         core_dir_inspection_engine_options,
         NULL,
         core_inspection_engine_options_map
+    ),
+
+    /* Protection Engine */
+    IB_DIRMAP_INIT_OPFLAGS(
+        "ProtectionEngineOptions",
+        core_dir_protection_engine_options,
+        NULL,
+        core_protection_engine_options_map
     ),
 
     /* Audit Engine */
@@ -4540,6 +4610,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->block_status         = 403;
     corecfg->block_method         = IB_BLOCK_METHOD_STATUS;
     corecfg->inspection_engine_options = IB_IEOPT_DEFAULT;
+    corecfg->protection_engine_options = IB_PEOPT_DEFAULT;
 
     /* Initialize core module limits to "off." */
     corecfg->limits.request_body_buffer_limit         = -1;
@@ -4780,6 +4851,12 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NUM,
         ib_core_cfg_t,
         inspection_engine_options
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "protection_engine_options",
+        IB_FTYPE_NUM,
+        ib_core_cfg_t,
+        protection_engine_options
     ),
 
     /* End */
