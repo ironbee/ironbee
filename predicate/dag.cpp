@@ -502,13 +502,13 @@ string String::escape(const std::string& s)
 
     pos = s.find_first_of("'\\", pos);
     while (pos != string::npos) {
-        escaped += s.substr(last_pos, pos);
+        escaped += s.substr(last_pos, pos - last_pos);
         escaped += '\\';
         escaped += s[pos];
         last_pos = pos + 1;
         pos = s.find_first_of("'\\", last_pos);
     }
-    escaped += s.substr(last_pos, pos);
+    escaped += s.substr(last_pos);
     return escaped;
 }
 
