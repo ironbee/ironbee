@@ -80,20 +80,32 @@ ib_log_level_t DLL_PUBLIC ib_log_string_to_level(
  */
 const char DLL_PUBLIC *ib_log_level_to_string(ib_log_level_t level);
 
-/* Descriptor to pass user data to log functions, according to call context */
+/**
+ * Log call data type
+ */
+typedef enum {
+    IBLOG_ENGINE,
+    IBLOG_CONN,
+    IBLOG_TX,
+    IBLOG_MANAGER
+} ib_log_call_data_type_t;
+
+/**
+ * Log call data
+ */
+typedef union {
+    const ib_engine_t *e;
+    const ib_conn_t *c;
+    const ib_tx_t *t;
+    const struct ib_manager_t *m;
+} ib_log_call_data_union_t;
+
+/**
+ * Descriptor to pass user data to log functions, according to call context
+ */
 typedef struct {
-    enum {
-        IBLOG_ENGINE,
-        IBLOG_CONN,
-        IBLOG_TX,
-        IBLOG_MANAGER
-    } type;
-    union {
-        const ib_engine_t *e;
-        const ib_conn_t *c;
-        const ib_tx_t *t;
-        const struct ib_manager_t *m;
-    } data;
+    ib_log_call_data_type_t  type;
+    ib_log_call_data_union_t data;
 } ib_log_call_data_t;
 
 /**
