@@ -538,9 +538,7 @@ ib_status_t modlua_runtime_get(
     assert(lua != NULL);
     assert(*lua == NULL);
 
-    ib_conn_get_module_data(conn, module, (void **)lua);
-
-    return IB_OK;
+    return ib_conn_get_module_data(conn, module, (void **)lua);
 }
 
 ib_status_t modlua_runtime_set(
