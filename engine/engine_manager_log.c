@@ -157,7 +157,7 @@ void ib_manager_log_ex(
 
     va_start(ap, fmt);
     ib_engine_manager_logger(NULL, level, file, line, fmt, ap, calldata,
-                            (void *)manager);
+                             (void *)manager);
     va_end(ap);
 }
 
