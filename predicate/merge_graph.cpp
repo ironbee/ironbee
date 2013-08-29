@@ -477,6 +477,10 @@ public:
 
         BOOST_FOREACH(const weak_node_p& weak_parent, node->parents()) {
             node_cp parent = weak_parent.lock();
+            if (! parent) {
+                error(node, "singular parent");
+                return;
+            }
             check_is_known(parent);
             node_list_t::const_iterator i =
                 find(
