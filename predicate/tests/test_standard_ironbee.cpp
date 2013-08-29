@@ -63,6 +63,11 @@ TEST_F(TestStandardIronBee, Operator)
     EXPECT_THROW(eval_bool("(operator null 'b' 'c')"), IronBee::einval);
 }
 
+TEST_F(TestStandardIronBee, FOperator)
+{
+    EXPECT_EQ("foo", eval_s("(foperator 'istreq' 'fOo' 'foo')"));
+}
+
 TEST_F(TestStandardIronBee, transformation)
 {
     EXPECT_EQ("foo", eval_s("(transformation 'lowercase' 'fOO')"));

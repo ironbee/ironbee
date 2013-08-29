@@ -266,6 +266,46 @@ void Operator::calculate(EvalContext context)
     map_calculate(input_node, context);
 }
 
+string FOperator::name() const
+{
+    return "foperator";
+}
+
+Value FOperator::value_calculate(Value v, EvalContext context)
+{
+    if (! m_data) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Evaluation without pre evaluation!"
+            )
+        );
+    }
+
+    int success = 0;
+    try {
+        success = m_data->op.execute_instance(
+            m_data->instance_data,
+            context,
+            v
+        );
+    }
+    catch (const error& e) {
+        string old_what = *boost::get_error_info<errinfo_what>(e);
+        e << errinfo_what(
+            "Predicate foperator failure for " +
+            to_s() + " : " + old_what
+        );
+        throw e;
+    }
+
+    if (success) {
+        return v;
+    }
+    else {
+        return Value();
+    }
+}
+
 struct Transformation::data_t
 {
     ConstTransformation transformation;
@@ -518,6 +558,7 @@ void load_ironbee(CallFactory& to)
     to
         .add<Field>()
         .add<Operator>()
+        .add<FOperator>()
         .add<Transformation>()
         .add<WaitPhase>()
         .add<FinishPhase>()

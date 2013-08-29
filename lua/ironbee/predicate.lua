@@ -262,7 +262,8 @@ local param2 = {
   'Ask'
 }
 local param3 = {
-  'Operator'
+  'Operator',
+  'FOperator'
 }
 local paramn = {
   'Or',
@@ -294,7 +295,9 @@ local operators = {
 for i,n in ipairs(operators) do
   local capitalized = n:gsub("^%l", string.upper)
   _M[capitalized] = function (a, b) return _M.Operator(n, a, b) end
+  _M["F" .. capitalized] = function (a, b) return _M.FOperator(n, a, b) end
   call_mt[n] = function (self) return _M[capitalized](self) end
+  call_mt["f" .. n] = function (self) return _M["F" .. capitalized](self) end
 end
 
 local tfns = {

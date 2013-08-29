@@ -70,9 +70,8 @@ private:
  * Run IronBee operator.
  *
  * First child is name of operator, second is parameters, third is input.
- * First and second must be string literals.  If operator results is 0,
- * node value is NULL, otherwise node value is the capture collection.  The
- * collection will be empty for operators that do not support capture.
+ * First and second must be string literals.  Values are the capture
+ * collections for any inputs values for which the operator returned 1.
  **/
 class Operator :
     public MapCall
@@ -94,12 +93,29 @@ protected:
     virtual void calculate(EvalContext context);
     virtual Value value_calculate(Value v, EvalContext context);
 
-private:
     //! Hidden complex implementation details.
     struct data_t;
 
     //! Hidden complex implementation details.
     boost::scoped_ptr<data_t> m_data;
+};
+
+/**
+ * Run IronBee operator as a filter.
+ *
+ * First child is name of operator, second is parameters, third is input.
+ * First and second must be string literals.  Values are the input values
+ * for which the operator returned 1.
+ **/
+class FOperator :
+    public Operator
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+protected:
+    virtual Value value_calculate(Value v, EvalContext context);
 };
 
 /**

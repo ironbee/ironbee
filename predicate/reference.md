@@ -636,6 +636,20 @@ Notes
 Front End
 : Provides most specific operators as `P.N(S, d)`.  These are also **Call Methods**.
 
+**`(foperator N S d)`**
+
+Result
+: As `operator`, but instead of adding capture, it adds the input.
+
+Finished
+: `d` is finished.
+
+Notes
+: You will often not need to use `foperator` directly.  The front end or templates will provide functions that directly call a specific IronBee operator.
+
+Front End
+: Provides most specific operators as `P.FN(S, d)`.  These are also **Call Methods**.
+
 **`(transformation N d)`**
 
 Result
