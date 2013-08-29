@@ -119,7 +119,7 @@ pair<bool, node_p> MergeGraph::learn(const node_p& which)
     if (! which) {
         BOOST_THROW_EXCEPTION(
             IronBee::einval() << errinfo_what(
-                "Cannot add singular node."
+                "Cannot learn singular node."
             )
         );
     }
@@ -146,7 +146,7 @@ node_p MergeGraph::known(const node_cp& node) const
     if (! node) {
         BOOST_THROW_EXCEPTION(
             IronBee::einval() << errinfo_what(
-                "Cannot add singular node."
+                "Cannot know singular node."
             )
         );
     }
