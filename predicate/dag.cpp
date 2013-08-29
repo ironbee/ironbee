@@ -232,7 +232,19 @@ Node::Node()
 
 Node::~Node()
 {
-    // nop
+    BOOST_FOREACH(const node_p& child, children()) {
+        // Can't throw exception so can't use unlink_from_child().
+        for (
+            weak_node_list_t::iterator i = child->m_parents.begin();
+            i != child->m_parents.end();
+            ++i
+        ) {
+            if (i->expired()) {
+                child->m_parents.erase(i);
+                break;
+            }
+        }
+    }
 }
 
 Node::per_thread_t& Node::lookup_value()
