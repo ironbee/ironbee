@@ -146,8 +146,6 @@ private:
         size_t              n
     )
     {
-        cout << "getter called with param = " << string(param, n) << endl;
-
         using namespace IronBee;
         typedef List<Value> result_t;
 
