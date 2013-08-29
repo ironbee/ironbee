@@ -84,11 +84,15 @@ TEST_F(ActionTest, CallAction) {
     ASSERT_EQ(IB_OK, status);
 }
 
+namespace {
+extern "C" {
+
 static bool action_executed = false;
 static ib_flags_t action_flags = IB_ACTINST_FLAG_NONE;
 static const char *action_str = NULL;
 
-static ib_status_t create_fn(ib_engine_t *ib,
+
+ib_status_t create_fn(ib_engine_t *ib,
                              const char *params,
                              ib_action_inst_t *inst,
                              void *cbdata)
@@ -100,7 +104,7 @@ static ib_status_t create_fn(ib_engine_t *ib,
     return IB_OK;
 }
 
-static ib_status_t execute_fn(const ib_rule_exec_t *rule_exec,
+ib_status_t execute_fn(const ib_rule_exec_t *rule_exec,
                               void *data,
                               ib_flags_t flags,
                               void *cbdata)
@@ -109,6 +113,8 @@ static ib_status_t execute_fn(const ib_rule_exec_t *rule_exec,
     action_str = (const char *)data;
     action_flags = flags;
     return IB_OK;
+}
+}
 }
 
 TEST_F(ActionTest, ExecuteAction) {
