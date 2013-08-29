@@ -389,6 +389,7 @@ static ib_status_t act_setflag_execute(
     const setflag_data_t *opdata = (const setflag_data_t *)data;
     ib_num_t value;
     ib_status_t rc;
+    ib_field_t *existing_field;
 
     switch (opdata->op) {
 
@@ -406,17 +407,25 @@ static ib_status_t act_setflag_execute(
         return IB_EINVAL;
     }
 
-    /* This fails because ib_data_remove() doesn't handle fields within
-     * collections */
-    rc = ib_data_remove(rule_exec->tx->data, opdata->flag->tx_name, NULL);
-    if (rc != IB_OK) {
-        /* Do nothing */
+    rc = ib_data_get(
+        rule_exec->tx->data,
+        opdata->flag->tx_name,
+        &existing_field);
+    if (rc == IB_ENOENT) {
+        rc = ib_data_add_num(
+            rule_exec->tx->data,
+            opdata->flag->tx_name,
+            value,
+            NULL);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
-
-    rc = ib_data_add_num(rule_exec->tx->data, opdata->flag->tx_name,
-                         value, NULL);
-    if (rc != IB_OK) {
-        return rc;
+    else if (rc != IB_OK) {
+        rc = ib_field_setv(existing_field, ib_ftype_num_in(&value));
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     return IB_OK;
