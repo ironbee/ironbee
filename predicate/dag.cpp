@@ -131,7 +131,6 @@ public:
     //! Reset node.
     void reset()
     {
-        cout << "Node::reset()" << endl;
         m_forward.reset();
         m_finished = false;
         m_values = m_own_values;
