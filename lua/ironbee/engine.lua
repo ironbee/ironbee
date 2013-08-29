@@ -247,7 +247,7 @@ end
 -- ===============================================
 _M.config_directive_process = function(self, name, ...)
     if CP == nil then
-      ib:logError(
+      self:logError(
           "config_directive_process() called in environment without CP."
       )
       return nil
@@ -258,7 +258,7 @@ _M.config_directive_process = function(self, name, ...)
         ffi.C.ib_engine_pool_main_get(self.ib_engine)
     )
     if rc ~= ffi.C.IB_OK then
-        ib:logError("Failed to create new ib_list_t.")
+        self:logError("Failed to create new ib_list_t.")
         return rc
     end
 
@@ -272,7 +272,7 @@ _M.config_directive_process = function(self, name, ...)
         args[0]
     )
     if rc ~= ffi.C.IB_OK then
-        ib:logError(
+        self:logError(
             "Failed to execute directive %s",
             name
         )
