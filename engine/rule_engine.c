@@ -1314,6 +1314,12 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
         else {
             fld_field_name->type = IB_FTYPE_BYTESTR;
             trc = ib_field_setv(fld_field_name, bs);
+            if (trc != IB_OK) {
+                ib_rule_log_error(rule_exec,
+                                  "Failed to set FIELD_NAME value: %s",
+                                  ib_status_to_string(trc));
+                rc = trc;
+            }
         }
     }
 
@@ -1372,7 +1378,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
         trc = ib_bytestr_dup_mem(&bs, tx->mp, (uint8_t *)name, namelen);
         if (trc == IB_OK) {
             fld_field_name_full->type = IB_FTYPE_BYTESTR;
-            trc = ib_field_setv(fld_field_name_full, bs);
+            rc = ib_field_setv(fld_field_name_full, bs);
         }
     }
 
@@ -5050,6 +5056,14 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     }
     else {
         rc = IB_EINVAL;
+    }
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Action \"%s\" could not be added to a list: %s",
+            action->action->name, 
+            ib_status_to_string(rc));
+        return rc;
     }
 
     /* Some actions require IB_RULE_FLAG_FIELS to be set. 
