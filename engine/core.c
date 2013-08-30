@@ -1946,7 +1946,6 @@ static ib_status_t logevent_hook_logging(ib_engine_t *ib,
     cfg->boundary = boundary;
     log->cfg_data = cfg;
 
-
     /* Add all the parts to the log. */
     if (tx->auditlog_parts & IB_ALPART_HEADER) {
         ib_auditlog_add_part_header(log);

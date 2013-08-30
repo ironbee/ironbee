@@ -1133,6 +1133,68 @@ static void clear_target_fields(ib_rule_exec_t *rule_exec)
 }
 
 /**
+ * Fetch an existing field, by name, or add a new @ref IB_FTYPE_GENERIC field.
+ *
+ * The new field will point to NULL and should be updated to
+ * a new type and value by the caller.
+ *
+ * There is no difference bewteen an added field or a new field. The
+ * caller should check to see if the resulting field is as they require it.
+ *
+ * @param[in] tx The transaction with the memory pool and data collection.
+ * @param[in] field_name The name of the field to fetch or create.
+ * @param[out] field The field found or created.
+ * @returns
+ * - IB_OK On success.
+ * - Other on field creation or data field adding errors.
+ */
+static ib_status_t get_or_create_field(
+    ib_tx_t     *tx,
+    const char  *field_name,
+    ib_field_t **field
+)
+{
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
+    assert(tx->data != NULL);
+    assert(field_name != NULL);
+    assert(field != NULL);
+
+    ib_status_t rc;
+
+    /* Fetch field. */
+    rc = ib_data_get(tx->data, field_name, field);
+    /* Success. */
+    if (rc == IB_OK) {
+        return IB_OK;
+    }
+    /* Unexpected failure. */
+    else if (rc != IB_ENOENT) {
+        return rc;
+    }
+
+    /* Create a new, generic field. */
+    rc = ib_field_create(
+        field,
+        tx->mp,
+        field_name,
+        strlen(field_name),
+        IB_FTYPE_GENERIC,
+        NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Add that field to the data collection. */
+    rc = ib_data_add(tx->data, *field);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+/**
  * Set the target fields (FIELD, FIELD_TFN, FIELD_NAME, FIELD_NAME_FULL)
  *
  * @param[in] rule_exec Rule execution object
@@ -1150,99 +1212,109 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
 
     ib_status_t           rc = IB_OK;
     ib_tx_t              *tx = rule_exec->tx;
-    ib_field_t           *f;
-    ib_bytestr_t         *bs;
     ib_status_t           trc;
-    const ib_field_t     *value;
-    const ib_list_node_t *node;
-    size_t                namelen;
-    size_t                nameoff;
-    int                   names;
-    int                   n;
-    char                 *name;
-    ib_rule_target_t     *target = rule_exec->target;
+    ib_field_t           *fld_field;           /* The field FIELD. */
+    ib_field_t           *fld_field_name;      /* The field FIELD_NAME. */
+    ib_field_t           *fld_field_name_full; /* The field FIELD_NAME_FULL. */
+    const ib_list_node_t *node;                /* Temporary list node. */
+    size_t                namelen;             /* FIELD_NAME_FULL tmp value. */
+    size_t                nameoff;             /* FIELD_NAME_FULL tmp value. */
+    int                   names;               /* FIELD_NAME_FULL tmp value. */
+    int                   n;                   /* FIELD_NAME_FULL tmp value. */
+    char                 *name;                /* FIELD_NAME_FULL tmp value. */
 
     if (! ib_flags_any(rule_exec->rule->flags, IB_RULE_FLAG_FIELDS)) {
-        ib_rule_log_trace(rule_exec, "Not creating target fields");
+        ib_rule_log_trace(rule_exec, "Not setting target fields");
         return IB_OK;
     }
     ib_rule_log_trace(rule_exec, "Creating target fields");
 
     /* The current value is the top of the stack */
     node = ib_list_last_const(rule_exec->value_stack);
-    if ( (node == NULL) || (node->data == NULL) ) {
+    if ( (node == NULL) || (ib_list_node_data_const(node) == NULL) ) {
         return IB_OK;       /* Do nothing for now */
     }
-    value = (const ib_field_t *)node->data;
 
-    /* Create FIELD */
-    (void)ib_data_remove(tx->data, "FIELD", NULL);
-    trc = ib_data_add_named(tx->data,
-                            (ib_field_t *)value,
-                            IB_FIELD_NAME("FIELD"));
+    /* Get or create all fields. */
+    trc = get_or_create_field(tx, "FIELD", &fld_field);
     if (trc != IB_OK) {
-        ib_rule_log_error(rule_exec,
-                          "Failed to create FIELD: %s",
-                          ib_status_to_string(trc));
+        ib_rule_log_error(
+            rule_exec,
+            "Failed to create FIELD: %s",
+            ib_status_to_string(trc));
         rc = trc;
+    }
+    else {
+        /* Shallow copy the field. */
+        *fld_field = *(const ib_field_t *)ib_list_node_data_const(node);
     }
 
     /* Create FIELD_TFN */
     if (transformed != NULL) {
-        (void)ib_data_remove(tx->data, "FIELD_TFN", NULL);
-        trc = ib_data_add_named(tx->data,
-                                (ib_field_t *)value,
-                                IB_FIELD_NAME("FIELD_TFN"));
+        ib_field_t *fld_field_tfn; /* The field FIELD_TFN. */
+        trc = get_or_create_field(tx, "FIELD_TFN", &fld_field_tfn);
         if (trc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Failed to create FIELD_TFN: %s",
                               ib_status_to_string(trc));
             rc = trc;
         }
+        else {
+            /* Shallow copy the field. */
+            *fld_field_tfn = *transformed;
+        }
     }
 
     /* Create FIELD_TARGET */
-    if (target != NULL) {
-        trc = ib_data_get(tx->data, "FIELD_TARGET", &f);
-        if (trc == IB_ENOENT) {
-            trc = ib_data_add_nulstr_ex(tx->data,
-                                        IB_FIELD_NAME("FIELD_TARGET"),
-                                        target->target_str,
-                                        NULL);
-        }
-        else if (trc == IB_OK) {
-            trc = ib_field_setv(f, ib_ftype_nulstr_in(target->target_str));
-        }
+    if (rule_exec->target != NULL) {
+        ib_field_t *fld_field_target; /* The field FIELD_TARGET. */
+
+        trc = get_or_create_field(tx, "FIELD_TARGET", &fld_field_target);
         if (trc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Failed to create FIELD_TARGET: %s",
                               ib_status_to_string(trc));
             rc = trc;
         }
+        else {
+            fld_field_target->type = IB_FTYPE_NULSTR;
+            trc = ib_field_setv(
+                fld_field_target,
+                ib_ftype_nulstr_in(rule_exec->target->target_str));
+            if (trc != IB_OK) {
+                ib_rule_log_error(rule_exec,
+                                  "Failed to set FIELD_TARGET: %s",
+                                  ib_status_to_string(trc));
+                rc = trc;
+            }
+        }
     }
 
     /* Create FIELD_NAME */
-    trc = ib_data_get(tx->data, "FIELD_NAME", &f);
-    if (trc == IB_ENOENT) {
-        trc = ib_data_add_bytestr_ex(tx->data,
-                                     IB_FIELD_NAME("FIELD_NAME"),
-                                     (uint8_t *)value->name,
-                                     value->nlen,
-                                     NULL);
-    }
-    else if (trc == IB_OK) {
-        trc = ib_bytestr_dup_mem(&bs, tx->mp,
-                                 (uint8_t *)value->name,
-                                 value->nlen);
-        if (trc == IB_OK) {
-            trc = ib_field_setv(f, bs);
-        }
-    }
+    trc = get_or_create_field(tx, "FIELD_NAME", &fld_field_name);
     if (trc != IB_OK) {
         ib_rule_log_error(rule_exec,
                           "Failed to create FIELD_NAME: %s",
                           ib_status_to_string(trc));
         rc = trc;
+    }
+    else {
+        ib_bytestr_t *bs;
+        trc = ib_bytestr_dup_mem(
+            &bs,
+            tx->mp,
+            (uint8_t *)(fld_field->name),
+            fld_field->nlen);
+        if (trc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "Failed to set FIELD_NAME: %s",
+                              ib_status_to_string(trc));
+            rc = trc;
+        }
+        else {
+            fld_field_name->type = IB_FTYPE_BYTESTR;
+            trc = ib_field_setv(fld_field_name, bs);
+        }
     }
 
     /* Create FIELD_NAME_FULL */
@@ -1252,10 +1324,10 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     names = 0;
     IB_LIST_LOOP_CONST(rule_exec->value_stack, node) {
         if (node->data != NULL) {
+            ib_field_t *fld_tmp = (ib_field_t *)ib_list_node_data_const(node);
             ++names;
-            value = (const ib_field_t *)node->data;
-            if (value->nlen > 0) {
-                namelen += (value->nlen + 1);
+            if (fld_tmp->nlen > 0) {
+                namelen += (fld_tmp->nlen + 1);
             }
         }
     }
@@ -1273,10 +1345,10 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     n = 0;
     IB_LIST_LOOP_CONST(rule_exec->value_stack, node) {
         if (node->data != NULL) {
-            value = (const ib_field_t *)node->data;
-            if (value->nlen > 0) {
-                memcpy(name+nameoff, value->name, value->nlen);
-                nameoff += value->nlen;
+            ib_field_t *fld_tmp = (ib_field_t *)ib_list_node_data_const(node);
+            if (fld_tmp->nlen > 0) {
+                memcpy(name+nameoff, fld_tmp->name, fld_tmp->nlen);
+                nameoff += fld_tmp->nlen;
                 ++n;
                 if (n < names) {
                     *(name+nameoff) = ':';
@@ -1287,24 +1359,21 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     }
 
     /* Step 3: Update the FIELD_NAME_FULL field. */
-    trc = ib_data_get(tx->data, "FIELD_NAME_FULL", &f);
-    if (trc == IB_ENOENT) {
-        trc = ib_data_add_bytestr_ex(tx->data,
-                                     IB_FIELD_NAME("FIELD_NAME_FULL"),
-                                     (uint8_t *)name, namelen,
-                                     NULL);
+    trc = get_or_create_field(tx, "FIELD_NAME_FULL", &fld_field_name_full);
+    if (trc != IB_OK) {
+        ib_rule_log_error(
+            rule_exec,
+            "Failed to create FIELD_NAME_FULL: %s",
+            ib_status_to_string(trc));
+        rc = trc;
     }
-    else if (trc == IB_OK) {
+    else {
+        ib_bytestr_t *bs;
         trc = ib_bytestr_dup_mem(&bs, tx->mp, (uint8_t *)name, namelen);
         if (trc == IB_OK) {
-            trc = ib_field_setv(f, bs);
+            fld_field_name_full->type = IB_FTYPE_BYTESTR;
+            trc = ib_field_setv(fld_field_name_full, bs);
         }
-    }
-    if (trc != IB_OK) {
-        ib_rule_log_error(rule_exec,
-                          "Failed to create FIELD_NAME_FULL: %s",
-                          ib_status_to_string(trc));
-        rc = trc;
     }
 
     return rc;
@@ -4981,6 +5050,13 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     }
     else {
         rc = IB_EINVAL;
+    }
+
+    /* Some actions require IB_RULE_FLAG_FIELS to be set. 
+     * FIXME: This is fragile code. Event should be able to construct
+     *        the current field name from the provided rule_exec. */
+    if (strcasestr(action->action->name, "event") == 0) {
+        ib_flags_set(rule->flags, IB_RULE_FLAG_FIELDS);
     }
 
     /* Check the parameters */
