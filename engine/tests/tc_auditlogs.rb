@@ -39,7 +39,7 @@ class TestAuditLogs < Test::Unit::TestCase
         "AuditLogBaseDir " + BUILDDIR,
       ].join("\n"),
       :default_site_config => <<-EOS
-        Rule REQUEST_METHOD @match "GET HEAD" id:1 phase:REQUEST_HEADER clipp_announce:A log event
+        Rule REQUEST_METHOD @match "GET HEAD" id:1 phase:REQUEST_HEADER clipp_announce:A event
       EOS
     )
     assert_no_issues
@@ -56,8 +56,21 @@ class TestAuditLogs < Test::Unit::TestCase
     assert(event)
     assert(event !~ /"fields": \[""\],/m, "Empty fields entry in event record detected.")
     assert(event =~ /"fields": \["request_method"\],/m)
-
-
   end
 
+  def test_log_auditlogs
+    clipp(
+      :input_hashes => [simple_hash("GET /foobar/a\n")],
+      :config => [
+        "AuditLogBaseDir " + BUILDDIR,
+        "LogLevel info",
+        "RuleEngineLogData event audit",
+      ].join("\n"),
+      :default_site_config => <<-EOS
+        Rule REQUEST_METHOD @match "GET HEAD" id:1 phase:REQUEST_HEADER clipp_announce:A event
+      EOS
+    )
+    assert_no_issues
+    assert_log_match(/ AUDIT /m)
+  end
 end

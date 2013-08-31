@@ -1847,7 +1847,11 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
 }
 
 /**
- * Handle writing the logevents.
+ * Handle writing the logevents that audit IronBee.
+ *
+ * This should occur in the post processing phase. If this is moved
+ * earlier then, for example, the rule engine's logging of
+ * events will not be audited.
  *
  * @param ib Engine.
  * @param tx Transaction.
@@ -1856,12 +1860,12 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
  *
  * @returns Status code.
  */
-static ib_status_t logevent_hook_logging(ib_engine_t *ib,
-                                         ib_tx_t *tx,
-                                         ib_state_event_type_t event,
-                                         void *cbdata)
+static ib_status_t auditing_hook(ib_engine_t *ib,
+                                 ib_tx_t *tx,
+                                 ib_state_event_type_t event,
+                                 void *cbdata)
 {
-    assert(event == handle_logging_event);
+    assert(event == handle_postprocess_event);
 
     ib_auditlog_t *log;
     ib_core_cfg_t *corecfg;
@@ -4657,9 +4661,9 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_hook_txdata_register(ib, response_body_data_event,
                             core_hook_response_body_data, NULL);
 
-    /* Register logevent hooks. */
-    ib_hook_tx_register(ib, handle_logging_event,
-                        logevent_hook_logging, NULL);
+    /* Register postprocessing hooks. */
+    ib_hook_tx_register(ib, handle_postprocess_event,
+                        auditing_hook, NULL);
 
     /* Register context hooks. */
     ib_hook_context_register(ib, context_open_event,

@@ -86,13 +86,6 @@ static const size_t REV_BUFSIZE = 16;
       IB_RULE_LOG_FLAG_ACTION )
 
 /**
- * If any of these flags are set, enable phase loop
- */
-#define RULE_LOG_FLAG_PHASE_ENABLE                   \
-    ( IB_RULE_LOG_FLAG_PHASE |                       \
-      IB_RULE_LOG_FLAG_AUDIT )
-
-/**
  * Mapping of valid rule logging names to flag values.
  */
 static IB_STRVAL_MAP(flags_map) = {
@@ -1167,10 +1160,8 @@ void ib_rule_log_phase(
     flags = rule_exec->tx_log->flags;
 
     if (phase_num != rule_exec->tx_log->cur_phase) {
-        static const bool phase_flags =
-            (RULE_LOG_FLAG_PHASE_ENABLE | IB_RULE_LOG_FLAG_PHASE);
 
-        if (ib_flags_all(flags, phase_flags)) {
+        if (ib_flags_any(flags, (IB_RULE_LOG_FLAG_AUDIT | IB_RULE_LOG_FLAG_PHASE))) {
             bool is_postprocess = (phase_num == IB_PHASE_POSTPROCESS);
             bool is_logging = (phase_num == IB_PHASE_LOGGING);
             bool empty_tx = rule_exec->tx_log->empty_tx;
