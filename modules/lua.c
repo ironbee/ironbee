@@ -1509,6 +1509,11 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         context_open_event,
         modlua_context_open,
         NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to register context_open_event hook: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
 
     /* Hook the context close event. */
     rc = ib_hook_context_register(
