@@ -360,7 +360,7 @@ LUALIB_API int ibjson_parse_string(lua_State *L) {
         yajl,
         yajl_allow_comments,
         yajl_allow_multiple_values);
-    if (yc != yajl_status_ok) {
+    if (yc == 0) {
         ib_mpool_release(mp);
         return luaL_error(L, "Cannot configure YAJL parser handle.");
     }
