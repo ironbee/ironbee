@@ -971,7 +971,8 @@ static ib_status_t kvset(
         rc = IB_EOTHER;
         goto cleanup;
     }
-    close(fd);
+    close(fd); /* Force all pending data to the file. */
+    fd = -1;   /* Set fd to an invalid value to avoid a double close. */
 
     /* Now, rename the temp file to the real file */
     sys_rc = rename(path_tmp, path_real);
