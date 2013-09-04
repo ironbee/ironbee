@@ -54,8 +54,8 @@ struct Info
     string              param2;
     bool                on;
     vector<string>      nparam;
-    uint32_t            mask;
-    uint32_t            value;
+    ib_flags_t          mask;
+    ib_flags_t          value;
 };
 
 class Handler
@@ -134,8 +134,8 @@ public:
     void operator()(
         ConfigurationParser parser,
         const char*         name,
-        uint32_t            value,
-        uint32_t            mask
+        ib_flags_t          value,
+        ib_flags_t          mask
     )
     {
         m_out_info.which  = 6;
@@ -172,7 +172,7 @@ TEST_F(TestConfigurationDirectives, Registrar)
     R.block("Block", handler, handler2);
     R.on_off("OnOff", handler);
     R.list("List", handler);
-    map<string,int64_t> value_map;
+    map<string,ib_flags_t> value_map;
     value_map["a"] = (1 << 1) & (1 << 3);
     value_map["b"] = (1 << 7);
     R.op_flags("OpFlags", handler, value_map);

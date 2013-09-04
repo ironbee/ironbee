@@ -154,8 +154,8 @@ ib_status_t config_on_off(
 ib_status_t config_op_flags(
     ib_cfgparser_t* cfgparser,
     const char*     name,
-    uint32_t        value,
-    uint32_t        mask,
+    ib_flags_t      value,
+    ib_flags_t      mask,
     void*           cbdata
 )
 {
@@ -304,10 +304,10 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::list(
 ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
     const char*          name,
     op_flags_t           function,
-    map<string, int64_t> value_map
+    map<string, ib_flags_t> value_map
 )
 {
-    typedef map<string, int64_t>::value_type value_type;
+    typedef map<string, ib_flags_t>::value_type value_type;
 
     MemoryPool mp = m_engine.main_memory_pool();
     ib_strval_t* valmap = mp.allocate<ib_strval_t>(value_map.size()+1);

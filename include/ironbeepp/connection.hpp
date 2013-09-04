@@ -168,7 +168,7 @@ public:
     };
 
     //! All flags.
-    uint32_t flags() const;
+    ib_flags_t flags() const;
 
     //! flags() & flag_none
     bool is_none() const

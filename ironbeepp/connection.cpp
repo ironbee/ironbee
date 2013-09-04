@@ -87,7 +87,7 @@ Transaction ConstConnection::last_transaction() const
     return Transaction(ib()->tx_last);
 }
 
-uint32_t ConstConnection::flags() const
+ib_flags_t ConstConnection::flags() const
 {
     return ib()->flags;
 }

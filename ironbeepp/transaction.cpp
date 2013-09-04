@@ -140,7 +140,7 @@ const char* ConstTransaction::path() const
     return ib()->path;
 }
 
-uint32_t ConstTransaction::flags() const
+ib_flags_t ConstTransaction::flags() const
 {
     return ib()->flags;
 }

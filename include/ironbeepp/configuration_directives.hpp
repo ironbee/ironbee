@@ -203,8 +203,8 @@ public:
     typedef boost::function<void(
         ConfigurationParser,
         const char*,
-        uint32_t,
-        uint32_t
+        ib_flags_t,
+        ib_flags_t
     )> op_flags_t;
 
     /**
@@ -224,7 +224,7 @@ public:
     ConfigurationDirectivesRegistrar& op_flags(
         const char*                    name,
         op_flags_t                     function,
-        std::map<std::string, int64_t> value_map
+        std::map<std::string, ib_flags_t> value_map
     );
 
 private:
