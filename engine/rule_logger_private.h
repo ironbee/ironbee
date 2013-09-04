@@ -120,7 +120,6 @@ struct ib_rule_log_exec_t {
     ib_list_t              *tgt_list;    /**< List of ib_rule_log_tgt_t */
     ib_rule_log_tgt_t      *tgt_cur;     /**< Current target */
     int                     tgt_count;   /**< # of targets */
-    ib_list_t              *audit_list;  /**< List of audit log file names */
     ib_rule_log_count_t     counts;      /**< Result counting info */
     ib_flags_t              filter;      /**< Rule filter flags */
     ib_status_t             op_status;   /**< Return status of last operator */

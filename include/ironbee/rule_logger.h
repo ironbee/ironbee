@@ -90,10 +90,14 @@ ib_status_t ib_rule_log_exec_add_event(
  *
  * @param[in] rule_exec Rule execution logging object
  * @param[in] audit_log Full path of the audit log file
+ * @param[in] failed If true, this logs that writing the audit log file
+ *            @a audit_log, failed. If false this function logs
+ *            that writing @a audit_log succeeded.
  */
 void ib_rule_log_add_audit(
-    const ib_rule_exec_t       *rule_exec,
-    const char                 *audit_log);
+    const ib_rule_exec_t *rule_exec,
+    const char           *audit_log,
+    bool                  failed);
 
 /** @} */
 

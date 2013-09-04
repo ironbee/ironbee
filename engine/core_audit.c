@@ -150,6 +150,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
         /// @todo Better error.
         ib_log_error(log->ib,
                      "Could not create audit log filename: too long");
+        ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename, true);
         free(dtmp);
         free(dn);
         return IB_EINVAL;
@@ -159,6 +160,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     if (ib_rc != IB_OK) {
         ib_log_error(log->ib,
                      "Could not create audit log dir: %s", dn);
+        ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename, true);
         free(dtmp);
         free(dn);
         return ib_rc;
@@ -174,6 +176,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
         /// @todo Better error.
         ib_log_error(log->ib,
                      "Could not create temporary audit log filename: too long");
+        ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename, true);
         free(dtmp);
         free(dn);
         return IB_EINVAL;
@@ -194,6 +197,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
         ib_log_error(log->ib,
                      "Failed to open audit log \"%s\": %s (%d)",
                      temp_filename, strerror(sys_rc), sys_rc);
+        ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename, true);
         free(dtmp);
         free(dn);
         return IB_EINVAL;
@@ -205,7 +209,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     cfg->temp_path = temp_filename;
 
     /* Log it via the rule logger */
-    ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename);
+    ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename, false);
 
     free(dtmp);
     free(dn);
