@@ -800,6 +800,9 @@ static ib_status_t print_directive(ib_cfgparser_t *cp,
                                    ib_list_t *args,
                                    const char *msg)
 {
+    /* clang analyzer has a false positive due to a poor undersanding of
+     * the value of params_len. */
+#ifndef __clang_analyzer__
     assert(cp != NULL);
     assert(cp->ib != NULL);
     assert(name != NULL);
@@ -829,6 +832,7 @@ static ib_status_t print_directive(ib_cfgparser_t *cp,
     ib_cfg_log_debug(cp, "%sname=%s%s", msg, name, params);
 
     free(params);
+#endif
     return IB_OK;
 }
 
