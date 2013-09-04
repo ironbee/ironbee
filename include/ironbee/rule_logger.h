@@ -56,7 +56,8 @@ extern "C" {
  * @return The log level configured.
  */
 ib_log_level_t ib_rule_log_level(
-    const ib_context_t         *ctx);
+    const ib_context_t *ctx
+);
 
 /**
  * Return the configured rule debug logging level.
@@ -69,7 +70,8 @@ ib_log_level_t ib_rule_log_level(
  * @return The log level configured.
  */
 ib_rule_dlog_level_t ib_rule_dlog_level(
-    const ib_context_t         *ctx);
+    const ib_context_t *ctx
+);
 
 /**
  * Add an event to a rule execution logging object
@@ -82,8 +84,9 @@ ib_rule_dlog_level_t ib_rule_dlog_level(
  *          Error status returned by ib_list_push()
  */
 ib_status_t ib_rule_log_exec_add_event(
-    ib_rule_log_exec_t         *exec_log,
-    const ib_logevent_t        *event);
+    ib_rule_log_exec_t  *exec_log,
+    const ib_logevent_t *event
+);
 
 /**
  * Log an audit log file for the rule logger
@@ -97,7 +100,8 @@ ib_status_t ib_rule_log_exec_add_event(
 void ib_rule_log_add_audit(
     const ib_rule_exec_t *rule_exec,
     const char           *audit_log,
-    bool                  failed);
+    bool                  failed
+);
 
 /** @} */
 
