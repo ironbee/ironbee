@@ -120,10 +120,17 @@ struct ib_var_target_t
     ib_var_source_t *source;
 
     /**
+     * Expand to lazily construct filter.
+     *
+     * If NULL, then use @ref filter.
+     **/
+    const ib_var_expand_t *expand;
+
+    /**
      * Filter.  May be NULL.
      *
-     * A NULL filter is considered trivial and results in the field from
-     * the source being wrapped in a list of size 1.
+     * If @ref expand and @ref filter are null, then this is a trivial target
+     * and the resutl is the source being wrapped in a list of size 1.
      **/
     const ib_var_filter_t *filter;
 };
@@ -801,6 +808,7 @@ ib_status_t ib_var_target_acquire(
     ib_var_target_t       **target,
     ib_mpool_t             *mp,
     ib_var_source_t        *source,
+    const ib_var_expand_t  *expand,
     const ib_var_filter_t  *filter
 )
 {
@@ -816,6 +824,7 @@ ib_status_t ib_var_target_acquire(
     }
 
     local_target->source = source;
+    local_target->expand = expand;
     local_target->filter = filter;
 
     *target = local_target;
@@ -840,7 +849,8 @@ ib_status_t ib_var_target_acquire_from_string(
 
     ib_status_t      rc;
     ib_var_source_t *source;
-    ib_var_filter_t *filter;
+    ib_var_expand_t *expand = NULL;
+    ib_var_filter_t *filter = NULL;
     size_t           split_at;
     const char      *split;
 
@@ -868,21 +878,35 @@ ib_status_t ib_var_target_acquire_from_string(
 
     /* The -1 allows for trivial filters such as "FOO:" */
     if (split_at < target_string_length - 1) {
-        rc = ib_var_filter_acquire(
-            &filter,
-            mp,
-            target_string + split_at + 1, target_string_length - split_at - 1,
-            error_message, error_offset
-        );
+        const char *filter_string = target_string + split_at + 1;
+        size_t filter_string_length = target_string_length - split_at - 1;
+        /* Do not allow expansions in regexp. */
+        if (
+            filter_string[0] == '/' ||
+            ! ib_var_expand_test(filter_string, filter_string_length)
+        ) {
+            rc = ib_var_filter_acquire(
+                &filter,
+                mp,
+                filter_string, filter_string_length,
+                error_message, error_offset
+            );
+        }
+        else {
+            rc = ib_var_expand_acquire(
+                &expand,
+                mp,
+                filter_string, filter_string_length,
+                config,
+                error_message, error_offset
+            );
+        }
         if (rc != IB_OK) {
             return rc;
         }
     }
-    else {
-        filter = NULL;
-    }
 
-    return ib_var_target_acquire(target, mp, source, filter);
+    return ib_var_target_acquire(target, mp, source, expand, filter);
 }
 
 ib_status_t ib_var_target_get(
@@ -896,10 +920,16 @@ ib_status_t ib_var_target_get(
     assert(result != NULL);
     assert(mp     != NULL);
     assert(store  != NULL);
+    assert(
+        (target->expand == NULL && target->filter == NULL) ||
+        (target->expand == NULL && target->filter != NULL) ||
+        (target->expand != NULL && target->filter == NULL)
+    );
 
-    ib_status_t      rc;
-    ib_field_t      *field;
-    const ib_list_t *local_result;
+    ib_status_t            rc;
+    ib_field_t            *field;
+    const ib_list_t       *local_result;
+    const ib_var_filter_t *filter = NULL;
 
     rc = ib_var_source_get(
         target->source,
@@ -910,10 +940,45 @@ ib_status_t ib_var_target_get(
         return rc;
     }
 
-    if (target->filter != NULL) {
+    if (target->expand != NULL) {
+        const char *filter_string;
+        size_t filter_string_length;
+        ib_var_filter_t *local_filter;
+
+        rc = ib_var_expand_execute(
+            target->expand,
+            &filter_string,
+            &filter_string_length,
+            mp,
+            store
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        if (filter_string_length > 0 && filter_string[0] == '/') {
+            return IB_EINVAL;
+        }
+
+        rc = ib_var_filter_acquire(
+            &local_filter,
+            mp,
+            filter_string, filter_string_length,
+            NULL, NULL /* Know not a regexp filter. */
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+        filter = local_filter;
+    }
+    else {
+        filter = target->filter;
+    }
+
+    if (filter != NULL) {
         /* Filter list field. */
         rc = ib_var_filter_apply(
-            target->filter,
+            filter,
             &local_result,
             mp,
             field

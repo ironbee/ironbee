@@ -88,19 +88,63 @@ extern "C" {
  */
 
 /**
+ * A set of var sources.
+ *
+ * A var store will be defined in terms of a var configuration.
+ **/
+typedef struct ib_var_config_t ib_var_config_t;
+
+/**
+ * A source of var in an @ref ib_var_store_t.
+ *
+ * From the purposes of getting and setting values, a var source is
+ * semantically equivalent to its name.  The main advantage gained from the
+ * strucutre is the ability to *get* in constant time (sets remain slow).
+ *
+ * The other purpose of a var source is to associate metavar with a var
+ * source.  At present, the metavar is the initial phase the source takes a
+ * value and the last phase it may be change that value in.
+ **/
+typedef struct ib_var_source_t ib_var_source_t;
+
+/**
+ * A map of var source to value.
+ *
+ * A var store is associated with a var configuration and holds the values
+ * for the sources in that configuration.  These values are held such that
+ * indexe sources can get their value in constant time.
+ *
+ * A store has an assocaited memory pool which may be used to creating fields
+ * to use as values that have the same lifetime as the store.
+ */
+typedef struct ib_var_store_t ib_var_store_t;
+
+/**
+ * A filter.
+ *
+ * A selection criteria to apply to a list of fields.
+ **/
+typedef struct ib_var_filter_t ib_var_filter_t;
+
+/**
+ * A target.
+ *
+ * A source and (possibly trivial) filter.
+ **/
+typedef struct ib_var_target_t ib_var_target_t;
+
+/**
+ * Prepared string expansion.
+ **/
+typedef struct ib_var_expand_t ib_var_expand_t;
+
+/**
  * @defgroup IronBeeEngineVarConfiguration Data Configuration
  *
  * Set of sources.
  *
  * @{
  **/
-
-/**
- * A set of var sources.
- *
- * A var store will be defined in terms of a var configuration.
- **/
-typedef struct ib_var_config_t ib_var_config_t;
 
 /**
  * Acquire new var configuration.
@@ -134,18 +178,6 @@ NONNULL_ATTRIBUTE(1);
  *
  * @{
  **/
-
-/**
- * A map of var source to value.
- *
- * A var store is associated with a var configuration and holds the values
- * for the sources in that configuration.  These values are held such that
- * indexe sources can get their value in constant time.
- *
- * A store has an assocaited memory pool which may be used to creating fields
- * to use as values that have the same lifetime as the store.
- */
-typedef struct ib_var_store_t ib_var_store_t;
 
 /**
  * Acquire new var store.
@@ -189,19 +221,6 @@ NONNULL_ATTRIBUTE(1);
  *
  * @{
  **/
-
-/**
- * A source of var in an @ref ib_var_store_t.
- *
- * From the purposes of getting and setting values, a var source is
- * semantically equivalent to its name.  The main advantage gained from the
- * strucutre is the ability to *get* in constant time (sets remain slow).
- *
- * The other purpose of a var source is to associate metavar with a var
- * source.  At present, the metavar is the initial phase the source takes a
- * value and the last phase it may be change that value in.
- **/
-typedef struct ib_var_source_t ib_var_source_t;
 
 /**
  * Register a var source.
@@ -435,13 +454,6 @@ NONNULL_ATTRIBUTE(1, 3);
  **/
 
 /**
- * A filter.
- *
- * A selection criteria to apply to a list of fields.
- **/
-typedef struct ib_var_filter_t ib_var_filter_t;
-
-/**
  * Acquire a filter
  *
  * This function prepares a filter for later use.  At present, the primary
@@ -517,15 +529,21 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  * turning a user specification of a target into appropriate fields to act
  * on while hiding details such as the presence of a filter.
  *
+ * There are four categories of targets:
+ *
+ * - Trivial, e.g., `foo`, which evaluates to the var named foo.
+ * - Simple, e.g., `foo:bar`, which evaluates to all members of the var `foo`
+ *   named `bar`.
+ * - Regexp, e.g., `foo:/bar/`, which evaluates to all members of the var
+ *   `foo` whose name matches the regexp `bar`.
+ * - Expanded, e.g., `foo:%{bar}`, which replaces `%{bar}` and then interprets
+ *   the result as a simple target.  This form is fundamentally slower than
+ *   the others as the target is reevaluated at execution time.  Also note
+ *   that only simple targets can result, not trivial or regexp.  Finally,
+ *   note that the expansion can be complex, e.g., `foo:x-%{bar:%{baz}}`.
+ *
  * @{
  **/
-
-/**
- * A target.
- *
- * A source and (possibly trivial) filter.
- **/
-typedef struct ib_var_target_t ib_var_target_t;
 
 /**
  * Acquire a target from a source and a filter.
@@ -535,6 +553,8 @@ typedef struct ib_var_target_t ib_var_target_t;
  * @param[out] target Created target.  Lifetime will be equal to @a mp.
  * @param[in]  mp     Memory pool to use for allocations.
  * @param[in]  source Source to fetch field from.
+ * @param[in]  expand Expand to use to lazilly generate filter.  May be
+ *                    NULL to use @a filter instead.
  * @param[in]  filter Filter to apply to field.  May be NULL to indicate
  *                    a trivial field.
  * @return
@@ -545,6 +565,7 @@ ib_status_t DLL_PUBLIC ib_var_target_acquire(
     ib_var_target_t       **target,
     ib_mpool_t             *mp,
     ib_var_source_t        *source,
+    const ib_var_expand_t  *expand,
     const ib_var_filter_t  *filter
 )
 NONNULL_ATTRIBUTE(1, 2, 3);
@@ -607,6 +628,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * - IB_EALLOC on allocation failure.
  * - IB_EINVAL if target and store have different configs.
  * - IB_EINVAL if filter is non-trivial and value of source is not a list.
+ * - IB_EINVAL if filter is expand and tries to be a regexp.
  * - IB_ENOENT if source does not exist in store.
  * - IB_EOTHER if source value is dynamic and query results in error.
  **/
@@ -648,11 +670,6 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  *
  * @{
  **/
-
-/**
- * Prepared string expansion.
- **/
-typedef struct ib_var_expand_t ib_var_expand_t;
 
 /**
  * Acquire a string expansion.
