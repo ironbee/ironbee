@@ -667,7 +667,10 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                             return HTP_ERROR;
                         }
 
+                        mode_t previous_mask = umask(S_IXUSR | S_IRWXG | S_IRWXO);
                         part->file->fd = mkstemp(part->file->tmpname);
+                        umask(previous_mask);
+
                         if (part->file->fd < 0) {
                             bstr_free(line);
                             return HTP_ERROR;
