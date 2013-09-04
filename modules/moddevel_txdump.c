@@ -122,7 +122,7 @@ typedef struct {
     ib_state_event_type_t        event;     /**< Event type */
     ib_state_hook_type_t         hook_type; /**< Hook type */
     const char                  *name;   /**< Event name */
-    ib_flags64_t                 flags;  /**< Flags defining what to txdump */
+    ib_flags_t                   flags;  /**< Flags defining what to txdump */
     ib_log_level_t               level;  /**< IB Log level */
     FILE                        *fp;     /**< File pointer (or NULL) */
     const char                  *dest;   /**< Copy of the destination string */
@@ -831,11 +831,12 @@ static ib_status_t moddevel_txdump_tx(
         const ib_strval_t *rec;
 
         moddevel_txdump(tx, txdump, 2,
-                        "Flags = %010"PRIx64, tx->flags);
+                        "Flags = %010lx", (unsigned long)tx->flags);
         for (rec = tx_flags_map; rec->str != NULL; ++rec) {
             bool on = ib_tx_flags_isset(tx, rec->val);
-            moddevel_txdump(tx, txdump, 4, "%010"PRIx64" \"%s\" = %s",
-                            rec->val, rec->str, on ? "On" : "Off");
+            moddevel_txdump(tx, txdump, 4, "%010lx \"%s\" = %s",
+                            (unsigned long)rec->val, rec->str,
+                            on ? "On" : "Off");
         }
     }
 
@@ -1276,8 +1277,8 @@ static ib_status_t moddevel_txdump_handler(
     const char                  *param;
     static const char           *label = "TxDump directive";
     int                          flagno = 0;
-    ib_flags64_t                 flags = 0;
-    ib_flags64_t                 mask = 0;
+    ib_flags_t                   flags = 0;
+    ib_flags_t                   mask = 0;
 
     /* Initialize the txdump object */
     memset(&txdump, 0, sizeof(txdump));
@@ -1425,8 +1426,8 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     char                 *param;
     static const char    *label = "TxDump action";
     int                   flagno = 0;
-    ib_flags64_t          flags = 0;
-    ib_flags64_t          mask = 0;
+    ib_flags_t            flags = 0;
+    ib_flags_t            mask = 0;
     ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
 
     assert(mp != NULL);

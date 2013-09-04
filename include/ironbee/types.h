@@ -45,8 +45,7 @@ extern "C" {
  */
 
 /* Type definitions. */
-typedef uint32_t ib_flags_t;
-typedef uint64_t ib_flags64_t;
+typedef uint64_t ib_flags_t;
 
 /** Generic function pointer type. */
 typedef void (*ib_void_fn_t)(void);

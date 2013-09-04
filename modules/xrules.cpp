@@ -466,7 +466,7 @@ namespace {
          */
         SetFlag(
             const std::string& field_name,
-            ib_flags64_t flag,
+            ib_flags_t flag,
             bool clear,
             int priority
         );
@@ -476,7 +476,7 @@ namespace {
         std::string m_field_name;
 
         //! The flag to set in ib_tx_t::flags.
-        ib_flags64_t m_flag;
+        ib_flags_t m_flag;
 
         //! Should the flag be cleared, rather than set.
         bool m_clear;
@@ -496,7 +496,7 @@ namespace {
     /* SetFlag Impl */
     SetFlag::SetFlag(
         const std::string& field_name,
-        ib_flags64_t flag,
+        ib_flags_t flag,
         bool clear,
         int priority
     )

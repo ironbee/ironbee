@@ -25,6 +25,7 @@
 #include "mock_module.h"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <ironbee/context.h>
 
 #define MODULE_NAME mock_module
@@ -147,7 +148,7 @@ opflags(
 ) {
     mock_module_conf_t *conf = getconf(cp);
 
-    ib_cfg_log_info(cp, "%s: %x&%x", name, val, mask);
+    ib_cfg_log_info(cp, "%s: %"PRIx64"&%"PRIx64"", name, val, mask);
 
     conf->opflags_val = val;
     conf->opflags_mask = mask;
