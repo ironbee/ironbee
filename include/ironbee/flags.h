@@ -59,7 +59,7 @@ typedef enum {
  */
 struct ib_flags_operation_t {
     ib_flags_op_t  op;       /**< Flag operator */
-    ib_flags_t     flags;    /**< Corresponding flags */
+    ib_flags64_t   flags;    /**< Corresponding flags */
 };
 typedef struct ib_flags_operation_t ib_flags_operation_t;
 
@@ -75,7 +75,7 @@ typedef struct ib_flags_operation_t ib_flags_operation_t;
  * Implemented in: (self)
  * Tested in: tests/test_util_flags.cpp
  */
-bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
+bool ib_flags_any(ib_flags64_t flags, ib_flags64_t check);
 #define ib_flags_any(flags, check) \
     ( ((flags) & (check)) != 0)
 
@@ -91,7 +91,7 @@ bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
  * Implemented in: (self)
  * Tested in: tests/test_util_flags.cpp
  */
-bool ib_flags_isset(ib_flags_t flags, ib_flags_t check);
+bool ib_flags_isset(ib_flags64_t flags, ib_flags64_t check);
 #define ib_flags_isset(flags, check) \
     ( ((flags) & (check)) != 0)
 
@@ -107,7 +107,7 @@ bool ib_flags_isset(ib_flags_t flags, ib_flags_t check);
  * Implemented in: (self)
  * Tested in: tests/test_util_flags.cpp
  */
-bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
+bool ib_flags_all(ib_flags64_t flags, ib_flags64_t check);
 #define ib_flags_all(flags, check) \
     ( ((flags) & (check)) == (check))
 
@@ -123,7 +123,7 @@ bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
  * Implemented in: (self)
  * Tested in: tests/test_util_flags.cpp
  */
-bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
+bool ib_flags_set(ib_flags64_t flags, ib_flags64_t flags_set);
 #define ib_flags_set(flags, flags_set) \
     ( (flags) |= (flags_set) )
 
@@ -139,7 +139,7 @@ bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
  * Implemented in: (self)
  * Tested in: tests/test_util_flags.cpp
  */
-bool ib_flags_clear(ib_flags_t flags, ib_flags_t flags_clear);
+bool ib_flags_clear(ib_flags64_t flags, ib_flags64_t flags_clear);
 #define ib_flags_clear(flags, flags_clear) \
     ( (flags) &= (~(flags_clear)) )
 
@@ -152,10 +152,10 @@ bool ib_flags_clear(ib_flags_t flags, ib_flags_t flags_clear);
  *
  * @returns Merged flags
  */
-ib_flags_t ib_flags_merge(
-    ib_flags_t  inflags,
-    ib_flags_t  flags,
-    ib_flags_t  mask);
+ib_flags64_t ib_flags_merge(
+    ib_flags64_t  inflags,
+    ib_flags64_t  flags,
+    ib_flags64_t  mask);
 
 /**
  * Merge a flag / mask with the previous value (macro version)
@@ -166,10 +166,10 @@ ib_flags_t ib_flags_merge(
  *
  * @returns Merged flags
  */
-ib_flags_t IB_FLAGS_MERGE(
-    ib_flags_t  inflags,
-    ib_flags_t  flags,
-    ib_flags_t  mask);
+ib_flags64_t IB_FLAGS_MERGE(
+    ib_flags64_t  inflags,
+    ib_flags64_t  flags,
+    ib_flags64_t  mask);
 #define IB_FLAGS_MERGE(inflags, flags, mask) \
     ( ((flags) & (mask)) | ((inflags) & ~(mask)) )
 
@@ -196,8 +196,8 @@ ib_status_t ib_flags_string(
     const ib_strval_t *map,
     const char        *str,
     int                num,
-    ib_flags_t        *pflags,
-    ib_flags_t        *pmask);
+    ib_flags64_t      *pflags,
+    ib_flags64_t      *pmask);
 
 /**
  * Parse and apply each node in a flag string list (list of flag strings).
@@ -218,8 +218,8 @@ ib_status_t ib_flags_string(
 ib_status_t DLL_PUBLIC ib_flags_strlist(
     const ib_strval_t *map,
     const ib_list_t   *strlist,
-    ib_flags_t        *pflags,
-    ib_flags_t        *pmask,
+    ib_flags64_t      *pflags,
+    ib_flags64_t      *pmask,
     const char       **perror);
 
 /**
@@ -250,8 +250,8 @@ ib_status_t DLL_PUBLIC ib_flags_strtok(
     ib_mpool_t        *mp,
     const char        *str,
     const char        *sep,
-    ib_flags_t        *pflags,
-    ib_flags_t        *pmask);
+    ib_flags64_t      *pflags,
+    ib_flags64_t      *pmask);
 
 /**
  * Parse a @a sep separated string from a name/value pair mapping into
@@ -294,8 +294,8 @@ ib_status_t DLL_PUBLIC ib_flags_oplist_parse(
  */
 ib_status_t DLL_PUBLIC ib_flags_oplist_apply(
     const ib_list_t   *oplist,
-    ib_flags_t        *pflags,
-    ib_flags_t        *pmask);
+    ib_flags64_t      *pflags,
+    ib_flags64_t      *pmask);
 
 
 /**

@@ -48,7 +48,7 @@ static ib_status_t parse_single(
     const ib_strval_t    *map,
     const char           *str,
     ib_flags_op_t        *poper,
-    ib_flags_t           *pflags)
+    ib_flags64_t         *pflags)
 {
     assert(map != NULL);
     assert(str != NULL);
@@ -94,10 +94,10 @@ static ib_status_t parse_single(
  */
 static ib_status_t apply_operation(
     ib_flags_op_t  oper,
-    ib_flags_t     flags,
+    ib_flags64_t   flags,
     int            num,
-    ib_flags_t    *pflags,
-    ib_flags_t    *pmask)
+    ib_flags64_t  *pflags,
+    ib_flags64_t  *pmask)
 {
     assert(pflags != NULL);
     assert(pmask != NULL);
@@ -123,10 +123,10 @@ static ib_status_t apply_operation(
     return IB_OK;
 }
 
-ib_flags_t ib_flags_merge(
-    ib_flags_t  inflags,
-    ib_flags_t  flags,
-    ib_flags_t  mask)
+ib_flags64_t ib_flags_merge(
+    ib_flags64_t  inflags,
+    ib_flags64_t  flags,
+    ib_flags64_t  mask)
 {
     return ( (flags & mask) | (inflags & ~mask) );
 }
@@ -135,8 +135,8 @@ ib_status_t ib_flags_string(
     const ib_strval_t *map,
     const char        *str,
     int                num,
-    ib_flags_t        *pflags,
-    ib_flags_t        *pmask)
+    ib_flags64_t      *pflags,
+    ib_flags64_t      *pmask)
 {
     if ( (map == NULL) || (str == NULL) ||
          (pflags == NULL) || (pmask == NULL) )
@@ -145,7 +145,7 @@ ib_status_t ib_flags_string(
     }
 
     ib_flags_op_t oper;
-    ib_flags_t    flags;
+    ib_flags64_t    flags;
     ib_status_t   rc;
 
     rc = parse_single(map, str, &oper, &flags);
@@ -166,8 +166,8 @@ ib_status_t ib_flags_strtok(
     ib_mpool_t        *mp,
     const char        *str,
     const char        *sep,
-    ib_flags_t        *pflags,
-    ib_flags_t        *pmask)
+    ib_flags64_t        *pflags,
+    ib_flags64_t        *pmask)
 {
     if ( (map == NULL) || (mp == NULL) || (str == NULL) || (sep == NULL) ||
          (pflags == NULL) || (pmask == NULL) )
@@ -175,11 +175,11 @@ ib_status_t ib_flags_strtok(
         return IB_EINVAL;
     }
 
-    int         n = 0;
-    ib_flags_t  flags = 0;
-    ib_flags_t  mask = 0;
-    char       *copy;
-    const char *tmp;
+    int           n = 0;
+    ib_flags64_t  flags = 0;
+    ib_flags64_t  mask = 0;
+    char         *copy;
+    const char   *tmp;
 
     /* Make a copy of the string that we can use for strtok */
     copy = ib_mpool_strdup(mp, str);
@@ -206,8 +206,8 @@ ib_status_t ib_flags_strtok(
 ib_status_t ib_flags_strlist(
     const ib_strval_t  *map,
     const ib_list_t    *strlist,
-    ib_flags_t         *pflags,
-    ib_flags_t         *pmask,
+    ib_flags64_t       *pflags,
+    ib_flags64_t       *pmask,
     const char        **perror)
 {
     if ( (map == NULL) || (strlist == NULL) ||
@@ -265,7 +265,7 @@ ib_status_t ib_flags_oplist_parse(
     do {
         ib_status_t           rc;
         ib_flags_op_t         op;
-        ib_flags_t            flags;
+        ib_flags64_t            flags;
         ib_flags_operation_t *operation;
 
         rc = parse_single(map, tmp, &op, &flags);
@@ -289,8 +289,8 @@ ib_status_t ib_flags_oplist_parse(
 
 ib_status_t ib_flags_oplist_apply(
     const ib_list_t   *oplist,
-    ib_flags_t        *pflags,
-    ib_flags_t        *pmask)
+    ib_flags64_t      *pflags,
+    ib_flags64_t      *pmask)
 {
     if ( (oplist == NULL) || (pflags == NULL) || (pmask == NULL) ) {
         return IB_EINVAL;

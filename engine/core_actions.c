@@ -2388,11 +2388,11 @@ static ib_status_t act_auditlogparts_execute(
     assert(rule_exec->tx != NULL);
 
     const act_auditlog_parts_t *idata = (const act_auditlog_parts_t *)data;
-    ib_tx_t    *tx = rule_exec->tx;
-    ib_num_t    parts = tx->auditlog_parts;
-    ib_flags_t  parts_flags = 0;
-    ib_flags_t  parts_mask = 0;
-    ib_status_t rc;
+    ib_tx_t      *tx = rule_exec->tx;
+    ib_num_t      parts = tx->auditlog_parts;
+    ib_flags64_t  parts_flags = 0;
+    ib_flags64_t  parts_mask = 0;
+    ib_status_t   rc;
 
     rc = ib_flags_oplist_apply(idata->oplist, &parts_flags, &parts_mask);
     if (rc != IB_OK) {

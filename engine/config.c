@@ -924,9 +924,9 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             break;
         case IB_DIRTYPE_OPFLAGS:
         {
-            ib_flags_t  flags = 0;
-            ib_flags_t  mask = 0;
-            const char *error;
+            ib_flags64_t  flags = 0;
+            ib_flags64_t  mask = 0;
+            const char   *error;
 
             rc = ib_flags_strlist(rec->valmap, args, &flags, &mask, &error);
             if (rc != IB_OK) {
