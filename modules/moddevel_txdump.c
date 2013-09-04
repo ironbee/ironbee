@@ -122,7 +122,7 @@ typedef struct {
     ib_state_event_type_t        event;     /**< Event type */
     ib_state_hook_type_t         hook_type; /**< Hook type */
     const char                  *name;   /**< Event name */
-    ib_flags_t                   flags;  /**< Flags defining what to txdump */
+    ib_flags64_t                 flags;  /**< Flags defining what to txdump */
     ib_log_level_t               level;  /**< IB Log level */
     FILE                        *fp;     /**< File pointer (or NULL) */
     const char                  *dest;   /**< Copy of the destination string */
@@ -159,11 +159,14 @@ static IB_STRVAL_MAP(tx_flags_map) = {
     IB_STRVAL_PAIR("Block: Advisory", IB_TX_BLOCK_ADVISORY),
     IB_STRVAL_PAIR("Block: Phase", IB_TX_BLOCK_PHASE),
     IB_STRVAL_PAIR("Block: Immediate", IB_TX_BLOCK_IMMEDIATE),
+    IB_STRVAL_PAIR("Blocking Mode", IB_TX_FBLOCKING_MODE),
     IB_STRVAL_PAIR("Allow: Phase", IB_TX_ALLOW_PHASE),
     IB_STRVAL_PAIR("Allow: Request", IB_TX_ALLOW_REQUEST),
     IB_STRVAL_PAIR("Allow: All", IB_TX_ALLOW_ALL),
     IB_STRVAL_PAIR("Post-Process", IB_TX_FPOSTPROCESS),
     IB_STRVAL_PAIR("Inspect Request Header", IB_TX_FINSPECT_REQHDR),
+    IB_STRVAL_PAIR("Inspect Request URI", IB_TX_FINSPECT_REQURI),
+    IB_STRVAL_PAIR("Inspect Request Parameters", IB_TX_FINSPECT_REQPARAMS),
     IB_STRVAL_PAIR("Inspect Request Body", IB_TX_FINSPECT_REQBODY),
     IB_STRVAL_PAIR("Inspect Response Header", IB_TX_FINSPECT_RSPHDR),
     IB_STRVAL_PAIR("Inspect Response Body", IB_TX_FINSPECT_RSPBODY),
@@ -828,12 +831,11 @@ static ib_status_t moddevel_txdump_tx(
         const ib_strval_t *rec;
 
         moddevel_txdump(tx, txdump, 2,
-                        "Flags = %08lx", (unsigned long)tx->flags);
+                        "Flags = %010"PRIx64, tx->flags);
         for (rec = tx_flags_map; rec->str != NULL; ++rec) {
             bool on = ib_tx_flags_isset(tx, rec->val);
-            moddevel_txdump(tx, txdump, 4, "%08lx \"%s\" = %s",
-                            (unsigned long)rec->val, rec->str,
-                            on ? "On" : "Off");
+            moddevel_txdump(tx, txdump, 4, "%010"PRIx64" \"%s\" = %s",
+                            rec->val, rec->str, on ? "On" : "Off");
         }
     }
 
@@ -1274,8 +1276,8 @@ static ib_status_t moddevel_txdump_handler(
     const char                  *param;
     static const char           *label = "TxDump directive";
     int                          flagno = 0;
-    ib_flags_t                   flags = 0;
-    ib_flags_t                   mask = 0;
+    ib_flags64_t                 flags = 0;
+    ib_flags64_t                 mask = 0;
 
     /* Initialize the txdump object */
     memset(&txdump, 0, sizeof(txdump));
@@ -1423,8 +1425,8 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     char                 *param;
     static const char    *label = "TxDump action";
     int                   flagno = 0;
-    ib_flags_t            flags = 0;
-    ib_flags_t            mask = 0;
+    ib_flags64_t          flags = 0;
+    ib_flags64_t          mask = 0;
     ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
 
     assert(mp != NULL);
