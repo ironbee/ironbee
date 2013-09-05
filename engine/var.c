@@ -428,10 +428,16 @@ ib_status_t ib_var_source_get(
     }
 
     if (source->is_indexed) {
-        if (field == NULL) {
-            return IB_OK;
+        ib_field_t *local_field = NULL;
+        ib_status_t rc = ib_array_get(store->array, source->index, &local_field);
+        /* Array only errors if out of band, i.e., not set. */
+        if (rc != IB_OK || local_field == NULL) {
+            return IB_ENOENT;
         }
-        return ib_array_get(store->array, source->index, field);
+        if (field != NULL) {
+            *field = local_field;
+        }
+        return rc;
     }
     else {
         return ib_hash_get_ex(
