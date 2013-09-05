@@ -150,6 +150,9 @@ done</programlisting></para>
                         files.</para>
                 </listitem>
                 <listitem>
+                    <para>Extended Rules (XRules), which is part of the IronBee Configuration Language and implements common logic such as Access Control Lists (ACLs).</para>
+                </listitem>
+                <listitem>
                     <para>External Lua rule scripts.</para>
                 </listitem>
                 <listitem>
@@ -507,6 +510,10 @@ Sig("lua/3",1):follows("lua/2")</programlisting></para>
                             and maintaining rule execution order.</para>
                     </listitem>
                 </itemizedlist></para>
+        </section>
+        <section>
+            <title>Extended Rules (XRules)</title>
+            <para>XRules are useful for Access Control Lists and exceptions. XRules compliment other rule forms. See the XRule directives for moreinformation.</para>
         </section>
         <section>
             <title>External Lua Rule Scripts</title>
