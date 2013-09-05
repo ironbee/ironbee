@@ -708,6 +708,41 @@ ib_status_t DLL_PUBLIC ib_var_target_get_const(
 )
 NONNULL_ATTRIBUTE(1, 2, 3, 4);
 
+/**
+ * Remove entries descried by target.
+ *
+ * This function behaves differently depending on the target type:
+ *
+ * - Trivial: Equivalent to using ib_var_source_set() to set the source to
+ *   NULL.
+ * - Simple: Equivalent to using ib_var_filter_remove().
+ * - Expand: As Simple, but with an expansion step.
+ * - Regexp: Returns IB_EINVAL.
+ *
+ * @param[in]  target Target to fetch values of.
+ * @param[out] result Removed values.  Lifetime will be equal to @a mp.  May
+ *                    be NULL.
+ * @param[in]  mp     Memory pool to use for allocations.  May be NULL if
+ *                    @a result is NULL.
+ * @param[in]  store  Store holding values.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - IB_ENOENT if nothing to remove.
+ * - IB_EINVAL if target and store have different configs.
+ * - IB_EINVAL if filter is non-trivial and value of source is not a list.
+ * - IB_EINVAL if value of source is dynamic.
+ * - IB_EINVAL if filter is expand and tries to be a regexp.
+ * - IB_EINVAL if filter is regexp.
+ **/
+ib_status_t DLL_PUBLIC ib_var_target_remove(
+    ib_var_target_t  *target,
+    ib_list_t       **result,
+    ib_mpool_t       *mp,
+    ib_var_store_t   *store
+)
+NONNULL_ATTRIBUTE(1, 4);
+
 /** @} */
 
 /**

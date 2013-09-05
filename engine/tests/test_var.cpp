@@ -303,7 +303,7 @@ TEST(TestVar, SourceUnindexed)
     ASSERT_EQ(&fa, f2);
 }
 
-TEST(TestVar, LookupWithoutPool)
+TEST(TestVar, SourceLookupWithoutPool)
 {
     ScopedMemoryPool smp;
     ib_status_t rc;
@@ -564,6 +564,160 @@ TEST(TestVar, Target)
     result_list = field_clist_t(result);
     EXPECT_EQ(1UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
+}
+
+TEST(TestVar, TargetRemoveTrivial)
+{
+    using namespace IronBee;
+
+    ScopedMemoryPool smp;
+    ib_status_t rc;
+    ib_mpool_t* mp = MemoryPool(smp).ib();
+    typedef List<IronBee::Field> field_list_t;
+
+    ib_var_config_t* config = make_config(mp);
+    ASSERT_TRUE(config);
+
+    ib_var_source_t* a = make_source(config, "a");
+    ib_var_source_t* b = make_source(config, "b");
+
+    ASSERT_TRUE(a);
+    ASSERT_TRUE(b);
+
+    ib_var_store_t* store = make_store(config);
+
+    rc = ib_var_source_set(a, store,
+        Field::create_number(smp, "a", 1, 1).ib()
+    );
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_var_source_set(b, store,
+        Field::create_number(smp, "b", 1, 1).ib()
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    ib_list_t* result;
+    ib_var_target_t* target;
+
+    rc = ib_var_target_acquire(&target, mp, a, NULL, NULL);
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_var_target_remove(target, &result, mp, store);
+    ASSERT_EQ(IB_OK, rc);
+
+    ASSERT_EQ(1UL, ib_list_elements(result));
+    ASSERT_EQ(IB_ENOENT, ib_var_source_get(a, NULL, store));
+    ASSERT_EQ(IB_OK, ib_var_source_get(b, NULL, store));
+}
+
+TEST(TestVar, TargetRemoveSimple)
+{
+    using namespace IronBee;
+
+    ScopedMemoryPool smp;
+    ib_status_t rc;
+    ib_mpool_t* mp = MemoryPool(smp).ib();
+    typedef List<IronBee::Field> field_list_t;
+    field_list_t data_list = field_list_t::create(smp);
+
+    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
+    data_list.push_back(Field::create_number(smp, "barA", 4, 7));
+
+    Field data_field =
+        Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
+
+    ib_var_config_t* config = make_config(mp);
+    ASSERT_TRUE(config);
+
+    ib_var_source_t* data = make_source(config, "data");
+    ASSERT_TRUE(data);
+
+    ib_var_store_t* store = make_store(config);
+    ASSERT_TRUE(store);
+
+    rc = ib_var_source_set(data, store, data_field.ib());
+    ASSERT_EQ(IB_OK, rc);
+
+    ib_list_t* result;
+    ib_var_target_t* target;
+
+    rc = ib_var_target_acquire_from_string(
+        &target,
+        mp,
+        config,
+        "data:fooA", sizeof("data:fooA") - 1,
+        NULL, NULL
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_var_target_remove(target, &result, mp, store);
+    ASSERT_EQ(IB_OK, rc);
+
+    ASSERT_EQ(1UL, ib_list_elements(result));
+
+    ib_field_t *field;
+    ASSERT_EQ(IB_OK, ib_var_source_get(data, &field, store));
+    ASSERT_EQ(2UL, Field(field).value_as_list<Field>().size());
+}
+
+TEST(TestVar, TargetRemoveExpand)
+{
+    using namespace IronBee;
+
+    ScopedMemoryPool smp;
+    ib_status_t rc;
+    ib_mpool_t* mp = MemoryPool(smp).ib();
+    typedef List<IronBee::Field> field_list_t;
+    field_list_t data_list = field_list_t::create(smp);
+
+    data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
+    data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
+    data_list.push_back(Field::create_number(smp, "barA", 4, 7));
+
+    Field data_field =
+        Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
+
+    ib_var_config_t* config = make_config(mp);
+    ASSERT_TRUE(config);
+
+    ib_var_source_t* data = make_source(config, "data");
+    ASSERT_TRUE(data);
+    ib_var_source_t* index = make_source(config, "index");
+    ASSERT_TRUE(data);
+
+    ib_var_store_t* store = make_store(config);
+    ASSERT_TRUE(store);
+
+    rc = ib_var_source_set(data, store, data_field.ib());
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_var_source_set(index, store,
+        Field::create_byte_string(
+            smp, "index", 5,
+            ByteString::create(smp, "fooA")
+        ).ib()
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    ib_list_t* result;
+    ib_var_target_t* target;
+
+    rc = ib_var_target_acquire_from_string(
+        &target,
+        mp,
+        config,
+        "data:%{index}", sizeof("data:%{index}") - 1,
+        NULL, NULL
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_var_target_remove(target, &result, mp, store);
+    ASSERT_EQ(IB_OK, rc);
+
+    ASSERT_EQ(1UL, ib_list_elements(result));
+
+    ib_field_t *field;
+    ASSERT_EQ(IB_OK, ib_var_source_get(data, &field, store));
+    ASSERT_EQ(2UL, Field(field).value_as_list<Field>().size());
 }
 
 TEST(TestVar, ExpandFilter)

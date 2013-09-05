@@ -194,6 +194,31 @@ bool find_expand_string(
 )
 NONNULL_ATTRIBUTE(1, 2, 3);
 
+
+/**
+ * Get the filter for a target, expanding if needed.
+ *
+ * @param[in]  target Target to get filter for.
+ * @param[out] result Where to store filter.  Lifetime is either that of
+ *                    @a target (if non-expand) or @a mp (if expand).
+ * @param[in]  mp     Memory pool to use for expansion.  May be NULL if no
+ *                    expansion.
+ * @param[in]  store  Store to use for expansion.
+ *
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL if expansion results in regexp filter.
+ * - Any return of ib_var_expand_execute() or ib_var_filter_acquire().
+ **/
+static
+ib_status_t target_filter_get(
+    ib_var_target_t        *target,
+    const ib_var_filter_t **result,
+    ib_mpool_t             *mp,
+    ib_var_store_t         *store
+)
+NONNULL_ATTRIBUTE(1, 2, 4);
+
 /* var_config */
 
 ib_status_t ib_var_config_acquire(
@@ -877,6 +902,7 @@ ib_status_t ib_var_filter_remove(
     ib_list_t      *field_list;
     ib_list_node_t *node;
     ib_list_node_t *next_node;
+    bool            removed = false;
 
     if (field->type != IB_FTYPE_LIST || ib_field_is_dynamic(field)) {
         return IB_EINVAL;
@@ -913,7 +939,12 @@ ib_status_t ib_var_filter_remove(
                 }
             }
             ib_list_node_remove(field_list, node);
+            removed = true;
         }
+    }
+
+    if (! removed) {
+        return IB_ENOENT;
     }
 
     if (result != NULL) {
@@ -1030,6 +1061,63 @@ ib_status_t ib_var_target_acquire_from_string(
     return ib_var_target_acquire(target, mp, source, expand, filter);
 }
 
+ib_status_t target_filter_get(
+    ib_var_target_t        *target,
+    const ib_var_filter_t **result,
+    ib_mpool_t             *mp,
+    ib_var_store_t         *store
+)
+{
+    assert(target != NULL);
+    assert(result != NULL);
+    assert(mp != NULL || target->expand == NULL);
+    assert(
+        (target->expand == NULL && target->filter == NULL) ||
+        (target->expand == NULL && target->filter != NULL) ||
+        (target->expand != NULL && target->filter == NULL)
+    );
+    assert(store  != NULL);
+
+    ib_status_t rc;
+
+    if (target->expand == NULL) {
+        *result = target->filter;
+    }
+    else {
+        const char *filter_string;
+        size_t filter_string_length;
+        ib_var_filter_t *local_filter;
+
+        rc = ib_var_expand_execute(
+            target->expand,
+            &filter_string,
+            &filter_string_length,
+            mp,
+            store
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        if (filter_string_length > 0 && filter_string[0] == '/') {
+            return IB_EINVAL;
+        }
+
+        rc = ib_var_filter_acquire(
+            &local_filter,
+            mp,
+            filter_string, filter_string_length,
+            NULL, NULL /* Know not a regexp filter. */
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+        *result = local_filter;
+    }
+
+    return IB_OK;
+}
+
 ib_status_t ib_var_target_get(
     ib_var_target_t  *target,
     const ib_list_t **result,
@@ -1061,39 +1149,9 @@ ib_status_t ib_var_target_get(
         return rc;
     }
 
-    if (target->expand != NULL) {
-        const char *filter_string;
-        size_t filter_string_length;
-        ib_var_filter_t *local_filter;
-
-        rc = ib_var_expand_execute(
-            target->expand,
-            &filter_string,
-            &filter_string_length,
-            mp,
-            store
-        );
-        if (rc != IB_OK) {
-            return rc;
-        }
-
-        if (filter_string_length > 0 && filter_string[0] == '/') {
-            return IB_EINVAL;
-        }
-
-        rc = ib_var_filter_acquire(
-            &local_filter,
-            mp,
-            filter_string, filter_string_length,
-            NULL, NULL /* Know not a regexp filter. */
-        );
-        if (rc != IB_OK) {
-            return rc;
-        }
-        filter = local_filter;
-    }
-    else {
-        filter = target->filter;
+    rc = target_filter_get(target, &filter, mp, store);
+    if (rc != IB_OK) {
+        return rc;
     }
 
     if (filter != NULL) {
@@ -1155,6 +1213,93 @@ ib_status_t ib_var_target_get_const(
         mp,
         (ib_var_store_t *)store
     );
+}
+
+ib_status_t ib_var_target_remove(
+    ib_var_target_t  *target,
+    ib_list_t       **result,
+    ib_mpool_t       *mp,
+    ib_var_store_t   *store
+)
+{
+    assert(target != NULL);
+    assert(store  != NULL);
+    assert((result != NULL && mp != NULL) || (result == NULL && mp == NULL));
+    assert(
+        (target->expand == NULL && target->filter == NULL) ||
+        (target->expand == NULL && target->filter != NULL) ||
+        (target->expand != NULL && target->filter == NULL)
+    );
+
+    ib_status_t rc;
+    ib_mpool_t *local_mp = NULL;
+    const ib_var_filter_t *filter;
+    ib_field_t *field;
+    ib_list_t *local_result = NULL;
+
+    /* No regexp filters. */
+    if (target->filter != NULL && target->filter->re != NULL) {
+        return IB_EINVAL;
+    }
+
+    /* Create result list if needed. */
+    if (result != NULL) {
+        rc = ib_list_create(&local_result, mp);
+        if (rc != IB_OK) {
+            assert(rc == IB_EALLOC);
+            return rc;
+        }
+    }
+
+    /* Fetch and check value. */
+    rc = ib_var_source_get(target->source, &field, store);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Figure out if we need a local memory pool. */
+    if (mp != NULL) {
+        local_mp = mp;
+    }
+    else if (target->expand != NULL) {
+        rc = ib_mpool_create(&local_mp, "ib_var_target_remove", NULL);
+        if (rc != IB_OK) {
+            assert(rc == IB_EALLOC);
+            return rc;
+        }
+    }
+
+    /* !!! From here on, cannot return directly; must goto finish. !!! */
+
+    rc = target_filter_get(target, &filter, local_mp, store);
+    if (rc != IB_OK) {
+        goto finish;
+    }
+
+    if (filter == NULL) {
+        /* Trivial */
+        if (local_result != NULL) {
+            ib_list_push(local_result, (void *)field);
+        }
+
+        rc = ib_var_source_set(target->source, store, NULL);
+        goto finish;
+    }
+    else {
+        /* Simple */
+        rc = ib_var_filter_remove(filter, &local_result, mp, field);
+        goto finish;
+    }
+
+finish:
+    if (mp == NULL && local_mp != NULL) {
+        ib_mpool_destroy(local_mp);
+    }
+    if (result != NULL && rc == IB_OK) {
+        *result = local_result;
+    }
+
+    return rc;
 }
 
 /* var_expand */
