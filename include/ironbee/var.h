@@ -517,7 +517,7 @@ ib_status_t DLL_PUBLIC ib_var_filter_acquire(
 NONNULL_ATTRIBUTE(1, 2, 3);
 
 /**
- * Apply a filter, read only version.
+ * Apply a filter.
  *
  * Apply @a filter to the collection @a field and store results in
  * @a result.
@@ -528,7 +528,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  * @parma[in]  mp     Memory pool to use.
  * @param[in]  field  Field to apply filter to.  Must be a field with value a
  *                    list of `const ib_field_t *`.
- * @result
+ * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
  * - IB_EINVAL if @a field is not of type list.
@@ -540,7 +540,7 @@ ib_status_t DLL_PUBLIC ib_var_filter_apply(
     ib_mpool_t             *mp,
     const ib_field_t       *field
 )
-NONNULL_ATTRIBUTE(1, 2, 3);
+NONNULL_ATTRIBUTE(1, 2, 3, 4);
 
 /** @} */
 

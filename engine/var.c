@@ -782,7 +782,7 @@ ib_status_t ib_var_filter_apply(
 {
     assert(filter != NULL);
     assert(result != NULL);
-    assert(field != NULL);
+    assert(field  != NULL);
 
     ib_status_t rc;
 
@@ -816,6 +816,8 @@ ib_status_t ib_var_filter_apply(
         const ib_list_node_t *node;
 
         rc = ib_field_value(field, ib_ftype_list_out(&answer));
+        /* Can only fail on dyanmic field. */
+        assert(rc == IB_OK);
         IB_LIST_LOOP_CONST(answer, node) {
             const ib_field_t *f =
                 (const ib_field_t *)ib_list_node_data_const(node);
@@ -847,6 +849,7 @@ ib_status_t ib_var_filter_apply(
                 /* Discard const because lists are const-generic. */
                 rc = ib_list_push(local_result, (void *)f);
                 if (rc != IB_OK) {
+                    assert(rc == IB_EALLOC);
                     return rc;
                 }
             }
