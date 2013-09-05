@@ -402,7 +402,7 @@ NONNULL_ATTRIBUTE(3, 4);
 /**
  * Initialize a source to a given field type.
  *
- * This is a help function which creates a field of the appropriate type and
+ * This is a helper function which creates a field of the appropriate type and
  * sets it as the value of @a source.
  *
  * Num and float fields are initialized to 0, time is initialize to epoch,
