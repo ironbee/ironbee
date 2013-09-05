@@ -266,7 +266,8 @@ TEST(TestVar, SourceSetAndGetInvalid)
     ASSERT_EQ(IB_EINVAL, rc);
 
     rc = ib_var_source_set(a, store, &fb);
-    ASSERT_EQ(IB_EINVAL, rc);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ("a", string(fb.name, fb.nlen));
 }
 
 TEST(TestVar, SourceUnindexed)

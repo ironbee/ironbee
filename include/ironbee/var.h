@@ -340,7 +340,7 @@ ib_status_t DLL_PUBLIC ib_var_source_get_const(
  * If @a source has already been set, this will overwrite the previous
  * value.
  *
- * The name of @a field must match the name of @a store.
+ * The name of @a field will be changed to match that of @a source.
  *
  * @sa ib_var_source_initialize() for an easier way to create a field and
  * set a source to it.
@@ -355,8 +355,6 @@ ib_status_t DLL_PUBLIC ib_var_source_get_const(
  * - IB_EALLOC on allocation failure.
  * - IB_EINVAL if @a source is from a different var configuration than
  *   @a store.
- * - IB_EINVAL if @a field is non-NULL and has a different name than
- *   @a source.
  **/
 ib_status_t DLL_PUBLIC ib_var_source_set(
     ib_var_source_t *source,

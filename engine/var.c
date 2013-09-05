@@ -506,12 +506,8 @@ ib_status_t ib_var_source_set(
     }
 
     if (field != NULL) {
-        if (source->name_length != field->nlen) {
-            return IB_EINVAL;
-        }
-        if (strncmp(source->name, field->name, source->name_length) != 0) {
-            return IB_EINVAL;
-        }
+        field->name = source->name;
+        field->nlen = source->name_length;
     }
 
     if (source->is_indexed) {
