@@ -542,6 +542,34 @@ ib_status_t DLL_PUBLIC ib_var_filter_apply(
 )
 NONNULL_ATTRIBUTE(1, 2, 3, 4);
 
+/**
+ * Apply a filter, removing found elements.
+ *
+ * Apply @a filter to the collection @a field, removing any elements found.
+ * Elements removed are stored in @a result if it is non-null.
+ *
+ * @param[in]  filter Filter to apply.  Cannot be regexp.
+ * @param[out] result Results.  Value is `const ib_field_t *`.  Lifetime is
+ *                    equal to @a mp.  Can be NULL.
+ * @param[in]  mp     Memory pool to use.  Can be NULL if results is NULL.
+ * @param[in]  field  Field to apply filter to.  Must be a field with value a
+ *                    list of `ib_field_t *`.  Cannot be dynamic.
+ *
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL if @a field is not of type list.
+ * - IB_EINVAL if @a filter is regexp.
+ * - IB_EOTHER if @a field is dynamic and dynamic query results in error.
+ **/
+ib_status_t DLL_PUBLIC ib_var_filter_remove(
+    const ib_var_filter_t  *filter,
+    ib_list_t             **result,
+    ib_mpool_t             *mp,
+    ib_field_t             *field
+)
+NONNULL_ATTRIBUTE(1, 4);
+
 /** @} */
 
 /**

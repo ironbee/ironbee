@@ -861,6 +861,68 @@ ib_status_t ib_var_filter_apply(
     return IB_OK;
 }
 
+ib_status_t ib_var_filter_remove(
+    const ib_var_filter_t  *filter,
+    ib_list_t             **result,
+    ib_mpool_t             *mp,
+    ib_field_t             *field
+)
+{
+    assert(filter != NULL);
+    assert(field  != NULL);
+    assert((result != NULL && mp != NULL) || (result == NULL && mp == NULL));
+
+    ib_status_t    rc;
+    ib_list_t      *local_result = NULL;
+    ib_list_t      *field_list;
+    ib_list_node_t *node;
+    ib_list_node_t *next_node;
+
+    if (field->type != IB_FTYPE_LIST || ib_field_is_dynamic(field)) {
+        return IB_EINVAL;
+    }
+
+    if (filter->re != NULL) {
+        return IB_EINVAL;
+    }
+
+    if (result != NULL) {
+        rc = ib_list_create(&local_result, mp);
+        if (rc != IB_OK) {
+            assert(rc == IB_EALLOC);
+            return rc;
+        }
+    }
+
+    rc = ib_field_value(field, ib_ftype_list_mutable_out(&field_list));
+    /* Can only fail on dyanmic field. */
+    IB_LIST_LOOP_SAFE(field_list, node, next_node) {
+        ib_field_t *f = (ib_field_t *)ib_list_node_data(node);
+        if (
+            filter->filter_string_length == f->nlen &&
+            strncasecmp(
+                filter->filter_string,
+                f->name, f->nlen
+            ) == 0
+        ) {
+            if (result != NULL) {
+                rc = ib_list_push(local_result, (void *)f);
+                if (rc != IB_OK) {
+                    assert(rc == IB_EALLOC);
+                    return rc;
+                }
+            }
+            ib_list_node_remove(field_list, node);
+        }
+    }
+
+    if (result != NULL) {
+        *result = local_result;
+    }
+
+    return IB_OK;
+}
+
 /* var_target */
 
 ib_status_t ib_var_target_acquire(
