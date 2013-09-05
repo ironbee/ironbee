@@ -15,8 +15,8 @@
  * limitations under the License.
  ****************************************************************************/
 
-#ifndef _IB_LOGGER_H_
-#define _IB_LOGGER_H_
+#ifndef _IB_LOG_H_
+#define _IB_LOG_H_
 
 /**
  * @file

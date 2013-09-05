@@ -3,16 +3,16 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 include $(top_srcdir)/build/common.mk
 
 SUBDIRS = tests
-EXTRA_DIST =  config-parser.rl \
-              engine_private.h  \
-	      config_private.h \
-              engine_manager_private.h  \
-              engine_manager_log_private.h  \
-              state_notify_private.h \
-              rule_engine_private.h \
-              rule_logger_private.h \
-              core_private.h \
-              core_audit_private.h
+EXTRA_DIST = config-parser.rl \
+             engine_private.h  \
+             config_private.h \
+             engine_manager_private.h  \
+             engine_manager_log_private.h  \
+             state_notify_private.h \
+             rule_engine_private.h \
+             rule_logger_private.h \
+             core_private.h \
+             core_audit_private.h
 
 
 lib_LTLIBRARIES = libironbee.la
@@ -32,6 +32,7 @@ libironbee_la_SOURCES = engine.c \
                         core_actions.c \
                         core_audit.c \
                         log.c \
+                        logger.c \
                         logevent.c \
                         rule_logger.c \
                         rule_engine.c \
@@ -43,8 +44,9 @@ libironbee_la_SOURCES = engine.c \
                         $(top_builddir)/lua/ironbee.h
 libironbee_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) $(PCRE_CFLAGS)
 libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la $(PCRE_LDADD)
-libironbee_la_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS) \
-						$(LIBM_LDFLAGS) \
+libironbee_la_LDFLAGS = $(AM_LDFLAGS)                   \
+                        $(HTP_LDFLAGS)                  \
+                        $(LIBM_LDFLAGS)                 \
                         -version-info @LIBRARY_VERSION@ \
                         -release @MAJOR_VERSION@.@MINOR_VERSION@
 
