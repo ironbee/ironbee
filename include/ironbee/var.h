@@ -551,12 +551,13 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * @param[in]  filter Filter to apply.  Cannot be regexp.
  * @param[out] result Results.  Value is `const ib_field_t *`.  Lifetime is
  *                    equal to @a mp.  Can be NULL.
- * @param[in]  mp     Memory pool to use.  Can be NULL if results is NULL.
+ * @param[in]  mp     Memory pool to use.  Can be NULL if @a result is NULL.
  * @param[in]  field  Field to apply filter to.  Must be a field with value a
  *                    list of `ib_field_t *`.  Cannot be dynamic.
  *
  * @return
  * - IB_OK on success.
+ * - IB_ENOENT if nothing to remove.
  * - IB_EALLOC on allocation failure.
  * - IB_EINVAL if @a field is not of type list.
  * - IB_EINVAL if @a filter is regexp.
