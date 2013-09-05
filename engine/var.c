@@ -212,7 +212,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  **/
 static
 ib_status_t target_filter_get(
-    ib_var_target_t        *target,
+    const ib_var_target_t  *target,
     const ib_var_filter_t **result,
     ib_mpool_t             *mp,
     ib_var_store_t         *store
@@ -1062,7 +1062,7 @@ ib_status_t ib_var_target_acquire_from_string(
 }
 
 ib_status_t target_filter_get(
-    ib_var_target_t        *target,
+    const ib_var_target_t  *target,
     const ib_var_filter_t **result,
     ib_mpool_t             *mp,
     ib_var_store_t         *store
@@ -1300,6 +1300,47 @@ finish:
     }
 
     return rc;
+}
+
+ib_status_t ib_var_target_expand(
+    const ib_var_target_t  *target,
+    const ib_var_target_t **expanded,
+    ib_mpool_t             *mp,
+    ib_var_store_t         *store
+)
+{
+    assert(target   != NULL);
+    assert(expanded != NULL);
+    assert(mp       != NULL);
+    assert(store    != NULL);
+
+    const ib_var_filter_t *expanded_filter;
+    ib_var_target_t *expanded_target;
+    ib_status_t rc;
+
+    if (target->expand == NULL) {
+        *expanded = target;
+        return IB_OK;
+    }
+
+    rc = target_filter_get(target, &expanded_filter, mp, store);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_var_target_acquire(
+        &expanded_target,
+        mp,
+        target->source,
+        NULL,
+        expanded_filter
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    *expanded = expanded_target;
+    return IB_OK;
 }
 
 /* var_expand */

@@ -743,6 +743,35 @@ ib_status_t DLL_PUBLIC ib_var_target_remove(
 )
 NONNULL_ATTRIBUTE(1, 4);
 
+/**
+ * Convert an expand target to a simple target.
+ *
+ * This function does the expansion of the target.  The result can then be
+ * used multiple times without reincurring the cost of expansion.  However,
+ * expansion fixes the expanded values.  As such, this routine sould only
+ * be used at evaluation time for targets that will be reused with no changes
+ * to the store in between uses.
+ *
+ * If called with a non-expand target, will output @a target.
+ *
+ * @param[in]  target   Target to expand.
+ * @param[out] expanded Expanded target.  Lifetime will be that of @a target
+ *                      for non-expand targets and that of @a mp for expand
+ *                      targets.
+ * @param[in]  mp       Memory pool to use.
+ * @param[in]  store    Store to use.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ **/
+ib_status_t DLL_PUBLIC ib_var_target_expand(
+    const ib_var_target_t  *target,
+    const ib_var_target_t **expanded,
+    ib_mpool_t             *mp,
+    ib_var_store_t         *store
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4);
+
 /** @} */
 
 /**
