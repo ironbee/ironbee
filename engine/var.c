@@ -633,6 +633,56 @@ ib_status_t ib_var_source_initialize(
     return IB_OK;
 }
 
+ib_status_t ib_var_source_append(
+    ib_var_source_t *source,
+    ib_var_store_t  *store,
+    ib_field_t      *field
+)
+{
+    assert(source != NULL);
+    assert(field  != NULL);
+    assert(store  != NULL);
+
+    ib_status_t  rc;
+    ib_field_t  *source_field;
+    ib_list_t   *list;
+
+    rc = ib_var_source_get(source, &source_field, store);
+    if (rc != IB_OK && rc != IB_ENOENT) {
+        return rc;
+    }
+
+    if (rc == IB_ENOENT) {
+        rc = ib_var_source_initialize(
+            source,
+            &source_field,
+            store,
+            IB_FTYPE_LIST
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    assert(source_field != NULL);
+
+    if (source_field->type != IB_FTYPE_LIST) {
+        return IB_EINCOMPAT;
+    }
+
+    rc = ib_field_value(source_field, ib_ftype_list_mutable_out(&list));
+    if (rc != IB_OK) {
+        return rc == IB_EALLOC ? rc : IB_EOTHER;
+    }
+
+    rc = ib_list_push(list, field);
+    if (rc != IB_OK) {
+        return rc == IB_EALLOC ? rc : IB_EOTHER;
+    }
+
+    return IB_OK;
+}
+
 /* var_filter */
 
 ib_status_t ib_var_filter_acquire(

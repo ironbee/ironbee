@@ -431,6 +431,32 @@ ib_status_t DLL_PUBLIC ib_var_source_initialize(
 )
 NONNULL_ATTRIBUTE(1, 3);
 
+/**
+ * Append a field to a list source, initializing if needed.
+ *
+ * This is a helper function which appends a field to a source of type list,
+ * initializing it (ib_var_source_initialize()) if needed.
+ *
+ * This function is *slow*.
+ *
+ * @param[in] source Source to append to.
+ * @param[in] field  Field to append.
+ * @param[in] store  Store source value is in.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL if @a source is from a different var configuration than
+ *   @a store.
+ * - IB_EINCOMPAT if @a source has a value in store that is non-list.
+ * - IB_EOTHER if there is an unexpected error in field or list handling.
+ **/
+ib_status_t DLL_PUBLIC ib_var_source_append(
+    ib_var_source_t *source,
+    ib_var_store_t  *store,
+    ib_field_t      *field
+)
+NONNULL_ATTRIBUTE(1, 2, 3);
+
 /** @} */
 
 /**

@@ -366,6 +366,50 @@ TEST(TestVar, SourceInitialize)
     ASSERT_FALSE(f);
 }
 
+TEST(TestVar, SourceAppend)
+{
+    using namespace IronBee;
+
+    ScopedMemoryPool smp;
+    ib_status_t rc;
+    ib_mpool_t* mp = MemoryPool(smp).ib();
+    ib_var_config_t* config = make_config(mp);
+    ASSERT_TRUE(config);
+
+    ib_var_source_t* a = make_source(config, "a");
+    ASSERT_TRUE(a);
+    ib_var_source_t* b = make_source(config, "b");
+    ASSERT_TRUE(a);
+
+    ib_var_store_t* store = make_store(config);
+    ASSERT_TRUE(store);
+
+    rc = ib_var_source_append(a, store,
+        Field::create_number(smp, "A", 1, 1).ib()
+    );
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_var_source_append(a, store,
+        Field::create_number(smp, "B", 1, 1).ib()
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    ib_field_t* list_field;
+    rc = ib_var_source_get(a, &list_field, store);
+    ASSERT_EQ(IB_OK, rc);
+    Field f(list_field);
+    ASSERT_EQ(2UL, f.value_as_list<Field>().size());
+
+    rc = ib_var_source_set(b, store,
+        Field::create_number(smp, "b", 1, 1).ib()
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_var_source_append(b, store,
+        Field::create_number(smp, "A", 1, 1).ib()
+    );
+    ASSERT_EQ(IB_EINCOMPAT, rc);
+}
+
 TEST(TestVar, Filter)
 {
     using namespace IronBee;
