@@ -844,6 +844,63 @@ LuaCommitRules</programlisting></para>
                     match_limit.</quote></para>
         </section>
         <section>
+            <title>ProtectionEngineOptions</title>
+            <para><emphasis role="bold">Description:</emphasis> Configures options for the
+                protection engine.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>ProtectionEngineOptions <replaceable>[+|-]option</replaceable>
+                    ...</literal></para>
+            <para><emphasis role="bold">Default:</emphasis>
+                <literal>default</literal></para>
+            <para><emphasis role="bold">Context:</emphasis> Any</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+            <para>The protection engine allows setting options;
+                    <literal>ProtectionEngineOptions</literal> controls these options. The options
+                are inherited into child contexts (Site, Location, etc). Specifying an option with
+                +/- operator will add or remove the given option from the current set. Specifying
+                the first option without +/- operators will cause all options to be overridden and
+                the list of options will be the only options set. Here is what your configuration
+                might look like:</para>
+            <programlisting>ProtectionEngineOptions none</programlisting>
+            <para>The above resets the inspection to <emphasis role="bold">none</emphasis>.</para>
+            <para>Later, in a sub-context, you may wish to enable blocking and
+            thus can just specify this with the + operator:</para>
+            <programlisting>&lt;Location /some/path>
+    ProtectionEngineOptions <emphasis role="bold">+blockingMode</emphasis>
+&lt;/Location></programlisting>
+            <para>If you already had blocking mode enabled, but didn't want it any more, you would
+                write:</para>
+            <programlisting>&lt;Location /some/other/path>
+    ProtectionEngineOptions <emphasis role="bold">-blockingMode</emphasis>
+&lt;/Location></programlisting>
+            <para>Protection Engine Options:</para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para><emphasis role="bold">blockingMode:</emphasis> Control blocking actions.</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>Protection Engine Option Group Names:</para>
+            <para>These are just aliases for multiple options.</para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para><emphasis role="bold">none:</emphasis> Removes all options</para>
+                    </listitem>
+                    <listitem>
+                        <para><emphasis role="bold">default:</emphasis> Default options (currently
+                            none)</para>
+                    </listitem>
+                    <listitem>
+                        <para><emphasis role="bold">all:</emphasis> All options</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+        <section>
             <title>RequestBuffering</title>
             <para><emphasis role="bold">Description:</emphasis> Enable/disable request
                 buffering.</para>
