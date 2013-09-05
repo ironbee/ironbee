@@ -203,7 +203,7 @@ struct ib_conn_t {
 };
 
 /**
- * Actions available when a limit is exceeded.
+ * Actions available in @ref ib_tx_limits_t when a limit is exceeded.
  */
 typedef enum ib_tx_limits_actions_t {
     IB_CORE_LIMIT_ROLLOVER, /**< Continue processing. */
