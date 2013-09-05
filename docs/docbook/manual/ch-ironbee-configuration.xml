@@ -1524,4 +1524,153 @@ TxDump PostProcess file:///tmp/tx.txt All
 TxDump Logging file:///var/log/ib/all.txt+ All
 TxDump PostProcess StdOut All</programlisting></para>
     </section>
+        <section>
+            <title>XRuleGeo</title>
+            <para><emphasis role="bold">Description:</emphasis> Add an extended geo rule.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>XRuleGeo <replaceable>2-char-country-code</replaceable> <replaceable>action</replaceable> <replaceable>...</replaceable></literal></para>
+            <para><emphasis role="bold">Default:</emphasis> None</para>
+            <para><emphasis role="bold">Context:</emphasis> Any</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
+            <para><emphasis role="bold">Module:</emphasis> xrules</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+            <note>
+                <para>XRules, or extended rules, are rules that implement common operations, such as Access Control Lists (ACLs). These extended rules hide much of the complexities of normal rules so that these common operations are easier to use. The priority allows conflicts to be resolved - higher priority (lower numerical value) rules will override lower priority rules.</para>
+            </note>
+            <para>An XRuleGeo is used to setup Geo (country) based rules.</para>
+            <para>Example:<programlisting>XRuleGeo US scaleThreat=0.8 priority=1</programlisting></para>
+            <para>For available actions, see <literal>XRuleIpv4</literal></para>
+        </section>
+        <section>
+            <title>XRuleIpv4</title>
+            <para><emphasis role="bold">Description:</emphasis> Add an extended IPv4 rule.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>XRuleIpv4 <replaceable>ipv4-cidr</replaceable> <replaceable>action</replaceable> <replaceable>...</replaceable></literal></para>
+            <para><emphasis role="bold">Default:</emphasis> None</para>
+            <para><emphasis role="bold">Context:</emphasis> Any</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
+            <para><emphasis role="bold">Module:</emphasis> xrules</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+            <note>
+                <para>XRules, or extended rules, are rules that implement common operations, such as Access Control Lists (ACLs). These extended rules hide much of the complexities of normal rules so that these common operations are easier to use. The priority allows conflicts to be resolved - higher priority (lower numerical value) rules will override lower priority rules.</para>
+            </note>
+            <para>An XRuleIpv4 is used to setup IPv4 based rules.</para>
+            <para>Example:<programlisting>XRuleIpv4 192.168.0.0/16 block priority=1</programlisting></para>
+            <para>Available Actions:
+                <itemizedlist>
+                    <listitem><para><literal>priority=N</literal> - Set rule priority.</para></listitem>
+                    <listitem><para><literal>block</literal> - Block the transaction.</para></listitem>
+                    <listitem><para><literal>allow</literal> - Allow the transaction.</para></listitem>
+                    <listitem><para><literal>enableBlockingMode</literal> - Enable blocking mode for this transaction.</para></listitem>
+                    <listitem><para><literal>disableBlockingMode</literal> - Disable blocking mode for this transaction</para></listitem>
+                    <listitem><para><literal>scaleThreat=X</literal> - Scale threat calculation (update <literal>XRULES:SCALE_THREAT</literal>) by floating point multiplier, X, for this transaction.</para></listitem>
+                    <listitem><para><literal>enableRequestHeaderInspection</literal> - Enable request header inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>disableRequestHeaderInspection</literal> - Disable request header inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>enableRequestURIInspection</literal> - Enable request URI inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>disableRequestURIInspection</literal> - Disable request URI inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>enableRequestParamInspection</literal> - Enable request parameter inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>disableRequestParamInspection</literal> - Disable request parameter inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>enableRequestBodyInspection</literal> - Enable request body inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>disableRequestBodyInspection</literal> - Disable request body inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>enableResponseHeaderInspection</literal> - Enable response header inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>disableResponseHeaderInspection</literal> - Disable response header inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>enableResponseBodyInspection</literal> - Enable response body inspection for this transaction.</para></listitem>
+                    <listitem><para><literal>disableResponseBodyInspection</literal> - Disable response body inspection for this transaction.</para></listitem>
+                </itemizedlist>
+            </para>
+        </section>
+        <section>
+            <title>XRuleIpv6</title>
+            <para><emphasis role="bold">Description:</emphasis> Add an extended IPv6 rule.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>XRuleIpv6 <replaceable>ipv6-cidr</replaceable> <replaceable>action</replaceable> <replaceable>...</replaceable></literal></para>
+            <para><emphasis role="bold">Default:</emphasis> None</para>
+            <para><emphasis role="bold">Context:</emphasis> Any</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
+            <para><emphasis role="bold">Module:</emphasis> xrules</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+            <note>
+                <para>XRules, or extended rules, are rules that implement common operations, such as Access Control Lists (ACLs). These extended rules hide much of the complexities of normal rules so that these common operations are easier to use. The priority allows conflicts to be resolved - higher priority (lower numerical value) rules will override lower priority rules.</para>
+            </note>
+            <para>An XRuleIpv6 is used to setup IPv6 based rules.</para>
+            <para>Example:<programlisting>XRuleIpv6 ::1/128 block priority=1</programlisting></para>
+            <para>For available actions, see <literal>XRuleIpv4</literal></para>
+        </section>
+        <section>
+            <title>XRulePath</title>
+            <para><emphasis role="bold">Description:</emphasis> Add an extended path rule.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>XRulePath <replaceable>uri-path</replaceable> <replaceable>action</replaceable> <replaceable>...</replaceable></literal></para>
+            <para><emphasis role="bold">Default:</emphasis> None</para>
+            <para><emphasis role="bold">Context:</emphasis> Any</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
+            <para><emphasis role="bold">Module:</emphasis> xrules</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+            <note>
+                <para>XRules, or extended rules, are rules that implement common operations, such as Access Control Lists (ACLs). These extended rules hide much of the complexities of normal rules so that these common operations are easier to use. The priority allows conflicts to be resolved - higher priority (lower numerical value) rules will override lower priority rules.</para>
+            </note>
+            <para>An XRulePath is used to setup URI path based rules.</para>
+            <para>Example:<programlisting>XRulePath /admin scaleThreat=1.5 enableBlockingMode priority=1</programlisting></para>
+            <para>For available actions, see <literal>XRuleIpv4</literal></para>
+        </section>
+        <section>
+            <title>XRuleRequestContentType</title>
+            <para><emphasis role="bold">Description:</emphasis> Add an extended request content type rule.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>XRuleRequestContentType <replaceable>mime-type</replaceable> <replaceable>action</replaceable> <replaceable>...</replaceable></literal></para>
+            <para><emphasis role="bold">Default:</emphasis> None</para>
+            <para><emphasis role="bold">Context:</emphasis> Any</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
+            <para><emphasis role="bold">Module:</emphasis> xrules</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+            <note>
+                <para>XRules, or extended rules, are rules that implement common operations, such as Access Control Lists (ACLs). These extended rules hide much of the complexities of normal rules so that these common operations are easier to use. The priority allows conflicts to be resolved - higher priority (lower numerical value) rules will override lower priority rules.</para>
+            </note>
+            <para>An XRuleRequestContentType is used to setup request contetnt type based rules.</para>
+            <para>Example:<programlisting>XRuleRequestContentType application/x-www-form-urlencoded enableRequestBodyInspection</programlisting></para>
+            <para>For available actions, see <literal>XRuleIpv4</literal></para>
+        </section>
+        <section>
+            <title>XRuleResponseContentType</title>
+            <para><emphasis role="bold">Description:</emphasis> Add an extended IPv6 rule.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>XRuleResponseContentType <replaceable>mime-type</replaceable> <replaceable>action</replaceable> <replaceable>...</replaceable></literal></para>
+            <para><emphasis role="bold">Default:</emphasis> None</para>
+            <para><emphasis role="bold">Context:</emphasis> Any</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
+            <para><emphasis role="bold">Module:</emphasis> xrules</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+            <note>
+                <para>XRules, or extended rules, are rules that implement common operations, such as Access Control Lists (ACLs). These extended rules hide much of the complexities of normal rules so that these common operations are easier to use. The priority allows conflicts to be resolved - higher priority (lower numerical value) rules will override lower priority rules.</para>
+            </note>
+            <para>An XRuleResponseContentType is used to setup response content type based rules.</para>
+            <para>Example:<programlisting>XRuleResponseContentType image/png disableResponseBodyInspection</programlisting></para>
+            <para>For available actions, see <literal>XRuleIpv4</literal></para>
+        </section>
+        <section>
+            <title>XRuleTime</title>
+            <para><emphasis role="bold">Description:</emphasis> Add an extended time rule.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>XRuleTime <replaceable>time-spec</replaceable> <replaceable>action</replaceable> <replaceable>...</replaceable></literal></para>
+            <para><emphasis role="bold">Default:</emphasis> None</para>
+            <para><emphasis role="bold">Context:</emphasis> Any</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
+            <para><emphasis role="bold">Module:</emphasis> xrules</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+            <note>
+                <para>XRules, or extended rules, are rules that implement common operations, such as Access Control Lists (ACLs). These extended rules hide much of the complexities of normal rules so that these common operations are easier to use. The priority allows conflicts to be resolved - higher priority (lower numerical value) rules will override lower priority rules.</para>
+            </note>
+            <para>An XRuleTime is used to setup date/time based rules.</para>
+            <para>The time-spec is in the format: <literal>[!]DOW(,DOW)*@HH:MM-HH:MM[-|+]ZZZZ</literal>:
+                <itemizedlist>
+                    <listitem><para><literal>!</literal> - Invert rule.</para></listitem>
+                    <listitem><para><literal>DOW</literal> - Day of Week (0=Sunday - 6=Saturday).</para></listitem>
+                    <listitem><para><literal>HH</literal> - Two digit hour (24-hr format).</para></listitem>
+                    <listitem><para><literal>MM</literal> - Two digit minute.</para></listitem>
+                    <listitem><para><literal>[-|+]ZZZZ</literal> - Timezone offset from GMT</para></listitem>
+                </itemizedlist>
+            </para>
+            <para>Example:<programlisting>XRuleTime !1,2,3,4,5@08:00-17:00-0500 scaleThreat=1.5 enableBlockingMode</programlisting></para>
+            <para>For available actions, see <literal>XRuleIpv4</literal></para>
+        </section>
 </chapter>
