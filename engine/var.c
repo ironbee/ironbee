@@ -1339,6 +1339,77 @@ ib_status_t ib_var_target_expand(
     return IB_OK;
 }
 
+ib_status_t ib_var_target_set(
+    ib_var_target_t *target,
+    ib_mpool_t      *mp,
+    ib_var_store_t  *store,
+    ib_field_t      *field
+)
+{
+    assert(target != NULL);
+    assert(mp     != NULL);
+    assert(store  != NULL);
+    assert(field  != NULL);
+    assert(
+        (target->expand == NULL && target->filter == NULL) ||
+        (target->expand == NULL && target->filter != NULL) ||
+        (target->expand != NULL && target->filter == NULL)
+    );
+
+    ib_status_t rc;
+    const ib_var_filter_t *filter;
+    ib_field_t *source_field;
+    ib_list_t *list;
+
+    /* No regexp filters. */
+    if (target->filter != NULL && target->filter->re != NULL) {
+        return IB_EINVAL;
+    }
+
+    rc = target_filter_get(target, &filter, mp, store);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    if (filter == NULL) {
+        return ib_var_source_set(target->source, store, field);
+    }
+
+    /* Target must be simple. */
+    rc = ib_var_source_get(target->source, &source_field, store);
+    if (rc == IB_ENOENT) {
+        rc = ib_var_source_initialize(
+            target->source,
+            &source_field,
+            store,
+            IB_FTYPE_LIST
+        );
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+    if (
+        source_field->type != IB_FTYPE_LIST ||
+        ib_field_is_dynamic(source_field)
+    ) {
+        return IB_EINVAL;
+    }
+
+    field->name = filter->filter_string;
+    field->nlen = filter->filter_string_length;
+
+    rc = ib_field_value(source_field, ib_ftype_list_mutable_out(&list));
+    if (rc != IB_OK) {
+        return rc == IB_EALLOC ? rc : IB_EOTHER;
+    }
+    rc = ib_list_push(list, field);
+    if (rc != IB_OK) {
+        return rc == IB_EALLOC ? rc : IB_EOTHER;
+    }
+
+    return IB_OK;
+}
+
 /* var_expand */
 
 void field_to_string(

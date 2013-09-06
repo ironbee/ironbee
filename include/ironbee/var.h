@@ -770,6 +770,40 @@ ib_status_t DLL_PUBLIC ib_var_target_expand(
 )
 NONNULL_ATTRIBUTE(1, 2, 3, 4);
 
+/**
+ * Set target to a value.
+ *
+ * This function behaves differently depending on the target:
+ * - Trivial: Equivalent to ib_var_source_set() except that @a field cannot
+ *   be null.
+ * - Simple: If source not set, will initialize a list field via
+ *   ib_var_source_initialize().  Will then append @a field to source.
+ * - Expand: Will expand and then as above.
+ * - Regexp: Will return IB_EINVAL.
+ *
+ * Note that @a field cannot be NULL.  Use ib_var_target_remove() instead.
+ *
+ * @param[in] target Target to set.
+ * @param[in] mp     Memory pool to use.
+ * @param[in] store  Store to use.
+ * @param[in] field  Field to set value to.  Will have name overriden based on
+ *                   filter.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL if target is regexp or expands to regexp.
+ * - IB_EINVAL if target is simple or expands to simple and source is not a
+ *   list or is dynamic.
+ * - IB_EINVAL if config of @a store does not match that of @a target.
+ **/
+ib_status_t DLL_PUBLIC ib_var_target_set(
+    ib_var_target_t *target,
+    ib_mpool_t      *mp,
+    ib_var_store_t  *store,
+    ib_field_t      *field
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4);
+
 /** @} */
 
 /**
