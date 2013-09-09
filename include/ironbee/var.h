@@ -254,7 +254,7 @@ NONNULL_ATTRIBUTE(1);
  *                           IB_RULE_PHASE_NONE or after @a initial_phase.
  * @return
  * - IB_OK on success.
- * - IB_EEXISTS if a source named @a name already exists.
+ * - IB_EEXIST if a source named @a name already exists.
  * - IB_EINVAL if @a initial_phase is after @a final_phase.
  * - IB_EALLOC on allocation failure.
  **/
