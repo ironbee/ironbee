@@ -238,9 +238,10 @@ static ib_status_t populate_data_in_context(
         const char         *name   = mapping->name;
         ib_persist_fw_store_t *store  = mapping->store;
         const char         *key    = mapping->key;
+        size_t              key_length = mapping->key_length;
         bool                expand = false;
 
-        ib_data_expand_test_str(key, &expand);
+        ib_data_expand_test_str_ex(key, key_length, &expand);
         if (expand) {
             char *ex_key = NULL;
             rc = ib_data_expand_str(
@@ -281,7 +282,7 @@ static ib_status_t populate_data_in_context(
             rc = store->handler->load_fn(
                 store->impl,
                 tx,
-                key,
+                key, key_length,
                 list,
                 store->handler->load_data);
             if (rc != IB_OK) {
@@ -344,16 +345,18 @@ static ib_status_t persist_data_in_context(
         const char         *name   = mapping->name;
         ib_persist_fw_store_t *store  = mapping->store;
         const char         *key    = mapping->key;
+        size_t              key_length = mapping->key_length;
         bool                expand = false;
 
         ib_data_expand_test_str(key, &expand);
         if (expand) {
             char *ex_key = NULL;
-            rc = ib_data_expand_str(
+            size_t ex_key_length;
+            rc = ib_data_expand_str_ex(
                 tx->data,
-                mapping->key,
-                true,
-                &ex_key);
+                mapping->key, mapping->key_length,
+                false, true,
+                &ex_key, &ex_key_length);
             if (rc != IB_OK) {
                 ib_log_error(
                     ib,
@@ -363,9 +366,11 @@ static ib_status_t persist_data_in_context(
                 continue;
             }
             key = ex_key;
+            key_length = ex_key_length;
         }
         else {
             key = mapping->key;
+            key_length = mapping->key_length;
         }
 
         if (store->handler->store_fn) {
@@ -388,7 +393,7 @@ static ib_status_t persist_data_in_context(
             rc = store->handler->store_fn(
                 store->impl,
                 tx,
-                key,
+                key, key_length,
                 list,
                 store->handler->store_data);
             if (rc != IB_OK) {
@@ -546,6 +551,7 @@ ib_status_t ib_persist_fw_map_collection(
     ib_context_t    *ctx,
     const char      *name,
     const char      *key,
+    size_t           key_length,
     const char      *store_name
 )
 {
@@ -587,6 +593,7 @@ ib_status_t ib_persist_fw_map_collection(
         ib_log_error(ib, "Failed to copy mapping %s's key name %s.", name, key);
         return IB_EALLOC;
     }
+    mapping->key_length = key_length;
 
     rc = ib_hash_get(persist_fw_cfg->stores, &store, store_name);
     if (rc != IB_OK) {

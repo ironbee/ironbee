@@ -99,6 +99,7 @@ typedef struct ib_persist_fw_store_t ib_persist_fw_store_t;
 struct ib_persist_fw_mapping_t {
     const char *name;          /**< Collection Name. */
     const char *key;           /**< The key the collection is stored under. */
+    size_t key_length;         /**< Length of key. */
     ib_persist_fw_store_t *store; /**< The store the data is in. */
 };
 typedef struct ib_persist_fw_mapping_t ib_persist_fw_mapping_t;

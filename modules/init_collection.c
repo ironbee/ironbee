@@ -37,6 +37,7 @@
 #endif
 #include <ironbee/module.h>
 #include <ironbee/path.h>
+#include <ironbee/string.h>
 #include <ironbee/uuid.h>
 
 #include <assert.h>
@@ -98,6 +99,7 @@ typedef struct json_t json_t;
  * @param[in] impl The implementation created by json_create_fn().
  * @param[in] tx The transaction.
  * @param[in] key Unused.
+ * @param[in] key_len Unused.
  * @param[in] fields The output fields.
  * @param[in] cbdata Callback data. Unused.
  *
@@ -109,6 +111,7 @@ static ib_status_t json_load_fn(
     void       *impl,
     ib_tx_t    *tx,
     const char *key,
+    size_t      key_len,
     ib_list_t  *fields,
     void       *cbdata
 )
@@ -403,6 +406,7 @@ static ib_status_t var_create_fn(
  * @param[in] impl The @ref var_t created by var_create_fn().
  * @param[in] tx The current transaction.
  * @param[in] key Unused.
+ * @param[in] key_len Unused.
  * @param[in] fields The output fields.
  * @param[in] cbdata Callback data. Unused.
  *
@@ -410,12 +414,14 @@ static ib_status_t var_create_fn(
  * - IB_OK On success.
  * - IB_EOTHER On unexpected list manipulation errors.
  */
-static ib_status_t var_load_fn(
-        void       *impl,
-        ib_tx_t    *tx,
-        const char *key,
-        ib_list_t  *fields,
-        void       *cbdata
+static
+ib_status_t var_load_fn(
+    void       *impl,
+    ib_tx_t    *tx,
+    const char *key,
+    size_t      key_len,
+    ib_list_t  *fields,
+    void       *cbdata
 )
 {
     assert(impl != NULL);
@@ -503,7 +509,7 @@ static ib_status_t domap(
         cfg->persist_fw,
         ctx,
         collection_name,
-        "no key",
+        IB_S2SL("no key"),
         store_name);
     if (rc != IB_OK) {
         ib_cfg_log_error(

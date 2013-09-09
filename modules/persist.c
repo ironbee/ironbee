@@ -234,6 +234,7 @@ static ib_status_t file_rw_load_fn(
     void       *impl,
     ib_tx_t    *tx,
     const char *key,
+    size_t      key_len,
     ib_list_t  *list,
     void       *cbdata
 )
@@ -250,7 +251,7 @@ static ib_status_t file_rw_load_fn(
     assert(ib != NULL);
 
     kv_key.key = key;
-    kv_key.length = strlen(key);
+    kv_key.length = key_len;
 
     /* Get the data. */
     rc = ib_kvstore_get(
@@ -298,6 +299,7 @@ static ib_status_t file_rw_store_fn(
     void            *impl,
     ib_tx_t         *tx,
     const char      *key,
+    size_t           key_len,
     const ib_list_t *list,
     void            *cbdata
 )
@@ -327,7 +329,7 @@ static ib_status_t file_rw_store_fn(
     }
 
     kv_key.key = key;
-    kv_key.length = strlen(key);
+    kv_key.length = key_len;
 
     kv_val.value = data;
     kv_val.value_length = dlen;
@@ -581,7 +583,7 @@ static ib_status_t persistence_map_fn(
         cfg->persist_fw,
         ctx,
         collection_name,
-        key,
+        IB_S2SL(key),
         store_name);
     /* Exit on success or a non-IB_ENOENT error. */
     if (rc != IB_ENOENT) {
@@ -617,7 +619,7 @@ static ib_status_t persistence_map_fn(
         cfg->persist_fw,
         ctx,
         collection_name,
-        key,
+        IB_S2SL(key),
         store_name);
     if (rc != IB_OK) {
         ib_cfg_log_error(
