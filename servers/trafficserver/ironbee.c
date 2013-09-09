@@ -1950,7 +1950,6 @@ static ib_status_t ironbee_conn_init(
     ib_ssn_ctx *ssn)
 {
     assert(ssn != NULL);
-    ib_status_t            rc;
     const struct sockaddr *addr;
     int                    port;
     ib_conn_t             *iconn = ssn->iconn;
