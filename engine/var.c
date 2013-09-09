@@ -1299,10 +1299,10 @@ finish:
 }
 
 ib_status_t ib_var_target_expand(
-    const ib_var_target_t  *target,
-    const ib_var_target_t **expanded,
-    ib_mpool_t             *mp,
-    ib_var_store_t         *store
+    ib_var_target_t  *target,
+    ib_var_target_t **expanded,
+    ib_mpool_t       *mp,
+    ib_var_store_t   *store
 )
 {
     assert(target   != NULL);
@@ -1337,6 +1337,27 @@ ib_status_t ib_var_target_expand(
 
     *expanded = expanded_target;
     return IB_OK;
+}
+
+ib_status_t ib_var_target_expand_const(
+    const ib_var_target_t  *target,
+    const ib_var_target_t **expanded,
+    ib_mpool_t             *mp,
+    ib_var_store_t         *store
+)
+{
+    assert(target   != NULL);
+    assert(expanded != NULL);
+    assert(mp       != NULL);
+    assert(store    != NULL);
+
+    /* Use non-const version; okay, as caller storing result in const */
+    return ib_var_target_expand(
+        (ib_var_target_t *)target,
+        (ib_var_target_t **)expanded,
+        mp,
+        store
+    );
 }
 
 ib_status_t ib_var_target_set(
@@ -1408,6 +1429,34 @@ ib_status_t ib_var_target_set(
     }
 
     return IB_OK;
+}
+
+ib_status_t ib_var_target_remove_and_set(
+    ib_var_target_t *target,
+    ib_mpool_t      *mp,
+    ib_var_store_t  *store,
+    ib_field_t      *field
+)
+{
+    assert(target != NULL);
+    assert(mp     != NULL);
+    assert(store  != NULL);
+    assert(field  != NULL);
+
+    ib_var_target_t *expanded;
+    ib_status_t rc;
+
+    rc = ib_var_target_expand(target, &expanded, mp, store);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_var_target_remove(target, NULL, mp, store);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return ib_var_target_set(target, mp, store, field);
 }
 
 /* var_expand */

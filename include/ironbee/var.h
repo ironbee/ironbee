@@ -763,10 +763,21 @@ NONNULL_ATTRIBUTE(1, 4);
  * - IB_EALLOC on allocation failure.
  **/
 ib_status_t DLL_PUBLIC ib_var_target_expand(
+    ib_var_target_t  *target,
+    ib_var_target_t **expanded,
+    ib_mpool_t       *mp,
+    ib_var_store_t   *store
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4);
+
+/**
+ * Const version of ib_var_target_expand().
+ **/
+ib_status_t DLL_PUBLIC ib_var_target_expand_const(
     const ib_var_target_t  *target,
     const ib_var_target_t **expanded,
-    ib_mpool_t             *mp,
-    ib_var_store_t         *store
+    ib_mpool_t       *mp,
+    ib_var_store_t   *store
 )
 NONNULL_ATTRIBUTE(1, 2, 3, 4);
 
@@ -797,6 +808,28 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * - IB_EINVAL if config of @a store does not match that of @a target.
  **/
 ib_status_t DLL_PUBLIC ib_var_target_set(
+    ib_var_target_t *target,
+    ib_mpool_t      *mp,
+    ib_var_store_t  *store,
+    ib_field_t      *field
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4);
+
+/**
+ * As ib_var_target_set() but removes any existing values first.
+ *
+ * This helper function is equivalent to calling ib_var_target_remove()
+ * followed by ib_var_target_set().
+ *
+ * @param[in] target Target to remove and set.
+ * @param[in] mp     Memory pool to use.
+ * @param[in] store  Store to use.
+ * @param[in] field  Field to set value to.  Will have name overriden based on
+ *                   filter.
+ * @return
+ * - As described in ib_var_target_remove() and ib_var_target_set().
+ **/
+ib_status_t DLL_PUBLIC ib_var_target_remove_and_set(
     ib_var_target_t *target,
     ib_mpool_t      *mp,
     ib_var_store_t  *store,
