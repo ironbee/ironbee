@@ -12,6 +12,7 @@ SensorId 80ECD8CF-318C-4915-A8C2-B3AAE315FB0C
 # Standard support modules
 LoadModule "ibmod_htp.so"
 LoadModule "ibmod_pcre.so"
+LoadModule "ibmod_init_collection.so"
 
 # IronBee Rule Language
 LoadModule "ibmod_rules.so"
