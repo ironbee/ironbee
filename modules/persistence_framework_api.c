@@ -345,7 +345,7 @@ static ib_status_t persist_data_in_context(
         const char         *name   = mapping->name;
         ib_persist_fw_store_t *store  = mapping->store;
         const char         *key    = mapping->key;
-        size_t              key_length = mapping->key_length;
+        size_t              key_length;
         bool                expand = false;
 
         ib_data_expand_test_str(key, &expand);
