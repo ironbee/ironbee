@@ -22,6 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
+#include <ironbee/string.h>
 #include <ironbee/var.h>
 
 #include <ironbeepp/field.hpp>
@@ -1034,4 +1035,96 @@ TEST(TestVar, Expand)
         "a = 17 b = 1.234000 c = foo d1 = 5, 6 d2 = 5",
         string(result, result_length)
     );
+}
+
+extern "C" {
+static ib_status_t dyn_get(
+    const ib_field_t *f,
+    void *out_value,
+    const void *arg,
+    size_t alen,
+    void *data
+)
+{
+    ib_mpool_t *mp = (ib_mpool_t *)data;
+    ib_num_t numval = 5;
+    ib_field_t *newf;
+    ib_status_t rc;
+    ib_list_t *l;
+
+    const char* carg = (const char *)arg;
+
+    rc = ib_list_create(&l, mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_field_create(&newf, mp, carg, alen, IB_FTYPE_NUM,
+        ib_ftype_num_in(&numval));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_list_push(l, newf);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    *(void**)out_value = l;
+
+    return IB_OK;
+}
+}
+
+TEST(TestVar, TargetDynamic)
+{
+    using namespace IronBee;
+
+    ScopedMemoryPool smp;
+    ib_status_t rc;
+    ib_mpool_t* mp = MemoryPool(smp).ib();
+
+    ib_var_config_t* config = make_config(mp);
+    ASSERT_TRUE(config);
+
+    ib_var_source_t* a = make_source(config, "a");
+    ASSERT_TRUE(a);
+
+    ib_var_store_t* store = make_store(config);
+    ASSERT_TRUE(store);
+
+    ib_field_t *dynf;
+    rc = ib_field_create_dynamic(
+        &dynf,
+        mp,
+        "", 0,
+        IB_FTYPE_LIST,
+        dyn_get, mp,
+        NULL, NULL
+    );
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(dynf);
+
+    rc = ib_var_source_set(a, store, dynf);
+    ASSERT_EQ(IB_OK, rc);
+
+    ib_var_target_t *target;
+
+    rc = ib_var_target_acquire_from_string(
+        &target,
+        mp,
+        config,
+        IB_S2SL("a:sub"),
+        NULL, NULL
+    );
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(target);
+
+    const ib_list_t *result;
+    rc = ib_var_target_get(target, &result, mp, store);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(1UL, ib_list_elements(result));
+
+    ConstField f = ConstList<ConstField>(result).front();
+    ASSERT_EQ(5, f.value_as_number());
 }
