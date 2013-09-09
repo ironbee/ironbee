@@ -22,6 +22,9 @@
  * is not compatible with trafficserver's plugins.
  * May be useful for other plugins with non-trivial
  * library dependencies.
+ *
+ * LIBLOADER IS NOW BUNDLED WITH TRAFFICSERVER.
+ * USE OF THIS VERSION OF LIBLOADER IS NOW DEPRECATED!
  */
 
 #include <dlfcn.h>
@@ -52,6 +55,8 @@ void TSPluginInit(int argc, const char *argv[])
 {
   int i;
   TSPluginRegistrationInfo info;
+
+  TSError("[libloader] DEPRECATED.  Please switch to the libloader plugin bundled with Apache Trafficserver instead.\n");
 
   info.plugin_name = (char *)"libloader";
   info.vendor_name = (char *)"Qualys, Inc";
