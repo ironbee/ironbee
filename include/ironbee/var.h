@@ -212,6 +212,18 @@ ib_mpool_t DLL_PUBLIC *ib_var_store_pool(
 )
 NONNULL_ATTRIBUTE(1);
 
+/**
+ * Export entire contents.
+ *
+ * @param[in]  store  Store to export.
+ * @param[in]  result List to push values to.
+ **/
+void ib_var_store_export(
+    ib_var_store_t *store,
+    ib_list_t      *result
+)
+NONNULL_ATTRIBUTE(1, 2);
+
 /**@}*/
 
 /**

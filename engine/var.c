@@ -321,6 +321,18 @@ ib_mpool_t *ib_var_store_pool(
     return store->mp;
 }
 
+void ib_var_store_export(
+    ib_var_store_t *store,
+    ib_list_t      *result
+)
+{
+    assert(store  != NULL);
+    assert(result != NULL);
+
+    /* Ignore return code.  Can only be IB_ENOENT */
+    ib_hash_get_all(store->hash, result);
+}
+
 /* var_source */
 
 ib_status_t ib_var_source_register(
