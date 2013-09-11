@@ -46,7 +46,7 @@
 
 /* Logging buffer sizes */
 static const size_t fmt_size_default = 256;   /**< Size of default format buf */
-static const size_t fmt_pad_size = 64;        /**< Size of format padding */
+static const size_t fmt_pad_size = 128;       /**< Size of format padding */
 static const size_t log_buf_size = 16 * 1024; /**< Size of log buffer */
 
 void ib_engine_manager_logger(
@@ -94,6 +94,18 @@ void ib_engine_manager_logger(
     }
     fmt_buf_size = fmt_required;
     snprintf(fmt_buf, fmt_buf_size, "%-10s- ", ib_log_level_to_string(level));
+
+    /* If this is a transaction, add the TX id */
+    if ( (calldata != NULL) && (calldata->type == IBLOG_TX) ) {
+        const ib_tx_t *tx = calldata->data.t;
+        static const size_t line_info_size = 64;
+        char                line_info[line_info_size];
+
+        strcpy(line_info, "[tx:");
+        strcat(line_info, tx->id);
+        strcat(line_info, "] ");
+        strcat(fmt_buf, line_info);
+    }
 
     /* Add the file name and line number if available and log level >= DEBUG */
     if ( (file != NULL) && (line > 0) && (logger_level >= IB_LOG_DEBUG)) {
