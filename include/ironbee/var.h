@@ -139,7 +139,7 @@ typedef struct ib_var_target_t ib_var_target_t;
 typedef struct ib_var_expand_t ib_var_expand_t;
 
 /**
- * @defgroup IronBeeEngineVarConfiguration Data Configuration
+ * @defgroup IronBeeEngineVarConfiguration Var Configuration
  *
  * Set of sources.
  *
@@ -184,7 +184,7 @@ NONNULL_ATTRIBUTE(1);
  *
  * @param[out] store  The new var store.
  * @param[in]  mp     Memory pool to use.
- * @param[in]  config Data configuration.
+ * @param[in]  config Var configuration.
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
@@ -227,7 +227,7 @@ NONNULL_ATTRIBUTE(1, 2);
 /**@}*/
 
 /**
- * @defgroup IronBeeEngineVarSource Data Source
+ * @defgroup IronBeeEngineVarSource Var Source
  *
  * Create, lookup, get, and set sources.
  *
@@ -258,7 +258,7 @@ NONNULL_ATTRIBUTE(1, 2);
  *
  * @param[out] source        Source acquired.  Will have lifetime equal to
  *                           @a config.  May be NULL.
- * @param[in]  config        Data configuration to acquire source for.
+ * @param[in]  config        Var configuration to acquire source for.
  * @param[in]  name          Name of source.
  * @param[in]  name_length   Length of @a name.
  * @param[in]  initial_phase First phase source has meaningful value in.
@@ -391,7 +391,7 @@ NONNULL_ATTRIBUTE(1, 2);
  *                         be NULL.
  * @param[in]  mp          Memory pool to use for unindexed sources.  If NULL,
  *                         an unindexed lookup will result in IB_ENOENT.
- * @param[in]  config      Data configuration to look up in.
+ * @param[in]  config      Var configuration to look up in.
  * @param[in]  name        Name of source to lookup.  If result is unindexed,
  *                         this must outlive result.
  * @param[in]  name_length Length of @a name.
