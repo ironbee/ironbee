@@ -29,6 +29,7 @@
 #include <ironbee/context.h>
 #include <ironbee/core.h>
 #include <ironbee/state_notify.h>
+#include <ironbee/string.h>
 #include <ironbee/util.h>
 
 #include "gtest/gtest.h"
@@ -743,6 +744,118 @@ public:
     virtual void sendResponseBody()
     {
     };
+
+
+    ib_var_source_t *acquireSource(const char *name)
+    {
+        ib_status_t rc;
+        ib_var_source_t *source;
+
+        rc = ib_var_source_acquire(
+            &source,
+            MainPool(),
+            ib_engine_var_config_get(ib_engine),
+            IB_S2SL(name)
+        );
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to acquire source.");
+        }
+
+        return source;
+    }
+
+    ib_var_target_t *acquireTarget(const char *str)
+    {
+        ib_status_t rc;
+        ib_var_target_t *target;
+
+        rc = ib_var_target_acquire_from_string(
+            &target,
+            MainPool(),
+            ib_engine_var_config_get(ib_engine),
+            IB_S2SL(str),
+            NULL, NULL
+        );
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to acquire target.");
+        }
+
+        return target;
+    }
+
+    ib_field_t *getVar(const char *name)
+    {
+        ib_status_t rc;
+        ib_field_t *f;
+
+        rc = ib_var_source_get(acquireSource(name), &f, ib_tx->var_store);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to get field from source.");
+        }
+
+        return f;
+    }
+
+    void setVar(const char *name, ib_field_t *f)
+    {
+        ib_status_t rc;
+
+        rc = ib_var_source_set(acquireSource(name), ib_tx->var_store, f);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to set field from source.");
+        }
+    }
+
+    ib_field_t *getTarget1(const char *str)
+    {
+        const ib_list_t *result;
+        ib_status_t rc;
+
+        rc = ib_var_target_get(
+            acquireTarget(str),
+            &result,
+            MainPool(),
+            ib_tx->var_store
+        );
+        if (rc == IB_ENOENT) {
+            return NULL;
+        }
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to get target.");
+        }
+
+        if (ib_list_elements(result) == 0) {
+            return NULL;
+        }
+
+        if (ib_list_elements(result) > 1) {
+            throw std::runtime_error("Got more than 1 value for target.");
+        }
+
+        return (ib_field_t *)ib_list_node_data_const(
+            ib_list_first_const(result));
+    }
+
+    const ib_list_t *getTargetN(const char *str)
+    {
+        const ib_list_t *result;
+        ib_status_t rc;
+
+        rc = ib_var_target_get(
+            acquireTarget(str),
+            &result,
+            MainPool(),
+            ib_tx->var_store
+        );
+        if (rc == IB_ENOENT) {
+            return NULL;
+        }
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to get target.");
+        }
+
+        return result;
+    }
 
 protected:
     ib_conn_t                  *ib_conn;
