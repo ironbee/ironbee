@@ -410,7 +410,6 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
 
     /* Create the target object */
     rc = ib_rule_create_target(cp->ib,
-                               target_str,
                                final_target_str,
                                tfns,
                                &ib_rule_target,
@@ -480,7 +479,6 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
     rc = ib_action_inst_create(cp->ib,
                                name,
                                params,
-                               IB_ACTINST_FLAG_NONE,
                                &action);
     if (rc == IB_ENOENT) {
         ib_cfg_log_notice(cp, "Ignoring unknown modifier \"%s\"", name);
@@ -597,8 +595,9 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     if ( (strcasecmp(name, "msg") == 0) ||
          (strcasecmp(name, "logdata") == 0) )
     {
-        bool expand = false;
         bool is_msg = toupper(*name) == 'M';
+        const char *error_message;
+        int error_offset;
 
         /* Check the parameter */
         rc = ib_rule_check_params(cp->ib, rule, value);
@@ -611,21 +610,24 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             return rc;
         }
 
-        /* Check for expansion */
-        ib_data_expand_test_str(value, &expand);
+        rc = ib_var_expand_acquire(
+            (is_msg ? &(rule->meta.msg) : &(rule->meta.data)),
+            ib_rule_mpool(cp->ib),
+            IB_S2SL(value),
+            ib_engine_var_config_get(cp->ib),
+            &error_message, &error_offset
+        );
 
-        /* Store the results in the rule */
-        if (is_msg) {
-            rule->meta.msg = value;
-            if (expand) {
-                rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_MSG;
-            }
-        }
-        else {
-            rule->meta.data = value;
-            if (expand) {
-                rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_DATA;
-            }
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp,
+                "%s expansion creation failed on \"%s\": %s (%s, %d)",
+                name,
+                value == NULL ? "" : value,
+                ib_status_to_string(rc),
+                error_message == NULL ? "NA" : error_message,
+                error_message == NULL ? 0 : error_offset
+            );
+            return rc;
         }
         return IB_OK;
     }
