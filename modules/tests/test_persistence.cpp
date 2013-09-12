@@ -121,7 +121,7 @@ TEST_P(PersistenceImplTest, InitCollection) {
 
     ASSERT_TRUE(ib_tx);
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "COL1", strlen("COL1"), &field));
+    field = getVar("COL1");
     ASSERT_TRUE(field);
     ASSERT_EQ(IB_FTYPE_LIST, field->type);
     ASSERT_EQ(IB_OK, ib_field_value(field, ib_ftype_list_out(&field_list)));
@@ -155,7 +155,7 @@ TEST_P(PersistenceImplTest, InitCollection) {
     ASSERT_FALSE(node);
 
     field = NULL;
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "COL2", strlen("COL2"), &field));
+    field = getVar("COL2");
     ASSERT_TRUE(field);
     ASSERT_EQ(IB_FTYPE_LIST, field->type);
     ASSERT_EQ(IB_OK, ib_field_value(field, ib_ftype_list_out(&field_list)));

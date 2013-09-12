@@ -93,13 +93,12 @@ typedef struct ib_persist_fw_store_t ib_persist_fw_store_t;
 /**
  * This represents a mapping of a collection to persisted data via key.
  *
- * The key may be literal string or may be a variable to be expanded
- * if ib_data_expand_test_str() returns true.
+ * The key may be literal string or may be a variable to be expanded.
  */
 struct ib_persist_fw_mapping_t {
     const char *name;          /**< Collection Name. */
-    const char *key;           /**< The key the collection is stored under. */
-    size_t key_length;         /**< Length of key. */
+    ib_var_source_t *source;   /**< Collection Source. */
+    const ib_var_expand_t *key; /**< The key the collection is stored under. */
     ib_persist_fw_store_t *store; /**< The store the data is in. */
 };
 typedef struct ib_persist_fw_mapping_t ib_persist_fw_mapping_t;

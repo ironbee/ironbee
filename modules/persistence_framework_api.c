@@ -28,6 +28,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/module.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 
@@ -215,7 +216,7 @@ static ib_status_t populate_data_in_context(
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->ctx != NULL);
-    assert(tx->data != NULL);
+    assert(tx->var_store != NULL);
     assert(tx->mp != NULL);
     assert(event == handle_context_tx_event);
     assert(cbdata != NULL);
@@ -237,39 +238,36 @@ static ib_status_t populate_data_in_context(
         /* Alias some values. */
         const char         *name   = mapping->name;
         ib_persist_fw_store_t *store  = mapping->store;
-        const char         *key    = mapping->key;
-        size_t              key_length = mapping->key_length;
-        bool                expand = false;
+        const char         *key = NULL;
+        size_t              key_length = 0;
 
-        ib_data_expand_test_str_ex(key, key_length, &expand);
-        if (expand) {
-            char *ex_key = NULL;
-            rc = ib_data_expand_str(
-                tx->data,
-                mapping->key,
-                true,
-                &ex_key);
-            if (rc != IB_OK) {
-                ib_log_error(
-                    ib,
-                    "Failed to expand key. "
-                    "Aborting population of collection %s.",
-                    name);
-                continue;
-            }
-            key = ex_key;
-        }
-        else {
-            key = mapping->key;
+        rc = ib_var_expand_execute(
+            mapping->key,
+            &key, &key_length,
+            tx->mp,
+            tx->var_store
+        );
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "Failed to expand key. "
+                "Aborting population of collection %s.",
+                name);
+            continue;
         }
 
         if (store->handler->load_fn) {
             ib_list_t *list = NULL;
             ib_field_t *list_field = NULL;
 
-            rc = ib_data_add_list(tx->data, name, &list_field);
+            rc = ib_var_source_initialize(
+                mapping->source,
+                &list_field,
+                tx->var_store,
+                IB_FTYPE_LIST
+            );
             if (rc != IB_OK) {
-                ib_log_error(ib, "Failed to list to populate.");
+                ib_log_error(ib, "Failed to initialize list to populate.");
                 continue;
             }
 
@@ -344,33 +342,22 @@ static ib_status_t persist_data_in_context(
         /* Alias some values. */
         const char         *name   = mapping->name;
         ib_persist_fw_store_t *store  = mapping->store;
-        const char         *key    = mapping->key;
+        const char         *key;
         size_t              key_length;
-        bool                expand = false;
 
-        ib_data_expand_test_str(key, &expand);
-        if (expand) {
-            char *ex_key = NULL;
-            size_t ex_key_length;
-            rc = ib_data_expand_str_ex(
-                tx->data,
-                mapping->key, mapping->key_length,
-                false, true,
-                &ex_key, &ex_key_length);
-            if (rc != IB_OK) {
-                ib_log_error(
-                    ib,
-                    "Failed to expand key. "
-                    "Aborting persisting of collection %s.",
-                    name);
-                continue;
-            }
-            key = ex_key;
-            key_length = ex_key_length;
-        }
-        else {
-            key = mapping->key;
-            key_length = mapping->key_length;
+        rc = ib_var_expand_execute(
+            mapping->key,
+            &key, &key_length,
+            tx->mp,
+            tx->var_store
+        );
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "Failed to expand key. "
+                "Aborting persisting of collection %s.",
+                name);
+            continue;
         }
 
         if (store->handler->store_fn) {
@@ -378,7 +365,11 @@ static ib_status_t persist_data_in_context(
             const ib_list_t *list = NULL;
             ib_field_t *list_field = NULL;
 
-            rc = ib_data_get(tx->data, name, strlen(name), &list_field);
+            rc = ib_var_source_get(
+                mapping->source,
+                &list_field,
+                tx->var_store
+            );
             if (rc != IB_OK) {
                 ib_log_error(ib, "Failed to get list to store.");
                 continue;
@@ -570,6 +561,7 @@ ib_status_t ib_persist_fw_map_collection(
     ib_mpool_t              *mp             = ib_engine_pool_main_get(ib);
     ib_persist_fw_store_t   *store          = NULL;
     ib_persist_fw_mapping_t *mapping        = NULL;
+    ib_var_expand_t         *expand         = NULL;
 
     rc = get_ctx_persist_fw(persist_fw, ctx, &persist_fw_cfg);
     if (rc != IB_OK) {
@@ -588,12 +580,31 @@ ib_status_t ib_persist_fw_map_collection(
         return IB_EALLOC;
     }
 
-    mapping->key = ib_mpool_strdup(mp, key);
-    if (mapping->key == NULL) {
-        ib_log_error(ib, "Failed to copy mapping %s's key name %s.", name, key);
+    rc = ib_var_source_register(
+        &(mapping->source),
+        ib_engine_var_config_get(ib),
+        IB_S2SL(name),
+        IB_PHASE_NONE, IB_PHASE_NONE
+    );
+    if (rc != IB_OK && rc != IB_EEXIST) {
+        ib_log_error(ib, "Failed to register source for %s: %s",
+                     name, ib_status_to_string(rc));
+        return rc;
+    }
+
+    rc = ib_var_expand_acquire(
+        &expand,
+        mp,
+        IB_S2SL(key),
+        ib_engine_var_config_get(ib),
+        NULL, NULL
+    );
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to create expand for %s's key name %s.",
+                     name, key);
         return IB_EALLOC;
     }
-    mapping->key_length = key_length;
+    mapping->key = expand;
 
     rc = ib_hash_get(persist_fw_cfg->stores, &store, store_name);
     if (rc != IB_OK) {

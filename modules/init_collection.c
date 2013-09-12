@@ -19,7 +19,7 @@
  * @file
  * @brief IronBee --- Init Collection Module
  *
- * This module provides the InitCollection and InitCollectionIndexed directives.
+ * This module provides the InitCollection directive.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
@@ -524,14 +524,12 @@ static ib_status_t domap(
 }
 
 /**
- * Implement the InitCollection and InitCollectionIndexed directives.
+ * Implement the InitCollection directive.
  *
  * @param[in] cp Configuration parser.
- * @param[in] directive InitCollection or InitCollectionIndexed.
+ * @param[in] directive InitCollection.
  * @param[in] vars List of `char *` types making up the parameters.
  * @param[in] cfg The module configuration.
- * @param[in] indexed True if @a directive is InitCollectionIndexed. False
- *            otherwise.
  *
  * @returns
  * - IB_OK On success.
@@ -543,8 +541,7 @@ static ib_status_t init_collection_common(
     ib_cfgparser_t        *cp,
     const char            *directive,
     const ib_list_t       *vars,
-    init_collection_cfg_t *cfg,
-    bool                   indexed
+    init_collection_cfg_t *cfg
 )
 {
     assert(cp != NULL);
@@ -615,17 +612,18 @@ static ib_status_t init_collection_common(
         goto exit_EINVAL;
     }
 
-    if (indexed) {
-        rc = ib_data_register_indexed(
-            ib_engine_data_config_get(cp->ib),
-            name);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(
-                cp,
-                "Failed to index collection %s: %s",
-                name,
-                ib_status_to_string(rc));
-        }
+    rc = ib_var_source_register(
+        NULL,
+        ib_engine_var_config_get(cp->ib),
+        IB_S2SL(name),
+        IB_PHASE_NONE, IB_PHASE_NONE
+    );
+    if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "Failed to register collection %s: %s",
+            name,
+            ib_status_to_string(rc));
     }
 
     /* Clear the configuration file to expose errors. */
@@ -660,33 +658,8 @@ static ib_status_t init_collection_fn(
         cp,
         directive,
         vars,
-        (init_collection_cfg_t *)cbdata,
-        false);
-}
-
-/**
- * Implement the IndexCollectionIndexed directive.
- *
- * param[in] cp The configuration parser.
- * param[in] directive InitCollectionIndexed.
- * param[in] vars Argument list to the directive.
- * param[in] cbdata An @ref init_collection_cfg_t.
- *
- * @returns results of init_collection_common();
- */
-static ib_status_t init_collection_indexed_fn(
-    ib_cfgparser_t *cp,
-    const char *directive,
-    const ib_list_t *vars,
-    void *cbdata
-)
-{
-    return init_collection_common(
-        cp,
-        directive,
-        vars,
-        (init_collection_cfg_t *)cbdata,
-        true);
+        (init_collection_cfg_t *)cbdata
+    );
 }
 
 /**
@@ -713,20 +686,6 @@ static ib_status_t register_directives(
         "InitCollection",
         IB_DIRTYPE_LIST,
         (ib_void_fn_t)init_collection_fn,
-        NULL,
-        cfg,
-        NULL,
-        NULL
-    );
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_config_register_directive(
-        ib,
-        "InitCollectionIndexed",
-        IB_DIRTYPE_LIST,
-        (ib_void_fn_t)init_collection_indexed_fn,
         NULL,
         cfg,
         NULL,
