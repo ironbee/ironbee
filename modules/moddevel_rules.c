@@ -44,8 +44,10 @@
 #include <ironbee/string.h>
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 
 
 /**
@@ -120,11 +122,43 @@ static ib_status_t op_false_execute(
     return IB_OK;
 }
 
-/** Instance data for assert operator. */
-struct assert_inst_data_t
+/**
+ * Execute function for the "break" operator
+ *
+ * @note This operator is enabled only for builds configured with
+ * "--enable-devel".
+ *
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data.
+ *
+ * @returns Status code
+ */
+static ib_status_t op_break_execute(
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t *result,
+    void *cbdata
+)
 {
-    bool expand;
-    const char *str;
+    *result = 0;
+
+    if (capture != NULL && *result) {
+        ib_capture_clear(capture);
+        ib_capture_set_item(capture, 0, tx->mp, field);
+    }
+    return IB_OK;
+}
+
+/** Instance data for assert operator */
+struct assert_inst_data_t {
+    bool expand;                   /**< Expand the message string? */
+    const char *str;               /**< Message string */
 };
 typedef struct assert_inst_data_t assert_inst_data_t;
 
@@ -135,7 +169,7 @@ typedef struct assert_inst_data_t assert_inst_data_t;
  * @param[in] parameters Unparsed string with the parameters to
  *                       initialize the operator instance.
  * @param[out] instance_data Instance data.
- * @param[in] cbdata Callback data.
+ * @param[in] cbdata Callback data
  *
  * @returns Status code
  */
@@ -146,6 +180,10 @@ static ib_status_t op_assert_create(
     void          *cbdata
 )
 {
+    assert(ctx != NULL);
+    assert(instance_data != NULL);
+    assert(cbdata != NULL);
+
     char *str;
     bool expand;
     ib_mpool_t *mp = ib_context_get_mpool(ctx);
@@ -188,7 +226,7 @@ static ib_status_t op_assert_create(
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
- * @param[in] cbdata Callback data.
+ * @param[in] cbdata Callback data (assert instance data).
  *
  * @returns Status code
  */
@@ -486,6 +524,27 @@ static ib_status_t action_print_execute(
 }
 
 /**
+ * Assert types
+ */
+typedef enum {
+    ASSERT_ANY,                   /**< Assert any time the assert fires */
+    ASSERT_TRUE,                  /**< Assert if operation true */
+    ASSERT_FALSE,                 /**< Assert if operation false */
+    ASSERT_OK,                    /**< Assert if the operation failed */
+    ASSERT_FAIL,                  /**< Assert if the operation succeeded */
+} assert_type_t;
+
+/**
+ * Data passed to the assert action
+ */
+typedef struct
+{
+    assert_type_t  assert_type;   /**< Type of assertion */
+    const char    *assert_str;    /**< String version of assert_type */
+    const char    *str;           /**< Message string */
+} assert_action_data_t;
+
+/**
  * Create function for the assert action.
  *
  * @param[in] ib IronBee engine (unused)
@@ -501,27 +560,74 @@ static ib_status_t action_assert_create(
     ib_action_inst_t *inst,
     void             *cbdata)
 {
-    bool expand;
-    char *str;
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
-    assert(mp != NULL);
+    assert(ib != NULL);
+    assert(inst != NULL);
 
+    bool expand;
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    assert_action_data_t *aad;
+    const char *type_str;
+    assert_type_t assert_type = ASSERT_ANY;
+    const char *message;
+
+    /* Default parameters to empty string */
     if (parameters == NULL) {
         parameters = "";
     }
 
-    str = ib_mpool_strdup(mp, parameters);
-    if (str == NULL) {
-        return IB_EALLOC;
+    /* The first argument is the type, second is message string. */
+    type_str = parameters;
+    message = strchr(parameters, ':');
+    if (message == NULL) {
+        message = "";
+    }
+    else {
+        ++message;
+    }
+
+    /* Check for true/false/ok/fail */
+    if (strncasecmp(type_str, "true", 4) == 0) {
+        assert_type = ASSERT_TRUE;
+        type_str = "True";
+    }
+    else if (strncasecmp(type_str, "false", 5) == 0) {
+        assert_type = ASSERT_FALSE;
+        type_str = "False";
+    }
+    else if (strncasecmp(type_str, "ok", 2) == 0) {
+        assert_type = ASSERT_OK;
+        type_str = "OK";
+    }
+    else if (strncasecmp(type_str, "fail", 4) == 0) {
+        assert_type = ASSERT_FAIL;
+        type_str = "Fail";
+    }
+    else {
+        assert_type = ASSERT_ANY;
+        type_str = "";
     }
 
     /* Do we need expansion? */
-    ib_data_expand_test_str(str, &expand);
+    ib_data_expand_test_str(message, &expand);
     if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
-    inst->data = str;
+    /* Allocate an assert instance object */
+    aad = ib_mpool_alloc(mp, sizeof(*aad));
+    if (aad == NULL) {
+        return IB_EALLOC;
+    }
+    aad->assert_str = type_str;
+    aad->assert_type = assert_type;
+
+    /* Copy the message string */
+    aad->str = ib_mpool_strdup(mp, message);
+    if (aad->str == NULL) {
+        return IB_EALLOC;
+    }
+
+    inst->data = aad;
     return IB_OK;
 }
 
@@ -529,7 +635,7 @@ static ib_status_t action_assert_create(
  * Execute function for the "assert" action
  *
  * @param[in] rule_exec The rule execution object
- * @param[in] data C-style string to log
+ * @param[in] data Assert action data
  * @param[in] flags Action instance flags
  * @param[in] cbdata Callback data (unused)
  *
@@ -541,10 +647,15 @@ static ib_status_t action_assert_execute(
     ib_flags_t            flags,
     void                 *cbdata)
 {
-    /* This works on C-style (NUL terminated) strings */
-    const char *cstr = (const char *)data;
-    char *expanded = NULL;
-    ib_status_t rc;
+    assert(rule_exec != NULL);
+    assert(data != NULL);
+
+    const assert_action_data_t *aad = (const assert_action_data_t *)data;
+    const char                 *cstr = aad->str;
+    bool                        fail = (rule_exec->cur_status != IB_OK);
+    char                       *expanded = NULL;
+    bool                        do_assert;
+    ib_status_t                 rc;
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
@@ -559,7 +670,37 @@ static ib_status_t action_assert_execute(
         expanded = (char *)cstr;
     }
 
-    ib_rule_log_fatal(rule_exec, "ASSERT \"%s\"", expanded);
+    /* Whether we assert or not we assert depends on the type of assertion. */
+    switch(aad->assert_type) {
+    case ASSERT_ANY:
+        do_assert = true;
+        break;
+    case ASSERT_TRUE:
+        do_assert = fail || (rule_exec->cur_result == 0);
+        break;
+    case ASSERT_FALSE:
+        do_assert = fail || (rule_exec->cur_result != 0);
+        break;
+    case ASSERT_OK:
+        do_assert = (rule_exec->cur_status != IB_OK);
+        break;
+    case ASSERT_FAIL:
+        do_assert = (rule_exec->cur_status == IB_OK);
+        break;
+    default:
+        assert(false);
+        break;
+    }
+
+    /* Do the actual assertion */
+    if (do_assert) {
+        ib_rule_log_fatal(rule_exec,
+                          "ASSERT: status=%d \"%s\" result=%"PRIu64" %s \"%s\"",
+                          rule_exec->cur_status,
+                          ib_status_to_string(rule_exec->cur_status),
+                          rule_exec->cur_result,
+                          aad->assert_str, expanded);
+    }
     return IB_OK;
 }
 
@@ -673,7 +814,7 @@ ib_status_t ib_moddevel_rules_init(
     ib_moddevel_rules_config_t **pconfig)
 {
     ib_status_t rc;
-    ib_rule_phase_num_t       phase;
+    ib_rule_phase_num_t         phase;
     ib_moddevel_rules_config_t *config;
     ib_log_debug(ib, "Initializing rule development module");
 
@@ -723,6 +864,22 @@ ib_status_t ib_moddevel_rules_init(
         return rc;
     }
 
+    /* Break operator; used to set breakpoints in a rule set */
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "break",
+        ( IB_OP_CAPABILITY_ALLOW_NULL |
+          IB_OP_CAPABILITY_NON_STREAM |
+              IB_OP_CAPABILITY_STREAM |
+        IB_OP_CAPABILITY_CAPTURE ),
+        NULL, NULL, /* No create function */
+        NULL, NULL, /* no destroy function */
+        op_break_execute, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     /* Register the field exists operator */
     rc = ib_operator_create_and_register(
         NULL,
@@ -739,7 +896,7 @@ ib_status_t ib_moddevel_rules_init(
         return rc;
     }
 
-    /* Register the false operator */
+    /* Register the assert operator */
     rc = ib_operator_create_and_register(
         NULL,
         ib,
@@ -748,9 +905,38 @@ ib_status_t ib_moddevel_rules_init(
           IB_OP_CAPABILITY_NON_STREAM |
               IB_OP_CAPABILITY_STREAM ),
         op_assert_create, NULL,
-        NULL, NULL, /* no destroy function
-    */
-                              op_assert_execute, NULL);
+        NULL, NULL, /* no destroy function */
+        op_assert_execute, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Register the assertok operator */
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "assertok",
+        ( IB_OP_CAPABILITY_ALLOW_NULL |
+          IB_OP_CAPABILITY_NON_STREAM |
+              IB_OP_CAPABILITY_STREAM ),
+        op_assert_create, NULL,
+        NULL, NULL, /* no destroy function */
+        op_assert_execute, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Register the assert operator */
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "assertfail",
+        ( IB_OP_CAPABILITY_ALLOW_NULL |
+          IB_OP_CAPABILITY_NON_STREAM |
+              IB_OP_CAPABILITY_STREAM ),
+        op_assert_create, NULL,
+        NULL, NULL, /* no destroy function */
+        op_assert_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }
@@ -876,13 +1062,9 @@ ib_status_t ib_moddevel_rules_init(
     }
 
 
-    /**
-     * Assert action
-     */
-
-    /* Register the assert action */
+    /* Register the Assert action */
     rc = ib_action_register(ib,
-                            "assert",
+                            "Assert",
                             IB_ACT_FLAG_NONE,
                             action_assert_create, NULL,
                             NULL, NULL, /* no destroy function */
