@@ -47,8 +47,10 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
+#include <ironbee/engine_state.h>
 #include <ironbee/module.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 
@@ -62,10 +64,12 @@ IB_MODULE_DECLARE();
 #endif
 
 /* Documented in definitions below. */
-typedef struct fast_runtime_t         fast_runtime_t;
-typedef struct fast_config_t          fast_config_t;
-typedef struct fast_search_t          fast_search_t;
-typedef struct fast_collection_spec_t fast_collection_spec_t;
+typedef struct fast_runtime_t                 fast_runtime_t;
+typedef struct fast_config_t                  fast_config_t;
+typedef struct fast_search_t                  fast_search_t;
+typedef struct fast_collection_spec_t         fast_collection_spec_t;
+typedef struct fast_collection_runtime_spec_t fast_collection_runtime_spec_t;
+typedef struct fast_specs_t                   fast_specs_t;
 
 /**
  * Module runtime data.
@@ -83,6 +87,9 @@ struct fast_runtime_t
 
     /** Hash of id (@c const @c char *) to index (@c uint32_t *) */
     ib_hash_t *by_id;
+
+    /** Specs on what to feed. */
+    fast_specs_t *specs;
 };
 
 /**
@@ -142,6 +149,32 @@ struct fast_collection_spec_t
     const char *separator;
 };
 
+/**
+ * Collection specification with source instead of string.
+ */
+struct fast_collection_runtime_spec_t
+{
+    /** Source of collection to feed to automata. */
+    const ib_var_source_t *name;
+    /** String to separate key and value with. */
+    const char *separator;
+};
+
+/**
+ * All runtime specifications.
+ */
+struct fast_specs_t
+{
+    const ib_var_source_t                **request_header_bytestrings;
+    const fast_collection_runtime_spec_t  *request_header_collections;
+    const ib_var_source_t                **request_body_bytestrings;
+    const fast_collection_runtime_spec_t  *request_body_collections;
+    const ib_var_source_t                **response_header_bytestrings;
+    const fast_collection_runtime_spec_t  *response_header_collections;
+    const ib_var_source_t                **response_body_bytestrings;
+    const fast_collection_runtime_spec_t  *response_body_collections;
+};
+
 /** Bytestrings to feed during REQUEST_HEADER phase. */
 static const char *c_request_header_bytestrings[] = {
     "REQUEST_METHOD",
@@ -176,7 +209,7 @@ static const char *c_response_header_bytestrings[] = {
 };
 /** Collections to feed during RESPONSE_HEADER phase. */
 static const fast_collection_spec_t c_response_header_collections[] = {
-    { "RESPONSE_HEADERS",    ":" },
+    { "RESPONSE_HEADERS", ":" },
     { NULL, NULL }
 };
 
@@ -196,6 +229,11 @@ static const char *c_bytestring_separator = " ";
 static const char *c_data_separator = "\n";
 
 /* Helper functions */
+
+/**
+ * Size of static C-array @a a.
+ */
+#define ARRAY_SIZE(a) sizeof((a)) / sizeof(*(a))
 
 /**
  * As ia_eudoxus_error() but uses "no error" for NULL.
@@ -254,6 +292,25 @@ fast_config_t *fast_get_config(
 }
 
 /**
+ * Access configuration data, read-only.
+ *
+ * @param[in] ib IronBee engine.
+ * @return
+ * - configuration on success.
+ * - NULL on failure.
+ */
+static
+const fast_config_t *fast_get_config_const(
+    const ib_engine_t *ib
+)
+{
+    assert(ib != NULL);
+
+    /* Interpreting const engine to mean const config. */
+    return fast_get_config((ib_engine_t *)ib);
+}
+
+/**
  * Feed data to the automata.
  *
  * @param[in] ib          IronBee engine; used for logging.
@@ -295,52 +352,55 @@ ib_status_t fast_feed(
 }
 
 /**
- * Feed a byte string from an @ref ib_data_t to the automata.
+ * Feed a byte string from an @ref ib_var_store_t to the automata.
  *
- * @param[in] ib                    IronBee engine; used for logging.
- * @param[in] eudoxus               Eudoxus engine; used for
- *                                  ia_eudoxus_error().
- * @param[in] state                 Current Eudoxus execution state; updated.
- * @param[in] data                  Data source.
- * @param[in] bytestring_field_name Name of data field to feed.
+ * @param[in] ib                IronBee engine; used for logging.
+ * @param[in] eudoxus           Eudoxus engine; used for
+ *                              ia_eudoxus_error().
+ * @param[in] state             Current Eudoxus execution state; updated.
+ * @param[in] var_store         Var store.
+ * @param[in] bytestring_source Source of bytestring.
  * @return
  * - IB_OK on success.
  * - IB_EINVAL on IronAutomata failure; will emit log message.
  * - IB_EOTHER on IronBee failure; will emit log message.
  */
-static
-ib_status_t fast_feed_data_bytestring(
-    const ib_engine_t  *ib,
-    const ia_eudoxus_t *eudoxus,
-    ia_eudoxus_state_t *state,
-    const ib_data_t    *data,
-    const char         *bytestring_field_name
+static ib_status_t fast_feed_var_bytestring(
+    const ib_engine_t     *ib,
+    const ia_eudoxus_t    *eudoxus,
+    ia_eudoxus_state_t    *state,
+    const ib_var_store_t  *var_store,
+    const ib_var_source_t *bytestring_source
 )
 {
-    assert(ib                    != NULL);
-    assert(eudoxus               != NULL);
-    assert(state                 != NULL);
-    assert(data                  != NULL);
-    assert(bytestring_field_name != NULL);
+    assert(ib                != NULL);
+    assert(eudoxus           != NULL);
+    assert(state             != NULL);
+    assert(var_store         != NULL);
+    assert(bytestring_source != NULL);
 
-    ib_field_t         *field;
+    const ib_field_t   *field;
     const ib_bytestr_t *bs;
     ib_status_t         rc;
+    const char         *name;
+    size_t              name_length;
 
-    rc = ib_data_get(data, bytestring_field_name, strlen(bytestring_field_name), &field);
+    ib_var_source_name(bytestring_source, &name, &name_length);
+
+    rc = ib_var_source_get_const(bytestring_source, &field, var_store);
     if (rc == IB_ENOENT) {
         ib_log_error(
             ib,
-            "fast: No such data %s",
-            bytestring_field_name
+            "fast: No such data %.*s",
+            (int)name_length, name
         );
         return IB_EOTHER;
     }
     else if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "fast: Error fetching data %s: %s",
-            bytestring_field_name,
+            "fast: Error fetching var %.*s: %s",
+            (int)name_length, name,
             ib_status_to_string(rc)
         );
         return IB_EOTHER;
@@ -354,8 +414,8 @@ ib_status_t fast_feed_data_bytestring(
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "fast: Error loading data field %s: %s",
-            bytestring_field_name,
+            "fast: Error loading data field %.*s: %s",
+            (int)name_length, name,
             ib_status_to_string(rc)
         );
         return IB_EOTHER;
@@ -373,12 +433,12 @@ ib_status_t fast_feed_data_bytestring(
 }
 
 /**
- * Feed a collection of byte strings from an @ref ib_data_t to automata.
+ * Feed a collection of byte strings from an @ref ib_var_store_t to automata.
  *
  * @param[in] ib          IronBee engine; used for logging.
  * @param[in] eudoxus     Eudoxus engine; used for ia_eudoxus_error().
  * @param[in] state       Current Eudoxus execution state; updated.
- * @param[in] data        Data source.
+ * @param[in] var_store   Var store.
  * @param[in] collection  Collection to feed.
  * @return
  * - IB_OK on success.
@@ -386,41 +446,45 @@ ib_status_t fast_feed_data_bytestring(
  * - IB_EOTHER on IronBee failure; will emit log message.
  */
 static
-ib_status_t fast_feed_data_collection(
-    const ib_engine_t             *ib,
-    const ia_eudoxus_t            *eudoxus,
-    ia_eudoxus_state_t            *state,
-    const ib_data_t               *data,
-    const fast_collection_spec_t  *collection
+ib_status_t fast_feed_var_collection(
+    const ib_engine_t                    *ib,
+    const ia_eudoxus_t                   *eudoxus,
+    ia_eudoxus_state_t                   *state,
+    const ib_var_store_t                 *var_store,
+    const fast_collection_runtime_spec_t *collection
 )
 {
     assert(ib         != NULL);
     assert(eudoxus    != NULL);
     assert(state      != NULL);
-    assert(data       != NULL);
+    assert(var_store  != NULL);
     assert(collection != NULL);
 
-    ib_field_t           *field;
+    const ib_field_t     *field;
     const ib_list_t      *subfields;
     const ib_list_node_t *node;
     const ib_field_t     *subfield;
     const ib_bytestr_t   *bs;
     ib_status_t           rc;
+    const char           *name;
+    size_t                name_length;
 
-    rc = ib_data_get(data, collection->name, strlen(collection->name), &field);
+    ib_var_source_name(collection->name, &name, &name_length);
+
+    rc = ib_var_source_get_const(collection->name, &field, var_store);
     if (rc == IB_ENOENT) {
         ib_log_error(
             ib,
-            "fast: No such data %s",
-            collection->name
+            "fast: No such var %.*s",
+            (int)name_length, name
         );
         return IB_EOTHER;
     }
     else if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "fast: Error fetching data %s: %s",
-            collection->name,
+            "fast: Error fetching data %.*s: %s",
+            (int)name_length, name,
             ib_status_to_string(rc)
         );
         return IB_EOTHER;
@@ -434,8 +498,8 @@ ib_status_t fast_feed_data_collection(
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "fast: Error loading data field %s: %s",
-            collection->name,
+            "fast: Error loading data field %.*s: %s",
+            (int)name_length, name,
             ib_status_to_string(rc)
         );
         return IB_EOTHER;
@@ -453,9 +517,9 @@ ib_status_t fast_feed_data_collection(
         if (rc != IB_OK) {
             ib_log_error(
                 ib,
-                "fast: Error loading data subfield %s of %s: %s",
+                "fast: Error loading data subfield %s of %.*s: %s",
                 subfield->name,
-                collection->name,
+                (int)name_length, name,
                 ib_status_to_string(rc)
             );
             return IB_EOTHER;
@@ -522,7 +586,7 @@ ib_status_t fast_feed_data_collection(
  * @param[in] ib          IronBee engine.
  * @param[in] eudoxus     Eudoxus engine.
  * @param[in] state       Eudoxus execution state; updated.
- * @param[in] data        Data source.
+ * @param[in] var_store   Var store.
  * @param[in] bytestrings Bytestrings to feed.
  * @param[in] collections Collections to feed.
  * @return
@@ -532,18 +596,18 @@ ib_status_t fast_feed_data_collection(
  */
 static
 ib_status_t fast_feed_phase(
-    const ib_engine_t             *ib,
-    const ia_eudoxus_t            *eudoxus,
-    ia_eudoxus_state_t            *state,
-    const ib_data_t               *data,
-    const char                   **bytestrings,
-    const fast_collection_spec_t  *collections
+    const ib_engine_t                     *ib,
+    const ia_eudoxus_t                    *eudoxus,
+    ia_eudoxus_state_t                    *state,
+    const ib_var_store_t                  *var_store,
+    const ib_var_source_t                **bytestrings,
+    const fast_collection_runtime_spec_t  *collections
 )
 {
     assert(ib          != NULL);
     assert(eudoxus     != NULL);
     assert(state       != NULL);
-    assert(data        != NULL);
+    assert(var_store   != NULL);
     assert(bytestrings != NULL);
     assert(collections != NULL);
 
@@ -552,16 +616,16 @@ ib_status_t fast_feed_phase(
     /* Lower level feed_* routines log errors, so we simply abort on
      * non-OK returns. */
     for (
-        const char **bytestring_name = bytestrings;
-        *bytestring_name != NULL;
-        ++bytestring_name
+        const ib_var_source_t **bytestring_source = bytestrings;
+        *bytestring_source != NULL;
+        ++bytestring_source
     ) {
-        rc = fast_feed_data_bytestring(
+        rc = fast_feed_var_bytestring(
             ib,
             eudoxus,
             state,
-            data,
-            *bytestring_name
+            var_store,
+            *bytestring_source
         );
         if (rc != IB_OK) {
             return rc;
@@ -590,20 +654,224 @@ ib_status_t fast_feed_phase(
     }
 
     for (
-        const fast_collection_spec_t *collection = collections;
+        const fast_collection_runtime_spec_t *collection = collections;
         collection->name != NULL;
         ++collection
     ) {
-        rc = fast_feed_data_collection(
+        rc = fast_feed_var_collection(
             ib,
             eudoxus,
             state,
-            data,
+            var_store,
             collection
         );
         if (rc != IB_OK) {
             return rc;
         }
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Convert strings to sources.
+ *
+ * @param[in]  ib   Engine.
+ * @param[out] dst  Where to store sources.
+ * @param[in]  src  Strings to convert.
+ * @param[in]  nsrc Number of strings in @a src.
+ * @return
+ * - IB_OK on success.
+ * - Any error returned by ib_var_source_acquire().
+ **/
+static
+ib_status_t fast_convert_specs_bytestrs(
+    ib_engine_t             *ib,
+    const ib_var_source_t ***dst,
+    const char             **src,
+    size_t                   nsrc
+)
+{
+    assert(ib  != NULL);
+    assert(src != NULL);
+    assert(dst != NULL);
+
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_var_config_t *config = ib_engine_var_config_get(ib);
+
+    *dst = ib_mpool_calloc(mp, nsrc, sizeof(*dst));
+    for (size_t i = 0; i < nsrc; ++i) {
+        const char *name = src[i];
+        ib_var_source_t *source = NULL;
+        ib_status_t rc;
+
+        if (name != NULL) {
+            rc = ib_var_source_acquire(&source, mp, config, IB_S2SL(name));
+            if (rc != IB_OK) {
+                ib_log_error(
+                    ib,
+                    "Error fetching source for %s: %s",
+                    name,
+                    ib_status_to_string(rc)
+                );
+                return rc;
+            }
+        }
+        (*dst)[i] = source;
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Convert collection spec to runtime collection spec.
+ *
+ * @param[in]  ib   Engine.
+ * @param[out] dst  Where to store runtime spec.
+ * @param[in]  src  Specs to convert.
+ * @param[in]  nsrc Number of specs in @a src.
+ * @return
+ * - IB_OK on success.
+ * - Any error returned by ib_var_source_acquire().
+ **/
+static
+ib_status_t fast_convert_specs_collections(
+    ib_engine_t                           *ib,
+    const fast_collection_runtime_spec_t **dst,
+    const fast_collection_spec_t          *src,
+    size_t                                 nsrc
+)
+{
+    assert(ib  != NULL);
+    assert(src != NULL);
+    assert(dst != NULL);
+
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_var_config_t *config = ib_engine_var_config_get(ib);
+    fast_collection_runtime_spec_t *result;
+
+    result = ib_mpool_calloc(mp, nsrc, sizeof(**dst));
+    for (size_t i = 0; i < nsrc; ++i) {
+        const fast_collection_spec_t *spec = &(src[i]);
+        ib_var_source_t *source = NULL;
+        ib_status_t rc;
+
+        if (spec->name != NULL) {
+            rc = ib_var_source_acquire(
+                &source,
+                mp,
+                config,
+                IB_S2SL(spec->name)
+            );
+            if (rc != IB_OK) {
+                ib_log_error(
+                    ib,
+                    "Error fetching source for %s: %s",
+                    spec->name,
+                    ib_status_to_string(rc)
+                );
+                return rc;
+            }
+        }
+        result[i].name = source;
+        result[i].separator = spec->separator;
+    }
+
+    *dst = result;
+
+    return IB_OK;
+}
+
+/**
+ * Convert specs to runtime specs.
+ *
+ * @param[in] ib    IronBee engine.
+ * @param[in] specs Specs structure to fill.
+ * @return
+ * - IB_OK on success.
+ * - Any error returned by fast_convert_specs_bytestrs() or
+ *   fast_convert_specs_collections()
+ **/
+static
+ib_status_t fast_convert_specs(
+    ib_engine_t  *ib,
+    fast_specs_t *specs
+)
+{
+    ib_status_t rc;
+
+    rc = fast_convert_specs_bytestrs(
+        ib,
+        &specs->request_header_bytestrings,
+        c_request_header_bytestrings,
+        ARRAY_SIZE(c_request_header_bytestrings)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = fast_convert_specs_collections(
+        ib,
+        &specs->request_header_collections,
+        c_request_header_collections,
+        ARRAY_SIZE(c_request_header_collections)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = fast_convert_specs_bytestrs(
+        ib,
+        &specs->request_body_bytestrings,
+        c_request_body_bytestrings,
+        ARRAY_SIZE(c_request_body_bytestrings)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = fast_convert_specs_collections(
+        ib,
+        &specs->request_body_collections,
+        c_request_body_collections,
+        ARRAY_SIZE(c_request_body_collections)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = fast_convert_specs_bytestrs(
+        ib,
+        &specs->response_header_bytestrings,
+        c_response_header_bytestrings,
+        ARRAY_SIZE(c_response_header_bytestrings)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = fast_convert_specs_collections(
+        ib,
+        &specs->response_header_collections,
+        c_response_header_collections,
+        ARRAY_SIZE(c_response_header_collections)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = fast_convert_specs_bytestrs(
+        ib,
+        &specs->response_body_bytestrings,
+        c_response_body_bytestrings,
+        ARRAY_SIZE(c_response_body_bytestrings)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = fast_convert_specs_collections(
+        ib,
+        &specs->response_body_collections,
+        c_response_body_collections,
+        ARRAY_SIZE(c_response_body_collections)
+    );
+    if (rc != IB_OK) {
+        return rc;
     }
 
     return IB_OK;
@@ -859,19 +1127,19 @@ done:
  */
 static
 ib_status_t fast_rule_injection(
-    const ib_engine_t             *ib,
-    const ib_rule_exec_t          *rule_exec,
-    ib_list_t                     *rule_list,
-    void                          *cbdata,
-    const char                   **bytestrings,
-    const fast_collection_spec_t  *collections
+    const ib_engine_t                     *ib,
+    const ib_rule_exec_t                  *rule_exec,
+    ib_list_t                             *rule_list,
+    void                                  *cbdata,
+    const ib_var_source_t                **bytestrings,
+    const fast_collection_runtime_spec_t  *collections
 )
 {
-    assert(ib                  != NULL);
-    assert(rule_exec           != NULL);
-    assert(rule_exec->tx       != NULL);
-    assert(rule_exec->tx->data != NULL);
-    assert(rule_list           != NULL);
+    assert(ib                       != NULL);
+    assert(rule_exec                != NULL);
+    assert(rule_exec->tx            != NULL);
+    assert(rule_exec->tx->var_store != NULL);
+    assert(rule_list                != NULL);
 
     const fast_runtime_t *runtime = (const fast_runtime_t *)cbdata;
 
@@ -879,12 +1147,12 @@ ib_status_t fast_rule_injection(
     assert(runtime->eudoxus != NULL);
     assert(runtime->index   != NULL);
 
-    ia_eudoxus_result_t  irc;
-    ia_eudoxus_state_t  *state = NULL;
-    ib_status_t          rc;
-    const ib_data_t     *data;
-    ib_mpool_t          *tmp_mp = NULL;
-    ib_hash_t           *rule_set;
+    ia_eudoxus_result_t   irc;
+    ia_eudoxus_state_t   *state = NULL;
+    ib_status_t           rc;
+    const ib_var_store_t *var_store;
+    ib_mpool_t           *tmp_mp = NULL;
+    ib_hash_t            *rule_set;
 
     rc = ib_mpool_create(&tmp_mp, "fast temporary pool", NULL);
     if (rc != IB_OK) {
@@ -916,7 +1184,7 @@ ib_status_t fast_rule_injection(
         .rule_set  = rule_set
     };
 
-    data = rule_exec->tx->data;
+    var_store = rule_exec->tx->var_store;
 
     irc = ia_eudoxus_create_state(
         &state,
@@ -939,7 +1207,7 @@ ib_status_t fast_rule_injection(
         ib,
         runtime->eudoxus,
         state,
-        data,
+        var_store,
         bytestrings,
         collections
     );
@@ -975,13 +1243,15 @@ ib_status_t fast_rule_injection_request_header(
     void                 *cbdata
 )
 {
+    const fast_specs_t *specs = fast_get_config_const(ib)->runtime->specs;
+    assert(specs != NULL);
     return fast_rule_injection(
         ib,
         rule_exec,
         rule_list,
         cbdata,
-        c_request_header_bytestrings,
-        c_request_header_collections
+        specs->request_header_bytestrings,
+        specs->request_header_collections
     );
 }
 
@@ -1005,13 +1275,15 @@ ib_status_t fast_rule_injection_request_body(
     void                 *cbdata
 )
 {
+    const fast_specs_t *specs = fast_get_config_const(ib)->runtime->specs;
+    assert(specs != NULL);
     return fast_rule_injection(
         ib,
         rule_exec,
         rule_list,
         cbdata,
-        c_request_body_bytestrings,
-        c_request_body_collections
+        specs->request_body_bytestrings,
+        specs->request_body_collections
     );
 }
 
@@ -1035,13 +1307,16 @@ ib_status_t fast_rule_injection_response_header(
     void                 *cbdata
 )
 {
+    const fast_specs_t *specs = fast_get_config_const(ib)->runtime->specs;
+    assert(specs != NULL);
+
     return fast_rule_injection(
         ib,
         rule_exec,
         rule_list,
         cbdata,
-        c_response_header_bytestrings,
-        c_response_header_collections
+        specs->response_header_bytestrings,
+        specs->response_header_collections
     );
 }
 
@@ -1065,14 +1340,60 @@ ib_status_t fast_rule_injection_response_body(
     void                 *cbdata
 )
 {
+    const fast_specs_t *specs = fast_get_config_const(ib)->runtime->specs;
+    assert(specs != NULL);
+
     return fast_rule_injection(
         ib,
         rule_exec,
         rule_list,
         cbdata,
-        c_response_body_bytestrings,
-        c_response_body_collections
+        specs->response_body_bytestrings,
+        specs->response_body_collections
     );
+}
+
+/**
+ * Called on context close.
+ *
+ * On close of main context, will call fast_convert_specs().  This is the
+ * appropriate time to do so as all vars will be registered by then.
+ *
+ * @param[in] ib  Engine.
+ * @param[in] ctx Context.
+ * @param[in] event Unused.
+ * @param[in] cbdata Unused.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - As fast_convert_specs()
+ **/
+static
+ib_status_t fast_ctx_close(
+    ib_engine_t           *ib,
+    ib_context_t          *ctx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+
+    if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
+        fast_config_t *cfg = fast_get_config(ib);
+
+        cfg->runtime->specs = (fast_specs_t *)ib_mpool_alloc(
+            ib_engine_pool_main_get(ib),
+            sizeof(*(cfg->runtime->specs))
+        );
+        if (cfg->runtime->specs == NULL) {
+            return IB_EALLOC;
+        }
+
+        return fast_convert_specs(ib, cfg->runtime->specs);
+    }
+
+    return IB_OK;
 }
 
 /**
@@ -1314,12 +1635,17 @@ ib_status_t fast_dir_fast_automata(
     rc = ib_action_register(
         ib,
         c_fast_action,
-        IB_ACT_FLAG_NONE,
         NULL, NULL,
         NULL, NULL,
         NULL, NULL
     );
     FAST_CHECK_RC("Error registering action");
+
+    /* Register context close hook to convert specs once all vars are
+     * registered. */
+    rc = ib_hook_context_register(ib, context_close_event,
+                                  fast_ctx_close, NULL);
+    FAST_CHECK_RC("Error registering context close.");
 
     return IB_OK;
 #undef FAST_METADATA_ERROR
