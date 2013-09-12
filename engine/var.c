@@ -498,7 +498,7 @@ ib_status_t ib_var_source_get_const(
     return ib_var_source_get(
         (ib_var_source_t *)source,
         (ib_field_t **)field,
-        (ib_var_store_t*)store
+        (ib_var_store_t *)store
     );
 }
 
