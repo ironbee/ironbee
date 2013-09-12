@@ -1,6 +1,13 @@
 IronBee Changes                                                   {#CHANGES}
 ===============
 
+IronBee v0.9.0
+--------------
+
+**Engine**
+
+- The data field layer (rule targets) has been overhauled.  Data fields are now known as 'vars'.  Expansions and filters should be significantly faster.  `InitVarIndexed` and `InitCollectionIndexed` have been removed; their normal versions now Index automatically.
+
 IronBee v0.8.0
 --------------
 
