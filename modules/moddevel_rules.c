@@ -475,12 +475,9 @@ static ib_status_t action_assert_create(
     type_str = parameters;
     tmp = strchr(parameters, ':');
     if (tmp != NULL) {
-        message = ib_mpool_strdup(mp, tmp+1);
-        if (message == NULL) {
-            return IB_EALLOC;
-        }
+        message = tmp + 1;
     }
-    else if (tmp == NULL) {
+    else {
         message = "";
     }
 
