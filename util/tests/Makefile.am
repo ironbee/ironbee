@@ -7,11 +7,15 @@ SUBDIRS = integration
 DIST_SUBDIRS = integration
 endif
 
-LDADD = \
-	$(top_builddir)/util/libibutil.la
 if CPP
-LDADD += $(top_builddir)/ironbeepp/libibpp.la
+LDADD = $(top_builddir)/ironbeepp/libibpp.la
+else
+LDADD =
 endif
+
+LDADD += \
+	$(top_builddir)/util/libibutil.la
+
 
 check_PROGRAMS = \
 	test_util_array \
