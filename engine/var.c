@@ -1640,7 +1640,7 @@ ib_status_t ib_var_expand_acquire(
     ib_var_expand_t **parent_next = &first;
     const char *suffix;
 
-    suffix = str;
+    suffix = ib_mpool_memdup(mp, str, str_length);
     while (suffix < str + str_length) {
         size_t suffix_length = str_length - (suffix - str);
         const char *a;
