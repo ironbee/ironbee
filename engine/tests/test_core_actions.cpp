@@ -26,6 +26,7 @@
 #include <ironbee/server.h>
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
+#include <ironbee/string.h>
 
 #include "gtest/gtest.h"
 
@@ -33,6 +34,7 @@
 
 class CoreActionTest : public BaseTransactionFixture
 {
+protected:
     void SetUp()
     {
         BaseTransactionFixture::SetUp();
@@ -45,8 +47,8 @@ TEST_F(CoreActionTest, setVarAdd) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "a", strlen("a"), &f));
-
+    f = getVar("a");
+    ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
 
     ib_field_value(f, ib_ftype_num_out(&n));
@@ -58,8 +60,8 @@ TEST_F(CoreActionTest, setVarSub) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "b", strlen("b"), &f));
-
+    f = getVar("b");
+    ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
 
     ib_field_value(f, ib_ftype_num_out(&n));
@@ -71,8 +73,8 @@ TEST_F(CoreActionTest, setVarMult) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "c", strlen("c"), &f));
-
+    f = getVar("c");
+    ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
 
     ib_field_value(f, ib_ftype_num_out(&n));
@@ -87,22 +89,26 @@ TEST_F(CoreActionTest, integration) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r1", strlen("r1"), &f));
+    f = getVar("r1");
+    ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r2", strlen("r2"), &f));
+    f = getVar("r2");
+    ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r3", strlen("r3"), &f));
+    f = getVar("r3");
+    ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r4", strlen("r4"), &f));
+    f = getVar("r4");
+    ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);

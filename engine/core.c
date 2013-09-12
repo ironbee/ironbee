@@ -1179,6 +1179,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_num_t tx_num = tx->conn->tx_count;
     const ib_site_t *site;
     ib_mpool_t *pool = log->mp;
+    const ib_field_t *threat_level_f;
     ib_field_t *f;
     ib_list_t *list;
     ib_num_t tx_time = 0;
@@ -1303,9 +1304,16 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
         /* Check if THREAT_LEVEL is available, or if we need to calculate
          * it here.
          */
-        rc = ib_data_get(tx->data, IB_S2SL("THREAT_LEVEL"), &f);
-        if ((rc == IB_OK) && (f->type == IB_FTYPE_NUM)) {
-            rc = ib_field_value(f, ib_ftype_num_out(&threat_level));
+        rc = ib_var_source_get_const(
+            cfg->core_cfg->vars->threat_level,
+            &threat_level_f,
+            tx->var_store
+        );
+        if ((rc == IB_OK) && (threat_level_f->type == IB_FTYPE_NUM)) {
+            rc = ib_field_value(
+                    threat_level_f,
+                    ib_ftype_num_out(&threat_level)
+            );
             if (rc == IB_OK) {
                 ib_log_debug_tx(tx, "Using THREAT_LEVEL as threat level value.");
                 do_threat_calc = false;
@@ -1479,6 +1487,10 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     ib_list_t *list;
     char *tstamp;
     ib_status_t rc;
+    const core_audit_cfg_t *core_audit_cfg =
+        (const core_audit_cfg_t *)log->cfg_data;
+    const ib_core_cfg_t *core_cfg = core_audit_cfg->core_cfg;
+    ib_var_store_t *var_store = tx->var_store;
 
     /* Generate a list of fields in this part. */
     rc = ib_list_create(&list, pool);
@@ -1538,7 +1550,11 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
             ib_list_push(list, f);
         }
 
-        rc = ib_data_get(tx->data, IB_S2SL("request_protocol"), &f);
+        rc = ib_var_source_get(
+            core_cfg->vars->request_protocol,
+            &f,
+            var_store
+        );
         if (rc == IB_OK) {
             ib_list_push(list, f);
         }
@@ -1547,7 +1563,11 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                             ib_status_to_string(rc));
         }
 
-        rc = ib_data_get(tx->data, IB_S2SL("request_method"), &f);
+        rc = ib_var_source_get(
+            core_cfg->vars->request_method,
+            &f,
+            var_store
+        );
         if (rc == IB_OK) {
             ib_list_push(list, f);
         }
@@ -1584,6 +1604,10 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     ib_field_t *f;
     ib_list_t *list;
     char *tstamp;
+    const core_audit_cfg_t *core_audit_cfg =
+        (const core_audit_cfg_t *)log->cfg_data;
+    const ib_core_cfg_t *core_cfg = core_audit_cfg->core_cfg;
+    ib_var_store_t *var_store = tx->var_store;
     ib_status_t rc;
 
     /* Timestamp */
@@ -1606,7 +1630,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
                                   strlen(tstamp));
     ib_list_push(list, f);
 
-    rc = ib_data_get(tx->data, IB_S2SL("response_status"), &f);
+    rc = ib_var_source_get(core_cfg->vars->response_status, &f, var_store);
     if (rc == IB_OK) {
         ib_list_push(list, f);
     }
@@ -1615,7 +1639,11 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
                         ib_status_to_string(rc));
     }
 
-    rc = ib_data_get(tx->data, IB_S2SL("response_protocol"), &f);
+    rc = ib_var_source_get(
+            core_cfg->vars->response_protocol,
+            &f,
+            var_store
+    );
     if (rc == IB_OK) {
         ib_list_push(list, f);
     }
@@ -1948,6 +1976,7 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
 
     cfg->tx = tx;
     cfg->boundary = boundary;
+    cfg->core_cfg = corecfg;
     log->cfg_data = cfg;
 
     /* Add all the parts to the log. */
@@ -2110,36 +2139,6 @@ static ib_status_t filter_ctl_config(ib_engine_t *ib,
     return rc;
 }
 
-
-/* -- Core Data Processors -- */
-
-/**
- * Initialize the DPI in the given transaction.
- *
- * @param[in] ib IronBee object.
- * @param[in,out] tx The transaction whose tx->data will be populated wit
- *                default values.
- *
- * @returns IB_OK on success or the failure of ib_data_add_list(...).
- */
-static ib_status_t data_default_init(ib_engine_t *ib, ib_tx_t *tx)
-{
-    ib_status_t rc;
-
-    assert(ib!=NULL);
-    assert(tx!=NULL);
-    assert(tx->data!=NULL);
-
-    rc = ib_data_add_list_ex(tx->data, IB_TX_CAPTURE, 2, NULL);
-
-    if (rc!=IB_OK) {
-        ib_log_debug2_tx(tx, "Unable to add list \""IB_TX_CAPTURE"\".");
-        return rc;
-    }
-
-    return rc;
-}
-
 /* -- Core Hook Handlers -- */
 
 /**
@@ -2166,11 +2165,16 @@ static ib_status_t core_initvar(ib_engine_t *ib,
 
     IB_LIST_LOOP_CONST(initvar_list, node) {
         ib_status_t trc; /* Temp RC */
-        const ib_field_t *field =
-            (const ib_field_t *)ib_list_node_data_const(node);
+        const ib_core_initvar_t *initvar =
+            (const ib_core_initvar_t *)ib_list_node_data_const(node);
         ib_field_t *newf;
 
-        trc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
+        trc = ib_field_copy(
+            &newf,
+            tx->mp,
+            initvar->initial_value->name, initvar->initial_value->nlen,
+            initvar->initial_value
+        );
         if (trc != IB_OK) {
             ib_log_debug_tx(tx, "Failed to copy field: %s",
                             ib_status_to_string(trc));
@@ -2180,10 +2184,15 @@ static ib_status_t core_initvar(ib_engine_t *ib,
             continue;
         }
 
-        trc = ib_data_add(tx->data, newf);
+        trc = ib_var_source_set(
+            initvar->source,
+            tx->var_store,
+            newf
+        );
         if (trc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI: %s",
-                            (int)field->nlen, field->name,
+            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX vars: %s",
+                            (int)initvar->initial_value->nlen,
+                            initvar->initial_value->name,
                             ib_status_to_string(trc));
             if (rc == IB_OK) {
                 rc = trc;
@@ -2191,8 +2200,9 @@ static ib_status_t core_initvar(ib_engine_t *ib,
         }
         else {
             ib_log_trace_tx(tx, "InitVar: Created field \"%.*s\" (type %s)",
-                            (int)field->nlen, field->name,
-                            ib_field_type_name(field->type));
+                            (int)initvar->initial_value->nlen,
+                            initvar->initial_value->name,
+                            ib_field_type_name(initvar->initial_value->type));
         }
     }
     ib_log_debug_tx(tx, "Created %zd InitVar fields for context \"%s\"",
@@ -2294,10 +2304,15 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
         return rc;
     }
 
-    /* Data Default Initialization */
-    rc = data_default_init(ib, tx);
+    /* Var Initialization */
+    rc = ib_var_source_initialize(
+        corecfg->vars->tx_capture,
+        NULL,
+        tx->var_store,
+        IB_FTYPE_LIST
+    );
     if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Failed to initialize data provider instance.");
+        ib_log_alert_tx(tx, "Failed to initialize TX capture var.");
         return rc;
     }
 
@@ -3985,8 +4000,9 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     ib_mpool_t *mp = cp->cur_ctx->mp;
     ib_core_cfg_t *corecfg;
     ib_field_t *field;
+    ib_var_source_t *source;
     ib_field_val_union_t fval;
-    bool index = (cbdata != NULL);
+    ib_core_initvar_t *initvar;
 
     /* Get the core module config. */
     rc = ib_core_context_config(cp->cur_ctx, &corecfg);
@@ -4025,17 +4041,45 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
         field = new_field;
     }
 
-    /* Index if desired */
-    if (index) {
-        rc = ib_data_register_indexed(ib_engine_data_config_get(cp->ib), name);
-        /* Only known error is already registered; ignore. */
-        assert(rc == IB_OK || rc == IB_EINVAL);
+    /* Register. */
+    rc = ib_var_source_register(
+        &source,
+        ib_engine_var_config_get(cp->ib),
+        name, strlen(name),
+        IB_PHASE_NONE,
+        IB_PHASE_NONE
+    );
+    if (rc == IB_EEXIST) {
+        /* Acquire existing source. */
+        rc = ib_var_source_acquire(
+            &source,
+            NULL,
+            ib_engine_var_config_get(cp->ib),
+            name, strlen(name)
+        );
+    }
+    if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "Error sourcing initvar %s: %s",
+            name,
+            ib_status_to_string(rc)
+        );
+        return rc;
     }
 
-    /* Add the field to the list */
-    rc = ib_list_push(corecfg->initvar_list, field);
+    /* Construct initvar */
+    initvar = ib_mpool_alloc(mp, sizeof(*initvar));
+    if (initvar == NULL) {
+        return IB_EALLOC;
+    }
+    initvar->source = source;
+    initvar->initial_value = field;
+
+    /* Add to the list */
+    rc = ib_list_push(corecfg->initvar_list, initvar);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "InitVar: Error pushing value on list: %s",
+        ib_cfg_log_error(cp, "InitVar: Error pushing initvar on list: %s",
                          ib_status_to_string(rc));
         return rc;
     }
@@ -4420,11 +4464,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         core_dir_initvar,
         NULL
     ),
-    IB_DIRMAP_INIT_PARAM2(
-        "InitVarIndexed",
-        core_dir_initvar,
-        (void *)1
-    ),
 
     /* End */
     IB_DIRMAP_INIT_LAST
@@ -4471,7 +4510,7 @@ static ib_status_t core_ctx_open(ib_engine_t *ib,
     ib_module_t *mod = (ib_module_t *)cbdata;
 
     /* Initialize the core fields context. */
-    rc = ib_core_fields_ctx_init(ib, mod, ctx, cbdata);
+    rc = ib_core_vars_ctx_init(ib, mod, ctx, cbdata);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to initialize core fields: %s",
                      ib_status_to_string(rc));
@@ -4503,6 +4542,8 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
 
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    const ib_var_config_t *var_config = ib_engine_var_config_get(ib);
 
     /* Get the current context config. */
     rc = ib_core_context_config(ctx, &corecfg);
@@ -4517,6 +4558,49 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
     if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
         rc = ib_ctxsel_finalize( ib );
         if (rc != IB_OK) {
+            return rc;
+        }
+
+        /* Set up sources. */
+/* Helper Macro */
+#define CCC_SOURCE(name, src) \
+    { \
+        ib_var_source_t *temp; \
+        rc = ib_var_source_acquire( \
+            &temp, mp, var_config, IB_S2SL((name)) \
+        ); \
+        if (rc != IB_OK) { \
+            ib_log_error(ib, \
+                "Failed to acquire var source: %s: %s", \
+                (name), ib_status_to_string(rc) \
+            ); \
+            return rc; \
+        } \
+        corecfg->vars->src = temp; \
+    }
+/* End Helper Macro */
+
+        CCC_SOURCE("THREAT_LEVEL",      threat_level);
+        CCC_SOURCE("REQUEST_PROTOCOL",  request_protocol);
+        CCC_SOURCE("REQUEST_METHOD",    request_method);
+        CCC_SOURCE("RESPONSE_STATUS",   response_status);
+        CCC_SOURCE("RESPONSE_PROTOCOL", response_protocol);
+        CCC_SOURCE(IB_TX_CAPTURE,       tx_capture);
+        CCC_SOURCE("FIELD_NAME_FULL",   field_name_full);
+#undef CCC_SOURCE
+
+        rc = ib_var_target_acquire_from_string(
+            &(corecfg->vars->flag_block),
+            mp,
+            var_config,
+            IB_S2SL("FLAG:BLOCK"),
+            NULL, NULL
+        );
+        if (rc != IB_OK) {
+            ib_log_error(ib,
+                "Failed to acquire var target: FLAG:BLOCK: %s",
+                ib_status_to_string(rc)
+            );
             return rc;
         }
     }
@@ -4623,6 +4707,11 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->limits.request_body_log_limit            = -1;
     corecfg->limits.response_body_log_limit           = -1;
 
+    /* Initialize vars */
+    corecfg->vars = ib_mpool_calloc(
+        ib_engine_pool_main_get(ib), 1, sizeof(*corecfg->vars)
+    );
+
     /* Register logger functions. */
     ib_log_set_logger_fn(ib, core_vlogmsg, NULL);
     ib_log_set_loglevel_fn(ib, core_loglevel, NULL);
@@ -4688,9 +4777,9 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
 
     /* Initialize the core fields */
-    rc = ib_core_fields_init(ib, m);
+    rc = ib_core_vars_init(ib, m);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to initialize core fields: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to initialize core vars: %s", ib_status_to_string(rc));
         return rc;
     }
 
@@ -4716,10 +4805,15 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
 
     /* Register CAPTURE */
-    rc = ib_data_register_indexed(ib_engine_data_config_get(ib), IB_TX_CAPTURE);
+    rc = ib_var_source_register(
+        NULL,
+        ib_engine_var_config_get(ib),
+        IB_TX_CAPTURE, strlen(IB_TX_CAPTURE),
+        IB_PHASE_NONE, IB_PHASE_NONE
+    );
     if (rc != IB_OK) {
         ib_log_warning(ib,
-            "Failed to register %s as indexed: %s",
+            "Failed to register %s: %s",
             IB_TX_CAPTURE, ib_status_to_string(rc)
         );
         /* Everything should still work, so do not return error. */

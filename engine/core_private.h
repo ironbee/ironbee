@@ -68,8 +68,8 @@ ib_module_t *ib_core_module_sym(void);
  * @param[in,out] ib IronBee object
  * @param[in] mod Module object
  */
-ib_status_t ib_core_fields_init(ib_engine_t *ib,
-                                ib_module_t *mod);
+ib_status_t ib_core_vars_init(ib_engine_t *ib,
+                              ib_module_t *mod);
 
 /**
  * Initialize the core config context for fields.
@@ -83,17 +83,17 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
  *
  * @returns IB_OK on success.
  */
-ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
-                                    ib_module_t *mod,
-                                    ib_context_t *ctx,
-                                    void *cbdata);
+ib_status_t ib_core_vars_ctx_init(ib_engine_t *ib,
+                                  ib_module_t *mod,
+                                  ib_context_t *ctx,
+                                  void *cbdata);
 
 /**
  * Get the core flags collection
  *
  * @returns Pointer to array of ib_tx_flag_map_t
  */
-const ib_tx_flag_map_t *ib_core_fields_tx_flags( void );
+const ib_tx_flag_map_t *ib_core_vars_tx_flags( void );
 
 /**
  * Get the core audit log parts string/value configuration map

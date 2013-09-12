@@ -59,6 +59,29 @@ typedef enum ib_audit_mode_t {
 } ib_audit_mode_t;
 
 /**
+ * InitVar entry.
+ **/
+typedef struct ib_core_initvar_t ib_core_initvar_t;
+struct ib_core_initvar_t
+{
+    ib_var_source_t *source;         /**< Source to initialize. */
+    const ib_field_t *initial_value; /**< Value to initialize to. */
+};
+
+/* Var sources and targets  */
+typedef struct ib_core_vars_t ib_core_vars_t;
+struct ib_core_vars_t {
+    const ib_var_source_t *threat_level;
+    ib_var_source_t *request_protocol;
+    ib_var_source_t *request_method;
+    ib_var_source_t *response_status;
+    ib_var_source_t *response_protocol;
+    ib_var_source_t *tx_capture;
+    const ib_var_source_t *field_name_full;
+    ib_var_target_t *flag_block;
+};
+
+/**
  * Core configuration.
  */
 typedef struct ib_core_cfg_t ib_core_cfg_t;
@@ -67,7 +90,7 @@ struct ib_core_cfg_t {
     const char       *log_uri;           /**< Log URI */
     FILE             *log_fp;            /**< File pointer for log. */
     const char       *logevent;          /**< Active logevent provider key */
-    ib_list_t        *initvar_list;      /**< List of ib_field_t for InitVar */
+    ib_list_t        *initvar_list;      /**< List of ib_core_initvar_t for InitVar */
     ib_list_t        *mancoll_list;      /**< List of ib_managed_collection_t */
     ib_num_t          buffer_req;        /**< Request buffering options */
     ib_num_t          buffer_res;        /**< Response buffering options */
@@ -93,6 +116,7 @@ struct ib_core_cfg_t {
     ib_num_t inspection_engine_options; /**< Inspection engine options */
     ib_num_t protection_engine_options; /**< Protection engine options */
     ib_tx_limits_t    limits;            /**< Limits used by this core. */
+    ib_core_vars_t   *vars;             /**< Var sources and targets. */
 };
 
 /**

@@ -291,20 +291,12 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
 }
 
 /**
- * Instance data for strop.
- */
-struct strop_instance_data_t {
-    bool expand; /**< Expand before comparing? */
-    const char *str; /**< String to compare to */
-};
-typedef struct strop_instance_data_t strop_instance_data_t;
-
-/**
  * Instance data for numop.
  */
 struct numop_instance_data_t {
-    bool expand; /**< Expand before comparing? */
-    ib_field_t *f; /**< Field to compare to */
+    /* One of these two fields must be NULL */
+    const ib_field_t *f; /**< Number field to compare to. */
+    const ib_var_expand_t *expand; /**< Var expand to compare to. */
 };
 typedef struct numop_instance_data_t numop_instance_data_t;
 
@@ -334,7 +326,6 @@ ib_status_t strop_create(
     assert(mp != NULL);
 
     ib_status_t rc;
-    bool expand;
     char *str;
     size_t str_len;
 
@@ -347,15 +338,18 @@ ib_status_t strop_create(
         return rc;
     }
 
-    ib_data_expand_test_str(str, &expand);
-
-    strop_instance_data_t *data =
-        (strop_instance_data_t *)ib_mpool_alloc(mp, sizeof(*data));
-    if (data == NULL) {
-        return IB_EALLOC;
+    ib_var_expand_t *data;
+    // @todo Catch and report error_message and error_offset.
+    rc = ib_var_expand_acquire(
+        &data,
+        mp,
+        str, str_len,
+        ib_engine_var_config_get(ib),
+        NULL, NULL
+    );
+    if (rc != IB_OK) {
+        return rc;
     }
-    data->expand = expand;
-    data->str = str;
 
     *instance_data = data;
 
@@ -389,27 +383,22 @@ ib_status_t op_streq_execute(
     assert(field != NULL);
     assert(result != NULL);
 
-    /**
-     * This works on C-style (NUL terminated) and byte strings.  Note
-     * that data is assumed to be a NUL terminated string (because our
-     * configuration parser can't produce anything else).
-     **/
-    ib_status_t  rc;
-    char        *expanded;
+    ib_status_t rc;
     bool         case_insensitive;
-    const strop_instance_data_t *data =
-        (const strop_instance_data_t *)instance_data;
     case_insensitive = (cbdata != NULL);
 
+    const char  *expanded;
+    size_t       expanded_length;
+
     /* Expand the string */
-    if ((tx != NULL) && data->expand) {
-        rc = ib_data_expand_str(tx->data, data->str, false, &expanded);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-    else {
-        expanded = (char *)data->str;
+    rc = ib_var_expand_execute(
+        (const ib_var_expand_t *)instance_data,
+        &expanded, &expanded_length,
+        tx->mp,
+        tx->var_store
+    );
+    if (rc != IB_OK) {
+        return rc;
     }
 
     /* Handle NUL-terminated strings and byte strings */
@@ -421,10 +410,10 @@ ib_status_t op_streq_execute(
         }
 
         if (case_insensitive) {
-            *result = (strcasecmp(fval, expanded) == 0);
+            *result = (strncasecmp(fval, expanded, expanded_length) == 0);
         }
         else {
-            *result = (strcmp(fval, expanded) == 0);
+            *result = (strncmp(fval, expanded, expanded_length) == 0);
         }
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
@@ -438,7 +427,7 @@ ib_status_t op_streq_execute(
 
         len = ib_bytestr_length(value);
 
-        if (len == strlen(expanded)) {
+        if (len == expanded_length) {
             if (case_insensitive) {
                 *result = 1;
                 const char *v = (const char *)ib_bytestr_const_ptr(value);
@@ -505,26 +494,21 @@ ib_status_t op_contains_execute(
     assert(result != NULL);
 
     ib_status_t  rc = IB_OK;
-    char        *expanded;
-    const strop_instance_data_t *data =
-        (const strop_instance_data_t *)instance_data;
+
+    const char  *expanded;
+    size_t       expanded_length;
 
     /* Expand the string */
-    if ((tx != NULL) && data->expand) {
-        rc = ib_data_expand_str(tx->data, data->str, false, &expanded);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-    else {
-        expanded = (char *)data->str;
+    rc = ib_var_expand_execute(
+        (const ib_var_expand_t *)instance_data,
+        &expanded, &expanded_length,
+        tx->mp,
+        tx->var_store
+    );
+    if (rc != IB_OK) {
+        return rc;
     }
 
-    /**
-     * This works on C-style (NUL terminated) and byte strings.  Note
-     * that data is assumed to be a NUL terminated string (because our
-     * configuration parser can't produce anything else).
-     **/
     if (field->type == IB_FTYPE_NULSTR) {
         const char *s;
         rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
@@ -532,7 +516,7 @@ ib_status_t op_contains_execute(
             return rc;
         }
 
-        if (strstr(s, expanded) == NULL) {
+        if (memmem(s, strlen(s), expanded, expanded_length) == NULL) {
             *result = 0;
         }
         else {
@@ -546,12 +530,13 @@ ib_status_t op_contains_execute(
             return rc;
         }
 
-        if (ib_bytestr_index_of_c(str, expanded) == -1) {
-            *result = 0;
-        }
-        else {
-            *result = 1;
-        }
+        *result = (
+            ib_strstr_ex(
+                (const char *)ib_bytestr_const_ptr(str),
+                ib_bytestr_length(str),
+                expanded, expanded_length
+            ) != NULL
+        );
     }
     else {
         return IB_EINVAL;
@@ -1185,64 +1170,56 @@ ib_status_t op_ipmatch6_execute(
 }
 
 /**
- * Convert @a in_field from a string by expanding it to an expanded
- * string and then convert that string to a number-type if
- * possible. Otherwise, leave it as a string.
+ * Expand an expansion and then convert the result to a number-type if
+ * possible.  Otherwise, leave it as a string.
  *
  * If no conversion is performed because none is necessary,
  * IB_OK is returned and @a out_field is set to NULL.
  *
  * @param[in] tx Current transaction.
- * @param[in] in_field The field to expand and attempt to convert.
+ * @param[in] in The expansion to expand and convert.
  * @param[out] out_field The field that the in_field is converted to.
  *             If no conversion is performed, this is set to NULL.
  * @returns
  *   - IB_OK On success.
  *   - IB_EALLOC On memory failure.
  *   - IB_EINVAL If an expandable value cannot be expanded.
- *   - Other returned by ib_data_expand_str.
+ *   - Other returned by ib_var_expand_execute()
  */
 static
 ib_status_t expand_field_num(
-    const ib_tx_t     *tx,
-    const ib_field_t  *in_field,
-    ib_field_t       **out_field
+    const ib_tx_t          *tx,
+    const ib_var_expand_t  *in,
+    ib_field_t            **out_field
 )
 {
-    assert(tx       != NULL);
-    assert(tx->mp   != NULL);
-    assert(in_field != NULL);
+    assert(tx     != NULL);
+    assert(tx->mp != NULL);
+    assert(in     != NULL);
 
-    const char *original;
-    char *expanded;
+    const char *expanded;
     size_t expanded_len;
     ib_field_t *tmp_field;
     ib_status_t rc;
 
-    /* Get the string from the field */
-    rc = ib_field_value(in_field, ib_ftype_nulstr_out(&original));
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Expand the string */
-    rc = ib_data_expand_str_ex(
-        tx->data,
-        original, strlen(original),
-        false,                /* No NUL required */
-        false,                /* No recursion */
-        &expanded, &expanded_len);
+    /* Expand */
+    rc = ib_var_expand_execute(
+        in,
+        &expanded, &expanded_len,
+        tx->mp,
+        tx->var_store
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Wrap the string into a field and set it to the tmp_field.
-     * We will not try to expand tmp_field into a number. If we
+     * We will now try to expand tmp_field into a number. If we
      * fail, we return tmp_field in *out_field. */
     rc = ib_field_create_bytestr_alias(
         &tmp_field,
         tx->mp,
-        in_field->name, in_field->nlen,
+        "expanded num", sizeof("expanded num"),
         (uint8_t *)expanded, expanded_len);
     if (rc != IB_OK) {
         return rc;
@@ -1419,7 +1396,7 @@ static ib_status_t select_math_type_conversion(
  * This function does a few important functions common to math and logic
  * operations.
  *
- *   - Expands the rh_in field.
+ *   - Expand rh_expand if rh_expand is non-NULL; otherwise use rh_in.
  *   - Finds a target type that rh_in and lh_in must be converted to.
  *   - If a float is disallowed, this applies that check and returns IB_EINVAL.
  *   - Both fields are converted and put into rh_out and lh_out.
@@ -1430,7 +1407,7 @@ static ib_status_t select_math_type_conversion(
  *           use these fields, so user-beware.
  *
  * @param tx Current transaction.
- * @param expand Expand operands?
+ * @param rh_expand What to expand to generate the right hand side.
  * @param lh_in Left-hand operand input.
  * @param rh_in Right-hand operand input.
  * @param lh_out Left-hand operand out. This may equal @a lh_in.
@@ -1441,18 +1418,21 @@ static ib_status_t select_math_type_conversion(
  */
 static
 ib_status_t prepare_math_operands(
-    const ib_tx_t     *tx,
-    bool               expand,
-    const ib_field_t  *lh_in,
-    const ib_field_t  *rh_in,
-    ib_field_t       **lh_out,
-    ib_field_t       **rh_out
+    const ib_tx_t          *tx,
+    const ib_var_expand_t  *rh_expand,
+    const ib_field_t       *lh_in,
+    const ib_field_t       *rh_in,
+    ib_field_t            **lh_out,
+    ib_field_t            **rh_out
 )
 {
     assert(tx != NULL);
     assert(tx->mp != NULL);
     assert(lh_in != NULL);
-    assert(rh_in != NULL);
+    assert(
+        (rh_in != NULL && rh_expand == NULL) ||
+        (rh_in == NULL && rh_expand != NULL)
+    );
     assert(lh_out != NULL);
     assert(rh_out != NULL);
 
@@ -1463,8 +1443,8 @@ ib_status_t prepare_math_operands(
     ib_field_t *tmp_field = NULL;
 
     /* First, expand the right hand input. */
-    if (expand) {
-        rc = expand_field_num(tx, rh_in, &tmp_field);
+    if (rh_expand != NULL) {
+        rc = expand_field_num(tx, rh_expand, &tmp_field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -1872,7 +1852,6 @@ ib_status_t op_numcmp_create(
 {
     ib_field_t *f;
     ib_status_t rc;
-    bool expandable;
     ib_num_t num_value;
     ib_float_t float_value;
 
@@ -1899,17 +1878,25 @@ ib_status_t op_numcmp_create(
     if (data == NULL) {
         return IB_EALLOC;
     }
-    data->expand = false;
+    data->expand = NULL;
     data->f = NULL;
     *instance_data = data;
 
     /* Is the string expandable? */
-    ib_data_expand_test_str(params_unesc, &expandable);
-    if (expandable) {
-        data->expand = true;
-        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
-                             IB_FTYPE_NULSTR,
-                             ib_ftype_nulstr_in(params_unesc));
+    if (ib_var_expand_test(params_unesc, params_unesc_len)) {
+        // @todo Catch error message and offset and report or log.
+        ib_var_expand_t *tmp;
+        rc = ib_var_expand_acquire(
+            &tmp,
+            mp,
+            params_unesc, params_unesc_len,
+            ib_engine_var_config_get(ib),
+            NULL, NULL
+        );
+        data->expand = tmp;
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
     else {
         ib_status_t num_rc;

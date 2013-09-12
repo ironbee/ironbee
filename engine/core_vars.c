@@ -17,9 +17,10 @@
 
 /**
  * @file
- * @brief IronBee - Core Module Fields
+ * @brief IronBee - Core Module: Vars
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -35,6 +36,14 @@
 #include <ironbee/stream.h>
 
 #include <assert.h>
+
+/*
+ * Important!
+ *
+ * Setting a var is slow (i.e., not O(1)).  As such, there is little to gain
+ * from acquiring the var source ahead of time for set operations.  This
+ * greatly simplifies this code.
+ */
 
 /* -- Field Generation Routines -- */
 
@@ -77,12 +86,7 @@ static const char *indexed_keys[] = {
 };
 
 /* Placeholder for as-of-yet-initialized bytestring fields. */
-static const uint8_t core_placeholder_value[] = {
-    '_', '_', 'c', 'o', 'r', 'e', '_', '_',
-    'p', 'l', 'a', 'c', 'e', 'h', 'o', 'l',
-    'd', 'e', 'r', '_', '_', 'v', 'a', 'l',
-    'u', 'e', '_', '_',  0,   0,   0,   0
-};
+static const char core_placeholder_value[] = "__core__placeholder__value__";
 
 static const ib_tx_flag_map_t core_tx_flag_map[] = {
     {
@@ -146,74 +150,216 @@ static const ib_tx_flag_map_t core_tx_flag_map[] = {
     { NULL, NULL, IB_TX_FNONE, true, false },
 };
 
-static ib_status_t core_field_placeholder_bytestr(ib_data_t *data,
-                                                  const char *name)
+static
+ib_status_t core_vars_placeholder_bytestr(
+    ib_var_store_t *store,
+    const char     *name
+)
 {
-    ib_status_t rc = ib_data_add_bytestr_ex(data,
-                                            (const char *)name,
-                                            strlen(name),
-                                            (uint8_t *)core_placeholder_value,
-                                            0,
-                                            NULL);
+    ib_status_t rc;
+    ib_var_source_t *source;
+    ib_field_t *f;
+
+    rc = ib_var_source_acquire(
+        &source,
+        ib_var_store_pool(store),
+        ib_var_store_config(store),
+        name, strlen(name)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_field_create_bytestr_alias(
+        &f,
+        ib_var_store_pool(store),
+        name, strlen(name),
+        (uint8_t *)core_placeholder_value,
+        sizeof(core_placeholder_value)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_var_source_set(
+        source,
+        store,
+        f
+    );
     return rc;
 }
 
-static void core_gen_tx_bytestr_alias_field(ib_tx_t *tx,
+static void core_gen_tx_bytestr_alias(ib_tx_t *tx,
                                             const char *name,
                                             ib_bytestr_t *val)
 {
-    ib_field_t *f;
 
     assert(tx != NULL);
     assert(name != NULL);
     assert(val != NULL);
 
-    ib_status_t rc = ib_field_create_no_copy(&f, tx->mp,
-                                             name, strlen(name),
-                                             IB_FTYPE_BYTESTR,
-                                             val);
+    ib_field_t *f;
+    ib_var_source_t *source;
+    ib_status_t rc;
+
+    rc = ib_field_create_no_copy(
+            &f,
+            tx->mp,
+            name, strlen(name),
+            IB_FTYPE_BYTESTR,
+            val
+    );
     if (rc != IB_OK) {
-        ib_log_warning(tx->ib, "Failed to create \"%s\" field: %s",
-                       name, ib_status_to_string(rc));
+        ib_log_warning_tx(tx, "Failed to create \"%s\" var: %s",
+                          name, ib_status_to_string(rc));
         return;
     }
 
-    rc = ib_data_add(tx->data, f);
+    rc = ib_var_source_acquire(
+        &source,
+        tx->mp,
+        ib_var_store_config(tx->var_store),
+        name, strlen(name)
+    );
+    if (rc != IB_OK) {
+        ib_log_warning_tx(tx, "Failed to acquire \"%s\" var: %s",
+                          name, ib_status_to_string(rc));
+        return;
+    }
+
+    rc = ib_var_source_set(source, tx->var_store, f);
     if (rc != IB_OK) {
         ib_log_warning_tx(tx,
-            "Failed add \"%s\" field to transaction data store: %s",
+            "Failed add \"%s\" var to transaction: %s",
             name, ib_status_to_string(rc)
         );
     }
 }
 
-static void core_gen_tx_numeric_field(ib_tx_t *tx,
-                                      const char *name,
-                                      ib_num_t val)
+static void core_gen_tx_bytestr_alias2(
+    ib_tx_t *tx,
+    const char *name,
+    const char *val, size_t val_length
+)
 {
-    ib_field_t *f;
-
     assert(tx != NULL);
     assert(name != NULL);
+    assert(val != NULL);
 
-    ib_num_t num = val;
-    ib_status_t rc = ib_field_create(&f, tx->mp,
-                                     name, strlen(name),
-                                     IB_FTYPE_NUM,
-                                     &num);
+    ib_status_t rc;
+    ib_bytestr_t *bytestr;
+
+    rc = ib_bytestr_alias_mem(
+        &bytestr,
+        tx->mp,
+        (const uint8_t *)val,
+        val_length
+    );
     if (rc != IB_OK) {
-        ib_log_warning(tx->ib, "Failed to create \"%s\" field: %s",
-                       name, ib_status_to_string(rc));
+        ib_log_warning_tx(tx, "Failed to create alias for \"%s\" var: %s",
+                          name, ib_status_to_string(rc));
         return;
     }
 
-    rc = ib_data_add(tx->data, f);
+    core_gen_tx_bytestr_alias(tx, name, bytestr);
+}
+
+static void core_gen_tx_numeric(ib_tx_t *tx,
+                                      const char *name,
+                                      ib_num_t val)
+{
+    assert(tx != NULL);
+    assert(name != NULL);
+
+    ib_field_t *f;
+    ib_num_t num = val;
+    ib_status_t rc;
+    ib_var_source_t *source;
+
+    rc = ib_field_create(&f, tx->mp,
+         name, strlen(name),
+         IB_FTYPE_NUM,
+         &num);
+    if (rc != IB_OK) {
+        ib_log_warning_tx(tx, "Failed to create \"%s\" field: %s",
+                          name, ib_status_to_string(rc));
+        return;
+    }
+
+    rc = ib_var_source_acquire(
+        &source,
+        tx->mp,
+        ib_var_store_config(tx->var_store),
+        name, strlen(name)
+    );
+    if (rc != IB_OK) {
+        ib_log_warning_tx(tx, "Failed to acquire \"%s\" var: %s",
+                          name, ib_status_to_string(rc));
+        return;
+    }
+
+    rc = ib_var_source_set(source, tx->var_store, f);
     if (rc != IB_OK) {
         ib_log_warning_tx(tx,
-            "Failed add \"%s\" field to transaction data store: %s",
+            "Failed add \"%s\" var to transaction: %s",
             name, ib_status_to_string(rc)
         );
     }
+}
+
+static void core_vars_gen_list(ib_tx_t *tx, const char *name)
+{
+    assert(tx != NULL);
+    assert(name != NULL);
+
+    ib_status_t rc;
+    ib_var_source_t *source;
+
+    rc = ib_var_source_acquire(
+        &source,
+        tx->mp,
+        ib_var_store_config(tx->var_store),
+        name, strlen(name)
+    );
+    if (rc != IB_OK) {
+        ib_log_warning_tx(tx, "Failed to acquire \"%s\" var: %s",
+                          name, ib_status_to_string(rc));
+        return;
+    }
+
+    rc = ib_var_source_initialize(source, NULL, tx->var_store, IB_FTYPE_LIST);
+    if (rc != IB_OK) {
+        ib_log_warning_tx(tx,
+            "Failed add \"%s\" var to transaction: %s",
+            name, ib_status_to_string(rc)
+        );
+    }
+}
+
+static bool core_vars_is_set(ib_tx_t *tx, const char *name)
+{
+    assert(tx != NULL);
+    assert(name != NULL);
+
+    ib_status_t rc;
+    ib_var_source_t *source;
+    ib_field_t *f;
+
+    rc = ib_var_source_acquire(
+        &source,
+        ib_var_store_pool(tx->var_store),
+        ib_var_store_config(tx->var_store),
+        name, strlen(name)
+    );
+    if (rc != IB_OK) {
+        return false;
+    }
+    rc = ib_var_source_get(source, &f, tx->var_store);
+    if (rc == IB_ENOENT || ! f) {
+        return false;
+    }
+
+    return true;
 }
 
 /* -- Hooks -- */
@@ -226,156 +372,126 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(tx->data != NULL);
+    assert(tx->var_store != NULL);
     assert(event == tx_started_event);
 
     ib_status_t rc;
-    ib_field_t *tmp;
 
     /* Core Request Fields */
-    rc = core_field_placeholder_bytestr(tx->data, "request_line");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_line");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_method");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_method");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_protocol");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_protocol");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri_raw");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri_raw");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri_scheme");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri_scheme");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri_username");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri_username");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri_password");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri_password");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri_host");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri_host");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_host");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_host");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri_port");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri_port");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri_path");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri_path");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri_path_raw");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri_path_raw");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri_query");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri_query");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_uri_fragment");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_uri_fragment");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_content_type");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_content_type");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "request_filename");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "request_filename");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "auth_type");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "auth_type");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "auth_username");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "auth_username");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "auth_password");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "auth_password");
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Core Request Collections */
-    rc = ib_data_add_list(tx->data, "request_headers", NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_data_add_list(tx->data, "request_cookies", NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_data_add_list(tx->data, "request_uri_params", NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_data_add_list(tx->data, "request_body_params", NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    core_vars_gen_list(tx, "request_headers");
+    core_vars_gen_list(tx, "request_cookies");
+    core_vars_gen_list(tx, "request_uri_params");
+    core_vars_gen_list(tx, "request_body_params");
 
     /* ARGS collection */
-    rc = ib_data_get(tx->data, "ARGS", strlen("ARGS"), &tmp);
-    if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(tx->data, "ARGS", NULL);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-    else if (rc != IB_OK) {
-        return rc;
+    if (! core_vars_is_set(tx, "ARGS")) {
+        core_vars_gen_list(tx, "ARGS");
     }
 
     /* Flags collection */
-    rc = ib_data_get(tx->data, "FLAGS", strlen("FLAGS"), &tmp);
-    if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(tx->data, "FLAGS", NULL);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-    else if (rc != IB_OK) {
-        return rc;
+    if (! core_vars_is_set(tx, "FLAGS")) {
+        core_vars_gen_list(tx, "FLAGS");
     }
 
     /* Initialize CAPTURE */
@@ -393,101 +509,46 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     }
 
     /* Core Response Fields */
-    rc = core_field_placeholder_bytestr(tx->data, "response_line");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "response_line");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "response_protocol");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "response_protocol");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "response_status");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "response_status");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "response_message");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "response_message");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "response_content_type");
+    rc = core_vars_placeholder_bytestr(tx->var_store, "response_content_type");
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Core Response Collections */
-    rc = ib_data_add_list(tx->data, "response_headers", NULL);
+    core_vars_gen_list(tx, "response_headers");
+
+    rc = core_vars_placeholder_bytestr(tx->var_store, "FIELD_NAME");
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = core_vars_placeholder_bytestr(tx->var_store, "FIELD_NAME_FULL");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->data, "FIELD_NAME");
-    if (rc != IB_OK) {
-        return rc;
-    }
-    rc = core_field_placeholder_bytestr(tx->data, "FIELD_NAME_FULL");
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_data_add_list(tx->data, "response_cookies", NULL);
+    core_vars_gen_list(tx, "response_cookies");
 
     return rc;
-}
-
-/*
- * Callback used to generate connection fields.
- */
-static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
-                                           ib_conn_t *conn,
-                                           ib_state_event_type_t event,
-                                           void *cbdata)
-{
-    ib_status_t rc;
-
-    assert(ib != NULL);
-    assert(conn != NULL);
-    assert(event == handle_connect_event);
-
-    rc = ib_data_add_bytestr(conn->data,
-                             "server_addr",
-                             (uint8_t *)conn->local_ipstr,
-                             strlen(conn->local_ipstr),
-                             NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_data_add_num(conn->data,
-                         "server_port",
-                         conn->local_port,
-                         NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_data_add_bytestr(conn->data,
-                             "remote_addr",
-                             (uint8_t *)conn->remote_ipstr,
-                             strlen(conn->remote_ipstr),
-                             NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_data_add_num(conn->data,
-                         "remote_port",
-                         conn->remote_port,
-                         NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-
-    return IB_OK;
 }
 
 static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
@@ -497,19 +558,55 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(tx->data != NULL);
+    assert(tx->var_store != NULL);
     assert(event == tx_started_event);
 
-    ib_status_t rc;
     const ib_tx_flag_map_t *flag;
 
-    for (flag = ib_core_fields_tx_flags();  flag->name != NULL;  ++flag) {
-        rc = ib_data_add_num(tx->data, flag->tx_name, (tx->flags & flag->tx_flag ? 1 : 0), NULL);
-        if (rc != IB_OK) {
-            return rc;
-        }
+    for (flag = ib_core_vars_tx_flags();  flag->name != NULL;  ++flag) {
+        core_gen_tx_numeric(
+            tx,
+            flag->tx_name,
+            (tx->flags & flag->tx_flag ? 1 : 0)
+        );
     }
 
+    return IB_OK;
+}
+
+static ib_status_t core_slow_get(
+    ib_field_t **f,
+    ib_tx_t *tx,
+    const char *name
+)
+{
+    assert(f != NULL);
+    assert(tx != NULL);
+    assert(name != NULL);
+
+    ib_status_t rc;
+    ib_var_source_t *source;
+    ib_field_t *value = NULL;
+
+    rc = ib_var_source_acquire(
+        &source,
+        ib_var_store_pool(tx->var_store),
+        ib_var_store_config(tx->var_store),
+        name, strlen(name)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_var_source_get(source, &value, tx->var_store);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    if (value == NULL) {
+        return IB_EOTHER;
+    }
+
+    *f = value;
     return IB_OK;
 }
 
@@ -533,6 +630,7 @@ static ib_status_t create_header_alias_list(
     ib_list_t *header_list;
     ib_status_t rc;
     ib_parsed_name_value_pair_list_t *nvpair;
+    ib_var_source_t *source;
 
     assert(ib != NULL);
     assert(tx != NULL);
@@ -540,16 +638,29 @@ static ib_status_t create_header_alias_list(
     assert(header != NULL);
 
     /* Create the list */
-    rc = ib_data_get(tx->data, name, strlen(name), &f);
-    if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(tx->data, name, &f);
+    rc = ib_var_source_acquire(
+        &source,
+        ib_var_store_pool(tx->var_store),
+        ib_var_store_config(tx->var_store),
+        name, strlen(name)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_var_source_get(source, &f, tx->var_store);
+    if (rc == IB_ENOENT || ! f) {
+        rc = ib_var_source_initialize(
+            source,
+            &f,
+            tx->var_store,
+            IB_FTYPE_LIST
+        );
         if (rc != IB_OK) {
             return rc;
         }
     }
-    else if (rc != IB_OK) {
-        return rc;
-    }
+
     rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&header_list));
     if (rc != IB_OK) {
         return rc;
@@ -627,75 +738,48 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
 {
     ib_field_t *f;
     ib_status_t rc;
+    ib_conn_t *conn = tx->conn;
 
     assert(ib != NULL);
     assert(tx != NULL);
     assert(event == request_header_finished_event);
 
-    /**
-     * Alias connection remote and server addresses
-     */
+    core_gen_tx_bytestr_alias2(tx, "server_addr",
+                               conn->local_ipstr,
+                               strlen(conn->local_ipstr));
 
-    rc = ib_data_get(tx->conn->data, "server_addr", strlen("server_addr"), &f);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    rc = ib_data_add(tx->data, f);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    core_gen_tx_numeric(tx, "server_port", conn->local_port);
 
-    rc = ib_data_get(tx->conn->data, "server_port", strlen("server_port"), &f);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    rc = ib_data_add(tx->data, f);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    core_gen_tx_bytestr_alias2(tx, "remote_addr",
+                               conn->remote_ipstr,
+                               strlen(conn->remote_ipstr));
 
-    rc = ib_data_get(tx->conn->data, "remote_addr", strlen("remote_addr"), &f);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    rc = ib_data_add(tx->data, f);
-    if (rc != IB_OK) {
-        return rc;
-    }
 
-    rc = ib_data_get(tx->conn->data, "remote_port", strlen("remote_port"), &f);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    rc = ib_data_add(tx->data, f);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    core_gen_tx_numeric(tx, "remote_port", conn->remote_port);
 
-    core_gen_tx_numeric_field(tx, "conn_tx_count",
-                              tx->conn->tx_count);
+    core_gen_tx_numeric(tx, "conn_tx_count",
+                        tx->conn->tx_count);
 
     if (tx->request_line != NULL) {
-        core_gen_tx_bytestr_alias_field(tx, "request_line",
-                                        tx->request_line->raw);
+        core_gen_tx_bytestr_alias(tx, "request_line",
+                                  tx->request_line->raw);
 
-        core_gen_tx_bytestr_alias_field(tx, "request_method",
-                                        tx->request_line->method);
+        core_gen_tx_bytestr_alias(tx, "request_method",
+                                  tx->request_line->method);
 
-        core_gen_tx_bytestr_alias_field(tx, "request_uri_raw",
-                                        tx->request_line->uri);
+        core_gen_tx_bytestr_alias(tx, "request_uri_raw",
+                                  tx->request_line->uri);
 
-        core_gen_tx_bytestr_alias_field(tx, "request_protocol",
-                                        tx->request_line->protocol);
+        core_gen_tx_bytestr_alias(tx, "request_protocol",
+                                  tx->request_line->protocol);
     }
 
     /* Populate the ARGS collection. */
-    rc = ib_data_get(tx->data, "ARGS", strlen("ARGS"), &f);
+    rc = core_slow_get(&f, tx, "ARGS");
     if (rc == IB_OK) {
         ib_field_t *param_list;
 
-        /* Add request URI parameters to ARGS collection. */
-        rc = ib_data_get(tx->data, "request_uri_params", strlen("request_uri_params"), &param_list);
+        rc = core_slow_get(&param_list, tx, "request_uri_params");
         if (rc == IB_OK) {
             ib_list_t *field_list;
             ib_list_node_t *node = NULL;
@@ -753,12 +837,12 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
     assert(event == request_finished_event);
 
     /* Populate the ARGS collection. */
-    rc = ib_data_get(tx->data, "ARGS", strlen("ARGS"), &f);
+    rc = core_slow_get(&f, tx, "ARGS");
     if (rc == IB_OK) {
         ib_field_t *param_list;
 
         /* Add request body parameters to ARGS collection. */
-        rc = ib_data_get(tx->data, "request_body_params", strlen("request_body_params"), &param_list);
+        rc = core_slow_get(&param_list, tx, "request_body_params");
         if (rc == IB_OK) {
             ib_list_t *field_list;
             ib_list_node_t *node = NULL;
@@ -806,17 +890,17 @@ static ib_status_t core_gen_response_header_fields(
     assert(event == response_header_finished_event);
 
     if (tx->response_line != NULL) {
-        core_gen_tx_bytestr_alias_field(tx, "response_line",
+        core_gen_tx_bytestr_alias(tx, "response_line",
                                         tx->response_line->raw);
 
-        core_gen_tx_bytestr_alias_field(tx, "response_protocol",
-                                        tx->response_line->protocol);
+        core_gen_tx_bytestr_alias(tx, "response_protocol",
+                                  tx->response_line->protocol);
 
-        core_gen_tx_bytestr_alias_field(tx, "response_status",
-                                        tx->response_line->status);
+        core_gen_tx_bytestr_alias(tx, "response_status",
+                                  tx->response_line->status);
 
-        core_gen_tx_bytestr_alias_field(tx, "response_message",
-                                        tx->response_line->msg);
+        core_gen_tx_bytestr_alias(tx, "response_message",
+                                  tx->response_line->msg);
     }
 
     /* Create the aliased response header list */
@@ -852,7 +936,7 @@ static ib_status_t core_gen_response_body_fields(ib_engine_t *ib,
 /* -- Initialization Routines -- */
 
 /* Initialize libhtp config object for the context. */
-ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
+ib_status_t ib_core_vars_ctx_init(ib_engine_t *ib,
                                     ib_module_t *mod,
                                     ib_context_t *ctx,
                                     void *cbdata)
@@ -878,17 +962,14 @@ ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
 }
 
 /* Initialize core field generation callbacks. */
-ib_status_t ib_core_fields_init(ib_engine_t *ib,
-                                ib_module_t *mod)
+ib_status_t ib_core_vars_init(ib_engine_t *ib,
+                              ib_module_t *mod)
 {
     assert(ib != NULL);
     assert(mod != NULL);
 
-    ib_data_config_t *config;
+    ib_var_config_t *config;
     ib_status_t rc;
-
-    ib_hook_conn_register(ib, handle_connect_event,
-                          core_gen_connect_fields, NULL);
 
     ib_hook_tx_register(ib, tx_started_event,
                         core_gen_placeholder_fields, NULL);
@@ -908,7 +989,7 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
     ib_hook_tx_register(ib, response_finished_event,
                         core_gen_response_body_fields, NULL);
 
-    config = ib_engine_data_config_get(ib);
+    config = ib_engine_var_config_get(ib);
     assert(config != NULL);
     for (
         const char **key = indexed_keys;
@@ -916,10 +997,15 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
         ++key
     )
     {
-        rc = ib_data_register_indexed(config, *key);
+        rc = ib_var_source_register(
+            NULL,
+            config,
+            *key, strlen(*key),
+            IB_PHASE_NONE, IB_PHASE_NONE
+        );
         if (rc != IB_OK) {
             ib_log_warning(ib,
-                "Core fields failed to register \"%s\" as indexed: %s",
+                "Core vars failed to register \"%s\": %s",
                 *key,
                 ib_status_to_string(rc)
             );
@@ -933,7 +1019,7 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
 }
 
 /* Get the core TX flags */
-const ib_tx_flag_map_t *ib_core_fields_tx_flags( )
+const ib_tx_flag_map_t *ib_core_vars_tx_flags( )
 {
     return core_tx_flag_map;
 }

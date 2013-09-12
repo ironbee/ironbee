@@ -26,7 +26,7 @@ libironbee_la_SOURCES = engine.c data.c \
                         capture.c \
                         core.c \
                         core_context_selection.c \
-                        core_fields.c \
+                        core_vars.c \
                         core_tfns.c \
                         core_operators.c \
                         core_actions.c \
