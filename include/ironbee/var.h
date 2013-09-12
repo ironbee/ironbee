@@ -36,6 +36,8 @@ extern "C" {
  * @defgroup IronBeeEngineVar Var Support
  * @ingroup IronBeeEngine
  *
+ * Var sources, filters, and targets.
+ *
  * This API covers var sources, var filters, and var targets, known as
  * vars, filters, and targets, respectively, in the rule language.
  *
@@ -48,21 +50,24 @@ extern "C" {
  *   from a field.
  * - @ref ib_var_target_t -- Target.  A var source and filter (possibly
  *   empty).
+ * - @ref ib_var_expand_t -- Expand.  A description of how to construct a
+ *   string out of targets.
  *
  * **APIs:**
  *
  * The API is divided into six sections:
  *
- * - @c ib_var_config -- Acquire a configuration.
- * - @c ib_var_store  -- Acquire a store.
- * - @c ib_var_source -- Register, acquire, get, or set sources.  This API is
- *   the fundamental service provided by the var code.  All later APIs are
- *   defined in terms of it as the field API.
- * - @c ib_var_filter -- Acquire and apply filters to fields; parse filter
+ * - @ref IronBeeEngineVarConfiguration -- Acquire a configuration.
+ * - @ref IronBeeEngineVarStore  -- Acquire a store.
+ * - @ref IronBeeEngineVarSource -- Register, acquire, get, or set sources.
+ *   This API is the fundamental service provided by the var code.  All later
+ *   APIs are defined in terms of it and the field API.
+ * - @ref IronBeeEngineVarFilter -- Acquire and apply filters to fields;
+ *   parse filter specification strings.
+ * - @ref IronBeeEngineVarTarget -- Acquire and apply targets; parse target
  *   specification strings.
- * - @c ib_var_target -- Acquire and apply targets; parse target specification
- *   strings.
- * - @c ib_var_expand -- Expand strings containing embedded target references.
+ * - @ref IronBeeEngineVarExpand -- Expand strings containing embedded target
+ *   references.
  *
  * **Pre-Computation:**
  *
@@ -71,13 +76,14 @@ extern "C" {
  * example, when the source name is known at configuration time, it can be
  * converted into an @ref ib_var_source_t allowing gets (but not sets) to
  * be executed at evaluation time in constant time.  Similar behavior is
- * available for filters and targets.  All such pre-computation routines have
- * `acquire` in the name, e.g., ib_var_store_acquire().  Whenever possible,
- * acquire at configuration time.
+ * available for filters, targets, and expands.  All such pre-computation
+ * routines have `acquire` in the name, e.g., ib_var_store_acquire().
+ * Whenever possible, acquire at configuration time.
  *
  * **Performance:**
  *
- * Generally, acquisition is slow but use of an acquired object is fast.
+ * Generally, acquisition is slow but use of an acquired object is fast.  The
+ * main exception is write access which is as slow as acquisition.
  *
  * @{
  */
@@ -115,21 +121,17 @@ typedef struct ib_var_source_t ib_var_source_t;
 typedef struct ib_var_store_t ib_var_store_t;
 
 /**
- * A filter.
- *
  * A selection criteria to apply to a list of fields.
  **/
 typedef struct ib_var_filter_t ib_var_filter_t;
 
 /**
- * A target.
- *
  * A source and (possibly trivial) filter.
  **/
 typedef struct ib_var_target_t ib_var_target_t;
 
 /**
- * Prepared string expansion.
+ * A prepared string expansion.
  **/
 typedef struct ib_var_expand_t ib_var_expand_t;
 
@@ -467,7 +469,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
 /**
  * @defgroup IronBeeEngineVarFilter Var Filter
  *
- * Select subkeys of a source.
+ * Select subkeys of a field.
  *
  * Filters reduced a list source to a shorter list.  They do this is one of
  * three ways:
