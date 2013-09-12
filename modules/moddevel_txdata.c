@@ -245,6 +245,7 @@ static ib_status_t tx_header_finished(
         (const ib_moddevel_txdata_config_t *)cbdata;
     const ib_list_node_t *node;
     ib_status_t rc = IB_OK;
+    ib_var_source_t *source;
 
     /* Loop through the list */
     IB_LIST_LOOP_CONST(config->field_list, node) {
@@ -269,7 +270,17 @@ static ib_status_t tx_header_finished(
             ib_log_debug_tx(tx, "Failed to copy field: %d", rc);
             continue;
         }
-        rc = ib_data_add(tx->data, newf);
+        rc = ib_var_source_acquire(
+            &source,
+            tx->mp,
+            ib_engine_var_config_get(ib),
+            field->name, field->nlen
+        );
+        if (rc != IB_OK) {
+            ib_log_debug_tx(tx, "Failed to acquire source: %d", rc);
+            continue;
+        }
+        rc = ib_var_source_set(source, tx->var_store, newf);
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
                             (int)field->nlen, field->name);

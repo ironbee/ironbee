@@ -155,114 +155,6 @@ static ib_status_t op_break_execute(
     return IB_OK;
 }
 
-/** Instance data for assert operator */
-struct assert_inst_data_t {
-    bool expand;                   /**< Expand the message string? */
-    const char *str;               /**< Message string */
-};
-typedef struct assert_inst_data_t assert_inst_data_t;
-
-/**
- * Create function for the "assert" operator
- *
- * @param[in] ctx Current context.
- * @param[in] parameters Unparsed string with the parameters to
- *                       initialize the operator instance.
- * @param[out] instance_data Instance data.
- * @param[in] cbdata Callback data
- *
- * @returns Status code
- */
-static ib_status_t op_assert_create(
-    ib_context_t  *ctx,
-    const char    *parameters,
-    void         **instance_data,
-    void          *cbdata
-)
-{
-    assert(ctx != NULL);
-    assert(instance_data != NULL);
-    assert(cbdata != NULL);
-
-    char *str;
-    bool expand;
-    ib_mpool_t *mp = ib_context_get_mpool(ctx);
-    assert_inst_data_t *aid;
-
-    if (parameters == NULL) {
-        return IB_EINVAL;
-    }
-
-    aid = ib_mpool_alloc(mp, sizeof(*aid));
-    if (aid == NULL) {
-        return IB_EALLOC;
-    }
-
-    str = ib_mpool_strdup(mp, parameters);
-    if (str == NULL) {
-        return IB_EALLOC;
-    }
-
-    /* Do we need expansion? */
-    ib_data_expand_test_str(str, &expand);
-    if (expand) {
-        aid->expand = true;
-    }
-
-    aid->str = str;
-    *instance_data = aid;
-
-    return IB_OK;
-}
-
-/**
- * Execute function for the "assert" operator
- *
- * @note This operator is enabled only for builds configured with
- * "--enable-devel".
- *
- * @param[in] tx Current transaction.
- * @param[in] instance_data Instance data needed for execution.
- * @param[in] field The field to operate on.
- * @param[in] capture If non-NULL, the collection to capture to.
- * @param[out] result The result of the operator 1=true 0=false.
- * @param[in] cbdata Callback data (assert instance data).
- *
- * @returns Status code
- */
-static ib_status_t op_assert_execute(
-    ib_tx_t *tx,
-    void *instance_data,
-    const ib_field_t *field,
-    ib_field_t *capture,
-    ib_num_t *result,
-    void *cbdata
-)
-{
-    const assert_inst_data_t *aid = (const assert_inst_data_t *)instance_data;
-    /* This works on C-style (NUL terminated) strings */
-    const char *cstr = aid->str;
-    char *expanded = NULL;
-    ib_status_t rc;
-
-    /* Expand the string */
-    if (aid->expand) {
-        rc = ib_data_expand_str(tx->data, cstr, false, &expanded);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "log_execute: Failed to expand string '%s': %s",
-                            cstr, ib_status_to_string(rc));
-        }
-    }
-    else {
-        expanded = (char *)cstr;
-    }
-
-    ib_log_error_tx(tx, "ASSERT: %s", expanded);
-    assert(0 && expanded);
-    return IB_OK;
-}
-
 /**
  * Execute function for the "exists" operator
  *
@@ -382,9 +274,9 @@ static ib_status_t action_debuglog_create(
     ib_action_inst_t *inst,
     void             *cbdata)
 {
-    bool expand;
-    char *str;
+    ib_var_expand_t *expand;
     ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_status_t rc;
 
     assert(mp != NULL);
 
@@ -392,18 +284,18 @@ static ib_status_t action_debuglog_create(
         return IB_EINVAL;
     }
 
-    str = ib_mpool_strdup(mp, parameters);
-    if (str == NULL) {
-        return IB_EALLOC;
+    rc = ib_var_expand_acquire(
+        &expand,
+        mp,
+        IB_S2SL(parameters),
+        ib_engine_var_config_get(ib),
+        NULL, NULL
+    );
+    if (rc != IB_OK) {
+        return rc;
     }
 
-    /* Do we need expansion? */
-    ib_data_expand_test_str(str, &expand);
-    if (expand) {
-        inst->flags |= IB_ACTINST_FLAG_EXPAND;
-    }
-
-    inst->data = str;
+    inst->data = expand;
     return IB_OK;
 }
 
@@ -412,7 +304,6 @@ static ib_status_t action_debuglog_create(
  *
  * @param[in] rule_exec The rule execution object
  * @param[in] data C-style string to log
- * @param[in] flags Action instance flags
  * @param[in] cbdata Callback data (unused)
  *
  * @returns Status code
@@ -420,28 +311,28 @@ static ib_status_t action_debuglog_create(
 static ib_status_t action_debuglog_execute(
     const ib_rule_exec_t *rule_exec,
     void                 *data,
-    ib_flags_t            flags,
     void                 *cbdata)
 {
-    /* This works on C-style (NUL terminated) strings */
-    const char *cstr = (const char *)data;
-    char *expanded = NULL;
+    const ib_var_expand_t *expand = (const ib_var_expand_t *)data;
+    const char *expanded = NULL;
+    size_t expanded_length;
     ib_status_t rc;
 
     /* Expand the string */
-    if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(rule_exec->tx->data, cstr, false, &expanded);
-        if (rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "log_execute: Failed to expand string '%s': %s",
-                              cstr, ib_status_to_string(rc));
-        }
-    }
-    else {
-        expanded = (char *)cstr;
+    rc = ib_var_expand_execute(
+        expand,
+        &expanded, &expanded_length,
+        rule_exec->tx->mp,
+        rule_exec->tx->var_store
+    );
+    if (rc != IB_OK) {
+        ib_rule_log_error(rule_exec,
+                          "log_execute: Failed to expand string: %s",
+                          ib_status_to_string(rc));
+        return rc;
     }
 
-    ib_rule_log_trace(rule_exec, "LOG: %s", expanded);
+    ib_rule_log_trace(rule_exec, "LOG: %.*s", (int)expanded_length, expanded);
     return IB_OK;
 }
 
@@ -461,9 +352,9 @@ static ib_status_t action_print_create(
     ib_action_inst_t *inst,
     void             *cbdata)
 {
-    char *str;
-    bool expand;
+    ib_var_expand_t *expand;
     ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_status_t rc;
 
     assert(mp != NULL);
 
@@ -471,18 +362,18 @@ static ib_status_t action_print_create(
         return IB_EINVAL;
     }
 
-    str = ib_mpool_strdup(mp, parameters);
-    if (str == NULL) {
-        return IB_EALLOC;
+    rc = ib_var_expand_acquire(
+        &expand,
+        mp,
+        IB_S2SL(parameters),
+        ib_engine_var_config_get(ib),
+        NULL, NULL
+    );
+    if (rc != IB_OK) {
+        return rc;
     }
 
-    /* Do we need expansion? */
-    ib_data_expand_test_str(str, &expand);
-    if (expand) {
-        inst->flags |= IB_ACTINST_FLAG_EXPAND;
-    }
-
-    inst->data = str;
+    inst->data = expand;
     return IB_OK;
 }
 
@@ -491,7 +382,6 @@ static ib_status_t action_print_create(
  *
  * @param[in] rule_exec The rule execution object
  * @param[in] data C-style string to log
- * @param[in] flags Action instance flags
  * @param[in] cbdata Unused.
  *
  * @returns Status code
@@ -499,27 +389,29 @@ static ib_status_t action_print_create(
 static ib_status_t action_print_execute(
     const ib_rule_exec_t *rule_exec,
     void                 *data,
-    ib_flags_t            flags,
     void                 *cbdata)
 {
-    const char *cstr = (const char *)data;
-    char *expanded = NULL;
+    const ib_var_expand_t *expand = (const ib_var_expand_t *)data;
+    const char *expanded = NULL;
+    size_t expanded_length;
     ib_status_t rc;
 
     /* Expand the string */
-    if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(rule_exec->tx->data, cstr, false, &expanded);
-        if (rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "print: Failed to expand string '%s': %d",
-                              cstr, rc);
-        }
-    }
-    else {
-        expanded = (char *)cstr;
+    rc = ib_var_expand_execute(
+        expand,
+        &expanded, &expanded_length,
+        rule_exec->tx->mp,
+        rule_exec->tx->var_store
+    );
+    if (rc != IB_OK) {
+        ib_rule_log_error(rule_exec,
+                          "print: Failed to expand string: %s",
+                          ib_status_to_string(rc));
+        return rc;
     }
 
-    printf( "Rule %s => %s\n", ib_rule_id(rule_exec->rule), expanded);
+    printf( "Rule %s => %.*s\n", ib_rule_id(rule_exec->rule),
+        (int)expanded_length, expanded);
     return IB_OK;
 }
 
@@ -539,9 +431,9 @@ typedef enum {
  */
 typedef struct
 {
-    assert_type_t  assert_type;   /**< Type of assertion */
-    const char    *assert_str;    /**< String version of assert_type */
-    const char    *str;           /**< Message string */
+    assert_type_t    assert_type;   /**< Type of assertion */
+    const char      *assert_str;    /**< String version of assert_type */
+    ib_var_expand_t *message;       /**< Message */
 } assert_action_data_t;
 
 /**
@@ -563,12 +455,16 @@ static ib_status_t action_assert_create(
     assert(ib != NULL);
     assert(inst != NULL);
 
-    bool expand;
+    ib_var_expand_t *expand;
     ib_mpool_t *mp = ib_engine_pool_main_get(ib);
     assert_action_data_t *aad;
     const char *type_str;
     assert_type_t assert_type = ASSERT_ANY;
+    const char *tmp;
     const char *message;
+    ib_status_t rc;
+
+    assert(mp != NULL);
 
     /* Default parameters to empty string */
     if (parameters == NULL) {
@@ -577,12 +473,15 @@ static ib_status_t action_assert_create(
 
     /* The first argument is the type, second is message string. */
     type_str = parameters;
-    message = strchr(parameters, ':');
-    if (message == NULL) {
-        message = "";
+    tmp = strchr(parameters, ':');
+    if (tmp != NULL) {
+        message = ib_mpool_strdup(mp, tmp+1);
+        if (message == NULL) {
+            return IB_EALLOC;
+        }
     }
-    else {
-        ++message;
+    else if (tmp == NULL) {
+        message = "";
     }
 
     /* Check for true/false/ok/fail */
@@ -607,10 +506,14 @@ static ib_status_t action_assert_create(
         type_str = "";
     }
 
-    /* Do we need expansion? */
-    ib_data_expand_test_str(message, &expand);
-    if (expand) {
-        inst->flags |= IB_ACTINST_FLAG_EXPAND;
+    /* Expand the message string as required */
+    rc = ib_var_expand_acquire(&expand,
+                               mp,
+                               IB_S2SL(message),
+                               ib_engine_var_config_get(ib),
+                               NULL, NULL);
+    if (rc != IB_OK) {
+        return rc;
     }
 
     /* Allocate an assert instance object */
@@ -620,12 +523,7 @@ static ib_status_t action_assert_create(
     }
     aad->assert_str = type_str;
     aad->assert_type = assert_type;
-
-    /* Copy the message string */
-    aad->str = ib_mpool_strdup(mp, message);
-    if (aad->str == NULL) {
-        return IB_EALLOC;
-    }
+    aad->message = expand;
 
     inst->data = aad;
     return IB_OK;
@@ -635,40 +533,25 @@ static ib_status_t action_assert_create(
  * Execute function for the "assert" action
  *
  * @param[in] rule_exec The rule execution object
- * @param[in] data Assert action data
- * @param[in] flags Action instance flags
- * @param[in] cbdata Callback data (unused)
+ * @param[in] data Instance data data (assert action data)
+ * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
 static ib_status_t action_assert_execute(
     const ib_rule_exec_t *rule_exec,
     void                 *data,
-    ib_flags_t            flags,
     void                 *cbdata)
 {
     assert(rule_exec != NULL);
     assert(data != NULL);
 
     const assert_action_data_t *aad = (const assert_action_data_t *)data;
-    const char                 *cstr = aad->str;
     bool                        fail = (rule_exec->cur_status != IB_OK);
-    char                       *expanded = NULL;
+    const char                 *expanded = NULL;
+    size_t                      expanded_length;
     bool                        do_assert;
     ib_status_t                 rc;
-
-    /* Expand the string */
-    if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(rule_exec->tx->data, cstr, false, &expanded);
-        if (rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "log_execute: Failed to expand string '%s': %s",
-                              cstr, ib_status_to_string(rc));
-        }
-    }
-    else {
-        expanded = (char *)cstr;
-    }
 
     /* Whether we assert or not we assert depends on the type of assertion. */
     switch(aad->assert_type) {
@@ -692,15 +575,30 @@ static ib_status_t action_assert_execute(
         break;
     }
 
-    /* Do the actual assertion */
-    if (do_assert) {
-        ib_rule_log_fatal(rule_exec,
-                          "ASSERT: status=%d \"%s\" result=%"PRIu64" %s \"%s\"",
-                          rule_exec->cur_status,
-                          ib_status_to_string(rule_exec->cur_status),
-                          rule_exec->cur_result,
-                          aad->assert_str, expanded);
+    /* Only do the actual assertion if required. */
+    if (! do_assert) {
+        return IB_OK;
     }
+
+    /* Expand the string */
+    rc = ib_var_expand_execute(aad->message,
+                               &expanded, &expanded_length,
+                               rule_exec->tx->mp,
+                               rule_exec->tx->var_store);
+    if (rc != IB_OK) {
+        ib_rule_log_error(rule_exec,
+                          "assert: Failed to expand string: %s",
+                          ib_status_to_string(rc));
+        return rc;
+    }
+
+    ib_rule_log_fatal(rule_exec,
+                      "ASSERT: status=%d \"%s\" result=%"PRIu64" %s \"%.*s\"",
+                      rule_exec->cur_status,
+                      ib_status_to_string(rule_exec->cur_status),
+                      rule_exec->cur_result,
+                      aad->assert_str,
+                      (int)expanded_length, expanded);
     return IB_OK;
 }
 
@@ -857,9 +755,8 @@ ib_status_t ib_moddevel_rules_init(
           IB_OP_CAPABILITY_NON_STREAM |
               IB_OP_CAPABILITY_STREAM ),
         NULL, NULL, /* No create function */
-        NULL, NULL, /* no destroy function
-    */
-                              op_false_execute, NULL);
+        NULL, NULL, /* no destroy function */
+        op_false_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }
@@ -892,51 +789,6 @@ ib_status_t ib_moddevel_rules_init(
         NULL, NULL, /* no destroy function */
         op_exists_execute, NULL
     );
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Register the assert operator */
-    rc = ib_operator_create_and_register(
-        NULL,
-        ib,
-        "assert",
-        ( IB_OP_CAPABILITY_ALLOW_NULL |
-          IB_OP_CAPABILITY_NON_STREAM |
-              IB_OP_CAPABILITY_STREAM ),
-        op_assert_create, NULL,
-        NULL, NULL, /* no destroy function */
-        op_assert_execute, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Register the assertok operator */
-    rc = ib_operator_create_and_register(
-        NULL,
-        ib,
-        "assertok",
-        ( IB_OP_CAPABILITY_ALLOW_NULL |
-          IB_OP_CAPABILITY_NON_STREAM |
-              IB_OP_CAPABILITY_STREAM ),
-        op_assert_create, NULL,
-        NULL, NULL, /* no destroy function */
-        op_assert_execute, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Register the assert operator */
-    rc = ib_operator_create_and_register(
-        NULL,
-        ib,
-        "assertfail",
-        ( IB_OP_CAPABILITY_ALLOW_NULL |
-          IB_OP_CAPABILITY_NON_STREAM |
-              IB_OP_CAPABILITY_STREAM ),
-        op_assert_create, NULL,
-        NULL, NULL, /* no destroy function */
-        op_assert_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1042,7 +894,6 @@ ib_status_t ib_moddevel_rules_init(
     /* Register the DebugLog action */
     rc = ib_action_register(ib,
                             "DebugLog",
-                            IB_ACT_FLAG_NONE,
                             action_debuglog_create, NULL,
                             NULL, NULL, /* no destroy function */
                             action_debuglog_execute, NULL);
@@ -1053,7 +904,6 @@ ib_status_t ib_moddevel_rules_init(
     /* Register the Print action */
     rc = ib_action_register(ib,
                             "Print",
-                            IB_ACT_FLAG_NONE,
                             action_print_create, NULL,
                             NULL, NULL, /* no destroy function */
                             action_print_execute, NULL);
@@ -1064,8 +914,7 @@ ib_status_t ib_moddevel_rules_init(
 
     /* Register the Assert action */
     rc = ib_action_register(ib,
-                            "Assert",
-                            IB_ACT_FLAG_NONE,
+                            "assert",
                             action_assert_create, NULL,
                             NULL, NULL, /* no destroy function */
                             action_assert_execute, NULL);
@@ -1080,7 +929,6 @@ ib_status_t ib_moddevel_rules_init(
     /* Register the inject action */
     rc = ib_action_register(ib,
                             action_inject_name,
-                            IB_ACT_FLAG_NONE,
                             action_inject_create_fn, config,
                             NULL, NULL, /* no destroy function */
                             NULL, NULL); /* no execute function */

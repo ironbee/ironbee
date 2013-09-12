@@ -849,8 +849,17 @@ static ib_status_t moddevel_txdump_tx(
     if (ib_flags_all(txdump->flags, MODDEVEL_TXDUMP_ARGS) ) {
         const ib_list_t *lst;
         ib_field_t *field;
+        ib_var_source_t *source;
         moddevel_txdump(tx, txdump, 2, "ARGS:");
-        rc = ib_data_get(tx->data, "ARGS", strlen("ARGS"), &field);
+        rc = ib_var_source_acquire(
+            &source,
+            tx->mp,
+            ib_engine_var_config_get_const(ib),
+            IB_S2SL("ARGS")
+        );
+        if (rc == IB_OK) {
+            rc = ib_var_source_get(source, &field, tx->var_store);
+        }
         if (rc == IB_OK) {
             moddevel_txdump_field(tx, txdump, 4, "ARGS", field, 0);
 
@@ -880,12 +889,7 @@ static ib_status_t moddevel_txdump_tx(
         }
 
         /* Extract the request headers field from the provider instance */
-        rc = ib_data_get_all(tx->data, lst);
-        if (rc != IB_OK) {
-            ib_log_debug_tx(tx, "log_tx: Failed to get all headers: %s",
-                            ib_status_to_string(rc));
-            return rc;
-        }
+        ib_var_store_export(tx->var_store, lst);
 
         /* Log it all */
         rc = moddevel_txdump_list(tx, txdump, 4, "", lst);
@@ -1002,7 +1006,6 @@ static ib_status_t moddevel_txdump_rspline_event(
  *
  * @param[in] rule_exec The rule execution object
  * @param[in] data C-style string to log
- * @param[in] flags Action instance flags
  * @param[in] cbdata Callback data (TxDump object)
  *
  * @returns Status code
@@ -1010,7 +1013,6 @@ static ib_status_t moddevel_txdump_rspline_event(
 static ib_status_t moddevel_txdump_act_execute(
     const ib_rule_exec_t *rule_exec,
     void                 *data,
-    ib_flags_t            flags,
     void                 *cbdata)
 {
     const ib_moddevel_txdump_t *txdump = (const ib_moddevel_txdump_t *)data;
@@ -1528,7 +1530,6 @@ ib_status_t ib_moddevel_txdump_init(
     /* Register the TxDump action */
     rc = ib_action_register(ib,
                             "TxDump",
-                            IB_ACT_FLAG_NONE,
                             moddevel_txdump_act_create, NULL,
                             NULL, NULL, /* no destroy function */
                             moddevel_txdump_act_execute, NULL);
