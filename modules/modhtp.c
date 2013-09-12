@@ -912,10 +912,11 @@ static ib_status_t modhtp_field_gen_bytestr(
     assert(tx != NULL);
     assert(name != NULL);
 
-    ib_field_t   *f;
-    ib_bytestr_t *ibs;
-    ib_status_t   rc;
-    uint8_t      *dptr;
+    ib_field_t      *f;
+    ib_bytestr_t    *ibs;
+    ib_status_t     rc;
+    uint8_t         *dptr;
+    ib_var_source_t *source;
 
     /* Initialize the field pointer */
     if (pf != NULL) {
@@ -939,34 +940,48 @@ static ib_status_t modhtp_field_gen_bytestr(
         dptr = (uint8_t *)bstr_ptr(bs);
     }
 
+    rc = ib_var_source_acquire(
+        &source,
+        tx->mp,
+        ib_engine_var_config_get(tx->ib),
+        IB_S2SL(name)
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+
     /* First lookup the field to see if there is already one
      * that needs the value set.
      */
-    rc = ib_data_get(tx->data, name, strlen(name), &f);
-    if (rc == IB_OK) {
-        rc = ib_field_mutable_value(f, ib_ftype_bytestr_mutable_out(&ibs));
+    rc = ib_var_source_get(source, &f, tx->var_store);
+    if (rc == IB_ENOENT) {
+        rc = ib_var_source_initialize(
+            source,
+            &f,
+            tx->var_store,
+            IB_FTYPE_BYTESTR
+        );
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to get field value for \"%s\": %s",
-                            name, ib_status_to_string(rc));
-            return rc;
-        }
-
-        rc = ib_bytestr_setv_const(ibs, dptr, bstr_len(bs));
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to set field value for \"%s\": %s",
-                            name, ib_status_to_string(rc));
             return rc;
         }
     }
-    else {
-        /* If no field exists, then create one. */
-        rc = ib_data_add_bytestr_ex(tx->data, name, strlen(name),
-                                    dptr, bstr_len(bs), &f);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed add bytestring field for \"%s\": %s",
-                            name, ib_status_to_string(rc));
-            return rc;
-        }
+    else if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_field_mutable_value(f, ib_ftype_bytestr_mutable_out(&ibs));
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Failed to get field value for \"%s\": %s",
+                        name, ib_status_to_string(rc));
+        return rc;
+    }
+
+    rc = ib_bytestr_setv_const(ibs, dptr, bstr_len(bs));
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Failed to set field value for \"%s\": %s",
+                        name, ib_status_to_string(rc));
+        return rc;
     }
 
     if (pf != NULL) {
@@ -1018,25 +1033,50 @@ static void modhtp_parser_flag(
 {
     assert(itx != NULL);
     assert(itx->mp != NULL);
-    assert(itx->data != NULL);
+    assert(itx->var_store != NULL);
     assert(flagname != NULL);
 
     ib_status_t rc;
     ib_field_t *field;
     ib_field_t *listfield;
     ib_num_t value = 1;
+    ib_var_source_t *source;
 
     (*pflags) ^= flagbit;
 
-    rc = ib_data_get(itx->data, collection, strlen(collection), &field);
+    rc = ib_var_source_acquire(
+        &source,
+        itx->mp,
+        ib_engine_var_config_get(itx->ib),
+        IB_S2SL(collection)
+    );
+    if (rc != IB_OK) {
+        ib_log_warning_tx(itx,
+                          "Failed to initialize collection source \"%s\": %s",
+                          collection, ib_status_to_string(rc));
+        return;
+    }
+
+    rc = ib_var_source_get(source, &field, itx->var_store);
     if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(itx->data, collection, &field);
+        rc = ib_var_source_initialize(
+            source,
+            &field,
+            itx->var_store,
+            IB_FTYPE_LIST
+        );
         if (rc != IB_OK) {
             ib_log_warning_tx(itx,
                               "Failed to add collection \"%s\": %s",
                               collection, ib_status_to_string(rc));
             return;
         }
+    }
+    else if (rc != IB_OK) {
+        ib_log_warning_tx(itx,
+                          "Failed to initialize collection \"%s\": %s",
+                          collection, ib_status_to_string(rc));
+        return;
     }
     rc = ib_field_create(&listfield,
                          itx->mp,
@@ -1661,6 +1701,62 @@ static int modhtp_htp_rsp_complete(
  */
 
 /**
+ * Get or create a list var
+ *
+ * @param[in] itx Transaction.
+ * @param[in] name Var name.
+ * @param[out] f Field.
+ *
+ * @returns IronBee status code
+ */
+static ib_status_t modhtp_get_or_create_list(
+    ib_tx_t *itx,
+    const char *name,
+    ib_field_t **f
+)
+{
+    ib_status_t rc;
+    ib_var_source_t *source;
+
+    rc = ib_var_source_acquire(
+        &source,
+        itx->mp,
+        ib_engine_var_config_get(itx->ib),
+        IB_S2SL(name)
+    );
+    if (rc != IB_OK) {
+        ib_log_error_tx(itx,
+                        "Failed to create %s source: %s",
+                        name,
+                        ib_status_to_string(rc));
+    }
+
+    rc = ib_var_source_get(source, f, itx->var_store);
+    if (rc == IB_ENOENT) {
+        rc = ib_var_source_initialize(
+            source,
+            f,
+            itx->var_store,
+            IB_FTYPE_LIST
+        );
+        if (rc != IB_OK) {
+            ib_log_error_tx(itx,
+                            "Failed to create %s list: %s",
+                            name,
+                            ib_status_to_string(rc));
+        }
+    }
+    else if (rc != IB_OK) {
+        ib_log_error_tx(itx,
+                        "Failed to get %s list: %s",
+                        name,
+                        ib_status_to_string(rc));
+    }
+
+    return IB_OK;
+}
+
+/**
  * Generate IronBee request header fields
  *
  * @param[in] txdata Transaction data
@@ -1729,7 +1825,7 @@ static ib_status_t modhtp_gen_request_header_fields(
                                  htx->parsed_uri->fragment, false, NULL);
     }
 
-    rc = ib_data_add_list(itx->data, "request_cookies", &f);
+    rc = modhtp_get_or_create_list(itx, "request_cookies", &f);
     if ( (htx->request_cookies != NULL) &&
          htp_table_size(htx->request_cookies) &&
          (rc == IB_OK) )
@@ -1743,14 +1839,9 @@ static ib_status_t modhtp_gen_request_header_fields(
     else if (rc == IB_OK) {
         ib_log_debug3_tx(itx, "No request cookies");
     }
-    else {
-        ib_log_error_tx(itx,
-                        "Failed to create request cookies list: %s",
-                        ib_status_to_string(rc));
-    }
 
     /* Extract the query parameters into the IronBee tx's URI parameters */
-    rc = ib_data_add_list(itx->data, "request_uri_params", &f);
+    rc = modhtp_get_or_create_list(itx, "request_uri_params", &f);
     if ( (rc == IB_OK) && (htx->request_params != NULL) ) {
         modhtp_param_iter_data_t idata =
             { f, HTP_SOURCE_QUERY_STRING, 0 };
@@ -1801,7 +1892,7 @@ static ib_status_t modhtp_gen_request_fields(
     /// @todo Check htp state, etc.
     size_t param_count = 0;
 
-    rc = ib_data_add_list(itx->data, "request_body_params", &f);
+    rc = modhtp_get_or_create_list(itx, "request_body_params", &f);
     if ( (rc == IB_OK) && (htx->request_params != NULL) ) {
         modhtp_param_iter_data_t idata =
             { f, HTP_SOURCE_BODY, 0 };
@@ -2884,7 +2975,7 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     assert(m != NULL);
 
     ib_status_t rc;
-    ib_data_config_t *config;
+    ib_var_config_t *config;
 
     /* Register hooks */
     /* Register the context close/destroy function */
@@ -2963,10 +3054,7 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
         return rc;
     }
 
-    /* These keys may be registered by other modules as well.  As such
-     * ignore IB_EINVAL from ib_data_register_indexed().
-     */
-    config = ib_engine_data_config_get(ib);
+    config = ib_engine_var_config_get(ib);
     assert(config != NULL);
     for (
         const char **key = indexed_keys;
@@ -2974,10 +3062,15 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
         ++key
     )
     {
-        rc = ib_data_register_indexed(config, *key);
-        if (rc != IB_OK && rc != IB_EINVAL) {
+        rc = ib_var_source_register(
+            NULL,
+            config,
+            IB_S2SL(*key),
+            IB_PHASE_NONE, IB_PHASE_NONE
+        );
+        if (rc != IB_OK && rc != IB_EEXIST) {
             ib_log_warning(ib,
-                "modhtp failed to register \"%s\" as indexed: %s",
+                "modhtp failed to register \"%s\": %s",
                 *key,
                 ib_status_to_string(rc)
             );
