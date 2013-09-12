@@ -1020,6 +1020,7 @@ static ib_status_t execute_rule_actions(const ib_rule_exec_t *rule_exec)
 
     const ib_list_t    *main_actions = NULL;
     const char         *name = NULL;
+    const ib_list_t    *aux_actions = NULL;
     ib_status_t         rc;
 
     /* Choose the appropriate action list */
@@ -1033,6 +1034,7 @@ static ib_status_t execute_rule_actions(const ib_rule_exec_t *rule_exec)
             name = "False";
         }
     }
+    aux_actions = rule_exec->rule->aux_actions;
 
     /* Run the main actions */
     ib_rule_log_exec_add_result(rule_exec->exec_log,
@@ -1044,6 +1046,10 @@ static ib_status_t execute_rule_actions(const ib_rule_exec_t *rule_exec)
                           "Error executing action(s) for rule: %s",
                           ib_status_to_string(rc));
     }
+
+    /* Run any auxilary actions, ignore result, don't log */
+    execute_action_list(rule_exec, aux_actions, "Auxilary",
+                        ib_rule_log_level(rule_exec->tx->ctx) >= IB_LOG_DEBUG);
 
     /* Return the primary actions' result code */
     return rc;
@@ -4021,6 +4027,9 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     /* The False Action list is created as required */
     rule->false_actions = NULL;
 
+    /* The Auxilary Action list is created as required. */
+    rule->aux_actions = NULL;
+
     /* Get the rule engine and previous rule */
     context_rules = ctx->rules;
     previous = context_rules->parser_data.previous;
@@ -5094,6 +5103,10 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     case IB_RULE_ACTION_FALSE :
         pactions = &(rule->false_actions);
         break;
+    case IB_RULE_ACTION_AUX :
+        pactions = &(rule->aux_actions);
+        break;
+    default:
         return IB_EINVAL;
     }
 

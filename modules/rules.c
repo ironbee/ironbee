@@ -461,9 +461,19 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
     ib_status_t        rc = IB_OK;
     ib_action_inst_t  *action;
     ib_rule_action_t   atype = IB_RULE_ACTION_TRUE;
-    if (*name == '!') {
-        ++name;
+
+    /* Select the action type */
+    switch (*name) {
+    case '!':
         atype = IB_RULE_ACTION_FALSE;
+        ++name;
+        break;
+    case '+':
+        atype = IB_RULE_ACTION_AUX;
+        ++name;
+        break;
+    default:
+        atype = IB_RULE_ACTION_TRUE;
     }
 
     /* Create a new action instance */
