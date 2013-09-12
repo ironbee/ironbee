@@ -362,12 +362,21 @@ namespace {
         /* After applying the TX, set the value. */
         IronBee::Field f = IronBee::Field::create_float(
             tx.memory_pool(),
-            "XRULES:SCALE_THREAT",
-            sizeof("XRULES:SCALE_THREAT"),
+            "", 0,
             mdata->scale_threat);
 
+        ib_var_source_t *source;
+
         IronBee::throw_if_error(
-            ib_data_add(tx.ib()->data, f.ib()),
+            ib_var_source_acquire(
+                &source,
+                tx.memory_pool().ib(),
+                ib_engine_var_config_get(tx.engine().ib()),
+                IB_S2SL("XRULES:SCALE_THREAT")
+            ),
+            "Failed to acquire source for Scale Threat.");
+        IronBee::throw_if_error(
+            ib_var_source_set(source, tx.ib()->var_store, f.ib()),
             "Failed to add Scale Threat field to tx.");
     }
 
@@ -523,9 +532,28 @@ namespace {
             ib_tx_flags_set(tx.ib(), m_flag);
         }
 
+        ib_var_source_t *source;
         IronBee::throw_if_error(
-            ib_data_add_num(tx.ib()->data, m_field_name.c_str(), val, NULL),
-            "Failed to set TX data field.");
+            ib_var_source_acquire(
+                &source,
+                tx.memory_pool().ib(),
+                ib_engine_var_config_get(tx.engine().ib()),
+                m_field_name.data(), m_field_name.length()
+            ),
+            "Failed to get source."
+        );
+        IronBee::throw_if_error(
+            ib_var_source_set(
+                source,
+                tx.ib()->var_store,
+                IronBee::Field::create_number(
+                    tx.memory_pool(),
+                    "", 0,
+                    val
+                ).ib()
+            ),
+            "Failed to set TX var."
+        );
     }
     /* End SetFlag Impl */
 
@@ -658,8 +686,19 @@ namespace {
             BLOCKING_MODE_FIELD_NAME.length(),
             bs);
 
+        ib_var_source_t *source;
+
         IronBee::throw_if_error(
-            ib_data_add(tx.ib()->data, f.ib()),
+            ib_var_source_acquire(
+                &source,
+                tx.memory_pool().ib(),
+                ib_engine_var_config_get(tx.engine().ib()),
+                BLOCKING_MODE_FIELD_NAME.data(),
+                BLOCKING_MODE_FIELD_NAME.length()
+            ),
+            "Failed to acquire blocking mode source.");
+        IronBee::throw_if_error(
+            ib_var_source_set(source, tx.ib()->var_store, f.ib()),
             "Failed to set XRULES:BLOCKING_MODE.");
     }
     const std::string SetBlockingMode::BLOCKING_MODE_FIELD_NAME =
@@ -1027,14 +1066,26 @@ namespace {
                 tx.ib(),
                 "Running GEO Check for %s",
                 m_country.c_str());
+            ib_var_source_t *source;
 
             IronBee::throw_if_error(
-                ib_data_get(
-                    tx.ib()->data,
-                    GEOIP_FIELD,
-                    strlen(GEOIP_FIELD),
-                    &cfield),
-                "Failed to retrieve GeoIP field.");
+                ib_var_source_acquire(
+                    &source,
+                    tx.memory_pool().ib(),
+                    ib_engine_var_config_get(tx.engine().ib()),
+                    IB_S2SL(GEOIP_FIELD)
+                ),
+                "Failed to acquire GeoIP source."
+            );
+
+            IronBee::throw_if_error(
+                ib_var_source_get(
+                    source,
+                    &cfield,
+                    tx.ib()->var_store
+                ),
+                "Failed to retrieve GeoIP field."
+            );
 
             IronBee::ConstField field(cfield);
 
@@ -1126,34 +1177,27 @@ namespace {
                 actions.set(m_action);
             }
             else {
-                ib_field_t         *cfield;
                 const ib_list_t          *clist = NULL;
+                ib_var_target_t *target;
 
                 // Fetch list of fields.
                 IronBee::throw_if_error(
-                    ib_data_get(
-                        tx.ib()->data,
+                    ib_var_target_acquire_from_string(
+                        &target,
+                        tx.memory_pool().ib(),
+                        ib_engine_var_config_get(tx.engine().ib()),
                         m_field.data(), m_field.length(),
-                        &cfield),
-                    "Failed to retrieve content type field.");
-
-                if (cfield->type != IB_FTYPE_LIST) {
-                    ib_log_error_tx(
-                        tx.ib(),
-                        "Expected type list(%d) but field type was %d.",
-                        IB_FTYPE_LIST,
-                        cfield->type);
-
-                    BOOST_THROW_EXCEPTION(
-                        IronBee::eother()
-                            << IronBee::errinfo_what("Expected list."));
-                }
-
-                // Extract bs from field.
+                        NULL, NULL
+                    ),
+                    "Failed to acquire content type target.");
                 IronBee::throw_if_error(
-                    ib_field_value(cfield, ib_ftype_list_out(&clist)),
-                    "Failed to extract byte string from content type "
-                    "field.");
+                    ib_var_target_get(
+                        target,
+                        &clist,
+                        tx.memory_pool().ib(),
+                        tx.ib()->var_store
+                    ),
+                    "Failed to retrieve content type field.");
 
                 IronBee::ConstList<ib_field_t *> list(clist);
 
