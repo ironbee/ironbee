@@ -1246,7 +1246,7 @@ static void clear_target_fields(ib_rule_exec_t *rule_exec)
  * The new field will point to NULL and should be updated to
  * a new type and value by the caller.
  *
- * There is no difference bewteen an added field or a new field. The
+ * There is no difference between an added field or a new field. The
  * caller should check to see if the resulting field is as they require it.
  *
  * @param[in] tx The transaction with the memory pool and data collection.

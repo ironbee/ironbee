@@ -74,7 +74,7 @@ public:
     //! Pair of @ref root_iterator.
     typedef std::pair<root_iterator, root_iterator> root_iterators;
 
-    //! List of indicies.
+    //! List of indices.
     typedef std::set<size_t> indices_t;
 
     /**

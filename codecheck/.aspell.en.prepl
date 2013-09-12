@@ -22,6 +22,7 @@ libhpt libhtp
 addres address
 yse use
 matche match
+undersanding understanding
 leadering leading
 nove not
 freeded freed
@@ -67,6 +68,7 @@ initialzed initialized
 contans contains
 operatore operator
 sterted started
+embeded embedded
 coce code
 dont don't
 persit persist
@@ -84,6 +86,7 @@ prefixs prefixes
 uops Oops
 ctrl variable
 wirte Write
+liea with
 enval EINVAL
 byestring ByteString
 byestring bytestring
@@ -94,7 +97,9 @@ bae base
 varargs variable args
 occures occurs
 casted cast
+sould should
 ignoreme ignored
+fiels FIELDS
 mutale mutable
 registerring Registering
 ib_core_cfg_t cfg
@@ -102,6 +107,7 @@ convertable convertible
 curr cur
 otheres others
 referece reference
+indexe indexed
 hlpr helper
 nul NUL
 thie This

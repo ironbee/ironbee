@@ -111,7 +111,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
 /** @} */
 
 /**
- * @} IronBeeEngineVar
+ * @} IronBeeUtilStringAssembly
  */
 
 #ifdef __cplusplus
