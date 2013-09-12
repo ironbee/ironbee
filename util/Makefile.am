@@ -17,7 +17,6 @@ libibutil_la_SOURCES = array.c \
                        decode.c \
                        dso.c \
                        escape.c \
-                       expand.c \
                        field.c \
                        file.c \
                        flags.c \

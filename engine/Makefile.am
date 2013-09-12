@@ -16,7 +16,7 @@ EXTRA_DIST =  config-parser.rl \
 
 
 lib_LTLIBRARIES = libironbee.la
-libironbee_la_SOURCES = engine.c data.c \
+libironbee_la_SOURCES = engine.c \
                         context_selection.c site.c \
                         config.c config-parser.c config-parser.h \
                         filter.c \

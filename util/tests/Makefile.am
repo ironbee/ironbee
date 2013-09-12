@@ -20,7 +20,6 @@ check_PROGRAMS = \
 	test_util_decode \
 	test_util_dso \
 	test_util_escape \
-	test_util_expand \
 	test_util_field \
 	test_util_flags \
 	test_util_hash \
@@ -123,8 +122,6 @@ test_util_string_trim_SOURCES = test_util_string_trim.cpp
 test_util_string_wspc_SOURCES = test_util_string_wspc.cpp
 
 test_util_strval_SOURCES = test_util_strval.cpp
-
-test_util_expand_SOURCES = test_util_expand.cpp
 
 test_util_escape_SOURCES = test_util_escape.cpp
 

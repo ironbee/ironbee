@@ -27,7 +27,6 @@
 
 /* Header of what we are testing. */
 #include <ironbee/capture.h>
-#include <ironbee/data.h>
 #include <ironbee/field.h>
 #include <ironbee/list.h>
 #include <ironbee/mpool.h>
