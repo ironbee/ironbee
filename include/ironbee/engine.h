@@ -273,22 +273,22 @@ void DLL_PUBLIC ib_engine_pool_temp_destroy(ib_engine_t *ib);
 void DLL_PUBLIC ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp);
 
 /**
- * Get data configuration of engine.
+ * Get var configuration of engine.
  *
  * @param[in] ib IronBee engine.
- * @return Data configuration.
+ * @return Var configuration.
  **/
-ib_data_config_t DLL_PUBLIC *ib_engine_data_config_get(
+ib_var_config_t DLL_PUBLIC *ib_engine_var_config_get(
     ib_engine_t *ib
 );
 
 /**
- * Get data configuration of engine (const version).
+ * Get var configuration of engine (const version).
  *
  * @param[in] ib IronBee engine.
- * @return Data configuration.
+ * @return var configuration.
  **/
-const ib_data_config_t DLL_PUBLIC *ib_engine_data_config_get_const(
+const ib_var_config_t DLL_PUBLIC *ib_engine_var_config_get_const(
     const ib_engine_t *ib
 );
 

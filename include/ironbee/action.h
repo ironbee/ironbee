@@ -48,7 +48,7 @@ typedef struct ib_action_inst_t ib_action_inst_t;
  * Action instance creation callback type.
  *
  * When this function is invoked, the @a act_inst action instance has been
- * created and the actions, flags, and params fields have been initialized.
+ * created and the actions, and params fields have been initialized.
  *
  * @param[in] ib IronBee engine.
  * @param[in] data Unparsed string with the parameters to
@@ -86,7 +86,6 @@ typedef ib_status_t (* ib_action_destroy_fn_t)(
  *
  * @param[in] rule_exec The rule execution object
  * @param[in] data Instance data needed for execution.
- * @param[in] flags The action instance flags
  * @param[in] cbdata Callback data passed to ib_action_register().
  *
  * @returns IB_OK if successful.
@@ -94,7 +93,6 @@ typedef ib_status_t (* ib_action_destroy_fn_t)(
 typedef ib_status_t (* ib_action_execute_fn_t)(
     const ib_rule_exec_t *rule_exec,
     void                 *data,
-    ib_flags_t            flags,
     void                 *cbdata
 );
 
@@ -103,7 +101,6 @@ typedef struct ib_action_t ib_action_t;
 
 struct ib_action_t {
     char                   *name;       /**< Name of the action. */
-    ib_flags_t              flags;      /**< Action flags */
     ib_action_create_fn_t   fn_create;  /**< Instance creation function. */
     void                   *cbdata_create; /**< Callback data for above. */
     ib_action_destroy_fn_t  fn_destroy; /**< Instance destroy function. */
@@ -112,20 +109,12 @@ struct ib_action_t {
     void                   *cbdata_execute; /**< Callback data for execute. */
 };
 
-/** Action flags */
-#define IB_ACT_FLAG_NONE         (0x0)      /**< No flags */
-
 struct ib_action_inst_t {
     struct ib_action_t *action; /**< Pointer to the action type */
-    ib_flags_t          flags;  /**< Action instance flags */
     void               *data;   /**< Data passed to the execute function */
     const char         *params; /**< Text of parameters */
     ib_field_t         *fparam; /**< Parameters as a field */
 };
-
-/** Action instance flags */
-#define IB_ACTINST_FLAG_NONE     (0x0)      /**< No flags */
-#define IB_ACTINST_FLAG_EXPAND   (1 << 0)   /**< Expand data at runtime */
 
 /**
  * Register an action.
@@ -136,7 +125,6 @@ struct ib_action_inst_t {
  *
  * @param[in] ib ironbee engine
  * @param[in] name The name of the action.
- * @param[in] flags Action instance flags.
  * @param[in] fn_create A pointer to the instance creation function.
  *                      (May be NULL)
  * @param[in] cbdata_create Callback data for @a fn_create.
@@ -152,7 +140,6 @@ struct ib_action_inst_t {
 ib_status_t ib_action_register(
     ib_engine_t            *ib,
     const char             *name,
-    ib_flags_t              flags,
     ib_action_create_fn_t   fn_create,
     void                   *cbdata_create,
     ib_action_destroy_fn_t  fn_destroy,
@@ -168,7 +155,6 @@ ib_status_t ib_action_register(
  * @param[in] ib ironbee engine.
  * @param[in] name The name of the action to create.
  * @param[in] parameters Parameters used to create the instance.
- * @param[in] flags Action instance flags.
  * @param[out] act_inst The resulting instance.
  *
  * @returns IB_OK on success, IB_EINVAL if the named action does not exist.
@@ -177,7 +163,6 @@ ib_status_t ib_action_inst_create_ex(
     ib_engine_t *ib,
     const char *name,
     const char *parameters,
-    ib_flags_t flags,
     ib_action_inst_t **act_inst);
 
 /**
@@ -187,7 +172,6 @@ ib_status_t ib_action_inst_create_ex(
  * @param[in] ib ironbee engine.
  * @param[in] name The name of the action to create.
  * @param[in] parameters Parameters used to create the instance.
- * @param[in] flags Action instance flags.
  * @param[out] act_inst The resulting instance.
  *
  * @returns IB_OK on success, IB_EINVAL if the named action does not exist.
@@ -195,7 +179,6 @@ ib_status_t ib_action_inst_create_ex(
 ib_status_t ib_action_inst_create(ib_engine_t *ib,
                                   const char *name,
                                   const char *parameters,
-                                  ib_flags_t flags,
                                   ib_action_inst_t **act_inst);
 
 /**

@@ -465,9 +465,9 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     }
 
     /* Initialize the data configuration. */
-    rc = ib_data_config_create(ib->mp, &ib->data_config);
+    rc = ib_var_config_acquire(&ib->var_config, ib->mp);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create data configuration: %s",
+        ib_log_alert(ib, "Failed to create var configuration: %s",
                      ib_status_to_string(rc));
         goto failed;
     }
@@ -702,18 +702,18 @@ void ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp)
     return;
 }
 
-ib_data_config_t *ib_engine_data_config_get(
+ib_var_config_t *ib_engine_var_config_get(
     ib_engine_t *ib
 )
 {
-    return ib->data_config;
+    return ib->var_config;
 }
 
-const ib_data_config_t *ib_engine_data_config_get_const(
+const ib_var_config_t *ib_engine_var_config_get_const(
     const ib_engine_t *ib
 )
 {
-    return ib->data_config;
+    return ib->var_config;
 }
 
 void ib_engine_destroy(ib_engine_t *ib)
@@ -828,14 +828,6 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     conn->mp = pool;
     conn->ctx = ib->ctx;
     conn->server_ctx = server_ctx;
-
-    /* Data */
-    rc = ib_data_create(ib->data_config, conn->mp, &conn->data);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create conn data: %s",
-                     ib_status_to_string(rc));
-        goto failed;
-    }
 
     /* Create the per-module data data store. */
     rc = ib_array_create(&(conn->module_data), pool, 16, 8);
@@ -983,10 +975,10 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     ib_tx_generate_id(tx, tx->mp);
 
     /* Create data */
-    rc = ib_data_create(tx->ib->data_config, tx->mp, &tx->data);
+    rc = ib_var_store_acquire(&tx->var_store, tx->mp, tx->ib->var_config);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
-                        "Failed to create tx data: %s",
+                        "Failed to create tx var store: %s",
                         ib_status_to_string(rc));
         return rc;
     }

@@ -114,7 +114,7 @@ struct ib_engine_t {
     ib_mpool_t            *mp;              /**< Primary memory pool */
     ib_mpool_t            *config_mp;       /**< Config memory pool */
     ib_mpool_t            *temp_mp;         /**< Temp memory pool for config */
-    ib_data_t             *data;            /**< Data fields */
+    ib_var_store_t        *var_store;       /**< Var store */
     ib_context_t          *ectx;            /**< Engine configuration context */
     ib_context_t          *ctx;             /**< Main configuration context */
     ib_engine_cfg_state_t  cfg_state;       /**< Engine configuration state */
@@ -142,7 +142,7 @@ struct ib_engine_t {
     void                  *logger_cbdata;   /**< Logger callback data. */
     ib_log_level_fn_t      loglevel_fn;     /**< Log level function. */
     void                  *loglevel_cbdata; /**< Log level callback data. */
-    ib_data_config_t      *data_config;     /**< Data configuration. */
+    ib_var_config_t       *var_config;      /**< Var configuration. */
 
     /* Hooks */
     ib_list_t *hooks[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */

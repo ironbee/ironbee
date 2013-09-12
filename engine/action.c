@@ -36,7 +36,6 @@
 ib_status_t ib_action_register(
     ib_engine_t            *ib,
     const char             *name,
-    ib_flags_t              flags,
     ib_action_create_fn_t   fn_create,
     void                   *cbdata_create,
     ib_action_destroy_fn_t  fn_destroy,
@@ -67,7 +66,6 @@ ib_status_t ib_action_register(
         return IB_EALLOC;
     }
     act->name           = name_copy;
-    act->flags          = flags;
     act->fn_create      = fn_create;
     act->cbdata_create  = cbdata_create;
     act->fn_destroy     = fn_destroy;
@@ -84,7 +82,6 @@ ib_status_t ib_action_inst_create_ex(
     ib_engine_t *ib,
     const char *name,
     const char *parameters,
-    ib_flags_t flags,
     ib_action_inst_t **act_inst)
 {
     assert(ib != NULL);
@@ -109,7 +106,6 @@ ib_status_t ib_action_inst_create_ex(
         return IB_EALLOC;
     }
     (*act_inst)->action = action;
-    (*act_inst)->flags = flags;
     (*act_inst)->params = ib_mpool_strdup(mpool, parameters);
     (*act_inst)->fparam = NULL;
 
@@ -142,14 +138,12 @@ ib_status_t ib_action_inst_create_ex(
 ib_status_t ib_action_inst_create(ib_engine_t *ib,
                                   const char *name,
                                   const char *parameters,
-                                  ib_flags_t flags,
                                   ib_action_inst_t **act_inst)
 {
     return ib_action_inst_create_ex(
         ib,
         name,
         parameters,
-        flags,
         act_inst);
 }
 
@@ -181,7 +175,6 @@ ib_status_t ib_action_execute(const ib_rule_exec_t *rule_exec,
         rc = act_inst->action->fn_execute(
             rule_exec,
             act_inst->data,
-            act_inst->flags,
             act_inst->action->cbdata_execute
         );
     }

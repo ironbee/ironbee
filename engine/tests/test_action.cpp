@@ -38,7 +38,6 @@ TEST_F(ActionTest, RegisterTest) {
     ib_status_t status;
     status = ib_action_register(ib_engine,
                                 "test_action",
-                                IB_ACT_FLAG_NONE,
                                 NULL, NULL,
                                 NULL, NULL,
                                 NULL, NULL);
@@ -49,14 +48,12 @@ TEST_F(ActionTest, RegisterDup) {
     ib_status_t status;
     status = ib_action_register(ib_engine,
                                 "test_action",
-                                IB_ACT_FLAG_NONE,
                                 NULL, NULL,
                                 NULL, NULL,
                                 NULL, NULL);
     ASSERT_EQ(IB_OK, status);
     status = ib_action_register(ib_engine,
                                 "test_action",
-                                IB_ACT_FLAG_NONE,
                                 NULL, NULL,
                                 NULL, NULL,
                                 NULL, NULL);
@@ -68,7 +65,6 @@ TEST_F(ActionTest, CallAction) {
     ib_action_inst_t *act;
     status = ib_action_register(ib_engine,
                                 "test_action",
-                                IB_ACT_FLAG_NONE,
                                 NULL, NULL,
                                 NULL, NULL,
                                 NULL, NULL);
@@ -76,7 +72,6 @@ TEST_F(ActionTest, CallAction) {
 
     status = ib_action_inst_create(ib_engine,
                                    "test_action", "parameters",
-                                   IB_ACTINST_FLAG_NONE,
                                    &act);
     ASSERT_EQ(IB_OK, status);
 
@@ -88,7 +83,6 @@ namespace {
 extern "C" {
 
 static bool action_executed = false;
-static ib_flags_t action_flags = IB_ACTINST_FLAG_NONE;
 static const char *action_str = NULL;
 
 
@@ -106,12 +100,10 @@ ib_status_t create_fn(ib_engine_t *ib,
 
 ib_status_t execute_fn(const ib_rule_exec_t *rule_exec,
                               void *data,
-                              ib_flags_t flags,
                               void *cbdata)
 {
     action_executed = true;
     action_str = (const char *)data;
-    action_flags = flags;
     return IB_OK;
 }
 }
@@ -120,12 +112,10 @@ ib_status_t execute_fn(const ib_rule_exec_t *rule_exec,
 TEST_F(ActionTest, ExecuteAction) {
     ib_status_t status;
     ib_action_inst_t *act;
-    ib_flags_t flags = (1 << 10);
     const char *params = "parameters";
 
     status = ib_action_register(ib_engine,
                                 "test_action",
-                                IB_ACT_FLAG_NONE,
                                 create_fn, NULL,
                                 NULL, NULL,
                                 execute_fn, NULL);
@@ -134,14 +124,12 @@ TEST_F(ActionTest, ExecuteAction) {
     status = ib_action_inst_create(ib_engine,
                                    "test_action",
                                    "INVALID",
-                                   flags,
                                    &act);
     ASSERT_EQ(IB_EINVAL, status);
 
     status = ib_action_inst_create(ib_engine,
                                    "test_action",
                                    params,
-                                   flags,
                                    &act);
     ASSERT_EQ(IB_OK, status);
 
@@ -150,5 +138,4 @@ TEST_F(ActionTest, ExecuteAction) {
     ASSERT_EQ(IB_OK, status);
     ASSERT_TRUE(action_executed);
     EXPECT_STREQ(action_str, params);
-    EXPECT_EQ(action_flags, flags);
 }

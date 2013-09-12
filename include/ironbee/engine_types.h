@@ -27,7 +27,6 @@
 
 #include <ironbee/array.h>
 #include <ironbee/clock.h>
-#include <ironbee/data.h>
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
 #include <ironbee/parsed_content.h>
@@ -35,6 +34,7 @@
 #include <ironbee/stream.h>
 #include <ironbee/types.h>
 #include <ironbee/uuid.h>
+#include <ironbee/var.h>
 
 #include <stdint.h>
 
@@ -178,7 +178,6 @@ struct ib_conn_t {
     ib_mpool_t         *mp;              /**< Connection memory pool */
     ib_context_t       *ctx;             /**< Config context */
     void               *server_ctx;      /**< Server context */
-    ib_data_t          *data;            /**< Data provider instance */
     ib_array_t         *module_data;     /**< Per module data. */
 
     ib_timeval_t       tv_created;       /**< Connection created time value */
@@ -263,7 +262,7 @@ struct ib_tx_t {
     ib_conn_t          *conn;            /**< Connection */
     ib_context_t       *ctx;             /**< Config context */
     void               *sctx;            /**< Server context */
-    ib_data_t          *data;            /**< Data fields*/
+    ib_var_store_t     *var_store;       /**< Var Store */
     ib_list_t          *logevents;       /**< Log events */
     ib_array_t         *module_data;     /**< Per-module data */
     ib_fctl_t          *fctl;            /**< Transaction filter controller */
