@@ -111,7 +111,13 @@ struct ib_rule_exec_t {
     bool                    is_stream;   /**< Is this a stream rule phase? */
     ib_rule_t              *rule;        /**< The currently executing rule */
     ib_rule_target_t       *target;      /**< The current rule target */
-    ib_num_t                result;      /**< Rule execution result */
+    ib_status_t             rule_status; /**< Rule execution status */
+    ib_num_t                rule_result; /**< Rule execution result */
+
+    /* Data on the current execution frame (current target) */
+    ib_status_t             cur_status;  /**< Current execution status. */
+    ib_num_t                cur_result;  /**< Current execution result. */
+    const ib_field_t       *cur_value;   /**< Current value */
 
     /* Logging objects */
     ib_rule_log_tx_t       *tx_log;      /**< Rule TX logging object */

@@ -574,7 +574,10 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
     /* No current rule, target, etc. */
     exec->rule = NULL;
     exec->target = NULL;
-    exec->result = 0;
+    exec->cur_status = IB_OK;
+    exec->cur_result = 0;
+    exec->rule_status = IB_OK;
+    exec->rule_result = 0;
     tx->rule_exec = exec;
 
     exec->exec_log = NULL;
@@ -608,7 +611,8 @@ static ib_status_t rule_exec_push_rule(ib_rule_exec_t *rule_exec,
 
     rule_exec->rule = NULL;
     rule_exec->target = NULL;
-    rule_exec->result = 0;
+    rule_exec->rule_status = IB_OK;
+    rule_exec->rule_result = 0;
 
     /* Create a new stack frame */
     frame = ib_mpool_alloc(rule_exec->tx->mp, sizeof(*frame));
@@ -622,7 +626,7 @@ static ib_status_t rule_exec_push_rule(ib_rule_exec_t *rule_exec,
     frame->rule = rule_exec->rule;
     frame->exec_log = rule_exec->exec_log;
     frame->target = rule_exec->target;
-    frame->result = rule_exec->result;
+    frame->result = rule_exec->rule_result;
     rc = ib_list_push(rule_exec->rule_stack, frame);
     if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
@@ -673,7 +677,7 @@ static ib_status_t rule_exec_pop_rule(ib_rule_exec_t *rule_exec)
     rule_exec->rule = frame->rule;
     rule_exec->rule = frame->rule;
     rule_exec->target = frame->target;
-    rule_exec->result = frame->result;
+    rule_exec->rule_result = frame->result;
 
     return IB_OK;
 }
@@ -899,27 +903,29 @@ static ib_status_t execute_action(const ib_rule_exec_t *rule_exec,
  * Execute a rule's actions
  *
  * @param[in] rule_exec Rule execution object
- * @param[in] result Rule execution result
  * @param[in] actions List of actions to execute
+ * @param[in] name Name for logging
+ * @param[in] log Log the actions?
  *
  * @returns Status code
  */
 static ib_status_t execute_action_list(const ib_rule_exec_t *rule_exec,
-                                       ib_num_t result,
-                                       const ib_list_t *actions)
+                                       const ib_list_t *actions,
+                                       const char *name,
+                                       bool log)
 {
     assert(rule_exec != NULL);
 
     const ib_list_node_t *node = NULL;
     ib_status_t           rc = IB_OK;
-    const char           *name;
 
     if (actions == NULL) {
         return IB_OK;
     }
 
-    name = (result != 0) ? "True" : "False";
-    ib_rule_log_trace(rule_exec, "Executing rule %s actions", name);
+    if (log) {
+        ib_rule_log_trace(rule_exec, "Executing rule %s actions", name);
+    }
 
     /*
      * Loop through all of the fields
@@ -933,11 +939,13 @@ static ib_status_t execute_action_list(const ib_rule_exec_t *rule_exec,
         const ib_action_inst_t *action = (const ib_action_inst_t *)node->data;
 
         /* Execute the action */
-        arc = execute_action(rule_exec, result, action);
-        ib_rule_log_exec_add_action(rule_exec->exec_log, action, arc);
+        arc = execute_action(rule_exec, rule_exec->cur_result, action);
+        if (log) {
+            ib_rule_log_exec_add_action(rule_exec->exec_log, action, arc);
+        }
 
         /* Record an error status code unless a block rc is to be reported. */
-        if (arc != IB_OK) {
+        if ( (arc != IB_OK) && log) {
             ib_rule_log_error(rule_exec,
                               "Action %s/\"%s\" returned an error: %s",
                               name,
@@ -947,6 +955,97 @@ static ib_status_t execute_action_list(const ib_rule_exec_t *rule_exec,
         }
     }
 
+    return rc;
+}
+
+/**
+ * Store a rules results
+ *
+ * @param[in] rule_exec Rule execution object
+ * @param[in] value Current target value
+ * @param[in] op_rc Operator result code
+ * @param[in] result Rule execution result
+ *
+ * @returns Action status code
+ */
+static ib_status_t store_results(ib_rule_exec_t *rule_exec,
+                                 const ib_field_t *value,
+                                 ib_status_t op_rc,
+                                 ib_num_t result)
+{
+    assert(rule_exec != NULL);
+    assert(rule_exec->rule != NULL);
+    assert(rule_exec->rule->opinst != NULL);
+
+    /* Store the value */
+    rule_exec->cur_value = value;
+
+    /* Perform inversion if required */
+    if (rule_exec->rule->opinst->invert) {
+        result = (result == 0);
+    }
+
+    /* Store the result after inversion */
+    rule_exec->cur_result = result;
+    if (result != 0) {
+        rule_exec->rule_result = result;
+    }
+
+    /* Store the operations result */
+    rule_exec->cur_status = op_rc;
+    if (op_rc != IB_OK) {
+        rule_exec->rule_status = op_rc;
+    }
+
+    /* Return the primary actions' result code */
+    return IB_OK;
+}
+
+/**
+ * Execute a rule's actions
+ *
+ * @todo The current behavior is to keep running even after action(s)
+ * returns an error.  This needs further discussion to determine what
+ * the correct behavior should be.
+ *
+ * @param[in] rule_exec Rule execution object
+ *
+ * @returns Action status code
+ */
+static ib_status_t execute_rule_actions(const ib_rule_exec_t *rule_exec)
+{
+    assert(rule_exec != NULL);
+    assert(rule_exec->rule != NULL);
+    assert(rule_exec->rule->opinst != NULL);
+
+    const ib_list_t    *main_actions = NULL;
+    const char         *name = NULL;
+    ib_status_t         rc;
+
+    /* Choose the appropriate action list */
+    if (rule_exec->cur_status == IB_OK) {
+        if (rule_exec->cur_result != 0) {
+            main_actions = rule_exec->rule->true_actions;
+            name = "True";
+        }
+        else {
+            main_actions = rule_exec->rule->false_actions;
+            name = "False";
+        }
+    }
+
+    /* Run the main actions */
+    ib_rule_log_exec_add_result(rule_exec->exec_log,
+                                rule_exec->cur_value,
+                                rule_exec->cur_result);
+    rc = execute_action_list(rule_exec, main_actions, name, true);
+    if (rc != IB_OK) {
+        ib_rule_log_error(rule_exec,
+                          "Error executing action(s) for rule: %s",
+                          ib_status_to_string(rc));
+    }
+
+    /* Return the primary actions' result code */
     return rc;
 }
 
@@ -1469,7 +1568,7 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
 }
 
 /**
- * Execute a rule on a list of values
+ * Execute a phase rule operator on a list of values
  *
  * @param[in] rule_exec Rule execution object
  * @param[in] value Field value to operate on
@@ -1477,9 +1576,9 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
  *
  * @returns Status code
  */
-static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
-                                    const ib_field_t *value,
-                                    int recursion)
+static ib_status_t execute_phase_operator(ib_rule_exec_t *rule_exec,
+                                          const ib_field_t *value,
+                                          int recursion)
 {
     assert(rule_exec != NULL);
     assert(rule_exec->rule != NULL);
@@ -1525,7 +1624,7 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
             pushed = rule_exec_push_value(rule_exec, nvalue);
 
             /* Recursive call. */
-            rc = execute_operator(rule_exec, nvalue, recursion);
+            rc = execute_phase_operator(rule_exec, nvalue, recursion);
             if (rc != IB_OK) {
                 ib_rule_log_warn(rule_exec,
                                  "Error executing list element #%d: %s",
@@ -1535,15 +1634,13 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
         }
 
         ib_rule_log_debug(rule_exec, "Operator (list %zd) => %"PRId64,
-                          vlist->nelts, rule_exec->result);
+                          vlist->nelts, rule_exec->rule_result);
     }
 
     /* No recursion required, handle it here */
     else {
-        ib_list_t  *actions;
         ib_num_t    result = 0;
         ib_status_t op_rc = IB_OK;
-        ib_status_t act_rc = IB_OK;
 
         /* Fill in the FIELD* fields */
         rc = set_target_fields(rule_exec, value);
@@ -1572,42 +1669,14 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
                               ib_status_to_string(rc));
         }
 
-        /* Store the result */
-        if (result != 0) {
-            rule_exec->result = result;
-        }
+        /* Store the results */
+        store_results(rule_exec, value, op_rc, result);
 
-        /*
-         * Execute the actions.
-         *
-         * @todo The current behavior is to keep running even after action(s)
-         * returns an error.  This needs further discussion to determine what
-         * the correct behavior should be.
-         */
-        if (opinst->invert) {
-            result = (result == 0);
-        }
-        if (op_rc != IB_OK) {
-            actions = NULL;
-        }
-        else if (result != 0) {
-            actions = rule_exec->rule->true_actions;
-        }
-        else {
-            actions = rule_exec->rule->false_actions;
-        }
-
-        ib_rule_log_exec_add_result(rule_exec->exec_log, value, result);
-        act_rc = execute_action_list(rule_exec, result, actions);
+        /* Execute any and all actions. */
+        execute_rule_actions(rule_exec);
 
         /* Done. */
         clear_target_fields(rule_exec);
-
-        if (act_rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "Error executing actions for rule: %s",
-                              ib_status_to_string(act_rc));
-        }
     }
 
     return rc;
@@ -1637,6 +1706,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
     /* Special case: External rules */
     if (ib_flags_all(rule->flags, IB_RULE_FLAG_EXTERNAL)) {
         ib_status_t op_rc;
+        ib_num_t    result;
 
         /* Execute the operator */
         ib_rule_log_trace(rule_exec, "Executing external rule");
@@ -1646,8 +1716,12 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
             rule_exec->tx,
             NULL,
             get_capture(rule_exec),
-            &rule_exec->result
+            &result
         );
+        rule_exec->rule_result = result;
+        rule_exec->cur_result = result;
+        rule_exec->rule_result = result;
+        rule_exec->cur_result = result;
         if (op_rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "External operator returned an error: %s",
@@ -1781,9 +1855,8 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
                 lpushed = rule_exec_push_value(rule_exec, node_value);
 
-
-                rc = execute_operator(rule_exec, node_value,
-                                      MAX_LIST_RECURSION);
+                rc = execute_phase_operator(rule_exec, node_value,
+                                            MAX_LIST_RECURSION);
                 if (rc != IB_OK) {
                     ib_rule_log_error(rule_exec,
                                       "Operator returned an error: %s",
@@ -1791,13 +1864,13 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
                     return rc;
                 }
                 ib_rule_log_trace(rule_exec, "Operator result => %" PRId64,
-                                  rule_exec->result);
+                                  rule_exec->rule_result);
                 rule_exec_pop_value(rule_exec, lpushed);
             }
         }
         else {
-            ib_rule_log_trace(rule_exec, "calling exop on single target");
-            rc = execute_operator(rule_exec, tfnvalue, MAX_LIST_RECURSION);
+            ib_rule_log_trace(rule_exec, "Calling exop on single target");
+            rc = execute_phase_operator(rule_exec, tfnvalue, MAX_LIST_RECURSION);
             if (rc != IB_OK) {
                 ib_rule_log_error(rule_exec,
                                   "Operator returned an error: %s",
@@ -1810,17 +1883,11 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
             /* Log it */
             ib_rule_log_trace(rule_exec, "Operator result => %" PRId64,
-                              rule_exec->result);
+                              rule_exec->cur_result);
         }
 
         /* Pop this element off the value stack */
         rule_exec_pop_value(rule_exec, pushed);
-    }
-
-    /* Invert? */
-    /* done: */
-    if (opinst->invert) {
-        rule_exec->result = (rule_exec->result == 0);
     }
 
     ib_rule_log_execution(rule_exec);
@@ -1888,7 +1955,7 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
      *
      * @note Chaining is currently done via recursion.
      */
-    if ( (rule_exec->result != 0) && (rule->chained_rule != NULL) ) {
+    if ( (rule_exec->rule_result != 0) && (rule->chained_rule != NULL) ) {
         ib_rule_log_debug(rule_exec,
                           "Chaining to rule \"%s\"",
                           ib_rule_id(rule->chained_rule));
@@ -2312,12 +2379,10 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     assert(value != NULL);
 
     ib_status_t      rc;
-    const ib_list_t *actions;
     const ib_rule_t *rule = rule_exec->rule;
     bool             pushed = rule_exec_push_value(rule_exec, value);
     ib_num_t         result = 0;
     ib_status_t      op_rc;
-    ib_status_t      act_rc;
 
     /* Add a target execution result to the log object */
     ib_rule_log_exec_add_stream_tgt(rule_exec->exec_log, value);
@@ -2353,34 +2418,13 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
 
     rule_exec_pop_value(rule_exec, pushed);
 
-    /* Invert? */
-    if (rule->opinst->invert) {
-        result = (result == 0);
-    }
+    /* Store the results */
+    store_results(rule_exec, value, op_rc, result);
 
-    /*
-     * Execute the actions.
-     *
-     * @todo The current behavior is to keep running even after action(s)
-     * returns an error.  This needs further discussion to determine what
-     * the correct behavior should be.
-     */
-    if (result != 0) {
-        actions = rule_exec->rule->true_actions;
-    }
-    else {
-        actions = rule_exec->rule->false_actions;
-    }
+    /* Execute any and all actions. */
+    execute_rule_actions(rule_exec);
 
-    ib_rule_log_exec_add_result(rule_exec->exec_log, value, result);
-    act_rc = execute_action_list(rule_exec, result, actions);
-
-    if (act_rc != IB_OK) {
-        ib_rule_log_error(rule_exec,
-                          "Error executing action for rule: %s",
-                          ib_status_to_string(act_rc));
-    }
-
+    /* Block if required */
     if (ib_tx_flags_isset(rule_exec->tx, IB_TX_BLOCK_IMMEDIATE) ) {
         ib_rule_log_debug(rule_exec,
                           "Rule resulted in immediate block "
@@ -3964,7 +4008,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     }
     rule->target_fields = lst;
 
-    /* True Action list */
+    /* Create the True Action list */
     lst = NULL;
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
@@ -3974,15 +4018,8 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     }
     rule->true_actions = lst;
 
-    /* False Action list */
-    lst = NULL;
-    rc = ib_list_create(&lst, mp);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to create rule false action list: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-    rule->false_actions = lst;
+    /* The False Action list is created as required */
+    rule->false_actions = NULL;
 
     /* Get the rule engine and previous rule */
     context_rules = ctx->rules;
@@ -5038,6 +5075,8 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
 {
     ib_status_t rc;
     const char *params;
+    ib_list_t  *actions;
+    ib_list_t **pactions;
     assert(ib != NULL);
 
     if ( (rule == NULL) || (action == NULL) ) {
@@ -5047,26 +5086,31 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     }
     params = action->params;
 
-    /* Add the rule to the appropriate action list */
-    if (which == IB_RULE_ACTION_TRUE) {
-        rc = ib_list_push(rule->true_actions, (void *)action);
-    }
-    else if (which == IB_RULE_ACTION_FALSE) {
-        rc = ib_list_push(rule->false_actions, (void *)action);
-    }
-    else {
-        rc = IB_EINVAL;
-    }
-    if (rc != IB_OK) {
-        ib_log_error(
-            ib,
-            "Action \"%s\" could not be added to a list: %s",
-            action->action->name, 
-            ib_status_to_string(rc));
-        return rc;
+    /* Selection the appropriate action list */
+    switch (which) {
+    case IB_RULE_ACTION_TRUE :
+        pactions = &(rule->true_actions);
+        break;
+    case IB_RULE_ACTION_FALSE :
+        pactions = &(rule->false_actions);
+        break;
+        return IB_EINVAL;
     }
 
-    /* Some actions require IB_RULE_FLAG_FIELS to be set. 
+    /* Create the list if required (for false and aux lists) */
+    if (*pactions == NULL) {
+        ib_list_t *lst;
+        rc = ib_list_create(&lst, ib_engine_pool_main_get(ib));
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Failed to create rule action list: %s",
+                         ib_status_to_string(rc));
+            return rc;
+        }
+        *pactions = lst;
+    }
+    actions = *pactions;
+
+    /* Some actions require IB_RULE_FLAG_FIELDS to be set. 
      * FIXME: This is fragile code. Event should be able to construct
      *        the current field name from the provided rule_exec. */
     if (strcasestr(action->action->name, "event") == 0) {
@@ -5083,7 +5127,8 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
         return rc;
     }
 
-    /* Problems? */
+    /* Add the action to the list */
+    rc = ib_list_push(actions, (void *)action);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to add rule action \"%s\": %s",
                      action->action->name, ib_status_to_string(rc));
