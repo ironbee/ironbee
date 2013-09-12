@@ -68,7 +68,6 @@ static ib_status_t conn_init(
 )
 {
     unsigned char buf[INET6_ADDRSTRLEN];
-    ib_status_t rc1, rc2;
     ngx_connection_t *conn = iconn->server_ctx;
     size_t len;
 
@@ -82,9 +81,6 @@ static ib_status_t conn_init(
     if (iconn->remote_ipstr == NULL) {
         return IB_EALLOC;
     }
-    // FIXME: calfield says "Don't create fields"
-    rc1 = ib_data_add_bytestr(iconn->data, "remote_ip",
-                              (uint8_t *)iconn->remote_ipstr, len, NULL);
 
     /* Get the local address.  Unfortunately this comes from config */
     len = ngx_sock_ntop(conn->local_sockaddr, buf, INET6_ADDRSTRLEN, 0);
@@ -92,10 +88,8 @@ static ib_status_t conn_init(
     if (iconn->local_ipstr == NULL) {
         return IB_EALLOC;
     }
-    rc2 = ib_data_add_bytestr(iconn->data, "local_ip",
-                              (uint8_t *)iconn->local_ipstr, len, NULL);
 
-    return (rc1 == IB_OK) ? rc2 : rc1;
+    return IB_OK;
 }
 
 ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx)
