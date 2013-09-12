@@ -470,7 +470,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
 /** @} */
 
 /**
- * @defgroup IronBeeEngineVarStore Var Filter
+ * @defgroup IronBeeEngineVarFilter Var Filter
  *
  * Select subkeys of a source.
  *
@@ -535,7 +535,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  * @param[in]  filter Filter to apply.
  * @param[out] result Results.  Value is `const ib_field_t *`.  Lifetime is
  *                    equal to @a mp.
- * @parma[in]  mp     Memory pool to use.
+ * @param[in]  mp     Memory pool to use.
  * @param[in]  field  Field to apply filter to.  Must be a field with value a
  *                    list of `const ib_field_t *`.
  * @return
@@ -584,7 +584,7 @@ NONNULL_ATTRIBUTE(1, 4);
 /** @} */
 
 /**
- * @defgroup IronBeeEngineVarStore Var Target
+ * @defgroup IronBeeEngineVarTarget Var Target
  *
  * Source and filter.
  *
@@ -852,7 +852,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
 /** @} */
 
 /**
- * @defgroup IronBeeEngineVarStore Var Expand
+ * @defgroup IronBeeEngineVarExpand Var Expand
  *
  * Expand string by substituting references to vars.
  *
@@ -931,7 +931,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4, 5);
  * This looks for a substring of the form `%{...}` for any `...`.
  *
  * @param[in] str String to test.
- * @parma[in] str_length Length of @a str.
+ * @param[in] str_length Length of @a str.
  * @return true iff string contains target expansion expression.
  **/
 bool DLL_PUBLIC ib_var_expand_test(

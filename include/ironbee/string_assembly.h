@@ -33,7 +33,7 @@ extern "C" {
  */
 
 /**
- * @defgroup IronBeeUtilStringAssembly
+ * @defgroup IronBeeUtilStringAssembly String Assembly
  * @ingroup IronBeeUtil
  *
  * Routines to assemble strings.
@@ -94,7 +94,7 @@ NONNULL_ATTRIBUTE(1, 2);
  * @param[in, out] sa         String assembly state.  Will be set to NULL on success.
  * @param[out]     dst        Where to store assembled string.  Lifetime will
  *                            equal that of @a mp.
- * @parma[out]     dst_length Length of @a dst.
+ * @param[out]     dst_length Length of @a dst.
  * @param[in]      mp         Memory pool to allocate @a dst from.
  * @return
  * - IB_OK on success.

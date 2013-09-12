@@ -184,7 +184,7 @@ typedef struct {
 /**
  * Perform float setvar operation.
  *
- * @param[in] Current transaction.
+ * @param[in] tx Current transaction.
  * @param[in] rule_exec Rule execution environment.
  * @param[in] setvar_data SetVar data.
  * @param[in] cur_field The current field being used for the left hand side
@@ -262,7 +262,7 @@ ib_status_t setvar_float_op(
 /**
  * Perform number setvar operation.
  *
- * @param[in] Current transaction.
+ * @param[in] tx Current transaction.
  * @param[in] rule_exec Rule execution environment.
  * @param[in] setvar_data SetVar data.
  * @param[in] cur_field The current field being used for the left hand side
@@ -1292,7 +1292,6 @@ typedef struct act_block_t act_block_t;
  * @param[in] rule_exec The rule execution object
  * @param[in] data Cast to an @c act_block_t and the @c execute field is
  *            called on the given @a tx.
- * @param[in] flags Flags. Unused.
  * @param[in] cbdata Callback data. Unused.
  */
 static ib_status_t act_block_execute(
@@ -1388,7 +1387,6 @@ typedef struct act_status_t act_status_t;
  * @param[in] rule_exec The rule execution object
  * @param[in] data The act_status_t that contains the @c block_status
  *            to assign to @c tx->block_status.
- * @param[in] flags The flags used to create this rule. Unused.
  * @param[in] cbdata Callback data. Unused.
  *
  * @returns IB_OK.
@@ -2055,7 +2053,6 @@ static ib_status_t act_allow_create(
  *
  * @param[in] rule_exec The rule execution object
  * @param[in] data Not used.
- * @param[in] flags Flags. Unused.
  * @param[in] cbdata Unused.
  */
 static ib_status_t act_allow_execute(

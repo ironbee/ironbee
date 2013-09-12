@@ -408,7 +408,7 @@ static ib_status_t persist_data_in_context(
  * @param[in] ib IronBee engine.
  * @param[in] ctx Context being destroyed.
  * @param[in] event The specific event type. This is @ref context_destroy_event.
- * @paramin] cbdata An @ref ib_persist_fw_t.
+ * @param[in] cbdata An @ref ib_persist_fw_t.
  *
  * @returns
  * - IB_OK On success.

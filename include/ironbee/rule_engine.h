@@ -511,7 +511,7 @@ ib_status_t DLL_PUBLIC ib_rule_set_invert(ib_rule_t *rule, bool invert);
  * @param[in] rule Rule to operate on.
  * @param[in] params The string constant to be copied.
  *
- * @reurns
+ * @returns
  * - IB_OK on success.
  * - IB_EALLOC on a copy error.
  */
