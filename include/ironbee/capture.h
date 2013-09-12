@@ -100,7 +100,7 @@ ib_status_t DLL_PUBLIC ib_capture_clear(ib_field_t *capture);
  * - IB_EINVAL: @a num is too large
  * - Error status from: ib_capture_set_list()
  *                      ib_capture_init_item()
- *                      ib_data_list_push()
+ *                      ib_var_source_set()
  *                      ib_field_mutable_value()
  */
 ib_status_t DLL_PUBLIC ib_capture_set_item(
@@ -122,7 +122,7 @@ ib_status_t DLL_PUBLIC ib_capture_set_item(
  * - IB_OK: All OK
  * - Error status from: ib_capture_set_list()
  *                      ib_capture_init_item()
- *                      ib_data_list_push()
+ *                      ib_var_source_set()
  *                      ib_field_mutable_value()
  */
 ib_status_t DLL_PUBLIC ib_capture_add_item(

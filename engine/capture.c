@@ -26,6 +26,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/capture.h>
+#include <ironbee/engine.h>
 #include <ironbee/log.h>
 
 #include <assert.h>
@@ -128,26 +129,36 @@ ib_status_t ib_capture_acquire(
 )
 {
     assert(tx != NULL);
-    assert(tx->data != NULL);
+    assert(tx->var_store != NULL);
 
     ib_status_t rc;
+    ib_var_source_t *source;
 
     /* Look up the capture list */
     collection_name = get_collection_name(collection_name);
-    rc = ib_data_get(tx->data, collection_name, strlen(collection_name), field);
-    if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(tx->data, collection_name, field);
-    }
+    // @todo Acquire source at configuration time.
+    rc = ib_var_source_acquire(&source,
+        tx->mp,
+        ib_engine_var_config_get(tx->ib),
+        collection_name, strlen(collection_name)
+    );
     if (rc != IB_OK) {
         return rc;
     }
-
-    if ((*field)->type != IB_FTYPE_LIST) {
-        rc = ib_data_remove(tx->data, collection_name, NULL);
-        if (rc != IB_OK) {
-            return IB_EINVAL;
-        }
-        return ib_capture_acquire(tx, collection_name, field);
+    rc = ib_var_source_get(source, field, tx->var_store);
+    if (
+        rc == IB_ENOENT ||
+        (rc == IB_OK && (*field)->type != IB_FTYPE_LIST)
+    ) {
+        rc = ib_var_source_initialize(
+            source,
+            field,
+            tx->var_store,
+            IB_FTYPE_LIST
+        );
+    }
+    if (rc != IB_OK) {
+        return rc;
     }
 
     return IB_OK;

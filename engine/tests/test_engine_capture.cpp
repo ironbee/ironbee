@@ -31,6 +31,7 @@
 #include <ironbee/field.h>
 #include <ironbee/list.h>
 #include <ironbee/mpool.h>
+#include <ironbee/string.h>
 
 /**
  * Test capture
@@ -44,23 +45,16 @@ class CaptureTest : public BaseTransactionFixture
         performTx();
     }
 public:
-    ib_status_t CaptureGet(
-        int          num,
-        ib_field_t **pfield)
+    ib_field_t *CaptureGet(int num)
     {
         const char *capture_name = ib_capture_fullname(ib_tx, NULL, num);
-        return ib_data_get(ib_tx->data, capture_name, strlen(capture_name),
-                              pfield);
+        return getTarget1(capture_name);
     };
 
-    ib_status_t CaptureGet(
-        const char  *capture,
-        int          num,
-        ib_field_t **pfield)
+    ib_field_t *CaptureGet(const char *capture, int num)
     {
         const char *capture_name = ib_capture_fullname(ib_tx, capture, num);
-        return ib_data_get(ib_tx->data, capture_name, strlen(capture_name),
-                              pfield);
+        return getTarget1(capture_name);
     };
 
     ib_status_t CaptureBytestr(
@@ -138,153 +132,86 @@ TEST_F(CaptureTest, basic)
 {
     ib_status_t           rc;
     ib_field_t           *ifield;
-    ib_field_t           *ofield;
     ib_field_t           *cfield;
     const ib_field_t     *tfield;
-    const ib_list_node_t *node;
-    const ib_list_t      *l;
     const ib_bytestr_t   *bs;
 
-    rc = CaptureGet(0, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(0U, ib_list_elements(l));
+    tfield = CaptureGet(0);
+    ASSERT_FALSE(tfield);
 
     rc = CaptureBytestr(NULL, 0, "value0", &ifield);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = CaptureGet(0, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(1U, ib_list_elements(l));
-    node = ib_list_first_const(l);
-    ASSERT_TRUE(node != NULL);
-    tfield = (const ib_field_t *)node->data;
+    tfield = CaptureGet(0);
+    ASSERT_TRUE(tfield);
     ASSERT_EQ(IB_FTYPE_BYTESTR, tfield->type);
     ASSERT_EQ(IB_OK, ib_field_value(tfield, ib_ftype_bytestr_out(&bs)));
     ASSERT_EQ(6U, ib_bytestr_length(bs));
     ASSERT_EQ(0, memcmp("value0", ib_bytestr_const_ptr(bs), 6));
 
-    /* */
     rc = CaptureBytestr(NULL, 1, "xyzzy1", &ifield);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = CaptureGet(1, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(1U, ib_list_elements(l));
-    node = ib_list_first_const(l);
-    ASSERT_TRUE(node != NULL);
-    tfield = (const ib_field_t *)node->data;
+    tfield = CaptureGet(1);
     ASSERT_EQ(IB_FTYPE_BYTESTR, tfield->type);
     ASSERT_EQ(IB_OK, ib_field_value(tfield, ib_ftype_bytestr_out(&bs)));
     ASSERT_EQ(6U, ib_bytestr_length(bs));
     ASSERT_EQ(0, memcmp("xyzzy1", ib_bytestr_const_ptr(bs), 6));
 
-    rc = CaptureGet(2, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(0U, ib_list_elements(l));
+    tfield = CaptureGet(2);
+    ASSERT_FALSE(tfield);
 
     rc = ib_capture_acquire(ib_tx, NULL, &cfield);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_capture_clear(cfield);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = CaptureGet(0, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(0U, ib_list_elements(l));
+    tfield = CaptureGet(0);
+    ASSERT_FALSE(tfield);
 
-    rc = CaptureGet(1, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(0U, ib_list_elements(l));
-
-    rc = CaptureGet(1, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(0U, ib_list_elements(l));
+    tfield = CaptureGet(1);
+    ASSERT_FALSE(tfield);
 }
 
 TEST_F(CaptureTest, named_collection)
 {
     ib_status_t           rc;
     ib_field_t           *ifield;
-    ib_field_t           *ofield;
     ib_field_t           *cfield;
     const ib_field_t     *tfield;
-    const ib_list_node_t *node;
-    const ib_list_t      *l;
     const ib_bytestr_t   *bs;
 
     rc = CaptureBytestr(CAP_NAME, 0, "value0", &ifield);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = CaptureGet(CAP_NAME, 0, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(1U, ib_list_elements(l));
-    node = ib_list_first_const(l);
-    ASSERT_TRUE(node != NULL);
-    tfield = (const ib_field_t *)node->data;
+    tfield = CaptureGet(CAP_NAME, 0);
     ASSERT_EQ(IB_FTYPE_BYTESTR, tfield->type);
     ASSERT_EQ(IB_OK, ib_field_value(tfield, ib_ftype_bytestr_out(&bs)));
     ASSERT_EQ(6U, ib_bytestr_length(bs));
     ASSERT_EQ(0, memcmp("value0", ib_bytestr_const_ptr(bs), 6));
 
-    /* */
     rc = CaptureBytestr(CAP_NAME, 1, "xyzzy1", &ifield);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = CaptureGet(CAP_NAME, 1, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(1U, ib_list_elements(l));
-    node = ib_list_first_const(l);
-    ASSERT_TRUE(node != NULL);
-    tfield = (const ib_field_t *)node->data;
+    tfield = CaptureGet(CAP_NAME, 1);
     ASSERT_EQ(IB_FTYPE_BYTESTR, tfield->type);
     ASSERT_EQ(IB_OK, ib_field_value(tfield, ib_ftype_bytestr_out(&bs)));
     ASSERT_EQ(6U, ib_bytestr_length(bs));
     ASSERT_EQ(0, memcmp("xyzzy1", ib_bytestr_const_ptr(bs), 6));
 
-    rc = CaptureGet(CAP_NAME, 2, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(0U, ib_list_elements(l));
+    tfield = CaptureGet(CAP_NAME, 2);
+    ASSERT_FALSE(tfield);
 
     rc = ib_capture_acquire(ib_tx, CAP_NAME, &cfield);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_capture_clear(cfield);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = CaptureGet(CAP_NAME, 0, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(0U, ib_list_elements(l));
+    tfield = CaptureGet(CAP_NAME, 0);
+    ASSERT_FALSE(tfield);
 
-    rc = CaptureGet(CAP_NAME, 1, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(0U, ib_list_elements(l));
-
-    rc = CaptureGet(CAP_NAME, 1, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(0U, ib_list_elements(l));
+    tfield = CaptureGet(CAP_NAME, 1);
+    ASSERT_FALSE(tfield);
 }
 
 TEST_F(CaptureTest, collection_type)
@@ -293,29 +220,32 @@ TEST_F(CaptureTest, collection_type)
     ib_field_t           *ifield;
     ib_field_t           *ofield;
     const ib_field_t     *tfield;
-    const ib_list_node_t *node;
-    const ib_list_t      *l;
     const ib_bytestr_t   *bs;
+    ib_var_source_t      *source;
 
-    rc = ib_data_add_num(ib_tx->data, CAP_NAME, 666, &ifield);
+    rc = ib_var_source_acquire(
+        &source,
+        ib_tx->mp,
+        ib_engine_var_config_get(ib_engine),
+        IB_S2SL(CAP_NAME)
+    );
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_var_source_initialize(
+        source,
+        &ifield,
+        ib_tx->var_store,
+        IB_FTYPE_NUM
+    );
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_data_get(ib_tx->data, CAP_NAME, strlen(CAP_NAME), &ofield);
-    ASSERT_EQ(IB_OK, rc);
+    ofield = getVar(CAP_NAME);
+    ASSERT_TRUE(ofield);
     ASSERT_EQ(IB_FTYPE_NUM, ofield->type);
-
 
     rc = CaptureBytestr(CAP_NAME, 0, "value0", &ifield);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = CaptureGet(CAP_NAME, 0, &ofield);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(IB_FTYPE_LIST, ofield->type);
-    ASSERT_EQ(IB_OK, ib_field_value(ofield, ib_ftype_list_out(&l)));
-    ASSERT_EQ(1U, ib_list_elements(l));
-    node = ib_list_first_const(l);
-    ASSERT_TRUE(node != NULL);
-    tfield = (const ib_field_t *)node->data;
+    tfield = CaptureGet(CAP_NAME, 0);
     ASSERT_EQ(IB_FTYPE_BYTESTR, tfield->type);
     ASSERT_EQ(IB_OK, ib_field_value(tfield, ib_ftype_bytestr_out(&bs)));
     ASSERT_EQ(6U, ib_bytestr_length(bs));
