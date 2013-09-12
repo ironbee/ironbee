@@ -1110,9 +1110,7 @@ static ib_status_t ironbee_conn_init(conn_rec *conn,
      * iconn->remote_port
      * iconn->local_ipstr
      * iconn->local_port
-     * iconn->data fields for local and remote ip
      */
-    ib_status_t rc;
 
 /* These fields differ between 2.2 and 2.4 because the latter
  * introduces the distinction between the HTTP Client (end user)
@@ -1124,34 +1122,12 @@ static ib_status_t ironbee_conn_init(conn_rec *conn,
     iconn->remote_port = conn->client_addr->port;
     iconn->local_ipstr = conn->local_ip;
     iconn->local_port = conn->local_addr->port;
-
-    rc = ib_data_add_bytestr(iconn->data,
-                             "remote_ip",
-                             (uint8_t *)iconn->remote_ipstr,
-                             strlen(conn->client_ip),
-                             NULL);
 #else
     iconn->remote_ipstr = conn->remote_ip;
     iconn->remote_port = conn->remote_addr->port;
     iconn->local_ipstr = conn->local_ip;
     iconn->local_port = conn->local_addr->port;
-
-    rc = ib_data_add_bytestr(iconn->data,
-                             "remote_ip",
-                             (uint8_t *)iconn->remote_ipstr,
-                             strlen(conn->remote_ip),
-                             NULL);
 #endif
-    if (rc != IB_OK)
-        return rc;
-
-    rc = ib_data_add_bytestr(iconn->data,
-                             "local_ip",
-                             (uint8_t *)iconn->local_ipstr,
-                             strlen(conn->local_ip),
-                             NULL);
-    if (rc != IB_OK)
-        return rc;
 
     return IB_OK;
 }
