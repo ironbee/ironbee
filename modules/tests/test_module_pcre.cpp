@@ -146,7 +146,6 @@ TEST_F(PcreModuleTest, test_load_module)
 TEST_F(PcreModuleTest, test_pcre_operator)
 {
     ib_field_t *outfield;
-    const ib_list_t *outlist;
     ib_num_t result;
     ib_field_t *capture;
     const ib_operator_t *op;
@@ -196,12 +195,8 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_TRUE(result);
 
     // Should be no capture set */
-    ASSERT_EQ(IB_OK,
-              ib_data_get(ib_tx->data, IB_TX_CAPTURE":0", strlen(IB_TX_CAPTURE":0"), &outfield));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), outfield);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), outfield->type);
-    ib_field_value(outfield, ib_ftype_list_out(&outlist));
-    ASSERT_EQ(0U, IB_LIST_ELEMENTS(outlist));
+    outfield = getTarget1(IB_TX_CAPTURE":0");
+    ASSERT_FALSE(outfield);
 
     // Create the operator instance.
     ASSERT_EQ(
@@ -246,12 +241,8 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_TRUE(result);
 
     // Should be no capture (CAPTURE flag not set for rule 1)
-    ASSERT_EQ(IB_OK,
-              ib_data_get(ib_tx->data, IB_TX_CAPTURE":0", strlen(IB_TX_CAPTURE":0"), &outfield));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), outfield);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), outfield->type);
-    ib_field_value(outfield, ib_ftype_list_out(&outlist));
-    ASSERT_EQ(0U, IB_LIST_ELEMENTS(outlist));
+    outfield = getTarget1(IB_TX_CAPTURE":0");
+    ASSERT_FALSE(outfield);
 
     // Create the operator instance.
     ASSERT_EQ(
@@ -287,63 +278,38 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_TRUE(result);
 
     // Should be a capture (CAPTURE flag is set for rule 2)
-    ASSERT_EQ(IB_OK,
-              ib_data_get(ib_tx->data, IB_TX_CAPTURE":0", strlen(IB_TX_CAPTURE":0"), &outfield));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), outfield);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), outfield->type);
-    ib_field_value(outfield, ib_ftype_list_out(&outlist));
-    ASSERT_EQ(1U, IB_LIST_ELEMENTS(outlist));
+    outfield = getTarget1(IB_TX_CAPTURE":0");
+    ASSERT_TRUE(outfield);
 }
 
 TEST_F(PcreModuleTest, test_match_basic)
 {
     ib_field_t *outfield;
-    const ib_list_t *outlist;
 
     // Should be no capture set */
-    ASSERT_EQ(IB_OK,
-              ib_data_get(ib_tx->data, IB_TX_CAPTURE":0", strlen(IB_TX_CAPTURE":0"), &outfield));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), outfield);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), outfield->type);
-    ib_field_value(outfield, ib_ftype_list_out(&outlist));
-    ASSERT_EQ(0U, IB_LIST_ELEMENTS(outlist));
+    outfield = getTarget1(IB_TX_CAPTURE":0");
+    ASSERT_FALSE(outfield);
 }
 
 TEST_F(PcreModuleTest, test_match_capture)
 {
     ib_field_t *ib_field;
-    const ib_list_t *ib_list;
 
     const ib_bytestr_t *ib_bytestr;
     ib_status_t rc;
 
     /* Check :0 */
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, IB_TX_CAPTURE":0", strlen(IB_TX_CAPTURE":0"), &ib_field));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
-    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
-    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
-    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
+    ib_field = getTarget1(IB_TX_CAPTURE":0");
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
     /* Check :1 */
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, IB_TX_CAPTURE":1", strlen(IB_TX_CAPTURE":1"), &ib_field));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
-    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
-    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
-    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
+    ib_field = getTarget1(IB_TX_CAPTURE":1");
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
     /* Check :2 */
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, IB_TX_CAPTURE":2", strlen(IB_TX_CAPTURE":2"), &ib_field));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
-    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
-    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
-    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
+    ib_field = getTarget1(IB_TX_CAPTURE":2");
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
@@ -356,18 +322,13 @@ TEST_F(PcreModuleTest, test_match_capture)
         ib_bytestr_length(ib_bytestr)
     ));
 
-    ASSERT_EQ(IB_OK,
-              ib_data_get(ib_tx->data, IB_TX_CAPTURE":3", strlen(IB_TX_CAPTURE":3"), &ib_field));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
-    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
-    ASSERT_EQ(0U, IB_LIST_ELEMENTS(ib_list));
+    ib_field = getTarget1(IB_TX_CAPTURE":3");
+    ASSERT_FALSE(ib_field);
 }
 
 TEST_F(PcreModuleTest, test_match_capture_named)
 {
     ib_field_t *ib_field;
-    const ib_list_t *ib_list;
     const char *capname;
 
     const ib_bytestr_t *ib_bytestr;
@@ -376,36 +337,21 @@ TEST_F(PcreModuleTest, test_match_capture_named)
     /* Check :0 */
     capname = ib_capture_fullname(ib_tx, "captest", 0);
     ASSERT_STREQ(capname, "captest:0");
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, capname, strlen(capname), &ib_field));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
-    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
-    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
-    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
+    ib_field = getTarget1(capname);
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
     /* Check :1 */
     capname = ib_capture_fullname(ib_tx, "captest", 1);
     ASSERT_STREQ(capname, "captest:1");
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, capname, strlen(capname), &ib_field));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
-    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
-    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
-    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
+    ib_field = getTarget1(capname);
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
     /* Check :2 */
     capname = ib_capture_fullname(ib_tx, "captest", 2);
     ASSERT_STREQ(capname, "captest:2");
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, capname, strlen(capname), &ib_field));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
-    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
-    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
-    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
+    ib_field = getTarget1(capname);
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
@@ -420,10 +366,6 @@ TEST_F(PcreModuleTest, test_match_capture_named)
 
     capname = ib_capture_fullname(ib_tx, "captest", 3);
     ASSERT_STREQ(capname, "captest:3");
-    ASSERT_EQ(IB_OK,
-              ib_data_get(ib_tx->data, capname, strlen(capname), &ib_field));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
-    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
-    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
-    ASSERT_EQ(0U, IB_LIST_ELEMENTS(ib_list));
+    ib_field = getTarget1(capname);
+    ASSERT_FALSE(ib_field);
 }
