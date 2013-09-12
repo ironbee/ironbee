@@ -400,7 +400,6 @@ ib_status_t clipp_action_create(
 ib_status_t clipp_action_execute(
     const ib_rule_exec_t* rule_exec,
     void*                 data,
-    ib_flags_t            flags,
     void*                 cbdata
 )
 {
@@ -431,7 +430,6 @@ ib_status_t clipp_announce_action_create(
 ib_status_t clipp_announce_action_execute(
     const ib_rule_exec_t* rule_exec,
     void*                 data,
-    ib_flags_t            flags,
     void*                 cbdata
 )
 {
@@ -666,7 +664,6 @@ IronBeeModifier::IronBeeModifier(
     rc = ib_action_register(
         m_state->engine.ib(),
         "clipp",
-        IB_ACT_FLAG_NONE,
         clipp_action_create,
         NULL,
         NULL,
@@ -681,7 +678,6 @@ IronBeeModifier::IronBeeModifier(
     rc = ib_action_register(
         m_state->engine.ib(),
         "clipp_announce",
-        IB_ACT_FLAG_NONE,
         clipp_announce_action_create,
         NULL,
         NULL,
