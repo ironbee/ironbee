@@ -40,40 +40,61 @@
 
 struct ib_var_config_t
 {
+    /** Memory pool */
     ib_mpool_t *mp;
-    ib_hash_t  *index_by_name; /**< Hash of keys to index. Value: ib_var_source_t* */
-    size_t      next_index;   /**< Next index to use. */
+
+    /** Hash of keys to index.  Value `ib_var_source_t *` */
+    ib_hash_t *index_by_name;
+
+    /** Next index to use. */
+    size_t next_index;
 };
 
 struct ib_var_store_t
 {
-    const ib_var_config_t *config; /**< Configuration. */
-    ib_mpool_t            *mp;     /**< Memory pool. */
-    ib_hash_t             *hash;   /**< Hash of data fields. Value: ib_field_t* */
-    ib_array_t            *array;  /**< Array of indexed data fields.  Value: ib_field_t* */
+    /** Configuration */
+    const ib_var_config_t *config;
+    /** Memory pool */
+    ib_mpool_t *mp;
+    /** Hash of source name to value. Value: `ib_field_t *` */
+    ib_hash_t *hash;
+    /** Array of source index to value.  Value: `ib_field_t *` */
+    ib_array_t *array;
 };
 
 struct ib_var_source_t
 {
-    const ib_var_config_t *config; /**< Configuration. */
+    /** Configuration */
+    const ib_var_config_t *config;
 
     /**
      * Name of source.
      *
      * For indexed sources, this will be a copy of the name passed to
      * ib_var_source_register().  For unindexed sources, this will be an alias
-     * of the name passed to ib_var_source_acquire().  This difference reflects
-     * the performance and lifetime issues of each use.
+     * of the name passed to ib_var_source_acquire().  This difference
+     * reflects the performance and lifetime issues of each use.
      **/
     const char *name;
 
-    size_t              name_length; /**< Length of name. */
-    ib_rule_phase_num_t initial_phase; /**< Initial phase with value. */
-    ib_rule_phase_num_t final_phase; /**< Final phase with value. */
-    bool                is_indexed; /**< Is this an indexed source? */
+    /** Length of @ref name */
+    size_t name_length;
+    /** Initial phase value is set. */
+    ib_rule_phase_num_t initial_phase;
+    /** Final phase with value is changed. */
+    ib_rule_phase_num_t final_phase;
 
     /**
-     * Indexed if @c is_indexed is true.
+     * Is source indexed?
+     *
+     * If true, @ref index is meaningful and can be used to lookup value in
+     * ib_var_store_t::array.  If false, @ref index is meaningless, and value
+     * must be looked up by name in ib_var_store_t::hash.
+     */
+    bool is_indexed;
+
+    /**
+     * Index (only if @ref is_indexed is true).
      *
      * For unindexed sources, this member is intentionally left uninitialized
      * to allow valgrind to catch inappropriate uses of it.
@@ -255,6 +276,7 @@ ib_mpool_t *ib_var_config_pool(
 )
 {
     assert(config != NULL);
+
     return config->mp;
 }
 
@@ -423,7 +445,6 @@ void ib_var_source_name(
     *name_length = source->name_length;
 }
 
-
 ib_rule_phase_num_t ib_var_source_initial_phase(
     const ib_var_source_t *source
 )
@@ -466,7 +487,10 @@ ib_status_t ib_var_source_get(
 
     if (source->is_indexed) {
         ib_field_t *local_field = NULL;
-        ib_status_t rc = ib_array_get(store->array, source->index, &local_field);
+        ib_status_t rc;
+
+        rc = ib_array_get(store->array, source->index, &local_field);
+
         /* Array only errors if out of band, i.e., not set. */
         if (rc != IB_OK || local_field == NULL) {
             return IB_ENOENT;
@@ -494,7 +518,7 @@ ib_status_t ib_var_source_get_const(
     assert(source != NULL);
     assert(store  != NULL);
 
-    /* Use non-const version; okay, as caller storing result in const */
+    /* Use non-const version; okay, as caller storing result in const. */
     return ib_var_source_get(
         (ib_var_source_t *)source,
         (ib_field_t **)field,
@@ -559,7 +583,7 @@ ib_status_t ib_var_source_acquire(
     }
 
     if (rc == IB_ENOENT) {
-        // Non-indexed.
+        /* Non-indexed. */
         if (mp == NULL) {
             return IB_ENOENT;
         }
