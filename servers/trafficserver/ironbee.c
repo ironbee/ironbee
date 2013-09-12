@@ -630,7 +630,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
         TSfree( (char *)x->value);
         TSfree(x);
     }
-    
+
     /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
     if (ctx->ssn) {
         /* If it's closing, the contp and with it the mutex are already gone.
@@ -1959,21 +1959,9 @@ static ib_status_t ironbee_conn_init(
     addr2str(addr, ssn->remote_ip, &port);
 
     iconn->remote_ipstr = ssn->remote_ip;
-    rc = ib_data_add_bytestr(iconn->data,
-                             "remote_ip",
-                             (uint8_t *)iconn->remote_ipstr,
-                             strlen(ssn->remote_ip),
-                             NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
 
     /* remote port */
     iconn->remote_port = port;
-    rc = ib_data_add_num(iconn->data, "remote_port", port, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
 
     /* local end */
     addr = TSHttpTxnIncomingAddrGet(ssn->txnp);
@@ -1981,21 +1969,10 @@ static ib_status_t ironbee_conn_init(
     addr2str(addr, ssn->local_ip, &port);
 
     iconn->local_ipstr = ssn->local_ip;
-    rc = ib_data_add_bytestr(iconn->data,
-                             "local_ip",
-                             (uint8_t *)iconn->local_ipstr,
-                             strlen(ssn->local_ip),
-                             NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
 
     /* local_port */
     iconn->local_port = port;
-    rc = ib_data_add_num(iconn->data, "local_port", port, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
+
     return IB_OK;
 }
 
