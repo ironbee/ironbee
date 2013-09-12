@@ -244,7 +244,7 @@ NONNULL_ATTRIBUTE(1, 2);
  *
  * The phase argument specify the first phase the source will be meaningful
  * at and the last phase its value will change at.  Either or both may be
- * IB_RULE_PHASE_NONE which should be interpreted as any phase and never,
+ * IB_PHASE_NONE which should be interpreted as any phase and never,
  * respectively.  Specifying these phases accurately can improve performance,
  * especially in more advance rule systems such as Predicate.
  *
@@ -263,7 +263,7 @@ NONNULL_ATTRIBUTE(1, 2);
  * @param[in]  name_length   Length of @a name.
  * @param[in]  initial_phase First phase source has meaningful value in.
  * @param[in]  final_phase   Last phase source may change value in.  Must be
- *                           IB_RULE_PHASE_NONE or after @a initial_phase.
+ *                           IB_PHASE_NONE or after @a initial_phase.
  * @return
  * - IB_OK on success.
  * - IB_EEXIST if a source named @a name already exists.
