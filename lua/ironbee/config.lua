@@ -129,7 +129,6 @@ local add_fields = function(ib, rule, prule, field)
     rc = ffi.C.ib_rule_create_target(
         ib.ib_engine,
         str,
-        name,
         tfn_names[0],
         target,
         not_found)
