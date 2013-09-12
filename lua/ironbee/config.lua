@@ -189,20 +189,20 @@ local build_rule = function(ib, ctx, chain, db)
             local name, arg = action.name, action.argument
 
             if name == "logdata" then
-                local expand = ffi.new("bool[1]")
-
-                prule[0].meta.data =
-                    ffi.C.ib_mpool_memdup(
-                        ffi.C.ib_engine_pool_main_get(ib.ib_engine),
-                        arg,
-                        #arg+1)
-                ffi.C.ib_data_expand_test_str(arg, expand)
-
-                if expand[0] ~= 0 then
-                    prule[0].meta.flags = ffi.C.ib_set_flag(
-                        prule[0].meta.flags,
-                        IB_RULEMD_FLAG_EXPAND_DATA)
-                end
+              local expand = ffi.new("ib_var_expand_t*[1]")
+              rc = ffi.C.ib_var_expand_acquire(
+                  expand,
+                  ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+                  arg,
+                  #arg,
+                  ffi.C.ib_engine_var_config_get(ib.ib_engine),
+                  nil, nil
+              )
+              if rc ~= ffi.C.IB_OK then
+                  ib:loggError("Failed to acquire rule data expand.")
+              else
+                  prule[0].meta.data = expand[0]
+              end
             elseif name == "severity" then
                 local severity = tonumber(arg)
                 if severity > 255 then
@@ -243,7 +243,6 @@ local build_rule = function(ib, ctx, chain, db)
                     ib.ib_engine,
                     name,
                     arg,
-                    0,
                     action_inst)
                 if rc ~= ffi.C.IB_OK then
                     ib:logError(
@@ -282,21 +281,21 @@ local build_rule = function(ib, ctx, chain, db)
         if rule.data.message then
 
             -- Set the message.
-            prule[0].meta.msg =
-                    ffi.C.ib_mpool_memdup(
-                        ffi.C.ib_engine_pool_main_get(ib.ib_engine),
-                        rule.data.message,
-                        #rule.data.message + 1)
-
-            -- Check if the string is expandable.
-            local expand = ffi.new("bool[1]")
-            ffi.C.ib_data_expand_test_str(rule.data.message, expand)
-
-            if expand[0] then
-                prule[0].meta.flags = ffi.C.ib_set_flag(
-                    prule[0].meta.flags,
-                    IB_RULEMD_FLAG_EXPAND_MSG)
+            local expand = ffi.new("ib_var_expand_t*[1]")
+            rc = ffi.C.ib_var_expand_acquire(
+                expand,
+                ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+                rule.data.message,
+                #rule.data.message,
+                ffi.C.ib_engine_var_config_get(ib.ib_engine),
+                nil, nil
+            )
+            if rc ~= ffi.C.IB_OK then
+                ib:loggError("Failed to acquire rule msg expand.")
+            else
+                prule[0].meta.msg = expand[0]
             end
+
         end
 
         -- If this rule is a member of a chain.
