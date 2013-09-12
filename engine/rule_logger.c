@@ -30,8 +30,8 @@
 
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
-#include <ironbee/core.h>
 #include <ironbee/context.h>
+#include <ironbee/core.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>

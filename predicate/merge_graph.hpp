@@ -32,8 +32,8 @@
 #include <predicate/less.hpp>
 
 #include <map>
-#include <vector>
 #include <set>
+#include <vector>
 
 namespace IronBee {
 namespace Predicate {
