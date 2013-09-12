@@ -45,7 +45,8 @@
  * Data used by each module instance, associated with an IronBee engine.
  */
 typedef struct {
-    GeoIP       *geoip_db;         /**< The GeoIP database */
+    GeoIP           *geoip_db;   /**< The GeoIP database */
+    ib_var_source_t *geoip_source; /**< Var source for GEO */
 } module_data_t;
 
 /* Declare the public module symbol. */
@@ -104,12 +105,17 @@ static ib_status_t geoip_lookup(
     ib_log_debug_tx(tx, "GeoIP Lookup '%s'", ip);
 
     /* Build a new list. */
-    rc = ib_data_add_list(tx->data, "GEOIP", &geoip_lst);
+    rc = ib_var_source_initialize(
+        mod_data->geoip_source,
+        &geoip_lst,
+        tx->var_store,
+        IB_FTYPE_LIST
+    );
 
     /* NOTICE: Called before GeoIP_record_by_addr allocates a
      * GeoIPRecord. */
     if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Unable to add GEOIP list to DPI.");
+        ib_log_alert_tx(tx, "Unable to add GEOIP var.");
         return IB_EINVAL;
     }
 
@@ -335,10 +341,15 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     ib_log_debug(ib, "Done registering handler.");
 
-    rc = ib_data_register_indexed(ib_engine_data_config_get(ib), "GEOIP");
+    rc = ib_var_source_register(
+        &(mod_data->geoip_source),
+        ib_engine_var_config_get(ib),
+        IB_S2SL("GEOIP"),
+        IB_PHASE_NONE, IB_PHASE_NONE
+    );
     if (rc != IB_OK) {
         ib_log_warning(ib,
-            "GeoIP failed to register \"GEOIP\" as indexed: %s",
+            "GeoIP failed to register \"GEOIP\" var: %s",
             ib_status_to_string(rc)
         );
         /* Continue */
