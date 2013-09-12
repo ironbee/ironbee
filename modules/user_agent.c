@@ -27,6 +27,7 @@
 #include "user_agent_private.h"
 
 #include <ironbee/bytestr.h>
+#include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/field.h>
@@ -55,6 +56,14 @@
 IB_MODULE_DECLARE();
 
 static const modua_match_ruleset_t *modua_match_ruleset = NULL;
+
+typedef struct {
+    const ib_var_target_t *user_agent;
+    const ib_var_target_t *forwarded_for;
+    ib_var_source_t *remote_addr;
+} modua_config_t;
+
+static modua_config_t c_modua_config = {NULL, NULL, NULL};
 
 /**
  * Skip spaces, return pointer to first non-space.
@@ -388,6 +397,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     char                     *buf;
     size_t                    len;
     ib_status_t               rc;
+    ib_var_source_t          *source;
 
     /* Get the length of the byte string */
     len = ib_bytestr_length(bs);
@@ -431,7 +441,16 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     }
 
     /* Build a new list. */
-    rc = ib_data_add_list(tx->data, "UA", &agent_list);
+    rc = ib_var_source_acquire(
+        &source, tx->mp, ib_engine_var_config_get(ib), IB_S2SL("UA")
+    );
+    if (rc != IB_OK) {
+        ib_log_alert_tx(tx, "Unable to acquire source for UserAgent list.");
+        return rc;
+    }
+    rc = ib_var_source_initialize(
+        source, &agent_list, tx->var_store, IB_FTYPE_LIST
+    );
     if (rc != IB_OK)
     {
         ib_log_alert_tx(tx, "Unable to add UserAgent list to DPI.");
@@ -489,7 +508,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
  * @param[in] ib IronBee object
  * @param[in,out] tx Transaction.
  * @param[in] event Event type
- * @param[in] data Callback data (not used)
+ * @param[in] data Callback data (module)
  *
  * @returns Status code
  */
@@ -500,31 +519,35 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(tx->data != NULL);
+    assert(tx->var_store != NULL);
     assert(event == request_header_finished_event);
+    assert(data != NULL);
 
-    ib_field_t         *req_agent = NULL;
+    const ib_module_t *m = (const ib_module_t *)data;
+    const ib_field_t  *req_agent = NULL;
     ib_status_t         rc = IB_OK;
     const ib_list_t *bs_list;
     const ib_bytestr_t *bs;
+    const modua_config_t *cfg;
 
-    /* Extract the User-Agent header field from the provider instance */
-    rc = ib_data_get(tx->data, "request_headers:User-Agent", strlen("request_headers:User-Agent"), &req_agent);
-    if ( (req_agent == NULL) || (rc != IB_OK) ) {
+    rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Can't fetch configuration: %s",
+                        ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Extract the User-Agent header field */
+    rc = ib_var_target_get_const(
+        cfg->user_agent,
+        &bs_list,
+        tx->mp,
+        tx->var_store
+    );
+    if (rc == IB_ENOENT || ib_list_elements(bs_list) == 0) {
         ib_log_debug_tx(tx, "request_header_finished_event: No user agent");
         return IB_OK;
     }
-
-    if (req_agent->type != IB_FTYPE_LIST) {
-        ib_log_error_tx(tx,
-            "Expected request_headers:User-Agent to "
-            "return list of values.");
-        return IB_EINVAL;
-    }
-
-    rc = ib_field_value_type(req_agent,
-                             ib_ftype_list_out(&bs_list),
-                             IB_FTYPE_LIST);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
                         "Cannot retrieve request_headers:User-Agent: %d",
@@ -566,7 +589,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
  * @param[in] ib IronBee object
  * @param[in,out] tx Transaction object
  * @param[in] event Event type
- * @param[in] cbdata Callback data (not used)
+ * @param[in] cbdata Callback data (module)
  *
  * @returns Status code
  */
@@ -577,9 +600,10 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(tx->data != NULL);
+    assert(tx->var_store != NULL);
     assert(event == request_header_finished_event);
 
+    const ib_module_t    *m = (const ib_module_t *)cbdata;
     ib_field_t           *field = NULL;
     ib_status_t           rc = IB_OK;
     const ib_bytestr_t   *bs;
@@ -593,20 +617,32 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     uint8_t              *stripped;
     size_t                num;
     ib_flags_t            flags;
+    const modua_config_t *cfg;
+
+    rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Can't fetch configuration: %s",
+                        ib_status_to_string(rc));
+        return rc;
+    }
 
     ib_log_debug3_tx(tx, "Checking for alternate remote address");
 
-    /* Extract the X-Forwarded-For from the provider instance */
-    rc = ib_data_get(tx->data, "request_headers:X-Forwarded-For", strlen("request_headers:X-Forwarded-For"), &field);
-    if ( (field == NULL) || (rc != IB_OK) ) {
-        ib_log_debug_tx(tx, "No X-Forwarded-For field");
+    /* Extract the X-Forwarded-For header field */
+    rc = ib_var_target_get_const(
+        cfg->forwarded_for,
+        &list,
+        tx->mp,
+        tx->var_store
+    );
+    if (rc == IB_ENOENT || ib_list_elements(list) == 0) {
+        ib_log_debug_tx(tx, "No X-Forwarded-For");
         return IB_OK;
     }
-
-    /* Because we asked for a filtered item, what we get back is a list */
-    rc = ib_field_value(field, ib_ftype_list_out(&list));
     if (rc != IB_OK) {
-        ib_log_debug_tx(tx, "No request header collection");
+        ib_log_error_tx(tx,
+                        "Cannot retrieve request_headers:User-Agent: %d",
+                        rc);
         return rc;
     }
 
@@ -688,12 +724,102 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     tx->er_ipstr = buf;
 
     /* Update the remote address field in the tx collection */
-    rc = ib_data_add_bytestr(tx->data, "remote_addr", (uint8_t*)buf, len, NULL);
+    rc = ib_field_create_bytestr_alias(
+        &field,
+        tx->mp,
+        "", 0,
+        (uint8_t *)buf, len
+    );
     if (rc != IB_OK) {
-        ib_log_error_tx(tx,
-                        "Failed to create remote address TX field: %s",
+        ib_log_error_tx(tx, "Failed to create field for remote_addr: %s",
                         ib_status_to_string(rc));
         return rc;
+    }
+    rc = ib_var_source_set(cfg->remote_addr, tx->var_store, field);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx,
+                        "Failed to set remote address var: %s",
+                        ib_status_to_string(rc));
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Called at context close.  Initialized user-agent target.
+ *
+ * @param[in] ib Engine
+ * @param[in] ctx Context
+ * @param[in] event Event triggering the callback
+ * @param[in] cbdata Callback data (module).
+ *
+ * @returns Status code
+ */
+static
+ib_status_t modua_ctx_close(
+    ib_engine_t           *ib,
+    ib_context_t          *ctx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
+{
+    ib_module_t *m = (ib_module_t *)cbdata;
+    if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
+        modua_config_t *cfg;
+        ib_var_target_t *target;
+        ib_status_t rc;
+
+        rc = ib_context_module_config(ctx, m, &cfg);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Can't fetch configuration: %s",
+                         ib_status_to_string(rc));
+            return rc;
+        }
+
+        rc = ib_var_target_acquire_from_string(
+            &target,
+            ib_engine_pool_main_get(ib),
+            ib_engine_var_config_get(ib),
+            IB_S2SL("request_headers:User-Agent"),
+            NULL, NULL
+        );
+        if (rc != IB_OK) {
+            ib_log_error(ib,
+                         "Error acquiring target for User-Agent header: %s",
+                         ib_status_to_string(rc));
+            return rc;
+        }
+        cfg->user_agent = target;
+
+        rc = ib_var_target_acquire_from_string(
+            &target,
+            ib_engine_pool_main_get(ib),
+            ib_engine_var_config_get(ib),
+            IB_S2SL("request_headers:X-Forwarded-For"),
+            NULL, NULL
+        );
+        if (rc != IB_OK) {
+            ib_log_error(ib,
+                         "Error acquiring target for X-Forwarded-For header: %s",
+                         ib_status_to_string(rc));
+            return rc;
+        }
+        cfg->forwarded_for = target;
+
+        rc = ib_var_source_acquire(
+            &(cfg->remote_addr),
+            ib_engine_pool_main_get(ib),
+            ib_engine_var_config_get(ib),
+            IB_S2SL("remote_addr")
+        );
+        if (rc != IB_OK) {
+            ib_log_error(ib,
+                         "Error acquiring source for remote_addr"
+                          " header: %s",
+                         ib_status_to_string(rc));
+            return rc;
+        }
     }
 
     return IB_OK;
@@ -719,7 +845,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Register the user agent callback */
     rc = ib_hook_tx_register(ib, request_header_finished_event,
                              modua_user_agent,
-                             NULL);
+                             m);
     if (rc != IB_OK) {
         ib_log_error(ib, "Hook register returned %s", ib_status_to_string(rc));
     }
@@ -727,7 +853,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Register the remote address callback */
     rc = ib_hook_tx_register(ib, request_header_finished_event,
                              modua_remoteip,
-                             NULL);
+                             m);
     if (rc != IB_OK) {
         ib_log_error(ib, "Hook register returned %s", ib_status_to_string(rc));
     }
@@ -751,35 +877,54 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                  "Found %d match rules",
                  modua_match_ruleset->num_rules);
 
-    rc = ib_data_register_indexed(ib_engine_data_config_get(ib), "remote_addr");
-    if (rc != IB_OK) {
+    rc = ib_var_source_register(
+        NULL,
+        ib_engine_var_config_get(ib),
+        IB_S2SL("remote_addr"),
+        IB_PHASE_NONE, IB_PHASE_NONE
+    );
+    if (rc != IB_OK && rc != IB_EEXIST) {
         ib_log_warning(ib,
-            "User agent failed to register \"remote_addr\" as indexed: %s",
+            "User agent failed to register \"remote_addr\": %s",
             ib_status_to_string(rc)
         );
         /* Continue. */
     }
 
-    rc = ib_data_register_indexed(ib_engine_data_config_get(ib), "UA");
+    rc = ib_var_source_register(
+        NULL,
+        ib_engine_var_config_get(ib),
+        IB_S2SL("UA"),
+        IB_PHASE_NONE, IB_PHASE_NONE
+    );
     if (rc != IB_OK) {
         ib_log_warning(ib,
-            "User agent failed to register \"UA\" as indexed: %s",
+            "User agent failed to register \"UA\": %s",
             ib_status_to_string(rc)
         );
         /* Continue. */
+    }
+
+    rc = ib_hook_context_register(ib, context_close_event,
+                                  modua_ctx_close, m);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Could not register context close hook: %s",
+                     ib_status_to_string(rc));
+        return rc;
     }
 
     return IB_OK;
 }
 
 IB_MODULE_INIT(
-    IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
-    MODULE_NAME_STR,                /* Module name */
-    IB_MODULE_CONFIG_NULL,          /* Global config data */
-    NULL,                           /* Module config map */
-    NULL,                           /* Module directive map */
-    modua_init,                     /* Initialize function */
-    NULL,                           /* Callback data */
-    NULL,                           /* Finish function */
-    NULL,                           /* Callback data */
+    IB_MODULE_HEADER_DEFAULTS,         /* Default metadata */
+    MODULE_NAME_STR,                   /* Module name */
+    IB_MODULE_CONFIG(&c_modua_config), /* Global config data */
+    NULL,                              /* Module config map */
+    NULL,                              /* Module directive map */
+    modua_init,                        /* Initialize function */
+    NULL,                              /* Callback data */
+    NULL,                              /* Finish function */
+    NULL,                              /* Callback data */
 );
