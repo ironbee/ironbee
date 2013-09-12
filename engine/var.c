@@ -1639,10 +1639,16 @@ ib_status_t ib_var_expand_acquire(
     ib_var_expand_t *first;
     ib_var_expand_t **parent_next = &first;
     const char *suffix;
+    const char *local_str;
 
-    suffix = ib_mpool_memdup(mp, str, str_length);
-    while (suffix < str + str_length) {
-        size_t suffix_length = str_length - (suffix - str);
+    local_str = ib_mpool_memdup(mp, str, str_length);
+    if (local_str == NULL) {
+        return IB_EALLOC;
+    }
+
+    suffix = local_str;
+    while (suffix < local_str + str_length) {
+        size_t suffix_length = str_length - (suffix - local_str);
         const char *a;
         const char *b;
         ib_var_expand_t *current;
