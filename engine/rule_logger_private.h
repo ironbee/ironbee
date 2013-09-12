@@ -302,12 +302,14 @@ ib_status_t ib_rule_log_exec_set_tgt_final(
 /**
  * Add a stream target result to a rule execution log
  *
+ * @param[in] ib Engine
  * @param[in,out] exec_log The execution logging object
  * @param[in] field Value passed to the operator
  *
  * @returns IB_OK on success
  */
 ib_status_t ib_rule_log_exec_add_stream_tgt(
+    ib_engine_t                *ib,
     ib_rule_log_exec_t         *exec_log,
     const ib_field_t           *field);
 

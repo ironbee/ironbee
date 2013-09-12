@@ -54,14 +54,13 @@ typedef struct {
     const char            *id;              /**< Rule ID */
     const char            *full_id;         /**< Rule's "full" ID */
     const char            *chain_id;        /**< Rule's chain ID */
-    const char            *msg;             /**< Rule message */
-    const char            *data;            /**< Rule logdata */
+    ib_var_expand_t       *msg;             /**< Rule message */
+    ib_var_expand_t       *data;            /**< Rule logdata */
     ib_list_t             *tags;            /**< Rule tags */
     ib_rule_phase_num_t    phase;           /**< Phase number */
     uint8_t                severity;        /**< Rule severity */
     uint8_t                confidence;      /**< Rule confidence */
     uint16_t               revision;        /**< Rule revision # */
-    ib_flags_t             flags;           /**< Rule meta-data flags */
     const char            *config_file;     /**< File rule defined in */
     unsigned int           config_line;     /**< Line number of rule def */
 } ib_rule_meta_t;
@@ -83,7 +82,7 @@ struct ib_rule_t {
     ib_rule_meta_t         meta;            /**< Rule meta data */
     const ib_rule_phase_meta_t *phase_meta; /**< Phase meta data */
     ib_rule_operator_inst_t *opinst;          /**< Rule operator */
-    ib_list_t             *target_fields;   /**< List of target fields */
+    ib_list_t             *target_fields;   /**< List of targets */
     ib_list_t             *true_actions;    /**< Actions if condition True */
     ib_list_t             *false_actions;   /**< Actions if condition False */
     ib_list_t             *aux_actions;     /**< Auxilary actions */
@@ -681,7 +680,6 @@ bool DLL_PUBLIC ib_rule_tag_match(
  *
  * @param[in] ib IronBee engine
  * @param[in] str Target string
- * @param[in] name Target name
  * @param[in] tfn_names List of transformations to add (or NULL)
  * @param[in,out] target Pointer to new target
  * @param[in] tfns_not_found Count of tfns names with no registered tfn
@@ -691,7 +689,6 @@ bool DLL_PUBLIC ib_rule_tag_match(
 ib_status_t DLL_PUBLIC ib_rule_create_target(
     ib_engine_t                *ib,
     const char                 *str,
-    const char                 *name,
     ib_list_t                  *tfn_names,
     ib_rule_target_t          **target,
     int                        *tfns_not_found);

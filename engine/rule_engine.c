@@ -1219,7 +1219,10 @@ static void clear_target_fields(ib_rule_exec_t *rule_exec)
 {
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
-    assert(rule_exec->tx->data != NULL);
+    assert(rule_exec->tx->var_store != NULL);
+
+    const ib_rule_engine_t *re = rule_exec->ib->rule_engine;
+    ib_var_store_t *var_store = rule_exec->tx->var_store;
 
     /* Destroy FIELD targets */
     if (! ib_flags_any(rule_exec->rule->flags, IB_RULE_FLAG_FIELDS)) {
@@ -1228,11 +1231,11 @@ static void clear_target_fields(ib_rule_exec_t *rule_exec)
 
     ib_rule_log_trace(rule_exec, "Destroying target fields");
 
-    ib_data_remove(rule_exec->tx->data, "FIELD", NULL);
-    ib_data_remove(rule_exec->tx->data, "FIELD_TARGET", NULL);
-    ib_data_remove(rule_exec->tx->data, "FIELD_TFN", NULL);
-    ib_data_remove(rule_exec->tx->data, "FIELD_NAME", NULL);
-    ib_data_remove(rule_exec->tx->data, "FIELD_NAME_FULL", NULL);
+    ib_var_source_set(re->source.field, var_store, NULL);
+    ib_var_source_set(re->source.field_target, var_store, NULL);
+    ib_var_source_set(re->source.field_tfn, var_store, NULL);
+    ib_var_source_set(re->source.field_name, var_store, NULL);
+    ib_var_source_set(re->source.field_name_full, var_store, NULL);
 
     return;
 }
@@ -1247,28 +1250,29 @@ static void clear_target_fields(ib_rule_exec_t *rule_exec)
  * caller should check to see if the resulting field is as they require it.
  *
  * @param[in] tx The transaction with the memory pool and data collection.
- * @param[in] field_name The name of the field to fetch or create.
+ * @param[in] source Source to fetch or create.
  * @param[out] field The field found or created.
  * @returns
  * - IB_OK On success.
  * - Other on field creation or data field adding errors.
  */
-static ib_status_t get_or_create_field(
-    ib_tx_t     *tx,
-    const char  *field_name,
-    ib_field_t **field
+static
+ib_status_t get_or_create_field(
+    ib_tx_t          *tx,
+    ib_var_source_t  *source,
+    ib_field_t      **field
 )
 {
     assert(tx != NULL);
     assert(tx->mp != NULL);
-    assert(tx->data != NULL);
-    assert(field_name != NULL);
+    assert(tx->var_store != NULL);
+    assert(source != NULL);
     assert(field != NULL);
 
     ib_status_t rc;
 
     /* Fetch field. */
-    rc = ib_data_get(tx->data, field_name, strlen(field_name), field);
+    rc = ib_var_source_get(source, field, tx->var_store);
     /* Success. */
     if (rc == IB_OK) {
         return IB_OK;
@@ -1282,8 +1286,7 @@ static ib_status_t get_or_create_field(
     rc = ib_field_create(
         field,
         tx->mp,
-        field_name,
-        strlen(field_name),
+        "", 0, /* name will be set by ib_var_source_set() */
         IB_FTYPE_GENERIC,
         NULL);
     if (rc != IB_OK) {
@@ -1291,7 +1294,7 @@ static ib_status_t get_or_create_field(
     }
 
     /* Add that field to the data collection. */
-    rc = ib_data_add(tx->data, *field);
+    rc = ib_var_source_set(source, tx->var_store, *field);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1312,7 +1315,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
 {
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
-    assert(rule_exec->tx->data != NULL);
+    assert(rule_exec->tx->var_store != NULL);
     assert(rule_exec->value_stack != NULL);
 
     ib_status_t           rc = IB_OK;
@@ -1327,6 +1330,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     int                   names;               /* FIELD_NAME_FULL tmp value. */
     int                   n;                   /* FIELD_NAME_FULL tmp value. */
     char                 *name;                /* FIELD_NAME_FULL tmp value. */
+    const ib_rule_engine_t *re = rule_exec->ib->rule_engine;
 
     if (! ib_flags_any(rule_exec->rule->flags, IB_RULE_FLAG_FIELDS)) {
         ib_rule_log_trace(rule_exec, "Not setting target fields");
@@ -1341,7 +1345,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     }
 
     /* Get or create all fields. */
-    trc = get_or_create_field(tx, "FIELD", &fld_field);
+    trc = get_or_create_field(tx, re->source.field, &fld_field);
     if (trc != IB_OK) {
         ib_rule_log_error(
             rule_exec,
@@ -1357,7 +1361,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     /* Create FIELD_TFN */
     if (transformed != NULL) {
         ib_field_t *fld_field_tfn; /* The field FIELD_TFN. */
-        trc = get_or_create_field(tx, "FIELD_TFN", &fld_field_tfn);
+        trc = get_or_create_field(tx, re->source.field_tfn, &fld_field_tfn);
         if (trc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Failed to create FIELD_TFN: %s",
@@ -1374,7 +1378,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     if (rule_exec->target != NULL) {
         ib_field_t *fld_field_target; /* The field FIELD_TARGET. */
 
-        trc = get_or_create_field(tx, "FIELD_TARGET", &fld_field_target);
+        trc = get_or_create_field(tx, re->source.field_target, &fld_field_target);
         if (trc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Failed to create FIELD_TARGET: %s",
@@ -1396,7 +1400,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     }
 
     /* Create FIELD_NAME */
-    trc = get_or_create_field(tx, "FIELD_NAME", &fld_field_name);
+    trc = get_or_create_field(tx, re->source.field_name, &fld_field_name);
     if (trc != IB_OK) {
         ib_rule_log_error(rule_exec,
                           "Failed to create FIELD_NAME: %s",
@@ -1470,7 +1474,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     }
 
     /* Step 3: Update the FIELD_NAME_FULL field. */
-    trc = get_or_create_field(tx, "FIELD_NAME_FULL", &fld_field_name_full);
+    trc = get_or_create_field(tx, re->source.field_name_full, &fld_field_name_full);
     if (trc != IB_OK) {
         ib_rule_log_error(
             rule_exec,
@@ -1505,9 +1509,9 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
 
     if ( value == NULL ) {
         ib_rule_log_trace(rule_exec,
-                          "Exec of op %s on field %s = NULL",
+                          "Exec of op %s on target %s = NULL",
                           ib_operator_get_name(opinst->op),
-                          target->field_name);
+                          target->target_str);
     }
     else if (value->type == IB_FTYPE_NUM) {
         ib_num_t num;
@@ -1516,9 +1520,9 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
             return;
         }
         ib_rule_log_trace(rule_exec,
-                          "Exec of op %s on field %s = %" PRId64,
+                          "Exec of op %s on target %s = %" PRId64,
                           ib_operator_get_name(opinst->op),
-                          target->field_name,
+                          target->target_str,
                           num);
     }
     else if (value->type == IB_FTYPE_NULSTR) {
@@ -1538,9 +1542,9 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
         }
 
         ib_rule_log_trace(rule_exec,
-                          "Exec of op %s on field %s = %s",
+                          "Exec of op %s on target %s = %s",
                           ib_operator_get_name(opinst->op),
-                          target->field_name,
+                          target->target_str,
                           escaped);
     }
     else if (value->type == IB_FTYPE_BYTESTR) {
@@ -1559,16 +1563,16 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
             return;
         }
         ib_rule_log_trace(rule_exec,
-                          "Exec of op %s on field %s = %s",
+                          "Exec of op %s on target %s = %s",
                           ib_operator_get_name(opinst->op),
-                          target->field_name,
+                          target->target_str,
                           escaped);
     }
     else {
         ib_rule_log_trace(rule_exec,
-                          "Exec of op %s on field %s = %s",
+                          "Exec of op %s on target %s = %s",
                           ib_operator_get_name(opinst->op),
-                          target->field_name,
+                          target->target_str,
                           "[cannot decode field type]");
     }
 }
@@ -1767,22 +1771,29 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
     IB_LIST_LOOP(rule->target_fields, node) {
         ib_rule_target_t   *target = (ib_rule_target_t *)node->data;
         assert(target != NULL);
-        const char         *fname = target->field_name;
-        assert(fname != NULL);
+        ib_list_t          *result = NULL;
         ib_field_t         *value = NULL;      /* Value from the DPI */
         const ib_field_t   *tfnvalue = NULL;   /* Value after tfns */
-        ib_status_t         getrc;             /* Status from ib_data_get() */
+        ib_status_t         getrc;
         bool                pushed = true;
 
         /* Set the target in the rule execution object */
         rule_exec_set_target(rule_exec, target);
 
         /* Get the field value */
-        if (target->is_indexed) {
-            getrc = ib_data_get_indexed(tx->data, target->index, &value);
+        /* The const cast below is unfortunate, but we currently don't have a
+         * good way of expressing const-list-fields.  The list will not be
+         * modified below. */
+        if (target->target == NULL) {
+            getrc = IB_ENOENT;
         }
         else {
-            getrc = ib_data_get(tx->data, fname, strlen(fname), &value);
+            getrc = ib_var_target_get(
+                target->target,
+                (const ib_list_t **)(&result),
+                tx->mp,
+                tx->var_store
+            );
         }
         if (getrc == IB_ENOENT) {
             bool allow = ib_flags_all(
@@ -1793,24 +1804,47 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
             if (! allow) {
                 ib_rule_log_debug(rule_exec,
                                   "Operator %s will not execute because "
-                                  "there is no field %s.",
+                                  "there is no target %s.",
                                   ib_operator_get_name(opinst->op),
-                                  fname);
+                                  target->target_str);
                 ib_rule_log_exec_add_target(rule_exec->exec_log, target, NULL);
                 continue;
             }
 
             ib_rule_log_debug(rule_exec,
                               "Operator %s receiving null argument because "
-                              "there is no field %s.",
+                              "there is no target %s.",
                               ib_operator_get_name(opinst->op),
-                              fname);
+                              target->target_str);
         }
         else if (getrc != IB_OK) {
             ib_rule_log_error(rule_exec, "Error getting target field: %s",
                               ib_status_to_string(rc));
             ib_rule_log_exec_add_target(rule_exec->exec_log, target, NULL);
             continue;
+        }
+
+        if (result != NULL) {
+            /* If list has one element, pull out into value.  Otherwise,
+             * wrap in a list field. */
+            if (ib_list_elements(result) == 1) {
+                value = (ib_field_t *)ib_list_node_data(ib_list_first(result));
+            }
+            else {
+                rc = ib_field_create(
+                    &value,
+                    tx->mp,
+                    IB_S2SL("rule_target_results"),
+                    IB_FTYPE_LIST,
+                    ib_ftype_list_in(result)
+                );
+                if (rc != IB_OK) {
+                    ib_rule_log_error(rule_exec, "Failed to wrap results: %s",
+                                      ib_status_to_string(rc));
+                    continue;
+                }
+            }
+            assert(value != NULL);
         }
 
         /* Add the target to the log object */
@@ -1849,9 +1883,9 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
                 ib_rule_log_trace(rule_exec,
                                   "Rule not running because there are no "
                                   "values for operator %s "
-                                  "to operate on in field %s.",
+                                  "to operate on in target %s.",
                                   ib_operator_get_name(opinst->op),
-                                  fname);
+                                  target->target_str);
             }
 
             /* Run operations on each list element. */
@@ -2391,7 +2425,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     ib_status_t      op_rc;
 
     /* Add a target execution result to the log object */
-    ib_rule_log_exec_add_stream_tgt(rule_exec->exec_log, value);
+    ib_rule_log_exec_add_stream_tgt(rule_exec->ib, rule_exec->exec_log, value);
 
     /* Fill in the FIELD* fields */
     rc = set_target_fields(rule_exec, value);
@@ -3696,6 +3730,39 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
                      ib_context_full_get(ctx));
     }
 
+    /* Initialize var sources */
+    {
+        ib_rule_engine_t *re = ib->rule_engine;
+        const ib_var_config_t *config =  ib_engine_var_config_get(ib);
+        ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+
+/* Helper Macro */
+#define RE_SOURCE(name, src) \
+    { \
+        ib_var_source_t *temp; \
+        rc = ib_var_source_acquire( \
+            &temp, mp, config, IB_S2SL((name)) \
+        ); \
+        if (rc != IB_OK) { \
+            ib_log_error(ib, \
+                "Failed to acquire var source: %s: %s", \
+                (name), ib_status_to_string(rc) \
+            ); \
+            return rc; \
+        } \
+        re->source.src = temp; \
+    }
+/* End Helper Macro */
+
+        RE_SOURCE("FIELD",           field);
+        RE_SOURCE("FIELD_TARGET",    field_target);
+        RE_SOURCE("FIELD_TFN",       field_tfn);
+        RE_SOURCE("FIELD_NAME",      field_name);
+        RE_SOURCE("FIELD_NAME_FULL", field_name_full);
+
+#undef RE_SOURCE
+    }
+
     ib_rule_log_flags_dump(ib, ctx);
 
     return IB_OK;
@@ -3726,7 +3793,7 @@ static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
 
     /* Late registration of the context close event */
     if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
-        ib_data_config_t *config;
+        ib_var_config_t *config;
 
         rc = ib_hook_context_register(ib, context_close_event,
                                       rule_engine_ctx_close, NULL);
@@ -3734,11 +3801,11 @@ static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
             return rc;
         }
 
-        /* Register indexed fields.  Do this here instead of at init to avoid
+        /* Register indexed vars.  Do this here instead of at init to avoid
          * requiring that the data subsystem be initialized before the
          * rule subsystem.
          */
-        config = ib_engine_data_config_get(ib);
+        config = ib_engine_var_config_get(ib);
         assert(config != NULL);
         for (
             const char **key = indexed_keys;
@@ -3746,7 +3813,12 @@ static ib_status_t rule_engine_ctx_open(ib_engine_t *ib,
             ++key
         )
         {
-            rc = ib_data_register_indexed(config, *key);
+            rc = ib_var_source_register(
+                NULL,
+                config,
+                IB_S2SL(*key),
+                IB_PHASE_NONE, IB_PHASE_NONE
+            );
             if (rc != IB_OK) {
                 ib_log_warning(ib,
                     "Rule engine failed to register \"%s\" as indexed: %s",
@@ -4337,9 +4409,8 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         if (tgt == NULL) {
             return IB_EALLOC;
         }
-        tgt->field_name = "NULL";
+        tgt->target = NULL;
         tgt->target_str = "NULL";
-        tgt->is_indexed = false;
         rc = ib_list_create(&(tgt->tfn_list), ib_rule_mpool(ib));
         if (rc != IB_OK) {
             return rc;
@@ -4846,57 +4917,39 @@ bool ib_rule_tag_match(const ib_rule_t *rule,
 
 ib_status_t ib_rule_create_target(ib_engine_t *ib,
                                   const char *str,
-                                  const char *name,
                                   ib_list_t *tfn_names,
                                   ib_rule_target_t **target,
                                   int *tfns_not_found)
 {
     ib_status_t rc;
-    size_t index;
+    const char *error_message = NULL;
+    int error_offset;
 
     assert(ib != NULL);
     assert(target != NULL);
-
-    /* Basic checks */
-    if (name == NULL) {
-        ib_log_error(ib,
-                     "Cannot add rule target: Invalid rule or target");
-        return IB_EINVAL;
-    }
 
     /* Allocate a rule field structure */
     *target = (ib_rule_target_t *)
         ib_mpool_calloc(ib_rule_mpool(ib), sizeof(**target), 1);
     if (*target == NULL) {
         ib_log_error(ib,
-                     "Error allocating rule target object \"%s\"", name);
+                     "Error allocating rule target object \"%s\"", str);
         return IB_EALLOC;
     }
 
-    /* Copy the name */
-    (*target)->field_name = (char *)ib_mpool_strdup(ib_rule_mpool(ib), name);
-    if ((*target)->field_name == NULL) {
-        ib_log_error(ib, "Error copying target field name \"%s\"", name);
-        return IB_EALLOC;
-    }
-
-    /* Check for index. */
-    rc = ib_data_lookup_index(
-        ib_engine_data_config_get_const(ib),
-        name,
-        &index
+    /* Acquire target. */
+    rc = ib_var_target_acquire_from_string(
+        &(*target)->target,
+        ib_rule_mpool(ib),
+        ib_engine_var_config_get_const(ib),
+        IB_S2SL(str),
+        &error_message, &error_offset
     );
-    if (rc == IB_ENOENT) {
-        (*target)->is_indexed = false;
-        (*target)->index      = 0;
-    }
-    else if (rc == IB_OK) {
-        (*target)->is_indexed = true;
-        (*target)->index      = index;
-    }
-    else {
-        ib_log_error(ib, "Error looking up target index for \"%s\": %s",
-                     name, ib_status_to_string(rc));
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Error acquiring target \"%s\": %s (%s, %d)",
+                     str, ib_status_to_string(rc),
+                     (error_message != NULL ? error_message : "NA"),
+                     (error_message != NULL ? error_offset : 0));
         return IB_EOTHER;
     }
 
@@ -4918,7 +4971,7 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error creating field operator list for target \"%s\": %s",
-                     name, ib_status_to_string(rc));
+                     str, ib_status_to_string(rc));
         return rc;
     }
 
@@ -4964,7 +5017,7 @@ ib_status_t ib_rule_add_target(ib_engine_t *ib,
     rc = ib_list_push(rule->target_fields, (void *)target);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to add target \"%s\" to rule \"%s\": %s",
-                     target->field_name, rule->meta.id,
+                     target->target_str, rule->meta.id,
                      ib_status_to_string(rc));
         return rc;
     }
@@ -4993,7 +5046,7 @@ ib_status_t ib_rule_target_add_tfn(ib_engine_t *ib,
     else if (rc != IB_OK) {
         ib_log_error(ib,
                      "Error looking up trans \"%s\" for target \"%s\": %s",
-                     name, target->field_name, ib_status_to_string(rc));
+                     name, target->target_str, ib_status_to_string(rc));
         return rc;
     }
 
@@ -5043,7 +5096,7 @@ ib_status_t ib_rule_add_tfn(ib_engine_t *ib,
             ib_log_notice(ib,
                           "Error adding tfn \"%s\" to target \"%s\" "
                           "rule \"%s\"",
-                          name, target->field_name, rule->meta.id);
+                          name, target->target_str, rule->meta.id);
         }
     }
 

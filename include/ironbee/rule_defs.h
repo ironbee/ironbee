@@ -100,13 +100,6 @@ typedef enum {
 #define IB_RULE_EXEC_FATAL    (1 << 0)  /**< Fatal error in rule exec. */
 
 /**
- * Rule meta-data flags
- */
-#define IB_RULEMD_FLAG_NONE        (0x0)     /**< No flags */
-#define IB_RULEMD_FLAG_EXPAND_MSG  (1 << 0)  /**< Expand rule message */
-#define IB_RULEMD_FLAG_EXPAND_DATA (1 << 1)  /**< Expand rule logdata */
-
-/**
  * Rule context flags
  */
 #define IB_RULECTX_FLAG_NONE          (0x0)  /**< No flags */

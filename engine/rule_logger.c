@@ -31,6 +31,7 @@
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/core.h>
+#include <ironbee/context.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
@@ -329,7 +330,7 @@ ib_flags_t ib_rule_log_flags(const ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
-    
+
     rc = ib_core_context_config(ctx, &corecfg);
     if (rc != IB_OK) {
         /* Don't crash / assert if logging fails. Try to recover. */
@@ -342,7 +343,7 @@ ib_log_level_t ib_rule_log_level(const ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
-    
+
     rc = ib_core_context_config(ctx, &corecfg);
     if (rc != IB_OK) {
         /* Don't crash / assert if logging fails. Try to recover. */
@@ -356,7 +357,7 @@ ib_rule_dlog_level_t ib_rule_dlog_level(const ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
-    
+
     rc = ib_core_context_config(ctx, &corecfg);
     if (rc != IB_OK) {
         /* Don't crash / assert if logging fails. Try to recover. */
@@ -554,7 +555,8 @@ ib_status_t ib_rule_log_exec_set_tgt_final(ib_rule_log_exec_t *exec_log,
     return IB_OK;
 }
 
-ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *exec_log,
+ib_status_t ib_rule_log_exec_add_stream_tgt(ib_engine_t *ib,
+                                            ib_rule_log_exec_t *exec_log,
                                             const ib_field_t *field)
 {
     ib_status_t rc = IB_OK;
@@ -580,9 +582,20 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *exec_log,
     }
     strncpy(fname, field->name, field->nlen);
     *(fname + field->nlen) = '\0';
-    target->field_name = fname;
+    target->target_str = fname;
+
+    rc = ib_var_target_acquire_from_string(
+        &target->target,
+        exec_log->tx_log->mp,
+        ib_engine_var_config_get(ib),
+        field->name, field->nlen,
+        NULL, NULL
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     target->tfn_list = NULL;
-    target->target_str = NULL;
 
     rc = ib_rule_log_exec_add_target(exec_log, target, field);
     if (rc != IB_OK) {
@@ -1147,7 +1160,7 @@ void ib_rule_log_phase(
             if
             (
                 /* Log if we are not in post processing or logging phases. */
-                ((!is_postprocess) && (!is_logging)) || 
+                ((!is_postprocess) && (!is_logging)) ||
 
                 /* If we are in post processing or logging, do not
                  * log empty transactions. */
@@ -1532,7 +1545,7 @@ void ib_rule_log_execution(
                 if ( (tgt->original == NULL) && (allow_null == false) ) {
                     rule_log_exec(rule_exec,
                                   "TARGET %s NOT_FOUND",
-                                  tgt->target->field_name);
+                                  tgt->target->target_str);
                 }
             }
 

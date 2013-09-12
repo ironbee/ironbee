@@ -105,7 +105,6 @@ static ib_status_t create_fn(ib_engine_t *ib,
 /* "store" action execute function, adds rule to m_actions list */
 static ib_status_t store_fn(const ib_rule_exec_t *rule_exec,
                             void *data,
-                            ib_flags_t flags,
                             void *cbdata)
 {
     RuleInjectTest *p = static_cast<RuleInjectTest *>(cbdata);
@@ -170,14 +169,12 @@ TEST_F(RuleInjectTest, test_inject)
 
     // Register the inject action and related rule engine callbacks
     rc = ib_action_register(ib_engine, name,
-                            IB_ACT_FLAG_NONE,
                             create_fn, this,
                             NULL, NULL,
                             NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_action_register(ib_engine, "store",
-                            IB_ACT_FLAG_NONE,
                             NULL, NULL,
                             NULL, NULL,
                             store_fn, this);

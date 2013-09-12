@@ -84,11 +84,9 @@ struct ib_rule_context_t {
  * Rule target fields
  */
 struct ib_rule_target_t {
-    const char            *field_name; /**< The field name */
-    bool                   is_indexed; /**< Is the field indexed? */
-    size_t                 index;      /**< Index if field; if is_indexed */
-    const char            *target_str; /**< The target string */
-    ib_list_t             *tfn_list;   /**< List of transformations */
+    ib_var_target_t *target;
+    const char      *target_str; /**< The target string */
+    ib_list_t       *tfn_list;   /**< List of transformations */
 };
 
 /**
@@ -100,6 +98,15 @@ struct ib_rule_engine_t {
     ib_hash_t            *external_drivers; /**< Drivers for external rules. */
     ib_list_t            *ownership_cbs;   /**< List of ownership callbacks */
     ib_list_t *injection_cbs[IB_RULE_PHASE_COUNT]; /**< Rule injection callbacks*/
+
+    /* Var Sources */
+    struct {
+        ib_var_source_t *field;
+        ib_var_source_t *field_target;
+        ib_var_source_t *field_tfn;
+        ib_var_source_t *field_name;
+        ib_var_source_t *field_name_full;
+    } source;
 };
 
 /**
