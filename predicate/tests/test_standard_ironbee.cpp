@@ -27,6 +27,7 @@
 #include <predicate/reporter.hpp>
 
 #include <ironbee/rule_engine.h>
+#include <ironbee/string.h>
 
 using namespace IronBee::Predicate;
 using namespace std;
@@ -38,12 +39,29 @@ class TestStandardIronBee :
 
 TEST_F(TestStandardIronBee, field)
 {
-    uint8_t data[4] = {'t', 'e', 's', 't'};
-    ib_status_t rc = ib_data_add_bytestr(
-        m_transaction.ib()->data,
-        "TestStandard.Field",
-        data, 4,
-        NULL
+    const char *data = "test";
+    ib_status_t rc;
+    ib_var_source_t *source;
+
+    rc = ib_var_source_acquire(
+        &source,
+        m_transaction.memory_pool().ib(),
+        ib_engine_var_config_get(m_transaction.engine().ib()),
+        IB_S2SL("TestStandard.Field")
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_var_source_set(
+        source,
+        m_transaction.ib()->var_store,
+        IronBee::Field::create_byte_string(
+            m_transaction.memory_pool(),
+            "", 0,
+            IronBee::ByteString::create(
+                m_transaction.memory_pool(),
+                data, 4
+            )
+        ).ib()
     );
     EXPECT_EQ(IB_OK, rc);
 

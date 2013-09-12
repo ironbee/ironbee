@@ -39,9 +39,9 @@ namespace IronBee {
 namespace Predicate {
 namespace Standard {
 
-struct Field::data_t {
-    bool   is_indexed;
-    size_t index;
+struct Field::data_t
+{
+    ib_var_source_t *source;
 };
 
 Field::Field() :
@@ -66,40 +66,27 @@ bool Field::validate(NodeReporter reporter) const
 
 void Field::pre_eval(Environment environment, NodeReporter reporter)
 {
-    const ib_data_config_t* config;
-    ib_status_t rc;
-    size_t i;
+    const ib_var_config_t* config;
 
-    config = ib_engine_data_config_get_const(environment.ib());
+    config = ib_engine_var_config_get_const(environment.ib());
     assert(config != NULL);
 
     // Key must be static.
     Value key_field = literal_value(children().front());
     IronBee::ConstByteString key = key_field.value_as_byte_string();
 
-    rc = ib_data_lookup_index_ex(
-        config,
-        key.const_data(), key.size(),
-        &i
+    IronBee::throw_if_error(
+        ib_var_source_acquire(
+            &(m_data->source),
+            environment.main_memory_pool().ib(),
+            config,
+            key.const_data(), key.length()
+        )
     );
-
-    if (rc == IB_ENOENT) {
-        /* Not an indexed field. */
-        m_data->is_indexed = false;
-    }
-    else if (rc == IB_OK) {
-        m_data->is_indexed = true;
-        m_data->index = i;
-    }
-    else {
-        IronBee::throw_if_error(rc);
-    }
 }
 
 void Field::calculate(EvalContext context)
 {
-    Value key_field = literal_value(children().front());
-    IronBee::ConstByteString key = key_field.value_as_byte_string();
     ib_field_t* data_field;
     ib_status_t rc;
 
@@ -107,28 +94,17 @@ void Field::calculate(EvalContext context)
         return;
     }
 
-    if (m_data->is_indexed) {
-        IronBee::throw_if_error(
-            ib_data_get_indexed(
-                context.ib()->data,
-                m_data->index,
-                &data_field
-            )
-        );
+    rc = ib_var_source_get(
+        m_data->source,
+        &data_field,
+        context.ib()->var_store
+    );
+    if (rc == IB_ENOENT) {
+        finish();
+        return;
     }
     else {
-        rc = ib_data_get(
-            context.ib()->data,
-            key.const_data(), key.size(),
-            &data_field
-        );
-        if (rc == IB_ENOENT) {
-            finish();
-            return;
-        }
-        else {
-            IronBee::throw_if_error(rc);
-        }
+        IronBee::throw_if_error(rc);
     }
 
     Value value(data_field);

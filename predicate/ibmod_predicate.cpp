@@ -628,7 +628,6 @@ Delegate::Delegate(IB::Module module) :
         ib_action_register(
             module.engine().ib(),
             c_predicate_action,
-            IB_ACT_FLAG_NONE,
             action_create.first, action_create.second,
             NULL, NULL,
             NULL, NULL
