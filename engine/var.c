@@ -130,7 +130,7 @@ struct ib_var_target_t
      * Filter.  May be NULL.
      *
      * If @ref expand and @ref filter are null, then this is a trivial target
-     * and the resutl is the source being wrapped in a list of size 1.
+     * and the result is the source being wrapped in a list of size 1.
      **/
     const ib_var_filter_t *filter;
 };
@@ -849,7 +849,7 @@ ib_status_t ib_var_filter_apply(
         const ib_list_node_t *node;
 
         rc = ib_field_value(field, ib_ftype_list_out(&answer));
-        /* Can only fail on dyanmic field. */
+        /* Can only fail on dynamic field. */
         assert(rc == IB_OK);
         IB_LIST_LOOP_CONST(answer, node) {
             const ib_field_t *f =
@@ -929,7 +929,7 @@ ib_status_t ib_var_filter_remove(
     }
 
     rc = ib_field_value(field, ib_ftype_list_mutable_out(&field_list));
-    /* Can only fail on dyanmic field. */
+    /* Can only fail on dynamic field. */
     IB_LIST_LOOP_SAFE(field_list, node, next_node) {
         ib_field_t *f = (ib_field_t *)ib_list_node_data(node);
         if (

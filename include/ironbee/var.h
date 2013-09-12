@@ -44,7 +44,7 @@ extern "C" {
  * - @ref ib_var_config_t -- Configuration.  A set of var sources.
  * - @ref ib_var_store_t  -- Store.  A mapping of sources to values.
  * - @ref ib_var_source_t -- Source.  A name and associated metadata.
- * - @ref ib_var_filter_t -- Filter.  A description of which subkey to fetch
+ * - @ref ib_var_filter_t -- Filter.  A description of which subkey to get
  *   from a field.
  * - @ref ib_var_target_t -- Target.  A var source and filter (possibly
  *   empty).
@@ -62,7 +62,7 @@ extern "C" {
  *   specification strings.
  * - @c ib_var_target -- Acquire and apply targets; parse target specification
  *   strings.
- * - @c ib_var_expand -- Expand strings containing embeded target references.
+ * - @c ib_var_expand -- Expand strings containing embedded target references.
  *
  * **Pre-Computation:**
  *
@@ -77,12 +77,7 @@ extern "C" {
  *
  * **Performance:**
  *
- * A *slow* function has runtime that grows with the length of the source name
- * and/or the number of registered var sources.
- *
- * A *fast* function has constant runtime.
- *
- * Generally, acquisition is *slow* but use of an acquired object is *fast*.
+ * Generally, acquisition is slow but use of an acquired object is fast.
  *
  * @{
  */
@@ -98,8 +93,8 @@ typedef struct ib_var_config_t ib_var_config_t;
  * A source of var in an @ref ib_var_store_t.
  *
  * From the purposes of getting and setting values, a var source is
- * semantically equivalent to its name.  The main advantage gained from the
- * strucutre is the ability to *get* in constant time (sets remain slow).
+ * semantically equivalent to its name.  The main advantage gained from a
+ * source is the ability to *get* in constant time (sets remain slow).
  *
  * The other purpose of a var source is to associate metavar with a var
  * source.  At present, the metavar is the initial phase the source takes a
@@ -112,9 +107,9 @@ typedef struct ib_var_source_t ib_var_source_t;
  *
  * A var store is associated with a var configuration and holds the values
  * for the sources in that configuration.  These values are held such that
- * indexe sources can get their value in constant time.
+ * indexed sources can get their value in constant time.
  *
- * A store has an assocaited memory pool which may be used to creating fields
+ * A store has an associated memory pool which may be used to creating fields
  * to use as values that have the same lifetime as the store.
  */
 typedef struct ib_var_store_t ib_var_store_t;
@@ -254,7 +249,8 @@ NONNULL_ATTRIBUTE(1, 2);
  * list.  Source that do not follow this advise will not work properly in
  * Predicate.
  *
- * This function is *slow*.
+ * This function should *only* be used at configuration time, never
+ * afterwards.
  *
  * @param[out] source        Source acquired.  Will have lifetime equal to
  *                           @a config.  May be NULL.
@@ -315,12 +311,13 @@ NONNULL_ATTRIBUTE(1);
 /**
  * Fetch the value of a source in a store.
  *
- * This function is *fast* if @a source is indexed and *slow* otherwise.  This
+ * This function is fast (small constant) if @a source is indexed and slow
+ * (grows with length of source name and number of sources) otherwise.  This
  * paragraph is the most important performance paragraph in this API.
  *
- * @param[in]  source Source to fetch value for.
- * @param[out] field  Value fetched.  May be NULL.
- * @param[in]  store  Store to fetch value from.
+ * @param[in]  source Source to get value for.
+ * @param[out] field  Where to store value.  May be NULL.
+ * @param[in]  store  Store to get value from.
  * @return
  * - IB_OK on success.
  * - IB_EINVAL if @a source is from a different var configuration than
@@ -357,7 +354,8 @@ ib_status_t DLL_PUBLIC ib_var_source_get_const(
  * @sa ib_var_source_initialize() for an easier way to create a field and
  * set a source to it.
  *
- * This function is *slow*.
+ * Unlike ib_var_source_get(), this function is slow; as slow as acquiring a
+ * source.
  *
  * @param[in] source Source to set value for.
  * @param[in] store  Store to set value in.
@@ -380,10 +378,11 @@ NONNULL_ATTRIBUTE(1, 2);
  *
  * If the name of the var source is known at configuration time, call this
  * then and store the var source somewhere.  For indexed var sources, this
- * will allow for get/set operations to execute in O(1) time.  If the name of
+ * will allow for get operations to execute in O(1) time.  If the name of
  * the var source is only known at evaluation time, then call this then.
  *
- * This function is *slow*.
+ * This function is slow, with time growing with with @a name_length and number of
+ * registered sources.
  *
  * @param[out] source      Looked up var source.  If @a indexed is false,
  *                         then this source has lifetime equal to @a mp.
@@ -419,8 +418,6 @@ NONNULL_ATTRIBUTE(3, 4);
  * nul string and byte string are initialized to empty strings, lists to
  * empty lists and sbuffers to result in an error.
  *
- * This function is *slow*.
- *
  * @param[in]  source Source to initialize.
  * @param[out] field  Field created; may be NULL.  Lifetime will be that of
  *                    @a store.
@@ -446,8 +443,6 @@ NONNULL_ATTRIBUTE(1, 3);
  *
  * This is a helper function which appends a field to a source of type list,
  * initializing it (ib_var_source_initialize()) if needed.
- *
- * This function is *slow*.
  *
  * @param[in] source Source to append to.
  * @param[in] field  Field to append.
@@ -493,7 +488,7 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  * Acquire a filter
  *
  * This function prepares a filter for later use.  At present, the primary
- * advantage of for regexp filters, but future filter functionality may also
+ * advantage is for regexp filters, but future filter functionality may also
  * take advantage of it.  As such, this should be called at configuration time
  * whenever possible.
  *
@@ -588,11 +583,12 @@ NONNULL_ATTRIBUTE(1, 4);
  *
  * Source and filter.
  *
- * A target is a source and a filter, possibly trivial.  It can be acquired
- * from such or prepared from a string.  At evaluation time, it can be
- * be used to get a list of fields.  As such, it provides an abstraction,
- * turning a user specification of a target into appropriate fields to act
- * on while hiding details such as the presence of a filter.
+ * A target is a source and a filter, possibly trivia, or an expand to
+ * construct a filter from.  It can be acquired from such or prepared from a
+ * string.  At evaluation time, it can be be used to get a list of fields.
+ * As such, it provides an abstraction, turning a user specification of a
+ * target into appropriate fields to act on while hiding details such as the
+ * presence of a filter.
  *
  * There are four categories of targets:
  *
@@ -601,27 +597,27 @@ NONNULL_ATTRIBUTE(1, 4);
  *   named `bar`.
  * - Regexp, e.g., `foo:/bar/`, which evaluates to all members of the var
  *   `foo` whose name matches the regexp `bar`.
- * - Expanded, e.g., `foo:%{bar}`, which replaces `%{bar}` and then interprets
+ * - Expand, e.g., `foo:%{bar}`, which replaces `%{bar}` and then interprets
  *   the result as a simple target.  This form is fundamentally slower than
- *   the others as the target is reevaluated at execution time.  Also note
+ *   the others as the target is reevaluated at execution time.  Note
  *   that only simple targets can result, not trivial or regexp.  Finally,
- *   note that the expansion can be complex, e.g., `foo:x-%{bar:%{baz}}`.
+ *   note that the expansion can be nested, e.g., `foo:x-%{bar:%{baz}}`.
  *
  * @{
  **/
 
 /**
- * Acquire a target from a source and a filter.
+ * Acquire a target from a source and an expand or filter.
  *
  * @sa ib_var_target_acquire()
  *
  * @param[out] target Created target.  Lifetime will be equal to @a mp.
  * @param[in]  mp     Memory pool to use for allocations.
- * @param[in]  source Source to fetch field from.
- * @param[in]  expand Expand to use to lazilly generate filter.  May be
+ * @param[in]  source Source to get field from.
+ * @param[in]  expand Expand to use to lazily generate filter.  May be
  *                    NULL to use @a filter instead.
  * @param[in]  filter Filter to apply to field.  May be NULL to indicate
- *                    a trivial field.
+ *                    a trivial field.  Must be NULL if @a expand is not NULL.
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
@@ -640,8 +636,6 @@ NONNULL_ATTRIBUTE(1, 2, 3);
  *
  * A specification string is a source name, optionally followed by a :
  * and a filter string, i.e., `^[^:]+(:.+)?$`.
- *
- * @sa ib_var_target_split()
  *
  * @param[out] target               Created target.  Lifetime will be equal
  *                                  to @a mp.
@@ -683,7 +677,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * will have lifetime equal to that field.  For all other results, the
  * lifetime will equal that of @a mp.
  *
- * @param[in]  target Target to fetch values of.
+ * @param[in]  target Target to get values of.
  * @param[out] result Fetched values.  Lifetime will vary.  See above.
  *                    Value is `ib_field_t *`.
  * @param[in]  mp     Memory pool to use for allocations.
@@ -719,7 +713,7 @@ ib_status_t DLL_PUBLIC ib_var_target_get_const(
 NONNULL_ATTRIBUTE(1, 2, 3, 4);
 
 /**
- * Remove entries descried by target.
+ * Remove entries described by target.
  *
  * This function behaves differently depending on the target type:
  *
@@ -729,7 +723,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * - Expand: As Simple, but with an expansion step.
  * - Regexp: Returns IB_EINVAL.
  *
- * @param[in]  target Target to fetch values of.
+ * @param[in]  target Target to get values of.
  * @param[out] result Removed values.  Lifetime will be equal to @a mp.  May
  *                    be NULL.
  * @param[in]  mp     Memory pool to use for allocations.  May be NULL if
@@ -758,7 +752,7 @@ NONNULL_ATTRIBUTE(1, 4);
  *
  * This function does the expansion of the target.  The result can then be
  * used multiple times without reincurring the cost of expansion.  However,
- * expansion fixes the expanded values.  As such, this routine sould only
+ * expansion fixes the expanded values.  As such, this routine should only
  * be used at evaluation time for targets that will be reused with no changes
  * to the store in between uses.
  *
@@ -809,7 +803,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * @param[in] target Target to set.
  * @param[in] mp     Memory pool to use.
  * @param[in] store  Store to use.
- * @param[in] field  Field to set value to.  Will have name overriden based on
+ * @param[in] field  Field to set value to.  Will have name overridden based on
  *                   filter.
  * @return
  * - IB_OK on success.
@@ -836,7 +830,7 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
  * @param[in] target Target to remove and set.
  * @param[in] mp     Memory pool to use.
  * @param[in] store  Store to use.
- * @param[in] field  Field to set value to.  Will have name overriden based on
+ * @param[in] field  Field to set value to.  Will have name overridden based on
  *                   filter.
  * @return
  * - As described in ib_var_target_remove() and ib_var_target_set().
@@ -926,7 +920,7 @@ ib_status_t DLL_PUBLIC ib_var_expand_execute(
 NONNULL_ATTRIBUTE(1, 2, 3, 4, 5);
 
 /**
- * Check if @a str has expasions.
+ * Check if @a str has expansions.
  *
  * This looks for a substring of the form `%{...}` for any `...`.
  *
