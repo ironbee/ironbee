@@ -1335,10 +1335,10 @@ finish:
 }
 
 ib_status_t ib_var_target_expand(
-    ib_var_target_t  *target,
-    ib_var_target_t **expanded,
-    ib_mpool_t       *mp,
-    ib_var_store_t   *store
+    ib_var_target_t       *target,
+    ib_var_target_t      **expanded,
+    ib_mpool_t            *mp,
+    const ib_var_store_t  *store
 )
 {
     assert(target   != NULL);
@@ -1379,7 +1379,7 @@ ib_status_t ib_var_target_expand_const(
     const ib_var_target_t  *target,
     const ib_var_target_t **expanded,
     ib_mpool_t             *mp,
-    ib_var_store_t         *store
+    const ib_var_store_t   *store
 )
 {
     assert(target   != NULL);

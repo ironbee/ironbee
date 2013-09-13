@@ -771,10 +771,10 @@ NONNULL_ATTRIBUTE(1, 4);
  * - IB_EALLOC on allocation failure.
  **/
 ib_status_t DLL_PUBLIC ib_var_target_expand(
-    ib_var_target_t  *target,
-    ib_var_target_t **expanded,
-    ib_mpool_t       *mp,
-    ib_var_store_t   *store
+    ib_var_target_t       *target,
+    ib_var_target_t      **expanded,
+    ib_mpool_t            *mp,
+    const ib_var_store_t  *store
 )
 NONNULL_ATTRIBUTE(1, 2, 3, 4);
 
@@ -784,8 +784,8 @@ NONNULL_ATTRIBUTE(1, 2, 3, 4);
 ib_status_t DLL_PUBLIC ib_var_target_expand_const(
     const ib_var_target_t  *target,
     const ib_var_target_t **expanded,
-    ib_mpool_t       *mp,
-    ib_var_store_t   *store
+    ib_mpool_t             *mp,
+    const ib_var_store_t   *store
 )
 NONNULL_ATTRIBUTE(1, 2, 3, 4);
 
