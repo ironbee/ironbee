@@ -43,6 +43,8 @@ class Context;
 class Notifier;
 class Server;
 class MemoryPool;
+class VarConfig;
+class ConstVarConfig;
 
 /**
  * Const Engine; equivalent to a const pointer to ib_engine_t.
@@ -142,6 +144,9 @@ public:
 
     //! Main context.
     Context main_context() const;
+
+    //! Var Config.
+    ConstVarConfig var_config() const;
 
 private:
     const ib_engine_t* m_ib;
@@ -318,6 +323,9 @@ public:
      * @returns Memory pool.
      **/
     MemoryPool temporary_memory_pool() const;
+
+    //! Var Config.
+    VarConfig var_config() const;
 
 private:
     ib_engine_t* m_ib;

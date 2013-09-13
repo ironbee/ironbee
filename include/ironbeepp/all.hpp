@@ -58,5 +58,6 @@
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/transaction_data.hpp>
 #include <ironbeepp/transformation.hpp>
+#include <ironbeepp/var.hpp>
 
 #endif

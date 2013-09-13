@@ -57,6 +57,8 @@ class Transaction;
 class Connection;
 class ParsedRequestLine;
 class ParsedNameValue;
+class VarStore;
+class ConstVarStore;
 
 /**
  * Const Transaction; equivalent to a const pointer to ib_tx_t.
@@ -299,6 +301,9 @@ public:
 
     ///@}
 
+    //! Access Var Store.
+    ConstVarStore var_store() const;
+
 private:
     ib_type m_ib;
 };
@@ -404,6 +409,9 @@ public:
      * Destroy transaction.
      **/
     void destroy() const;
+
+    //! Access Var Store.
+    VarStore var_store() const;
 
 private:
     ib_type m_ib;

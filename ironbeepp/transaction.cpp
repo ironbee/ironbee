@@ -7,6 +7,7 @@
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
 #include <ironbeepp/throw.hpp>
+#include <ironbeepp/var.hpp>
 
 namespace IronBee {
 
@@ -155,6 +156,11 @@ ParsedNameValue ConstTransaction::request_header() const
     return ParsedNameValue(ib()->request_header->head);
 }
 
+ConstVarStore ConstTransaction::var_store() const
+{
+    return ConstVarStore(ib()->var_store);
+}
+
 // Transaction
 
 Transaction Transaction::remove_const(ConstTransaction transaction)
@@ -188,6 +194,11 @@ Transaction Transaction::create(Connection connection)
 void Transaction::destroy() const
 {
     ib_tx_destroy(ib());
+}
+
+VarStore Transaction::var_store() const
+{
+    return VarStore(ib()->var_store);
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstTransaction& transaction)

@@ -37,4 +37,5 @@ libibpp_la_SOURCES = \
     ironbee.cpp \
     server.cpp \
 	operator.cpp \
-	transformation.cpp
+	transformation.cpp \
+	var.cpp

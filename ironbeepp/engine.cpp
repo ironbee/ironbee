@@ -28,6 +28,7 @@
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/server.hpp>
 #include <ironbeepp/notifier.hpp>
+#include <ironbeepp/var.hpp>
 
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
@@ -53,9 +54,13 @@ ConstEngine::ConstEngine(const ib_engine_t* ib_engine) :
 
 Context ConstEngine::main_context() const
 {
-  return Context(ib_context_main(ib()));
+    return Context(ib_context_main(ib()));
 }
 
+ConstVarConfig ConstEngine::var_config() const
+{
+    return ConstVarConfig(ib_engine_var_config_get_const(ib()));
+}
 
 Engine::Engine() :
     m_ib(NULL)
@@ -127,6 +132,11 @@ MemoryPool Engine::configuration_memory_pool() const
 MemoryPool Engine::temporary_memory_pool() const
 {
     return MemoryPool(ib_engine_pool_temp_get(ib()));
+}
+
+VarConfig Engine::var_config() const
+{
+    return VarConfig(ib_engine_var_config_get(ib()));
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstEngine& engine)

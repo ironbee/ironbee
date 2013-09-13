@@ -85,6 +85,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/transaction.hpp>',
   '<ironbeepp/transaction_data.hpp>',
   '<ironbeepp/transformation.hpp>',
+  '<ironbeepp/var.hpp>',
 
   '"collection_manager_private.h"',
   '"core_audit_private.h"',
