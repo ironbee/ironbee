@@ -236,7 +236,7 @@ ib_status_t target_filter_get(
     const ib_var_target_t  *target,
     const ib_var_filter_t **result,
     ib_mpool_t             *mp,
-    ib_var_store_t         *store
+    const ib_var_store_t   *store
 )
 NONNULL_ATTRIBUTE(1, 2, 4);
 
@@ -1097,7 +1097,7 @@ ib_status_t target_filter_get(
     const ib_var_target_t  *target,
     const ib_var_filter_t **result,
     ib_mpool_t             *mp,
-    ib_var_store_t         *store
+    const ib_var_store_t   *store
 )
 {
     assert(target != NULL);
