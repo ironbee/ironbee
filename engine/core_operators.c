@@ -927,9 +927,11 @@ ib_status_t op_ipmatch_execute(
         if (rc != IB_OK) {
             return rc;
         }
-
         assert(bs != NULL);
-        assert(ib_bytestr_length(bs) < 17);
+
+        if (ib_bytestr_length(bs) > 16) {
+            return IB_EINVAL;
+        }
 
         strncpy(
             ipstr_buffer,
