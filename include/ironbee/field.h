@@ -228,18 +228,6 @@ typedef int64_t ib_num_t;
  */
 typedef long double ib_float_t;
 
-/** The union of values; only used externally by ib_field_from_string() */
-typedef union {
-    ib_num_t       num;           /**< Generic numeric value */
-    ib_float_t     fnum;          /**< Floating type value. */
-    ib_time_t      time;          /**< Milliseconds since epoch. */
-    ib_bytestr_t  *bytestr;       /**< Byte string value */
-    char          *nulstr;        /**< NUL string value */
-    ib_list_t     *list;          /**< List of fields */
-    ib_stream_t   *stream;        /**< Stream buffer */
-    void          *ptr;           /**< Pointer value */
-} ib_field_val_union_t;
-
 /**
  * Assert @a v is proper type.
  */
@@ -1095,7 +1083,6 @@ ib_status_t DLL_PUBLIC ib_field_convert(
  * @param[in] nlen Length of @a name
  * @param[in] vstr Value string
  * @param[out] pfield Pointer to newly created field
- * @param[out] pvalue Pointer to value (or NULL)
  *
  * @returns Status code:
  *  - IB_OK All OK
@@ -1106,8 +1093,7 @@ ib_status_t DLL_PUBLIC ib_field_from_string(
     const char *name,
     size_t nlen,
     const char *vstr,
-    ib_field_t **pfield,
-    ib_field_val_union_t *pvalue);
+    ib_field_t **pfield);
 
 /**
  * Convert a string to a field, trying to treat the string as a number if
@@ -1119,7 +1105,6 @@ ib_status_t DLL_PUBLIC ib_field_from_string(
  * @param[in] vstr Value string
  * @param[in] vlen Length of @a vstr
  * @param[out] pfield Pointer to newly created field
- * @param[out] pvalue Pointer to value (or NULL)
  *
  * @returns Status code:
  *  - IB_OK All OK
@@ -1131,8 +1116,7 @@ ib_status_t DLL_PUBLIC ib_field_from_string_ex(
     size_t nlen,
     const char *vstr,
     size_t vlen,
-    ib_field_t **pfield,
-    ib_field_val_union_t *pvalue);
+    ib_field_t **pfield);
 
 
 /**

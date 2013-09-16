@@ -42,6 +42,18 @@
 #pragma message "Warning: GCC optimization turned on off GCC 4.4"
 #endif
 
+/** The union of values. */
+typedef union {
+    ib_num_t       num;           /**< Generic numeric value */
+    ib_float_t     fnum;          /**< Floating type value. */
+    ib_time_t      time;          /**< Milliseconds since epoch. */
+    ib_bytestr_t  *bytestr;       /**< Byte string value */
+    char          *nulstr;        /**< NUL string value */
+    ib_list_t     *list;          /**< List of fields */
+    ib_stream_t   *stream;        /**< Stream buffer */
+    void          *ptr;           /**< Pointer value */
+} ib_field_val_union_t;
+
 /**
  * Field value structure.
  *
@@ -254,8 +266,7 @@ static ib_status_t field_from_string_internal(
     const char *vstr,
     size_t vlen,
     bool vstr_is_nulstr,
-    ib_field_t **pfield,
-    ib_field_val_union_t *pvalue)
+    ib_field_t **pfield)
 {
     assert(mp != NULL);
     assert(name != NULL);
@@ -282,9 +293,6 @@ static ib_status_t field_from_string_internal(
                                  name, nlen,
                                  IB_FTYPE_NUM,
                                  ib_ftype_num_in(&num_val));
-            if (pvalue != NULL) {
-                pvalue->num = num_val;
-            }
             *pfield = field;
         }
     }
@@ -303,9 +311,6 @@ static ib_status_t field_from_string_internal(
                                  name, nlen,
                                  IB_FTYPE_FLOAT,
                                  ib_ftype_float_in(&float_val));
-            if (pvalue != NULL) {
-                pvalue->fnum = float_val;
-            }
             *pfield = field;
         }
     }
@@ -329,9 +334,6 @@ static ib_status_t field_from_string_internal(
                                  IB_FTYPE_BYTESTR,
                                  ib_ftype_bytestr_in(bs));
         }
-        if (pvalue != NULL) {
-            pvalue->nulstr = (char *)vstr;
-        }
         *pfield = field;
     }
 
@@ -343,13 +345,12 @@ ib_status_t ib_field_from_string(
     const char *name,
     size_t nlen,
     const char *vstr,
-    ib_field_t **pfield,
-    ib_field_val_union_t *pvalue)
+    ib_field_t **pfield)
 {
     return field_from_string_internal(mp,
                                       name, nlen,
                                       vstr, 0, true,
-                                      pfield, pvalue);
+                                      pfield);
 }
 
 ib_status_t ib_field_from_string_ex(
@@ -358,13 +359,12 @@ ib_status_t ib_field_from_string_ex(
     size_t nlen,
     const char *vstr,
     size_t vlen,
-    ib_field_t **pfield,
-    ib_field_val_union_t *pvalue)
+    ib_field_t **pfield)
 {
     return field_from_string_internal(mp,
                                       name, nlen,
                                       vstr, vlen, false,
-                                      pfield, pvalue);
+                                      pfield);
 }
 
 void ib_field_util_log_debug(

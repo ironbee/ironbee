@@ -115,49 +115,57 @@ TEST_F(TestIBUtilField, test_field_from_string)
 {
     ib_field_t *f;
     ib_status_t rc;
-    ib_field_val_union_t val;
+    ib_num_t fnum;
+    ib_float_t ffloat;
+    const char *fnulstr;
 
     rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_num"),
-                              "11", &f, &val);
+                              "11", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
-    ASSERT_EQ(11, val.num);
+    ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_num_out(&fnum)));
+    ASSERT_EQ(11, fnum);
 
     rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_num"),
-                              "-11", &f, &val);
+                              "-11", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
-    ASSERT_EQ(-11, val.num);
+    ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_num_out(&fnum)));
+    ASSERT_EQ(-11, fnum);
 
     rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_float"),
-                              "1.0", &f, &val);
+                              "1.0", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_FLOAT, f->type);
-    ASSERT_EQ(1.0, val.fnum);
+    ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_float_out(&ffloat)));
+    ASSERT_EQ(1.0, ffloat);
 
     rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_num"),
-                              "-1.0", &f, &val);
+                              "-1.0", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_FLOAT, f->type);
-    ASSERT_EQ(-1.0, val.fnum);
+    ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_float_out(&ffloat)));
+    ASSERT_EQ(-1.0, ffloat);
 
     rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_str"),
-                              "x", &f, &val);
+                              "x", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NULSTR, f->type);
-    ASSERT_STREQ("x", val.nulstr);
+    ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_nulstr_out(&fnulstr)));
+    ASSERT_STREQ("x", fnulstr);
 
     rc = ib_field_from_string(MemPool(), IB_FIELD_NAME("test_str"),
-                              "-1.1x", &f, &val);
+                              "-1.1x", &f);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(IB_FTYPE_NULSTR, f->type);
-    ASSERT_STREQ("-1.1x", val.nulstr);
+    ASSERT_EQ(IB_OK, ib_field_value(f, ib_ftype_nulstr_out(&fnulstr)));
+    ASSERT_STREQ("-1.1x", fnulstr);
 }
 
 /// @test Test util field library - ib_field_format() with nulstr

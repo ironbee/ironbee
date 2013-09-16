@@ -4001,7 +4001,6 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     ib_core_cfg_t *corecfg;
     ib_field_t *field;
     ib_var_source_t *source;
-    ib_field_val_union_t fval;
     ib_core_initvar_t *initvar;
 
     /* Get the core module config. */
@@ -4021,7 +4020,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     }
 
     /* Create the field based on whether the value looks like a number or not */
-    rc = ib_field_from_string(mp, IB_FIELD_NAME(name), value, &field, &fval);
+    rc = ib_field_from_string(mp, IB_FIELD_NAME(name), value, &field);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error creating field for InitVar: %s",
                          ib_status_to_string(rc));
@@ -4085,23 +4084,23 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     }
     if (field->type == IB_FTYPE_NUM) {
         ib_cfg_log_debug(cp,
-                         "InitVar: Created numeric field \"%s\" %"PRId64" "
+                         "InitVar: Created numeric field \"%s\" "
                          "for context \"%s\"",
-                         name, fval.num,
+                         name,
                          ib_context_full_get(cp->cur_ctx));
     }
     else if (field->type == IB_FTYPE_FLOAT) {
         ib_cfg_log_debug(cp,
-                         "InitVar: Created float field \"%s\" %Lf "
+                         "InitVar: Created float field \"%s\" "
                          "for context \"%s\"",
-                         name, fval.fnum,
+                         name,
                          ib_context_full_get(cp->cur_ctx));
     }
     else {
         ib_cfg_log_debug(cp,
-                         "InitVar:Created string field \"%s\" \"%s\" "
+                         "InitVar:Created string field \"%s\" "
                          "for context \"%s\"",
-                         name, fval.nulstr, ib_context_full_get(cp->cur_ctx));
+                         name, ib_context_full_get(cp->cur_ctx));
     }
 
     /* Done */

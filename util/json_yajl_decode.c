@@ -120,7 +120,6 @@ static int decode_number(void *ctx,
                          size_t len)
 {
     decode_ctx_t *decode = (decode_ctx_t *)ctx;
-    ib_field_val_union_t value;
     ib_field_t *field;
     ib_status_t rc;
     char namebuf[namebuf_len+1];
@@ -133,7 +132,7 @@ static int decode_number(void *ctx,
     }
     rc = ib_field_from_string_ex(decode->alloc_ctx->mpool,
                                  name, nlen, s, len,
-                                 &field, &value);
+                                 &field);
     if (rc != IB_OK) {
         goto cleanup;
     }
