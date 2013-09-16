@@ -1647,7 +1647,7 @@ ib_status_t ib_var_expand_acquire(
     assert(config != NULL);
 
     ib_status_t rc;
-    ib_var_expand_t *first;
+    ib_var_expand_t *first = NULL;
     ib_var_expand_t **parent_next = &first;
     const char *suffix;
     const char *local_str;
@@ -1655,6 +1655,20 @@ ib_status_t ib_var_expand_acquire(
     local_str = ib_mpool_memdup(mp, str, str_length);
     if (local_str == NULL) {
         return IB_EALLOC;
+    }
+
+    /* Special case empty string. */
+    if (str_length == 0) {
+        first = ib_mpool_calloc(mp, 1, sizeof(*first));
+        if (first == NULL) {
+            return IB_EALLOC;
+        }
+
+        first->prefix = local_str;
+        first->prefix_length = 0;
+
+        *expand = first;
+        return IB_OK;
     }
 
     suffix = local_str;

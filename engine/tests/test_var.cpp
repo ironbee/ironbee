@@ -1035,7 +1035,25 @@ TEST(TestVar, Expand)
         "a = 17 b = 1.234000 c = foo d1 = 5, 6 d2 = 5",
         string(result, result_length)
     );
+
+    expand = NULL;
+    rc = ib_var_expand_acquire(&expand, mp, "", 0, config, NULL, NULL);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(expand);
+
+    result = NULL;
+    rc = ib_var_expand_execute(
+        expand,
+        &result, &result_length,
+        mp,
+        store
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    EXPECT_EQ("", string(result, result_length));
 }
+
+
 
 extern "C" {
 static ib_status_t dyn_get(
