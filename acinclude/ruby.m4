@@ -6,21 +6,21 @@ AC_DEFUN([CHECK_RUBY],
   if test "x$RUBY" == "x" ; then
     AC_MSG_ERROR([ruby is required])
   fi
-  
+
   minRubyVersion=[$1]
   AC_MSG_CHECKING([for ruby minimum version $minRubyVersion])
 
-  ## warning about line below: use $ 2 instead of $2 otherwise m4 trys to 
+  ## warning about line below: use $ 2 instead of $2 otherwise m4 trys to
   ## interpret, luckily awk doesn't care
   rubyVersion=`$RUBY --version | awk '{print $ 2}'`
-  
+
   AX_COMPARE_VERSION([$rubyVersion],[ge],[$minRubyVersion],
        [AC_MSG_RESULT($rubyVersion is ok)],
        [AC_MSG_ERROR([ruby version must be >= $minRubyVersion - found $rubyVersion])])
-  
-   RUBY_TOPDIR=`$RUBY -rrbconfig -e  "print \"#{Config::CONFIG['topdir']}\n\""`
-   RUBY_LIBRUBYARG=`$RUBY -rrbconfig -e "print \"#{Config::CONFIG['LIBRUBYARG']}\n\""`
-   RUBY_LIBDIR=`$RUBY -rrbconfig -e "print \"#{Config::CONFIG['libdir']}\n\""`
+
+   RUBY_TOPDIR=`$RUBY -rrbconfig -e  "print \"#{RbConfig::CONFIG['topdir']}\n\""`
+   RUBY_LIBRUBYARG=`$RUBY -rrbconfig -e "print \"#{RbConfig::CONFIG['LIBRUBYARG']}\n\""`
+   RUBY_LIBDIR=`$RUBY -rrbconfig -e "print \"#{RbConfig::CONFIG['libdir']}\n\""`
    AC_SUBST(RUBY_TOPDIR)
    AC_SUBST(RUBY_LIBRUBYARG)
    AC_SUBST(RUBY_LIBDIR)
@@ -36,7 +36,7 @@ AC_DEFUN([CHECK_GEM],
   if test "x$GEM" == "x" ; then
     AC_MSG_ERROR([ruby gem command is required])
   fi
-  
+
   AC_MSG_CHECKING([for gem minimum version $minGemVersion])
 
   gemVersion=`$GEM --version`
@@ -53,7 +53,7 @@ AC_DEFUN([CHECK_RUBY_GEM],
 [
   rubyGem=[$1]
 	minRubyGemVersion=[$2]
-	
+
 	AC_CACHE_CHECK([for ruby gem $rubyGem],[$rubyGem],[
 	  acl_cv_gem_[$3]=`$GEM list --local [$1] | egrep "^[$1]" | awk '{print $ 2}'| sed -e 's/@<:@(),@:>@//g'`
 	])
