@@ -583,7 +583,7 @@ static ib_status_t persistence_map_fn(
         cfg->persist_fw,
         ctx,
         collection_name,
-        IB_S2SL(key),
+        IB_S2SL(key == NULL ? "" : key),
         store_name);
     /* Exit on success or a non-IB_ENOENT error. */
     if (rc != IB_ENOENT) {
