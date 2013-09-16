@@ -1490,7 +1490,6 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     const core_audit_cfg_t *core_audit_cfg =
         (const core_audit_cfg_t *)log->cfg_data;
     const ib_core_cfg_t *core_cfg = core_audit_cfg->core_cfg;
-    ib_var_store_t *var_store = tx->var_store;
 
     /* Generate a list of fields in this part. */
     rc = ib_list_create(&list, pool);
@@ -1499,6 +1498,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     }
 
     if (tx != NULL) {
+        ib_var_store_t *var_store = tx->var_store;
         ib_num_t num;
 
         /* Timestamp */
