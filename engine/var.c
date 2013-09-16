@@ -804,10 +804,17 @@ ib_status_t ib_var_filter_acquire(
         if (error_message != NULL) {
             study_error = error_message;
         }
+#ifdef PCRE_STUDY_JIT_COMPILE
         local_filter->re_extra = pcre_study(
             local_filter->re, PCRE_STUDY_JIT_COMPILE,
             study_error
         );
+#else
+        local_filter->re_extra = pcre_study(
+            local_filter->re, 0,
+            study_error
+        );
+#endif
         if (*study_error != NULL) {
             return IB_EINVAL;
         }
