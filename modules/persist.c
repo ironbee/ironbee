@@ -619,7 +619,7 @@ static ib_status_t persistence_map_fn(
         cfg->persist_fw,
         ctx,
         collection_name,
-        IB_S2SL(key),
+        IB_S2SL(key == NULL ? "" : key),
         store_name);
     if (rc != IB_OK) {
         ib_cfg_log_error(
