@@ -1160,6 +1160,14 @@ static ib_status_t act_block_advisory_execute(
             &f, tx->mp, "", 0, IB_FTYPE_NUM,
             ib_ftype_num_in(&c_num_one)
         );
+        if (rc != IB_OK) {
+            ib_rule_log_error(
+                rule_exec,
+                "Could not create field for FLAGS:BLOCK: %s",
+                ib_status_to_string(rc)
+            );
+            return rc;
+        }
 
         /* When doing an advisory block, mark the DPI with FLAGS:BLOCK=1. */
         rc = ib_var_target_remove_and_set(
