@@ -1753,14 +1753,17 @@ ib_status_t ib_var_expand_execute(
     }
 
     rc = ib_sa_begin(&sa, mp);
-    if (rc != IB_OK) {goto finish_ealloc;}
+    if (rc != IB_OK) {
+        assert(rc == IB_EALLOC);
+        return IB_EALLOC;
+    }
 
     /* Construct temporary memory pool. */
     ib_mpool_t *temp_mp;
     rc = ib_mpool_create(&temp_mp, "ib_var_expand_execute", mp);
     if (rc != IB_OK) {
         assert(rc == IB_EALLOC);
-        return rc;
+        return IB_EALLOC;
     }
 
     for (
