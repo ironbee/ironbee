@@ -405,6 +405,9 @@ public:
     static
     Transaction create(Connection connection);
 
+    //! All flags.
+    ib_flags_t& flags() const;
+
     /**
      * Destroy transaction.
      **/

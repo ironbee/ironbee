@@ -196,6 +196,11 @@ void Transaction::destroy() const
     ib_tx_destroy(ib());
 }
 
+ib_flags_t& Transaction::flags() const
+{
+    return ib()->flags;
+}
+
 VarStore Transaction::var_store() const
 {
     return VarStore(ib()->var_store);
