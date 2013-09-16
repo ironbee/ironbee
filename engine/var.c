@@ -822,7 +822,11 @@ ib_status_t ib_var_filter_acquire(
             rc = ib_mpool_cleanup_register(
                 mp,
                 /* The cast effectively casts pcre_extra* to void* */
+#ifdef PCRE_STUDY_JIT_COMPILE
                 (ib_mpool_cleanup_fn_t)pcre_free_study,
+#else
+                (ib_mpool_cleanup_fn_t)pcre_free,
+#endif
                 local_filter->re_extra
             );
             if (rc != IB_OK) {
