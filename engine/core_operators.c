@@ -1938,10 +1938,10 @@ ib_status_t op_numcmp_create(
         else {
             return IB_EINVAL;
         }
-    }
 
-    if (rc == IB_OK) {
-        data->f = f;
+        if (rc == IB_OK) {
+            data->f = f;
+        }
     }
 
     return rc;
