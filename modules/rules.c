@@ -613,7 +613,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rc = ib_var_expand_acquire(
             (is_msg ? &(rule->meta.msg) : &(rule->meta.data)),
             ib_rule_mpool(cp->ib),
-            IB_S2SL(value),
+            IB_S2SL(value == NULL ? "" : value),
             ib_engine_var_config_get(cp->ib),
             &error_message, &error_offset
         );
