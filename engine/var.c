@@ -964,6 +964,7 @@ ib_status_t ib_var_filter_remove(
     }
 
     rc = ib_field_value(field, ib_ftype_list_mutable_out(&field_list));
+    assert(rc == IB_OK);
     /* Can only fail on dynamic field. */
     IB_LIST_LOOP_SAFE(field_list, node, next_node) {
         ib_field_t *f = (ib_field_t *)ib_list_node_data(node);
