@@ -699,7 +699,7 @@ ib_status_t fast_convert_specs_bytestrs(
     ib_mpool_t *mp = ib_engine_pool_main_get(ib);
     ib_var_config_t *config = ib_engine_var_config_get(ib);
 
-    *dst = ib_mpool_calloc(mp, nsrc, sizeof(*dst));
+    *dst = ib_mpool_calloc(mp, nsrc, sizeof(**dst));
     for (size_t i = 0; i < nsrc; ++i) {
         const char *name = src[i];
         ib_var_source_t *source = NULL;
