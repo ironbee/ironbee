@@ -770,6 +770,7 @@ ib_status_t ib_var_filter_acquire(
     local_filter->re = NULL;
 
     if (
+        filter_string_length                     >= 2   &&
         filter_string[0]                         == '/' &&
         filter_string[filter_string_length - 1]  == '/'
     ) {

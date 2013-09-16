@@ -426,6 +426,7 @@ TEST(TestVar, Filter)
     data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
     data_list.push_back(Field::create_number(smp, "fooB", 4, 6));
     data_list.push_back(Field::create_number(smp, "barA", 4, 7));
+    data_list.push_back(Field::create_number(smp, "x", 1, 7));
 
     Field data_field =
         Field::create_no_copy_list<Field>(smp, "data", 4, data_list);
@@ -449,6 +450,20 @@ TEST(TestVar, Filter)
     EXPECT_EQ(2UL, result_list.size());
     EXPECT_EQ("fooA", result_list.front().name_as_s());
     EXPECT_EQ("fooB", result_list.back().name_as_s());
+
+    rc = ib_var_filter_acquire(&filter, mp, "", 0, NULL, NULL);
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_var_filter_apply(filter, &result, mp, data_field.ib());
+    ASSERT_EQ(IB_OK, rc);
+    result_list = field_clist_t(result);
+    EXPECT_EQ(0UL, result_list.size());
+
+    rc = ib_var_filter_acquire(&filter, mp, "x", 1, NULL, NULL);
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_var_filter_apply(filter, &result, mp, data_field.ib());
+    ASSERT_EQ(IB_OK, rc);
+    result_list = field_clist_t(result);
+    EXPECT_EQ(1UL, result_list.size());
 }
 
 TEST(TestVar, FilterRemove)
