@@ -575,7 +575,6 @@ TEST(TestVar, TargetRemoveTrivial)
     ScopedMemoryPool smp;
     ib_status_t rc;
     ib_mpool_t* mp = MemoryPool(smp).ib();
-    typedef List<IronBee::Field> field_list_t;
 
     ib_var_config_t* config = make_config(mp);
     ASSERT_TRUE(config);
@@ -965,7 +964,6 @@ TEST(TestVar, Expand)
     ASSERT_TRUE(config);
 
     typedef List<IronBee::Field> field_list_t;
-    typedef ConstList<IronBee::Field> field_clist_t;
     field_list_t data_list = field_list_t::create(smp);
 
     data_list.push_back(Field::create_number(smp, "fooA", 4, 5));
