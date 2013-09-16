@@ -4937,27 +4937,28 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
         return IB_EALLOC;
     }
 
-    /* Acquire target. */
-    rc = ib_var_target_acquire_from_string(
-        &(*target)->target,
-        ib_rule_mpool(ib),
-        ib_engine_var_config_get_const(ib),
-        IB_S2SL(str),
-        &error_message, &error_offset
-    );
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Error acquiring target \"%s\": %s (%s, %d)",
-                     str, ib_status_to_string(rc),
-                     (error_message != NULL ? error_message : "NA"),
-                     (error_message != NULL ? error_offset : 0));
-        return IB_EOTHER;
-    }
-
     /* Copy the original */
     if (str == NULL) {
         (*target)->target_str = NULL;
+        (*target)->target = NULL;
     }
     else {
+        /* Acquire target. */
+        rc = ib_var_target_acquire_from_string(
+            &(*target)->target,
+            ib_rule_mpool(ib),
+            ib_engine_var_config_get_const(ib),
+            IB_S2SL(str),
+            &error_message, &error_offset
+        );
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Error acquiring target \"%s\": %s (%s, %d)",
+                         str, ib_status_to_string(rc),
+                         (error_message != NULL ? error_message : "NA"),
+                         (error_message != NULL ? error_offset : 0));
+            return IB_EOTHER;
+        }
+
         (*target)->target_str =
             (char *)ib_mpool_strdup(ib_rule_mpool(ib), str);
         if ((*target)->target_str == NULL) {
