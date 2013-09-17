@@ -12,6 +12,9 @@ class TestLuaWaggle < Test::Unit::TestCase
 
   SITE_CONFIG = "RuleEnable all"
 
+  def lua_path
+    File.expand_path(File.join(BUILDDIR, "lua_test_" + rand(10000).to_s + '.lua'))
+  end
 
   def test_sig
     lua = <<-EOS
@@ -21,7 +24,7 @@ class TestLuaWaggle < Test::Unit::TestCase
         phase([[REQUEST_HEADER]]):
         action([[clipp_announce:basic1]])
     EOS
-    lua_file = File.expand_path(File.join(BUILDDIR, rand(10000).to_s + '.lua'))
+    lua_file = lua_path()
     File.open(lua_file, 'w') {|fp| fp.print lua}
 
     clipp(make_config(lua_file,
@@ -37,7 +40,7 @@ class TestLuaWaggle < Test::Unit::TestCase
         phase([[REQUEST_HEADER]]):
         action([[clipp_announce:basic2]])
     EOS
-    lua_file = File.expand_path(File.join(BUILDDIR, rand(10000).to_s + '.lua'))
+    lua_file = lua_path()
     File.open(lua_file, 'w') {|fp| fp.print lua}
 
     clipp(make_config(lua_file,
