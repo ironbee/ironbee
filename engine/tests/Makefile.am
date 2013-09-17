@@ -45,6 +45,7 @@ TEST_EXTRAS = \
 
 EXTRA_DIST = $(TEST_EXTRAS)
 
+CLEANFILES += *.log *.Po
 if OUT_OF_TREE
 BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
 CLEANFILES += $(TEST_EXTRAS)
