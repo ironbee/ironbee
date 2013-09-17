@@ -11,6 +11,10 @@ class TestLuaPredicate < Test::Unit::TestCase
     }.merge(extras)
   end
 
+  def lua_path
+    File.expand_path(File.join(BUILDDIR, "lua_test_" + rand(10000).to_s + '.lua'))
+  end
+
   def test_basic
     lua = <<-EOS
       Action("basic1", "1"):
@@ -18,7 +22,7 @@ class TestLuaPredicate < Test::Unit::TestCase
         action([[clipp_announce:basic1]]):
         predicate(P.Rx('GET', P.Field('REQUEST_METHOD')))
     EOS
-    lua_file = File.expand_path(File.join(BUILDDIR, rand(10000).to_s + '.lua'))
+    lua_file = lua_path()
     File.open(lua_file, 'w') {|fp| fp.print lua}
 
     clipp(make_config(lua_file,
@@ -38,7 +42,7 @@ class TestLuaPredicate < Test::Unit::TestCase
         action([[clipp_announce:basic1]]):
         predicate(P.Rx('GET', getField('REQUEST_METHOD')))
     EOS
-    lua_file = File.expand_path(File.join(BUILDDIR, rand(10000).to_s + '.lua'))
+    lua_file = lua_path()
     File.open(lua_file, 'w') {|fp| fp.print lua}
 
     clipp(make_config(lua_file,

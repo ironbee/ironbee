@@ -46,4 +46,6 @@ test_leaves_SOURCES = test_leaves.cpp
 test_transform_graph_SOURCES = test_transform_graph.cpp
 test_validate_graph_SOURCES = test_validate_graph.cpp
 
+CLEANFILES += lua_test_*.lua
+
 check-local: check-ruby
