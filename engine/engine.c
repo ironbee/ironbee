@@ -482,6 +482,9 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
 
     *pib = ib;
 
+    ib_log_ex(ib, IB_LOG_INFO, NULL, 0,
+              "%s: Starting ", IB_PRODUCT_VERSION_NAME);
+
     return rc;
 
 failed:
@@ -497,6 +500,9 @@ failed:
 ib_status_t ib_engine_init(ib_engine_t *ib)
 {
     ib_status_t rc;
+
+    ib_log_ex(ib, IB_LOG_INFO, NULL, 0,
+              "%s: Starting", IB_PRODUCT_VERSION_NAME);
 
     rc = ib_context_open(ib->ectx);
     if (rc != IB_OK) {
