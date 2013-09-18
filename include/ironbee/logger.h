@@ -402,6 +402,26 @@ ib_status_t DLL_PUBLIC ib_logger_dequeue(
 );
 
 /**
+ * Get the count of writers in this logger.
+ *
+ * @param[in] logger The logger to get the count from.
+ *
+ * @returns The count of the writers in this logger.
+ */
+size_t ib_logger_writer_count(ib_logger_t *logger);
+
+/**
+ * Return the current log level for this logger.
+ *
+ * This does not mean that other writer will not implement their own filtering.
+ *
+ * @param[in] logger The logger whose level will be returned.
+ *
+ * @returns The logger level.
+ */
+ib_log_level_t DLL_PUBLIC ib_logger_level(ib_logger_t *logger);
+
+/**
  * @} IronBeeEngineLogging
  */
 

@@ -572,19 +572,39 @@ ib_status_t ib_logger_dequeue(
     return rc;
 }
 
-/// Default Logger Implementation.
+size_t ib_logger_writer_count(ib_logger_t *logger) {
+    assert(logger != NULL);
+    assert(logger->writers != NULL);
 
+    return ib_list_elements(logger->writers);
+}
+
+ib_log_level_t ib_logger_level(ib_logger_t *logger) {
+    assert(logger != NULL);
+
+    return logger->level;
+}
+
+/**
+ * Default logger message structure.
+ */
 typedef struct default_logger_msg_t {
-    uint8_t *prefix;
-    uint8_t *msg;
-    size_t   msg_sz;
+    uint8_t *prefix; /**< Prefix of the log message. A string. */
+    uint8_t *msg;    /**< User's logging data. */
+    size_t   msg_sz; /**< The message length. */
 } default_logger_msg_t;
 
+/**
+ * Default logger configuration.
+ */
 typedef struct default_logger_cfg_t {
-    FILE * file;
+    FILE * file; /**< File to log to. */
 } default_logger_cfg_t;
 
-ib_status_t default_logger_format(
+/**
+ * The default logger format function.
+ */
+static ib_status_t default_logger_format(
     ib_logger_t     *logger,
     ib_logger_rec_t *rec,
     const uint8_t   *log_msg,
@@ -671,7 +691,10 @@ out_of_mem:
 
 }
 
-ib_status_t default_logger_record(
+/**
+ * The default logger's record call.
+ */
+static ib_status_t default_logger_record(
     ib_logger_t        *logger,
     ib_logger_writer_t *writer,
     void               *data
