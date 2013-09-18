@@ -97,13 +97,18 @@ typedef ib_status_t (*ib_logger_close_fn)(ib_logger_t *logger, void *data);
  * Signal a writer that its empty queue now has at leaste one element in it.
  *
  * @param[in] logger The logger.
+ * @param[in] writer The writer that the message is enqueued in.
  * @param[in] data Callback data.
  *
  * @returns
  * - IB_OK On success.
  * - Other on error. Defined by the implementation.
  */
-typedef ib_status_t (*ib_logger_record_fn_t)(ib_logger_t *logger,  void *data);
+typedef ib_status_t (*ib_logger_record_fn_t)(
+    ib_logger_t        *logger, 
+    ib_logger_writer_t *writer,
+    void               *data
+);
 
 /**
  * Ask the log writter to format the message before it is written.
@@ -112,6 +117,9 @@ typedef ib_status_t (*ib_logger_record_fn_t)(ib_logger_t *logger,  void *data);
  * non-printable characters.
  *
  * @param[in] logger The logger.
+ * @param[in] rec The logging record to use for formatting.
+ *            This should be considered to be free'ed after this 
+ *            function call.
  * @param[in] log_msg The user's log message.
  * @param[in] log_msg_sz The user's log message size.
  * @param[out] writer_record Out variable. @c *writer_record is assigned to.
@@ -123,11 +131,12 @@ typedef ib_status_t (*ib_logger_record_fn_t)(ib_logger_t *logger,  void *data);
  * - Other on error. Defined by the implementation.
  */
 typedef ib_status_t (*ib_logger_format_fn_t)(
-    ib_logger_t   *logger,
-    const uint8_t *log_msg,
-    const size_t   log_msg_sz,
-    void          *writer_record,
-    void          *data
+    ib_logger_t     *logger,
+    ib_logger_rec_t *rec,
+    const uint8_t   *log_msg,
+    const size_t     log_msg_sz,
+    void            *writer_record,
+    void            *data
 );
 
 /**
@@ -313,6 +322,20 @@ ib_status_t ib_logger_writer_add(
     void                  *format_data,
     ib_logger_record_fn_t  record_fn,
     void                  *record_data
+);
+
+/**
+ * Add the default writer.
+ *
+ * @param[in] logger The logger.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On memory allocation error.
+ * - Other on unexpected failure.
+ */
+ib_status_t ib_logger_writer_add_default(
+    ib_logger_t *logger
 );
 
 /**

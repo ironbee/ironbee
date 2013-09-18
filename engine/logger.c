@@ -75,8 +75,9 @@ static ib_status_t for_each_writer(
  * Structure to hold the user's log message to format.
  */
 typedef struct logger_write_cbdata_t {
-    const uint8_t *msg;    /**< The message. */
-    size_t         msg_sz; /**< The size of the message. */
+    const uint8_t   *msg;    /**< The message. */
+    size_t           msg_sz; /**< The size of the message. */
+    ib_logger_rec_t *rec;    /**< Record used to format. */
 } logger_write_cbdata_t;
 
 static const size_t MAX_QUEUE_DEPTH = 1000;
@@ -112,6 +113,7 @@ static ib_status_t logger_write(
 
     rc = writer->format_fn(
         logger,
+        logger_write_data->rec,
         logger_write_data->msg,
         logger_write_data->msg_sz,
         &rec,
@@ -152,7 +154,7 @@ static ib_status_t logger_write(
     }
 
     if (ib_queue_size(writer->records) == 1) {
-        rc = writer->record_fn(logger,  writer->record_data);
+        rc = writer->record_fn(logger, writer, writer->record_data);
         if (rc != IB_OK) {
             goto locked_exit;
         }
@@ -202,7 +204,7 @@ static void logger_log(
 {
     assert(logger != NULL);
 
-    logger_write_cbdata_t logger_write_data = { msg, msg_sz };
+    logger_write_cbdata_t logger_write_data = { msg, msg_sz, rec };
 
     /* For each logger,
      * - format the log message
@@ -568,4 +570,173 @@ ib_status_t ib_logger_dequeue(
 
     ib_lock_unlock(&(writer->records_lck));
     return rc;
+}
+
+/// Default Logger Implementation.
+
+typedef struct default_logger_msg_t {
+    uint8_t *prefix;
+    uint8_t *msg;
+    size_t   msg_sz;
+} default_logger_msg_t;
+
+typedef struct default_logger_cfg_t {
+    FILE * file;
+} default_logger_cfg_t;
+
+ib_status_t default_logger_format(
+    ib_logger_t     *logger,
+    ib_logger_rec_t *rec,
+    const uint8_t   *log_msg,
+    const size_t     log_msg_sz,
+    void            *writer_record,
+    void            *data
+)
+{
+    assert(logger != NULL);
+    assert(rec != NULL);
+    assert(log_msg != NULL);
+    assert(writer_record != NULL);
+    assert(data != NULL);
+
+    char      *msg_prefix;
+    char       time_info[32 + 1];
+    struct tm *tminfo;
+    time_t     timet;
+    default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
+    default_logger_msg_t *msg = malloc(sizeof(*msg));
+
+    if (msg == NULL) {
+        goto out_of_mem;
+    }
+
+    timet = time(NULL);
+    tminfo = localtime(&timet);
+    strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
+
+    /* 100 is more than sufficient. */
+    msg_prefix = (char *)malloc(strlen(time_info) + 100);
+    if (msg_prefix == NULL) {
+        goto out_of_mem;
+    }
+
+    sprintf(
+        msg_prefix,
+        "%s %-10s- ",
+        time_info,
+        ib_log_level_to_string(rec->level));
+
+    if ( (rec->file != NULL) && (rec->line_number > 0) ) {
+        const char *file = rec->file;
+        size_t flen;
+        while (strncmp(file, "../", 3) == 0) {
+            file += 3;
+        }
+        flen = strlen(file);
+        if (flen > 23) {
+            file += (flen - 23);
+        }
+
+        static const size_t c_line_info_length = 35;
+        char line_info[c_line_info_length];
+        snprintf(
+            line_info,
+            c_line_info_length,
+            "(%23s:%-5d) ",
+            file,
+            (int)rec->line_number
+        );
+        strcat(msg_prefix, line_info);
+    }
+
+    msg->msg_sz = log_msg_sz;
+    msg->msg = malloc(log_msg_sz);
+    if (msg->msg == NULL) {
+        goto out_of_mem;
+    }
+    memcpy(msg->msg, log_msg, log_msg_sz);
+
+    msg->prefix = malloc(strlen(msg_prefix));
+    if (msg->prefix == NULL) {
+        goto out_of_mem;
+    }
+
+    *(void **)writer_record = msg;
+    free(msg_prefix);
+    return IB_OK;
+out_of_mem:
+    fprintf(cfg->file, "Out of memory.  Unable to log.");
+    fflush(cfg->file);
+    return IB_EALLOC;
+
+}
+
+ib_status_t default_logger_record(
+    ib_logger_t        *logger,
+    ib_logger_writer_t *writer,
+    void               *data
+)
+{
+    assert(logger != NULL);
+    assert(writer != NULL);
+    assert(data != NULL);
+
+    ib_status_t           rc;
+    default_logger_msg_t *msg = NULL;
+    default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
+
+    for (
+        rc = ib_logger_dequeue(logger, writer, &msg);
+        rc == IB_OK;
+        rc = ib_logger_dequeue(logger, writer, &msg)
+        )
+    {
+        fprintf(
+            cfg->file,
+            "%s %.*s\n",
+            msg->prefix,
+            (int)msg->msg_sz,
+            (char *)msg->msg);
+        fflush(cfg->file);
+        free(msg->msg);
+        free(msg->prefix);
+        free(msg);
+    }
+
+    /* Check for an unexpected failure. */
+    if (rc != IB_ENOENT) {
+        return rc;
+    }
+    return IB_OK;
+}
+
+ib_status_t ib_logger_writer_add_default(
+    ib_logger_t *logger
+)
+{
+    assert(logger != NULL);
+    assert(logger->mp != NULL);
+
+    default_logger_cfg_t *cfg;
+
+    cfg = ib_mpool_alloc(logger->mp, sizeof(*cfg));
+    if (cfg == NULL) {
+        return IB_EALLOC;
+    }
+
+    cfg->file = stderr;
+
+    return ib_logger_writer_add(
+        logger,
+        NULL, /* Open. */
+        NULL,
+        NULL, /* Close. */
+        NULL,
+        NULL, /* Reopen. */
+        NULL,
+        default_logger_format,
+        cfg,
+        default_logger_record,
+        cfg
+    );
 }
