@@ -58,13 +58,19 @@ extern "C" {
  * @param cbdata Callback data
  * @param level Log level
  * @param file Optional source filename (or NULL)
+ * @param func Optional source function (or NULL)
  * @param line Optional source line number (or 0)
  * @param fmt Formatting string
  */
-typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
-                                    const char *file, int line,
-                                    const char *fmt, va_list ap)
-                                    VPRINTF_ATTRIBUTE(5);
+typedef void (*ib_util_fn_logger_t)(
+    void *cbdata,
+    int level,
+    const char *file,
+    const char *func,
+    int line,
+    const char *fmt,
+    va_list ap)
+VPRINTF_ATTRIBUTE(6);
 
 /**
  * Utility log at passed in level
@@ -76,7 +82,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  * Tested in: tests/test_util_log.cpp
  */
 #define ib_util_log(lvl, ...) \
-  ib_util_log_ex((lvl), __FILE__, __LINE__, __VA_ARGS__)
+  ib_util_log_ex((lvl), __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /**
  * Utility log at error level
@@ -86,7 +92,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  * Tested in: tests/test_util_log.cpp
  */
 #define ib_util_log_error(...) \
-  ib_util_log_ex(3, __FILE__, __LINE__, __VA_ARGS__)
+  ib_util_log_ex(3, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 
 /**
@@ -97,7 +103,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  * Tested in: tests/test_util_log.cpp
  */
 #define ib_util_log_debug(...) \
-  ib_util_log_ex(7, __FILE__, __LINE__, __VA_ARGS__)
+  ib_util_log_ex(7, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 
 /**
@@ -158,6 +164,7 @@ ib_util_fn_logger_t DLL_PUBLIC ib_util_get_log_logger(void);
  *
  * @param level Log level (0-9)
  * @param file Filename (or NULL)
+ * @param func Function (or NULL)
  * @param line Line number (or 0)
  * @param fmt Printf-like format string
  *
@@ -166,9 +173,9 @@ ib_util_fn_logger_t DLL_PUBLIC ib_util_get_log_logger(void);
  * Tested in: tests/test_util_log.cpp
  */
 void DLL_PUBLIC ib_util_log_ex(int level,
-                               const char *file, int line,
+                               const char *file, const char *func, int line,
                                const char *fmt, ...)
-                               PRINTF_ATTRIBUTE(4, 5);
+                               PRINTF_ATTRIBUTE(5, 6);
 
 /**
  * Copy a buffer before it's written to.

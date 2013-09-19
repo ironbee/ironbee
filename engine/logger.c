@@ -216,13 +216,13 @@ static void logger_log(
 
 void ib_logger_log_msg(
     ib_logger_t       *logger,
-    size_t             line_number,
     const char        *file,
     const char        *function,
+    size_t             line_number,
     ib_engine_t       *engine,
     ib_module_t       *module,
     ib_conn_t         *conn,
-    ib_tx_t           *tx,
+    const ib_tx_t     *tx,
     ib_log_level_t     level,
     const uint8_t     *msg,
     size_t             msg_sz,
@@ -285,16 +285,49 @@ void ib_logger_log_msg(
 
 void ib_logger_log_va(
     ib_logger_t       *logger,
-    size_t             line_number,
     const char        *file,
     const char        *function,
-    ib_engine_t       *engine,
+    size_t             line_number,
+    const ib_engine_t *engine,
     ib_module_t       *module,
     ib_conn_t         *conn,
-    ib_tx_t           *tx,
+    const ib_tx_t     *tx,
     ib_log_level_t     level,
     const char        *msg,
     ...
+)
+{
+    va_list          ap;
+
+    va_start(ap, msg);
+    ib_logger_log_va_list(
+        logger,
+        file,
+        function,
+        line_number,
+        engine,
+        module,
+        conn,
+        tx,
+        level,
+        msg,
+        ap
+    );
+    va_end(ap);
+}
+
+void ib_logger_log_va_list(
+    ib_logger_t       *logger,
+    const char        *file,
+    const char        *function,
+    size_t             line_number,
+    const ib_engine_t *engine,
+    ib_module_t       *module,
+    ib_conn_t         *conn,
+    const ib_tx_t     *tx,
+    ib_log_level_t     level,
+    const char        *msg,
+    va_list            ap
 )
 {
     ib_status_t      rc;
@@ -303,7 +336,6 @@ void ib_logger_log_va(
     ib_logger_rec_t  rec;
     ib_mpool_t      *mp = NULL;
     const size_t     buffer_sz = 1024;
-    va_list ap;
 
     if (logger_filter(logger, level)) {
         return;
@@ -319,9 +351,7 @@ void ib_logger_log_va(
         return;
     }
 
-    va_start(ap, msg);
     log_msg_sz = vsnprintf((char *)log_msg, buffer_sz, msg, ap);
-    va_end(ap);
 
     rec.line_number = line_number;
     rec.file        = file;
@@ -579,10 +609,16 @@ size_t ib_logger_writer_count(ib_logger_t *logger) {
     return ib_list_elements(logger->writers);
 }
 
-ib_log_level_t ib_logger_level(ib_logger_t *logger) {
+ib_log_level_t ib_logger_level_get(ib_logger_t *logger) {
     assert(logger != NULL);
 
     return logger->level;
+}
+
+void ib_logger_level_set(ib_logger_t *logger, ib_log_level_t level) {
+    assert(logger != NULL);
+
+    logger->level = level;
 }
 
 /**
@@ -734,7 +770,8 @@ static ib_status_t default_logger_record(
 }
 
 ib_status_t ib_logger_writer_add_default(
-    ib_logger_t *logger
+    ib_logger_t *logger,
+    FILE        *logfile
 )
 {
     assert(logger != NULL);
@@ -747,7 +784,7 @@ ib_status_t ib_logger_writer_add_default(
         return IB_EALLOC;
     }
 
-    cfg->file = stderr;
+    cfg->file = logfile;
 
     return ib_logger_writer_add(
         logger,

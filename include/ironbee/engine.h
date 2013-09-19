@@ -33,6 +33,7 @@
 #include <ironbee/engine_types.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
+#include <ironbee/logger.h>
 #include <ironbee/parsed_content.h>
 #include <ironbee/server.h>
 #include <ironbee/stream.h>
@@ -134,6 +135,18 @@ ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_engine_init(ib_engine_t *ib);
+
+/**
+ * Return the logger object constructed for this engine.
+ *
+ * Use the returned object to add writers or change the log level.
+ *
+ * This will never return NULL as ib_engine_create() would have failed
+ * with an IB_EALLOC.
+ *
+ * @returns Pointer to the logger structure for @a ib.
+ */
+ib_logger_t DLL_PUBLIC *ib_engine_logger_get(const ib_engine_t *ib);
 
 /**
  * Get the engine's instance UUID

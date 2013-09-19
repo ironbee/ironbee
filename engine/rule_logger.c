@@ -143,10 +143,11 @@ static void rule_vlog_tx(
     const ib_rule_t *rule,
     const ib_rule_target_t *target,
     const char *file,
+    const char *func,
     int line,
     const char *fmt,
     va_list ap
-) VPRINTF_ATTRIBUTE(8);
+) VPRINTF_ATTRIBUTE(9);
 
 static void rule_vlog_tx(
     ib_rule_dlog_level_t rule_log_level,
@@ -155,6 +156,7 @@ static void rule_vlog_tx(
     const ib_rule_t *rule,
     const ib_rule_target_t *target,
     const char *file,
+    const char *func,
     int line,
     const char *fmt,
     va_list ap
@@ -194,7 +196,7 @@ static void rule_vlog_tx(
         freeptr = fmtbuf;
     }
 
-    ib_log_tx_vex(tx, log_level, file, line, fmt, ap);
+    ib_log_tx_vex(tx, log_level, file, func, line, fmt, ap);
 
     if (freeptr != NULL) {
         free(freeptr);
@@ -208,6 +210,7 @@ void ib_rule_log_tx(
     ib_rule_dlog_level_t rule_log_level,
     const ib_tx_t *tx,
     const char *file,
+    const char *func,
     int line,
     const char *fmt, ...
 )
@@ -246,7 +249,7 @@ void ib_rule_log_tx(
 
     va_start(ap, fmt);
     rule_vlog_tx(rule_log_level, ib_log_level,
-                 tx, NULL, NULL, file, line, fmt, ap);
+                 tx, NULL, NULL, file, func,line, fmt, ap);
     va_end(ap);
 
     return;
@@ -256,6 +259,7 @@ void ib_rule_log_exec(
     ib_rule_dlog_level_t level,
     const ib_rule_exec_t *rule_exec,
     const char *file,
+    const char *func,
     int line,
     const char *fmt, ...
 )
@@ -267,7 +271,7 @@ void ib_rule_log_exec(
     va_start(ap, fmt);
     rule_vlog_tx(level, log_level,
                  rule_exec->tx, rule_exec->rule, rule_exec->target,
-                 file, line, fmt, ap);
+                 file, func, line, fmt, ap);
     va_end(ap);
 
     return;
@@ -292,7 +296,7 @@ static void rule_log_exec(
     va_start(ap, fmt);
     rule_vlog_tx(IB_RULE_DLOG_ALWAYS, rule_exec->tx_log->level,
                  rule_exec->tx, rule_exec->rule, rule_exec->target,
-                 NULL, 0, fmt, ap);
+                 NULL, NULL, 0, fmt, ap);
     va_end(ap);
 
     return;
@@ -471,6 +475,7 @@ ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
 void ib_rule_log_fatal_ex(
     const ib_rule_exec_t *rule_exec,
     const char *file,
+    const char *func,
     int line,
     const char *fmt, ...
 )
@@ -486,7 +491,7 @@ void ib_rule_log_fatal_ex(
     va_start(ap, fmt);
     rule_vlog_tx(IB_RULE_DLOG_ERROR, log_level,
                  rule_exec->tx, rule_exec->rule, rule_exec->target,
-                 file, line, fmt, ap);
+                 file, func, line, fmt, ap);
     va_end(ap);
 
     return;

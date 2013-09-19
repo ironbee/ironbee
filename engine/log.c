@@ -35,82 +35,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-/**
- * Engine default logger.
- *
- * This is the default logger that executes when no other logger has
- * been configured.
- *
- * @param fp File pointer.
- * @param level Log level.
- * @param ib IronBee engine.
- * @param file Source filename.
- * @param line Source line number.
- * @param fmt Formatting string.
- * @param ap Variable argument list.
- */
-static void default_logger(FILE *fp, ib_log_level_t level,
-                           const ib_engine_t *ib,
-                           const char *file, int line,
-                           const char *fmt, va_list ap)
-{
-    char *new_fmt;
-    char time_info[32 + 1];
-    struct tm *tminfo;
-    time_t timet;
-
-    if (level > 4) {
-        return;
-    }
-
-    timet = time(NULL);
-    tminfo = localtime(&timet);
-    strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
-
-    /* 100 is more than sufficient. */
-    new_fmt = (char *)malloc(strlen(time_info) + strlen(fmt) + 100);
-    if (new_fmt == NULL) {
-        /* panic */
-        fprintf(fp, "Out of memory.  Unable to log.");
-        fflush(fp);
-        return;
-    }
-
-    sprintf(new_fmt, "%s %-10s- ", time_info, ib_log_level_to_string(level));
-
-    if ( (file != NULL) && (line > 0) ) {
-        size_t flen;
-        while (strncmp(file, "../", 3) == 0) {
-            file += 3;
-        }
-        flen = strlen(file);
-        if (flen > 23) {
-            file += (flen - 23);
-        }
-
-        static const size_t c_line_info_length = 35;
-        char line_info[c_line_info_length];
-        snprintf(
-            line_info,
-            c_line_info_length,
-            "(%23s:%-5d) ",
-            file,
-            line
-        );
-        strcat(new_fmt, line_info);
-    }
-
-    strcat(new_fmt, fmt);
-    strcat(new_fmt, "\n");
-
-    vfprintf(fp, new_fmt, ap);
-    fflush(fp);
-
-    free(new_fmt);
-
-    return;
-}
-
 static const char* c_log_levels[] = {
     "EMERGENCY",
     "ALERT",
@@ -125,32 +49,6 @@ static const char* c_log_levels[] = {
     "TRACE"
 };
 static size_t c_num_levels = sizeof(c_log_levels)/sizeof(*c_log_levels);
-
-void ib_log_set_logger_fn(
-    ib_engine_t        *ib,
-    ib_log_logger_fn_t  logger,
-    void               *cbdata
-)
-{
-    assert(ib != NULL);
-    assert(logger != NULL);
-
-    ib->logger_fn = logger;
-    ib->logger_cbdata = cbdata;
-}
-
-void ib_log_set_loglevel_fn(
-    ib_engine_t       *ib,
-    ib_log_level_fn_t  log_level,
-    void              *cbdata
-)
-{
-    assert(ib != NULL);
-    assert(log_level != NULL);
-
-    ib->loglevel_fn = log_level;
-    ib->loglevel_cbdata = cbdata;
-}
 
 ib_log_level_t ib_log_string_to_level(
     const char     *s,
@@ -193,6 +91,7 @@ void DLL_PUBLIC ib_log_ex(
     const ib_engine_t *ib,
     ib_log_level_t     level,
     const char        *file,
+    const char        *func,
     int                line,
     const char        *fmt,
     ...
@@ -201,7 +100,7 @@ void DLL_PUBLIC ib_log_ex(
     va_list ap;
     va_start(ap, fmt);
 
-    ib_log_vex_ex(ib, level, file, line, fmt, ap);
+    ib_log_vex_ex(ib, level, file, func, line, fmt, ap);
 
     va_end(ap);
 
@@ -212,6 +111,7 @@ void DLL_PUBLIC ib_log_tx_ex(
      const ib_tx_t  *tx,
      ib_log_level_t  level,
      const char     *file,
+     const char     *func,
      int             line,
      const char     *fmt,
      ...
@@ -220,7 +120,7 @@ void DLL_PUBLIC ib_log_tx_ex(
     va_list ap;
     va_start(ap, fmt);
 
-    ib_log_tx_vex(tx, level, file, line, fmt, ap);
+    ib_log_tx_vex(tx, level, file, func, line, fmt, ap);
 
     va_end(ap);
 
@@ -231,25 +131,28 @@ void DLL_PUBLIC ib_log_tx_vex(
      const ib_tx_t  *tx,
      ib_log_level_t  level,
      const char     *file,
+     const char     *func,
      int             line,
      const char     *fmt,
      va_list         ap
 )
 {
-    /* Check the log level, return if we're not interested. */
-    ib_log_level_t logger_level = ib_log_get_level(tx->ib);
-    if (level > logger_level) {
-        return;
-    }
+    assert(tx != NULL);
+    assert(tx->ib != NULL);
 
-    if (tx->ib->logger_fn != NULL) {
-        tx->ib->logger_fn(tx->ib, level, file, line, fmt, ap,
-                          &(ib_log_call_data_t) {IBLOG_TX, {.t = tx}},
-                          tx->ib->logger_cbdata);
-    }
-    else {
-        default_logger(stderr, level, tx->ib, file, line, fmt, ap);
-    }
+    ib_logger_log_va(
+        ib_engine_logger_get(tx->ib),
+        file,
+        func,
+        (int)line,
+        tx->ib,
+        NULL,
+        tx->conn,
+        tx,
+        level,
+        fmt,
+        ap
+    );
 
     return;
 }
@@ -258,33 +161,24 @@ void DLL_PUBLIC ib_log_vex_ex(
     const ib_engine_t *ib,
     ib_log_level_t     level,
     const char        *file,
+    const char        *func,
     int                line,
     const char        *fmt,
     va_list            ap
 )
 {
-    /* Check the log level, return if we're not interested. */
-    ib_log_level_t logger_level = ib_log_get_level(ib);
-    if (level > logger_level) {
-        return;
-    }
-
-    if (ib->logger_fn != NULL) {
-        ib->logger_fn(ib, level, file, line, fmt, ap,
-                      &(ib_log_call_data_t) {IBLOG_ENGINE, {.e=ib}},
-                      ib->logger_cbdata);
-    }
-    else {
-        default_logger(stderr, level, ib, file, line, fmt, ap);
-    }
+    ib_logger_log_va(
+        ib_engine_logger_get(ib),
+        file,
+        func,
+        (int)line,
+        ib,
+        NULL,
+        NULL,
+        NULL,
+        level,
+        fmt,
+        ap
+    );
 }
 
-ib_log_level_t DLL_PUBLIC ib_log_get_level(const ib_engine_t *ib)
-{
-    if (ib->loglevel_fn != NULL) {
-        return ib->loglevel_fn(ib, ib->loglevel_cbdata);
-    }
-    else {
-        return IB_LOG_TRACE;
-    }
-}

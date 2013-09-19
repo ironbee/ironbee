@@ -394,127 +394,6 @@ static void core_log_file_close(const ib_engine_t *ib,
     }
 }
 
-/**
- * Core to log data via va_list args to file pointer.
- *
- * @param ib IronBee engine
- * @param log_fp File pointer to log to
- * @param log_level Configured log level
- * @param level Message log level
- * @param file Source code filename (typically __FILE__)
- * @param line Source code line number (typically __LINE__)
- * @param fmt Printf like format string
- * @param ap Variable length parameter list
- */
-static void core_vlogmsg_fp(
-    const ib_engine_t   *ib,
-    FILE                *log_fp,
-    ib_log_level_t       log_level,
-    ib_log_level_t       level,
-    const char          *file,
-    int                  line,
-    const char          *fmt,
-    va_list              ap)
-{
-    static const size_t c_line_info_length = 35;
-    char line_info[c_line_info_length];
-    size_t new_fmt_length = 0;
-    char *new_fmt = NULL;
-    const char *which_fmt;
-    char time_info[30];
-
-    ib_clock_timestamp(time_info, NULL);
-
-    line_info[0] = '\0';
-    if ( (file != NULL) && (line > 0) && (log_level >= IB_LOG_DEBUG)) {
-        size_t flen;
-        while (strncmp(file, "../", 3) == 0) {
-            file += 3;
-        }
-        flen = strlen(file);
-        if (flen > 23) {
-            file += (flen - 23);
-        }
-
-        snprintf(line_info, c_line_info_length, "(%23s:%-5d)", file, line);
-    }
-
-    new_fmt_length = (strlen(line_info) +
-                      strlen(time_info) +
-                      strlen(fmt) +
-                      110);
-    new_fmt = (char *)malloc(new_fmt_length);
-    if (new_fmt == NULL) {
-        which_fmt = fmt;
-    }
-    else {
-        snprintf(new_fmt, new_fmt_length,
-                 "%s %-10s- %s [%d] %s\n",
-                 time_info, ib_log_level_to_string(level),
-                 line_info, getpid(), fmt);
-        which_fmt = new_fmt;
-    }
-
-    vfprintf(log_fp, which_fmt, ap);
-    fflush(log_fp);
-
-    if (new_fmt != NULL) {
-        free(new_fmt);
-    }
-}
-
-/**
- * Core implementation to log data via va_list args.
- *
- * @param ib IronBee engine
- * @param level Log level
- * @param file Source code filename (typically __FILE__)
- * @param line Source code line number (typically __LINE__)
- * @param fmt Printf like format string
- * @param ap Variable length parameter list
- * @param calldata unused.
- * @param cbdata Callback data.
- */
-static void core_vlogmsg(
-    const ib_engine_t  *ib,
-    ib_log_level_t      level,
-    const char         *file,
-    int                 line,
-    const char         *fmt,
-    va_list             ap,
-    ib_log_call_data_t *calldata,
-    void               *cbdata)
-{
-    ib_log_level_t log_level;
-    ib_core_cfg_t *config;
-
-    config = core_get_main_config(ib, false);
-    if (config->log_fp == NULL) {
-        core_log_file_open(ib, config);
-    }
-    log_level = ib_log_get_level(ib);
-
-    core_vlogmsg_fp(ib, config->log_fp, log_level, level, file, line, fmt, ap);
-}
-
-/**
- * Fetch the log level.
- *
- * @param[in] ib     IronBee engine.
- * @param[in] cbdata Callback data; ignored.
- * @returns Log level.
- */
-static ib_log_level_t core_loglevel(
-    const ib_engine_t *ib,
-    void              *cbdata)
-{
-    ib_core_cfg_t *config = NULL;
-
-    config = core_get_main_config(ib, false);
-
-    return config->log_level;
-}
-
 /* -- Audit Implementations -- */
 
 /**
@@ -4476,11 +4355,11 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
  **/
 static void core_util_logger(
     void *ib, int level,
-    const char *file, int line,
+    const char *file, const char *func, int line,
     const char *fmt, va_list ap
 )
 {
-    ib_log_vex_ex((ib_engine_t *)ib, level, file, line, fmt, ap);
+    ib_log_vex_ex((ib_engine_t *)ib, level, file, func, line, fmt, ap);
 
     return;
 }
@@ -4674,7 +4553,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
 
     /* Set defaults */
-    corecfg->log_level            = 4;
     corecfg->log_uri              = "";
     corecfg->buffer_req           = 0;
     corecfg->buffer_res           = 0;
@@ -4712,8 +4590,12 @@ static ib_status_t core_init(ib_engine_t *ib,
     );
 
     /* Register logger functions. */
-    ib_log_set_logger_fn(ib, core_vlogmsg, NULL);
-    ib_log_set_loglevel_fn(ib, core_loglevel, NULL);
+    ib_logger_level_set(ib_engine_logger_get(ib), IB_LOG_INFO);
+
+    /* Define corecfg->log_fp. */
+    core_log_file_open(ib, corecfg);
+
+    ib_logger_writer_add_default(ib_engine_logger_get(ib), corecfg->log_fp);
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger(core_util_logger, ib);
@@ -4845,13 +4727,6 @@ ib_status_t core_finish(
  * Core module configuration parameter initialization structure.
  */
 static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
-    /* Logger */
-    IB_CFGMAP_INIT_ENTRY(
-        "logger.log_level",
-        IB_FTYPE_NUM,
-        ib_core_cfg_t,
-        log_level
-    ),
     IB_CFGMAP_INIT_ENTRY(
         "logger.log_uri",
         IB_FTYPE_NULSTR,

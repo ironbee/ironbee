@@ -51,7 +51,7 @@ static struct _ibutil_logger_t {
  * Builtin Logger.
  */
 static void _builtin_logger(void *cbdata, int level,
-                            const char *file, int line,
+                            const char *file, const char *func, int line,
                             const char *fmt, va_list ap)
 {
     FILE *fp = (FILE *)cbdata;
@@ -106,7 +106,7 @@ ib_util_fn_logger_t ib_util_get_log_logger(void)
 }
 
 void ib_util_log_ex(int level,
-                    const char *file, int line,
+                    const char *file, const char *func, int line,
                     const char *fmt, ...)
 {
     va_list ap;
@@ -119,11 +119,11 @@ void ib_util_log_ex(int level,
     /* Only pass on the file/line data if we are in DEBUG level or higher. */
     if (_ibutil_logger.level >= 7) {
         _ibutil_logger.callback(_ibutil_logger.cbdata,
-                                level, file, line, fmt, ap);
+                                level, file, func, line, fmt, ap);
     }
     else {
         _ibutil_logger.callback(_ibutil_logger.cbdata,
-                                level, NULL, 0, fmt, ap);
+                                level, NULL, NULL, 0, fmt, ap);
     }
 
     va_end(ap);

@@ -488,7 +488,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
         return rc;
     }
 
-    if (ib_log_get_level(ib) >= 9) {
+    if (ib_logger_level_get(ib_engine_logger_get(ib)) >= 9) {
         ib_log_debug3_tx(tx, "TX DATA EVENT: %s", ib_state_event_name(event));
     }
 

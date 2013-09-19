@@ -852,7 +852,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
     const char *p2;
     ib_status_t rc;
 
-    if (ib_log_get_level(ib) >= IB_LOG_DEBUG) {
+    if (ib_logger_level_get(ib_engine_logger_get(ib)) >= IB_LOG_DEBUG) {
         rc = print_directive(cp, name, args, "Processing directive: ");
         if (rc != IB_OK) {
             return rc;
@@ -1098,7 +1098,7 @@ void ib_cfg_vlog_ex(const ib_engine_t *ib,
         which_fmt = fmt;
     }
 
-    ib_log_vex_ex(ib, level, file, line, which_fmt, ap);
+    ib_log_vex_ex(ib, level, file, __func__, line, which_fmt, ap);
 
     if (new_fmt != NULL) {
         free(new_fmt);

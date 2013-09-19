@@ -30,7 +30,7 @@
 #include <ironbee/array.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/lock.h>
-#include <ironbee/log.h>
+#include <ironbee/logger.h>
 
 #include <stdio.h>
 
@@ -138,11 +138,8 @@ struct ib_engine_t {
     ib_hash_t             *operators;       /**< Hash tracking operators */
     ib_hash_t             *actions;         /**< Hash tracking rules */
     ib_rule_engine_t      *rule_engine;     /**< Rule engine data */
-    ib_log_logger_fn_t     logger_fn;       /**< Logger function. */
-    void                  *logger_cbdata;   /**< Logger callback data. */
-    ib_log_level_fn_t      loglevel_fn;     /**< Log level function. */
-    void                  *loglevel_cbdata; /**< Log level callback data. */
-    ib_var_config_t       *var_config;      /**< Var configuration. */
+    ib_logger_t           *logger;          /**< The engine log object. */
+    ib_data_config_t      *data_config;     /**< Data configuration. */
 
     /* Hooks */
     ib_list_t *hooks[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */

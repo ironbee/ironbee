@@ -322,6 +322,12 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     }
     ib->mp = pool;
 
+    /* Set the logger. */
+    rc = ib_logger_create(&(ib->logger), IB_LOG_INFO, pool);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     /* Create temporary memory pool */
     rc = ib_mpool_create(&(ib->temp_mp),
                          "temp",
@@ -482,7 +488,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
 
     *pib = ib;
 
-    ib_log_ex(ib, IB_LOG_INFO, NULL, 0,
+    ib_log_ex(ib, IB_LOG_INFO, NULL, NULL, 0,
               "%s: Starting ", IB_PRODUCT_VERSION_NAME);
 
     return rc;
@@ -501,7 +507,7 @@ ib_status_t ib_engine_init(ib_engine_t *ib)
 {
     ib_status_t rc;
 
-    ib_log_ex(ib, IB_LOG_INFO, NULL, 0,
+    ib_log_ex(ib, IB_LOG_INFO, NULL, NULL, 0,
               "%s: Starting", IB_PRODUCT_VERSION_NAME);
 
     rc = ib_context_open(ib->ectx);
@@ -511,6 +517,14 @@ ib_status_t ib_engine_init(ib_engine_t *ib)
 
     rc = ib_context_close(ib->ectx);
     return rc;
+}
+
+ib_logger_t* ib_engine_logger_get(const ib_engine_t *ib)
+{
+    assert(ib != NULL);
+    assert(ib->logger != NULL);
+
+    return ib->logger;
 }
 
 /* Create a main context to operate in. */

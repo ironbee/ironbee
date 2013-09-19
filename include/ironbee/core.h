@@ -86,7 +86,6 @@ struct ib_core_vars_t {
  */
 typedef struct ib_core_cfg_t ib_core_cfg_t;
 struct ib_core_cfg_t {
-    ib_num_t          log_level;         /**< Log level */
     const char       *log_uri;           /**< Log URI */
     FILE             *log_fp;            /**< File pointer for log. */
     const char       *logevent;          /**< Active logevent provider key */

@@ -168,8 +168,8 @@ struct ib_logger_rec_t {
     ib_time_t          timestamp;   /* When the logging statement was made.*/
     ib_module_t       *module;      /* The current module. May be null. */
     ib_conn_t         *conn;        /* The current connection. May be null. */
-    ib_tx_t           *tx;          /* The current transaction. May be null. */
-    ib_engine_t       *engine;      /* The IronBee engine. */
+    const ib_tx_t     *tx;          /* The current transaction. May be null. */
+    const ib_engine_t *engine;      /* The IronBee engine. */
     ib_log_level_t     level;       /* The log level. */
 };
 
@@ -227,13 +227,13 @@ struct ib_logger_t {
 */
 void ib_logger_log_msg(
     ib_logger_t       *logger,
-    size_t             line_number,
     const char        *file,
     const char        *function,
+    size_t             line_number,
     ib_engine_t       *engine,
     ib_module_t       *module,
     ib_conn_t         *conn,
-    ib_tx_t           *tx,
+    const ib_tx_t     *tx,
     ib_log_level_t     level,
     const uint8_t     *msg,
     size_t             msg_sz,
@@ -264,18 +264,33 @@ void ib_logger_log_msg(
  */
 void ib_logger_log_va(
     ib_logger_t       *logger,
-    size_t             line_number,
     const char        *file,
     const char        *function,
-    ib_engine_t       *engine,
+    size_t             line_number,
+    const ib_engine_t *engine,
     ib_module_t       *module,
     ib_conn_t         *con,
-    ib_tx_t           *tx,
+    const ib_tx_t     *tx,
     ib_log_level_t     level,
     const char        *msg,
     ...
 )
 PRINTF_ATTRIBUTE(10, 11);
+
+void ib_logger_log_va_list(
+    ib_logger_t       *logger,
+    const char        *file,
+    const char        *function,
+    size_t             line_number,
+    const ib_engine_t *engine,
+    ib_module_t       *module,
+    ib_conn_t         *conn,
+    const ib_tx_t     *tx,
+    ib_log_level_t     level,
+    const char        *msg,
+    va_list            ap
+)
+VPRINTF_ATTRIBUTE(10);
 
 /**
  * Create a new logger.
@@ -328,6 +343,7 @@ ib_status_t ib_logger_writer_add(
  * Add the default writer.
  *
  * @param[in] logger The logger.
+ * @param[in] logfile The log file to write to. May be stderr or similar.
  *
  * @returns
  * - IB_OK On success.
@@ -335,7 +351,8 @@ ib_status_t ib_logger_writer_add(
  * - Other on unexpected failure.
  */
 ib_status_t ib_logger_writer_add_default(
-    ib_logger_t *logger
+    ib_logger_t *logger,
+    FILE        *logfile
 );
 
 /**
@@ -419,7 +436,15 @@ size_t ib_logger_writer_count(ib_logger_t *logger);
  *
  * @returns The logger level.
  */
-ib_log_level_t DLL_PUBLIC ib_logger_level(ib_logger_t *logger);
+ib_log_level_t DLL_PUBLIC ib_logger_level_get(ib_logger_t *logger);
+
+/**
+ * Set the current log level.
+ *
+ * @param[in] logger The logger whose level we are setting.
+ * @param[in] level The level to set.
+ */
+void DLL_PUBLIC ib_logger_level_set(ib_logger_t *logger, ib_log_level_t level);
 
 /**
  * @} IronBeeEngineLogging

@@ -132,46 +132,8 @@ typedef void (*ib_log_logger_fn_t)(
 )
 VPRINTF_ATTRIBUTE(5);
 
-/**
- * Log level callback.
- *
- * @param ib IronBee engine
- * @param cbdata Callback data.
- * @return Log level.
- */
-typedef ib_log_level_t (*ib_log_level_fn_t)(
-    const ib_engine_t *ib,
-    void              *cbdata
-);
-
-/**
- * Set logger callback.
- *
- * @param ib     IronBee engine.
- * @param logger Logger function.
- * @param cbdata Data to pass to logger function.
- */
-void DLL_PUBLIC ib_log_set_logger_fn(
-    ib_engine_t        *ib,
-    ib_log_logger_fn_t  logger,
-    void               *cbdata
-);
-
-/**
- * Set log level callback.
- *
- * @param ib        IronBee engine.
- * @param log_level Log level function.
- * @param cbdata    Data to pass to log level function.
- */
-void DLL_PUBLIC ib_log_set_loglevel_fn(
-    ib_engine_t       *ib,
-    ib_log_level_fn_t  log_level,
-    void              *cbdata
-);
-
 /** Log Generic */
-#define ib_log(ib, lvl, ...) ib_log_ex((ib), (lvl), __FILE__, __LINE__, __VA_ARGS__)
+#define ib_log(ib, lvl, ...) ib_log_ex((ib), (lvl), __FILE__, __func__, __LINE__, __VA_ARGS__)
 /** Log Emergency */
 #define ib_log_emergency(ib, ...) ib_log((ib), IB_LOG_EMERGENCY, __VA_ARGS__)
 /** Log Alert */
@@ -196,7 +158,7 @@ void DLL_PUBLIC ib_log_set_loglevel_fn(
 #define ib_log_trace(ib, ...)     ib_log((ib), IB_LOG_TRACE, __VA_ARGS__)
 
 /** Log Generic (Transaction form) */
-#define ib_log_tx(tx, lvl, ...) ib_log_tx_ex(tx,  (lvl), __FILE__, __LINE__, __VA_ARGS__)
+#define ib_log_tx(tx, lvl, ...) ib_log_tx_ex(tx,  (lvl), __FILE__, __func__, __LINE__, __VA_ARGS__)
 /** Log Emergency (Transaction form) */
 #define ib_log_emergency_tx(tx, ...) ib_log_tx(tx,  IB_LOG_EMERGENCY, __VA_ARGS__)
 /** Log Alert (Transaction form) */
@@ -226,6 +188,7 @@ void DLL_PUBLIC ib_log_set_loglevel_fn(
  * @param ib IronBee engine
  * @param level Log level.
  * @param file Filename.
+ * @param func Function.
  * @param line Line number.
  * @param fmt Printf-like format string
  */
@@ -233,11 +196,12 @@ void DLL_PUBLIC ib_log_ex(
     const ib_engine_t *ib,
     ib_log_level_t     level,
     const char        *file,
+    const char        *func,
     int                line,
     const char        *fmt,
     ...
 )
-PRINTF_ATTRIBUTE(5, 6);
+PRINTF_ATTRIBUTE(6, 7);
 
 /**
  * Transaction Logger for engine.
@@ -252,11 +216,12 @@ void DLL_PUBLIC ib_log_tx_ex(
      const ib_tx_t  *tx,
      ib_log_level_t  level,
      const char     *file,
+     const char     *func,
      int             line,
      const char     *fmt,
      ...
 )
-PRINTF_ATTRIBUTE(5, 6);
+PRINTF_ATTRIBUTE(6, 7);
 
 /**
  * Generic Logger for engine.  valist version.
@@ -272,11 +237,12 @@ void DLL_PUBLIC ib_log_vex_ex(
     const ib_engine_t *ib,
     ib_log_level_t     level,
     const char        *file,
+    const char        *func,
     int                line,
     const char        *fmt,
     va_list            ap
 )
-VPRINTF_ATTRIBUTE(5);
+VPRINTF_ATTRIBUTE(6);
 
 /**
  * Transaction Logger for engine.  valist version.
@@ -292,22 +258,12 @@ void DLL_PUBLIC ib_log_tx_vex(
     const ib_tx_t*     tx,
     ib_log_level_t     level,
     const char        *file,
+    const char        *func,
     int                line,
     const char        *fmt,
     va_list            ap
 )
-VPRINTF_ATTRIBUTE(5);
-
-/**
- * Return the configured logging level.
- *
- * This is used to determine if optional complex processing should be
- * performed to log possibly option information.
- *
- * @param[in] ib The IronBee engine that would be used in a call to ib_log_ex.
- * @return The log level configured.
- */
-ib_log_level_t DLL_PUBLIC ib_log_get_level(const ib_engine_t *ib);
+VPRINTF_ATTRIBUTE(6);
 
 /**
  * Translate a log level to a string.

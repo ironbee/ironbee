@@ -886,9 +886,10 @@ void DLL_PUBLIC ib_rule_log_exec(
     ib_rule_dlog_level_t        level,
     const ib_rule_exec_t       *rule_exec,
     const char                 *file,
+    const char                 *func,
     int                         line,
     const char                 *fmt, ...)
-    PRINTF_ATTRIBUTE(5, 6);
+    PRINTF_ATTRIBUTE(6, 7);
 
 /**
  * Log a fatal rule execution error
@@ -904,43 +905,44 @@ void DLL_PUBLIC ib_rule_log_exec(
 void DLL_PUBLIC ib_rule_log_fatal_ex(
     const ib_rule_exec_t       *rule_exec,
     const char                 *file,
+    const char                 *func,
     int                         line,
     const char                 *fmt, ...)
-    PRINTF_ATTRIBUTE(4, 5);
+    PRINTF_ATTRIBUTE(5, 6);
 
 /** Rule execution fatal error logging */
 #define ib_rule_log_fatal(rule_exec, ...) \
-    ib_rule_log_fatal_ex(rule_exec, __FILE__, __LINE__, __VA_ARGS__)
+    ib_rule_log_fatal_ex(rule_exec, __func__, __FILE__, __LINE__, __VA_ARGS__)
 
 /** Rule execution error logging */
 #define ib_rule_log_error(rule_exec, ...) \
     ib_rule_log_exec(IB_RULE_DLOG_ERROR, rule_exec, \
-                     __FILE__, __LINE__, __VA_ARGS__)
+                     __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** Rule execution warning logging */
 #define ib_rule_log_warn(rule_exec, ...) \
     ib_rule_log_exec(IB_RULE_DLOG_WARNING, rule_exec, \
-                     __FILE__, __LINE__, __VA_ARGS__)
+                     __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** Rule execution notice logging */
 #define ib_rule_log_notice(rule_exec, ...) \
     ib_rule_log_exec(IB_RULE_DLOG_NOTICE, rule_exec, \
-                     __FILE__, __LINE__, __VA_ARGS__)
+                     __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** Rule execution info logging */
 #define ib_rule_log_info(rule_exec, ...) \
     ib_rule_log_exec(IB_RULE_DLOG_INFO, rule_exec, \
-                     __FILE__, __LINE__, __VA_ARGS__)
+                     __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** Rule execution debug logging */
 #define ib_rule_log_debug(rule_exec, ...) \
     ib_rule_log_exec(IB_RULE_DLOG_DEBUG, rule_exec, \
-                     __FILE__, __LINE__, __VA_ARGS__)
+                     __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** Rule execution trace logging */
 #define ib_rule_log_trace(rule_exec, ...) \
     ib_rule_log_exec(IB_RULE_DLOG_TRACE, rule_exec, \
-                     __FILE__, __LINE__, __VA_ARGS__)
+                     __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /**
  * Generic Logger for with transaction
@@ -959,39 +961,40 @@ void DLL_PUBLIC ib_rule_log_fatal_ex(
 void ib_rule_log_tx(ib_rule_dlog_level_t level,
                     const ib_tx_t *tx,
                     const char *file,
+                    const char *func,
                     int line,
                     const char *fmt, ...)
-    PRINTF_ATTRIBUTE(5, 6);
+    PRINTF_ATTRIBUTE(6, 7);
 
 /** Rule error logging (TX version) */
 #define ib_rule_log_tx_error(tx, ...) \
     ib_rule_log_tx(IB_RULE_DLOG_ERROR, tx, \
-                   __FILE__, __LINE__, __VA_ARGS__)
+                   __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** Rule warning logging (TX version) */
 #define ib_rule_log_tx_warn(tx, ...) \
     ib_rule_log_tx(IB_RULE_DLOG_WARNING, tx, \
-                   __FILE__, __LINE__, __VA_ARGS__)
+                   __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** Rule notice logging (TX version) */
 #define ib_rule_log_tx_notice(tx, ...) \
     ib_rule_log_tx(IB_RULE_DLOG_NOTICE, tx, \
-                   __FILE__, __LINE__, __VA_ARGS__)
+                   __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** Rule info logging (TX version) */
 #define ib_rule_log_tx_info(tx, ...) \
     ib_rule_log_tx(IB_RULE_DLOG_INFO, tx, \
-                   __FILE__, __LINE__, __VA_ARGS__)
+                   __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** Rule debug logging (TX version) */
 #define ib_rule_log_tx_debug(tx, ...) \
     ib_rule_log_tx(IB_RULE_DLOG_DEBUG, tx, \
-                   __FILE__, __LINE__, __VA_ARGS__)
+                   __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** Rule trace logging (TX version) */
 #define ib_rule_log_tx_trace(tx, ...) \
     ib_rule_log_tx(IB_RULE_DLOG_TRACE, tx, \
-                   __FILE__, __LINE__, __VA_ARGS__)
+                   __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 /** @} */
 
