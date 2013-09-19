@@ -178,6 +178,7 @@ static const char *indexed_keys[] = {
     "request_host",
     "request_uri_port",
     "request_uri_path",
+    "request_uri_params",
     "request_uri_path_raw",
     "request_uri_query",
     "request_uri_fragment",
