@@ -132,7 +132,7 @@
 #include <ironbee/server.h>
 #include <ironbee/context.h>
 #include <ironbee/core.h>
-#include <ironbee/log.h>
+#include <ironbee/logger.h>
 #include <ironbee/site.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>
@@ -1566,7 +1566,7 @@ static ib_status_t fixup_request_line(
     *pline_len = new_line_len;
 
     /* Log a message */
-    if (ib_log_get_level(tx->ib) >= IB_LOG_DEBUG) {
+    if (ib_logger_level_get(ib_engine_logger_get(tx->ib)) >= IB_LOG_DEBUG) {
         TSDebug("ironbee", "Rewrote request URL from \"%.*s\" to \"%.*s\"",
                 (int)bad_line_len, bad_line_url,
                 (int)url_len, url_buf);
@@ -2374,16 +2374,13 @@ static int check_ts_version(void)
  *
  * Performs IronBee logging for the ATS plugin.
  *
- * @param[in] level IronBee log level (unused)
+ * @param[in] rec Log record to write.
  * @param[in] cbdata Callback data.
- * @param[in] buf Formatted buffer
- * @param[in] calldata unused
  */
 static void ironbee_logger(
-    ib_log_level_t      level,
-    void               *cbdata,
-    const char         *buf,
-    ib_log_call_data_t *calldata)
+    ib_manager_logger_record_t *rec,
+    void                       *cbdata
+)
 {
     if (cbdata == NULL) {
         return;
@@ -2394,10 +2391,10 @@ static void ironbee_logger(
     if (logger == NULL) {
         return;
     }
-    if (buf == NULL) {
+    if (rec->msg == NULL) {
         TSTextLogObjectFlush(logger);
     }
-    TSTextLogObjectWrite(logger, "%s", buf);
+    TSTextLogObjectWrite(logger, "%s", rec->msg);
 }
 
 /**
@@ -2582,12 +2579,11 @@ static int ironbee_init(module_data_t *mod_data)
     TSDebug("ironbee", "Creating IronBee engine manager");
     rc = ib_manager_create(&ibplugin,             /* Server object */
                            mod_data->max_engines, /* Default max */
-                           NULL,                  /* Logger va function */
                            ironbee_logger,        /* Logger buf function */
+                           mod_data,              /* cbdata: module data */
                            ironbee_logger_flush,  /* Logger flush function */
                            mod_data,              /* cbdata: module data */
                            mod_data->log_level,   /* IB log level */
-                           NULL,                  /* No maintenance callback */
                            &(mod_data->manager)); /* Engine Manager */
     if (rc != IB_OK) {
         TSError("Failed to create IronBee engine manager: %s",
