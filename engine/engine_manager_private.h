@@ -71,12 +71,12 @@ struct ib_manager_t {
     ib_lock_t             creation_lock;   /**< Serialize engine creation */
 
     /* Logging */
-    ib_log_level_t            log_level;    /**< Log level for manager */
-    ib_manager_log_va_fn_t    log_va_fn;    /**< Logger @c va_list function */
-    ib_manager_log_buf_fn_t   log_buf_fn;   /**< Logger formatted buffer fn */
-    ib_manager_log_flush_fn_t log_flush_fn; /**< Logger flush function */
-    void                     *log_cbdata;   /**< Logger callback data */
-    void (*callback)(void* cbdata);         /**< Function to callback under mutex */
+    ib_log_level_t            log_level;        /**< Log level for manager */
+    ib_manager_log_buf_fn_t   log_buf_fn;       /**< Logger formatted buffer */
+    void                     *log_buf_cbdata;   /**< Logger callback data */
+    ib_manager_log_flush_fn_t log_flush_fn;     /**< Logger flush function */
+    void                     *log_flush_cbdata; /**< Logger callback data */
+    void (*callback)(void* cbdata);             /**< Function to callback under mutex */
 };
 
 /** @} */

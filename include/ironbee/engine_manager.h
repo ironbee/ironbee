@@ -77,34 +77,24 @@ extern "C" {
 typedef struct ib_manager_t ib_manager_t;
 
 /**
- * Engine manager logger callback (@c va_list version).
- *
- * @param[in] level IronBee log level
- * @param[in] cbdata Callback data
- * @param[in] fmt Format string
- * @param[in] ap Variable args list
+ * Log record created by manager_logger_format() and passed to servers.
  */
-typedef void (*ib_manager_log_va_fn_t)(
-    ib_log_level_t      level,
-    void               *cbdata,
-    const char         *fmt,
-    va_list             ap
-)
-VPRINTF_ATTRIBUTE(3);
+typedef struct ib_manager_logger_record_t {
+    ib_log_level_t level; /**< Log level of the message. */
+    uint8_t *msg;         /**< Log message. Must be freed on destroy. */
+    size_t   msg_sz;      /**< Size of manager_logger_record_t::msg. */
+} ib_manager_logger_record_t;
+
 
 /**
  * Engine manager logger callback (formatted buffer version).
  *
- * @param[in] level IronBee log level
+ * @param[in] rec Formatted buffer
  * @param[in] cbdata Callback data
- * @param[in] buf Formatted buffer
- * @param[in] calldata Context-dependent data.
  */
 typedef void (*ib_manager_log_buf_fn_t)(
-    ib_log_level_t      level,
-    void               *cbdata,
-    const char         *buf,
-    ib_log_call_data_t *calldata
+    ib_manager_logger_record_t  rec,
+    void                       *cbdata
 );
 
 /**
@@ -113,7 +103,7 @@ typedef void (*ib_manager_log_buf_fn_t)(
  * @param[in] cbdata Callback data
  */
 typedef void (*ib_manager_log_flush_fn_t)(
-    void               *cbdata
+    void *cbdata
 );
 
 /* Engine Manager API */
@@ -156,10 +146,10 @@ typedef void (*ib_manager_log_flush_fn_t)(
 ib_status_t DLL_PUBLIC ib_manager_create(
     const ib_server_t          *server,
     size_t                      max_engines,
-    ib_manager_log_va_fn_t      logger_va_fn,
     ib_manager_log_buf_fn_t     logger_buf_fn,
+    void                       *logger_buf_cbdata,
     ib_manager_log_flush_fn_t   logger_flush_fn,
-    void                       *logger_cbdata,
+    void                       *logger_flush_cbdata,
     ib_log_level_t              logger_level,
     void                      (*callback)(void *),
     ib_manager_t              **pmanager

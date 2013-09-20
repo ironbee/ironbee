@@ -118,7 +118,7 @@ static ib_status_t logger_write(
         logger_write_data->msg_sz,
         &rec,
         writer->format_data);
-    if (rc == IB_DECLINED) {
+    if (rc == IB_DECLINED || rec == NULL) {
         return IB_OK;
     }
     if (rc != IB_OK) {
@@ -153,14 +153,13 @@ static ib_status_t logger_write(
         return rc;
     }
 
+    /* If the queue is size=1, unlock and notify writers. */
     if (ib_queue_size(writer->records) == 1) {
+        ib_lock_unlock(&(writer->records_lck));
         rc = writer->record_fn(logger, writer, writer->record_data);
-        if (rc != IB_OK) {
-            goto locked_exit;
-        }
+        return rc;
     }
 
-locked_exit:
     ib_lock_unlock(&(writer->records_lck));
     return rc;
 }
@@ -271,6 +270,7 @@ void ib_logger_log_msg(
     log_msg_sz = msg_sz + fn_msg_sz;
     log_msg = ib_mpool_alloc(mp, log_msg_sz);
     if (log_msg == NULL) {
+        ib_mpool_destroy(mp);
         return;
     }
 
@@ -297,7 +297,7 @@ void ib_logger_log_va(
     ...
 )
 {
-    va_list          ap;
+    va_list ap;
 
     va_start(ap, msg);
     ib_logger_log_va_list(
@@ -348,10 +348,12 @@ void ib_logger_log_va_list(
 
     log_msg = ib_mpool_alloc(mp, buffer_sz);
     if (log_msg == NULL) {
+        ib_mpool_destroy(mp);
         return;
     }
 
-    log_msg_sz = vsnprintf((char *)log_msg, buffer_sz, msg, ap);
+    // FIXME 
+    log_msg_sz = vsnprintf((char *)log_msg, buffer_sz, "HI", ap);
 
     rec.line_number = line_number;
     rec.file        = file;
@@ -417,7 +419,7 @@ ib_status_t ib_logger_writer_add(
     ib_status_t         rc;
     ib_logger_writer_t *writer;
 
-    writer = (ib_logger_writer_t *)ib_mpool_alloc(logger->mp, sizeof(writer));
+    writer = (ib_logger_writer_t *)ib_mpool_alloc(logger->mp, sizeof(*writer));
     if (writer == NULL) {
         return IB_EALLOC;
     }
@@ -625,7 +627,7 @@ void ib_logger_level_set(ib_logger_t *logger, ib_log_level_t level) {
  * Default logger message structure.
  */
 typedef struct default_logger_msg_t {
-    uint8_t *prefix; /**< Prefix of the log message. A string. */
+    char    *prefix; /**< Prefix of the log message. A string. */
     uint8_t *msg;    /**< User's logging data. */
     size_t   msg_sz; /**< The message length. */
 } default_logger_msg_t;
@@ -655,29 +657,32 @@ static ib_status_t default_logger_format(
     assert(writer_record != NULL);
     assert(data != NULL);
 
-    char      *msg_prefix;
     char       time_info[32 + 1];
     struct tm *tminfo;
     time_t     timet;
     default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
-    default_logger_msg_t *msg = malloc(sizeof(*msg));
+    default_logger_msg_t *msg;
 
+    msg = malloc(sizeof(*msg));
     if (msg == NULL) {
         goto out_of_mem;
     }
+
+    msg->prefix = NULL;
+    msg->msg = NULL;
 
     timet = time(NULL);
     tminfo = localtime(&timet);
     strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
 
     /* 100 is more than sufficient. */
-    msg_prefix = (char *)malloc(strlen(time_info) + 100);
-    if (msg_prefix == NULL) {
+    msg->prefix = (char *)malloc(strlen(time_info) + 100);
+    if (msg->prefix == NULL) {
         goto out_of_mem;
     }
 
     sprintf(
-        msg_prefix,
+        msg->prefix,
         "%s %-10s- ",
         time_info,
         ib_log_level_to_string(rec->level));
@@ -702,7 +707,7 @@ static ib_status_t default_logger_format(
             file,
             (int)rec->line_number
         );
-        strcat(msg_prefix, line_info);
+        strcat(msg->prefix, line_info);
     }
 
     msg->msg_sz = log_msg_sz;
@@ -712,19 +717,21 @@ static ib_status_t default_logger_format(
     }
     memcpy(msg->msg, log_msg, log_msg_sz);
 
-    msg->prefix = malloc(strlen(msg_prefix));
-    if (msg->prefix == NULL) {
-        goto out_of_mem;
-    }
-
     *(void **)writer_record = msg;
-    free(msg_prefix);
     return IB_OK;
 out_of_mem:
+    if (msg != NULL) {
+        if (msg->prefix != NULL) {
+            free(msg->prefix);
+        }
+        if (msg->msg != NULL) {
+            free(msg->msg);
+        }
+        free(msg);
+    }
     fprintf(cfg->file, "Out of memory.  Unable to log.");
     fflush(cfg->file);
     return IB_EALLOC;
-
 }
 
 /**
@@ -750,16 +757,22 @@ static ib_status_t default_logger_record(
         rc = ib_logger_dequeue(logger, writer, &msg)
         )
     {
+            /*
+             * FIXME - put back
         fprintf(
             cfg->file,
             "%s %.*s\n",
             msg->prefix,
             (int)msg->msg_sz,
             (char *)msg->msg);
+            */
         fflush(cfg->file);
+        /*
+         * FIXME - put back
         free(msg->msg);
         free(msg->prefix);
         free(msg);
+        */
     }
 
     /* Check for an unexpected failure. */

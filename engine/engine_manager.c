@@ -138,21 +138,20 @@ void cleanup_locks(
  */
 static void set_logger(
     ib_manager_t              *manager,
-    ib_manager_log_va_fn_t     logger_va_fn,
     ib_manager_log_buf_fn_t    logger_buf_fn,
+    void                      *logger_buf_cbdata,
     ib_manager_log_flush_fn_t  logger_flush_fn,
-    void                      *logger_cbdata
+    void                      *logger_flush_cbdata
 )
 {
     assert(manager != NULL);
-    assert( (logger_va_fn != NULL) || (logger_buf_fn != NULL) );
-    assert( (logger_va_fn == NULL) || (logger_buf_fn == NULL) );
+    assert(logger_buf_fn != NULL);
 
     /* Set the logger info */
-    manager->log_va_fn    = logger_va_fn;
-    manager->log_buf_fn   = logger_buf_fn;
-    manager->log_flush_fn = logger_flush_fn;
-    manager->log_cbdata   = logger_cbdata;
+    manager->log_buf_fn       = logger_buf_fn;
+    manager->log_buf_cbdata   = logger_buf_cbdata;
+    manager->log_flush_fn     = logger_flush_fn;
+    manager->log_flush_cbdata = logger_flush_cbdata;
 }
 
 /**
@@ -332,10 +331,10 @@ static ib_status_t destroy_engines(
 ib_status_t ib_manager_create(
     const ib_server_t         *server,
     size_t                     max_engines,
-    ib_manager_log_va_fn_t     logger_va_fn,
     ib_manager_log_buf_fn_t    logger_buf_fn,
+    void                      *logger_buf_cbdata,
     ib_manager_log_flush_fn_t  logger_flush_fn,
-    void                      *logger_cbdata,
+    void                      *logger_flush_cbdata,
     ib_log_level_t             logger_level,
     void                     (*callback)(void *),
     ib_manager_t             **pmanager
@@ -398,9 +397,13 @@ ib_status_t ib_manager_create(
     manager->callback       = callback;
 
     /* Set the logger */
-    set_logger(manager,
-               logger_va_fn, logger_buf_fn, logger_flush_fn,
-               logger_cbdata);
+    set_logger(
+        manager,
+        logger_buf_fn,
+        logger_buf_cbdata,
+        logger_flush_fn,
+        logger_flush_cbdata
+    );
 
     /* Log */
     ib_manager_log(manager, IB_LOG_INFO,
@@ -587,7 +590,29 @@ ib_status_t ib_manager_engine_create(
                    getpid(), manager, engine);
 
     /* Set the engine's logger function */
-    ib_log_set_logger_fn(engine, ib_engine_manager_logger, manager);
+    // FIXME - sam add a logger here.
+    rc = ib_logger_writer_clear(ib_engine_logger_get(engine));
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+
+    rc = ib_logger_writer_add(
+        ib_engine_logger_get(engine),
+        manager_logger_open,
+        manager,
+        manager_logger_close,
+        manager,
+        manager_logger_reopen,
+        manager,
+        manager_logger_format,
+        manager,
+        manager_logger_record,
+        manager
+    );
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+
     ib_manager_log(manager, IB_LOG_INFO,
                    "Starting %s", IB_PRODUCT_VERSION_NAME);
 
