@@ -61,33 +61,6 @@ ib_status_t DLL_LOCAL manager_logger_record(
 );
 
 /**
- * IronBee Engine Manager logger.
- *
- * Performs IronBee logging for the engine manager
- *
- * @param[in] ib IronBee engine (unused)
- * @param[in] level Debug level
- * @param[in] file File name
- * @param[in] line Line number
- * @param[in] fmt Format string
- * @param[in] ap Var args list to match the format
- * @param[in] calldata Context-specific data
- * @param[in] cbdata Callback data (engine manager handle)
- */
-void DLL_LOCAL ib_engine_manager_logger(
-    const ib_engine_t  *ib,
-    ib_log_level_t      level,
-    const char         *file,
-    const char         *func,
-    int                 line,
-    const char         *fmt,
-    va_list             ap,
-    ib_log_call_data_t *calldata,
-    void               *cbdata
-)
-VPRINTF_ATTRIBUTE(6);
-
-/**
  * Internal logger for the engine manager (ex version).
  *
  * @param[in] manager IronBee engine manager
@@ -98,7 +71,7 @@ VPRINTF_ATTRIBUTE(6);
  * @param[in] fmt Printf-like format string
  */
 void DLL_LOCAL ib_manager_log_ex(
-    const ib_manager_t *manager,
+    ib_manager_t       *manager,
     ib_log_level_t      level,
     const char         *file,
     const char         *func,

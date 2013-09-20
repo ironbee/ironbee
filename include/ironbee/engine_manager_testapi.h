@@ -100,10 +100,10 @@ ib_status_t DLL_PUBLIC ib_manager_destroy_engines(
  */
 void DLL_PUBLIC ib_manager_set_logger(
     ib_manager_t              *manager,
-    ib_manager_log_va_fn_t     logger_va_fn,
     ib_manager_log_buf_fn_t    logger_buf_fn,
+    void                      *logger_buf_cbdata,
     ib_manager_log_flush_fn_t  logger_flush_fn,
-    void                      *logger_cbdata
+    void                      *logger_flush_cbdata
 );
 
 /**

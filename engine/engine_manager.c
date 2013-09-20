@@ -47,7 +47,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define CALLBACK(manager) if (manager->callback) (manager)->callback((manager)->log_cbdata)
 /**
  * The Engine Manager engine wrapper.
  *
@@ -163,24 +162,29 @@ static void set_logger(
  * @param[in] label Label for logging
  */
 static void log_engines(
-    const ib_manager_t *manager,
+    ib_manager_t       *manager,
     ib_log_level_t      level1,
     ib_log_level_t      level2,
     const char         *label
 )
 {
+    assert(manager != NULL);
+    assert(manager->logger != NULL);
+
+    ib_log_level_t mgr_log_level = ib_logger_level_get(manager->logger);
+
     /* Log the engine count. */
-    if (manager->log_level >= level1) {
+    if (mgr_log_level >= level1) {
         ib_manager_log(manager, level1,
                        "ENGINE MANAGER[%d,%p]: "
                        "%s; engine list (count=%zu, max=%zd)%c",
                        getpid(), manager, label,
                        manager->engine_count, manager->max_engines,
-                       (manager->log_level >= level2) ? ':' : ' ');
+                       (mgr_log_level >= level2) ? ':' : ' ');
     }
 
     /* Log the individual engines. */
-    if (manager->log_level >= level2) {
+    if (mgr_log_level >= level2) {
         for (size_t n = 0;  n < manager->engine_count;  ++n) {
             ib_manager_engine_t *engine = manager->engine_list[n];
             if (engine == NULL) {
@@ -336,7 +340,6 @@ ib_status_t ib_manager_create(
     ib_manager_log_flush_fn_t  logger_flush_fn,
     void                      *logger_flush_cbdata,
     ib_log_level_t             logger_level,
-    void                     (*callback)(void *),
     ib_manager_t             **pmanager
 )
 {
@@ -393,8 +396,12 @@ ib_status_t ib_manager_create(
     manager->mpool          = mpool;
     manager->engine_list    = engine_list;
     manager->max_engines    = max_engines;
-    manager->log_level      = logger_level;
-    manager->callback       = callback;
+
+    rc = ib_logger_create(&(manager->logger), logger_level, mpool);
+    if (rc != IB_OK) {
+        destroy_locks(manager);
+        goto cleanup;
+    }
 
     /* Set the logger */
     set_logger(
@@ -520,7 +527,6 @@ static ib_status_t register_engine(
     if (manager->engine_count > 1) {
         destroy_engines(manager, IB_MANAGER_DESTROY_INACTIVE, "INACTIVE");
     }
-    CALLBACK(manager);
     ib_lock_unlock(&manager->engines_lock);
     return rc;
 }
@@ -590,12 +596,12 @@ ib_status_t ib_manager_engine_create(
                    getpid(), manager, engine);
 
     /* Set the engine's logger function */
-    // FIXME - sam add a logger here.
     rc = ib_logger_writer_clear(ib_engine_logger_get(engine));
     if (rc != IB_OK) {
         goto cleanup;
     }
 
+    /* Tell the engine to use the manager's logging routines. */
     rc = ib_logger_writer_add(
         ib_engine_logger_get(engine),
         manager_logger_open,
@@ -743,7 +749,6 @@ cleanup:
                    ib_status_to_string(rc));
 
     /* Release any locks */
-    CALLBACK(manager);
     ib_lock_unlock(&manager->engines_lock);
     return rc;
 }
@@ -844,7 +849,6 @@ cleanup:
                    ib_status_to_string(rc));
 
     /* Release any locks */
-    CALLBACK(manager);
     ib_lock_unlock(&manager->engines_lock);
     return rc;
 }
@@ -880,7 +884,6 @@ ib_status_t ib_manager_disable_current(
     manager->engine_current = NULL;
 
     /* Done */
-    CALLBACK(manager);
     ib_lock_unlock(&manager->engines_lock);
     return rc;
 }
@@ -939,7 +942,6 @@ cleanup:
     }
 
     /* Release the engine list lock */
-    CALLBACK(manager);
     ib_lock_unlock(&manager->engines_lock);
 
     return rc;
@@ -984,16 +986,20 @@ size_t ib_manager_engine_count_inactive(
 
 void ib_manager_set_logger(
     ib_manager_t              *manager,
-    ib_manager_log_va_fn_t     logger_va_fn,
     ib_manager_log_buf_fn_t    logger_buf_fn,
+    void                      *logger_buf_cbdata,
     ib_manager_log_flush_fn_t  logger_flush_fn,
-    void                      *logger_cbdata
+    void                      *logger_flush_cbdata
 )
 {
     assert(manager != NULL);
 
     /* set_logger() does the real work */
-    set_logger(manager,
-               logger_va_fn, logger_buf_fn, logger_flush_fn,
-               logger_cbdata);
+    set_logger(
+        manager,
+        logger_buf_fn,
+        logger_buf_cbdata,
+        logger_flush_fn,
+        logger_flush_cbdata
+    );
 }
