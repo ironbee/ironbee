@@ -25,8 +25,6 @@
 #ifndef _IB_LOCK_H_
 #define _IB_LOCK_H_
 
-#include "ironbee_config_auto.h"
-
 #include <ironbee/build.h>
 #include <ironbee/types.h>
 
