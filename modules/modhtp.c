@@ -1227,13 +1227,13 @@ static int modhtp_htp_log(
 
     if (log->code != 0) {
         ib_log_ex(txdata->ib, level,
-                  log->file, log->line,
+                  log->file, NULL, log->line,
                   "LibHTP [error %d] %s",
                   log->code, log->msg);
     }
     else {
         ib_log_ex(txdata->ib, level,
-                  log->file, log->line,
+                  log->file, NULL, log->line,
                   "LibHTP %s",
                   log->msg);
     }

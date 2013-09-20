@@ -51,6 +51,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 /** Module name. */
@@ -122,74 +123,147 @@ static ib_status_t log_pipe_restart(const ib_engine_t *ib, ib_module_t *m,
     return rc;
 }
 
-/**
- * Main logging function: Ironbee callback to write a message to the pipe
- *
- * @param[in] ib  Ironbee engine
- * @param[in] level  Debug level
- * @param[in] file  File name
- * @param[in] line  Line number
- * @param[in] fmt Format string
- * @param[in] ap  Var args list to match the format
- * @param[in] calldata Unused
- * @param[in] x Unused
- */
-static void log_pipe_logger(const ib_engine_t *ib, ib_log_level_t level,
-                            const char *file, int line, const char *fmt,
-                            va_list ap, ib_log_call_data_t *calldata, void *x)
+typedef struct log_pipe_log_rec_t {
+    ib_log_level_t  level;
+    char           *file;
+    int             line;
+    char            timestr[26];
+    char            buf[8192+1];
+    int             ec;
+} log_pipe_log_rec_t;
+
+ib_status_t log_pipe_format(
+    ib_logger_t     *logger,
+    ib_logger_rec_t *rec,
+    const uint8_t   *log_msg,
+    const size_t     log_msg_sz,
+    void            *writer_record,
+    void            *data
+)
 {
     /* Just duplicate what's in all the server loggers */
-    char buf[8192 + 1];
-    int limit = 7000;
     ib_module_t *m;
-    char timestr[26];
-    int ec;
     log_pipe_cfg *cfg;
     time_t tm;
     ib_status_t rc;
+    ib_engine_t *ib = (ib_engine_t *)data;
+    log_pipe_log_rec_t *log_pipe_log_rec = malloc(sizeof(*log_pipe_log_rec));
+
+    if (log_pipe_log_rec == NULL) {
+        return IB_EALLOC;
+    }
 
     rc = ib_engine_module_get((ib_engine_t *)ib, MODULE_NAME_STR, &m);
     assert((rc == IB_OK) && (m != NULL));
     rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
     assert((rc == IB_OK) && (cfg != NULL) && (cfg->pipe != NULL));
 
-    if (level > cfg->log_level) {
-        return;
+    if (rec->level > cfg->log_level) {
+        return IB_DECLINED;
+    }
+
+    log_pipe_log_rec->level = rec->level;
+    log_pipe_log_rec->line  = rec->line_number;
+    log_pipe_log_rec->file  = strdup(rec->file);
+    if (log_pipe_log_rec->file == NULL) {
+        free(log_pipe_log_rec);
+        return IB_EALLOC;
     }
 
     /* TODO: configurable time format */
     time(&tm);
-    ctime_r(&tm, timestr);
-    timestr[24] = 0;  /* we don't want the newline */
+    ctime_r(&tm, log_pipe_log_rec->timestr);
+    log_pipe_log_rec->timestr[24] = 0;  /* we don't want the newline */
 
     /* Buffer the log line. */
-    ec = vsnprintf(buf, sizeof(buf), fmt, ap);
-    MUTEX_LOCK;
-    if (ec >= limit) {
-        /* Mark as truncated, with a " ...". */
-        memcpy(buf + (limit - 5), " ...", 5);
+    log_pipe_log_rec->ec = snprintf(
+        log_pipe_log_rec->buf,
+        8192+1,
+        "%.*s",
+        (int)log_msg_sz,
+        log_msg);
 
-        /// @todo Do something about it
-        if (fprintf(cfg->pipe, "%s: Log format truncated: limit (%d/%d)\n",
-                    timestr, (int)ec, limit) < 0) {
-            if (log_pipe_restart(ib, m, timestr, cfg) == IB_OK) {
-                fprintf(cfg->pipe, "%s: Log format truncated: limit (%d/%d)\n",
-                        timestr, (int)ec, limit);
+    *(void **)writer_record = log_pipe_log_rec;
+    return IB_OK;
+}
+
+ib_status_t log_pipe_record(
+    ib_logger_t        *logger,
+    ib_logger_writer_t *writer,
+    void               *data
+)
+{
+    const int           LIMIT = 7000;
+    ib_status_t         rc;
+    ib_engine_t        *ib = (ib_engine_t *)data;
+    log_pipe_log_rec_t *rec;
+    log_pipe_cfg *cfg;
+    ib_module_t *m;
+
+    rc = ib_engine_module_get((ib_engine_t *)ib, MODULE_NAME_STR, &m);
+    assert((rc == IB_OK) && (m != NULL));
+    rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
+    assert((rc == IB_OK) && (cfg != NULL) && (cfg->pipe != NULL));
+
+    for (
+        rc = ib_logger_dequeue(logger, writer, &rec);
+        rc == IB_OK;
+        rc = ib_logger_dequeue(logger, writer, &rec)
+    )
+    {
+        MUTEX_LOCK;
+        if (rec->ec >= LIMIT) {
+            /* Mark as truncated, with a " ...". */
+            memcpy((rec->buf) + (LIMIT - 5), " ...", 5);
+
+            /// @todo Do something about it
+            if (
+                fprintf(
+                    cfg->pipe, "%s: Log format truncated: limit (%d/%d)\n",
+                    rec->timestr, (int)rec->ec, LIMIT) < 0
+                )
+            {
+                if (log_pipe_restart(ib, m, rec->timestr, cfg) == IB_OK) {
+                    fprintf(
+                        cfg->pipe,
+                        "%s: Log format truncated: limit (%d/%d)\n",
+                        rec->timestr,
+                        (int)rec->ec,
+                        LIMIT);
+                }
             }
         }
+
+        if (
+            fprintf(
+                cfg->pipe,
+                "%s %s [%s:%d]: %s\n", rec->timestr,
+                ib_log_level_to_string(rec->level),
+                rec->file,
+                rec->line,
+                rec->buf) < 0
+        )
+        {
+            /* On error, see if we can save anything.
+            * There's no sensible error handling at this point.
+            */
+            if (log_pipe_restart(ib, m, rec->timestr, cfg) == IB_OK) {
+                fprintf(
+                    cfg->pipe,
+                    "%s %s [%s:%d]: %s\n",
+                    rec->timestr,
+                    ib_log_level_to_string(rec->level),
+                    rec->file,
+                    rec->line,
+                    rec->buf);
+            }
+        }
+        MUTEX_UNLOCK;
+        free(rec->file);
+        free(rec);
     }
 
-    if (fprintf(cfg->pipe, "%s %s [%s:%d]: %s\n", timestr,
-                ib_log_level_to_string(level), file, line, buf) < 0) {
-        /* On error, see if we can save anything.
-         * There's no sensible error handling at this point.
-         */
-        if (log_pipe_restart(ib, m, timestr, cfg) == IB_OK) {
-            fprintf(cfg->pipe, "%s %s [%s:%d]: %s\n", timestr,
-                    ib_log_level_to_string(level), file, line, buf);
-        }
-    }
-    MUTEX_UNLOCK;
+    return IB_OK;
 }
 
 /**
@@ -199,7 +273,7 @@ static void log_pipe_logger(const ib_engine_t *ib, ib_log_level_t level,
  * @param[in] dummy
  * @return  The current log level
  */
-static ib_log_level_t log_pipe_get_level(const ib_engine_t *ib, void *dummy)
+static ib_log_level_t log_pipe_get_level(const ib_engine_t *ib)
 {
     log_pipe_cfg *cfg;
     ib_module_t *m;
@@ -266,9 +340,24 @@ static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
     }
     ib_mpool_cleanup_register(mp, log_pipe_close, cfg);
 
+    ib_logger_t *logger = ib_engine_logger_get(ib);
+
     /* Now our pipe is up-and-running, register our own logger */
-    ib_log_set_logger_fn(ib, log_pipe_logger, NULL);
-    ib_log_set_loglevel_fn(ib, log_pipe_get_level, NULL);
+    ib_logger_writer_clear(logger);
+    ib_logger_writer_add(
+        logger,
+        NULL, /* Open */
+        NULL,
+        NULL, /* Close */
+        NULL,
+        NULL, /* Reopen */
+        NULL,
+        log_pipe_format,
+        ib,
+        log_pipe_record,
+        ib
+    );
+    ib_logger_level_set(logger, log_pipe_get_level(ib));
 
     return IB_OK;
 }

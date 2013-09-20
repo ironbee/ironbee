@@ -217,7 +217,7 @@ static void moddevel_txdump_va(
         fputs("\n", txdump->fp);
     }
     else {
-        ib_log_tx_vex(tx, txdump->level, NULL, 0, fmtbuf, ap);
+        ib_log_tx_vex(tx, txdump->level, NULL, NULL, 0, fmtbuf, ap);
     }
 }
 
