@@ -27,6 +27,26 @@ module IronBee
         end
       end
 
+      def self.copy_keys_s(pb, hash, *keys)
+        keys.select {|k| hash.has_key?(k)}.each do |k|
+          pb[k] = hash[k].to_s
+        end
+      end
+
+      def self.deep_stringify(obj)
+        if obj.is_a?(Hash)
+          new_hash = {}
+          obj.each do |k, v|
+            new_hash[k.to_s] = deep_stringify(v)
+          end
+          new_hash
+        elsif obj.is_a?(Array)
+          obj.collect {|x| deep_stringify(x)}
+        else
+          obj
+        end
+      end
+
       def self.copy_event_list(pb_field, events)
         events.each do |event|
           pb_event = IronBee::CLIPP::PB::Event.new
@@ -41,21 +61,21 @@ module IronBee
             )
           elsif event.has_key?('data_event')
             pb_event.data_event = IronBee::CLIPP::PB::DataEvent.new
-            copy_keys(
+            copy_keys_s(
               pb_event.data_event,
               event['data_event'],
               'data'
             )
           elsif event.has_key?('request_event')
             pb_event.request_event = IronBee::CLIPP::PB::RequestEvent.new
-            copy_keys(
+            copy_keys_s(
               pb_event.request_event,
               event['request_event'],
               'raw', 'method', 'uri', 'protocol'
             )
           elsif event.has_key?('response_event')
             pb_event.response_event = IronBee::CLIPP::PB::ResponseEvent.new
-            copy_keys(
+            copy_keys_s(
               pb_event.response_event,
               event['response_event'],
               'raw', 'protocol', 'status', 'message'
@@ -65,7 +85,7 @@ module IronBee
             event['header_event']['header'].each do |header|
               pb_header = IronBee::CLIPP::PB::Header.new
               pb_event.header_event.header << pb_header
-              copy_keys(pb_header, header, 'name', 'value')
+              copy_keys_s(pb_header, header, 'name', 'value')
             end
           end
         end
@@ -74,8 +94,10 @@ module IronBee
       public
 
       def self.write_hash_to_pb(io, input_as_hash)
+        input_as_hash = deep_stringify(input_as_hash)
+
         pb_input = IronBee::CLIPP::PB::Input.new
-        copy_keys(pb_input, input_as_hash, 'id')
+        copy_keys_s(pb_input, input_as_hash, 'id')
 
         pb_input.connection = IronBee::CLIPP::PB::Connection.new
 
@@ -108,6 +130,7 @@ module IronBee
       end
 
       def self.hash_to_pb(input_as_hash)
+        input_as_hash = deep_stringify(input_as_hash)
         result = ""
         write_hash_to_pb(StringIO.new(result), input_as_hash)
         result
