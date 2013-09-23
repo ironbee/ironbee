@@ -8,6 +8,7 @@
 
 $:.unshift(File.dirname(__FILE__))
 require 'hash_to_pb'
+require 'json'
 
 if ! ARGV.empty?
   puts "Usage: #{$0} < <json file>"
