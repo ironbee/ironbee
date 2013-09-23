@@ -17,7 +17,7 @@ module IronBee
         input.serialize_to(out)
         out.close
 
-        io.write [data.size].pack("N")
+        io.write [data.bytesize].pack("N")
         io.write data
       end
 
