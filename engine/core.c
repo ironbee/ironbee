@@ -391,6 +391,7 @@ static void core_log_file_close(const ib_engine_t *ib,
     if ( (config->log_fp != NULL) && (config->log_fp != stderr) ) {
         fclose(config->log_fp);
         config->log_fp = stderr;
+        core_configure_engine_logger(ib, config);
     }
 }
 

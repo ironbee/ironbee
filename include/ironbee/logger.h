@@ -116,6 +116,13 @@ typedef ib_status_t (*ib_logger_record_fn_t)(
  * The @a log_msg should be escaped if the log writer cannot write 
  * non-printable characters.
  *
+ * The formatter also has the option to not handle the log message. If
+ * IB_DECLINE is returned then @a writer_record is not enqueued in the
+ * writer's queue.
+ *
+ * Note: If memory is allocated and IB_DECLINE is returned, there is no way
+ * to get that memory back to free it through this API.
+ *
  * @param[in] logger The logger.
  * @param[in] rec The logging record to use for formatting.
  *            This should be considered to be free'ed after this 
@@ -166,60 +173,38 @@ struct ib_logger_rec_t {
     const char        *file;        /* File of the logging statement. */
     const char        *function;    /* The current function. */
     ib_time_t          timestamp;   /* When the logging statement was made.*/
-    ib_module_t       *module;      /* The current module. May be null. */
-    ib_conn_t         *conn;        /* The current connection. May be null. */
+    const ib_module_t *module;      /* The current module. May be null. */
+    const ib_conn_t   *conn;        /* The current connection. May be null. */
     const ib_tx_t     *tx;          /* The current transaction. May be null. */
     const ib_engine_t *engine;      /* The IronBee engine. */
     ib_log_level_t     level;       /* The log level. */
 };
 
 /**
- * A collection of callbacks and function pointer that implement a logger.
- */
-struct ib_logger_writer_t {
-    ib_logger_open_fn      open_fn;     /**< Open the logger. */
-    void                  *open_data;   /**< Callback data. */
-    ib_logger_close_fn     close_fn;    /**< Close logs files. */
-    void                  *close_data;  /**< Callback data. */
-    ib_logger_reopen_fn    reopen_fn;   /**< Close and reopen log files. */
-    void                  *reopen_data; /**< Callback data. */
-    ib_logger_format_fn_t  format_fn;   /**< Signal that the queue has data. */
-    void                  *format_data; /**< Callback data. */
-    ib_logger_record_fn_t  record_fn;   /**< Signal a record is ready. */
-    void                  *record_data; /**< Callback data. */
-    ib_queue_t            *records;     /**< Records for the log writer. */
-    ib_lock_t              records_lck; /**< Guard the queue. */
-};
-
-/**
- * A logger is what @ref ib_logger_rec are submitted to to produce a log.
- */
-struct ib_logger_t {
-    ib_log_level_t       level;       /**< The log level. */
-
-    /**
-     * Memory pool with a lifetime of the logger.
-     */
-    ib_mpool_t          *mp;
-
-    ib_list_t           *writers;    /**< List of @ref ib_logger_writter_t. */
-};
-
-/**
  * Submit a log message to a logger.
  *
- * This is an internal function that is typically wrapped by macros.
+ * This function takes @a msg and @a msg_fn as log message inputs.
+ * The @a msg argument is a simple string from the user where as
+ * @a msg_fn is function that will return a log message.
  *
+ * When both are present @a msg_fn's output is contactiated to @a msg and
+ * passed on in the logging pipeline. If either is NULL, they are not included.
+ *
+ * If the resulting message is 0 length, then it is assumed that there is no
+ * message and the message is not logged.
+ *
+ * @param[in] logger The logger.
  * @param[in] line_number The current line number.
  * @param[in] file The current file.
  * @param[in] function The current function.
  * @param[in] engine The IronBee engine.
  * @param[in] module Optional module.
- * @param[in] con Optional connection.
+ * @param[in] conn Optional connection.
  * @param[in] tx Optional transaction.
  * @param[in] level The level the log record is at. If this value is
  *            below the log message level, this record is not logged.
  * @param[in] msg The optional first part of the user's log message.
+ * @param[in] msg_sz The message size.
  * @param[in] msg_fn An optional callback function that will return the last
  *            portion of the log message. This is only called
  *            if the message is actually formatted for logging.
@@ -230,9 +215,9 @@ void ib_logger_log_msg(
     const char        *file,
     const char        *function,
     size_t             line_number,
-    ib_engine_t       *engine,
-    ib_module_t       *module,
-    ib_conn_t         *conn,
+    const ib_engine_t *engine,
+    const ib_module_t *module,
+    const ib_conn_t   *conn,
     const ib_tx_t     *tx,
     ib_log_level_t     level,
     const uint8_t     *msg,
@@ -247,20 +232,17 @@ void ib_logger_log_msg(
  * This function will compose the vargs into a single string
  * log message which will be passed down the logging pipeline.
  *
+ * @param[in] logger The logger.
  * @param[in] line_number The current line number.
  * @param[in] file The current file.
  * @param[in] function The current function.
  * @param[in] engine The IronBee engine.
  * @param[in] module Optional module.
- * @param[in] con Optional connection.
+ * @param[in] conn Optional connection.
  * @param[in] tx Optional transaction.
  * @param[in] level The level the log record is at. If this value is
  *            below the log message level, this record is not logged.
- * @param[in] msg The optional first part of the user's log message.
- * @param[in] msg_fn An optional callback function that will return the last
- *            portion of the log message. This is only called
- *            if the message is actually formatted for logging.
- * @param[in] msg_fn_data Data passed to @a msg_fn.
+ * @param[in] msg The user's format, followed by format arguments.
  */
 void ib_logger_log_va(
     ib_logger_t       *logger,
@@ -268,8 +250,8 @@ void ib_logger_log_va(
     const char        *function,
     size_t             line_number,
     const ib_engine_t *engine,
-    ib_module_t       *module,
-    ib_conn_t         *con,
+    const ib_module_t *module,
+    const ib_conn_t   *conn,
     const ib_tx_t     *tx,
     ib_log_level_t     level,
     const char        *msg,
@@ -277,14 +259,33 @@ void ib_logger_log_va(
 )
 PRINTF_ATTRIBUTE(10, 11);
 
+/**
+ * Submit a log message using vprintf style arguments for the message.
+ *
+ * This function will compose the vargs into a single string
+ * log message which will be passed down the logging pipeline.
+ *
+ * @param[in] logger The logger.
+ * @param[in] line_number The current line number.
+ * @param[in] file The current file.
+ * @param[in] function The current function.
+ * @param[in] engine The IronBee engine.
+ * @param[in] module Optional module.
+ * @param[in] conn Optional connection.
+ * @param[in] tx Optional transaction.
+ * @param[in] level The level the log record is at. If this value is
+ *            below the log message level, this record is not logged.
+ * @param[in] msg The user's format, followed by format arguments.
+ * @param[in] ap The list of arguments.
+ */
 void ib_logger_log_va_list(
     ib_logger_t       *logger,
     const char        *file,
     const char        *function,
     size_t             line_number,
     const ib_engine_t *engine,
-    ib_module_t       *module,
-    ib_conn_t         *conn,
+    const ib_module_t *module,
+    const ib_conn_t   *conn,
     const ib_tx_t     *tx,
     ib_log_level_t     level,
     const char        *msg,
@@ -295,8 +296,8 @@ VPRINTF_ATTRIBUTE(10);
 /**
  * Create a new logger.
  *
- * @param[in] logger
- * @param[in] level
+ * @param[in] logger The logger.
+ * @param[in] level The level the logger should allow to writers.
  * @param[in] mp Memory pool used to create resources used for the 
  *            lifetime of this logger.
  *

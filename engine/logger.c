@@ -178,13 +178,13 @@ static ib_status_t logger_write(
  * - Faulse if the message should not be discarded.
  */
 static bool logger_filter(
-    ib_logger_t *logger,
-    ib_log_level_t level
+    ib_logger_t    *logger,
+    ib_log_level_t  level
 )
 {
     assert(logger != NULL);
 
-    if (level > logger->level) {
+    if (level <= logger->level) {
         return false;
     }
 

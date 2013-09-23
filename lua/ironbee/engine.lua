@@ -134,9 +134,10 @@ _M.logDebug = function(self, msg, ...)
 end
 
 _M.log = function(self, level, prefix, msg, ...)
-    local debug_table = debug.getinfo(3, "Sl")
+    local debug_table = debug.getinfo(3, "Sln")
     local file = debug_table.short_src
     local line = debug_table.currentline
+    local func = debug_table.name
 
     -- Msg must not be nil.
     if msg == nil then
@@ -153,7 +154,7 @@ _M.log = function(self, level, prefix, msg, ...)
     -- Prepend prefix.
     msg = prefix .. " " .. msg
 
-    ffi.C.ib_log_ex(self.ib_engine, level, file, line, msg);
+    ffi.C.ib_log_ex(self.ib_engine, level, file, func, line, msg);
 end
 
 -- Return a function that executes an operator instance.
