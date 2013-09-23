@@ -3,6 +3,25 @@ require File.join(File.dirname(__FILE__), '..', 'clipp_test')
 class TestTesting < Test::Unit::TestCase
   include CLIPPTest
 
+  def test_clippscript
+    clipp(consumer: 'view') do
+      transaction do |t|
+        t.request(
+          raw: "GET /foo HTTP/1.1",
+          headers: {
+            'Host'           => 'foo.com',
+            'Content-Length' => 0
+          }
+        )
+        t.response(raw: "HTTP/1.1 200 OK")
+      end
+    end
+    assert_log_match %r{GET /foo HTTP/1.1}
+    assert_log_match %r{Host: foo.com}
+    assert_log_match %r{Content-Length: 0}
+    assert_log_match %r{HTTP/1.1 200 OK}
+  end
+
   def test_input_hashes
     clipp(
         :input_hashes => [

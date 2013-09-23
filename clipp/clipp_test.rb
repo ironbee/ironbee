@@ -17,6 +17,7 @@ require 'erb'
 
 $:.unshift(File.dirname(__FILE__))
 require 'hash_to_pb'
+require 'clippscript'
 
 # Assertion module.
 #
@@ -156,7 +157,7 @@ private
   def generate_ironbee_configuration(context, template = nil)
     template ||= DEFAULT_TEMPLATE
     template = expand_path(template)
-    CLIPPTestCast::fatal "Could not read #{template}" if ! File.readable?(template)
+    CLIPPTest::fatal "Could not read #{template}" if ! File.readable?(template)
 
     erb = ERB.new(IO.read(template))
     config = erb.result(context)
@@ -292,11 +293,19 @@ public
   def clipp(config)
     config = config.dup
 
-    if ! config[:input] && ! config[:input_hashes]
-      CLIPPTestCase::fatal "Must have :input or :input_hashes."
+    if ! config[:input] && ! config[:input_hashes] && ! block_given?
+      CLIPPTest::fatal "Must have :input, :input_hashes, or a block."
     end
 
     config[:id] ||= generate_id
+
+    if block_given?
+      config[:input_hashes] ||= []
+      ClippScript::eval(Proc.new) do |input|
+        config[:input_hashes] << input
+        nil
+      end
+    end
 
     if config[:input_hashes]
       input_content = ""

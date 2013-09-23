@@ -12,6 +12,10 @@ IronBee v0.9.0
 
 - The data field layer (rule targets) has been overhauled.  Data fields are now known as 'vars'.  Expansions and filters should be significantly faster.  `InitVarIndexed` and `InitCollectionIndexed` have been removed; their normal versions now Index automatically.
 
+**CLIPP**
+
+- Added ClippScript, a Ruby DSL for creating CLIPP inputs.  See `clipp/clippscript.md`.
+
 IronBee v0.8.0
 --------------
 
