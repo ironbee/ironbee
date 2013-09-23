@@ -345,6 +345,8 @@ ib_status_t ib_logger_writer_add(
  *
  * @param[in] logger The logger.
  * @param[in] logfile The log file to write to. May be stderr or similar.
+ *            The default writer does not close the FILE provided. It is 
+ *            assumed to be managed externally.
  *
  * @returns
  * - IB_OK On success.

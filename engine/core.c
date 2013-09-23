@@ -335,12 +335,48 @@ static ib_core_cfg_t *core_get_main_config(const ib_engine_t *ib,
 }
 
 /**
+ * Take the @a cfg FILE pointer for the log file and give it to the logger.
+ * 
+ * @param[in] ib Engine to be modified.
+ * @param[in] cfg The core configuration use to configure the logger in
+ *            @a ib.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on ib_logger_* failures.
+ */
+static ib_status_t core_configure_engine_logger(
+    ib_engine_t   *ib,
+    ib_core_cfg_t *corecfg
+)
+{
+    assert(ib != NULL);
+    assert(corecfg != NULL);
+    assert(corecfg->log_fp != NULL);
+
+    ib_status_t  rc;
+    ib_logger_t *logger = ib_engine_logger_get(ib);
+
+    rc = ib_logger_writer_clear(logger);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_logger_writer_add_default(logger, corecfg->log_fp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+/**
  * Open the configured log file
  *
  * @param[in] ib IronBee engine
  * @param[in,out] config Core configuration
  */
-static void core_log_file_open(const ib_engine_t *ib,
+static void core_log_file_open(ib_engine_t *ib,
                                ib_core_cfg_t *config)
 {
     assert(ib != NULL);
@@ -374,15 +410,17 @@ static void core_log_file_open(const ib_engine_t *ib,
         }
         config->log_uri = "stderr";
     }
+
+    core_configure_engine_logger(ib, config);
 }
 
 /**
  * Open the configuration's log file
  *
  * @param[in] ib IronBee engine
- * @param[in,out] config Core configuration
+ * @param[in,out] corecfg Core configuration
  */
-static void core_log_file_close(const ib_engine_t *ib,
+static void core_log_file_close(ib_engine_t *ib,
                                 ib_core_cfg_t *config)
 {
     assert(ib != NULL);
@@ -393,6 +431,8 @@ static void core_log_file_close(const ib_engine_t *ib,
         config->log_fp = stderr;
         core_configure_engine_logger(ib, config);
     }
+
+    core_configure_engine_logger(ib, config);
 }
 
 /* -- Audit Implementations -- */
@@ -3588,8 +3628,8 @@ static ib_status_t core_dir_loglevel(ib_cfgparser_t *cp,
     if (strcasecmp("LogLevel", name) == 0)
     {
         ib_log_debug2(ib, "%s: %u", name, (unsigned int)level);
-        rc = ib_context_set_num(ctx, "logger.log_level", level);
-        return rc;
+        ib_logger_level_set(ib_engine_logger_get(ib), level);
+        return IB_OK;
     }
     else if (strcasecmp("RuleEngineLogLevel", name) == 0) {
         ib_log_debug2(ib, "%s: %u", name, (unsigned int)level);
@@ -4595,8 +4635,6 @@ static ib_status_t core_init(ib_engine_t *ib,
 
     /* Define corecfg->log_fp. */
     core_log_file_open(ib, corecfg);
-
-    ib_logger_writer_add_default(ib_engine_logger_get(ib), corecfg->log_fp);
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger(core_util_logger, ib);
