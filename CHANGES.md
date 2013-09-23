@@ -12,6 +12,8 @@ IronBee v0.9.0
 
 - The data field layer (rule targets) has been overhauled.  Data fields are now known as 'vars'.  Expansions and filters should be significantly faster.  `InitVarIndexed` and `InitCollectionIndexed` have been removed; their normal versions now Index automatically.
 
+- Added API to load a module from a symbol rather than a file (`ib_module_load_from_sym()`) and an API to load a symbol from a file without initializing the module (`ib_module_file_to_sym()`).
+
 **CLIPP**
 
 - Added ClippScript, a Ruby DSL for creating CLIPP inputs.  See `clipp/clippscript.md`.

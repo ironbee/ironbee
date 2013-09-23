@@ -146,11 +146,13 @@ ib_status_t ib_module_create(ib_module_t **pm,
  */
 extern const ib_module_t *IB_MODULE_SYM(ib_engine_t *);
 
-ib_status_t ib_module_load(ib_module_t **pm,
-                           ib_engine_t *ib,
-                           const char *file)
+ib_status_t ib_module_file_to_sym(
+    ib_module_sym_fn *psym,
+    ib_engine_t      *ib,
+    const char       *file
+)
 {
-    assert(pm != NULL);
+    assert(psym != NULL);
     assert(ib != NULL);
     assert(file != NULL);
 
@@ -167,7 +169,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
     }
 
     /* Load module and fetch the module symbol. */
-    ib_log_debug2(ib, "Loading module: %s", file);
+    ib_log_debug2(ib, "Loading module symbol: %s", file);
 
     rc = ib_dso_open(&dso, file, ib->config_mp);
     if (rc != IB_OK) {
@@ -184,14 +186,37 @@ ib_status_t ib_module_load(ib_module_t **pm,
         return rc;
     }
 
+    *psym = sym.fn_sym;
+    return IB_OK;
+}
+
+
+ib_status_t DLL_PUBLIC ib_module_load_from_sym(
+    ib_module_t      **pm,
+    ib_engine_t       *ib,
+    ib_module_sym_fn   sym
+)
+{
+    assert(pm != NULL);
+    assert(ib != NULL);
+    assert(sym != NULL);
+
+    ib_status_t rc;
+
+    if (ib == NULL) {
+        return IB_EINVAL;
+    }
+
+    /* Load module and fetch the module symbol. */
+    ib_log_debug2(ib, "Loading module.");
+
     {
         const ib_module_t *m;
 
         /* Fetch and copy the module structure. */
-        m = sym.fn_sym(ib);
+        m = sym(ib);
         if (m == NULL) {
-            ib_log_error(ib, "Failed to load module %s: no module structure",
-                         file);
+            ib_log_error(ib, "Failed to load module: no module structure");
             return IB_EUNKNOWN;
         }
         *pm = (ib_module_t *)ib_mpool_alloc(
@@ -208,11 +233,10 @@ ib_status_t ib_module_load(ib_module_t **pm,
     /* Check module for ABI compatibility with this engine */
     if ((*pm)->vernum > IB_VERNUM) {
         ib_log_alert(ib,
-                     "Module %s (built against engine version %s) is not "
+                     "Module (built against engine version %s) is not "
                      "compatible with this engine (version %s): "
                      "ABI %d > %d",
-                     file, (*pm)->version, IB_VERSION, (*pm)->abinum,
-                     IB_ABINUM);
+                     (*pm)->version, IB_VERSION, (*pm)->abinum, IB_ABINUM);
         return IB_EINCOMPAT;
     }
 
@@ -224,6 +248,30 @@ ib_status_t ib_module_load(ib_module_t **pm,
                   (*pm)->idx, (*pm)->filename);
 
     rc = ib_module_init(*pm, ib);
+    return rc;
+}
+
+ib_status_t ib_module_load(ib_module_t **pm,
+                           ib_engine_t *ib,
+                           const char *file)
+{
+    assert(pm != NULL);
+    assert(ib != NULL);
+    assert(file != NULL);
+
+    ib_status_t rc;
+    ib_module_sym_fn sym;
+
+    if (ib == NULL) {
+        return IB_EINVAL;
+    }
+
+    rc = ib_module_file_to_sym(&sym, ib, file);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_module_load_from_sym(pm, ib, sym);
     return rc;
 }
 

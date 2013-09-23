@@ -247,7 +247,7 @@ ib_status_t DLL_PUBLIC ib_module_create(
  *
  * This causes the module init() function to be called.
  *
- * @param[out] pm   Address which module handle is written
+ * @param[out] pm   Address to which module handle is written
  * @param[in]  ib   Engine handle
  * @param[in]  file Filename of the module
  *
@@ -257,6 +257,38 @@ ib_status_t DLL_PUBLIC ib_module_load(
     ib_module_t **pm,
     ib_engine_t  *ib,
     const char   *file
+);
+
+/**
+ * Load a module DSO but do not initialize; instead return symbol.
+ *
+ * @param[out] psym Address to which module symbol is written
+ * @param[in]  ib   Engine handle
+ * @param[in]  file Filename of the module
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_module_file_to_sym(
+    ib_module_sym_fn *psym,
+    ib_engine_t      *ib,
+    const char       *file
+);
+
+/**
+ * Initialize an engine module from a symbol.
+ *
+ * This causes the module init() function to be called.
+ *
+ * @param[out] pm  Address to which module handle is written
+ * @param[in]  ib  Engine handle
+ * @parma[in]  sym Module symbol.
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_module_load_from_sym(
+    ib_module_t      **pm,
+    ib_engine_t       *ib,
+    ib_module_sym_fn   sym
 );
 
 /**
