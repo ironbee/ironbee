@@ -2941,6 +2941,10 @@ static ib_status_t modhtp_context_destroy(
     modhtp_context_t   *modctx;
     ib_module_t        *module = (ib_module_t *)cbdata;
 
+    if (ib_context_type_check(ctx, IB_CTYPE_ENGINE)) {
+        return IB_OK;
+    }
+
     /* Get the module config. */
     rc = ib_context_module_config(ctx, module, (void *)&config);
     if (rc != IB_OK) {
