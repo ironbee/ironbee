@@ -278,6 +278,8 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
     } else {
         // Add as a new header.
         if (htp_table_add(connp->out_tx->response_headers, h->name, h) != HTP_OK) {
+            bstr_free(h->name);
+            bstr_free(h->value);
             free(h);
             return HTP_ERROR;
         }
