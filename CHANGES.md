@@ -6,7 +6,7 @@ IronBee v0.9.0
 
 **Build**
 
-- Ruby 1.9 now required.  This is a build dependency only; IronBee does not require Ruby to be used.  Build is now fully compatible with Ruby 2.0.
+- Ruby 1.9 now required.  This is a build dependency only; IronBee does not require Ruby to be used.  Build is now fully compatible with Ruby 2.0.  If you need to use alternative ruby or gem binaries, those can specified by setting RUBY and GEM in configure, e.g., 'configure RUBY=/usr/bin/ruby19 GEM=/usr/bin/gem19'.
 
 **Engine**
 

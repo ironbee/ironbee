@@ -1,7 +1,9 @@
 # ==================== Ruby ====================
 AC_DEFUN([CHECK_RUBY],
 [
-  AC_PATH_PROG([RUBY], ruby)
+  if test "x$RUBY" == "x"; then
+    AC_PATH_PROG([RUBY], ruby)
+  fi
 
   if test "x$RUBY" == "x" ; then
     AC_MSG_ERROR([ruby is required])
@@ -30,7 +32,9 @@ AC_DEFUN([CHECK_RUBY],
 # Like Perl's CPAN
 AC_DEFUN([CHECK_GEM],
 [
-  AC_PATH_PROG([GEM], gem)
+  if test "x$GEM" == "x"; then
+    AC_PATH_PROG([GEM], gem)
+  fi
 
   minGemVersion=[$1]
   if test "x$GEM" == "x" ; then
