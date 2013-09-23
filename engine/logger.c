@@ -270,7 +270,7 @@ void ib_logger_log_msg(
     log_msg_sz = msg_sz + fn_msg_sz;
     log_msg = ib_mpool_alloc(mp, log_msg_sz);
     if (log_msg == NULL) {
-        ib_mpool_destroy(mp);
+        ib_mpool_release(mp);
         return;
     }
 
@@ -280,7 +280,7 @@ void ib_logger_log_msg(
 
     logger_log(logger, &rec, log_msg, log_msg_sz);
 
-    ib_mpool_destroy(mp);
+    ib_mpool_release(mp);
 }
 
 void ib_logger_log_va(
@@ -332,10 +332,9 @@ void ib_logger_log_va_list(
 {
     ib_status_t      rc;
     uint8_t         *log_msg;    /* Final message. */
-    size_t           log_msg_sz;
+    size_t           log_msg_sz = 1024;
     ib_logger_rec_t  rec;
     ib_mpool_t      *mp = NULL;
-    const size_t     buffer_sz = 1024;
 
     if (logger_filter(logger, level)) {
         return;
@@ -346,14 +345,13 @@ void ib_logger_log_va_list(
         return;
     }
 
-    log_msg = ib_mpool_alloc(mp, buffer_sz);
+    log_msg = ib_mpool_alloc(mp, log_msg_sz);
     if (log_msg == NULL) {
-        ib_mpool_destroy(mp);
+        ib_mpool_release(mp);
         return;
     }
 
-    // FIXME 
-    log_msg_sz = vsnprintf((char *)log_msg, buffer_sz, "HI", ap);
+    log_msg_sz = vsnprintf((char *)log_msg, log_msg_sz, msg, ap);
 
     rec.line_number = line_number;
     rec.file        = file;
@@ -367,7 +365,7 @@ void ib_logger_log_va_list(
 
     logger_log(logger, &rec, log_msg, log_msg_sz);
 
-    ib_mpool_destroy(mp);
+    ib_mpool_release(mp);
 }
 
 ib_status_t ib_logger_create(
@@ -757,22 +755,15 @@ static ib_status_t default_logger_record(
         rc = ib_logger_dequeue(logger, writer, &msg)
         )
     {
-            /*
-             * FIXME - put back
         fprintf(
             cfg->file,
             "%s %.*s\n",
             msg->prefix,
             (int)msg->msg_sz,
             (char *)msg->msg);
-            */
-        fflush(cfg->file);
-        /*
-         * FIXME - put back
         free(msg->msg);
         free(msg->prefix);
         free(msg);
-        */
     }
 
     /* Check for an unexpected failure. */

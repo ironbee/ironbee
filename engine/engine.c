@@ -777,6 +777,9 @@ void ib_engine_destroy(ib_engine_t *ib)
     ib_module_unload(cm);
     /* No logging from here on out. */
 
+    /* Close the loggers. */
+    ib_logger_close(ib->logger);
+
 #ifdef IB_DEBUG_MEMORY
     /* We can't use ib_engine_pool_destroy here as too little of the
      * the engine is left.

@@ -140,7 +140,7 @@ void DLL_PUBLIC ib_log_tx_vex(
     assert(tx != NULL);
     assert(tx->ib != NULL);
 
-    ib_logger_log_va(
+    ib_logger_log_va_list(
         ib_engine_logger_get(tx->ib),
         file,
         func,
@@ -167,7 +167,7 @@ void DLL_PUBLIC ib_log_vex_ex(
     va_list            ap
 )
 {
-    ib_logger_log_va(
+    ib_logger_log_va_list(
         ib_engine_logger_get(ib),
         file,
         func,

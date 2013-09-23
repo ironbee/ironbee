@@ -139,7 +139,7 @@ struct ib_engine_t {
     ib_hash_t             *actions;         /**< Hash tracking rules */
     ib_rule_engine_t      *rule_engine;     /**< Rule engine data */
     ib_logger_t           *logger;          /**< The engine log object. */
-    ib_data_config_t      *data_config;     /**< Data configuration. */
+    ib_var_config_t       *var_config;      /**< Data configuration. */
 
     /* Hooks */
     ib_list_t *hooks[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
