@@ -90,16 +90,18 @@ private:
     static void LoggerFn(void *cbdata,
                          int level,
                          const char *file,
+                         const char *func,
                          int line,
                          const char *fmt,
                          va_list ap)
     {
         TestIBUtilLog *self = (TestIBUtilLog *)cbdata;
-        self->LoggerFn(level, file, line, fmt, ap);
+        self->LoggerFn(level, file, func, line, fmt, ap);
     }
 
     void LoggerFn(int level,
                   const char *file,
+                  const char *func,
                   int line,
                   const char *fmt,
                   va_list ap)
@@ -123,6 +125,7 @@ static int log_lines = 0;
 static void LoggerFn(void *cbdata,
                      int level,
                      const char *file,
+                     const char *func,
                      int line,
                      const char *fmt,
                      va_list ap)
@@ -140,14 +143,14 @@ TEST(TestIBUtilLogSet, set_logger)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ((ib_util_fn_logger_t)LoggerFn, ib_util_get_log_logger());
 
-    ib_util_log_ex(0, __FILE__, __LINE__, "Message %d", 1);
+    ib_util_log_ex(0, __FILE__, __func__, __LINE__, "Message %d", 1);
     ASSERT_EQ(1, log_lines);
 
     rc = ib_util_log_logger(NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ((ib_util_fn_logger_t)NULL, ib_util_get_log_logger());
 
-    ib_util_log_ex(0, __FILE__, __LINE__, "Message %d", 1);
+    ib_util_log_ex(0, __FILE__, __func__, __LINE__, "Message %d", 1);
     ASSERT_EQ(1, log_lines);
 }
 
@@ -155,7 +158,7 @@ TEST_F(TestIBUtilLog, basic)
 {
     ASSERT_EQ(IB_OK, ib_util_log_level(1));
 
-    ib_util_log_ex(1, __FILE__, __LINE__, "Message %d", 1);
+    ib_util_log_ex(1, __FILE__, __func__, __LINE__, "Message %d", 1);
     ASSERT_TRUE ( Grep ("Message 1") ) << Cat() << std::endl;
     ASSERT_FALSE( GrepF("Message 1") ) << Cat() << std::endl;
 }
@@ -164,28 +167,28 @@ TEST_F(TestIBUtilLog, levels)
 {
     ASSERT_EQ(IB_OK, ib_util_log_level(1));
 
-    ib_util_log_ex(1, __FILE__, __LINE__, "Message %d", 1);
+    ib_util_log_ex(1, __FILE__, __func__, __LINE__, "Message %d", 1);
     ASSERT_TRUE ( Grep ("Message 1") ) << Cat() << std::endl;
     ASSERT_FALSE( GrepF("Message 1") ) << Cat() << std::endl;
 
-    ib_util_log_ex(2, __FILE__, __LINE__, "Message %d", 2);
+    ib_util_log_ex(2, __FILE__, __func__, __LINE__, "Message %d", 2);
     ASSERT_FALSE( Grep ("Message 2") ) << Cat() << std::endl;
     ASSERT_FALSE( GrepF("Message 2") ) << Cat() << std::endl;
 
     ASSERT_EQ(IB_OK, ib_util_log_level(7));
-    ib_util_log_ex(1, __FILE__, __LINE__, "Message %d", 3);
+    ib_util_log_ex(1, __FILE__, __func__, __LINE__, "Message %d", 3);
     ASSERT_TRUE ( Grep ("Message 3") ) << Cat() << std::endl;
     ASSERT_TRUE ( GrepF("Message 3") ) << Cat() << std::endl;
 
-    ib_util_log_ex(2, __FILE__, __LINE__, "Message %d", 4);
+    ib_util_log_ex(2, __FILE__, __func__, __LINE__, "Message %d", 4);
     ASSERT_TRUE ( Grep ("Message 4") ) << Cat() << std::endl;
     ASSERT_TRUE ( GrepF("Message 4") ) << Cat() << std::endl;
 
-    ib_util_log_ex(7, __FILE__, __LINE__, "Message %d", 5);
+    ib_util_log_ex(7, __FILE__, __func__, __LINE__, "Message %d", 5);
     ASSERT_TRUE ( Grep ("Message 5") ) << Cat() << std::endl;
     ASSERT_TRUE ( GrepF("Message 5") ) << Cat() << std::endl;
 
-    ib_util_log_ex(9, __FILE__, __LINE__, "Message %d", 5);
+    ib_util_log_ex(9, __FILE__, __func__, __LINE__, "Message %d", 5);
     ASSERT_FALSE( Grep ("Message 6") ) << Cat() << std::endl;
     ASSERT_FALSE( GrepF("Message 6") ) << Cat() << std::endl;
 }
