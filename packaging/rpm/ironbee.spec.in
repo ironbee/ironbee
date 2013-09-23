@@ -27,6 +27,9 @@ URL:            http://www.ironbee.com
 BuildRequires: autoconf, automake, libtool, gcc, gcc-c++
 BuildRequires: pcre-devel, zlib-devel, libxml2-devel
 BuildRequires: uuid-devel
+BuildRequires: boost-devel >= 1.49
+
+Requires: boost >= 1.49
 
 %if %{with trafficserver}
 BuildRequires: trafficserver-devel >= 3.1.4
