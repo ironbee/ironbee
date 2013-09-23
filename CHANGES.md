@@ -4,6 +4,10 @@ IronBee Changes                                                   {#CHANGES}
 IronBee v0.9.0
 --------------
 
+**Build**
+
+- Ruby 1.9 now required.  This is a build dependency only; IronBee does not require Ruby to be used.  Build is now fully compatible with Ruby 2.0.
+
 **Engine**
 
 - The data field layer (rule targets) has been overhauled.  Data fields are now known as 'vars'.  Expansions and filters should be significantly faster.  `InitVarIndexed` and `InitCollectionIndexed` have been removed; their normal versions now Index automatically.
