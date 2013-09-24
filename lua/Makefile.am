@@ -1,5 +1,7 @@
 ACLOCAL_AMFLAGS = -I ../acinclude
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 include $(top_srcdir)/build/common.mk
 
 SUBDIRS = tests
