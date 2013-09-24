@@ -270,7 +270,6 @@ ib_status_t log_pipe_record(
  * Ironbee callback to get current log level
  *
  * @param[in] ib  Ironbee engine
- * @param[in] dummy
  * @return  The current log level
  */
 static ib_log_level_t log_pipe_get_level(const ib_engine_t *ib)

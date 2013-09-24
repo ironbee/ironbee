@@ -879,6 +879,7 @@ void DLL_PUBLIC ib_rule_log_execution(
  * @param[in] level Rule log level
  * @param[in] rule_exec Rule execution object (or NULL)
  * @param[in] file Filename (or NULL)
+ * @param[in] func Function name (or NULL)
  * @param[in] line Line number (or 0)
  * @param[in] fmt Printf-like format string
  */
@@ -899,6 +900,7 @@ void DLL_PUBLIC ib_rule_log_exec(
  *
  * @param[in] rule_exec Rule execution object
  * @param[in] file Filename (or NULL)
+ * @param[in] func Function name (or NULL)
  * @param[in] line Line number (or 0)
  * @param[in] fmt Printf-like format string
  */
@@ -955,6 +957,7 @@ void DLL_PUBLIC ib_rule_log_fatal_ex(
  * @param[in] level Rule log level
  * @param[in] tx Transaction information
  * @param[in] file Filename (or NULL)
+ * @param[in] func Function name (or NULL)
  * @param[in] line Line number (or 0)
  * @param[in] fmt Printf-like format string
  */

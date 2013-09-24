@@ -338,7 +338,7 @@ static ib_core_cfg_t *core_get_main_config(const ib_engine_t *ib,
  * Take the @a cfg FILE pointer for the log file and give it to the logger.
  * 
  * @param[in] ib Engine to be modified.
- * @param[in] cfg The core configuration use to configure the logger in
+ * @param[in] corecfg The core configuration use to configure the logger in
  *            @a ib.
  *
  * @returns
@@ -418,7 +418,7 @@ static void core_log_file_open(ib_engine_t *ib,
  * Open the configuration's log file
  *
  * @param[in] ib IronBee engine
- * @param[in,out] corecfg Core configuration
+ * @param[in,out] config Core configuration
  */
 static void core_log_file_close(ib_engine_t *ib,
                                 ib_core_cfg_t *config)

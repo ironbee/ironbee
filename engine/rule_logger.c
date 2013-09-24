@@ -130,6 +130,7 @@ static IB_STRVAL_MAP(flags_map) = {
  * @param[in] rule Rule to log (or NULL)
  * @param[in] target Rule target (or NULL)
  * @param[in] file Filename (or NULL)
+ * @param[in] func Function name (or NULL)
  * @param[in] line Line number (or 0)
  * @param[in] fmt Printf-like format string
  * @param[in] ap Argument list

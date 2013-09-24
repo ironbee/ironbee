@@ -130,10 +130,10 @@ void cleanup_locks(
  * arguments.
  *
  * @param[in] manager IronBee manager object
- * @param[in] logger_va_fn Logger function (@c va_list version)
  * @param[in] logger_buf_fn Logger function (Formatted buffer version)
+ * @param[in] logger_buf_cbdata Data to pass to logger function
  * @param[in] logger_flush_fn Logger flush function (or NULL)
- * @param[in] logger_cbdata Data to pass to logger function
+ * @param[in] logger_flush_cbdata Data to pass to logger function
  */
 static void set_logger(
     ib_manager_t              *manager,

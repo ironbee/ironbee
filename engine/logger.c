@@ -24,11 +24,23 @@
 
 #include "ironbee_config_auto.h"
 
+#include "logger_private.h"
+
 #include <ironbee/logger.h>
 
 #include <assert.h>
 #include <stdlib.h>
 
+/**
+ * Writer function.
+ *
+ * @param[in] logger The logger.
+ * @param[in] writer The writer.
+ * @param[in] cbdata Callback data.
+ * @returns
+ * - IB_OK On success.
+ * - Other on errror.
+ */
 typedef ib_status_t (*writer_fn)(
     ib_logger_t *logger,
     ib_logger_writer_t *writer,
@@ -39,6 +51,7 @@ typedef ib_status_t (*writer_fn)(
  *
  * @param[in] logger The logger.
  * @param[in] fn The function to apply to every @ref ib_logger_writer_t.
+ * @param[in] data Callback data.
  *
  * @returns
  * - IB_OK On success.
@@ -218,9 +231,9 @@ void ib_logger_log_msg(
     const char        *file,
     const char        *function,
     size_t             line_number,
-    ib_engine_t       *engine,
-    ib_module_t       *module,
-    ib_conn_t         *conn,
+    const ib_engine_t *engine,
+    const ib_module_t *module,
+    const ib_conn_t   *conn,
     const ib_tx_t     *tx,
     ib_log_level_t     level,
     const uint8_t     *msg,
@@ -259,19 +272,18 @@ void ib_logger_log_msg(
     /* Build the message using the user's function. */
     rc = msg_fn(&rec, mp, &fn_msg, &fn_msg_sz, msg_fn_data);
     if (rc != IB_OK) {
-        return;
+        goto exit;
     }
 
     /* Do not log empty messages. */
     if (msg_sz + fn_msg_sz == 0) {
-        return;
+        goto exit;
     }
 
     log_msg_sz = msg_sz + fn_msg_sz;
     log_msg = ib_mpool_alloc(mp, log_msg_sz);
     if (log_msg == NULL) {
-        ib_mpool_release(mp);
-        return;
+        goto exit;
     }
 
     /* Build msg. */
@@ -280,6 +292,7 @@ void ib_logger_log_msg(
 
     logger_log(logger, &rec, log_msg, log_msg_sz);
 
+exit:
     ib_mpool_release(mp);
 }
 
@@ -289,8 +302,8 @@ void ib_logger_log_va(
     const char        *function,
     size_t             line_number,
     const ib_engine_t *engine,
-    ib_module_t       *module,
-    ib_conn_t         *conn,
+    const ib_module_t *module,
+    const ib_conn_t   *conn,
     const ib_tx_t     *tx,
     ib_log_level_t     level,
     const char        *msg,
@@ -322,8 +335,8 @@ void ib_logger_log_va_list(
     const char        *function,
     size_t             line_number,
     const ib_engine_t *engine,
-    ib_module_t       *module,
-    ib_conn_t         *conn,
+    const ib_module_t *module,
+    const ib_conn_t   *conn,
     const ib_tx_t     *tx,
     ib_log_level_t     level,
     const char        *msg,
@@ -465,7 +478,7 @@ ib_status_t ib_logger_writer_clear(
  * Implementation for ib_logger_open.
  *
  * @param[in] logger The logger.
- * @param[in] The writer to perform the function on.
+ * @param[in] writer The writer to perform the function on.
  * @param[in] data Callback data. NULL.
  *
  * @returns
@@ -502,7 +515,7 @@ ib_status_t ib_logger_open(
  * Implementation for ib_logger_close.
  *
  * @param[in] logger The logger.
- * @param[in] The writer to perform the function on.
+ * @param[in] writer The writer to perform the function on.
  * @param[in] data Callback data. NULL.
  *
  * @returns
@@ -539,7 +552,7 @@ ib_status_t ib_logger_close(
  * Implementation for ib_logger_reopen.
  *
  * @param[in] logger The logger.
- * @param[in] The writer to perform the function on.
+ * @param[in] writer The writer to perform the function on.
  * @param[in] data Callback data. NULL.
  *
  * @returns

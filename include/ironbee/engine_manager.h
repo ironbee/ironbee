@@ -113,10 +113,10 @@ typedef void (*ib_manager_log_flush_fn_t)(
  *
  * @param[in] server IronBee server object
  * @param[in] max_engines Maximum number of simultaneous engines
- * @param[in] logger_va_fn Logger function (@c va_list version)
  * @param[in] logger_buf_fn Logger function (Formatted buffer version)
+ * @param[in] logger_buf_cbdata Callback data.
  * @param[in] logger_flush_fn Logger flush function (or NULL)
- * @param[in] logger_cbdata Data to pass to logger function
+ * @param[in] logger_flush_cbdata Callback data.
  * @param[in] logger_level Initial log level
  * @param[out] pmanager Pointer to IronBee engine manager object
  *

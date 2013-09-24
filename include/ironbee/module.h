@@ -281,7 +281,7 @@ ib_status_t DLL_PUBLIC ib_module_file_to_sym(
  *
  * @param[out] pm  Address to which module handle is written
  * @param[in]  ib  Engine handle
- * @parma[in]  sym Module symbol.
+ * @param[in]  sym Module symbol.
  *
  * @returns Status code
  */

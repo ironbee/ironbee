@@ -209,6 +209,7 @@ PRINTF_ATTRIBUTE(6, 7);
  * @param tx Transaction
  * @param level Log level.
  * @param file Filename.
+ * @param func Function name.
  * @param line Line number.
  * @param fmt Printf-like format string
  */
@@ -229,6 +230,7 @@ PRINTF_ATTRIBUTE(6, 7);
  * @param ib IronBee engine.
  * @param level Log level.
  * @param file Filename.
+ * @param func Function name.
  * @param line Line number.
  * @param fmt Printf-like format string.
  * @param ap Argument list.
@@ -250,6 +252,7 @@ VPRINTF_ATTRIBUTE(6);
  * @param tx Transaction.
  * @param level Log level.
  * @param file Filename.
+ * @param func Function name.
  * @param line Line number.
  * @param fmt Printf-like format string.
  * @param ap Argument list.

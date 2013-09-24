@@ -66,6 +66,7 @@ ib_status_t DLL_LOCAL manager_logger_record(
  * @param[in] manager IronBee engine manager
  * @param[in] level Log level.
  * @param[in] file Filename.
+ * @param[in] func Function name.
  * @param[in] line Line number.
  * @param[in] calldata Context-specific data
  * @param[in] fmt Printf-like format string

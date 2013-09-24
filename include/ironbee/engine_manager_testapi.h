@@ -93,10 +93,10 @@ ib_status_t DLL_PUBLIC ib_manager_destroy_engines(
  * arguments.
  *
  * @param[in] manager IronBee manager object
- * @param[in] logger_va_fn Logger function (@c va_list version)
  * @param[in] logger_buf_fn Logger function (Formatted buffer version)
+ * @param[in] logger_buf_cbdata Callback data.
  * @param[in] logger_flush_fn Logger flush function (or NULL)
- * @param[in] logger_cbdata Data to pass to logger function
+ * @param[in] logger_flush_cbdata Callback data.
  */
 void DLL_PUBLIC ib_manager_set_logger(
     ib_manager_t              *manager,
