@@ -25,13 +25,13 @@
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
 // The main part of this test is that it compiles.
 
-class TestModuleDelegate : public ::testing::Test, public IBPPTestFixture
+class TestModuleDelegate : public ::testing::Test, public IronBee::TestFixture
 {
 };
 

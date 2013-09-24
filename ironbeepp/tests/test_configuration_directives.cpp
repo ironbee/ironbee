@@ -26,7 +26,7 @@
 #include <ironbeepp/configuration_parser.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/site.hpp>
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
@@ -39,7 +39,7 @@ using namespace std;
 using namespace IronBee;
 
 class TestConfigurationDirectives :
-    public ::testing::Test, public IBPPTestFixture
+    public ::testing::Test, public TestFixture
 {
 };
 

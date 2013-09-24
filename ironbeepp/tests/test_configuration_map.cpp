@@ -24,7 +24,7 @@
 
 #include <ironbeepp/configuration_map.hpp>
 #include <ironbeepp/module.hpp>
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
@@ -32,7 +32,9 @@
 
 using namespace std;
 
-class TestConfigurationMap : public ::testing::Test, public IBPPTestFixture
+class TestConfigurationMap :
+    public ::testing::Test,
+    public IronBee::TestFixture
 {
 protected:
     ib_cfgmap_t* setup_cfgmap(const ib_cfgmap_init_t* init, void* data)

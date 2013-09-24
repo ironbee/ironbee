@@ -81,6 +81,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/parsed_response_line.hpp>',
   '<ironbeepp/server.hpp>',
   '<ironbeepp/site.hpp>',
+  '<ironbeepp/test_fixture.hpp>',
   '<ironbeepp/throw.hpp>',
   '<ironbeepp/transaction.hpp>',
   '<ironbeepp/transaction_data.hpp>',

@@ -27,11 +27,12 @@
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/memory_pool.hpp>
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
-class TestParsedResponseLine : public ::testing::Test, public IBPPTestFixture
+class TestParsedResponseLine :
+    public ::testing::Test, public IronBee::TestFixture
 {
 };
 

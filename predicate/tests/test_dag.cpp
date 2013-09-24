@@ -23,7 +23,7 @@
  **/
 
 #include <predicate/dag.hpp>
-#include "../../ironbeepp/tests/fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
@@ -32,7 +32,7 @@
 using namespace IronBee::Predicate;
 using namespace std;
 
-class TestDAG : public ::testing::Test, public IBPPTestFixture
+class TestDAG : public ::testing::Test, public IronBee::TestFixture
 {
 };
 

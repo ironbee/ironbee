@@ -24,7 +24,7 @@
 
 #include <ironbeepp/operator.hpp>
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "../engine/engine_private.h"
 
@@ -33,7 +33,7 @@
 using namespace IronBee;
 using namespace std;
 
-class TestOperator : public ::testing::Test, public IBPPTestFixture
+class TestOperator : public ::testing::Test, public TestFixture
 {
 };
 

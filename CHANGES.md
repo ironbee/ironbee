@@ -18,6 +18,10 @@ IronBee v0.9.0
 
 - Added ClippScript, a Ruby DSL for creating CLIPP inputs.  See `clipp/clippscript.md`.
 
+**IronBee++**
+
+- The `IBPPTestFixture` class used in IronBee++ test fixtures has been promoted to part of the public API as `IronBee::TestFixture`.  This makes it easier for other IronBee++ based code to write unit tests.
+
 IronBee v0.8.0
 --------------
 

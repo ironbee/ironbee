@@ -54,6 +54,7 @@
 #include <ironbeepp/parsed_response_line.hpp>
 #include <ironbeepp/server.hpp>
 #include <ironbeepp/site.hpp>
+#include <ironbeepp/test_fixture.hpp>
 #include <ironbeepp/throw.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/transaction_data.hpp>

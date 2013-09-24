@@ -36,6 +36,7 @@ libibpp_la_SOURCES = \
     notifier.cpp \
     ironbee.cpp \
     server.cpp \
-	operator.cpp \
-	transformation.cpp \
-	var.cpp
+  	operator.cpp \
+  	test_fixture.cpp \
+  	transformation.cpp \
+  	var.cpp

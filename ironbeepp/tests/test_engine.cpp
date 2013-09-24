@@ -27,12 +27,12 @@
 #include <ironbeepp/server.hpp>
 #include <ironbeepp/memory_pool.hpp>
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 #include "gtest/gtest.h"
 
 using namespace IronBee;
 
-class TestEngine : public ::testing::Test, public IBPPTestFixture
+class TestEngine : public ::testing::Test, public TestFixture
 {
 };
 

@@ -24,11 +24,12 @@
 
 #include <ironbeepp/module_bootstrap.hpp>
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
-class TestModuleBootstrapA : public ::testing::Test, public IBPPTestFixture
+class TestModuleBootstrapA :
+    public ::testing::Test, public IronBee::TestFixture
 {
 };
 

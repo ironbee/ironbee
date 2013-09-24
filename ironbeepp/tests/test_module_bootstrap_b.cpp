@@ -26,11 +26,12 @@
 
 #include "engine_private.h"
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
-class TestModuleBootstrapB : public ::testing::Test, public IBPPTestFixture
+class TestModuleBootstrapB :
+    public ::testing::Test, public IronBee::TestFixture
 {
 };
 

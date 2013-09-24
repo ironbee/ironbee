@@ -24,7 +24,7 @@
 
 #include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/exception.hpp>
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
@@ -32,7 +32,7 @@
 
 using namespace std;
 
-class TestMemoryPool : public ::testing::Test, public IBPPTestFixture
+class TestMemoryPool : public ::testing::Test, public IronBee::TestFixture
 {
 };
 

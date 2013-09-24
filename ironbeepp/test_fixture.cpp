@@ -17,33 +17,43 @@
 
 /**
  * @file
- * @brief IronBee++ Internals --- Test Fixture
+ * @brief IronBee++ --- Test Fixture Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#ifndef __IBPP__TESTS__FIXTURE__
-#define __IBPP__TESTS__FIXTURE__
 
-#include <ironbeepp/engine.hpp>
-#include <ironbeepp/server.hpp>
-#include <ironbeepp/connection.hpp>
-#include <ironbeepp/transaction.hpp>
+#include <ironbeepp/ironbee.hpp>
+#include <ironbeepp/test_fixture.hpp>
 
-class IBPPTestFixture
+#include <stdexcept>
+
+namespace IronBee {
+
+TestFixture::TestFixture() :
+    m_server_value("filename", "name")
 {
-public:
-    IBPPTestFixture();
-    ~IBPPTestFixture();
+    IronBee::initialize();
 
-protected:
-    IronBee::Server      m_server;
-    IronBee::Engine      m_engine;
-    IronBee::Connection  m_connection;
-    IronBee::Transaction m_transaction;
+    m_server = m_server_value.get();
 
-private:
-    IronBee::ServerValue m_server_value;
-};
+    m_engine = Engine::create(m_server);
+    m_engine.initialize();
 
-#endif
+    m_connection = Connection::create(m_engine);
+
+    m_connection.set_local_ip_string("1.0.0.1");
+    m_connection.set_remote_ip_string("1.0.0.2");
+    m_connection.set_remote_port(65534);
+    m_connection.set_local_port(80);
+
+    m_transaction = Transaction::create(m_connection);
+}
+
+TestFixture::~TestFixture()
+{
+    m_engine.destroy();
+    IronBee::shutdown();
+}
+
+} // IronBee

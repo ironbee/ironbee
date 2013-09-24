@@ -24,7 +24,7 @@
 
 #include <ironbeepp/transformation.hpp>
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "../engine/engine_private.h"
 
@@ -33,7 +33,7 @@
 using namespace IronBee;
 using namespace std;
 
-class TestTransformation : public ::testing::Test, public IBPPTestFixture
+class TestTransformation : public ::testing::Test, public TestFixture
 {
 };
 

@@ -23,7 +23,7 @@
  **/
 
 #include <ironbeepp/site.hpp>
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
@@ -36,7 +36,7 @@
 using namespace std;
 using namespace IronBee;
 
-class TestSite : public ::testing::Test, public IBPPTestFixture
+class TestSite : public ::testing::Test, public TestFixture
 {
 public:
     TestSite()
@@ -50,7 +50,7 @@ public:
             NULL,
             IB_CTYPE_LOCATION,
             "Location",
-            "IBPPTestFixtureContext",
+            "TestFixtureContext",
             &ib_context
         );
         throw_if_error(rc);
@@ -62,7 +62,7 @@ public:
             NULL,
             IB_CTYPE_SITE,
             "Site",
-            "IBPPTestFixtureContext",
+            "TestFixtureContext",
             &ib_context
         );
         throw_if_error(rc);

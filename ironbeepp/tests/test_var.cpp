@@ -26,12 +26,12 @@
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/var.hpp>
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 #include "gtest/gtest.h"
 
 using namespace IronBee;
 
-class TestVar : public ::testing::Test, public IBPPTestFixture
+class TestVar : public ::testing::Test, public TestFixture
 {
 };
 

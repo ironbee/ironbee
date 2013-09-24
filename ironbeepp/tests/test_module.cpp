@@ -23,13 +23,13 @@
  **/
 
 #include <ironbeepp/module.hpp>
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
 #include "engine_private.h"
 
-class TestModule : public ::testing::Test, public IBPPTestFixture
+class TestModule : public ::testing::Test, public IronBee::TestFixture
 {
 };
 

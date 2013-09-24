@@ -28,15 +28,13 @@
 #include "predicate/dag.hpp"
 
 #include "parse_fixture.hpp"
-#include "../../ironbeepp/tests/fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
-// XXX documentation
-
 class StandardTest :
     public ::testing::Test,
-    public IBPPTestFixture,
+    public IronBee::TestFixture,
     public ParseFixture
 {
 protected:

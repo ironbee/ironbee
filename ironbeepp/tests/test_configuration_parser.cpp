@@ -25,7 +25,7 @@
 #include <ironbeepp/configuration_parser.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/site.hpp>
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
@@ -38,14 +38,14 @@ using namespace std;
 using namespace IronBee;
 
 class TestConfigurationParser :
-    public ::testing::Test, public IBPPTestFixture
+    public ::testing::Test, public TestFixture
 {
 };
 
 TEST_F(TestConfigurationParser, ConfigurationParser)
 {
     ib_cfgparser_t *parser;
-    
+
     ASSERT_EQ(IB_OK, ib_cfgparser_create(&parser, m_engine.ib()));
     ASSERT_TRUE(parser);
 

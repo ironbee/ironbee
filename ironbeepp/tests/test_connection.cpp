@@ -29,13 +29,13 @@
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/clock.hpp>
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
 using namespace std;
 
-class TestConnection : public ::testing::Test, public IBPPTestFixture
+class TestConnection : public ::testing::Test, public IronBee::TestFixture
 {
 };
 

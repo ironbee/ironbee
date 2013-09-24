@@ -31,7 +31,7 @@
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
 
@@ -46,7 +46,7 @@
 using namespace std;
 using namespace IronBee;
 
-class TestHooks : public ::testing::Test, public IBPPTestFixture
+class TestHooks : public ::testing::Test, public TestFixture
 {
 public:
     enum callback_e

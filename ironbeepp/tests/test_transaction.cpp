@@ -34,12 +34,12 @@
 // For ugly workaround.
 #include "engine/engine_private.h"
 
-#include "fixture.hpp"
+#include <ironbeepp/test_fixture.hpp>
 #include "gtest/gtest.h"
 
 using namespace IronBee;
 
-class TestTransaction : public ::testing::Test, public IBPPTestFixture
+class TestTransaction : public ::testing::Test, public TestFixture
 {
 };
 
