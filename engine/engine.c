@@ -456,14 +456,6 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
         }
     }
 
-    /* Initialize the rule engine */
-    rc = ib_rule_engine_init(ib);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize rule engine: %s",
-                     ib_status_to_string(rc));
-        goto failed;
-    }
-
     /* Initialize the data configuration. */
     rc = ib_data_config_create(ib->mp, &ib->data_config);
     if (rc != IB_OK) {
@@ -477,6 +469,14 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     rc = ib_module_init(ib_core_module_sym(), ib);
     if (rc != IB_OK) {
         ib_log_alert(ib,  "Error in ib_module_init");
+        goto failed;
+    }
+
+    /* Initialize the rule engine */
+    rc = ib_rule_engine_init(ib);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to initialize rule engine: %s",
+                     ib_status_to_string(rc));
         goto failed;
     }
 
