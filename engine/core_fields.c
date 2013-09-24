@@ -750,7 +750,7 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(event == request_finished_event);
+    assert(event == handle_request_event);
 
     /* Populate the ARGS collection. */
     rc = ib_data_get(tx->data, "ARGS", &f);
@@ -803,7 +803,7 @@ static ib_status_t core_gen_response_header_fields(
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(event == response_header_finished_event);
+    assert(event == handle_response_header_event);
 
     if (tx->response_line != NULL) {
         core_gen_tx_bytestr_alias_field(tx, "response_line",
@@ -843,7 +843,7 @@ static ib_status_t core_gen_response_body_fields(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(event == response_finished_event);
+    assert(event == handle_response_event);
 
     return IB_OK;
 }
@@ -899,13 +899,13 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
     ib_hook_tx_register(ib, handle_request_header_event,
                         core_gen_request_header_fields, NULL);
 
-    ib_hook_tx_register(ib, request_finished_event,
+    ib_hook_tx_register(ib, handle_request_event,
                         core_gen_request_body_fields, NULL);
 
-    ib_hook_tx_register(ib, response_header_finished_event,
+    ib_hook_tx_register(ib, handle_response_header_event,
                         core_gen_response_header_fields, NULL);
 
-    ib_hook_tx_register(ib, response_finished_event,
+    ib_hook_tx_register(ib, handle_response_event,
                         core_gen_response_body_fields, NULL);
 
     config = ib_engine_data_config_get(ib);
