@@ -1,5 +1,7 @@
 include $(top_srcdir)/build/tests.mk
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 noinst_LIBRARIES = libibtest.a
 
 # Turn off Werror for gtest.
