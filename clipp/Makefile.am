@@ -19,7 +19,7 @@ clipp_SOURCES = \
     view.cpp \
     ironbee.cpp \
     raw_generator.cpp \
-    $(builddir)/clipp.pb.cc \
+    clipp.pb.cc \
     pb_consumer.cpp \
     htp_consumer.cpp \
     null_consumer.cpp \
