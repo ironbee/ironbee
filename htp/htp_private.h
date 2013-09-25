@@ -57,6 +57,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "htp.h"
 #include "htp_config_private.h"

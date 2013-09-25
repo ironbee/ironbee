@@ -381,6 +381,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
     fprintf(stderr, "[LOG] %s\n", log->msg);
     #endif
 
+    /* coverity[check_return] */
     htp_hook_run_all(connp->cfg->hook_log, log);
 }
 
