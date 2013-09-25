@@ -107,7 +107,9 @@ unset FFLAGS
         --localstatedir=%{_localstatedir} \
         --sharedstatedir=%{_sharedstatedir} \
         --mandir=%{_mandir} \
-        --infodir=%{_infodir}
+        --infodir=%{_infodir} \
+	RUBY=@RUBY@ GEM=@GEM@ 
+
 make %{?_smp_mflags}
 
 %install
