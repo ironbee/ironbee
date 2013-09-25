@@ -108,7 +108,7 @@ module CLIPPTest
     end
 
     w.close
-    output = r.read
+    output = r.read.force_encoding('UTF-8')
     pid, status = Process::wait2(pid)
 
     [output, status]
