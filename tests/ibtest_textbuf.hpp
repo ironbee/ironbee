@@ -41,9 +41,9 @@ class TextBuf
 {
 public:
     TextBuf(size_t bufsize)
-        : m_size(bufsize),
+        : m_size(bufsize ? bufsize : 1),
           m_buf(new char [bufsize+1]),
-          m_fmtsize(4*bufsize),
+          m_fmtsize(4*bufsize ? 4*bufsize : 1),
           m_fmtbuf(new char [m_fmtsize+1])
     {
         SetStr("");
@@ -61,7 +61,7 @@ public:
     TextBuf(size_t bufsize, const char *s)
         : m_size(bufsize),
           m_buf(new char [bufsize+1]),
-          m_fmtsize(4*bufsize),
+          m_fmtsize(4*bufsize ? 4*bufsize : 1),
           m_fmtbuf(new char [m_fmtsize+1])
     {
         SetStr(s);
@@ -78,8 +78,8 @@ public:
 
     TextBuf(size_t bufsize, const char *text, size_t len)
         : m_size(bufsize),
-          m_buf(new char [bufsize]),
-          m_fmtsize(4*bufsize),
+          m_buf(new char [bufsize ? bufsize : 1]),
+          m_fmtsize(4*bufsize ? 4*bufsize : 1),
           m_fmtbuf(new char [bufsize*2])
     {
         SetText(text, len);

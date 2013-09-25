@@ -329,7 +329,7 @@ protected:
     void RunTestInplaceNul(const TextBuf &input, const TextBuf &expected)
     {
         size_t len = input.GetLen();
-        char buf[len];
+        char buf[len ? len : 1];
         ib_status_t rc;
         ib_flags_t result;
 
@@ -353,7 +353,7 @@ protected:
     void RunTestInplaceEx(const TextBuf &input, const TextBuf &expected)
     {
         size_t len = input.GetLen();
-        uint8_t buf[len];
+        uint8_t buf[len ? len : 1];
         ib_status_t rc;
         size_t outlen;
         ib_flags_t result;
