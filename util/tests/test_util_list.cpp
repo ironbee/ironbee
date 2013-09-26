@@ -33,8 +33,42 @@
 
 #include <stdexcept>
 
+
 class TestIBUtilList : public SimpleFixture
 {
+
+public:
+    /* Populate a list from an array of integers */
+    static void populate_list(ib_list_t *list,
+                              const int *ints,
+                              size_t count)
+    {
+        size_t i;
+        ib_status_t rc;
+        for (i = 0; i < count; i++) {
+            rc = ib_list_push(list, (int *)&ints[i]);
+            ASSERT_EQ(IB_OK, rc);
+        }
+        ASSERT_EQ(count, ib_list_elements(list));
+    }
+
+    /* Check a list against an array of integers */
+    static void check_list(const ib_list_t *list,
+                           const int *ints,
+                           size_t count)
+    {
+        const ib_list_node_t *node;
+        const int *val;
+        size_t i = 0;
+
+        ASSERT_EQ(count, ib_list_elements(list));
+        IB_LIST_LOOP_CONST(list, node) {
+            val = (const int *)ib_list_node_data_const(node);
+            ASSERT_EQ(ints[i], *val);
+            i++;
+        }
+    }
+
 };
 
 /* -- Tests -- */
@@ -127,18 +161,13 @@ TEST_F(TestIBUtilList, test_list_remove_head)
     ib_status_t rc;
     int init[] = { 0, 1, 2, 3, 4 };
     int *val;
-    int i;
 
     rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
 
-    for (i = 0; i < 5; i++) {
-        rc = ib_list_push(list, &init[i]);
-        ASSERT_EQ(IB_OK, rc);
-    }
-    ASSERT_EQ(5UL, ib_list_elements(list));
+    populate_list(list, init, 5);
 
     node = IB_LIST_FIRST(list);
     val = (int *)ib_list_node_data(node);
@@ -179,18 +208,13 @@ TEST_F(TestIBUtilList, test_list_remove_tail)
     ib_status_t rc;
     int init[] = { 0, 1, 2, 3, 4 };
     int *val;
-    int i;
 
     rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
 
-    for (i = 0; i < 5; i++) {
-        rc = ib_list_push(list, &init[i]);
-        ASSERT_EQ(IB_OK, rc);
-    }
-    ASSERT_EQ(5UL, ib_list_elements(list));
+    populate_list(list, init, 5);
 
     node = IB_LIST_LAST(list);
     val = (int *)ib_list_node_data(node);
@@ -304,30 +328,66 @@ TEST_F(TestIBUtilList, test_list_unshift_and_shift)
 TEST_F(TestIBUtilList, test_list_loop)
 {
     ib_list_t *list;
-    ib_list_node_t *node;
     ib_status_t rc;
     int init[] = { 0, 1, 2, 3, 4 };
-    int *val;
-    int i;
 
     rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
 
-    for (i = 0; i < 5; i++) {
-        rc = ib_list_push(list, &init[i]);
-        ASSERT_EQ(IB_OK, rc);
-    }
-    ASSERT_EQ(5UL, ib_list_elements(list));
+    populate_list(list, init, 5);
+    check_list(list, init, 5);
+}
 
-    i = 0;
-    IB_LIST_LOOP(list, node) {
-        val = (int *)ib_list_node_data(node);
-        ASSERT_EQ(init[i], *val);
-        i++;
-    }
-    ASSERT_EQ(5UL, ib_list_elements(list));
+/// @test Test util list library - ib_list_copy_nodes
+TEST_F(TestIBUtilList, test_list_copy_nodes)
+{
+    ib_list_t *list1;
+    ib_list_t *list2;
+    ib_status_t rc;
+    int init[] = { 0, 1, 2, 3, 4 };
+
+    rc = ib_list_create(&list1, MemPool());
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(list1 != NULL);
+    ASSERT_EQ(0UL, ib_list_elements(list1));
+
+    populate_list(list1, init, 5);
+    check_list(list1, init, 5);
+
+    rc = ib_list_create(&list2, MemPool());
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(list2 != NULL);
+
+    rc = ib_list_copy_nodes(list1, list2);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(list2 != NULL);
+
+    check_list(list2, init, 5);
+}
+
+/// @test Test util list library - ib_list_copy
+TEST_F(TestIBUtilList, test_list_copy)
+{
+    ib_list_t *list1;
+    ib_list_t *list2;
+    ib_status_t rc;
+    int init[] = { 0, 1, 2, 3, 4 };
+
+    rc = ib_list_create(&list1, MemPool());
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(list1 != NULL);
+    ASSERT_EQ(0UL, ib_list_elements(list1));
+
+    populate_list(list1, init, 5);
+    check_list(list1, init, 5);
+
+    rc = ib_list_copy(list1, MemPool(), &list2);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(list2 != NULL);
+
+    check_list(list2, init, 5);
 }
 
 /// @test Test util list library - IB_LIST_LOOP_SAFE()

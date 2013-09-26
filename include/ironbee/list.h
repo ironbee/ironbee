@@ -568,6 +568,38 @@ void DLL_PUBLIC *ib_list_node_data(ib_list_node_t *node);
  */
 const void DLL_PUBLIC *ib_list_node_data_const(const ib_list_node_t *node);
 
+/**
+ * Copy all items from @a src_list to @a dest_list.
+ *
+ * @note This is a shallow copy; if the data items themselves are pointers,
+ * the pointer is copied, with the new list containing a list of aliases.
+ *
+ * @param[in] src_list List of items to copy
+ * @param[in,out] dest_list List to copy items into
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_list_copy_nodes(const ib_list_t *src_list,
+                                          ib_list_t *dest_list);
+
+
+/**
+ * Create a new list pointed at by @a pdest and copy all items from @a src
+ * into it.
+ *
+ * @note This is a shallow copy; if the data items themselves are pointers,
+ * the pointer is copied, with the new list containing a list of aliases.
+ *
+ * @param[in]  src List of items to copy
+ * @param[in]  mp Memory pool
+ * @param[out] pdest Pointer to new list
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_list_copy(const ib_list_t *src,
+                                    ib_mpool_t *mp,
+                                    ib_list_t **pdest);
+
 /** @} IronBeeUtilList */
 
 

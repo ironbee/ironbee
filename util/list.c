@@ -29,6 +29,8 @@
 
 #include <ironbee/list.h>
 
+#include <assert.h>
+
 ib_status_t ib_list_create(ib_list_t **plist, ib_mpool_t *pool)
 {
     /* Create the structure. */
@@ -39,6 +41,50 @@ ib_status_t ib_list_create(ib_list_t **plist, ib_mpool_t *pool)
     }
     (*plist)->mp = pool;
 
+    return IB_OK;
+}
+
+ib_status_t ib_list_copy_nodes(const ib_list_t *src_list,
+                               ib_list_t *dest_list)
+{
+    assert(src_list != NULL);
+    assert(dest_list != NULL);
+
+    ib_status_t rc;
+    const ib_list_node_t *node;
+
+    IB_LIST_LOOP_CONST(src_list, node) {
+        assert(node->data != NULL);
+        rc = ib_list_push(dest_list, node->data);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+    return IB_OK;
+}
+
+ib_status_t ib_list_copy(const ib_list_t *src,
+                         ib_mpool_t *mp,
+                         ib_list_t **pdest)
+{
+    assert(mp != NULL);
+    assert(src != NULL);
+    assert(pdest != NULL);
+
+    ib_status_t  rc;
+    ib_list_t   *dest_list;
+
+    rc = ib_list_create(&dest_list, mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_list_copy_nodes(src, dest_list);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    *pdest = dest_list;
     return IB_OK;
 }
 
