@@ -183,7 +183,7 @@ ib_status_t ib_module_file_to_sym(
     if (rc != IB_OK || &IB_MODULE_SYM == sym.fn_sym) {
         ib_log_error(ib, "Failed to load module %s: no symbol named %s",
                      file, IB_MODULE_SYM_NAME);
-        return rc;
+        return IB_EINVAL;
     }
 
     *psym = sym.fn_sym;
