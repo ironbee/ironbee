@@ -30,6 +30,7 @@
 
 #include <ironbeepp/operator.hpp>
 #include <ironbeepp/transformation.hpp>
+#include <ironbeepp/var.hpp>
 
 #include <ironbee/rule_engine.h>
 
@@ -41,7 +42,7 @@ namespace Standard {
 
 struct Var::data_t
 {
-    ib_var_source_t *source;
+    VarSource source;
 };
 
 Var::Var() :
@@ -66,48 +67,33 @@ bool Var::validate(NodeReporter reporter) const
 
 void Var::pre_eval(Environment environment, NodeReporter reporter)
 {
-    const ib_var_config_t* config;
-
-    config = ib_engine_var_config_get_const(environment.ib());
-    assert(config != NULL);
-
     // Key must be static.
     Value key_field = literal_value(children().front());
     IronBee::ConstByteString key = key_field.value_as_byte_string();
 
-    IronBee::throw_if_error(
-        ib_var_source_acquire(
-            &(m_data->source),
-            environment.main_memory_pool().ib(),
-            config,
-            key.const_data(), key.length()
-        )
+    m_data->source = VarSource::acquire(
+        environment.main_memory_pool(),
+        environment.var_config(),
+        key.const_data(), key.length()
     );
 }
 
 void Var::calculate(EvalContext context)
 {
-    ib_field_t* data_field;
-    ib_status_t rc;
+    Value value;
 
     if (is_aliased()) {
         return;
     }
 
-    rc = ib_var_source_get(
-        m_data->source,
-        &data_field,
-        context.ib()->var_store
-    );
-    if (rc == IB_ENOENT) {
+    try {
+        value = m_data->source.get(context.var_store());
+    }
+    catch (enoent) {
         finish();
         return;
     }
-    else {
-        IronBee::throw_if_error(rc);
-    }
 
-    Value value(data_field);
     if (
         value.is_dynamic() ||
         value.type() != Value::LIST
