@@ -207,17 +207,6 @@ private:
     > roots_iterator;
 
     /**
-     * Iterate through all root nodes for a phase.
-     *
-     * @param[in] phase Which phase to iterate through.
-     * @returns Pair of begin and end iterator for all roots in @ref rules for
-     *          phase @a phase.
-     **/
-    pair<roots_iterator, roots_iterator> roots(
-        ib_rule_phase_num_t phase
-    ) const;
-
-    /**
      * Rules for each root by index.
      *
      * At configuration time, rules are accumulated here.  As the nodes of the
@@ -475,23 +464,6 @@ PerContext::PerContext(Delegate& delegate) :
     m_delegate(&delegate)
 {
     // nop
-}
-
-pair<PerContext::roots_iterator, PerContext::roots_iterator>
-PerContext::roots(
-    ib_rule_phase_num_t phase
-) const
-{
-    return make_pair(
-        roots_iterator(
-            m_rules[phase].begin(),
-            bind(&rules_by_node_t::value_type::first, _1)
-        ),
-        roots_iterator(
-            m_rules[phase].end(),
-            bind(&rules_by_node_t::value_type::first, _1)
-        )
-    );
 }
 
 void PerContext::convert_rules()
