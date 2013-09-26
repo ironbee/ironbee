@@ -623,7 +623,7 @@ static parse_directive_entry_t parse_directive_table[] = {
         IB_LIST_LOOP(cp->fsm.plist, lst_node) {
             ib_list_push(node->params, ib_list_node_data(lst_node));
         }
-        ib_list_push(cp->curr->children, node);
+        rc = ib_list_push(cp->curr->children, node);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Out of memory.");
         }
