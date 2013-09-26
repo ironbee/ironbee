@@ -156,5 +156,38 @@ void MapCall::map_calculate(
     }
 }
 
+AliasCall::AliasCall(const std::string& into) :
+    m_into(into)
+{
+    // nop
+}
+
+bool AliasCall::transform(
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory,
+    NodeReporter       reporter
+)
+{
+    node_p me = shared_from_this();
+    node_p replacement = call_factory(m_into);
+
+    BOOST_FOREACH(const node_p& child, children()) {
+        replacement->add_child(child);
+    }
+
+    merge_graph.replace(me, replacement);
+
+    return true;
+}
+
+void AliasCall::calculate(EvalContext context)
+{
+    BOOST_THROW_EXCEPTION(
+        IronBee::einval() << errinfo_what(
+            "Cannot evaluate AliasCall.  Did you forget transform?"
+        )
+    );
+}
+
 } // Predicate
 } // IronBee

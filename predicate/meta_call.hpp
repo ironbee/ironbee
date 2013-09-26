@@ -129,6 +129,36 @@ private:
     boost::thread_specific_ptr<input_locations_t> m_input_locations;
 };
 
+/**
+ * Base class for calls that directly transform into another.
+ *
+ * This class simply transforms into a different Call at transformation time.
+ **/
+class AliasCall :
+    virtual public Predicate::Call
+{
+protected:
+    //! Constructor.
+    explicit AliasCall(const std::string& into);
+
+    /**
+     * See Node::transform().
+     *
+     * Will replace self with another call type with same children.
+     **/
+    virtual bool transform(
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory,
+        NodeReporter       reporter
+    );
+
+    //! Throws exception.
+    virtual void calculate(EvalContext context);
+
+private:
+    const std::string m_into;
+};
+
 } // Predicate
 } // IronBee
 
