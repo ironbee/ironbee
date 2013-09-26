@@ -34,6 +34,7 @@
 #include <ironbee/engine_state.h>
 #include <ironbee/field.h>
 #include <ironbee/stream.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 
@@ -48,41 +49,45 @@
 /* -- Field Generation Routines -- */
 
 /* Keys to register as indexed. */
-static const char *indexed_keys[] = {
-    "ARGS",
-    "FLAGS",
-    "auth_password",
-    "auth_type",
-    "auth_username",
-    "request_body_params",
-    "request_content_type",
-    "request_cookies",
-    "request_filename",
-    "request_headers",
-    "request_host",
-    "request_line",
-    "request_method",
-    "request_protocol",
-    "request_uri",
-    "request_uri_fragment",
-    "request_uri_host",
-    "request_uri_params",
-    "request_uri_password",
-    "request_uri_path",
-    "request_uri_path_raw",
-    "request_uri_port",
-    "request_uri_query",
-    "request_uri_raw",
-    "request_uri_scheme",
-    "request_uri_username",
-    "response_content_type",
-    "response_cookies",
-    "response_headers",
-    "response_line",
-    "response_message",
-    "response_protocol",
-    "response_status",
-    NULL
+typedef struct {
+    const char *name;
+    ib_rule_phase_num_t initial;
+    ib_rule_phase_num_t final;
+} indexed_key_t;
+indexed_key_t indexed_keys[] = {
+{"ARGS",                  IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_BODY},
+{"FLAGS",                 IB_PHASE_NONE,            IB_PHASE_NONE},
+{"auth_password",         IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"auth_type",             IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"auth_username",         IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_body_params",   IB_PHASE_REQUEST_BODY,    IB_PHASE_REQUEST_BODY},
+{"request_content_type",  IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_cookies",       IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_filename",      IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_headers",       IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_host",          IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_line",          IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_method",        IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_protocol",      IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri",           IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_fragment",  IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_host",      IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_params",    IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_password",  IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_path",      IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_path_raw",  IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_port",      IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_query",     IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_raw",       IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_scheme",    IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"request_uri_username",  IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
+{"response_content_type", IB_PHASE_RESPONSE_HEADER, IB_PHASE_RESPONSE_HEADER},
+{"response_cookies",      IB_PHASE_RESPONSE_HEADER, IB_PHASE_RESPONSE_HEADER},
+{"response_headers",      IB_PHASE_RESPONSE_HEADER, IB_PHASE_RESPONSE_HEADER},
+{"response_line",         IB_PHASE_RESPONSE_HEADER, IB_PHASE_RESPONSE_HEADER},
+{"response_message",      IB_PHASE_RESPONSE_HEADER, IB_PHASE_RESPONSE_HEADER},
+{"response_protocol",     IB_PHASE_RESPONSE_HEADER, IB_PHASE_RESPONSE_HEADER},
+{"response_status",       IB_PHASE_RESPONSE_HEADER, IB_PHASE_RESPONSE_HEADER}
 };
 
 /* Placeholder for as-of-yet-initialized bytestring fields. */
@@ -991,22 +996,18 @@ ib_status_t ib_core_vars_init(ib_engine_t *ib,
 
     config = ib_engine_var_config_get(ib);
     assert(config != NULL);
-    for (
-        const char **key = indexed_keys;
-        *key != NULL;
-        ++key
-    )
-    {
+    for (size_t i = 0; i < sizeof(indexed_keys)/sizeof(*indexed_keys); ++i) {
+        indexed_key_t key_info = indexed_keys[i];
         rc = ib_var_source_register(
             NULL,
             config,
-            *key, strlen(*key),
-            IB_PHASE_NONE, IB_PHASE_NONE
+            IB_S2SL(key_info.name),
+            key_info.initial, key_info.final
         );
         if (rc != IB_OK) {
             ib_log_warning(ib,
                 "Core vars failed to register \"%s\": %s",
-                *key,
+                key_info.name,
                 ib_status_to_string(rc)
             );
         }
