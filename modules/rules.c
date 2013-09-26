@@ -523,14 +523,6 @@ static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp,
         return IB_EINVAL;
     }
 
-    if ( (! child) &&
-         ((rule->meta.phase == IB_PHASE_INVALID) ||
-          (rule->meta.phase == IB_PHASE_NONE)) )
-    {
-        ib_cfg_log_error(cp, "Phase invalid or not specified.");
-        return IB_EINVAL;
-    }
-
     return IB_OK;
 }
 /**
