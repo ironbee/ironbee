@@ -734,15 +734,19 @@ void Delegate::context_close(IB::Context context)
 
         // Transform
         {
+            bool needs_transform = true;
             num_errors = 0;
-            P::transform_graph(reporter, graph(), m_call_factory);
-            if (num_errors > 0) {
-                BOOST_THROW_EXCEPTION(
-                    IB::einval() << IB::errinfo_what(
-                        "Errors occurred during DAG transformation."
-                        " See above."
-                    )
-                );
+            while (needs_transform) {
+                needs_transform =
+                    P::transform_graph(reporter, graph(), m_call_factory);
+                if (num_errors > 0) {
+                    BOOST_THROW_EXCEPTION(
+                        IB::einval() << IB::errinfo_what(
+                            "Errors occurred during DAG transformation."
+                            " See above."
+                        )
+                    );
+                }
             }
         }
 
