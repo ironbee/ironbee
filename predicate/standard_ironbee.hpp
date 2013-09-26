@@ -36,14 +36,14 @@ namespace Predicate {
 namespace Standard {
 
 /**
- * Returns data field with name given by only child.
+ * Returns var with name given by only child.
  **/
-class Field :
+class Var :
     public Call
 {
 public:
     //! Constructor.
-    Field();
+    Var();
 
     //! See Call::name()
     virtual std::string name() const;
@@ -64,6 +64,18 @@ private:
 
     //! Hidden complex implementation details.
     boost::scoped_ptr<data_t> m_data;
+};
+
+//! Alias for Var.
+class Field :
+    public AliasCall
+{
+public:
+    //! Constructor.
+    Field();
+
+    //! See Call::name()
+    virtual std::string name() const;
 };
 
 /**

@@ -37,7 +37,7 @@ class TestStandardIronBee :
 {
 };
 
-TEST_F(TestStandardIronBee, field)
+TEST_F(TestStandardIronBee, var)
 {
     const char *data = "test";
     ib_status_t rc;
@@ -47,7 +47,7 @@ TEST_F(TestStandardIronBee, field)
         &source,
         m_transaction.memory_pool().ib(),
         ib_engine_var_config_get(m_transaction.engine().ib()),
-        IB_S2SL("TestStandard.Field")
+        IB_S2SL("TestStandard.Var")
     );
     ASSERT_EQ(IB_OK, rc);
 
@@ -65,7 +65,12 @@ TEST_F(TestStandardIronBee, field)
     );
     EXPECT_EQ(IB_OK, rc);
 
-    EXPECT_EQ("test", eval_s("(field 'TestStandard.Field')"));
+    EXPECT_EQ("test", eval_s("(var 'TestStandard.Var')"));
+}
+
+TEST_F(TestStandardIronBee, Field)
+{
+    EXPECT_EQ("(var 'foo')", transform("(field 'foo')"));
 }
 
 TEST_F(TestStandardIronBee, Operator)

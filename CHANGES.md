@@ -14,6 +14,10 @@ IronBee v0.9.0
 
 - Added API to load a module from a symbol rather than a file (`ib_module_load_from_sym()`) and an API to load a symbol from a file without initializing the module (`ib_module_file_to_sym()`).
 
+**Predicate**
+
+- The Field call is now known as Var.  Field continues to exist as an alias for Var.
+
 **CLIPP**
 
 - Added ClippScript, a Ruby DSL for creating CLIPP inputs.  See `clipp/clippscript.md`.

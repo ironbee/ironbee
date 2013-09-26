@@ -97,9 +97,9 @@ The primary front end for Predicate is written in Lua and intended to be used wi
 
 All functions are exposed directly via `P.Function(...)`, e.g., `P.Eq("foo", P.Cat("foo", "bar", "baz"))`.
 
-Functions marked **String Method** are also available as string members, e.g., `P.Field("REQUEST_URI"):length()", with the string passed in as the last argument.
+Functions marked **String Method** are also available as string members, e.g., `P.Var("REQUEST_URI"):length()", with the string passed in as the last argument.
 
-Functions marked **Call Method** are also available as members of any function call node, e.g., `P.Field("ARGS"):scatter():eq("foo")`, with the call passed in as the last argument.
+Functions marked **Call Method** are also available as members of any function call node, e.g., `P.Var("ARGS"):scatter():eq("foo")`, with the call passed in as the last argument.
 
 Literals can be represented via `P.String(s)` and `P.Number(n)` and the `P.Null` constant.  Arbitrary call functions can be represented via `P.Call(name, ...)`.  Raw sexpr text can be directly inserted via `P.Raw(text)`.  Shortcuts for the above are available as `P.S`, `P.N`, `P.C`, and `P.R`, respectively.
 
@@ -617,7 +617,7 @@ Finished
 : `v` is finished.
 
 Notes
-: Values created by other modules are allowed to define their value dynamically.  Such dynamic values are automatically used correctly by `field`, `sub`, `scatter`, etc.  However, these pass no argument in.  `ask` may be used to pass an argument in.
+: Values created by other modules are allowed to define their value dynamically.  Such dynamic values are automatically used correctly by `var`, `sub`, `scatter`, etc.  However, these pass no argument in.  `ask` may be used to pass an argument in.
 
 Front End
 : **Call Method**
@@ -664,15 +664,19 @@ Notes
 Front End
 : Provides most specific transformations as `P.N(d)`.  These are also **Call Methods**.
 
-**`(field N)`**
+**`(var N)`**
 
 Result
-: `[]` if no data field named `N`.
-: `[v]` where `v` is the value of the data field named `N` and 'v' is either a dynamic list or not a list.
-: `[...]` where '...' is the values of the list field named `N`.
+: `[]` if no var named `N`.
+: `[v]` where `v` is the value of the var named `N` and 'v' is either a dynamic list or not a list.
+: `[...]` where '...' is the values of the list var named `N`.
 
 Finished
-: Except for non-dynamic lists, as soon as field has a value.  For dynamic lists, it will be finished if that is known and otherwise, never.
+: Except for non-dynamic lists, as soon as var has a value.  For dynamic lists, it will be finished if that is known and otherwise, never.
+
+**`(field N)`**
+
+Alias for `var`.
 
 **`(field N W F)` [Future]**
 

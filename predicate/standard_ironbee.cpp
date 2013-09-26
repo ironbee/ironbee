@@ -39,23 +39,23 @@ namespace IronBee {
 namespace Predicate {
 namespace Standard {
 
-struct Field::data_t
+struct Var::data_t
 {
     ib_var_source_t *source;
 };
 
-Field::Field() :
+Var::Var() :
     m_data(new data_t)
 {
     // nop
 }
 
-string Field::name() const
+string Var::name() const
 {
-    return "field";
+    return "var";
 }
 
-bool Field::validate(NodeReporter reporter) const
+bool Var::validate(NodeReporter reporter) const
 {
     bool result = true;
     result = Validate::n_children(reporter, 1) && result;
@@ -64,7 +64,7 @@ bool Field::validate(NodeReporter reporter) const
     return result;
 }
 
-void Field::pre_eval(Environment environment, NodeReporter reporter)
+void Var::pre_eval(Environment environment, NodeReporter reporter)
 {
     const ib_var_config_t* config;
 
@@ -85,7 +85,7 @@ void Field::pre_eval(Environment environment, NodeReporter reporter)
     );
 }
 
-void Field::calculate(EvalContext context)
+void Var::calculate(EvalContext context)
 {
     ib_field_t* data_field;
     ib_status_t rc;
@@ -118,6 +118,17 @@ void Field::calculate(EvalContext context)
     else {
         alias(value.value_as_list<Value>());
     }
+}
+
+Field::Field() :
+    AliasCall("var")
+{
+    // nop
+}
+
+string Field::name() const
+{
+    return "field";
 }
 
 struct Operator::data_t
@@ -532,6 +543,7 @@ void Ask::calculate(EvalContext context)
 void load_ironbee(CallFactory& to)
 {
     to
+        .add<Var>()
         .add<Field>()
         .add<Operator>()
         .add<FOperator>()

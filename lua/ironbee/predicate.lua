@@ -272,6 +272,7 @@ local paramn = {
   'OrSC',
   'AndSC',
   'isHomogeneous',
+  'Var',
   'Field',
   'P',
   'Sequence',
