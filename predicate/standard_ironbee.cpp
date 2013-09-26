@@ -81,8 +81,24 @@ void Var::pre_eval(Environment environment, NodeReporter reporter)
 void Var::calculate(EvalContext context)
 {
     Value value;
+    bool time_to_finish = false;
+    ib_rule_phase_num_t current_phase = context.ib()->rule_exec->phase;
+    ib_rule_phase_num_t initial_phase = m_data->source.final_phase();
+    ib_rule_phase_num_t finish_phase = m_data->source.final_phase();
+
+    if (initial_phase != IB_PHASE_NONE && current_phase < initial_phase) {
+        // Nothing to do, yet.
+        return;
+    }
+
+    if (finish_phase != IB_PHASE_NONE && finish_phase <= current_phase) {
+        time_to_finish = true;
+    }
 
     if (is_aliased()) {
+        if (time_to_finish) {
+            finish();
+        }
         return;
     }
 
@@ -90,7 +106,6 @@ void Var::calculate(EvalContext context)
         value = m_data->source.get(context.var_store());
     }
     catch (enoent) {
-        finish();
         return;
     }
 
@@ -103,6 +118,9 @@ void Var::calculate(EvalContext context)
     }
     else {
         alias(value.value_as_list<Value>());
+        if (time_to_finish) {
+            finish();
+        }
     }
 }
 

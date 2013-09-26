@@ -672,7 +672,7 @@ Result
 : `[...]` where '...' is the values of the list var named `N`.
 
 Finished
-: Except for non-dynamic lists, as soon as var has a value.  For dynamic lists, it will be finished if that is known and otherwise, never.
+: Except for non-dynamic lists, as soon as var has a value.  For dynamic lists, it will be finished if the var has a defined final phase that is at or before the current phase.
 
 **`(field N)`**
 
