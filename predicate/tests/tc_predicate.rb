@@ -96,4 +96,16 @@ class TestPredicate < Test::Unit::TestCase
     assert_log_no_match /NOTICE/
     assert_log_match /CLIPP ANNOUNCE: field_present/
   end
+
+  def test_phaseless
+    clipp(CONFIG.merge(
+      :input_hashes => [make_request('foobar')],
+      :default_site_config => <<-EOS
+        Action id:1 clipp_announce:field_present "predicate:(var 'REQUEST_URI')"
+      EOS
+    ))
+    assert_no_issues
+    assert_log_no_match /NOTICE/
+    assert_log_match /CLIPP ANNOUNCE: field_present/
+  end
 end

@@ -20,6 +20,8 @@ IronBee v0.9.0
 
 - The Field call is now known as Var.  Field continues to exist as an alias for Var.
 
+- Predicate now supports phaseless rules.  Phaseless rules will execute as early as possible.
+
 **CLIPP**
 
 - Added ClippScript, a Ruby DSL for creating CLIPP inputs.  See `clipp/clippscript.md`.

@@ -129,6 +129,7 @@ const char* c_define_directive = "PredicateDefine";
  *          that phase as well.
  **/
 const ib_rule_phase_num_t c_phases[] = {
+    IB_PHASE_NONE, /* Special: Executed in every phase. */
     IB_PHASE_REQUEST_HEADER,
     IB_PHASE_REQUEST_BODY,
     IB_PHASE_RESPONSE_HEADER,
@@ -510,19 +511,26 @@ void PerContext::inject(
     assert(rule_exec);
     assert(rule_list);
 
-    ib_rule_phase_num_t phase = rule_exec->phase;
+    const ib_rule_phase_num_t phases[2] = {
+        IB_PHASE_NONE,
+        rule_exec->phase
+    };
     IB::Transaction tx(rule_exec->tx);
     assert(tx);
 
-    BOOST_FOREACH(
-        PerContext::rules_by_node_t::const_reference v,
-        m_rules[phase]
-    ) {
-        if (! v.first->eval(tx).empty()) {
-            copy(
-                v.second.begin(), v.second.end(),
-                back_inserter(rule_list)
-            );
+    for (size_t i = 0; i < sizeof(phases)/sizeof(*phases); ++i) {
+        ib_rule_phase_num_t phase = phases[i];
+
+        BOOST_FOREACH(
+            PerContext::rules_by_node_t::const_reference v,
+            m_rules[phase]
+        ) {
+            if (! v.first->eval(tx).empty()) {
+                copy(
+                    v.second.begin(), v.second.end(),
+                    back_inserter(rule_list)
+                );
+            }
         }
     }
 }
