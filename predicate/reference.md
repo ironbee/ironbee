@@ -54,7 +54,7 @@ EvalContext | Transaction | `const ib_tx_t*`    | `IronBee::ConstTransaction`
 Nodes
 =====
 
-Every literal and function call in Predicate is represented as a node in a direct acyclic graph.  Literals are leaves in the graph, while function calls have out edges to the Nodes representing their arguments.  Nodes may have multiple in edges due to subexpression merging.  I.e., if two different Predicate rules involve the expression `(field 'ARGS')`, there will be a single node representing `(field 'ARGS')` with in edges for the expressions of both of those rules.
+Every literal and function call in Predicate is represented as a node in a direct acyclic graph.  Literals are leaves in the graph, while function calls have out edges to the Nodes representing their arguments.  Nodes may have multiple in edges due to subexpression merging.  I.e., if two different Predicate rules involve the expression `(var 'ARGS')`, there will be a single node representing `(var 'ARGS')` with in edges for the expressions of both of those rules.
 
 Every Predicate rule has a "top node" that determines whether the rule should fire.  The ultimate purpose of Predicate is to termine which top Nodes are truthy.
 
@@ -508,7 +508,7 @@ Notes
 
 **Warning on `lt`, `le`, `gt`, `ge`**
 
-Filters based on asymmetric operators are tricky.  Should `(lt F v)` be elements of `v` that are less than `F` or greater than `F` (as `F` appears on the left).  After much debate, the latter was chosen to facilitate more natural any-of-the-following expressions.  For example, `(gt 100 (length (sub 'Host' (field 'REQUEST_HEADERS'))))` should express the notion of a long 'Host' header, not a small one, and should be true if any 'Host' header is long in the case of multiples.
+Filters based on asymmetric operators are tricky.  Should `(lt F v)` be elements of `v` that are less than `F` or greater than `F` (as `F` appears on the left).  After much debate, the latter was chosen to facilitate more natural any-of-the-following expressions.  For example, `(gt 100 (length (sub 'Host' (var 'REQUEST_HEADERS'))))` should express the notion of a long 'Host' header, not a small one, and should be true if any 'Host' header is long in the case of multiples.
 
 **`(lt F v)`**
 
@@ -676,7 +676,8 @@ Finished
 
 **`(field N)`**
 
-Alias for `var`.
+Synonym
+: `(var N)`
 
 **`(field N W F)` [Future]**
 
