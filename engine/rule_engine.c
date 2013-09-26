@@ -3269,17 +3269,8 @@ static ib_status_t copy_rule_list(const ib_list_t *src_list,
 {
     assert(src_list != NULL);
     assert(dest_list != NULL);
-    ib_status_t rc;
-    const ib_list_node_t *node;
 
-    IB_LIST_LOOP_CONST(src_list, node) {
-        assert(node->data != NULL);
-        rc = ib_list_push(dest_list, node->data);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-    return IB_OK;
+    return ib_list_copy_nodes(src_list, dest_list);
 }
 
 /**
