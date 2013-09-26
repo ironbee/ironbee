@@ -605,7 +605,7 @@ static parse_directive_entry_t parse_directive_table[] = {
     }
     action push_dir {
         ib_cfgparser_node_t *node = NULL;
-        ib_cfgparser_node_create(&node, cp);
+        rc = ib_cfgparser_node_create(&node, cp);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Cannot create node.");
             return rc;

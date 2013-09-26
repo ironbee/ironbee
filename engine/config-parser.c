@@ -800,6 +800,8 @@ static ib_status_t cfgparser_partial_match_maintenance(
  * @param[in] cp Configuration parser. The cp->fsm structure is updated.
  * @param[in] buf Buffer to append to cp->fsm.ts_buffer.
  * @param[in] blen Length of the buffer to append to cp->fsm.ts_buffer.
+ * @param[out] fsm_vars The p field is updated to point to 
+ *             the new location of buffer.
  */
 static ib_status_t cfgparser_partial_match_resume(
     ib_cfgparser_t *cp,
@@ -1033,7 +1035,7 @@ _eof_trans:
 #line 606 "config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
-        ib_cfgparser_node_create(&node, cp);
+        rc = ib_cfgparser_node_create(&node, cp);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Cannot create node.");
             return rc;
@@ -1394,7 +1396,7 @@ _again:
 #line 606 "config-parser.rl"
 	{
         ib_cfgparser_node_t *node = NULL;
-        ib_cfgparser_node_create(&node, cp);
+        rc = ib_cfgparser_node_create(&node, cp);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Cannot create node.");
             return rc;
