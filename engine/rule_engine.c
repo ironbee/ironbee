@@ -2045,14 +2045,12 @@ static bool rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule)
  *
  * @param[in] tx Transaction
  * @param[in] meta Rule's phase meta-data
- * @param[in] rule Rule to check (or NULL)
  * @param[in] check_phase Check if ALLOW_PHASE is set
  *
  * @returns true if the rule is affected, otherwise false
  */
 static bool rule_allow(const ib_tx_t *tx,
                        const ib_rule_phase_meta_t *meta,
-                       const ib_rule_t *rule,
                        bool check_phase)
 {
     /* Check the ALLOW_ALL flag */
@@ -2271,7 +2269,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
 
     /* Check if this phase should be skipped. Is the whole TX is allowed? */
-    if (rule_allow(tx, meta, NULL, false)) {
+    if (rule_allow(tx, meta, false)) {
         rc = IB_OK;
         goto finish;
     }
@@ -2344,10 +2342,13 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         const ib_rule_t *rule = (const ib_rule_t *)node->data;
         ib_status_t      rule_rc;
 
-        assert(rule->meta.phase == meta->phase_num);
+        assert(
+            rule->meta.phase == meta->phase_num ||
+            rule->meta.phase == IB_PHASE_NONE
+        );
 
         /* Allow (skip) this phase? */
-        if (rule_allow(tx, meta, rule, true)) {
+        if (rule_allow(tx, meta, true)) {
             break;
         }
 
@@ -2622,7 +2623,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                       ib_list_elements(rules));
 
     /* Allow (skip) this phase? Perhaps the whole TX is allowed? */
-    if (rule_allow(tx, meta, NULL, false)) {
+    if (rule_allow(tx, meta, false)) {
         return IB_OK;
     }
 
@@ -2682,7 +2683,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         rc = IB_OK;
 
         /* Allow (skip) this phase? */
-        if (rule_allow(tx, meta, rule, true)) {
+        if (rule_allow(tx, meta, true)) {
             break;
         }
 
