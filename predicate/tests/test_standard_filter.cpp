@@ -123,11 +123,7 @@ TEST_F(TestStandardFilter, namedi)
 
 TEST_F(TestStandardFilter, sub)
 {
-    EXPECT_EQ(2, eval_n("(sub 'fOo' (cat (setName 'bar' 1) (setName 'foo' 2)))"));
-
-    EXPECT_THROW(eval_bool("(sub)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(sub 'a' 2 3)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(sub 5 'b')"), IronBee::einval);
+    EXPECT_EQ("(namedi 'foo' 'bar')", transform("(sub 'foo' 'bar')"));
 }
 
 TEST_F(TestStandardFilter, namedRx)

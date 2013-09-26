@@ -244,9 +244,12 @@ protected:
  * Synonym for NamedI.
  **/
 class Sub :
-    public NamedI
+    public AliasCall
 {
 public:
+    //! Constructor.
+    Sub();
+
     //! See Call::name()
     virtual std::string name() const;
 };

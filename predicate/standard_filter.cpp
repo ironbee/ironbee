@@ -437,6 +437,12 @@ bool NamedI::validate(NodeReporter reporter) const
     return result;
 }
 
+Sub::Sub() :
+    AliasCall("namedi")
+{
+    // nop
+}
+
 string Sub::name() const
 {
     return "sub";
