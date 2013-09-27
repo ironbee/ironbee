@@ -159,6 +159,7 @@ ib_status_t log_pipe_format(
     assert((rc == IB_OK) && (cfg != NULL) && (cfg->pipe != NULL));
 
     if (rec->level > cfg->log_level) {
+        free(log_pipe_log_rec);
         return IB_DECLINED;
     }
 
