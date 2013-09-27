@@ -87,9 +87,9 @@ static const char *action_str = NULL;
 
 
 ib_status_t create_fn(ib_engine_t *ib,
-                             const char *params,
-                             ib_action_inst_t *inst,
-                             void *cbdata)
+                      const char *params,
+                      ib_action_inst_t *inst,
+                      void *cbdata)
 {
     if (strcmp(params, "INVALID") == 0) {
         return IB_EINVAL;
@@ -99,8 +99,8 @@ ib_status_t create_fn(ib_engine_t *ib,
 }
 
 ib_status_t execute_fn(const ib_rule_exec_t *rule_exec,
-                              void *data,
-                              void *cbdata)
+                       void *data,
+                       void *cbdata)
 {
     action_executed = true;
     action_str = (const char *)data;

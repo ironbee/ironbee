@@ -195,8 +195,8 @@ ib_status_t core_vars_placeholder_bytestr(
 }
 
 static void core_gen_tx_bytestr_alias(ib_tx_t *tx,
-                                            const char *name,
-                                            ib_bytestr_t *val)
+                                      const char *name,
+                                      ib_bytestr_t *val)
 {
 
     assert(tx != NULL);
@@ -270,8 +270,8 @@ static void core_gen_tx_bytestr_alias2(
 }
 
 static void core_gen_tx_numeric(ib_tx_t *tx,
-                                      const char *name,
-                                      ib_num_t val)
+                                const char *name,
+                                ib_num_t val)
 {
     assert(tx != NULL);
     assert(name != NULL);
@@ -282,9 +282,9 @@ static void core_gen_tx_numeric(ib_tx_t *tx,
     ib_var_source_t *source;
 
     rc = ib_field_create(&f, tx->mp,
-         name, strlen(name),
-         IB_FTYPE_NUM,
-         &num);
+                         name, strlen(name),
+                         IB_FTYPE_NUM,
+                         &num);
     if (rc != IB_OK) {
         ib_log_warning_tx(tx, "Failed to create \"%s\" field: %s",
                           name, ib_status_to_string(rc));
@@ -896,7 +896,7 @@ static ib_status_t core_gen_response_header_fields(
 
     if (tx->response_line != NULL) {
         core_gen_tx_bytestr_alias(tx, "response_line",
-                                        tx->response_line->raw);
+                                  tx->response_line->raw);
 
         core_gen_tx_bytestr_alias(tx, "response_protocol",
                                   tx->response_line->protocol);
@@ -942,9 +942,9 @@ static ib_status_t core_gen_response_body_fields(ib_engine_t *ib,
 
 /* Initialize libhtp config object for the context. */
 ib_status_t ib_core_vars_ctx_init(ib_engine_t *ib,
-                                    ib_module_t *mod,
-                                    ib_context_t *ctx,
-                                    void *cbdata)
+                                  ib_module_t *mod,
+                                  ib_context_t *ctx,
+                                  void *cbdata)
 {
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
