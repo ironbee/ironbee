@@ -22,6 +22,8 @@ IronBee v0.9.0
 
 - Predicate now supports phaseless rules.  Phaseless rules will execute as early as possible.
 
+- The long form of Var is now supported, allowing specification of a wait and final phase.
+
 **CLIPP**
 
 - Added ClippScript, a Ruby DSL for creating CLIPP inputs.  See `clipp/clippscript.md`.
