@@ -249,7 +249,7 @@ private:
  * VarStore can be treated as ConstVarStore.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * See @ref IronBeeEngineVarStoreuration.
+ * See @ref IronBeeEngineVarStore.
  *
  * @sa ConstVarStore
  * @sa ironbeepp
@@ -402,7 +402,7 @@ private:
  * VarSource can be treated as ConstVarSource.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * See @ref IronBeeEngineVarSourceuration.
+ * See @ref IronBeeEngineVarSource.
  *
  * @sa ConstVarSource
  * @sa ironbeepp
@@ -581,7 +581,7 @@ private:
  * VarFilter can be treated as ConstVarFilter.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * See @ref IronBeeEngineVarFilteruration.
+ * See @ref IronBeeEngineVarFilter.
  *
  * @sa ConstVarFilter
  * @sa ironbeepp
@@ -737,7 +737,7 @@ private:
  * VarTarget can be treated as ConstVarTarget.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * See @ref IronBeeEngineVarTargeturation.
+ * See @ref IronBeeEngineVarTarget.
  *
  * @sa ConstVarTarget
  * @sa ironbeepp
@@ -925,7 +925,7 @@ private:
  * VarExpand can be treated as ConstVarExpand.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * See @ref IronBeeEngineVarExpanduration.
+ * See @ref IronBeeEngineVarExpand.
  *
  * @sa ConstVarExpand
  * @sa ironbeepp

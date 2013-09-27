@@ -1047,8 +1047,8 @@ static ib_status_t execute_rule_actions(const ib_rule_exec_t *rule_exec)
                           ib_status_to_string(rc));
     }
 
-    /* Run any auxilary actions, ignore result, don't log */
-    execute_action_list(rule_exec, aux_actions, "Auxilary",
+    /* Run any auxiliary actions, ignore result, don't log */
+    execute_action_list(rule_exec, aux_actions, "Auxiliary",
                         ib_rule_log_level(rule_exec->tx->ctx) >= IB_LOG_DEBUG);
 
     /* Return the primary actions' result code */
@@ -4063,7 +4063,7 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     /* The False Action list is created as required */
     rule->false_actions = NULL;
 
-    /* The Auxilary Action list is created as required. */
+    /* The Auxiliary Action list is created as required. */
     rule->aux_actions = NULL;
 
     /* Get the rule engine and previous rule */

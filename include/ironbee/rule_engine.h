@@ -85,7 +85,7 @@ struct ib_rule_t {
     ib_list_t             *target_fields;   /**< List of targets */
     ib_list_t             *true_actions;    /**< Actions if condition True */
     ib_list_t             *false_actions;   /**< Actions if condition False */
-    ib_list_t             *aux_actions;     /**< Auxilary actions */
+    ib_list_t             *aux_actions;     /**< Auxiliary actions */
     ib_list_t             *parent_rlist;    /**< Parent rule list */
     ib_context_t          *ctx;             /**< Parent context */
     ib_rule_t             *chained_rule;    /**< Next rule in the chain */

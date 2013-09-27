@@ -59,7 +59,7 @@ typedef enum {
 typedef enum {
     IB_RULE_ACTION_TRUE,          /**< Add a True action */
     IB_RULE_ACTION_FALSE,         /**< Add a False action */
-    IB_RULE_ACTION_AUX,           /**< Add an auxilary action */
+    IB_RULE_ACTION_AUX,           /**< Add an auxiliary action */
 } ib_rule_action_t;
 
 /**

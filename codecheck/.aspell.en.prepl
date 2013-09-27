@@ -30,6 +30,7 @@ validaty validity
 fo of
 performant fast
 subtrace Subtract
+ironbeeenginevartargeturation IronBeeEngineVarTarget
 matchs matches
 prepend prefix
 redhat Red Hat
@@ -110,14 +111,17 @@ referece reference
 indexe indexed
 hlpr helper
 nul NUL
+ironbeeenginevarfilteruration IronBeeEngineVarFilter
 thie This
 stirng string
 hdrs headers
 failes fails
 mucn much
 allcation allocation
+ironbeeenginevarexpanduration IronBeeEngineVarExpand
 trailser Trailer
 kstore kvstore
+ironbeeenginevarsourceuration IronBeeEngineVarSource
 contet context
 cominging combining
 ngix Nginx
