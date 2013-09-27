@@ -80,9 +80,10 @@
 </tr>
 </tbody>
 </table>
+
 <h1 id="nodes">Nodes</h1>
 
-<p>Every literal and function call in Predicate is represented as a node in a direct acyclic graph. Literals are leaves in the graph, while function calls have out edges to the Nodes representing their arguments. Nodes may have multiple in edges due to subexpression merging. I.e., if two different Predicate rules involve the expression <code>(field 'ARGS')</code>, there will be a single node representing <code>(field 'ARGS')</code> with in edges for the expressions of both of those rules.</p>
+<p>Every literal and function call in Predicate is represented as a node in a direct acyclic graph. Literals are leaves in the graph, while function calls have out edges to the Nodes representing their arguments. Nodes may have multiple in edges due to subexpression merging. I.e., if two different Predicate rules involve the expression <code>(var 'ARGS')</code>, there will be a single node representing <code>(var 'ARGS')</code> with in edges for the expressions of both of those rules.</p>
 
 <p>Every Predicate rule has a &#8220;top node&#8221; that determines whether the rule should fire. The ultimate purpose of Predicate is to termine which top Nodes are truthy.</p>
 
@@ -107,6 +108,7 @@
 <p>Unbound variables is an area of ongoing discussion and research.</p>
 
 <h1 id="terminology">Terminology</h1>
+
 <dl>
 <dt>Simple</dt>
 <dd>A Node is simple if its ValueList is empty or contains exactly one value. Functions are simple if their Node is always simple.</dd>
@@ -115,17 +117,30 @@
 <dd>A Node is literal if it is a literal. Literals are always simple and always have the same value.</dd>
 </dl>
 
+<h1 id="luafrontend">Lua Front End</h1>
+
+<p>The primary front end for Predicate is written in Lua and intended to be used with Waggle. This document includes information on how functions are exposed in the front end.</p>
+
+<p>All functions are exposed directly via <code>P.Function(...)</code>, e.g., <code>P.Eq(&quot;foo&quot;, P.Cat(&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;))</code>.</p>
+
+<p>Functions marked <strong>String Method</strong> are also available as string members, e.g., `P.Var(&#8220;REQUEST_URI&#8221;):length()&quot;, with the string passed in as the last argument.</p>
+
+<p>Functions marked <strong>Call Method</strong> are also available as members of any function call node, e.g., <code>P.Var(&quot;ARGS&quot;):scatter():eq(&quot;foo&quot;)</code>, with the call passed in as the last argument.</p>
+
+<p>Literals can be represented via <code>P.String(s)</code> and <code>P.Number(n)</code> and the <code>P.Null</code> constant. Arbitrary call functions can be represented via <code>P.Call(name, ...)</code>. Raw sexpr text can be directly inserted via <code>P.Raw(text)</code>. Shortcuts for the above are available as <code>P.S</code>, <code>P.N</code>, <code>P.C</code>, and <code>P.R</code>, respectively.</p>
+
+<p>In many cases, Lua numbers and strings will be automatically converted to Predicate number and string nodes.</p>
 
 <h1 id="functions">Functions</h1>
 
 <p><strong>Conventions</strong></p>
+
 <dl>
 <dt>Arguments</dt>
 <dd>Arguments that must be literal are capitalized.</dd>
 
 <dd>Arguments that may be dynamic are not.</dd>
 </dl>
-
 
 <h2 id="boolean">Boolean</h2>
 
@@ -135,7 +150,22 @@
 
 <p>In contrast, the short circuited versions, <code>andSC</code> and <code>orSC</code> do not reorder. They will incorporate arguments of the same function as them, but not those of the non-short-circuited versions.</p>
 
+<p>The front end provides some synthetic functions and operator overloads:</p>
+
+<ul>
+<li><code>a + b</code> is equivalent to <code>P.And(a, b)</code>.</li>
+<li><code>a / b</code> is equivalent to <code>P.Or(a, b)</code>.</li>
+<li><code>-a</code> is equivalent to <code>P.Not(a)</code>.</li>
+<li><code>a - b</code> is equivalent to <code>a + (-b)</code></li>
+<li><code>P.Xor(a, b)</code> is equivalent to <code>(a - b) + (b - a)</code>.</li>
+<li><code>a ^ b</code> is equivalent to <code>P.Xor(a, b)</code>.</li>
+<li><code>P.Nand(a, b)</code> is equivalent to <code>-(a + b)</code>.</li>
+<li><code>P.Nor(a, b)</code> is equivalent to <code>-(a / b)</code>.</li>
+<li><code>P.Nxor(a, b)</code> is equivalent to <code>-(a ^ b)</code>.</li>
+</ul>
+
 <p><strong><code>(true)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd>None (see below)</dd>
@@ -145,10 +175,13 @@
 
 <dt>Transformations</dt>
 <dd>Always into the empty string literal.</dd>
+
+<dt>Front End</dt>
+<dd>Available as constant <code>P.True</code>.</dd>
 </dl>
 
-
 <p><strong><code>(false)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd>None (see below)</dd>
@@ -158,10 +191,13 @@
 
 <dt>Transformations</dt>
 <dd>Always into <code>null</code>.</dd>
+
+<dt>Front End</dt>
+<dd>Available as constant <code>P.False</code>.</dd>
 </dl>
 
-
 <p><strong><code>(and ...)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd>truthy if all arguments are truthy.</dd>
@@ -182,10 +218,13 @@
 <dd>Will remove any truthy literal children.</dd>
 
 <dd>If any child is itself an <code>and</code> call, will replace that child with the child&#8217;s children.</dd>
+
+<dt>Front End</dt>
+<dd>Available via <code>+</code>.</dd>
 </dl>
 
-
 <p><strong><code>(or ...)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd>truthy if any child is truthy.</dd>
@@ -203,10 +242,13 @@
 <dd>Will remove any null literal children.</dd>
 
 <dd>If any child is itself an <code>or</code> call, will replace that child with the child&#8217;s children.</dd>
+
+<dt>Front End</dt>
+<dd>Available via <code>/</code>.</dd>
 </dl>
 
-
 <p><strong><code>(not a)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd>truthy if <code>a</code> is falsy.</dd>
@@ -220,8 +262,8 @@
 <dd>If <code>a</code> is literal, will replace itself with a truthy or falsy literal value as appropriate.</dd>
 </dl>
 
-
 <p><strong><code>(if p t f)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>t</code> if <code>p</code> is truthy.</dd>
@@ -237,10 +279,13 @@
 
 <dt>Transformations</dt>
 <dd>If <code>p</code> is literal, will replace itself with <code>t</code> or <code>f</code> as appropriate.</dd>
+
+<dt>Front End</dt>
+<dd>If <code>p</code> is a literal, the front end will evaluate the if expression.</dd>
 </dl>
 
-
 <p><strong><code>(andSC ...)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>(true)</code> if all arguments are truthy.</dd>
@@ -259,8 +304,8 @@
 <dd><code>and</code></dd>
 </dl>
 
-
 <p><strong><code>(orSC ...)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>(true)</code> if any child is truthy.</dd>
@@ -279,22 +324,25 @@
 <dd><code>or</code></dd>
 </dl>
 
-
 <h2 id="valuelist">ValueList</h2>
 
 <p>These functions are for manipulating ValueLists.</p>
 
 <p><strong><code>(setName N v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>v</code> with name of every value of <code>v</code> set to <code>N</code>.</dd>
 
 <dt>Finished</dt>
 <dd><code>v</code> is finished.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(cat ...)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> until all arguments are finished.</dd>
@@ -315,8 +363,8 @@
 <dd>If a child is itself a <code>cat</code> call, it will be replaced with its children.</dd>
 </dl>
 
-
 <p><strong><code>(scatter a)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> if <code>a</code> is not finished.</dd>
@@ -330,10 +378,13 @@
 
 <dt>Transformations</dt>
 <dd>If <code>a</code> is a literal, will replace itself with a falsy value.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(gather a)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> if <code>a</code> is not finished.</dd>
@@ -344,8 +395,8 @@
 <dd><code>a</code> is finished.</dd>
 </dl>
 
-
 <p><strong><code>(first v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> if <code>v</code> is empty.</dd>
@@ -359,10 +410,13 @@
 
 <dt>Transformations</dt>
 <dd>If <code>v</code> is literal, will replace itself with <code>v</code>.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(rest v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> if <code>v</code> has one or fewer values.</dd>
@@ -374,10 +428,13 @@
 
 <dt>Transformations</dt>
 <dd>If <code>v</code> is a literal, will replace itself with <code>null</code>.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(nth N v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> if <code>v</code> has less than <code>N</code> elements.</dd>
@@ -391,37 +448,17 @@
 
 <dt>Transformations</dt>
 <dd>If <code>v</code> is a literal, will replace itself with null (<code>N &gt; 1</code>) or <code>v</code> (<code>N == 1</code>).</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
-
-
-<p><strong><code>(sub N v)</code> [Future]</strong></p>
-<dl>
-<dt>Result</dt>
-<dd><code>[]</code> if <code>v</code> is not finished or not simple.</dd>
-
-<dd>Else <code>[]</code> if value of <code>v</code> is not a list.</dd>
-
-<dd>Else <code>[...]</code> where <code>...</code> is members of value of <code>v</code> with name <code>N</code>.</dd>
-
-<dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
-
-<dd><code>v</code> is not simple.</dd>
-
-<dd><code>v</code> has value that is not a list.</dd>
-
-<dt>Notes</dt>
-<dd><code>(sub N v)</code> is semantically identical to <code>(named N (scatter v))</code> but is more efficient.</dd>
-
-<dd>Sub will <em>not</em> do what you want with <em>dynamic</em> collections. For those, use <code>ask</code> first.</dd>
-</dl>
-
 
 <h2 id="predicatepredicates">Predicate Predicates</h2>
 
 <p>These functions have <code>(true)</code> or <code>(false)</code> (aka <code>[]</code>) as their result.</p>
 
 <p><strong><code>(isLonger N v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> if <code>v</code> has <code>N</code> or fewer values.</dd>
@@ -435,10 +472,13 @@
 
 <dt>Transformations</dt>
 <dd>If <code>v</code> is literal, will replace itself with a truthy or falsy literal depending on <code>N</code>.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(isLiteral v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd>None (see below).</dd>
@@ -448,10 +488,13 @@
 
 <dt>Transformations</dt>
 <dd>Will replace itself with a truthy value if <code>v</code> is a literal and a falsy value otherwise.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(isSimple v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd>Truthy if <code>v</code> has at most one value.</dd>
@@ -465,10 +508,13 @@
 
 <dt>Transformations</dt>
 <dd>If <code>v</code> is a literal, will replace itself with a truthy value.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(isFinished v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> if <code>v</code> is not finished.</dd>
@@ -480,10 +526,13 @@
 
 <dt>Transformations</dt>
 <dd>If <code>v</code> is a literal, will replace itself with a truthy value.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(isHomogeneous v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> if <code>v</code> is not finished or <code>v</code> has values of different types.</dd>
@@ -497,17 +546,20 @@
 
 <dt>Transformations</dt>
 <dd>If <code>v</code> is a literal, will replace itself with a truthy value.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
+<p><strong><code>(isHomogeneous ...)</code> [Future]</strong></p>
 
-<p><strong><code>(isHomogeneous ...)</code></strong></p>
 <dl>
 <dt>Synonym</dt>
 <dd><code>(isHomogeneous (cat ...))</code></dd>
 </dl>
 
-
 <p><strong><code>(isComplete a b)</code> [Future]</strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> if <code>a</code> or <code>b</code> is unfinished.</dd>
@@ -522,25 +574,33 @@
 <dd><code>a</code> is finished and <code>b</code> has more values than <code>a</code>.</dd>
 
 <dt>Notes</dt>
-<dd>Intended use is with maplike functions to see if the per-value function succeeded on every value. For exampe: <code>(isComplete v (rx 'foo' v))</code> is true iff every value of <code>v</code> matches thre regular expression &#8216;foo&#8217;.</dd>
-</dl>
+<dd>Intended use is with maplike functions to see if the per-value function succeeded on every value. For example: <code>(isComplete v (rx 'foo' v))</code> is true iff every value of <code>v</code> matches the regular expression &#8216;foo&#8217;.</dd>
 
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
+
+<dd>E.g., <code>P.Rx('foo', v):isComplete(v)</code>.</dd>
+</dl>
 
 <h2 id="filters">Filters</h2>
 
 <p>All of these functions are of the following form:</p>
 
 <p><strong><code>(X F v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[...]</code> where <code>...</code> is the values of <code>v</code> that match the filter described by <code>F</code>.</dd>
 
 <dt>Finished</dt>
 <dd><code>v</code> is finished.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(eq F v)</code></strong></p>
+
 <dl>
 <dt>Filter</dt>
 <dd>Equal in type and value to filter.</dd>
@@ -551,8 +611,8 @@
 <dd>Lists are currently never equal.</dd>
 </dl>
 
-
 <p><strong><code>(ne F v)</code></strong></p>
+
 <dl>
 <dt>Filter</dt>
 <dd>Not equal in type or value to filter.</dd>
@@ -561,40 +621,40 @@
 <dd><code>ne</code> is the exact opposite of <code>eq</code>. E.g., lists are always <code>ne</code>.</dd>
 </dl>
 
-
 <p><strong>Warning on <code>lt</code>, <code>le</code>, <code>gt</code>, <code>ge</code></strong></p>
 
-<p>Filters based on asymmetric operators are tricky. Should <code>(lt F v)</code> be elements of <code>v</code> that are less than <code>F</code> or greater than <code>F</code> (as <code>F</code> appears on the left). After much debate, the latter was chosen to facilitate more natural any-of-the-following expressions. For example, <code>(gt 100 (length (sub 'Host' (field 'REQUEST_HEADERS'))))</code> should express the notion of a long &#8216;Host&#8217; header, not a small one, and should be true if any &#8216;Host&#8217; header is long in the case of multiples.</p>
+<p>Filters based on asymmetric operators are tricky. Should <code>(lt F v)</code> be elements of <code>v</code> that are less than <code>F</code> or greater than <code>F</code> (as <code>F</code> appears on the left). After much debate, the latter was chosen to facilitate more natural any-of-the-following expressions. For example, <code>(gt 100 (length (sub 'Host' (var 'REQUEST_HEADERS'))))</code> should express the notion of a long &#8216;Host&#8217; header, not a small one, and should be true if any &#8216;Host&#8217; header is long in the case of multiples.</p>
 
 <p><strong><code>(lt F v)</code></strong></p>
+
 <dl>
 <dt>Filter</dt>
 <dd>Number or float and filter is less than.</dd>
 </dl>
 
-
 <p><strong><code>(le F v)</code></strong></p>
+
 <dl>
 <dt>Filter</dt>
 <dd>Number or float and filter less than or equal.</dd>
 </dl>
 
-
 <p><strong><code>(gt F v)</code></strong></p>
+
 <dl>
 <dt>Filter</dt>
 <dd>Number or float and filter greater than.</dd>
 </dl>
 
-
 <p><strong><code>(ge F v)</code></strong></p>
+
 <dl>
 <dt>Filter</dt>
 <dd>Number or float and filter greater than or equal.</dd>
 </dl>
 
-
 <p><strong><code>(typed F v)</code></strong></p>
+
 <dl>
 <dt>Filter</dt>
 <dd>Type as described by <code>F</code>.</dd>
@@ -603,38 +663,52 @@
 <dd><code>F</code> must be one of &#8216;number&#8217;, &#8216;float&#8217;, &#8216;list&#8217;, &#8216;string&#8217;.</dd>
 </dl>
 
-
 <p><strong><code>(named F v)</code></strong></p>
+
 <dl>
 <dt>Filter</dt>
 <dd>Has name equal to value of filter.</dd>
 </dl>
 
+<p><strong><code>(namedi F v)</code></strong></p>
+
+<dl>
+<dt>Filter</dt>
+<dd>Has name equal to value of filter, case insensitive.</dd>
+</dl>
+
+<p>** <code>(sub F v)</code>**</p>
+
+<dl>
+<dt>Synonym</dt>
+<dd><code>(namedi F v)</code></dd>
+</dl>
 
 <p><strong><code>(namedRx F v)</code></strong></p>
+
 <dl>
 <dt>Filter</dt>
 <dd>Has name matching regexp <code>F</code>.</dd>
 </dl>
-
 
 <h2 id="phase">Phase</h2>
 
 <p>In these function, <code>P</code> is a string literal describing an IronBee phase. Valid values are:</p>
 
 <ul>
-<li><code>request_header</code></li>
-<li><code>request</code></li>
-<li><code>response_header</code></li>
-<li><code>response</code></li>
-<li><code>postprocess</code></li>
-<li><code>request_header_stream</code></li>
-<li><code>request_body_stream</code></li>
-<li><code>response_header_stream</code></li>
-<li><code>response_body_stream</code></li>
+<li><code>REQUEST_HEADER</code></li>
+<li><code>REQUEST</code></li>
+<li><code>RESPONSE_HEADER</code></li>
+<li><code>RESPONSE</code></li>
+<li><code>POSTPROCESS</code></li>
+<li><code>REQUEST_HEADER_STREAM</code></li>
+<li><code>REQUEST_BODY_STREAM</code></li>
+<li><code>RESPONSE_HEADER_STREAM</code></li>
+<li><code>RESPONSE_BODY_STREAM</code></li>
 </ul>
 
 <p><strong><code>(waitPhase P v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> if has not been evaluated during phase <code>P</code> yet.</dd>
@@ -648,10 +722,13 @@
 <dd><code>v</code> is not evaluated via this path until phase <code>P</code>. I.e., <code>v</code> will not be evaluated before phase <code>P</code> because of this expression, although it may be if used outside a <code>waitPhase</code> somewhere else.</dd>
 
 <dd>This function is primarily intended for performance tweaking although it may also be used to delay values to a later phase.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(finishPhase P v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>v</code> until evaluated at phase <code>P</code>.</dd>
@@ -665,12 +742,15 @@
 
 <dt>Notes</dt>
 <dd>This function is primarily intended for performance although it may also be used to ignore later values.</dd>
-</dl>
 
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
+</dl>
 
 <h2 id="ironbee">IronBee</h2>
 
-<p><strong><code>(ask P v)</code> [Future]</strong></p>
+<p><strong><code>(ask P v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[...]</code> where <code>...</code> is the result of asking each value of <code>v</code> for its values given parameter <code>P</code>.</dd>
@@ -679,11 +759,14 @@
 <dd><code>v</code> is finished.</dd>
 
 <dt>Notes</dt>
-<dd>Values created by other modules are allowed to define their value dynamically. Such dynamic values are automatically used correctly by <code>field</code>, <code>sub</code>, <code>scatter</code>, etc. However, these pass no argument in. <code>ask</code> may be used to pass an argument in.</dd>
+<dd>Values created by other modules are allowed to define their value dynamically. Such dynamic values are automatically used correctly by <code>var</code>, <code>sub</code>, <code>scatter</code>, etc. However, these pass no argument in. <code>ask</code> may be used to pass an argument in.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
 
-
 <p><strong><code>(operator N S d)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd>Executes operator named <code>N</code> with static argument <code>S</code> on each value of <code>d</code>. If result is true, then adds the capture field as a value if possible and an empty string if not.</dd>
@@ -693,10 +776,29 @@
 
 <dt>Notes</dt>
 <dd>You will often not need to use <code>operator</code> directly. The front end or templates will provide functions that directly call a specific IronBee operator.</dd>
+
+<dt>Front End</dt>
+<dd>Provides most specific operators as <code>P.N(S, d)</code>. These are also <strong>Call Methods</strong>.</dd>
 </dl>
 
+<p><strong><code>(foperator N S d)</code></strong></p>
+
+<dl>
+<dt>Result</dt>
+<dd>As <code>operator</code>, but instead of adding capture, it adds the input.</dd>
+
+<dt>Finished</dt>
+<dd><code>d</code> is finished.</dd>
+
+<dt>Notes</dt>
+<dd>You will often not need to use <code>foperator</code> directly. The front end or templates will provide functions that directly call a specific IronBee operator.</dd>
+
+<dt>Front End</dt>
+<dd>Provides most specific operators as <code>P.FN(S, d)</code>. These are also <strong>Call Methods</strong>.</dd>
+</dl>
 
 <p><strong><code>(transformation N d)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[...]</code> where <code>...</code> is each value of <code>d</code> transformed by the transformation named <code>N</code>.</dd>
@@ -706,27 +808,27 @@
 
 <dt>Notes</dt>
 <dd>You will often not need to use <code>transformation</code> directly. The front end or templates will provide functions that directly call a specific IronBee operator.</dd>
+
+<dt>Front End</dt>
+<dd>Provides most specific transformations as <code>P.N(d)</code>. These are also <strong>Call Methods</strong>.</dd>
 </dl>
 
+<p><strong><code>(var N)</code></strong></p>
 
-<p><strong><code>(field N)</code></strong></p>
 <dl>
 <dt>Result</dt>
-<dd><code>[]</code> if no data field named <code>N</code>.</dd>
+<dd><code>[]</code> if no var named <code>N</code>.</dd>
 
-<dd><code>[v]</code> where <code>v</code> is the value of the data field named <code>N</code>.</dd>
+<dd><code>[v]</code> where <code>v</code> is the value of the var named <code>N</code> and &#8216;v&#8217; is either a dynamic list or not a list.</dd>
+
+<dd><code>[...]</code> where &#8216;&#8230;&#8217; is the values of the list var named <code>N</code>.</dd>
 
 <dt>Finished</dt>
-<dd>When data field is finished, if known.</dd>
-
-<dd>Else never.</dd>
-
-<dt>See Also</dt>
-<dd><code>target</code></dd>
+<dd>Except for non-dynamic lists, as soon as var has a value. For dynamic lists, it will be finished if the var has a defined final phase that is at or before the current phase.</dd>
 </dl>
 
+<p><strong><code>(var N W F)</code></strong></p>
 
-<p><strong><code>(field N W F)</code> [Future]</strong></p>
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> until phase <code>W</code>.</dd>
@@ -739,30 +841,27 @@
 <dt>Notes</dt>
 <dd>See Phase section for acceptable values of <code>W</code> and <code>F</code>.</dd>
 
-<dd>This function should <strong>not</strong> be confused with <code>(waitPhase W (finishPhase E (field N)))</code>. The latter enforces that the value does not change after phase <code>E</code>, wheras this function indicates that it can <em>assume</em> that the field will not change after phase <code>E</code> and can thus finish.</dd>
+<dd>This function should <strong>not</strong> be confused with <code>(waitPhase W (finishPhase E (field N)))</code>. The latter enforces that the value does not change after phase <code>E</code>, whereas this function indicates that it can <em>assume</em> that the field will not change after phase <code>E</code> and can thus finish.</dd>
 </dl>
 
+<p><strong><code>(field N)</code></strong></p>
 
-<p><strong><code>(target N)</code> [Future]</strong></p>
 <dl>
-<dt>Result:</dt>
-<dd><code>[]</code> if no target matching string <code>N</code>.</dd>
-
-<dd><code>[v]</code> wherte <code>v</code> is the value of evaluating the target string <code>N</code>.</dd>
-
-<dt>Finished</dt>
-<dd>Never</dd>
-
-<dt>Notes</dt>
-<dd>Avoid if possible. Most target strings can be more efficiently evaluated by combining <code>field</code>, <code>sub</code>, <code>scatter</code>, <code>gather</code>, and filters.</dd>
-
-<dd>Primarily provided to ease automatic conversion of rules from other systems.</dd>
+<dt>Synonym</dt>
+<dd><code>(var N)</code></dd>
 </dl>
 
+<p><strong><code>(field N W F)</code> </strong></p>
+
+<dl>
+<dt>Synonym</dt>
+<dd><code>(var N W F)</code></dd>
+</dl>
 
 <h2 id="streamingironbeefuture">Streaming IronBee [Future]</h2>
 
 <p><strong><code>(streamRequestBodyRx R)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[...]</code> captures of any matches of regexp <code>R</code> in the streamed request body.</dd>
@@ -771,8 +870,8 @@
 <dd>Once request is finished.</dd>
 </dl>
 
-
 <p><strong><code>(streamResponseBodyRx R)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[...]</code> captures of any matches of regexp <code>R</code> in the streamed response body.</dd>
@@ -781,12 +880,12 @@
 <dd>Once response is finished.</dd>
 </dl>
 
-
 <h2 id="fastfuture">Fast [Future]</h2>
 
 <p>TODO: Documentation.</p>
 
 <p><strong><code>(fast P)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[]</code> until pattern <code>P</code> appears in traffic.</dd>
@@ -802,30 +901,26 @@
 <dd>The advantage of this function is that, properly used, all occurrences of it will have their patterns merged into a single patterned Aho-Corasick automata which will efficiently determine which occurrences are true.</dd>
 </dl>
 
-
 <h2 id="development">Development</h2>
 
-<p><strong><code>(p v M)</code></strong></p>
+<p><strong><code>(p ...)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
-<dd><code>v</code></dd>
+<dd>Value of last argument.</dd>
 
 <dt>Finished</dt>
-<dd><code>v</code> is finished.</dd>
+<dd>Last argument is finished.</dd>
 
 <dt>Notes</dt>
-<dd>Will log <code>M</code> and the value of <code>v</code> each time evaluated.</dd>
+<dd>Will log each argument to stderr each time evaluated.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
 </dl>
-
-
-<p><strong><code>(p v M L)</code></strong></p>
-<dl>
-<dt>Notes</dt>
-<dd>As above, but at log level <code>L</code> where <code>L</code> can be: &#8220;emergency&#8221;, &#8220;alert&#8221;, &#8220;critical&#8221;, &#8220;error&#8221;, &#8220;warning&#8221;, &#8220;notice&#8221;, &#8220;info&#8221;, &#8220;debug&#8221;, &#8220;debug2&#8221;, &#8220;debug3&#8221;, &#8220;trace&#8221;, &#8220;stdout&#8221;, or &#8220;stderr&#8221;.</dd>
-</dl>
-
 
 <p><strong><code>(sequence S E D)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[...]</code> where &#8230; is the numbers <code>S</code>, <code>S+D</code>, <code>S+2D</code>, &#8230;, <code>E</code>, inclusive.</dd>
@@ -843,22 +938,22 @@
 <dd>Infinite constant ranges are also possible by having <code>D</code> == 0.</dd>
 </dl>
 
-
 <p><strong><code>(sequence S E)</code></strong></p>
+
 <dl>
 <dt>Synonym</dt>
 <dd><code>(sequence S E 1)</code></dd>
 </dl>
 
-
 <p><strong><code>(sequence S)</code></strong></p>
+
 <dl>
 <dt>Synonym</dt>
 <dd><code>(sequence S E 1)</code> where <code>E</code> is some value less than <code>S</code>.</dd>
 </dl>
 
-
 <p><strong><code>(identity v)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd><code>[...]</code> where &#8230; is the result of <code>v</code>.</dd>
@@ -870,21 +965,21 @@
 <dd>Does not transform. In contrast, <code>(cat v)</code> is semantically identical, but transforms itself into <code>v</code>.</dd>
 </dl>
 
-
-<h2 id="templatesfuture">Templates [Future]</h2>
+<h2 id="templates">Templates</h2>
 
 <p>Templates provide basic user defined substitution transformations. They permit complex expressions to be expressed as simple expressions, allowing for improved error messages and fewer bytes in certain forms. Ultimately, they expand out to full expressions tree, have subexpressions merged with all other expressions, and are treated no differently that had they been written out fully to begin with.</p>
 
 <p>Templates are defined externally, e.g., via an IronBee directive. As an example:</p>
 
-<pre><code>PredicateDefineTemplate &quot;request_header name&quot; &quot;(sub (ref 'name') (field 'REQUEST_HEADERS'))&quot;
+<pre><code>PredicateDefine &quot;requestHeader&quot; &quot;name&quot; &quot;(sub (ref 'name') (field 'REQUEST_HEADERS'))&quot;
 </code></pre>
 
-<p>The <code>request_header</code> template then be used as a function, e.g., <code>(request_header 'Host')</code> which would be expanded to <code>(sub 'Host' (field 'REQUEST_HEADERS'))</code>.</p>
+<p>The <code>requestHeader</code> template then be used as a function, e.g., <code>(requestHeader 'Host')</code> which would be expanded to <code>(sub 'Host' (field 'REQUEST_HEADERS'))</code>.</p>
 
 <p><strong><code>(T ...)</code></strong></p>
 
 <p>Where <code>T</code> is some user defined template.</p>
+
 <dl>
 <dt>Result</dt>
 <dd>N/A (see below)</dd>
@@ -896,8 +991,8 @@
 <dd>Will replace itself with a deep copy of its associated expression tree. Will then go through that copy and replace any <code>ref</code> nodes with values taken from its arguments.</dd>
 </dl>
 
-
 <p><strong><code>(ref S)</code></strong></p>
+
 <dl>
 <dt>Result</dt>
 <dd>N/A (see below)</dd>
@@ -908,7 +1003,6 @@
 <dt>Notes</dt>
 <dd>Will be replaced with appropriate expression during template transformations.</dd>
 </dl>
-
 
 <div class="footnotes">
 <hr />

@@ -72,6 +72,10 @@ TEST_F(TestStandardIronBee, var)
     EXPECT_EQ(IB_OK, rc);
 
     EXPECT_EQ("test", eval_s("(var 'TestStandard.Var')"));
+    EXPECT_EQ("test", eval_s("(var 'TestStandard.Var' 'REQUEST_HEADER' 'REQUEST')"));
+    EXPECT_THROW(eval_bool("(var 'foo' 'bar' 'baz')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(var 'foo' 'REQUEST_HEADER')"), IronBee::einval);
+    EXPECT_THROW(eval_bool("(var 'foo' 'REQUEST_HEADER' 'REQUEST' 'baz')"), IronBee::einval);
 }
 
 TEST_F(TestStandardIronBee, Field)

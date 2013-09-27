@@ -563,15 +563,15 @@ Phase
 
 In these function, `P` is a string literal describing an IronBee phase.  Valid values are:
 
-- `requestHeader`
-- `request`
-- `response_header`
-- `response`
-- `postprocess`
-- `requestHeader_stream`
-- `request_body_stream`
-- `response_header_stream`
-- `response_body_stream`
+- `REQUEST_HEADER`
+- `REQUEST`
+- `RESPONSE_HEADER`
+- `RESPONSE`
+- `POSTPROCESS`
+- `REQUEST_HEADER_STREAM`
+- `REQUEST_BODY_STREAM`
+- `RESPONSE_HEADER_STREAM`
+- `RESPONSE_BODY_STREAM`
 
 **`(waitPhase P v)`**
 
@@ -674,12 +674,7 @@ Result
 Finished
 : Except for non-dynamic lists, as soon as var has a value.  For dynamic lists, it will be finished if the var has a defined final phase that is at or before the current phase.
 
-**`(field N)`**
-
-Synonym
-: `(var N)`
-
-**`(field N W F)` [Future]**
+**`(var N W F)`**
 
 Result
 : `[]` until phase `W`.
@@ -690,7 +685,18 @@ Finished
 
 Notes
 : See Phase section for acceptable values of `W` and `F`.
-: This function should **not** be confused with `(waitPhase W (finishPhase E (field N)))`.  The latter enforces that the value does not change after phase `E`, wheras this function indicates that it can *assume* that the field will not change after phase `E` and can thus finish.
+: This function should **not** be confused with `(waitPhase W (finishPhase E (field N)))`.  The latter enforces that the value does not change after phase `E`, whereas this function indicates that it can *assume* that the field will not change after phase `E` and can thus finish.
+
+**`(field N)`**
+
+Synonym
+: `(var N)`
+
+**`(field N W F)` **
+
+Synonym
+: `(var N W F)`
+
 
 Streaming IronBee \[Future]
 ---------------------------

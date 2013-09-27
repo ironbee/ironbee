@@ -40,9 +40,31 @@ namespace IronBee {
 namespace Predicate {
 namespace Standard {
 
+namespace {
+
+ib_rule_phase_num_t phase_lookup(const string& phase_string)
+{
+    ib_rule_phase_num_t result;
+
+    result = ib_rule_lookup_phase(phase_string.c_str(), true);
+    if (result == IB_PHASE_INVALID) {
+        result = ib_rule_lookup_phase(phase_string.c_str(), false);
+    }
+    return result;
+}
+
+}
+
 struct Var::data_t
 {
+    data_t() :
+        wait_phase(IB_PHASE_NONE),
+        final_phase(IB_PHASE_NONE)
+    {}
+
     VarSource source;
+    ib_rule_phase_num_t wait_phase;
+    ib_rule_phase_num_t final_phase;
 };
 
 Var::Var() :
@@ -59,8 +81,33 @@ string Var::name() const
 bool Var::validate(NodeReporter reporter) const
 {
     bool result = true;
-    result = Validate::n_children(reporter, 1) && result;
-    result = Validate::nth_child_is_string(reporter, 0) && result;
+
+    if (children().size() == 1) {
+        result = Validate::n_children(reporter, 1) && result;
+        result = Validate::nth_child_is_string(reporter, 0) && result;
+    }
+    else if (children().size() == 3) {
+        result = Validate::n_children(reporter, 3) && result;
+        result = Validate::nth_child_is_string(reporter, 0) && result;
+        result = Validate::nth_child_is_string(reporter, 1) && result;
+        result = Validate::nth_child_is_string(reporter, 2) && result;
+
+        if (result) {
+            string phase;
+            node_list_t::const_iterator i = children().begin();
+            for (++i; i != children().end(); ++i) {
+                phase = literal_value(*i).value_as_byte_string().to_s();
+                if (phase_lookup(phase) == IB_PHASE_INVALID) {
+                    reporter.error("Invalid phase: " + phase);
+                    result = false;
+                }
+            }
+        }
+    }
+    else {
+        reporter.error(name() + " must have 1 or 3 children.");
+        result = false;
+    }
 
     return result;
 }
@@ -76,6 +123,19 @@ void Var::pre_eval(Environment environment, NodeReporter reporter)
         environment.var_config(),
         key.const_data(), key.length()
     );
+
+    if (children().size() > 1) {
+        node_list_t::const_iterator i = children().begin();
+
+        ++i;
+        m_data->wait_phase = phase_lookup(
+            literal_value(*i).value_as_byte_string().to_s()
+        );
+        ++i;
+        m_data->final_phase = phase_lookup(
+            literal_value(*i).value_as_byte_string().to_s()
+        );
+    }
 }
 
 void Var::calculate(EvalContext context)
@@ -86,12 +146,33 @@ void Var::calculate(EvalContext context)
     ib_rule_phase_num_t initial_phase = m_data->source.final_phase();
     ib_rule_phase_num_t finish_phase = m_data->source.final_phase();
 
-    if (initial_phase != IB_PHASE_NONE && current_phase < initial_phase) {
+    if (
+        initial_phase != IB_PHASE_NONE &&
+        current_phase < initial_phase
+    ) {
         // Nothing to do, yet.
         return;
     }
+    if (
+        m_data->wait_phase != IB_PHASE_NONE &&
+        current_phase < m_data->wait_phase
+    ) {
+        // User wants us to do nothing, yet.
+        return;
+    }
 
-    if (finish_phase != IB_PHASE_NONE && finish_phase <= current_phase) {
+    if (
+        finish_phase != IB_PHASE_NONE &&
+        finish_phase <= current_phase
+    ) {
+        // Var says it's done.
+        time_to_finish = true;
+    }
+    if (
+        m_data->final_phase != IB_PHASE_NONE &&
+        m_data->final_phase <= current_phase
+    ) {
+        // Users says var is done.
         time_to_finish = true;
     }
 
@@ -356,21 +437,6 @@ Value Transformation::value_calculate(Value v, EvalContext context)
 void Transformation::calculate(EvalContext context)
 {
     map_calculate(children().back(), context);
-}
-
-namespace {
-
-ib_rule_phase_num_t phase_lookup(const string& phase_string)
-{
-    ib_rule_phase_num_t result;
-
-    result = ib_rule_lookup_phase(phase_string.c_str(), true);
-    if (result == IB_PHASE_INVALID) {
-        result = ib_rule_lookup_phase(phase_string.c_str(), false);
-    }
-    return result;
-}
-
 }
 
 struct WaitPhase::data_t

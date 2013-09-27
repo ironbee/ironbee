@@ -36,7 +36,9 @@ namespace Predicate {
 namespace Standard {
 
 /**
- * Returns var with name given by only child.
+ * Returns var with name given by child.
+ *
+ * Long form has three children: name, initial phase, and final phase.
  **/
 class Var :
     public Call
