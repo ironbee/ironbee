@@ -16,7 +16,7 @@ all_ironbee_code do |path|
   if finals =~ /^[ \n]+/
     puts "#{path} -- Extra space."
   end
-  if finals[1] != 10
+  if finals[1] != "\n" && finals[1] != 10
     puts "#{path} -- Missing final new line."
   end
 end
