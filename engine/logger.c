@@ -24,12 +24,51 @@
 
 #include "ironbee_config_auto.h"
 
-#include "logger_private.h"
-
 #include <ironbee/logger.h>
 
 #include <assert.h>
 #include <stdlib.h>
+
+/**
+ * A collection of callbacks and function pointer that implement a logger.
+ */
+struct ib_logger_writer_t {
+    ib_logger_open_fn      open_fn;     /**< Open the logger. */
+    void                  *open_data;   /**< Callback data. */
+    ib_logger_close_fn     close_fn;    /**< Close logs files. */
+    void                  *close_data;  /**< Callback data. */
+    ib_logger_reopen_fn    reopen_fn;   /**< Close and reopen log files. */
+    void                  *reopen_data; /**< Callback data. */
+    ib_logger_format_fn_t  format_fn;   /**< Signal that the queue has data. */
+    void                  *format_data; /**< Callback data. */
+    ib_logger_record_fn_t  record_fn;   /**< Signal a record is ready. */
+    void                  *record_data; /**< Callback data. */
+    ib_queue_t            *records;     /**< Records for the log writer. */
+    ib_lock_t              records_lck; /**< Guard the queue. */
+};
+
+/**
+ * A logger is what @ref ib_logger_rec_t are submitted to to produce a log.
+ */
+struct ib_logger_t {
+    ib_log_level_t       level;       /**< The log level. */
+
+    /**
+     * Memory pool with a lifetime of the logger.
+     */
+    ib_mpool_t          *mp;
+
+    /**
+     * List of @ref ib_logger_writer_t.
+     *
+     * A logger, by itself, cannot log anything. The writers
+     * implement the actual logging functionality. This list is the list
+     * of all writers that this logger will send messages to.
+     *
+     * Writers also get notified of flush, open, close, and reopen events.
+     */
+    ib_list_t           *writers;
+};
 
 /**
  * Writer function.

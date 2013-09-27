@@ -11,7 +11,6 @@ EXTRA_DIST = \
     engine_private.h             \
     engine_manager_private.h     \
     engine_manager_log_private.h \
-    logger_private.h             \
     rule_engine_private.h        \
     rule_logger_private.h        \
     state_notify_private.h
