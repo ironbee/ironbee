@@ -48,7 +48,7 @@ Here is a simple Hello World is ClippScript:
         t.request(
           method: 'GET',
           uri: '/hello/world',
-          version: 'HTTP/1.9',
+          protocol: 'HTTP/1.9',
           headers: {
             'Host' => 'Foo.Com',
             'Content-Length' => 0
@@ -73,7 +73,7 @@ Here is the output as Ruby Hash (`clippscript.rb --ruby helloworld.cs`):
          [{:event=>
             [{:which=>5,
               :request_event=>
-               {:method=>"GET", :uri=>"/hello/world", :version=>"HTTP/1.9"}},
+               {:method=>"GET", :uri=>"/hello/world", :protocol=>"HTTP/1.9"}},
              {:which=>6,
               :header_event=>
                {:header=>
@@ -226,9 +226,9 @@ Adds events for an entire request including Request Started, Request Header, Req
 : String of body data.
 
 `raw`
-: The entire request line.  Optional if `method`, `uri`, and `version` are present.
+: The entire request line.  Optional if `method`, `uri`, and `protocol` are present.
 
-`method`, `uri`, `version`
+`method`, `uri`, `protocol`
 : The components of the request line.  Optional if `raw` is present.
 
 `t.response(options)`
@@ -245,9 +245,9 @@ As `t.request`, but generates events for a response instead.
 : String of body data.
 
 `raw`
-: The entire response line.  Optional if `version`, `status`, and `message` are present.
+: The entire response line.  Optional if `protocol`, `status`, and `message` are present.
 
-`version`, `status`, `message`
+`protocol`, `status`, `message`
 : The components of the response line.  Optional if `raw` is present.
 
 `t.headers(headers)`
@@ -268,9 +268,9 @@ Generate a Request Started event.
 **Options:**
 
 `raw`
-: The entire request line.  Optional if `method`, `uri`, and `version` are present.
+: The entire request line.  Optional if `method`, `uri`, and `protocol` are present.
 
-`method`, `uri`, `version`
+`method`, `uri`, `protocol`
 : The components of the request line.  Optional if `raw` is present.
 
 `pre_delay`
@@ -287,9 +287,9 @@ Generate a Response Started event.
 **Options:**
 
 `raw`
-: The entire response line.  Optional if `version`, `status`, and `message` are present.
+: The entire response line.  Optional if `protocol`, `status`, and `message` are present.
 
-`version`, `status`, `message`
+`protocol`, `status`, `message`
 : The components of the response line.  Optional if `raw` is present.
 
 `pre_delay`
