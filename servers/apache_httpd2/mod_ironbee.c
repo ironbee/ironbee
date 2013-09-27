@@ -351,33 +351,26 @@ ib_server_t DLL_LOCAL ibplugin = {
  *
  * Performs IronBee logging for the Apache HTTPd plugin.
  *
- * @param[in] level IronBee log level
+ * @param[in] rec The log record.
  * @param[in] cbdata Callback data.
- * @param[in] buf Formatted buffer
- * @param[in] calldata Ironbee engine, conn, or tx
- * @param[in] calltype Enum of calldata type
  */
 static void ironbee_logger(
-    ib_log_level_t      level,
-    void               *cbdata,
-    const char         *buf,
-    ib_log_call_data_t *calldata)
+    ib_manager_logger_record_t *rec,
+    void                       *cbdata)
 {
+    assert(rec != NULL);
+    assert(cbdata != NULL);
+
     module_data_t *mod_data = (module_data_t *)cbdata;
     int            ap_level;
 
-    assert(buf != NULL);
-    assert(calldata != NULL);
-    if (cbdata == NULL) {
-        return;
-    }
     if (! mod_data->ib_log_active) {
-        fputs(buf, stderr);
+        fputs((const char *)(rec->msg), stderr);
         return;
     }
 
     /* Translate the log level. */
-    switch (level) {
+    switch (rec->level) {
     case IB_LOG_EMERGENCY:
         ap_level = APLOG_EMERG;
         break;
@@ -407,28 +400,8 @@ static void ironbee_logger(
     /* Apply the "startup" log flag */
     ap_level |= mod_data->log_level_is_startup;
 
-    /* Write it to the error log. */
-    switch (calldata->type) {
-    case IBLOG_ENGINE: /* still an ugly hack */
-        ap_log_perror(APLOG_MARK, ap_level, 0, mod_data->pool,
-                      "ironbee: %s", buf);
-        break;
-    case IBLOG_MANAGER: /* still an ugly hack */
-        ap_log_perror(APLOG_MARK, ap_level, 0, mod_data->pool,
-                      "ironbee: %s", buf);
-        break;
-    case IBLOG_CONN:
-        ap_log_cerror(APLOG_MARK, ap_level, 0,
-                      (const conn_rec *)calldata->data.c->server_ctx,
-                      "ironbee: %s", buf);
-        break;
-    case IBLOG_TX:
-    {
-        ironbee_req_ctx *ctx = calldata->data.t->sctx;
-        ap_log_rerror(APLOG_MARK, ap_level, 0, ctx->r, "ironbee: %s", buf);
-        break;
-    }
-    }
+    ap_log_perror(APLOG_MARK, ap_level, 0, mod_data->pool,
+                  "ironbee: %*.s", (int)rec->msg_sz, (const char *)(rec->msg));
 }
 
 /***********   APACHE PER-REQUEST FILTERS AND HOOKS  ************/
@@ -1214,12 +1187,6 @@ static apr_status_t ironbee_manager_cleanup(void *data)
     return APR_SUCCESS;
 }
 
-static void ironbee_manager_callback(void *data)
-{
-    module_data_t *mod_data = data;
-    apr_pool_clear(mod_data->pool);
-}
-
 /* Bootstrap: copy initialisation from trafficserver plugin */
 /**
  * HTTPD callback to initialise Ironbee
@@ -1254,12 +1221,11 @@ static int ironbee_init(
     /* Create the IronBee engine manager */
     rc = ib_manager_create(&ibplugin,                /* Server object */
                            mod_data->ib_max_engines, /* Max number of engines */
-                           NULL,                     /* Logger va function */
-                           ironbee_logger,           /* Logger buf function */
-                           NULL,                     /* Logger flush function */
-                           mod_data,                 /* cbdata: module data */
+                           ironbee_logger,           /* Logger function. */
+                           mod_data,                 /* Flush callback. */
+                           NULL,                     /* Flush function. */
+                           mod_data,                 /* Flush callback. */
                            mod_data->ib_log_level,   /* IB log level */
-                           ironbee_manager_callback, /* Callback to flush pool */
                            &(mod_data->ib_manager)); /* Engine Manager */
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
