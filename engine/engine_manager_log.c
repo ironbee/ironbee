@@ -175,7 +175,7 @@ cleanup:
     if (log_buf != NULL) {
         free(log_buf);
     }
-    return IB_OK;
+    return rc;
 }
 
 ib_status_t manager_logger_record(
