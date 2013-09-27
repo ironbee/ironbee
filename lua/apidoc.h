@@ -44,9 +44,9 @@
  * 4. @c LuaInclude - A Lua version of @c Include, this will include
  *                    a Lua file at configuration time and interpret it
  *                    in the context of a configuration DSL. The
- *                    @ref Waggle rule language is part of 
+ *                    @ref Waggle rule language is part of
  *                    that configuration DSL.
- * 5. @c LuaCommitRules - Take rules defined in @ref Waggle and 
+ * 5. @c LuaCommitRules - Take rules defined in @ref Waggle and
  *                       integrate them into the engine.
  *
  * @section LuaConfiguration Configuring IronBee through Lua
@@ -66,7 +66,7 @@
  *
  * @section LuaPerformance A Note About Performance
  *
- * As of IronBee 0.8.0, each connection is given a single Lua stack to work 
+ * As of IronBee 0.8.0, each connection is given a single Lua stack to work
  * with. This means the Lua rules, and Lua modules all execute in the
  * same environment, and can use this environment to exchange information.
  *
@@ -82,7 +82,7 @@
  * Writing a module in Lua is an excellent way to quickly express complicated
  * security logic, prototype ideas, or simply protect a site that only
  * handles moderate traffic load. Modules are also the way to interface
- * with IronBee for purposes other than connections. For example, if you 
+ * with IronBee for purposes other than connections. For example, if you
  * wanted to influence the engine at configuration time, there are
  * callbacks for configuration events. If you wanted to know
  * when IronBee's engine is going to cleanly shutdown, there is an event
@@ -138,7 +138,7 @@
  * changed the callback to @c tx_started_event so that the first
  * argument to our callback function is a @c tx, a child object of @c ib.
  *
- * We log, but at DEBUG level, that we are blocking everything. 
+ * We log, but at DEBUG level, that we are blocking everything.
  * We do this by creating an event that has an action of "block".
  *
  * Moudules can also review created events and suppress them.
@@ -164,7 +164,7 @@
  *
  * Choosing to write a Lua Rule involves a similar economy to that of
  * when to write a module. Performance is a cost, but the flexibility is
- * much greater. Perhaps this is a good way to prototype? Perhaps this is a 
+ * much greater. Perhaps this is a good way to prototype? Perhaps this is a
  * good way to archive all data matching a particular rule?
  *
  * @subsection Lua Rules are Rules all the Same
@@ -176,7 +176,7 @@
  * @endcode
  *
  * Some things to observe. First, the directive is not Lua-specific.
- * @c RuleExt is for any supported external rule definition, for which 
+ * @c RuleExt is for any supported external rule definition, for which
  * there is only, currently, Lua.  Extending the external rule
  * languages is not covered in this guide, but is quite possible.
  * Second, notice, that this rule has no fields, no operator, and no
@@ -186,7 +186,7 @@
  * @c RuleExt statement are real rules, and so they can be chained. Perhaps
  * you would like to only use your Lua rule if there is a strong possibility
  * of it finding something. You could write:
- * 
+ *
  * @code
  * Rule ARGS @rx "my_check" id:myRule rev:1 phase:REQUEST chain
  * RuleExt "lua:/my_careful_check.lua"
@@ -196,8 +196,8 @@
  * portion of a rule. That operator returns 1 on success, 0 on failure,
  * but never errors. Also, it must fetch its fields as they are not provided.
  * Finally, since Lua Rules are implemented as operators, they have
- * no notion of the @c ib_rule_ext_t structure that an Action has 
- * available to it. 
+ * no notion of the @c ib_rule_ext_t structure that an Action has
+ * available to it.
  *
  * @subsection LuaRuleScript Inside the Rule Script
  *
@@ -228,7 +228,7 @@
  * end
  * @endcode
  *
- * As a final example, the above rule will find a field @c a in the 
+ * As a final example, the above rule will find a field @c a in the
  * collection @c ARGS. If @c a is set to 'hello world', the modifier list is
  * fired.
  *
@@ -302,11 +302,11 @@
  *   table should contain a field @c msg continaing the message.
  *
  *   The options available are:
- *   - recommended_action with a value of @c block, @c ignore, @c log, 
+ *   - recommended_action with a value of @c block, @c ignore, @c log,
  *     or @c unknown (the default).
  *   - action set to one of the values in recommended_action.
  *   - type which may be @c observation or @c unknown.
- *   - confidence - An integer. The default is 0. 
+ *   - confidence - An integer. The default is 0.
  *   - severity - An integer. The default is 0.
  *   - msg - Defines the message if the @c msg argument is omitted.
  *   - tags - A Lua list of tags.
@@ -368,4 +368,3 @@
  * - @c ib:logInfo(format, ...) - Log an info message.
  * - @c ib:logDebug(format, ...) - Log a debug message.
  */
-
