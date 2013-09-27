@@ -126,5 +126,6 @@ directly related to code formatting.
   last argument as this consistency allows easy trampoline creation (see
   `include/ironbeepp/c_trampoline.hpp`).
 
-* `void **` is not allowed.  Use `void *` for any generic pointer and clearly
-  document any requirements on its use such as the level of indirection.
+* `void **` is not allowed as a parameter type.  Use `void *` for any generic
+  pointer parameter and clearly   document any requirements on its use such
+  as the level of indirection.
