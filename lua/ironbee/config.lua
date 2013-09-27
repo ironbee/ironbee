@@ -379,7 +379,7 @@ local build_rule = function(ib, ctx, chain, db)
         end
 
         -- Copy the parameters used to construct the operator instance into the rule for logging.
-        ib:logInfo("Setting rule op inst params: %s", ffi.string(cop_params));
+        ib:logDebug("Setting rule op inst params: %s", ffi.string(cop_params));
         rc = ffi.C.ib_rule_set_op_params(prule[0], cop_params);
         if rc ~= ffi.C.IB_OK then
             ib:logError("Failed to copy params %s.", ffi.string(cop_params))
