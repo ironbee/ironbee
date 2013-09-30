@@ -91,7 +91,8 @@ ib_status_t manager_logger_format(
     rc = ib_manager_engine_acquire(manager, &ib);
     if (rc == IB_ENOENT) {
         logger_level = ib_logger_level_get(manager->logger);
-    } else if (rc == IB_OK ) {
+    }
+    else if (rc == IB_OK ) {
         logger_level = ib_logger_level_get(ib_engine_logger_get(ib));
     }
     else {
