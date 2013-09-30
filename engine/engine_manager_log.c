@@ -84,6 +84,10 @@ ib_status_t manager_logger_format(
     const size_t                buffer_sz = msg_sz + fmt_pad_size;
     ib_manager_logger_record_t *manager_logger_record;
 
+    /* Clang analyzer cannot follow record through a void* and so
+     * gives a false positive on a memory leak. */
+#ifndef __clang_analyzer__
+
     /* Define logger_level. If logger_level is DEBUG, we do more formatting. */
     rc = ib_manager_engine_acquire(manager, &ib);
     if (rc == IB_ENOENT) {
@@ -159,6 +163,7 @@ ib_status_t manager_logger_format(
     /* Return the formatted log message. */
     *(void**)writer_record = manager_logger_record;
 
+#endif
 cleanup:
     return rc;
 }
