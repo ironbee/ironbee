@@ -45,7 +45,6 @@
 #include <unistd.h>
 
 /* Logging buffer sizes */
-static const size_t fmt_size_default = 256;   /**< Size of default format buf */
 static const size_t fmt_pad_size = 128;       /**< Size of format padding */
 static const size_t log_buf_size = 16 * 1024; /**< Size of log buffer */
 
@@ -82,7 +81,6 @@ ib_status_t manager_logger_format(
     ib_engine_t                *ib = NULL;
     ib_status_t                 rc;
     ib_log_level_t              logger_level;
-    char                        fmt_buf_default[fmt_size_default+1];
     char                       *fmt_buf = NULL;
     char                       *fmt_free = NULL;
     size_t                      fmt_buf_size = 0;
@@ -102,16 +100,11 @@ ib_status_t manager_logger_format(
 
     /* Add padding bytes to required size */
     fmt_required = msg_sz + fmt_pad_size;
-    if (fmt_required > fmt_size_default) {
-        fmt_buf = (char *)malloc(fmt_required+1);
-        if (fmt_buf == NULL) {
-            goto cleanup;
-        }
-        fmt_free = fmt_buf;
+    fmt_buf = (char *)malloc(fmt_required+1);
+    if (fmt_buf == NULL) {
+        goto cleanup;
     }
-    else {
-        fmt_buf = fmt_buf_default;
-    }
+    fmt_free = fmt_buf;
     fmt_buf_size = fmt_required;
     snprintf(
         fmt_buf,
