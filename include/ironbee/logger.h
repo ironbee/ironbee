@@ -108,7 +108,7 @@ typedef ib_status_t (*ib_logger_close_fn)(ib_logger_t *logger, void *data);
  * - Other on error. Defined by the implementation.
  */
 typedef ib_status_t (*ib_logger_record_fn_t)(
-    ib_logger_t        *logger, 
+    ib_logger_t        *logger,
     ib_logger_writer_t *writer,
     void               *data
 );
@@ -116,7 +116,7 @@ typedef ib_status_t (*ib_logger_record_fn_t)(
 /**
  * Ask the log writter to format the message before it is written.
  *
- * The @a log_msg should be escaped if the log writer cannot write 
+ * The @a log_msg should be escaped if the log writer cannot write
  * non-printable characters.
  *
  * The formatter also has the option to not handle the log message. If
@@ -128,7 +128,7 @@ typedef ib_status_t (*ib_logger_record_fn_t)(
  *
  * @param[in] logger The logger.
  * @param[in] rec The logging record to use for formatting.
- *            This should be considered to be free'ed after this 
+ *            This should be considered to be free'ed after this
  *            function call.
  * @param[in] log_msg The user's log message.
  * @param[in] log_msg_sz The user's log message size.
@@ -168,7 +168,7 @@ typedef ib_status_t (*ib_logger_reopen_fn)(ib_logger_t *logger, void *data);
  * A log record.
  *
  * This is populated and passed to individual loggers which will
- * convert this into a logged message. This is a public structure, but 
+ * convert this into a logged message. This is a public structure, but
  * should be considered read-only.
  */
 struct ib_logger_rec_t {
@@ -301,7 +301,7 @@ VPRINTF_ATTRIBUTE(10);
  *
  * @param[out] logger The logger.
  * @param[in] level The level the logger should allow to writers.
- * @param[in] mp Memory pool used to create resources used for the 
+ * @param[in] mp Memory pool used to create resources used for the
  *            lifetime of this logger.
  *
  * @returns
@@ -322,7 +322,7 @@ NONNULL_ATTRIBUTE(1, 3);
  * thread. The formating thread block the ib_log_debug() (and similar) call
  * and the resulting message is put in a queue by the logging framework.
  *
- * The writer thread may, or may not, be a different thread from the 
+ * The writer thread may, or may not, be a different thread from the
  * formatting thread. It is the user's decision. What this API provides
  * is @a record_fn to signal the user's implementation that the
  * record queue has gone from empty to non-empty.
@@ -376,7 +376,7 @@ ib_status_t ib_logger_writer_add(
  *
  * @param[in] logger The logger.
  * @param[in] logfile The log file to write to. May be stderr or similar.
- *            The default writer does not close the FILE provided. It is 
+ *            The default writer does not close the FILE provided. It is
  *            assumed to be managed externally.
  *
  * @returns
@@ -444,7 +444,7 @@ ib_status_t ib_logger_reopen(
 /**
  * Safely remove 1 message from the queue.
  *
- * This API may be called by a user to remove messages produced by 
+ * This API may be called by a user to remove messages produced by
  * @ref ib_logger_format_fn_t, write them to disk, and free them.
  *
  * @param[in]  logger The logger.

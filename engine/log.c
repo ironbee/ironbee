@@ -181,4 +181,3 @@ void DLL_PUBLIC ib_log_vex_ex(
         ap
     );
 }
-

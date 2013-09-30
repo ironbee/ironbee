@@ -193,7 +193,7 @@ static ib_status_t logger_write(
             return rc;
         }
 
-        /* TODO - The number of times we need to sleep should be 
+        /* TODO - The number of times we need to sleep should be
          *        audited. It is a good indicator of excessive logging or
          *        proxy load. */
         sleep(1);

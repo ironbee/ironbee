@@ -336,7 +336,7 @@ static ib_core_cfg_t *core_get_main_config(const ib_engine_t *ib,
 
 /**
  * Take the @a cfg FILE pointer for the log file and give it to the logger.
- * 
+ *
  * @param[in] ib Engine to be modified.
  * @param[in] corecfg The core configuration use to configure the logger in
  *            @a ib.
