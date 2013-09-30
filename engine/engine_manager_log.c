@@ -81,13 +81,10 @@ ib_status_t manager_logger_format(
     ib_engine_t                *ib = NULL;
     ib_status_t                 rc;
     ib_log_level_t              logger_level;
-    char                       *fmt_buf = NULL;
-    char                       *fmt_free = NULL;
-    size_t                      fmt_buf_size = 0;
-    size_t                      fmt_required;
-    char                       *log_buf = NULL;
+    const size_t                buffer_sz = msg_sz + fmt_pad_size;
     ib_manager_logger_record_t *manager_logger_record;
 
+    /* Define logger_level. If logger_level is DEBUG, we do more formatting. */
     rc = ib_manager_engine_acquire(manager, &ib);
     if (rc == IB_ENOENT) {
         logger_level = ib_logger_level_get(manager->logger);
@@ -99,17 +96,20 @@ ib_status_t manager_logger_format(
         goto cleanup;
     }
 
+    /* Build a log record to populate. */
+    manager_logger_record = malloc(sizeof(*manager_logger_record));
+    if (manager_logger_record == NULL) {
+        return IB_EALLOC;
+    }
+
     /* Add padding bytes to required size */
-    fmt_required = msg_sz + fmt_pad_size;
-    fmt_buf = (char *)malloc(fmt_required+1);
-    if (fmt_buf == NULL) {
+    manager_logger_record->msg = (uint8_t *)malloc(buffer_sz+1);
+    if (manager_logger_record->msg == NULL) {
         goto cleanup;
     }
-    fmt_free = fmt_buf;
-    fmt_buf_size = fmt_required;
     snprintf(
-        fmt_buf,
-        fmt_buf_size,
+        (char *)manager_logger_record->msg,
+        buffer_sz,
         "%-10s- ",
         ib_log_level_to_string(rec->level));
 
@@ -122,11 +122,14 @@ ib_status_t manager_logger_format(
         strcpy(line_info, "[tx:");
         strcat(line_info, tx->id);
         strcat(line_info, "] ");
-        strcat(fmt_buf, line_info);
+        strcat((char *)manager_logger_record->msg, line_info);
     }
 
     /* Add the file name and line number if available and log level >= DEBUG */
-    if ( (rec->file != NULL) && (rec->line_number > 0) && (logger_level >= IB_LOG_DEBUG)) {
+    if ( (rec->file != NULL) &&
+         (rec->line_number > 0) &&
+         (logger_level >= IB_LOG_DEBUG) )
+    {
         size_t              flen;
         static const size_t line_info_size = 35;
         char                line_info[line_info_size];
@@ -140,35 +143,23 @@ ib_status_t manager_logger_format(
             file += (flen - 23);
         }
 
-        snprintf(line_info, line_info_size, "(%23s:%-5d) ", file, (int)rec->line_number);
-        strcat(fmt_buf, line_info);
+        snprintf(
+            line_info,
+            line_info_size,
+            "(%23s:%-5d) ",
+            file,
+            (int)rec->line_number);
+        strcat((char *)manager_logger_record->msg, line_info);
     }
-    strcat(fmt_buf, (char *)msg);
+    strcat((char *)manager_logger_record->msg, (char *)msg);
 
-    manager_logger_record = malloc(sizeof(*manager_logger_record));
-    if (manager_logger_record == NULL) {
-        rc = IB_EALLOC;
-        goto cleanup;
-    }
-
-    manager_logger_record->msg    = (uint8_t *)fmt_buf;
-    manager_logger_record->msg_sz = strlen(fmt_buf);
+    manager_logger_record->msg_sz = strlen((char *)manager_logger_record->msg);
     manager_logger_record->level  = rec->level;
 
     /* Return the formatted log message. */
     *(void**)writer_record = manager_logger_record;
 
-    /* Do not free the buffer on success.
-     * The log writing function will do this. */
-    fmt_buf = NULL;
-
 cleanup:
-    if (fmt_free != NULL) {
-        free(fmt_free);
-    }
-    if (log_buf != NULL) {
-        free(log_buf);
-    }
     return rc;
 }
 
