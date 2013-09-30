@@ -77,16 +77,18 @@ ib_status_t manager_logger_format(
 {
     assert(data != NULL);
 
-    ib_manager_t               *manager = (ib_manager_t *)data;
-    ib_engine_t                *ib = NULL;
-    ib_status_t                 rc;
-    ib_log_level_t              logger_level;
-    const size_t                buffer_sz = msg_sz + fmt_pad_size;
-    ib_manager_logger_record_t *manager_logger_record;
+    ib_status_t rc = IB_OK;
 
     /* Clang analyzer cannot follow record through a void* and so
      * gives a false positive on a memory leak. */
 #ifndef __clang_analyzer__
+
+    ib_manager_t               *manager = (ib_manager_t *)data;
+    ib_engine_t                *ib = NULL;
+    ib_log_level_t              logger_level;
+    const size_t                buffer_sz = msg_sz + fmt_pad_size;
+    ib_manager_logger_record_t *manager_logger_record;
+
 
     /* Define logger_level. If logger_level is DEBUG, we do more formatting. */
     rc = ib_manager_engine_acquire(manager, &ib);
