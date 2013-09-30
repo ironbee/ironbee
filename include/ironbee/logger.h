@@ -114,7 +114,7 @@ typedef ib_status_t (*ib_logger_record_fn_t)(
 );
 
 /**
- * Ask the log writter to format the message before it is written.
+ * Ask the log writer to format the message before it is written.
  *
  * The @a log_msg should be escaped if the log writer cannot write
  * non-printable characters.
@@ -319,7 +319,7 @@ NONNULL_ATTRIBUTE(1, 3);
  *
  * The writer API that the user is asked to supply allows for the user
  * to split logging across two threads, a formatting thread, and a writing
- * thread. The formating thread block the ib_log_debug() (and similar) call
+ * thread. The formatting thread block the ib_log_debug() (and similar) call
  * and the resulting message is put in a queue by the logging framework.
  *
  * The writer thread may, or may not, be a different thread from the
@@ -408,7 +408,7 @@ ib_status_t ib_logger_writer_clear(
  * @param[in] logger The logger to commit messages in.
  *
  * @returns
- * - IB_OK On succes.
+ * - IB_OK On success.
  * - Other on implementation errors.
  */
 ib_status_t ib_logger_open(
@@ -421,7 +421,7 @@ ib_status_t ib_logger_open(
  * @param[in] logger The logger to commit messages in.
  *
  * @returns
- * - IB_OK On succes.
+ * - IB_OK On success.
  * - Other on implementation errors.
  */
 ib_status_t ib_logger_close(
@@ -434,7 +434,7 @@ ib_status_t ib_logger_close(
  * @param[in] logger The logger to commit messages in.
  *
  * @returns
- * - IB_OK On succes.
+ * - IB_OK On success.
  * - Other on implementation errors.
  */
 ib_status_t ib_logger_reopen(

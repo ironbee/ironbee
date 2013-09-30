@@ -78,7 +78,7 @@ struct ib_logger_t {
  * @param[in] cbdata Callback data.
  * @returns
  * - IB_OK On success.
- * - Other on errror.
+ * - Other on error.
  */
 typedef ib_status_t (*writer_fn)(
     ib_logger_t *logger,
@@ -220,7 +220,7 @@ static ib_status_t logger_write(
 }
 
 /**
- * Deterimine if the logger message should be filtered (ignored) or not.
+ * Determine if the logger message should be filtered (ignored) or not.
  *
  * This is common filtering code. While it seems simple now, it is
  * expected to grow as features are added to the logger api.
@@ -230,7 +230,7 @@ static ib_status_t logger_write(
  *
  * @returns
  * - True if the message should be discarded.
- * - Faulse if the message should not be discarded.
+ * - False if the message should not be discarded.
  */
 static bool logger_filter(
     ib_logger_t    *logger,
