@@ -312,7 +312,7 @@ ib_status_t ib_logger_create(
     ib_log_level_t   level,
     ib_mpool_t      *mp
 )
-NONNULL_ATTRIBUTE(1, 2, 3);
+NONNULL_ATTRIBUTE(1, 3);
 
 /**
  * Construct a log writer record in this logger using a set of callbacks.
