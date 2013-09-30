@@ -166,6 +166,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/log.h>',
   '<ironbee/logevent.h>',
   '<ironbee/logformat.h>',
+  '<ironbee/logger.h>',
   '<ironbee/module.h>',
   '<ironbee/module_sym.h>',
   '<ironbee/mpool.h>',
