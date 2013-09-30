@@ -1069,9 +1069,6 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     const char *operand;
     ib_rule_t *rule;
 
-    if (cbdata != NULL) {
-            }
-
     /* Get the phase string */
     node = ib_list_first_const(vars);
     if ( (node == NULL) || (node->data == NULL) ) {
