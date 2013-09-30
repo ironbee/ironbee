@@ -229,29 +229,33 @@ void DLL_LOCAL ib_manager_log_ex(
     assert(manager != NULL);
     assert(manager->logger != NULL);
 
-    ib_engine_t *ib = NULL;
     va_list      ap;
-    ib_status_t  rc;
 
-    rc = ib_manager_engine_acquire(manager, &ib);
-    if (rc != IB_OK) {
-        return;
+    if (manager->log_buf_fn != NULL) {
+        const size_t               msg_sz_mx = 1024;
+        ib_manager_logger_record_t rec = {
+            .level  = level,
+            .msg    = NULL,
+            .msg_sz = 0
+        };
+
+        rec.msg = malloc(msg_sz_mx);
+        if (rec.msg == NULL) {
+            return;
+        }
+
+        va_start(ap, fmt);
+        rec.msg_sz = vsnprintf((char *)rec.msg, msg_sz_mx, fmt, ap);
+        va_end(ap);
+
+        manager->log_buf_fn(&rec, manager->log_buf_cbdata);
+
+        if (manager->log_flush_fn != NULL) {
+            manager->log_flush_fn(manager->log_flush_cbdata);
+        }
+
+        free(rec.msg);
     }
 
-    va_start(ap, fmt);
-    ib_logger_log_va_list(
-        manager->logger,
-        file,
-        func,
-        (int)line,
-        ib,
-        NULL, /* module */
-        NULL, /* conn */
-        NULL, /* tx */
-        level,
-        fmt,
-        ap
-    );
-    va_end(ap);
 }
 
