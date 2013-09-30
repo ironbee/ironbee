@@ -2839,13 +2839,12 @@ static void check_command_file(module_data_t *mod_data)
 
         TSDebug("ironbee", "Creating new engine manager\n");
         rc = ib_manager_create(&ibplugin,             /* Server object */
-                               mod_data->max_engines, /* Max # of engines */
-                               NULL,                  /* Logger va function */
+                               mod_data->max_engines, /* Default max */
                                ironbee_logger,        /* Logger buf function */
-                               ironbee_logger_flush,  /* Logger flush fn */
+                               mod_data,              /* cbdata: module data */
+                               ironbee_logger_flush,  /* Logger flush function*/
                                mod_data,              /* cbdata: module data */
                                mod_data->log_level,   /* IB log level */
-                               NULL,                  /* No maintenance cb */
                                &(mod_data->manager)); /* Engine Manager */
         if (rc != IB_OK) {
             TSError("Failed to create new manager: %s\n",
