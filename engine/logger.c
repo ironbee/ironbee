@@ -105,12 +105,12 @@ static ib_status_t for_each_writer(
 {
     assert(logger != NULL);
 
-    ib_status_t     rc = IB_OK;
-    ib_list_node_t *node;
+    ib_status_t           rc = IB_OK;
+    const ib_list_node_t *node;
 
-    IB_LIST_LOOP(logger->writers, node) {
+    IB_LIST_LOOP_CONST(logger->writers, node) {
         ib_logger_writer_t *writer =
-            (ib_logger_writer_t *)ib_list_node_data(node);
+            (ib_logger_writer_t *)ib_list_node_data_const(node);
         if (fn != NULL) {
             ib_status_t trc = fn(logger, writer, data);
 
@@ -132,12 +132,15 @@ typedef struct logger_write_cbdata_t {
     ib_logger_rec_t *rec;    /**< Record used to format. */
 } logger_write_cbdata_t;
 
+/**
+ * The maximum depth of a message queue in a @ref ib_logger_writer_t.
+ */
 static const size_t MAX_QUEUE_DEPTH = 1000;
 
 /**
  * The implementation for logger_log().
  *
- * This fucntion will
+ * This function will
  * - Format the message stored in @a cbdata as a @ref logger_write_cbdata_t.
  * - Lock the message queue.
  * - Enqueue the formatted message.
@@ -514,7 +517,7 @@ ib_status_t ib_logger_writer_clear(
 }
 
 /**
- * Implementation for ib_logger_open.
+ * Implementation for ib_logger_open().
  *
  * @param[in] logger The logger.
  * @param[in] writer The writer to perform the function on.
@@ -551,7 +554,7 @@ ib_status_t ib_logger_open(
 }
 
 /**
- * Implementation for ib_logger_close.
+ * Implementation for ib_logger_close().
  *
  * @param[in] logger The logger.
  * @param[in] writer The writer to perform the function on.
@@ -588,7 +591,7 @@ ib_status_t ib_logger_close(
 }
 
 /**
- * Implementation for ib_logger_reopen.
+ * Implementation for ib_logger_reopen().
  *
  * @param[in] logger The logger.
  * @param[in] writer The writer to perform the function on.
@@ -693,12 +696,12 @@ typedef struct default_logger_cfg_t {
  * The default logger format function.
  */
 static ib_status_t default_logger_format(
-    ib_logger_t     *logger,
-    ib_logger_rec_t *rec,
-    const uint8_t   *log_msg,
-    const size_t     log_msg_sz,
-    void            *writer_record,
-    void            *data
+    ib_logger_t           *logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *data
 )
 {
     assert(logger != NULL);

@@ -51,22 +51,25 @@ typedef struct ib_logger_writer_t ib_logger_writer_t;
 /**
  * Callback that returns part of a logging message.
  *
- * This function should not log messages.
+ * This function should not be confused with @ref ib_logger_format_fn_t
+ * which is a function that formats log messages.
  *
- * @param[in] rec Record used to logging.
- * @param[in] mp Memory pool to allocate out of. Freed after logging call.
- * @param[in] msg Message generated.
- * @param[in] msg_sz Message size.
- * @param[in] data The data to use to produce the message.
+ * @param[in] rec The log record used to produce @a msg and @a msg_sz.
+ * @param[in] mp Memory pool to allocate out of. Released after logging call.
+ * @param[out] msg Message generated.
+ * @param[out] msg_sz Message size.
+ * @param[in] data Callback data.
  *
- * @returns The message to be logged or NULL if any error occures.
+ * @returns
+ * - IB_OK On success.
+ * - Other values to signal an error.
  */
 typedef ib_status_t (ib_logger_msg_fn_t)(
-    ib_logger_rec_t  *rec,
-    ib_mpool_t       *mp,
-    uint8_t         **msg,
-    size_t           *msg_sz,
-    void             *data
+    const ib_logger_rec_t  *rec,
+    ib_mpool_t             *mp,
+    uint8_t               **msg,
+    size_t                 *msg_sz,
+    void                   *data
 );
 
 /**
@@ -94,7 +97,7 @@ typedef ib_status_t (*ib_logger_open_fn)(ib_logger_t *logger, void *data);
 typedef ib_status_t (*ib_logger_close_fn)(ib_logger_t *logger, void *data);
 
 /**
- * Signal a writer that its empty queue now has at leaste one element in it.
+ * Signal a writer that its empty queue now has at least one element in it.
  *
  * @param[in] logger The logger.
  * @param[in] writer The writer that the message is enqueued in.
@@ -117,10 +120,10 @@ typedef ib_status_t (*ib_logger_record_fn_t)(
  * non-printable characters.
  *
  * The formatter also has the option to not handle the log message. If
- * IB_DECLINE is returned then @a writer_record is not enqueued in the
+ * IB_DECLINE is returned, then @a writer_record is not enqueued in the
  * writer's queue.
  *
- * Note: If memory is allocated and IB_DECLINE is returned, there is no way
+ * @note If memory is allocated and IB_DECLINE is returned, there is no way
  * to get that memory back to free it through this API.
  *
  * @param[in] logger The logger.
@@ -138,12 +141,12 @@ typedef ib_status_t (*ib_logger_record_fn_t)(
  * - Other on error. Defined by the implementation.
  */
 typedef ib_status_t (*ib_logger_format_fn_t)(
-    ib_logger_t     *logger,
-    ib_logger_rec_t *rec,
-    const uint8_t   *log_msg,
-    const size_t     log_msg_sz,
-    void            *writer_record,
-    void            *data
+    ib_logger_t           *logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *data
 );
 
 /**
@@ -184,23 +187,20 @@ struct ib_logger_rec_t {
  * Submit a log message to a logger.
  *
  * This function takes @a msg and @a msg_fn as log message inputs.
- * The @a msg argument is a simple string from the user where as
+ * The @a msg argument is a string from the user, whereas
  * @a msg_fn is function that will return a log message.
  *
- * When both are present @a msg_fn's output is contactiated to @a msg and
+ * When both are present, @a msg_fn's output is concatenated to @a msg and
  * passed on in the logging pipeline. If either is NULL, they are not included.
  *
  * If the resulting message is 0 length, then it is assumed that there is no
  * message and the message is not logged.
  *
  * @param[in] logger The logger.
- * @param[in] line_number The current line number.
- * @param[in] file The current file.
- * @param[in] function The current function.
  * @param[in] engine The IronBee engine.
- * @param[in] module Optional module.
- * @param[in] conn Optional connection.
- * @param[in] tx Optional transaction.
+ * @param[in] module Optional module (may be null).
+ * @param[in] conn Optional connection (may be null).
+ * @param[in] tx Optional transaction (may be null).
  * @param[in] level The level the log record is at. If this value is
  *            below the log message level, this record is not logged.
  * @param[in] msg The optional first part of the user's log message.
@@ -224,7 +224,8 @@ void ib_logger_log_msg(
     size_t             msg_sz,
     ib_logger_msg_fn_t msg_fn,
     void              *msg_fn_data
-);
+)
+NONNULL_ATTRIBUTE(1, 5);
 
 /**
  * Submit a log message using printf style arguments for the message.
@@ -234,12 +235,12 @@ void ib_logger_log_msg(
  *
  * @param[in] logger The logger.
  * @param[in] line_number The current line number.
- * @param[in] file The current file.
- * @param[in] function The current function.
+ * @param[in] file Optional current file (may be null).
+ * @param[in] function Optional current function (may be null).
  * @param[in] engine The IronBee engine.
- * @param[in] module Optional module.
- * @param[in] conn Optional connection.
- * @param[in] tx Optional transaction.
+ * @param[in] module Optional module (may be null).
+ * @param[in] conn Optional connection (may be null).
+ * @param[in] tx Optional transaction (may be null).
  * @param[in] level The level the log record is at. If this value is
  *            below the log message level, this record is not logged.
  * @param[in] msg The user's format, followed by format arguments.
@@ -257,6 +258,7 @@ void ib_logger_log_va(
     const char        *msg,
     ...
 )
+NONNULL_ATTRIBUTE(1, 5, 10)
 PRINTF_ATTRIBUTE(10, 11);
 
 /**
@@ -267,12 +269,12 @@ PRINTF_ATTRIBUTE(10, 11);
  *
  * @param[in] logger The logger.
  * @param[in] line_number The current line number.
- * @param[in] file The current file.
- * @param[in] function The current function.
+ * @param[in] file Optional current file (may be null).
+ * @param[in] function Optional current function (may be null).
  * @param[in] engine The IronBee engine.
- * @param[in] module Optional module.
- * @param[in] conn Optional connection.
- * @param[in] tx Optional transaction.
+ * @param[in] module Optional module (may be null).
+ * @param[in] conn Optional connection (may be null).
+ * @param[in] tx Optional transaction (may be null).
  * @param[in] level The level the log record is at. If this value is
  *            below the log message level, this record is not logged.
  * @param[in] msg The user's format, followed by format arguments.
@@ -291,12 +293,13 @@ void ib_logger_log_va_list(
     const char        *msg,
     va_list            ap
 )
+NONNULL_ATTRIBUTE(1, 5, 10)
 VPRINTF_ATTRIBUTE(10);
 
 /**
  * Create a new logger.
  *
- * @param[in] logger The logger.
+ * @param[out] logger The logger.
  * @param[in] level The level the logger should allow to writers.
  * @param[in] mp Memory pool used to create resources used for the 
  *            lifetime of this logger.
@@ -308,20 +311,48 @@ ib_status_t ib_logger_create(
     ib_logger_t    **logger,
     ib_log_level_t   level,
     ib_mpool_t      *mp
-);
+)
+NONNULL_ATTRIBUTE(1, 2, 3);
 
 /**
+ * Construct a log writer record in this logger using a set of callbacks.
+ *
+ * The writer API that the user is asked to supply allows for the user
+ * to split logging across two threads, a formatting thread, and a writing
+ * thread. The formating thread block the ib_log_debug() (and similar) call
+ * and the resulting message is put in a queue by the logging framework.
+ *
+ * The writer thread may, or may not, be a different thread from the 
+ * formatting thread. It is the user's decision. What this API provides
+ * is @a record_fn to signal the user's implementation that the
+ * record queue has gone from empty to non-empty.
+ *
+ * If the user empties the queue in the @a record_fn callback, this will
+ * continue to block the formatting thread, thus blocking the client code
+ * to the logger, until the writing is complete. A better implementation is
+ * to use the @a record_fn to signal a sleeping thread that will do this work.
+ *
  * @param[in] logger The logger to add the writer to.
- * @param[in] open_fn
- * @param[in] open_data
- * @param[in] close_fn
- * @param[in] close_data
- * @param[in] reopen_fn
- * @param[in] reopen_data
- * @param[in] format_fn
- * @param[in] format_data
- * @param[in] record_fn
- * @param[in] record_data
+ * @param[in] open_fn Signal the writer to open logging resources.
+ * @param[in] open_data Callback data.
+ * @param[in] close_fn Signal the writer to close logging resources.
+ * @param[in] close_data Callback data.
+ * @param[in] reopen_fn Signal the writer to reopen logging resources.
+ * @param[in] reopen_data Callback data.
+ * @param[in] format_fn Format a log message for the writer to write.
+ *            Any allocations done by this function must be freed by the
+ *            user's code when the logging message is written.
+ *            Any arguments passed to this function should not
+ *            be assumed to exist at log write time. A @ref ib_tx_t
+ *            passed into this may be destroyed before the log
+ *            records are able to be written, and so it should not be
+ *            directly relied upon.
+ * @param[in] format_data Callback data.
+ * @param[in] record_fn Receive a signal that the queue of formatted
+ *            log messages has gone from 0 to more-than-0.
+ *            This function, like @a format_fn, fires
+ *            in the logging thread. In order to not block the lo
+ * @param[in] record_data Callback data.
  *
  * @returns
  * - IB_OK success.
@@ -362,12 +393,18 @@ ib_status_t ib_logger_writer_add_default(
  * Clear all logger writers.
  *
  * @param[in] logger The logger.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on internal error.
  */
 ib_status_t ib_logger_writer_clear(
     ib_logger_t *logger
 );
 
 /**
+ * Open all logging resources. This is relayed to all writers.
+ *
  * @param[in] logger The logger to commit messages in.
  *
  * @returns
@@ -379,6 +416,8 @@ ib_status_t ib_logger_open(
 );
 
 /**
+ * Close all logging resources. This is relayed to all writers.
+ *
  * @param[in] logger The logger to commit messages in.
  *
  * @returns
@@ -390,6 +429,8 @@ ib_status_t ib_logger_close(
 );
 
 /**
+ * Reopen all logging resources. This is relayed to all writers.
+ *
  * @param[in] logger The logger to commit messages in.
  *
  * @returns
@@ -403,12 +444,13 @@ ib_status_t ib_logger_reopen(
 /**
  * Safely remove 1 message from the queue.
  *
+ * This API may be called by a user to remove messages produced by 
+ * @ref ib_logger_format_fn_t, write them to disk, and free them.
+ *
  * @param[in]  logger The logger.
  * @param[in]  writer The logger writer.
- * @param[out] msg    A pointer to a pointer into which the 
- *             message in the queue, produced by the writer's
- *             format function, is stored. This will
- *             assign @c *msg the dequeued message.
+ * @param[out] msg The pointer to a log message produced by an implementation
+ *             of @ref ib_logger_format_fn_t.
  *
  * @returns
  * - IB_OK On success.
@@ -431,7 +473,7 @@ ib_status_t DLL_PUBLIC ib_logger_dequeue(
 size_t ib_logger_writer_count(ib_logger_t *logger);
 
 /**
- * Return the current log level for this logger.
+ * Get the current log level for this logger.
  *
  * This does not mean that other writer will not implement their own filtering.
  *

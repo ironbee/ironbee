@@ -68,12 +68,12 @@ ib_status_t manager_logger_reopen(ib_logger_t *logger, void *data) {
 }
 
 ib_status_t manager_logger_format(
-    ib_logger_t *logger, 
-    ib_logger_rec_t *rec,
-    const uint8_t *msg,
-    const size_t msg_sz,
-    void *writer_record,
-    void *data
+    ib_logger_t           *logger, 
+    const ib_logger_rec_t *rec,
+    const uint8_t         *msg,
+    const size_t           msg_sz,
+    void                  *writer_record,
+    void                  *data
 )
 {
     assert(data != NULL);

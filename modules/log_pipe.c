@@ -133,12 +133,12 @@ typedef struct log_pipe_log_rec_t {
 } log_pipe_log_rec_t;
 
 ib_status_t log_pipe_format(
-    ib_logger_t     *logger,
-    ib_logger_rec_t *rec,
-    const uint8_t   *log_msg,
-    const size_t     log_msg_sz,
-    void            *writer_record,
-    void            *data
+    ib_logger_t           *logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *data
 )
 {
     /* Just duplicate what's in all the server loggers */
