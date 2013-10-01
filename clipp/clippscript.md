@@ -226,10 +226,10 @@ Adds events for an entire request including Request Started, Request Header, Req
 : String of body data.
 
 `raw`
-: The entire request line.  Optional if `method`, `uri`, and `protocol` are present.
+: The entire request line.
 
 `method`, `uri`, `protocol`
-: The components of the request line.  Optional if `raw` is present.
+: The components of the request line.
 
 `t.response(options)`
 ---------------------
@@ -245,10 +245,10 @@ As `t.request`, but generates events for a response instead.
 : String of body data.
 
 `raw`
-: The entire response line.  Optional if `protocol`, `status`, and `message` are present.
+: The entire response line.
 
 `protocol`, `status`, `message`
-: The components of the response line.  Optional if `raw` is present.
+: The components of the response line.
 
 `t.headers(headers)`
 --------------------
@@ -268,10 +268,10 @@ Generate a Request Started event.
 **Options:**
 
 `raw`
-: The entire request line.  Optional if `method`, `uri`, and `protocol` are present.
+: The entire request line.
 
 `method`, `uri`, `protocol`
-: The components of the request line.  Optional if `raw` is present.
+: The components of the request line.
 
 `pre_delay`
 : How long in seconds to delay before event.  Can be floating point.
@@ -287,10 +287,10 @@ Generate a Response Started event.
 **Options:**
 
 `raw`
-: The entire response line.  Optional if `protocol`, `status`, and `message` are present.
+: The entire response line.
 
 `protocol`, `status`, `message`
-: The components of the response line.  Optional if `raw` is present.
+: The components of the response line.
 
 `pre_delay`
 : How long in seconds to delay before event.  Can be floating point.
