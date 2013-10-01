@@ -289,10 +289,10 @@ bool Not::transform(
     if (child->is_literal()) {
         node_p replacement;
         if (! child->eval(EvalContext()).empty()) {
-            replacement.reset(new Null());
+            replacement = c_false;
         }
         else {
-            replacement.reset(new String(""));
+            replacement = c_true;
         }
         merge_graph.replace(me, replacement);
         return true;
