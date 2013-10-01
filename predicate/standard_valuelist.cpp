@@ -34,6 +34,12 @@ namespace IronBee {
 namespace Predicate {
 namespace Standard {
 
+namespace {
+
+static const node_p c_false(new Null());
+
+}
+
 string SetName::name() const
 {
     return "setName";
@@ -64,6 +70,56 @@ bool SetName::validate(NodeReporter reporter) const
 string Cat::name() const
 {
     return "cat";
+}
+
+bool Cat::transform(
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory,
+    NodeReporter       reporter
+)
+{
+    node_p me = shared_from_this();
+    bool result = false;
+
+    // Remove null children.
+    {
+        node_list_t to_remove;
+        BOOST_FOREACH(const node_p& child, children()) {
+            if (child->is_literal() && ! literal_value(child)) {
+                to_remove.push_back(child);
+            }
+        }
+        BOOST_FOREACH(const node_p& child, to_remove) {
+            merge_graph.remove(me, child);
+        }
+
+        result = true;
+    }
+
+    // Become child if only one child.
+    if (children().size() == 1) {
+        node_p replacement = children().front();
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    // Become false if no children.
+    if (children().size() == 0) {
+        node_p replacement = c_false;
+        merge_graph.replace(me, replacement);
+        return true;
+    }
+
+    // Absorb similar children.
+    {
+        node_p replacement(new Cat());
+        if (flatten_children(replacement, me, name())) {
+            merge_graph.replace(me, replacement);
+            return true;
+        }
+    }
+
+    return result;
 }
 
 void Cat::calculate(EvalContext context)

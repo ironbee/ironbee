@@ -295,6 +295,9 @@ Notes
 
 Transformations
 : If a child is itself a `cat` call, it will be replaced with its children.
+: If a child is a null literal, it will be removed.
+: If `cat` has a single argument, it will replace itself with its argument.
+: If `cat` has no arguments, it will replace itself with false.
 
 **`(scatter a)`**
 

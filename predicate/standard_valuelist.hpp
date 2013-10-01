@@ -69,6 +69,17 @@ public:
     //! See Call:name()
     virtual std::string name() const;
 
+    /**
+     * See Node::transform().
+     *
+     * Will replace self with ''.
+     **/
+    virtual bool transform(
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory,
+        NodeReporter       reporter
+    );
+
 protected:
     virtual void calculate(EvalContext context);
 };

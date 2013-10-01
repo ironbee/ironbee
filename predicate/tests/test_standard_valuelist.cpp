@@ -61,6 +61,14 @@ TEST_F(TestStandardValueList, CatFirstRest)
     EXPECT_FALSE(eval_bool("(first (cat))"));
 }
 
+TEST_F(TestStandardValueList, CatTransform)
+{
+    EXPECT_EQ("'a'", transform("(cat 'a')"));
+    EXPECT_EQ("null", transform("(cat)"));
+    EXPECT_EQ("(cat 'a' 'b' 'c')", transform("(cat 'a' null 'b' null 'c')"));
+    EXPECT_EQ("(cat 'a' 'b' 'c')", transform("(cat 'a' (cat 'b' 'c'))"));
+}
+
 TEST_F(TestStandardValueList, Nth)
 {
     EXPECT_EQ("a", eval_s("(nth 1 'a')"));
