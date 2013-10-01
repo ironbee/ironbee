@@ -677,14 +677,17 @@ void ib_logger_level_set(ib_logger_t *logger, ib_logger_level_t level) {
     logger->level = level;
 }
 
-/**
- * Default logger message structure.
- */
-typedef struct default_logger_msg_t {
-    char    *prefix; /**< Prefix of the log message. A string. */
-    uint8_t *msg;    /**< User's logging data. */
-    size_t   msg_sz; /**< The message length. */
-} default_logger_msg_t;
+void ib_logger_standard_msg_free(ib_logger_standard_msg_t *msg) {
+    if (msg != NULL) {
+        if (msg->prefix != NULL) {
+            free(msg->prefix);
+        }
+        if (msg->msg != NULL) {
+            free(msg->msg);
+        }
+        free(msg);
+    }
+}
 
 /**
  * Default logger configuration.
@@ -693,10 +696,7 @@ typedef struct default_logger_cfg_t {
     FILE * file; /**< File to log to. */
 } default_logger_cfg_t;
 
-/**
- * The default logger format function.
- */
-static ib_status_t default_logger_format(
+ib_status_t ib_logger_standard_formatter(
     ib_logger_t           *logger,
     const ib_logger_rec_t *rec,
     const uint8_t         *log_msg,
@@ -709,13 +709,11 @@ static ib_status_t default_logger_format(
     assert(rec != NULL);
     assert(log_msg != NULL);
     assert(writer_record != NULL);
-    assert(data != NULL);
 
-    char       time_info[32 + 1];
-    struct tm *tminfo;
-    time_t     timet;
-    default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
-    default_logger_msg_t *msg;
+    char                      time_info[32 + 1];
+    struct tm                *tminfo;
+    time_t                    timet;
+    ib_logger_standard_msg_t *msg;
 
     msg = malloc(sizeof(*msg));
     if (msg == NULL) {
@@ -773,19 +771,67 @@ static ib_status_t default_logger_format(
 
     *(void **)writer_record = msg;
     return IB_OK;
+
 out_of_mem:
-    if (msg != NULL) {
-        if (msg->prefix != NULL) {
-            free(msg->prefix);
-        }
-        if (msg->msg != NULL) {
-            free(msg->msg);
-        }
-        free(msg);
-    }
-    fprintf(cfg->file, "Out of memory.  Unable to log.");
-    fflush(cfg->file);
+    ib_logger_standard_msg_free(msg);
     return IB_EALLOC;
+}
+
+/**
+ * The default logger format function.
+ *
+ * This wraps ib_logger_standard_formatter() and reports errors to the 
+ * log file defined by @a data.
+ *
+ * param[in] logger The logger.
+ * param[in] rec The record.
+ * param[in] log_msg The user's log message.
+ * param[in] log_msg_sz The length of @a log_msg.
+ * param[in] writer_record A @a ib_logger_standard_msg_t will be written here
+ *           on success.
+ * param[in] data A @a default_logger_cfg_t holding default logger
+ *           configuration information.
+ */
+static ib_status_t default_logger_format(
+    ib_logger_t           *logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *data
+)
+{
+    assert(logger != NULL);
+    assert(rec != NULL);
+    assert(log_msg != NULL);
+    assert(writer_record != NULL);
+    assert(data != NULL);
+
+    ib_status_t rc;
+    default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
+    
+    rc = ib_logger_standard_formatter(
+        logger,
+        rec,
+        log_msg,
+        log_msg_sz,
+        writer_record,
+        data);
+
+    if (rc == IB_EALLOC) {
+        ib_logger_standard_msg_free(
+            *(ib_logger_standard_msg_t **)writer_record);
+        fprintf(cfg->file, "Out of memory.  Unable to log.");
+        fflush(cfg->file);
+    }
+    else if (rc != IB_OK) {
+        ib_logger_standard_msg_free(
+            *(ib_logger_standard_msg_t **)writer_record);
+        fprintf(cfg->file, "Unexpected error.");
+        fflush(cfg->file);
+    }
+
+    return rc;
 }
 
 /**
@@ -802,7 +848,7 @@ static ib_status_t default_logger_record(
     assert(data != NULL);
 
     ib_status_t           rc;
-    default_logger_msg_t *msg = NULL;
+    ib_logger_standard_msg_t *msg = NULL;
     default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
 
     for (
@@ -817,9 +863,7 @@ static ib_status_t default_logger_record(
             msg->prefix,
             (int)msg->msg_sz,
             (char *)msg->msg);
-        free(msg->msg);
-        free(msg->prefix);
-        free(msg);
+        ib_logger_standard_msg_free(msg);
     }
 
     /* Check for an unexpected failure. */

@@ -505,6 +505,73 @@ ib_status_t DLL_PUBLIC ib_logger_dequeue(
 );
 
 /**
+ * A standard logger log message format.
+ *
+ * This is the type of message produced by ib_logger_standard_formatter().
+ * This structure should be freed with ib_logger_standard_msg_free().
+ */
+struct ib_logger_standard_msg_t {
+    /**
+     * A standard null terminated string that should preceed
+     * the user's message in the log file.
+     */
+    char    *prefix;
+
+    /**
+     * User's logging data. This is typically a string, but no
+     * guarantee is made that it will not also include unprintable characters
+     * or binary data. Users of the standard message should
+     * escape this, if necessary, to log safely.
+     */
+    uint8_t *msg;
+
+    /**
+     * The length of @c msg.
+     */
+    size_t   msg_sz;
+}; 
+
+typedef struct ib_logger_standard_msg_t ib_logger_standard_msg_t;
+
+/**
+ * Free @a msg in a standard way.
+ *
+ * @param[out] msg Free this message structure.
+ */
+void DLL_PUBLIC ib_logger_standard_msg_free(ib_logger_standard_msg_t *msg);
+
+/**
+ * A standard implementation of @ref ib_logger_format_fn_t for IronBee.
+ *
+ * This format function is provided for implementers of writer callbacks
+ * so they can easily produce a standard IronBee log entry for line-oriented
+ * logs.
+ *
+ * @param[in] logger The logger.
+ * @param[in] rec The logging record to use for formatting.
+ *            This should be considered to be free'ed after this
+ *            function call.
+ * @param[in] log_msg The user's log message.
+ * @param[in] log_msg_sz The user's log message size.
+ * @param[out] writer_record On success an @a ib_logger_standard_msg_t is
+ *             assigned here.
+ * @param[in] data Unused.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On a memory error.
+ */
+ib_status_t DLL_PUBLIC ib_logger_standard_formatter(
+    ib_logger_t           *logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *data
+);
+
+
+/**
  * Get the count of writers in this logger.
  *
  * @param[in] logger The logger to get the count from.
