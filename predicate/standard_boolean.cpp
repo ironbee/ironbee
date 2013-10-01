@@ -23,6 +23,7 @@
  */
 
 #include <predicate/standard_boolean.hpp>
+#include <predicate/call_helpers.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/validate.hpp>
 
@@ -171,10 +172,18 @@ bool Or::transform(
         return true;
     }
 
+    {
+        node_p replacement(new Or());
+        if (flatten_children(replacement, me, name())) {
+            merge_graph.replace(me, replacement);
+            return true;
+        }
+    }
+
+
     return
         AbelianCall::transform(merge_graph, call_factory, reporter) ||
         result;
-
 }
 
 bool Or::validate(NodeReporter reporter) const
@@ -245,6 +254,14 @@ bool And::transform(
         node_p replacement = c_true;
         merge_graph.replace(me, replacement);
         return true;
+    }
+
+    {
+        node_p replacement(new And());
+        if (flatten_children(replacement, me, name())) {
+            merge_graph.replace(me, replacement);
+            return true;
+        }
     }
 
     return
