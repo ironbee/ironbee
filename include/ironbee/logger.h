@@ -72,15 +72,10 @@ typedef enum {
  *
  * @returns Converted log level (if successful), or @a default.
  */
-ib_logger_level_t DLL_PUBLIC ib_log_string_to_level(
+ib_logger_level_t DLL_PUBLIC ib_logger_string_to_level(
     const char        *s,
     ib_logger_level_t  dlevel
 );
-
-/**
- * Level to string conversion
- */
-const char DLL_PUBLIC *ib_log_level_to_string(ib_logger_level_t level);
 
 typedef struct ib_logger_t ib_logger_t;
 typedef struct ib_logger_rec_t ib_logger_rec_t;
@@ -573,7 +568,6 @@ ib_status_t DLL_PUBLIC ib_logger_standard_formatter(
     void                  *data
 );
 
-
 /**
  * Get the count of writers in this logger.
  *
@@ -611,7 +605,7 @@ void DLL_PUBLIC ib_logger_level_set(
  * @param[in] level Log level.
  * @returns String form of @a level.
  */
-const char DLL_PUBLIC *ib_log_level_to_string(ib_logger_level_t level);
+const char DLL_PUBLIC *ib_logger_level_to_string(ib_logger_level_t level);
 
 /**
  * @} IronBeeEngineLogging

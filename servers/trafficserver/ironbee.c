@@ -2513,7 +2513,7 @@ static ib_status_t read_ibconf(
             break;
         case 'v':
             mod_data->log_level =
-                ib_log_string_to_level(optarg, IB_LOG_WARNING);
+                ib_logger_string_to_level(optarg, IB_LOG_WARNING);
             break;
         case 'm':
             mod_data->max_engines = atoi(optarg);

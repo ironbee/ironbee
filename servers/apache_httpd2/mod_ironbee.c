@@ -112,14 +112,14 @@ typedef struct ironbee_dir_conf {
  * Module global data
  */
 typedef struct {
-    const char     *ib_config_file;         /**< IronBee configuration file */
-    ib_log_level_t  ib_log_level;           /**< IronBee log level */
-    bool            ib_log_active;          /**< Is IronBee logging active? */
-    ib_manager_t   *ib_manager;             /**< IronBee engine manager */
-    size_t          ib_max_engines;         /**< Max # of IronBee engines */
-    int             max_log_level;          /**< Max AP Log level to use */
-    int             log_level_is_startup;   /**< Adjust log level at startup */
-    apr_pool_t     *pool;                   /**< for logging without leaking */
+    const char        *ib_config_file;       /**< IronBee configuration file */
+    ib_logger_level_t  ib_log_level;         /**< IronBee log level */
+    bool               ib_log_active;        /**< Is IronBee logging active? */
+    ib_manager_t      *ib_manager;           /**< IronBee engine manager */
+    size_t             ib_max_engines;       /**< Max # of IronBee engines */
+    int                max_log_level;        /**< Max AP Log level to use */
+    int                log_level_is_startup; /**< Adjust log level at startup */
+    apr_pool_t        *pool;                 /**< for logging without leaking */
 } module_data_t;
 
 /*************    GENERAL GLOBALS        *************************/
@@ -1438,7 +1438,7 @@ static const char *ib_log_level(cmd_parms *cmd, void *x, const char *level)
     if (errmsg)
         return errmsg;
 
-    module_data.ib_log_level = ib_log_string_to_level(level, IB_LOG_WARNING);
+    module_data.ib_log_level = ib_logger_string_to_level(level, IB_LOG_WARNING);
 
     return NULL;
 }

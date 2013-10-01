@@ -80,9 +80,9 @@ typedef struct ib_manager_t ib_manager_t;
  * Log record created by manager_logger_format() and passed to servers.
  */
 typedef struct ib_manager_logger_record_t {
-    ib_logger_level_t level; /**< Log level of the message. */
-    uint8_t *msg;         /**< Log message. Must be freed on destroy. */
-    size_t   msg_sz;      /**< Size of manager_logger_record_t::msg. */
+    ib_logger_level_t         level;  /**< Log level of the message. */
+    const uint8_t            *msg;    /**< User message. */
+    size_t                    msg_sz; /**< Size of message. */
 } ib_manager_logger_record_t;
 
 

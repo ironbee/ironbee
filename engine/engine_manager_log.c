@@ -77,96 +77,65 @@ ib_status_t manager_logger_format(
 {
     assert(data != NULL);
 
-    ib_status_t rc = IB_OK;
+    ib_status_t               rc = IB_OK;
 
     /* Clang analyzer cannot follow record through a void* and so
      * gives a false positive on a memory leak. */
 #ifndef __clang_analyzer__
 
-    ib_manager_t               *manager = (ib_manager_t *)data;
-    ib_engine_t                *ib = NULL;
-    ib_logger_level_t           logger_level;
-    const size_t                buffer_sz = msg_sz + fmt_pad_size;
+    ib_logger_standard_msg_t   *std_msg = NULL;
+    size_t                      prefix_sz;
+
+    /* Format the message into the standard message struct. */
+    rc = ib_logger_standard_formatter(
+        logger,
+        rec,
+        msg,
+        msg_sz,
+        &std_msg,
+        data);
+
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     ib_manager_logger_record_t *manager_logger_record;
-
-
-    /* Define logger_level. If logger_level is DEBUG, we do more formatting. */
-    rc = ib_manager_engine_acquire(manager, &ib);
-    if (rc == IB_ENOENT) {
-        logger_level = ib_logger_level_get(manager->logger);
-    }
-    else if (rc == IB_OK ) {
-        logger_level = ib_logger_level_get(ib_engine_logger_get(ib));
-    }
-    else {
-        goto cleanup;
-    }
 
     /* Build a log record to populate. */
     manager_logger_record = malloc(sizeof(*manager_logger_record));
     if (manager_logger_record == NULL) {
+        ib_logger_standard_msg_free(std_msg);
         return IB_EALLOC;
     }
 
-    /* Add padding bytes to required size */
-    manager_logger_record->msg = (uint8_t *)malloc(buffer_sz+1);
+    prefix_sz = strlen(std_msg->prefix);
+
+    manager_logger_record->msg_sz = prefix_sz + std_msg->msg_sz;
+    manager_logger_record->msg = malloc(manager_logger_record->msg_sz + 1);
     if (manager_logger_record->msg == NULL) {
-        goto cleanup;
-    }
-    snprintf(
-        (char *)manager_logger_record->msg,
-        buffer_sz,
-        "%-10s- ",
-        ib_log_level_to_string(rec->level));
-
-    /* If this is a transaction, add the TX id */
-    if ( rec->tx != NULL ) {
-        const ib_tx_t *tx = rec->tx;
-        static const size_t line_info_size = 64;
-        char                line_info[line_info_size];
-
-        strcpy(line_info, "[tx:");
-        strcat(line_info, tx->id);
-        strcat(line_info, "] ");
-        strcat((char *)manager_logger_record->msg, line_info);
+        free(manager_logger_record);
+        ib_logger_standard_msg_free(std_msg);
+        return IB_EALLOC;
     }
 
-    /* Add the file name and line number if available and log level >= DEBUG */
-    if ( (rec->file != NULL) &&
-         (rec->line_number > 0) &&
-         (logger_level >= IB_LOG_DEBUG) )
-    {
-        size_t              flen;
-        static const size_t line_info_size = 35;
-        char                line_info[line_info_size];
-        const char         *file = rec->file;
+    memcpy(
+        (uint8_t *)(manager_logger_record->msg),
+        std_msg->prefix,
+        prefix_sz);
+    memcpy(
+        (uint8_t *)(manager_logger_record->msg + prefix_sz),
+        std_msg->msg,
+        std_msg->msg_sz);
+    *(uint8_t *)(manager_logger_record->msg + manager_logger_record->msg_sz) =
+        '\0';
 
-        while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
-            file += 3;
-        }
-        flen = strlen(file);
-        if (flen > 23) {
-            file += (flen - 23);
-        }
-
-        snprintf(
-            line_info,
-            line_info_size,
-            "(%23s:%-5d) ",
-            file,
-            (int)rec->line_number);
-        strcat((char *)manager_logger_record->msg, line_info);
-    }
-    strcat((char *)manager_logger_record->msg, (char *)msg);
-
-    manager_logger_record->msg_sz = strlen((char *)manager_logger_record->msg);
     manager_logger_record->level  = rec->level;
 
     /* Return the formatted log message. */
-    *(void**)writer_record = manager_logger_record;
+    *(void **)writer_record = manager_logger_record;
 
 #endif
-cleanup:
+
     return rc;
 }
 
@@ -243,7 +212,7 @@ void DLL_LOCAL ib_manager_log_ex(
             manager->log_flush_fn(manager->log_flush_cbdata);
         }
 
-        free(rec.msg);
+        free((void *)rec.msg);
     }
 
 }

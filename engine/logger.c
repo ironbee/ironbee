@@ -732,9 +732,13 @@ ib_status_t ib_logger_standard_formatter(
         msg->prefix,
         "%s %-10s- ",
         time_info,
-        ib_log_level_to_string(rec->level));
+        ib_logger_level_to_string(rec->level));
 
-    if ( (rec->file != NULL) && (rec->line_number > 0) ) {
+    /* Add the file name and line number if available and log level >= DEBUG */
+    if ( (rec->file != NULL) &&
+         (rec->line_number > 0) &&
+         (logger->level >= IB_LOG_DEBUG) )
+    {
         const char *file = rec->file;
         size_t flen;
         while (strncmp(file, "../", 3) == 0) {
@@ -909,7 +913,7 @@ static const char* c_log_levels[] = {
 };
 static size_t c_num_levels = sizeof(c_log_levels)/sizeof(*c_log_levels);
 
-ib_logger_level_t ib_log_string_to_level(
+ib_logger_level_t ib_logger_string_to_level(
     const char        *s,
     ib_logger_level_t  dlevel
 )
@@ -936,7 +940,7 @@ ib_logger_level_t ib_log_string_to_level(
     return dlevel;
 }
 
-const char *ib_log_level_to_string(ib_logger_level_t level)
+const char *ib_logger_level_to_string(ib_logger_level_t level)
 {
     if (level < c_num_levels) {
         return c_log_levels[level];
