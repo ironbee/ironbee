@@ -139,7 +139,7 @@ static IB_STRVAL_MAP(flags_map) = {
  */
 static void rule_vlog_tx(
     ib_rule_dlog_level_t rule_log_level,
-    ib_log_level_t log_level,
+    ib_logger_level_t log_level,
     const ib_tx_t *tx,
     const ib_rule_t *rule,
     const ib_rule_target_t *target,
@@ -152,7 +152,7 @@ static void rule_vlog_tx(
 
 static void rule_vlog_tx(
     ib_rule_dlog_level_t rule_log_level,
-    ib_log_level_t log_level,
+    ib_logger_level_t log_level,
     const ib_tx_t *tx,
     const ib_rule_t *rule,
     const ib_rule_target_t *target,
@@ -218,7 +218,7 @@ void ib_rule_log_tx(
 {
     va_list ap;
     ib_core_cfg_t *corecfg = NULL;
-    ib_log_level_t ib_log_level;
+    ib_logger_level_t ib_log_level;
     ib_status_t rc;
 
 
@@ -266,7 +266,7 @@ void ib_rule_log_exec(
 )
 {
     va_list ap;
-    ib_log_level_t log_level =
+    ib_logger_level_t log_level =
         (rule_exec->tx_log == NULL) ? IB_LOG_INFO : rule_exec->tx_log->level;
 
     va_start(ap, fmt);
@@ -344,7 +344,7 @@ ib_flags_t ib_rule_log_flags(const ib_context_t *ctx)
     return corecfg->rule_log_flags;
 }
 
-ib_log_level_t ib_rule_log_level(const ib_context_t *ctx)
+ib_logger_level_t ib_rule_log_level(const ib_context_t *ctx)
 {
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
@@ -484,7 +484,7 @@ void ib_rule_log_fatal_ex(
 
     va_list ap;
     ib_rule_log_exec_t *exec_log = rule_exec->exec_log;
-    ib_log_level_t log_level =
+    ib_logger_level_t log_level =
         (rule_exec->tx_log == NULL) ? IB_LOG_INFO : rule_exec->tx_log->level;
 
     ib_flags_set(exec_log->flags, IB_RULE_EXEC_FATAL);

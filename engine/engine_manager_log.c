@@ -85,7 +85,7 @@ ib_status_t manager_logger_format(
 
     ib_manager_t               *manager = (ib_manager_t *)data;
     ib_engine_t                *ib = NULL;
-    ib_log_level_t              logger_level;
+    ib_logger_level_t           logger_level;
     const size_t                buffer_sz = msg_sz + fmt_pad_size;
     ib_manager_logger_record_t *manager_logger_record;
 
@@ -209,7 +209,7 @@ void ib_manager_log_flush(
 
 void DLL_LOCAL ib_manager_log_ex(
     ib_manager_t       *manager,
-    ib_log_level_t      level,
+    ib_logger_level_t   level,
     const char         *file,
     const char         *func,
     int                 line,

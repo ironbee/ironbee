@@ -73,7 +73,7 @@ ib_status_t DLL_LOCAL manager_logger_record(
  */
 void DLL_LOCAL ib_manager_log_ex(
     ib_manager_t       *manager,
-    ib_log_level_t      level,
+    ib_logger_level_t   level,
     const char         *file,
     const char         *func,
     int                 line,

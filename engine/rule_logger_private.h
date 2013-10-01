@@ -134,7 +134,7 @@ struct ib_rule_log_tx_t {
     ib_timeval_t            end_time;    /**< Time of end of rule engine */
     ib_flags_t              flags;       /**< Rule logging flags */
     ib_flags_t              filter;      /**< Rule filter flags */
-    ib_log_level_t          level;       /**< Level to log at */
+    ib_logger_level_t       level;       /**< Level to log at */
     bool                    empty_tx;    /**< Is this an empty transaction? */
     ib_rule_phase_num_t     cur_phase;   /**< Current phase # */
     const char             *phase_name;  /**< Name of current phase */

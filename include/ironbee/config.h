@@ -664,7 +664,7 @@ ib_status_t DLL_PUBLIC ib_config_strval_pair_lookup(const char *str,
  * @param[in] fmt printf-style format string
  */
 void DLL_PUBLIC ib_cfg_log_f(ib_cfgparser_t *cp,
-                             ib_log_level_t level,
+                             ib_logger_level_t level,
                              const char *file,
                              int line,
                              const char *fmt, ...)
@@ -682,7 +682,7 @@ void DLL_PUBLIC ib_cfg_log_f(ib_cfgparser_t *cp,
  * @param[in] ap Variable args list
  */
 void DLL_PUBLIC ib_cfg_vlog(ib_cfgparser_t *cp,
-                            ib_log_level_t level,
+                            ib_logger_level_t level,
                             const char *file,
                             int line,
                             const char *fmt,
@@ -705,7 +705,7 @@ void DLL_PUBLIC ib_cfg_vlog(ib_cfgparser_t *cp,
  */
 void DLL_PUBLIC ib_cfg_log_ex_f(const ib_engine_t *ib,
                                 const char *cfgfile, unsigned int cfgline,
-                                ib_log_level_t level,
+                                ib_logger_level_t level,
                                 const char *file, int line,
                                 const char *fmt, ...)
                                 PRINTF_ATTRIBUTE(7, 8);
@@ -725,7 +725,7 @@ void DLL_PUBLIC ib_cfg_log_ex_f(const ib_engine_t *ib,
  */
 void DLL_PUBLIC ib_cfg_vlog_ex(const ib_engine_t *ib,
                                const char *cfgfile, unsigned int cfgline,
-                               ib_log_level_t level,
+                               ib_logger_level_t level,
                                const char *file, int line,
                                const char *fmt, va_list ap)
                                VPRINTF_ATTRIBUTE(7);

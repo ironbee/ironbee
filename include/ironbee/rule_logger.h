@@ -55,7 +55,7 @@ extern "C" {
  *
  * @return The log level configured.
  */
-ib_log_level_t ib_rule_log_level(
+ib_logger_level_t ib_rule_log_level(
     const ib_context_t *ctx
 );
 

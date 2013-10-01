@@ -22,16 +22,14 @@
  * @file
  * @brief IronBee --- Logger
  *
- * @author Brian Rectanus <brectanus@qualys.com>
- * @author Christopher Alfeld <calfeld@qualys.com>
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
 #include <ironbee/engine_types.h>
 #include <ironbee/lock.h>
-#include <ironbee/log.h>
 #include <ironbee/queue.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 
 #ifdef __cplusplus
@@ -39,10 +37,50 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeEngineLogging New Logging
+ * @defgroup IronBeeEngineLogging Logging
  * @ingroup IronBeeEngine
  * @{
  */
+
+/**
+ * Logger log level.
+ **/
+typedef enum {
+    IB_LOG_EMERGENCY, /**< System unusable. */
+    IB_LOG_ALERT,     /**< Crisis happened; immediate attention */
+    IB_LOG_CRITICAL,  /**< Crisis coming; immediate attention */
+    IB_LOG_ERROR,     /**< Error occurred; needs attention */
+    IB_LOG_WARNING,   /**< Error likely to occur; needs attention */
+    IB_LOG_NOTICE,    /**< Something unusual happened */
+    IB_LOG_INFO,      /**< Something usual happened */
+    IB_LOG_DEBUG,     /**< Developer oriented information */
+    IB_LOG_DEBUG2,    /**< As above, lower priority */
+    IB_LOG_DEBUG3,    /**< As above, lowest priority */
+    IB_LOG_TRACE,     /**< Reserved for future use */
+
+    /* Not a log level, but keeps track of the number of levels. */
+    IB_LOG_LEVEL_NUM  /**< Number of levels */
+} ib_logger_level_t;
+
+/**
+ * String to level conversion.
+ *
+ * Attempts to convert @a s as both a number and a symbolic name (e.g. "debug")
+ *
+ * @param[in] s String to convert
+ * @param[in] dlevel Default value in case conversion fails.
+ *
+ * @returns Converted log level (if successful), or @a default.
+ */
+ib_logger_level_t DLL_PUBLIC ib_log_string_to_level(
+    const char        *s,
+    ib_logger_level_t  dlevel
+);
+
+/**
+ * Level to string conversion
+ */
+const char DLL_PUBLIC *ib_log_level_to_string(ib_logger_level_t level);
 
 typedef struct ib_logger_t ib_logger_t;
 typedef struct ib_logger_rec_t ib_logger_rec_t;
@@ -180,7 +218,7 @@ struct ib_logger_rec_t {
     const ib_conn_t   *conn;        /* The current connection. May be null. */
     const ib_tx_t     *tx;          /* The current transaction. May be null. */
     const ib_engine_t *engine;      /* The IronBee engine. */
-    ib_log_level_t     level;       /* The log level. */
+    ib_logger_level_t  level;       /* The log level. */
 };
 
 /**
@@ -222,7 +260,7 @@ void ib_logger_log_msg(
     const ib_module_t *module,
     const ib_conn_t   *conn,
     const ib_tx_t     *tx,
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     const uint8_t     *msg,
     size_t             msg_sz,
     ib_logger_msg_fn_t msg_fn,
@@ -257,7 +295,7 @@ void ib_logger_log_va(
     const ib_module_t *module,
     const ib_conn_t   *conn,
     const ib_tx_t     *tx,
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     const char        *msg,
     ...
 )
@@ -292,7 +330,7 @@ void ib_logger_log_va_list(
     const ib_module_t *module,
     const ib_conn_t   *conn,
     const ib_tx_t     *tx,
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     const char        *msg,
     va_list            ap
 )
@@ -311,8 +349,8 @@ VPRINTF_ATTRIBUTE(10);
  * - IB_OK success.
  */
 ib_status_t ib_logger_create(
-    ib_logger_t    **logger,
-    ib_log_level_t   level,
+    ib_logger_t       **logger,
+    ib_logger_level_t   level,
     ib_mpool_t      *mp
 )
 NONNULL_ATTRIBUTE(1, 3);
@@ -484,7 +522,7 @@ size_t ib_logger_writer_count(ib_logger_t *logger);
  *
  * @returns The logger level.
  */
-ib_log_level_t DLL_PUBLIC ib_logger_level_get(ib_logger_t *logger);
+ib_logger_level_t DLL_PUBLIC ib_logger_level_get(ib_logger_t *logger);
 
 /**
  * Set the current log level.
@@ -492,7 +530,18 @@ ib_log_level_t DLL_PUBLIC ib_logger_level_get(ib_logger_t *logger);
  * @param[in] logger The logger whose level we are setting.
  * @param[in] level The level to set.
  */
-void DLL_PUBLIC ib_logger_level_set(ib_logger_t *logger, ib_log_level_t level);
+void DLL_PUBLIC ib_logger_level_set(
+    ib_logger_t *logger,
+    ib_logger_level_t level
+);
+
+/**
+ * Translate a log level to a string.
+ *
+ * @param[in] level Log level.
+ * @returns String form of @a level.
+ */
+const char DLL_PUBLIC *ib_log_level_to_string(ib_logger_level_t level);
 
 /**
  * @} IronBeeEngineLogging

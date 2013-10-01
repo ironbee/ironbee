@@ -63,7 +63,7 @@ IB_MODULE_DECLARE();
 
 typedef struct log_pipe_cfg {
     const char *cmdline;
-    ib_log_level_t log_level;
+    ib_logger_level_t log_level;
     FILE *pipe;
 } log_pipe_cfg;
 
@@ -124,12 +124,12 @@ static ib_status_t log_pipe_restart(const ib_engine_t *ib, ib_module_t *m,
 }
 
 typedef struct log_pipe_log_rec_t {
-    ib_log_level_t  level;
-    char           *file;
-    int             line;
-    char            timestr[26];
-    char            buf[8192+1];
-    int             ec;
+    ib_logger_level_t  level;
+    char              *file;
+    int                line;
+    char               timestr[26];
+    char               buf[8192+1];
+    int                ec;
 } log_pipe_log_rec_t;
 
 ib_status_t log_pipe_format(
@@ -273,7 +273,7 @@ ib_status_t log_pipe_record(
  * @param[in] ib  Ironbee engine
  * @return  The current log level
  */
-static ib_log_level_t log_pipe_get_level(const ib_engine_t *ib)
+static ib_logger_level_t log_pipe_get_level(const ib_engine_t *ib)
 {
     log_pipe_cfg *cfg;
     ib_module_t *m;

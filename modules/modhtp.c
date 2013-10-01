@@ -837,9 +837,9 @@ static inline ib_status_t modhtp_check_tx(
     assert(label != NULL);
     assert(ptxdata != NULL);
 
-    htp_log_t       *log;
-    modhtp_txdata_t *txdata;
-    ib_log_level_t   level;
+    htp_log_t         *log;
+    modhtp_txdata_t   *txdata;
+    ib_logger_level_t  level;
 
     /* Get the transaction data */
     txdata = (modhtp_txdata_t *)htp_tx_get_user_data(htx);
@@ -1195,9 +1195,9 @@ static int modhtp_htp_log(
 {
     assert(log != NULL);
 
-    htp_tx_t        *htx = log->tx;
-    modhtp_txdata_t *txdata;
-    ib_log_level_t   level;
+    htp_tx_t          *htx = log->tx;
+    modhtp_txdata_t   *txdata;
+    ib_logger_level_t  level;
 
     /* Not interested, if there is no transaction. */
     if (htx == NULL) {

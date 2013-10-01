@@ -123,7 +123,7 @@ typedef struct {
     ib_state_hook_type_t         hook_type; /**< Hook type */
     const char                  *name;   /**< Event name */
     ib_flags_t                   flags;  /**< Flags defining what to txdump */
-    ib_log_level_t               level;  /**< IB Log level */
+    ib_logger_level_t            level;  /**< IB Log level */
     FILE                        *fp;     /**< File pointer (or NULL) */
     const char                  *dest;   /**< Copy of the destination string */
     ib_moddevel_txdump_config_t *config; /**< TxDump configuration data */

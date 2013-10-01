@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/logger.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -51,7 +52,7 @@ struct ib_logger_writer_t {
  * A logger is what @ref ib_logger_rec_t are submitted to to produce a log.
  */
 struct ib_logger_t {
-    ib_log_level_t       level;       /**< The log level. */
+    ib_logger_level_t    level;       /**< The log level. */
 
     /**
      * Memory pool with a lifetime of the logger.
@@ -233,8 +234,8 @@ static ib_status_t logger_write(
  * - False if the message should not be discarded.
  */
 static bool logger_filter(
-    ib_logger_t    *logger,
-    ib_log_level_t  level
+    ib_logger_t       *logger,
+    ib_logger_level_t  level
 )
 {
     assert(logger != NULL);
@@ -277,7 +278,7 @@ void ib_logger_log_msg(
     const ib_module_t *module,
     const ib_conn_t   *conn,
     const ib_tx_t     *tx,
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     const uint8_t     *msg,
     size_t             msg_sz,
     ib_logger_msg_fn_t msg_fn,
@@ -347,7 +348,7 @@ void ib_logger_log_va(
     const ib_module_t *module,
     const ib_conn_t   *conn,
     const ib_tx_t     *tx,
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     const char        *msg,
     ...
 )
@@ -380,7 +381,7 @@ void ib_logger_log_va_list(
     const ib_module_t *module,
     const ib_conn_t   *conn,
     const ib_tx_t     *tx,
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     const char        *msg,
     va_list            ap
 )
@@ -424,9 +425,9 @@ void ib_logger_log_va_list(
 }
 
 ib_status_t ib_logger_create(
-    ib_logger_t    **logger,
-    ib_log_level_t   level,
-    ib_mpool_t      *mp
+    ib_logger_t       **logger,
+    ib_logger_level_t   level,
+    ib_mpool_t         *mp
 )
 {
     assert(logger != NULL);
@@ -664,13 +665,13 @@ size_t ib_logger_writer_count(ib_logger_t *logger) {
     return ib_list_elements(logger->writers);
 }
 
-ib_log_level_t ib_logger_level_get(ib_logger_t *logger) {
+ib_logger_level_t ib_logger_level_get(ib_logger_t *logger) {
     assert(logger != NULL);
 
     return logger->level;
 }
 
-void ib_logger_level_set(ib_logger_t *logger, ib_log_level_t level) {
+void ib_logger_level_set(ib_logger_t *logger, ib_logger_level_t level) {
     assert(logger != NULL);
 
     logger->level = level;
@@ -859,3 +860,56 @@ ib_status_t ib_logger_writer_add_default(
         cfg
     );
 }
+
+static const char* c_log_levels[] = {
+    "EMERGENCY",
+    "ALERT",
+    "CRITICAL",
+    "ERROR",
+    "WARNING",
+    "NOTICE",
+    "INFO",
+    "DEBUG",
+    "DEBUG2",
+    "DEBUG3",
+    "TRACE"
+};
+static size_t c_num_levels = sizeof(c_log_levels)/sizeof(*c_log_levels);
+
+ib_logger_level_t ib_log_string_to_level(
+    const char        *s,
+    ib_logger_level_t  dlevel
+)
+{
+    unsigned int i;
+    ib_num_t     level;
+
+    /* First, if it's a number, just do a numeric conversion */
+    if (ib_string_to_num(s, 10, &level) == IB_OK) {
+        return (ib_logger_level_t)level;
+    }
+
+    /* Now, string compare to level names */
+    for (i = 0; i < c_num_levels; ++i) {
+        if (
+            strncasecmp(s, c_log_levels[i], strlen(c_log_levels[i])) == 0 &&
+            strlen(s) == strlen(c_log_levels[i])
+        ) {
+            return i;
+        }
+    }
+
+    /* No match, return the default */
+    return dlevel;
+}
+
+const char *ib_log_level_to_string(ib_logger_level_t level)
+{
+    if (level < c_num_levels) {
+        return c_log_levels[level];
+    }
+    else {
+        return "UNKNOWN";
+    }
+}
+

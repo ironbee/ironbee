@@ -27,6 +27,7 @@
  */
 
 #include <ironbee/engine_types.h>
+#include <ironbee/logger.h>
 
 #include <stdarg.h>
 
@@ -35,53 +36,14 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeEngineLog Logging
+ * @defgroup IronBeeEngineLog Engine Logging
  * @ingroup IronBeeEngine
  * @{
  */
 
 /**
- * Logger log level.
- **/
-typedef enum {
-    IB_LOG_EMERGENCY, /**< System unusable. */
-    IB_LOG_ALERT,     /**< Crisis happened; immediate attention */
-    IB_LOG_CRITICAL,  /**< Crisis coming; immediate attention */
-    IB_LOG_ERROR,     /**< Error occurred; needs attention */
-    IB_LOG_WARNING,   /**< Error likely to occur; needs attention */
-    IB_LOG_NOTICE,    /**< Something unusual happened */
-    IB_LOG_INFO,      /**< Something usual happened */
-    IB_LOG_DEBUG,     /**< Developer oriented information */
-    IB_LOG_DEBUG2,    /**< As above, lower priority */
-    IB_LOG_DEBUG3,    /**< As above, lowest priority */
-    IB_LOG_TRACE,     /**< Reserved for future use */
-
-    /* Not a log level, but keeps track of the number of levels. */
-    IB_LOG_LEVEL_NUM  /**< Number of levels */
-} ib_log_level_t;
-
-/**
- * String to level conversion.
- *
- * Attempts to convert @a s as both a number and a symbolic name (e.g. "debug")
- *
- * @param[in] s String to convert
- * @param[in] dlevel Default value in case conversion fails.
- *
- * @returns Converted log level (if successful), or @a default.
- */
-ib_log_level_t DLL_PUBLIC ib_log_string_to_level(
-    const char     *s,
-    ib_log_level_t  dlevel
-);
-
-/**
- * Level to string conversion
- */
-const char DLL_PUBLIC *ib_log_level_to_string(ib_log_level_t level);
-
-/**
  * Log call data type
+ * FIXME - srb - remove
  */
 typedef enum {
     IBLOG_ENGINE,
@@ -92,6 +54,7 @@ typedef enum {
 
 /**
  * Log call data
+ * FIXME - srb - remove
  */
 typedef union {
     const ib_engine_t *e;
@@ -102,35 +65,12 @@ typedef union {
 
 /**
  * Descriptor to pass user data to log functions, according to call context
+ * FIXME - srb - remove
  */
 typedef struct {
     ib_log_call_data_type_t  type;
     ib_log_call_data_union_t data;
 } ib_log_call_data_t;
-
-/**
- * Logger callback.
- *
- * @param ib IronBee engine.
- * @param level Log level
- * @param file Optional source filename (or NULL)
- * @param line Optional source line number (or 0)
- * @param fmt Formatting string
- * @param ap Variable args list
- * @param calldata Context-sensitive call data.
- * @param cbdata Callback data
- */
-typedef void (*ib_log_logger_fn_t)(
-    const ib_engine_t  *ib,
-    ib_log_level_t      level,
-    const char         *file,
-    int                 line,
-    const char         *fmt,
-    va_list             ap,
-    ib_log_call_data_t *calldata,
-    void               *cbdata
-)
-VPRINTF_ATTRIBUTE(5);
 
 /** Log Generic */
 #define ib_log(ib, lvl, ...) ib_log_ex((ib), (lvl), __FILE__, __func__, __LINE__, __VA_ARGS__)
@@ -194,7 +134,7 @@ VPRINTF_ATTRIBUTE(5);
  */
 void DLL_PUBLIC ib_log_ex(
     const ib_engine_t *ib,
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     const char        *file,
     const char        *func,
     int                line,
@@ -214,12 +154,12 @@ PRINTF_ATTRIBUTE(6, 7);
  * @param fmt Printf-like format string
  */
 void DLL_PUBLIC ib_log_tx_ex(
-     const ib_tx_t  *tx,
-     ib_log_level_t  level,
-     const char     *file,
-     const char     *func,
-     int             line,
-     const char     *fmt,
+     const ib_tx_t     *tx,
+     ib_logger_level_t  level,
+     const char        *file,
+     const char        *func,
+     int                line,
+     const char        *fmt,
      ...
 )
 PRINTF_ATTRIBUTE(6, 7);
@@ -237,7 +177,7 @@ PRINTF_ATTRIBUTE(6, 7);
  */
 void DLL_PUBLIC ib_log_vex_ex(
     const ib_engine_t *ib,
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     const char        *file,
     const char        *func,
     int                line,
@@ -259,7 +199,7 @@ VPRINTF_ATTRIBUTE(6);
  */
 void DLL_PUBLIC ib_log_tx_vex(
     const ib_tx_t*     tx,
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     const char        *file,
     const char        *func,
     int                line,
@@ -267,14 +207,6 @@ void DLL_PUBLIC ib_log_tx_vex(
     va_list            ap
 )
 VPRINTF_ATTRIBUTE(6);
-
-/**
- * Translate a log level to a string.
- *
- * @param[in] level Log level.
- * @returns String form of @a level.
- */
-const char DLL_PUBLIC *ib_log_level_to_string(ib_log_level_t level);
 
 /**
  * @} IronBeeEngineLog

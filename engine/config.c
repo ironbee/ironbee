@@ -1023,7 +1023,7 @@ ib_status_t ib_config_strval_pair_lookup(const char *str,
 }
 
 
-void ib_cfg_log_f(ib_cfgparser_t *cp, ib_log_level_t level,
+void ib_cfg_log_f(ib_cfgparser_t *cp, ib_logger_level_t level,
                   const char *file, int line,
                   const char *fmt, ...)
 {
@@ -1042,7 +1042,7 @@ void ib_cfg_log_f(ib_cfgparser_t *cp, ib_log_level_t level,
 
 void ib_cfg_log_ex_f(const ib_engine_t *ib,
                      const char *cfgfile, unsigned int cfgline,
-                     ib_log_level_t level,
+                     ib_logger_level_t level,
                      const char *file, int line,
                      const char *fmt, ...)
 {
@@ -1061,7 +1061,7 @@ void ib_cfg_log_ex_f(const ib_engine_t *ib,
 
 void ib_cfg_vlog_ex(const ib_engine_t *ib,
                     const char *cfgfile, unsigned int cfgline,
-                    ib_log_level_t level,
+                    ib_logger_level_t level,
                     const char *file, int line,
                     const char *fmt, va_list ap)
 {
@@ -1107,7 +1107,7 @@ void ib_cfg_vlog_ex(const ib_engine_t *ib,
     return;
 }
 
-void ib_cfg_vlog(ib_cfgparser_t *cp, ib_log_level_t level,
+void ib_cfg_vlog(ib_cfgparser_t *cp, ib_logger_level_t level,
                  const char *file, int line,
                  const char *fmt, va_list ap)
 {

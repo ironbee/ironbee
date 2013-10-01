@@ -85,7 +85,7 @@ ib_status_t convert_exception(
             if (boost::get_error_info<errinfo_level>(e)) {
                 level = *boost::get_error_info<errinfo_level>(e);
             }
-            ib_log_level_t ib_level = static_cast<ib_log_level_t>(level);
+            ib_logger_level_t ib_level = static_cast<ib_logger_level_t>(level);
 
             if (
                 const ConfigurationParser* cp =

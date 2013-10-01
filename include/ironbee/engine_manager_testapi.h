@@ -129,7 +129,7 @@ void DLL_PUBLIC ib_manager_set_logger(
  * @param[in] ap Var args list to match the format
  */
 void DLL_PUBLIC ib_manager_file_vlogger(
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     void              *cbdata,
     const char        *fmt,
     va_list            ap
@@ -157,7 +157,7 @@ void DLL_PUBLIC ib_manager_file_vlogger(
  * @param[in] buf Formatted buffer
  */
 void DLL_PUBLIC ib_manager_file_logger(
-    ib_log_level_t     level,
+    ib_logger_level_t  level,
     void              *cbdata,
     const char        *buf
 );

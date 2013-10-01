@@ -163,15 +163,15 @@ static void set_logger(
  */
 static void log_engines(
     ib_manager_t       *manager,
-    ib_log_level_t      level1,
-    ib_log_level_t      level2,
+    ib_logger_level_t   level1,
+    ib_logger_level_t   level2,
     const char         *label
 )
 {
     assert(manager != NULL);
     assert(manager->logger != NULL);
 
-    ib_log_level_t mgr_log_level = ib_logger_level_get(manager->logger);
+    ib_logger_level_t mgr_log_level = ib_logger_level_get(manager->logger);
 
     /* Log the engine count. */
     if (mgr_log_level >= level1) {
@@ -339,7 +339,7 @@ ib_status_t ib_manager_create(
     void                      *logger_buf_cbdata,
     ib_manager_log_flush_fn_t  logger_flush_fn,
     void                      *logger_flush_cbdata,
-    ib_log_level_t             logger_level,
+    ib_logger_level_t          logger_level,
     ib_manager_t             **pmanager
 )
 {
