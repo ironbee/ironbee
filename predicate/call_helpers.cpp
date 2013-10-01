@@ -67,5 +67,31 @@ Value literal_value(const node_p& node)
     return simple_value(node);
 }
 
+bool flatten_children(
+    const node_p&      to,
+    const node_cp&     from,
+    const std::string& name
+)
+{
+    bool did_something = false;
+
+    BOOST_FOREACH(const node_p& child, from->children()) {
+        if (
+            boost::dynamic_pointer_cast<Call>(child) &&
+            boost::dynamic_pointer_cast<Call>(child)->name() == name
+        ) {
+            BOOST_FOREACH(const node_p& subchild, child->children()) {
+                to->add_child(subchild);
+            }
+            did_something = true;
+        }
+        else {
+            to->add_child(child);
+        }
+    }
+
+    return did_something;
+}
+
 } // Predicate
 } // IronBee

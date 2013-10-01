@@ -52,6 +52,24 @@ Value simple_value(const node_cp& node);
  **/
 Value literal_value(const node_p& node);
 
+/**
+ * Add children of @a from to @a to, flattening children named @a name.
+ *
+ * This copies children from @a from to @a to, treating certain children
+ * differently.  Children of a specified name have their children added
+ * rather than themselves.
+ *
+ * @param[in] to   Node to add children to.
+ * @param[in] from Node to add children from.
+ * @param[in] name Name of children to flatten.
+ * @return true iff any children were flattened.
+ **/
+bool flatten_children(
+    const node_p&      to,
+    const node_cp&     from,
+    const std::string& name
+);
+
 } // Predicate
 } // IronBee
 
