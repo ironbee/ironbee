@@ -441,4 +441,48 @@ size_t ib_queue_size(
     return queue->size;
 }
 
+ib_status_t ib_queue_enqueue(
+    ib_queue_t *queue,
+    void       *element
+)
+{
+    return ib_queue_push_back(queue, element);
+}
+
+ib_status_t ib_queue_dequeue(
+    ib_queue_t  *queue,
+    void       **element
+)
+{
+    return ib_queue_pop_front(queue, element);
+}
+
+ib_status_t ib_queue_dequeue_all_to_function(
+    ib_queue_t             *queue,
+    ib_queue_element_fn_t   fn,
+    void                   *cbdata
+)
+{
+    assert(queue != NULL);
+    ib_status_t rc;
+
+    for (size_t i = 0; i < queue->size; ++i) {
+        /* Get the element at index i. */
+        void *element = *to_addr(queue, i);
+
+        /* Call the user's function. */
+        fn(element, cbdata);
+    }
+
+    /* Now shrink the queue to zero size. */
+    queue->size = 0;
+
+    rc = resize(queue,  DEFAULT_QUEUE_SIZE);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
 /** @} */

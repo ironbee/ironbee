@@ -151,6 +151,34 @@ ib_status_t DLL_PUBLIC ib_queue_pop_front(
 );
 
 /**
+ * An alias for ib_queue_push_back().
+ *
+ * @param[in] queue The queue.
+ * @param[out] element The element to retrieve.
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC If memory for a new queue cannot be obtained when resizing.
+ */
+ib_status_t DLL_PUBLIC ib_queue_enqueue(
+    ib_queue_t *queue,
+    void       *element
+);
+
+/**
+ * An alias for ib_queue_pop_front().
+ *
+ * @param[in] queue The queue.
+ * @param[out] element The element to retrieve.
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC If memory for a new queue cannot be obtained when resizing.
+ */
+ib_status_t DLL_PUBLIC ib_queue_dequeue(
+    ib_queue_t  *queue,
+    void       **element
+);
+
+/**
  * Get the value at the front of the queue (index 0).
  *
  * @param[in] queue The queue.
@@ -225,6 +253,34 @@ ib_status_t DLL_PUBLIC ib_queue_reserve(
  */
 size_t DLL_PUBLIC ib_queue_size(
     const ib_queue_t *queue
+);
+
+/**
+ * Callback function to process elements in the queue.
+ *
+ * @param[in] element The element.
+ * @param[in] cbdata The callback data for this function call.
+ *
+ */
+typedef void (*ib_queue_element_fn_t)(void *element, void *cbdata);
+
+/**
+ * Dequeue all elements by passing them to the function given.
+ *
+ * This will result in the queue having a size of zero.
+ *
+ * @param[in] queue The queue to empty.
+ * @param[in] fn The function to handle each element.
+ * @param[in] cbdata Callback data for @a fn.
+ *
+ * @returns
+ * - IB_OK on success.
+ * - IB_EALLOC on queue resize errors.
+ */
+ib_status_t DLL_PUBLIC ib_queue_dequeue_all_to_function(
+    ib_queue_t             *queue,
+    ib_queue_element_fn_t   fn,
+    void                   *cbdata
 );
 
 #ifdef __cplusplus
