@@ -170,29 +170,26 @@ cleanup:
     return rc;
 }
 
+static void write_log_record(void *record, void *cbdata)
+{
+    assert(record != NULL);
+    assert(cbdata != NULL);
+
+    ib_manager_t *manager = (ib_manager_t *)cbdata;
+    ib_manager_logger_record_t *rec = (ib_manager_logger_record_t *)record;
+
+    manager->log_buf_fn(rec, manager->log_buf_cbdata);
+    free((void *)rec->msg);
+    free(rec);
+}
+
 ib_status_t manager_logger_record(
     ib_logger_t        *logger,
     ib_logger_writer_t *writer,
     void *data
 )
 {
-    ib_status_t rc;
-
-    ib_manager_t *manager = (ib_manager_t *)data;
-    ib_manager_logger_record_t *rec;
-
-    for (
-        rc = ib_logger_dequeue(logger, writer, &rec);
-        rc == IB_OK;
-        rc = ib_logger_dequeue(logger, writer, &rec)
-    )
-    {
-        manager->log_buf_fn(rec, manager->log_buf_cbdata);
-        free(rec->msg);
-        free(rec);
-    }
-
-    return IB_OK;
+    return ib_logger_dequeue(logger, writer, write_log_record, data);
 }
 
 void ib_manager_log_flush(

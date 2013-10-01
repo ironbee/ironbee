@@ -188,83 +188,113 @@ ib_status_t log_pipe_format(
     return IB_OK;
 }
 
+/**
+ * Callback data for log_pipe_writer().
+ */
+typedef struct log_pipe_writer_data_t {
+    log_pipe_cfg *cfg;    /**< Configuration. */
+    ib_module_t  *module; /**< This module structure. */
+    ib_engine_t  *ib;     /**< IronBee engine. */
+} log_pipe_writer_data_t;
+
+/**
+ * Do the writing of a single record.
+ *
+ * @param[in] record The log record.
+ * @param[in] cbdata A @ref log_pipe_writer_data_t pointer used for writing.
+ */
+static void log_pipe_writer(void *record, void *cbdata) {
+    assert(record != NULL);
+    assert(cbdata != NULL);
+
+    const int               LIMIT = 7000;
+    log_pipe_writer_data_t *writer_data = (log_pipe_writer_data_t *)cbdata;
+    log_pipe_log_rec_t     *rec = (log_pipe_log_rec_t *)record;
+    log_pipe_cfg           *cfg = writer_data->cfg;
+    ib_module_t            *m   = writer_data->module;
+    ib_engine_t            *ib  = writer_data->ib;
+
+    MUTEX_LOCK;
+    if (rec->ec >= LIMIT) {
+        /* Mark as truncated, with a " ...". */
+        memcpy((rec->buf) + (LIMIT - 5), " ...", 5);
+
+        /// @todo Do something about it
+        if (
+            fprintf(
+                cfg->pipe, "%s: Log format truncated: limit (%d/%d)\n",
+                rec->timestr, (int)rec->ec, LIMIT) < 0
+            )
+        {
+            if (log_pipe_restart(ib, m, rec->timestr, cfg) == IB_OK) {
+                fprintf(
+                    cfg->pipe,
+                    "%s: Log format truncated: limit (%d/%d)\n",
+                    rec->timestr,
+                    (int)rec->ec,
+                    LIMIT);
+            }
+        }
+    }
+
+    if (
+        fprintf(
+            cfg->pipe,
+            "%s %s [%s:%d]: %s\n", rec->timestr,
+            ib_logger_level_to_string(rec->level),
+            rec->file,
+            rec->line,
+            rec->buf) < 0
+    )
+    {
+        /* On error, see if we can save anything.
+         * There's no sensible error handling at this point.
+         */
+        if (log_pipe_restart(ib, m, rec->timestr, cfg) == IB_OK) {
+            fprintf(
+                cfg->pipe,
+                "%s %s [%s:%d]: %s\n",
+                rec->timestr,
+                ib_logger_level_to_string(rec->level),
+                rec->file,
+                rec->line,
+                rec->buf);
+        }
+    }
+    MUTEX_UNLOCK;
+    free(rec->file);
+    free(rec);
+}
+
 ib_status_t log_pipe_record(
     ib_logger_t        *logger,
     ib_logger_writer_t *writer,
     void               *data
 )
 {
-    const int           LIMIT = 7000;
-    ib_status_t         rc;
-    ib_engine_t        *ib = (ib_engine_t *)data;
-    log_pipe_log_rec_t *rec;
-    log_pipe_cfg *cfg;
-    ib_module_t *m;
+    assert(logger != NULL);
+    assert(writer != NULL);
+    assert(data != NULL);
+
+    ib_status_t             rc;
+    log_pipe_writer_data_t  writer_data;
+    log_pipe_cfg           *cfg;
+    ib_module_t            *m;
+    ib_engine_t            *ib = (ib_engine_t *)data;
 
     rc = ib_engine_module_get((ib_engine_t *)ib, MODULE_NAME_STR, &m);
     assert((rc == IB_OK) && (m != NULL));
+
     rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
     assert((rc == IB_OK) && (cfg != NULL) && (cfg->pipe != NULL));
 
-    for (
-        rc = ib_logger_dequeue(logger, writer, &rec);
-        rc == IB_OK;
-        rc = ib_logger_dequeue(logger, writer, &rec)
-    )
-    {
-        MUTEX_LOCK;
-        if (rec->ec >= LIMIT) {
-            /* Mark as truncated, with a " ...". */
-            memcpy((rec->buf) + (LIMIT - 5), " ...", 5);
+    writer_data.ib     = ib;
+    writer_data.cfg    = cfg;
+    writer_data.module = m;
 
-            /// @todo Do something about it
-            if (
-                fprintf(
-                    cfg->pipe, "%s: Log format truncated: limit (%d/%d)\n",
-                    rec->timestr, (int)rec->ec, LIMIT) < 0
-                )
-            {
-                if (log_pipe_restart(ib, m, rec->timestr, cfg) == IB_OK) {
-                    fprintf(
-                        cfg->pipe,
-                        "%s: Log format truncated: limit (%d/%d)\n",
-                        rec->timestr,
-                        (int)rec->ec,
-                        LIMIT);
-                }
-            }
-        }
+    rc = ib_logger_dequeue(logger, writer, log_pipe_writer, &writer_data);
 
-        if (
-            fprintf(
-                cfg->pipe,
-                "%s %s [%s:%d]: %s\n", rec->timestr,
-                ib_log_level_to_string(rec->level),
-                rec->file,
-                rec->line,
-                rec->buf) < 0
-        )
-        {
-            /* On error, see if we can save anything.
-            * There's no sensible error handling at this point.
-            */
-            if (log_pipe_restart(ib, m, rec->timestr, cfg) == IB_OK) {
-                fprintf(
-                    cfg->pipe,
-                    "%s %s [%s:%d]: %s\n",
-                    rec->timestr,
-                    ib_log_level_to_string(rec->level),
-                    rec->file,
-                    rec->line,
-                    rec->buf);
-            }
-        }
-        MUTEX_UNLOCK;
-        free(rec->file);
-        free(rec);
-    }
-
-    return IB_OK;
+    return rc;
 }
 
 /**

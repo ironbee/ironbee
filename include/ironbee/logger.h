@@ -483,25 +483,28 @@ ib_status_t ib_logger_reopen(
 );
 
 /**
- * Safely remove 1 message from the queue.
+ * Safely remove all messages from the queue and process them.
  *
- * This API may be called by a user to remove messages produced by
- * @ref ib_logger_format_fn_t, write them to disk, and free them.
+ * This API must be called by a user to remove messages produced by
+ * @ref ib_logger_format_fn_t, write them to a log store, and free them.
  *
- * @param[in]  logger The logger.
- * @param[in]  writer The logger writer.
- * @param[out] msg The pointer to a log message produced by an implementation
- *             of @ref ib_logger_format_fn_t.
+ * @param[in] logger The logger.
+ * @param[in] writer The logger writer.
+ * @param[in] handler Callback function that handles the pointer to a
+ *            log message produced by an implementation of
+ *            @ref ib_logger_format_fn_t. This function drains the 
+ *            message queue and writes it to disk.
+ * @param[in] cbdata Callback data for @a handler.
  *
  * @returns
  * - IB_OK On success.
- * - IB_ENOENT If the queue is empty.
- * - Other on failure.
+ * - Other On failure.
  */
 ib_status_t DLL_PUBLIC ib_logger_dequeue(
-    ib_logger_t        *logger,
-    ib_logger_writer_t *writer,
-    void               *msg
+    ib_logger_t           *logger,
+    ib_logger_writer_t    *writer,
+    ib_queue_element_fn_t  handler,
+    void                  *cbdata
 );
 
 /**

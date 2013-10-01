@@ -629,9 +629,10 @@ ib_status_t ib_logger_reopen(
 }
 
 ib_status_t ib_logger_dequeue(
-    ib_logger_t        *logger,
-    ib_logger_writer_t *writer,
-    void               *msg
+    ib_logger_t           *logger,
+    ib_logger_writer_t    *writer,
+    ib_queue_element_fn_t  handler,
+    void                  *cbdata
 )
 {
     assert(logger != NULL);
@@ -639,22 +640,16 @@ ib_status_t ib_logger_dequeue(
     assert(writer->records != NULL);
 
     ib_status_t rc;
-    size_t      q_sz;
 
     rc = ib_lock_lock(&(writer->records_lck));
     if (rc != IB_OK) {
         return rc;
     }
 
-    q_sz = ib_queue_size(writer->records);
-    if (q_sz > 0) {
-        rc = ib_queue_pop_front(writer->records, msg);
-    }
-    else {
-        rc = IB_ENOENT;
-    }
+    rc = ib_queue_dequeue_all_to_function(writer->records, handler, cbdata);
 
     ib_lock_unlock(&(writer->records_lck));
+
     return rc;
 }
 
@@ -834,6 +829,23 @@ static ib_status_t default_logger_format(
     return rc;
 }
 
+static void default_log_writer(void *record, void *cbdata) {
+    assert(record != NULL);
+    assert(cbdata != NULL);
+
+    default_logger_cfg_t     *cfg = (default_logger_cfg_t *)cbdata;
+    ib_logger_standard_msg_t *msg = (ib_logger_standard_msg_t *)record;
+
+    fprintf(
+        cfg->file,
+        "%s %.*s\n",
+        msg->prefix,
+        (int)msg->msg_sz,
+        (char *)msg->msg);
+
+    ib_logger_standard_msg_free(msg);
+}
+
 /**
  * The default logger's record call.
  */
@@ -847,30 +859,7 @@ static ib_status_t default_logger_record(
     assert(writer != NULL);
     assert(data != NULL);
 
-    ib_status_t           rc;
-    ib_logger_standard_msg_t *msg = NULL;
-    default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
-
-    for (
-        rc = ib_logger_dequeue(logger, writer, &msg);
-        rc == IB_OK;
-        rc = ib_logger_dequeue(logger, writer, &msg)
-        )
-    {
-        fprintf(
-            cfg->file,
-            "%s %.*s\n",
-            msg->prefix,
-            (int)msg->msg_sz,
-            (char *)msg->msg);
-        ib_logger_standard_msg_free(msg);
-    }
-
-    /* Check for an unexpected failure. */
-    if (rc != IB_ENOENT) {
-        return rc;
-    }
-    return IB_OK;
+    return ib_logger_dequeue(logger, writer, default_log_writer, data);
 }
 
 ib_status_t ib_logger_writer_add_default(
