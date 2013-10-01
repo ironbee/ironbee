@@ -103,6 +103,7 @@ clipp_LDFLAGS = \
     -lboost_regex$(BOOST_SUFFIX) \
     -lboost_thread-mt \
     -lprotobuf \
+    -lstdc++ \
     $(GLIB_LIBS)
 
 if DARWIN
