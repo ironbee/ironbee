@@ -700,26 +700,6 @@ Synonym
 Synonym
 : `(var N W F)`
 
-
-Streaming IronBee \[Future]
----------------------------
-
-**`(streamRequestBodyRx R)`**
-
-Result
-: `[...]` captures of any matches of regexp `R` in the streamed request body.
-
-Finished
-: Once request is finished.
-
-**`(streamResponseBodyRx R)`**
-
-Result
-: `[...]` captures of any matches of regexp `R` in the streamed response body.
-
-Finished
-: Once response is finished.
-
 Fast \[Future]
 --------------
 
