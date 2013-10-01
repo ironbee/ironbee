@@ -197,6 +197,9 @@ struct ib_logger_rec_t {
  * message and the message is not logged.
  *
  * @param[in] logger The logger.
+ * @param[in] file Optional current file (may be null).
+ * @param[in] function Optional current function (may be null).
+ * @param[in] line_number The current line number.
  * @param[in] engine The IronBee engine.
  * @param[in] module Optional module (may be null).
  * @param[in] conn Optional connection (may be null).
@@ -234,9 +237,9 @@ NONNULL_ATTRIBUTE(1, 5);
  * log message which will be passed down the logging pipeline.
  *
  * @param[in] logger The logger.
- * @param[in] line_number The current line number.
  * @param[in] file Optional current file (may be null).
  * @param[in] function Optional current function (may be null).
+ * @param[in] line_number The current line number.
  * @param[in] engine The IronBee engine.
  * @param[in] module Optional module (may be null).
  * @param[in] conn Optional connection (may be null).

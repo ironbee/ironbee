@@ -65,8 +65,10 @@ typedef struct {
 
 /**
  * Append @a c to the internal buffer of @a cp.
+
  * @param[in] cp Configuration parser.
  * @param[in] c Char to append.
+
  * @returns
  * - IB_OK
  * - IB_EALLOC if there is no space left in the buffer.
@@ -95,6 +97,7 @@ static ib_status_t cpbuf_append(ib_cfgparser_t *cp, char c)
 
 /**
  * Clear the buffer in @a cp.
+
  * @param[in] cp Configuration parser.
  */
 static void cpbuf_clear(ib_cfgparser_t *cp) {
@@ -161,6 +164,7 @@ typedef struct parse_directive_entry_t parse_directive_entry_t;
  *
  * @param[in] cp Configuration parser.
  * @param[in] node The current parse node.
+
  * @returns
  * - IB_OK if the directive represented by @a node is new (not a dup).
  * - IB_EINVAL if we detect that @a node's file and line have been seen before.
@@ -264,6 +268,7 @@ static ib_status_t include_parse_directive_impl_log_realpath(
 
 /**
  * Check the file for inclusion and report useful error messages on failure.
+
  * @param[in] cp Configuration parser.
  * @param[in] incfile File to include.
  * @param[in] if_exists Choose the error message and log level by 
@@ -388,9 +393,10 @@ static ib_status_t include_parse_directive_impl_parse(
 
 /**
  * Implementation of "Include" and "IncludeIfExists" parse directives.
- * param[in] cp Configuration parser.
- * param[in] mp Memory pool to use.
- * param[in] node The parse node containing the directive.
+ *
+ * @param[in] cp Configuration parser.
+ * @param[in] mp Memory pool to use.
+ * @param[in] node The parse node containing the directive.
  *
  * @returns
  * - IB_OK on success.
@@ -889,6 +895,7 @@ static ib_status_t cfgparser_partial_match_maintenance(
 /**
  * If Ragel has a partial match we must resume parsing in 
  * a special buffer we are maintaining.
+
  * @param[in] cp Configuration parser. The cp->fsm structure is updated.
  * @param[in] buf Buffer to append to cp->fsm.ts_buffer.
  * @param[in] blen Length of the buffer to append to cp->fsm.ts_buffer.
