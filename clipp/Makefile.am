@@ -104,6 +104,7 @@ clipp_LDFLAGS = \
     -lboost_thread-mt \
     -lprotobuf \
     -lstdc++ \
+    -lm \
     $(GLIB_LIBS)
 
 if DARWIN
