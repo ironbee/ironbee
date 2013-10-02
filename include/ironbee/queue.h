@@ -132,8 +132,8 @@ ib_status_t DLL_PUBLIC ib_queue_push_front(
  * - IB_EALLOC If memory for a new queue cannot be obtained when resizing.
  */
 ib_status_t DLL_PUBLIC ib_queue_pop_back(
-    ib_queue_t  *queue,
-    void       **element
+    ib_queue_t *queue,
+    void       *element
 );
 
 /**
@@ -146,8 +146,8 @@ ib_status_t DLL_PUBLIC ib_queue_pop_back(
  * - IB_EALLOC If memory for a new queue cannot be obtained when resizing.
  */
 ib_status_t DLL_PUBLIC ib_queue_pop_front(
-    ib_queue_t  *queue,
-    void       **element
+    ib_queue_t *queue,
+    void       *element
 );
 
 /**
@@ -160,8 +160,8 @@ ib_status_t DLL_PUBLIC ib_queue_pop_front(
  * - IB_EINVAL If the queue is empty.
  */
 ib_status_t DLL_PUBLIC ib_queue_peek(
-    const ib_queue_t  *queue,
-    void             **element
+    const ib_queue_t *queue,
+    void             *element
 );
 
 /**
@@ -173,9 +173,9 @@ ib_status_t DLL_PUBLIC ib_queue_peek(
  * - IB_EINVAL If the element is not in the range of the queue.
  */
 ib_status_t DLL_PUBLIC ib_queue_get(
-    const ib_queue_t  *queue,
-    size_t             index,
-    void              **element
+    const ib_queue_t *queue,
+    size_t            index,
+    void             *element
 );
 
 /**

@@ -42,7 +42,7 @@ struct ib_queue_t {
     size_t      allocation; /**< The allocation of the queue buffer. */
     size_t      size;       /**< The number of elements in the queue. */
     ib_mpool_t *mp;         /**< Pool for allocations. */
-    void      **queue;      /**< The queue. */
+    void       *queue;      /**< The queue. */
     ib_flags_t  flags;      /**< Flags. @sa IB_QUEUE_NEVER_SHRINK. */
 };
 
@@ -59,7 +59,7 @@ struct ib_queue_t {
  */
 static inline size_t to_index(
     const ib_queue_t *queue,
-    size_t offset
+    size_t            offset
 )
 {
     assert(queue != NULL);
@@ -74,13 +74,13 @@ static inline size_t to_index(
  *
  * @returns The address to assign to.
  */
-static inline void **to_addr(
+static inline void *to_addr(
     const ib_queue_t *queue,
     size_t offset
 )
 {
     assert(queue != NULL);
-    return (queue->queue + to_index(queue, offset));
+    return ((void **)(queue->queue) + to_index(queue, offset));
 }
 
 ib_status_t ib_queue_create(
@@ -108,7 +108,7 @@ ib_status_t ib_queue_create(
     q->size = 0;
     q->head  = 0;
     q->flags = flags;
-    q->queue = ib_mpool_alloc(q->mp, sizeof(*(q->queue)) * q->allocation);
+    q->queue = ib_mpool_alloc(q->mp, sizeof(void *) * q->allocation);
     if (q->queue == NULL) {
         free(q);
         return IB_EALLOC;
@@ -135,8 +135,8 @@ ib_status_t ib_queue_create(
  * @param[out] new_queue The repacked queue.
  */
 static void repack(
-    ib_queue_t  *queue,
-    void       **new_queue
+    ib_queue_t *queue,
+    void       *new_queue
 )
 {
     /* If true, then the queue wraps around the end of the array. */
@@ -145,14 +145,17 @@ static void repack(
         size_t size_2 = queue->size - size_1;
 
         /* Copy the unwrapped half. */
-        memcpy(new_queue, to_addr(queue, 0), sizeof(*new_queue) * size_1);
+        memcpy(new_queue, to_addr(queue, 0), sizeof(void *) * size_1);
 
         /* Copy the wrapped half. */
-        memcpy(new_queue + size_1, queue->queue, sizeof(*new_queue) * size_2);
+        memcpy(
+            (void **)new_queue + size_1,
+            queue->queue,
+            sizeof(void *) * size_2);
     }
     /* The queue does not wrap. Simple copy case. */
     else {
-        memcpy(new_queue, to_addr(queue, 0), sizeof(*new_queue)*queue->size);
+        memcpy(new_queue, to_addr(queue, 0), sizeof(void *) * queue->size);
     }
 }
 
@@ -171,7 +174,7 @@ static ib_status_t resize(
     assert(new_size >= queue->size);
 
     ib_mpool_t  *new_mp;
-    void       **new_queue;
+    void        *new_queue;
     ib_status_t  rc;
 
     rc = ib_mpool_create(&new_mp, "queue", ib_mpool_parent(queue->mp));
@@ -179,19 +182,19 @@ static ib_status_t resize(
         return rc;
     }
 
-    new_queue = ib_mpool_alloc(new_mp, sizeof(*new_queue) * new_size);
+    new_queue = ib_mpool_alloc(new_mp, sizeof(void *) * new_size);
     if (new_queue == NULL) {
         return IB_EALLOC;
     }
 
-    repack(queue, new_queue);
+    repack(queue, (void **)new_queue);
 
     ib_mpool_release(queue->mp);
 
     queue->allocation  = new_size;
-    queue->head  = 0;
-    queue->queue = new_queue;
-    queue->mp    = new_mp;
+    queue->head        = 0;
+    queue->queue       = new_queue;
+    queue->mp          = new_mp;
     queue->allocation  = new_size;
 
     return IB_OK;
@@ -282,7 +285,7 @@ ib_status_t ib_queue_push_back(
         }
     }
 
-    *(to_addr(queue, queue->size)) = element;
+    *(void **)to_addr(queue, queue->size) = element;
 
     ++(queue->size);
 
@@ -306,14 +309,14 @@ ib_status_t ib_queue_push_front(
     queue->head = (queue->head == 0)?  queue->allocation - 1 : queue->head - 1;
     ++(queue->size);
 
-    *(to_addr(queue, 0)) = element;
+    *(void **)to_addr(queue, 0) = element;
 
     return IB_OK;
 }
 
 ib_status_t ib_queue_pop_back(
-    ib_queue_t  *queue,
-    void       **element
+    ib_queue_t *queue,
+    void       *element
 )
 {
     assert(queue != NULL);
@@ -325,7 +328,7 @@ ib_status_t ib_queue_pop_back(
 
     --(queue->size);
 
-    *element = *to_addr(queue, queue->size);
+    *(void **)element = *(void **)to_addr(queue, queue->size);
 
     if (queue->size * 2 < queue->allocation) {
         ib_status_t rc = shrink(queue);
@@ -338,8 +341,8 @@ ib_status_t ib_queue_pop_back(
 }
 
 ib_status_t ib_queue_pop_front(
-    ib_queue_t  *queue,
-    void       **element
+    ib_queue_t *queue,
+    void       *element
 )
 {
     assert(queue != NULL);
@@ -349,7 +352,7 @@ ib_status_t ib_queue_pop_front(
         return IB_EINVAL;
     }
 
-    *element = *to_addr(queue, 0);
+    *(void **)element = *(void **)to_addr(queue, 0);
 
     queue->head = (queue->head == queue->allocation - 1)?  0 : queue->head + 1;
     --(queue->size);
@@ -365,8 +368,8 @@ ib_status_t ib_queue_pop_front(
 }
 
 ib_status_t ib_queue_peek(
-    const ib_queue_t  *queue,
-    void             **element
+    const ib_queue_t *queue,
+    void             *element
 )
 {
     assert(queue != NULL);
@@ -376,15 +379,15 @@ ib_status_t ib_queue_peek(
         return IB_EINVAL;
     }
 
-    *element = *to_addr(queue, 0);
+    *(void **)element = *(void **)to_addr(queue, 0);
 
     return IB_OK;
 }
 
 ib_status_t ib_queue_get(
-    const ib_queue_t  *queue,
-    size_t             index,
-    void             **element
+    const ib_queue_t *queue,
+    size_t            index,
+    void             *element
 )
 {
     assert(queue != NULL);
@@ -394,15 +397,15 @@ ib_status_t ib_queue_get(
         return IB_EINVAL;
     }
 
-    *element = *to_addr(queue, index);
+    *(void **)element = *(void **)to_addr(queue, index);
 
     return IB_OK;
 }
 
 ib_status_t ib_queue_set(
     ib_queue_t *queue,
-    size_t index,
-    void *element
+    size_t      index,
+    void       *element
 )
 {
     assert(queue != NULL);
@@ -411,7 +414,7 @@ ib_status_t ib_queue_set(
         return IB_EINVAL;
     }
 
-    *(to_addr(queue, index)) = element;
+    *(void **)to_addr(queue, index) = element;
 
     return IB_OK;
 }
