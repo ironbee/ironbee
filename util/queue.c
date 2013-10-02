@@ -468,7 +468,7 @@ ib_status_t ib_queue_dequeue_all_to_function(
 
     for (size_t i = 0; i < queue->size; ++i) {
         /* Get the element at index i. */
-        void *element = *to_addr(queue, i);
+        void *element = *(void **)to_addr(queue, i);
 
         /* Call the user's function. */
         fn(element, cbdata);
