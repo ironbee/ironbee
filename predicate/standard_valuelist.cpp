@@ -110,15 +110,6 @@ bool Cat::transform(
         return true;
     }
 
-    // Absorb similar children.
-    {
-        node_p replacement(new Cat());
-        if (flatten_children(replacement, me, name())) {
-            merge_graph.replace(me, replacement);
-            return true;
-        }
-    }
-
     return result;
 }
 

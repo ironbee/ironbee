@@ -119,7 +119,7 @@ Boolean
 
 All of these functions will evaluate at transformation time if possible.  E.g., `(and (false) v)` will transform into `(false)`; `(if (true) t f)` will transform into `t`.
 
-Furthermore, some amount of simplification will occur.  `true` and `false` will transform into `['']` and `[]`, respectively.  `or` and `and` will incorporate arguments that are the same function, e.g., `(or (or a b) c)` will transform into `(or a b c)`.  `or` and `and` will also reorder their arguments into a canonical order to allow further subexpression merging, e.g., `(or a b)` will merge with `(or b a)`.
+Furthermore, some amount of simplification will occur.  `true` and `false` will transform into `['']` and `[]`, respectively.  `or` and `and` will also reorder their arguments into a canonical order to allow further subexpression merging, e.g., `(or a b)` will merge with `(or b a)`.
 
 In contrast, the short circuited versions, `andSC` and `orSC` do not reorder.  They will incorporate arguments of the same function as them, but not those of the non-short-circuited versions.
 
@@ -179,7 +179,6 @@ Transformations
 : Will reorder children into a canonical order to aid in subexpression merging.
 : If any child is a the null literal, will replace itself with `null`.
 : Will remove any truthy literal children.
-: If any child is itself an `and` call, will replace that child with the child's children.
 
 Front End
 : Available via `+`.
@@ -197,7 +196,6 @@ Transformations
 : Will reorder children into a canonical order to aid in subexpression merging.
 : If any child is a truthy literal, will replace itself with a truthy value.
 : Will remove any null literal children.
-: If any child is itself an `or` call, will replace that child with the child's children.
 
 Front End
 : Available via `/`.
@@ -294,7 +292,6 @@ Notes
 : `cat` could add values from any argument immediately if it were not concerned with preserving order.  An additional, differently named, function to do just that may be added in the future.
 
 Transformations
-: If a child is itself a `cat` call, it will be replaced with its children.
 : If a child is a null literal, it will be removed.
 : If `cat` has a single argument, it will replace itself with its argument.
 : If `cat` has no arguments, it will replace itself with false.
