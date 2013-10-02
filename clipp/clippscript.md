@@ -268,10 +268,10 @@ Generate a Request Started event.
 **Options:**
 
 `raw`
-: The entire request line.
+: The entire request line.  Optional if 'method', 'uri', and 'protocol' are present.
 
 `method`, `uri`, `protocol`
-: The components of the request line.
+: The components of the request line.  Optional if `raw` is present.
 
 `pre_delay`
 : How long in seconds to delay before event.  Can be floating point.
@@ -287,10 +287,10 @@ Generate a Response Started event.
 **Options:**
 
 `raw`
-: The entire response line.
+: The entire response line.  Optional if 'protocol', 'status', and 'message' are present.
 
 `protocol`, `status`, `message`
-: The components of the response line.
+: The components of the response line.  Optional if `raw` is present.
 
 `pre_delay`
 : How long in seconds to delay before event.  Can be floating point.

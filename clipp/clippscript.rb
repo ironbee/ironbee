@@ -75,13 +75,12 @@ module ClippScript
   end
 
   def self.eval(what, &writer)
-    env = Environment.new(&writer)
     results = []
     env = Environment.new do |x|
       if writer
         writer.(x)
       else
-        results << v
+        results << x
       end
     end
 
@@ -218,6 +217,22 @@ private
     end
 
     def request_started(options = {})
+      options = options.dup
+      parsed_set = 0
+      parsed_set += 1 if options[:method]
+      parsed_set += 1 if options[:uri]
+      parsed_set += 1 if options[:protocol]
+      if parsed_set != 0 && parsed_set != 3
+        raise "Some but not all parsed options set."
+      end
+      if ! options[:raw]
+        raise "Missing raw and parsed fields." if parsed_set != 3
+        options[:raw] = [
+          options[:method], options[:uri], options[:protocol]
+        ].join(' ')
+      elsif parsed_set == 0
+        options[:method], options[:uri], options[:protocol] = options[:raw].split(' ')
+      end
       event(REQUEST_STARTED, options)
     end
 
@@ -288,6 +303,23 @@ private
     end
 
     def response_started(options = {})
+      options = options.dup
+      parsed_set = 0
+      parsed_set += 1 if options[:protocol]
+      parsed_set += 1 if options[:status]
+      parsed_set += 1 if options[:message]
+      if parsed_set != 0 && parsed_set != 3
+        raise "Some but not all parsed options set."
+      end
+      if ! options[:raw]
+        raise "Missing raw and parsed fields." if parsed_set != 3
+        options[:raw] = [
+          options[:protocol], options[:status], options[:message]
+        ].join(' ')
+      elsif parsed_set == 0
+        options[:protocol], options[:status], options[:message] = options[:raw].split(' ')
+      end
+
       event(RESPONSE_STARTED, options)
     end
 

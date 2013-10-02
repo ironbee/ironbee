@@ -276,10 +276,10 @@ end
 
 <dl>
 <dt><code>raw</code></dt>
-<dd>The entire request line.</dd>
+<dd>The entire request line. Optional if &#8216;method&#8217;, &#8216;uri&#8217;, and &#8216;protocol&#8217; are present.</dd>
 
 <dt><code>method</code>, <code>uri</code>, <code>protocol</code></dt>
-<dd>The components of the request line.</dd>
+<dd>The components of the request line. Optional if <code>raw</code> is present.</dd>
 
 <dt><code>pre_delay</code></dt>
 <dd>How long in seconds to delay before event. Can be floating point.</dd>
@@ -296,10 +296,10 @@ end
 
 <dl>
 <dt><code>raw</code></dt>
-<dd>The entire response line.</dd>
+<dd>The entire response line. Optional if &#8216;protocol&#8217;, &#8216;status&#8217;, and &#8216;message&#8217; are present.</dd>
 
 <dt><code>protocol</code>, <code>status</code>, <code>message</code></dt>
-<dd>The components of the response line.</dd>
+<dd>The components of the response line. Optional if <code>raw</code> is present.</dd>
 
 <dt><code>pre_delay</code></dt>
 <dd>How long in seconds to delay before event. Can be floating point.</dd>
