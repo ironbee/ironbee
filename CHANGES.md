@@ -24,6 +24,8 @@ IronBee v0.9.0
 
 - The long form of Var is now supported, allowing specification of a wait and final phase.
 
+- A variety of simplifying transformations have been added.
+
 **CLIPP**
 
 - Added ClippScript, a Ruby DSL for creating CLIPP inputs.  See `clipp/clippscript.md`.
