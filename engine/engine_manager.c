@@ -27,12 +27,10 @@
 #include <ironbee/engine_manager.h>
 
 #include "engine_manager_private.h"
-#include "engine_manager_log_private.h"
 
 #include <ironbee/config.h>
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
-#include <ironbee/engine_manager_testapi.h>
 #include <ironbee/list.h>
 #include <ironbee/lock.h>
 #include <ironbee/log.h>
@@ -121,91 +119,6 @@ void cleanup_locks(
 }
 
 /**
- * Set the engine manager's logger functions.
- *
- * Caller must assure exclusive access (e.g. call from manager initialization
- * or with the engine lock held).
- *
- * See ib_manager_create() for documentation on the callback function
- * arguments.
- *
- * @param[in] manager IronBee manager object
- * @param[in] logger_buf_fn Logger function (Formatted buffer version)
- * @param[in] logger_buf_cbdata Data to pass to logger function
- * @param[in] logger_flush_fn Logger flush function (or NULL)
- * @param[in] logger_flush_cbdata Data to pass to logger function
- */
-static void set_logger(
-    ib_manager_t              *manager,
-    ib_manager_log_buf_fn_t    logger_buf_fn,
-    void                      *logger_buf_cbdata,
-    ib_manager_log_flush_fn_t  logger_flush_fn,
-    void                      *logger_flush_cbdata
-)
-{
-    assert(manager != NULL);
-    assert(logger_buf_fn != NULL);
-
-    /* Set the logger info */
-    manager->log_buf_fn       = logger_buf_fn;
-    manager->log_buf_cbdata   = logger_buf_cbdata;
-    manager->log_flush_fn     = logger_flush_fn;
-    manager->log_flush_cbdata = logger_flush_cbdata;
-}
-
-/**
- * Log the current engine list for debugging.
- *
- * @param[in] manager IronBee engine manager
- * @param[in] level1 Logging level for the count line
- * @param[in] level2 Logging level for individual engines
- * @param[in] label Label for logging
- */
-static void log_engines(
-    ib_manager_t       *manager,
-    ib_logger_level_t   level1,
-    ib_logger_level_t   level2,
-    const char         *label
-)
-{
-    assert(manager != NULL);
-    assert(manager->logger != NULL);
-
-    ib_logger_level_t mgr_log_level = ib_logger_level_get(manager->logger);
-
-    /* Log the engine count. */
-    if (mgr_log_level >= level1) {
-        ib_manager_log(manager, level1,
-                       "ENGINE MANAGER[%d,%p]: "
-                       "%s; engine list (count=%zu, max=%zd)%c",
-                       getpid(), manager, label,
-                       manager->engine_count, manager->max_engines,
-                       (mgr_log_level >= level2) ? ':' : ' ');
-    }
-
-    /* Log the individual engines. */
-    if (mgr_log_level >= level2) {
-        for (size_t n = 0;  n < manager->engine_count;  ++n) {
-            ib_manager_engine_t *engine = manager->engine_list[n];
-            if (engine == NULL) {
-                ib_manager_log(manager, level2,
-                               "ENGINE MANAGER[%d,%p]:  #%zd: %p",
-                               getpid(), manager, n, NULL);
-            }
-            else {
-                ib_manager_log(manager, level2,
-                               "ENGINE MANAGER[%d,%p]:  #%zd: %p (%sref=%" PRIu64 ")",
-                               getpid(), manager, n,
-                               engine->engine,
-                               ( (engine == manager->engine_current) ?
-                                 "current " : "" ),
-                               engine->ref_count);
-            }
-        }
-    }
-}
-
-/**
  * Destroy IronBee engines
  *
  * This function assumes that the engine list lock has been locked by the
@@ -236,12 +149,6 @@ static ib_status_t destroy_engines(
     size_t num;
     size_t count;
 
-    /* Log a message */
-    ib_manager_log(manager, IB_LOG_INFO,
-                   "ENGINE MANAGER[%d,%p]: Destroying engines (%s)",
-                   getpid(), manager, opstr);
-    log_engines(manager, IB_LOG_INFO, IB_LOG_DEBUG3, "Before destroy");
-
     /* Destroy all non-current engines with zero reference count */
     for (num = 0;  num < manager->engine_count;  ++num) {
         const ib_manager_engine_t *wrapper = manager->engine_list[num];
@@ -261,16 +168,6 @@ static ib_status_t destroy_engines(
         default:
             assert(0);
         }
-        ib_manager_log(manager, IB_LOG_DEBUG,
-                       "ENGINE MANAGER[%d,%p]: "
-                       "%s engine %p (%s, %s, ref=%" PRIu64 ")",
-                       getpid(),
-                       manager,
-                       destroy ? "Destroying" : "Not destroying",
-                       engine,
-                       is_current ? "current" : "non-current",
-                       is_active ? "active" : "inactive",
-                       wrapper->ref_count);
 
         /* Destroy the engine */
         if (destroy) {
@@ -278,17 +175,11 @@ static ib_status_t destroy_engines(
 
             /* If it's current, NULL out the current pointer */
             if (wrapper == manager->engine_current) {
-                ib_manager_log(manager, IB_LOG_INFO,
-                               "ENGINE MANAGER[%d,%p]: Current engine now NULL",
-                               getpid(), manager);
                 manager->engine_current = NULL;
             }
 
             /* Note: This will destroy the engine wrapper object, too */
             ib_engine_destroy(engine);
-            ib_manager_log(manager, IB_LOG_TRACE,
-                           "ENGINE MANAGER[%d,%p]: Destroyed engine %p",
-                           getpid(), manager, engine);
 
             /* NULL out it's place in the list -- we'll consolidate the
              * list at the bottom */
@@ -297,7 +188,6 @@ static ib_status_t destroy_engines(
     }
 
     /* Consolidate the list */
-    log_engines(manager, IB_LOG_DEBUG3, IB_LOG_TRACE, "Before consolidation");
     count = manager->engine_count;
     for (num = 0;  num < count;  ++num) {
         while ( (manager->engine_count) &&
@@ -310,22 +200,9 @@ static ib_status_t destroy_engines(
             --(manager->engine_count);
         }
     }
-    log_engines(manager, IB_LOG_DEBUG3, IB_LOG_TRACE, "After consolidation");
-
-    /* Update the engine count */
-    ib_manager_log(manager, IB_LOG_INFO,
-                   "ENGINE MANAGER[%d,%p]: Finished destroying engines "
-                   "(op=%s, destroyed=%zu, count=%zu)",
-                   getpid(), manager, opstr, destroyed,
-                   manager->engine_count);
-    log_engines(manager, IB_LOG_DEBUG2, IB_LOG_DEBUG3, "Finished destroy");
 
     /* Confirm that all were destroyed */
-    if ( (op == IB_MANAGER_DESTROY_ALL) && (manager->engine_count != 0) ) {
-        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Destroy all");
-        ib_manager_log_flush(manager);
-        assert(manager->engine_count == 0);
-    }
+    assert(op == IB_MANAGER_DESTROY_ALL && manager->engine_count == 0);
 
     /* By definition, we have no inactive engines now. */
     manager->inactive_count = 0;
@@ -335,11 +212,6 @@ static ib_status_t destroy_engines(
 ib_status_t ib_manager_create(
     const ib_server_t         *server,
     size_t                     max_engines,
-    ib_manager_log_buf_fn_t    logger_buf_fn,
-    void                      *logger_buf_cbdata,
-    ib_manager_log_flush_fn_t  logger_flush_fn,
-    void                      *logger_flush_cbdata,
-    ib_logger_level_t          logger_level,
     ib_manager_t             **pmanager
 )
 {
@@ -397,26 +269,6 @@ ib_status_t ib_manager_create(
     manager->engine_list    = engine_list;
     manager->max_engines    = max_engines;
 
-    rc = ib_logger_create(&(manager->logger), logger_level, mpool);
-    if (rc != IB_OK) {
-        destroy_locks(manager);
-        goto cleanup;
-    }
-
-    /* Set the logger */
-    set_logger(
-        manager,
-        logger_buf_fn,
-        logger_buf_cbdata,
-        logger_flush_fn,
-        logger_flush_cbdata
-    );
-
-    /* Log */
-    ib_manager_log(manager, IB_LOG_INFO,
-                   "ENGINE MANAGER[%d,%p]: Manager created",
-                   getpid(), manager);
-
     /* Hand the new manager off to the caller. */
     *pmanager = manager;
 
@@ -437,27 +289,13 @@ ib_status_t ib_manager_destroy(
 {
     ib_status_t  rc;
 
-    ib_manager_log(manager, IB_LOG_INFO,
-                   "ENGINE MANAGER[%d,%p]: Destroy manager",
-                   getpid(), manager);
-
     /* Destroy engines */
     rc = destroy_engines(manager, IB_MANAGER_DESTROY_ALL, "all");
     if (rc != IB_OK) {
         goto cleanup;
     }
 
-    /* Any engines not destroyed? */
-    if (manager->engine_count != 0) {
-        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Destroy manager");
-        ib_manager_log_flush(manager);
-        assert(manager->engine_count == 0);
-    }
-
-    /* Done */
-    ib_manager_log(manager, IB_LOG_INFO,
-                   "ENGINE MANAGER[%d,%p]: Destroying manager",
-                   getpid(), manager);
+    assert(manager->engine_count == 0);
 
     /* Destroy the manager by destroying it's memory pool. */
     ib_mpool_destroy(manager->mpool);
@@ -468,9 +306,6 @@ ib_status_t ib_manager_destroy(
     return IB_OK;
 
 cleanup:
-    ib_manager_log(manager, IB_LOG_NOTICE,
-                   "ENGINE MANAGER[%d,%p]: Not destroying manager: %s",
-                   getpid(), manager, ib_status_to_string(rc));
     return rc;
 }
 
@@ -505,11 +340,7 @@ static ib_status_t register_engine(
     }
 
     /* Because of the creation lock, we should always have another slot */
-    if (manager->engine_count >= manager->max_engines) {
-        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Register engine");
-        ib_manager_log_flush(manager);
-        assert(manager->engine_count < manager->max_engines);
-    }
+    assert(manager->engine_count < manager->max_engines);
 
     /* Store it in the list */
     manager->engine_list[manager->engine_count] = engine;
@@ -517,11 +348,6 @@ static ib_status_t register_engine(
 
     /* Make this engine current */
     manager->engine_current = engine;
-    ib_manager_log(manager, IB_LOG_INFO,
-                   "ENGINE MANAGER[%d,%p]: Current IronBee engine -> %p %s",
-                   getpid(), manager, engine->engine,
-                   ib_engine_instance_uuid_str(engine->engine));
-    log_engines(manager, IB_LOG_DEBUG, IB_LOG_DEBUG2, "Created engine");
 
     /* Destroy all non-current engines with zero reference count */
     if (manager->engine_count > 1) {
@@ -555,27 +381,11 @@ ib_status_t ib_manager_engine_create(
     /* Are we already at the max # of engines? */
     if (manager->engine_count == manager->max_engines) {
         rc = IB_DECLINED;
-        ib_manager_log(manager, IB_LOG_DEBUG,
-                       "ENGINE MANAGER[%d,%p]: "
-                       "Not creating engine because limit reached "
-                       "(count=%zd, limit=%zd)",
-                       getpid(), manager,
-                       manager->engine_count, manager->max_engines);
-        log_engines(manager, IB_LOG_DEBUG3, IB_LOG_TRACE, "Limit encountered");
         goto cleanup;
     }
 
     /* Sanity check */
-    if (manager->engine_count >= manager->max_engines) {
-        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Engine create");
-        ib_manager_log_flush(manager);
-        assert(manager->engine_count < manager->max_engines);
-    }
-
-    ib_manager_log(manager, IB_LOG_INFO,
-                   "ENGINE MANAGER[%d,%p]: Creating IronBee engine "
-                   "with configuration file \"%s\"",
-                   getpid(), manager, config_file);
+    assert(manager->engine_count < manager->max_engines);
 
     /* Create the engine */
     rc = ib_engine_create(&engine, manager->server);
@@ -590,45 +400,15 @@ ib_status_t ib_manager_engine_create(
         goto cleanup;
     }
 
-    /* The basic engine is created */
-    ib_manager_log(manager, IB_LOG_INFO,
-                   "ENGINE MANAGER[%d,%p]: Created IronBee engine %p",
-                   getpid(), manager, engine);
-
     /* Set the engine's logger function */
     rc = ib_logger_writer_clear(ib_engine_logger_get(engine));
     if (rc != IB_OK) {
         goto cleanup;
     }
 
-    /* Tell the engine to use the manager's logging routines. */
-    rc = ib_logger_writer_add(
-        ib_engine_logger_get(engine),
-        manager_logger_open,
-        manager,
-        manager_logger_close,
-        manager,
-        manager_logger_reopen,
-        manager,
-        manager_logger_format,
-        manager,
-        manager_logger_record,
-        manager
-    );
-    if (rc != IB_OK) {
-        goto cleanup;
-    }
-
-    ib_manager_log(manager, IB_LOG_INFO,
-                   "Starting %s", IB_PRODUCT_VERSION_NAME);
-
     /* Create the configuration parser */
     rc = ib_cfgparser_create(&parser, engine);
     if (rc != IB_OK) {
-        ib_manager_log(manager, IB_LOG_ERROR,
-                       "ENGINE MANAGER[%d,%p]: "
-                       "Failed to create parser for engine %p: %s",
-                       getpid(), manager, engine, ib_status_to_string(rc));
         goto cleanup;
     }
 
@@ -636,10 +416,6 @@ ib_status_t ib_manager_engine_create(
      * configuration context. */
     rc = ib_engine_config_started(engine, parser);
     if (rc != IB_OK) {
-        ib_manager_log(manager, IB_LOG_ERROR,
-                       "ENGINE MANAGER[%d,%p]: "
-                       "Failed to start configuration for engine %p: %s",
-                       getpid(), manager, engine, ib_status_to_string(rc));
         goto cleanup;
     }
 
@@ -649,22 +425,11 @@ ib_status_t ib_manager_engine_create(
 
     /* Parse the configuration */
     rc = ib_cfgparser_parse(parser, config_file);
-    if (rc != IB_OK) {
-        ib_manager_log(manager, IB_LOG_ERROR,
-                       "ENGINE MANAGER[%d,%p]: "
-                       "Failed to parse configuration \"%s\" for engine %p: %s",
-                       getpid(), manager,
-                       config_file, engine, ib_status_to_string(rc));
-    }
 
     /* Report the status to the engine */
     rc2 = ib_engine_config_finished(engine);
-    if (rc2 != IB_OK) {
-        ib_manager_log(manager, IB_LOG_ERROR,
-                       "ENGINE MANAGER[%d,%p]: "
-                       "Failed to finish configuration for engine %p: %s",
-                       getpid(), manager, engine, ib_status_to_string(rc));
-    }
+
+    /* Merge rc2 into rc. */
     if ( (rc2 != IB_OK) && (rc == IB_OK) ) {
         rc = rc2;
     }
@@ -689,10 +454,6 @@ cleanup:
 
     /* If something failed, destroy the engine that may have been created */
     if (rc != IB_OK) {
-        ib_manager_log(manager, IB_LOG_ERROR,
-                       "ENGINE MANAGER[%d,%p]: "
-                       "Failed to create IronBee engine: %s",
-                       getpid(), manager, ib_status_to_string(rc));
         if (engine != NULL) {
             ib_engine_destroy(engine);
             engine = NULL;
@@ -738,16 +499,6 @@ ib_status_t ib_manager_engine_acquire(
     *pengine = engine->engine;
 
 cleanup:
-    ib_manager_log(manager, IB_LOG_TRACE,
-                   "ENGINE MANAGER[%d,%p]: "
-                   "Acquire engine %p %s [ref=%"PRIu64"]: %s",
-                   getpid(),
-                   manager,
-                   (engine == NULL) ? NULL : engine->engine,
-                   (engine == NULL) ? "" : ib_engine_instance_uuid_str(engine->engine),
-                   (engine == NULL) ? 0 : engine->ref_count,
-                   ib_status_to_string(rc));
-
     /* Release any locks */
     ib_lock_unlock(&manager->engines_lock);
     return rc;
@@ -776,12 +527,7 @@ ib_status_t ib_manager_engine_release(
     if ( (manager->engine_current != NULL) &&
          (engine == manager->engine_current->engine) )
     {
-        if (manager->engine_current->ref_count == 0) {
-            log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING,
-                        "Engine release");
-            ib_manager_log_flush(manager);
-            assert(manager->engine_current->ref_count > 0);
-        }
+        assert(manager->engine_current->ref_count > 0);
         engptr = manager->engine_current;
         --(engptr->ref_count);
         goto cleanup;
@@ -809,23 +555,8 @@ ib_status_t ib_manager_engine_release(
         }
     }
 
-    /* Something is *very* wrong if we don't have this engine in our list! */
-    if(engptr == NULL) {
-        ib_manager_log(manager, IB_LOG_CRITICAL,
-                       "ENGINE MANAGER[%d,%p]: "
-                       "Release engine %p: engine not found",
-                       getpid(), manager, engine);
-        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Can't find engine");
-        ib_manager_log_flush(manager);
-        assert(engptr != NULL);
-    }
-
     /* Decrement the reference count. */
-    if (engptr->ref_count == 0) {
-        log_engines(manager, IB_LOG_ERROR, IB_LOG_WARNING, "Engine release");
-        ib_manager_log_flush(manager);
-        assert(engptr->ref_count > 0);
-    }
+    assert(engptr->ref_count > 0);
     --(engptr->ref_count);
 
     /* If we hit zero, update the inactive count. */
@@ -837,113 +568,8 @@ ib_status_t ib_manager_engine_release(
     manager->inactive_count = inactive;
 
 cleanup:
-    /* Log while we have the log */
-    ib_manager_log(manager, IB_LOG_TRACE,
-                   "ENGINE MANAGER[%d,%p]: "
-                   "Release engine %p [ref=%"PRIu64"] inactive=%zd: %s",
-                   getpid(),
-                   manager,
-                   engine,
-                   engptr == NULL ? 0 : engptr->ref_count,
-                   manager->inactive_count,
-                   ib_status_to_string(rc));
-
     /* Release any locks */
     ib_lock_unlock(&manager->engines_lock);
-    return rc;
-}
-
-ib_status_t ib_manager_disable_current(
-    ib_manager_t *manager
-)
-{
-    assert(manager != NULL);
-
-    ib_status_t rc;
-
-    /* Grab the engine list lock */
-    rc = ib_lock_lock(&manager->engines_lock);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Log what we're doing. */
-    ib_manager_log(manager, IB_LOG_DEBUG,
-                   "ENGINE MANAGER[%d]: Disabling current engine %p",
-                   getpid(), manager->engine_current);
-
-    /* If this makes an otherwise active engine become inactive, increment the
-     * manager's inactive count */
-    if ( (manager->engine_current != NULL) &&
-         (manager->engine_current->ref_count == 0) )
-    {
-        ++(manager->inactive_count);
-    }
-
-    /* NULL the current engine */
-    manager->engine_current = NULL;
-
-    /* Done */
-    ib_lock_unlock(&manager->engines_lock);
-    return rc;
-}
-
-ib_status_t ib_manager_destroy_engines(
-    ib_manager_t           *manager,
-    ib_manager_destroy_ops  op,
-    size_t                 *pcount
-)
-{
-    assert(manager != NULL);
-    assert( (op == IB_MANAGER_DESTROY_INACTIVE) ||
-            (op == IB_MANAGER_DESTROY_ALL) );
-    ib_status_t  rc = IB_OK;
-    const char  *opstr;
-
-    /* Grab the engine list lock */
-    rc = ib_lock_lock(&manager->engines_lock);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /*
-     * If this is a cleanup, and we have no inactive engines to cleanup,
-     * do nothing.  Otherwise, grab the engine list lock, and go to town.
-     */
-    if ( (op == IB_MANAGER_DESTROY_INACTIVE) &&
-         (manager->inactive_count == 0) )
-    {
-        goto cleanup;
-    }
-
-    /* Get the operation string */
-    opstr = (op == IB_MANAGER_DESTROY_ALL) ? "ALL" : "INACTIVE";
-    ib_manager_log(manager, IB_LOG_DEBUG,
-                   "ENGINE MANAGER[%d,%p]: Destroy engines (op=%s)",
-                   getpid(), manager, opstr);
-
-    /* Destroy engines */
-    rc = destroy_engines(manager, op, opstr);
-
-    /* Done */
-    ib_manager_log(manager, IB_LOG_DEBUG,
-                   "ENGINE MANAGER[%d,%p]: "
-                   "Destroy engines (op=%s count=%zd): %s",
-                   getpid(),
-                   manager,
-                   opstr,
-                   manager->engine_count,
-                   ib_status_to_string(rc));
-
-cleanup:
-    /* Return the count to the caller if requested */
-    if (pcount != NULL) {
-        *pcount = manager->engine_count;
-    }
-
-    /* Release the engine list lock */
-    ib_lock_unlock(&manager->engines_lock);
-
     return rc;
 }
 
@@ -959,12 +585,25 @@ ib_status_t ib_manager_engine_cleanup(
         return IB_OK;
     }
 
-    rc = ib_manager_destroy_engines(manager, IB_MANAGER_DESTROY_INACTIVE, NULL);
-    ib_manager_log(manager, IB_LOG_INFO,
-                   "ENGINE MANAGER[%d,%p]: Cleanup engines [count=%zu]: %s",
-                   getpid(), manager,
-                   manager->engine_count,
-                   ib_status_to_string(rc));
+    /* Grab the engine list lock */
+    rc = ib_lock_lock(&manager->engines_lock);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = destroy_engines(manager, IB_MANAGER_DESTROY_INACTIVE, NULL);
+    if (rc != IB_OK) {
+        ib_lock_unlock(&manager->engines_lock);
+        return rc;
+    }
+    else {
+        /* Grab the engine list lock */
+        rc = ib_lock_unlock(&manager->engines_lock);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     return rc;
 }
 
@@ -982,24 +621,4 @@ size_t ib_manager_engine_count_inactive(
 {
     assert(manager != NULL);
     return manager->inactive_count;
-}
-
-void ib_manager_set_logger(
-    ib_manager_t              *manager,
-    ib_manager_log_buf_fn_t    logger_buf_fn,
-    void                      *logger_buf_cbdata,
-    ib_manager_log_flush_fn_t  logger_flush_fn,
-    void                      *logger_flush_cbdata
-)
-{
-    assert(manager != NULL);
-
-    /* set_logger() does the real work */
-    set_logger(
-        manager,
-        logger_buf_fn,
-        logger_buf_cbdata,
-        logger_flush_fn,
-        logger_flush_cbdata
-    );
 }

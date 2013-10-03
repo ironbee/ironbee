@@ -148,7 +148,6 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/dso.h>',
   '<ironbee/engine.h>',
   '<ironbee/engine_manager.h>',
-  '<ironbee/engine_manager_testapi.h>',
   '<ironbee/engine_state.h>',
   '<ironbee/engine_types.h>',
   '<ironbee/escape.h>',

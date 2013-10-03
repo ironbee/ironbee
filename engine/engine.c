@@ -814,7 +814,8 @@ const char *ib_engine_instance_uuid_str(
 }
 
 ib_status_t ib_conn_create(ib_engine_t *ib,
-                           ib_conn_t **pconn, void *server_ctx)
+                           ib_conn_t **pconn,
+                           void *server_ctx)
 {
     ib_mpool_t *pool;
     ib_status_t rc;

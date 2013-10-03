@@ -10,7 +10,6 @@ EXTRA_DIST = \
     core_audit_private.h         \
     engine_private.h             \
     engine_manager_private.h     \
-    engine_manager_log_private.h \
     rule_engine_private.h        \
     rule_logger_private.h        \
     state_notify_private.h
@@ -33,7 +32,6 @@ libironbee_la_SOURCES =                  \
     core_vars.c                          \
     engine.c                             \
     engine_manager.c                     \
-    engine_manager_log.c                 \
     filter.c                             \
     log.c                                \
     logger.c                             \

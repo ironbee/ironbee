@@ -69,13 +69,6 @@ struct ib_manager_t {
     /* The locks themselves */
     ib_lock_t             engines_lock;    /**< The engine list lock */
     ib_lock_t             creation_lock;   /**< Serialize engine creation */
-
-    /* Logging */
-    ib_logger_t              *logger;           /**< Logger for manager. */
-    ib_manager_log_buf_fn_t   log_buf_fn;       /**< Svr plugin logger. */
-    void                     *log_buf_cbdata;   /**< Svr log cbdata. */
-    ib_manager_log_flush_fn_t log_flush_fn;     /**< Svr plugin  flush. */
-    void                     *log_flush_cbdata; /**< Svr flush cbdata. */
 };
 
 /** @} */

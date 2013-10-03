@@ -54,6 +54,14 @@ extern "C" {
 /* Engine Manager type declarations */
 
 /**
+ * Engine manager engine destroy operations.
+ */
+typedef enum {
+    IB_MANAGER_DESTROY_INACTIVE,    /**< Destroy only inactive engines */
+    IB_MANAGER_DESTROY_ALL,         /**< Destroy all engines */
+} ib_manager_destroy_ops;
+
+/**
  * The engine manager.
  *
  * An engine manager is created via ib_manager_create().
@@ -75,36 +83,6 @@ extern "C" {
  *
  */
 typedef struct ib_manager_t ib_manager_t;
-
-/**
- * Log record created by manager_logger_format() and passed to servers.
- */
-typedef struct ib_manager_logger_record_t {
-    ib_logger_level_t         level;  /**< Log level of the message. */
-    const uint8_t            *msg;    /**< User message. */
-    size_t                    msg_sz; /**< Size of message. */
-} ib_manager_logger_record_t;
-
-
-/**
- * Engine manager logger callback (formatted buffer version).
- *
- * @param[in] rec Formatted buffer
- * @param[in] cbdata Callback data
- */
-typedef void (*ib_manager_log_buf_fn_t)(
-    ib_manager_logger_record_t *rec,
-    void                       *cbdata
-);
-
-/**
- * Engine manager log flush callback
- *
- * @param[in] cbdata Callback data
- */
-typedef void (*ib_manager_log_flush_fn_t)(
-    void *cbdata
-);
 
 /* Engine Manager API */
 
@@ -145,11 +123,6 @@ typedef void (*ib_manager_log_flush_fn_t)(
 ib_status_t DLL_PUBLIC ib_manager_create(
     const ib_server_t          *server,
     size_t                      max_engines,
-    ib_manager_log_buf_fn_t     logger_buf_fn,
-    void                       *logger_buf_cbdata,
-    ib_manager_log_flush_fn_t   logger_flush_fn,
-    void                       *logger_flush_cbdata,
-    ib_logger_level_t           logger_level,
     ib_manager_t              **pmanager
 );
 

@@ -113,12 +113,6 @@
  *  $ cat /dev/null | nc localhost 8180
  */
 
-#ifdef ATS_DEBUG_ENGINE_MANAGER
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <fcntl.h>
-#endif
-
 #include <sys/socket.h>
 #include <netdb.h>
 
@@ -139,10 +133,6 @@
 #include <ironbee/regex.h>
 #include <ironbee/string.h>
 
-#ifdef ATS_DEBUG_ENGINE_MANAGER
-#include <ironbee/engine_manager_testapi.h>
-#endif
-
 static void addr2str(const struct sockaddr *addr, char *str, int *port);
 
 #define ADDRSIZE 48 /* what's the longest IPV6 addr ? */
@@ -159,10 +149,6 @@ typedef struct {
     const char      *log_file;       /**< IronBee log file */
     int              log_level;      /**< IronBee log level */
     bool             log_disable;    /**< Disable logging? */
-#ifdef ATS_DEBUG_ENGINE_MANAGER
-    bool             shutdown;       /**< In shutdown state? */
-    const char      *debug_file;     /**< Debugging file */
-#endif
 } module_data_t;
 
 /* Global module data */
@@ -175,10 +161,6 @@ static module_data_t module_data =
     NULL,                            /* .log_file */
     IB_LOG_WARNING,                  /* .log_level */
     false,                           /* .log_disable */
-#ifdef ATS_DEBUG_ENGINE_MANAGER
-    false,                           /* .shutdown */
-    NULL,                            /* .debug_file */
-#endif
 };
 
 typedef enum {
@@ -1976,10 +1958,6 @@ static ib_status_t ironbee_conn_init(
     return IB_OK;
 }
 
-#ifdef ATS_DEBUG_ENGINE_MANAGER
-static void check_command_file(module_data_t *mod_data);
-#endif
-
 /**
  * Plugin for the IronBee ATS.
  *
@@ -2001,10 +1979,6 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     ib_txn_ctx *txndata;
     ib_ssn_ctx *ssndata;
     ib_hdr_outcome status;
-
-#ifdef ATS_DEBUG_ENGINE_MANAGER
-    check_command_file(&module_data);
-#endif
 
     TSDebug("ironbee", "Entering ironbee_plugin with %d", event);
     switch (event) {
@@ -2465,12 +2439,6 @@ static void ibexit(void)
         TSTextLogObjectDestroy(mod_data->logger);
         mod_data->logger = NULL;
     }
-#ifdef ATS_DEBUG_ENGINE_MANAGER
-    if (mod_data->debug_file != NULL) {
-        free((void *)mod_data->debug_file);
-        mod_data->debug_file = NULL;
-    }
-#endif
     if (mod_data->log_file != NULL) {
         free((void *)mod_data->log_file);
         mod_data->log_file = NULL;
@@ -2518,12 +2486,6 @@ static ib_status_t read_ibconf(
         case 'm':
             mod_data->max_engines = atoi(optarg);
             break;
-#ifdef ATS_DEBUG_ENGINE_MANAGER
-        case 'd':
-            mod_data->debug_file = strdup(optarg);
-            TSDebug("ironbee", "Debug file: \"%s\"", mod_data->debug_file);
-            break;
-#endif
         default:
             TSError("[ironbee] Unrecognised option -%c ignored.\n", optopt);
             break;
@@ -2677,251 +2639,3 @@ Lerror:
     TSError("[ironbee] Unable to initialize plugin (disabled).\n");
 }
 
-#ifdef ATS_DEBUG_ENGINE_MANAGER
-/**
- * Check and read the debug command file.
- *
- * Attempts to read the debug command file, and, if it exists, parse
- * the command in the file and execute it.  See documentation at the
- * top of this file for a list of the commands.
- *
- * @param[in] mod_data Module data object
- */
-static void check_command_file(module_data_t *mod_data)
-{
-    ib_status_t  rc;
-    int          fd;
-    char         buf[64];
-    size_t       bytes;
-
-    if ( (mod_data == NULL) || (mod_data->debug_file == NULL) ) {
-        return;
-    }
-
-    /* Attempt to read the file */
-    fd = open(mod_data->debug_file, O_RDONLY);
-    if (fd <= 0) {
-        return;
-    }
-    bytes = read(fd, buf, sizeof(buf)-1);
-    close(fd);
-    if (bytes == 0) {
-        return;
-    }
-    unlink(mod_data->debug_file);
-    buf[bytes] = '\0';
-    TSDebug("ironbee", "command \"%s\"", buf);
-
-    /* "Config:/path/to/new/config" command? */
-    if ( (strncasecmp(buf, "new-config:", 11) == 0) && (strlen(buf) > 11) ) {
-        mod_data->config_file = strdup(buf+7);
-        TSDebug("ironbee", "Configuration file set to \"%s\"\n",
-                mod_data->config_file);
-    }
-
-    /* Command to manager to create a new? engine */
-    else if (strncasecmp(buf, "manager-create-engine", 21) == 0) {
-        if (mod_data->manager == NULL) {
-            TSDebug("ironbee", "No manager to Create engine!\n");
-            goto done;
-        }
-
-        TSDebug("ironbee", "Creating new engine\n");
-        rc = ib_manager_engine_create(mod_data->manager, mod_data->config_file);
-        if (rc != IB_OK) {
-            TSError("Failed to create new engine: %s\n",
-                    ib_status_to_string(rc));
-        }
-        else {
-            TSDebug("ironbee", "Created new engine\n");
-        }
-    }
-
-    /* Command to manager to "cleanup"? */
-    else if (strncasecmp(buf, "manager-cleanup-engines", 23) == 0) {
-        mod_data->shutdown = true;
-        if (mod_data->manager == NULL) {
-            TSDebug("ironbee", "No manager to cleanup!\n");
-            goto done;
-        }
-        TSDebug("ironbee", "Cleaning up engines\n");
-        ib_manager_engine_cleanup(mod_data->manager);
-    }
-
-    /* Command to manager to "disable"? */
-    else if (strncasecmp(buf, "manager-disable-current", 23) == 0) {
-        mod_data->shutdown = true;
-        if (mod_data->manager == NULL) {
-            TSDebug("ironbee", "No manager to disable!\n");
-            goto done;
-        }
-        TSDebug("ironbee", "Disabling current engine\n");
-        ib_manager_disable_current(mod_data->manager);
-    }
-
-    /* "Destroy engines" command? */
-    else if (strncasecmp(buf, "manager-destroy-engines", 23) == 0) {
-        ib_manager_destroy_ops  op;
-        const char             *opstr;
-        ib_manager_t           *manager = mod_data->manager;
-        size_t                  count;
-
-        if (manager == NULL) {
-            TSDebug("ironbee", "Destroy engines: No manager!\n");
-            goto done;
-        }
-
-        if (strcasestr(buf, ":inactive") != NULL) {
-            op = IB_MANAGER_DESTROY_INACTIVE;
-            opstr = "inactive";
-        }
-        else if (strcasestr(buf, ":all") != NULL) {
-            op = IB_MANAGER_DESTROY_ALL;
-            opstr = "all";
-        }
-        else {
-            op = IB_MANAGER_DESTROY_INACTIVE;
-            opstr = "inactive";
-        }
-
-        TSDebug("ironbee", "Destroying manager (%s)\n", opstr);
-        if (mod_data->logger != NULL) {
-            TSTextLogObjectFlush(mod_data->logger);
-        }
-        rc = ib_manager_destroy_engines(manager, op, &count);
-        if (rc == IB_OK) {
-            TSDebug("ironbee", "Engines destroyed; count now %zd\n", count);
-            mod_data->manager = NULL;
-        }
-        else {
-            TSDebug("ironbee", "Failed to destroy manager engines: %s\n",
-                    ib_status_to_string(rc));
-        }
-    }
-
-    /* "Flush log" command? */
-    else if (strncasecmp(buf, "server-log-flush", 16) == 0) {
-        if (mod_data->logger != NULL) {
-            TSTextLogObjectFlush(mod_data->logger);
-        }
-    }
-
-    /* "Destroy manager" command? */
-    else if (strncasecmp(buf, "server-destroy-manager", 22) == 0) {
-        ib_manager_t *manager = mod_data->manager;
-
-        if (manager == NULL) {
-            TSDebug("ironbee", "No manager to destroy!\n");
-            goto done;
-        }
-
-        TSDebug("ironbee", "Destroying manager\n");
-        if (mod_data->logger != NULL) {
-            TSTextLogObjectFlush(mod_data->logger);
-        }
-        rc = ib_manager_destroy(manager);
-        if (rc == IB_OK) {
-            TSDebug("ironbee", "Manager destroyed\n");
-            mod_data->manager = NULL;
-        }
-        else {
-            TSDebug("ironbee", "Manager not destroyed: %s\n",
-                    ib_status_to_string(rc));
-        }
-    }
-
-    /* Command to create a manager */
-    else if (strncasecmp(buf, "server-create-manager", 21) == 0) {
-        if (mod_data->manager != NULL) {
-            TSDebug("ironbee", "Manager already exists!\n");
-            goto done;
-        }
-
-        TSDebug("ironbee", "Creating new engine manager\n");
-        rc = ib_manager_create(&ibplugin,             /* Server object */
-                               mod_data->max_engines, /* Default max */
-                               ironbee_logger,        /* Logger buf function */
-                               mod_data,              /* cbdata: module data */
-                               ironbee_logger_flush,  /* Logger flush function*/
-                               mod_data,              /* cbdata: module data */
-                               mod_data->log_level,   /* IB log level */
-                               &(mod_data->manager)); /* Engine Manager */
-        if (rc != IB_OK) {
-            TSError("Failed to create new manager: %s\n",
-                    ib_status_to_string(rc));
-        }
-        else {
-            TSDebug("ironbee", "New engine manager created (%p)\n",
-                    mod_data->manager);
-        }
-    }
-
-    /* "Shutdown manager" command? */
-    else if (strncasecmp(buf, "server-shutdown-manager", 23) == 0) {
-        ib_manager_t *manager = mod_data->manager;
-        size_t        count;
-
-        if (manager == NULL) {
-            TSDebug("ironbee", "No manager to shut down!\n");
-            goto done;
-        }
-
-        /* Destroy engines */
-        rc = ib_manager_destroy_engines(manager,
-                                        IB_MANAGER_DESTROY_INACTIVE,
-                                        &count);
-
-        if (rc != IB_OK) {
-            TSDebug("ironbee", "Failed to destroy engines: %s\n",
-                    ib_status_to_string(rc));
-            goto done;
-        }
-        if (count != 0) {
-            TSDebug("ironbee", "Not all engines destroyed (count=%zd)\n",
-                    count);
-            goto done;
-        }
-
-        TSDebug("ironbee", "All engines destroyed, destroying manager\n");
-        if (mod_data->logger != NULL) {
-            TSTextLogObjectFlush(mod_data->logger);
-        }
-        rc = ib_manager_destroy(manager);
-        if (rc == IB_OK) {
-            TSDebug("ironbee", "Manager destroyed\n");
-            mod_data->manager = NULL;
-        }
-        else {
-            TSDebug("ironbee", "Manager not destroyed: %s\n",
-                    ib_status_to_string(rc));
-        }
-    }
-
-    /* Server "Exit" command? */
-    else if (strncasecmp(buf, "server-exit", 11) == 0) {
-        TSDebug("ironbee", "Exiting\n");
-        free((void *)mod_data->debug_file);
-        mod_data->debug_file = NULL;
-        exit(0);
-    }
-
-    /* NOP command? */
-    else if (strncasecmp(buf, "nop", 3) == 0) {
-        /* Do nothing */
-    }
-
-    else {
-        TSDebug("ironbee", "Unknown command in \"%s\" \"%s\"\n",
-                mod_data->debug_file, buf);
-    }
-
-    /* All done */
-done:
-
-    /* Flush log */
-    if (mod_data->logger != NULL) {
-        TSTextLogObjectFlush(mod_data->logger);
-    }
-
-}
-#endif
