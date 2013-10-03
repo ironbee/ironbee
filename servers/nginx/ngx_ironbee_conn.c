@@ -134,7 +134,7 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx)
 
     rctx->conn = ngx_palloc(rctx->r->connection->pool, sizeof(ngxib_conn_t));
     if (rctx->conn == NULL) {
-        ib_log_emerg_tx(rctx->tx, "Failed to alloc.  Probably crashing!");
+        ib_log_emergency_tx(rctx->tx, "Failed to alloc.  Probably crashing!");
         ngxib_release_engine(ib, rctx->r->connection->log);
         cleanup_return NULL;
     }
