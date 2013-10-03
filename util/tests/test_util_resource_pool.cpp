@@ -46,11 +46,11 @@ extern "C" {
     };
     typedef struct cbdata_t cbdata_t;
 
-    ib_status_t create_fn(void **resource, void *data) {
+    ib_status_t create_fn(void *resource, void *data) {
         cbdata_t *cbdata = reinterpret_cast<cbdata_t *>(data);
         resource_t *tmp_r = reinterpret_cast<resource_t *>(
             ib_mpool_calloc(cbdata->mp, sizeof(*tmp_r), 1));
-        *resource = tmp_r;
+        *(void **)resource = tmp_r;
         return IB_OK;
     }
 

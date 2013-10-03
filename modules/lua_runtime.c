@@ -441,7 +441,7 @@ ib_status_t modlua_reload_ctx_except_main(
     return IB_OK;
 }
 
-ib_status_t lua_pool_create_fn(void **resource, void *cbdata)
+ib_status_t lua_pool_create_fn(void *resource, void *cbdata)
 {
     assert(resource != NULL);
     assert(cbdata != NULL);
@@ -492,7 +492,7 @@ ib_status_t lua_pool_create_fn(void **resource, void *cbdata)
         return rc;
     }
 
-    *resource = modlua_rt;
+    *(void **)resource = modlua_rt;
 
     return IB_OK;
 }
