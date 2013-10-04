@@ -381,23 +381,40 @@ if $0 == __FILE__
   require 'hash_to_pb'
   require 'json'
 
-  if ARGV.empty? || ARGV.length > 2
-    puts "Usage: #{$0} [option] <file>"
+  if ARGV.empty?
+    puts "Usage: #{$0} [option] <file> [-- ...]"
+    puts "Any arguments after -- are left for clippscripts to interpret."
     exit 1
   end
 
   output_type = 'pb'
-  if ARGV.length == 2
-    case op = ARGV.shift
+  if ARGV[0] && ARGV[0][0..1] == "--"
+    op = ARGV.shift
+    case op
     when '--pb'   then output_type = 'pb'
     when '--json' then output_type = 'json'
     when '--ruby' then output_type = 'ruby'
     else
       puts "Unknown option: #{op}"
+      exit 1
     end
   end
 
-  text = IO::read(ARGV[0])
+  input_path = ARGV.shift
+  if ! input_path
+    puts "Missing input path."
+    exit 1
+  end
+
+  if ! ARGV.empty?
+    arg = ARGV.shift
+    if arg != "--"
+      puts "Unknown option: #{arg}"
+      exit 1
+    end
+  end
+
+  text = IO::read(input_path)
 
   case output_type
   when 'pb' then
