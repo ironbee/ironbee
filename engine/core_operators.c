@@ -312,10 +312,10 @@ typedef struct numop_instance_data_t numop_instance_data_t;
  */
 static
 ib_status_t strop_create(
-    ib_context_t  *ctx,
-    const char    *parameters,
-    void         **instance_data,
-    void          *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     assert(ctx != NULL);
@@ -351,7 +351,7 @@ ib_status_t strop_create(
         return rc;
     }
 
-    *instance_data = data;
+    *(ib_var_expand_t **)instance_data = data;
 
     return IB_OK;
 }
@@ -588,10 +588,10 @@ ib_status_t op_contains_execute(
  */
 static
 ib_status_t op_match_create(
-    ib_context_t  *ctx,
-    const char    *parameters,
-    void         **instance_data,
-    void          *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     assert(ctx           != NULL);
@@ -660,7 +660,7 @@ ib_status_t op_match_create(
     }
 
     /* Done */
-    *instance_data = set;
+    *(ib_hash_t **)instance_data = set;
 
     return IB_OK;
 }
@@ -761,10 +761,10 @@ ib_status_t op_match_execute(
  */
 static
 ib_status_t op_ipmatch_create(
-    ib_context_t         *ctx,
-    const char           *parameters,
-    void                **instance_data,
-    void                 *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     assert(ctx           != NULL);
@@ -852,7 +852,7 @@ ib_status_t op_ipmatch_create(
     }
 
     /* Done */
-    *instance_data = ipset;
+    *(ib_ipset4_t **)instance_data = ipset;
 
     return IB_OK;
 }
@@ -973,10 +973,10 @@ ib_status_t op_ipmatch_execute(
  */
 static
 ib_status_t op_ipmatch6_create(
-    ib_context_t         *ctx,
-    const char           *parameters,
-    void                **instance_data,
-    void                 *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     assert(ctx           != NULL);
@@ -1064,7 +1064,7 @@ ib_status_t op_ipmatch6_create(
     }
 
     /* Done */
-    *instance_data = ipset;
+    *(ib_ipset6_t **)instance_data = ipset;
 
     return IB_OK;
 }
@@ -1844,10 +1844,10 @@ ib_status_t op_le_execute(
  */
 static
 ib_status_t op_numcmp_create(
-    ib_context_t  *ctx,
-    const char    *parameters,
-    void         **instance_data,
-    void          *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     ib_field_t *f;
@@ -1880,7 +1880,7 @@ ib_status_t op_numcmp_create(
     }
     data->expand = NULL;
     data->f = NULL;
-    *instance_data = data;
+    *(numop_instance_data_t **)instance_data = data;
 
     /* Is the string expandable? */
     if (ib_var_expand_test(params_unesc, params_unesc_len)) {

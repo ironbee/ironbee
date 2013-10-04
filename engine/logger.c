@@ -768,7 +768,7 @@ ib_status_t ib_logger_standard_formatter(
     }
     memcpy(msg->msg, log_msg, log_msg_sz);
 
-    *(void **)writer_record = msg;
+    *(ib_logger_standard_msg_t **)writer_record = msg;
     return IB_OK;
 
 out_of_mem:
@@ -779,7 +779,7 @@ out_of_mem:
 /**
  * The default logger format function.
  *
- * This wraps ib_logger_standard_formatter() and reports errors to the 
+ * This wraps ib_logger_standard_formatter() and reports errors to the
  * log file defined by @a data.
  *
  * param[in] logger The logger.
@@ -808,7 +808,7 @@ static ib_status_t default_logger_format(
 
     ib_status_t rc;
     default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
-    
+
     rc = ib_logger_standard_formatter(
         logger,
         rec,

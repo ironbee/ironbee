@@ -328,12 +328,12 @@ ib_status_t operator_create_translator(
         create,
     ib_context_t* ib_context,
     const char*   parameters,
-    void**        instance_data
+    void*         instance_data
 )
 {
     Context context(ib_context);
     try {
-        *instance_data = value_to_data(
+        *(void **)instance_data = value_to_data(
             create(context, parameters),
             context.engine().main_memory_pool().ib()
         );
@@ -405,7 +405,7 @@ Operator Operator::create(
 
     if (create) {
         data.create_trampoline = make_c_trampoline<
-            ib_status_t(ib_context_t*, const char *, void **)
+            ib_status_t(ib_context_t*, const char *, void *)
         >(
             boost::bind(
                 &Impl::operator_create_translator<InstanceData>,

@@ -875,9 +875,9 @@ failed:
 }
 
 ib_status_t ib_conn_get_module_data(
-    const ib_conn_t    *conn,
-    const ib_module_t  *m,
-    void              **data
+    const ib_conn_t   *conn,
+    const ib_module_t *m,
+    void              *data
 )
 {
   assert(conn != NULL);

@@ -191,11 +191,11 @@ ib_status_t ib_operator_lookup(
 }
 
 ib_status_t ib_operator_inst_create(
-    const ib_operator_t  *op,
-    ib_context_t         *ctx,
-    ib_flags_t            required_capabilities,
-    const char           *parameters,
-    void                **instance_data
+    const ib_operator_t *op,
+    ib_context_t        *ctx,
+    ib_flags_t           required_capabilities,
+    const char          *parameters,
+    void                *instance_data
 )
 {
     assert(op            != NULL);
@@ -209,7 +209,7 @@ ib_status_t ib_operator_inst_create(
         return IB_EINVAL;
     }
 
-    *instance_data = NULL;
+    *(void **)instance_data = NULL;
 
     if (op->fn_create == NULL) {
         return IB_OK;

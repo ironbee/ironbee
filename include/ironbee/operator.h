@@ -59,10 +59,10 @@ extern "C" {
  * @return IB_OK if successful.
  */
 typedef ib_status_t (* ib_operator_create_fn_t)(
-    ib_context_t  *ctx,
-    const char    *parameters,
-    void         **instance_data,
-    void          *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 );
 
 /**
@@ -97,12 +97,12 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(
  * @return IB_OK if successful.
  */
 typedef ib_status_t (* ib_operator_execute_fn_t)(
-    ib_tx_t    *tx,
-    void       *instance_data,
+    ib_tx_t          *tx,
+    void             *instance_data,
     const ib_field_t *field,
-    ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_field_t       *capture,
+    ib_num_t         *result,
+    void             *cbdata
 );
 
 /** Operator Structure */
@@ -250,7 +250,8 @@ ib_flags_t DLL_PUBLIC ib_operator_get_capabilities(
  * @param[in] ctx Current IronBee context
  * @param[in] required_capabilities Required operator capabilities.
  * @param[in] parameters Parameters used to create the instance.
- * @param[out] instance_data Instance data.
+ * @param[out] instance_data Instance data.  Can be treated as in handle,
+ *                           i.e., `T **`.
  *
  * @return
  * - IB_OK on success,
@@ -258,11 +259,11 @@ ib_flags_t DLL_PUBLIC ib_operator_get_capabilities(
  * - Creation callback status if it reports an error.
  */
 ib_status_t DLL_PUBLIC ib_operator_inst_create(
-    const ib_operator_t  *op,
-    ib_context_t         *ctx,
-    ib_flags_t            required_capabilities,
-    const char           *parameters,
-    void                **instance_data
+    const ib_operator_t *op,
+    ib_context_t        *ctx,
+    ib_flags_t           required_capabilities,
+    const char          *parameters,
+    void                *instance_data
 );
 
 /**

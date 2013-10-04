@@ -330,16 +330,16 @@ ib_status_t DLL_PUBLIC ib_conn_create(ib_engine_t *ib,
  *
  * @param[in]  conn Connection
  * @param[in]  module Module.
- * @param[out] data Data.
+ * @param[out] data Data.  Can be any handle, i.e., `T **`.
 
  * @returns
  *   - IB_OK on success.
  *   - IB_EINVAL if @a conn does not know about @a module.
  */
 ib_status_t DLL_PUBLIC ib_conn_get_module_data(
-    const ib_conn_t    *conn,
-    const ib_module_t  *module,
-    void              **data
+    const ib_conn_t   *conn,
+    const ib_module_t *module,
+    void              *data
 );
 
 /**

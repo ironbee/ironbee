@@ -33,10 +33,10 @@
 
 
 ib_status_t test_create_fn(
-    ib_context_t  *ctx,
-    const char    *parameters,
-    void         **instance_data,
-    void          *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     assert(ctx != NULL);
@@ -51,18 +51,18 @@ ib_status_t test_create_fn(
         return IB_EALLOC;
     }
 
-    *instance_data = str;
+    *(char **)instance_data = str;
 
     return IB_OK;
 }
 
 ib_status_t test_execute_fn(
-    ib_tx_t    *tx,
-    void       *instance_data,
+    ib_tx_t          *tx,
+    void             *instance_data,
     const ib_field_t *field,
-    ib_field_t *capture,
-    ib_num_t   *result,
-    void       *cbdata
+    ib_field_t       *capture,
+    ib_num_t         *result,
+    void             *cbdata
 )
 {
     char *searchstr = (char *)instance_data;
