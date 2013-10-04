@@ -54,14 +54,6 @@ extern "C" {
 /* Engine Manager type declarations */
 
 /**
- * Engine manager engine destroy operations.
- */
-typedef enum {
-    IB_MANAGER_DESTROY_INACTIVE,    /**< Destroy only inactive engines */
-    IB_MANAGER_DESTROY_ALL,         /**< Destroy all engines */
-} ib_manager_destroy_ops;
-
-/**
  * The engine manager.
  *
  * An engine manager is created via ib_manager_create().
@@ -159,11 +151,8 @@ ib_status_t DLL_PUBLIC ib_manager_create(
  * dangerous and can lead to undefined behavior.
  *
  * @param[in] manager IronBee engine manager
- *
- * @returns Status code
- * - IB_OK All OK.  All IronBee engines and the engine manager are destroyed.
  */
-ib_status_t DLL_PUBLIC ib_manager_destroy(
+void DLL_PUBLIC ib_manager_destroy(
     ib_manager_t *manager
 );
 

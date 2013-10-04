@@ -89,34 +89,64 @@ static ib_status_t create_locks(
 }
 
 /**
- * Destroy the the manager's locks
- *
- * All locks must be unlocked before destroying
- *
- * @param[in] manager Engine manager object
- */
-static void destroy_locks(
-    ib_manager_t *manager
-)
-{
-    assert(manager != NULL);
-
-    ib_lock_destroy(&manager->engines_lock);
-    ib_lock_destroy(&manager->creation_lock);
-}
-
-/**
  * Memory pool cleanup function to destroy the locks attached to a manager.
  *
- * @param[in] cbdata Callback data (manager)
+ * @param[in] cbdata Callback data (an @ref ib_manager_t).
  */
 void cleanup_locks(
     void *cbdata
 )
 {
     assert(cbdata != NULL);
+
     ib_manager_t *manager = (ib_manager_t *)cbdata;
-    destroy_locks(manager);
+
+    ib_lock_destroy(&(manager->engines_lock));
+
+    ib_lock_destroy(&(manager->creation_lock));
+}
+
+/**
+ * Report if an engine manager engine is active (there are references to it).
+ *
+ * @param[in] manager_engine The engine to check.
+ *
+ * @returns
+ * - True if references are greater than 0.
+ * - False if there are 0 references.
+ */
+static bool is_active(
+    const ib_manager_engine_t *manager_engine
+)
+{
+    assert(manager_engine != NULL);
+
+    return manager_engine->ref_count > 0;
+}
+
+/**
+ * Report if an engine manager engine is the current one.
+ *
+ * The "current" @ref ib_manager_engine_t will have its
+ * ib_manager_engine_t::engine returned when ib_manager_engine_acquire()
+ * is called.
+ *
+ * @param[in] manager The engine manager.
+ * @param[in] manager_engine The manager_engine to check.
+ *
+ * @returns
+ * - True if @a manager_engine is current.
+ * - False otherwise.
+ */
+static bool is_current(
+    const ib_manager_t        *manager,
+    const ib_manager_engine_t *manager_engine
+)
+{
+    assert(manager != NULL);
+    assert(manager_engine != NULL);
+
+    return manager_engine == manager->engine_current;
 }
 
 /**
@@ -133,16 +163,12 @@ void cleanup_locks(
  * all engines will be destroyed.
  *
  * @param[in,out] manager IronBee engine manager
- * @param[in] op Destroy operation
- * @param[in] opstr Destroy operation string (for logging)
  *
  * @returns Status code
  *  - IB_OK
  */
-static ib_status_t destroy_engines(
-    ib_manager_t           *manager,
-    ib_manager_destroy_ops  op,
-    const char             *opstr
+static ib_status_t destroy_inactive_engines(
+    ib_manager_t  *manager
 )
 {
     assert(manager != NULL);
@@ -154,24 +180,12 @@ static ib_status_t destroy_engines(
     for (num = 0;  num < manager->engine_count;  ++num) {
         const ib_manager_engine_t *wrapper = manager->engine_list[num];
         ib_engine_t         *engine = wrapper->engine;
-        bool                 is_current = (wrapper == manager->engine_current);
-        bool                 is_active = (wrapper->ref_count != 0);
-        bool                 destroy = false;
 
-        /* Should we destroy this engine? */
-        switch(op) {
-        case IB_MANAGER_DESTROY_INACTIVE:
-            destroy = ((!is_current) && (!is_active));
-            break;
-        case IB_MANAGER_DESTROY_ALL:
-            destroy = true;
-            break;
-        default:
-            assert(0);
-        }
-
-        /* Destroy the engine */
-        if (destroy) {
+        if (
+            ! is_current(manager, wrapper) &&
+            ! is_active(wrapper)
+        )
+        {
             ++destroyed;
 
             /* If it's current, NULL out the current pointer */
@@ -202,11 +216,41 @@ static ib_status_t destroy_engines(
         }
     }
 
-    /* Confirm that all were destroyed */
-    assert(op == IB_MANAGER_DESTROY_ALL && manager->engine_count == 0);
+    /* If any engines were destroyed, there is a NULL in the list
+     * where they where. Collapse the list, removing NULLs. */
+    if (destroyed > 0) {
+        size_t new_engine_count = manager->engine_count - destroyed;
+
+        /* Iterator i walks the list.
+         * Non-null elements are copied to the iterator, j, which
+         *     starts equal to i, but will lag behind i when the first
+         *     NULL entry is seen.
+         * When i increases to and beyond new_engine_count, we know
+         *     that those array slots will not be used in the new list
+         *     and should be cleared.
+         */
+        for (size_t i = 0, j = 0; i < manager->engine_count; ++i) {
+
+            /* If i is not null, copy it to j. */
+            if (manager->engine_list[i] != NULL) {
+
+                manager->engine_list[j] = manager->engine_list[i];
+                ++j;
+
+                /* If is is beyond the new list, NULL the source elements. */
+                if (i >= new_engine_count) {
+                    manager->engine_list[i] = NULL;
+                }
+            }
+        }
+
+        /* Update the engine count. */
+        manager->engine_count = new_engine_count;
+    }
 
     /* By definition, we have no inactive engines now. */
     manager->inactive_count = 0;
+
     return IB_OK;
 }
 
@@ -262,7 +306,6 @@ ib_status_t ib_manager_create(
     /* Cleanup locks when our memory pool is destroyed */
     rc = ib_mpool_cleanup_register(mpool, cleanup_locks, manager);
     if (rc != IB_OK) {
-        destroy_locks(manager);
         goto cleanup;
     }
 
@@ -288,30 +331,22 @@ cleanup:
     return rc;
 }
 
-ib_status_t ib_manager_destroy(
+void ib_manager_destroy(
     ib_manager_t *manager
 )
 {
-    ib_status_t  rc;
-
     /* Destroy engines */
-    rc = destroy_engines(manager, IB_MANAGER_DESTROY_ALL, "all");
-    if (rc != IB_OK) {
-        goto cleanup;
-    }
+    for (size_t num = 0;  num < manager->engine_count;  ++num) {
+        const ib_manager_engine_t *manager_engine = manager->engine_list[num];
 
-    assert(manager->engine_count == 0);
+        /* Note: This will destroy the engine wrapper object, too */
+        ib_engine_destroy(manager_engine->engine);
+    }
 
     /* Destroy the manager by destroying it's memory pool. */
     ib_mpool_destroy(manager->mpool);
 
     /* Note: Locks are destroyed by the memory pool cleanup */
-
-    /* Done */
-    return IB_OK;
-
-cleanup:
-    return rc;
 }
 
 /**
@@ -356,7 +391,7 @@ static ib_status_t register_engine(
 
     /* Destroy all non-current engines with zero reference count */
     if (manager->engine_count > 1) {
-        destroy_engines(manager, IB_MANAGER_DESTROY_INACTIVE, "INACTIVE");
+        destroy_inactive_engines(manager);
     }
     ib_lock_unlock(&manager->engines_lock);
     return rc;
@@ -600,7 +635,7 @@ ib_status_t ib_manager_engine_cleanup(
         return rc;
     }
 
-    rc = destroy_engines(manager, IB_MANAGER_DESTROY_INACTIVE, NULL);
+    rc = destroy_inactive_engines(manager);
     if (rc != IB_OK) {
         ib_lock_unlock(&manager->engines_lock);
         return rc;
