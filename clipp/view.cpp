@@ -258,6 +258,7 @@ void view_id(const input_p& input)
 void view_summary(const input_p& input)
 {
     string id("NO ID");
+    static const string prefix("CLIPP INPUT: ");
 
     if (! input->id.empty()) {
         id = input->id;
@@ -267,22 +268,28 @@ void view_summary(const input_p& input)
 
     if (input->connection.pre_transaction_events.empty()) {
         // no IP information.
-        cout << boost::format("%36s NO CONNECTION INFO %5d") % id % num_txs
+        cout <<
+            (boost::format("%s %36s NO CONNECTION INFO %5d")
+                % prefix % id % num_txs
+            )
              << endl;
     }
-    const ConnectionEvent& connection_event =
-        dynamic_cast<ConnectionEvent&>(
-            *input->connection.pre_transaction_events.front()
-        );
-    cout << boost::format("%-40s %22s <-> %-22s %5d txs") % id %
-        (boost::format("%s:%d") %
-            connection_event.local_ip % connection_event.local_port
-        ) %
-        (boost::format("%s:%d") %
-            connection_event.remote_ip % connection_event.remote_port
-        ) %
-        num_txs
-         << endl;
+    else {
+        const ConnectionEvent& connection_event =
+            dynamic_cast<ConnectionEvent&>(
+                *input->connection.pre_transaction_events.front()
+            );
+        cout << boost::format("%s %-40s %22s <-> %-22s %5d txs") % prefix %
+            id %
+            (boost::format("%s:%d") %
+                connection_event.local_ip % connection_event.local_port
+            ) %
+            (boost::format("%s:%d") %
+                connection_event.remote_ip % connection_event.remote_port
+            ) %
+            num_txs
+             << endl;
+    }
 }
 
 }
