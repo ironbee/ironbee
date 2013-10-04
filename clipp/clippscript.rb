@@ -38,10 +38,10 @@ module ClippScript
     yield InputProxy.new(result)
 
     if result[:connection][:pre_transaction_event].empty?
-      delete result[:connection][:pre_transaction_event]
+      result[:connection][:pre_transaction_event] = nil
     end
     if result[:connection][:post_transaction_event].empty?
-      delete result[:connection][:post_transaction_event]
+      result[:connection][:post_transaction_event] = nil
     end
 
     result
