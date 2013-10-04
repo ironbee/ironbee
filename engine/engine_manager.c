@@ -577,7 +577,6 @@ ib_status_t ib_manager_engine_release(
     }
 
     /* Decrement the reference count. */
-    assert(engptr->ref_count > 0);
     --(engptr->ref_count);
 
     /* If we hit zero, update the inactive count. */
