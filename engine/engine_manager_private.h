@@ -69,6 +69,17 @@ struct ib_manager_t {
     /* The locks themselves */
     ib_lock_t             engines_lock;    /**< The engine list lock */
     ib_lock_t             creation_lock;   /**< Serialize engine creation */
+
+    /* Engine Init Routine. */
+
+    /**
+     * Option module function to create a module to add to the engine.
+     *
+     * This is added before the engine is configured.
+     */
+    ib_manager_module_create_fn_t  module_fn;
+
+    void                          *module_data; /**< Callback for module_fn. */
 };
 
 /** @} */

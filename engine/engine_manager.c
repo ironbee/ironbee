@@ -34,6 +34,7 @@
 #include <ironbee/list.h>
 #include <ironbee/lock.h>
 #include <ironbee/log.h>
+#include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/release.h>
 #include <ironbee/server.h>
@@ -210,9 +211,11 @@ static ib_status_t destroy_engines(
 }
 
 ib_status_t ib_manager_create(
-    const ib_server_t         *server,
-    size_t                     max_engines,
-    ib_manager_t             **pmanager
+    ib_manager_t                 **pmanager,
+    const ib_server_t             *server,
+    size_t                         max_engines,
+    ib_manager_module_create_fn_t  module_fn,
+    void                          *module_data
 )
 {
     assert(server != NULL);
@@ -268,6 +271,8 @@ ib_status_t ib_manager_create(
     manager->mpool          = mpool;
     manager->engine_list    = engine_list;
     manager->max_engines    = max_engines;
+    manager->module_fn      = module_fn;
+    manager->module_data    = module_data;
 
     /* Hand the new manager off to the caller. */
     *pmanager = manager;
@@ -400,10 +405,26 @@ ib_status_t ib_manager_engine_create(
         goto cleanup;
     }
 
-    /* Set the engine's logger function */
-    rc = ib_logger_writer_clear(ib_engine_logger_get(engine));
-    if (rc != IB_OK) {
-        goto cleanup;
+    /* If the user defined a module creation function, use and add to engine. */
+    if (manager->module_fn != NULL) {
+
+        ib_module_t *module = NULL;
+
+        /* Build a module structure per the plugin's request. */
+        rc = manager->module_fn(&module, engine, manager->module_data);
+
+        /* On OK, initialize the module in the engine. */
+        if (rc == IB_OK) {
+            rc = ib_module_init(module, engine);
+            if (rc != IB_OK) {
+                goto cleanup;
+            }
+        }
+
+        /* If module_fn is not OK and did not decline to make a module, fail. */
+        else if (rc != IB_DECLINED) {
+            goto cleanup;
+        }
     }
 
     /* Create the configuration parser */

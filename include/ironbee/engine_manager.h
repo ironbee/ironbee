@@ -84,19 +84,39 @@ typedef enum {
  */
 typedef struct ib_manager_t ib_manager_t;
 
+/**
+ * Callback function to create a module structure using a given 
+ *
+ * This should not call ib_module_init() as the manager will do that.
+ *
+ * @param[out] module The module to create or return.
+ * @param[in] ib The IronBee engine the module is being created for.
+ * @param[in] cbdata Callback data.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_DECLINE If no module was created but the fucntion is defined.
+ * - Other on error. Creation of the IronBee engine fails.
+ */
+typedef ib_status_t (*ib_manager_module_create_fn_t)(
+    ib_module_t **module,
+    ib_engine_t  *ib,
+    void         *cbdata
+);
+
 /* Engine Manager API */
 
 /**
  * Create an engine manager.
  *
+ * @param[out] pmanager Pointer to IronBee engine manager object
  * @param[in] server IronBee server object
  * @param[in] max_engines Maximum number of simultaneous engines
- * @param[in] logger_buf_fn Logger function (Formatted buffer version)
- * @param[in] logger_buf_cbdata Callback data.
- * @param[in] logger_flush_fn Logger flush function (or NULL)
- * @param[in] logger_flush_cbdata Callback data.
- * @param[in] logger_level Initial log level
- * @param[out] pmanager Pointer to IronBee engine manager object
+ * @param[in] module_fn Function to return a module structure for a server
+ *            module that will be registered to a newly created IronBee
+ *            engine. The module will be added before the engine is
+ *            configured.
+ * @param[in] module_data Callback data for @a module_fn.
  *
  * If @a logger_va_fn is provided, the engine manager's IronBee logger will not
  * format the log message, but will instead pass the format (@a fmt) and args
@@ -121,9 +141,11 @@ typedef struct ib_manager_t ib_manager_t;
  * - IB_EALLOC for allocation problems
  */
 ib_status_t DLL_PUBLIC ib_manager_create(
-    const ib_server_t          *server,
-    size_t                      max_engines,
-    ib_manager_t              **pmanager
+    ib_manager_t                  **pmanager,
+    const ib_server_t             *server,
+    size_t                         max_engines,
+    ib_manager_module_create_fn_t  module_fn,
+    void                          *module_data
 );
 
 /**

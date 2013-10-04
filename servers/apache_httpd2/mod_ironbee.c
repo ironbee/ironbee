@@ -44,7 +44,7 @@
 #include <ironbee/engine_manager.h>
 #include <ironbee/config.h>
 #include <ironbee/context.h>
-#include <ironbee/module.h> /* Only needed while config is in here. */
+#include <ironbee/module.h>
 #include <ironbee/server.h>
 #include <ironbee/core.h>
 #include <ironbee/state_notify.h>
@@ -345,64 +345,6 @@ ib_server_t DLL_LOCAL ibplugin = {
 };
 
 /* BOOTSTRAP: lift logger straight from the old mod_ironbee */
-
-/**
- * IronBee Apache logger.
- *
- * Performs IronBee logging for the Apache HTTPd plugin.
- *
- * @param[in] rec The log record.
- * @param[in] cbdata Callback data.
- */
-static void ironbee_logger(
-    ib_manager_logger_record_t *rec,
-    void                       *cbdata)
-{
-    assert(rec != NULL);
-    assert(cbdata != NULL);
-
-    module_data_t *mod_data = (module_data_t *)cbdata;
-    int            ap_level;
-
-    if (! mod_data->ib_log_active) {
-        fputs((const char *)(rec->msg), stderr);
-        return;
-    }
-
-    /* Translate the log level. */
-    switch (rec->level) {
-    case IB_LOG_EMERGENCY:
-        ap_level = APLOG_EMERG;
-        break;
-    case IB_LOG_ALERT:
-        ap_level = APLOG_ALERT;
-        break;
-    case IB_LOG_CRITICAL:
-    case IB_LOG_ERROR:
-        ap_level = APLOG_ERR;
-        break;
-    case IB_LOG_WARNING:
-        //ap_level = APLOG_WARNING;
-        ap_level = APLOG_DEBUG; /// @todo For now, so we get file/line
-        break;
-    case IB_LOG_DEBUG:
-        ap_level = APLOG_DEBUG;
-        break;
-    default:
-        ap_level = APLOG_DEBUG; /// @todo Make configurable
-    }
-
-    /// @todo Make configurable
-    if (ap_level > mod_data->max_log_level) {
-        ap_level = mod_data->max_log_level;
-    }
-
-    /* Apply the "startup" log flag */
-    ap_level |= mod_data->log_level_is_startup;
-
-    ap_log_perror(APLOG_MARK, ap_level, 0, mod_data->pool,
-                  "ironbee: %*.s", (int)rec->msg_sz, (const char *)(rec->msg));
-}
 
 /***********   APACHE PER-REQUEST FILTERS AND HOOKS  ************/
 
@@ -1187,6 +1129,215 @@ static apr_status_t ironbee_manager_cleanup(void *data)
     return APR_SUCCESS;
 }
 
+/**
+ * Log a message to the server plugin.
+ *
+ * @param[in] ib_logger The IronBee logger.
+ * @param[in] rec The record to use in logging.
+ * @param[in] log_msg The user's log message.
+ * @param[in] log_msg_sz The user's log message size.
+ * @param[out] writer_record Unused. We always return IB_DECLINED.
+ * @param[in] cbdata The server plugin module data used for logging.
+ *
+ * @returns
+ * - IB_DECLINED when everything goes well.
+ * - IB_OK is not returned.
+ * - Other on error.
+ */
+static ib_status_t logger_format(
+    ib_logger_t           *logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(rec != NULL);
+    assert(log_msg != NULL);
+    assert(cbdata != NULL);
+
+    module_data_t            *mod_data = (module_data_t *)cbdata;
+    int                       ap_level;
+    ib_status_t               rc;
+    ib_logger_standard_msg_t *std_msg;
+
+    if (! mod_data->ib_log_active) {
+        fputs((const char *)(log_msg), stderr);
+        return IB_EOTHER;
+    }
+
+    /* Translate the log level. */
+    switch (rec->level) {
+    case IB_LOG_EMERGENCY:
+        ap_level = APLOG_EMERG;
+        break;
+    case IB_LOG_ALERT:
+        ap_level = APLOG_ALERT;
+        break;
+    case IB_LOG_CRITICAL:
+    case IB_LOG_ERROR:
+        ap_level = APLOG_ERR;
+        break;
+    case IB_LOG_WARNING:
+        //ap_level = APLOG_WARNING;
+        ap_level = APLOG_DEBUG; /// @todo For now, so we get file/line
+        break;
+    case IB_LOG_DEBUG:
+        ap_level = APLOG_DEBUG;
+        break;
+    default:
+        ap_level = APLOG_DEBUG; /// @todo Make configurable
+    }
+
+    /// @todo Make configurable using module directive.
+    if (ap_level > mod_data->max_log_level) {
+        ap_level = mod_data->max_log_level;
+    }
+
+    /* Apply the "startup" log flag */
+    ap_level |= mod_data->log_level_is_startup;
+
+
+    rc = ib_logger_standard_formatter(
+          logger,
+          rec,
+          log_msg,
+          log_msg_sz,
+          &std_msg,
+          NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    if (rec->conn != NULL) {
+        conn_rec *conn = (conn_rec *)(rec->conn->server_ctx);
+        ap_log_cerror(
+            APLOG_MARK,
+            ap_level,
+            0,
+            conn,
+            "ironbee: %s %*.s",
+            std_msg->prefix,
+            (int)std_msg->msg_sz,
+            (const char *)std_msg->msg);
+    }
+    else {
+        ap_log_perror(
+            APLOG_MARK,
+            ap_level,
+            0,
+            mod_data->pool,
+            "ironbee: %s %*.s",
+            std_msg->prefix,
+            (int)std_msg->msg_sz,
+            (const char *)std_msg->msg);
+    }
+
+    ib_logger_standard_msg_free(std_msg);
+
+    /* since we do all the work here, signal the logger to not
+     * use the record function. */
+    return IB_DECLINED;
+}
+
+/**
+ * Initialize a new server plugin module instance. 
+ *
+ * @param[in] ib Engine this module is operating on.
+ * @param[in] module This module structure.
+ * @param[in] cbdata The server plugin module data.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
+static ib_status_t init_module(
+    ib_engine_t *ib,
+    ib_module_t *module,
+    void        *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(module != NULL);
+    assert(cbdata != NULL);
+
+    module_data_t *mod_data = (module_data_t *)cbdata;
+
+    ib_logger_writer_add(
+        ib_engine_logger_get(ib),
+        NULL,                      /* Open. */
+        NULL,                      /* Callback data. */
+        NULL,                      /* Close. */
+        NULL,                      /* Callback data. */
+        NULL,                      /* Ueopen. */
+        NULL,                      /* Callback data. */
+        logger_format,             /* Format - this does all the work. */
+        mod_data,                  /* Callback data. */
+        NULL,                      /* Record. */
+        NULL                       /* Callback data. */
+    );
+
+    return IB_OK;
+}
+
+/**
+ * Create a new module to be registered with @a ib.
+ *
+ * This is pre-configuration time so directives may be registered.
+ *
+ * @param[out] module Module created using ib_module_create() and
+ *             properly initialized. This should not be
+ *             passed to ib_module_init(), the manager will do that.
+ * @param[in] ib The unconfigured engine this module will be
+ *            initialized in.
+ * @param[in] cbdata The server plugin data.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_DECLINED Is never returned.
+ * - Other on fatal errors.
+ */
+static ib_status_t create_module(
+    ib_module_t **module,
+    ib_engine_t *ib,
+    void *cbdata
+)
+{
+    assert(module != NULL);
+    assert(ib != NULL);
+    assert(cbdata != NULL);
+
+    ib_status_t    rc;
+    module_data_t *mod_data = (module_data_t *)cbdata;
+
+    rc = ib_module_create(module, ib);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    IB_MODULE_INIT_DYNAMIC(
+      *module,
+      __FILE__,
+      NULL,                  /* Module data */
+      ib,                    /* Engine. */
+      "ApacheHTTPDModule",   /* Module name. */
+      NULL,                  /* Config struct. */
+      0,                     /* Config size. */
+      NULL,                  /* Config copy function. */
+      NULL,                  /* Config copy function callback data. */
+      NULL,                  /* Configuration field map. */
+      NULL,                  /* Configuration directive map. */
+      init_module,           /* Init function. */
+      mod_data,              /* Init function callback data. */
+      NULL,                  /* Finish function. */
+      NULL                   /* Finish function callback data. */
+    );
+
+    return IB_OK;
+}
+
 /* Bootstrap: copy initialisation from trafficserver plugin */
 /**
  * HTTPD callback to initialise Ironbee
@@ -1219,14 +1370,11 @@ static int ironbee_init(
     }
 
     /* Create the IronBee engine manager */
-    rc = ib_manager_create(&ibplugin,                /* Server object */
+    rc = ib_manager_create(&(mod_data->ib_manager),   /* Engine Manager. */
+                           &ibplugin,                /* Server object */
                            mod_data->ib_max_engines, /* Max number of engines */
-                           ironbee_logger,           /* Logger function. */
-                           mod_data,                 /* Flush callback. */
-                           NULL,                     /* Flush function. */
-                           mod_data,                 /* Flush callback. */
-                           mod_data->ib_log_level,   /* IB log level */
-                           &(mod_data->ib_manager)); /* Engine Manager */
+                           create_module,            /* Create httpd mod. */
+                           mod_data);
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
                      "Failed to create IronBee Engine Manager (%s)",

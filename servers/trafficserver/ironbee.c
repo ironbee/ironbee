@@ -2344,45 +2344,89 @@ static int check_ts_version(void)
 }
 
 /**
- * IronBee ATS logger.
+ * Log a message to the server plugin.
  *
- * Performs IronBee logging for the ATS plugin.
+ * @param[in] ib_logger The IronBee logger.
+ * @param[in] rec The record to use in logging.
+ * @param[in] log_msg The user's log message.
+ * @param[in] log_msg_sz The user's log message size.
+ * @param[out] writer_record Unused. We always return IB_DECLINED.
+ * @param[in] cbdata The server plugin module data used for logging.
  *
- * @param[in] rec Log record to write.
- * @param[in] cbdata Callback data.
+ * @returns
+ * - IB_DECLINED when everything goes well.
+ * - IB_OK is not returned.
+ * - Other on error.
  */
-static void ironbee_logger(
-    ib_manager_logger_record_t *rec,
-    void                       *cbdata
+static ib_status_t logger_format(
+    ib_logger_t           *ib_logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *cbdata
 )
 {
+    assert(ib_logger != NULL);
+    assert(rec != NULL);
+    assert(log_msg != NULL);
+    assert(cbdata != NULL);
+
     if (cbdata == NULL) {
-        return;
+        return IB_DECLINED;
     }
+
     module_data_t   *mod_data = (module_data_t *)cbdata;
     TSTextLogObject  logger = mod_data->logger;
 
     if (logger == NULL) {
-        return;
+        return IB_DECLINED;
     }
-    if (rec->msg == NULL) {
+    if (log_msg == NULL || log_msg_sz == 0) {
         TSTextLogObjectFlush(logger);
     }
-    TSTextLogObjectWrite(logger, "%s", rec->msg);
+    else {
+
+        ib_logger_standard_msg_t *std_msg = NULL;
+
+        ib_status_t rc = ib_logger_standard_formatter(
+            ib_logger,
+            rec,
+            log_msg,
+            log_msg_sz,
+            &std_msg,
+            NULL);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        TSTextLogObjectWrite(
+            logger,
+            "%s %.*s",
+            std_msg->prefix,
+            (int)std_msg->msg_sz,
+            (const char *)std_msg->msg);
+
+        ib_logger_standard_msg_free(std_msg);
+    }
+
+    return IB_DECLINED;
 }
 
 /**
- * IronBee ATS logger flush.
+ * Perform a flush when closing the log.
  *
  * Performs flush for IronBee ATS plugin logging.
  *
+ * @param[in] logger IronBee logger. Unused.
  * @param[in] cbdata Callback data.
  */
-static void ironbee_logger_flush(
+static ib_status_t logger_close(
+    ib_logger_t       *ib_logger,
     void              *cbdata)
 {
     if (cbdata == NULL) {
-        return;
+        return IB_OK;
     }
     module_data_t   *mod_data = (module_data_t *)cbdata;
     TSTextLogObject  logger = mod_data->logger;
@@ -2390,6 +2434,104 @@ static void ironbee_logger_flush(
     if (logger != NULL) {
         TSTextLogObjectFlush(logger);
     }
+
+    return IB_OK;
+}
+
+/**
+ * Initialize a new server plugin module instance. 
+ *
+ * @param[in] ib Engine this module is operating on.
+ * @param[in] module This module structure.
+ * @param[in] cbdata The server plugin module data.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
+static ib_status_t init_module(
+    ib_engine_t *ib,
+    ib_module_t *module,
+    void        *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(module != NULL);
+    assert(cbdata != NULL);
+
+    module_data_t *mod_data = (module_data_t *)cbdata;
+
+    ib_logger_writer_add(
+        ib_engine_logger_get(ib),
+        NULL,                      /* Open. */
+        NULL,                      /* Callback data. */
+        logger_close,              /* Close. */
+        mod_data,                  /* Callback data. */
+        NULL,                      /* Reopen. */
+        NULL,                      /* Callback data. */
+        logger_format,             /* Format - This does all the work. */
+        mod_data,                  /* Callback data. */
+        NULL,                      /* Record. */
+        NULL                       /* Callback data. */
+    );
+
+    return IB_OK;
+}
+
+/**
+ * Create a new module to be registered with @a ib.
+ *
+ * This is pre-configuration time so directives may be registered.
+ *
+ * @param[out] module Module created using ib_module_create() and
+ *             properly initialized. This should not be
+ *             passed to ib_module_init(), the manager will do that.
+ * @param[in] ib The unconfigured engine this module will be
+ *            initialized in.
+ * @param[in] cbdata The server plugin data.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_DECLINED Is never returned.
+ * - Other on fatal errors.
+ */
+static ib_status_t create_module(
+    ib_module_t **module,
+    ib_engine_t *ib,
+    void *cbdata
+)
+{
+    assert(module != NULL);
+    assert(ib != NULL);
+    assert(cbdata != NULL);
+
+    ib_status_t    rc;
+    module_data_t *mod_data = (module_data_t *)cbdata;
+
+    rc = ib_module_create(module, ib);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    IB_MODULE_INIT_DYNAMIC(
+      *module,
+      __FILE__,
+      NULL,                  /* Module data */
+      ib,                    /* Engine. */
+      "ApacheHTTPDModule",   /* Module name. */
+      NULL,                  /* Config struct. */
+      0,                     /* Config size. */
+      NULL,                  /* Config copy function. */
+      NULL,                  /* Config copy function callback data. */
+      NULL,                  /* Configuration field map. */
+      NULL,                  /* Configuration directive map. */
+      init_module,           /* Init function. */
+      mod_data,              /* Init function callback data. */
+      NULL,                  /* Finish function. */
+      NULL                   /* Finish function callback data. */
+    );
+
+    return IB_OK;
 }
 
 /**
@@ -2532,21 +2674,18 @@ static int ironbee_init(module_data_t *mod_data)
     }
 
     /* Initialize IronBee (including util) */
-    rc = ib_initialize( );
+    rc = ib_initialize();
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Create the IronBee engine manager */
     TSDebug("ironbee", "Creating IronBee engine manager");
-    rc = ib_manager_create(&ibplugin,             /* Server object */
+    rc = ib_manager_create(&(mod_data->manager),  /* Engine Manager */
+                           &ibplugin,             /* Server object */
                            mod_data->max_engines, /* Default max */
-                           ironbee_logger,        /* Logger buf function */
-                           mod_data,              /* cbdata: module data */
-                           ironbee_logger_flush,  /* Logger flush function */
-                           mod_data,              /* cbdata: module data */
-                           mod_data->log_level,   /* IB log level */
-                           &(mod_data->manager)); /* Engine Manager */
+                           create_module,         /* Init module. */
+                           mod_data);             /* Init module cbdata. */
     if (rc != IB_OK) {
         TSError("Failed to create IronBee engine manager: %s",
                 ib_status_to_string(rc));
