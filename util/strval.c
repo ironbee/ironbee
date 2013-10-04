@@ -56,9 +56,9 @@ ib_status_t ib_strval_lookup(
 }
 
 ib_status_t ib_strval_ptr_lookup(
-    const ib_strval_ptr_t  *map,
-    const char             *str,
-    const void            **pptr)
+    const ib_strval_ptr_t *map,
+    const char            *str,
+    const void            *pptr)
 {
     if ( (map == NULL) || (str == NULL) || (pptr == NULL) ) {
         return IB_EINVAL;
@@ -68,21 +68,21 @@ ib_status_t ib_strval_ptr_lookup(
 
     while (rec->str != NULL) {
         if (strcasecmp(str, rec->str) == 0) {
-            *pptr = rec->val;
+            *(const void **)pptr = rec->val;
             return IB_OK;
         }
         ++rec;
     }
 
-    *pptr = NULL;
+    *(const void **)pptr = NULL;
     return IB_ENOENT;
 }
 
 ib_status_t ib_strval_data_lookup(
-    const ib_strval_data_t  *map,
-    size_t                   rec_size,
-    const char              *str,
-    const void             **pptr)
+    const ib_strval_data_t *map,
+    size_t                  rec_size,
+    const char             *str,
+    const void             *pptr)
 {
     if ( (map == NULL) || (str == NULL) || (pptr == NULL) ||
          (rec_size <= sizeof(ib_strval_data_t)) ) {
@@ -97,11 +97,11 @@ ib_status_t ib_strval_data_lookup(
          rptr += rec_size, rec = (const ib_strval_data_t *)rptr)
     {
         if (strcasecmp(str, rec->str) == 0) {
-            *pptr = &(rec->data);
+            *(const void **)pptr = &(rec->data);
             return IB_OK;
         }
     }
 
-    *pptr = NULL;
+    *(const void **)pptr = NULL;
     return IB_ENOENT;
 }

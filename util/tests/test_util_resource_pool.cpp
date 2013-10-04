@@ -50,7 +50,7 @@ extern "C" {
         cbdata_t *cbdata = reinterpret_cast<cbdata_t *>(data);
         resource_t *tmp_r = reinterpret_cast<resource_t *>(
             ib_mpool_calloc(cbdata->mp, sizeof(*tmp_r), 1));
-        *(void **)resource = tmp_r;
+        *(resource_t **)resource = tmp_r;
         return IB_OK;
     }
 

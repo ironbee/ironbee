@@ -174,8 +174,8 @@ ib_status_t DLL_PUBLIC ib_queue_enqueue(
  * - IB_EALLOC If memory for a new queue cannot be obtained when resizing.
  */
 ib_status_t DLL_PUBLIC ib_queue_dequeue(
-    ib_queue_t  *queue,
-    void       **element
+    ib_queue_t *queue,
+    void       *element
 );
 
 /**

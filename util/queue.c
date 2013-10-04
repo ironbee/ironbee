@@ -67,7 +67,7 @@ static inline size_t to_index(
 }
 
 /**
- * Return a @c void ** in the queue array that may be assigned to.
+ * Return a @c void * in the queue array that may be assigned to.
  *
  * @param[in] queue The queue.
  * @param[in] offset The offset.
@@ -450,8 +450,8 @@ ib_status_t ib_queue_enqueue(
 }
 
 ib_status_t ib_queue_dequeue(
-    ib_queue_t  *queue,
-    void       **element
+    ib_queue_t *queue,
+    void       *element
 )
 {
     return ib_queue_pop_front(queue, element);

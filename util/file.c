@@ -32,10 +32,10 @@
 #include <sys/stat.h>
 
 ib_status_t ib_file_readall(
-    ib_mpool_t  *mp,
-    const char  *file,
-    const void **out,
-    size_t      *sz
+    ib_mpool_t     *mp,
+    const char     *file,
+    const uint8_t **out,
+    size_t         *sz
 )
 {
     assert(mp != NULL);
@@ -43,12 +43,12 @@ ib_status_t ib_file_readall(
     assert(out != NULL);
     assert(sz != NULL);
 
-    int         fd;
-    void       *buf;
-    size_t      bufsz;
-    size_t      fill = 0;
-    struct stat stat_data;
-    int         sys_rc;
+    int          fd;
+    uint8_t     *buf;
+    size_t       bufsz;
+    size_t       fill = 0;
+    struct stat  stat_data;
+    int          sys_rc;
 
     /* Stat the file to get its total size. */
     sys_rc = stat(file, &stat_data);

@@ -59,10 +59,10 @@ extern "C" {
  * - IB_EALLOC On allocation error.
  */
 ib_status_t ib_file_readall(
-    ib_mpool_t  *mp,
-    const char  *file,
-    const void **out,
-    size_t      *sz
+    ib_mpool_t     *mp,
+    const char     *file,
+    const uint8_t **out,
+    size_t         *sz
 );
 
 /**

@@ -102,9 +102,9 @@ extern "C" {
  *         <td>@c void*</td>
  *         <td>@c void*</td>
  *         <td>@c void*</td>
- *         <td>@c void**</td>
- *         <td>@c void**</td>
- *         <td>@c void**</td>
+ *         <td>@c void*</td>
+ *         <td>@c void*</td>
+ *         <td>@c void*</td>
  *     </tr>
  *
  *     <tr>
@@ -183,7 +183,11 @@ extern "C" {
  *   an ib_num_t will not fit in a @c void *parameter on 32 bit architectures.
  * - The mutable out types for IB_FTYPE_NUM is @c ib_num_t** so that a pointer
  *   to the value can be passed out.  This allows the caller to mutate the
- *   actual number as expected for a mutable value.  The same applies to
+ *   actual number as expected for a mutable value.  The same applies
+ *   to IB_FTYPE_FLOAT.
+ * - The use of `void *` instead of `void **` for IB_FTYPE_GENERIC may seem
+ *   surprising, but using `void *` allows the user to express specific
+ *   knowledge of the held type without an awkward cast.
  *
  * @{
  */
@@ -247,7 +251,7 @@ static inline void *ib_ftype_generic_in(void *v)
 /**
  * Assert @a v is proper type.
  */
-static inline void *ib_ftype_generic_out(void **v)
+static inline void *ib_ftype_generic_out(void *v)
 {
     return (void *)(v);
 }
@@ -255,7 +259,7 @@ static inline void *ib_ftype_generic_out(void **v)
 /**
  * Assert @a v is proper type.
  */
-static inline void *ib_ftype_generic_mutable_out(void **v)
+static inline void *ib_ftype_generic_mutable_out(void *v)
 {
     return (void *)(v);
 }
@@ -263,7 +267,7 @@ static inline void *ib_ftype_generic_mutable_out(void **v)
 /**
  * Assert @a v is proper type.
  */
-static inline void *ib_ftype_generic_storage(void **v)
+static inline void *ib_ftype_generic_storage(void *v)
 {
     return (void *)(v);
 }

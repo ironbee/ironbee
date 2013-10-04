@@ -116,8 +116,8 @@ static void ib_resource_pool_destroy(void *data) {
  * - Other from the user create function.
  */
 static ib_status_t create_resource(
-    ib_resource_pool_t  *resource_pool,
-    ib_resource_t      **resource
+    ib_resource_pool_t *resource_pool,
+    ib_resource_t **resource
 )
 {
     assert(resource_pool != NULL);
@@ -139,7 +139,9 @@ static ib_status_t create_resource(
 
     /* Attempt to get an already allocated resource struct. */
     if (ib_queue_size(resource_pool->free_queue) > 0) {
-        rc = ib_queue_pop_front(resource_pool->free_queue, &tmp_resource);
+        rc = ib_queue_pop_front(
+            resource_pool->free_queue,
+            &tmp_resource);
         if (rc != IB_OK) {
             return rc;
         }
@@ -184,7 +186,7 @@ static ib_status_t fill_to_min(
     /* Pre-create the minimum number of items. */
     while (resource_pool->min_count > resource_pool->count) {
         ib_resource_t *r;
-        ib_status_t    rc;
+        ib_status_t rc;
         rc = create_resource(resource_pool, &r);
         if (rc != IB_OK) {
             return rc;
@@ -277,7 +279,7 @@ ib_status_t ib_resource_pool_create(
 
 ib_status_t ib_resource_acquire(
     ib_resource_pool_t *resource_pool,
-    ib_resource_t     **resource
+    ib_resource_t **resource
 )
 {
     assert(resource_pool != NULL);
@@ -288,7 +290,9 @@ ib_status_t ib_resource_acquire(
 
     /* If there is a free resource, acquire it. */
     if (ib_queue_size(resource_pool->resources) > 0) {
-        rc = ib_queue_pop_front(resource_pool->resources, &tmp_resource);
+        rc = ib_queue_pop_front(
+            resource_pool->resources,
+            &tmp_resource);
         if (rc != IB_OK) {
             goto failure;
         }

@@ -106,9 +106,9 @@ ib_status_t DLL_PUBLIC ib_strval_lookup(
  *  - IB_EINVAL: One or more of the pointer parameters is NULL
  */
 ib_status_t DLL_PUBLIC ib_strval_ptr_lookup(
-    const ib_strval_ptr_t  *map,
-    const char             *str,
-    const void            **pptr);
+    const ib_strval_ptr_t *map,
+    const char            *str,
+    const void            *pptr);
 
 /**
  * Lookup a name/data pair mapping
@@ -124,10 +124,10 @@ ib_status_t DLL_PUBLIC ib_strval_ptr_lookup(
  *  - IB_EINVAL: One or more of the pointer parameters is NULL
  */
 ib_status_t DLL_PUBLIC ib_strval_data_lookup(
-    const ib_strval_data_t  *map,
-    size_t                   rec_size,
-    const char              *str,
-    const void             **pptr);
+    const ib_strval_data_t *map,
+    size_t                  rec_size,
+    const char             *str,
+    const void             *pptr);
 
 /**
  * Lookup a name/data pair mapping -- macro version
@@ -147,7 +147,7 @@ ib_status_t DLL_PUBLIC ib_strval_data_lookup(
         (const ib_strval_data_t *)map,                    \
         sizeof(type),                                     \
         str,                                              \
-        (const void **)pptr)
+        pptr)
 
 /**
  * @} IronBeeUtilStringValue

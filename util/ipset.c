@@ -406,28 +406,28 @@ ib_status_t ib_ipset_set_query(
  */
 static
 ib_status_t ib_ipset_query(
-    const void           *network,
-    const void           *negative,
-    size_t                num_negative,
-    const void           *positive,
-    size_t                num_positive,
-    size_t                entry_size,
-    ib_ipset_compare_fn   compare,
-    const void          **out_entry,
-    const void          **out_specific_entry,
-    const void          **out_general_entry
+    const void          *network,
+    const void          *negative,
+    size_t               num_negative,
+    const void          *positive,
+    size_t               num_positive,
+    size_t               entry_size,
+    ib_ipset_compare_fn  compare,
+    const void          *out_entry,
+    const void          *out_specific_entry,
+    const void          *out_general_entry
 )
 {
     const void *entry = NULL;
 
     if (out_entry != NULL) {
-        *out_entry = NULL;
+        *(const void **)out_entry = NULL;
     }
     if (out_specific_entry != NULL) {
-        *out_specific_entry = NULL;
+        *(const void **)out_specific_entry = NULL;
     }
     if (out_general_entry != NULL) {
-        *out_general_entry = NULL;
+        *(const void **)out_general_entry = NULL;
     }
 
     if (
@@ -465,28 +465,30 @@ ib_status_t ib_ipset_query(
         return rc;
     }
     if (out_entry != NULL) {
-        *out_entry = entry;
+        *(const void **)out_entry = entry;
     }
     if (out_specific_entry != NULL) {
-        *out_specific_entry = entry;
+        *(const void **)out_specific_entry = entry;
         while (
-            (char *)*out_specific_entry <
+            *(char **)out_specific_entry <
                 ((char *)positive + entry_size * (num_positive - 1)) &&
-            compare(((char *)*out_specific_entry + entry_size), network) == 0
+            compare((*(char **)out_specific_entry + entry_size), network) == 0
         )
         {
-            *out_specific_entry = (char *)*out_specific_entry + entry_size;
+            *(const void **)out_specific_entry =
+                *(char **)out_specific_entry + entry_size;
         }
     }
 
     if (out_general_entry != NULL) {
-        *out_general_entry = entry;
+        *(const void **)out_general_entry = entry;
         while (
-            *out_general_entry > positive &&
-            compare(((char *)*out_general_entry - entry_size), network) == 0
+            *(const void **)out_general_entry > positive &&
+            compare((*(char **)out_general_entry - entry_size), network) == 0
         )
         {
-            *out_general_entry = (char *)*out_general_entry - entry_size;
+            *(const void **)out_general_entry =
+                *(char **)out_general_entry - entry_size;
         }
     }
 
@@ -517,9 +519,9 @@ ib_status_t ib_ipset4_query(
         set->num_positive,
         sizeof(ib_ipset4_entry_t),
         &ib_ipset4_compare,
-        (const void **)out_entry,
-        (const void **)out_specific_entry,
-        (const void **)out_general_entry
+        out_entry,
+        out_specific_entry,
+        out_general_entry
     );
 }
 
@@ -545,9 +547,9 @@ ib_status_t ib_ipset6_query(
         set->num_positive,
         sizeof(ib_ipset6_entry_t),
         &ib_ipset6_compare,
-        (const void **)out_entry,
-        (const void **)out_specific_entry,
-        (const void **)out_general_entry
+        out_entry,
+        out_specific_entry,
+        out_general_entry
     );
 }
 

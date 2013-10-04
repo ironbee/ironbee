@@ -54,8 +54,8 @@ typedef struct ib_resource_t ib_resource_t;
  * - Other On error.
  */
 typedef ib_status_t (*ib_resource_create_fn_t)(
-    void  *resource,
-    void  *cbdata
+    void *resource,
+    void *cbdata
 );
 
 /**
