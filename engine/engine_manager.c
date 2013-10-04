@@ -257,9 +257,7 @@ static ib_status_t destroy_inactive_engines(
 ib_status_t ib_manager_create(
     ib_manager_t                 **pmanager,
     const ib_server_t             *server,
-    size_t                         max_engines,
-    ib_manager_module_create_fn_t  module_fn,
-    void                          *module_data
+    size_t                         max_engines
 )
 {
     assert(server != NULL);
@@ -314,8 +312,8 @@ ib_status_t ib_manager_create(
     manager->mpool          = mpool;
     manager->engine_list    = engine_list;
     manager->max_engines    = max_engines;
-    manager->module_fn      = module_fn;
-    manager->module_data    = module_data;
+    manager->module_fn      = NULL;
+    manager->module_data    = NULL;
 
     /* Hand the new manager off to the caller. */
     *pmanager = manager;
@@ -329,6 +327,20 @@ cleanup:
     }
 
     return rc;
+}
+
+ib_status_t ib_manager_register_module_fn(
+    ib_manager_t                  *manager,
+    ib_manager_module_create_fn_t  module_fn,
+    void                          *module_data
+)
+{
+    assert(manager != NULL);
+
+    manager->module_fn      = module_fn;
+    manager->module_data    = module_data;
+
+    return IB_OK;
 }
 
 void ib_manager_destroy(

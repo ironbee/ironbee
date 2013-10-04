@@ -104,11 +104,6 @@ typedef ib_status_t (*ib_manager_module_create_fn_t)(
  * @param[out] pmanager Pointer to IronBee engine manager object
  * @param[in] server IronBee server object
  * @param[in] max_engines Maximum number of simultaneous engines
- * @param[in] module_fn Function to return a module structure for a server
- *            module that will be registered to a newly created IronBee
- *            engine. The module will be added before the engine is
- *            configured.
- * @param[in] module_data Callback data for @a module_fn.
  *
  * If @a logger_va_fn is provided, the engine manager's IronBee logger will not
  * format the log message, but will instead pass the format (@a fmt) and args
@@ -135,7 +130,29 @@ typedef ib_status_t (*ib_manager_module_create_fn_t)(
 ib_status_t DLL_PUBLIC ib_manager_create(
     ib_manager_t                  **pmanager,
     const ib_server_t             *server,
-    size_t                         max_engines,
+    size_t                         max_engines
+);
+
+/**
+ * Register a single module creation callback function.
+ *
+ * Currently only 1 module create function can be registered at a time.
+ * Future callbacks will replace the previous one.
+ *
+ * The arguments @a module_fn and @a module_data may be NULL, in which case
+ * the @a manager will have no callbacks.
+ *
+ * @param[out] pmanager Pointer to IronBee engine manager object
+ * @param[in] module_fn Function to return a module structure for a server
+ *            module that will be registered to a newly created IronBee
+ *            engine. The module will be added before the engine is
+ *            configured.
+ * @param[in] module_data Callback data for @a module_fn.
+ *
+ * @returns Currently this always returns IB_OK.
+ */
+ib_status_t ib_manager_register_module_fn(
+    ib_manager_t                  *manager,
     ib_manager_module_create_fn_t  module_fn,
     void                          *module_data
 );

@@ -1371,13 +1371,22 @@ static int ironbee_init(
 
     /* Create the IronBee engine manager */
     rc = ib_manager_create(&(mod_data->ib_manager),   /* Engine Manager. */
-                           &ibplugin,                /* Server object */
-                           mod_data->ib_max_engines, /* Max number of engines */
-                           create_module,            /* Create httpd mod. */
-                           mod_data);
+                           &ibplugin,                 /* Server object */
+                           mod_data->ib_max_engines); /* Max num of engines */
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
                      "Failed to create IronBee Engine Manager (%s)",
+                     ib_status_to_string(rc));
+        return IB2AP(rc);
+    }
+
+    /* Register the IronBee server plugin as a module. */
+    rc = ib_manager_register_module_fn(mod_data->ib_manager,
+                                       create_module,
+                                       mod_data);
+    if (rc != IB_OK) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
+                     "Failed to register plugin as module. (%s)",
                      ib_status_to_string(rc));
         return IB2AP(rc);
     }

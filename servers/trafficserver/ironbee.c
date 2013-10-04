@@ -2681,13 +2681,20 @@ static int ironbee_init(module_data_t *mod_data)
 
     /* Create the IronBee engine manager */
     TSDebug("ironbee", "Creating IronBee engine manager");
-    rc = ib_manager_create(&(mod_data->manager),  /* Engine Manager */
-                           &ibplugin,             /* Server object */
-                           mod_data->max_engines, /* Default max */
-                           create_module,         /* Init module. */
-                           mod_data);             /* Init module cbdata. */
+    rc = ib_manager_create(&(mod_data->manager),   /* Engine Manager */
+                           &ibplugin,              /* Server object */
+                           mod_data->max_engines); /* Default max */
     if (rc != IB_OK) {
         TSError("Failed to create IronBee engine manager: %s",
+                ib_status_to_string(rc));
+        return rc;
+    }
+
+    rc = ib_manager_register_module_fn(mod_data->manager,
+                                       create_module,
+                                       mod_data);
+    if (rc != IB_OK) {
+        TSError("Failed to register server plugin as module: %s",
                 ib_status_to_string(rc));
         return rc;
     }
