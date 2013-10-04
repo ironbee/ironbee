@@ -16,6 +16,8 @@ IronBee v0.9.0
 
 - Rules are now passed to alternate rule systems at the point of the directive rather than at the close of the context.  Rules claimed by alternative rule systems are allowed to not have a phase.  It is up to the alternative rule system to check the phase.
 
+- All `void **` parameters have been replaced with `void *` parameters.  This allows them to be used to output to specific pointer types without a cast.
+
 **Predicate**
 
 - The Field call is now known as Var.  Field continues to exist as an alias for Var.

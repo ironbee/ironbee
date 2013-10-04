@@ -127,5 +127,5 @@ directly related to code formatting.
   `include/ironbeepp/c_trampoline.hpp`).
 
 * `void **` is not allowed as a parameter type.  Use `void *` for any generic
-  pointer parameter and clearly   document any requirements on its use such
+  pointer parameter and clearly document any requirements on its use such
   as the level of indirection.
