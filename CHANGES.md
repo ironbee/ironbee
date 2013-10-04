@@ -34,6 +34,8 @@ IronBee v0.9.0
 
 - view:summary now adds a "CLIPP INPUT" prefix to each summary line.
 
+- Clipp Test now has support for asserting on a per-input basis.  See `assert_log_every_input_match` and `assert_log_every_input_no_match`.
+
 **IronBee++**
 
 - The `IBPPTestFixture` class used in IronBee++ test fixtures has been promoted to part of the public API as `IronBee::TestFixture`.  This makes it easier for other IronBee++ based code to write unit tests.

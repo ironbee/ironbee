@@ -104,4 +104,23 @@ class TestTesting < Test::Unit::TestCase
     )
     assert_log_match /clipp_header/
   end
+
+  def test_input_asserts
+    clipp(
+      :default_site_config => <<-EOS
+        Action id:1 phase:REQUEST_HEADER clipp_announce:A
+      EOS
+    ) do
+      transaction(id: 'id1') do |t|
+        t.request(raw: "GET /1")
+      end
+      transaction(id: 'id2') do |t|
+        t.request(raw: "GET /2")
+      end
+      transaction(id: 'id3') do |t|
+        t.request(raw: "GET /3")
+      end
+    end
+    assert_log_every_input_match /CLIPP ANNOUNCE: A/
+  end
 end

@@ -37,6 +37,37 @@ module CLIPPTestAssertions
   def assert_no_issues
     assert_log_no_match(/ (EMERGENCY|CRITICAL|ALERT|ERROR|WARNING) /)
   end
+
+  # Iterate through every input.
+  def each_input
+    raise "Block required." if ! block_given?
+    current_id = nil
+    current_log = ""
+    log.split("\n").each do |line|
+      if line =~ /^CLIPP INPUT:\s+([^ ]+) /
+        yield current_id, current_log if current_id
+        current_id = $1
+        current_log = ""
+      else
+        current_log += line + "\n"
+      end
+    end
+    yield current_id, current_log if current_id
+  end
+
+  # Assert that every input matches _re_.
+  def assert_log_every_input_match(re)
+    each_input do |input_id, input_log|
+      assert_match(re, input_log, "#{re.inspect} was not found in input #{input_id}")
+    end
+  end
+
+  # Assert that every input does not match _re_.
+  def assert_log_every_input_no_match(re)
+    each_input do |input_id, input_log|
+      assert_no_match(re, input_log, "#{re.inspect} was found in input #{input_id}")
+    end
+  end
 end
 
 # Log helper module.
@@ -91,7 +122,7 @@ module CLIPPTest
   # Default IronBee configuration template.
   DEFAULT_TEMPLATE = 'CLIPPDIR/ironbee.config.erb'
   # Default consumer.
-  DEFAULT_CONSUMER = 'ironbee:IRONBEE_CONFIG'
+  DEFAULT_CONSUMER = 'ironbee:IRONBEE_CONFIG @view:summary'
 
   # Execute cmd and return [output, exit status]
   # stdin is closed immediately.
