@@ -114,14 +114,14 @@ static ib_status_t lua_operator_execute(
 static ib_status_t lua_operator_create(
     ib_context_t  *ctx,
     const char    *parameters,
-    void         **instance_data,
+    void          *instance_data,
     void          *cbdata
 )
 {
     assert(parameters    != NULL);
     assert(instance_data != NULL);
 
-    *instance_data = (void *)parameters;
+    *(const char **)instance_data = parameters;
     return IB_OK;
 }
 

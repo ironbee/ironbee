@@ -355,10 +355,10 @@ ib_status_t dir_define_from_file(
  **/
 static
 ib_status_t operator_create(
-    ib_context_t  *ctx,
-    const char    *set_name,
-    void         **instance_data,
-    void          *cbdata
+    ib_context_t *ctx,
+    const char   *set_name,
+    void         *instance_data,
+    void         *cbdata
 );
 
 /**
@@ -787,10 +787,10 @@ ib_status_t dir_define_from_file(
 
 static
 ib_status_t operator_create(
-    ib_context_t  *ctx,
-    const char    *set_name,
-    void         **instance_data,
-    void          *cbdata
+    ib_context_t *ctx,
+    const char   *set_name,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     assert(ctx           != NULL);
@@ -821,7 +821,7 @@ ib_status_t operator_create(
     per_operator->set_name = ib_mpool_strdup(mp, set_name);
     assert(per_operator->set_name != NULL);
 
-    *instance_data = per_operator;
+    *(per_operator_t **)instance_data = per_operator;
 
     return IB_OK;
 }

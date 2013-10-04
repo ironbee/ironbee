@@ -407,10 +407,10 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
  */
 static
 ib_status_t pcre_operator_create(
-    ib_context_t  *ctx,
-    const char    *parameters,
-    void         **instance_data,
-    void          *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     assert(ctx           != NULL);
@@ -474,7 +474,7 @@ ib_status_t pcre_operator_create(
     operator_data->id = NULL;           /* Not needed for rx rules */
 
     /* Rule data is an alias for the compiled pattern data */
-    *instance_data = operator_data;
+    *(modpcre_operator_data_t **)instance_data = operator_data;
 
     return rc;
 }
@@ -825,10 +825,10 @@ ib_status_t dfa_id_set(
  */
 static
 ib_status_t dfa_operator_create(
-    ib_context_t         *ctx,
-    const char           *parameters,
-    void                **instance_data,
-    void                 *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     assert(ctx           != NULL);
@@ -894,7 +894,7 @@ ib_status_t dfa_operator_create(
     ib_log_debug(ib, "Compiled DFA id=\"%s\" operator pattern \"%s\" @ %p",
                  operator_data->id, parameters, (void *)cpdata->cpatt);
 
-    *instance_data = operator_data;
+    *(modpcre_operator_data_t **)instance_data = operator_data;
     return IB_OK;
 }
 
@@ -926,7 +926,7 @@ ib_status_t get_or_create_operator_data_hash(
     ib_status_t rc;
 
     /* Get or create the hash that contains the rule data. */
-    rc = ib_tx_get_module_data(tx, m, (void **)hash);
+    rc = ib_tx_get_module_data(tx, m, hash);
     if ( (rc == IB_OK) && (*hash != NULL) ) {
         ib_log_debug2_tx(tx, "Found rule data hash in tx.");
         return IB_OK;

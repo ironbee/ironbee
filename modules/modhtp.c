@@ -2123,7 +2123,7 @@ ib_status_t modhtp_conn_finish(
     ib_status_t irc;
 
     /* Get the parser data */
-    irc = ib_conn_get_module_data(iconn, m, (void **)&parser_data);
+    irc = ib_conn_get_module_data(iconn, m, &parser_data);
     if (irc != IB_OK) {
         ib_log_error(ib,
                      "Failed to get connection parser data from IB connection");
@@ -2160,7 +2160,7 @@ ib_status_t modhtp_connect(
     const ib_module_t *m = (const ib_module_t *)cbdata;
 
     /* Get the parser data */
-    irc = ib_conn_get_module_data(iconn, m, (void **)&parser_data);
+    irc = ib_conn_get_module_data(iconn, m, &parser_data);
     if (irc != IB_OK) {
         ib_log_error(iconn->ib,
                      "Failed to get connection parser data from IB connection");
@@ -2199,7 +2199,7 @@ ib_status_t modhtp_disconnect(
     const ib_module_t *m = (const ib_module_t *)cbdata;
 
     /* Get the parser data */
-    irc = ib_conn_get_module_data(iconn, m, (void **)&parser_data);
+    irc = ib_conn_get_module_data(iconn, m, &parser_data);
     if (irc != IB_OK) {
         ib_log_error(iconn->ib,
                      "Failed to get connection parser data from IB connection");
@@ -2244,7 +2244,7 @@ ib_status_t modhtp_tx_started(
     htp_status_t          hrc;
 
     /* Get the parser data from the transaction */
-    irc = ib_conn_get_module_data(itx->conn, m, (void **)&parser_data);
+    irc = ib_conn_get_module_data(itx->conn, m, &parser_data);
     if (irc != IB_OK) {
         ib_log_error_tx(itx, "Failed to get parser data for connection");
         return IB_EOTHER;

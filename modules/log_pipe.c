@@ -184,7 +184,7 @@ ib_status_t log_pipe_format(
         (int)log_msg_sz,
         log_msg);
 
-    *(void **)writer_record = log_pipe_log_rec;
+    *(log_pipe_log_rec_t **)writer_record = log_pipe_log_rec;
     return IB_OK;
 }
 

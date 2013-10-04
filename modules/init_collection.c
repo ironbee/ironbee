@@ -121,11 +121,11 @@ static ib_status_t json_load_fn(
     assert(tx->mp != NULL);
     assert(fields != NULL);
 
-    json_t      *json_cfg = (json_t *)impl;
-    ib_status_t  rc;
-    const char  *err_msg;
-    const void  *buf = NULL;
-    size_t       sz;
+    json_t        *json_cfg = (json_t *)impl;
+    ib_status_t    rc;
+    const char    *err_msg;
+    const uint8_t *buf = NULL;
+    size_t         sz;
 
     ib_log_debug_tx(tx, "Loading JSON file %s.", json_cfg->file);
 
@@ -173,10 +173,10 @@ static ib_status_t json_load_fn(
  * - IB_EALLOC On allocation error.
  */
 static ib_status_t json_create_fn(
-    ib_engine_t      *ib,
-    const ib_list_t  *params,
-    void            **impl,
-    void             *cbdata
+    ib_engine_t     *ib,
+    const ib_list_t *params,
+    void            *impl,
+    void            *cbdata
 )
 {
     assert(ib != NULL);
@@ -226,7 +226,7 @@ static ib_status_t json_create_fn(
         return IB_EALLOC;
     }
 
-    *impl = json_cfg;
+    *(json_t **)impl = json_cfg;
     return IB_OK;
 }
 #endif /* ENABLE_JSON */
@@ -253,10 +253,10 @@ typedef struct var_t var_t;
  * - Other on sub call errors.
  */
 static ib_status_t var_create_fn(
-    ib_engine_t      *ib,
-    const ib_list_t  *params,
-    void            **impl,
-    void             *cbdata
+    ib_engine_t     *ib,
+    const ib_list_t *params,
+    void            *impl,
+    void            *cbdata
 )
 {
     assert(ib != NULL);
@@ -396,7 +396,7 @@ static ib_status_t var_create_fn(
     }
 
     var->fields = fields;
-    *impl = var;
+    *(var_t **)impl = var;
     return IB_OK;
 }
 

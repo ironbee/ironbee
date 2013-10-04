@@ -137,7 +137,7 @@ ib_status_t get_or_create_operator_data_hash(
     ib_status_t rc;
 
     /* Get or create the hash that contains the rule data. */
-    rc = ib_tx_get_module_data(tx, m, (void **)hash);
+    rc = ib_tx_get_module_data(tx, m, hash);
     if ( (rc == IB_OK) && (*hash != NULL) ) {
         ib_log_debug2_tx(tx, "Found rule data hash in tx.");
         return IB_OK;
@@ -417,10 +417,10 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
  */
 static
 ib_status_t ee_match_any_operator_create(
-    ib_context_t  *ctx,
-    const char    *parameters,
-    void         **instance_data,
-    void          *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     assert(ctx != NULL);
@@ -468,7 +468,7 @@ ib_status_t ee_match_any_operator_create(
     }
 
     operator_data->eudoxus = eudoxus;
-    *instance_data = operator_data;
+    *(ee_operator_data_t **)instance_data = operator_data;
     ib_log_debug(ib, "Found compiled eudoxus pattern \"%s\"", parameters);
 
     return IB_OK;

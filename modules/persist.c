@@ -118,11 +118,12 @@ static const char * get_val(const char *config, const char *opt)
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t file_rw_create_fn(
-    ib_engine_t      *ib,
-    const ib_list_t  *params,
-    void            **impl,
-    void             *cbdata
+static
+ib_status_t file_rw_create_fn(
+    ib_engine_t     *ib,
+    const ib_list_t *params,
+    void            *impl,
+    void            *cbdata
 )
 {
     assert(ib != NULL);
@@ -210,7 +211,7 @@ static ib_status_t file_rw_create_fn(
         return IB_EINVAL;
     }
 
-    *impl = file_rw;
+    *(file_rw_t **)impl = file_rw;
     return IB_OK;
 }
 

@@ -56,10 +56,10 @@ extern "C" {
 typedef struct ib_persist_fw_t ib_persist_fw_t;
 
 typedef ib_status_t (* ib_persist_fw_create_fn_t)(
-    ib_engine_t       *ib,
-    const ib_list_t   *params,
-    void             **impl,
-    void              *cbdata
+    ib_engine_t      *ib,
+    const ib_list_t  *params,
+    void             *impl,
+    void             *cbdata
 );
 typedef void (* ib_persist_fw_destroy_fn_t)(
     void *impl,

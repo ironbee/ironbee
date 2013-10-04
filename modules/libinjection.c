@@ -281,10 +281,10 @@ ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
 
 static
 ib_status_t sqli_op_create(
-    ib_context_t  *ctx,
-    const char    *parameters,
-    void         **instance_data,
-    void          *cbdata
+    ib_context_t *ctx,
+    const char   *parameters,
+    void         *instance_data,
+    void         *cbdata
 )
 {
     ib_engine_t *ib = ib_context_get_engine(ctx);
@@ -312,7 +312,7 @@ ib_status_t sqli_op_create(
     }
 
     if (strncmp("default", set_name, set_name_len) == 0) {
-        *instance_data = NULL;
+        *(const sqli_pattern_set_t **)instance_data = NULL;
         return IB_OK;
     }
 
@@ -328,7 +328,7 @@ ib_status_t sqli_op_create(
     assert(rc == IB_OK);
     assert(ps != NULL);
 
-    *instance_data = (void *)ps;
+    *(const sqli_pattern_set_t **)instance_data = ps;
 
     return IB_OK;
 }
