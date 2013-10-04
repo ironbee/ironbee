@@ -1111,9 +1111,12 @@ static ib_status_t moddevel_txdump_parse_event(
         return rc;
     }
 
+#ifndef __clang_analyzer__
     txdump->event = value->event;
     txdump->hook_type = value->hook_type;
+#endif
     txdump->name = ib_state_event_name(txdump->event);
+
     return IB_OK;
 }
 
