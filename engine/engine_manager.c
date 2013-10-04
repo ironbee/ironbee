@@ -533,10 +533,9 @@ ib_status_t ib_manager_engine_release(
     assert(manager != NULL);
     assert(engine != NULL);
 
-    ib_status_t           rc;
-    ib_manager_engine_t  *engptr = NULL;
-    size_t                num;
-    size_t                inactive = 0;
+    ib_status_t rc;
+    size_t      num;
+    size_t      inactive = 0;
 
     /* Grab the engine list lock */
     rc = ib_lock_lock(&manager->engines_lock);
@@ -544,44 +543,34 @@ ib_status_t ib_manager_engine_release(
         return rc;
     }
 
-    /* Is this the current engine? */
+    /* Release the current engine. */
     if ( (manager->engine_current != NULL) &&
          (engine == manager->engine_current->engine) )
     {
+        /* Ensure the manager always maintains a reference to the current
+         * engine until that engine is replaced. */
         assert(manager->engine_current->ref_count > 0);
-        engptr = manager->engine_current;
-        --(engptr->ref_count);
+        --(manager->engine_current->ref_count);
         goto cleanup;
     }
 
-    /*
-     * This engine being released is not the current engine.  Walk through the
-     * list of engines of known engines, searching for a match.  While
-     * iterating through the list, count the number of inactive engines that
-     * we encounter.
+    /* An old engine is being released.
+     *
+     * 1. Walk the list to find the engine.
+     * 2. Re-count the inactive engines.
      */
     for (num = 0;  num < manager->engine_count;  ++num) {
         ib_manager_engine_t *cur = manager->engine_list[num];
 
-        /* If this is the engine we're looking for, save the pointer. */
+        /* Decrement the reference count if the engine matches. */
         if (engine == cur->engine) {
-            engptr = cur;
+            --(cur->ref_count);
         }
 
-        /* Otherwise, check to see if it's active (current is never inactive) */
-        else if ( (cur != manager->engine_current) &&
-                  (cur->ref_count == 0) )
-        {
+        /* Non-current engines with a ref count of 0 are inactive. */
+        if ( (cur != manager->engine_current) && (cur->ref_count == 0) ) {
             ++inactive;
         }
-    }
-
-    /* Decrement the reference count. */
-    --(engptr->ref_count);
-
-    /* If we hit zero, update the inactive count. */
-    if (engptr->ref_count == 0) {
-        ++inactive;
     }
 
     /* Store off the inactive count now that we're done walking */
