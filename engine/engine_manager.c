@@ -26,8 +26,6 @@
 
 #include <ironbee/engine_manager.h>
 
-#include "engine_manager_private.h"
-
 #include <ironbee/config.h>
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
@@ -45,6 +43,44 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+/* The manager's engine wrapper type */
+typedef struct ib_manager_engine_t ib_manager_engine_t;
+
+/**
+ * The Engine Manager.
+ */
+struct ib_manager_t {
+    const ib_server_t    *server;          /**< Server object */
+    ib_mpool_t           *mpool;           /**< Engine Manager's Memory pool */
+    size_t                max_engines;     /**< The maximum number of engines */
+
+    /*
+     * List of all managed engines, and other related items.  These items are
+     * all protected by the engine list lock.  To keep the implementation
+     * simple, the latest engine is always stored at the end of the list, and
+     * the list is compacted after removing elements from it.
+     */
+    ib_manager_engine_t **engine_list;     /**< Array of all engines */
+    size_t                engine_count;    /**< Count of engines */
+    ib_manager_engine_t  *engine_current;  /**< Current IronBee engine */
+    volatile size_t       inactive_count;  /**< Count of inactive engines */
+
+    /* The locks themselves */
+    ib_lock_t             engines_lock;    /**< The engine list lock */
+    ib_lock_t             creation_lock;   /**< Serialize engine creation */
+
+    /* Engine Init Routine. */
+
+    /**
+     * Option module function to create a module to add to the engine.
+     *
+     * This is added before the engine is configured.
+     */
+    ib_manager_module_create_fn_t  module_fn;
+
+    void                          *module_data; /**< Callback for module_fn. */
+};
 
 /**
  * The Engine Manager engine wrapper.

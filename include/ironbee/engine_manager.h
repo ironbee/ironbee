@@ -23,6 +23,7 @@
  * @brief IronBee --- Engine Manager
  *
  * @author Nick LeRoy <nleroy@qualys.com>
+ * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
 #include <ironbee/engine.h>

@@ -9,7 +9,6 @@ EXTRA_DIST = \
     core_private.h               \
     core_audit_private.h         \
     engine_private.h             \
-    engine_manager_private.h     \
     rule_engine_private.h        \
     rule_logger_private.h        \
     state_notify_private.h

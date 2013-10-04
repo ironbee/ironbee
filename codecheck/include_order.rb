@@ -93,7 +93,6 @@ CANONICAL_INCLUDE_ORDER = [
   '"core_private.h"',
   '"engine_private.h"',
   '"engine_manager_log_private.h"',
-  '"engine_manager_private.h"',
   '"ironbee_private.h"',
   '"json_yajl_private.h"',
   '"kvstore_private.h"',

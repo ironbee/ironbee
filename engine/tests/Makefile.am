@@ -13,6 +13,7 @@ check_PROGRAMS = \
 	test_action \
 	test_config \
 	test_engine \
+	test_engine_manager \
 	test_kvstore \
 	test_operator \
 	test_rule_inject
@@ -58,6 +59,9 @@ test_engine_SOURCES = test_engine.cpp \
                       test_engine_capture.cpp \
                       test_parsed_content.cpp
 test_engine_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
+
+test_engine_manager_SOURCES = test_engine_manager.cpp
+test_engine_manager_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
 
 test_rule_inject_SOURCES = test_rule_inject.cpp
 test_rule_inject_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
