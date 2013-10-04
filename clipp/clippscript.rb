@@ -74,6 +74,9 @@ module ClippScript
     end
   end
 
+  # Add above as module methods as well.
+  extend self
+
   def self.eval(what, &writer)
     results = []
     env = Environment.new do |x|
