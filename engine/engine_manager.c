@@ -614,9 +614,7 @@ ib_status_t ib_manager_engine_release(
     }
 
     /* Happy path: The current engine is being released. */
-    if ( (manager->engine_current != NULL) &&
-         (engine == manager->engine_current->engine) )
-    {
+    if ( engine == manager->engine_current->engine) {
         managed_engine = manager->engine_current;
     }
 
@@ -635,11 +633,23 @@ ib_status_t ib_manager_engine_release(
         }
     }
 
-    /* Quick sanity check. Never release an unowned engine. */
-    assert(manager->engine_current->ref_count > 0);
 
-    /* Release the engine. */
-    --(managed_engine->ref_count);
+    /* Found the engine in this manager. Release it. */
+    if (managed_engine != NULL) {
+
+        /* Quick sanity check. Never release an unowned engine. */
+        assert(managed_engine->ref_count > 0);
+
+        /* Release the engine. */
+        --(managed_engine->ref_count);
+
+        rc = IB_OK;
+    }
+
+    /* The user passed us an engine not from this manager. */
+    else {
+        rc = IB_EINVAL;
+    }
 
     /* Release the lock. */
     ib_lock_unlock(&manager->manager_lck);
