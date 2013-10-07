@@ -30,7 +30,7 @@
 #include <ironbee/engine_manager.h>
 
 /**
- * Base class for engine manager tests. 
+ * Base class for engine manager tests.
  *
  * This may be relocated to a more public .hpp file if necessary.
  */
@@ -40,7 +40,7 @@ class EngineManagerFixture : public ::testing::Test
 
     ib_server_t   m_server;
     ib_manager_t *m_manager;
-    
+
     public:
     virtual void SetUp() {
         ASSERT_EQ(IB_OK, ib_initialize());
@@ -155,7 +155,7 @@ TEST_F(EngineManager, MaxEngines)
     ASSERT_EQ(
         IB_DECLINED,
         ib_manager_engine_create(m_manager, createIronBeeConfig().c_str())
-    ); 
+    );
 
     /* Return an engine, and try to get a new one. */
     ASSERT_EQ(IB_OK, ib_manager_engine_release(m_manager, engines[0]));
@@ -169,7 +169,7 @@ TEST_F(EngineManager, MaxEngines)
     ASSERT_EQ(
         IB_DECLINED,
         ib_manager_engine_create(m_manager, createIronBeeConfig().c_str())
-    ); 
+    );
 
     /* Now clean up the mess we've made. */
     for(size_t i = 0; i < IB_MANAGER_DEFAULT_MAX_ENGINES; ++i) {

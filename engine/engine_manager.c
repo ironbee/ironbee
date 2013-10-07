@@ -310,7 +310,7 @@ void ib_manager_destroy(
  * This requires that the caller hold the manager lock and that
  * ib_manager_t::engine_count be less than ib_manager_t::max_engines.
  *
- * - Add @a engine to @a manager's engine list. 
+ * - Add @a engine to @a manager's engine list.
  * - Demote the current engine, removing the manager's reference count.
  * - Promote @a engine to current, adding a manager reference count.
  *
@@ -338,7 +338,7 @@ static void register_engine(
 
     /* Promote engine to the current engine (demoting the previous one. */
     manager->engine_current = engine;
-    
+
     /* Add a reference count to the current engine for the manager. */
     ++(manager->engine_current->ref_count);
 
@@ -357,7 +357,7 @@ static void register_engine(
  *
  * This function will attempt a call to destroy_inactive_engines() if
  * no space is available. If no space is available after the cleanup attempt
- * IB_DECLINED is returned. 
+ * IB_DECLINED is returned.
  *
  * @param[in] manager The manager.
  *
@@ -396,7 +396,7 @@ static ib_status_t has_engine_slots(ib_manager_t *manager)
  * @returns
  * - IB_OK On success.
  * - IB_EALLOC For memory errors.
- * - IB_DECLINED If there is no engine slot available. 
+ * - IB_DECLINED If there is no engine slot available.
  */
 static ib_status_t create_engine(
     ib_manager_t         *manager,
@@ -503,7 +503,7 @@ static ib_status_t create_engine(
     *engine_wrapper = wrapper;
     return IB_OK;
 
-error: 
+error:
     /* If a parser was created, destroy it */
     if (parser != NULL) {
         ib_cfgparser_destroy(parser);
@@ -693,4 +693,3 @@ size_t ib_manager_engine_count(
     assert(manager != NULL);
     return manager->engine_count;
 }
-

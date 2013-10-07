@@ -487,7 +487,7 @@ ib_status_t ib_logger_reopen(
  * @param[in] writer The logger writer.
  * @param[in] handler Callback function that handles the pointer to a
  *            log message produced by an implementation of
- *            @ref ib_logger_format_fn_t. This function drains the 
+ *            @ref ib_logger_format_fn_t. This function drains the
  *            message queue and writes it to disk.
  * @param[in] cbdata Callback data for @a handler.
  *
@@ -527,7 +527,7 @@ struct ib_logger_standard_msg_t {
      * The length of @c msg.
      */
     size_t   msg_sz;
-}; 
+};
 
 typedef struct ib_logger_standard_msg_t ib_logger_standard_msg_t;
 

@@ -78,7 +78,7 @@ extern "C" {
 typedef struct ib_manager_t ib_manager_t;
 
 /**
- * Callback function to create a module structure using a given 
+ * Callback function to create a module structure using a given
  *
  * This should not call ib_module_init() as the manager will do that.
  *

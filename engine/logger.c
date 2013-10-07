@@ -949,4 +949,3 @@ const char *ib_logger_level_to_string(ib_logger_level_t level)
         return "UNKNOWN";
     }
 }
-

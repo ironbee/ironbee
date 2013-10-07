@@ -337,13 +337,13 @@ ib_status_t DLL_PUBLIC ib_module_config_initialize(
     size_t cfg_length);
 
 /**
- * Duplicate a module structure to create an independent module 
+ * Duplicate a module structure to create an independent module
  * representation that may be added to a another @ref ib_engine_t.
  *
  * @param[out] module_dst The module structure to be created and copied.
  * @param[in] module_src An module that has not been added to an engine yet.
  *            This will be copied into module_final.
- * @param[in] engine_dst The engine that @a module_dst will eventually 
+ * @param[in] engine_dst The engine that @a module_dst will eventually
  *            be added to.
  *
  * @returns
