@@ -135,7 +135,7 @@ class EngineManager : public EngineManagerFixture
 {
 };
 
-TEST_F(EngineManager, DISABLED_MaxEngines)
+TEST_F(EngineManager, MaxEngines)
 {
     std::vector<ib_engine_t *> engines(IB_MANAGER_DEFAULT_MAX_ENGINES);
 
