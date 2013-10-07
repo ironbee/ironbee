@@ -135,7 +135,7 @@ class EngineManager : public EngineManagerFixture
 {
 };
 
-TEST_F(EngineManager, MaxEngines)
+TEST_F(EngineManager, DISABLED_MaxEngines)
 {
     std::vector<ib_engine_t *> engines(IB_MANAGER_DEFAULT_MAX_ENGINES);
 
@@ -158,7 +158,7 @@ TEST_F(EngineManager, MaxEngines)
     ); 
 
     /* Return an engine, and try to get a new one. */
-    ASSERT_EQ(IB_OK, ib_manager_engine_release(m_manager, &(engines[0])));
+    ASSERT_EQ(IB_OK, ib_manager_engine_release(m_manager, engines[0]));
     ASSERT_EQ(
         IB_OK,
         ib_manager_engine_create(m_manager, createIronBeeConfig().c_str())
@@ -173,7 +173,7 @@ TEST_F(EngineManager, MaxEngines)
 
     /* Now clean up the mess we've made. */
     for(size_t i = 0; i < IB_MANAGER_DEFAULT_MAX_ENGINES; ++i) {
-        ASSERT_EQ(IB_OK, ib_manager_engine_release(m_manager, engins[i]);
+        ASSERT_EQ(IB_OK, ib_manager_engine_release(m_manager, engines[i]));
     }
 
     ib_manager_destroy(m_manager);

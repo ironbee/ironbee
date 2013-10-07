@@ -238,7 +238,7 @@ static ib_status_t destroy_inactive_engines(
 
     /* If any engines were destroyed, there is a NULL in the list
      * where they where. Collapse the list, removing NULLs. */
-    if (list_sz > manager->engine_count > 0) {
+    if (list_sz > manager->engine_count) {
 
         /* Iterator i walks the list.
          * Non-null elements are copied to the iterator, j, which
