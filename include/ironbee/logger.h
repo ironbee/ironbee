@@ -510,7 +510,7 @@ ib_status_t DLL_PUBLIC ib_logger_dequeue(
  */
 struct ib_logger_standard_msg_t {
     /**
-     * A standard null terminated string that should preceed
+     * A standard null terminated string that should precede
      * the user's message in the log file.
      */
     char    *prefix;

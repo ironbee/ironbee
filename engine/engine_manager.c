@@ -351,7 +351,7 @@ static void register_engine(
 }
 
 /**
- * Determine if space is availbe for add another engine.
+ * Determine if space is available for add another engine.
  *
  * This function assumes that the caller has locked the manager.
  *
@@ -363,7 +363,7 @@ static void register_engine(
  *
  * @returns
  * - IB_OK If there is space, or if space has been reclaimed.
- * - IB_DECLINED If there is no space or an error occures.
+ * - IB_DECLINED If there is no space or an error occurs.
  */
 static ib_status_t has_engine_slots(ib_manager_t *manager)
 {

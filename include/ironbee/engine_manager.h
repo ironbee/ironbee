@@ -88,7 +88,7 @@ typedef struct ib_manager_t ib_manager_t;
  *
  * @returns
  * - IB_OK On success.
- * - IB_DECLINE If no module was created but the fucntion is defined.
+ * - IB_DECLINE If no module was created but the function is defined.
  * - Other on error. Creation of the IronBee engine fails.
  */
 typedef ib_status_t (*ib_manager_module_create_fn_t)(
