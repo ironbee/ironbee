@@ -135,17 +135,46 @@ class EngineManager : public EngineManagerFixture
 {
 };
 
-TEST_F(EngineManager, DISABLED_MaxEngines)
+TEST_F(EngineManager, MaxEngines)
 {
-    for(int i = 0; i < IB_MANAGER_DEFAULT_MAX_ENGINES; ++i) {
+    std::vector<ib_engine_t *> engines(IB_MANAGER_DEFAULT_MAX_ENGINES);
+
+    for(size_t i = 0; i < IB_MANAGER_DEFAULT_MAX_ENGINES; ++i) {
         ASSERT_EQ(
             IB_OK,
             ib_manager_engine_create(m_manager, createIronBeeConfig().c_str())
         );
+
+        ASSERT_EQ(
+            IB_OK,
+            ib_manager_engine_acquire(m_manager, &(engines[i])));
+
+        ASSERT_EQ(i+1U, ib_manager_engine_count(m_manager));
     }
 
     ASSERT_EQ(
         IB_DECLINED,
         ib_manager_engine_create(m_manager, createIronBeeConfig().c_str())
     ); 
+
+    /* Return an engine, and try to get a new one. */
+    ASSERT_EQ(IB_OK, ib_manager_engine_release(m_manager, &(engines[0])));
+    ASSERT_EQ(
+        IB_OK,
+        ib_manager_engine_create(m_manager, createIronBeeConfig().c_str())
+    );
+    ASSERT_EQ(IB_OK, ib_manager_engine_acquire(m_manager, &(engines[0])));
+
+    /* And we should fail again. */
+    ASSERT_EQ(
+        IB_DECLINED,
+        ib_manager_engine_create(m_manager, createIronBeeConfig().c_str())
+    ); 
+
+    /* Now clean up the mess we've made. */
+    for(size_t i = 0; i < IB_MANAGER_DEFAULT_MAX_ENGINES; ++i) {
+        ASSERT_EQ(IB_OK, ib_manager_engine_release(m_manager, engins[i]);
+    }
+
+    ib_manager_destroy(m_manager);
 }

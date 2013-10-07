@@ -208,21 +208,19 @@ static ib_status_t destroy_inactive_engines(
 )
 {
     assert(manager != NULL);
-    size_t destroyed = 0;
-    size_t num;
-    size_t count;
+    size_t list_sz = manager->engine_count;
 
     /* Destroy all non-current engines with zero reference count */
-    for (num = 0;  num < manager->engine_count;  ++num) {
+    for (size_t num = 0;  num < list_sz; ++num) {
         const ib_manager_engine_t *wrapper = manager->engine_list[num];
-        ib_engine_t         *engine = wrapper->engine;
+        ib_engine_t               *engine  = wrapper->engine;
 
         if (
             ! is_current(manager, wrapper) &&
             ! is_active(wrapper)
         )
         {
-            ++destroyed;
+            --(manager->engine_count);
 
             /* If it's current, NULL out the current pointer */
             if (wrapper == manager->engine_current) {
@@ -238,24 +236,9 @@ static ib_status_t destroy_inactive_engines(
         }
     }
 
-    /* Consolidate the list */
-    count = manager->engine_count;
-    for (num = 0;  num < count;  ++num) {
-        while ( (manager->engine_count) &&
-                (manager->engine_list[num] == NULL) )
-        {
-            size_t n2;
-            for (n2 = 0;  n2 < (count - num - 1);  ++n2) {
-                manager->engine_list[num+n2] = manager->engine_list[num+n2+1];
-            }
-            --(manager->engine_count);
-        }
-    }
-
     /* If any engines were destroyed, there is a NULL in the list
      * where they where. Collapse the list, removing NULLs. */
-    if (destroyed > 0) {
-        size_t new_engine_count = manager->engine_count - destroyed;
+    if (list_sz > manager->engine_count > 0) {
 
         /* Iterator i walks the list.
          * Non-null elements are copied to the iterator, j, which
@@ -265,7 +248,7 @@ static ib_status_t destroy_inactive_engines(
          *     that those array slots will not be used in the new list
          *     and should be cleared.
          */
-        for (size_t i = 0, j = 0; i < manager->engine_count; ++i) {
+        for (size_t i = 0, j = 0; i < list_sz; ++i) {
 
             /* If i is not null, copy it to j. */
             if (manager->engine_list[i] != NULL) {
@@ -274,14 +257,11 @@ static ib_status_t destroy_inactive_engines(
                 ++j;
 
                 /* If is is beyond the new list, NULL the source elements. */
-                if (i >= new_engine_count) {
+                if (i >= manager->engine_count) {
                     manager->engine_list[i] = NULL;
                 }
             }
         }
-
-        /* Update the engine count. */
-        manager->engine_count = new_engine_count;
     }
 
     /* By definition, we have no inactive engines now. */
@@ -467,13 +447,10 @@ ib_status_t ib_manager_engine_create(
     }
 
     /* Are we already at the max # of engines? */
-    if (manager->engine_count == manager->max_engines) {
+    if (manager->engine_count >= manager->max_engines) {
         rc = IB_DECLINED;
         goto cleanup;
     }
-
-    /* Sanity check */
-    assert(manager->engine_count < manager->max_engines);
 
     /* Create the engine */
     rc = ib_engine_create(&engine, manager->server);
@@ -500,14 +477,15 @@ ib_status_t ib_manager_engine_create(
         /* On OK, initialize the module in the engine. */
         if (rc == IB_OK) {
 
-            /* Copy the module structure. */
             ib_module_t *module_final = NULL;
 
+            /* Copy the module structure. */
             rc = ib_module_dup(&module_final, module, engine);
             if (rc != IB_OK) {
                 goto cleanup;
             }
 
+            /* Initialize the module into the engine. */
             rc = ib_module_init(module_final, engine);
             if (rc != IB_OK) {
                 goto cleanup;
