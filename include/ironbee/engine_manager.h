@@ -82,6 +82,9 @@ typedef struct ib_manager_t ib_manager_t;
  *
  * This should not call ib_module_init() as the manager will do that.
  *
+ * The resulting @ref ib_module_t is copied with ib_module_dup() to avoid
+ * accidental sharing of module structures.
+ *
  * @param[out] module The module to create or return.
  * @param[in] ib The IronBee engine the module is being created for.
  * @param[in] cbdata Callback data.
@@ -106,48 +109,28 @@ typedef ib_status_t (*ib_manager_module_create_fn_t)(
  * @param[in] server IronBee server object
  * @param[in] max_engines Maximum number of simultaneous engines
  *
- * If @a logger_va_fn is provided, the engine manager's IronBee logger will not
- * format the log message, but will instead pass the format (@a fmt) and args
- * (@a ap) directly to the logger function.
- *
- * If @a logger_buf_fn is provided, the engine manager will do all of
- * the formatting, and will then call the logger with a formatted buffer.
- *
- * One of @a logger_va_fn or @a logger_buf_fn logger functions should be
- * specified, but not both.  Behavior is undefined if both are NULL or both
- * are non-NULL.
- *
- * If the server provides a @c va_list logging facility, the @a logger_va_fn
- * should be specified.  The alternate @c formatted buffer logger function @a
- * logger_buf_fn is provided for servers that don't provide a @c va_list
- * logging facility (e.g., Traffic Server).
- *
- * If specified, the @a logger_flush_fn function should flush the log file(s0
- *
  * @returns Status code
  * - IB_OK if all OK
  * - IB_EALLOC for allocation problems
  */
 ib_status_t DLL_PUBLIC ib_manager_create(
-    ib_manager_t                  **pmanager,
-    const ib_server_t             *server,
-    size_t                         max_engines
+    ib_manager_t      **pmanager,
+    const ib_server_t  *server,
+    size_t             max_engines
 );
 
 /**
  * Register a single module creation callback function.
  *
- * Currently only 1 module create function can be registered at a time.
+ * Currently only one module create function can be registered at a time.
  * Future callbacks will replace the previous one.
- *
- * The arguments @a module_fn and @a module_data may be NULL, in which case
- * the @a manager will have no callbacks.
  *
  * @param[out] pmanager Pointer to IronBee engine manager object
  * @param[in] module_fn Function to return a module structure for a server
  *            module that will be registered to a newly created IronBee
  *            engine. The module will be added before the engine is
- *            configured.
+ *            configured. This may be NULL to remove a module
+ *            callback.
  * @param[in] module_data Callback data for @a module_fn.
  *
  * @returns Currently this always returns IB_OK.
@@ -162,11 +145,9 @@ ib_status_t ib_manager_register_module_fn(
  * Destroy an engine manager.
  *
  * Destroys IronBee engines managed by @a manager, and the engine manager
- * itself if all managed engines are destroyed.
- *
- * @note If server threads are still interacting with any of the IronBee
- * engines that are managed by @a manager, destroying @a manager can be
- * dangerous and can lead to undefined behavior.
+ * itself. Users of the Engine Manager should be sure to not destroy
+ * an @ref ib_manager_t while @ref ib_engine_t s provided by it
+ * are still in use.
  *
  * @param[in] manager IronBee engine manager
  */
@@ -175,27 +156,28 @@ void DLL_PUBLIC ib_manager_destroy(
 );
 
 /**
- * Create a new IronBee engine.
+ * Create a new IronBee engine and set it as the current engine.
  *
- * The engine manager will destroy old engines when a call to
- * ib_manager_engine_release() results in a non-current engine having a
- * reference count of zero.
- *
- * If the engine creation is successful, this new engine becomes the current
- * engine.  This new engine is created with a zero reference count, but will
- * not be destroyed by ib_manager_engine_cleanup() operations as long as it
- * remains the current engine.
+ * The previous engine is not destroyed so other threads using it
+ * can call ib_manager_engine_release() on it. If there are too many
+ * engines (the max engines limit is reached) then an attempt will be
+ * made to find and destroy engines with nothing referencing them.
+ * If the cleanup attempt fails, then this returns @c IB_DECLINED.
  *
  * @param[in] manager IronBee engine manager
  * @param[in] config_file Configuration file path
  *
  * @returns Status code
- *   - IB_OK All OK
- *   - IB_DECLINED Max # of engines reached, no engine created
+ * - IB_OK All OK
+ * - IB_EALLOC If memory allocation fails.
+ * - IB_DECLINED The max number of engines has been created and
+ *   no engine could be destroyed because it is still recorded as being
+ *   referenced.
+ * - Other on internal API failures.
  */
 ib_status_t DLL_PUBLIC ib_manager_engine_create(
-    ib_manager_t  *manager,
-    const char    *config_file
+    ib_manager_t *manager,
+    const char   *config_file
 );
 
 /**
@@ -204,8 +186,8 @@ ib_status_t DLL_PUBLIC ib_manager_engine_create(
  * This function increments the reference count associated with the current
  * engine, and then returns that engine.
  *
- * @note A matching call to ib_manager_engine_release() is required to
- * decrement the reference count.
+ * Any engine provided by this interface must have
+ * ib_manager_engine_release() called on it.
  *
  * @param[in] manager IronBee engine manager
  * @param[out] pengine Pointer to the current engine
@@ -220,21 +202,24 @@ ib_status_t DLL_PUBLIC ib_manager_engine_acquire(
 );
 
 /**
- * Release the specified IronBee engine when no longer required.
+ * Relinquish use of @a engine.
  *
- * This function decrements the reference count associated with the specified
- * engine.
+ * If @a engine is not the current engine and for every call to
+ * ib_manager_engine_acquire() there has been a corresponding
+ * call to ib_manage_engine_release(), then the engine will be
+ * destroyed.
  *
- * Behavior is undefined if @a engine is not known to the engine manager or
- * if the reference count of @a engine is zero.
+ * Engine destruction may be deferred or it may be immediate.
  *
- * @note A matching prior call to ib_manager_engine_acquire() is required to
- * increment the reference count.
+ * @param[in] manager IronBee engine manager.
+ * @param[in] engine IronBee engine to release. If this engine is
+ *            unknown to the manager, this function call has no effect
+ *            and IB_EINVAL will be returned.
  *
- * @param[in] manager IronBee engine manager
- * @param[in] engine IronBee engine to release
- *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If @a engine is not found in @a manager.
+ * - Other on unexpected failures.
  */
 ib_status_t DLL_PUBLIC ib_manager_engine_release(
     ib_manager_t *manager,
@@ -242,13 +227,15 @@ ib_status_t DLL_PUBLIC ib_manager_engine_release(
 );
 
 /**
- * Cleanup and destroy any inactive engines.
+ * Destroy any inactive engines.
  *
- * This will destroy any non-current engines with a zero reference count.
+ * Inactive engines are those engines with a reference count of zero.
  *
  * @param[in] manager IronBee engine manager
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - Other on API calls.
  */
 ib_status_t DLL_PUBLIC ib_manager_engine_cleanup(
     ib_manager_t *manager
@@ -262,7 +249,7 @@ ib_status_t DLL_PUBLIC ib_manager_engine_cleanup(
  * @returns Count of total IronBee engines
  */
 size_t DLL_PUBLIC ib_manager_engine_count(
-    ib_manager_t *manager
+    const ib_manager_t *manager
 );
 
 /** @} */

@@ -51,22 +51,21 @@ typedef struct ib_manager_engine_t ib_manager_engine_t;
  * The Engine Manager.
  */
 struct ib_manager_t {
-    const ib_server_t    *server;          /**< Server object */
-    ib_mpool_t           *mpool;           /**< Engine Manager's Memory pool */
-    size_t                max_engines;     /**< The maximum number of engines */
+    const ib_server_t    *server;         /**< Server object */
+    ib_mpool_t           *mpool;          /**< Engine Manager's Memory pool */
 
-    /*
-     * List of all managed engines, and other related items.  These items are
-     * all protected by the engine list lock.  To keep the implementation
-     * simple, the latest engine is always stored at the end of the list, and
-     * the list is compacted after removing elements from it.
+    /**
+     * A list of all engines, including the current engine.
+     *
+     * This is ib_manager_t::max_engines long. The list is compacted
+     * so indexes 0 through ib_manager_t::engine_count-1 have
+     * engines.
      */
-    ib_manager_engine_t **engine_list;     /**< Array of all engines */
-    size_t                engine_count;    /**< Count of engines */
-    ib_manager_engine_t  *engine_current;  /**< Current IronBee engine */
-    ib_lock_t             manager_lck;     /**< Protect access to the mgr. */
-
-    /* Engine Init Routine. */
+    ib_manager_engine_t **engine_list;
+    size_t                engine_count;   /**< Current count of engines */
+    size_t                max_engines;    /**< The maximum number of engines */
+    ib_manager_engine_t  *engine_current; /**< Current IronBee engine */
+    ib_lock_t             manager_lck;    /**< Protect access to the mgr. */
 
     /**
      * Option module function to create a module to add to the engine.
@@ -74,8 +73,7 @@ struct ib_manager_t {
      * This is added before the engine is configured.
      */
     ib_manager_module_create_fn_t  module_fn;
-
-    void                          *module_data; /**< Callback for module_fn. */
+    void                          *module_data; /**< Callback data. */
 };
 
 /**
@@ -84,8 +82,17 @@ struct ib_manager_t {
  * There is one wrapper per engine instance.
  */
 struct ib_manager_engine_t {
-    ib_engine_t  *engine;           /**< The IronBee engine itself */
-    uint64_t      ref_count;        /**< Engine's reference count */
+    ib_engine_t  *engine;    /**< The IronBee Engine. */
+
+    /**
+     * The number of references to ib_manager_engine_t::engine.
+     *
+     * The current engine has a reference count of at least one which
+     * represents the manager's use of that engine as the current engine.
+     * Other engines may have a reference count as low as zero. If an
+     * engine's reference count is zero, it may be cleaned up.
+     */
+    size_t        ref_count;
 };
 
 /**
@@ -93,7 +100,7 @@ struct ib_manager_engine_t {
  *
  * @param[in] cbdata Callback data (an @ref ib_manager_t).
  */
-void cleanup_locks(
+static void cleanup_locks(
     void *cbdata
 )
 {
@@ -105,42 +112,15 @@ void cleanup_locks(
 }
 
 /**
- * Report if an engine manager engine is active (there are references to it).
- *
- * @param[in] manager_engine The engine to check.
- *
- * @returns
- * - True if references are greater than 0.
- * - False if there are 0 references.
- */
-static bool is_active(
-    const ib_manager_engine_t *manager_engine
-)
-{
-    assert(manager_engine != NULL);
-
-    return manager_engine->ref_count > 0;
-}
-
-/**
- * Destroy IronBee engines
+ * Destroy IronBee engines with a reference count of zero.
  *
  * This function assumes that the engine list lock has been locked by the
  * caller.
  *
- * Destroy all IronBee engines managed by @a manager.
+ * @param[in] manager IronBee engine manager.
  *
- * If @a op is IB_ENGINE_DESTROY_INACTIVE, only inactive, non-current engines
- * will be destroyed.  If @a op is IB_ENGINE_DESTROY_NON_CURRENT, all
- * non-current engines will be destroyed.  If @a op is IB_ENGINE_DESTROY_ALL,
- * all engines will be destroyed.
- *
- * @param[in,out] manager IronBee engine manager
- *
- * @returns Status code
- *  - IB_OK
  */
-static ib_status_t destroy_inactive_engines(
+static void destroy_inactive_engines(
     ib_manager_t  *manager
 )
 {
@@ -150,11 +130,15 @@ static ib_status_t destroy_inactive_engines(
     /* Destroy all non-current engines with zero reference count */
     for (size_t num = 0;  num < list_sz; ++num) {
 
+        /* Get and check the wrapper for the IronBee engine. */
         const ib_manager_engine_t *wrapper = manager->engine_list[num];
-        ib_engine_t               *engine  = wrapper->engine;
+        assert(wrapper != NULL);
 
-        if (! is_active(wrapper))
-        {
+        /* Get and check the engine. */
+        ib_engine_t *engine = wrapper->engine;
+        assert(engine != NULL);
+
+        if ( wrapper->ref_count == 0) {
             --(manager->engine_count);
 
             /* Note: This will destroy the engine wrapper object, too */
@@ -171,12 +155,14 @@ static ib_status_t destroy_inactive_engines(
     if (list_sz > manager->engine_count) {
 
         /* Iterator i walks the list.
+         *
          * Non-null elements are copied to the iterator, j, which
-         *     starts equal to i, but will lag behind i when the first
-         *     NULL entry is seen.
+         * starts equal to i, but will lag behind i when the first
+         * NULL entry is seen.
+         *
          * When i increases to and beyond new_engine_count, we know
-         *     that those array slots will not be used in the new list
-         *     and should be cleared.
+         * that those array slots will not be used in the new list
+         * and should be cleared.
          */
         for (size_t i = 0, j = 0; i < list_sz; ++i) {
 
@@ -193,8 +179,6 @@ static ib_status_t destroy_inactive_engines(
             }
         }
     }
-
-    return IB_OK;
 }
 
 ib_status_t ib_manager_create(
@@ -577,21 +561,18 @@ ib_status_t ib_manager_engine_acquire(
 
     /* Get the current engine; If there is no current engine, decline. */
     engine = manager->engine_current;
-    if (engine == NULL) {
+    if (engine != NULL) {
+
+        /* Increment and return the engine. */
+        ++(engine->ref_count);
+        *pengine = engine->engine;
+
+        rc = IB_OK;
+    }
+    else {
         rc = IB_DECLINED;
-        goto cleanup;
     }
 
-    /* Increment the reference count */
-    ++(engine->ref_count);
-    rc = IB_OK;
-
-    /* No need to update the inactive count; the current engine is
-     * never inactive */
-    *pengine = engine->engine;
-
-cleanup:
-    /* Release any locks */
     ib_lock_unlock(&manager->manager_lck);
     return rc;
 }
@@ -670,24 +651,15 @@ ib_status_t ib_manager_engine_cleanup(
         return rc;
     }
 
-    rc = destroy_inactive_engines(manager);
-    if (rc != IB_OK) {
-        ib_lock_unlock(&manager->manager_lck);
-        return rc;
-    }
-    else {
-        /* Grab the engine list lock */
-        rc = ib_lock_unlock(&manager->manager_lck);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
+    destroy_inactive_engines(manager);
 
-    return rc;
+    ib_lock_unlock(&manager->manager_lck);
+
+    return IB_OK;
 }
 
 size_t ib_manager_engine_count(
-    ib_manager_t *manager
+    const ib_manager_t *manager
 )
 {
     assert(manager != NULL);
