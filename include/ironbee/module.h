@@ -337,6 +337,27 @@ ib_status_t DLL_PUBLIC ib_module_config_initialize(
     size_t cfg_length);
 
 /**
+ * Duplicate a module structure to create an independent module 
+ * representation that may be added to a another @ref ib_engine_t.
+ *
+ * @param[out] module_dst The module structure to be created and copied.
+ * @param[in] module_src An module that has not been added to an engine yet.
+ *            This will be copied into module_final.
+ * @param[in] engine_dst The engine that @a module_dst will eventually 
+ *            be added to.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On an allocation error.
+ * - Other on unexpected error.
+ */
+ib_status_t DLL_PUBLIC ib_module_dup(
+    ib_module_t **module_dst,
+    ib_module_t  *module_src,
+    ib_engine_t  *engine_dst
+);
+
+/**
  * @} IronBeeModule
  */
 

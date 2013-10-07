@@ -430,3 +430,31 @@ ib_status_t ib_module_config_initialize(
 
     return IB_OK;
 }
+
+ib_status_t DLL_PUBLIC ib_module_dup(
+    ib_module_t **module_dst,
+    ib_module_t  *module_src,
+    ib_engine_t  *engine_dst
+)
+{
+    assert(module_dst != NULL);
+    assert(module_src != NULL);
+    assert(engine_dst != NULL);
+
+    ib_mpool_t *mp = ib_engine_pool_main_get(engine_dst);
+
+    ib_module_t *module_tmp =
+        (ib_module_t *)ib_mpool_calloc(mp, 1, sizeof(*module_tmp));
+
+    if (module_tmp == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Copy the module. */
+    *module_tmp = *module_src;
+
+    /* Return the successful result to the user. */
+    *module_dst = module_tmp;
+
+    return IB_OK;
+}

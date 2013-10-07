@@ -491,14 +491,24 @@ ib_status_t ib_manager_engine_create(
     /* If the user defined a module creation function, use and add to engine. */
     if (manager->module_fn != NULL) {
 
-        ib_module_t *module = NULL;
+        /* Module the user creates. */
+        ib_module_t *module       = NULL;
 
         /* Build a module structure per the plugin's request. */
         rc = manager->module_fn(&module, engine, manager->module_data);
 
         /* On OK, initialize the module in the engine. */
         if (rc == IB_OK) {
-            rc = ib_module_init(module, engine);
+
+            /* Copy the module structure. */
+            ib_module_t *module_final = NULL;
+
+            rc = ib_module_dup(&module_final, module, engine);
+            if (rc != IB_OK) {
+                goto cleanup;
+            }
+
+            rc = ib_module_init(module_final, engine);
             if (rc != IB_OK) {
                 goto cleanup;
             }
