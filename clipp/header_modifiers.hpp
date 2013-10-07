@@ -43,15 +43,24 @@ public:
         RESPONSE //!< Apply to response only.
     };
 
+    //! What mode of modifcation.
+    enum mode_e {
+        REPLACE_EXISTING, //!< Only replace existing headers.
+        ADD,              //!< Add additional headers.
+        ADD_MISSING,      //!< Add if no existing headers.
+    };
+
     /**
      * Constructor.
      *
-     * @param[in] which    Which type to modify.
-     * @param[in] key      Key of header.
-     * @param[in] value    Value of header.
+     * @param[in] which Which type to modify.
+     * @param[in] mode  What mode to run in.
+     * @param[in] key   Key of header.
+     * @param[in] value Value of header.
      **/
     SetModifier(
         which_e            which,
+        mode_e             mode,
         const std::string& key,
         const std::string& value
     );

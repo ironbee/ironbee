@@ -213,7 +213,7 @@ first via `writepb`.
 Generators
 ----------
 
-All generators -- except pcap -- that take file system paths, support using 
+All generators -- except pcap -- that take file system paths, support using
 `-` to indicate stdin.
 
 All generators except pb produce parsed events.  Use @unparse if you want
@@ -233,8 +233,8 @@ This generator produces a single input with a single transaction.
 
 **modsec**:*path* --- Generate events from ModSecurity audit log.
 
-Serial ModSecurity audit logs -- those that have multiple entries -- are often 
-somewhat corrupted.  CLIPP will emit a message, ignore, and continue 
+Serial ModSecurity audit logs -- those that have multiple entries -- are often
+somewhat corrupted.  CLIPP will emit a message, ignore, and continue
 processing whenever it fails to parse an entry.
 
 This generator produces an Input for each audit log entry.  The Input consists
@@ -331,11 +331,11 @@ first line on spaces into three values (the request/response line values),
 splits the next lines on : into two values (header key and value), and, when
 it sees a blank line, treats the remainder of the data as the body.
 
-At present, `@parse` does not support repeated connection data in or 
-connection data out events.  Handling those properly (also repeat parsed 
-events) would require a smarter parser and handling those dumbly (join them 
-and process as a single block of text) was deemed more unexpected than 
-useful.  So, if repeated events are present, an error will be displayed and 
+At present, `@parse` does not support repeated connection data in or
+connection data out events.  Handling those properly (also repeat parsed
+events) would require a smarter parser and handling those dumbly (join them
+and process as a single block of text) was deemed more unexpected than
+useful.  So, if repeated events are present, an error will be displayed and
 the input discarded.
 
 **@unparse**
@@ -428,6 +428,14 @@ headers will be changed.  If *key* is prefixed with <, then only response
 headers will be changed.  If no header is present, no change is made (i.e.,
 does not add headers).  If a header appears multiple times, all instances are
 changed.
+
+**@add**:*key*:*value*
+
+Add a header with key *key* and value *value* to the end of the headers list.  See `@set` for *key* prefixes.
+
+**@addmissing**:*key*:*value*
+
+As `@add`, but only adds a header if no header with key *key* is present.
 
 **@fillbody**
 

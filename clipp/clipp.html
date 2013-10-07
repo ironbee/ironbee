@@ -442,6 +442,14 @@ headers will be changed. If no header is present, no change is made (i.e.,
 does not add headers). If a header appears multiple times, all instances are
 changed.</p>
 
+<p><strong>@add</strong>:<em>key</em>:<em>value</em></p>
+
+<p>Add a header with key <em>key</em> and value <em>value</em> to the end of the headers list. See <code>@set</code> for <em>key</em> prefixes.</p>
+
+<p><strong>@addmissing</strong>:<em>key</em>:<em>value</em></p>
+
+<p>As <code>@add</code>, but only adds a header if no header with key <em>key</em> is present.</p>
+
 <p><strong>@fillbody</strong></p>
 
 <p>Adds any missing body events and replaces the contents of body events with an

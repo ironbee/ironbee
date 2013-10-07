@@ -247,9 +247,11 @@ component_t construct_select_modifier(const string& arg);
 /**
  * Construct set modifier.
  *
+ * @tparam mode Mode; see SetModifier.
  * @param[in] arg @a arg is either >key:value, <key:value, or key:value.
  **/
-component_t construct_set_modifier(const string& arg);
+template <SetModifier::mode_e mode>
+component_t construct_set_add_modifier(const string& arg);
 
 ///@}
 
@@ -402,6 +404,15 @@ void help()
     "  @set:key:value  -- Set all headers of <key> to <value>\n"
     "  @set:>key:value -- Set request headers of <key> to <value>\n"
     "  @set:<key:value -- Set response headers of <key> to <value>\n"
+    "  @add:key:value  -- Add header <key> with value <value>.\n"
+    "  @add:>key:value -- Add request header <key> with value <value>.\n"
+    "  @add:<key:value -- Add response header <key> with value <value>.\n"
+    "  @addmissing:key:value\n"
+    "    Add header <key> with value <value> if header is missing..\n"
+    "  @addmissing:>key:value\n"
+    "    Add request header <key> with value <value> if header is missing..\n"
+    "  @addmissing:<key:value\n"
+    "    Add response header <key> with value <value> if header is missing..\n"
     "  @fillbody -- Add missing bodies and replace contents with @s.\n"
     "  @ironbee:config:behavior --\n"
     "    Run data through ironbee.\n"
@@ -594,7 +605,9 @@ int main(int argc, char** argv)
         ("edit",            construct_component<EditModifier>)
         ("limit",           construct_component<LimitModifier, size_t>)
         ("select",          construct_select_modifier)
-        ("set",             construct_set_modifier)
+        ("set",             construct_set_add_modifier<SetModifier::REPLACE_EXISTING>)
+        ("add",             construct_set_add_modifier<SetModifier::ADD>)
+        ("addmissing",      construct_set_add_modifier<SetModifier::ADD_MISSING>)
         ("fillbody",        construct_argless_component<FillBodyModifier>)
         ("ironbee",         construct_ironbee_modifier)
         ("time",            construct_argless_component<TimeModifier>)
@@ -1028,7 +1041,8 @@ component_t construct_select_modifier(const string& arg)
     return SelectModifier(select);
 }
 
-component_t construct_set_modifier(const string& arg)
+template <SetModifier::mode_e mode>
+component_t construct_set_add_modifier(const string& arg)
 {
     SetModifier::which_e which = SetModifier::BOTH;
 
@@ -1054,7 +1068,7 @@ component_t construct_set_modifier(const string& arg)
     const string key   = modified_arg.substr(0, colon_i);
     const string value = modified_arg.substr(colon_i + 1);
 
-    return SetModifier(which, key, value);
+    return SetModifier(which, mode, key, value);
 }
 
 component_t construct_ironbee_threaded_consumer(const string& arg)

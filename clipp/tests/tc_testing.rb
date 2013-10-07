@@ -123,4 +123,29 @@ class TestTesting < Test::Unit::TestCase
     end
     assert_log_every_input_match /CLIPP ANNOUNCE: A/
   end
+
+  def test_add
+    clipp(consumer: 'view @add:Foo:Bar') do
+      transaction do |t|
+        t.request(
+          raw: "GET / HTTP/1.1",
+          headers: {}
+        )
+      end
+    end
+    assert_log_match(/^Foo:\s*Bar/)
+  end
+
+  def test_addmissing
+    clipp(consumer: 'view @addmissing:Foo:Bar @addmissing:Baz:Buz') do
+      transaction do |t|
+        t.request(
+          raw: "GET / HTTP/1.1",
+          headers: {"Foo" => "SomethingElse"}
+        )
+      end
+    end
+    assert_log_no_match(/^Foo:\s*Bar/)
+    assert_log_match(/^Baz:\s*Buz/)
+  end
 end
