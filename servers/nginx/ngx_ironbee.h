@@ -118,6 +118,7 @@ ib_status_t ngxib_conn_init(ib_engine_t *ib,
                             ib_state_event_type_t event,
                             void *cbdata);
 
+#if OLD_LOGGING
 /**
  * IronBee / Nginx logger.
  *
@@ -129,7 +130,7 @@ ib_status_t ngxib_conn_init(ib_engine_t *ib,
  * @param[in] calldata Context-sensitive data descriptor
  */
 void ngxib_logger(
-    ib_log_level_t      level,
+    int                 level,
     void               *cbdata,
     const char         *buf,
     ib_log_call_data_t *calldata
@@ -142,8 +143,10 @@ ib_log_level_t ngxib_loglevel(const ib_engine_t *ib, void *cbdata);
  * pointer in ironbee logger API.
  */
 ngx_log_t *ngxib_log(ngx_log_t *log);
+#endif
 
 int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx);
+
 
 
 
@@ -151,6 +154,16 @@ int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx);
 extern ngx_module_t  ngx_ironbee_module;         /* The module struct */
 ngx_int_t ngxib_handler(ngx_http_request_t *r);  /* Handler for Request Data */
 ib_server_t *ngxib_server(void);                 /* The ironbee server */
+
+/* new stuff for module */
+typedef struct module_data_t {
+    struct ib_manager_t   *manager;      /**< IronBee engine manager object */
+    int                    ib_log_active;
+    ngx_log_t             *log;
+    int                    log_level;
+} module_data_t;
+
+ib_status_t ngxib_module(ib_module_t**, ib_engine_t*, void*);
 
 
 /* Return from a function that has set globals, ensuring those

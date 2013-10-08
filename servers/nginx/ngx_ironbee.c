@@ -91,12 +91,11 @@ static ngx_command_t  ngx_ironbee_commands[] =
 /**
  * Static module data
  */
-typedef struct {
-    ib_manager_t   *manager;      /**< IronBee engine manager object */
-} module_data_t;
 static module_data_t module_data =
 {
     NULL,          /* .manager */
+    0,             /* .active */
+    NULL,          /* .log */
 };
 
 ib_status_t ngxib_acquire_engine(
@@ -524,7 +523,6 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     char *buf;
 
     /* We still use the global-log hack to initialise */
-    ngxib_log(cf->log);
     ngx_regex_malloc_init(cf->pool);
 
     ngx_log_error(NGX_LOG_NOTICE, cf->log, 0, "ironbee_init %d", getpid());
@@ -536,6 +534,14 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     if (proc->max_engines == NGX_CONF_UNSET_UINT) {
         proc->max_engines = IB_MANAGER_DEFAULT_MAX_ENGINES;
     }
+    if (proc->use_ngxib_logger == NGX_CONF_UNSET) {
+        proc->use_ngxib_logger =1;
+    }
+
+    /* initialise fields in mod_data */
+    mod_data->ib_log_active = proc->use_ngxib_logger;
+    mod_data->log = cf->log;
+    mod_data->log_level = proc->log_level;
 
     rc = ib_initialize();
     if (rc != IB_OK) {
@@ -543,15 +549,12 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     }
 
     /* Create the IronBee engine manager */
-    rc = ib_manager_create(ngxib_server(),        /* Server object */
+    rc = ib_manager_create(&(mod_data->manager),  /* Engine Manager */
+                           ngxib_server(),        /* Server object */
                            proc->max_engines,     /* Max engines */
-                           NULL,                  /* Logger va function */
-                           ngxib_logger,          /* Logger buf function */
-                           NULL,                  /* Logger flush function */
-                           mod_data,              /* cbdata: module data */
-                           proc->log_level,       /* IB log level */
-                           NULL,                  /* Maintenance callback */
-                           &(mod_data->manager)); /* Engine Manager */
+                           ngxib_module,          /* Init module */
+                           mod_data);             /* Init module cbdata. */
+
     if (rc != IB_OK) {
         cleanup_return IB2NG(rc);
     }
@@ -680,12 +683,10 @@ static void ironbee_exit(ngx_cycle_t *cycle)
 {
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "ironbee_exit %d", getpid());
     /* FIXME: this fails under gdb */
-    ngxib_log(cycle->log);
     if (module_data.manager != NULL) {
         ib_manager_destroy(module_data.manager);
         module_data.manager = NULL;
     }
-    ngxib_log(NULL);
 }
 
 

@@ -19,7 +19,7 @@ NGXIB_FILES =	$(NGXIB_SRCDIR)/ngx_ironbee.h		\
 		$(NGXIB_SRCDIR)/ngx_ironbee.c		\
 		$(NGXIB_SRCDIR)/ngx_ironbee_conn.c	\
 		$(NGXIB_SRCDIR)/ngx_ironbee_in.c	\
-		$(NGXIB_SRCDIR)/ngx_ironbee_logger.c	\
+		$(NGXIB_SRCDIR)/ngx_ironbee_module.c	\
 		$(NGXIB_SRCDIR)/ngx_ironbee_plugin.c
 NGXIB_PREFIX = $(prefix)/nginx
 #NGXIB_COPTS = $(CFLAGS) $(PCRE_CFLAGS) -D_GNU_SOURCE -I$(prefix)/include

@@ -2518,7 +2518,7 @@ static ib_status_t create_module(
       __FILE__,
       NULL,                  /* Module data */
       ib,                    /* Engine. */
-      "ApacheHTTPDModule",   /* Module name. */
+      "TrafficserverModule", /* Module name. */
       NULL,                  /* Config struct. */
       0,                     /* Config size. */
       NULL,                  /* Config copy function. */
