@@ -57,15 +57,23 @@ module CLIPPTestAssertions
 
   # Assert that every input matches _re_.
   def assert_log_every_input_match(re)
+    message = ""
     each_input do |input_id, input_log|
-      assert_match(re, input_log, "#{re.inspect} was not found in input #{input_id}")
+      if input_log !~ re
+        message += "Input #{input_id} did not match #{re.inspect}.\n"
+      end
     end
+    assert(message.empty?, message)
   end
 
   # Assert that every input does not match _re_.
   def assert_log_every_input_no_match(re)
+    message = ""
     each_input do |input_id, input_log|
-      assert_no_match(re, input_log, "#{re.inspect} was found in input #{input_id}")
+      if input_log =~ re
+        message += "Input #{input_id} matched #{re.inspect}.\n"
+      end
+      assert(message.empty?, message)
     end
   end
 end
