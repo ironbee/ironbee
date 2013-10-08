@@ -94,17 +94,11 @@ local build_table = function(rule, msg)
 end
 
 -- Check that a rule is ready from only defined fields.
--- Not part of the validator API. 
+-- Not part of the validator API.
 local check_defined_fields = function(validator, rule, defined_fields)
     for i, field in ipairs(rule.data.fields) do
         if defined_fields[field.collection] == nil then
             validator:warning(rule, string.format("Field %s read before defined.", field.collection))
-        end
-
-        if field.selector and 
-           string.match(field.selector, "^%w+$") and
-           defined_fields[field.selector] == nil then
-            validator:warning(rule, string.format("Field %s:%s read before defined.", field.collection, field.selector))
         end
     end
 end
@@ -138,7 +132,7 @@ Validator.has_errors = function(self)
 end
 
 Validator.validate = function(self, db,  plan)
- 
+
     -- Fields that we've seen already.
     local defined_fields = setmetatable({}, { __index = predefined_fields })
 
