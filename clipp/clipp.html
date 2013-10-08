@@ -638,10 +638,12 @@ accessed by including the <code>CLIPPTest</code> mixin.</p>
 
 <p><strong>The <code>clipp</code> command</strong></p>
 
-<p>The <code>clipp</code> command takes a configuration hash. The only required options are
-an input describing option (<code>:input</code> or <code>:input_hash</code>). Several others can
-manipulate how clipp is run, and all options are provided to the ERB template
-for generating the IronBee configuration file.</p>
+<p>The <code>clipp</code> command takes a configuration hash. The current best practice is
+to pass in any configuration as command line options and define inputs via
+ClippScript (see <code>clippscript.md</code>).</p>
+
+<p>All options are provided to the ERB template for generating the IronBee
+configuration file.</p>
 
 <p>Currently meaningful options modifying how CLIPP is invoked are:</p>
 
@@ -657,10 +659,12 @@ for generating the IronBee configuration file.</p>
 <li><code>:consumer</code> &#8211; A CLIPP consumer chain. If omitted, <code>ironbee:IRONBEE_CONFIG</code>
  is used. <code>IRONBEE_CONFIG</code> is replaced with a path to the evaluation of the
  ERB file specified via <code>:template</code>.</li>
+<li><code>:id</code> &#8211; An identifier used to generate files. If omitted, a random number if used.</li>
 </ul>
 
-<p>One of <code>:input</code> and <code>:input_hashes</code> is required. If <code>:input_hashes</code> is
-provided, protobuf will be provided to stdin and <code>:input</code> will default to <code>pb:-</code>.
+<p>One of <code>:input</code>, <code>:input_hashes</code>, or a ClippScript block is required. is
+required. If <code>:input_hashes</code> or ClippScript is provided, protobuf will be
+provided to stdin and <code>:input</code> will default to <code>pb:-</code>.
 If you override <code>:input</code>, e.g., to add modifiers, be sure to begin
 with <code>pb:-</code> as the generator.</p>
 
@@ -675,18 +679,20 @@ with <code>pb:-</code> as the generator.</p>
 
 <p><strong>Assertions</strong></p>
 
-<p>Currently only two assertions are supported:</p>
+<p>The following assertions are supported.</p>
 
 <ul>
 <li><code>assert_log_match</code> <em>regex</em> &#8212; Asserts that <em>regex</em> appears in the output
  of the most recent CLIPP invocation.</li>
 <li><code>assert_log_no_match</code> <em>regex</em> &#8212; Asserts that <em>regex</em> does <strong>not</strong> appears
  in the output of the most recent CLIPP invocation.</li>
+<li><code>assert_log_every_input_match</code> <em>regex</em> &#8212; Asserts that <em>regex</em> matches every input. This requires the inputs to pass through <code>@view:summary</code>. If you override the default consumer, you will need to explicitly specify the modifier.</li>
+<li><code>assert_log_every_input_no_match</code> <em>regex</em> &#8212; As above, but asserts that <em>regex</em> is not matched.</li>
 </ul>
 
-<p>Additional assertions will be added as needed.</p>
-
 <p><strong>Input Generation</strong></p>
+
+<p>Instead of using the routines below, consider using ClippScript (<code>clippscript.md</code>).</p>
 
 <p>Helper routines are provided to generate inputs. Ultimately, these produce
 hashes to be passed to CLIPP via the <code>:input_hash</code> option.</p>

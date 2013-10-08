@@ -621,10 +621,12 @@ The main additions are:
 
 **The `clipp` command**
 
-The `clipp` command takes a configuration hash.  The only required options are
-an input describing option (`:input` or `:input_hash`).  Several others can
-manipulate how clipp is run, and all options are provided to the ERB template
-for generating the IronBee configuration file.
+The `clipp` command takes a configuration hash.  The current best practice is
+to pass in any configuration as command line options and define inputs via
+ClippScript (see `clippscript.md`).
+
+All options are provided to the ERB template for generating the IronBee
+configuration file.
 
 Currently meaningful options modifying how CLIPP is invoked are:
 
@@ -639,9 +641,11 @@ Currently meaningful options modifying how CLIPP is invoked are:
 - `:consumer` -- A CLIPP consumer chain.  If omitted, `ironbee:IRONBEE_CONFIG`
   is used.  `IRONBEE_CONFIG` is replaced with a path to the evaluation of the
   ERB file specified via `:template`.
+- `:id` -- An identifier used to generate files.  If omitted, a random number if used.
 
-One of `:input` and `:input_hashes` is required.  If `:input_hashes` is
-provided, protobuf will be provided to stdin and `:input` will default to `pb:-`.
+One of `:input`, `:input_hashes`, or a ClippScript block is required. is
+required.  If `:input_hashes` or ClippScript is provided, protobuf will be
+provided to stdin and `:input` will default to `pb:-`.
 If you override `:input`, e.g., to add modifiers, be sure to begin
 with `pb:-` as the generator.
 
@@ -654,16 +658,18 @@ The following options are used by the default IronBee configuration template:
 
 **Assertions**
 
-Currently only two assertions are supported:
+The following assertions are supported.
 
 - `assert_log_match` *regex* --- Asserts that *regex* appears in the output
   of the most recent CLIPP invocation.
 - `assert_log_no_match` *regex* --- Asserts that *regex* does **not** appears
   in the output of the most recent CLIPP invocation.
-
-Additional assertions will be added as needed.
+- `assert_log_every_input_match` *regex* --- Asserts that *regex* matches every input.  This requires the inputs to pass through `@view:summary`.  If you override the default consumer, you will need to explicitly specify the modifier.
+- `assert_log_every_input_no_match` *regex* --- As above, but asserts that *regex* is not matched.
 
 **Input Generation**
+
+Instead of using the routines below, consider using ClippScript (`clippscript.md`).
 
 Helper routines are provided to generate inputs.  Ultimately, these produce
 hashes to be passed to CLIPP via the `:input_hash` option.
