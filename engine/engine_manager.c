@@ -429,7 +429,11 @@ static ib_status_t create_engine(
             ib_module_t *module_final = NULL;
 
             /* Copy the module structure. */
-            rc = ib_module_dup(&module_final, module, engine);
+            rc = ib_module_dup(
+                &module_final,
+                module,
+                ib_engine_pool_main_get(engine)
+            );
             if (rc != IB_OK) {
                 goto error;
             }
