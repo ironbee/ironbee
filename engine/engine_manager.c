@@ -128,7 +128,7 @@ static void destroy_inactive_engines(
     const size_t list_sz = manager->engine_count;
 
     /* Destroy all non-current engines with zero reference count */
-    for (size_t num = 0;  num < list_sz; ++num) {
+    for (size_t num = 0; num < list_sz; ++num) {
 
         /* Get and check the wrapper for the IronBee engine. */
         const ib_manager_engine_t *wrapper = manager->engine_list[num];
@@ -203,7 +203,7 @@ ib_status_t ib_manager_create(
     /* Create our memory pool. */
     rc = ib_mpool_create(&mpool, "Engine Manager", NULL);
     if (rc != IB_OK) {
-        goto cleanup;
+        return rc;
     }
 
     /* Create the manager object. */
@@ -235,12 +235,12 @@ ib_status_t ib_manager_create(
     }
 
     /* Populate the manager object. */
-    manager->server         = server;
-    manager->mpool          = mpool;
-    manager->engine_list    = engine_list;
-    manager->max_engines    = max_engines;
-    manager->module_fn      = NULL;
-    manager->module_data    = NULL;
+    manager->server      = server;
+    manager->mpool       = mpool;
+    manager->engine_list = engine_list;
+    manager->max_engines = max_engines;
+    manager->module_fn   = NULL;
+    manager->module_data = NULL;
 
     /* Hand the new manager off to the caller. */
     *pmanager = manager;
@@ -264,8 +264,8 @@ ib_status_t ib_manager_register_module_fn(
 {
     assert(manager != NULL);
 
-    manager->module_fn      = module_fn;
-    manager->module_data    = module_data;
+    manager->module_fn   = module_fn;
+    manager->module_data = module_data;
 
     return IB_OK;
 }
@@ -274,8 +274,10 @@ void ib_manager_destroy(
     ib_manager_t *manager
 )
 {
+    assert(manager != NULL);
+
     /* Destroy engines */
-    for (size_t num = 0;  num < manager->engine_count;  ++num) {
+    for (size_t num = 0; num < manager->engine_count; ++num) {
         const ib_manager_engine_t *manager_engine = manager->engine_list[num];
 
         /* Note: This will destroy the engine wrapper object, too */
@@ -289,7 +291,7 @@ void ib_manager_destroy(
 }
 
 /**
- * Register an engine.
+ * Put @a engine under @a manager 's controle and make it the current engine.
  *
  * This requires that the caller hold the manager lock and that
  * ib_manager_t::engine_count be less than ib_manager_t::max_engines.
@@ -392,7 +394,6 @@ static ib_status_t create_engine(
     assert(config_file != NULL);
 
     ib_status_t          rc;
-    ib_status_t          rc2;
     ib_cfgparser_t      *parser = NULL;
     ib_context_t        *ctx;
     ib_manager_engine_t *wrapper;
@@ -418,10 +419,13 @@ static ib_status_t create_engine(
     if (manager->module_fn != NULL) {
 
         /* Module the user creates. */
-        ib_module_t *module       = NULL;
+        const ib_module_t *module = NULL;
 
         /* Build a module structure per the plugin's request. */
-        rc = manager->module_fn(&module, engine, manager->module_data);
+        rc = manager->module_fn(
+            (ib_module_t **)&module,
+            engine,
+            manager->module_data);
 
         /* On OK, initialize the module in the engine. */
         if (rc == IB_OK) {
@@ -432,7 +436,7 @@ static ib_status_t create_engine(
             rc = ib_module_dup(
                 &module_final,
                 module,
-                ib_engine_pool_main_get(engine)
+                engine
             );
             if (rc != IB_OK) {
                 goto error;
@@ -470,16 +474,12 @@ static ib_status_t create_engine(
 
     /* Parse the configuration */
     rc = ib_cfgparser_parse(parser, config_file);
-
-    /* Report the status to the engine */
-    rc2 = ib_engine_config_finished(engine);
-
-    /* Merge rc2 into rc. */
-    if ( (rc2 != IB_OK) && (rc == IB_OK) ) {
-        rc = rc2;
+    if (rc != IB_OK) {
+        return rc;
     }
 
-    /* All ok? */
+    /* Report the status to the engine */
+    rc = ib_engine_config_finished(engine);
     if (rc != IB_OK) {
         return rc;
     }
@@ -504,8 +504,8 @@ error:
 }
 
 ib_status_t ib_manager_engine_create(
-    ib_manager_t  *manager,
-    const char    *config_file
+    ib_manager_t *manager,
+    const char   *config_file
 )
 {
     assert(manager != NULL);
@@ -605,7 +605,7 @@ ib_status_t ib_manager_engine_release(
 
     /* More work to find an old engine that's being released. */
     else {
-        for (size_t num = 0;  num < manager->engine_count;  ++num) {
+        for (size_t num = 0; num < manager->engine_count; ++num) {
             ib_manager_engine_t *cur = manager->engine_list[num];
 
             /* Decrement the reference count if the engine matches. */

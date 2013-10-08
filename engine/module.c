@@ -219,7 +219,7 @@ ib_status_t DLL_PUBLIC ib_module_load_from_sym(
             ib_log_error(ib, "Failed to load module: no module structure");
             return IB_EUNKNOWN;
         }
-        rc = ib_module_dup(pm, m, ib_engine_pool_main_get(ib));
+        rc = ib_module_dup(pm, m, ib);
         if (rc != IB_OK) {
             return rc;
         }
@@ -427,18 +427,21 @@ ib_status_t ib_module_config_initialize(
     return IB_OK;
 }
 
-ib_status_t ib_module_dup(
+ib_status_t DLL_PUBLIC ib_module_dup(
     ib_module_t       **module_dst,
     const ib_module_t  *module_src,
-    ib_mpool_t         *mp
+    ib_engine_t        *engine_dst
 )
 {
     assert(module_dst != NULL);
     assert(module_src != NULL);
-    assert(mp         != NULL);
+    assert(engine_dst != NULL);
 
     ib_module_t *module_tmp =
-        (ib_module_t *)ib_mpool_calloc(mp, 1, sizeof(*module_tmp));
+        (ib_module_t *)ib_mpool_calloc(
+            ib_engine_pool_main_get(engine_dst),
+            1,
+            sizeof(*module_tmp));
 
     if (module_tmp == NULL) {
         return IB_EALLOC;

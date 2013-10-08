@@ -341,7 +341,7 @@ ib_status_t DLL_PUBLIC ib_module_config_initialize(
  *
  * @param[out] module_dst The module structure to be created and copied into.
  * @param[in]  module_src The module structure to copy.
- * @param[in]  mp         The memory pool to use to allocate @a module_dst.
+ * @param[in]  engine_dst The engine that @a module_dst will be added to.
  *
  * @returns
  * - IB_OK On success.
@@ -351,7 +351,7 @@ ib_status_t DLL_PUBLIC ib_module_config_initialize(
 ib_status_t DLL_PUBLIC ib_module_dup(
     ib_module_t       **module_dst,
     const ib_module_t  *module_src,
-    ib_mpool_t         *mp
+    ib_engine_t        *engine_dst
 );
 
 /**
