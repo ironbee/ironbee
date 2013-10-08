@@ -1591,9 +1591,9 @@ ib_status_t ib_context_create(ib_engine_t *ib,
         goto failed;
     }
 
-    /* Register the modules */
+    /* Register the modules. */
     /// @todo Later on this needs to be triggered by ActivateModule or similar
-    if (ib->modules) {
+    if (ctype != IB_CTYPE_ENGINE) {
         ib_module_t *m;
         size_t n;
         size_t i;
@@ -1608,13 +1608,6 @@ ib_status_t ib_context_create(ib_engine_t *ib,
             if (rc != IB_OK) {
                 goto failed;
             }
-        }
-    }
-    else {
-        /* Register the core module by default. */
-        rc = ib_module_register_context(ib_core_module_sym(), ctx);
-        if (rc != IB_OK) {
-            goto failed;
         }
     }
 
