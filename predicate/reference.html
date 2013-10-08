@@ -146,7 +146,7 @@
 
 <p>All of these functions will evaluate at transformation time if possible. E.g., <code>(and (false) v)</code> will transform into <code>(false)</code>; <code>(if (true) t f)</code> will transform into <code>t</code>.</p>
 
-<p>Furthermore, some amount of simplification will occur. <code>true</code> and <code>false</code> will transform into <code>['']</code> and <code>[]</code>, respectively. <code>or</code> and <code>and</code> will incorporate arguments that are the same function, e.g., <code>(or (or a b) c)</code> will transform into <code>(or a b c)</code>. <code>or</code> and <code>and</code> will also reorder their arguments into a canonical order to allow further subexpression merging, e.g., <code>(or a b)</code> will merge with <code>(or b a)</code>.</p>
+<p>Furthermore, some amount of simplification will occur. <code>true</code> and <code>false</code> will transform into <code>['']</code> and <code>[]</code>, respectively. <code>or</code> and <code>and</code> will also reorder their arguments into a canonical order to allow further subexpression merging, e.g., <code>(or a b)</code> will merge with <code>(or b a)</code>.</p>
 
 <p>In contrast, the short circuited versions, <code>andSC</code> and <code>orSC</code> do not reorder. They will incorporate arguments of the same function as them, but not those of the non-short-circuited versions.</p>
 
@@ -217,8 +217,6 @@
 
 <dd>Will remove any truthy literal children.</dd>
 
-<dd>If any child is itself an <code>and</code> call, will replace that child with the child&#8217;s children.</dd>
-
 <dt>Front End</dt>
 <dd>Available via <code>+</code>.</dd>
 </dl>
@@ -240,8 +238,6 @@
 <dd>If any child is a truthy literal, will replace itself with a truthy value.</dd>
 
 <dd>Will remove any null literal children.</dd>
-
-<dd>If any child is itself an <code>or</code> call, will replace that child with the child&#8217;s children.</dd>
 
 <dt>Front End</dt>
 <dd>Available via <code>/</code>.</dd>
@@ -355,12 +351,16 @@
 <dt>Notes</dt>
 <dd><code>cat</code> waits until all arguments are finished as it is not allowed to add values in the middle of its value list.</dd>
 
-<dd>A future version of <code>cat</code> may begin adding values when possible. E.g., <code>(cat a b)</code> could begin adding values of <code>a</code> as soon as they appear, although it would ahve to wait for <code>a</code> to finish before adding values of <code>b</code>.</dd>
+<dd>A future version of <code>cat</code> may begin adding values when possible. E.g., <code>(cat a b)</code> could begin adding values of <code>a</code> as soon as they appear, although it would have to wait for <code>a</code> to finish before adding values of <code>b</code>.</dd>
 
 <dd><code>cat</code> could add values from any argument immediately if it were not concerned with preserving order. An additional, differently named, function to do just that may be added in the future.</dd>
 
 <dt>Transformations</dt>
-<dd>If a child is itself a <code>cat</code> call, it will be replaced with its children.</dd>
+<dd>If a child is a null literal, it will be removed.</dd>
+
+<dd>If <code>cat</code> has a single argument, it will replace itself with its argument.</dd>
+
+<dd>If <code>cat</code> has no arguments, it will replace itself with false.</dd>
 </dl>
 
 <p><strong><code>(scatter a)</code></strong></p>
@@ -856,28 +856,6 @@
 <dl>
 <dt>Synonym</dt>
 <dd><code>(var N W F)</code></dd>
-</dl>
-
-<h2 id="streamingironbeefuture">Streaming IronBee [Future]</h2>
-
-<p><strong><code>(streamRequestBodyRx R)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[...]</code> captures of any matches of regexp <code>R</code> in the streamed request body.</dd>
-
-<dt>Finished</dt>
-<dd>Once request is finished.</dd>
-</dl>
-
-<p><strong><code>(streamResponseBodyRx R)</code></strong></p>
-
-<dl>
-<dt>Result</dt>
-<dd><code>[...]</code> captures of any matches of regexp <code>R</code> in the streamed response body.</dd>
-
-<dt>Finished</dt>
-<dd>Once response is finished.</dd>
 </dl>
 
 <h2 id="fastfuture">Fast [Future]</h2>
