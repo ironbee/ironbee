@@ -125,7 +125,7 @@ node_cp StandardTest::transform(node_p n) const
     return G.root(i);
 }
 
-string StandardTest::transform(const string& s) const
+string StandardTest::transform(const std::string& s) const
 {
     return transform(parse(s))->to_s();
 }
