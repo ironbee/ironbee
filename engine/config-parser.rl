@@ -246,7 +246,7 @@ static ib_status_t include_parse_directive_impl_log_realpath(
     }
 
     /* Convert to the real path. Failure is OK. We'll use the original.
-     * NOTE: We do not error report here. Error reporting is handled 
+     * NOTE: We do not error report here. Error reporting is handled
      *       when we try to access the file. */
     real = realpath(incfile, real);
     if (real == NULL) {
@@ -271,7 +271,7 @@ static ib_status_t include_parse_directive_impl_log_realpath(
 
  * @param[in] cp Configuration parser.
  * @param[in] incfile File to include.
- * @param[in] if_exists Choose the error message and log level by 
+ * @param[in] if_exists Choose the error message and log level by
  *            whether the file must exist or may be missing.
  * @returns
  * - IB_OK on success.
@@ -395,8 +395,10 @@ static ib_status_t include_parse_directive_impl_parse(
  * Implementation of "Include" and "IncludeIfExists" parse directives.
  *
  * @param[in] cp Configuration parser.
- * @param[in] mp Memory pool to use.
+ * @param[in] temp_mp Memory pool to use.
  * @param[in] node The parse node containing the directive.
+ * @param[in] if_exists Choose the error message and log level by
+ *            whether the file must exist or may be missing.
  *
  * @returns
  * - IB_OK on success.
@@ -893,14 +895,12 @@ static ib_status_t cfgparser_partial_match_maintenance(
 }
 
 /**
- * If Ragel has a partial match we must resume parsing in 
+ * If Ragel has a partial match we must resume parsing in
  * a special buffer we are maintaining.
-
+ *
  * @param[in] cp Configuration parser. The cp->fsm structure is updated.
  * @param[in] buf Buffer to append to cp->fsm.ts_buffer.
  * @param[in] blen Length of the buffer to append to cp->fsm.ts_buffer.
- * @param[out] fsm_vars The p field is updated to point to 
- *             the new location of buffer.
  */
 static ib_status_t cfgparser_partial_match_resume(
     ib_cfgparser_t *cp,
