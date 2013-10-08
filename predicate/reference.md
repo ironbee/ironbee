@@ -288,7 +288,7 @@ Finished
 
 Notes
 : `cat` waits until all arguments are finished as it is not allowed to add values in the middle of its value list.
-: A future version of `cat` may begin adding values when possible.  E.g., `(cat a b)` could begin adding values of `a` as soon as they appear, although it would ahve to wait for `a` to finish before adding values of `b`.
+: A future version of `cat` may begin adding values when possible.  E.g., `(cat a b)` could begin adding values of `a` as soon as they appear, although it would have to wait for `a` to finish before adding values of `b`.
 : `cat` could add values from any argument immediately if it were not concerned with preserving order.  An additional, differently named, function to do just that may be added in the future.
 
 Transformations
