@@ -123,9 +123,9 @@ ib_status_t DLL_PUBLIC ib_manager_create(
  * Register a single module creation callback function.
  *
  * Currently only one module create function can be registered at a time.
- * Future callbacks will replace the previous one.
+ * Will replace any already registered callback.
  *
- * @param[out] pmanager Pointer to IronBee engine manager object
+ * @param[in] manager Engine manager to register function with.
  * @param[in] module_fn Function to return a module structure for a server
  *            module that will be registered to a newly created IronBee
  *            engine. The module will be added before the engine is
