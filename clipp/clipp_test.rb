@@ -102,21 +102,15 @@ module CLIPPTest
     exit 1
   end
 
-  # Source test directory.
-  CLIPPDIR          = File.expand_path(File.dirname(__FILE__))
-  # Build test directory.
-  BUILDDIR         = \
-    ($abs_builddir || ENV['abs_builddir'] || fatal("abs_builddir not set."))
-  # Top build dir.
-  TOP_BUILDDIR     = \
-    ($abs_top_builddir || ENV['abs_top_builddir'] || fatal("abs_top_builddir not set."))
+  # Source test directory; needed to find support files.
+  CLIPPDIR     = File.expand_path(File.dirname(__FILE__))
+  # Build directory; clipp will store output here.
+  BUILDDIR     = ($abs_builddir || ENV['abs_builddir'] || '.')
+  # Top build dir; if given, clipp and modules will be loaded from this tree.
+  TOP_BUILDDIR = ($abs_top_builddir || ENV['abs_top_builddir'])
 
   # CLIPP executable.
-  CLIPP            = File.join(TOP_BUILDDIR, 'clipp', 'clipp')
-  if ! File.exists?(CLIPP)
-    STDERR.puts "#{CLIPP} not found.  Unable to run tests."
-    exit 1
-  end
+  CLIPP = TOP_BUILDDIR ? File.join(TOP_BUILDDIR, 'clipp', 'clipp') : 'clipp'
 
   # Default IronBee configuration template.
   DEFAULT_TEMPLATE = 'CLIPPDIR/ironbee.config.erb'
