@@ -3383,7 +3383,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("LoadModule", name) == 0) {
         char *absfile;
-        ib_module_t *m;
 
         if (*p1_unescaped == '/') {
             absfile = (char *)p1_unescaped;
@@ -3404,7 +3403,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             }
         }
 
-        rc = ib_module_load(&m, ib, absfile);
+        rc = ib_module_load(ib, absfile);
         /* ib_module_load will report errors. */
         return rc;
     }

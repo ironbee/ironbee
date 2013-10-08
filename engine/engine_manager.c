@@ -430,20 +430,8 @@ static ib_status_t create_engine(
         /* On OK, initialize the module in the engine. */
         if (rc == IB_OK) {
 
-            ib_module_t *module_final = NULL;
-
-            /* Copy the module structure. */
-            rc = ib_module_dup(
-                &module_final,
-                module,
-                engine
-            );
-            if (rc != IB_OK) {
-                goto error;
-            }
-
             /* Initialize the module into the engine. */
-            rc = ib_module_init(module_final, engine);
+            rc = ib_module_register(module, engine);
             if (rc != IB_OK) {
                 goto error;
             }

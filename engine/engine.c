@@ -472,9 +472,9 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
 
     /* Initialize the core static module. */
     /// @todo Probably want to do this in a less hard-coded manner.
-    rc = ib_module_init(ib_core_module_sym(), ib);
+    rc = ib_module_register(ib_core_module_sym(), ib);
     if (rc != IB_OK) {
-        ib_log_alert(ib,  "Error in ib_module_init");
+        ib_log_alert(ib,  "Error in ib_module_register");
         goto failed;
     }
 
@@ -741,8 +741,7 @@ void ib_engine_destroy(ib_engine_t *ib)
     size_t ne;
     size_t idx;
     ib_list_node_t *node;
-    ib_module_t *cm = ib_core_module(ib);
-    ib_module_t *m;
+    ib_module_t    *m;
 
     if (ib == NULL) {
         return;
@@ -768,13 +767,9 @@ void ib_engine_destroy(ib_engine_t *ib)
 
     /* Important: Logging does not work after this point! */
     IB_ARRAY_LOOP_REVERSE(ib->modules, ne, idx, m) {
-        if ( (m != NULL) && (m != cm) ) {
-            ib_module_unload(m);
-        }
+        ib_module_unload(m);
     }
 
-    /* Unload core module. */
-    ib_module_unload(cm);
     /* No logging from here on out. */
 
     /* Close the loggers. */

@@ -45,10 +45,6 @@ namespace {
  */
 class TestIronBeeModuleRulesLua : public BaseTransactionFixture
 {
-    private:
-
-    ib_module_t *m_module;
-
     protected:
     ib_rule_t *rule;
 
@@ -59,7 +55,7 @@ class TestIronBeeModuleRulesLua : public BaseTransactionFixture
 
     virtual void SetUp(){
         BaseTransactionFixture::SetUp();
-        loadModule(&m_module, "ibmod_rules.so");
+        loadModule("ibmod_rules.so");
         ASSERT_IB_OK(ib_rule_create(ib_engine,
                                     ib_engine->ectx,
                                     __FILE__,

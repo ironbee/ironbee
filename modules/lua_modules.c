@@ -105,7 +105,7 @@ static ib_status_t build_near_empty_module(
 
     /* Initialize and register the new lua module with the engine. */
     ib_log_debug3(ib, "Init lua module");
-    rc = ib_module_init(*module, ib);
+    rc = ib_module_register(*module, ib);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to initialize / register a lua module.");
         return rc;

@@ -69,9 +69,18 @@ static ib_status_t module_context_open(
 }
 
 /// @todo Probably need to load into a given context???
-ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
+ib_status_t ib_module_register(const ib_module_t *mod, ib_engine_t *ib)
 {
+    assert(ib != NULL);
+    assert(mod != NULL);
+
     ib_status_t rc;
+    ib_module_t *m = ib_mpool_memdup(
+        ib_engine_pool_main_get(ib), mod, sizeof(*mod));
+
+    if (m == NULL) {
+        return IB_EALLOC;
+    }
 
     /* Keep track of the module index. */
     m->idx = ib_array_elements(ib->modules);
@@ -190,18 +199,16 @@ ib_status_t ib_module_file_to_sym(
     return IB_OK;
 }
 
-
 ib_status_t DLL_PUBLIC ib_module_load_from_sym(
-    ib_module_t      **pm,
     ib_engine_t       *ib,
     ib_module_sym_fn   sym
 )
 {
-    assert(pm != NULL);
     assert(ib != NULL);
     assert(sym != NULL);
 
-    ib_status_t rc;
+    ib_status_t        rc;
+    const ib_module_t *m;
 
     if (ib == NULL) {
         return IB_EINVAL;
@@ -210,48 +217,37 @@ ib_status_t DLL_PUBLIC ib_module_load_from_sym(
     /* Load module and fetch the module symbol. */
     ib_log_debug2(ib, "Loading module.");
 
-    {
-        const ib_module_t *m;
-
-        /* Fetch and copy the module structure. */
-        m = sym(ib);
-        if (m == NULL) {
-            ib_log_error(ib, "Failed to load module: no module structure");
-            return IB_EUNKNOWN;
-        }
-        rc = ib_module_dup(pm, m, ib);
-        if (rc != IB_OK) {
-            return rc;
-        }
-        /* m departs scope, never to return. */
+    /* Fetch and copy the module structure. */
+    m = sym(ib);
+    if (m == NULL) {
+        ib_log_error(ib, "Failed to load module: no module structure");
+        return IB_EUNKNOWN;
     }
 
     /* Check module for ABI compatibility with this engine */
-    if ((*pm)->vernum > IB_VERNUM) {
+    if (m->vernum > IB_VERNUM) {
         ib_log_alert(ib,
                      "Module (built against engine version %s) is not "
                      "compatible with this engine (version %s): "
                      "ABI %d > %d",
-                     (*pm)->version, IB_VERSION, (*pm)->abinum, IB_ABINUM);
+                     m->version, IB_VERSION, m->abinum, IB_ABINUM);
         return IB_EINCOMPAT;
     }
 
     ib_log_debug3(ib,
                   "Loaded module %s: "
                   "vernum=%d abinum=%d version=%s index=%zd filename=%s",
-                  (*pm)->name,
-                  (*pm)->vernum, (*pm)->abinum, (*pm)->version,
-                  (*pm)->idx, (*pm)->filename);
+                  m->name,
+                  m->vernum, m->abinum, m->version,
+                  m->idx, m->filename);
 
-    rc = ib_module_init(*pm, ib);
+    /* Register, but we already have  acopy. :\ */
+    rc = ib_module_register(m, ib);
     return rc;
 }
 
-ib_status_t ib_module_load(ib_module_t **pm,
-                           ib_engine_t *ib,
-                           const char *file)
+ib_status_t ib_module_load(ib_engine_t *ib, const char *file)
 {
-    assert(pm != NULL);
     assert(ib != NULL);
     assert(file != NULL);
 
@@ -267,7 +263,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
         return rc;
     }
 
-    rc = ib_module_load_from_sym(pm, ib, sym);
+    rc = ib_module_load_from_sym(ib, sym);
     return rc;
 }
 
@@ -423,35 +419,6 @@ ib_status_t ib_module_config_initialize(
     main_cfgdata->data = cfg;
     module->gcdata = cfg;
     module->gclen = cfg_length;
-
-    return IB_OK;
-}
-
-ib_status_t DLL_PUBLIC ib_module_dup(
-    ib_module_t       **module_dst,
-    const ib_module_t  *module_src,
-    ib_engine_t        *engine_dst
-)
-{
-    assert(module_dst != NULL);
-    assert(module_src != NULL);
-    assert(engine_dst != NULL);
-
-    ib_module_t *module_tmp =
-        (ib_module_t *)ib_mpool_calloc(
-            ib_engine_pool_main_get(engine_dst),
-            1,
-            sizeof(*module_tmp));
-
-    if (module_tmp == NULL) {
-        return IB_EALLOC;
-    }
-
-    /* Copy the module. */
-    *module_tmp = *module_src;
-
-    /* Return the successful result to the user. */
-    *module_dst = module_tmp;
 
     return IB_OK;
 }

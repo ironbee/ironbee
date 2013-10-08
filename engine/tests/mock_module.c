@@ -215,7 +215,7 @@ const char *mock_module_name() {
 ib_status_t mock_module_register(ib_engine_t *ib) {
     ib_status_t rc;
 
-    rc = ib_module_init(IB_MODULE_STRUCT_PTR, ib);
+    rc = ib_module_register(IB_MODULE_STRUCT_PTR, ib);
     if (rc != IB_OK){
         return rc;
     }

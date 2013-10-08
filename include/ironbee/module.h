@@ -213,18 +213,16 @@ struct ib_module_t {
 };
 
 /**
- * Initialize an engine module.
+ * Duplicate and add a module handle to the given engine.
  *
- * Use this to initialize a static module.
- *
- * @param[in] m  Module handle (already loaded)
+ * @param[in] m  Loaded module handle.
  * @param[in] ib Engine handle
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_module_init(
-    ib_module_t *m,
-    ib_engine_t *ib
+ib_status_t DLL_PUBLIC ib_module_register(
+    const ib_module_t *m,
+    ib_engine_t       *ib
 );
 
 /**
@@ -247,16 +245,14 @@ ib_status_t DLL_PUBLIC ib_module_create(
  *
  * This causes the module init() function to be called.
  *
- * @param[out] pm   Address to which module handle is written
  * @param[in]  ib   Engine handle
  * @param[in]  file Filename of the module
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_module_load(
-    ib_module_t **pm,
-    ib_engine_t  *ib,
-    const char   *file
+    ib_engine_t *ib,
+    const char  *file
 );
 
 /**
@@ -279,14 +275,12 @@ ib_status_t DLL_PUBLIC ib_module_file_to_sym(
  *
  * This causes the module init() function to be called.
  *
- * @param[out] pm  Address to which module handle is written
  * @param[in]  ib  Engine handle
  * @param[in]  sym Module symbol.
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_module_load_from_sym(
-    ib_module_t      **pm,
     ib_engine_t       *ib,
     ib_module_sym_fn   sym
 );
@@ -335,24 +329,6 @@ ib_status_t DLL_PUBLIC ib_module_config_initialize(
     ib_module_t *module,
     void *cfg,
     size_t cfg_length);
-
-/**
- * Duplicate a module structure.
- *
- * @param[out] module_dst The module structure to be created and copied into.
- * @param[in]  module_src The module structure to copy.
- * @param[in]  engine_dst The engine that @a module_dst will be added to.
- *
- * @returns
- * - IB_OK On success.
- * - IB_EALLOC On any allocation error.
- * - Other on unexpected error.
- */
-ib_status_t DLL_PUBLIC ib_module_dup(
-    ib_module_t       **module_dst,
-    const ib_module_t  *module_src,
-    ib_engine_t        *engine_dst
-);
 
 /**
  * @} IronBeeModule

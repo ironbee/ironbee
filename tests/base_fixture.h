@@ -594,8 +594,7 @@ public:
         }
     }
 
-    void loadModule(ib_module_t **ib_module,
-                    const std::string& module_file)
+    void loadModule(const std::string& module_file)
     {
         ib_status_t rc;
 
@@ -604,16 +603,10 @@ public:
             "/" +
             module_file;
 
-        rc = ib_module_load(ib_module, ib_engine, module_path.c_str());
+        rc = ib_module_load(ib_engine, module_path.c_str());
 
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to load module " + module_file);
-        }
-
-        rc = ib_module_init(*ib_module, ib_engine);
-
-        if (rc != IB_OK) {
-            throw std::runtime_error("Failed to init module " + module_file);
         }
     }
 
@@ -887,38 +880,17 @@ protected:
     //! The file name of the module.
     std::string m_module_file;
 
-    //! The setup module is stored here.
-    ib_module_t *ib_module;
-
-
 public:
     explicit
     BaseModuleFixture(const std::string& module_file) :
-        m_module_file(module_file),
-        ib_module(NULL)
+        m_module_file(module_file)
     {}
 
     virtual void SetUp()
     {
         BaseTransactionFixture::SetUp();
         configureIronBee();
-        loadModule(&ib_module, m_module_file);
-    }
-
-    virtual void TearDown()
-    {
-        ib_status_t rc;
-        rc = ib_module_unload(ib_module);
-
-        if (rc != IB_OK) {
-            std::cerr<<"Failed to unload module "
-                     <<m_module_file
-                     <<" with ib_status of "
-                     <<rc
-                     <<std::endl;
-        }
-
-        BaseTransactionFixture::TearDown();
+        loadModule(m_module_file);
     }
 
     virtual ~BaseModuleFixture(){}
