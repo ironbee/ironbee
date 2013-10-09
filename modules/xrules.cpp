@@ -1532,19 +1532,25 @@ namespace {
     /* RuleIP Impl */
     XRuleIP::XRuleIP(XRulesModuleConfig& cfg)
     {
-        ib_ipset4_init(
-            &m_ipset4,
-            NULL,
-            0,
-            &(cfg.ipv4_list[0]),
-            cfg.ipv4_list.size());
+        IronBee::throw_if_error(
+            ib_ipset4_init(
+                &m_ipset4,
+                NULL,
+                0,
+                &(cfg.ipv4_list[0]),
+                cfg.ipv4_list.size()),
+            "Failed to initialize IPv4 set."
+        );
 
-        ib_ipset6_init(
-            &m_ipset6,
-            NULL,
-            0,
-            &(cfg.ipv6_list[0]),
-            cfg.ipv6_list.size());
+        IronBee::throw_if_error(
+            ib_ipset6_init(
+                &m_ipset6,
+                NULL,
+                0,
+                &(cfg.ipv6_list[0]),
+                cfg.ipv6_list.size()),
+            "Failed to initialize IPv6 set."
+        );
     }
 
     void XRuleIP::xrule_impl(
