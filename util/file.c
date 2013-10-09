@@ -50,14 +50,15 @@ ib_status_t ib_file_readall(
     struct stat  stat_data;
     int          sys_rc;
 
-    /* Stat the file to get its total size. */
-    sys_rc = stat(file, &stat_data);
-    if (sys_rc != 0) {
+    fd = open(file, O_RDONLY);
+    if (fd == -1) {
         return IB_EINVAL;
     }
 
-    fd = open(file, O_RDONLY);
-    if (fd == -1) {
+    /* Stat the file to get its total size. */
+    sys_rc = fstat(fd, &stat_data);
+    if (sys_rc != 0) {
+        close(fd);
         return IB_EINVAL;
     }
 
