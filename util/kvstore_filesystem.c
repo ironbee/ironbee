@@ -346,8 +346,14 @@ static ib_status_t read_whole_file(
     char *dataptr;
     char *dataend;
 
-    sys_rc = stat(path, &sb);
+    fd = open(path, O_RDONLY);
+    if (fd < 0) {
+        return IB_EOTHER;
+    }
+
+    sys_rc = fstat(fd, &sb);
     if (sys_rc) {
+        close(fd);
         return IB_EOTHER;
     }
 
@@ -356,15 +362,11 @@ static ib_status_t read_whole_file(
         sb.st_size,
         kvstore->malloc_cbdata);
     if (!dataptr) {
-        return IB_EALLOC;
+        close(fd);
+        return IB_EOTHER;
     }
     *len = sb.st_size;
     *data = dataptr;
-
-    fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        goto eother_failure;
-    }
 
     for (dataend = dataptr + sb.st_size; dataptr < dataend; )
     {
@@ -376,6 +378,8 @@ static ib_status_t read_whole_file(
 
         dataptr += fr_tmp;
     }
+
+    /* Note: do not free *data on success. It is an out variable. */
 
     close(fd);
 
@@ -959,6 +963,8 @@ static ib_status_t kvset(
     if (rc != IB_OK) {
         goto cleanup;
     }
+
+    umask(!(server->dmode));
     fd = mkstemp(path_tmp);
     if (fd < 0) {
         rc = IB_EOTHER;
