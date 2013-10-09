@@ -104,6 +104,7 @@ CANONICAL_INCLUDE_ORDER = [
   '"lua_runtime_private.h"',
   '"managed_collection_private.h"',
   '"moddevel_private.h"',
+  '"module_private.h"',
   '"parser_suite.hpp"',
   '"persistence_framework.h"',
   '"persistence_framework_private.h"',

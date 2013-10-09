@@ -286,31 +286,6 @@ ib_status_t DLL_PUBLIC ib_module_load_from_sym(
 );
 
 /**
- * Unload an engine module.
- *
- * @param[in] m Module
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_module_unload(
-     ib_module_t *m
-);
-
-
-/**
- * Register a module with a configuration context.
- *
- * @param[in] m Module
- * @param[in] ctx Configuration context
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_module_register_context(
-     ib_module_t  *m,
-     ib_context_t *ctx
-);
-
-/**
  * Initialize module configuration for main context.
  *
  * This routine is an alternative to setting an initial structure in the

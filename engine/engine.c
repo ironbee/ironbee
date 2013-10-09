@@ -30,6 +30,7 @@
 #include "engine_private.h"
 
 #include "core_private.h"
+#include "module_private.h"
 #include "rule_engine_private.h"
 #include "state_notify_private.h"
 

@@ -28,6 +28,7 @@
 #include <ironbee/module.h>
 
 #include "engine_private.h"
+#include "module_private.h"
 
 #include <ironbee/context.h>
 #include <ironbee/dso.h>
@@ -266,20 +267,14 @@ ib_status_t ib_module_load(ib_engine_t *ib, const char *file)
     return rc;
 }
 
-ib_status_t ib_module_unload(ib_module_t *m)
+void ib_module_unload(ib_module_t *m)
 {
-    ib_engine_t *ib;
+    assert(m != NULL);
+
     ib_status_t rc;
 
-    if (m == NULL) {
-        return IB_EINVAL;
-    }
-
-    ib = m->ib;
-
-    /* Finish the module */
     if (m->fn_fini != NULL) {
-        rc = m->fn_fini(ib, m, m->cbdata_fini);
+        rc = m->fn_fini(m->ib, m, m->cbdata_fini);
         /* If something goes wrong here, we are in trouble.  We can't log it
          * as logging is not supported during module unloading.  We settle
          * for panic. */
@@ -292,12 +287,6 @@ ib_status_t ib_module_unload(ib_module_t *m)
             abort();
         }
     }
-
-    /// @todo Implement
-
-    /* Unregister directives */
-
-    return IB_ENOTIMPL;
 }
 
 ib_status_t ib_module_register_context(ib_module_t *m,
