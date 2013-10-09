@@ -408,11 +408,12 @@ static ib_status_t act_setflag_execute(
 {
     /* Data will be a setflag_data_t */
     const setflag_data_t *opdata = (const setflag_data_t *)data;
-    ib_num_t value;
-    ib_status_t rc;
-    ib_field_t *existing_field;
-    ib_var_source_t *source;
-    ib_tx_t *tx = rule_exec->tx;
+    ib_num_t              value;
+    ib_status_t           rc;
+    ib_field_t           *field;
+    ib_var_source_t      *source;
+    ib_tx_t              *tx = rule_exec->tx;
+    ib_var_target_t      *target = NULL;
 
     switch (opdata->op) {
 
@@ -440,23 +441,37 @@ static ib_status_t act_setflag_execute(
         return rc;
     }
 
-    rc = ib_var_source_get(source, &existing_field, tx->var_store);
-    if (rc != IB_OK && rc != IB_ENOENT) {
+    /* Try to get the field. */
+    rc = ib_var_target_acquire_from_string(
+        &target,
+        tx->mp,
+        ib_var_store_config(tx->var_store),
+        opdata->flag->tx_name,
+        strlen(opdata->flag->tx_name),
+        NULL,
+        NULL);
+    if (rc != IB_OK) {
         return rc;
     }
-    if (rc == IB_ENOENT || existing_field->type != IB_FTYPE_NUM) {
-        rc = ib_var_source_initialize(
-            source,
-            &existing_field,
-            tx->var_store,
-            IB_FTYPE_NUM
-        );
-        if (rc != IB_OK) {
-            return rc;
-        }
+
+    /* Create a field to use to set the value. */
+    rc = ib_field_create(
+        &field,
+        tx->mp,
+        opdata->flag->tx_name,
+        strlen(opdata->flag->tx_name),
+        IB_FTYPE_NUM,
+        ib_ftype_num_in(&value));
+    if (rc != IB_OK) {
+        return rc;
     }
 
-    rc = ib_field_setv(existing_field, ib_ftype_num_in(&value));
+    /* Set the value. */
+    rc = ib_var_target_set(
+        target,
+        tx->mp,
+        tx->var_store,
+        field);
     if (rc != IB_OK) {
         return rc;
     }
