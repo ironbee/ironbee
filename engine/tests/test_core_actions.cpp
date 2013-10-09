@@ -27,6 +27,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
+#include <ironbee/var.h>
 
 #include "gtest/gtest.h"
 
@@ -42,6 +43,98 @@ protected:
         performTx( );
     }
 };
+
+/**
+ * Test that the TX flags are set in the tx var.
+ */
+class CoreActionFlagVarTest
+    :
+    public BaseTransactionFixture,
+    public ::testing::WithParamInterface<const char*>
+{
+    void SetUp() {
+        BaseTransactionFixture::SetUp();
+        configureIronBee("CoreActionTest.setFlag.config");
+        performTx();
+    }
+};
+
+/**
+ * Test that the TX flags are set in the tx.
+ */
+class CoreActionFlagTxTest
+    :
+    public BaseTransactionFixture,
+    public ::testing::WithParamInterface<ib_flags_t>
+{
+    void SetUp() {
+        BaseTransactionFixture::SetUp();
+        configureIronBee("CoreActionTest.setFlag.config");
+        performTx();
+    }
+};
+
+TEST_P(CoreActionFlagVarTest, FlagSet) {
+    ib_field_t       *f;
+    ib_num_t          n;
+    const ib_list_t  *l;
+    ib_var_target_t  *target;
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_var_target_acquire_from_string(
+            &target,
+            ib_tx->mp,
+            ib_var_store_config(ib_tx->var_store),
+            GetParam(),
+            strlen(GetParam()),
+            NULL,
+            NULL)
+    );
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_var_target_get_const(
+            target,
+            &l,
+            ib_tx->mp,
+            ib_tx->var_store)
+    );
+
+    ASSERT_EQ(1U, ib_list_elements(l));
+
+    f = (ib_field_t *)ib_list_node_data_const(ib_list_first_const(l));
+
+    ASSERT_EQ(IB_FTYPE_NUM, f->type);
+
+    ib_field_value(f, ib_ftype_num_out(&n));
+
+    ASSERT_EQ(1, n);
+}
+
+TEST_P(CoreActionFlagTxTest, FlagSet) {
+    ASSERT_TRUE(ib_tx_flags_isset(ib_tx, GetParam()));
+}
+
+INSTANTIATE_TEST_CASE_P(AllFlags, CoreActionFlagVarTest, testing::Values(
+    "FLAGS:suspicious",
+    "FLAGS:inspectRequestHeader",
+    "FLAGS:inspectRequestBody",
+    "FLAGS:inspectResponseHeader",
+    "FLAGS:inspectResponseBody",
+    "FLAGS:inspectRequestParams",
+    "FLAGS:inspectRequestUri",
+    "FLAGS:blockingMode"));
+
+INSTANTIATE_TEST_CASE_P(AllTxFlags, CoreActionFlagTxTest, testing::Values(
+    IB_TX_FSUSPICIOUS,
+    IB_TX_FINSPECT_REQHDR,
+    IB_TX_FINSPECT_REQBODY,
+    IB_TX_FINSPECT_RSPHDR,
+    IB_TX_FINSPECT_RSPBODY,
+    IB_TX_FINSPECT_REQPARAMS,
+    IB_TX_FINSPECT_REQURI,
+    IB_TX_FBLOCKING_MODE));
 
 TEST_F(CoreActionTest, setVarAdd) {
     ib_field_t *f;
