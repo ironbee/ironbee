@@ -24,6 +24,7 @@ AM_CPPFLAGS += \
 TESTS = $(check_PROGRAMS)
 
 TEST_EXTRAS = \
+       CoreActionTest.setFlag.config \
        CoreActionTest.setVarMult.config \
        CoreActionTest.setVarAdd.config \
        CoreActionTest.setVarSub.config \
