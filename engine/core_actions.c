@@ -387,9 +387,11 @@ static ib_status_t act_setflag_execute(
 {
     /* Data will be a setflag_data_t */
     const setflag_data_t *opdata = (const setflag_data_t *)data;
-    ib_num_t value;
-    ib_status_t rc;
-    ib_field_t *existing_field;
+    ib_num_t              value;
+    ib_status_t           rc;
+    ib_list_t            *flag_list;
+    ib_field_t           *flags_collection = NULL;
+    ib_field_t           *flag_field = NULL;
 
     switch (opdata->op) {
 
@@ -410,19 +412,43 @@ static ib_status_t act_setflag_execute(
     rc = ib_data_get(
         rule_exec->tx->data,
         opdata->flag->tx_name,
-        &existing_field);
+        &flags_collection);
+    if (flags_collection->type != IB_FTYPE_LIST) {
+        return IB_EINVAL;
+    }
+
+    /* If there is no FLAGS field, add the flag as a new field. */
     if (rc == IB_ENOENT) {
         rc = ib_data_add_num(
             rule_exec->tx->data,
             opdata->flag->tx_name,
             value,
             NULL);
-        if (rc != IB_OK) {
-            return rc;
-        }
+        return rc;
     }
-    else if (rc != IB_OK) {
-        rc = ib_field_setv(existing_field, ib_ftype_num_in(&value));
+
+    rc = ib_field_value_type(
+        flags_collection,
+        ib_ftype_list_mutable_out(&flag_list),
+        IB_FTYPE_LIST);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* If the flag is not found in the list, add it as a new field. */
+    if (ib_list_elements(flag_list) == 0U) {
+        rc = ib_data_add_num(
+            rule_exec->tx->data,
+            opdata->flag->tx_name,
+            value,
+            NULL);
+        return rc;
+    }
+
+    flag_field = (ib_field_t *)ib_list_node_data(ib_list_last(flag_list));
+
+    if (rc == IB_OK) {
+        rc = ib_field_setv(flag_field, ib_ftype_num_in(&value));
         if (rc != IB_OK) {
             return rc;
         }
