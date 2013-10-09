@@ -939,6 +939,8 @@ static ib_status_t kvset(
     if (rc != IB_OK) {
         goto cleanup;
     }
+
+    umask(!(server->dmode));
     fd = mkstemp(path_real);
     if (fd < 0) {
         rc = IB_EOTHER;
