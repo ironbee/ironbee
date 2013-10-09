@@ -485,9 +485,8 @@ error:
         ib_cfgparser_destroy(parser);
     }
 
-    if (engine != NULL) {
-        ib_engine_destroy(engine);
-    }
+    ib_engine_destroy(engine);
+
     return rc;
 }
 
