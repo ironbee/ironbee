@@ -241,7 +241,6 @@ ib_status_t DLL_PUBLIC ib_module_load_from_sym(
                   m->vernum, m->abinum, m->version,
                   m->idx, m->filename);
 
-    /* Register, but we already have  acopy. :\ */
     rc = ib_module_register(m, ib);
     return rc;
 }
