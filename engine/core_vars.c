@@ -95,60 +95,60 @@ static const char core_placeholder_value[] = "__core__placeholder__value__";
 
 static const ib_tx_flag_map_t core_tx_flag_map[] = {
     {
-        "suspicious",
-        "FLAGS:suspicious",
-        IB_TX_FSUSPICIOUS,
-        false,
-        false
+        .name          = "suspicious",
+        .tx_name       = "FLAGS:suspicious",
+        .tx_flag       = IB_TX_FSUSPICIOUS,
+        .read_only     = false,
+        .default_value = false
     },
     {
-        "inspectRequestHeader",
-        "FLAGS:inspectRequestHeader",
-        IB_TX_FINSPECT_REQHDR,
-        false,
-        false
+        .name          = "inspectRequestHeader",
+        .tx_name       = "FLAGS:inspectRequestHeader",
+        .tx_flag       = IB_TX_FINSPECT_REQHDR,
+        .read_only     = false,
+        .default_value = false
     },
     {
-        "inspectRequestBody",
-        "FLAGS:inspectRequestBody",
-        IB_TX_FINSPECT_REQBODY,
-        false,
-        false
+        .name          = "inspectRequestBody",
+        .tx_name       = "FLAGS:inspectRequestBody",
+        .tx_flag       = IB_TX_FINSPECT_REQBODY,
+        .read_only     = false,
+        .default_value = false
     },
     {
-        "inspectResponseHeader",
-        "FLAGS:inspectResponseHeader",
-        IB_TX_FINSPECT_RSPHDR,
-        false,
-        false
+        .name          = "inspectResponseHeader",
+        .tx_name       = "FLAGS:inspectResponseHeader",
+        .tx_flag       = IB_TX_FINSPECT_RSPHDR,
+        .read_only     = false,
+        .default_value = false
     },
     {
-        "inspectResponseBody",
-        "FLAGS:inspectResponseBody",
-        IB_TX_FINSPECT_RSPBODY,
-        false,
-        false
+        .name          = "inspectResponseBody",
+        .tx_name       = "FLAGS:inspectResponseBody",
+        .tx_flag       = IB_TX_FINSPECT_RSPBODY,
+        .read_only     = false,
+        .default_value = false
     },
     {
-        "inspectRequestParams",
-        "FLAGS:inspectRequestParams",
-        IB_TX_FINSPECT_REQPARAMS,
-        false,
-        false
+        .name          = "inspectRequestParams",
+        .tx_name       = "FLAGS:inspectRequestParams",
+        .tx_flag       = IB_TX_FINSPECT_REQPARAMS,
+        .read_only     = false,
+        .default_value = false
     },
     {
-        "inspectRequestUri",
-        "FLAGS:inspectRequestUri",
-        IB_TX_FINSPECT_REQURI,
-        false,
-        false
+        .name          = "inspectRequestUri",
+        .tx_name       = "FLAGS:inspectRequestUri",
+        .tx_flag       = IB_TX_FINSPECT_REQURI,
+        .read_only     = false,
+        .default_value = false
     },
     {
-        "blockingMode",
-        "FLAGS:blockingMode",
-        IB_TX_FBLOCKING_MODE,
-        false,
-        false
+        .name          = "blockingMode",
+        .tx_name       = "FLAGS:blockingMode",
+        .tx_flag       = IB_TX_FBLOCKING_MODE,
+        .read_only     = false,
+        .default_value = false
     },
 
     /* End */
