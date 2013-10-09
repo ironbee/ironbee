@@ -294,6 +294,11 @@ ib_status_t ib_module_register_context(ib_module_t *m,
 {
     ib_context_data_t *cfgdata;
     ib_status_t rc;
+    ib_context_t *p_ctx = ctx->parent;
+    ib_context_data_t *p_cfgdata;
+
+    void *src_data = NULL;
+    size_t src_length;
 
     /* Create a module context data structure. */
     cfgdata =
@@ -303,80 +308,42 @@ ib_status_t ib_module_register_context(ib_module_t *m,
     }
     cfgdata->module = m;
 
-    /* Set default values from parent values. */
+    if (p_ctx != NULL) {
+        rc = ib_array_get(p_ctx->cfgdata, m->idx, &p_cfgdata);
+        if (rc == IB_OK) {
+            src_data = p_cfgdata->data;
+            src_length = p_cfgdata->data_length;
+        }
+    }
+    if (src_data == NULL) {
+        src_data = m->gcdata;
+        src_length = m->gclen;
+    }
 
-    /* Add module config entries to config context, copying the
-     * parent/global values.
-     */
-    if (m->gclen > 0) {
-        ib_context_t *p_ctx = ctx->parent;
-        ib_context_data_t *p_cfgdata;
-
-        cfgdata->data = ib_mpool_alloc(ctx->mp, m->gclen);
+    if (src_length > 0) {
+        cfgdata->data = ib_mpool_alloc(ctx->mp, src_length);
         if (cfgdata->data == NULL) {
             return IB_EALLOC;
         }
-
-        /* Copy values from parent context if available, otherwise
-         * use the module global values as defaults.
-         */
-        if (p_ctx != NULL) {
-            rc = ib_array_get(p_ctx->cfgdata, m->idx, &p_cfgdata);
-            if (rc == IB_OK) {
-                if (m->fn_cfg_copy) {
-                    rc = m->fn_cfg_copy(
-                        m->ib, m,
-                        cfgdata->data,
-                        p_cfgdata->data,
-                        m->gclen,
-                        m->cbdata_cfg_copy
-                    );
-                    if (rc != IB_OK) {
-                        return rc;
-                    }
-                }
-                else {
-                    memcpy(cfgdata->data, p_cfgdata->data, m->gclen);
-                }
+        cfgdata->data_length = src_length;
+        if (m->fn_cfg_copy) {
+            rc = m->fn_cfg_copy(
+                m->ib, m,
+                cfgdata->data,
+                src_data, src_length,
+                m->cbdata_cfg_copy
+            );
+            if (rc != IB_OK) {
+                return rc;
             }
-            else {
-                /* No parent context config, so use globals. */
-                if (m->fn_cfg_copy) {
-                    rc = m->fn_cfg_copy(
-                        m->ib, m,
-                        cfgdata->data,
-                        m->gcdata,
-                        m->gclen,
-                        m->cbdata_cfg_copy
-                    );
-                    if (rc != IB_OK) {
-                        return rc;
-                    }
-                }
-                else {
-                    memcpy(cfgdata->data, m->gcdata, m->gclen);
-                }
-            }
-            ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
         }
         else {
-            if (m->fn_cfg_copy) {
-                rc = m->fn_cfg_copy(
-                    m->ib, m,
-                    cfgdata->data,
-                    m->gcdata,
-                    m->gclen,
-                    m->cbdata_cfg_copy
-                );
-                if (rc != IB_OK) {
-                    return rc;
-                }
-            }
-            else {
-                memcpy(cfgdata->data, m->gcdata, m->gclen);
-            }
-            ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
+            memcpy(
+                cfgdata->data,
+                src_data, src_length
+            );
         }
+        ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
     }
 
     /* Keep track of module specific context data using the
@@ -404,9 +371,10 @@ ib_status_t ib_module_config_initialize(
     if (rc != IB_OK || main_cfgdata->data != NULL) {
         return IB_EINVAL;
     }
-    main_cfgdata->data = cfg;
-    module->gcdata = cfg;
-    module->gclen = cfg_length;
+    main_cfgdata->data        = cfg;
+    main_cfgdata->data_length = cfg_length;
+    module->gcdata            = cfg;
+    module->gclen             = cfg_length;
 
     return IB_OK;
 }

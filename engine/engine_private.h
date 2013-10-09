@@ -154,8 +154,9 @@ struct ib_engine_t {
  */
 typedef struct ib_context_data_t ib_context_data_t;
 struct ib_context_data_t {
-    ib_module_t          *module;      /**< Module handle */
-    void                 *data;        /**< Module config structure */
+    ib_module_t *module;      /**< Module handle */
+    void        *data;        /**< Module config structure */
+    size_t       data_length; /**< Length of data */
 };
 
 /**
