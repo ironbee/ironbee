@@ -129,9 +129,7 @@ bytes @ 8        = 4927
 
 <p><strong>Step 3</strong>: Tell IronBee about the automata.</p>
 
-<p><strong>Note: This step is not yet supported in IronBee.</strong></p>
-
-<p>IronBee must be told to use the fast pattern system and about the automata you built in step 2. Make sure you load the <code>fast</code> module. Then use the <code>FastAutomata</code> directive to provide the path to the <code>.e</code> file you built in step 2. </p>
+<p>IronBee must be told to use the fast pattern system and about the automata you built in step 2. Make sure you load the <code>fast</code> module. Then use the <code>FastAutomata</code> directive to provide the path to the <code>.e</code> file you built in step 2.</p>
 
 <p>At present, you should use a single automata built from every fast pattern rule, regardless of phase or context. The fast pattern system will filter the results of the automata execution to only evaluate rules appropriate to the current context and phase. The current assumption is that a single automata plus filtering is better choice in terms of space and time than per-context/phase automata. This assumption may be incorrect or such usage may be too onerous to users. As such, this behavior may change in the future.</p>
 
@@ -151,7 +149,7 @@ bytes @ 8        = 4927
 
 <p>Followed by the rule the comments apply to.</p>
 
-<p>Result tables will only be displayed for certain regular expressions (see below). </p>
+<p>Result tables will only be displayed for certain regular expressions (see below).</p>
 
 <p>The RE comment will display the regular expression of the rule that the suggestion and result table apply to. Rules containing multiple regular expressions will have multiple comment sets.</p>
 
@@ -170,12 +168,12 @@ bytes @ 8        = 4927
 
 <pre><code># FAST RE: HeaderName:\s*Value1|Value2
 # FAST Suggest: &quot;fast:HeaderName:&quot; &quot;fast:Value2&quot;
-# FAST Result Table: 
+# FAST Result Table:
 # FAST ( Value1 AND HeaderName: ) OR
 # FAST ( Value2 )
 </code></pre>
 
-<p>The lack of Value1 in the suggestion suggests something is awry. Further investigation reveals the problem: the regular expression is equivalent to </p>
+<p>The lack of Value1 in the suggestion suggests something is awry. Further investigation reveals the problem: the regular expression is equivalent to</p>
 
 <pre><code>(?:HeaderName:\s*Value1)|(?:Value2)
 </code></pre>
@@ -189,7 +187,7 @@ bytes @ 8        = 4927
 
 <pre><code># FAST RE: HeaderName:\s*(?:Value1|Value2)
 # FAST Suggest: &quot;fast:HeaderName:&quot;
-# FAST Result Table: 
+# FAST Result Table:
 # FAST ( Value1 AND HeaderName: ) OR
 # FAST ( Value2 AND HeaderName: )
 </code></pre>

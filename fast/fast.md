@@ -111,7 +111,7 @@ Here is an example run:
 	bytes @ 2        = 1993
 	bytes @ 4        = 2971
 	bytes @ 8        = 4927
-	
+
 During this run the following files were created:
 
 - `test.txt.manifest`: The patterns and rule ids.  Human readable.
@@ -123,9 +123,7 @@ Note that `bytes = 1993` line.  This line shows the space (RAM) cost of using fa
 
 **Step 3**: Tell IronBee about the automata.
 
-**Note: This step is not yet supported in IronBee.**
-
-IronBee must be told to use the fast pattern system and about the automata you built in step 2.  Make sure you load the `fast` module.  Then use the `FastAutomata` directive to provide the path to the `.e` file you built in step 2.  
+IronBee must be told to use the fast pattern system and about the automata you built in step 2.  Make sure you load the `fast` module.  Then use the `FastAutomata` directive to provide the path to the `.e` file you built in step 2.
 
 At present, you should use a single automata built from every fast pattern rule, regardless of phase or context.  The fast pattern system will filter the results of the automata execution to only evaluate rules appropriate to the current context and phase.  The current assumption is that a single automata plus filtering is better choice in terms of space and time than per-context/phase automata.  This assumption may be incorrect or such usage may be too onerous to users.  As such, this behavior may change in the future.
 
@@ -142,10 +140,10 @@ Comments will generally be of the form:
     # FAST Suggest: ...
     # FAST Result Table:
     # FAST ...
-    
+
 Followed by the rule the comments apply to.
-    
-Result tables will only be displayed for certain regular expressions (see below).  
+
+Result tables will only be displayed for certain regular expressions (see below).
 
 The RE comment will display the regular expression of the rule that the suggestion and result table apply to.  Rules containing multiple regular expressions will have multiple comment sets.
 
@@ -158,28 +156,28 @@ The Result table displays the complete set of suggestions that the suggestion co
 It is important to check the suggestions for sanity for two reasons.  First, this code is in an early state and may get things wrong.  Second, if your regular expression is incorrect, this may be obvious in the patterns.  For example, consider the regular expression:
 
     HeaderName:\s*Value1|Value2
-    
+
 The comments are:
 
     # FAST RE: HeaderName:\s*Value1|Value2
     # FAST Suggest: "fast:HeaderName:" "fast:Value2"
-    # FAST Result Table: 
+    # FAST Result Table:
     # FAST ( Value1 AND HeaderName: ) OR
     # FAST ( Value2 )
 
-The lack of Value1 in the suggestion suggests something is awry.  Further investigation reveals the problem: the regular expression is equivalent to 
+The lack of Value1 in the suggestion suggests something is awry.  Further investigation reveals the problem: the regular expression is equivalent to
 
     (?:HeaderName:\s*Value1)|(?:Value2)
-    
+
 instead of the intended
 
     HeaderName:\s*(?:Value1|Value2)
-    
+
 Correcting it changes the comment to:
 
     # FAST RE: HeaderName:\s*(?:Value1|Value2)
     # FAST Suggest: "fast:HeaderName:"
-    # FAST Result Table: 
+    # FAST Result Table:
     # FAST ( Value1 AND HeaderName: ) OR
     # FAST ( Value2 AND HeaderName: )
 
@@ -194,7 +192,7 @@ The suggest.rb script can be run as `suggest.rb --rx` in which case each line is
 In addition to the comments described above, you may see
 
     # FAST Exception: ...
-    
+
 comments.  These either indicate a bug in the suggestion code or a known limitation.  Please report them to the author.
 
 *Why no comments?*
@@ -210,7 +208,7 @@ Some rules that contain regular expressions will not receive comments.  There ar
 The suggestion code understands a large portion of regular expressions.  However, there are a few notable limitations.  Some of these are due to limitations in the third party regular expression parser.  Others may be solved in the future.  See `re_to_ac.rb` for details.
 
 - \cX is not supported for X non-alpha.
-- Only the i option is supported.  
+- Only the i option is supported.
 - No unicode support.
 - Many pcre specific features are not supported.
 - Back references are not supported.
