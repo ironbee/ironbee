@@ -411,7 +411,6 @@ static ib_status_t act_setflag_execute(
     ib_num_t              value;
     ib_status_t           rc;
     ib_field_t           *field;
-    ib_var_source_t      *source;
     ib_tx_t              *tx = rule_exec->tx;
     ib_var_target_t      *target = NULL;
 
@@ -429,16 +428,6 @@ static ib_status_t act_setflag_execute(
 
     default:
         return IB_EINVAL;
-    }
-
-    rc = ib_var_source_acquire(
-        &source,
-        tx->mp,
-        ib_engine_var_config_get(tx->ib),
-        opdata->flag->tx_name, strlen(opdata->flag->tx_name)
-    );
-    if (rc != IB_OK) {
-        return rc;
     }
 
     /* Try to get the field. */
