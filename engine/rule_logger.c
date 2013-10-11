@@ -1138,7 +1138,7 @@ void ib_rule_log_phase(
 
     if (phase_num != rule_exec->tx_log->cur_phase) {
 
-        if (ib_flags_any(flags, (IB_RULE_LOG_FLAG_AUDIT | IB_RULE_LOG_FLAG_PHASE))) {
+        if (ib_flags_any(flags, IB_RULE_LOG_FLAG_PHASE)) {
             bool is_postprocess = (phase_num == IB_PHASE_POSTPROCESS);
             bool is_logging = (phase_num == IB_PHASE_LOGGING);
             bool empty_tx = rule_exec->tx_log->empty_tx;
