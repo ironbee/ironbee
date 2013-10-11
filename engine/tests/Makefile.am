@@ -83,8 +83,8 @@ test_luajit_SOURCES = \
                       test_ironbee_lua_api.cpp \
                       test_ironbee_lua_configs.cpp \
                       test_ironbee_lua_modules.cpp
-test_luajit_CPPFLAGS = $(AM_CPPFLAGS) \
-                       -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+test_luajit_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+                       $(AM_CPPFLAGS) \
                        -I$(top_srcdir)
 test_luajit_LDADD = $(LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \

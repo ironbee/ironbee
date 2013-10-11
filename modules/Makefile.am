@@ -95,9 +95,8 @@ ibmod_lua_la_SOURCES = lua.c \
                        lua_runtime_private.h \
                        lua_rules_private.h \
                        lua_common_private.h
-ibmod_lua_la_CPPFLAGS = $(AM_CPPFLAGS) \
-                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
-                        -I$(top_srcdir)
+ibmod_lua_la_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+                        $(AM_CPPFLAGS)
 ibmod_lua_la_LIBADD = $(AM_LIBADD) \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
@@ -105,9 +104,15 @@ ibmod_lua_la_LIBADD = $(AM_LIBADD) \
 endif
 
 ibmod_rules_la_SOURCES = rules.c
+if ENABLE_LUA
+ibmod_rules_la_CPPFLAGS = \
+    -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+     $(AM_CPPFLAGS) \
+     -D_XOPEN_SOURCE=1
+else
 ibmod_rules_la_CPPFLAGS = $(AM_CPPFLAGS) \
-                        -I$(top_srcdir) \
                         -D_XOPEN_SOURCE=1
+endif
 
 ibmod_rules_la_LIBADD = $(AM_LIBADD) $(LIBM_LDFLAGS)
 
@@ -115,10 +120,6 @@ if ENABLE_LUA
 ibmod_rules_la_SOURCES += \
     lua_common.c \
     lua_common_private.h
-
-ibmod_rules_la_CPPFLAGS += \
-     $(AM_CPPFLAGS) \
-    -I$(top_srcdir)/libs/luajit-2.0-ironbee/src
 ibmod_rules_la_LIBADD += -lluajit-ironbee \
                          -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src
 endif

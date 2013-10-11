@@ -63,8 +63,8 @@ TEST_EXTRAS = \
 if ENABLE_LUA
 test_module_rules_lua_SOURCES = test_module_rules_lua.cpp
 test_module_rules_lua_CPPFLAGS = \
-    $(AM_CPPFLAGS) \
     -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+    $(AM_CPPFLAGS) \
     -D_XOPEN_SOURCE=1 \
     -DTEST_LUA_FILE=\"$(abs_srcdir)/test_module_rules_lua.lua\"
 test_module_rules_lua_LDADD = \
