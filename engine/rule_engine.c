@@ -4416,14 +4416,15 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
             return IB_EINVAL;
         }
         ib_log_debug3(ib,
-                      "Registered rule \"%s\" chained from rule \"%s\"",
+                      "Registered rule \"%s\" chained from rule \"%s\".",
                       ib_rule_id(rule), ib_rule_id(rule->chained_from));
     }
 
     /* Give the ownership functions a shot at the rule */
     {
         const ib_list_node_t *onode;
-        bool                  owned = false;
+        int                   owners     = 0;
+        const char           *owner_name = NULL;
         IB_LIST_LOOP_CONST(ib->rule_engine->ownership_cbs, onode) {
             const ib_rule_ownership_cb_t *cb =
                 (const ib_rule_ownership_cb_t *)onode->data;
@@ -4432,18 +4433,30 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
             orc = cb->fn(ib, rule, cb->data);
             if (orc == IB_OK) {
                 ib_log_debug3(ib,
-                              "Ownership callback \"%s\" has taken ownership "
-                              "of rule \"%s\" phase=%d context=\"%s\"",
-                              cb->name,
-                              ib_rule_id(rule), phase_num,
-                              ib_context_full_get(ctx));
-                owned = true;
-                break;
+                            "Ownership callback \"%s\" has taken ownership "
+                            "of rule \"%s\" phase=%d context=\"%s\".",
+                            cb->name,
+                            ib_rule_id(rule), phase_num,
+                            ib_context_full_get(ctx));
+                ++owners;
+                owner_name = cb->name;
+
+                /* Report multiple owners as an error. */
+                if (owners > 1) {
+                    ib_log_error(
+                        ib,
+                        "Rule owned by \"%s\" was also claimed by \"%s\" "
+                        "in rule \"%s\" phase=%d context=\"%s\".",
+                        owner_name,
+                        cb->name,
+                        ib_rule_id(rule),
+                        phase_num,
+                        ib_context_full_get(ctx));
+                }
             }
-            else if (orc == IB_DECLINED) {
-                /* Callback declined to take ownership, proceed normally. */
-            }
-            else {
+            
+            /* Ownership may only return IB_OK or IB_DECLINED. */
+            else if (orc != IB_DECLINED) {
                 ib_log_error(ib,
                              "Ownership callback \"%s\" returned an error "
                              "for rule \"%s\" phase=%d context=\"%s\": %s",
@@ -4454,8 +4467,15 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                 return IB_EUNKNOWN;
             }
         }
-        if (owned) {
+
+        /* Single owner, stop processing. Success. */
+        if (owners == 1) {
             return IB_OK;
+        }
+
+        /* Multiple owners, an error is reported. */
+        else if (owners > 1) {
+            return IB_EEXIST;
         }
     }
 

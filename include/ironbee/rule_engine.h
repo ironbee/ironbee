@@ -178,9 +178,9 @@ typedef struct {
  * @param[in] cbdata Registration function callback data
  *
  * @returns Status code:
- *   - IB_OK All OK, rule managed externally by module
- *   - IB_DECLINE Decline to manage rule
- *   - IB_Exx Other error
+ *   - IB_OK All OK, rule managed externally by module.
+ *   - IB_DECLINE Decline to manage rule.
+ *   - IB_Exx Other error.
  */
 typedef ib_status_t (* ib_rule_ownership_fn_t)(
     const ib_engine_t          *ib,
@@ -829,7 +829,14 @@ ib_status_t DLL_PUBLIC ib_rule_set_capture(
  * @param[in,out] ctx Context in which to execute the rule
  * @param[in,out] rule Rule to register
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_EEXIST If more than 1 external rule manager module claims ownership
+ *   of a rule or if a rule is already defined by its ID and revision.
+ * - IB_EALLOC On allocation errors.
+ * - IB_EINVAL On if @a rule is not properly constructed.
+ * - IB_EUNKNOWN If an external module tries to handle a rule
+ *   and does not return IB_OK or IB_DECLINE.
  */
 ib_status_t DLL_PUBLIC ib_rule_register(
     ib_engine_t                *ib,
