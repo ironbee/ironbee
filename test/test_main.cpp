@@ -70,6 +70,11 @@ protected:
     char *home;
 };
 
+TEST_F(ConnectionParsing, AdHoc) {
+    int rc = test_run(home, "00-adhoc.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+}
+
 TEST_F(ConnectionParsing, Get) {
     int rc = test_run(home, "01-get.t", cfg, &connp);
     ASSERT_GE(rc, 0);
