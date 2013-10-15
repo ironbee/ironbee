@@ -90,22 +90,45 @@ Signature.fields = function(self, ...)
     if #fields == 0 then
         self.data.fields = {}
     else
-        for _, field in ipairs(fields) do
-
-            local f = { collection = nil, selector = nil, transformation = nil }
-
-            f.collection = string.match(field, "^([^:.]*)[:.]")
-
-            if f.collection then
-                f.selector = string.match(field, ":([^.]*)")
-                f.transformation = string.match(field, "%.(.*)$")
-            else
-                f.collection = field
-                f.selector = nil
-                f.transformation = nil
-            end
-
+        -- Special case of stream fields. This sets the phase as a side effect.
+        if #fields == 1 and 
+            (
+               fields[1] == 'RESPONSE_HEADER_STREAM' or
+               fields[1] == 'RESPONSE_BODY_STREAM'   or
+               fields[1] == 'REQUEST_HEADER_STREAM'  or
+               fields[1] == 'REQUEST_BODY_STREAM'
+            )
+        then
+            self:phase(fields[1])
+            local f = {
+                collection     = fields[1],
+                selector       = nil,
+                transformation = nil
+            }
             table.insert(self.data.fields, f)
+        -- The normal case, the phase is not implicitly set.
+        else
+            for _, field in ipairs(fields) do
+
+                local f = {
+                    collection     = nil,
+                    selector       = nil,
+                    transformation = nil
+                }
+
+                f.collection = string.match(field, "^([^:.]*)[:.]")
+
+                if f.collection then
+                    f.selector = string.match(field, ":([^.]*)")
+                    f.transformation = string.match(field, "%.(.*)$")
+                else
+                    f.collection = field
+                    f.selector = nil
+                    f.transformation = nil
+                end
+
+                table.insert(self.data.fields, f)
+            end
         end
     end
 
