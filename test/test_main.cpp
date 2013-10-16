@@ -1819,3 +1819,28 @@ TEST_F(ConnectionParsing, PartialRequestTimeout) {
     ASSERT_EQ(HTP_REQUEST_LINE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
+
+TEST_F(ConnectionParsing, IncorrectHostAmbiguousWarning) {
+    int rc = test_run(home, "87-issue-55-incorrect-host-ambiguous-warning.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->parsed_uri_raw != NULL);
+
+    ASSERT_TRUE(tx->parsed_uri_raw->port != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri_raw->port, "443"));
+
+    ASSERT_TRUE(tx->parsed_uri_raw->hostname != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri_raw->hostname, "www.example.com"));
+    
+    ASSERT_EQ(443, tx->parsed_uri_raw->port_number);
+
+    ASSERT_TRUE(tx->request_hostname != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_hostname, "www.example.com"));
+   
+    ASSERT_FALSE(tx->flags & HTP_HOST_AMBIGUOUS);
+}
