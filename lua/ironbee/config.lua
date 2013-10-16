@@ -182,7 +182,9 @@ local build_rule = function(ib, ctx, chain, db)
 
         -- For actions, set the magic actionflag.
         if rule.type == "actionsignature" then
-            prule[0].flags = ffi.C.ib_set_flag(prule[0].flags, IB_RULE_FLAG_ACTION);
+            prule[0].flags = ffi.C.ib_set_flag(
+                prule[0].flags,
+                IB_RULE_FLAG_ACTION)
         end
 
         for _, action in ipairs(rule.data.actions) do
@@ -221,7 +223,22 @@ local build_rule = function(ib, ctx, chain, db)
                 else
                     prule[0].meta.confidence = confidence
                 end
-
+            elseif name == 'capture' then
+                rc = ffi.C.ib_rule_set_capture(ib.ib_engine, prule[0], arg)
+                if rc ~= ffi.C.IB_OK then
+                    ib:loggerError("Failed to set capture value on rule.")
+                end
+            elseif name == 't' then
+                if ffi.C.ib_rule_allow_tfns(prule[0]) then
+                    rc = ffi.C.ib_rule_add_tfn(ib.ib_engine, prule[0], arg)
+                    if rc == ffi.C.IB_ENOENT then
+                        ib:logError("Unknown transformation: \"%s\".", arg)
+                    elseif rc ~= ffi.C.IB_OK then
+                        ib:logError("Error adding transformation \"%s\".", arg)
+                    end
+                else
+                    ib:logError("Transformations not supported for this rule.")
+                end
             -- Handling of Actions
             else
 
