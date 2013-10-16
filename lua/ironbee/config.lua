@@ -94,10 +94,14 @@ local add_fields = function(ib, rule, prule, field)
     local not_found = ffi.new("int[1]")
     local target = ffi.new("ib_rule_target_t*[1]")
     local tfn_names = ffi.new("ib_list_t*[1]")
+    local target_name
     if field.selector then
         str = str .. ":" .. field.selector
         name = name .. ":" .. field.selector
     end
+
+    -- The target name is the collection and the selector; no transormation.
+    target_name = str
     if field.transformation then
         str = str .. "." .. field.transformation
     end
@@ -128,7 +132,7 @@ local add_fields = function(ib, rule, prule, field)
     -- Create target
     rc = ffi.C.ib_rule_create_target(
         ib.ib_engine,
-        str,
+        target_name,
         tfn_names[0],
         target,
         not_found)
