@@ -593,7 +593,10 @@ ib_status_t ib_var_source_acquire(
             return IB_EALLOC;
         }
 
-        local_source->name          = name;
+        local_source->name          = ib_mpool_memdup(mp, name, name_length);
+        if (local_source->name == NULL) {
+            return IB_EALLOC;
+        }
         local_source->name_length   = name_length;
         local_source->config        = config;
         local_source->initial_phase = IB_PHASE_NONE;
@@ -1051,7 +1054,7 @@ ib_status_t ib_var_target_acquire_from_string(
     size_t           split_at;
     const char      *split;
 
-    split  = memchr(target_string, ':', target_string_length);
+    split = memchr(target_string, ':', target_string_length);
     if (split == NULL) {
         split_at = target_string_length;
     }

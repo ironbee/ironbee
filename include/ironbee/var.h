@@ -393,8 +393,7 @@ NONNULL_ATTRIBUTE(1, 2);
  * @param[in]  mp          Memory pool to use for unindexed sources.  If NULL,
  *                         an unindexed lookup will result in IB_ENOENT.
  * @param[in]  config      Var configuration to look up in.
- * @param[in]  name        Name of source to lookup.  If result is unindexed,
- *                         this must outlive result.
+ * @param[in]  name        Name of source to lookup.
  * @param[in]  name_length Length of @a name.
  * @return
  * - IB_OK on success.
