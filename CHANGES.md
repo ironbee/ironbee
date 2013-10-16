@@ -18,6 +18,8 @@ IronBee v0.9.0
 
 - All `void **` parameters have been replaced with `void *` parameters.  This allows them to be used to output to specific pointer types without a cast.
 
+- Engine will now warn if loading a module compiled for a different version and error and refuse to load a module compiled for a different ABI.
+
 **Predicate**
 
 - The Field call is now known as Var.  Field continues to exist as an alias for Var.

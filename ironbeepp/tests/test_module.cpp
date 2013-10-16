@@ -77,6 +77,8 @@ TEST_F(TestModule, init)
 {
     ib_module_t* ib_module;
     ASSERT_EQ(IB_OK, ib_module_create(&ib_module, m_engine.ib()));
+    ib_module->vernum = IB_VERNUM;
+    ib_module->abinum = IB_ABINUM;
     ASSERT_EQ(IB_OK, ib_module_register(ib_module, m_engine.ib()));
 }
 
@@ -315,6 +317,8 @@ TEST_F(TestModule, DataPOD)
     ib_module_t* ib_engine_module; /* The module in the engine. */
     ASSERT_EQ(IB_OK, ib_module_create(&ib_module, m_engine.ib()));
     ib_module->name = "A NAME";
+    ib_module->vernum = IB_VERNUM;
+    ib_module->abinum = IB_ABINUM;
     ASSERT_EQ(IB_OK, ib_module_register(ib_module, m_engine.ib()));
 
     ib_engine_module_get(m_engine.ib(), ib_module->name, &ib_engine_module);
@@ -347,6 +351,8 @@ TEST_F(TestModule, DataPOD2)
     ib_module_t* ib_engine_module; /* The module in the engine. */
     ASSERT_EQ(IB_OK, ib_module_create(&ib_module, m_engine.ib()));
     ib_module->name = "A NAME";
+    ib_module->vernum = IB_VERNUM;
+    ib_module->abinum = IB_ABINUM;
     ASSERT_EQ(IB_OK, ib_module_register(ib_module, m_engine.ib()));
     ib_engine_module_get(m_engine.ib(), ib_module->name, &ib_engine_module);
     IronBee::Module module(ib_engine_module);
@@ -372,6 +378,8 @@ TEST_F(TestModule, DataCPP)
     ib_module_t* ib_engine_module; /* The module in the engine. */
     ASSERT_EQ(IB_OK, ib_module_create(&ib_module, m_engine.ib()));
     ib_module->name = "A NAME";
+    ib_module->vernum = IB_VERNUM;
+    ib_module->abinum = IB_ABINUM;
     ASSERT_EQ(IB_OK, ib_module_register(ib_module, m_engine.ib()));
     ib_engine_module_get(m_engine.ib(), ib_module->name, &ib_engine_module);
     IronBee::Module module(ib_engine_module);
@@ -419,6 +427,8 @@ TEST_F(TestModule, ConfigurationMap)
     ib_module_t* ib_engine_module; /* The module in the engine. */
     ASSERT_EQ(IB_OK, ib_module_create(&ib_module, m_engine.ib()));
     ib_module->name = "A NAME";
+    ib_module->vernum = IB_VERNUM;
+    ib_module->abinum = IB_ABINUM;
     ASSERT_EQ(IB_OK, ib_module_register(ib_module, m_engine.ib()));
     ib_engine_module_get(m_engine.ib(), ib_module->name, &ib_engine_module);
     IronBee::Module module(ib_engine_module);

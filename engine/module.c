@@ -69,11 +69,28 @@ static ib_status_t module_context_open(
     return IB_OK;
 }
 
-/// @todo Probably need to load into a given context???
 ib_status_t ib_module_register(const ib_module_t *mod, ib_engine_t *ib)
 {
     assert(ib != NULL);
     assert(mod != NULL);
+
+    /* Validate module */
+    if (mod->vernum != IB_VERNUM) {
+        ib_log_warning(ib,
+            "Module was written for IronBee version %d but this is IronBee"
+            " version %d.  Please ask module writer to update.",
+            mod->vernum, IB_VERNUM
+        );
+    }
+    if (mod->abinum != IB_ABINUM) {
+        ib_log_error(ib,
+            "Module was written for IronBee ABI %d but this is IronBee"
+            " ABI %d.  Cannot load incompatible module.  Ask module writer "
+            " to update.",
+            mod->abinum, IB_ABINUM
+        );
+        return IB_EINVAL;
+    }
 
     ib_status_t rc;
     ib_module_t *m = ib_mpool_memdup(
