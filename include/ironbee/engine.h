@@ -116,8 +116,7 @@ ib_status_t DLL_PUBLIC ib_shutdown(void);
  * Create an engine handle.
  *
  * After creating the engine, the caller must configure defaults, such as
- * initial logging parameters, and then call ib_engine_init() to
- * initialize the engine configuration context.
+ * initial logging parameters.
  *
  * @param pib Address which new handle is written
  * @param server Information on the server instantiating the engine
@@ -126,15 +125,6 @@ ib_status_t DLL_PUBLIC ib_shutdown(void);
  */
 ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib,
                                         const ib_server_t *server);
-
-/**
- * Initialize the engine configuration context.
- *
- * @param ib Engine handle
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_engine_init(ib_engine_t *ib);
 
 /**
  * Return the logger object constructed for this engine.

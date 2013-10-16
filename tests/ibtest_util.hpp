@@ -56,7 +56,6 @@ extern ib_server_t ibt_ibserver;
         ASSERT_EQ(IB_OK, ib_engine_create(ibt_pib, &ibt_ibserver)); \
         ASSERT_TRUE(*ibt_pib); \
         ASSERT_TRUE((*ibt_pib)->mp); \
-        ASSERT_EQ(IB_OK, ib_engine_init(*ibt_pib)); \
     } while (0)
 
 /**

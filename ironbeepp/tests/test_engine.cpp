@@ -44,7 +44,6 @@ TEST(TestEngineNoFixture, create)
     Engine engine = Engine::create(server_value.get());
 
     ASSERT_TRUE(engine);
-    engine.initialize();
     engine.destroy();
 
     IronBee::shutdown();

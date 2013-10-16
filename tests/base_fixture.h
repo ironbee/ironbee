@@ -78,15 +78,6 @@ public:
             throw std::runtime_error(buf);
         }
 
-        /* Initialize the engine. */
-        rc = ib_engine_init(ib_engine);
-        if (rc != IB_OK) {
-            snprintf(buf, EXCEPTION_BUF_SIZE,
-                     "Failed to initialize IronBee Engine: %s",
-                     ib_status_to_string(rc));
-            throw std::runtime_error(buf);
-        }
-
         /* Set/reset the rules base path and modules base path.*/
         resetRuleBasePath();
         resetModuleBasePath();

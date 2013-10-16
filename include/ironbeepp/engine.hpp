@@ -238,13 +238,6 @@ public:
     ///@}
 
     /**
-     * Initialize Engine.
-     *
-     * This should be called on a new Engine (via create()) before use.
-     **/
-    void initialize();
-
-    /**
      * Destroy Engine.
      *
      * Destroy Engine, reclaiming all memory.  Do not use afterwards.

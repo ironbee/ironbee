@@ -38,7 +38,6 @@ TestFixture::TestFixture() :
     m_server = m_server_value.get();
 
     m_engine = Engine::create(m_server);
-    m_engine.initialize();
 
     m_connection = Connection::create(m_engine);
 

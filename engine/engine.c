@@ -359,7 +359,6 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     if (rc != IB_OK) {
         goto failed;
     }
-
     /* Set the context's CWD */
     rc = ib_context_set_cwd(ib->ectx, NULL);
     if (rc != IB_OK) {
@@ -487,6 +486,16 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
         goto failed;
     }
 
+    /* Kick off internal configuration of then engine context. */
+    rc = ib_context_open(ib->ectx);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+    rc = ib_context_close(ib->ectx);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     *pib = ib;
 
     ib_log_ex(ib, IB_LOG_INFO, NULL, NULL, 0,
@@ -501,22 +510,6 @@ failed:
     }
     ib = NULL;
 
-    return rc;
-}
-
-ib_status_t ib_engine_init(ib_engine_t *ib)
-{
-    ib_status_t rc;
-
-    ib_log_ex(ib, IB_LOG_INFO, NULL, NULL, 0,
-              "%s: Starting", IB_PRODUCT_VERSION_NAME);
-
-    rc = ib_context_open(ib->ectx);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_context_close(ib->ectx);
     return rc;
 }
 

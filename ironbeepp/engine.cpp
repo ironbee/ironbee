@@ -93,11 +93,6 @@ Engine Engine::remove_const(ConstEngine engine)
     return Engine(const_cast<ib_engine_t*>(engine.ib()));
 }
 
-void Engine::initialize()
-{
-    throw_if_error(ib_engine_init(ib()));
-}
-
 void Engine::destroy()
 {
     ib_engine_destroy(ib());
