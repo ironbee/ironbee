@@ -744,7 +744,7 @@ namespace {
     };
 
     /* ActionFactory Impl */
-    boost::regex ActionFactory::name_val_re("\\s*([^\\s]+)(?:=([^\\s]*))?\\s*");
+    boost::regex ActionFactory::name_val_re("\\s*([^\\s=]+)(?:=([^\\s]*))?\\s*");
 
     ActionFactory::ActionFactory(IronBee::Engine ib) : m_ib(ib) {}
 
@@ -786,7 +786,7 @@ namespace {
                 ib_uuid_bin_to_ascii(&(uuid_str[0]), &uuid),
                 "Cannot generate v4 UUID.");
             IronBee::throw_if_error(
-                ib_string_to_float(arg, &fnum),
+                ib_string_to_float(std::string(mr[2]).c_str(), &fnum),
                 "Cannot convert string to float.");
 
             return action_ptr(
