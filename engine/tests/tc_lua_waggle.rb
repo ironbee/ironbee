@@ -34,6 +34,24 @@ class TestLuaWaggle < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: basic1/
   end
 
+  def test_transformations
+    lua = <<-EOS
+      Sig("basic1", "1"):
+        fields([[REQUEST_METHOD.removeWhitespace()]]):
+        op('imatch', [[GET]]):
+        phase([[REQUEST_HEADER]]):
+        action([[clipp_announce:basic1]])
+    EOS
+    lua_file = lua_path()
+    File.open(lua_file, 'w') {|fp| fp.print lua}
+
+    clipp(make_config(lua_file,
+      :input => "echo:\"GET /foo\""
+    ))
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: basic1/
+  end
+
   def test_action
     lua = <<-EOS
       Action("basic2", "1"):
