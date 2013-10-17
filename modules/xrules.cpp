@@ -363,7 +363,7 @@ namespace {
         IronBee::Field f = IronBee::Field::create_float(
             tx.memory_pool(),
             "XRULES:SCALE_THREAT",
-            sizeof("XRULES:SCALE_THREAT"),
+            sizeof("XRULES:SCALE_THREAT")-1,
             mdata->scale_threat);
 
         IronBee::throw_if_error(
