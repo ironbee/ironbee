@@ -1689,7 +1689,7 @@ private:
      * - IB_OK On success.
      * - Other on error.
      */
-    void on_handle_response_header(
+    void on_response_header_finished(
         IronBee::Engine      ib,
         IronBee::Transaction tx
     );
@@ -1704,7 +1704,7 @@ private:
      * - IB_OK On success.
      * - Other on error.
      */
-    void on_handle_request_header(
+    void on_request_header_finished(
         IronBee::Engine ib,
         IronBee::Transaction tx
     );
@@ -1718,17 +1718,17 @@ XRulesModule::XRulesModule(IronBee::Module module) :
     assert(module);
 
     module.engine().register_hooks()
-        .handle_request_header(
+        .request_header_finished(
             boost::bind(
-                &XRulesModule::on_handle_request_header,
+                &XRulesModule::on_request_header_finished,
                 this,
                 _1,
                 _2
             )
         )
-        .handle_response_header(
+        .response_header_finished(
             boost::bind(
-                &XRulesModule::on_handle_response_header,
+                &XRulesModule::on_response_header_finished,
                 this,
                 _1,
                 _2
@@ -1930,7 +1930,7 @@ void XRulesModule::on_transaction_started(
     tx.set_module_data(module(), mdata);
 }
 
-void XRulesModule::on_handle_response_header(
+void XRulesModule::on_response_header_finished(
     IronBee::Engine      ib,
     IronBee::Transaction tx
 )
@@ -1953,7 +1953,7 @@ void XRulesModule::on_handle_response_header(
     actions.apply(mdata, tx);
 }
 
-void XRulesModule::on_handle_request_header(
+void XRulesModule::on_request_header_finished(
     IronBee::Engine      ib,
     IronBee::Transaction tx
 )
