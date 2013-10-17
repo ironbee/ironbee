@@ -606,7 +606,7 @@ namespace {
         int priority
     )
     :
-        Action(std::string("SetBlockingMode") + unique_id, priority),
+        Action(std::string("ScaleThreat_") + unique_id, priority),
         m_fnum(fnum)
     {}
 
