@@ -339,10 +339,10 @@ namespace {
             m_actions.find(*action);
 
         if (itr == m_actions.end()) {
-            m_actions[*action].swap(action);
+            m_actions[*action] = action;
         }
         else if (itr->second->overrides(*action)) {
-            itr->second.swap(action);
+            itr->second = action;
         }
     }
 
