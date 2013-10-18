@@ -2179,6 +2179,16 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                              "has been blocked with status %" PRId64,
                              meta->phase_num, phase_name(meta),
                              ib_context_full_get(ctx), tx->block_status);
+
+        /* Report blocking to server if blocking was set prior to rules. */
+        if (meta->phase_num == IB_PHASE_REQUEST_HEADER) {
+            rc = report_block_to_server(rule_exec);
+            if (rc != IB_OK) {
+                ib_rule_log_error(rule_exec, "Failed to block: %s",
+                                  ib_status_to_string(rc));
+            }
+        }
+
         rc = IB_OK;
         goto finish;
     }

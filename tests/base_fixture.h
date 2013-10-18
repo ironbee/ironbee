@@ -53,6 +53,7 @@ public:
         char buf[EXCEPTION_BUF_SIZE+1];
 
         /* Setup IronBee server object. */
+        memset(&ibt_ibserver, 0, sizeof(ibt_ibserver));
         ibt_ibserver.vernum = IB_VERNUM;
         ibt_ibserver.abinum = IB_ABINUM;
         ibt_ibserver.version = IB_VERSION;
