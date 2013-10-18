@@ -1063,38 +1063,51 @@ namespace {
     void XRuleGeo::xrule_impl(IronBee::Transaction tx, ActionSet& actions)
     {
         if (actions.overrides(m_action)) {
-            ib_field_t *cfield;
+            ib_var_target_t *target;
+            const ib_list_t *clist;
+
             ib_log_debug_tx(
                 tx.ib(),
                 "Running GEO Check for %s",
                 m_country.c_str());
-            ib_var_source_t *source;
 
             IronBee::throw_if_error(
-                ib_var_source_acquire(
-                    &source,
+                ib_var_target_acquire_from_string(
+                    &target,
                     tx.memory_pool().ib(),
                     ib_engine_var_config_get(tx.engine().ib()),
-                    IB_S2SL(GEOIP_FIELD)
+                    IB_S2SL(GEOIP_FIELD),
+                    NULL,
+                    NULL
                 ),
                 "Failed to acquire GeoIP source."
             );
 
             IronBee::throw_if_error(
-                ib_var_source_get(
-                    source,
-                    &cfield,
+                ib_var_target_get_const(
+                    target,
+                    &clist,
+                    tx.memory_pool().ib(),
                     tx.ib()->var_store
                 ),
                 "Failed to retrieve GeoIP field."
             );
 
-            IronBee::ConstField field(cfield);
+            IronBee::ConstList<const ib_field_t *> ls(clist);
 
-            IronBee::ConstByteString bs(field.value_as_byte_string());
+            if (ls.size() < 1) {
+                ib_log_info_tx(
+                    tx.ib(),
+                    "No GeoIP fields. Not filtering on GeoIP.");
+            }
+            else {
+                IronBee::ConstByteString bs(
+                    IronBee::ConstField(ls.front()).
+                        value_as_byte_string());
 
-            if (bs.index_of(m_country.c_str()) == 0) {
-                actions.set(m_action);
+                if (bs.index_of(m_country.c_str()) == 0) {
+                    actions.set(m_action);
+                }
             }
         }
         else {
