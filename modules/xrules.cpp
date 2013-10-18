@@ -1704,7 +1704,7 @@ private:
      * - IB_OK On success.
      * - Other on error.
      */
-    void on_request_header_finished(
+    void on_handle_context_transaction(
         IronBee::Engine ib,
         IronBee::Transaction tx
     );
@@ -1718,9 +1718,9 @@ XRulesModule::XRulesModule(IronBee::Module module) :
     assert(module);
 
     module.engine().register_hooks()
-        .request_header_finished(
+        .handle_context_transaction(
             boost::bind(
-                &XRulesModule::on_request_header_finished,
+                &XRulesModule::on_handle_context_transaction,
                 this,
                 _1,
                 _2
@@ -1953,7 +1953,7 @@ void XRulesModule::on_response_header_finished(
     actions.apply(mdata, tx);
 }
 
-void XRulesModule::on_request_header_finished(
+void XRulesModule::on_handle_context_transaction(
     IronBee::Engine      ib,
     IronBee::Transaction tx
 )

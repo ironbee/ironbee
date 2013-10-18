@@ -978,7 +978,7 @@ ib_status_t ib_core_vars_init(ib_engine_t *ib,
     ib_hook_tx_register(ib, tx_started_event,
                         core_gen_flags_collection, NULL);
 
-    ib_hook_tx_register(ib, request_header_finished_event,
+    ib_hook_tx_register(ib, handle_context_tx_event,
                         core_gen_request_header_fields, NULL);
 
     ib_hook_tx_register(ib, request_finished_event,
