@@ -501,7 +501,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->data != NULL);
-    assert(event == request_header_finished_event);
+    assert(event == handle_context_tx_event);
 
     ib_field_t         *req_agent = NULL;
     ib_status_t         rc = IB_OK;
@@ -511,7 +511,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     /* Extract the User-Agent header field from the provider instance */
     rc = ib_data_get(tx->data, "request_headers:User-Agent", &req_agent);
     if ( (req_agent == NULL) || (rc != IB_OK) ) {
-        ib_log_debug_tx(tx, "request_header_finished_event: No user agent");
+        ib_log_debug_tx(tx, "handle_context_tx_event: No user agent");
         return IB_OK;
     }
 
@@ -533,7 +533,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     }
 
     if (IB_LIST_ELEMENTS(bs_list) == 0) {
-        ib_log_debug_tx(tx, "request_header_finished_event: No user agent");
+        ib_log_debug_tx(tx, "handle_context_tx_event: No user agent");
         return IB_OK;
     }
 
@@ -578,7 +578,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->data != NULL);
-    assert(event == request_header_finished_event);
+    assert(event == handle_context_tx_event);
 
     ib_field_t           *field = NULL;
     ib_status_t           rc = IB_OK;
@@ -702,7 +702,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
 /**
  * Called to initialize the user agent module (when the module is loaded).
  *
- * Registers a handler for the request_header_finished_event event.
+ * Registers a handler for the handle_context_tx_event event.
  *
  * @param[in,out] ib IronBee object
  * @param[in] m Module object
@@ -717,7 +717,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     unsigned int failed_frule_num;
 
     /* Register the user agent callback */
-    rc = ib_hook_tx_register(ib, request_header_finished_event,
+    rc = ib_hook_tx_register(ib, handle_context_tx_event,
                              modua_user_agent,
                              NULL);
     if (rc != IB_OK) {
@@ -725,7 +725,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     }
 
     /* Register the remote address callback */
-    rc = ib_hook_tx_register(ib, request_header_finished_event,
+    rc = ib_hook_tx_register(ib, handle_context_tx_event,
                              modua_remoteip,
                              NULL);
     if (rc != IB_OK) {
