@@ -352,3 +352,51 @@ TEST_F(XRulesTest, RunGeoIP) {
     ASSERT_TRUE(ib_tx);
     ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
 }
+
+TEST_F(XRulesTest, SetFlag) {
+    ib_field_t       *field;
+    const ib_list_t  *list;
+    ib_num_t          num;
+
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_persistence_framework.so\"\n"
+            "LoadModule \"ibmod_init_collection.so\"\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "InitCollection GeoIP vars: country_code=US\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            /* Note that both rules should fire and result in a single entry. */
+            "XRulePath /  EnableRequestParamInspection priority=1\n"
+            "XRuleGeo US EnableRequestParamInspection priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FINSPECT_REQPARAMS);
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_data_get(ib_tx->data, "FLAGS:inspectRequestParams", &field)
+    );
+    ASSERT_EQ(IB_FTYPE_LIST, field->type);
+    ASSERT_EQ(
+        IB_OK,
+        ib_field_value(field, ib_ftype_list_out(&list))
+    );
+    ASSERT_EQ(1U, ib_list_elements(list));
+    field = (ib_field_t *)ib_list_node_data_const(ib_list_first_const(list));
+    ASSERT_EQ(IB_FTYPE_NUM, field->type);
+    ASSERT_EQ(
+        IB_OK,
+        ib_field_value(field, ib_ftype_num_out(&num))
+    );
+    ASSERT_EQ(1, num);
+}

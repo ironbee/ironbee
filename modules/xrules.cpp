@@ -34,6 +34,7 @@
 #include <ironbeepp/transaction.hpp>
 
 /* C includes. */
+#include <ironbee/data.h>
 #include <ironbee/engine.h>
 #include <ironbee/flags.h>
 #include <ironbee/ip.h>
@@ -514,7 +515,10 @@ namespace {
         IronBee::Transaction tx
     ) const
     {
-        ib_num_t val;
+        ib_num_t    val;
+        ib_list_t  *clist;
+        ib_field_t *cfield;
+        ib_status_t rc;
 
         if (m_clear) {
             val = 0;
@@ -525,9 +529,45 @@ namespace {
             ib_tx_flags_set(tx.ib(), m_flag);
         }
 
-        IronBee::throw_if_error(
-            ib_data_add_num(tx.ib()->data, m_field_name.c_str(), val, NULL),
-            "Failed to set TX data field.");
+        rc = ib_data_get(tx.ib()->data, m_field_name.c_str(), &cfield);
+        if (cfield->type != IB_FTYPE_LIST) {
+            throw IronBee::einval() << IronBee::errinfo_what(
+                "ib_data_get failed to return a list for field "+m_field_name);
+        }
+
+        /* If there is no FLAGS field, add the flag as a new field. */
+        if (rc == IB_ENOENT) {
+            IronBee::throw_if_error(
+                ib_data_add_num(tx.ib()->data, m_field_name.c_str(), val, NULL)
+            );
+        }
+        else {
+
+            /* Otherwise, get the first entry. */
+            IronBee::throw_if_error(
+                ib_field_value_type(
+                    cfield,
+                    ib_ftype_list_mutable_out(&clist),
+                    IB_FTYPE_LIST)
+            );
+
+            /* If the flag is not found in the list, add it as a new field. */
+            if (ib_list_elements(clist) == 0U) {
+                IronBee::throw_if_error(
+                    ib_data_add_num(
+                        tx.ib()->data,
+                        m_field_name.c_str(),
+                        val,
+                        NULL)
+                );
+            }
+            else {
+                /* If the field is found, set its value in-place. */
+                IronBee::Field(
+                    IronBee::List<ib_field_t *>(clist).back()
+                ).set_number(val);
+            }
+        }
     }
     /* End SetFlag Impl */
 
