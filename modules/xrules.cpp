@@ -40,6 +40,7 @@
 #include <ironbee/ipset.h>
 #include <ironbee/server.h>
 #include <ironbee/string.h>
+#include <ironbee/var.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -523,7 +524,9 @@ namespace {
         IronBee::Transaction tx
     ) const
     {
-        ib_num_t val;
+        ib_num_t         val;
+        ib_field_t      *cfield;
+        ib_var_target_t *target;
 
         if (m_clear) {
             val = 0;
@@ -534,27 +537,36 @@ namespace {
             ib_tx_flags_set(tx.ib(), m_flag);
         }
 
-        ib_var_source_t *source;
+        /* Try to get the field. */
         IronBee::throw_if_error(
-            ib_var_source_acquire(
-                &source,
+            ib_var_target_acquire_from_string(
+                &target,
                 tx.memory_pool().ib(),
-                ib_engine_var_config_get(tx.engine().ib()),
-                m_field_name.data(), m_field_name.length()
-            ),
-            "Failed to get source."
+                ib_var_store_config(tx.ib()->var_store),
+                m_field_name.data(),
+                m_field_name.length(),
+                NULL,
+                NULL)
         );
+
+        /* Create a field to use to set the value. */
         IronBee::throw_if_error(
-            ib_var_source_set(
-                source,
+            ib_field_create(
+                &cfield,
+                tx.memory_pool().ib(),
+                m_field_name.data(),
+                m_field_name.length(),
+                IB_FTYPE_NUM,
+                ib_ftype_num_in(&val))
+        );
+
+        /* Set the value. */
+        IronBee::throw_if_error(
+            ib_var_target_set(
+                target,
+                tx.memory_pool().ib(),
                 tx.ib()->var_store,
-                IronBee::Field::create_number(
-                    tx.memory_pool(),
-                    "", 0,
-                    val
-                ).ib()
-            ),
-            "Failed to set TX var."
+                cfield)
         );
     }
     /* End SetFlag Impl */
