@@ -1025,6 +1025,7 @@ namespace {
     {
         if (actions.overrides(m_action)) {
             ib_field_t *cfield;
+
             ib_log_debug_tx(
                 tx.ib(),
                 "Running GEO Check for %s",
@@ -1039,11 +1040,22 @@ namespace {
                 "Failed to retrieve GeoIP field.");
 
             IronBee::ConstField field(cfield);
+            IronBee::ConstList<const ib_field_t *> ls(
+                field.value_as_list<const ib_field_t *>());
 
-            IronBee::ConstByteString bs(field.value_as_byte_string());
+            if (ls.size() < 1) {
+                ib_log_info_tx(
+                    tx.ib(),
+                    "No GeoIP fields. Not filtering on GeoIP.");
+            }
+            else {
+                IronBee::ConstByteString bs(
+                    IronBee::ConstField(ls.front()).
+                        value_as_byte_string());
 
-            if (bs.index_of(m_country.c_str()) == 0) {
-                actions.set(m_action);
+                if (bs.index_of(m_country.c_str()) == 0) {
+                    actions.set(m_action);
+                }
             }
         }
         else {
