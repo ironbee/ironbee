@@ -429,12 +429,14 @@ namespace {
     ) const
     {
         if (m_block) {
+            ib_log_debug_tx(tx.ib(), "Blocking Transaction");
             tx.ib()->flags |= IB_TX_BLOCK_IMMEDIATE;
             tx.ib()->flags &= ~(IB_TX_ALLOW_ALL);
         }
         else {
-            tx.ib()->flags &= ~(IB_TX_BLOCK_IMMEDIATE);
-            tx.ib()->flags &= IB_TX_ALLOW_ALL;
+            ib_log_debug_tx(tx.ib(), "Allowing Transaction");
+            tx.ib()->flags &= ~(IB_TX_BLOCK_IMMEDIATE | IB_TX_BLOCK_PHASE | IB_TX_BLOCK_ADVISORY);
+            tx.ib()->flags |= IB_TX_ALLOW_ALL;
         }
     }
     /* End BlockAllow Impl */
@@ -1528,6 +1530,7 @@ namespace {
             ib_status_t rc;
             rc = ib_ipset4_query(&(m_ipset4), ipv4, NULL, &entry, NULL);
             if (rc == IB_OK) {
+                ib_log_debug_tx(tx.ib(), "IP matched %s", remote_ip);
                 action_ptr action =
                     IronBee::data_to_value<action_ptr>(entry->data);
                 actions.set(action);
@@ -1544,6 +1547,7 @@ namespace {
             ib_status_t rc;
             rc = ib_ipset6_query(&(m_ipset6), ipv6, NULL, &entry, NULL);
             if (rc == IB_OK) {
+                ib_log_debug_tx(tx.ib(), "IP matched %s", remote_ip);
                 action_ptr action =
                     IronBee::data_to_value<action_ptr>(entry->data);
                 actions.set(action);
