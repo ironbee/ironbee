@@ -1374,7 +1374,7 @@ static ib_status_t get_http_header(
             int bytes = hdr_len - (null+1 - hdr_buf);
             memmove(null, null+1, bytes);
             hdr_len--;
-            line_end = strstr(hdr_buf, "\r\n");
+            line_end = strstr(null, "\r\n");
         }
         else {
             /* There are no NULLs, and we still don't have termination */
@@ -1452,7 +1452,7 @@ static ib_status_t get_request_url(
             int bytes = url_len - (null+1 - url_buf);
             memmove(null, null+1, bytes);
             url_len--;
-            line_end = strstr(url_buf, "\r\n");
+            line_end = strstr(null, "\r\n");
         }
         else {
             /* There are no NULLs, and we still don't have termination */
