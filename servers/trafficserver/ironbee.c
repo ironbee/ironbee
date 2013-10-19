@@ -1087,12 +1087,13 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
  *
  * Can now also error-correct for "\r" or "\n" line ends.
  *
- * @param[in] line Buffer to parse
+ * @param[in,out] linep Buffer to parse.  On output, moved on one line.
  * @param[out] lenp Line length (excluding line end)
+ * @param[in] strict Whether to be strict about line ends
  * @return 1 if a line was parsed, 2 if parsed but with error correction,
  *         0 for a blank line (no more headers), -1 for irrecoverable error
  */
-static int next_line(const char **linep, size_t *lenp)
+static int next_line(const char **linep, size_t *lenp, int strict)
 {
     int rv = 1;
 
@@ -1104,26 +1105,35 @@ static int next_line(const char **linep, size_t *lenp)
     if ( (line[0] == '\r') && (line[1] == '\n') ) {
         return 0; /* blank line = no more hdr lines */
     }
-    else if ( (line[0] == '\r') || (line[0] == '\n') ) {
+    else if ( !strict && ( (line[0] == '\r') || (line[0] == '\n') ) ) {
         return 0; /* blank line which is also malformed HTTP */
     }
 
     /* skip to next start-of-line from where we are */
-    line += strcspn(line, "\r\n");
-    if ( (line[0] == '\r') && (line[1] == '\n') ) {
-        /* valid line end.  Set pointer to start of next line */
+    if (strict) {
+        line = strstr(line, "\r\n");
+        if (!line) {
+            return -1;
+        }
         line += 2;
     }
-    else {   /* bogus lineend!
-              * Treat a single '\r' or '\n' as a lineend
-              */
-        line += 1;
-        rv = 2; /* bogus linend */
+    else {
+        line += strcspn(line, "\r\n");
+        if ( (line[0] == '\r') && (line[1] == '\n') ) {
+            /* valid line end.  Set pointer to start of next line */
+            line += 2;
+        }
+        else {   /* bogus lineend!
+                  * Treat a single '\r' or '\n' as a lineend
+                  */
+            line += 1;
+            rv = 2; /* bogus linend */
+        }
     }
     if ( (line[0] == '\r') && (line[1] == '\n') ) {
         return 0; /* blank line = no more hdr lines */
     }
-    else if ( (line[0] == '\r') || (line[0] == '\n') ) {
+    else if ( !strict && ((line[0] == '\r') || (line[0] == '\n')) ) {
         return 0; /* blank line which is also malformed HTTP */
     }
 
@@ -1136,18 +1146,27 @@ static int next_line(const char **linep, size_t *lenp)
             /* we have a continuation line.  Add the lineend. */
             len += lelen;
         }
-        end = line + strcspn(line + len, "\r\n");
-        if ( (line[0] == '\r') && (line[1] == '\n') ) {
-            lelen = 2;             /* All's well, this is a good line */
+        if (strict) {
+            end = strstr(line, "\r\n");
+            if (!end) {
+                return -1;
+            }
+            lelen = 2;
         }
         else {
-            /* Malformed header.  Check for a bogus single-char lineend */
-            if (end > line) {
-                lelen = 1;
-                rv = 2;
+            end = line + strcspn(line + len, "\r\n");
+            if ( (line[0] == '\r') && (line[1] == '\n') ) {
+                lelen = 2;             /* All's well, this is a good line */
             }
-            else { /* nothing at all we can interpret as lineend */
-                return -1;
+            else {
+                /* Malformed header.  Check for a bogus single-char lineend */
+                if (end > line) {
+                    lelen = 1;
+                    rv = 2;
+                }
+                else { /* nothing at all we can interpret as lineend */
+                    return -1;
+                }
             }
         }
         len = end - line;
@@ -1344,16 +1363,30 @@ static ib_status_t get_http_header(
     ++hdr_len;
 
     /* Find the line end. */
-    line_len = strcspn(hdr_buf, "\r\n");
-    if ( (line_len == 0) || (line_len > hdr_len) ) {
-        TSError("Invalid HTTP request line");
-        rc = IB_EINVAL;
-        goto cleanup;
+    /* hack fixes RNS506, but could potentially get in trouble if
+     * a malformed request contains a \r or \n lineend but no \r\n
+     */
+    char *line_end = strstr(hdr_buf, "\r\n");
+    while (line_end == NULL && hdr_len > 2) {
+        char *null = memchr(hdr_buf, 0, hdr_len);
+        if (null != NULL) {
+            /* remove embedded NULL and retry */
+            int bytes = hdr_len - (null+1 - hdr_buf);
+            memmove(null, null+1, bytes);
+            hdr_len--;
+            line_end = strstr(hdr_buf, "\r\n");
+        }
+        else {
+            /* There are no NULLs, and we still don't have termination */
+            TSError("Invalid HTTP request line");
+            rc = IB_EINVAL;
+            goto cleanup;
+        }
     }
-    line_len += strspn(hdr_buf, "\r\n");
+    line_len = (line_end - hdr_buf) + 2;
 
     *phdr_buf  = hdr_buf;
-    *phdr_len  = hdr_len;
+    *phdr_len  = strlen(hdr_buf);
     *pline_buf = hdr_buf;
     *pline_len = line_len;
 
@@ -1374,6 +1407,7 @@ cleanup:
  *
  * @returns IronBee Status Code
  */
+
 static ib_status_t get_request_url(
     TSMBuffer         hdr_bufp,
     TSMLoc            hdr_loc,
@@ -1407,6 +1441,26 @@ static ib_status_t get_request_url(
         rc = IB_EUNKNOWN;
         goto cleanup;
     }
+    /* hack fixes RNS506, but could potentially get in trouble if
+     * a malformed request contains a \r or \n lineend but no \r\n
+     */
+    char *line_end = strstr(url_buf, "\r\n");
+    while (line_end == NULL && url_len > 2) {
+        char *null = memchr(url_buf, 0, url_len);
+        if (null != NULL) {
+            /* remove embedded NULL and retry */
+            int bytes = url_len - (null+1 - url_buf);
+            memmove(null, null+1, bytes);
+            url_len--;
+            line_end = strstr(url_buf, "\r\n");
+        }
+        else {
+            /* There are no NULLs, and we still don't have termination */
+            TSError("Invalid HTTP request line");
+            rc = IB_EINVAL;
+            goto cleanup;
+        }
+    }
 
     url_copy = ib_mpool_memdup(mp, url_buf, url_len);
     if (url_copy == NULL) {
@@ -1422,7 +1476,6 @@ cleanup:
 
     return rc;
 }
-
 /**
  * Fixup the HTTP request line from ATS if required
  *
@@ -1497,11 +1550,11 @@ static ib_status_t fixup_request_line(
         TSError("Failed to get request URL: %s", ib_status_to_string(rc));
         return rc;
     }
-
     /* If the URL doesn't start with the above pattern, we're done. */
     if ( (url_len < bad_len) || (memcmp(url_buf, bad_url, bad_len) != 0) ) {
         goto line_ok;
     }
+
     bad_line_len = url_len;
 
     /*
@@ -1783,7 +1836,12 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
     // get_line ensures CRLF (line_len + 2)?
     line = hdr_buf;
-    while (next_line(&line, &line_len) > 0) {
+    /* RNS506 fix: enforce strict lineend first time round (jumping over the request/response line) */
+    int l_status;
+
+    for (l_status = next_line(&line, &line_len, 1);
+         l_status > 0;
+         l_status = next_line(&line, &line_len, 0)) {
         size_t n_len;
         size_t v_len;
 
