@@ -1145,13 +1145,18 @@ namespace {
         XRuleContentType(
             const char* content_type,
             action_ptr action,
-            const std::string field
+            const std::string content_type_field,
+            const std::string transport_encoding_field
         );
 
     private:
         bool                  m_any;
-        std::string           m_field;
+        bool                  m_none;
+        std::string           m_content_type_field;
+        std::string           m_transport_encoding_field;
         std::set<std::string> m_content_types;
+
+        bool has_field(IronBee::Transaction tx, std::string &field);
 
         virtual void xrule_impl(
             IronBee::Transaction tx,
@@ -1161,14 +1166,17 @@ namespace {
 
     /* XRuleContentType Impl */
     XRuleContentType::XRuleContentType(
-        const char* content_type,
-        action_ptr action,
-        const std::string field
+        const char*       content_type,
+        action_ptr        action,
+        const std::string content_type_field,
+        const std::string transport_encoding_field
     )
     :
         XRule(action),
         m_any(false),
-        m_field(field)
+        m_none(false),
+        m_content_type_field(content_type_field),
+        m_transport_encoding_field(transport_encoding_field)
     {
         std::string content_type_str(content_type);
         std::list<std::string> result;
@@ -1194,6 +1202,36 @@ namespace {
         }
     }
 
+    bool XRuleContentType::has_field(
+        IronBee::Transaction tx,
+        std::string &field
+    )
+    {
+        ib_var_target_t *target;
+        const ib_list_t *clist;
+
+        IronBee::throw_if_error(
+            ib_var_target_acquire_from_string(
+                &target,
+                tx.memory_pool().ib(),
+                ib_engine_var_config_get(tx.engine().ib()),
+                field.data(),
+                field.length(),
+                NULL,
+                NULL)
+        );
+
+        IronBee::throw_if_error(
+            ib_var_target_get_const(
+                target,
+                &clist,
+                tx.memory_pool().ib(),
+                tx.ib()->var_store)
+        );
+
+        return (ib_list_elements(clist) >= 1U);
+    }
+
     void XRuleContentType::xrule_impl(
         IronBee::Transaction tx,
         ActionSet&           actions
@@ -1201,7 +1239,24 @@ namespace {
     {
         if (actions.overrides(m_action)) {
             if (m_any) {
-                actions.set(m_action);
+                if
+                (
+                    has_field(tx, m_content_type_field) &&
+                    !has_field(tx, m_transport_encoding_field)
+                )
+                {
+                    actions.set(m_action);
+                }
+            }
+            else if (m_none) {
+                if
+                (
+                    !has_field(tx, m_content_type_field) &&
+                    has_field(tx, m_transport_encoding_field)
+                )
+                {
+                    actions.set(m_action);
+                }
             }
             else {
                 const ib_list_t          *clist = NULL;
@@ -1213,10 +1268,12 @@ namespace {
                         &target,
                         tx.memory_pool().ib(),
                         ib_engine_var_config_get(tx.engine().ib()),
-                        m_field.data(), m_field.length(),
+                        m_content_type_field.data(),
+                        m_content_type_field.length(),
                         NULL, NULL
                     ),
                     "Failed to acquire content type target.");
+
                 IronBee::throw_if_error(
                     ib_var_target_get(
                         target,
@@ -1925,8 +1982,8 @@ void XRulesModule::xrule_directive(
                 new XRuleContentType(
                     params.front(),
                     parse_action(cp, params),
-                    //"REQUEST_CONTENT_TYPE")));
-                    "request_headers:Content-Type")));
+                    "request_headers:Content-Type",
+                    "request_headers:Transport-Encoding")));
     }
     else if (name_str =="XRuleResponseContentType") {
         cfg.resp_xrules.push_back(
@@ -1934,8 +1991,8 @@ void XRulesModule::xrule_directive(
                 new XRuleContentType(
                     params.front(),
                     parse_action(cp, params),
-                    //"RESPONSE_CONTENT_TYPE")));
-                    "response_headers:Content-Type")));
+                    "response_headers:Content-Type",
+                    "response_headers:Transport-Encoding")));
     }
     else {
         ib_cfg_log_error(
