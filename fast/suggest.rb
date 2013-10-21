@@ -37,7 +37,9 @@ FIELDS = [
 ]
 FIELD_RE = Regexp.new('\b(' + FIELDS.join('|') + ')[^A-Za-z]')
 
-rx_mode = (ARGV[0] == '--rx')
+rx_mode = ARGV.member?('--rx')
+lua_mode = ARGV.member?('--lua')
+$comment = lua_mode ? '--' : '#'
 
 # Evaluate if a rule is a candidate for an fast modifier.
 def potential_rule(line)
@@ -58,6 +60,9 @@ end
 def format_patterns(patterns)
   patterns.collect {|x| "\"fast:#{x}\""}.join(' ')
 end
+def format_patterns_lua(patterns)
+  patterns.collect {|x| "action(\"fast:#{x}\")"}.join(':')
+end
 
 # Is this pattern considered valid?
 def valid_pattern(s)
@@ -65,24 +70,38 @@ def valid_pattern(s)
 end
 
 # Main loop.
+lua_eligible = false
 STDIN.each do |line|
   begin
     if rx_mode
       res = [line.chomp]
+    elsif lua_mode
+      res = []
+      if line =~ /^\s*Sig|Action/
+        lua_eligible = false
+      elsif line =~ /\bfields?\((.+)\)/
+        if $1 =~ /[A-Za-z_]+/
+          if FIELDS.member?($&)
+            lua_eligible = true
+          end
+        end
+      elsif lua_eligible && line =~ /\bop\(\s*(?:'|"|\[=*\[)rx(?:'|"|\]=*\])\s*,\s*(?:'|"|\[=*\[)(.+)(?:'|"|\]=*\])/
+        res = [$1]
+      end
     elsif potential_rule(line)
       res = extract_regexps(line)
     else
       res = []
     end
   rescue Exception => err
-    puts "# FAST Error looking at line: #{err}"
+    puts "#{$comment} FAST Error looking at line: #{err}"
     puts line
     res = []
   end
 
   res.each do |re|
     if re.nil?
-      puts "# FAST Failed to extract regexp.  Malformed rule?"
+      puts "#{$comment} FAST Failed to extract regexp.  Malformed rule?"
       next
     end
 
@@ -90,13 +109,13 @@ STDIN.each do |line|
     begin
       Regexp.new(re)
     rescue Exception => err
-      puts "# FAST Ruby Says: #{err}"
+      puts "#{$comment} FAST Ruby Says: #{err}"
     end
 
     begin
       result = ReToAC::extract(re, MAX_ALTERNATIONS, MAX_REPETITIONS)
     rescue Exception => err
-      puts "# FAST Exception: #{err}"
+      puts "#{$comment} FAST Exception: #{err}"
       result = []
     end
     next if result.empty?
@@ -109,11 +128,15 @@ STDIN.each do |line|
 
     suggestion = ReToAC::craft_suggestion(result)
     if suggestion
-      puts "# FAST RE: #{re}"
-      puts "# FAST Suggest: #{format_patterns(suggestion)}"
+      puts "#{$comment} FAST RE: #{re}"
+      if lua_mode
+        puts "#{$comment} FAST Suggest: #{format_patterns_lua(suggestion)}"
+      else
+        puts "#{$comment} FAST Suggest: #{format_patterns(suggestion)}"
+      end
       if result.size > 1 || result.first.size > 1
-        puts "# FAST Result Table: "
-        puts "# FAST " +
+        puts "#{$comment} FAST Result Table: "
+        puts "#{$comment} FAST " +
           (result.collect do |row|
             '( ' + row.join(' AND ') + ' )'
           end.join(" OR\n# FAST "))

@@ -151,6 +151,8 @@ The Suggest comment display what it believes is the best fast pattern settings f
 
 The Result table displays the complete set of suggestions that the suggestion code found.  It is formatted as a boolean expression.  Each line is a ANDed clause of patterns and all the lines are joined together with OR.  The fast system evaluates a rule if any of the fast patterns for that rule are found.  As such, there is no way to specify the AND relationship.  As such, to generate fast patterns for the rule, a single pattern from each line needs to be chosen and added as a fast modifier.  The Suggest line is simply one such choice that the suggestion code believes is the best.
 
+Suggest can also be used with Lua/Waggle rules.  Pass `--lua` in as an argument to `suggest.rb`.  It can also be used directly with regexps: pass `--rx` in as an argument and provide one regexp per line on stdin.
+
 *Suggestions*
 
 It is important to check the suggestions for sanity for two reasons.  First, this code is in an early state and may get things wrong.  Second, if your regular expression is incorrect, this may be obvious in the patterns.  For example, consider the regular expression:

@@ -34,6 +34,8 @@ IronBee v0.9.0
 
 - Added `extract_waggle.rb` to extract fast patterns from waggle rules and updated `build.rb` to use appropriately for `.lua` and `.waggle` files.
 
+- Added support for Lua/Waggle to `suggest.rb`.  Use `suggest.rb --lua`.
+
 **CLIPP**
 
 - Added ClippScript, a Ruby DSL for creating CLIPP inputs.  See `clipp/clippscript.md`.
