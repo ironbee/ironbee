@@ -4464,7 +4464,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                         ib_context_full_get(ctx));
                 }
             }
-            
+
             /* Ownership may only return IB_OK or IB_DECLINED. */
             else if (orc != IB_DECLINED) {
                 ib_log_error(ib,
