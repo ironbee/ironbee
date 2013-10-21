@@ -11,13 +11,13 @@ end
 # cerr is left alone.
 def run(cmd, cin, cout)
   pid = fork do
-    STDIN.reopen(cin)
+    STDIN.reopen(cin) if cin
     STDOUT.reopen(cout)
 
     exec(*cmd)
   end
 
-  cin.close
+  cin.close if cin
   cout.close
 
   Process::wait2(pid)[1]
@@ -30,7 +30,7 @@ end
 def step(what, cmd, infile, outfile)
   v what
   v "  #{cmd.join(' ')}"
-  input = File.open(infile, 'r')
+  input = infile ? File.open(infile, 'r') : nil
   output = File.open(outfile, 'w')
   status = run(cmd, input, output)
   if ! status.success?
@@ -46,12 +46,21 @@ end
 
 rules = ARGV[0]
 manifest = rules + '.manifest'
-step(
-  "Extracting rules from #{rules} to #{manifest}",
-  [File.join(HOME, 'extract.rb')],
-  rules,
-  manifest
-)
+if rules =~ /\.waggle$/ || rules =~ /\.lua/
+  step(
+    "Extracting rules from #{rules} to #{manifest}",
+    [File.join(HOME, 'extract_waggle.rb'), rules],
+    nil,
+    manifest
+  )
+else
+  step(
+    "Extracting rules from #{rules} to #{manifest}",
+    [File.join(HOME, 'extract.rb')],
+    rules,
+    manifest
+  )
+end
 
 automata = rules + '.automata'
 step(

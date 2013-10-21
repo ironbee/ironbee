@@ -79,7 +79,7 @@ See the next section for a way to largely automate this task.
 
 **Step 2**: Build the automata.
 
-In order for IronBee to take advantage of fast modifiers, it needs the corresponding automata.  This automata is an IronAutomata Eudoxus file with specific metadata.  The easiest way to build it is to run `fast/build.rb` (currently this must be run in the *object tree* `fast` directory) with a single argument specifying the rules file.  It will generate a bunch of build artifacts, including a `.e` file suitable for loading into IronBee.
+In order for IronBee to take advantage of fast modifiers, it needs the corresponding automata.  This automata is an IronAutomata Eudoxus file with specific metadata.  The easiest way to build it is to run `fast/build.rb` (currently this must be run in the *object tree* `fast` directory) with a single argument specifying the rules file.  It will generate a bunch of build artifacts, including a `.e` file suitable for loading into IronBee.  The script will work with Waggle rule files as well so long as they end in `.lua` or `.waggle` and the `ruby-lua` gem is installed.
 
 Note that you must be run `build.rb` on a platform of the same endianness as where you intend to run IronBee.
 
