@@ -58,8 +58,9 @@
  */
 #define NEWVERSION AP_MODULE_MAGIC_AT_LEAST(20100919,1)
 
-/* vacuous hack to pretend Apache's OK and Ironbee's IB_OK might be nonzero */
-#define IB2AP(rc) (OK - IB_OK + (rc))
+/* Convert Ironbee errors to nonspecific Apache/APR errors */
+#define IB2AP(rc) ((rc) == IB_OK) ? OK : !OK
+#define IB2APR(rc) ((rc) == IB_OK) ? APR_SUCCESS : APR_EGENERAL
 
 #define STATUS_IS_ERROR(code) ( ((code) >= 200) && ((code) <  600) )
 #define STATUS_IS_OK(code)    ( ((code)  < 200) || ((code) >= 600) )
@@ -379,13 +380,13 @@ static apr_status_t ib_req_cleanup(void *data)
     if (!ib_tx_flags_isset(ctx->tx, IB_TX_FPOSTPROCESS)) {
         rc = ib_state_notify_postprocess(ctx->tx->ib, ctx->tx);
         if (rc != IB_OK) {
-            return IB2AP(rc);
+            return IB2APR(rc);
         }
     }
     if (!ib_tx_flags_isset(ctx->tx, IB_TX_FLOGGING)) {
         rc = ib_state_notify_logging(ctx->tx->ib, ctx->tx);
         if (rc != IB_OK) {
-            return IB2AP(rc);
+            return IB2APR(rc);
         }
     }
     ib_tx_destroy(ctx->tx);
@@ -406,12 +407,17 @@ static int ironbee_headers_in(request_rec *r)
     int early;
     ib_status_t rc = IB_OK;
     const char *rc_what = "no message set";
-    ironbee_req_ctx *ctx = ap_get_module_config(r->request_config,
-                                                &ironbee_module);
-    ib_conn_t *iconn = ap_get_module_config(r->connection->conn_config,
-                                            &ironbee_module);
-    ironbee_svr_conf *scfg = ap_get_module_config(r->server->module_config,
-                                                  &ironbee_module);
+    ironbee_req_ctx *ctx;
+    ib_conn_t *iconn;
+    ironbee_svr_conf *scfg;
+
+    if (module_data.ib_manager == NULL) {
+        return DECLINED; /* Ironbee loaded but not configured */
+    }
+
+    ctx = ap_get_module_config(r->request_config, &ironbee_module);
+    iconn = ap_get_module_config(r->connection->conn_config, &ironbee_module);
+    scfg = ap_get_module_config(r->server->module_config, &ironbee_module);
 
     /* Don't act in a subrequest or internal redirect */
     /* FIXME: this means 'clever' things like content aggregation
@@ -964,11 +970,18 @@ setaside_input:
  */
 static void ironbee_filter_insert(request_rec *r)
 {
-    ironbee_dir_conf *cfg = ap_get_module_config(r->per_dir_config,
-                                                 &ironbee_module);
-    ironbee_req_ctx *rctx = ap_get_module_config(r->request_config,
-                                                 &ironbee_module);
-    request_rec *rr = r;
+    ironbee_dir_conf *cfg;
+    ironbee_req_ctx *rctx;
+    request_rec *rr;
+
+    if (module_data.ib_manager == NULL) {
+        return; /* Ironbee loaded but not configured */
+    }
+
+    cfg = ap_get_module_config(r->per_dir_config, &ironbee_module);
+    rctx = ap_get_module_config(r->request_config, &ironbee_module);
+    rr = r;
+
     while (!rctx) {
         /* Oops, are we in a subrequest or internal redirect?
          * Find main config and set it here
@@ -1124,8 +1137,8 @@ static apr_status_t ironbee_manager_cleanup(void *data)
     if (module_data.ib_manager != NULL) {
         ib_manager_destroy(module_data.ib_manager);
         module_data.ib_manager = NULL;
+        apr_pool_destroy(module_data.pool);
     }
-    apr_pool_destroy(module_data.pool);
     return APR_SUCCESS;
 }
 
@@ -1355,17 +1368,20 @@ static int ironbee_init(
     ib_status_t    rc;
     module_data_t *mod_data = &module_data;
 
+    if (mod_data->ib_config_file == NULL) {
+        ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, plog,
+                     "Ironbee is loaded but not configured!");
+        return OK;
+    }
+
     /* Create our own pool to live forever but be cleaned up regularly */
     apr_pool_create(&module_data.pool, pool);
 
-    if (mod_data->ib_config_file == NULL) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Ironbee is loaded but not configured!");
-        return OK ^ (-1);
-    }
-
     rc = ib_initialize();
     if (rc != IB_OK) {
+        ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_CRIT, 0, plog,
+                      "Failed to initialize IronBee (%s)",
+                      ib_status_to_string(rc));
         return IB2AP(rc);
     }
 
@@ -1374,9 +1390,9 @@ static int ironbee_init(
                            &ibplugin,                 /* Server object */
                            mod_data->ib_max_engines); /* Max num of engines */
     if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Failed to create IronBee Engine Manager (%s)",
-                     ib_status_to_string(rc));
+        ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_CRIT, 0, plog,
+                      "Failed to create IronBee Engine Manager (%s)",
+                      ib_status_to_string(rc));
         return IB2AP(rc);
     }
 
@@ -1385,9 +1401,9 @@ static int ironbee_init(
                                        create_module,
                                        mod_data);
     if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Failed to register plugin as module. (%s)",
-                     ib_status_to_string(rc));
+        ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_CRIT, 0, plog,
+                      "Failed to register plugin as module. (%s)",
+                      ib_status_to_string(rc));
         return IB2AP(rc);
     }
 
@@ -1395,9 +1411,9 @@ static int ironbee_init(
     rc = ib_manager_engine_create(mod_data->ib_manager,
                                   mod_data->ib_config_file);
     if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
-                     "Ironbee failed to create initial engine! (%s)",
-                     ib_status_to_string(rc));
+        ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_CRIT, 0, plog,
+                      "Ironbee failed to create initial engine! (%s)",
+                      ib_status_to_string(rc));
         return IB2AP(rc);
     }
 
@@ -1412,8 +1428,8 @@ static int ironbee_init(
      * But that's fine, we have the message.
      */
     mod_data->log_level_is_startup = 0;
-    ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, s,
-                 IB_PRODUCT_VERSION_NAME " initialized.");
+    ap_log_perror(APLOG_MARK, APLOG_NOTICE, 0, plog,
+                  IB_PRODUCT_VERSION_NAME " initialized.");
     return OK;
 }
 
