@@ -1137,7 +1137,6 @@ static apr_status_t ironbee_manager_cleanup(void *data)
     if (module_data.ib_manager != NULL) {
         ib_manager_destroy(module_data.ib_manager);
         module_data.ib_manager = NULL;
-        apr_pool_destroy(module_data.pool);
     }
     return APR_SUCCESS;
 }
@@ -1376,6 +1375,7 @@ static int ironbee_init(
 
     /* Create our own pool to live forever but be cleaned up regularly */
     apr_pool_create(&module_data.pool, pool);
+    apr_pool_tag(&module_data.pool, "ironbee");
 
     rc = ib_initialize();
     if (rc != IB_OK) {
