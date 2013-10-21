@@ -1375,7 +1375,7 @@ static int ironbee_init(
 
     /* Create our own pool to live forever but be cleaned up regularly */
     apr_pool_create(&module_data.pool, pool);
-    apr_pool_tag(&module_data.pool, "ironbee");
+    apr_pool_tag(module_data.pool, "ironbee");
 
     rc = ib_initialize();
     if (rc != IB_OK) {
