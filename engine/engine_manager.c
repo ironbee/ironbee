@@ -291,7 +291,7 @@ void ib_manager_destroy(
 }
 
 /**
- * Put @a engine under @a manager 's controle and make it the current engine.
+ * Put @a engine under @a manager 's control and make it the current engine.
  *
  * This requires that the caller hold the manager lock and that
  * ib_manager_t::engine_count be less than ib_manager_t::max_engines.

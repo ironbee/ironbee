@@ -72,4 +72,4 @@ ib_status_t DLL_PUBLIC ib_module_register_context(
 }
 #endif
 
-#endif /* _IB_MODULE_PRIVTE_H_ */
+#endif /* _IB_MODULE_PRIVATE_H_ */

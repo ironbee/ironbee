@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2270 
+personal_ws-1.1 en 2271 
 malloced
 malloc'ed
 libnet
@@ -608,6 +608,7 @@ printf
 bc
 curr
 bd
+IronBeeModulePrivate
 nanosecs
 bg
 cb
@@ -1796,7 +1797,7 @@ moduleName
 MyParam
 ifstream
 HandleConnect
-Finalizer
+finalizer
 IsNulStr
 slen
 sive

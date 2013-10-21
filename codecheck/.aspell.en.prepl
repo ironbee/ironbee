@@ -15,6 +15,7 @@ thead thread
 orign origin
 maintaing maintaining
 agaist against
+controle control
 calblack Callback
 pmanger pmanager
 conver convert
@@ -60,6 +61,7 @@ interator iterator
 suppor support
 retuned returned
 valuelists ValueList
+privte PRIVATE
 inits initializes
 tranformation transformation
 seach Search
