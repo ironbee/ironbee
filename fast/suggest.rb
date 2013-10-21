@@ -85,8 +85,8 @@ STDIN.each do |line|
             lua_eligible = true
           end
         end
-      elsif lua_eligible && line =~ /\bop\(\s*(?:'|"|\[=*\[)rx(?:'|"|\]=*\])\s*,\s*(?:'|"|\[=*\[)(.+)(?:'|"|\]=*\])/
-        res = [$1]
+      elsif lua_eligible && line =~ /\bop\(\s*('|"|\[(=*)\[)rx(?:'|"|\]\2\])\s*,\s*('|"|\[(=*)\[)(.+)(?:'|"|\]\4\])/
+        res = [$5]
       end
     elsif potential_rule(line)
       res = extract_regexps(line)
