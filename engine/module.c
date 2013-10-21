@@ -27,8 +27,8 @@
 
 #include <ironbee/module.h>
 
-#include "engine_private.h"
 #include "module_private.h"
+#include "engine_private.h"
 
 #include <ironbee/context.h>
 #include <ironbee/dso.h>
