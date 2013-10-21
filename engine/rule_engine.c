@@ -4443,11 +4443,11 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
             orc = cb->fn(ib, rule, cb->data);
             if (orc == IB_OK) {
                 ib_log_debug3(ib,
-                            "Ownership callback \"%s\" has taken ownership "
-                            "of rule \"%s\" phase=%d context=\"%s\".",
-                            cb->name,
-                            ib_rule_id(rule), phase_num,
-                            ib_context_full_get(ctx));
+                              "Ownership callback \"%s\" has taken ownership "
+                              "of rule \"%s\" phase=%d context=\"%s\".",
+                              cb->name,
+                              ib_rule_id(rule), phase_num,
+                              ib_context_full_get(ctx));
                 ++owners;
                 owner_name = cb->name;
 
