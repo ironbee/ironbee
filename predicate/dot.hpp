@@ -67,6 +67,21 @@ void to_dot(
     dot_node_decorator_t node_decorator = DefaultNodeDecorator()
 );
 
+/**
+ * Output a single root to GraphViz DOT format.
+ *
+ * @param[in] out            Stream to output to.
+ * @param[in] node           Node to output.
+ * @param[in] node_decorator Function to provide attributes string for every
+ *                           node in DAG.
+ * @throw IronBee::einval if [begin, end) contains any singular nodes.
+ **/
+void to_dot(
+    std::ostream& out,
+    const node_cp& node,
+    dot_node_decorator_t node_decorator = DefaultNodeDecorator()
+);
+
 /// @cond internal
 namespace Impl {
 

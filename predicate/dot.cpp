@@ -66,5 +66,15 @@ void dot_node_outputer::operator()(const node_cp& node) const
 
 } // Impl
 
+void to_dot(
+    std::ostream& out,
+    const node_cp& node,
+    dot_node_decorator_t node_decorator
+)
+{
+    vector<node_cp> v(1, node);
+    to_dot(out, v.begin(), v.end(), node_decorator);
+}
+
 } // Predicate
 } // IronBee
