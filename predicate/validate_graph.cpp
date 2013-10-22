@@ -67,9 +67,9 @@ private:
 }
 
 void validate_graph(
-    validation_e which,
-    reporter_t   reporter,
-    MergeGraph&  graph
+    validation_e      which,
+    reporter_t        reporter,
+    const MergeGraph& graph
 )
 {
     node_list_t leaves;

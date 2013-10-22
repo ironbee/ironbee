@@ -49,12 +49,12 @@ enum validation_e {
  *
  * @param[in] which    Which validation routine to use.
  * @param[in] reporter Reporter to use for NodeReporter's.
- * @param[in] graph    Graph to transform.
+ * @param[in] graph    Graph to validate.
  **/
 void validate_graph(
-    validation_e which,
-    reporter_t   reporter,
-    MergeGraph&  graph
+    validation_e      which,
+    reporter_t        reporter,
+    const MergeGraph& graph
 );
 
 } // Predicate
