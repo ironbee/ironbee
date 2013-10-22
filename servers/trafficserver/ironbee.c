@@ -138,6 +138,8 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port);
 #define ADDRSIZE 48 /* what's the longest IPV6 addr ? */
 #define DEFAULT_LOG "ts-ironbee"
 
+typedef enum {LE_N, LE_RN, LE_ANY} http_lineend_t;
+
 /**
  * Plugin global data
  */
@@ -1089,11 +1091,11 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
  *
  * @param[in,out] linep Buffer to parse.  On output, moved on one line.
  * @param[out] lenp Line length (excluding line end)
- * @param[in] strict Whether to be strict about line ends
+ * @param[in] letype What to treat as line ends
  * @return 1 if a line was parsed, 2 if parsed but with error correction,
  *         0 for a blank line (no more headers), -1 for irrecoverable error
  */
-static int next_line(const char **linep, size_t *lenp, int strict)
+static int next_line(const char **linep, size_t *lenp, http_lineend_t letype)
 {
     int rv = 1;
 
@@ -1102,22 +1104,49 @@ static int next_line(const char **linep, size_t *lenp, int strict)
     const char *end;
     const char *line = *linep;
 
-    if ( (line[0] == '\r') && (line[1] == '\n') ) {
-        return 0; /* blank line = no more hdr lines */
-    }
-    else if ( !strict && ( (line[0] == '\r') || (line[0] == '\n') ) ) {
-        return 0; /* blank line which is also malformed HTTP */
-    }
-
-    /* skip to next start-of-line from where we are */
-    if (strict) {
+    switch (letype) {
+      case LE_RN: /* Enforces the HTTP spec */
+        if ( (line[0] == '\r') && (line[1] == '\n') ) {
+            return 0; /* blank line = no more hdr lines */
+        }
+        /* skip to next start-of-line from where we are */
         line = strstr(line, "\r\n");
         if (!line) {
             return -1;
         }
         line += 2;
-    }
-    else {
+        if ( (line[0] == '\r') && (line[1] == '\n') ) {
+            return 0; /* blank line = no more hdr lines */
+        }
+        /* Use a loop here to catch theoretically-unlimited numbers
+         * of continuation lines in a folded header.  The isspace
+         * tests for a continuation line
+         */
+        do {
+            if (len > 0) {
+                /* we have a continuation line.  Add the lineend. */
+                len += lelen;
+            }
+            end = strstr(line, "\r\n");
+            if (!end) {
+                return -1;
+            }
+            lelen = 2;
+            len = end - line;
+        } while ( (isspace(end[lelen]) != 0) &&
+                  (end[lelen] != '\r') &&
+                  (end[lelen] != '\n') );
+        break;
+      case LE_ANY: /* Original code: take either \r or \n as lineend */
+
+        if ( (line[0] == '\r') && (line[1] == '\n') ) {
+            return 0; /* blank line = no more hdr lines */
+        }
+        else if ( ( (line[0] == '\r') || (line[0] == '\n') ) ) {
+            return 0; /* blank line which is also malformed HTTP */
+        }
+
+        /* skip to next start-of-line from where we are */
         line += strcspn(line, "\r\n");
         if ( (line[0] == '\r') && (line[1] == '\n') ) {
             /* valid line end.  Set pointer to start of next line */
@@ -1129,33 +1158,24 @@ static int next_line(const char **linep, size_t *lenp, int strict)
             line += 1;
             rv = 2; /* bogus linend */
         }
-    }
-    if ( (line[0] == '\r') && (line[1] == '\n') ) {
-        return 0; /* blank line = no more hdr lines */
-    }
-    else if ( !strict && ((line[0] == '\r') || (line[0] == '\n')) ) {
-        return 0; /* blank line which is also malformed HTTP */
-    }
+        if ( (line[0] == '\r') && (line[1] == '\n') ) {
+            return 0; /* blank line = no more hdr lines */
+        }
+        else if ( (line[0] == '\r') || (line[0] == '\n') ) {
+            return 0; /* blank line which is also malformed HTTP */
+        }
 
-    /* Use a loop here to catch theoretically-unlimited numbers
-     * of continuation lines in a folded header.  The isspace
-     * tests for a continuation line
-     */
-    do {
-        if (len > 0) {
-            /* we have a continuation line.  Add the lineend. */
-            len += lelen;
-        }
-        if (strict) {
-            end = strstr(line, "\r\n");
-            if (!end) {
-                return -1;
+        /* Use a loop here to catch theoretically-unlimited numbers
+         * of continuation lines in a folded header.  The isspace
+         * tests for a continuation line
+         */
+        do {
+            if (len > 0) {
+                /* we have a continuation line.  Add the lineend. */
+                len += lelen;
             }
-            lelen = 2;
-        }
-        else {
             end = line + strcspn(line + len, "\r\n");
-            if ( (line[0] == '\r') && (line[1] == '\n') ) {
+            if ( (end[0] == '\r') && (end[1] == '\n') ) {
                 lelen = 2;             /* All's well, this is a good line */
             }
             else {
@@ -1168,11 +1188,60 @@ static int next_line(const char **linep, size_t *lenp, int strict)
                     return -1;
                 }
             }
+            len = end - line;
+        } while ( (isspace(end[lelen]) != 0) &&
+                  (end[lelen] != '\r') &&
+                  (end[lelen] != '\n') );
+        break;
+      case LE_N: /* \n is lineend, but either \n or \r\n is blank line */
+
+        if ( (line[0] == '\r') && (line[1] == '\n') ) {
+            return 0; /* blank line = no more hdr lines */
         }
-        len = end - line;
-    } while ( (isspace(end[lelen]) != 0) &&
-              (end[lelen] != '\r') &&
-              (end[lelen] != '\n') );
+        else if ( line[0] == '\n' ) {
+            return 0; /* blank line which is also malformed HTTP */
+        }
+
+        /* skip to next start-of-line from where we are */
+        line = strchr(line, '\n');
+        if (line++ == NULL) {
+            return -1;
+        }
+        if ( (line[0] == '\r') && (line[1] == '\n') ) {
+            return 0; /* blank line = no more hdr lines */
+        }
+        else if ( line[0] == '\n' ) {
+            return 0; /* blank line which is also malformed HTTP */
+        }
+
+        /* Use a loop here to catch theoretically-unlimited numbers
+         * of continuation lines in a folded header.  The isspace
+         * tests for a continuation line
+         */
+        do {
+            if (len > 0) {
+                /* we have a continuation line.  Add the lineend. */
+                len += lelen;
+            }
+            end = strchr(line, '\n');
+            if (end == NULL) {
+                return -1; /* there's no lineend */
+            }
+            /* point to the last non-lineend char and set length of lineend */
+            if (end[-1] == '\r') {
+                end--;
+                lelen = 2;
+            }
+            else {
+                lelen = 1;
+                rv = 2;    /* we're into error-correcting */
+            }
+            len = end - line;
+        } while ( (isspace(end[lelen]) != 0) &&
+                  (end[lelen] != '\r') &&
+                  (end[lelen] != '\n') );
+        break;
+    }
 
     *lenp = len;
     *linep = line;
@@ -1441,11 +1510,16 @@ static ib_status_t get_request_url(
         rc = IB_EUNKNOWN;
         goto cleanup;
     }
+
     /* hack fixes RNS506, but could potentially get in trouble if
      * a malformed request contains a \r or \n lineend but no \r\n
      */
+#if STRICT_LINEEND
     char *line_end = strstr(url_buf, "\r\n");
-    while (line_end == NULL && url_len > 2) {
+#else
+    char *line_end = strchr(url_buf, '\n');
+#endif
+    while (line_end == NULL && url_len > 1) {
         char *null = memchr(url_buf, 0, url_len);
         if (null != NULL) {
             /* remove embedded NULL and retry */
@@ -1590,11 +1664,11 @@ static ib_status_t fixup_request_line(
 
     /* Copy into the new buffer */
     new_line_cur = new_line_buf;
-    strncpy(new_line_cur, line_buf, line_method_len);
+    memcpy(new_line_cur, line_buf, line_method_len);
     new_line_cur += line_method_len;
-    strncpy(new_line_cur, url_buf, url_len);
+    memcpy(new_line_cur, url_buf, url_len);
     new_line_cur += url_len;
-    strncpy(new_line_cur, line_buf + line_proto_off, line_proto_len);
+    memcpy(new_line_cur, line_buf + line_proto_off, line_proto_len);
 
     /* Store new pointers */
     *pline_buf = new_line_buf;
@@ -1839,9 +1913,9 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     /* RNS506 fix: enforce strict lineend first time round (jumping over the request/response line) */
     int l_status;
 
-    for (l_status = next_line(&line, &line_len, 1);
+    for (l_status = next_line(&line, &line_len, LE_N);
          l_status > 0;
-         l_status = next_line(&line, &line_len, 0)) {
+         l_status = next_line(&line, &line_len, LE_N)) {
         size_t n_len;
         size_t v_len;
 
