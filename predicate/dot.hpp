@@ -128,6 +128,7 @@ void to_dot(
         out_iter(Impl::dot_node_outputer(out, node_decorator));
 
     out << "digraph G {" << std::endl;
+    out << "  ordering = out;" << std::endl;
     bfs_down(begin, end, out_iter);
     out << "}" << std::endl;
 }
