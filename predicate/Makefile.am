@@ -33,6 +33,7 @@ libpredicate_la_SOURCES = \
 	validate_graph.cpp \
 	pre_eval_graph.cpp \
 	tree_copy.cpp
+noinst_PROGRAMS = pp
 
 EXTRA_DIST = \
 		bfs.hpp                   \
@@ -69,3 +70,13 @@ ibmod_predicate_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/lib -module -avoid-versi
 else
 ibmod_predicate_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
 endif
+
+pp_SOURCES = pp.cpp
+pp_LDADD = \
+    libpredicate.la \
+    $(top_builddir)/ironbeepp/libibpp.la \
+    $(top_builddir)/util/libibutil.la \
+    $(top_builddir)/engine/libironbee.la
+pp_LDFLAGS = $(AM_LDFLAGS) -lboost_program_options$(BOOST_SUFFIX)
+
+pp_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
