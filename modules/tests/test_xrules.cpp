@@ -212,7 +212,7 @@ TEST_F(XRulesTest, ReqContentType1) {
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
             "SensorHostname unit-testing.sensor.tld\n"
-            "XRuleRequestContentType \"all\" block priority=1\n"
+            "XRuleRequestContentType \"*\" block priority=1\n"
             "<Site test-site>\n"
             "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
             "   Hostname somesite.com\n"
@@ -247,27 +247,6 @@ TEST_F(XRulesTest, ReqContentType2) {
 }
 
 TEST_F(XRulesTest, ReqContentType3) {
-    std::string config =
-        std::string(
-            "LogLevel INFO\n"
-            "LoadModule \"ibmod_xrules.so\"\n"
-            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
-            "SensorName UnitTesting\n"
-            "SensorHostname unit-testing.sensor.tld\n"
-            "XRuleRequestContentType \"text/bob|all\" block priority=1\n"
-            "<Site test-site>\n"
-            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
-            "   Hostname somesite.com\n"
-            "</Site>\n"
-        );
-
-    configureIronBeeByString(config.c_str());
-    performTx();
-    ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
-}
-
-TEST_F(XRulesTest, ReqContentType4) {
     std::string config =
         std::string(
             "LogLevel INFO\n"

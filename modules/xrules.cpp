@@ -1146,6 +1146,7 @@ namespace {
             const char* content_type,
             action_ptr action,
             const std::string content_type_field,
+            const std::string content_length_field,
             const std::string transport_encoding_field
         );
 
@@ -1153,6 +1154,7 @@ namespace {
         bool                  m_any;
         bool                  m_none;
         std::string           m_content_type_field;
+        std::string           m_content_length_field;
         std::string           m_transport_encoding_field;
         std::set<std::string> m_content_types;
 
@@ -1169,6 +1171,7 @@ namespace {
         const char*       content_type,
         action_ptr        action,
         const std::string content_type_field,
+        const std::string content_length_field,
         const std::string transport_encoding_field
     )
     :
@@ -1176,6 +1179,7 @@ namespace {
         m_any(false),
         m_none(false),
         m_content_type_field(content_type_field),
+        m_content_length_field(content_length_field),
         m_transport_encoding_field(transport_encoding_field)
     {
         std::string content_type_str(content_type);
@@ -1186,14 +1190,7 @@ namespace {
             boost::algorithm::is_any_of("|"));
 
         BOOST_FOREACH(const std::string& s, result) {
-            if (s ==   "*"
-            ||  s == "\"*\""
-            ||  s ==   "all"
-            ||  s == "\"all\""
-            ||  s ==   "any"
-            ||  s == "\"any\""
-            )
-            {
+            if (s ==   "*" ||  s == "\"*\"") {
                 m_any = true;
             }
             else if (s == "" || s == "\"\"") {
@@ -1245,6 +1242,7 @@ namespace {
                 if
                 (
                     has_field(tx, m_content_type_field) &&
+                    !has_field(tx, m_content_length_field) &&
                     !has_field(tx, m_transport_encoding_field)
                 )
                 {
@@ -1255,7 +1253,10 @@ namespace {
                 if
                 (
                     !has_field(tx, m_content_type_field) &&
-                    has_field(tx, m_transport_encoding_field)
+                    (
+                        has_field(tx, m_content_length_field) ||
+                        has_field(tx, m_transport_encoding_field)
+                    )
                 )
                 {
                     actions.set(m_action);
@@ -1986,6 +1987,7 @@ void XRulesModule::xrule_directive(
                     params.front(),
                     parse_action(cp, params),
                     "request_headers:Content-Type",
+                    "request_headers:Content-Length",
                     "request_headers:Transport-Encoding")));
     }
     else if (name_str =="XRuleResponseContentType") {
@@ -1995,6 +1997,7 @@ void XRulesModule::xrule_directive(
                     params.front(),
                     parse_action(cp, params),
                     "response_headers:Content-Type",
+                    "response_headers:Content-Length",
                     "response_headers:Transport-Encoding")));
     }
     else {
