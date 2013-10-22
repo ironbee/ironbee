@@ -400,3 +400,45 @@ TEST_F(XRulesTest, SetFlag) {
     );
     ASSERT_EQ(1, num);
 }
+
+TEST_F(XRulesTest, RespBlockAny) {
+    std::string config =
+        std::string(
+            "LogLevel INFO\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleResponseContentType \"*\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
+
+TEST_F(XRulesTest, RespBlockNone) {
+    std::string config =
+        std::string(
+            "LogLevel INFO\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleResponseContentType \"\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+}
+
