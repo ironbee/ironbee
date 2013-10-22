@@ -411,3 +411,72 @@ TEST_F(XRulesTest, SetFlag) {
     );
     ASSERT_EQ(1, num);
 }
+
+TEST_F(XRulesTest, RespBlockAny) {
+    std::string config =
+        std::string(
+            "LogLevel INFO\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleResponseContentType \"*\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
+
+class XRulesTest2 :
+    public BaseTransactionFixture
+{
+    public:
+    virtual void generateResponseHeader()
+    {
+        addResponseHeader("X-MyHeader", "header3");
+        addResponseHeader("X-MyHeader", "header4");
+        addResponseHeader("Transport-Encoding", "somebits");
+    }
+
+    virtual void sendResponseBody()
+    {
+        std::vector<uint8_t> data(100);
+        ib_txdata_t ib_tx_data;
+        ib_tx_data.dlen = data.size();
+        ib_tx_data.data = &(data[0]);
+
+        ib_state_notify_response_body_data(
+            ib_tx->ib,
+            ib_tx,
+            &ib_tx_data
+        );
+    }
+};
+
+TEST_F(XRulesTest2, RespBlockNone) {
+    std::string config =
+        std::string(
+            "LogLevel INFO\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleResponseContentType \"\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
+

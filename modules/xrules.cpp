@@ -1196,6 +1196,9 @@ namespace {
             {
                 m_any = true;
             }
+            else if (s == "" || s == "\"\"") {
+                m_none = true;
+            }
             else {
                 m_content_types.insert(s);
             }
