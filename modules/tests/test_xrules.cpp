@@ -411,20 +411,6 @@ class XRulesTest2 :
         addResponseHeader("X-MyHeader", "header4");
         addResponseHeader("Transport-Encoding", "somebits");
     }
-
-    virtual void sendResponseBody()
-    {
-        std::vector<uint8_t> data(100);
-        ib_txdata_t ib_tx_data;
-        ib_tx_data.dlen = data.size();
-        ib_tx_data.data = &(data[0]);
-
-        ib_state_notify_response_body_data(
-            ib_tx->ib,
-            ib_tx,
-            &ib_tx_data
-        );
-    }
 };
 
 TEST_F(XRulesTest2, RespBlockNone) {
