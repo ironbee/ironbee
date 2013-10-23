@@ -448,28 +448,6 @@ public:
     }
 
     /**
-     * Send a request body block
-     *
-     * @param[in] tx IronBee transaction
-     * @param[in] data Data to send
-     * @param[in] dlen Data length
-     */
-    void sendReponseBodyBlock(ib_tx_t *tx,
-                              void *data,
-                              size_t dlen)
-    {
-        ib_status_t rc;
-        ib_txdata_t txdata;
-
-        txdata.data = (uint8_t *)data;
-        txdata.dlen = dlen;
-        rc = ib_state_notify_request_body_data(ib_engine, tx, &txdata);
-        if (rc != IB_OK) {
-            notifyError("request body data");
-        }
-    }
-
-    /**
      * Finish request
      *
      * @param[in] tx IronBee transaction
