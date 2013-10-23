@@ -68,11 +68,14 @@ static ib_status_t geoip_lookup(
 )
 {
     assert(ib != NULL);
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
     assert(event == handle_context_tx_event);
     assert(data != NULL);
 
-    const char *ip = tx->er_ipstr;
+    const char          *ip = tx->er_ipstr;
     const module_data_t *mod_data = (const module_data_t *)data;
+    ib_mpool_t          *mp = tx->mp;
 
     if (ip == NULL) {
         ib_log_alert_tx(tx, "Trying to lookup NULL IP in GEOIP");
@@ -131,82 +134,128 @@ static ib_status_t geoip_lookup(
 
     if (geoip_id > 0) {
         const char *tmp_str;
+        ib_bytestr_t *tmp_bs;
 
         ib_log_debug_tx(tx, "GeoIP record found.");
 
-        /* Add integers. */
+        /* Add integers. */ 
         tmp_field = NULL;
 
         tmp_str = GeoIP_code_by_id(geoip_id);
         if (tmp_str)
         {
+            rc = ib_bytestr_dup_nulstr(&tmp_bs, mp, tmp_str);
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx, "Failed to dup string %s", tmp_str);
+                return rc;
+            }
             ib_field_create(&tmp_field,
-                            tx->mp,
+                            mp,
                             IB_FIELD_NAME("country_code"),
-                            IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(tmp_str));
+                            IB_FTYPE_BYTESTR,
+                            ib_ftype_bytestr_in(tmp_bs));
             ib_field_list_add(geoip_lst, tmp_field);
         }
 
         tmp_str = GeoIP_code3_by_id(geoip_id);
         if (tmp_str)
         {
+            rc = ib_bytestr_dup_nulstr(&tmp_bs, mp, tmp_str);
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx, "Failed to dup string %s", tmp_str);
+                return rc;
+            }
             ib_field_create(&tmp_field,
-                            tx->mp,
+                            mp,
                             IB_FIELD_NAME("country_code3"),
-                            IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(tmp_str));
+                            IB_FTYPE_BYTESTR,
+                            ib_ftype_bytestr_in(tmp_bs));
             ib_field_list_add(geoip_lst, tmp_field);
         }
 
         tmp_str = GeoIP_country_name_by_id(mod_data->geoip_db, geoip_id);
         if (tmp_str)
         {
+            rc = ib_bytestr_dup_nulstr(&tmp_bs, mp, tmp_str);
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx, "Failed to dup string %s", tmp_str);
+                return rc;
+            }
             ib_field_create(&tmp_field,
-                            tx->mp,
+                            mp,
                             IB_FIELD_NAME("country_name"),
-                            IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(tmp_str));
+                            IB_FTYPE_BYTESTR,
+                            ib_ftype_bytestr_in(tmp_bs));
             ib_field_list_add(geoip_lst, tmp_field);
         }
 
         tmp_str = GeoIP_continent_by_id(geoip_id);
         if (tmp_str)
         {
+            rc = ib_bytestr_dup_nulstr(&tmp_bs, mp, tmp_str);
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx, "Failed to dup string %s", tmp_str);
+                return rc;
+            }
             ib_field_create(&tmp_field,
-                            tx->mp,
+                            mp,
                             IB_FIELD_NAME("continent_code"),
-                            IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(tmp_str));
+                            IB_FTYPE_BYTESTR,
+                            ib_ftype_bytestr_in(tmp_bs));
             ib_field_list_add(geoip_lst, tmp_field);
         }
     }
     else
     {
+        ib_bytestr_t *tmp_bs;
         ib_log_debug_tx(tx, "No GeoIP record found.");
+
+        rc = ib_bytestr_alias_nulstr(&tmp_bs, mp, "01");
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to dup string 01");
+            return rc;
+        }
         ib_field_create(&tmp_field,
-                        tx->mp,
+                        mp,
                         IB_FIELD_NAME("country_code"),
-                        IB_FTYPE_NULSTR,
-                        ib_ftype_nulstr_in("O1"));
+                        IB_FTYPE_BYTESTR,
+                        ib_ftype_bytestr_in(tmp_bs));
         ib_field_list_add(geoip_lst, tmp_field);
+
+        rc = ib_bytestr_alias_nulstr(&tmp_bs, mp, "001");
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to dup string 001");
+            return rc;
+        }
         ib_field_create(&tmp_field,
-                        tx->mp,
+                        mp,
                         IB_FIELD_NAME("country_code3"),
-                        IB_FTYPE_NULSTR,
-                        ib_ftype_nulstr_in("O01"));
+                        IB_FTYPE_BYTESTR,
+                        ib_ftype_bytestr_in(tmp_bs));
         ib_field_list_add(geoip_lst, tmp_field);
+
+        rc = ib_bytestr_alias_nulstr(&tmp_bs, mp, "01");
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to dup string Other Country");
+            return rc;
+        }
         ib_field_create(&tmp_field,
-                        tx->mp,
+                        mp,
                         IB_FIELD_NAME("country_name"),
-                        IB_FTYPE_NULSTR,
-                        ib_ftype_nulstr_in("Other Country"));
+                        IB_FTYPE_BYTESTR,
+                        ib_ftype_bytestr_in(tmp_bs));
         ib_field_list_add(geoip_lst, tmp_field);
+
+        rc = ib_bytestr_alias_nulstr(&tmp_bs, mp, "01");
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to dup string 01");
+            return rc;
+        }
         ib_field_create(&tmp_field,
-                        tx->mp,
+                        mp,
                         IB_FIELD_NAME("continent_code"),
-                        IB_FTYPE_NULSTR,
-                        ib_ftype_nulstr_in("O1"));
+                        IB_FTYPE_BYTESTR,
+                        ib_ftype_bytestr_in(tmp_bs));
         ib_field_list_add(geoip_lst, tmp_field);
     }
 
