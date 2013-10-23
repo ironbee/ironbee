@@ -1781,7 +1781,7 @@ private:
 };
 
 bool XRulesModule::is_tx_empty(IronBee::ConstTransaction tx) const {
-    return (! (tx.flags() && (IB_TX_FREQ_HAS_DATA | IB_TX_FRES_HAS_DATA)));
+    return (! (tx.flags() & (IB_TX_FREQ_HAS_DATA | IB_TX_FRES_HAS_DATA)));
 }
 
 /* XRulesModule Impl */
