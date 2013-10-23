@@ -1376,7 +1376,10 @@ namespace {
          * @param[in] action The action executed if a given
          *            IronBee::Transaction started in the @a time window.
          */
-        XRuleTime(const char *time, action_ptr action);
+        XRuleTime(
+            IronBee::ConfigurationParser cp,
+            const char *time,
+            action_ptr action);
 
     private:
         //! A set of days of the week (0 through 6 where 0 is Sunday).
@@ -1434,7 +1437,11 @@ namespace {
     };
 
     /* XRuleTime Impl */
-    XRuleTime::XRuleTime(const char *time, action_ptr action) :
+    XRuleTime::XRuleTime(
+        IronBee::ConfigurationParser cp,
+        const char *time,
+        action_ptr action
+    ) :
         XRule(action),
         m_invert(false)
     {
@@ -1442,9 +1449,11 @@ namespace {
 
         boost::cmatch mr;
         static const boost::regex re(
-            "(!?)(?:([\\d,]+)@)?"
+            "(!?)([\\d,]+@)?"
             "(\\d\\d:\\d\\d)-(\\d\\d:\\d\\d)([+-]\\d\\d\\d\\d)");
         boost::local_time::time_zone_ptr zone_info;
+
+        ib_cfg_log_debug(cp.ib(), "Parsing time %s", time);
 
         if (!boost::regex_match(time, mr, re)) {
             BOOST_THROW_EXCEPTION(
@@ -1460,15 +1469,17 @@ namespace {
         /* Parse comma-separated days. */
         if (mr[2].length() > 0) {
             boost::cmatch days_mr;
-            boost::regex days_re("(\\d+)[,$]");
+            static const boost::regex days_re("(\\d+)[,\\@].*");
             const char *c = mr[2].first;
+            const int   l = mr[2].length();
+            ib_cfg_log_debug(cp.ib(), "Parsing day string \"%.*s\"", l, c);
             while (boost::regex_match(c, days_mr, days_re)) {
 
                 /* Convert the front of the match to a digit. */
                 m_days.insert(atoi(days_mr[1].first));
 
-                /* Advance c past it's match. */
-                c += days_mr[0].length();
+                /* Advance c past it's match and the , or @ character. */
+                c += days_mr[1].length() + 1;
             }
         }
 
@@ -1476,8 +1487,8 @@ namespace {
         parse_date_time(mr[4].first, m_end_time);
         parse_time_zone(mr[5].first, zone_info);
 
-        m_start_time += zone_info->base_utc_offset();
-        m_end_time   += zone_info->base_utc_offset();
+        // FIXME - put back m_start_time += zone_info->base_utc_offset();
+        // FIXME - put back m_end_time   += zone_info->base_utc_offset();
     }
 
     void XRuleTime::parse_time_zone(
@@ -1488,9 +1499,14 @@ namespace {
         using namespace std;
         using namespace boost::local_time;
 
-        zone.reset(
-            new posix_time_zone(
-                string(str).insert(2, ":")));
+        string tzstr(str);
+
+        tzstr.insert(
+            ((str[0] == '-' || str[0] == '+') ? 3 : 2),
+            ":"
+        );
+
+        zone.reset(new posix_time_zone(tzstr));
     }
 
     void XRuleTime::parse_date_time(
@@ -1962,7 +1978,7 @@ void XRulesModule::xrule_directive(
     else if (name_str =="XRuleTime") {
         cfg.req_xrules.push_back(
             xrule_ptr(
-                new XRuleTime(params.front(), parse_action(cp, params))));
+                new XRuleTime(cp, params.front(), parse_action(cp, params))));
     }
     else if (name_str =="XRuleRequestContentType") {
         cfg.req_xrules.push_back(
