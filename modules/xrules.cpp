@@ -1939,7 +1939,7 @@ void XRulesModule::xrule_directive(
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
 
-    if (name_str == "XRuleIpv4") {
+    if (boost::iequals(name_str, "XRuleIpv4")) {
         // Copy in an empty, uninitialized ipset entry.
         ib_ipset4_entry_t entry;
         action_ptr action = parse_action(cp, params);
@@ -1955,7 +1955,7 @@ void XRulesModule::xrule_directive(
 
         cfg.ipv4_list.push_back(entry);
     }
-    else if (name_str =="XRuleIpv6") {
+    else if (boost::iequals(name_str, "XRuleIpv6")) {
         // Copy in an empty, uninitialized ipset entry.
         ib_ipset6_entry_t entry;
         action_ptr action = parse_action(cp, params);
@@ -1971,22 +1971,22 @@ void XRulesModule::xrule_directive(
 
         cfg.ipv6_list.push_back(entry);
     }
-    else if (name_str =="XRuleGeo") {
+    else if (boost::iequals(name_str, "XRuleGeo")) {
         cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleGeo(params.front(), parse_action(cp, params))));
     }
-    else if (name_str =="XRulePath") {
+    else if (boost::iequals(name_str, "XRulePath")) {
         cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRulePath(params.front(), parse_action(cp, params))));
     }
-    else if (name_str =="XRuleTime") {
+    else if (boost::iequals(name_str, "XRuleTime")) {
         cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleTime(params.front(), parse_action(cp, params))));
     }
-    else if (name_str =="XRuleRequestContentType") {
+    else if (boost::iequals(name_str, "XRuleRequestContentType")) {
         cfg.req_xrules.push_back(
             xrule_ptr(
                 new XRuleContentType(
@@ -1996,7 +1996,7 @@ void XRulesModule::xrule_directive(
                     "request_headers:Content-Length",
                     "request_headers:Transport-Encoding")));
     }
-    else if (name_str =="XRuleResponseContentType") {
+    else if (boost::iequals(name_str, "XRuleResponseContentType")) {
         cfg.resp_xrules.push_back(
             xrule_ptr(
                 new XRuleContentType(
