@@ -2023,11 +2023,6 @@ void XRulesModule::on_transaction_started(
     IronBee::Transaction tx
 )
 {
-    if (is_tx_empty(tx)) {
-        ib_log_debug_tx(tx.ib(), "Empty transaction. Skipping XRules.");
-        return;
-    }
-
     xrules_module_tx_data_ptr mdata(new XRulesModuleTxData());
 
     tx.set_module_data(module(), mdata);
@@ -2039,7 +2034,7 @@ void XRulesModule::on_response_header_finished(
 )
 {
     if (is_tx_empty(tx)) {
-        ib_log_debug_tx(tx.ib(), "Empty transaction. Skipping XRules.");
+        ib_log_debug_tx(tx.ib(), "Empty tx. Skipping response XRules.");
         return;
     }
 
@@ -2067,7 +2062,7 @@ void XRulesModule::on_handle_context_transaction(
 )
 {
     if (is_tx_empty(tx)) {
-        ib_log_debug_tx(tx.ib(), "Empty transaction. Skipping XRules.");
+        ib_log_debug_tx(tx.ib(), "Empty tx. Skipping request XRules.");
         return;
     }
 
