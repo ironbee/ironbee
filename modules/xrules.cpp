@@ -1776,7 +1776,13 @@ private:
         IronBee::Engine ib,
         IronBee::Transaction tx
     );
+
+    bool is_tx_empty(IronBee::ConstTransaction tx) const;
 };
+
+bool XRulesModule::is_tx_empty(IronBee::ConstTransaction tx) const {
+    return (! (tx.flags() && (IB_TX_FREQ_HAS_DATA | IB_TX_FRES_HAS_DATA)));
+}
 
 /* XRulesModule Impl */
 XRulesModule::XRulesModule(IronBee::Module module) :
@@ -1995,6 +2001,11 @@ void XRulesModule::on_transaction_started(
     IronBee::Transaction tx
 )
 {
+    if (is_tx_empty(tx)) {
+        ib_log_debug_tx(tx.ib(), "Empty transaction. Skipping XRules.");
+        return;
+    }
+
     xrules_module_tx_data_ptr mdata(new XRulesModuleTxData());
 
     tx.set_module_data(module(), mdata);
@@ -2005,6 +2016,11 @@ void XRulesModule::on_response_header_finished(
     IronBee::Transaction tx
 )
 {
+    if (is_tx_empty(tx)) {
+        ib_log_debug_tx(tx.ib(), "Empty transaction. Skipping XRules.");
+        return;
+    }
+
     IronBee::Context ctx = tx.context();
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
@@ -2028,6 +2044,11 @@ void XRulesModule::on_handle_context_transaction(
     IronBee::Transaction tx
 )
 {
+    if (is_tx_empty(tx)) {
+        ib_log_debug_tx(tx.ib(), "Empty transaction. Skipping XRules.");
+        return;
+    }
+
     IronBee::Context ctx = tx.context();
     XRulesModuleConfig &cfg =
         module().configuration_data<XRulesModuleConfig>(ctx);
