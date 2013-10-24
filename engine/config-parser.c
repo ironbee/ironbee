@@ -738,7 +738,7 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
 
 #line 832 "config-parser.rl"
 
-    ib_cfg_log_info(cp, "Initializing IronBee parse values.");
+    ib_cfg_log_debug(cp, "Initializing IronBee parse values.");
 
     rc = ib_list_create(&(cp->fsm.plist), cp->mp);
     if (rc != IB_OK) {
