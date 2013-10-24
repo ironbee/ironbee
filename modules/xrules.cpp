@@ -1418,6 +1418,7 @@ namespace {
          * @param[out] zone The zone object to output.
          */
         static void parse_time_zone(
+            IronBee::ConfigurationParser      cp,
             const char*                       str,
             boost::local_time::time_zone_ptr& zone
         );
@@ -1429,8 +1430,9 @@ namespace {
          * @param[out] p The posix time it is stored in.
          */
         static void parse_date_time(
-            const char *str,
-            boost::posix_time::ptime& p
+            IronBee::ConfigurationParser  cp,
+            const char                   *str,
+            boost::posix_time::ptime&     p
         );
 
         /**
@@ -1499,15 +1501,16 @@ namespace {
             }
         }
 
-        parse_date_time(mr[3].first, m_start_time);
-        parse_date_time(mr[4].first, m_end_time);
-        parse_time_zone(mr[5].first, zone_info);
+        parse_date_time(cp, mr[3].first, m_start_time);
+        parse_date_time(cp, mr[4].first, m_end_time);
+        parse_time_zone(cp, mr[5].first, zone_info);
 
         m_start_time += zone_info->base_utc_offset();
         m_end_time   += zone_info->base_utc_offset();
     }
 
     void XRuleTime::parse_time_zone(
+        IronBee::ConfigurationParser      cp,
         const char*                       str,
         boost::local_time::time_zone_ptr& zone
     )
@@ -1522,12 +1525,38 @@ namespace {
             ":"
         );
 
-        zone.reset(new posix_time_zone(tzstr));
+        try {
+            zone.reset(new posix_time_zone(tzstr));
+        }
+        catch (const boost::local_time::bad_offset& e) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval()
+                    << IronBee::errinfo_level(IB_LOG_ERROR)
+                    << IronBee::errinfo_what(
+                        " Zone offset out of range. "
+                        "Valid values are -1200 <= tz <= +1400.")
+            );
+        }
+        catch (const boost::local_time::bad_adjustment& e) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval()
+                    << IronBee::errinfo_what(e.what())
+                    << IronBee::errinfo_level(IB_LOG_ERROR)
+            );
+        }
+        catch (const std::out_of_range& e) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval()
+                    << IronBee::errinfo_what(e.what())
+                    << IronBee::errinfo_level(IB_LOG_ERROR)
+            );
+        }
     }
 
     void XRuleTime::parse_date_time(
-        const char *str,
-        boost::posix_time::ptime& p
+        IronBee::ConfigurationParser  cp,
+        const char                   *str,
+        boost::posix_time::ptime&     p
     )
     {
         boost::posix_time::time_input_facet *facet =
@@ -1536,7 +1565,22 @@ namespace {
         std::istringstream is(time_str);
         std::locale loc(is.getloc(), facet);
         is.imbue(loc);
-        is>>p;
+        is.exceptions(std::ios_base::failbit); /* Enable exceptions. */
+
+        ib_cfg_log_debug(cp.ib(), "Parsing time string \"%.*s\"", 5, str);
+
+        try {
+            is>>p;
+        }
+        catch (...) {
+            const std::string msg = 
+                std::string("Unable to parse time string: ") + str;
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval()
+                    << IronBee::errinfo_what(msg)
+                    << IronBee::errinfo_level(IB_LOG_ERROR)
+            );
+        }
     }
 
     void XRuleTime::xrule_impl(
