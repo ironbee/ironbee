@@ -1395,6 +1395,9 @@ namespace {
         //! Should the rule check result be inverted (outside the window).
         bool m_invert;
 
+        //! The amount incoming times to be checked are shifted.
+        boost::local_time::time_zone_ptr m_zone_info;
+
         /**
          * Parse a time value.
          *
@@ -1454,7 +1457,6 @@ namespace {
         static const boost::regex re(
             "(!?)([\\d,]+@)?"
             "(\\d\\d:\\d\\d)-(\\d\\d:\\d\\d)([+-]\\d\\d\\d\\d)");
-        boost::local_time::time_zone_ptr zone_info;
 
         ib_cfg_log_debug(cp.ib(), "Parsing time %s", time);
 
@@ -1488,10 +1490,7 @@ namespace {
 
         parse_date_time(cp, mr[3].first, m_start_time);
         parse_date_time(cp, mr[4].first, m_end_time);
-        parse_time_zone(cp, mr[5].first, zone_info);
-
-        m_start_time += zone_info->base_utc_offset();
-        m_end_time   += zone_info->base_utc_offset();
+        parse_time_zone(cp, mr[5].first, m_zone_info);
     }
 
     void XRuleTime::parse_time_zone(
@@ -1575,21 +1574,23 @@ namespace {
     {
         if (actions.overrides(m_action)) {
 
+            /* Get tx start time, shifted into the local time zone. */
+            boost::posix_time::ptime tx_start =
+                tx.started_time() + m_zone_info->base_utc_offset();
+
             std::ostringstream os;
             std::locale loc(
                 os.getloc(), 
                 new boost::posix_time::time_facet("%H:%M"));
             os.imbue(loc);
             os << "Checking current time "
-               << tx.started_time()
+               << tx_start
                << " against window "
                << m_start_time
                << "-"
                << m_end_time
                << ".";
             ib_log_debug_tx(tx.ib(), "%s", os.str().c_str());
-
-            boost::posix_time::ptime tx_start = tx.started_time();
 
             bool in_window = (
                 m_start_time.time_of_day() <= tx_start.time_of_day() &&

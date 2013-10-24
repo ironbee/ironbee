@@ -165,7 +165,7 @@ TEST_F(XRulesTest, Time2) {
 TEST_F(XRulesTest, Time3) {
     std::string config =
         std::string(
-            "LogLevel INFO\n"
+            "LogLevel DEBUG\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -186,7 +186,7 @@ TEST_F(XRulesTest, Time3) {
 TEST_F(XRulesTest, Time4) {
     std::string config =
         std::string(
-            "LogLevel INFO\n"
+            "LogLevel DEBUG\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
@@ -213,6 +213,25 @@ TEST_F(XRulesTest, Time5) {
             "SensorName UnitTesting\n"
             "SensorHostname unit-testing.sensor.tld\n"
             "XRuleTime \"0@15:00-17:45-0800\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+}
+
+TEST_F(XRulesTest, Time6) {
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleTime \"4@02:00-02:10-0800\" Block priority=1\n"
             "<Site test-site>\n"
             "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
             "   Hostname somesite.com\n"
