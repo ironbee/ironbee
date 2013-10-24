@@ -1597,7 +1597,7 @@ namespace {
             std::ostringstream os;
             std::locale loc(
                 os.getloc(), 
-                new boost::posix_time::time_facet("%H:%M"));
+                new boost::posix_time::time_facet("%H:%M:%S"));
             os.imbue(loc);
             os << "Checking current time "
                << tx_start
@@ -1610,7 +1610,7 @@ namespace {
 
             bool in_window = (
                 m_start_time.time_of_day() <= tx_start.time_of_day() &&
-                tx_start.time_of_day()     <= m_end_time.time_of_day()
+                tx_start.time_of_day()     <  m_end_time.time_of_day()
             );
 
             // If any days of the week are specified in our window...
