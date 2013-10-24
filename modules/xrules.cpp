@@ -1589,13 +1589,21 @@ namespace {
     )
     {
         if (actions.overrides(m_action)) {
+            std::ostringstream os;
+            std::locale loc(
+                os.getloc(), 
+                new boost::posix_time::time_facet("%H:%M"));
+            os.imbue(loc);
 
-            ib_log_debug_tx(
-                tx.ib(),
-                "Checking current time %s against window %s-%s.",
-                to_simple_string(tx.started_time()).c_str(),
-                to_simple_string(m_start_time).c_str(),
-                to_simple_string(m_end_time).c_str());
+            os << "Checking current time "
+               << tx.started_time()
+               << " against window "
+               << m_start_time
+               << "-"
+               << m_end_time
+               << ".";
+
+            ib_log_debug_tx(tx.ib(), os.str().c_str());
 
             boost::posix_time::ptime tx_start = tx.started_time();
 
