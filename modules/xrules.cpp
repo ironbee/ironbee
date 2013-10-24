@@ -1487,8 +1487,8 @@ namespace {
         parse_date_time(mr[4].first, m_end_time);
         parse_time_zone(mr[5].first, zone_info);
 
-        // FIXME - put back m_start_time += zone_info->base_utc_offset();
-        // FIXME - put back m_end_time   += zone_info->base_utc_offset();
+        m_start_time += zone_info->base_utc_offset();
+        m_end_time   += zone_info->base_utc_offset();
     }
 
     void XRuleTime::parse_time_zone(
