@@ -39,6 +39,7 @@
 #include <ironbee/flags.h>
 #include <ironbee/ip.h>
 #include <ironbee/ipset.h>
+#include <ironbee/log.h>
 #include <ironbee/server.h>
 #include <ironbee/string.h>
 
@@ -1573,12 +1574,12 @@ namespace {
     )
     {
         if (actions.overrides(m_action)) {
+
             std::ostringstream os;
             std::locale loc(
                 os.getloc(), 
                 new boost::posix_time::time_facet("%H:%M"));
             os.imbue(loc);
-
             os << "Checking current time "
                << tx.started_time()
                << " against window "
@@ -1586,8 +1587,7 @@ namespace {
                << "-"
                << m_end_time
                << ".";
-
-            ib_log_debug_tx(tx.ib(), os.str().c_str());
+            ib_log_debug_tx(tx.ib(), "%s", os.str().c_str());
 
             boost::posix_time::ptime tx_start = tx.started_time();
 
@@ -1610,7 +1610,11 @@ namespace {
             // If we are in the window specified (considering the
             // m_invert member) then execute the associated action.
             if (in_window ^ m_invert) {
+                ib_log_debug_tx(tx.ib(), "XRuleTime was matched.");
                 actions.set(m_action);
+            }
+            else {
+                ib_log_debug_tx(tx.ib(), "XRuleTime was not matched.");
             }
         }
         else {
