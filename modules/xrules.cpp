@@ -1594,7 +1594,7 @@ namespace {
 
             bool in_window = (
                 m_start_time.time_of_day() <= tx_start.time_of_day() &&
-                tx_start.time_of_day()     <  m_end_time.time_of_day()
+                tx_start.time_of_day()     <= m_end_time.time_of_day()
             );
 
             // If any days of the week are specified in our window...
