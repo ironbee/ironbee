@@ -27,7 +27,8 @@ PREVIOUS_EXCEPTIONS = [
   %r{^\s+"\(},
   /for \(;/,
   /^\s+if \( /,
-  /\("/
+  /\("/,
+  /'\('/
 ]
 
 def last_unmatched_lp(s)
