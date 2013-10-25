@@ -28,6 +28,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<predicate/call_helpers.hpp>',
   '<predicate/dag.hpp>',
   '<predicate/dot.hpp>',
+  '<predicate/dot2.hpp>',
   '<predicate/ironbee.hpp>',
   '<predicate/less.hpp>',
   '<predicate/leaves.hpp>',

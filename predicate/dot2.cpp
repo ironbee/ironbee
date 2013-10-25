@@ -25,9 +25,9 @@
 #include <predicate/dot2.hpp>
 #include <predicate/merge_graph.hpp>
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string/join.hpp>
 
 using namespace std;
 
