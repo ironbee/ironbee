@@ -84,21 +84,26 @@ void Reporter::write_report(ostream& out) const
     }
 }
 
-NodeReporter::NodeReporter(reporter_t reporter, const node_cp& node) :
+NodeReporter::NodeReporter(
+    reporter_t     reporter,
+    const node_cp& node,
+    bool           use_prefix
+):
     m_reporter(reporter),
-    m_node(node)
+    m_node(node),
+    m_use_prefix(use_prefix)
 {
     // nop
 }
 
 void NodeReporter::error(const string& msg)
 {
-    m_reporter(true, m_node->to_s() + ": " + msg);
+    m_reporter(true, (m_use_prefix ? m_node->to_s() + ": " : "") + msg);
 }
 
 void NodeReporter::warn(const string& msg)
 {
-    m_reporter(false, m_node->to_s() + ": " + msg);
+    m_reporter(false, (m_use_prefix ? m_node->to_s() + ": " : "") + msg);
 }
 
 } // Predicate

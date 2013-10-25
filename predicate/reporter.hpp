@@ -94,10 +94,15 @@ public:
     /**
      * Constructor.
      *
-     * @param[in] reporter Reporter to report messages to.
-     * @param[in] node     Node to report messages for.
+     * @param[in] reporter   Reporter to report messages to.
+     * @param[in] node       Node to report messages for.
+     * @param[in] use_prefix If true, node sexprs will be prefixed to message.
      **/
-    NodeReporter(reporter_t reporter, const node_cp& node);
+    NodeReporter(
+        reporter_t     reporter,
+        const node_cp& node,
+        bool           use_prefix = true
+    );
 
     //! Node accessor.
     const node_cp& node() const
@@ -113,6 +118,7 @@ public:
 private:
     reporter_t    m_reporter;
     const node_cp m_node;
+    bool          m_use_prefix;
 };
 
 } // Predicate
