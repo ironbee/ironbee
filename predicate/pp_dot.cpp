@@ -161,7 +161,7 @@ int main(int argc, char **argv)
             line.length() > c_define.length() &&
             line.substr(0, c_define.length()) == c_define
         ) {
-            // Define lineession
+            // Define line.
             size_t name_at = line.find_first_of(" ") + 1;
             size_t args_at = line.find_first_of(" ", name_at) + 1;
             size_t body_at = line.find_first_of(" ", args_at) + 1;
