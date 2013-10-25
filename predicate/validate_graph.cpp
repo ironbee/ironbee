@@ -51,7 +51,7 @@ public:
 
     void operator()(const node_cp& n)
     {
-        if (m_which == PRE_TRANSFORM) {
+        if (m_which == VALIDATE_PRE) {
             n->pre_transform(NodeReporter(m_reporter, n));
         }
         else {

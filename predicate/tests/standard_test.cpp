@@ -55,7 +55,7 @@ ValueList StandardTest::eval(node_p n)
 
     size_t i = g.add_root(n);
 
-    validate_graph(PRE_TRANSFORM, r, g);
+    validate_graph(VALIDATE_PRE, r, g);
     if (r.num_errors() > 0 || r.num_warnings() > 0) {
         r.write_report(cout);
         BOOST_THROW_EXCEPTION(

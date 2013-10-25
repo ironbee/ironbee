@@ -701,7 +701,7 @@ void Delegate::context_close(IB::Context context)
         // Pre-Transform
         {
             num_errors = 0;
-            P::validate_graph(P::PRE_TRANSFORM, reporter, graph());
+            P::validate_graph(P::VALIDATE_PRE, reporter, graph());
             if (num_errors > 0) {
                 BOOST_THROW_EXCEPTION(
                     IB::einval() << IB::errinfo_what(
@@ -738,7 +738,7 @@ void Delegate::context_close(IB::Context context)
         // Post-Transform
         {
             num_errors = 0;
-            P::validate_graph(P::POST_TRANSFORM, reporter, graph());
+            P::validate_graph(P::VALIDATE_POST, reporter, graph());
             if (num_errors > 0) {
                 BOOST_THROW_EXCEPTION(
                     IB::einval() << IB::errinfo_what(

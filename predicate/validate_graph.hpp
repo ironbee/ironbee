@@ -37,8 +37,9 @@ class MergeGraph;   // merge_graph.hpp
 
 //! Which of pre_transform and post_transform to validate.
 enum validation_e {
-    PRE_TRANSFORM,
-    POST_TRANSFORM
+    VALIDATE_NONE,
+    VALIDATE_PRE,
+    VALIDATE_POST
 };
 
 /**

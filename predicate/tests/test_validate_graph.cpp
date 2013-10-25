@@ -73,5 +73,5 @@ TEST_F(TestValidateGraph, Simple)
         EXPECT_EQ(0UL, r.num_warnings());
         EXPECT_EQ(0UL, r.num_errors());
     }
-    EXPECT_FALSE(validate(PRE_TRANSFORM, g));
+    EXPECT_FALSE(validate(VALIDATE_PRE, g));
 }
