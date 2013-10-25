@@ -484,8 +484,9 @@ function _M.define(name, args, body)
   _M.declare(name)
 
   if IB == nil then
-    print("Not running in IronBee?")
-    print("Define " .. name .. "(" .. args_string .. "): " .. body)
+    -- Not running in IronBee
+    local info = debug.getinfo(2, "l")
+    print("Define " .. info.currentline .. " " .. name .. "(" .. args_string .. "): " .. body)
   else
     IB:config_directive_process(PREDICATE_DEFINE, name, args_string, body)
   end
