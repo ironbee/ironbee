@@ -3,36 +3,37 @@ include $(top_srcdir)/build/common.mk
 SUBDIRS = tests
 
 AM_LDFLAGS += \
-  	$(BOOST_LDFLAGS) \
-    -lboost_system$(BOOST_SUFFIX) \
-    -lboost_thread-mt \
-	-lboost_regex$(BOOST_SUFFIX)
+  $(BOOST_LDFLAGS)              \
+  -lboost_system$(BOOST_SUFFIX) \
+  -lboost_thread-mt             \
+  -lboost_regex$(BOOST_SUFFIX)
 
 module_LTLIBRARIES = ibmod_predicate.la
 noinst_LTLIBRARIES = libpredicate.la
 libpredicate_la_SOURCES = \
-    dag.cpp \
-    call_factory.cpp \
-    call_helpers.cpp \
-    parse.cpp \
-    standard.cpp \
-    standard_boolean.cpp \
+    dag.cpp                  \
+    call_factory.cpp         \
+    call_helpers.cpp         \
+    parse.cpp                \
+    standard.cpp             \
+    standard_boolean.cpp     \
     standard_development.cpp \
-    standard_filter.cpp \
-    standard_ironbee.cpp \
-    standard_template.cpp \
-    standard_valuelist.cpp \
-    standard_predicate.cpp \
-    dot.cpp \
-    bfs.cpp \
-    meta_call.cpp \
-    merge_graph.cpp \
-    reporter.cpp \
-    validate.cpp \
-    transform_graph.cpp \
-	validate_graph.cpp \
-	pre_eval_graph.cpp \
-	tree_copy.cpp
+    standard_filter.cpp      \
+    standard_ironbee.cpp     \
+    standard_template.cpp    \
+    standard_valuelist.cpp   \
+    standard_predicate.cpp   \
+    dot.cpp                  \
+    dot2.cpp                 \
+    bfs.cpp                  \
+    meta_call.cpp            \
+    merge_graph.cpp          \
+    reporter.cpp             \
+    validate.cpp             \
+    transform_graph.cpp      \
+    validate_graph.cpp       \
+    pre_eval_graph.cpp       \
+    tree_copy.cpp
 noinst_PROGRAMS = pp_dot
 
 EXTRA_DIST = \
@@ -41,6 +42,7 @@ EXTRA_DIST = \
 		call_helpers.hpp          \
 		dag.hpp                   \
 		dot.hpp                   \
+		dot2.hpp                  \
 		ibmod_predicate.hpp       \
 		ironbee.hpp               \
 		leaves.hpp                \
