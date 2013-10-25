@@ -1988,7 +1988,6 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
     /* If there's no or zero-length body in a Request, notify end-of-request */
     if ((ibd->dir == IBD_REQ) && !body_len) {
-        ib_tx_flags_unset(data->tx, IB_TX_FREQ_HAS_DATA);
         rv = (*ibd->ib_notify_end)(data->tx->ib, data->tx);
         if (rv != IB_OK)
             TSError("Error notifying Ironbee end of request");
