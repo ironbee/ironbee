@@ -1,0 +1,1272 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>ExtractPredicateFromWaggle Report</title>
+<script type='application/javascript'>
+function expand_collapse(id)
+{
+  var e = document.getElementById(id)
+  if (e.style.display == 'none') {e.style.display='inline';}
+  else {e.style.display='none';}
+}
+</script>
+<style type='text/css'>
+.predicate-ok {
+  color:green;
+}
+.predicate-error {
+  color:red;
+}
+.predicate-warn {
+  color:orange;
+}
+td {
+  vertical-align: top;
+}
+.line {
+  white-space: pre;
+  font-family:monospace;
+}
+.pperror {
+  color:red;
+}
+.ppwarn {
+  color:orange;
+}
+</style>
+</head>
+<body>
+<table>
+<tr><td class=predicate-ok onclick="expand_collapse('p-1')">Predicate</td><td class=linenumber>1</td>
+<td><span class=line>local getHeader = P.define('getHeader', {'which'},</span><div style=display:none class=output id=p-1>
+<pre>(<b>sub</b>
+  (<b>ref</b> <i>'which'</i>)
+  (<b>var</b> <i>'REQUEST_HEADERS'</i>)
+)
+</pre>
+<pre><h2>Pre-Transform Graph</h2>
+<svg width="325pt" height="114pt"
+ viewBox="0.00 0.00 325.00 114.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 110)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-110 321,-110 321,4 -4,4"/>
+<g id="node1" class="node"><title>0x7fd8a8409f50</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="181.25,-105.5 94.75,-105.5 94.75,-76.5 181.25,-76.5 181.25,-105.5"/>
+<text text-anchor="start" x="102.5" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">sub</text>
+<text text-anchor="start" x="127.5" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="136.5" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="150.5" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="159.5" y="-88.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="node2" class="node"><title>0x7fd8a8409ff0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="108,-29.5 0,-29.5 0,-0.5 108,-0.5 108,-29.5"/>
+<text text-anchor="start" x="8" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">ref</text>
+<text text-anchor="start" x="33" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="42" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;which&#39;</text>
+</g>
+<g id="edge1" class="edge"><title>0x7fd8a8409f50&#45;&gt;0x7fd8a8409ff0</title>
+<path fill="none" stroke="black" d="M122.593,-76.4273C108.826,-64.299 88.5826,-46.4656 73.6537,-33.314"/>
+<polygon fill="black" stroke="black" points="74.5023,-31.7293 69.5937,-29.7373 72.1887,-34.3556 74.5023,-31.7293"/>
+<text text-anchor="start" x="102" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node3" class="node"><title>0x7fd8a840a470</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="317.25,-29.5 126.75,-29.5 126.75,-0.5 317.25,-0.5 317.25,-29.5"/>
+<text text-anchor="start" x="134.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="159.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="168.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_HEADERS&#39;</text>
+</g>
+<g id="edge2" class="edge"><title>0x7fd8a8409f50&#45;&gt;0x7fd8a840a470</title>
+<path fill="none" stroke="black" d="M153.407,-76.4273C167.174,-64.299 187.417,-46.4656 202.346,-33.314"/>
+<polygon fill="black" stroke="black" points="203.811,-34.3556 206.406,-29.7373 201.498,-31.7293 203.811,-34.3556"/>
+<text text-anchor="start" x="186" y="-50.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+</g>
+</svg>
+
+<h2>Post-Transform Graph</h2>
+<svg width="325pt" height="114pt"
+ viewBox="0.00 0.00 325.00 114.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 110)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-110 321,-110 321,4 -4,4"/>
+<g id="node1" class="node"><title>0x7fd8a840b308</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="194,-105.5 82,-105.5 82,-76.5 194,-76.5 194,-105.5"/>
+<text text-anchor="start" x="90" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">namedi</text>
+<text text-anchor="start" x="140" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="149" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="163" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="172" y="-88.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="node2" class="node"><title>0x7fd8a8409ff0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="108,-29.5 0,-29.5 0,-0.5 108,-0.5 108,-29.5"/>
+<text text-anchor="start" x="8" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">ref</text>
+<text text-anchor="start" x="33" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="42" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;which&#39;</text>
+</g>
+<g id="edge1" class="edge"><title>0x7fd8a840b308&#45;&gt;0x7fd8a8409ff0</title>
+<path fill="none" stroke="black" d="M122.593,-76.4273C108.826,-64.299 88.5826,-46.4656 73.6537,-33.314"/>
+<polygon fill="black" stroke="black" points="74.5023,-31.7293 69.5937,-29.7373 72.1887,-34.3556 74.5023,-31.7293"/>
+<text text-anchor="start" x="102" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node3" class="node"><title>0x7fd8a840a470</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="317.25,-29.5 126.75,-29.5 126.75,-0.5 317.25,-0.5 317.25,-29.5"/>
+<text text-anchor="start" x="134.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="159.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="168.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_HEADERS&#39;</text>
+</g>
+<g id="edge2" class="edge"><title>0x7fd8a840b308&#45;&gt;0x7fd8a840a470</title>
+<path fill="none" stroke="black" d="M153.407,-76.4273C167.174,-64.299 187.417,-46.4656 202.346,-33.314"/>
+<polygon fill="black" stroke="black" points="203.811,-34.3556 206.406,-29.7373 201.498,-31.7293 203.811,-34.3556"/>
+<text text-anchor="start" x="186" y="-50.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+</g>
+</svg>
+
+</pre>
+</div>
+</td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>2</td>
+<td><span class=line>    P.Sub(P.Ref('which'), P.Var('REQUEST_HEADERS'))</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>3</td>
+<td><span class=line>)</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>4</td>
+<td><span class=line></span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>5</td>
+<td><span class=line>local isGet = P.Rx('GET', P.Var('REQUEST_METHOD'));</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>6</td>
+<td><span class=line>local isPost = P.Rx('POST', P.Var('REQUEST_METHOD'));</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>7</td>
+<td><span class=line></span></td>
+</tr>
+<tr><td class=predicate-ok onclick="expand_collapse('p-8')">Predicate</td><td class=linenumber>8</td>
+<td><span class=line>Action("IsGet", "1"):</span><div style=display:none class=output id=p-8>
+<pre>(<b>operator</b>
+  <i>'rx'</i> <i>'GET'</i>
+  (<b>var</b> <i>'REQUEST_METHOD'</i>)
+)
+</pre>
+<pre><h2>Pre-Transform Graph</h2>
+<svg width="208pt" height="114pt"
+ viewBox="0.00 0.00 208.00 114.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 110)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-110 204,-110 204,4 -4,4"/>
+<g id="node1" class="node"><title>0x7f9fe2409f40</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="200,-105.5 0,-105.5 0,-76.5 200,-76.5 200,-105.5"/>
+<text text-anchor="start" x="8" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="75" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="84" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="118" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="127" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;GET&#39;</text>
+<text text-anchor="start" x="169" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="178" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="node2" class="node"><title>0x7f9fe240a5e0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="191.25,-29.5 8.75,-29.5 8.75,-0.5 191.25,-0.5 191.25,-29.5"/>
+<text text-anchor="start" x="16.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="41.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="50.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_METHOD&#39;</text>
+</g>
+<g id="edge1" class="edge"><title>0x7f9fe2409f40&#45;&gt;0x7f9fe240a5e0</title>
+<path fill="none" stroke="black" d="M100,-76.4273C100,-64.8173 100,-47.9794 100,-35.0249"/>
+<polygon fill="black" stroke="black" points="101.75,-34.7373 100,-29.7373 98.2501,-34.7373 101.75,-34.7373"/>
+<text text-anchor="start" x="100" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+<h2>Post-Transform Graph</h2>
+<svg width="208pt" height="114pt"
+ viewBox="0.00 0.00 208.00 114.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 110)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-110 204,-110 204,4 -4,4"/>
+<g id="node1" class="node"><title>0x7f9fe2409f40</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="200,-105.5 0,-105.5 0,-76.5 200,-76.5 200,-105.5"/>
+<text text-anchor="start" x="8" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="75" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="84" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="118" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="127" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;GET&#39;</text>
+<text text-anchor="start" x="169" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="178" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="node2" class="node"><title>0x7f9fe240a5e0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="191.25,-29.5 8.75,-29.5 8.75,-0.5 191.25,-0.5 191.25,-29.5"/>
+<text text-anchor="start" x="16.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="41.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="50.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_METHOD&#39;</text>
+</g>
+<g id="edge1" class="edge"><title>0x7f9fe2409f40&#45;&gt;0x7f9fe240a5e0</title>
+<path fill="none" stroke="black" d="M100,-76.4273C100,-64.8173 100,-47.9794 100,-35.0249"/>
+<polygon fill="black" stroke="black" points="101.75,-34.7373 100,-29.7373 98.2501,-34.7373 101.75,-34.7373"/>
+<text text-anchor="start" x="100" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+</pre>
+</div>
+</td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>9</td>
+<td><span class=line>  action([[clipp_announce:IsGet]]):</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>10</td>
+<td><span class=line>  predicate(isGet)</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>11</td>
+<td><span class=line></span></td>
+</tr>
+<tr><td class=predicate-ok onclick="expand_collapse('p-12')">Predicate</td><td class=linenumber>12</td>
+<td><span class=line>Action("IsPost", "1"):</span><div style=display:none class=output id=p-12>
+<pre>(<b>operator</b>
+  <i>'rx'</i> <i>'POST'</i>
+  (<b>var</b> <i>'REQUEST_METHOD'</i>)
+)
+</pre>
+<pre><h2>Pre-Transform Graph</h2>
+<svg width="216pt" height="114pt"
+ viewBox="0.00 0.00 216.00 114.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 110)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-110 212,-110 212,4 -4,4"/>
+<g id="node1" class="node"><title>0x7fe439c09f40</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="208,-105.5 0,-105.5 0,-76.5 208,-76.5 208,-105.5"/>
+<text text-anchor="start" x="8" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="75" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="84" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="118" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="127" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;POST&#39;</text>
+<text text-anchor="start" x="177" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="186" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="node2" class="node"><title>0x7fe439c0a5e0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="195.25,-29.5 12.75,-29.5 12.75,-0.5 195.25,-0.5 195.25,-29.5"/>
+<text text-anchor="start" x="20.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="45.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="54.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_METHOD&#39;</text>
+</g>
+<g id="edge1" class="edge"><title>0x7fe439c09f40&#45;&gt;0x7fe439c0a5e0</title>
+<path fill="none" stroke="black" d="M104,-76.4273C104,-64.8173 104,-47.9794 104,-35.0249"/>
+<polygon fill="black" stroke="black" points="105.75,-34.7373 104,-29.7373 102.25,-34.7373 105.75,-34.7373"/>
+<text text-anchor="start" x="104" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+<h2>Post-Transform Graph</h2>
+<svg width="216pt" height="114pt"
+ viewBox="0.00 0.00 216.00 114.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 110)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-110 212,-110 212,4 -4,4"/>
+<g id="node1" class="node"><title>0x7fe439c09f40</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="208,-105.5 0,-105.5 0,-76.5 208,-76.5 208,-105.5"/>
+<text text-anchor="start" x="8" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="75" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="84" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="118" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="127" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;POST&#39;</text>
+<text text-anchor="start" x="177" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="186" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="node2" class="node"><title>0x7fe439c0a5e0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="195.25,-29.5 12.75,-29.5 12.75,-0.5 195.25,-0.5 195.25,-29.5"/>
+<text text-anchor="start" x="20.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="45.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="54.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_METHOD&#39;</text>
+</g>
+<g id="edge1" class="edge"><title>0x7fe439c09f40&#45;&gt;0x7fe439c0a5e0</title>
+<path fill="none" stroke="black" d="M104,-76.4273C104,-64.8173 104,-47.9794 104,-35.0249"/>
+<polygon fill="black" stroke="black" points="105.75,-34.7373 104,-29.7373 102.25,-34.7373 105.75,-34.7373"/>
+<text text-anchor="start" x="104" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+</pre>
+</div>
+</td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>13</td>
+<td><span class=line>  action([[clipp_announce:IsPost]]):</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>14</td>
+<td><span class=line>  predicate(isPost)</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>15</td>
+<td><span class=line></span></td>
+</tr>
+<tr><td class=predicate-ok onclick="expand_collapse('p-16')">Predicate</td><td class=linenumber>16</td>
+<td><span class=line>Action("NoHost", "1"):</span><div style=display:none class=output id=p-16>
+<pre>(<b>and</b>
+  (<b>or</b>
+    (<b>operator</b>
+      <i>'rx'</i> <i>'GET'</i>
+      (<b>var</b> <i>'REQUEST_METHOD'</i>)
+    )
+    
+    (<b>operator</b>
+      <i>'rx'</i> <i>'POST'</i>
+      (<b>var</b> <i>'REQUEST_METHOD'</i>)
+    )
+  )
+  
+  (<b>not</b>
+    (<b>getHeader</b> <i>'Host'</i>)
+  )
+)
+</pre>
+<pre><h2>Pre-Transform Graph</h2>
+<svg width="602pt" height="266pt"
+ viewBox="0.00 0.00 602.00 266.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 262)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-262 598,-262 598,4 -4,4"/>
+<g id="node1" class="node"><title>0x7ff811409f00</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="483.25,-257.5 396.75,-257.5 396.75,-228.5 483.25,-228.5 483.25,-257.5"/>
+<text text-anchor="start" x="404.5" y="-240.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">and</text>
+<text text-anchor="start" x="429.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="438.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="452.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="461.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="node2" class="node"><title>0x7ff811409fb0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="361.25,-181.5 282.75,-181.5 282.75,-152.5 361.25,-152.5 361.25,-181.5"/>
+<text text-anchor="start" x="290.5" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">or</text>
+<text text-anchor="start" x="307.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="316.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="330.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="339.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="edge1" class="edge"><title>0x7ff811409f00&#45;&gt;0x7ff811409fb0</title>
+<path fill="none" stroke="black" d="M418.357,-228.427C398.604,-216.04 369.361,-197.701 348.275,-184.477"/>
+<polygon fill="black" stroke="black" points="349.071,-182.911 343.905,-181.737 347.212,-185.876 349.071,-182.911"/>
+<text text-anchor="start" x="389" y="-202.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node3" class="node"><title>0x7ff81140b6c0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="530,-181.5 466,-181.5 466,-152.5 530,-152.5 530,-181.5"/>
+<text text-anchor="start" x="474" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">not</text>
+<text text-anchor="start" x="499" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="508" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge2" class="edge"><title>0x7ff811409f00&#45;&gt;0x7ff81140b6c0</title>
+<path fill="none" stroke="black" d="M450.638,-228.427C459.982,-216.506 473.645,-199.074 483.898,-185.992"/>
+<polygon fill="black" stroke="black" points="485.526,-186.752 487.233,-181.737 482.771,-184.593 485.526,-186.752"/>
+<text text-anchor="start" x="473" y="-202.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node4" class="node"><title>0x7ff81140a150</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="200,-105.5 0,-105.5 0,-76.5 200,-76.5 200,-105.5"/>
+<text text-anchor="start" x="8" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="75" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="84" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="118" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="127" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;GET&#39;</text>
+<text text-anchor="start" x="169" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="178" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge3" class="edge"><title>0x7ff811409fb0&#45;&gt;0x7ff81140a150</title>
+<path fill="none" stroke="black" d="M282.567,-152.856C244.133,-140.044 185.745,-120.582 145.395,-107.132"/>
+<polygon fill="black" stroke="black" points="145.863,-105.443 140.566,-105.522 144.756,-108.764 145.863,-105.443"/>
+<text text-anchor="start" x="225" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node5" class="node"><title>0x7ff81140ac30</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="426,-105.5 218,-105.5 218,-76.5 426,-76.5 426,-105.5"/>
+<text text-anchor="start" x="226" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="293" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="302" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="336" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="345" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;POST&#39;</text>
+<text text-anchor="start" x="395" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="404" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge4" class="edge"><title>0x7ff811409fb0&#45;&gt;0x7ff81140ac30</title>
+<path fill="none" stroke="black" d="M322,-152.427C322,-140.817 322,-123.979 322,-111.025"/>
+<polygon fill="black" stroke="black" points="323.75,-110.737 322,-105.737 320.25,-110.737 323.75,-110.737"/>
+<text text-anchor="start" x="322" y="-126.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node6" class="node"><title>0x7ff81140b800</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="594,-105.5 444,-105.5 444,-76.5 594,-76.5 594,-105.5"/>
+<text text-anchor="start" x="452" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">getHeader</text>
+<text text-anchor="start" x="527" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="536" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;Host&#39;</text>
+</g>
+<g id="edge5" class="edge"><title>0x7ff81140b6c0&#45;&gt;0x7ff81140b800</title>
+<path fill="none" stroke="black" d="M501.852,-152.427C505.176,-140.714 510.01,-123.678 513.699,-110.679"/>
+<polygon fill="black" stroke="black" points="515.42,-111.025 515.102,-105.737 512.053,-110.07 515.42,-111.025"/>
+<text text-anchor="start" x="510" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node7" class="node"><title>0x7ff81140a7e0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="325.25,-29.5 142.75,-29.5 142.75,-0.5 325.25,-0.5 325.25,-29.5"/>
+<text text-anchor="start" x="150.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="175.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="184.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_METHOD&#39;</text>
+</g>
+<g id="edge6" class="edge"><title>0x7ff81140a150&#45;&gt;0x7ff81140a7e0</title>
+<path fill="none" stroke="black" d="M124.578,-76.4273C147.103,-63.988 180.495,-45.5474 204.463,-32.3117"/>
+<polygon fill="black" stroke="black" points="205.593,-33.6864 209.124,-29.7373 203.901,-30.6225 205.593,-33.6864"/>
+<text text-anchor="start" x="176" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="edge7" class="edge"><title>0x7ff81140ac30&#45;&gt;0x7ff81140a7e0</title>
+<path fill="none" stroke="black" d="M305.859,-76.4273C291.313,-64.1953 269.866,-46.1604 254.19,-32.9778"/>
+<polygon fill="black" stroke="black" points="255.289,-31.6159 250.336,-29.7373 253.037,-34.2947 255.289,-31.6159"/>
+<text text-anchor="start" x="284" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+<h2>Post-Transform Graph</h2>
+<svg width="621pt" height="266pt"
+ viewBox="0.00 0.00 621.00 266.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 262)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-262 617,-262 617,4 -4,4"/>
+<g id="node1" class="node"><title>0x7ff811500d50</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="272.25,-257.5 185.75,-257.5 185.75,-228.5 272.25,-228.5 272.25,-257.5"/>
+<text text-anchor="start" x="193.5" y="-240.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">and</text>
+<text text-anchor="start" x="218.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="227.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="241.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="250.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="node2" class="node"><title>0x7ff81140b6c0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="178,-181.5 114,-181.5 114,-152.5 178,-152.5 178,-181.5"/>
+<text text-anchor="start" x="122" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">not</text>
+<text text-anchor="start" x="147" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="156" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge1" class="edge"><title>0x7ff811500d50&#45;&gt;0x7ff81140b6c0</title>
+<path fill="none" stroke="black" d="M213.777,-228.427C200.173,-216.299 180.171,-198.466 165.42,-185.314"/>
+<polygon fill="black" stroke="black" points="166.305,-183.758 161.408,-181.737 163.976,-186.371 166.305,-183.758"/>
+<text text-anchor="start" x="193" y="-202.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node3" class="node"><title>0x7ff811409fb0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="326.25,-181.5 247.75,-181.5 247.75,-152.5 326.25,-152.5 326.25,-181.5"/>
+<text text-anchor="start" x="255.5" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">or</text>
+<text text-anchor="start" x="272.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="281.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="295.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="304.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="edge2" class="edge"><title>0x7ff811500d50&#45;&gt;0x7ff811409fb0</title>
+<path fill="none" stroke="black" d="M239.638,-228.427C248.982,-216.506 262.645,-199.074 272.898,-185.992"/>
+<polygon fill="black" stroke="black" points="274.526,-186.752 276.233,-181.737 271.771,-184.593 274.526,-186.752"/>
+<text text-anchor="start" x="262" y="-202.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node4" class="node"><title>0x7ff811501208</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="169,-105.5 21,-105.5 21,-76.5 169,-76.5 169,-105.5"/>
+<text text-anchor="start" x="29" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">namedi</text>
+<text text-anchor="start" x="79" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="88" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;Host&#39;</text>
+<text text-anchor="start" x="138" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="147" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge3" class="edge"><title>0x7ff81140b6c0&#45;&gt;0x7ff811501208</title>
+<path fill="none" stroke="black" d="M136.646,-152.427C128.43,-140.506 116.416,-123.074 107.4,-109.992"/>
+<polygon fill="black" stroke="black" points="108.746,-108.861 104.468,-105.737 105.864,-110.847 108.746,-108.861"/>
+<text text-anchor="start" x="124" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node5" class="node"><title>0x7ff81140a150</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="387,-105.5 187,-105.5 187,-76.5 387,-76.5 387,-105.5"/>
+<text text-anchor="start" x="195" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="262" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="271" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="305" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="314" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;GET&#39;</text>
+<text text-anchor="start" x="356" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="365" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge4" class="edge"><title>0x7ff811409fb0&#45;&gt;0x7ff81140a150</title>
+<path fill="none" stroke="black" d="M287,-152.427C287,-140.817 287,-123.979 287,-111.025"/>
+<polygon fill="black" stroke="black" points="288.75,-110.737 287,-105.737 285.25,-110.737 288.75,-110.737"/>
+<text text-anchor="start" x="287" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node6" class="node"><title>0x7ff81140ac30</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="613,-105.5 405,-105.5 405,-76.5 613,-76.5 613,-105.5"/>
+<text text-anchor="start" x="413" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="480" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="489" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="523" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="532" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;POST&#39;</text>
+<text text-anchor="start" x="582" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="591" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge5" class="edge"><title>0x7ff811409fb0&#45;&gt;0x7ff81140ac30</title>
+<path fill="none" stroke="black" d="M326.433,-152.856C364.867,-140.044 423.255,-120.582 463.605,-107.132"/>
+<polygon fill="black" stroke="black" points="464.244,-108.764 468.434,-105.522 463.137,-105.443 464.244,-108.764"/>
+<text text-anchor="start" x="412" y="-126.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node7" class="node"><title>0x7ff8115016b0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="190.25,-29.5 -0.25,-29.5 -0.25,-0.5 190.25,-0.5 190.25,-29.5"/>
+<text text-anchor="start" x="7.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="32.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="41.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_HEADERS&#39;</text>
+</g>
+<g id="edge6" class="edge"><title>0x7ff811501208&#45;&gt;0x7ff8115016b0</title>
+<path fill="none" stroke="black" d="M95,-76.4273C95,-64.8173 95,-47.9794 95,-35.0249"/>
+<polygon fill="black" stroke="black" points="96.7501,-34.7373 95,-29.7373 93.2501,-34.7373 96.7501,-34.7373"/>
+<text text-anchor="start" x="95" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node8" class="node"><title>0x7ff81140a7e0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="451.25,-29.5 268.75,-29.5 268.75,-0.5 451.25,-0.5 451.25,-29.5"/>
+<text text-anchor="start" x="276.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="301.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="310.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_METHOD&#39;</text>
+</g>
+<g id="edge7" class="edge"><title>0x7ff81140a150&#45;&gt;0x7ff81140a7e0</title>
+<path fill="none" stroke="black" d="M300.389,-76.4273C312.354,-64.299 329.946,-46.4656 342.92,-33.314"/>
+<polygon fill="black" stroke="black" points="344.183,-34.5258 346.448,-29.7373 341.691,-32.0678 344.183,-34.5258"/>
+<text text-anchor="start" x="328" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="edge8" class="edge"><title>0x7ff81140ac30&#45;&gt;0x7ff81140a7e0</title>
+<path fill="none" stroke="black" d="M481.671,-76.4273C456.336,-63.8449 418.638,-45.1223 391.928,-31.857"/>
+<polygon fill="black" stroke="black" points="392.664,-30.2685 387.408,-29.6118 391.107,-33.4032 392.664,-30.2685"/>
+<text text-anchor="start" x="443" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+</pre>
+</div>
+</td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>17</td>
+<td><span class=line>    action([[clipp_announce:IsPost]]):</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>18</td>
+<td><span class=line>    predicate((isGet / isPost) + P.Not(P.getHeader('Host')))</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>19</td>
+<td><span class=line></span></td>
+</tr>
+<tr><td class=predicate-ok onclick="expand_collapse('p-20')">Predicate</td><td class=linenumber>20</td>
+<td><span class=line>Action("ContentLengthZero", "1"):</span><div style=display:none class=output id=p-20>
+<pre>(<b>and</b>
+  (<b>or</b>
+    (<b>operator</b>
+      <i>'rx'</i> <i>'GET'</i>
+      (<b>var</b> <i>'REQUEST_METHOD'</i>)
+    )
+    
+    (<b>operator</b>
+      <i>'rx'</i> <i>'POST'</i>
+      (<b>var</b> <i>'REQUEST_METHOD'</i>)
+    )
+  )
+  
+  (<b>eq</b>
+    0
+    (<b>getHeader</b> <i>'Content-Length'</i>)
+  )
+)
+</pre>
+<pre><h2>Pre-Transform Graph</h2>
+<svg width="685pt" height="266pt"
+ viewBox="0.00 0.00 685.00 266.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 262)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-262 681,-262 681,4 -4,4"/>
+<g id="node1" class="node"><title>0x7fe3f1409600</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="510.25,-257.5 423.75,-257.5 423.75,-228.5 510.25,-228.5 510.25,-257.5"/>
+<text text-anchor="start" x="431.5" y="-240.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">and</text>
+<text text-anchor="start" x="456.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="465.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="479.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="488.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="node2" class="node"><title>0x7fe3f140a040</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="361.25,-181.5 282.75,-181.5 282.75,-152.5 361.25,-152.5 361.25,-181.5"/>
+<text text-anchor="start" x="290.5" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">or</text>
+<text text-anchor="start" x="307.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="316.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="330.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="339.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="edge1" class="edge"><title>0x7fe3f1409600&#45;&gt;0x7fe3f140a040</title>
+<path fill="none" stroke="black" d="M440.405,-228.427C415.929,-215.936 379.596,-197.394 353.638,-184.147"/>
+<polygon fill="black" stroke="black" points="354.167,-182.451 348.918,-181.737 352.576,-185.569 354.167,-182.451"/>
+<text text-anchor="start" x="404" y="-202.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node3" class="node"><title>0x7fe3f140b758</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="572,-181.5 498,-181.5 498,-152.5 572,-152.5 572,-181.5"/>
+<text text-anchor="start" x="506" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">eq</text>
+<text text-anchor="start" x="523" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="532" y="-164.3" font-family="Courier,monospace" font-size="14.00">0</text>
+<text text-anchor="start" x="541" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="550" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge2" class="edge"><title>0x7fe3f1409600&#45;&gt;0x7fe3f140b758</title>
+<path fill="none" stroke="black" d="M479.472,-228.427C490.522,-216.403 506.725,-198.77 518.779,-185.652"/>
+<polygon fill="black" stroke="black" points="520.282,-186.603 522.377,-181.737 517.705,-184.235 520.282,-186.603"/>
+<text text-anchor="start" x="506" y="-202.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node4" class="node"><title>0x7fe3f140a1f0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="200,-105.5 0,-105.5 0,-76.5 200,-76.5 200,-105.5"/>
+<text text-anchor="start" x="8" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="75" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="84" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="118" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="127" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;GET&#39;</text>
+<text text-anchor="start" x="169" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="178" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge3" class="edge"><title>0x7fe3f140a040&#45;&gt;0x7fe3f140a1f0</title>
+<path fill="none" stroke="black" d="M282.567,-152.856C244.133,-140.044 185.745,-120.582 145.395,-107.132"/>
+<polygon fill="black" stroke="black" points="145.863,-105.443 140.566,-105.522 144.756,-108.764 145.863,-105.443"/>
+<text text-anchor="start" x="225" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node5" class="node"><title>0x7fe3f140acb0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="426,-105.5 218,-105.5 218,-76.5 426,-76.5 426,-105.5"/>
+<text text-anchor="start" x="226" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="293" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="302" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="336" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="345" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;POST&#39;</text>
+<text text-anchor="start" x="395" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="404" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge4" class="edge"><title>0x7fe3f140a040&#45;&gt;0x7fe3f140acb0</title>
+<path fill="none" stroke="black" d="M322,-152.427C322,-140.817 322,-123.979 322,-111.025"/>
+<polygon fill="black" stroke="black" points="323.75,-110.737 322,-105.737 320.25,-110.737 323.75,-110.737"/>
+<text text-anchor="start" x="322" y="-126.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node6" class="node"><title>0x7fe3f140bb40</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="677.25,-105.5 444.75,-105.5 444.75,-76.5 677.25,-76.5 677.25,-105.5"/>
+<text text-anchor="start" x="452.5" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">getHeader</text>
+<text text-anchor="start" x="527.5" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="536.5" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;Content&#45;Length&#39;</text>
+</g>
+<g id="edge5" class="edge"><title>0x7fe3f140b758&#45;&gt;0x7fe3f140bb40</title>
+<path fill="none" stroke="black" d="M539.769,-152.427C543.884,-140.714 549.87,-123.678 554.437,-110.679"/>
+<polygon fill="black" stroke="black" points="556.167,-111.035 556.173,-105.737 552.865,-109.874 556.167,-111.035"/>
+<text text-anchor="start" x="550" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node7" class="node"><title>0x7fe3f140a860</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="325.25,-29.5 142.75,-29.5 142.75,-0.5 325.25,-0.5 325.25,-29.5"/>
+<text text-anchor="start" x="150.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="175.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="184.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_METHOD&#39;</text>
+</g>
+<g id="edge6" class="edge"><title>0x7fe3f140a1f0&#45;&gt;0x7fe3f140a860</title>
+<path fill="none" stroke="black" d="M124.578,-76.4273C147.103,-63.988 180.495,-45.5474 204.463,-32.3117"/>
+<polygon fill="black" stroke="black" points="205.593,-33.6864 209.124,-29.7373 203.901,-30.6225 205.593,-33.6864"/>
+<text text-anchor="start" x="176" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="edge7" class="edge"><title>0x7fe3f140acb0&#45;&gt;0x7fe3f140a860</title>
+<path fill="none" stroke="black" d="M305.859,-76.4273C291.313,-64.1953 269.866,-46.1604 254.19,-32.9778"/>
+<polygon fill="black" stroke="black" points="255.289,-31.6159 250.336,-29.7373 253.037,-34.2947 255.289,-31.6159"/>
+<text text-anchor="start" x="284" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+<h2>Post-Transform Graph</h2>
+<svg width="683pt" height="266pt"
+ viewBox="0.00 0.00 683.00 266.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 262)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-262 679,-262 679,4 -4,4"/>
+<g id="node1" class="node"><title>0x7fe3f140cba0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="326.25,-257.5 239.75,-257.5 239.75,-228.5 326.25,-228.5 326.25,-257.5"/>
+<text text-anchor="start" x="247.5" y="-240.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">and</text>
+<text text-anchor="start" x="272.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="281.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="295.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="304.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="node2" class="node"><title>0x7fe3f140b758</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="222,-181.5 148,-181.5 148,-152.5 222,-152.5 222,-181.5"/>
+<text text-anchor="start" x="156" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">eq</text>
+<text text-anchor="start" x="173" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="182" y="-164.3" font-family="Courier,monospace" font-size="14.00">0</text>
+<text text-anchor="start" x="191" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="200" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge1" class="edge"><title>0x7fe3f140cba0&#45;&gt;0x7fe3f140b758</title>
+<path fill="none" stroke="black" d="M265.025,-228.427C248.826,-216.195 224.942,-198.16 207.484,-184.978"/>
+<polygon fill="black" stroke="black" points="208.237,-183.354 203.193,-181.737 206.128,-186.147 208.237,-183.354"/>
+<text text-anchor="start" x="240" y="-202.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node3" class="node"><title>0x7fe3f140a040</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="388.25,-181.5 309.75,-181.5 309.75,-152.5 388.25,-152.5 388.25,-181.5"/>
+<text text-anchor="start" x="317.5" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">or</text>
+<text text-anchor="start" x="334.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="343.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="357.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="366.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="edge2" class="edge"><title>0x7fe3f140cba0&#45;&gt;0x7fe3f140a040</title>
+<path fill="none" stroke="black" d="M295.105,-228.427C305.83,-216.403 321.556,-198.77 333.256,-185.652"/>
+<polygon fill="black" stroke="black" points="334.726,-186.634 336.748,-181.737 332.114,-184.304 334.726,-186.634"/>
+<text text-anchor="start" x="320" y="-202.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node4" class="node"><title>0x7fe3f140b398</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="230.25,-105.5 -0.25,-105.5 -0.25,-76.5 230.25,-76.5 230.25,-105.5"/>
+<text text-anchor="start" x="7.5" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">namedi</text>
+<text text-anchor="start" x="57.5" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="66.5" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;Content&#45;Length&#39;</text>
+<text text-anchor="start" x="199.5" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="208.5" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge3" class="edge"><title>0x7fe3f140b758&#45;&gt;0x7fe3f140b398</title>
+<path fill="none" stroke="black" d="M172.161,-152.427C160.786,-140.403 144.107,-122.77 131.698,-109.652"/>
+<polygon fill="black" stroke="black" points="132.702,-108.167 127.995,-105.737 130.159,-110.572 132.702,-108.167"/>
+<text text-anchor="start" x="155" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node5" class="node"><title>0x7fe3f140a1f0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="449,-105.5 249,-105.5 249,-76.5 449,-76.5 449,-105.5"/>
+<text text-anchor="start" x="257" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="324" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="333" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="367" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="376" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;GET&#39;</text>
+<text text-anchor="start" x="418" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="427" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge4" class="edge"><title>0x7fe3f140a040&#45;&gt;0x7fe3f140a1f0</title>
+<path fill="none" stroke="black" d="M349,-152.427C349,-140.817 349,-123.979 349,-111.025"/>
+<polygon fill="black" stroke="black" points="350.75,-110.737 349,-105.737 347.25,-110.737 350.75,-110.737"/>
+<text text-anchor="start" x="349" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node6" class="node"><title>0x7fe3f140acb0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="675,-105.5 467,-105.5 467,-76.5 675,-76.5 675,-105.5"/>
+<text text-anchor="start" x="475" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="542" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="551" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="585" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="594" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;POST&#39;</text>
+<text text-anchor="start" x="644" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="653" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge5" class="edge"><title>0x7fe3f140a040&#45;&gt;0x7fe3f140acb0</title>
+<path fill="none" stroke="black" d="M388.433,-152.856C426.867,-140.044 485.255,-120.582 525.605,-107.132"/>
+<polygon fill="black" stroke="black" points="526.244,-108.764 530.434,-105.522 525.137,-105.443 526.244,-108.764"/>
+<text text-anchor="start" x="474" y="-126.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node7" class="node"><title>0x7fe3f140d710</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="210.25,-29.5 19.75,-29.5 19.75,-0.5 210.25,-0.5 210.25,-29.5"/>
+<text text-anchor="start" x="27.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="52.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="61.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_HEADERS&#39;</text>
+</g>
+<g id="edge6" class="edge"><title>0x7fe3f140b398&#45;&gt;0x7fe3f140d710</title>
+<path fill="none" stroke="black" d="M115,-76.4273C115,-64.8173 115,-47.9794 115,-35.0249"/>
+<polygon fill="black" stroke="black" points="116.75,-34.7373 115,-29.7373 113.25,-34.7373 116.75,-34.7373"/>
+<text text-anchor="start" x="115" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node8" class="node"><title>0x7fe3f140a860</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="550.25,-29.5 367.75,-29.5 367.75,-0.5 550.25,-0.5 550.25,-29.5"/>
+<text text-anchor="start" x="375.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="400.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="409.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_METHOD&#39;</text>
+</g>
+<g id="edge7" class="edge"><title>0x7fe3f140a1f0&#45;&gt;0x7fe3f140a860</title>
+<path fill="none" stroke="black" d="M369.176,-76.4273C387.512,-64.0917 414.622,-45.8543 434.259,-32.6437"/>
+<polygon fill="black" stroke="black" points="435.408,-33.9802 438.58,-29.7373 433.454,-31.0762 435.408,-33.9802"/>
+<text text-anchor="start" x="411" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="edge8" class="edge"><title>0x7fe3f140acb0&#45;&gt;0x7fe3f140a860</title>
+<path fill="none" stroke="black" d="M550.457,-76.4273C531.787,-64.0917 504.185,-45.8543 484.19,-32.6437"/>
+<polygon fill="black" stroke="black" points="484.928,-31.0335 479.792,-29.7373 482.999,-33.9537 484.928,-31.0335"/>
+<text text-anchor="start" x="521" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+</pre>
+</div>
+</td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>21</td>
+<td><span class=line>    action([[clipp_announce:IsPost]]):</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>22</td>
+<td><span class=line>    predicate((isGet / isPost) + P.Eq(0, P.getHeader('Content-Length')))</span></td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>23</td>
+<td><span class=line></span></td>
+</tr>
+<tr><td class=predicate-error onclick="expand_collapse('p-24')">Predicate</td><td class=linenumber>24</td>
+<td><span class=line>Action("ThisHasAnError", "1"):</span><div style=display:inline class=output id=p-24>
+<pre>(<b>sub</b>
+  (<b>var</b> <i>'a'</i>)
+  <i>'foo'</i>
+)
+</pre>
+<pre><h2>Pre-Transform Graph</h2>
+<svg width="122pt" height="114pt"
+ viewBox="0.00 0.00 122.00 114.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 110)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-110 118,-110 118,4 -4,4"/>
+<g id="node1" class="node"><title>0x7fb2f8c09f00</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="114.25,-105.5 -0.25,-105.5 -0.25,-76.5 114.25,-76.5 114.25,-105.5"/>
+<text text-anchor="start" x="7.5" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">sub</text>
+<text text-anchor="start" x="32.5" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="41.5" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="55.5" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="64.5" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;foo&#39;</text>
+</g>
+<g id="node2" class="node"><title>0x7fb2f8c09fa0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="94.25,-29.5 19.75,-29.5 19.75,-0.5 94.25,-0.5 94.25,-29.5"/>
+<text text-anchor="start" x="27.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="52.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="61.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;a&#39;</text>
+</g>
+<g id="edge1" class="edge"><title>0x7fb2f8c09f00&#45;&gt;0x7fb2f8c09fa0</title>
+<path fill="none" stroke="black" d="M57,-76.4273C57,-64.8173 57,-47.9794 57,-35.0249"/>
+<polygon fill="black" stroke="black" points="58.7501,-34.7373 57,-29.7373 55.2501,-34.7373 58.7501,-34.7373"/>
+<text text-anchor="start" x="57" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+<h2>Post-Transform Graph</h2>
+<svg width="408pt" height="114pt"
+ viewBox="0.00 0.00 408.00 114.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 110)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-110 404,-110 404,4 -4,4"/>
+<g id="node1" class="node"><title>0x7fb2f8c0a948</title>
+<polygon fill="red" stroke="black" stroke-width="0.2" points="140,-105.5 0,-105.5 0,-76.5 140,-76.5 140,-105.5"/>
+<text text-anchor="start" x="8" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">namedi</text>
+<text text-anchor="start" x="58" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="67" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="81" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="90" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;foo&#39;</text>
+</g>
+<g id="node2" class="node"><title>report&#45;0x7fb2f8c0a948</title>
+<text text-anchor="start" x="188.5" y="-88.5" font-family="Courier,monospace" font-size="10.00" fill="red">Child 1 must be a string literal.</text>
+</g>
+<g id="edge1" class="edge"><title>0x7fb2f8c0a948&#45;&gt;report&#45;0x7fb2f8c0a948</title>
+<path fill="none" stroke="black" stroke-width="0.5" d="M140.254,-91C152.085,-91 163.916,-91 175.748,-91"/>
+</g>
+<g id="node3" class="node"><title>0x7fb2f8c09fa0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="107.25,-29.5 32.75,-29.5 32.75,-0.5 107.25,-0.5 107.25,-29.5"/>
+<text text-anchor="start" x="40.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="65.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="74.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;a&#39;</text>
+</g>
+<g id="edge2" class="edge"><title>0x7fb2f8c0a948&#45;&gt;0x7fb2f8c09fa0</title>
+<path fill="none" stroke="black" d="M70,-76.4273C70,-64.8173 70,-47.9794 70,-35.0249"/>
+<polygon fill="black" stroke="black" points="71.7501,-34.7373 70,-29.7373 68.2501,-34.7373 71.7501,-34.7373"/>
+<text text-anchor="start" x="70" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+</pre>
+</div>
+</td>
+</tr>
+<tr><td class=predicate></td><td class=linenumber>25</td>
+<td><span class=line>    predicate(P.Sub(P.Var('a'), 'foo'))</span></td>
+</tr>
+</table>
+<hr>
+<pre>
+<h2>Pre-Transform Graph</h2>
+<svg width="894pt" height="334pt"
+ viewBox="0.00 0.00 894.00 334.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 330)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-330 890,-330 890,4 -4,4"/>
+<g id="node1" class="node"><title>0x7fd958409f60</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="114.25,-257.5 -0.25,-257.5 -0.25,-228.5 114.25,-228.5 114.25,-257.5"/>
+<text text-anchor="start" x="7.5" y="-240.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">sub</text>
+<text text-anchor="start" x="32.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="41.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="55.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="64.5" y="-240.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;foo&#39;</text>
+</g>
+<g id="node2" class="node"><title>0x7fd95840a000</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="94.25,-181.5 19.75,-181.5 19.75,-152.5 94.25,-152.5 94.25,-181.5"/>
+<text text-anchor="start" x="27.5" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="52.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="61.5" y="-164.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;a&#39;</text>
+</g>
+<g id="edge1" class="edge"><title>0x7fd958409f60&#45;&gt;0x7fd95840a000</title>
+<path fill="none" stroke="black" d="M57,-228.427C57,-216.817 57,-199.979 57,-187.025"/>
+<polygon fill="black" stroke="black" points="58.7501,-186.737 57,-181.737 55.2501,-186.737 58.7501,-186.737"/>
+<text text-anchor="start" x="57" y="-202.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node3" class="node"><title>root&#45;0</title>
+<text text-anchor="start" x="8.5" y="-307.3" font-family="Times,serif" font-size="14.00">ThisHasAnError</text>
+</g>
+<g id="edge2" class="edge"><title>root&#45;0&#45;&gt;0x7fd958409f60</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M57,-296.325C57,-284.998 57,-268.98 57,-257.658"/>
+</g>
+<g id="node4" class="node"><title>0x7fd95840aae0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="497.25,-257.5 410.75,-257.5 410.75,-228.5 497.25,-228.5 497.25,-257.5"/>
+<text text-anchor="start" x="418.5" y="-240.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">and</text>
+<text text-anchor="start" x="443.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="452.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="466.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="475.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="node5" class="node"><title>0x7fd95840ab70</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="401.25,-181.5 322.75,-181.5 322.75,-152.5 401.25,-152.5 401.25,-181.5"/>
+<text text-anchor="start" x="330.5" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">or</text>
+<text text-anchor="start" x="347.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="356.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="370.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="379.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="edge3" class="edge"><title>0x7fd95840aae0&#45;&gt;0x7fd95840ab70</title>
+<path fill="none" stroke="black" d="M437.126,-228.427C421.919,-216.195 399.497,-198.16 383.108,-184.978"/>
+<polygon fill="black" stroke="black" points="384.072,-183.507 379.079,-181.737 381.878,-186.235 384.072,-183.507"/>
+<text text-anchor="start" x="414" y="-202.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node6" class="node"><title>0x7fd95840c228</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="602,-181.5 528,-181.5 528,-152.5 602,-152.5 602,-181.5"/>
+<text text-anchor="start" x="536" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">eq</text>
+<text text-anchor="start" x="553" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="562" y="-164.3" font-family="Courier,monospace" font-size="14.00">0</text>
+<text text-anchor="start" x="571" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="580" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge4" class="edge"><title>0x7fd95840aae0&#45;&gt;0x7fd95840c228</title>
+<path fill="none" stroke="black" d="M460.692,-228.292C465.732,-219.199 473.41,-207.587 483,-200 494.635,-190.796 509.237,-183.971 522.883,-179.044"/>
+<polygon fill="black" stroke="black" points="523.712,-180.609 527.86,-177.314 522.563,-177.303 523.712,-180.609"/>
+<text text-anchor="start" x="483" y="-202.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node11" class="node"><title>0x7fd95840acb0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="240,-105.5 40,-105.5 40,-76.5 240,-76.5 240,-105.5"/>
+<text text-anchor="start" x="48" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="115" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="124" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="158" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="167" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;GET&#39;</text>
+<text text-anchor="start" x="209" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="218" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge13" class="edge"><title>0x7fd95840ab70&#45;&gt;0x7fd95840acb0</title>
+<path fill="none" stroke="black" d="M322.567,-152.856C284.133,-140.044 225.745,-120.582 185.395,-107.132"/>
+<polygon fill="black" stroke="black" points="185.863,-105.443 180.566,-105.522 184.756,-108.764 185.863,-105.443"/>
+<text text-anchor="start" x="265" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node14" class="node"><title>0x7fd95840b780</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="466,-105.5 258,-105.5 258,-76.5 466,-76.5 466,-105.5"/>
+<text text-anchor="start" x="266" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="333" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="342" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="376" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="385" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;POST&#39;</text>
+<text text-anchor="start" x="435" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="444" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge14" class="edge"><title>0x7fd95840ab70&#45;&gt;0x7fd95840b780</title>
+<path fill="none" stroke="black" d="M362,-152.427C362,-140.817 362,-123.979 362,-111.025"/>
+<polygon fill="black" stroke="black" points="363.75,-110.737 362,-105.737 360.25,-110.737 363.75,-110.737"/>
+<text text-anchor="start" x="362" y="-126.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node16" class="node"><title>0x7fd95840c610</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="717.25,-105.5 484.75,-105.5 484.75,-76.5 717.25,-76.5 717.25,-105.5"/>
+<text text-anchor="start" x="492.5" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">getHeader</text>
+<text text-anchor="start" x="567.5" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="576.5" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;Content&#45;Length&#39;</text>
+</g>
+<g id="edge15" class="edge"><title>0x7fd95840c228&#45;&gt;0x7fd95840c610</title>
+<path fill="none" stroke="black" d="M571.603,-152.427C577.352,-140.61 585.736,-123.376 592.08,-110.335"/>
+<polygon fill="black" stroke="black" points="593.703,-110.999 594.317,-105.737 590.556,-109.468 593.703,-110.999"/>
+<text text-anchor="start" x="585" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node7" class="node"><title>root&#45;1</title>
+<text text-anchor="start" x="396.5" y="-307.3" font-family="Times,serif" font-size="14.00">ContentLengthZero</text>
+</g>
+<g id="edge5" class="edge"><title>root&#45;1&#45;&gt;0x7fd95840aae0</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M454,-296.325C454,-284.998 454,-268.98 454,-257.658"/>
+</g>
+<g id="node8" class="node"><title>0x7fd95840b960</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="631.25,-257.5 544.75,-257.5 544.75,-228.5 631.25,-228.5 631.25,-257.5"/>
+<text text-anchor="start" x="552.5" y="-240.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">and</text>
+<text text-anchor="start" x="577.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="586.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="600.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="609.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="edge6" class="edge"><title>0x7fd95840b960&#45;&gt;0x7fd95840ab70</title>
+<path fill="none" stroke="black" d="M560.825,-228.422C541.897,-219.387 515.865,-207.791 492,-200 456.943,-188.556 446.746,-191.07 411,-182 409.414,-181.597 407.8,-181.18 406.173,-180.752"/>
+<polygon fill="black" stroke="black" points="406.541,-179.039 401.259,-179.44 405.638,-182.42 406.541,-179.039"/>
+<text text-anchor="start" x="519" y="-202.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node9" class="node"><title>0x7fd95840e2e0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="806,-181.5 742,-181.5 742,-152.5 806,-152.5 806,-181.5"/>
+<text text-anchor="start" x="750" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">not</text>
+<text text-anchor="start" x="775" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="784" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge7" class="edge"><title>0x7fd95840b960&#45;&gt;0x7fd95840e2e0</title>
+<path fill="none" stroke="black" d="M622.115,-228.427C654.702,-215.463 703.675,-195.979 737.144,-182.663"/>
+<polygon fill="black" stroke="black" points="737.967,-184.219 741.966,-180.745 736.673,-180.967 737.967,-184.219"/>
+<text text-anchor="start" x="692" y="-202.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node17" class="node"><title>0x7fd95840e420</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="886,-105.5 736,-105.5 736,-76.5 886,-76.5 886,-105.5"/>
+<text text-anchor="start" x="744" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">getHeader</text>
+<text text-anchor="start" x="819" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="828" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;Host&#39;</text>
+</g>
+<g id="edge16" class="edge"><title>0x7fd95840e2e0&#45;&gt;0x7fd95840e420</title>
+<path fill="none" stroke="black" d="M780.786,-152.427C786.695,-140.61 795.312,-123.376 801.833,-110.335"/>
+<polygon fill="black" stroke="black" points="803.46,-110.992 804.131,-105.737 800.33,-109.427 803.46,-110.992"/>
+<text text-anchor="start" x="794" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node10" class="node"><title>root&#45;2</title>
+<text text-anchor="start" x="565" y="-307.3" font-family="Times,serif" font-size="14.00">NoHost</text>
+</g>
+<g id="edge8" class="edge"><title>root&#45;2&#45;&gt;0x7fd95840b960</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M588,-296.325C588,-284.998 588,-268.98 588,-257.658"/>
+</g>
+<g id="node12" class="node"><title>0x7fd95840b330</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="365.25,-29.5 182.75,-29.5 182.75,-0.5 365.25,-0.5 365.25,-29.5"/>
+<text text-anchor="start" x="190.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="215.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="224.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_METHOD&#39;</text>
+</g>
+<g id="edge9" class="edge"><title>0x7fd95840acb0&#45;&gt;0x7fd95840b330</title>
+<path fill="none" stroke="black" d="M164.578,-76.4273C187.103,-63.988 220.495,-45.5474 244.463,-32.3117"/>
+<polygon fill="black" stroke="black" points="245.593,-33.6864 249.124,-29.7373 243.901,-30.6225 245.593,-33.6864"/>
+<text text-anchor="start" x="216" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node13" class="node"><title>root&#45;3</title>
+<text text-anchor="start" x="124.5" y="-163.3" font-family="Times,serif" font-size="14.00">IsGet</text>
+</g>
+<g id="edge10" class="edge"><title>root&#45;3&#45;&gt;0x7fd95840acb0</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M140,-152.427C140,-139.159 140,-119.062 140,-105.737"/>
+</g>
+<g id="edge11" class="edge"><title>0x7fd95840b780&#45;&gt;0x7fd95840b330</title>
+<path fill="none" stroke="black" d="M345.859,-76.4273C331.313,-64.1953 309.866,-46.1604 294.19,-32.9778"/>
+<polygon fill="black" stroke="black" points="295.289,-31.6159 290.336,-29.7373 293.037,-34.2947 295.289,-31.6159"/>
+<text text-anchor="start" x="324" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node15" class="node"><title>root&#45;4</title>
+<text text-anchor="start" x="429.5" y="-163.3" font-family="Times,serif" font-size="14.00">IsPost</text>
+</g>
+<g id="edge12" class="edge"><title>root&#45;4&#45;&gt;0x7fd95840b780</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M431.41,-152.427C416.169,-139.159 393.085,-119.062 377.779,-105.737"/>
+</g>
+</g>
+</svg>
+
+<h2>Post-Transform Graph</h2>
+<svg width="945pt" height="334pt"
+ viewBox="0.00 0.00 945.00 334.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 330)">
+<title>G</title>
+<polygon fill="white" stroke="white" points="-4,4 -4,-330 941,-330 941,4 -4,4"/>
+<g id="node1" class="node"><title>0x7fd95840bf08</title>
+<polygon fill="red" stroke="black" stroke-width="0.2" points="140,-257.5 0,-257.5 0,-228.5 140,-228.5 140,-257.5"/>
+<text text-anchor="start" x="8" y="-240.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">namedi</text>
+<text text-anchor="start" x="58" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="67" y="-240.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="81" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="90" y="-240.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;foo&#39;</text>
+</g>
+<g id="node2" class="node"><title>report&#45;0x7fd95840bf08</title>
+<text text-anchor="start" x="199.5" y="-240.5" font-family="Courier,monospace" font-size="10.00" fill="red">Child 1 must be a string literal.</text>
+</g>
+<g id="edge1" class="edge"><title>0x7fd95840bf08&#45;&gt;report&#45;0x7fd95840bf08</title>
+<path fill="none" stroke="black" stroke-width="0.5" d="M140.221,-243C155.726,-243 171.232,-243 186.738,-243"/>
+</g>
+<g id="node3" class="node"><title>0x7fd95840a000</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="107.25,-181.5 32.75,-181.5 32.75,-152.5 107.25,-152.5 107.25,-181.5"/>
+<text text-anchor="start" x="40.5" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="65.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="74.5" y="-164.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;a&#39;</text>
+</g>
+<g id="edge2" class="edge"><title>0x7fd95840bf08&#45;&gt;0x7fd95840a000</title>
+<path fill="none" stroke="black" d="M70,-228.427C70,-216.817 70,-199.979 70,-187.025"/>
+<polygon fill="black" stroke="black" points="71.7501,-186.737 70,-181.737 68.2501,-186.737 71.7501,-186.737"/>
+<text text-anchor="start" x="70" y="-202.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node4" class="node"><title>root&#45;0</title>
+<text text-anchor="start" x="21.5" y="-307.3" font-family="Times,serif" font-size="14.00">ThisHasAnError</text>
+</g>
+<g id="edge3" class="edge"><title>root&#45;0&#45;&gt;0x7fd95840bf08</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M70,-296.325C70,-284.998 70,-268.98 70,-257.658"/>
+</g>
+<g id="node5" class="node"><title>0x7fd95840d6c0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="644.25,-257.5 557.75,-257.5 557.75,-228.5 644.25,-228.5 644.25,-257.5"/>
+<text text-anchor="start" x="565.5" y="-240.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">and</text>
+<text text-anchor="start" x="590.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="599.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="613.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="622.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="node6" class="node"><title>0x7fd95840c228</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="448,-181.5 374,-181.5 374,-152.5 448,-152.5 448,-181.5"/>
+<text text-anchor="start" x="382" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">eq</text>
+<text text-anchor="start" x="399" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="408" y="-164.3" font-family="Courier,monospace" font-size="14.00">0</text>
+<text text-anchor="start" x="417" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="426" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge4" class="edge"><title>0x7fd95840d6c0&#45;&gt;0x7fd95840c228</title>
+<path fill="none" stroke="black" d="M579.712,-228.488C564.828,-219.483 544.247,-207.895 525,-200 501.837,-190.499 474.912,-182.795 453.047,-177.329"/>
+<polygon fill="black" stroke="black" points="453.45,-175.627 448.176,-176.128 452.611,-179.025 453.45,-175.627"/>
+<text text-anchor="start" x="547" y="-202.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node7" class="node"><title>0x7fd95840ab70</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="650.25,-181.5 571.75,-181.5 571.75,-152.5 650.25,-152.5 650.25,-181.5"/>
+<text text-anchor="start" x="579.5" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">or</text>
+<text text-anchor="start" x="596.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="605.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="619.5" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="628.5" y="-164.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="edge5" class="edge"><title>0x7fd95840d6c0&#45;&gt;0x7fd95840ab70</title>
+<path fill="none" stroke="black" d="M602.834,-228.427C604.403,-216.817 606.678,-199.979 608.429,-187.025"/>
+<polygon fill="black" stroke="black" points="610.208,-186.927 609.144,-181.737 606.74,-186.458 610.208,-186.927"/>
+<text text-anchor="start" x="607" y="-202.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node17" class="node"><title>0x7fd95840ea38</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="492.25,-105.5 261.75,-105.5 261.75,-76.5 492.25,-76.5 492.25,-105.5"/>
+<text text-anchor="start" x="269.5" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">namedi</text>
+<text text-anchor="start" x="319.5" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="328.5" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;Content&#45;Length&#39;</text>
+<text text-anchor="start" x="461.5" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="470.5" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge14" class="edge"><title>0x7fd95840c228&#45;&gt;0x7fd95840ea38</title>
+<path fill="none" stroke="black" d="M404.764,-152.427C399.334,-140.61 391.416,-123.376 385.424,-110.335"/>
+<polygon fill="black" stroke="black" points="386.989,-109.55 383.312,-105.737 383.809,-111.011 386.989,-109.55"/>
+<text text-anchor="start" x="397" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node12" class="node"><title>0x7fd95840acb0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="711,-105.5 511,-105.5 511,-76.5 711,-76.5 711,-105.5"/>
+<text text-anchor="start" x="519" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="586" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="595" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="629" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="638" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;GET&#39;</text>
+<text text-anchor="start" x="680" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="689" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge15" class="edge"><title>0x7fd95840ab70&#45;&gt;0x7fd95840acb0</title>
+<path fill="none" stroke="black" d="M611,-152.427C611,-140.817 611,-123.979 611,-111.025"/>
+<polygon fill="black" stroke="black" points="612.75,-110.737 611,-105.737 609.25,-110.737 612.75,-110.737"/>
+<text text-anchor="start" x="611" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node15" class="node"><title>0x7fd95840b780</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="937,-105.5 729,-105.5 729,-76.5 937,-76.5 937,-105.5"/>
+<text text-anchor="start" x="737" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">operator</text>
+<text text-anchor="start" x="804" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="813" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;rx&#39;</text>
+<text text-anchor="start" x="847" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="856" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;POST&#39;</text>
+<text text-anchor="start" x="906" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="915" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge16" class="edge"><title>0x7fd95840ab70&#45;&gt;0x7fd95840b780</title>
+<path fill="none" stroke="black" d="M650.433,-152.856C688.867,-140.044 747.255,-120.582 787.605,-107.132"/>
+<polygon fill="black" stroke="black" points="788.244,-108.764 792.434,-105.522 787.137,-105.443 788.244,-108.764"/>
+<text text-anchor="start" x="735" y="-126.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node8" class="node"><title>root&#45;1</title>
+<text text-anchor="start" x="543.5" y="-307.3" font-family="Times,serif" font-size="14.00">ContentLengthZero</text>
+</g>
+<g id="edge6" class="edge"><title>root&#45;1&#45;&gt;0x7fd95840d6c0</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M601,-296.325C601,-284.998 601,-268.98 601,-257.658"/>
+</g>
+<g id="node9" class="node"><title>0x7fd95840f170</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="522.25,-257.5 435.75,-257.5 435.75,-228.5 522.25,-228.5 522.25,-257.5"/>
+<text text-anchor="start" x="443.5" y="-240.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">and</text>
+<text text-anchor="start" x="468.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="477.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">①</text>
+<text text-anchor="start" x="491.5" y="-240.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="500.5" y="-240.3" font-family="Courier,monospace" font-size="14.00">②</text>
+</g>
+<g id="edge8" class="edge"><title>0x7fd95840f170&#45;&gt;0x7fd95840ab70</title>
+<path fill="none" stroke="black" d="M488.219,-228.188C494.953,-219.049 504.833,-207.425 516,-200 520.634,-196.919 544.351,-188.929 566.927,-181.704"/>
+<polygon fill="black" stroke="black" points="567.487,-183.362 571.719,-180.176 566.424,-180.028 567.487,-183.362"/>
+<text text-anchor="start" x="516" y="-202.8" font-family="Times,serif" font-size="9.00">②</text>
+</g>
+<g id="node10" class="node"><title>0x7fd95840e2e0</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="243,-181.5 179,-181.5 179,-152.5 243,-152.5 243,-181.5"/>
+<text text-anchor="start" x="187" y="-164.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">not</text>
+<text text-anchor="start" x="212" y="-164.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="221" y="-164.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge7" class="edge"><title>0x7fd95840f170&#45;&gt;0x7fd95840e2e0</title>
+<path fill="none" stroke="black" d="M435.643,-230.028C383.653,-215.673 297.39,-191.854 248.266,-178.29"/>
+<polygon fill="black" stroke="black" points="248.624,-176.573 243.339,-176.929 247.693,-179.947 248.624,-176.573"/>
+<text text-anchor="start" x="362" y="-202.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node18" class="node"><title>0x7fd95840fd78</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="243,-105.5 95,-105.5 95,-76.5 243,-76.5 243,-105.5"/>
+<text text-anchor="start" x="103" y="-88.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">namedi</text>
+<text text-anchor="start" x="153" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="162" y="-88.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;Host&#39;</text>
+<text text-anchor="start" x="212" y="-88.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="221" y="-88.3" font-family="Courier,monospace" font-size="14.00">①</text>
+</g>
+<g id="edge17" class="edge"><title>0x7fd95840e2e0&#45;&gt;0x7fd95840fd78</title>
+<path fill="none" stroke="black" d="M203.297,-152.427C196.589,-140.61 186.808,-123.376 179.406,-110.335"/>
+<polygon fill="black" stroke="black" points="180.787,-109.222 176.797,-105.737 177.743,-110.95 180.787,-109.222"/>
+<text text-anchor="start" x="193" y="-126.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node11" class="node"><title>root&#45;2</title>
+<text text-anchor="start" x="456" y="-307.3" font-family="Times,serif" font-size="14.00">NoHost</text>
+</g>
+<g id="edge9" class="edge"><title>root&#45;2&#45;&gt;0x7fd95840f170</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M479,-296.325C479,-284.998 479,-268.98 479,-257.658"/>
+</g>
+<g id="node13" class="node"><title>0x7fd95840b330</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="812.25,-29.5 629.75,-29.5 629.75,-0.5 812.25,-0.5 812.25,-29.5"/>
+<text text-anchor="start" x="637.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="662.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="671.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_METHOD&#39;</text>
+</g>
+<g id="edge10" class="edge"><title>0x7fd95840acb0&#45;&gt;0x7fd95840b330</title>
+<path fill="none" stroke="black" d="M631.176,-76.4273C649.512,-64.0917 676.622,-45.8543 696.259,-32.6437"/>
+<polygon fill="black" stroke="black" points="697.408,-33.9802 700.58,-29.7373 695.454,-31.0762 697.408,-33.9802"/>
+<text text-anchor="start" x="673" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node14" class="node"><title>root&#45;3</title>
+<text text-anchor="start" x="510.5" y="-163.3" font-family="Times,serif" font-size="14.00">IsGet</text>
+</g>
+<g id="edge11" class="edge"><title>root&#45;3&#45;&gt;0x7fd95840acb0</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M541.59,-152.427C556.831,-139.159 579.915,-119.062 595.221,-105.737"/>
+</g>
+<g id="edge12" class="edge"><title>0x7fd95840b780&#45;&gt;0x7fd95840b330</title>
+<path fill="none" stroke="black" d="M812.457,-76.4273C793.787,-64.0917 766.185,-45.8543 746.19,-32.6437"/>
+<polygon fill="black" stroke="black" points="746.928,-31.0335 741.792,-29.7373 744.999,-33.9537 746.928,-31.0335"/>
+<text text-anchor="start" x="783" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="node16" class="node"><title>root&#45;4</title>
+<text text-anchor="start" x="815.5" y="-163.3" font-family="Times,serif" font-size="14.00">IsPost</text>
+</g>
+<g id="edge13" class="edge"><title>root&#45;4&#45;&gt;0x7fd95840b780</title>
+<path fill="none" stroke="black" stroke-dasharray="1,5" d="M833,-152.427C833,-139.159 833,-119.062 833,-105.737"/>
+</g>
+<g id="node19" class="node"><title>0x7fd95840f380</title>
+<polygon fill="none" stroke="black" stroke-width="0.2" points="346.25,-29.5 155.75,-29.5 155.75,-0.5 346.25,-0.5 346.25,-29.5"/>
+<text text-anchor="start" x="163.5" y="-12.3" font-family="Courier,monospace" font-weight="bold" font-size="14.00">var</text>
+<text text-anchor="start" x="188.5" y="-12.3" font-family="Courier,monospace" font-size="14.00"> </text>
+<text text-anchor="start" x="197.5" y="-12.3" font-family="Courier,monospace" font-style="italic" font-size="14.00">&#39;REQUEST_HEADERS&#39;</text>
+</g>
+<g id="edge18" class="edge"><title>0x7fd95840ea38&#45;&gt;0x7fd95840f380</title>
+<path fill="none" stroke="black" d="M353.89,-76.4273C332.709,-63.988 301.31,-45.5474 278.774,-32.3117"/>
+<polygon fill="black" stroke="black" points="279.588,-30.7604 274.391,-29.7373 277.816,-33.7785 279.588,-30.7604"/>
+<text text-anchor="start" x="322" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+<g id="edge19" class="edge"><title>0x7fd95840fd78&#45;&gt;0x7fd95840f380</title>
+<path fill="none" stroke="black" d="M184.04,-76.4273C197.479,-64.299 217.241,-46.4656 231.814,-33.314"/>
+<polygon fill="black" stroke="black" points="233.238,-34.3863 235.778,-29.7373 230.893,-31.788 233.238,-34.3863"/>
+<text text-anchor="start" x="215" y="-50.8" font-family="Times,serif" font-size="9.00">①</text>
+</g>
+</g>
+</svg>
+
+</pre>
+</body>
+</html>
