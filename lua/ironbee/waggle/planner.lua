@@ -97,6 +97,38 @@ Planner.to_rule_ids = function(self, list, db)
     return r
 end
 
+-- Recursively insert rules that rule follows into the follow list.
+--
+-- Tables structured { rule = rule_id, result = true|false } will be
+-- inserted into the parameter "list" in the order they should
+-- execute leading up to the execution of rule.
+--
+-- This function will check for duplicates.
+-- 
+local insert_follows
+insert_follows = function(list, rule, db, seen)
+    -- Check we have a seen DB.
+    if seen== nil then
+        seen= {}
+    end
+
+    -- Check if the given rule is in it.
+    if seen[rule.id] ~= nil then
+        error( {
+            sig_id = rule.data.id,
+            sig_rev = rule.data.version,
+            msg = string.format("Rule %s attempted to follow itself.", rule.data.id)
+        }, 1)
+    end
+
+    for _, rule_link in ipairs(rule.data.follows) do
+        seen[rule_link.rule] = 1
+        insert_follows(list, db.db[rule_link.rule], db, seen)
+        seen[rule_link.rule] = nil
+        table.insert(list, rule_link)
+    end
+end
+
 -- Plan a single rule and all its dependencies.
 -- Returns true on success and exits with error({sig_id, sig_rev, msg}, 1) on error.
 Planner.plan_rule = function(self, rule, db)
@@ -142,23 +174,13 @@ Planner.plan_rule = function(self, rule, db)
     -- Build the rule chain to insert
     local rule_chain = {}
     for _, rule_link in ipairs(rule.data.follows) do
-        -- Insert the rule_link table. Simple.
-        table.insert(rule_chain, rule_link)
-
-        -- NOTE: This if block is a little unintuitive. 
-        --       Rules used in chains may never be independent rules.
-        --       Because we may have already scheduled a rule,
-        --       not then knowing it would be used in a chain,
-        --       we must remove it (the if-block). We remove
-        --       a rule by replacing its chain table with an empty list.
-        --       If a chained rule is not-yet used in the plan, we
-        --       mark it as such (the else-block) to prevent it
-        --       from ever being scheduled.
         if self.m_inplan[rule_link.rule] ~= nil then
             self.m_plan[self.m_inplan[rule_link.rule]] = {}
         else
             self.m_inplan[rule_link.rule] = #self.m_plan
         end
+
+        insert_follows(rule_chain, rule, db)
     end
     table.insert(rule_chain, { rule = rule.data.id, result = true })
 
