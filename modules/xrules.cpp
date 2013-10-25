@@ -1573,7 +1573,7 @@ namespace {
             is>>p;
         }
         catch (...) {
-            const std::string msg = 
+            const std::string msg =
                 std::string("Unable to parse time string: ") + str;
             BOOST_THROW_EXCEPTION(
                 IronBee::einval()
@@ -1596,7 +1596,7 @@ namespace {
 
             std::ostringstream os;
             std::locale loc(
-                os.getloc(), 
+                os.getloc(),
                 new boost::posix_time::time_facet("%H:%M:%S"));
             os.imbue(loc);
             os << "Checking current time "

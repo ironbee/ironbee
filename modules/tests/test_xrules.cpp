@@ -482,4 +482,3 @@ TEST_F(XRulesTest2, RespBlockNone) {
     ASSERT_TRUE(ib_tx);
     ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
 }
-

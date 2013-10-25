@@ -138,7 +138,7 @@ static ib_status_t geoip_lookup(
 
         ib_log_debug_tx(tx, "GeoIP record found.");
 
-        /* Add integers. */ 
+        /* Add integers. */
         tmp_field = NULL;
 
         tmp_str = GeoIP_code_by_id(geoip_id);
