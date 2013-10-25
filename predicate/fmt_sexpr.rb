@@ -10,13 +10,14 @@ def self.fmt_sexpr(s)
   s = s.dup
   while ! s.empty?
     line = s.slice!(/^[^()]+/)     ||
-           s.slice!(/^\([^()]+\)/) ||
+           s.slice!(/^\([^()]+\) ?/) ||
            s.slice!(/^\([^ ]+ ?/)  ||
            s.slice!(/^\)/)
 
     if line.nil?
       throw "Insanity error on #{s}"
     end
+    line.strip!
 
     if line == ')'
       indent -= 2
