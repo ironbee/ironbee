@@ -17,18 +17,21 @@
 
 /**
  * @file
- * @brief Predicate -- Predicate Playground
+ * @brief Predicate -- Predicate Playground Dot Generator.
  *
  * This is a simple little utility to read predicate expressions and display
- * the resulting parse trees and DAG.  Input is one predicate expression per
- * line with an optional label: LABEL EXPRESSION.
+ * the resulting parse trees and DAG.  Input is:
+ * @code
+ * line   := expression | label SP expression | define
+ * define := 'Define' SP name SP arglist SP body
+ * @endcode
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include <predicate/bfs.hpp>
 #include <predicate/dag.hpp>
-#include <predicate/dot.hpp>
+#include <predicate/dot2.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/parse.hpp>
 #include <predicate/pre_eval_graph.hpp>
@@ -47,24 +50,6 @@ namespace P = IronBee::Predicate;
 typedef map<size_t, string> root_names_t;
 
 /**
- * Node decorator for to_dot().
- *
- * Labels root nodes with all names.
- *
- * @sa Predicate::dot_node_decorator_t
- *
- * @param[in] names Root name map.
- * @param[in] G     Merge graph.  Need to fetch indices of @a node.
- * @param[in] node  Node to decorate.
- * @return Decoration string.
- **/
-string decorate_node(
-    const root_names_t&                names,
-    const P::MergeGraph&               G,
-    const IronBee::Predicate::node_cp& node
-);
-
-/**
  * Validation reporter.
  *
  * @param[out] should_abort Set to true on error.
@@ -77,19 +62,73 @@ void report(
     const string& message
 );
 
+bool handle_define(
+    P::CallFactory& call_factory,
+    const string& name,
+    const string& args,
+    const string& body
+);
+
+bool handle_expr(
+    const P::CallFactory& call_factory,
+    const string&         expr,
+    bool                  no_post_validation
+);
+
+P::node_p parse_expr(
+    const P::CallFactory& call_factory,
+    const string&         expr
+);
+
+void validate_graph(
+    const P::MergeGraph& G,
+    P::validation_e      which
+);
+
+void transform_graph(
+    P::MergeGraph&        G,
+    const P::CallFactory& call_factory
+);
+
+bool handle_graph_line(
+    const P::CallFactory& call_factory,
+    P::MergeGraph&        G,
+    root_names_t&         root_names,
+    const string&         expr
+);
+
+bool handle_graph_finish(
+    const P::CallFactory& call_factory,
+    P::MergeGraph&        G,
+    root_names_t&         root_names,
+    bool                  no_post_validation
+);
+
+string lookup_root_name(const root_names_t& root_names, size_t index);
+
+struct abort_error : runtime_error
+{
+    abort_error() : runtime_error("abort") {}
+};
+
 int main(int argc, char **argv)
 {
     using boost::bind;
+    static const string c_define("Define");
 
     // Command line options
     namespace po = boost::program_options;
 
-    bool parse_only = false;
+    bool expr_mode = false;
+    bool graph_mode = false;
+    bool no_post_validation = false;
 
     po::options_description desc("Options:");
     desc.add_options()
         ("help", "display help and exit")
-        ("parse", po::bool_switch(&parse_only), "only display parse trees")
+        ("expr", po::bool_switch(&expr_mode), "expression mode")
+        ("graph", po::bool_switch(&graph_mode), "graph mode")
+        ("no-post-validate", po::bool_switch(&no_post_validation), "no transform")
         ;
 
     po::variables_map vm;
@@ -101,167 +140,78 @@ int main(int argc, char **argv)
     );
     po::notify(vm);
 
-    if (vm.count("help")) {
+    if (vm.count("help") || (graph_mode && expr_mode)) {
         cout << desc << endl;
         return 1;
     }
     // End command line options
 
-    P::MergeGraph G;
     P::CallFactory call_factory;
-    string expr;
-    P::node_list_t roots;
-    root_names_t root_names;
-    P::dot_node_decorator_t decorator =
-        bind(decorate_node, boost::ref(root_names), boost::ref(G), _1);
+    string line;
 
     P::Standard::load(call_factory);
 
-    while (getline(cin, expr)) {
-        string label;
+    // For Graph Mode
+    P::MergeGraph G;
+    root_names_t root_names;
 
-        cout << "Read " << expr << endl;
-        size_t i = expr.find_first_of(" ");
-        size_t j = expr.find_first_of("(");
-        if (i == string::npos || j < i) {
-            i = 0;
-        }
-        else {
-            label = expr.substr(0, i);
-            ++i;
-        }
+    while (getline(cin, line)) {
+        // Handle a define line.
+        if (
+            line.length() > c_define.length() &&
+            line.substr(0, c_define.length()) == c_define
+        ) {
+            // Define lineession
+            size_t name_at = line.find_first_of(" ") + 1;
+            size_t args_at = line.find_first_of(" ", name_at) + 1;
+            size_t body_at = line.find_first_of(" ", args_at) + 1;
 
-        P::node_p parse_tree;
-        try {
-            parse_tree = P::parse_call(expr, i, call_factory);
-        }
-        catch (const IronBee::error& e) {
-            cerr << "ERROR: "
-                 << *boost::get_error_info<IronBee::errinfo_what>(e)
-                 << endl;
-            continue;
-        }
-        if (i != expr.length() - 1) {
-            // Parse failed.
-            size_t pre_length  = max(i+1,               size_t(10));
-            size_t post_length = max(expr.length() - i, size_t(10));
-            cerr
-                << boost::format(
-                    "ERROR: Incomplete parse: %s --ERROR-- %s"
-                )
-                % expr.substr(i-pre_length, pre_length).c_str()
-                % expr.substr(i+1, post_length).c_str()
-                << endl;
-        }
-
-        cout << "Parsed to:" << endl;
-        P::to_dot(cout, parse_tree);
-
-        if (parse_only) {
-            continue;
-        }
-
-        size_t index = G.add_root(parse_tree);
-        roots.push_back(parse_tree);
-        root_names[index] = label;
-
-        cout << "Added as index " << index << " with label " << label << endl;
-        P::to_dot(
-            cout,
-            G.roots().first, G.roots().second,
-            decorator
-        );
-    }
-
-    if (parse_only) {
-        return 0;
-    }
-
-    cout << "Validating..." << endl;
-    {
-        bool should_abort = false;
-        P::validate_graph(
-            P::PRE_TRANSFORM,
-            bind(report, boost::ref(should_abort), _1, _2),
-            G
-        );
-        if (should_abort) {
-            return 1;
-        }
-    }
-
-    cout << "Transforming..." << endl;
-    {
-        bool needs_transform = true;
-        bool should_abort = false;
-        size_t pass_number = 0;
-        while (needs_transform) {
-            ++pass_number;
-            cout << "Pass " << pass_number << endl;
-            needs_transform =
-                P::transform_graph(
-                    bind(report, boost::ref(should_abort), _1, _2),
-                    G,
-                    call_factory
-                );
-            if (should_abort) {
+            if (
+                name_at == string::npos ||
+                args_at == string::npos ||
+                body_at == string::npos
+            ) {
+                cerr << "ERROR: Parsing define: " << line;
                 return 1;
             }
-            if (needs_transform) {
-                P::to_dot(
-                    cout,
-                    G.roots().first, G.roots().second,
-                    decorator
-                );
+
+            bool success = handle_define(
+                call_factory,
+                line.substr(name_at, args_at - name_at - 1),
+                line.substr(args_at, body_at - args_at - 1),
+                line.substr(body_at)
+            );
+            if (! success) {
+                return 1;
             }
-            else {
-                cout << "No change." << endl;
+
+            continue;
+        }
+
+        // If in expression mode and not a define line, treat as a sexpr.
+        if (expr_mode) {
+            bool success = handle_expr(call_factory, line, no_post_validation);
+            if (! success) {
+                return 1;
+            }
+        }
+        else {
+            // Graph mode.
+            bool success = handle_graph_line(call_factory, G, root_names, line);
+            if (! success) {
+                return 1;
             }
         }
     }
 
-    cout << "Validating..." << endl;
-    {
-        bool should_abort = false;
-        P::validate_graph(
-            P::POST_TRANSFORM,
-            bind(report, boost::ref(should_abort), _1, _2),
-            G
-        );
-        if (should_abort) {
+    if (graph_mode) {
+        bool success = handle_graph_finish(call_factory, G, root_names, no_post_validation);
+        if (! success) {
             return 1;
         }
     }
 
     return 0;
-}
-
-string decorate_node(
-    const root_names_t&                names,
-    const P::MergeGraph&               G,
-    const IronBee::Predicate::node_cp& node
-)
-{
-    string label;
-
-    try {
-        BOOST_FOREACH(size_t index, G.root_indices(node)) {
-            root_names_t::const_iterator i = names.find(index);
-            if (i != names.end()) {
-                label += i->second + "\\n";
-            }
-        }
-    }
-    catch (IronBee::enoent) {}
-
-    P::call_cp as_call = boost::dynamic_pointer_cast<const P::Call>(node);
-    if (as_call) {
-        label += as_call->name();
-    }
-    else {
-        label += node->to_s();
-    }
-    return "label=\"" + label + "\"";
 }
 
 void report(
@@ -273,5 +223,240 @@ void report(
     cout << (is_error ? "ERROR" : "WARNING") << ": " << message << endl;
     if (is_error) {
         should_abort = true;
+    }
+}
+
+bool handle_define(
+    P::CallFactory& call_factory,
+    const string& name,
+    const string& args,
+    const string& body
+)
+{
+    P::node_p body_node;
+    try {
+        size_t i = 0;
+        if (body[0] == '(') {
+            body_node = P::parse_call(body, i, call_factory);
+        }
+        else {
+            body_node = P::parse_literal(body, i);
+        }
+    }
+    catch (const IronBee::einval& e) {
+        cerr << "ERROR: Error parsing body: "
+             << *boost::get_error_info<IronBee::errinfo_what>(e)
+             << endl;
+        return false;
+    }
+
+    bool duplicate = true;
+    try {
+        call_factory(name);
+    }
+    catch (IronBee::enoent) {
+        duplicate = false;
+    }
+    if (duplicate) {
+        cerr << "ERROR: Already have function named " << name << endl;
+        return false;
+    }
+
+    P::Standard::template_arg_list_t arg_list;
+    {
+        size_t i = 0;
+        while (i != string::npos) {
+            size_t next_i = args.find_first_of(',', i);
+            arg_list.push_back(args.substr(i, next_i - i));
+            i = args.find_first_not_of(',', next_i);
+        }
+    }
+
+    call_factory.add(
+        name,
+        P::Standard::define_template(arg_list, body_node)
+    );
+
+    return true;
+}
+
+bool handle_expr(
+    const P::CallFactory& call_factory,
+    const string&         expr,
+    bool                  no_post_validation
+)
+{
+    try {
+        P::MergeGraph G;
+        P::node_p node;
+
+        node = parse_expr(call_factory, expr);
+        G.add_root(node);
+
+        P::to_dot2(cout, G, P::VALIDATE_PRE);
+
+        transform_graph(G, call_factory);
+
+        P::to_dot2(cout, G,
+            (no_post_validation ? P::VALIDATE_NONE : P::VALIDATE_POST)
+        );
+    }
+    catch (const IronBee::error& e) {
+        cerr << "ERROR: Expression error: "
+             << *boost::get_error_info<IronBee::errinfo_what>(e)
+             << endl;
+        return false;
+    }
+    catch (abort_error) {
+        // Error already reported.
+        return false;
+    }
+
+    return true;
+}
+
+P::node_p parse_expr(
+    const P::CallFactory& call_factory,
+    const string&         expr
+)
+{
+    size_t i = 0;
+
+    P::node_p node = P::parse_call(expr, i, call_factory);
+    if (i != expr.length() - 1) {
+        // Parse failed.
+        size_t pre_length  = max(i+1,               size_t(10));
+        size_t post_length = max(expr.length() - i, size_t(10));
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << IronBee::errinfo_what(
+                (boost::format("ERROR: Incomplete parse: %s --ERROR-- %s")
+                    % expr.substr(i-pre_length, pre_length).c_str()
+                    % expr.substr(i+1, post_length).c_str()
+                ).str()
+            )
+        );
+    }
+
+    return node;
+}
+
+void validate_graph(
+    const P::MergeGraph& G,
+    P::validation_e      which
+)
+{
+    bool should_abort = false;
+    P::validate_graph(
+        which,
+        bind(report, boost::ref(should_abort), _1, _2),
+        G
+    );
+    if (should_abort) {
+        throw abort_error();
+    }
+}
+
+void transform_graph(
+    P::MergeGraph&        G,
+    const P::CallFactory& call_factory
+)
+{
+    bool needs_transform = true;
+    bool should_abort = false;
+    while (needs_transform) {
+        needs_transform =
+            P::transform_graph(
+                bind(report, boost::ref(should_abort), _1, _2),
+                G,
+                call_factory
+            );
+        if (should_abort) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << IronBee::errinfo_what(
+                    "Transformation failed."
+                )
+            );
+        }
+    }
+}
+
+bool handle_graph_line(
+    const P::CallFactory& call_factory,
+    P::MergeGraph&        G,
+    root_names_t&         root_names,
+    const string&         expr
+)
+{
+    try {
+        P::node_p node;
+        size_t space_at = expr.find_first_of(' ');
+        size_t lp_at = expr.find_first_of('(');
+        size_t expr_at = 0;
+        string label;
+
+        if (space_at != string::npos && space_at < lp_at) {
+            // Has label.
+            label = expr.substr(0, space_at);
+            expr_at = space_at + 1;
+        }
+
+        node = parse_expr(call_factory, expr.substr(expr_at));
+        size_t index = G.add_root(node);
+        if (label.empty()) {
+            label = boost::lexical_cast<string>(index);
+        }
+        root_names[index] = label;
+    }
+    catch (const IronBee::error& e) {
+        cout << "ERROR: "
+             << *boost::get_error_info<IronBee::errinfo_what>(e)
+             << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool handle_graph_finish(
+    const P::CallFactory& call_factory,
+    P::MergeGraph&        G,
+    root_names_t&         root_names,
+    bool                  no_post_validation
+)
+{
+    P::root_namer_t root_namer =
+        bind(lookup_root_name, boost::ref(root_names), _1);
+    try {
+        P::to_dot2(cout, G, P::VALIDATE_PRE, root_namer);
+
+        transform_graph(G, call_factory);
+
+        P::to_dot2(cout, G,
+            (no_post_validation ? P::VALIDATE_NONE : P::VALIDATE_POST),
+            root_namer
+        );
+    }
+    catch (const IronBee::error& e) {
+        cout << "ERROR: "
+             << *boost::get_error_info<IronBee::errinfo_what>(e)
+             << endl;
+        return false;
+    }
+    catch (abort_error) {
+        // Error already reported.
+        return false;
+    }
+
+    return true;
+}
+
+string lookup_root_name(const root_names_t& root_names, size_t index)
+{
+    root_names_t::const_iterator i = root_names.find(index);
+    if (i == root_names.end()) {
+        return "undefined";
+    }
+    else {
+        return i->second;
     }
 }
