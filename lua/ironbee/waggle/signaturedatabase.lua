@@ -2,6 +2,7 @@ local Util = require('ironbee/waggle/util')
 local Signature = require('ironbee/waggle/signature')
 local ActionSignature = require('ironbee/waggle/actionsignature')
 local StreamInspect = require('ironbee/waggle/streaminspect')
+local Predicate = require('ironbee/waggle/predicaterule')
 local ExternalSignature = require('ironbee/waggle/externalsignature')
 
 -- ###########################################################################
@@ -81,6 +82,24 @@ SignatureDatabase.Action = function(self, rule_id, rule_version)
     end
 
     local sig = ActionSignature:new(rule_id, rule_version, self)
+
+    self.db[rule_id] = sig
+
+    return sig
+end
+
+SignatureDatabase.Predicate = function(self, rule_id, rule_version)
+
+    if self.db[rule_id] ~= nil then
+        error(
+        {
+            sig_id = rule_id,
+            sig_rev = rule_version,
+            msg = string.format("Cannot redefine predicate signature/rule %s:%s.", rule_id, rule_version)
+        }, 1)
+    end
+
+    local sig = Predicate:new(rule_id, rule_version, self)
 
     self.db[rule_id] = sig
 

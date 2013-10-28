@@ -77,6 +77,20 @@ _M.Action = function(self, rule_id, rule_version)
 end
 
 -- See Sig.
+_M.Predicate = function(self, rule_id, rule_version)
+    if type(self) == 'string' then
+        rule_version = rule_id
+        rule_id = self
+    end
+
+    local sig = _M.DEFAULT_RULE_DB:Predicate(rule_id, rule_version)
+
+    set_sig_meta(sig)
+
+    return sig
+end
+
+-- See Sig.
 _M.ExtSig = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
