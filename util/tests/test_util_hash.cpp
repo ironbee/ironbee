@@ -487,3 +487,31 @@ TEST_F(TestIBUtilHash, iterator) {
     ASSERT_TRUE(found_b);
     ASSERT_TRUE(found_c);
 }
+
+TEST_F(TestIBUtilHash, non_printable_keys) {
+    ib_hash_t *hash;
+    const char *key = "\xff\xfe\xfd\xed\xee\xef";
+    const char *data = "Some data.";
+    char       *hash_data;
+    ASSERT_EQ(IB_OK, ib_hash_create_nocase(&hash, m_pool));
+    ASSERT_EQ(
+        IB_OK,
+        ib_hash_set(
+            hash,
+            key,
+            const_cast<void *>(static_cast<const void *>(data)))
+    );
+
+    hash_data = NULL;
+    ASSERT_EQ(IB_OK, ib_hash_get(hash, &hash_data, key));
+    ASSERT_EQ(data, hash_data);
+    ASSERT_STREQ(data, hash_data);
+
+    hash_data = NULL;
+    ASSERT_EQ(IB_OK, ib_hash_remove(hash, &hash_data, key));
+    ASSERT_EQ(data, hash_data);
+    ASSERT_STREQ(data, hash_data);
+
+    hash_data = NULL;
+    ASSERT_EQ(IB_ENOENT, ib_hash_get(hash, &hash_data, key));
+}

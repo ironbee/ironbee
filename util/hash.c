@@ -436,10 +436,7 @@ static char ib_hash_tolower(
         248, 249, 250, 251, 252, 253, 254, 255
     };
 
-    /* Remove sign information before using as an index. */
-    unsigned char c2 = c;
-
-    return s_table[c2];
+    return s_table[(unsigned char)c];
 }
 
 /* End Internal Definitions */
