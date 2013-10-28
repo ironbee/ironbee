@@ -12,6 +12,7 @@
 require 'open3'
 $:.unshift(File.dirname(File.expand_path(__FILE__)))
 require 'fmt_sexpr'
+require 'cgi'
 
 BASEDIR = File.dirname(File.expand_path(__FILE__))
 EXTRACT = File.join(BASEDIR, "extract_predicate_from_waggle.rb")
@@ -146,7 +147,9 @@ end
 
 # Render an sexpr as an sexpr.
 def render_sexpr(sexpr)
-  IronBee::Predicate::fmt_sexpr(sexpr).gsub(/(?<=\()\w+/) do |x|
+  CGI::escapeHTML(
+    IronBee::Predicate::fmt_sexpr(sexpr)
+  ).gsub(/(?<=\()\w+/) do |x|
     "<b>#{x}</b>"
   end.gsub(/'(?:\\?+.)*?'/) do |x|
     "<i>#{x}</i>"
@@ -203,7 +206,7 @@ IO.foreach(waggle_file) do |line|
     print "<td class=predicate></td>"
   end
   puts "<td class=linenumber>#{line_number}</td>"
-  puts "<td><span class=line>#{line}</span>#{post}</td>"
+  puts "<td><span class=line>#{CGI::escapeHTML(line)}</span>#{post}</td>"
 
   puts "</tr>"
 end
