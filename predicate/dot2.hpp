@@ -21,6 +21,10 @@
  *
  * Alternative graphviz renderer.
  *
+ * These renderes are designed to generate pretty and useful graphs for
+ * consumption by predicate expression writers.  In contrast, to_dot() is a
+ * more low level routine designed for use by Predicate developers.
+ *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
@@ -41,12 +45,19 @@ typedef boost::function<std::string(size_t)> root_namer_t;
 /**
  * Write @a G out to @a out in GraphViz format.
  *
- * This version is designed to generate pretty and useful graphs for
- * consumption by predicate expression writers.  In contrast, to_dot() is a
- * more low level routine designed for use by Predicate developers.  The main
- * additional information to_dot2() provides is the ability to attach names to
- * roots and to display validation information.  Beyond that, it produces a
- * prettier and cleaner graph.
+ * @param[in] out Where to write output.
+ * @param[in] G   Graph to render.
+ * @param[in] root_namer If provided, additional roots will be rendered and
+ *                       attached to their appropriate nodes.
+ **/
+void to_dot2(
+    std::ostream& out,
+    const MergeGraph& G,
+    root_namer_t root_namer = root_namer_t()
+);
+
+/*
+ * Write @a G out to @a out in GraphViz format with validation results.
  *
  * @param[in] out Where to write output.
  * @param[in] G   Graph to render.
@@ -56,10 +67,10 @@ typedef boost::function<std::string(size_t)> root_namer_t;
  * @param[in] root_namer If provided, additional roots will be rendered and
  *                       attached to their appropriate nodes.
  **/
-void to_dot2(
+void to_dot2_validate(
     std::ostream& out,
     const MergeGraph& G,
-    validation_e validate = VALIDATE_NONE,
+    validation_e validate,
     root_namer_t root_namer = root_namer_t()
 );
 

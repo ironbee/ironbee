@@ -293,11 +293,11 @@ bool handle_expr(
         node = parse_expr(call_factory, expr);
         G.add_root(node);
 
-        P::to_dot2(cout, G, P::VALIDATE_PRE);
+        P::to_dot2_validate(cout, G, P::VALIDATE_PRE);
 
         transform_graph(G, call_factory);
 
-        P::to_dot2(cout, G,
+        P::to_dot2_validate(cout, G,
             (no_post_validation ? P::VALIDATE_NONE : P::VALIDATE_POST)
         );
     }
@@ -427,11 +427,11 @@ bool handle_graph_finish(
     P::root_namer_t root_namer =
         bind(lookup_root_name, boost::ref(root_names), _1);
     try {
-        P::to_dot2(cout, G, P::VALIDATE_PRE, root_namer);
+        P::to_dot2_validate(cout, G, P::VALIDATE_PRE, root_namer);
 
         transform_graph(G, call_factory);
 
-        P::to_dot2(cout, G,
+        P::to_dot2_validate(cout, G,
             (no_post_validation ? P::VALIDATE_NONE : P::VALIDATE_POST),
             root_namer
         );

@@ -213,10 +213,10 @@ enum status_t {
  * @param[in]  message  Message.
  **/
 void dot_reporter(
-    status_t&          status,
-    string&            report,
-    bool               is_error,
-    const std::string& message
+    status_t&     status,
+    string&       report,
+    bool          is_error,
+    const string& message
 )
 {
     status = is_error ? STATUS_ERROR : STATUS_WARN;
@@ -225,13 +225,29 @@ void dot_reporter(
               escape_html(message) + "</font></td></tr>";
 }
 
-}
+/**
+ * Node hook.
+ *
+ * First argument is output stream to output additional dot *before* node.
+ * Second argument is a string of additional node properties.
+ * Third argument is is the node itself.
+ **/
+typedef boost::function<void(ostream&, string&, const node_cp&)>
+    node_hook_t;
 
-void to_dot2(
-    std::ostream& out,
+/**
+ * Base to_dot2() routine.
+ *
+ * @param[in] out        Where to write dot.
+ * @param[in] G          MergeGraph, used to detect roots.
+ * @param[in] root_namer How to name roots.
+ * @param[in] node_hook  Additional rendering logic.
+  **/
+void to_dot2_base(
+    ostream& out,
     const MergeGraph& G,
-    validation_e validate,
-    root_namer_t root_namer
+    root_namer_t root_namer,
+    node_hook_t node_hook
 )
 {
     typedef set<node_cp> node_cset_t;
@@ -264,46 +280,11 @@ void to_dot2(
             boost::shared_ptr<const Call> call =
                 boost::dynamic_pointer_cast<const Call>(node);
             assert(call);
-            status_t status = STATUS_OK;
-            string report;
-            string color;
+            string extra;
 
-            // Status.
-            switch (validate) {
-                case VALIDATE_NONE: break;
-                case VALIDATE_PRE:
-                    node->pre_transform(NodeReporter(
-                        boost::bind(
-                            dot_reporter,
-                            boost::ref(status),
-                            boost::ref(report),
-                            _1, _2
-                        ), node, false
-                    ));
-                    break;
-                case VALIDATE_POST:
-                    node->post_transform(NodeReporter(
-                        boost::bind(
-                            dot_reporter,
-                            boost::ref(status),
-                            boost::ref(report),
-                            _1, _2
-                        ), node, false
-                    ));
-                    break;
-            };
-            switch (status) {
-                case STATUS_OK:
-                    break;
-                case STATUS_WARN:
-                    color = ", style=filled, fillcolor=orange";
-                    break;
-                case STATUS_ERROR:
-                    color = ", style=filled, fillcolor=red";
-                    break;
-            };
-            if (status != STATUS_OK) {
-                render_report(out, report, node);
+            // Let node hook run.
+            if (node_hook) {
+                node_hook(out, extra, node);
             }
 
             // Otherwise node is a call.
@@ -349,7 +330,7 @@ void to_dot2(
                 render_node(out, node,
                     "label=<" +
                     boost::algorithm::join(name, " ") + ">" +
-                    color
+                    extra
                 );
             }
         }
@@ -359,6 +340,76 @@ void to_dot2(
 
     // Footer
     out << "}" << endl;
+}
+
+//! Node Hook: Validate
+void nh_validate(
+    validation_e   validate,
+    ostream&       out,
+    string&        extra,
+    const node_cp& node
+)
+{
+    status_t status;
+    string report;
+
+    switch (validate) {
+        case VALIDATE_NONE: return;
+        case VALIDATE_PRE:
+            node->pre_transform(NodeReporter(
+                boost::bind(
+                    dot_reporter,
+                    boost::ref(status),
+                    boost::ref(report),
+                    _1, _2
+                ), node, false
+            ));
+            break;
+        case VALIDATE_POST:
+            node->post_transform(NodeReporter(
+                boost::bind(
+                    dot_reporter,
+                    boost::ref(status),
+                    boost::ref(report),
+                    _1, _2
+                ), node, false
+            ));
+            break;
+    };
+    switch (status) {
+        case STATUS_OK:
+            break;
+        case STATUS_WARN:
+            extra = ", style=filled, fillcolor=orange";
+            break;
+        case STATUS_ERROR:
+            extra = ", style=filled, fillcolor=red";
+            break;
+    };
+    if (status != STATUS_OK) {
+        render_report(out, report, node);
+    }
+}
+
+}
+
+void to_dot2_validate(
+    ostream&          out,
+    const MergeGraph& G,
+    validation_e      validate,
+    root_namer_t      root_namer
+)
+{
+    to_dot2_base(out, G, root_namer, bind(nh_validate, validate, _1, _2, _3));
+}
+
+void to_dot2(
+    ostream&          out,
+    const MergeGraph& G,
+    root_namer_t      root_namer
+)
+{
+    to_dot2_base(out, G, root_namer, node_hook_t());
 }
 
 } // Predicate
