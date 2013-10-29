@@ -93,7 +93,9 @@ bool Cat::transform(
             merge_graph.remove(me, child);
         }
 
-        result = true;
+        if (! to_remove.empty()) {
+            result = true;
+        }
     }
 
     // Become child if only one child.
