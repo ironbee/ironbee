@@ -61,7 +61,13 @@ if test -n "${apxs_path}"; then
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(apxs CFLAGS: $APXS_CFLAGS); fi
     APXS_CPPFLAGS=""
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(apxs CPPFLAGS: $APXS_CPPFLAGS); fi
-    APXS_LDFLAGS="-L`${APXS} -q LIBDIR`"
+    APXS_LIBDIR=`${APXS} -q LIBDIR`
+    if test -d "${APXS_LIBDIR}"; then
+        APXS_LDFLAGS="-L${APXS_LIBDIR}"
+    else
+        APXS_LDFLAGS=""
+    fi
+    APXS_LDFLAGS="`$APXS -q EXTRA_LDFLAGS` ${APXS_LDFLAGS}"
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(apxs LDFLAGS: $APXS_LDFLAGS); fi
     APXS_LIBS="`$APXS -q LIBS` `$APXS -q EXTRA_LIBS`"
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(apxs LIBS: $APXS_LIBS); fi
