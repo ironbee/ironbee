@@ -467,7 +467,7 @@ void nh_value(
     }
 
     if (! values.empty()) {
-        extra += ", fillcolor=\"green\"";
+        extra += ", fillcolor=\"#BDECB6\"";
         render_values(out, node);
     }
 }
