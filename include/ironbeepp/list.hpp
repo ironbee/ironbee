@@ -80,77 +80,49 @@ class pointer_list_const_iterator :
     >
 {
 public:
-    //! Construct from ib_list_node_t.
-    explicit
-    pointer_list_const_iterator(ib_list_node_t* n) :
-        m_node(n)
+    //! Construct from an ib_list_t and ib_list_node_t.
+    pointer_list_const_iterator(const ib_list_t* l, const ib_list_node_t* n) :
+        m_list(l),
+        m_node(n),
+        m_before_the_beginning(false),
+        m_past_the_end(false)
     {
-        init_node(m_past_the_end);
-        init_node(m_before_the_beginning);
+        // nop
     }
 
     //! Default constructor; all operations except assignment undefined.
     pointer_list_const_iterator() :
-        m_node(NULL)
+        m_list(NULL),
+        m_node(NULL),
+        m_before_the_beginning(false),
+        m_past_the_end(false)
     {
-        init_node(m_past_the_end);
-        init_node(m_before_the_beginning);
-    }
-
-    //! Copy constructor.
-    pointer_list_const_iterator(
-        const pointer_list_const_iterator& other
-    )
-    {
-        init_node(m_past_the_end);
-        init_node(m_before_the_beginning);
-
-        if (other.m_node == &other.m_before_the_beginning) {
-            m_before_the_beginning.next = other.m_before_the_beginning.next;
-            m_node = &m_before_the_beginning;
-        }
-        else if (other.m_node == & other.m_past_the_end) {
-            m_past_the_end.prev = other.m_past_the_end.prev;
-            m_node = &m_past_the_end;
-        }
-        else {
-            m_node = other.m_node;
-        }
+        //
     }
 
     //! Provide underlying ib_list_node_t.
     ib_list_node_t* node() const
     {
-        if (m_node != &m_past_the_end && m_node != &m_before_the_beginning) {
-            return m_node;
-        }
-        else {
-            return NULL;
-        }
+        return m_node;
     }
 
 private:
     friend class boost::iterator_core_access;
 
-    //! Initialize @a n to all NULLs.
-    static void init_node(ib_list_node_t& n)
-    {
-        n.next = NULL;
-        n.prev = NULL;
-        n.data = NULL;
-    }
-
     //! Increment iterator.
     void increment()
     {
-        if (m_node != &m_past_the_end) {
-            if (m_node->next) {
+        if (! m_past_the_end) {
+            if (m_before_the_beginning) {
+                m_node = ib_list_first_const(m_list);
+                m_before_the_beginning = false;
+            }
+            else if (m_node->next) {
                 m_node = m_node->next;
             }
             else {
-                // moving past end
-                m_past_the_end.prev = m_node;
-                m_node = &m_past_the_end;
+                m_node = NULL;
+                m_past_the_end = true;
             }
         }
     }
@@ -158,14 +130,17 @@ private:
     //! Decrement iterator.
     void decrement()
     {
-        if (m_node != &m_before_the_beginning) {
-            if (m_node->prev) {
+        if (! m_before_the_beginning) {
+            if (m_past_the_end) {
+                m_node = ib_list_last_const(m_list);
+                m_past_the_end = false;
+            }
+            else if (m_node->prev) {
                 m_node = m_node->prev;
             }
             else {
-                // moving before beginning
-                m_before_the_beginning.next = m_node;
-                m_node = &m_before_the_beginning;
+                m_node = NULL;
+                m_before_the_beginning = true;
             }
         }
     }
@@ -176,15 +151,10 @@ private:
     ) const
     {
         return
-            (m_node == other.m_node) ||
-            (
-                m_node == &m_before_the_beginning &&
-                other.m_node == &other.m_before_the_beginning
-            ) ||
-            (
-                m_node == &m_past_the_end &&
-                other.m_node == &other.m_past_the_end
-            )
+            (m_node == other.m_node) &&
+            (m_list == other.m_list) &&
+            (m_before_the_beginning == other.m_before_the_beginning) &&
+            (m_past_the_end == other.m_past_the_end)
             ;
     }
 
@@ -194,9 +164,10 @@ private:
         return reinterpret_cast<T>(m_node->data);
     }
 
-    ib_list_node_t  m_before_the_beginning;
-    ib_list_node_t  m_past_the_end;
-    ib_list_node_t* m_node;
+    const ib_list_t* m_list;
+    const ib_list_node_t* m_node;
+    bool m_before_the_beginning;
+    bool m_past_the_end;
 };
 
 /**
@@ -237,13 +208,13 @@ public:
         // nop
     }
 
-    //! Construct from ib_list_node_t.
-    explicit
+    //! Construct from ib_list_t and ib_list_node_t.
     list_const_iterator(
-        ib_list_node_t* n
+        const ib_list_t *l,
+        const ib_list_node_t* n
     )  :
         list_const_iterator::iterator_adaptor_(
-            pointer_list_const_iterator<typename T::ib_type>(n)
+            pointer_list_const_iterator<typename T::ib_type>(l, n)
         )
     {
         // nop
@@ -443,7 +414,7 @@ public:
     //! Iterator to beginning of list.
     iterator begin() const
     {
-        return iterator(IB_LIST_FIRST(ib()));
+        return iterator(ib(), IB_LIST_FIRST(ib()));
     }
 
     //! Iterator just past end of list.
@@ -453,7 +424,7 @@ public:
             return begin();
         }
         else {
-            return boost::next(iterator(IB_LIST_LAST(ib())));
+            return boost::next(iterator(ib(), IB_LIST_LAST(ib())));
         }
     }
 
