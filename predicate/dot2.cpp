@@ -424,7 +424,7 @@ void nh_validate(
     const node_cp& node
 )
 {
-    status_t status;
+    status_t status = STATUS_OK;
     string report;
 
     switch (validate) {
