@@ -30,6 +30,8 @@ IronBee v0.9.0
 
 - A variety of simplifying transformations have been added.
 
+- Fixed bug causing Predicate rules to fire multiple times.
+
 **Fast**
 
 - Added `extract_waggle.rb` to extract fast patterns from waggle rules and updated `build.rb` to use appropriately for `.lua` and `.waggle` files.
