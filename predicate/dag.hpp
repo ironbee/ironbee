@@ -121,6 +121,9 @@ typedef std::list<node_p> node_list_t;
 //! Weak list of nodes.  See parents().
 typedef std::list<weak_node_p> weak_node_list_t;
 
+//! List of const nodes.
+typedef std::list<node_cp> node_clist_t;
+
 /**
  * A node in the predicate DAG.
  *

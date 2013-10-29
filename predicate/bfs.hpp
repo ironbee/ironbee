@@ -235,14 +235,14 @@ struct bfs_down_tag {};
 
 //! Append @c node_cp's to parents of @a which to @a list.
 void bfs_append_list(
-    std::list<node_cp>& list,
+    node_clist_t& list,
     const node_cp&      which,
     bfs_up_tag
 );
 
 //! Append @c node_cp's to children of @a which to @a list.
 void bfs_append_list(
-    std::list<node_cp>& list,
+    node_clist_t& list,
     const node_cp&      which,
     bfs_down_tag
 );
@@ -269,7 +269,7 @@ void bfs(
 )
 {
     std::set<node_cp>  visited;
-    std::list<node_cp> todo(begin, end);
+    node_clist_t todo(begin, end);
     while (! todo.empty()) {
         node_cp n = todo.front();
         todo.pop_front();

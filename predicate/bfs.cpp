@@ -30,7 +30,7 @@ namespace Predicate {
 namespace Impl {
 
 void bfs_append_list(
-    std::list<node_cp>& list,
+    node_clist_t& list,
     const node_cp&      which,
     bfs_up_tag
 )
@@ -41,7 +41,7 @@ void bfs_append_list(
 }
 
 void bfs_append_list(
-    std::list<node_cp>& list,
+    node_clist_t& list,
     const node_cp&      which,
     bfs_down_tag
 )
