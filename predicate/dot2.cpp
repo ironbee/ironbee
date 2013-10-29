@@ -234,22 +234,39 @@ void dot_reporter(
 void render_value(
     ostream&     out,
     const Value& value
+);
+
+/**
+ * Render a list of values.
+ *
+ * @param[out] out    Where to write.
+ * @param[in]  values What to write.
+ **/
+void render_valuelist(
+    ostream&         out,
+    const ValueList& values
+)
+{
+    out << "<table border=\"0\">";
+    BOOST_FOREACH(const Value& value, values) {
+        out << "<tr><td align=\"right\">" << escape_html(value.name_as_s())
+            << "</td><td align=\"left\">";
+        render_value(out, value);
+        out << "</td></tr>";
+    }
+    out << "</table>";
+}
+
+void render_value(
+    ostream&     out,
+    const Value& value
 )
 {
     if (value.type() != Value::LIST) {
-        out << escape_html(value.name()) << ":" << escape_html(value.to_s());
+        out << escape_html(value.to_s());
     }
     else {
-        bool first = true;
-        out << "[";
-        BOOST_FOREACH(const Value& subvalue, value.value_as_list<Value>()) {
-            if (first) {
-                out << ", ";
-                first = false;
-            }
-            render_value(out, subvalue);
-        }
-        out << "]";
+        render_valuelist(out, value.value_as_list<Value>());
     }
 }
 
@@ -264,18 +281,14 @@ void render_values(
     const node_cp& node
 )
 {
-    size_t i = 0;
-    BOOST_FOREACH(const Value& value, node->values()) {
-        ++i;
-        out << "  { rank = same; \"" << node
-            << "\" \"value-" << node << "-" << i << "\" }" << endl;
-        out << "  \"value-" << node << "-" << i << "\" ["
-            << "fontsize=10, shape=none, label=<";
-        render_value(out, value);
-        out << ">];\n";
-        out << "  \"" << node << "\" -> \"value-" << node << "-" << i
-            << "\" [weight=1000, dir=none, penwidth=0.5];\n";
-    }
+    out << "  { rank = same; \"" << node
+        << "\" \"value-" << node << "\" }" << endl
+        << "  \"" << node << "\" -> \"value-" << node
+        << "\" [weight=1000, dir=none, penwidth=0.5];\n"
+        << "  \"value-" << node << "\" ["
+        << "fontsize=10, shape=none, label=<";
+    render_valuelist(out, node->values());
+    out << ">];" << endl;
 }
 
 /**
