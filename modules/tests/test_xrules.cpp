@@ -370,6 +370,31 @@ TEST_F(XRulesTest, RunGeoIP) {
     ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
 }
 
+TEST_F(XRulesTest, RunGeoIPNoMatch) {
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_persistence_framework.so\"\n"
+            "LoadModule \"ibmod_init_collection.so\"\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "InitCollection GeoIP vars: country_code=DE\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRuleGeo \"US\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_FALSE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
+
+
 TEST_F(XRulesTest, SetFlag) {
     ib_field_t       *field;
     ib_num_t          num;
