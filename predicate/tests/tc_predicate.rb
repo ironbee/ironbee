@@ -48,6 +48,27 @@ class TestPredicate < Test::Unit::TestCase
     assert_log_no_match /CLIPP ANNOUNCE: field_not_present/
   end
 
+  def test_context
+    foo_config = <<-EOS
+      <Site foo>
+          SiteId 26058ae0-22e4-0131-3b7a-001f5b320164
+          Hostname foo
+          Action id:2 phase:REQUEST_HEADER clipp_announce:foo "predicate:(field 'REQUEST_URI')"
+      </Site>
+    EOS
+    clipp(CONFIG.merge(
+      :input_hashes => [make_request('foobar')],
+      :config_trailer => foo_config,
+      :default_site_config => <<-EOS
+        Action id:1 phase:REQUEST_HEADER clipp_announce:default "predicate:(field 'REQUEST_URI')"
+      EOS
+    ))
+    assert_no_issues
+    assert_log_no_match /NOTICE/
+    assert_log_match /CLIPP ANNOUNCE: default/
+    assert_log_no_match /CLIPP ANNOUNCE: foo/
+  end
+
   def test_assert_valid
     clipp(CONFIG.merge(
       :input_hashes => [make_request('foobar')],
