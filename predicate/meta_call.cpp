@@ -138,17 +138,30 @@ void MapCall::map_calculate(
                 i,
                 make_pair(input, inputs.begin())
             );
-        }
-        ValueList::const_iterator current = i->second;
-        ValueList::const_iterator end     = inputs.end();
-        for (;current != end; ++current) {
-            Value v = *current;
-            Value result = value_calculate(v, eval_context);
+            Value result = value_calculate(inputs.front(), eval_context);
 
             if (result) {
                 add_value(result);
             }
         }
+
+        ValueList::const_iterator end     = inputs.end();
+        // current will always be the last element successfully processed.
+        ValueList::const_iterator current = i->second;
+
+        for (
+            // consider will be the element after current.
+            ValueList::const_iterator consider = boost::next(current);
+            consider != end;
+            current = consider, consider = boost::next(current)
+        ) {
+            Value v = *consider;
+            Value result = value_calculate(v, eval_context);
+            if (result) {
+                add_value(result);
+            }
+        }
+        i->second = current;
     }
 
     if (auto_finish && input->is_finished()) {
