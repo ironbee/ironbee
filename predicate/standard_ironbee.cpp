@@ -143,7 +143,7 @@ void Var::calculate(EvalContext context)
     Value value;
     bool time_to_finish = false;
     ib_rule_phase_num_t current_phase = context.ib()->rule_exec->phase;
-    ib_rule_phase_num_t initial_phase = m_data->source.final_phase();
+    ib_rule_phase_num_t initial_phase = m_data->source.initial_phase();
     ib_rule_phase_num_t finish_phase = m_data->source.final_phase();
 
     if (
