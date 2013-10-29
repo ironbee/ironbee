@@ -69,6 +69,7 @@
 
 #include <predicate/bfs.hpp>
 #include <predicate/dag.hpp>
+#include <predicate/dot2.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/parse.hpp>
 #include <predicate/pre_eval_graph.hpp>
@@ -117,6 +118,9 @@ const char* c_debug_report_directive = "PredicateDebugReport";
 
 //! Directive to define a template.
 const char* c_define_directive = "PredicateDefine";
+
+//! Directive to trace.
+const char* c_trace_directive = "PredicateTrace";
 
 /**
  * Phases supported by predicate.
@@ -177,10 +181,12 @@ public:
     /**
      * Inject rules.
      *
-     * @param[in] rule_exec Rule execution environment.
-     * @param[in] rule_list List to write injected rules to.
+     * @param[in] ib_context_t Context this PerContext belongs to.
+     * @param[in] rule_exec    Rule execution environment.
+     * @param[in] rule_list    List to write injected rules to.
      **/
     void inject(
+        IB::ConstContext           context,
         const ib_rule_exec_t*      rule_exec,
         IB::List<const ib_rule_t*> rule_list
     ) const;
@@ -191,7 +197,13 @@ public:
     //! Delegate setter.
     void set_delegate(Delegate& delegate) {m_delegate = &delegate;}
 
+    //! Set trace.
+    void set_trace(const string& to);
+
 private:
+    //! Root namer for use with dot2 routines.
+    string root_namer(ib_rule_phase_num_t phase, size_t index) const;
+
     //! List of rules.
     typedef list<const ib_rule_t*> rule_list_t;
     //! Map of root index to rule list.
@@ -233,6 +245,11 @@ private:
      * allows access to that data when only the context is available.
      **/
     Delegate* m_delegate;
+
+    //! Whether to output a trace.
+    bool m_write_trace;
+    //! Where to write a trace.
+    string m_trace_to;
 };
 
 /**
@@ -256,8 +273,22 @@ public:
      **/
     P::CallFactory& call_factory() { return m_call_factory; }
 
-    //! MergeGraph accessor.  Only meaningful before end of configuration.
+    /**
+     * MergeGraph accessor.
+     *
+     * Only meaningful before end of configuration unless keep_data() is
+     * called.
+     **/
     P::MergeGraph& graph() const { return *m_graph; }
+
+    /**
+     * Keep extra data around.
+     *
+     * This instructs Delegate to keep the MergeGraph around past the end of
+     * configuration.  This can be useful for introspective purposes and is
+     * used by the trace code.
+     **/
+    void keep_data();
 
 private:
     /**
@@ -372,6 +403,14 @@ private:
     void define(IB::ConfigurationParser& cp, IB::List<const char*> params);
 
     /**
+     * Handle @ref c_trace_directive.
+     *
+     * @param[in] cp     Configuration parser.
+     * @param[in] params Parameters of directive.
+     **/
+    void trace(IB::ConfigurationParser& cp, const char* to);
+
+    /**
      * Handle @ref reports for Predicate::Node life cycle routines.
      *
      * Warnings and errors are translated into log messages.  Errors also
@@ -451,18 +490,22 @@ private:
     bool m_write_debug_report;
     //! Where to write a debug report.
     string m_debug_report_to;
+    //! Keep extra data past configuration?
+    bool m_keep_data;
 };
 
 // Implementation
 
 PerContext::PerContext() :
-    m_delegate(NULL)
+    m_delegate(NULL),
+    m_write_trace(false)
 {
     // nop
 }
 
 PerContext::PerContext(Delegate& delegate) :
-    m_delegate(&delegate)
+    m_delegate(&delegate),
+    m_write_trace(false)
 {
     // nop
 }
@@ -504,6 +547,7 @@ void PerContext::add_rule(P::node_p root, const ib_rule_t* rule)
 }
 
 void PerContext::inject(
+    IB::ConstContext           context,
     const ib_rule_exec_t*      rule_exec,
     IB::List<const ib_rule_t*> rule_list
 ) const
@@ -533,12 +577,71 @@ void PerContext::inject(
             }
         }
     }
+
+    if (m_write_trace) {
+        ostream* trace_out;
+        scoped_ptr<ostream> trace_out_resource;
+
+        if (m_write_trace && ! m_trace_to.empty()) {
+            trace_out_resource.reset(new ofstream(m_trace_to.c_str()));
+            trace_out = trace_out_resource.get();
+            if (! *trace_out) {
+                ib_log_error(delegate()->module().engine().ib(),
+                    "Could not open %s for writing.",
+                    m_trace_to.c_str()
+                );
+                BOOST_THROW_EXCEPTION(IB::einval());
+            }
+        }
+        else {
+            trace_out = &cerr;
+        }
+
+        *trace_out << "PredicateTrace "
+                   << ib_rule_phase_name(rule_exec->phase)
+                   << " " << context.full_name() << endl;
+
+        to_dot2_value(*trace_out, delegate()->graph(),
+            boost::bind(&PerContext::root_namer, this, rule_exec->phase, _1)
+        );
+    }
+}
+
+void PerContext::set_trace(const string& to)
+{
+    m_write_trace = true;
+    m_trace_to = to;
+    delegate()->keep_data();
+}
+
+string PerContext::root_namer(ib_rule_phase_num_t phase, size_t index) const
+{
+    const P::node_p& root = delegate()->graph().root(index);
+    rules_by_node_t::const_iterator i = m_rules[phase].find(root);
+    if (i == m_rules[phase].end()) {
+        i = m_rules[IB_PHASE_NONE].find(root);
+        if (i == m_rules[IB_PHASE_NONE].end()) {
+            return "Out of phase";
+        }
+    }
+
+    string result;
+    bool first = true;
+    BOOST_FOREACH(const ib_rule_t* rule, i->second) {
+        if (! first) {
+            result += "\\n";
+        }
+        first = false;
+        result += rule->meta.full_id;
+    }
+    return result;
 }
 
 Delegate::Delegate(IB::Module module) :
     IB::ModuleDelegate(module),
     m_graph(new P::MergeGraph()),
-    m_write_debug_report(false)
+    m_write_debug_report(false),
+    m_keep_data(false)
 {
     assert(module);
 
@@ -568,7 +671,8 @@ Delegate::Delegate(IB::Module module) :
     );
 
     // Injection Functions.
-    for (unsigned int i = 0; i < c_num_phases; ++i) {
+    // Start at 1 to skip IB_PHASE_NONE.
+    for (unsigned int i = 1; i < c_num_phases; ++i) {
         ib_rule_phase_num_t phase = c_phases[i];
 
         pair<ib_rule_injection_fn_t, void*> injection =
@@ -638,7 +742,16 @@ Delegate::Delegate(IB::Module module) :
             c_define_directive,
             bind(&Delegate::define, this, _1, _3)
         )
+        .param1(
+            c_trace_directive,
+            bind(&Delegate::trace, this, _1, _3)
+        )
         ;
+}
+
+void Delegate::keep_data()
+{
+    m_keep_data = true;
 }
 
 void Delegate::context_close(IB::Context context)
@@ -777,7 +890,9 @@ void Delegate::context_close(IB::Context context)
         );
 
         // Release graph.
-        m_graph.reset();
+        if (! m_keep_data) {
+            m_graph.reset();
+        }
     }
 }
 
@@ -889,7 +1004,7 @@ ib_status_t Delegate::injection(
         IB::ConstTransaction tx(rule_exec->tx);
         PerContext& per_context =
             module().configuration_data<PerContext>(tx.context());
-        per_context.inject(rule_exec, rule_list);
+        per_context.inject(tx.context(), rule_exec, rule_list);
     }
     catch (...) {
         return IB::convert_exception(module().engine());
@@ -959,6 +1074,20 @@ void Delegate::debug_report(
     }
     m_write_debug_report = true;
     m_debug_report_to = to;
+}
+
+void Delegate::trace(
+    IB::ConfigurationParser& cp,
+    const char*              to
+)
+{
+    assert(cp);
+    assert(to);
+
+    PerContext& per_context =
+        module().configuration_data<PerContext>(cp.current_context());
+
+    per_context.set_trace(to);
 }
 
 void Delegate::define(
