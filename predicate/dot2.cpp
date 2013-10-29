@@ -293,21 +293,29 @@ typedef boost::function<void(ostream&, string&, const node_cp&)>
  *
  * @param[in] out        Where to write dot.
  * @param[in] G          MergeGraph, used to detect roots.
+ * @param[in] initial    Initial vector for search.  If empty, will default
+ *                       to all nodes in graph.
  * @param[in] root_namer How to name roots.
  * @param[in] node_hook  Additional rendering logic.
   **/
 void to_dot2_base(
-    ostream& out,
-    const MergeGraph& G,
-    root_namer_t root_namer,
-    node_hook_t node_hook
+    ostream&            out,
+    const MergeGraph&   G,
+    const node_clist_t& initial,
+    root_namer_t        root_namer,
+    node_hook_t         node_hook
 )
 {
     typedef set<node_cp> node_cset_t;
     node_clist_t queue;
     node_cset_t skip;
 
-    copy(G.roots().first, G.roots().second, back_inserter(queue));
+    if (! initial.empty()) {
+        queue = initial;
+    }
+    else {
+        copy(G.roots().first, G.roots().second, back_inserter(queue));
+    }
 
     // Header
     out << "digraph G {" << endl;
@@ -472,7 +480,7 @@ void to_dot2(
     root_namer_t      root_namer
 )
 {
-    to_dot2_base(out, G, root_namer, node_hook_t());
+    to_dot2_base(out, G, node_clist_t(), root_namer, node_hook_t());
 }
 
 void to_dot2_validate(
@@ -482,16 +490,19 @@ void to_dot2_validate(
     root_namer_t      root_namer
 )
 {
-    to_dot2_base(out, G, root_namer, bind(nh_validate, validate, _1, _2, _3));
+    to_dot2_base(out, G, node_clist_t(), root_namer,
+        bind(nh_validate, validate, _1, _2, _3)
+    );
 }
 
 void to_dot2_value(
-    ostream&          out,
-    const MergeGraph& G,
-    root_namer_t      root_namer
+    ostream&            out,
+    const MergeGraph&   G,
+    const node_clist_t& initial,
+    root_namer_t        root_namer
 )
 {
-    to_dot2_base(out, G, root_namer, nh_value);
+    to_dot2_base(out, G, initial, root_namer, nh_value);
 }
 
 } // Predicate
