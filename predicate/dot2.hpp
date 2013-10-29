@@ -45,8 +45,8 @@ typedef boost::function<std::string(size_t)> root_namer_t;
 /**
  * Write @a G out to @a out in GraphViz format.
  *
- * @param[in] out Where to write output.
- * @param[in] G   Graph to render.
+ * @param[in] out        Where to write output.
+ * @param[in] G          Graph to render.
  * @param[in] root_namer If provided, additional roots will be rendered and
  *                       attached to their appropriate nodes.
  **/
@@ -59,8 +59,8 @@ void to_dot2(
 /*
  * Write @a G out to @a out in GraphViz format with validation results.
  *
- * @param[in] out Where to write output.
- * @param[in] G   Graph to render.
+ * @param[in] out        Where to write output.
+ * @param[in] G          Graph to render.
  * @param[in] validate   What, if any, validation to do.  Validation results
  *                       will color their respective nodes and attach the
  *                       messages to the side of the node.
@@ -71,6 +71,20 @@ void to_dot2_validate(
     std::ostream& out,
     const MergeGraph& G,
     validation_e validate,
+    root_namer_t root_namer = root_namer_t()
+);
+
+/*
+ * Write @a G out to @a out in GraphViz format with values.
+ *
+ * @param[in] out Where to write output.
+ * @param[in] G   Graph to render.
+ * @param[in] root_namer If provided, additional roots will be rendered and
+ *                       attached to their appropriate nodes.
+ **/
+void to_dot2_value(
+    std::ostream& out,
+    const MergeGraph& G,
     root_namer_t root_namer = root_namer_t()
 );
 

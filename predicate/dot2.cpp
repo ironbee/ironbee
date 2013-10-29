@@ -226,6 +226,59 @@ void dot_reporter(
 }
 
 /**
+ * Render a Value.
+ *
+ * @param[out] out   Where to write.
+ * @param[in]  value What to write.
+ **/
+void render_value(
+    ostream&     out,
+    const Value& value
+)
+{
+    if (value.type() != Value::LIST) {
+        out << escape_html(value.name()) << ":" << escape_html(value.to_s());
+    }
+    else {
+        bool first = true;
+        out << "[";
+        BOOST_FOREACH(const Value& subvalue, value.value_as_list<Value>()) {
+            if (first) {
+                out << ", ";
+                first = false;
+            }
+            render_value(out, subvalue);
+        }
+        out << "]";
+    }
+}
+
+/**
+ * Render values of a node.
+ *
+ * @param[out] out  Where to write.
+ * @param[in]  node Node to write values of.
+ **/
+void render_values(
+    ostream&       out,
+    const node_cp& node
+)
+{
+    size_t i = 0;
+    BOOST_FOREACH(const Value& value, node->values()) {
+        ++i;
+        out << "  { rank = same; \"" << node
+            << "\" \"value-" << node << "-" << i << "\" }" << endl;
+        out << "  \"value-" << node << "-" << i << "\" ["
+            << "fontsize=10, shape=none, label=<";
+        render_value(out, value);
+        out << ">];\n";
+        out << "  \"" << node << "\" -> \"value-" << node << "-" << i
+            << "\" [weight=1000, dir=none, penwidth=0.5];\n";
+    }
+}
+
+/**
  * Node hook.
  *
  * First argument is output stream to output additional dot *before* node.
@@ -391,6 +444,35 @@ void nh_validate(
     }
 }
 
+//! Node Hook: Value
+void nh_value(
+    ostream&       out,
+    string&        extra,
+    const node_cp& node
+)
+{
+    const ValueList& values = node->values();
+    bool finished = node->is_finished();
+
+    if (finished) {
+        extra += ", style=\"diagonals,filled\"";
+    }
+
+    if (! values.empty()) {
+        extra += ", fillcolor=\"green\"";
+        render_values(out, node);
+    }
+}
+
+}
+
+void to_dot2(
+    ostream&          out,
+    const MergeGraph& G,
+    root_namer_t      root_namer
+)
+{
+    to_dot2_base(out, G, root_namer, node_hook_t());
 }
 
 void to_dot2_validate(
@@ -403,13 +485,13 @@ void to_dot2_validate(
     to_dot2_base(out, G, root_namer, bind(nh_validate, validate, _1, _2, _3));
 }
 
-void to_dot2(
+void to_dot2_value(
     ostream&          out,
     const MergeGraph& G,
     root_namer_t      root_namer
 )
 {
-    to_dot2_base(out, G, root_namer, node_hook_t());
+    to_dot2_base(out, G, root_namer, nh_value);
 }
 
 } // Predicate
