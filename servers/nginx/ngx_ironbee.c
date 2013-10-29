@@ -96,6 +96,7 @@ static module_data_t module_data =
     NULL,          /* .manager */
     0,             /* .active */
     NULL,          /* .log */
+    NGX_LOG_INFO,  /* .log_level */
 };
 
 ib_status_t ngxib_acquire_engine(
@@ -551,13 +552,19 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     /* Create the IronBee engine manager */
     rc = ib_manager_create(&(mod_data->manager),  /* Engine Manager */
                            ngxib_server(),        /* Server object */
-                           proc->max_engines,     /* Max engines */
-                           ngxib_module,          /* Init module */
-                           mod_data);             /* Init module cbdata. */
-
+                           proc->max_engines);    /* Max engines */
     if (rc != IB_OK) {
         cleanup_return IB2NG(rc);
     }
+
+    rc = ib_manager_register_module_fn(
+        mod_data->manager,
+        ngxib_module,
+        mod_data);
+    if (rc != IB_OK) {
+        cleanup_return IB2NG(rc);
+    }
+
     /* Null manager here would be a bug, as per RNS-CR-143 comments */
     assert(mod_data->manager != NULL);
 

@@ -65,7 +65,7 @@ static ib_status_t logger_format(
     assert(cbdata != NULL);
 
     module_data_t            *mod_data = (module_data_t *)cbdata;
-    int                       ngx_level;
+    unsigned int              ngx_level;
     ib_status_t               rc;
     ib_logger_standard_msg_t *std_msg;
 
