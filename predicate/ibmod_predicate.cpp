@@ -579,31 +579,51 @@ void PerContext::inject(
     }
 
     if (m_write_trace) {
-        ostream* trace_out;
-        scoped_ptr<ostream> trace_out_resource;
+        P::node_clist_t initial;
+        for (size_t i = 0; i < sizeof(phases)/sizeof(*phases); ++i) {
+            ib_rule_phase_num_t phase = phases[i];
 
-        if (m_write_trace && ! m_trace_to.empty()) {
-            trace_out_resource.reset(new ofstream(m_trace_to.c_str()));
-            trace_out = trace_out_resource.get();
-            if (! *trace_out) {
-                ib_log_error(delegate()->module().engine().ib(),
-                    "Could not open %s for writing.",
-                    m_trace_to.c_str()
-                );
-                BOOST_THROW_EXCEPTION(IB::einval());
+            BOOST_FOREACH(
+                PerContext::rules_by_node_t::const_reference v,
+                m_rules[phase]
+            ) {
+                initial.push_back(v.first);
             }
         }
-        else {
-            trace_out = &cerr;
+        if (! initial.empty()) {
+            ostream* trace_out;
+            scoped_ptr<ostream> trace_out_resource;
+
+            if (m_write_trace && ! m_trace_to.empty()) {
+                trace_out_resource.reset(
+                    new ofstream(m_trace_to.c_str(), ofstream::app)
+                );
+                trace_out = trace_out_resource.get();
+                if (! *trace_out) {
+                    ib_log_error(delegate()->module().engine().ib(),
+                        "Could not open %s for writing.",
+                        m_trace_to.c_str()
+                    );
+                    BOOST_THROW_EXCEPTION(IB::einval());
+                }
+            }
+            else {
+                trace_out = &cerr;
+            }
+
+            *trace_out << "PredicateTrace "
+                       << ib_rule_phase_name(rule_exec->phase)
+                       << " " << context.full_name() << endl;
+
+            to_dot2_value(*trace_out, delegate()->graph(), initial,
+                boost::bind(
+                    &PerContext::root_namer,
+                    this,
+                    rule_exec->phase,
+                    _1
+                )
+            );
         }
-
-        *trace_out << "PredicateTrace "
-                   << ib_rule_phase_name(rule_exec->phase)
-                   << " " << context.full_name() << endl;
-
-        to_dot2_value(*trace_out, delegate()->graph(),
-            boost::bind(&PerContext::root_namer, this, rule_exec->phase, _1)
-        );
     }
 }
 
