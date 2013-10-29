@@ -561,6 +561,8 @@ void PerContext::inject(
     };
     IB::Transaction tx(rule_exec->tx);
     assert(tx);
+    size_t num_considered = 0;
+    size_t num_injected = 0;
 
     for (size_t i = 0; i < sizeof(phases)/sizeof(*phases); ++i) {
         ib_rule_phase_num_t phase = phases[i];
@@ -569,11 +571,15 @@ void PerContext::inject(
             PerContext::rules_by_node_t::const_reference v,
             m_rules[phase]
         ) {
+            // Only calculate if tracing as .size() might be O(n).
+            size_t n = (m_write_trace ? v.second.size() : 0);
+            num_considered += n;
             if (! v.first->eval(tx).empty()) {
                 copy(
                     v.second.begin(), v.second.end(),
                     back_inserter(rule_list)
                 );
+                num_injected += n;
             }
         }
     }
@@ -613,7 +619,10 @@ void PerContext::inject(
 
             *trace_out << "PredicateTrace "
                        << ib_rule_phase_name(rule_exec->phase)
-                       << " " << context.full_name() << endl;
+                       << " context=" << context.full_name()
+                       << " consider=" << num_considered
+                       << " inject=" << num_injected
+                       << endl;
 
             to_dot2_value(*trace_out, delegate()->graph(), initial,
                 boost::bind(
@@ -623,6 +632,8 @@ void PerContext::inject(
                     _1
                 )
             );
+
+            *trace_out << "End PredicateTrace" << endl;
         }
     }
 }
