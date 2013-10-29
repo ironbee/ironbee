@@ -36,9 +36,6 @@ namespace Predicate {
 
 namespace {
 
-//! List of const nodes.
-typedef list<node_cp> node_clist_t;
-
 /**
  * Determine if @a node can be absorbed.
  *
