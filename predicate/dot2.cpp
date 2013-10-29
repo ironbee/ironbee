@@ -474,14 +474,20 @@ void nh_value(
 {
     const ValueList& values = node->values();
     bool finished = node->is_finished();
+    list<string> styles;
 
     if (finished) {
-        extra += ", style=\"diagonals,filled\"";
+        styles.push_back("diagonals");
     }
 
     if (! values.empty()) {
+        styles.push_back("filled");
         extra += ", fillcolor=\"#BDECB6\"";
         render_values(out, node);
+    }
+
+    if (! styles.empty()) {
+        extra += ", style=\"" + boost::algorithm::join(styles, ",") + "\"";
     }
 }
 
