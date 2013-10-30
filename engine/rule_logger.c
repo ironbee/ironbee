@@ -126,7 +126,6 @@ static ib_status_t ib_field_format_quote(
 )
 {
     ib_status_t   rc;
-    const char   *tname = NULL;
     const size_t  bufsize = MAX_FIELD_BUF+1;
     char         *buf;
 
@@ -142,7 +141,6 @@ static ib_status_t ib_field_format_quote(
 
     *buf = '\0';
     if (field == NULL) {
-        tname = "NULL";
         strncpy(buf, "\"\"", bufsize-1);
         *(buf+bufsize) = '\0';
     }
@@ -152,7 +150,6 @@ static ib_status_t ib_field_format_quote(
         case IB_FTYPE_NULSTR :
         {
             const char *s;
-            tname = "NULSTR";
             rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
             if (rc != IB_OK) {
                 break;
@@ -166,7 +163,6 @@ static ib_status_t ib_field_format_quote(
         {
             const ib_bytestr_t *bs;
 
-            tname = "BYTESTR";
             rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
             if (rc != IB_OK) {
                 break;
@@ -181,7 +177,6 @@ static ib_status_t ib_field_format_quote(
         case IB_FTYPE_NUM :          /**< Numeric value */
         {
             ib_num_t n;
-            tname = "NUM";
             rc = ib_field_value(field, ib_ftype_num_out(&n));
             if (rc != IB_OK) {
                 break;
@@ -193,7 +188,6 @@ static ib_status_t ib_field_format_quote(
         case IB_FTYPE_TIME :          /**< Time value */
         {
             ib_time_t t;
-            tname = "TIME";
             rc = ib_field_value(field, ib_ftype_time_out(&t));
             if (rc != IB_OK) {
                 break;
@@ -205,7 +199,6 @@ static ib_status_t ib_field_format_quote(
         case IB_FTYPE_FLOAT :        /**< Float numeric value */
         {
             ib_float_t f;
-            tname = "FLOAT";
             rc = ib_field_value(field, ib_ftype_float_out(&f));
             if (rc != IB_OK) {
                 break;
@@ -219,7 +212,6 @@ static ib_status_t ib_field_format_quote(
             const ib_list_t *lst;
             size_t len;
 
-            tname = "LIST";
             rc = ib_field_value(field, ib_ftype_list_out(&lst));
             if (rc != IB_OK) {
                 break;
@@ -246,7 +238,6 @@ static ib_status_t ib_field_format_quote(
         }
 
         default:
-            tname = buf;
             snprintf(buf, bufsize, "type = %d", field->type);
             break;
         }
@@ -278,7 +269,6 @@ static ib_status_t ib_field_format_escape(
 )
 {
     ib_status_t   rc;
-    const char   *tname = NULL;
     const size_t  bufsize = MAX_FIELD_BUF+1;
     char         *buf;
 
@@ -294,7 +284,6 @@ static ib_status_t ib_field_format_escape(
 
     *buf = '\0';
     if (field == NULL) {
-        tname = "NULL";
         strncpy(buf, "\"\"", bufsize-1);
         *(buf+bufsize) = '\0';
     }
@@ -304,7 +293,6 @@ static ib_status_t ib_field_format_escape(
         case IB_FTYPE_NULSTR :
         {
             const char *s;
-            tname = "NULSTR";
             rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
             if (rc != IB_OK) {
                 break;
@@ -318,7 +306,6 @@ static ib_status_t ib_field_format_escape(
         {
             const ib_bytestr_t *bs;
 
-            tname = "BYTESTR";
             rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
             if (rc != IB_OK) {
                 break;
@@ -336,7 +323,6 @@ static ib_status_t ib_field_format_escape(
         case IB_FTYPE_NUM :          /**< Numeric value */
         {
             ib_num_t n;
-            tname = "NUM";
             rc = ib_field_value(field, ib_ftype_num_out(&n));
             if (rc != IB_OK) {
                 break;
@@ -348,7 +334,6 @@ static ib_status_t ib_field_format_escape(
         case IB_FTYPE_TIME :          /**< Time value */
         {
             ib_time_t t;
-            tname = "TIME";
             rc = ib_field_value(field, ib_ftype_time_out(&t));
             if (rc != IB_OK) {
                 break;
@@ -360,7 +345,6 @@ static ib_status_t ib_field_format_escape(
         case IB_FTYPE_FLOAT :        /**< Float numeric value */
         {
             ib_float_t f;
-            tname = "FLOAT";
             rc = ib_field_value(field, ib_ftype_float_out(&f));
             if (rc != IB_OK) {
                 break;
@@ -374,7 +358,6 @@ static ib_status_t ib_field_format_escape(
             const ib_list_t *lst;
             size_t len;
 
-            tname = "LIST";
             rc = ib_field_value(field, ib_ftype_list_out(&lst));
             if (rc != IB_OK) {
                 break;
@@ -401,7 +384,6 @@ static ib_status_t ib_field_format_escape(
         }
 
         default:
-            tname = buf;
             snprintf(buf, bufsize, "type = %d", field->type);
             break;
         }
