@@ -118,6 +118,301 @@ static IB_STRVAL_MAP(flags_map) = {
     IB_STRVAL_PAIR_LAST
 };
 
+static ib_status_t ib_field_format_quote(
+    ib_mpool_t        *mp,
+    const ib_field_t  *field,
+    char             **buffer,
+    size_t            *buffer_sz
+)
+{
+    ib_status_t   rc;
+    const char   *tname = NULL;
+    const size_t  bufsize = MAX_FIELD_BUF+1;
+    char         *buf;
+
+    assert(mp != NULL);
+    assert(field != NULL);
+    assert(buffer != NULL);
+    assert(buffer_sz != NULL);
+
+    buf = ib_mpool_alloc(mp, MAX_FIELD_BUF+1);
+    if (buf == NULL) {
+        return IB_EALLOC;
+    }
+
+    *buf = '\0';
+    if (field == NULL) {
+        tname = "NULL";
+        strncpy(buf, "\"\"", bufsize-1);
+        *(buf+bufsize) = '\0';
+    }
+    else {
+        switch (field->type) {
+
+        case IB_FTYPE_NULSTR :
+        {
+            const char *s;
+            tname = "NULSTR";
+            rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
+            if (rc != IB_OK) {
+                break;
+            }
+            snprintf(buf, bufsize, "\"%s\"", (s?s:""));
+
+            break;
+        }
+
+        case IB_FTYPE_BYTESTR:
+        {
+            const ib_bytestr_t *bs;
+
+            tname = "BYTESTR";
+            rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+            if (rc != IB_OK) {
+                break;
+            }
+
+            snprintf(buf, bufsize, "\"%.*s\"",
+                     (int)ib_bytestr_length(bs),
+                     (const char *)ib_bytestr_const_ptr(bs));
+            break;
+        }
+
+        case IB_FTYPE_NUM :          /**< Numeric value */
+        {
+            ib_num_t n;
+            tname = "NUM";
+            rc = ib_field_value(field, ib_ftype_num_out(&n));
+            if (rc != IB_OK) {
+                break;
+            }
+            snprintf(buf, bufsize, "%"PRId64, n);
+            break;
+        }
+
+        case IB_FTYPE_TIME :          /**< Time value */
+        {
+            ib_time_t t;
+            tname = "TIME";
+            rc = ib_field_value(field, ib_ftype_time_out(&t));
+            if (rc != IB_OK) {
+                break;
+            }
+            snprintf(buf, bufsize, "%"PRIu64, t);
+            break;
+        }
+
+        case IB_FTYPE_FLOAT :        /**< Float numeric value */
+        {
+            ib_float_t f;
+            tname = "FLOAT";
+            rc = ib_field_value(field, ib_ftype_float_out(&f));
+            if (rc != IB_OK) {
+                break;
+            }
+            snprintf(buf, bufsize, "%Lf", f);
+            break;
+        }
+
+        case IB_FTYPE_LIST :         /**< List */
+        {
+            const ib_list_t *lst;
+            size_t len;
+
+            tname = "LIST";
+            rc = ib_field_value(field, ib_ftype_list_out(&lst));
+            if (rc != IB_OK) {
+                break;
+            }
+            len = IB_LIST_ELEMENTS(lst);
+            if (len == 0) {
+                snprintf(buf, bufsize, "list[%zd]", len);
+            }
+            else {
+                const ib_list_node_t *node;
+                node = ib_list_last_const(lst);
+                if (node == NULL) {
+                    snprintf(buf, bufsize, "list[%zd]", len);
+                }
+                else {
+                    ib_field_format_quote(
+                        mp,
+                        (const ib_field_t *)node->data,
+                        buffer,
+                        buffer_sz);
+                }
+            }
+            break;
+        }
+
+        default:
+            tname = buf;
+            snprintf(buf, bufsize, "type = %d", field->type);
+            break;
+        }
+    }
+
+    /* Return the buffer */
+    *buffer = buf;
+    *buffer_sz = bufsize;
+    return IB_OK;
+}
+
+/**
+ * Format a field into a string.
+ *
+ * @param[in] mp Memory pool to allocate @a buf out of.
+ * @param[in] field Field to convert to a string.
+ * @param[out] buffer Buffer for output.
+ * @param[out] buffer_sz Size of @a buf.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On error.
+ */
+static ib_status_t ib_field_format_escape(
+    ib_mpool_t        *mp,
+    const ib_field_t  *field,
+    char             **buffer,
+    size_t            *buffer_sz
+)
+{
+    ib_status_t   rc;
+    const char   *tname = NULL;
+    const size_t  bufsize = MAX_FIELD_BUF+1;
+    char         *buf;
+
+    assert(mp != NULL);
+    assert(field != NULL);
+    assert(buffer != NULL);
+    assert(buffer_sz != NULL);
+
+    buf = ib_mpool_alloc(mp, MAX_FIELD_BUF+1);
+    if (buf == NULL) {
+        return IB_EALLOC;
+    }
+
+    *buf = '\0';
+    if (field == NULL) {
+        tname = "NULL";
+        strncpy(buf, "\"\"", bufsize-1);
+        *(buf+bufsize) = '\0';
+    }
+    else {
+        switch (field->type) {
+
+        case IB_FTYPE_NULSTR :
+        {
+            const char *s;
+            tname = "NULSTR";
+            rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
+            if (rc != IB_OK) {
+                break;
+            }
+            ib_string_escape_json_buf(s, true, buf, bufsize, NULL, NULL);
+
+            break;
+        }
+
+        case IB_FTYPE_BYTESTR:
+        {
+            const ib_bytestr_t *bs;
+
+            tname = "BYTESTR";
+            rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+            if (rc != IB_OK) {
+                break;
+            }
+
+            ib_string_escape_json_buf_ex(ib_bytestr_const_ptr(bs),
+                                         ib_bytestr_length(bs),
+                                         true,
+                                         true,
+                                         buf, bufsize, NULL,
+                                         NULL);
+            break;
+        }
+
+        case IB_FTYPE_NUM :          /**< Numeric value */
+        {
+            ib_num_t n;
+            tname = "NUM";
+            rc = ib_field_value(field, ib_ftype_num_out(&n));
+            if (rc != IB_OK) {
+                break;
+            }
+            snprintf(buf, bufsize, "%"PRId64, n);
+            break;
+        }
+
+        case IB_FTYPE_TIME :          /**< Time value */
+        {
+            ib_time_t t;
+            tname = "TIME";
+            rc = ib_field_value(field, ib_ftype_time_out(&t));
+            if (rc != IB_OK) {
+                break;
+            }
+            snprintf(buf, bufsize, "%"PRIu64, t);
+            break;
+        }
+
+        case IB_FTYPE_FLOAT :        /**< Float numeric value */
+        {
+            ib_float_t f;
+            tname = "FLOAT";
+            rc = ib_field_value(field, ib_ftype_float_out(&f));
+            if (rc != IB_OK) {
+                break;
+            }
+            snprintf(buf, bufsize, "%Lf", f);
+            break;
+        }
+
+        case IB_FTYPE_LIST :         /**< List */
+        {
+            const ib_list_t *lst;
+            size_t len;
+
+            tname = "LIST";
+            rc = ib_field_value(field, ib_ftype_list_out(&lst));
+            if (rc != IB_OK) {
+                break;
+            }
+            len = IB_LIST_ELEMENTS(lst);
+            if (len == 0) {
+                snprintf(buf, bufsize, "list[%zd]", len);
+            }
+            else {
+                const ib_list_node_t *node;
+                node = ib_list_last_const(lst);
+                if (node == NULL) {
+                    snprintf(buf, bufsize, "list[%zd]", len);
+                }
+                else {
+                    ib_field_format_escape(
+                        mp,
+                        (const ib_field_t *)node->data,
+                        buffer,
+                        buffer_sz);
+                }
+            }
+            break;
+        }
+
+        default:
+            tname = buf;
+            snprintf(buf, bufsize, "type = %d", field->type);
+            break;
+        }
+    }
+
+    /* Return the buffer */
+    *buffer = buf;
+    *buffer_sz = bufsize;
+    return IB_OK;
+}
+
 /**
  * Generic Logger for rules.
  *
@@ -1190,9 +1485,10 @@ void ib_rule_log_phase(
  * @param[in] rslt Matching result field (or NULL)
  */
 static void log_tfns(
-    const ib_rule_exec_t *rule_exec,
+    ib_mpool_t              *mp,
+    const ib_rule_exec_t    *rule_exec,
     const ib_rule_log_tgt_t *tgt,
-    const ib_field_t *rslt
+    const ib_field_t        *rslt
 )
 {
     assert(rule_exec != NULL);
@@ -1202,51 +1498,68 @@ static void log_tfns(
     assert(rule_exec->tx != NULL);
 
     const ib_list_node_t *tfn_node;
-    char buf[MAX_FIELD_BUF+1];
-
+    ib_status_t           rc;
+    
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_TFN) == false) {
         return;
     }
 
     IB_LIST_LOOP_CONST(tgt->tfn_list, tfn_node) {
-        const ib_rule_log_tfn_t *tfn =
-            (const ib_rule_log_tfn_t *)ib_list_node_data_const(tfn_node);
-        const ib_list_node_t *value_node;
-        bool logged = false;
+        char                    *buf;
+        size_t                   sz;
+        const   ib_list_node_t  *value_node;
+        const ib_rule_log_tfn_t *tfn;
+        
+        tfn = (const ib_rule_log_tfn_t *)ib_list_node_data_const(tfn_node);
 
-        IB_LIST_LOOP_CONST(tfn->value_list, value_node) {
-            const ib_rule_log_tfn_val_t *value = (const ib_rule_log_tfn_val_t *)
-                ib_list_node_data_const(value_node);
-            char vbuf[MAX_FIELD_BUF+1];
+        if (ib_list_elements(tfn->value_list) > 0) {
 
-            if ( (rslt != NULL) &&
-                 ((rslt->nlen != value->in->nlen) ||
-                  (memcmp(rslt->name, value->in->name, rslt->nlen) != 0)) )
-            {
-                continue;
+            IB_LIST_LOOP_CONST(tfn->value_list, value_node) {
+
+                const ib_rule_log_tfn_val_t *value =
+                    (const ib_rule_log_tfn_val_t *)
+                        ib_list_node_data_const(value_node);
+
+                if ( (rslt != NULL) &&
+                    ((rslt->nlen != value->in->nlen) ||
+                    (memcmp(rslt->name, value->in->name, rslt->nlen) != 0)) )
+                {
+                    continue;
+                }
+
+                rc = ib_field_format_escape(mp, value->out, &buf, &sz);
+                if (rc != IB_OK) {
+                    return;
+                }
+
+                rule_log_exec(rule_exec,
+                            "TFN %s() %s \"%.*s:%.*s\" %s %s",
+                            ib_tfn_name(tfn->tfn),
+                            ib_field_type_name(value->in->type),
+                            (int)tgt->original->nlen, tgt->original->name,
+                            (int)value->in->nlen, value->in->name,
+                            buf,
+                            ( value->status == IB_OK ?
+                                "" : ib_status_to_string(value->status)));
             }
-            rule_log_exec(rule_exec,
-                          "TFN %s() %s \"%.*s:%.*s\" %s %s",
-                          ib_tfn_name(tfn->tfn),
-                          ib_field_type_name(value->in->type),
-                          (int)tgt->original->nlen, tgt->original->name,
-                          (int)value->in->nlen, value->in->name,
-                          ib_field_format(value->out, true, true, NULL,
-                                          vbuf, MAX_FIELD_BUF),
-                          ( value->status == IB_OK ?
-                            "" : ib_status_to_string(value->status)));
-            logged = true;
         }
-        if (! logged) {
-            rule_log_exec(rule_exec,
-                          "TFN %s() %s \"%.*s\" %s %s",
-                          ib_tfn_name(tfn->tfn),
-                          ib_field_type_name(tgt->original->type),
-                          (int)tgt->original->nlen, tgt->original->name,
-                          ib_field_format(tfn->value.out, true, true, NULL,
-                                          buf, MAX_FIELD_BUF),
-                          ( tfn->value.status == IB_OK ?
-                            "" : ib_status_to_string(tfn->value.status)));
+        else {
+            rc = ib_field_format_escape(mp,tfn->value.out, &buf, &sz);
+            if (rc != IB_OK) {
+                return;
+            }
+
+            rule_log_exec(
+                rule_exec,
+                "TFN %s() %s \"%.*s\" %s %s",
+                ib_tfn_name(tfn->tfn),
+                ib_field_type_name(tgt->original->type),
+                (int)tgt->original->nlen,
+                tgt->original->name,
+                buf,
+                ( tfn->value.status == IB_OK ?
+                    "" : ib_status_to_string(tfn->value.status))
+            );
         }
     }
 
@@ -1256,10 +1569,12 @@ static void log_tfns(
 /**
  * Log a rule result's actions
  *
+ * @param[in] mp Memory pool to allocate buffers out of.
  * @param[in] rule_exec Rule execution object
  * @param[in] rslt Rule result logging object
  */
 static void log_actions(
+    ib_mpool_t           *mp,
     const ib_rule_exec_t *rule_exec,
     const ib_rule_log_rslt_t *rslt
 )
@@ -1283,14 +1598,20 @@ static void log_actions(
             (const ib_rule_log_act_t *)ib_list_node_data_const(act_node);
         const char *status =
             act->status == IB_OK ?"" : ib_status_to_string(act->status);
-        char buf[MAX_FIELD_BUF+1];
+        char       *buf;
+        size_t      buf_sz;
+        ib_status_t rc;
+        rc = ib_field_format_quote(mp, act->act_inst->fparam, &buf, &buf_sz);
+        if (rc != IB_OK) {
+            return;
+        }
 
-        rule_log_exec(rule_exec,
-                      "ACTION %s(%s) %s",
-                      act->act_inst->action->name,
-                      ib_field_format(act->act_inst->fparam,
-                                      true, false, NULL, buf, MAX_FIELD_BUF),
-                      status);
+        rule_log_exec(
+            rule_exec,
+            "ACTION %s(%s) %s",
+            act->act_inst->action->name,
+            buf,
+            status);
     }
 
     return;
@@ -1349,13 +1670,15 @@ static void log_events(
 /**
  * Log a rule result
  *
+ * @param[in] mp Memory pool to allocate buffers out of.
  * @param[in] rule_exec Rule execution object
  * @param[in] tgt Rule target logging object
  * @param[in] rslt Rule result logging object
  */
 static void log_result(
-    const ib_rule_exec_t *rule_exec,
-    const ib_rule_log_tgt_t *tgt,
+    ib_mpool_t               *mp,
+    const ib_rule_exec_t     *rule_exec,
+    const ib_rule_log_tgt_t  *tgt,
     const ib_rule_log_rslt_t *rslt
 )
 {
@@ -1366,13 +1689,15 @@ static void log_result(
     assert(tgt != NULL);
     assert(rslt != NULL);
 
-    char buf[MAX_FIELD_BUF+1];
+    char             *buf    = NULL;
+    size_t            buf_sz;
     ib_rule_log_tx_t *tx_log = rule_exec->tx_log;
-
+    ib_status_t       rc;
+    
     if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_TARGET) ) {
         if (rslt->value == NULL) {
             if (tgt->tfn_list != NULL) {
-                log_tfns(rule_exec, tgt, NULL);
+                log_tfns(mp, rule_exec, tgt, NULL);
             }
             rule_log_exec(rule_exec,
                           "TARGET \"%s\" %s \"%.*s\" %s",
@@ -1384,66 +1709,106 @@ static void log_result(
         }
         else if (ib_rule_is_stream(rule_exec->rule) ) {
             if (tgt->tfn_list != NULL) {
-                log_tfns(rule_exec, tgt, NULL);
+                log_tfns(mp, rule_exec, tgt, NULL);
             }
+
+            rc = ib_field_format_escape(mp, rslt->value, &buf, &buf_sz);
+            if (rc != IB_OK) {
+                return;
+            }
+
             rule_log_exec(rule_exec,
                           "TARGET \"%s\" %s \"%.*s\" %s",
                           rule_exec->tx_log->phase_name,
                           ib_field_type_name(rslt->value->type),
                           (int)rslt->value->nlen, rslt->value->name,
-                          ib_field_format(rslt->value, true, true, NULL,
-                                          buf, MAX_FIELD_BUF));
+                          buf);
         }
         else if ( (tgt->original->type == IB_FTYPE_LIST) &&
                   (rslt->value->type != IB_FTYPE_LIST) )
         {
             if (tgt->tfn_list != NULL) {
-                log_tfns(rule_exec, tgt, rslt->value);
+                log_tfns(mp, rule_exec, tgt, rslt->value);
             }
+
+            rc = ib_field_format_escape(mp, rslt->value, &buf, &buf_sz);
+            if (rc != IB_OK) {
+                return;
+            }
+
             rule_log_exec(rule_exec,
                           "TARGET \"%s\" %s \"%.*s:%.*s\" %s",
                           tgt->target->target_str,
                           ib_field_type_name(rslt->value->type),
                           (int)tgt->original->nlen, tgt->original->name,
                           (int)rslt->value->nlen, rslt->value->name,
-                          ib_field_format(rslt->value, true, true, NULL,
-                                          buf, MAX_FIELD_BUF));
+                          buf);
         }
         else  {
             if (tgt->tfn_list != NULL) {
-                log_tfns(rule_exec, tgt, NULL);
+                log_tfns(mp, rule_exec, tgt, NULL);
             }
+
+            rc = ib_field_format_escape(mp, rslt->value, &buf, &buf_sz);
+            if (rc != IB_OK) {
+                return;
+            }
+
             rule_log_exec(rule_exec,
                           "TARGET \"%s\" %s \"%.*s\" %s",
                           tgt->target->target_str,
                           ib_field_type_name(rslt->value->type),
                           (int)rslt->value->nlen, rslt->value->name,
-                          ib_field_format(rslt->value, true, true, NULL,
-                                          buf, MAX_FIELD_BUF));
+                          buf);
         }
     }
 
     if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_OPERATOR) ) {
-        const char *s1;
-        const char *s2;
+        const char *is_inverted = (rule_exec->rule->opinst->invert)? "!":"";
         if (rslt->status == IB_OK) {
-            s1 = "";
-            s2 = (rslt->result == 0) ? "FALSE" : "TRUE";
+            const char *op_result = (rslt->result == 0) ? "FALSE" : "TRUE";
+
+            rc = ib_field_format_quote(
+                mp,
+                rule_exec->exec_log->rule->opinst->fparam,
+                &buf,
+                &buf_sz);
+            if (rc != IB_OK) {
+                return;
+            }
+
+            rule_log_exec(
+                rule_exec,
+                "OP %s%s(%s) %s",
+                is_inverted,
+                ib_operator_get_name(rule_exec->exec_log->rule->opinst->op),
+                buf,
+                op_result);
         }
         else {
-            s1 = "ERROR ";
-            s2 = ib_status_to_string(rslt->status);
+            const char *error_status = ib_status_to_string(rslt->status);
+
+            rc = ib_field_format_quote(
+                mp,
+                rule_exec->exec_log->rule->opinst->fparam,
+                &buf,
+                &buf_sz);
+            if (rc != IB_OK) {
+                return;
+            }
+
+            rule_log_exec(
+                rule_exec,
+                "OP %s%s(%s) ERROR %s",
+                is_inverted,
+                ib_operator_get_name(rule_exec->exec_log->rule->opinst->op),
+                buf,
+                error_status);
         }
-        rule_log_exec(rule_exec,
-                      "OP %s(%s) %s%s",
-                      ib_operator_get_name(rule_exec->exec_log->rule->opinst->op),
-                      ib_field_format(rule_exec->exec_log->rule->opinst->fparam,
-                                      true, false, NULL, buf, MAX_FIELD_BUF),
-                      s1, s2);
     }
 
     if (rslt->act_list != NULL) {
-        log_actions(rule_exec, rslt);
+        log_actions(mp, rule_exec, rslt);
     }
     if (rslt->event_list != NULL) {
         log_events(rule_exec, rslt);
@@ -1499,14 +1864,22 @@ void ib_rule_log_execution(
     const ib_rule_log_exec_t *exec_log = rule_exec->exec_log;
     const ib_rule_log_tx_t *tx_log;
     const ib_rule_t *rule;
+    ib_mpool_t       *mp     = rule_exec->tx->mp;
+    ib_mpool_t       *tmpmp  = NULL;
+    ib_status_t       rc;
+
+    rc = ib_mpool_create(&tmpmp, "temp", mp);
+    if (rc != IB_OK) {
+        return;
+    }
 
     if ( (exec_log == NULL) || (exec_log->rule == NULL) ) {
-        return;
+        goto cleanup;
     }
 
     tx_log = rule_exec->tx_log;
     if (filter(exec_log, &exec_log->counts) == false) {
-        return;
+        goto cleanup;
     }
 
     rule = exec_log->rule;
@@ -1559,7 +1932,7 @@ void ib_rule_log_execution(
                 IB_LIST_LOOP_CONST(tgt->rslt_list, rslt_node) {
                     const ib_rule_log_rslt_t *rslt =
                         (const ib_rule_log_rslt_t *)rslt_node->data;
-                    log_result(rule_exec, tgt, rslt);
+                    log_result(tmpmp, rule_exec, tgt, rslt);
                 }
             }
         }
@@ -1574,5 +1947,7 @@ void ib_rule_log_execution(
         assert(0 && "Fatal rule execution error");
     }
 
+cleanup:
+    ib_mpool_release(tmpmp);
     return;
 }
