@@ -153,10 +153,10 @@ extern "C" {
  *   handle_connect_event -> tx_started_event [weight=100.0]
  *
  *   tx_started_event -> request_started_event [weight=5.0]
- *   request_started_event -> request_header_finished_event [weight=1.0]
- *   request_header_finished_event -> context_tx_selected [weight=1.0]
+ *   request_started_event -> context_tx_selected [weight=1.0]
  *   context_tx_selected -> handle_context_tx_event [weight=1.0]
- *   handle_context_tx_event -> handle_request_header_event [weight=1.0]
+ *   handle_context_tx_event -> request_header_finished_event [weight=1.0]
+ *   request_header_finished_event -> handle_request_header_event [weight=1.0]
  *   handle_request_header_event -> request_started_event [label="HTTP\nPipeline\nRequest",style=dashed,weight=10.0]
  *   handle_request_header_event -> request_body_data_event [weight=1.0]
  *   request_body_data_event -> request_finished_event [weight=1.0]
