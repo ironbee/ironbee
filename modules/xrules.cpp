@@ -1081,7 +1081,7 @@ namespace {
 
             ib_log_debug_tx(
                 tx.ib(),
-                "Running GEO Check for %s",
+                "Running GeoIP check for %s",
                 m_country.c_str());
 
             IronBee::throw_if_error(
@@ -1126,7 +1126,11 @@ namespace {
                     static_cast<int>(m_country.length()),
                     m_country.data());
                 if (boost::iequals(bs.to_s(), m_country)) {
+                    ib_log_debug_tx(tx.ib(), "GeoIP match.");
                     actions.set(m_action);
+                }
+                else {
+                    ib_log_debug_tx(tx.ib(), "No GeoIP match.");
                 }
             }
         }
