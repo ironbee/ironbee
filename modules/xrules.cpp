@@ -353,6 +353,17 @@ namespace {
         IronBee::Transaction tx
     )
     {
+        /* Just a debug message. */
+        if (m_actions.size() == 0) {
+            ib_log_debug_tx(tx.ib(), "No actions to run.");
+        }
+        else {
+            ib_log_debug_tx(
+                tx.ib(),
+                "Running %d actions.",
+                static_cast<int>(m_actions.size()));
+        }
+
         for(
             std::map<Action, action_ptr>::iterator itr = m_actions.begin();
             itr != m_actions.end();
