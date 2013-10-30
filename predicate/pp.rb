@@ -10,15 +10,15 @@
 # Author: Christopher Alfeld <calfeld@qualys.com>
 
 require 'open3'
+require 'cgi'
 $:.unshift(File.dirname(File.expand_path(__FILE__)))
 require 'fmt_sexpr'
-require 'cgi'
+require 'render'
 
-BASEDIR = File.dirname(File.expand_path(__FILE__))
-EXTRACT = File.join(BASEDIR, "extract_predicate_from_waggle.rb")
-HEADER  = File.join(BASEDIR, "pp_report_header.html")
-FOOTER  = File.join(BASEDIR, "pp_report_footer.html")
-DOT     = 'dot'
+BASEDIR  = File.dirname(File.expand_path(__FILE__))
+EXTRACT  = File.join(BASEDIR, "extract_predicate_from_waggle.rb")
+DOT      = 'dot'
+RESOURCE = split_data()
 
 # Try to find pp_dot.
 path = File.join(BASEDIR, "pp_dot")
@@ -59,71 +59,43 @@ def renderpp(text)
   # :post -- Post post-transform graph.
   state = :pre
   result = ""
-  ingraph = false
-  dot = ""
   status = :ok
 
-  text.split("\n").each do |line|
-    if ingraph
-      dot += line + "\n"
-      if line =~ /fillcolor=red/
+  extract_dot(text) do |type, data|
+    if type == :dot
+      if data =~ /fillcolor=red/
         status = :error
-      elsif line =~ /fillcolor=orange/
+      elsif data =~ /fillcolor=orange/
         staus = :warn if status == :ok
       end
-      if line =~ /^}/
-        # Done with dot.  Display header.
-        if state == :pre
-          result += "<h2>Pre-Transform Graph</h2>\n"
-          state = :transform
-        elsif state == :transform
-          result += "<h2>Post-Transform Graph</h2>\n"
-          state = :post
-        else
-          throw "Insanity"
-        end
-        result += render(dot) + "\n"
-        ingraph = false
-      end
-    else
-      if line =~ /^(di)?graph (.*)\{$/
-        ingraph = true
-        dot = line
+      if state == :pre
+        result += "<h2>Pre-Transform Graph</h2>\n"
+        state = :transform
+      elsif state == :transform
+        result += "<h2>Post-Transform Graph</h2>\n"
+        state = :post
       else
-        # Not a dot line.
-        if line =~ /^ERROR: /
-          result += "<span class=pperror>"
-          status = :error
-        elsif line =~ /^WARNING: /
-          result += "<span class=ppwarn>"
-          status = :warn if status == :ok
-        else
-          result += "<span class=ppother>"
-        end
-        result += line + "</span>\n"
+        throw "Insanity"
       end
+      result += render_dot_as_svg(data) + "\n"
+    elsif type == :line
+      # Not a dot line.
+      if data =~ /^ERROR: /
+        result += "<span class=pperror>"
+        status = :error
+      elsif data =~ /^WARNING: /
+        result += "<span class=ppwarn>"
+        status = :warn if status == :ok
+      else
+        result += "<span class=ppother>"
+      end
+      result += data + "</span>\n"
+    else
+      throw "Insanity"
     end
   end
 
   [result, status]
-end
-
-# Convert dot text to SVG.
-def render(dot)
-  svg = ""
-  Open3.popen2(DOT, "-Tsvg") do |i, o|
-    o.set_encoding("UTF-8")
-    i.write(dot)
-    i.close
-    o.each_line do |line|
-      if line =~ /^<\?xml/ || line =~ /^<!DOCTYPE/ || line =~ /^\s*"http/ || line =~ /^<!--/ || line =~ /^\s*-->$/
-        next
-      end
-      svg += line
-    end
-  end
-
-  svg
 end
 
 # Render a list of defines for consumption by pp_dot.
@@ -183,7 +155,7 @@ end
 
 expressions.sort! {|a,b| a.line_number <=> b.line_number}
 
-puts IO.read(HEADER)
+puts RESOURCE['Header']
 
 puts "<table>"
 line_number = 0
@@ -227,4 +199,49 @@ end
 
 puts "</pre>"
 
-puts IO.read(FOOTER)
+puts RESOURCE['Footer']
+
+__END__
+<<<Header>>>
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>ExtractPredicateFromWaggle Report</title>
+<script type='application/javascript'>
+function expand_collapse(id)
+{
+  var e = document.getElementById(id)
+  if (e.style.display == 'none') {e.style.display='inline';}
+  else {e.style.display='none';}
+}
+</script>
+<style type='text/css'>
+.predicate-ok {
+  color:green;
+}
+.predicate-error {
+  color:red;
+}
+.predicate-warn {
+  color:orange;
+}
+td {
+  vertical-align: top;
+}
+.line {
+  white-space: pre;
+  font-family:monospace;
+}
+.pperror {
+  color:red;
+}
+.ppwarn {
+  color:orange;
+}
+</style>
+</head>
+<body>
+<<<Footer>>>
+</body>
+</html>
