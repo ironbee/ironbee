@@ -164,4 +164,27 @@ class TestTesting < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: A/
   end    
+  def test_args_simple
+    clipp(
+      :config => "LoadModule \"ibmod_htp.so\"",
+      default_site_config: <<-EOS
+        Rule ARGS @match "baz" id:1 phase:REQUEST clipp_announce:A
+        Rule REQUEST_BODY_PARAMS @match "baz" id:2 phase:REQUEST clipp_announce:B
+      EOS
+    ) do
+      transaction do |t|
+        t.request(
+          raw: "POST /foo HTTP/1.1",
+          headers: {
+            "Content-Type" => "application/x-www-form-urlencoded",
+            "Content-Length" => 5
+          },
+          body: "x=baz"
+        )
+      end
+    end
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: A/
+    assert_log_match /CLIPP ANNOUNCE: B/
+  end
 end

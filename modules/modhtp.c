@@ -2464,7 +2464,7 @@ ib_status_t modhtp_request_header_data(
 }
 
 /**
- * Request Header Finished Hook
+ * Context Selection Hook
  *
  * @param[in] ib     IronBee engine.
  * @param[in] itx    Transaction.
@@ -2474,7 +2474,7 @@ ib_status_t modhtp_request_header_data(
  * @returns Status code
  */
 static
-ib_status_t modhtp_request_header_finished(
+ib_status_t modhtp_handle_context_tx(
     ib_engine_t           *ib,
     ib_tx_t               *itx,
     ib_state_event_type_t  event,
@@ -2521,10 +2521,10 @@ ib_status_t modhtp_request_header_finished(
 
     ib_log_debug_tx(itx,
                     "SEND REQUEST HEADER FINISHED TO LIBHTP: "
-                    "modhtp_request_header_finished");
-
+                    "modhtp_handle_context_tx");
     return IB_OK;
 }
+
 
 /**
  * Request Body Data Hook
@@ -3054,7 +3054,7 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_hook_tx_register(ib, request_header_finished_event, modhtp_request_header_finished, m);
+    rc = ib_hook_tx_register(ib, handle_context_tx_event, modhtp_handle_context_tx, m);
     if (rc != IB_OK) {
         return rc;
     }
