@@ -1758,13 +1758,13 @@ static ib_status_t modhtp_get_or_create_list(
 }
 
 /**
- * Generate IronBee request header fields
+ * Generate IronBee request uri fields
  *
  * @param[in] txdata Transaction data
  *
  * @returns IronBee status code
  */
-static ib_status_t modhtp_gen_request_header_fields(
+static ib_status_t modhtp_gen_request_uri_fields(
     const modhtp_txdata_t *txdata)
 {
     assert(txdata != NULL);
@@ -1777,9 +1777,6 @@ static ib_status_t modhtp_gen_request_header_fields(
     ib_tx_t     *itx = txdata->itx;
     htp_tx_t    *htx = txdata->htx;
     bstr        *uri;
-
-    modhtp_field_gen_bytestr(itx, "request_line",
-                             htx->request_line, false, NULL);
 
     /* @todo: htp_unparse_uri_noencode() is private */
     uri = htp_unparse_uri_noencode(htx->parsed_uri);
@@ -1826,21 +1823,6 @@ static ib_status_t modhtp_gen_request_header_fields(
                                  htx->parsed_uri->fragment, false, NULL);
     }
 
-    rc = modhtp_get_or_create_list(itx, "request_cookies", &f);
-    if ( (htx->request_cookies != NULL) &&
-         htp_table_size(htx->request_cookies) &&
-         (rc == IB_OK) )
-    {
-        rc = modhtp_table_iterator(itx, htx->request_cookies,
-                                   modhtp_field_list_callback, f);
-        if (rc != IB_OK) {
-            ib_log_warning_tx(itx, "Error adding request cookies");
-        }
-    }
-    else if (rc == IB_OK) {
-        ib_log_debug3_tx(itx, "No request cookies");
-    }
-
     /* Extract the query parameters into the IronBee tx's URI parameters */
     rc = modhtp_get_or_create_list(itx, "request_uri_params", &f);
     if ( (rc == IB_OK) && (htx->request_params != NULL) ) {
@@ -1861,6 +1843,46 @@ static ib_status_t modhtp_gen_request_header_fields(
     }
     else {
         ib_log_debug3_tx(itx, "%zd request URI parameters", param_count);
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Generate IronBee request header fields
+ *
+ * @param[in] txdata Transaction data
+ *
+ * @returns IronBee status code
+ */
+static ib_status_t modhtp_gen_request_header_fields(
+    const modhtp_txdata_t *txdata)
+{
+    assert(txdata != NULL);
+    assert(txdata->itx != NULL);
+    assert(txdata->htx != NULL);
+
+    ib_field_t  *f;
+    ib_status_t  rc;
+    ib_tx_t     *itx = txdata->itx;
+    htp_tx_t    *htx = txdata->htx;
+
+    modhtp_field_gen_bytestr(itx, "request_line",
+                             htx->request_line, false, NULL);
+
+    rc = modhtp_get_or_create_list(itx, "request_cookies", &f);
+    if ( (htx->request_cookies != NULL) &&
+         htp_table_size(htx->request_cookies) &&
+         (rc == IB_OK) )
+    {
+        rc = modhtp_table_iterator(itx, htx->request_cookies,
+                                   modhtp_field_list_callback, f);
+        if (rc != IB_OK) {
+            ib_log_warning_tx(itx, "Error adding request cookies");
+        }
+    }
+    else if (rc == IB_OK) {
+        ib_log_debug3_tx(itx, "No request cookies");
     }
 
     return IB_OK;
@@ -2469,13 +2491,19 @@ ib_status_t modhtp_request_header_finished(
     ib_status_t      irc;
     htp_status_t     hrc;
 
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(m, itx);
+
+    /* Generate uri fields. */
+    irc = modhtp_gen_request_uri_fields(txdata);
+    if (irc != IB_OK) {
+        return irc;
+    }
+
     /* LibHTP doesn't like header finished with no body ... */
     if (itx->request_header == NULL) {
         return IB_OK;
     }
-
-    /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(m, itx);
 
     /* Update the state */
     hrc = htp_tx_state_request_headers(txdata->htx);

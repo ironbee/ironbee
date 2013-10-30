@@ -148,4 +148,20 @@ class TestTesting < Test::Unit::TestCase
     assert_log_no_match(/^Foo:\s*Bar/)
     assert_log_match(/^Baz:\s*Buz/)
   end
+  def test_headerless
+    clipp(
+      :config => "LoadModule \"ibmod_htp.so\"",
+      :default_site_config => <<-EOS
+        Rule REQUEST_URI_PARAMS @match "bar" id:1 phase:REQUEST_HEADER clipp_announce:A
+      EOS
+    ) do 
+      transaction do |t|
+        t.request(
+          raw: "GET /foo?x=bar HTTP/1.1"
+        )
+      end
+    end
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: A/
+  end    
 end
