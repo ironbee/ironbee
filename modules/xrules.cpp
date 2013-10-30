@@ -1118,7 +1118,14 @@ namespace {
                     IronBee::ConstField(ls.front()).
                         value_as_byte_string());
 
-                if (bs.index_of(m_country.c_str()) == 0) {
+                ib_log_debug_tx(
+                    tx.ib(),
+                    "Matching GeoIP input %.*s against country %.*s.",
+                    static_cast<int>(bs.length()),
+                    bs.const_data(),
+                    static_cast<int>(m_country.length()),
+                    m_country.data());
+                if (boost::iequals(bs.to_s(), m_country)) {
                     actions.set(m_action);
                 }
             }
