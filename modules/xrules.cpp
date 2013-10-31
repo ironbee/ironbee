@@ -1312,18 +1312,28 @@ namespace {
 
                 IronBee::ConstList<ib_field_t *> list(clist);
 
-                const std::string content_type =
-                    IronBee::ConstField(list.front()).to_s();
+                if (list.size() > 0) {
+                    const std::string content_type =
+                        IronBee::ConstField(list.front()).to_s();
 
-                ib_log_debug_tx(
-                    tx.ib(),
-                    "Got string %s",
-                    content_type.c_str());
+                    ib_log_debug_tx(
+                        tx.ib(),
+                        "Checking content type value \"%s\".",
+                        content_type.c_str());
 
-                // Is the content type in the set.
-                if (m_content_types.count(content_type) > 0)
-                {
-                    actions.set(m_action);
+                    // Is the content type in the set.
+                    if (m_content_types.count(content_type) > 0)
+                    {
+                        ib_log_debug_tx(
+                            tx.ib(),
+                            "Content type matched.");
+                        actions.set(m_action);
+                    }
+                }
+                else {
+                    ib_log_debug_tx(
+                        tx.ib(),
+                        "No Content-Type header values. Rule not evaluated.");
                 }
             }
         }
