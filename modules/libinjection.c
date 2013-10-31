@@ -226,7 +226,7 @@ ib_status_t sqli_normalize_tfn(ib_mpool_t *mp,
     /* NOTE: We do not care if it is sqli, but just want the tokens. */
     libinjection_is_sqli(&sf);
 
-    if (sf.fingerprint == NULL) {
+    if (strlen(sf.fingerprint) == 0) {
         *field_out = field_in;
         return IB_OK;
     }
