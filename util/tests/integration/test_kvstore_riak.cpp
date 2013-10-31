@@ -22,7 +22,6 @@
 
 #include "ironbee_config_auto.h"
 #include "../gtest/gtest.h"
-#include "../gtest/gtest-spi.h"
 
 #include <iostream>
 #include <sstream>

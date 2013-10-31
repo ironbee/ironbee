@@ -1,6 +1,7 @@
 include $(top_srcdir)/build/tests.mk
-
 AUTOMAKE_OPTIONS = subdir-objects
+
+AM_CPPFLAGS += -Wno-missing-field-initializers
 
 noinst_LIBRARIES = libibtest.a
 
