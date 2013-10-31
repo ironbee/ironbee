@@ -129,4 +129,28 @@ class TestPredicate < Test::Unit::TestCase
     assert_log_no_match /NOTICE/
     assert_log_match /CLIPP ANNOUNCE: field_present/
   end
+
+  def test_trace
+    clipp(CONFIG.merge(
+      default_site_config: <<-EOS
+       Action id:1 phase:REQUEST_HEADER clipp_announce:a "predicate:(eq 'foo' (sub 'x' (var 'ARGS')))"
+       Action id:2 phase:REQUEST_HEADER clipp_announce:b "predicate:(eq 'bar' (sub 'x' (var 'ARGS')))"
+       Action id:3 clipp_announce:c "predicate:(or (eq 'bar' (sub 'x' (var 'ARGS'))) (eq 'bar' (sub 'y' (var 'ARGS'))))"
+       PredicateTrace ""
+      EOS
+    )) do
+      transaction do |t|
+        t.request(
+          raw: 'POST /a/b/c?x=bar&y=foo HTTP/1.1',
+          headers: {
+            "Content-Type" => "application/x-www-form-urlencoded",
+            "Content-Length" => 5
+          },
+          body: "y=bar"
+        )
+      end
+    end
+    assert_no_issues
+    assert_log_match /PredicateTrace/
+  end
 end
