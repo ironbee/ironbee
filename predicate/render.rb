@@ -61,7 +61,7 @@ def split_data
   DATA.each_line do |line|
     line.chomp!
     if line =~ /^<<<(.+)>>>$/
-      result[current_key] = current
+      result[current_key] = current if current
       current = ""
       current_key = $1
     elsif current_key
@@ -70,6 +70,7 @@ def split_data
       throw "Data before section."
     end
   end
+  result[current_key] = current
 
   result
 end
