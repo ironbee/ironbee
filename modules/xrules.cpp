@@ -1125,23 +1125,32 @@ namespace {
                     "No GeoIP fields. Not filtering on GeoIP.");
             }
             else {
-                IronBee::ConstByteString bs(
-                    IronBee::ConstField(ls.front()).
-                        value_as_byte_string());
+                try {
+                    IronBee::ConstByteString bs(
+                        IronBee::ConstField(ls.front()).
+                            value_as_byte_string());
 
-                ib_log_debug_tx(
-                    tx.ib(),
-                    "Matching GeoIP input %.*s against country %.*s.",
-                    static_cast<int>(bs.length()),
-                    bs.const_data(),
-                    static_cast<int>(m_country.length()),
-                    m_country.data());
-                if (boost::iequals(bs.to_s(), m_country)) {
-                    ib_log_debug_tx(tx.ib(), "GeoIP match.");
-                    actions.set(m_action);
+                    ib_log_debug_tx(
+                        tx.ib(),
+                        "Matching GeoIP input %.*s against country %.*s.",
+                        static_cast<int>(bs.length()),
+                        bs.const_data(),
+                        static_cast<int>(m_country.length()),
+                        m_country.data());
+                    if (boost::iequals(bs.to_s(), m_country)) {
+                        ib_log_debug_tx(tx.ib(), "GeoIP match.");
+                        actions.set(m_action);
+                    }
+                    else {
+                        ib_log_debug_tx(tx.ib(), "No GeoIP match.");
+                    }
                 }
-                else {
-                    ib_log_debug_tx(tx.ib(), "No GeoIP match.");
+                catch (const IronBee::einval& e) {
+                    ib_log_error_tx(
+                        tx.ib(),
+                        "GeoIP field is not a byte string field. "
+                        "This XRule cannot run."
+                    );
                 }
             }
         }
