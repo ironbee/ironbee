@@ -355,11 +355,18 @@ CHECK_PCRE()
 AX_BOOST_BASE(1.40,
               [have_boost_low=yes],
               [have_boost_low=no])
+# Save flags in case we don't find higher version.
+saved_BOOST_LDFLAGS=$BOOST_LDFLAGS
+saved_BOOST_CPPFLAGS=$BOOST_CPPFLAGS
 AX_BOOST_BASE(1.49,
               [have_boost=yes],
               [have_boost=no])
 if test "$have_boost_low" = "no"; then
     AC_MSG_WARN("Boost required for testing.")
+fi
+if test "$have_boost" = "no"; then
+  BOOST_LDFLAGS=$saved_BOOST_LDFLAGS
+  BOOST_CPPFLAGS=$saved_BOOST_CPPFLAGS
 fi
 AX_BOOST_SUFFIX()
 
