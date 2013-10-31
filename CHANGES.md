@@ -30,6 +30,8 @@ IronBee v0.9.0
 
 - A variety of simplifying transformations have been added.
 
+- Added new directive, `PredicateTrace` which takes either "" (stderr) or a path and writes out a trace file of what Predicate is doing.  See `predicate/ptrace.pdf`.
+
 - Fixed bug causing Predicate rules to fire multiple times.
 
 **Fast**
