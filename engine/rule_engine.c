@@ -101,6 +101,32 @@ struct ib_rule_phase_meta_t {
     ib_state_event_type_t  event;
 };
 
+/**
+ * Function to produce the default error page.
+ *
+ * @param[in] tx Ignored.
+ * @param[out] body The default error body is placed here.
+ * @param[out] legnth The default error body length is placed here.
+ * @param[in] cbdata Ignored.
+ *
+ * @returns IB_OK.
+ */
+static ib_status_t default_error_page_fn(
+    ib_tx_t        *tx,
+    const uint8_t **body,
+    size_t         *length,
+    void           *cbdata
+)
+{
+    assert(body != NULL);
+    assert(length != NULL);
+
+    *body = default_block_document;
+    *length = default_block_document_len;
+
+    return IB_OK;
+}
+
 /* Rule definition data */
 static const ib_rule_phase_meta_t rule_phase_meta[] =
 {
@@ -1104,12 +1130,17 @@ static ib_status_t report_status_block_to_server(
     assert(rule_exec != NULL);
     assert(rule_exec->ib != NULL);
     assert(rule_exec->ib->server != NULL);
+    assert(rule_exec->ib->rule_engine != NULL);
     assert(rule_exec->tx != NULL);
     assert(rule_exec->tx->ctx != NULL);
 
-    ib_status_t  rc;
-    ib_engine_t *ib = rule_exec->ib;
-    ib_tx_t     *tx = rule_exec->tx;
+    ib_status_t       rc;
+    ib_engine_t      *ib          = rule_exec->ib;
+    ib_tx_t          *tx          = rule_exec->tx;
+    ib_rule_engine_t *rule_engine = ib->rule_engine;
+    const uint8_t    *body;
+    size_t            body_len;
+
     ib_rule_log_debug(
         rule_exec,
         "Setting HTTP error response: status=%" PRId64,
@@ -1135,11 +1166,31 @@ static ib_status_t report_status_block_to_server(
      *       document from a file/template.
      */
     ib_rule_log_debug(rule_exec, "Setting HTTP error response data.");
-    rc = ib_server_error_body(
-        ib->server,
+
+    /* Get the error page from the rule engine function. */
+    rc = rule_engine->error_page_fn(
         tx,
-        default_block_document,
-        default_block_document_len);
+        &body,
+        &body_len,
+        rule_engine->error_page_data);
+    if (rc != IB_OK) {
+        /* If there was an error, and it was not a declination, log. */
+        if (rc != IB_DECLINED) {
+            ib_rule_log_error(rule_exec, "Custom error page failed.");
+        }
+
+        /* As a fail-back, call the default function. */
+        rc = default_error_page_fn(tx, &body, &body_len, NULL);
+        if (rc != IB_OK) {
+            /* This should be dead code as the default fn should not fail. */
+            ib_rule_log_error(rule_exec, "Default error page failed.");
+            body = (uint8_t *)"Error";
+            body_len = sizeof("Error")-1;
+        }
+    }
+
+    /* Report the error page back to the server. */
+    rc = ib_server_error_body(ib->server, tx, body, body_len);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_rule_log_notice(
             rule_exec,
@@ -3138,6 +3189,10 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
             return rc;
         }
     }
+
+    /* Setup the error page. */
+    rule_engine->error_page_fn = default_error_page_fn;
+    rule_engine->error_page_data = NULL;
 
     *p_rule_engine = rule_engine;
     return IB_OK;
@@ -5388,6 +5443,19 @@ ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
     }
 
     return IB_EINVAL;
+}
+
+void ib_rule_set_error_page_fn(
+    ib_engine_t             *ib,
+    ib_rule_error_page_fn_t  error_page_fn,
+    void                    *error_page_data
+)
+{
+    assert(ib != NULL);
+    assert(ib->rule_engine != NULL);
+
+    ib->rule_engine->error_page_fn = error_page_fn;
+    ib->rule_engine->error_page_data = error_page_data;
 }
 
 ib_status_t ib_rule_register_external_driver(

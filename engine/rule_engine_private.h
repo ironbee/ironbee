@@ -93,11 +93,25 @@ struct ib_rule_target_t {
  * Rule engine.
  */
 struct ib_rule_engine_t {
-    ib_list_t            *rule_list;        /**< List of all registered rules */
-    ib_hash_t            *rule_hash;        /**< Hash of rules (by rule-id) */
+    ib_list_t            *rule_list;        /**< All registered rules. */
+    ib_hash_t            *rule_hash;        /**< All rules by rule-id. */
     ib_hash_t            *external_drivers; /**< Drivers for external rules. */
-    ib_list_t            *ownership_cbs;   /**< List of ownership callbacks */
-    ib_list_t *injection_cbs[IB_RULE_PHASE_COUNT]; /**< Rule injection callbacks*/
+    ib_list_t            *ownership_cbs;    /**< List of ownership callbacks. */
+
+    /**
+     * Rule injection callbacks.
+     */
+    ib_list_t *injection_cbs[IB_RULE_PHASE_COUNT];
+
+    /**
+     * Error page function.
+     */
+    ib_rule_error_page_fn_t  error_page_fn;
+
+    /**
+     * Callback data for ib_rule_engine_t::error_page_data.
+     */
+    void                    *error_page_data;
 
     /* Var Sources */
     struct {
