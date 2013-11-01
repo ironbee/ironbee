@@ -1503,8 +1503,8 @@ ib_status_t ib_var_target_remove_and_set(
         return rc;
     }
 
-    rc = ib_var_target_remove(target, NULL, mp, store);
-    if (rc != IB_OK) {
+    rc = ib_var_target_remove(target, NULL, NULL, store);
+    if (rc != IB_OK && rc != IB_ENOENT) {
         return rc;
     }
 
