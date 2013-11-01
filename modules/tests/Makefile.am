@@ -39,6 +39,14 @@ test_xrules_LDADD     = \
     $(LDADD) \
     $(top_builddir)/ironbeepp/libibpp.la
 
+check_PROGRAMS           += test_error_page
+test_error_page_SOURCES   = test_error_page.cpp
+test_error_page_CPPFLAGS  = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
+test_error_page_LDFLAGS   = $(AM_LDFLAGS) $(BOOST_LDFLAGS)
+test_error_page_LDADD     = \
+    $(LDADD) \
+    $(top_builddir)/ironbeepp/libibpp.la
+
 noinst_PROGRAMS = psparse
 psparse_LDADD = ../libparser_suite.la
 psparse_SOURCES = psparse.cpp
@@ -49,6 +57,7 @@ TESTS=$(check_PROGRAMS)
 TEST_EXTRAS = \
        DfaModuleTest.matches.config \
        EeOperModuleTest.config \
+       error_page.html \
        eudoxus_pattern1.e \
        init_collection_1.json \
        init_collection_2.json \
