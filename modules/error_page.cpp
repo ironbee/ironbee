@@ -24,6 +24,8 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+#include "ironbee_config_auto.h"
+
 #include <ironbee/rule_engine.h>
 
 #include <ironbeepp/c_trampoline.hpp>
@@ -39,6 +41,14 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
+
+/* Enable PRId64 printf. */
+extern "C" {
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+}
 
 /**
  * Error Page Module implementaiton.
@@ -184,7 +194,7 @@ ib_status_t ErrorPageModule::error_page_fn(
 
     ib_log_debug_tx(
         tx,
-        "Returning custom error page with status %ld for context %s.",
+        "Returning custom error page with status %" PRId64 " for context %s.",
         tx->block_status,
         txpp.context().name());
 
@@ -196,7 +206,8 @@ ib_status_t ErrorPageModule::error_page_fn(
     if (itr == cfg.status_to_file.end()) {
         ib_log_debug_tx(
             tx,
-            "No custom page mapped for status %ld and context %s. Declining.",
+            "No custom page mapped for status %" PRId64 " and context %s. "
+            "Declining.",
             tx->block_status,
             txpp.context().name());
         return IB_DECLINED;
