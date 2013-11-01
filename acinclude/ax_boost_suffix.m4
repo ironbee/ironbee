@@ -16,7 +16,10 @@ if test "x$findsuffix" = "xyes"; then
 		changequote(<<, >>)dnl
 		candidates=`echo $boostlibpath/libboost_date_time* | sed 's|.*libboost_date_time||g' | sed 's/\.[^ ]*//g'`
 		changequote([, ])dnl
-		if `echo $candidates | grep -q ' '`; then
+
+    if test "x$candidates" = "x*"; then
+      AC_MSG_ERROR(Unable to find boost suffix.  Use --with-boost-suffix to specify.)
+		elif `echo $candidates | grep -q ' '`; then
 			AC_MSG_ERROR(Multiple candidates found for suffix.  Use --with-boost-suffix to choose one: $candidates)
 		else
 			BOOST_SUFFIX=$candidates
