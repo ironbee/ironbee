@@ -1481,7 +1481,7 @@ static void log_tfns(
 
     const ib_list_node_t *tfn_node;
     ib_status_t           rc;
-    
+
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_TFN) == false) {
         return;
     }
@@ -1491,7 +1491,7 @@ static void log_tfns(
         size_t                   sz;
         const   ib_list_node_t  *value_node;
         const ib_rule_log_tfn_t *tfn;
-        
+
         tfn = (const ib_rule_log_tfn_t *)ib_list_node_data_const(tfn_node);
 
         if (ib_list_elements(tfn->value_list) > 0) {
@@ -1675,7 +1675,7 @@ static void log_result(
     size_t            buf_sz;
     ib_rule_log_tx_t *tx_log = rule_exec->tx_log;
     ib_status_t       rc;
-    
+
     if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_TARGET) ) {
         if (rslt->value == NULL) {
             if (tgt->tfn_list != NULL) {
