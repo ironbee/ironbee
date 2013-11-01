@@ -3327,7 +3327,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             status_str = p1 + strlen("status=");
             status  = atoi(status_str);
 
-            if (!(status <= 200 && status < 600))
+            if (status < 200 || status >= 600)
             {
                 ib_log_debug2(
                     ib,
