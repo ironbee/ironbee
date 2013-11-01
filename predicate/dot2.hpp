@@ -21,7 +21,7 @@
  *
  * Alternative graphviz renderer.
  *
- * These renderes are designed to generate pretty and useful graphs for
+ * These renderers are designed to generate pretty and useful graphs for
  * consumption by predicate expression writers.  In contrast, to_dot() is a
  * more low level routine designed for use by Predicate developers.
  *
