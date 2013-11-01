@@ -155,7 +155,7 @@ struct fast_collection_spec_t
 struct fast_collection_runtime_spec_t
 {
     /** Source of collection to feed to automata. */
-    const ib_var_source_t *name;
+    const ib_var_source_t *source;
     /** String to separate key and value with. */
     const char *separator;
 };
@@ -469,16 +469,12 @@ ib_status_t fast_feed_var_collection(
     const char           *name;
     size_t                name_length;
 
-    ib_var_source_name(collection->name, &name, &name_length);
+    ib_var_source_name(collection->source, &name, &name_length);
 
-    rc = ib_var_source_get_const(collection->name, &field, var_store);
+    rc = ib_var_source_get_const(collection->source, &field, var_store);
     if (rc == IB_ENOENT) {
-        ib_log_error(
-            ib,
-            "fast: No such var %.*s",
-            (int)name_length, name
-        );
-        return IB_EOTHER;
+        // Var not set.
+        return IB_OK;
     }
     else if (rc != IB_OK) {
         ib_log_error(
@@ -655,7 +651,7 @@ ib_status_t fast_feed_phase(
 
     for (
         const fast_collection_runtime_spec_t *collection = collections;
-        collection->name != NULL;
+        collection->source != NULL;
         ++collection
     ) {
         rc = fast_feed_var_collection(
@@ -773,7 +769,7 @@ ib_status_t fast_convert_specs_collections(
                 return rc;
             }
         }
-        result[i].name = source;
+        result[i].source = source;
         result[i].separator = spec->separator;
     }
 
