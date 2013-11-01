@@ -1515,14 +1515,14 @@ static void log_tfns(
                 }
 
                 rule_log_exec(rule_exec,
-                            "TFN %s() %s \"%.*s:%.*s\" %s %s",
-                            ib_tfn_name(tfn->tfn),
-                            ib_field_type_name(value->in->type),
-                            (int)tgt->original->nlen, tgt->original->name,
-                            (int)value->in->nlen, value->in->name,
-                            buf,
-                            ( value->status == IB_OK ?
-                                "" : ib_status_to_string(value->status)));
+                              "TFN %s() %s \"%.*s:%.*s\" %s %s",
+                              ib_tfn_name(tfn->tfn),
+                              ib_field_type_name(value->in->type),
+                              (int)tgt->original->nlen, tgt->original->name,
+                              (int)value->in->nlen, value->in->name,
+                              buf,
+                              ( value->status == IB_OK ?
+                                  "" : ib_status_to_string(value->status)));
             }
         }
         else {
