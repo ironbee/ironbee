@@ -187,6 +187,17 @@ ibmod_xrules_la_LIBADD  = $(AM_LIBADD) \
 			  $(top_builddir)/ironbeepp/libibpp.la
 endif
 
+if CPP
+module_LTLIBRARIES += ibmod_error_page.la
+ibmod_error_page_la_SOURCES = error_page.cpp
+ibmod_error_page_la_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
+ibmod_error_page_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
+			      $(BOOST_LDFLAGS) \
+			      -lboost_iostreams$(BOOST_SUFFIX) \
+ibmod_error_page_la_LIBADD  = $(AM_LIBADD) \
+			      $(top_builddir)/ironbeepp/libibpp.la
+endif
+
 install-exec-hook: $(module_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
 	for m in $(module_LTLIBRARIES); do \
