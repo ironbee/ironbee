@@ -1,3 +1,39 @@
+# v3.8.0 - 2013-10-18
+
+LAMP Special Edition: MySQL and PHP improvements
+
+* [Issue #33](https://github.com/client9/libinjection/issues/54) Fixes MySQL in latin1-mode use of `%A0` as whitespace.  This was tricky since `%A0` might be part of larger UTF-8 encoding as well.  Or perhaps `%C2%A0` (utf-8 encoding) might be treated as whitespace.  Fortunately, MySQL only seems to treat `%A0` as whitespace in latin1 mode.   HT [@ru_raz0r](https://twitter.com/ru_raz0r)
+* Fixes to Lua testdriver and portability fixes
+* Much improved PHP build and test.  It now uses `phpize` and builds and tests like a real module.
+* API CHANGE:  the macro `LIBINJECTION_VERSION` has been replaced by `const char* libinjection_version()`.  This allows us to increment the version number without having to regenerate SWIG (or other) bindings for minor releases.
+
+NOTE:
+Pregenerated [SWIG](http://www.swig.org/) bindings are removed.  You'll need to install SWIG before running `make`.  SWIG is packaged on virtually every OS so this should not be a problem.
+
+Here's why:
+
+* Latest versions of swig appear to generate poor quality bindings for LUA and Python.  Bugs are filed upstream [1341](https://sourceforge.net/p/swig/bugs/1341/), [1343](https://sourceforge.net/p/swig/bugs/1343/), [1345](https://sourceforge.net/p/swig/bugs/1345/).  These are fixed or will be fixed in swig 3.0.0.
+* In addition, I've recieved a number of reports of generated code failing various static analysis
+* I can't triangulate which SWIG for which langauge for which OS will work for you
+* I may be switching to [libffi](http://cffi.readthedocs.org/) for python, and [luajit.ffi](http://luajit.org/ext_ffi.html) for lua(jit) in the future, anyways.
+
+# v3.7.1 -- 2013-10-13
+
+* Remove un-needed code
+
+# v3.7.0 -- 2013-10-13
+
+Major Release
+
+* [Issue #54](https://github.com/client9/libinjection/issues/54): Add test vectors from [Arne Swinnen](http://www.arneswinnen.net/2013/09/automated-sql-injection-detection/). Thanks [qerub@github](https://github.com/qerub)
+* Minor fingerprint update for [Issue #54](https://github.com/client9/libinjection/issues/54).  I don't really think it's valid SQL but it's safe enough to detect without false positives.
+* [Issue #55](https://github.com/client9/libinjection/issues/55): Parse MS SQLSERVER use of \[brackets\] for column and table names. This is a big one that closes a lot of holes.  Thanks [nroggle@github](https://github.com/nroggel)
+* [Issue #56](https://github.com/client9/libinjection/issues/56): fix buffer over-read.  Thanks [safe3@github](https://github.com/Safe3) and [flily@github](https://github.com/flily)
+* Remove use of `-fstack-protector` as it breaks valgrind detecting memory problems
+  Read more about it http://blog.client9.com/2013/10/12/gcc-valgrind-stackprotector.html
+* Fixed folding issue where `1,-sin(1))` would be folded as `1 (1)`
+* Add more test cases and improved test coverage to [98.8%](https://libinjection.client9.com/cicada/artifacts/libinjection-coverage-unittest/lcov-html/c/libinjection_sqli.c.gcov.html)
+
 # v3.6.0 -- 2013-09-11
 * New PHP API
 * Big fingerprint update
@@ -6,6 +42,7 @@
 ** adding folding rule for "sqltype sqltype -> sqltype" since
    `select binary binary binary 1` is valid
 * Other minor fingerprints added
+* -maybe- API change as typedefs and structs were re-arranged for SWIG
 
 # v3.5.3 -- 2013-08-25
 * Fingerprint update -- `BETWEEN` operation bypasses

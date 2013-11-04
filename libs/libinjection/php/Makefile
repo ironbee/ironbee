@@ -1,45 +1,55 @@
-
 #
+# this requires swig, and an installation of php (and php-dev tools)
 #
-all: php
+# everything is copied and generating int the build directory
+#
 
-php: libinjection_wrap.c copy words.php
-	gcc `php-config --includes` -fpic -c libinjection_wrap.c libinjection_sqli.c
-	gcc -shared libinjection_sqli.o libinjection_wrap.o -o libinjection.so
+all: module
 
-#python: copy libinjection/libinjection_wrap.c
-#	rm -f libinjection.py libinjection.pyc
-#	python setup.py --verbose build --force
-#	sudo python setup.py --verbose install
+build/modules/libinjection.so: build build/libinjection.h build/libinjection_sqli.c build/libinjection_sqli_data.h build/config.m4 build/libinjection.i
+	swig -version
+	(cd build; swig -noproxy -php -Wall -Wextra libinjection.i)
+	(cd build; phpize; ./configure ; make )
 
-words.php: Makefile json2php.py ../c/sqlparse_data.json
-	./json2php.py < ../c/sqlparse_data.json > words.php
+module: build/modules/libinjection.so
 
-test-unit: php
-	phpunit -v testdriver.php
-
-test: test-unit
+test: build/modules/libinjection.so
+	mkdir -p build/tests
+	./gentests.py
+	cp testsupport.php build/
+	(cd build; export NO_INTERACTION=1 && make test)
 .PHONY: test
 
-speed:
-	./speedtest.py
+install: build/modules/libinjection.so
+	(cd build; make install)
 
-libinjection.h: ../c/libinjection.h
-	cp ../c/libinjection.h libinjection.h
+build:
+	mkdir build
 
-libinjection_sqli.c: ../c/libinjection_sqli.c
-	cp ../c/libinjection_sqli.c libinjection_sqli.c
+build/libinjection.h: ../c/libinjection.h
+	cp ../c/libinjection.h build/libinjection.h
 
-libinjection_sqli_data.h: ../c/libinjection_sqli_data.h
-	cp ../c/libinjection_sqli_data.h libinjection_sqli_data.h
+build/libinjection_sqli.c: ../c/libinjection_sqli.c
+	cp ../c/libinjection_sqli.c build/libinjection_sqli.c
 
-libinjection_wrap.c: libinjection.i libinjection.h
-	swig -noproxy -php -Wextra libinjection.i
+build/libinjection_sqli_data.h: ../c/libinjection_sqli_data.h
+	cp ../c/libinjection_sqli_data.h build/libinjection_sqli_data.h
 
-copy: libinjection.h libinjection_sqli.c libinjection_sqli_data.h
+build/libinjection.i: libinjection.i
+	cp libinjection.i build/
+
+build/config.m4: config.m4
+	mkdir -p build
+	cp config.m4 build/config.m4
+
+
+#
+# old
+#
+words.php: Makefile json2php.py ../c/sqlparse_data.json
+	./json2php.py < ../c/sqlparse_data.json > words.php
 
 clean:
 	rm -f *~ *.o *.so
 	rm -f words.php
-	rm -f libinjection.h libinjection_sqli.c libinjection_sqli_data.h
-	rm -f libinjection.php php_libinjection.h
+	rm -rf build

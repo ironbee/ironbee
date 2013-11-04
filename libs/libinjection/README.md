@@ -1,7 +1,12 @@
 libinjection
 ============
 
-SQL / SQLI tokenizer parser analyzer.
+SQL / SQLI tokenizer parser analyzer. For
+
+* C and C++
+* PHP
+* Python
+* Lua
 
 See
 [https://libinjection.client9.com/](https://libinjection.client9.com/)
@@ -66,8 +71,8 @@ https://libinjection.client9.com/diagnostics
 
 For quick experiments, cracking and breaking, and other ad-hoc tests.
 
-At https://libinjection.client9.com/jenkins/view/libinjection/ is
-a [Jenkin](http://jenkins-ci.org/) server showing automated testing:
+At https://libinjection.client9.com/cicada/ is
+a integration server showing automated testing:
 
 * build and unit-tests under GCC latest
 * build, unit-tests and static analysis using clang

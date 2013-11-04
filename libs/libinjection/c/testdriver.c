@@ -4,9 +4,9 @@
 #include <glob.h>
 #include "libinjection.h"
 
-char g_test[4096];
-char g_input[4096];
-char g_expected[4096];
+char g_test[8096];
+char g_input[8096];
+char g_expected[8096];
 
 size_t modp_rtrim(char* str, size_t len)
 {
@@ -71,8 +71,8 @@ int read_file(const char* fname, int flags, int testtype)
 {
     int count = 0;
     FILE *fp = NULL;
-    char linebuf[4096];
-    char g_actual[4096];
+    char linebuf[8192];
+    char g_actual[8192];
     char* bufptr = NULL;
     sfilter sf;
     int ok = 1;
@@ -126,7 +126,7 @@ int read_file(const char* fname, int flags, int testtype)
     } else if (testtype == 2) {
         num_tokens = libinjection_sqli_fold(&sf);
         for (i = 0; i < num_tokens; ++i) {
-            slen = print_token(g_actual, slen, &(sf.tokenvec[i]));
+            slen = print_token(g_actual, slen, libinjection_sqli_get_token(&sf, i));
         }
     } else {
         while (libinjection_sqli_tokenize(&sf) == 1) {
@@ -167,6 +167,8 @@ int main(int argc, char** argv)
             break;
         }
     }
+
+    printf("%s\n", libinjection_version());
 
     for (i = offset; i < argc; ++i) {
         fname = argv[i];

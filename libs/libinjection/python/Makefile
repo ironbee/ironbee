@@ -1,24 +1,28 @@
 
+all: build
 #
 #
-python: copy libinjection/libinjection_wrap.c
+build: copy libinjection/libinjection_wrap.c
 	rm -f libinjection.py libinjection.pyc
 	python setup.py --verbose build --force
+
+install: build
 	sudo python setup.py --verbose install
+
+test-unit: build
+	python setup.py build_ext --inplace
+	PYTHON_PATH='.' nosetests -v --with-xunit test_driver.py
+
+.PHONY: test
+test: test-unit
+
+.PHONY: speed
+speed:
+	./speedtest.py
 
 
 words.py: Makefile json2python.py ../c/sqlparse_data.json
 	./json2python.py < ../c/sqlparse_data.json > words.py
-
-test-unit: copy words.py
-	python setup.py build_ext --inplace
-	PYTHON_PATH='.' nosetests -v --with-xunit test_driver.py
-
-test: test-unit
-.PHONY: test
-
-speed:
-	./speedtest.py
 
 libinjection/libinjection.h: ../c/libinjection.h
 	cp ../c/libinjection.h libinjection/libinjection.h
@@ -30,14 +34,16 @@ libinjection/libinjection_sqli_data.h: ../c/libinjection_sqli_data.h
 	cp ../c/libinjection_sqli_data.h libinjection/libinjection_sqli_data.h
 
 libinjection/libinjection_wrap.c: libinjection/libinjection.i libinjection/libinjection.h
-	swig -python -builtin -Wextra libinjection/libinjection.i
+	swig -version
+	swig -python -builtin -Wall -Wextra libinjection/libinjection.i
 
+.PHONY:copy
 copy: libinjection/libinjection.h libinjection/libinjection_sqli.c libinjection/libinjection_sqli_data.h
 
 clean:
 	rm -rf build dist
 	rm -f *.pyc *~ _libinjection.so
 	rm -f nosetests.xml
-	(cd libinjection; rm -f *.pyc *~)
-	(cd libinjection; rm -f libinjection.h libinjection_sqli.c libinjection_sqli_data.h)
-
+	rm -f words.py
+	rm -f libinjection/libinjection.h libinjection/libinjection_sqli.c libinjection/libinjection_sqli_data.h
+	rm -f libinjection/libinjection_wrap.c libinjection/libinjection.py
