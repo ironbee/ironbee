@@ -1,8 +1,7 @@
 --TEST--
-MS Brackets
+junk
 --INPUT--
-[]
+SELECT ]
 --EXPECTED--
-n []
-
-
+E SELECT
+? ]

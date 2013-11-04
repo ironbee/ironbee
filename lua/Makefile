@@ -2,28 +2,26 @@
 # either works
 
 # ubuntu
-LUA_FLAGS=-I/usr/include/lua5.1 -llua5.1
-LUA=/usr/bin/lua5.1
+#LUA_FLAGS=-I/usr/include/lua5.1 -llua5.1
+#LUA=/usr/bin/lua5.1
 
 # ubuntu libjit 2
 LUA_FLAGS=-I/usr/include/luajit-2.0 -lluajit5.1
-LUA=XXX
-# where is luajit?
-
-# MAC OS X - "port" luajit
-LUA_FLAGS=-I/opt/local/include/luajit-2.0 -L/opt/local/lib -lluajit-5.1.2
 LUA=luajit
 
-# MAC OS X - "port" for lua
-#LUA_FLAGS=-I/opt/local/include -L/opt/local/lib/ -llua
-#LUA=lua
-
+# centos and friends
+LUA_FLAGS=-I/usr/include/ -L/usr/lib64 -llua
+LUA=lua
 
 SHARED=-shared -Wl,-soname,libinjection.so
-CFLAGS= -O0 -g -Wall -Werror -fPIC -fno-common
+CFLAGS= -O0 -g -Wall -Wextra -fPIC -fno-common
 APPLE=$(shell uname -a | grep -c Darwin)
+
+# MAC OS X - brew install luajit
 ifeq ($(APPLE),1)
 	SHARED=-dynamiclib
+	LUA_FLAGS=-I/usr/local/include/luajit-2.0 -L/usr/local/lib -lluajit-5.1
+	LUA=luajit
 endif
 
 # need to hack a linux version here
@@ -42,8 +40,11 @@ test-unit: libinjection.so lua-TestMore
 	./make_test.py > unit-test.t
 	LUA_PATH='?.lua;lua-TestMore/src/?.lua' ${LUA} unit-test.t
 
+test: test-unit
+
 libinjection_wrap.c: libinjection.i libinjection.h
-	swig -lua libinjection.i
+	swig -version
+	swig -lua -Wall -Wextra libinjection.i
 
 sqlifingerprints.lua: generate_lua_fingerprints.py ../c/sqlparse_data.json
 	./generate_lua_fingerprints.py > sqlifingerprints.lua
@@ -77,3 +78,4 @@ clean:
 	rm -f unit-test.t
 	rm -f libinjection_sqli.c.*
 	rm -f junit*.xml
+	rm -f libinjection_wrap.c

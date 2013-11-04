@@ -104,9 +104,8 @@ def alltokens(val, flags):
 
     args = []
     fingerprint = libinjection.sqli_fingerprint(sqlstate, flags)
-    vec = sqlstate.tokenvec
     for i in range(len(sqlstate.fingerprint)):
-        args.append(print_token(vec[i]))
+        args.append(print_token(libinjection.sqli_get_token(sqlstate,i)))
     parse['folds'] = args
     parse['sqli'] = bool(libinjection.sqli_blacklist(sqlstate) and libinjection.sqli_not_whitelist(sqlstate))
     parse['fingerprint'] = fingerprint
@@ -208,7 +207,7 @@ class NullHandler(tornado.web.RequestHandler):
 
         self.render("tokens.html",
                     title='libjection sqli token parsing diagnositcs',
-                    version = libinjection.LIBINJECTION_VERSION,
+                    version = libinjection.version(),
                     parsed=parsed,
                     formvalue=val,
                     ssl_protocol=self.request.headers.get('X-SSL-Protocol', ''),
@@ -298,7 +297,7 @@ class NullHandler(tornado.web.RequestHandler):
 
         self.render("form.html",
                     title='libjection sqli diagnositc',
-                    version = libinjection.LIBINJECTION_VERSION,
+                    version = libinjection.version(),
                     is_sqli=qssqli,
                     args=args,
                     allfp = allfp,

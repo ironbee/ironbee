@@ -5,12 +5,6 @@ LISTEN = [
 
 tests = [
     {
-        'name'    : 'libinjection.client9.com-sslassert',
-        'listen'  : [  TestOnTime(minute='1') ],
-        'source'  : CheckoutGit('https://github.com/client9/sslassert.git'),
-        'exec'    : ExecuteShell("OPENSSL=/usr/local/ssl/bin/openssl ./example-libinjection.sh")
-    },
-    {
         'name'    : 'libinjection-build-test',
         'listen'  : LISTEN,
         'source'  : CheckoutGit('https://github.com/client9/libinjection.git'),
@@ -52,6 +46,18 @@ tests = [
         'listen': LISTEN,
         'source': CheckoutGit('https://github.com/client9/libinjection.git'),
         'exec': ExecuteShell('make clean && cd python && make test'),
+    },
+    {
+        'name': 'libinjection-php-build-test',
+        'listen': LISTEN,
+        'source': CheckoutGit('https://github.com/client9/libinjection.git'),
+        'exec': ExecuteShell('make clean && cd php && make test'),
+    },
+    {
+        'name': 'libinjection-lua-build-test',
+        'listen': LISTEN,
+        'source': CheckoutGit('https://github.com/client9/libinjection.git'),
+        'exec': ExecuteShell('make clean && cd lua && make test'),
     },
     {
         'name': 'libinjection-samples-positive',
