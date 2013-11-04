@@ -155,9 +155,10 @@ ibmod_fast_la_SOURCES = fast.c
 ibmod_fast_la_CPPFLAGS = ${AM_CPPFLAGS} -I$(srcdir)/../automata/include
 ibmod_fast_la_LIBADD = $(AMLIB_ADD) ../automata/libiaeudoxus.la
 
-ibmod_libinjection_la_SOURCES = libinjection.c
-nodist_ibmod_libinjection_la_SOURCES = \
-    $(abs_top_srcdir)/libs/libinjection/c/libinjection_sqli.c
+libinjection_sqli.c: $(abs_top_srcdir)/libs/libinjection/c/libinjection_sqli.c
+	cp $< $@
+
+ibmod_libinjection_la_SOURCES = libinjection.c libinjection_sqli.c
 ibmod_libinjection_la_CFLAGS = ${AM_CFLAGS} -I$(abs_top_srcdir)/libs/libinjection/c
 ibmod_libinjection_la_LDFLAGS = $(AM_LDFLAGS)
 
