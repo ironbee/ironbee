@@ -208,4 +208,23 @@ Content-Length: 1234
     )
     assert_no_issues
   end
+
+  def test_no_raw
+    clipp(
+      :default_site_config => <<-EOS
+      Rule REQUEST_METHOD @match "GET HEAD" id:1 phase:REQUEST_HEADER clipp_announce:A
+      EOS
+    ) do
+      transaction do |t|
+        t.event(ClippScript::REQUEST_STARTED,
+          method: 'GET',
+          uri: '/foo/bar',
+          protocol: 'HTTP/1.1'
+        )
+        t.request_finished
+      end
+    end
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: A/
+  end
 end

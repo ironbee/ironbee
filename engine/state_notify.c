@@ -317,11 +317,17 @@ ib_status_t ib_state_notify_request_started(
     }
 
     /* Notify the request line if it's present */
-    if ( (line == NULL) ||
-         (line->raw == NULL) ||
-         (ib_bytestr_const_ptr(line->raw) == NULL) )
-    {
-        ib_log_debug_tx(tx, "Request started with no line");
+    if (line == NULL) {
+        ib_log_info_tx(tx, "Request started with no line");
+    }
+    else if (
+        (line->raw == NULL) ||
+        (line->method == NULL) ||
+        (line->uri == NULL) ||
+        (line->protocol == NULL)
+    ) {
+        ib_log_error_tx(tx, "Request started with malformed line");
+        return IB_EINVAL;
     }
     else {
         ib_tx_flags_set(tx, IB_TX_FREQ_HAS_DATA);
