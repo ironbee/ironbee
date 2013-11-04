@@ -425,6 +425,12 @@ ib_status_t op_streq_execute(
             return rc;
         }
 
+        if (ib_bytestr_const_ptr(value) == NULL) {
+            /* Null matches nothing. */
+            *result = 0;
+            return IB_OK;
+        }
+
         len = ib_bytestr_length(value);
 
         if (len == expanded_length) {
@@ -528,6 +534,11 @@ ib_status_t op_contains_execute(
         rc = ib_field_value(field, ib_ftype_bytestr_out(&str));
         if (rc != IB_OK) {
             return rc;
+        }
+        if (ib_bytestr_const_ptr(str) == NULL) {
+            /* Null matches nothing. */
+            *result = 0;
+            return IB_OK;
         }
 
         *result = (
@@ -732,16 +743,22 @@ ib_status_t op_match_execute(
         return IB_EINVAL;
     }
 
-    rc = ib_hash_get_ex(set, &v, s, length);
-    if (rc != IB_ENOENT && rc != IB_OK) {
-        ib_log_error_tx(
-            tx,
-            "Unexpected hash get error: %s",
-            ib_status_to_string(rc)
-        );
-        return IB_EUNKNOWN;
+    /* NULL matches nothing. */
+    if (s == NULL) {
+        *result = 0;
     }
-    *result = (rc == IB_OK);
+    else {
+        rc = ib_hash_get_ex(set, &v, s, length);
+        if (rc != IB_ENOENT && rc != IB_OK) {
+            ib_log_error_tx(
+                tx,
+                "Unexpected hash get error: %s",
+                ib_status_to_string(rc)
+            );
+            return IB_EUNKNOWN;
+        }
+        *result = (rc == IB_OK);
+    }
 
     return IB_OK;
 }
@@ -913,6 +930,11 @@ ib_status_t op_ipmatch_execute(
             return rc;
         }
         assert(bs != NULL);
+        if (ib_bytestr_const_ptr(bs) == NULL) {
+            /* Null matches nothing. */
+            *result = 0;
+            return IB_OK;
+        }
 
         if (ib_bytestr_length(bs) > 16) {
             return IB_EINVAL;
@@ -1127,6 +1149,12 @@ ib_status_t op_ipmatch6_execute(
 
         assert(bs != NULL);
         assert(ib_bytestr_length(bs) < 41);
+
+        if (ib_bytestr_const_ptr(bs) == NULL) {
+            /* Null matches nothing. */
+            *result = 0;
+            return IB_OK;
+        }
 
         strncpy(
             ipstr_buffer,
