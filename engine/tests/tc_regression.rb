@@ -1,3 +1,5 @@
+require '../../clipp/clipp_test'
+
 class TestRegression < Test::Unit::TestCase
   include CLIPPTest
 
