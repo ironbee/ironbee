@@ -1,6 +1,7 @@
 
 AM_CFLAGS = -g -O2
 CPPFLAGS = -I$(top_srcdir)/src
+AUTOMAKE_OPTIONS = subdir-objects
 
 check_PROGRAMS = test
 
