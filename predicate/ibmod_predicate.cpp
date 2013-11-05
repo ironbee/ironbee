@@ -574,11 +574,18 @@ void PerContext::inject(
             // Only calculate if tracing as .size() might be O(n).
             size_t n = (m_write_trace ? v.second.size() : 0);
             num_considered += n;
+
+            // Check user data.
+            if (! v.first->get_user_data().empty()) {
+                continue;
+            }
+
             if (! v.first->eval(tx).empty()) {
                 copy(
                     v.second.begin(), v.second.end(),
                     back_inserter(rule_list)
                 );
+                v.first->set_user_data(true);
                 num_injected += n;
             }
         }
@@ -1054,6 +1061,9 @@ void Delegate::request_started(
             bind(&P::Node::reset, _1)
         )
     );
+    BOOST_FOREACH(const P::node_p& root, m_roots) {
+        root->set_user_data(boost::any());
+    }
 }
 
 void Delegate::assert_valid(
