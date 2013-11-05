@@ -821,7 +821,7 @@ static ib_status_t moddevel_txdump_tx(
     }
 
     /* Response Header */
-    if (ib_flags_all(txdump->flags, MODDEVEL_TXDUMP_REQHDR) ) {
+    if (ib_flags_all(txdump->flags, MODDEVEL_TXDUMP_RSPHDR) ) {
         moddevel_txdump_header(tx, txdump, 2,
                                "Response Header", tx->response_header);
     }
