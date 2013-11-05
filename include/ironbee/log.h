@@ -41,37 +41,6 @@ extern "C" {
  * @{
  */
 
-/**
- * Log call data type
- * FIXME - srb - remove
- */
-typedef enum {
-    IBLOG_ENGINE,
-    IBLOG_CONN,
-    IBLOG_TX,
-    IBLOG_MANAGER
-} ib_log_call_data_type_t;
-
-/**
- * Log call data
- * FIXME - srb - remove
- */
-typedef union {
-    const ib_engine_t *e;
-    const ib_conn_t *c;
-    const ib_tx_t *t;
-    const struct ib_manager_t *m;
-} ib_log_call_data_union_t;
-
-/**
- * Descriptor to pass user data to log functions, according to call context
- * FIXME - srb - remove
- */
-typedef struct {
-    ib_log_call_data_type_t  type;
-    ib_log_call_data_union_t data;
-} ib_log_call_data_t;
-
 /** Log Generic */
 #define ib_log(ib, lvl, ...) ib_log_ex((ib), (lvl), __FILE__, __func__, __LINE__, __VA_ARGS__)
 /** Log Emergency */
