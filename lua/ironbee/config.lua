@@ -150,6 +150,54 @@ local add_fields = function(ib, rule, prule, field)
     return ffi.C.IB_OK
 end
 
+local add_action_to_rule = function(
+    ib, 
+    name,
+    arg,
+    rule
+)
+    local rc
+
+    -- Detect inverted actions (actions starting with !)
+    local is_inverted = ffi.new("ib_rule_action_t")
+
+    if string.sub(name, 1, 1) == '!' then
+        name = string.sub(name, 2)
+
+        -- fire false actions.
+        is_inverted = ffi.C.IB_RULE_ACTION_FALSE
+    else
+        -- fire true actions.
+        is_inverted = ffi.C.IB_RULE_ACTION_TRUE
+    end
+
+    -- Create the action instance.
+    local action_inst = ffi.new("ib_action_inst_t*[1]")
+    rc = ffi.C.ib_action_inst_create(
+        ib.ib_engine,
+        name,
+        arg,
+        action_inst)
+    if rc ~= ffi.C.IB_OK then
+        ib:logError(
+            "Failed to create action %s instance for rule.", name)
+        return rc
+    end
+
+    -- Add the action instance.
+    rc = ffi.C.ib_rule_add_action(
+        ib.ib_engine,
+        rule,
+        action_inst[0],
+        is_inverted)
+    if rc ~= ffi.C.IB_OK then
+        ib:logError("Failed to add action instance \"%s\" to rule.", action)
+        return rc
+    end
+
+    return ffi.C.IB_OK
+end
+
 -- Create, setup, and register a rule in the given ironbee engine.
 -- @param[in] ib IronBee Engine.
 -- @param[in] ctx The context the rules should be added to.
@@ -241,42 +289,21 @@ local build_rule = function(ib, ctx, chain, db)
                 end
             -- Handling of Actions
             else
-
-                -- Detect inverted actions (actions starting with !)
-                local is_inverted = ffi.new("ib_rule_action_t")
-                if string.sub(name, 1, 1) == '!' then
-                    name = string.sub(name, 2)
-
-                    -- fire false actions.
-                    is_inverted = ffi.C.IB_RULE_ACTION_FALSE
-                else
-                    -- fire true actions.
-                    is_inverted = ffi.C.IB_RULE_ACTION_TRUE
-                end
-
-                -- Create the action instance.
-                local action_inst = ffi.new("ib_action_inst_t*[1]")
-                rc = ffi.C.ib_action_inst_create(
-                    ib.ib_engine,
-                    name,
-                    arg,
-                    action_inst)
+                rc = add_action_to_rule(ib, name, arg, prule[0])
                 if rc ~= ffi.C.IB_OK then
-                    ib:logError(
-                        "Failed to create action %s instance for rule.", name)
                     return rc
                 end
+            end
+        end
 
-                -- Add the action instance.
-                rc = ffi.C.ib_rule_add_action(
-                    ib.ib_engine,
-                    prule[0],
-                    action_inst[0],
-                    is_inverted)
-                if rc ~= ffi.C.IB_OK then
-                    ib:logError("Failed to add action instance to rule.")
-                    return rc
-                end
+        -- While we're building up actions, add the wagle action
+        -- which flags that this rule is subject to Waggle rule injection.
+        if rule.data.waggle_owned then
+            -- Non-predicate rules should be claimed by Waggle.
+            rc = add_action_to_rule(ib, "waggle", "", prule[0])
+            if rc ~= ffi.C.IB_OK then
+                ib:logError("Failed to add wagle action to rule.")
+                return rc
             end
         end
 

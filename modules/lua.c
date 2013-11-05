@@ -98,6 +98,11 @@ typedef ib_status_t(*critical_section_fn_t)(ib_engine_t *ib,
 #define IB_FFI_MODULE_EVENT_WRAPPER_STR IB_XSTRINGIFY(IB_FFI_MODULE_EVENT_WRAPPER)
 
 /**
+ * Name of an action that does nothing but tag a rule.
+ */
+static const char *modlua_waggle_action_name = "waggle";
+
+/**
  * Evaluate the Lua stack and report errors about directive processing.
  *
  * @param[in] L Lua state.
@@ -1311,6 +1316,11 @@ static ib_status_t modlua_context_open(
         return rc;
     }
 
+    rc = ib_list_create(&(cfg->waggle_rules), mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     return IB_OK;
 }
 
@@ -1427,6 +1437,182 @@ static ib_status_t modlua_context_destroy(
 }
 
 /**
+ * @param[in] ib IronBee engine.
+ * @param[in] rule The rule to consider.
+ * @param[in] cbdata Callback data.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_DECLINED To not take ownership of the rule.
+ * - Other on error.
+ */
+static ib_status_t modlua_ownership_fn(
+    const ib_engine_t *ib,
+    const ib_rule_t   *rule,
+    void              *cbdata
+) NONNULL_ATTRIBUTE(1, 2, 3);
+
+static ib_status_t modlua_ownership_fn(
+    const ib_engine_t *ib,
+    const ib_rule_t   *rule,
+    void              *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(rule != NULL);
+    assert(rule->ctx != NULL);
+    assert(cbdata != NULL);
+
+    ib_module_t  *module = (ib_module_t *)cbdata;
+    ib_context_t *ctx    = rule->ctx;
+    modlua_cfg_t *cfg    = NULL;
+    ib_status_t   rc;
+    ib_mpool_t   *tmpmp;
+    ib_list_t    *actions;
+    
+    rc = ib_mpool_create(&tmpmp, "tmptmp", ib_engine_pool_main_get(ib));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_list_create(&actions, tmpmp);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+
+    rc = ib_rule_search_action(
+        ib,
+        rule,
+        IB_RULE_ACTION_TRUE,
+        modlua_waggle_action_name,
+        actions,
+        NULL
+    );
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot find action %s.", modlua_waggle_action_name);
+        goto cleanup;
+    }
+
+    if (ib_list_elements(actions) > 0) {
+        /* Fetch the module configuration. */
+        rc = ib_context_module_config(ctx, module, &cfg);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Cannot retrieve module configuration.");
+            goto cleanup;
+        }
+
+        /* Copy the rule into the waggle list for this context. */
+        rc = ib_list_push(cfg->waggle_rules, (void *)rule);
+        if (rc != IB_OK) {
+            goto cleanup;
+        }
+
+        rc = IB_OK;
+        goto cleanup;
+    }
+
+    rc = IB_DECLINED;
+cleanup:
+    ib_mpool_release(tmpmp);
+    return rc;
+}
+
+/**
+ * Recursively get all rules to execute from the root context up.
+ */
+static ib_status_t modlua_injection_helper(
+    const ib_engine_t    *ib,
+    ib_module_t          *module,
+    const ib_rule_exec_t *rule_exec,
+    ib_context_t         *ctx,
+    ib_list_t            *rule_list
+)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+
+    ib_status_t     rc;
+    modlua_cfg_t   *cfg = NULL;
+    ib_list_node_t *node;
+
+    if (ctx != ib_context_main(ib)) {
+        ib_context_t *parent_ctx = ib_context_parent_get(ctx);
+
+        if (parent_ctx != ctx && parent_ctx != NULL) {
+            rc = modlua_injection_helper(ib, module, rule_exec, parent_ctx, rule_list);
+            if (rc != IB_OK) {
+                return rc;
+            }
+        }
+    }
+
+    rc = ib_context_module_config(ctx, module, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot retrieve module configuration.");
+        return rc;
+    }
+
+    /* Copy all Waggle rules that match the current rule phase
+     * into the rule_list which the rule_engine will execute for us. */
+    IB_LIST_LOOP(cfg->waggle_rules, node) {
+        ib_rule_t *rule = (ib_rule_t *)ib_list_node_data(node);
+        if (rule_exec->phase == rule->meta.phase) {
+            ib_list_push(rule_list, rule);
+        }
+    }
+
+    return IB_OK;
+}
+
+/**
+ * @param[in] ib IronBee engine.
+ * @param[in] rule_exec The rule execution environment.
+ * @param[out] rule_list The list of rules to append to.
+ * @param[in] cbdata Callback data.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
+static ib_status_t modlua_injection_fn(
+    const ib_engine_t    *ib,
+    const ib_rule_exec_t *rule_exec,
+    ib_list_t            *rule_list,
+    void                 *cbdata
+) NONNULL_ATTRIBUTE(1, 2, 3, 4);
+
+static ib_status_t modlua_injection_fn(
+    const ib_engine_t    *ib,
+    const ib_rule_exec_t *rule_exec,
+    ib_list_t            *rule_list,
+    void                 *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(rule_exec != NULL);
+    assert(rule_exec->tx != NULL);
+    assert(rule_exec->tx->ctx != NULL);
+    assert(rule_list != NULL);
+
+    ib_module_t          *module = (ib_module_t *)cbdata;
+    ib_context_t         *ctx    = rule_exec->tx->ctx;
+    ib_status_t           rc;
+
+    rc = modlua_injection_helper(
+        ib,
+        module,
+        rule_exec,
+        ctx,
+        rule_list);
+
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+/**
  * Initialize the ModLua Module.
  *
  * This will create a common "global" runtime into which various APIs
@@ -1456,11 +1642,25 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         return rc;
     }
 
+    rc = ib_list_create(&(cfg->waggle_rules), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to allocate waggle rules list.");
+        return rc;
+    }
+
     rc = ib_module_config_initialize(module, cfg, sizeof(*cfg));
     if (rc != IB_OK) {
         ib_log_error(ib, "Module already has configuration data?");
         return rc;
     }
+
+    rc = ib_action_register(
+        ib, 
+        modlua_waggle_action_name,
+        NULL, NULL,
+        NULL, NULL,
+        NULL, NULL
+    );
 
     rc = ib_lock_init(&(cfg->lua_pool_lock));
     if (rc != IB_OK) {
@@ -1537,6 +1737,29 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         ib_log_error(ib, "Failed to register context_destroy_event hook: %s",
                      ib_status_to_string(rc));
         return rc;
+    }
+
+    /* Register an ownership function to take ownership of all waggle rules. */
+    rc = ib_rule_register_ownership_fn(
+        ib,
+        "LuaRuleOwnership",
+        modlua_ownership_fn,
+        module);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Register an injection function for all phases. */
+    for (int phase = 0; phase < IB_RULE_PHASE_COUNT; ++phase) {
+        rc = ib_rule_register_injection_fn(
+            ib,
+            "LuaRuleInjection",
+            phase,
+            modlua_injection_fn,
+            module);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     /* Set up rule support. */
@@ -1877,16 +2100,32 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     IB_DIRMAP_INIT_LAST
 };
 
-/**
- * Destroy global lock and Lua state.
- */
-static ib_status_t modlua_fini(
+ib_status_t modlua_cfg_copy(
     ib_engine_t *ib,
     ib_module_t *module,
-    void *cbdata)
+    void        *dst, 
+    const void  *src,
+    size_t       length,
+    void        *cbdata
+)
 {
     assert(ib != NULL);
     assert(module != NULL);
+    assert(dst != NULL);
+    assert(src != NULL);
+
+    modlua_cfg_t *dstcfg = (modlua_cfg_t *)dst;
+    ib_status_t   rc;
+
+    /* Base copy. */
+    memcpy(dst, src, length);
+
+    /* The list has to be different in each context to 
+     * separately append. */
+    rc = ib_list_create(&(dstcfg->waggle_rules), ib_engine_pool_main_get(ib));
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     return IB_OK;
 }
@@ -1901,11 +2140,14 @@ static ib_status_t modlua_fini(
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,           /**< Default metadata */
     MODULE_NAME_STR,                     /**< Module name */
-    IB_MODULE_CONFIG_NULL,               /**< modlua_init sets this. */
+    NULL,                                /**< NULL config. Init sets this. */
+    0,                                   /**< Zero length config (it's null).*/
+    modlua_cfg_copy,                     /**< Copy modlua configs. */
+    NULL,                                /**< Callback for modlua_cfg_copy. */
     modlua_config_map,                   /**< Configuration field map */
     modlua_directive_map,                /**< Config directive map */
     modlua_init,                         /**< Initialize function */
     NULL,                                /**< Callback data */
-    modlua_fini,                         /**< Finish function */
+    NULL,                                /**< Finish function */
     NULL,                                /**< Callback data */
 );

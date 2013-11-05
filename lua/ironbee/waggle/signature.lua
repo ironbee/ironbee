@@ -51,10 +51,15 @@ Signature.new = function(self, rule_id, rule_version, db)
             message = nil,
             -- List of fields to operate on.
             fields = {},
-            -- List of tags.
-            tags = {},
+            -- Hash of tags where the key is the tag name.
+            tags = { },
             -- True if a predicate expression has been added to the actions.
             has_predicate = false,
+            -- True if this Signature will be owned by the Waggle execution
+            -- engine. If false, then this rule will be be subject to
+            -- Waggle rule injection and should be claimed by another
+            -- module (such as predicate or fast).
+            waggle_owned = true,
             -- List of actions.
             actions = {},
             -- After list. List of rules / tags this must occur after.
@@ -201,6 +206,7 @@ Signature.predicate = function(self, expression)
   end
 
   self.data.has_predicate = true
+  self:waggle_owned(false)
   table.insert(self.data.actions, {name = 'predicate', argument = sexpr})
 
   return self
@@ -347,6 +353,18 @@ end
 -- Report if this rule type is a stream rule or not.
 Signature.is_streaming = function(self)
     return false
+end
+
+-- Set if this Signature should be claimed by Waggle for rule injection.
+--
+-- Rule injection is a method by which a rule owner (such as Predicate,
+-- Fast, or Waggle) can select a list of rules to execute at IronBee
+-- runtime. A rule may not be owned by two rule injection modules.
+-- If you specify a rule that you know will be claimed by another
+-- injection module, you should set this to false so that Waggle
+-- will not try and claim the produced rule.
+Signature.waggle_owned = function(self, true_false)
+    self.data.waggle_owned = true_false
 end
 
 return Signature
