@@ -211,6 +211,18 @@ public:
         m_values = other;
     }
 
+    //! Set user data.
+    void set_user_data(boost::any data)
+    {
+        m_user_data = data;
+    }
+
+    //! Get user data.
+    boost::any get_user_data() const
+    {
+        return m_user_data;
+    }
+
 private:
     //! What node forwarding to.
     node_p m_forward;
@@ -222,6 +234,8 @@ private:
     List<Value> m_own_values;
     //! Value list to use for values; might be @ref m_own_values.
     ValueList m_values;
+    //! User data.
+    boost::any m_user_data;
 };
 
 Node::Node()
@@ -479,6 +493,16 @@ void Node::pre_eval(Environment environment, NodeReporter reporter)
 bool Node::is_literal() const
 {
     return dynamic_cast<const Literal*>(this);
+}
+
+void Node::set_user_data(boost::any data)
+{
+    lookup_value().set_user_data(data);
+}
+
+boost::any Node::get_user_data() const
+{
+    return lookup_value().get_user_data();
 }
 
 ostream& operator<<(ostream& out, const Node& node)

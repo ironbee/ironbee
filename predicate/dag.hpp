@@ -349,6 +349,20 @@ public:
      **/
     virtual void pre_eval(Environment environment, NodeReporter reporter);
 
+    /**
+     * Set user specific data.
+     *
+     * This data is per-thread.
+     **/
+    void set_user_data(boost::any data);
+
+    /**
+     * Get user specific data.
+     *
+     * This data is per-thread.
+     **/
+    boost::any get_user_data() const;
+
 protected:
     /**
      * Calculate value.
