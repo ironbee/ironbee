@@ -1661,6 +1661,10 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         NULL, NULL,
         NULL, NULL
     );
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to register waggle injection action.");
+        return rc;
+    }
 
     rc = ib_lock_init(&(cfg->lua_pool_lock));
     if (rc != IB_OK) {
