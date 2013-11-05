@@ -68,7 +68,7 @@ TEST_F(TestStandardValueList, CatTransform)
 
 TEST_F(TestStandardValueList, CatIncremental)
 {
-    // This test is unfortunately fragile as sequene depends on the number
+    // This test is unfortunately fragile as sequence depends on the number
     // of times its evaluated at that number is dependent on the
     // implementation of Cat.  What we really need is something like sequence
     // but that is externally incremented.

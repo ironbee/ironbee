@@ -50,7 +50,7 @@ extern "C" {
 }
 
 /**
- * Error Page Module implementaiton.
+ * Error Page Module implementation.
  */
 class ErrorPageModule : public IronBee::ModuleDelegate
 {
@@ -70,7 +70,7 @@ public:
 private:
 
     /**
-     * Memeber to store the C trampoline information.
+     * Member to store the C trampoline information.
      *
      * Note that m_trampoline_pair.second must be destroyed.
      */

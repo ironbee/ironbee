@@ -106,7 +106,7 @@ struct ib_rule_phase_meta_t {
  *
  * @param[in] tx Ignored.
  * @param[out] body The default error body is placed here.
- * @param[out] legnth The default error body length is placed here.
+ * @param[out] length The default error body length is placed here.
  * @param[in] cbdata Ignored.
  *
  * @returns IB_OK.
