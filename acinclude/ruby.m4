@@ -16,16 +16,27 @@ AC_DEFUN([CHECK_RUBY],
   ## interpret, luckily awk doesn't care
   rubyVersion=`$RUBY --version | awk '{print $ 2}'`
 
+  success=no
   AX_COMPARE_VERSION([$rubyVersion],[ge],[$minRubyVersion],
-       [AC_MSG_RESULT($rubyVersion is ok)],
-       [AC_MSG_ERROR([ruby version must be >= $minRubyVersion - found $rubyVersion])])
+    [
+      AC_MSG_RESULT([$rubyVersion is ok])
+      ifelse([$2], , :, [$2])
+      success=yes
+    ],
+    [
+      AC_MSG_RESULT([ruby version must be >= $minRubyVersion - found $rubyVersion])
+      ifelse([$3], , :, [$3])
+    ]
+  )
 
-   RUBY_TOPDIR=`$RUBY -rrbconfig -e  "print \"#{RbConfig::CONFIG['topdir']}\n\""`
-   RUBY_LIBRUBYARG=`$RUBY -rrbconfig -e "print \"#{RbConfig::CONFIG['LIBRUBYARG']}\n\""`
-   RUBY_LIBDIR=`$RUBY -rrbconfig -e "print \"#{RbConfig::CONFIG['libdir']}\n\""`
-   AC_SUBST(RUBY_TOPDIR)
-   AC_SUBST(RUBY_LIBRUBYARG)
-   AC_SUBST(RUBY_LIBDIR)
+  if test "$success" = "yes"; then
+    RUBY_TOPDIR=`$RUBY -rrbconfig -e  "print \"#{RbConfig::CONFIG['topdir']}\n\""`
+    RUBY_LIBRUBYARG=`$RUBY -rrbconfig -e "print \"#{RbConfig::CONFIG['LIBRUBYARG']}\n\""`
+    RUBY_LIBDIR=`$RUBY -rrbconfig -e "print \"#{RbConfig::CONFIG['libdir']}\n\""`
+    AC_SUBST(RUBY_TOPDIR)
+    AC_SUBST(RUBY_LIBRUBYARG)
+    AC_SUBST(RUBY_LIBDIR)
+  fi
 ])
 
 # ==================== Ruby Gem ====================
@@ -37,17 +48,30 @@ AC_DEFUN([CHECK_GEM],
   fi
 
   minGemVersion=[$1]
+  success=yes
   if test "x$GEM" == "x" ; then
-    AC_MSG_ERROR([ruby gem command is required])
+    AC_MSG_RESULT([ruby gem not found])
+    success=no
   fi
 
-  AC_MSG_CHECKING([for gem minimum version $minGemVersion])
+  if test "$success" = "yes"; then
+    AC_MSG_CHECKING([for gem minimum version $minGemVersion])
 
-  gemVersion=`$GEM --version`
+    gemVersion=`$GEM --version`
 
-  AX_COMPARE_VERSION([$gemVersion],[ge],[$minGemVersion],
-       [AC_MSG_RESULT($gemVersion is ok)],
-       [AC_MSG_ERROR([gem version must be >= $minGemVersion - found $gemVersion])])
+    AX_COMPARE_VERSION([$gemVersion],[ge],[$minGemVersion],
+         [AC_MSG_RESULT($gemVersion is ok)],
+         [
+           AC_MSG_RESULT([gem version must be >= $minGemVersion - found $gemVersion])
+           success=no
+         ])
+  fi;
+
+  if test "$success" = "yes"; then
+    ifelse([$2], , :, [$2])
+  else
+    ifelse([$3], , :, [$3])
+  fi
 ])
 
 ##
@@ -63,12 +87,22 @@ AC_DEFUN([CHECK_RUBY_GEM],
 	])
 	rubyGemVersion=$acl_cv_gem_[$3]
 	AC_MSG_CHECKING([for [$1] minimum version $minRubyGemVersion])
+  success=yes
 	if test x"$acl_cv_gem_[$3]" == x; then
     AC_MSG_RESULT([missing])
-    AC_MSG_ERROR([type 'gem install $rubyGem' to install])
+    AC_MSG_NOTICE([type 'gem install $rubyGem' to install])
+    syccess=no
   else
 	  AX_COMPARE_VERSION([$rubyGemVersion],[ge],$[minRubyGemVersion],
 		  [AC_MSG_RESULT($rubyGemVersion is ok)],
-		  [AC_MSG_ERROR([$rubyGem version must be >= $minRubyGemVersion - found $rubyGemVersion])])
+		  [
+        AC_MSG_RESULT([$rubyGem version must be >= $minRubyGemVersion - found $rubyGemVersion])
+        success=no
+      ])
+  fi
+  if test "$success" = "yes"; then
+    ifelse([$4], , :, [$4])
+  else
+    ifelse([$5], , :, [$5])
   fi
 ])

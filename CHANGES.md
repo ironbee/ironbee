@@ -8,6 +8,8 @@ IronBee v0.9.0
 
 - Ruby 1.9 now required.  This is a build dependency only; IronBee does not require Ruby to be used.  Build is now fully compatible with Ruby 2.0.  If you need to use alternative ruby or gem binaries, those can specified by setting RUBY and GEM in configure, e.g., 'configure RUBY=/usr/bin/ruby19 GEM=/usr/bin/gem19'.
 
+- Added `--disable-ruby-code` and `--enable-ruby-code` configure options.  If `--disable-ruby-code` is specified, then ruby dependencies will not be checked and ruby based tests will not be run.  If `--enable-ruby-code` is specified, then dependencies will be checked and configure will fail if they are not present.  If neither option is specified, then dependencies will be checked but will not be fatal; tests will be run if all dependencies pass.
+
 **Engine**
 
 - The data field layer (rule targets) has been overhauled.  Data fields are now known as 'vars'.  Expansions and filters should be significantly faster.  `InitVarIndexed` and `InitCollectionIndexed` have been removed; their normal versions now Index automatically.

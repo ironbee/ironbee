@@ -201,9 +201,18 @@ AC_ARG_ENABLE(devel,
 [
   devel="yes"
 ])
-
-
 AM_CONDITIONAL([BUILD_DEV_MODULES], [test "$devel" != "no"])
+
+### Disable Ruby.
+AC_ARG_ENABLE(ruby-code,
+              AS_HELP_STRING([--disable-ruby-code],
+                             [Disable everything that requires ruby.]),
+[
+  ruby_code=$enableval
+],
+[
+  ruby_code="default"
+])
 
 ### Mpool Valgrind Support
 AC_ARG_ENABLE(mpool-valgrind,
@@ -429,9 +438,23 @@ if test "${cpp_code}" = 1 ; then
     if test "${HAVE_PROTOBUF}" != "yes" ; then
         AC_MSG_ERROR([protobuf is required for C++ code])
     fi
-    CHECK_RUBY(1.9)
-    CHECK_GEM(1.3)
-    CHECK_RUBY_GEM(ruby_protobuf, 0.4.11)
+	have_ruby=yes
+	if test "$ruby_code" != "no"; then
+	    CHECK_RUBY(1.9,[],[have_ruby=no])
+	    CHECK_GEM(1.3,[],[have_ruby=no])
+	    CHECK_RUBY_GEM(ruby_protobuf, 0.4.11, ruby_protobuf,[],[have_ruby=no])
+	fi
+
+	if test "$have_ruby" != "yes"; then
+		if test "$ruby_code" = "yes"; then
+			AC_MSG_ERROR([ruby requirements not met but --enable-ruby-code present.])
+		else
+	        echo "************************************************************"
+	        echo "* Warning: ruby requirements not met; disabling ruby code. *"
+	        echo "************************************************************"
+			ruby_code=no
+		fi
+	fi
 
     if test "${HAVE_NIDS}" != "yes" ; then
         echo "*******************************************************"
@@ -569,6 +592,8 @@ else
 	AC_MSG_NOTICE([Old or unknown compiler detected; limited support.])
 fi
 
+AM_CONDITIONAL([RUBY_CODE], [test "$ruby_code" != "no"])
+
 dnl Install directories
 pkglibdir='${libdir}'
 moduledir='${libexecdir}'
@@ -675,3 +700,9 @@ AC_CONFIG_SUBDIRS([libs/libhtp])
 AC_CONFIG_SUBDIRS([libs/sqltfn])
 
 AC_OUTPUT
+
+echo "IronBee configure complete."
+if test "$ruby_code" != "no"; then
+	echo "Unchecked optional dependencies:"
+	echo "- Some ruby scripts also require the ruby-lua gem and graphviz."
+fi
