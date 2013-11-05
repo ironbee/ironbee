@@ -69,6 +69,10 @@ protected:
     std::string transform(
         const std::string& s
     ) const;
+
+    void reset(
+        IronBee::Predicate::node_p n
+    ) const;
 };
 
 

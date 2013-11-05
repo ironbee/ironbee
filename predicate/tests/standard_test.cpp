@@ -74,12 +74,7 @@ ValueList StandardTest::eval(node_p n)
         );
     }
 
-    bfs_down(
-        g.root(i),
-        boost::make_function_output_iterator(
-            bind(&Node::reset, _1)
-        )
-    );
+    reset(g.root(i));
     return g.root(i)->eval(m_transaction);
 }
 
@@ -128,4 +123,14 @@ node_cp StandardTest::transform(node_p n) const
 string StandardTest::transform(const std::string& s) const
 {
     return transform(parse(s))->to_s();
+}
+
+void StandardTest::reset(node_p n) const
+{
+    bfs_down(
+        n,
+        boost::make_function_output_iterator(
+            bind(&Node::reset, _1)
+        )
+    );
 }
