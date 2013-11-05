@@ -26,16 +26,15 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/rule_engine.h>
-
-#include <ironbeepp/c_trampoline.hpp>
 #include <ironbeepp/configuration_directives.hpp>
 #include <ironbeepp/configuration_parser.hpp>
+#include <ironbeepp/c_trampoline.hpp>
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
 #include <ironbeepp/transaction.hpp>
 
+#include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 
 #include <boost/bind.hpp>

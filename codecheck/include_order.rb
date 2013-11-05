@@ -218,6 +218,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/function.hpp>',
   '<boost/function_output_iterator.hpp>',
   '<boost/fusion/adapted.hpp>',
+  '<boost/iostreams/device/mapped_file.hpp>',
   '<boost/iterator/iterator_adaptor.hpp>',
   '<boost/iterator/iterator_facade.hpp>',
   '<boost/iterator/transform_iterator.hpp>',
