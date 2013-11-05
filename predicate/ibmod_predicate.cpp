@@ -574,17 +574,7 @@ void PerContext::inject(
             // Only calculate if tracing as .size() might be O(n).
             size_t n = (m_write_trace ? v.second.size() : 0);
             num_considered += n;
-
-            // After first phase, only run rules if they change from false
-            // to true.
-            bool pre_value = (
-                rule_exec->phase == c_phases[1] ?
-                false :
-                ! v.first->values().empty()
-            );
-            bool post_value = ! v.first->eval(tx).empty();
-            if (pre_value != post_value) {
-                assert(post_value); // Nodes should never change to false.
+            if (! v.first->eval(tx).empty()) {
                 copy(
                     v.second.begin(), v.second.end(),
                     back_inserter(rule_list)
