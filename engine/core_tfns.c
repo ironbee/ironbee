@@ -1447,11 +1447,6 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_tfn_create_and_register(NULL, ib, "lc", false,
-                                    tfn_lowercase, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
 
     rc = ib_tfn_create_and_register(NULL, ib, "trimLeft", false,
                                     tfn_trim_left, NULL);
