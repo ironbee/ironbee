@@ -1493,6 +1493,13 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
             <para><emphasis role="bold">Version:</emphasis> Not implemented yet.</para>
         </section>
         <section>
+            <title>ceil</title>
+            <para><emphasis role="bold">Description:</emphasis> Return the integral value greater
+                than or equal to the numeric value of the input.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+        </section>
+        <section>
             <title>compressWhitespace</title>
             <para><emphasis role="bold">Description:</emphasis> Replaces one or more consecutive
                 whitespace characters with a single space.</para>
@@ -1510,6 +1517,13 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
                 number if items in the collection.  Given a scalar, returns 1.</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        </section>
+        <section>
+            <title>floor</title>
+            <para><emphasis role="bold">Description:</emphasis> Return the integral value less
+                than or equal to the numeric value of the input.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
         </section>
         <section>
             <title>htmlEntityDecode</title>
@@ -1552,6 +1566,69 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
             <para><emphasis role="bold">Version:</emphasis> 0.2</para>
         </section>
         <section>
+            <title>max</title>
+            <para><emphasis role="bold">Description:</emphasis> Given a collection of numeric data,
+                returns the maximum value.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        </section>
+        <section>
+            <title>min</title>
+            <para><emphasis role="bold">Description:</emphasis> Given a collection of numeric data,
+                returns the minimum value.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        </section>
+        <section>
+            <title>name</title>
+            <para><emphasis role="bold">Description:</emphasis> Returns the name of the field as
+                the value.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        </section>
+        <section>
+            <title>names</title>
+            <para><emphasis role="bold">Description:</emphasis> Returns a collection of names from
+                a collection of name/value pairs.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        </section>
+        <section>
+            <title>normalizePath</title>
+            <para><emphasis role="bold">Description:</emphasis> Normalize a filesystem path,
+                removing back and self references.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        </section>
+        <section>
+            <title>normalizePathWin</title>
+            <para><emphasis role="bold">Description:</emphasis> Normalize a Windows filesystem path,
+                removing back and self references.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        </section>
+        <section>
+            <title>normalizeSqli</title>
+            <para><emphasis role="bold">Description:</emphasis> Normalize potential SQL injection via libinjection.</para>
+            <para><emphasis role="bold">Module:</emphasis> libinjection</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+            <para>The libinjection ironbee module utilizes Nick Galbreath's libinjection to
+                implement SQLi detection. This transformation is based on an example in libinjection. The libinjection library is available via: <link
+                    xlink:href="http://www.client9.com/projects/libinjection/"
+                    >http://www.client9.com/projects/libinjection/</link></para>
+            <para>Example
+                Input/Output:<programlisting>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</programlisting><programlisting>Output: foo' or 1=1 union select id,passwd from users --</programlisting></para>
+        </section>
+        <section>
+            <title>normalizeSqlPg</title>
+            <para><emphasis role="bold">Description:</emphasis> Normalize postgres SQL.</para>
+            <para><emphasis role="bold">Module:</emphasis> sqltfn</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+            <para>Normalize Postgres SQL.</para>
+            <para>Example
+                Input/Output:<programlisting>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</programlisting><programlisting>Output: foo' or 1 = 1 union select id,passwd from users </programlisting></para>
+        </section>
+        <section>
             <title>removeWhitespace</title>
             <para><emphasis role="bold">Description:</emphasis> Removes one or more consecutive
                 whitespace characters.</para>
@@ -1591,6 +1668,13 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
                 replaces with a single space character.</para>
         </section>
         <section>
+            <title>round</title>
+            <para><emphasis role="bold">Description:</emphasis> Return the integral value closest to
+                the numeric value of the input.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+        </section>
+        <section>
             <title>trim</title>
             <para><emphasis role="bold">Description:</emphasis> Removes consecutive whitespace from the
                 beginning and end of the input.</para>
@@ -1610,6 +1694,26 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
                 end of the input.</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+        </section>
+        <section>
+            <title>toFloat</title>
+            <para><emphasis role="bold">Description:</emphasis> Convert input to a numeric floating
+                point type.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+        </section>
+        <section>
+            <title>toInteger</title>
+            <para><emphasis role="bold">Description:</emphasis> Convert input to a numeric integral
+                type.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
+        </section>
+        <section>
+            <title>toString</title>
+            <para><emphasis role="bold">Description:</emphasis> Convert input to a string type.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.8</para>
         </section>
         <section>
             <title>urlDecode</title>
@@ -1634,55 +1738,6 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
                     and you should not apply this transformation to these fields unless you are trying
                     to inspect multiple levels of encoding.</para>
             </warning>
-        </section>
-        <section>
-            <title>min</title>
-            <para><emphasis role="bold">Description:</emphasis> Given a collection of numeric data,
-                returns the minimum value.</para>
-            <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> 0.3</para>
-        </section>
-        <section>
-            <title>max</title>
-            <para><emphasis role="bold">Description:</emphasis> Given a collection of numeric data,
-                returns the maximum value.</para>
-            <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> 0.3</para>
-        </section>
-        <section>
-            <title>normalizePath</title>
-            <para><emphasis role="bold">Description:</emphasis> Normalize a filesystem path,
-                removing back and self references.</para>
-            <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> 0.6</para>
-        </section>
-        <section>
-            <title>normalizePathWin</title>
-            <para><emphasis role="bold">Description:</emphasis> Normalize a Windows filesystem path,
-                removing back and self references.</para>
-            <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> 0.6</para>
-        </section>
-        <section>
-            <title>normalizeSqli</title>
-            <para><emphasis role="bold">Description:</emphasis> Normalize potential SQL injection via libinjection.</para>
-            <para><emphasis role="bold">Module:</emphasis> libinjection</para>
-            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
-            <para>The libinjection ironbee module utilizes Nick Galbreath's libinjection to
-                implement SQLi detection. This transformation is based on an example in libinjection. The libinjection library is available via: <link
-                    xlink:href="http://www.client9.com/projects/libinjection/"
-                    >http://www.client9.com/projects/libinjection/</link></para>
-            <para>Example
-                Input/Output:<programlisting>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</programlisting><programlisting>Output: foo' or 1=1 union select id,passwd from users --</programlisting></para>
-        </section>
-        <section>
-            <title>normalizeSqlPg</title>
-            <para><emphasis role="bold">Description:</emphasis> Normalize postgres SQL.</para>
-            <para><emphasis role="bold">Module:</emphasis> sqltfn</para>
-            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
-            <para>Normalize Postgres SQL.</para>
-            <para>Example
-                Input/Output:<programlisting>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</programlisting><programlisting>Output: foo' or 1 = 1 union select id,passwd from users </programlisting></para>
         </section>
     </section>
 </chapter>
