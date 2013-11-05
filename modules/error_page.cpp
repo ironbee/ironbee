@@ -169,7 +169,7 @@ void ErrorPageModule::directive(
     cfg.status_to_file[num] = std::string(param2);
 
     try {
-        cfg.status_to_mapped_file_source[num] = 
+        cfg.status_to_mapped_file_source[num] =
             boost::iostreams::mapped_file_source(param2);
     }
     catch (const std::exception& e) {
@@ -214,7 +214,7 @@ ib_status_t ErrorPageModule::error_page_fn(
     }
 
     const std::string& file = itr->second;
-    const boost::iostreams::mapped_file_source &source = 
+    const boost::iostreams::mapped_file_source &source =
         cfg.status_to_mapped_file_source[tx->block_status];
 
     ib_log_debug_tx(
@@ -229,4 +229,3 @@ ib_status_t ErrorPageModule::error_page_fn(
     /* Until we write this, decline the action. */
     return IB_OK;
 }
-

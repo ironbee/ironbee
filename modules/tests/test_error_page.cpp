@@ -70,7 +70,7 @@ namespace {
     /**
      * Impl for ib_server_t::err_body_fn.
      *
-     * This captures a copy of the provided error page. 
+     * This captures a copy of the provided error page.
      * This is compared in unit tests later.
      * Users of this function should clear the shared state variable,
      * @ref mock_error_body.

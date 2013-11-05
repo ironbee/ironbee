@@ -1469,7 +1469,7 @@ static ib_status_t modlua_ownership_fn(
     ib_status_t   rc;
     ib_mpool_t   *tmpmp;
     ib_list_t    *actions;
-    
+
     rc = ib_mpool_create(&tmpmp, "tmptmp", ib_engine_pool_main_get(ib));
     if (rc != IB_OK) {
         return rc;
@@ -1655,7 +1655,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     }
 
     rc = ib_action_register(
-        ib, 
+        ib,
         modlua_waggle_action_name,
         NULL, NULL,
         NULL, NULL,
@@ -2107,7 +2107,7 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
 ib_status_t modlua_cfg_copy(
     ib_engine_t *ib,
     ib_module_t *module,
-    void        *dst, 
+    void        *dst,
     const void  *src,
     size_t       length,
     void        *cbdata
@@ -2124,7 +2124,7 @@ ib_status_t modlua_cfg_copy(
     /* Base copy. */
     memcpy(dst, src, length);
 
-    /* The list has to be different in each context to 
+    /* The list has to be different in each context to
      * separately append. */
     rc = ib_list_create(&(dstcfg->waggle_rules), ib_engine_pool_main_get(ib));
     if (rc != IB_OK) {
