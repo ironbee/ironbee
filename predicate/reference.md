@@ -280,8 +280,7 @@ Front End
 **`(cat ...)`**
 
 Result
-: `[]` until all arguments are finished.
-: Concatenation of all values of all arguments once all arguments are finished.
+: Values of leftmost unfinished argument preceded by values of all finished arguments before it.  That is, Cat will work left to right, adding values from finished argument along with values from the leftmost unfinished argument, but no values after the leftmost unfinished argument.
 
 Finished
 : All arguments are finished.

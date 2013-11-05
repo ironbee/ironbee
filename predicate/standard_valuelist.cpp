@@ -67,6 +67,173 @@ bool SetName::validate(NodeReporter reporter) const
         ;
 }
 
+/**
+ * Implementation details of Cat.
+ *
+ * To implement Cat, we track two iterators (per thread):
+ * - last_unfinished is the child we last processed.  That is, the last time
+ *   calculate was run, we added all children of last_unfinished but it was
+ *   unfinished so we did not advance to the next child.
+ * - last_value_added is the last value of last_unfinished.  That is, the
+ *   last time calculate was run, we added all children of last_unfinished,
+ *   the last of which was last_value_added.
+ *
+ * Thus, our task on calculate is to add any remaining children of
+ * last_unfinished and check if it is now finished.  If it is, we go on to
+ * add any subsequent finished children.  If that consumes all children, we
+ * are done and can finish.  Otherwise, we have arrived at a new leftmost
+ * unfinished child.  We must add all of its current children, and then
+ * wait for the next calculate.
+ *
+ * This task is handled by add_from_current() and add_until_next_unfinished().
+ *
+ * This class is a friend of Cat and all routines take a `me` argument being
+ * the Cat instance they are working on behalf of.
+ **/
+class Cat::impl_t
+{
+private:
+    //! Per thread data.
+    struct data_t
+    {
+        //! Last unfinished child processed.
+        node_list_t::const_iterator last_unfinished;
+        /**
+         * Last value added from @ref last_unfinished.
+         *
+         * A singular value means no children of @ref last_unfinished have
+         * been added.
+         **/
+        ValueList::const_iterator last_value_added;
+    };
+
+    //! Data.
+    boost::thread_specific_ptr<data_t> m_data;
+
+public:
+    /**
+     * Reset.
+     *
+     * Set @ref last_unfinished to be the first child and
+     * @ref last_value_added to be singular.
+     **/
+    void reset(Cat& me)
+    {
+        if (m_data.get()) {
+            *m_data = data_t();
+        }
+        else {
+            m_data.reset(new data_t());
+        }
+        m_data->last_unfinished = me.children().begin();
+    }
+
+    /**
+     * Calculate.
+     *
+     * After this, @ref last_unfinished and @ref last_value_added will be
+     * updated.
+     **/
+    void calculate(Cat& me, EvalContext context)
+    {
+        // Cache to avoid repeated thread local lookups.
+        data_t& data = *m_data;
+
+        // Add any new children from last_unfinished.
+        add_from_current(me, data, context);
+        // If last_unfinished is still unfinished, nothing more to do.
+        if (! (*data.last_unfinished)->is_finished()) {
+            return;
+        }
+
+        // Need to find new leftmost unfinished child.  Do so, adding any
+        // values from finished children along the way.
+        add_until_next_unfinished(me, data, context);
+
+        // If no new leftmost unfinished child, all done.  Finish.
+        if (data.last_unfinished == me.children().end()) {
+            me.finish();
+        }
+        // Otherwise, need to add children from the new last_unfinished.
+        else {
+            data.last_value_added = ValueList::const_iterator();
+            add_from_current(me, data, context);
+        }
+    }
+
+private:
+    /**
+     * Add all children from @ref last_unfinished after @ref last_value_added.
+     *
+     * Updates @ref last_value_added.
+     **/
+    static
+    void add_from_current(
+        Cat&        me,
+        data_t&     data,
+        EvalContext context
+    )
+    {
+        const ValueList& values = (*data.last_unfinished)->eval(context);
+
+        if (values.empty() && ! (*data.last_unfinished)->is_finished()) {
+            return;
+        }
+        else if (! values.empty()) {
+            if (data.last_value_added == ValueList::const_iterator()) {
+                me.add_value(values.front());
+                data.last_value_added = values.begin();
+            }
+            ValueList::const_iterator n = data.last_value_added;
+            ValueList::const_iterator end = values.end();
+            for (;;) {
+                ++n;
+                if (n == end) {
+                    break;
+                }
+                me.add_value(*n);
+                data.last_value_added = n;
+            }
+        }
+    }
+
+    /**
+     * Advanced @ref last_unfinished to new leftmost unfinished child.
+     *
+     * Adds values of finished children along the way.
+     * If no unfinished children, @ref last_unfinished will end up as
+     * `me.children().end()`.
+     **/
+    static
+    void add_until_next_unfinished(
+        Cat&        me,
+        data_t&     data,
+        EvalContext context
+    )
+    {
+        assert((*data.last_unfinished)->is_finished());
+        for (
+            ++data.last_unfinished;
+            data.last_unfinished != me.children().end();
+            ++data.last_unfinished
+        ) {
+            const ValueList& values = (*data.last_unfinished)->eval(context);
+            if (! (*data.last_unfinished)->is_finished()) {
+                break;
+            }
+            BOOST_FOREACH(Value v, values) {
+                me.add_value(v);
+            }
+        }
+    }
+};
+
+Cat::Cat() :
+    m_impl(new impl_t())
+{
+    // nop
+}
+
 string Cat::name() const
 {
     return "cat";
@@ -115,27 +282,14 @@ bool Cat::transform(
     return result;
 }
 
+void Cat::reset()
+{
+    m_impl->reset(*this);
+}
+
 void Cat::calculate(EvalContext context)
 {
-    // @todo Change to be opportunistic.  I.e., add values of first
-    // child immediately.  Once that child is finished, do same for next,
-    // and so on.
-
-    // Do nothing if any unfinished children.
-    BOOST_FOREACH(const node_p& child, children()) {
-        child->eval(context);
-        if (! child->is_finished()) {
-            return;
-        }
-    }
-
-    // All children finished, concatenate values.
-    BOOST_FOREACH(const node_p& child, children()) {
-        BOOST_FOREACH(Value v, child->values()) {
-            add_value(v);
-        }
-    }
-    finish();
+    m_impl->calculate(*this, context);
 }
 
 string First::name() const

@@ -66,6 +66,9 @@ class Cat :
     public Call
 {
 public:
+    //! Constructor.
+    Cat();
+
     //! See Call:name()
     virtual std::string name() const;
 
@@ -81,7 +84,16 @@ public:
     );
 
 protected:
+    virtual void reset();
     virtual void calculate(EvalContext context);
+
+private:
+    //! Hidden complex implementation details.
+    class impl_t;
+    friend class impl_t;
+
+    //! Hidden complex implementation details.
+    boost::scoped_ptr<impl_t> m_impl;
 };
 
 /**

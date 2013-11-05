@@ -22,6 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
+#include <predicate/reporter.hpp>
 #include <predicate/standard_valuelist.hpp>
 #include "standard_test.hpp"
 
@@ -56,9 +57,6 @@ TEST_F(TestStandardValueList, CatFirstRest)
     EXPECT_THROW(eval_s("(first)"), IronBee::einval);
     EXPECT_THROW(eval_s("(rest 'a' 'b')"), IronBee::einval);
     EXPECT_THROW(eval_s("(rest)"), IronBee::einval);
-
-    EXPECT_FALSE(eval_bool("(cat)"));
-    EXPECT_FALSE(eval_bool("(first (cat))"));
 }
 
 TEST_F(TestStandardValueList, CatTransform)
@@ -66,6 +64,32 @@ TEST_F(TestStandardValueList, CatTransform)
     EXPECT_EQ("'a'", transform("(cat 'a')"));
     EXPECT_EQ("null", transform("(cat)"));
     EXPECT_EQ("(cat 'a' 'b' 'c')", transform("(cat 'a' null 'b' null 'c')"));
+}
+
+TEST_F(TestStandardValueList, CatIncremental)
+{
+    // This test is unfortunately fragile as sequene depends on the number
+    // of times its evaluated at that number is dependent on the
+    // implementation of Cat.  What we really need is something like sequence
+    // but that is externally incremented.
+    node_p n = parse("(cat (sequence 0 1) (sequence 0 3))");
+    Reporter r;
+
+    reset(n);
+
+    n->eval(m_transaction);
+    EXPECT_EQ(1UL, n->values().size());
+    EXPECT_FALSE(n->is_finished());
+    n->eval(m_transaction);
+    EXPECT_EQ(4UL, n->values().size());
+    EXPECT_FALSE(n->is_finished());
+    n->eval(m_transaction);
+    EXPECT_EQ(5UL, n->values().size());
+    EXPECT_FALSE(n->is_finished());
+    n->eval(m_transaction);
+    EXPECT_EQ(6UL, n->values().size());
+    EXPECT_TRUE(n->is_finished());
+    n->eval(m_transaction);
 }
 
 TEST_F(TestStandardValueList, Nth)
