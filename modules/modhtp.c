@@ -2488,13 +2488,7 @@ ib_status_t modhtp_request_header_process(
     assert(cbdata != NULL);
 
     const ib_module_t *m = (const ib_module_t *)cbdata;
-
-    modhtp_txdata_t *txdata;
-    ib_status_t      irc;
-    htp_status_t     hrc;
-
-    /* Fetch the transaction data */
-    txdata = modhtp_get_txdata_ibtx(m, itx);
+    modhtp_txdata_t *txdata = modhtp_get_txdata_ibtx(m, itx);
 
     /* Process request header prior to context selection. */
     modhtp_process_req_headers(txdata);
