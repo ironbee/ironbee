@@ -236,6 +236,7 @@ static ib_status_t ib_event_table_init(void)
     /* Parser States */
     INIT_EVENT_TABLE_ENT(request_started_event, IB_STATE_HOOK_REQLINE);
     INIT_EVENT_TABLE_ENT(request_header_data_event, IB_STATE_HOOK_HEADER);
+    INIT_EVENT_TABLE_ENT(request_header_process_event, IB_STATE_HOOK_TX);
     INIT_EVENT_TABLE_ENT(request_header_finished_event, IB_STATE_HOOK_TX);
     INIT_EVENT_TABLE_ENT(request_body_data_event, IB_STATE_HOOK_TXDATA);
     INIT_EVENT_TABLE_ENT(request_finished_event, IB_STATE_HOOK_TX);

@@ -22,6 +22,8 @@ IronBee v0.9.0
 
 - Engine will now warn if loading a module compiled for a different version and error and refuse to load a module compiled for a different ABI.
 
+- Moved request_header_finished_event after site context selection so that it has the correct configuration context.  Additionally added a request_header_process_event before site context selection to be used to process any header data prior to site context selection (e.g., normalize hostname, etc.)
+
 **Predicate**
 
 - The Field call is now known as Var.  Field continues to exist as an alias for Var.

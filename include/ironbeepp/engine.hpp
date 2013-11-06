@@ -89,6 +89,7 @@ public:
         handle_postprocess         = handle_postprocess_event,
         handle_logging             = handle_logging_event,
         request_started            = request_started_event,
+        request_header_process     = request_header_process_event,
         request_header_finished    = request_header_finished_event,
         request_header_data        = request_header_data_event,
         request_body_data          = request_body_data_event,

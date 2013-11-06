@@ -124,6 +124,7 @@ extern "C" {
  *   tx_finished_event [label="tx_finished",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_finished_event"]
  *
  *   request_started_event [label="request_started *",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_started_event"]
+ *   request_header_process_event [label="request_header_process",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_header_process_event"]
  *   request_header_finished_event [label="request_header_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_header_finished_event"]
  *   request_body_data_event [label="request_body_data",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_body_data_event"]
  *   request_finished_event [label="request_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_finished_event"]
@@ -153,7 +154,8 @@ extern "C" {
  *   handle_connect_event -> tx_started_event [weight=100.0]
  *
  *   tx_started_event -> request_started_event [weight=5.0]
- *   request_started_event -> context_tx_selected [weight=1.0]
+ *   request_started_event -> request_header_process_event [weight=1.0]
+ *   request_header_process_event -> context_tx_selected [weight=1.0]
  *   context_tx_selected -> handle_context_tx_event [weight=1.0]
  *   handle_context_tx_event -> request_header_finished_event [weight=1.0]
  *   request_header_finished_event -> handle_request_header_event [weight=1.0]
@@ -241,6 +243,8 @@ typedef enum {
                                    * (Hook type:@ref ib_state_request_line_fn_t) */
     request_header_data_event,    /**< Parser notified of request header data
                                    * (Hook type:@ref ib_state_header_data_fn_t) */
+    request_header_process_event, /**< Parser notified of request header process
+                                    * (Hook type:@ref ib_state_tx_hook_fn_t) */
     request_header_finished_event, /**< Parser notified of request header
                                     * (Hook type:@ref ib_state_tx_hook_fn_t) */
     request_body_data_event,       /**< Parser notified of request body
@@ -445,6 +449,7 @@ typedef ib_status_t (*ib_state_conn_hook_fn_t)(
  * - @ref handle_response_event
  * - @ref handle_postprocess_event
  * - @ref handle_logging_event
+ * - @ref request_header_process_event
  * - @ref request_header_finished_event
  * - @ref request_finished_event
  * - @ref response_header_finished_event

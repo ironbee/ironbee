@@ -619,6 +619,11 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FREQ_SEENHEADER);
 
+    rc = ib_state_notify_tx(ib, request_header_process_event, tx);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     /* Select the transaction context to use. */
     rc = ib_ctxsel_select_context(ib, tx->conn, tx, &tx->ctx);
     if (rc != IB_OK) {
