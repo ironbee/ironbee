@@ -113,9 +113,6 @@ static ib_status_t get_ctx_persist_fw(
         persist_fw_main->persist_fw_module,
         &configs);
     if (rc != IB_OK) {
-        ib_log_warning(
-            persist_fw_main->ib,
-            "Failed to fetch per-context persistence mappings.");
         return rc;
     }
 
@@ -124,9 +121,6 @@ static ib_status_t get_ctx_persist_fw(
         persist_fw_main->user_module->idx,
         &persist_fw_tmp);
     if (rc != IB_OK) {
-        ib_log_warning(
-            persist_fw_main->ib,
-            "Failed to fetch per-context persistence mappings.");
         return rc;
     }
 
@@ -228,6 +222,7 @@ static ib_status_t populate_data_in_context(
 
     rc = get_ctx_persist_fw(persist_fw, tx->ctx, &persist_fw_cfg);
     if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve persistence store.");
         return rc;
     }
 
@@ -332,6 +327,7 @@ static ib_status_t persist_data_in_context(
 
     rc = get_ctx_persist_fw(persist_fw, tx->ctx, &persist_fw_cfg);
     if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve persistence store.");
         return rc;
     }
 
@@ -498,6 +494,7 @@ ib_status_t ib_persist_fw_register_type(
 
     rc = get_ctx_persist_fw(persist_fw, ctx, &persist_fw_cfg);
     if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve persistence store.");
         return rc;
     }
 
@@ -565,6 +562,7 @@ ib_status_t ib_persist_fw_map_collection(
 
     rc = get_ctx_persist_fw(persist_fw, ctx, &persist_fw_cfg);
     if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve persistence store.");
         return rc;
     }
 
@@ -728,6 +726,7 @@ ib_status_t ib_persist_fw_create_store(
 
     rc = get_ctx_persist_fw(persist_fw, ctx, &persist_fw_cfg);
     if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve persistence store.");
         return rc;
     }
 
