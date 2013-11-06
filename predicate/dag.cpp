@@ -28,8 +28,6 @@
 
 #include <ironbeepp/engine.hpp>
 
-#include <ironbee/rule_engine.h>
-
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
@@ -64,8 +62,7 @@ public:
         m_pool("node value private pool"),
         m_finished(false),
         m_own_values(List<Value>::create(m_pool)),
-        m_values(m_own_values),
-        m_phase(IB_PHASE_NONE)
+        m_values(m_own_values)
     {
         // nop
     }
@@ -138,19 +135,6 @@ public:
         m_finished = false;
         m_values = m_own_values;
         m_own_values.clear();
-        m_phase = IB_PHASE_NONE;
-    }
-
-    //! Last phase evaluated.
-    ib_rule_phase_num_t phase() const
-    {
-        return m_phase;
-    }
-
-    //! Update last phase evaluated.
-    void set_phase(ib_rule_phase_num_t phase)
-    {
-        m_phase = phase;
     }
 
     //! Add @a value to values list.
@@ -252,8 +236,6 @@ private:
     ValueList m_values;
     //! User data.
     boost::any m_user_data;
-    //! Last phase evaluated at.
-    ib_rule_phase_num_t m_phase;
 };
 
 Node::Node()
@@ -303,23 +285,11 @@ const Node::per_thread_t& Node::lookup_value() const
 ValueList Node::eval(EvalContext context)
 {
     per_thread_t& v = lookup_value();
-
-    // In certain cases, e.g., literals, we run without a context or
-    // rule_exec.  Then, always calculate.
-    ib_rule_phase_num_t phase = IB_PHASE_NONE;
-    if (context.ib() && context.ib()->rule_exec) {
-        phase = context.ib()->rule_exec->phase;
-    }
     if (v.is_forwarding()) {
         return v.forward_node()->eval(context);
     }
 
-    if (
-        ! v.is_forwarding() &&
-        ! v.is_finished() &&
-        (v.phase() != phase || phase == IB_PHASE_NONE)
-    ) {
-        v.set_phase(phase);
+    if (! v.is_forwarding() && ! v.is_finished()) {
         calculate(context);
     }
     return v.values();
