@@ -293,3 +293,56 @@ TEST_F(CoreOperatorsTest, NeTest)
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }
+
+TEST_F(CoreOperatorsTest, IpMatchSegfault) {
+    ib_num_t call_result = 17; /* 17 is a arbitrary value. */
+    const ib_operator_t *op;
+    void *instance_data;
+    ib_field_t *field;
+    ib_bytestr_t *bytestr;
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_bytestr_alias_nulstr(
+            &bytestr,
+            ib_engine_pool_main_get(ib_engine),
+            "nleroy-laptop.msn01.qualys.com:8182")
+    );
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_field_create(
+            &field,
+            ib_engine_pool_main_get(ib_engine),
+            IB_FIELD_NAME("testfield"),
+            IB_FTYPE_BYTESTR,
+            ib_ftype_bytestr_in(bytestr))
+    );
+
+    ASSERT_EQ(IB_OK, ib_operator_lookup(ib_engine, "ipmatch", &op));
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_inst_create(
+            op,
+            ib_context_main(ib_engine),
+            IB_OP_CAPABILITY_NON_STREAM,
+            "192.168.0.0/16",
+            &instance_data)
+    );
+
+    /* Expected failure because the input value is incorrect. */
+    ASSERT_EQ(
+        IB_EINVAL,
+        ib_operator_inst_execute(
+            op,
+            instance_data,
+            ib_tx,
+            field,
+            NULL,
+            &call_result)
+    );
+
+    /* And the result is left unchanged. */
+    EXPECT_EQ(17, call_result);
+}
