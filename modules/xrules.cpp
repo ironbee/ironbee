@@ -648,7 +648,7 @@ namespace {
     /**
      * Sets XRULE:BLOCKING_MODE = ENABLED | DISABLED.
      */
-    class SetBlockingMode : public Action {
+    class SetBlockingMode : public SetFlag {
 
     public:
 
@@ -661,74 +661,18 @@ namespace {
          *            if it may be overridden.
          */
         SetBlockingMode(bool enabled, int priority);
-
-    private:
-        //! Set the field to enabled or disabled.
-        bool m_enabled;
-
-        //! The name of the field to mark as blocked.
-        static const std::string BLOCKING_MODE_FIELD_NAME;
-
-        /**
-         * Set @c XRULES:BLOCKING_MODE = @c ENABLED or @c DISABLED.
-         *
-         * @param[in] mdata The module.
-         * @param[in] tx The transaction to be modified.
-         */
-        virtual void apply_impl(
-            xrules_module_tx_data_ptr mdata,
-            IronBee::Transaction tx
-        ) const;
     };
 
     /* SetBlockingMode Impl */
     SetBlockingMode::SetBlockingMode(bool enabled, int priority)
     :
-        Action("SetBlockingMode", priority),
-        m_enabled(enabled)
+        SetFlag(
+            "FLAGS:blockingMode",
+            IB_TX_FBLOCKING_MODE,
+            enabled,
+            priority)
     {}
 
-    void SetBlockingMode::apply_impl(
-        xrules_module_tx_data_ptr mdata,
-        IronBee::Transaction tx
-    ) const
-    {
-        typedef IronBee::ByteString BS;
-
-        BS bs;
-
-        if (m_enabled) {
-            ib_tx_flags_set(tx.ib(), IB_TX_FBLOCKING_MODE);
-            bs = BS::create(tx.memory_pool(), "ENABLED");
-        }
-        else {
-            ib_tx_flags_unset(tx.ib(), IB_TX_FBLOCKING_MODE);
-            bs = BS::create(tx.memory_pool(), "DISABLED");
-        }
-
-        IronBee::Field f = IronBee::Field::create_byte_string(
-            tx.memory_pool(),
-            BLOCKING_MODE_FIELD_NAME.c_str(),
-            BLOCKING_MODE_FIELD_NAME.length(),
-            bs);
-
-        ib_var_source_t *source;
-
-        IronBee::throw_if_error(
-            ib_var_source_acquire(
-                &source,
-                tx.memory_pool().ib(),
-                ib_engine_var_config_get(tx.engine().ib()),
-                BLOCKING_MODE_FIELD_NAME.data(),
-                BLOCKING_MODE_FIELD_NAME.length()
-            ),
-            "Failed to acquire blocking mode source.");
-        IronBee::throw_if_error(
-            ib_var_source_set(source, tx.ib()->var_store, f.ib()),
-            "Failed to set XRULES:BLOCKING_MODE.");
-    }
-    const std::string SetBlockingMode::BLOCKING_MODE_FIELD_NAME =
-        "XRULES:BLOCKING_MODE";
     /* End SetBlockingMode Impl */
 
 
