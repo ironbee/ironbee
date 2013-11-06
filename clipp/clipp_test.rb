@@ -72,8 +72,8 @@ module CLIPPTestAssertions
       if input_log =~ re
         message += "Input #{input_id} matched #{re.inspect}.\n"
       end
-      assert(message.empty?, message)
     end
+    assert(message.empty?, message)
   end
 end
 
