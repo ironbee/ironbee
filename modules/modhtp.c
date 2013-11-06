@@ -2460,6 +2460,48 @@ ib_status_t modhtp_request_header_data(
         return irc;
     }
 
+    /* Set the hostname, if possible. */
+    modhtp_set_hostname(txdata->htx, false, itx);
+
+    return IB_OK;
+}
+/**
+ * Pre-Context Selection Hook
+ *
+ * @param[in] ib     IronBee engine.
+ * @param[in] itx    Transaction.
+ * @param[in] event  Which event trigger the callback.
+ * @param[in] cbdata Callback data; this module.
+ *
+ * @returns Status code
+ */
+static
+ib_status_t modhtp_request_header_process(
+    ib_engine_t           *ib,
+    ib_tx_t               *itx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
+{
+    assert(ib     != NULL);
+    assert(itx    != NULL);
+    assert(cbdata != NULL);
+
+    const ib_module_t *m = (const ib_module_t *)cbdata;
+
+    modhtp_txdata_t *txdata;
+    ib_status_t      irc;
+    htp_status_t     hrc;
+
+    /* Fetch the transaction data */
+    txdata = modhtp_get_txdata_ibtx(m, itx);
+
+    /* Process request header prior to context selection. */
+    modhtp_process_req_headers(txdata);
+
+    ib_log_debug_tx(itx,
+                    "PROCESS REQUEST HEADER: "
+                    "modhtp_request_header_process");
     return IB_OK;
 }
 
@@ -2513,7 +2555,6 @@ ib_status_t modhtp_handle_context_tx(
     }
 
     /* Generate header fields. */
-    modhtp_process_req_headers(txdata);
     irc = modhtp_gen_request_header_fields(txdata);
     if (irc != IB_OK) {
         return irc;
@@ -3051,6 +3092,10 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
         return rc;
     }
     rc = ib_hook_parsed_header_data_register(ib, request_header_data_event, modhtp_request_header_data, m);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_hook_tx_register(ib, request_header_process_event, modhtp_request_header_process, m);
     if (rc != IB_OK) {
         return rc;
     }
