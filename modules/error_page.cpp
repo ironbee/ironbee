@@ -183,8 +183,6 @@ ib_status_t ErrorPageModule::error_page_fn(
     const uint8_t **page,
     size_t *len)
 {
-    assert(tx->block_method == IB_BLOCK_METHOD_STATUS);
-
     IronBee::Transaction txpp(tx);
 
     ErrorPageCtxConfig &cfg =
