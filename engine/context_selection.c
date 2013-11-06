@@ -444,6 +444,51 @@ ib_status_t ib_ctxsel_registration_register(
 
 }
 
+/*
+ * Take the transaction hostname from the HTTP Host header.
+ *
+ * @param[in] name Header name
+ * @param[in] name_len Header name length
+ * @param[in] value Header value
+ * @param[in] value_len Header value length
+ * @param[in] user_data Transaction
+ *
+ * @returns Status code:
+ *  - IB_OK: Keep going
+ *  - IB_DECLINED: Stop
+ */
+static ib_status_t ib_ctxsel_extract_hostname(
+    const char *name,
+    size_t name_len,
+    const char *value,
+    size_t value_len,
+    void *user_data)
+{
+    ib_tx_t *tx = (ib_tx_t *)user_data;
+
+    if ( (name_len == 4) && (strncasecmp("Host", name, 4) == 0) ) {
+        size_t *i = 0;
+        char *val_end = value + value_len - 1;
+
+        /* Copy hostname without any port. */
+        for (; i < value_len; ++i) {
+            if (value[i] == ":") {
+                break;
+            }
+        }
+
+        if (i > 0) {
+            tx->hostname = ib_mpool_memdup_to_str(tx->mp, value, i);
+            if (tx->hostname != NULL) {
+                ib_log_debug_tx(tx, "Using hostname from HTTP Host header: %s", tx->hostname);
+                return IB_DECLINED;
+            }
+        }
+    }
+
+    return IB_OK;
+}
+
 ib_status_t ib_ctxsel_select_context(
     const ib_engine_t *ib,
     const ib_conn_t *conn,
@@ -456,6 +501,11 @@ ib_status_t ib_ctxsel_select_context(
     ib_status_t rc;
     const ib_ctxsel_registration_t *ctxsel = &ib->act_ctxsel;
     assert(ctxsel->select_fn != NULL);
+
+    /* If there is a transaction, make sure there is a hostname set. */
+    if ( (tx != NULL) && (tx->hostname == NULL) ) {
+        ib_parsed_tx_each_header(tx->request_header, ib_ctxsel_extract_hostname, tx);
+    }
 
     rc = ctxsel->select_fn(ib, conn, tx, ctxsel->common_cb_data,
                            ctxsel->select_cb_data, pctx);

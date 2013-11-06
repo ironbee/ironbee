@@ -187,10 +187,37 @@ class TestTesting < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: A/
     assert_log_match /CLIPP ANNOUNCE: B/
   end
-  def test_site_selection
+  def test_site_selection_with_modhtp
     clipp(
       :config => <<-EOS,
         LoadModule "ibmod_htp.so"
+        <Site should_be_selected>
+          SiteId bf9b5c39-c94e-4d9c-89a6-8d17cfd92911
+          Service *:*
+          Hostname my.testsite.tld
+          Action id:1 phase:REQUEST_HEADER clipp_announce:A
+        </Site>
+      EOS
+      default_site_config: <<-EOS
+        Action id:1 phase:REQUEST_HEADER clipp_announce:B
+      EOS
+    ) do
+      transaction do |t|
+        t.request(
+          raw: "GET /foo HTTP/1.1",
+          headers: {
+            'Host'           => 'my.testsite.tld',
+          }
+        )
+      end
+    end
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: A/
+    assert_log_no_match /CLIPP ANNOUNCE: B/
+  end
+  def test_site_selection_without_modhtp
+    clipp(
+      :config => <<-EOS,
         LogLevel debug3
         <Site should_be_selected>
           SiteId bf9b5c39-c94e-4d9c-89a6-8d17cfd92911
