@@ -263,6 +263,7 @@ private:
 TEST_F(TestDAG, Threaded)
 {
     ib_tx_t dummy_tx;
+    dummy_tx.rule_exec = NULL;
     ib_field_t dummy_field;
     EvalContext nonnull(&dummy_tx);
     Value a(&dummy_field); // non-null
