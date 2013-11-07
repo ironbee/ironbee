@@ -2080,3 +2080,77 @@ ib_status_t ib_context_get(ib_context_t *ctx,
     ib_status_t rc = ib_cfgmap_get(ctx->cfg, name, pval, ptype);
     return rc;
 }
+
+/**
+ * Set the given tx var flag to the given value (1 or 0).
+ */
+static ib_status_t tx_var_flags_set(
+    ib_tx_t    *tx,
+    ib_flags_t  flag,
+    ib_num_t    flag_value
+)
+{
+    assert(tx != NULL);
+
+    const ib_tx_flag_map_t *flagmap;
+
+    for (flagmap = ib_core_vars_tx_flags();  flagmap->name != NULL;  ++flagmap)
+    {
+        /* If this flag is being set, set the var value. */
+        if (flagmap->tx_flag | flag) {
+            ib_var_target_t *target;
+            ib_field_t      *field;
+            ib_status_t      rc;
+
+            /* Try to get the field. */
+            rc = ib_var_target_acquire_from_string(
+                &target,
+                tx->mp,
+                ib_var_store_config(tx->var_store),
+                flagmap->tx_name,
+                strlen(flagmap->tx_name),
+                NULL,
+                NULL);
+            if (rc != IB_OK) {
+                return rc;
+            }
+
+            /* Create a field to use to set the value. */
+            rc = ib_field_create(
+                &field,
+                tx->mp,
+                flagmap->tx_name,
+                strlen(flagmap->tx_name),
+                IB_FTYPE_NUM,
+                ib_ftype_num_in(&flag_value));
+            if (rc != IB_OK) {
+                return rc;
+            }
+
+            /* Set the value. */
+            rc = ib_var_target_set(
+                target,
+                tx->mp,
+                tx->var_store,
+                field);
+            if (rc != IB_OK) {
+                return rc;
+            }
+        }
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_tx_var_flags_set(ib_tx_t *tx, ib_flags_t flag)
+{
+    tx->flags |= flag;
+    return tx_var_flags_set(tx, flag, 1);
+}
+
+ib_status_t ib_tx_var_flags_unset(ib_tx_t *tx, ib_flags_t flag)
+{
+    tx->flags ^= flag;
+    return tx_var_flags_set(tx, flag, 0);
+}
+

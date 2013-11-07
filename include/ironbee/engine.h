@@ -373,6 +373,30 @@ ib_status_t DLL_PUBLIC ib_conn_set_module_data(
 #define ib_conn_flags_isset(conn, flag) ((conn)->flags & (flag) ? 1 : 0)
 
 /**
+ * Set @a flag in the @a tx and the corresponding var value.
+ *
+ * @param[in] tx The transaction to set the flag in.
+ * @param[in] flag A single flag to set.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on var errors.
+ */
+ib_status_t DLL_PUBLIC ib_tx_var_flags_set(ib_tx_t *tx, ib_flags_t flag);
+
+/**
+ * Unset @a flag in the @a tx and the corresponding var value.
+ *
+ * @param[in] tx The transaction to set the flag in.
+ * @param[in] flag A single flag to set.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on var errors.
+ */
+ib_status_t DLL_PUBLIC ib_tx_var_flags_unset(ib_tx_t *tx, ib_flags_t flag);
+
+/**
  * Destroy a connection structure.
  *
  * @param conn Connection structure
