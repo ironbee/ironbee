@@ -242,23 +242,23 @@ bool handle_define(
         else {
             body_node = P::parse_literal(body, i);
         }
+
+        bool duplicate = true;
+        try {
+            call_factory(name);
+        }
+        catch (IronBee::enoent) {
+            duplicate = false;
+        }
+        if (duplicate) {
+            cerr << "ERROR: Already have function named " << name << endl;
+            return false;
+        }
     }
-    catch (const IronBee::einval& e) {
+    catch (const IronBee::error& e) {
         cerr << "ERROR: Error parsing body: "
              << *boost::get_error_info<IronBee::errinfo_what>(e)
              << endl;
-        return false;
-    }
-
-    bool duplicate = true;
-    try {
-        call_factory(name);
-    }
-    catch (IronBee::enoent) {
-        duplicate = false;
-    }
-    if (duplicate) {
-        cerr << "ERROR: Already have function named " << name << endl;
         return false;
     }
 
