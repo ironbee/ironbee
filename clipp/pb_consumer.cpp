@@ -42,7 +42,6 @@
 #include <stdexcept>
 
 using namespace std;
-using boost::make_shared;
 
 namespace IronBee {
 namespace CLIPP {
@@ -218,7 +217,7 @@ PBConsumer::PBConsumer()
 }
 
 PBConsumer::PBConsumer(const std::string& output_path) :
-    m_state(make_shared<State>(output_path))
+    m_state(boost::make_shared<State>(output_path))
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 }

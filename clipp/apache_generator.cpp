@@ -43,7 +43,6 @@
 #include <fstream>
 
 using namespace std;
-using boost::make_shared;
 
 namespace {
 
@@ -105,7 +104,7 @@ ApacheGenerator::ApacheGenerator()
 }
 
 ApacheGenerator::ApacheGenerator(const std::string& input_path) :
-    m_state(make_shared<State>(input_path))
+    m_state(boost::make_shared<State>(input_path))
 {
     // nop
 }

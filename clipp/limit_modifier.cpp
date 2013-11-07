@@ -28,7 +28,6 @@
 #include <boost/make_shared.hpp>
 
 using namespace std;
-using boost::make_shared;
 
 namespace IronBee {
 namespace CLIPP {
@@ -39,7 +38,7 @@ struct LimitModifier::State
 };
 
 LimitModifier::LimitModifier(size_t n) :
-    m_state(make_shared<State>())
+    m_state(boost::make_shared<State>())
 {
     m_state->n = n;
 }

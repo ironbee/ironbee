@@ -27,7 +27,6 @@
 #include <boost/make_shared.hpp>
 
 using namespace std;
-using boost::make_shared;
 
 namespace IronBee {
 namespace CLIPP {
@@ -63,7 +62,7 @@ struct SelectModifier::State
 };
 
 SelectModifier::SelectModifier(const range_list_t& select) :
-    m_state(make_shared<State>())
+    m_state(boost::make_shared<State>())
 {
     m_state->select  = select;
     m_state->current = 0;

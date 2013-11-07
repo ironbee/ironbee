@@ -4,7 +4,6 @@
 #include <boost/make_shared.hpp>
 
 using namespace std;
-using boost::make_shared;
 
 namespace IronBee {
 namespace CLIPP {
@@ -200,7 +199,7 @@ DataEvent& Transaction::connection_data_in(
 )
 {
     boost::shared_ptr<DataEvent> event =
-        make_shared<DataEvent>(
+        boost::make_shared<DataEvent>(
             CONNECTION_DATA_IN,
             data
         );
@@ -214,7 +213,7 @@ DataEvent& Transaction::connection_data_out(
 )
 {
     boost::shared_ptr<DataEvent> event =
-        make_shared<DataEvent>(
+        boost::make_shared<DataEvent>(
             CONNECTION_DATA_OUT,
             data
         );
@@ -231,7 +230,7 @@ RequestEvent& Transaction::request_started(
 )
 {
     boost::shared_ptr<RequestEvent> event =
-        make_shared<RequestEvent>(
+        boost::make_shared<RequestEvent>(
             REQUEST_STARTED,
             raw,
             method,
@@ -246,7 +245,7 @@ RequestEvent& Transaction::request_started(
 HeaderEvent& Transaction::request_header()
 {
     boost::shared_ptr<HeaderEvent> event =
-        make_shared<HeaderEvent>(REQUEST_HEADER);
+        boost::make_shared<HeaderEvent>(REQUEST_HEADER);
     events.push_back(event);
 
     return *event;
@@ -255,7 +254,7 @@ HeaderEvent& Transaction::request_header()
 NullEvent& Transaction::request_header_finished()
 {
     boost::shared_ptr<NullEvent> event =
-        make_shared<NullEvent>(REQUEST_HEADER_FINISHED);
+        boost::make_shared<NullEvent>(REQUEST_HEADER_FINISHED);
     events.push_back(event);
 
     return *event;
@@ -266,7 +265,7 @@ DataEvent& Transaction::request_body(
 )
 {
     boost::shared_ptr<DataEvent> event =
-        make_shared<DataEvent>(
+        boost::make_shared<DataEvent>(
             REQUEST_BODY,
             data
         );
@@ -278,7 +277,7 @@ DataEvent& Transaction::request_body(
 NullEvent& Transaction::request_finished()
 {
     boost::shared_ptr<NullEvent> event =
-        make_shared<NullEvent>(REQUEST_FINISHED);
+        boost::make_shared<NullEvent>(REQUEST_FINISHED);
     events.push_back(event);
 
     return *event;
@@ -291,7 +290,7 @@ ResponseEvent& Transaction::response_started(
     const Buffer& message
 )
 {
-    boost::shared_ptr<ResponseEvent> event = make_shared<ResponseEvent>(
+    boost::shared_ptr<ResponseEvent> event = boost::make_shared<ResponseEvent>(
         RESPONSE_STARTED,
         raw,
         protocol,
@@ -306,7 +305,7 @@ ResponseEvent& Transaction::response_started(
 HeaderEvent& Transaction::response_header()
 {
     boost::shared_ptr<HeaderEvent> event =
-        make_shared<HeaderEvent>(RESPONSE_HEADER);
+        boost::make_shared<HeaderEvent>(RESPONSE_HEADER);
     events.push_back(event);
 
     return *event;
@@ -315,7 +314,7 @@ HeaderEvent& Transaction::response_header()
 NullEvent& Transaction::response_header_finished()
 {
     boost::shared_ptr<NullEvent> event =
-        make_shared<NullEvent>(RESPONSE_HEADER_FINISHED);
+        boost::make_shared<NullEvent>(RESPONSE_HEADER_FINISHED);
     events.push_back(event);
 
     return *event;
@@ -326,7 +325,7 @@ DataEvent& Transaction::response_body(
 )
 {
     boost::shared_ptr<DataEvent> event =
-        make_shared<DataEvent>(
+        boost::make_shared<DataEvent>(
             RESPONSE_BODY,
             data
         );
@@ -338,7 +337,7 @@ DataEvent& Transaction::response_body(
 NullEvent& Transaction::response_finished()
 {
     boost::shared_ptr<NullEvent> event =
-        make_shared<NullEvent>(RESPONSE_FINISHED);
+        boost::make_shared<NullEvent>(RESPONSE_FINISHED);
     events.push_back(event);
 
     return *event;
@@ -382,7 +381,7 @@ ConnectionEvent& Connection::connection_opened(
 )
 {
     boost::shared_ptr<ConnectionEvent> event =
-        make_shared<ConnectionEvent>(
+        boost::make_shared<ConnectionEvent>(
             CONNECTION_OPENED,
             local_ip,
             local_port,
@@ -397,7 +396,7 @@ ConnectionEvent& Connection::connection_opened(
 NullEvent& Connection::connection_closed()
 {
     boost::shared_ptr<NullEvent> event =
-        make_shared<NullEvent>(CONNECTION_CLOSED);
+        boost::make_shared<NullEvent>(CONNECTION_CLOSED);
     post_transaction_events.push_back(event);
 
     return *event;

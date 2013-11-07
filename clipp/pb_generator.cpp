@@ -44,7 +44,6 @@
 #include <stdexcept>
 
 using namespace std;
-using boost::make_shared;
 
 namespace IronBee {
 namespace CLIPP {
@@ -82,7 +81,7 @@ PBGenerator::PBGenerator()
 }
 
 PBGenerator::PBGenerator(const std::string& input_path) :
-    m_state(make_shared<State>(input_path))
+    m_state(boost::make_shared<State>(input_path))
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 }
@@ -269,7 +268,7 @@ bool PBGenerator::operator()(Input::input_p& input)
     }
     size = ntohl(raw_size);
 
-    boost::shared_ptr<data_t> data = make_shared<data_t>();
+    boost::shared_ptr<data_t> data = boost::make_shared<data_t>();
     input->source = data;
 
     boost::scoped_array<char> buffer(new char[size]);

@@ -32,7 +32,6 @@
 #include <vector>
 
 using namespace std;
-using boost::make_shared;
 
 namespace IronBee {
 namespace CLIPP {
@@ -211,7 +210,7 @@ bool FillBodyModifier::operator()(Input::input_p& input)
     }
 
     // Allocate a single big block of data to use for all bodies.
-    boost::shared_ptr<data_t> data = make_shared<data_t>();
+    boost::shared_ptr<data_t> data = boost::make_shared<data_t>();
     data->original_source = input->source;
     input->source = data;
     data->data.assign(max_body_length, '@');
@@ -242,7 +241,7 @@ bool FillBodyModifier::operator()(Input::input_p& input)
                 if (content_length > 0 && ! has_data_event) {
                     tx.events.insert(
                         boost::next(last_header_i),
-                        make_shared<Input::DataEvent>(
+                        boost::make_shared<Input::DataEvent>(
                             Input::REQUEST_BODY,
                             Input::Buffer()
                         )
@@ -253,7 +252,7 @@ bool FillBodyModifier::operator()(Input::input_p& input)
                 if (content_length > 0 && ! has_data_event) {
                     tx.events.insert(
                         boost::next(last_header_i),
-                        make_shared<Input::DataEvent>(
+                        boost::make_shared<Input::DataEvent>(
                             Input::RESPONSE_BODY,
                             Input::Buffer()
                         )

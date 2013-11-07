@@ -45,7 +45,6 @@
 #include <cstring>
 
 using namespace std;
-using boost::make_shared;
 
 // libNIDS makes excessive use of global state and can not be run
 // simultaneously.  We get around these limitations by (a) using global state
@@ -134,7 +133,7 @@ void nids_tcp(tcp_stream* ts, void** param)
     }
     case NIDS_CLOSE: {
         // Generate input.
-        s_global_state->input = make_shared<Input::Input>();
+        s_global_state->input = boost::make_shared<Input::Input>();
         Input::input_p input = s_global_state->input;
         data_t* data = reinterpret_cast<data_t*>(*param);
 

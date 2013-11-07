@@ -34,7 +34,6 @@
 #include <list>
 #include <stdexcept>
 
-using boost::make_shared;
 using boost::assign::list_of;
 using namespace std;
 
@@ -66,7 +65,7 @@ struct ACNode : public Intermediate::Node
      */
     void prepend_output(const Intermediate::byte_vector_t& content)
     {
-        Intermediate::output_p output = make_shared<Intermediate::Output>();
+        Intermediate::output_p output = boost::make_shared<Intermediate::Output>();
         output->content() = content;
         output->next_output() = first_output();
         if (! last_output) {
@@ -217,7 +216,7 @@ void deep_copy(
         todo.pop_front();
 
         if (src->default_target()) {
-            dst->default_target() = make_shared<ACNode>();
+            dst->default_target() = boost::make_shared<ACNode>();
             todo.push_back(
                 make_pair(dst->default_target(), src->default_target())
             );
@@ -226,7 +225,7 @@ void deep_copy(
         if (src->first_output()) {
             Intermediate::output_p current_src = src->first_output();
             Intermediate::output_p current_dst =
-                make_shared<Intermediate::Output>();
+                boost::make_shared<Intermediate::Output>();
             boost::shared_ptr<ACNode> ac_dst =
                 boost::static_pointer_cast<ACNode>(dst);
             ac_dst->first_output() = ac_dst->last_output = current_dst;
@@ -235,7 +234,7 @@ void deep_copy(
                 current_dst->content() = current_src->content();
                 if (current_src->next_output()) {
                     current_dst->next_output() =
-                        make_shared<Intermediate::Output>();
+                        boost::make_shared<Intermediate::Output>();
                     ac_dst->last_output = current_dst->next_output();
                 }
                 current_dst = current_dst->next_output();
@@ -247,7 +246,7 @@ void deep_copy(
             dst->edges().push_back(Intermediate::Edge());
             Intermediate::Edge& dst_edge = dst->edges().back();
             dst_edge = src_edge;
-            dst_edge.target() = make_shared<ACNode>();
+            dst_edge.target() = boost::make_shared<ACNode>();
             todo.push_back(make_pair(dst_edge.target(), src_edge.target()));
         }
     }
@@ -282,7 +281,7 @@ Intermediate::Edge split_edge(
     // This method assumes the context of Aho-Corasick.  If generalized,
     // ACNode should be changed to node, and advance() should be updated
     // instead of asserted.
-    to.target() = make_shared<ACNode>();
+    to.target() = boost::make_shared<ACNode>();
     deep_copy(to.target(), from.target());
 
     assert(to.advance());
@@ -779,7 +778,7 @@ void aho_corasick_begin(
     if (automata.start_node()) {
         throw invalid_argument("Automata not empty.");
     }
-    automata.start_node() = make_shared<ACNode>();
+    automata.start_node() = boost::make_shared<ACNode>();
 }
 
 void aho_corasick_add_length(
@@ -824,7 +823,7 @@ void aho_corasick_add_data(
 
         current_node->edges().push_back(Intermediate::Edge());
         Intermediate::Edge& edge = current_node->edges().back();
-        edge.target() = make_shared<ACNode>();
+        edge.target() = boost::make_shared<ACNode>();
         edge.add(c);
         current_node = edge.target();
     }
@@ -904,7 +903,7 @@ void aho_corasick_add_pattern(
             if (! cs.empty()) {
                 node->edges().push_front(
                     Intermediate::Edge::make_from_vector(
-                        make_shared<ACNode>(),
+                        boost::make_shared<ACNode>(),
                         true,
                         cs
                     )

@@ -32,8 +32,6 @@
 
 using namespace std;
 
-using boost::make_shared;
-
 namespace IronBee {
 namespace CLIPP {
 
@@ -87,10 +85,8 @@ public:
 
     void connection_opened(const Input::ConnectionEvent& event)
     {
-        using namespace boost;
-
         {
-            lock_guard<mutex> guard(m_mutex);
+            boost::lock_guard<boost::mutex> guard(m_mutex);
 
             if (m_connection) {
                 m_connection.destroy();
@@ -103,12 +99,12 @@ public:
                 event.local_ip.data,
                 event.local_ip.length
             );
-            m_connection.memory_pool().register_cleanup(bind(free,local_ip));
+            m_connection.memory_pool().register_cleanup(boost::bind(free,local_ip));
             char* remote_ip = strndup(
                 event.remote_ip.data,
                 event.remote_ip.length
             );
-            m_connection.memory_pool().register_cleanup(bind(free,remote_ip));
+            m_connection.memory_pool().register_cleanup(boost::bind(free,remote_ip));
 
             m_connection.set_local_ip_string(local_ip);
             m_connection.set_local_port(event.local_port);
@@ -613,7 +609,7 @@ struct IronBeeConsumer::State
 };
 
 IronBeeConsumer::IronBeeConsumer(const string& config_path) :
-    m_state(make_shared<State>())
+    m_state(boost::make_shared<State>())
 {
     m_state->modifier = IronBeeModifier(config_path);
 }
@@ -652,7 +648,7 @@ IronBeeModifier::IronBeeModifier(
     const string& config_path,
     behavior_e    behavior
 ) :
-    m_state(make_shared<State>())
+    m_state(boost::make_shared<State>())
 {
     m_state->behavior = behavior;
 
@@ -774,7 +770,7 @@ IronBeeThreadedConsumer::IronBeeThreadedConsumer(
     const string& config_path,
     size_t        num_workers
 ) :
-    m_state(make_shared<State>(num_workers))
+    m_state(boost::make_shared<State>(num_workers))
 {
     load_configuration(m_state->engine, config_path);
 }

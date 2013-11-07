@@ -40,7 +40,6 @@
 
 using namespace std;
 using namespace IronAutomata::Intermediate;
-using boost::make_shared;
 
 namespace {
 
@@ -62,8 +61,8 @@ TEST(TestIntermediate, EdgeConstructors)
     EXPECT_TRUE(edge.advance());
     EXPECT_TRUE(edge.empty());
 
-    node_p target_a = make_shared<Node>();
-    node_p target_b = make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
+    node_p target_b = boost::make_shared<Node>();
 
     edge = Edge(target_a, false);
     EXPECT_EQ(target_a, edge.target());
@@ -214,9 +213,9 @@ TEST(TestIntermediate, NodeConstructor)
 TEST(TestIntermediate, NodeEdges)
 {
     Node node;
-    node_p target_a = make_shared<Node>();
-    node_p target_a2 = make_shared<Node>();
-    node_p target_b = make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
+    node_p target_a2 = boost::make_shared<Node>();
+    node_p target_b = boost::make_shared<Node>();
     byte_vector_t values;
     values.push_back('a');
     node.edges().push_back(Edge::make_from_vector(target_a, false, values));
@@ -234,7 +233,7 @@ TEST(TestIntermediate, NodeEdges)
     EXPECT_TRUE(edges.front().matches('b'));
     EXPECT_EQ(1UL, edges.front().size());
 
-    node_p target_default = make_shared<Node>();
+    node_p target_default = boost::make_shared<Node>();
 
     node.default_target() = target_default;
 
@@ -248,7 +247,7 @@ TEST(TestIntermediate, NodeEdges)
     EXPECT_EQ(1UL, targets.size());
     EXPECT_EQ(target_default, targets.front().first);
 
-    node_p target_epsilon = make_shared<Node>();
+    node_p target_epsilon = boost::make_shared<Node>();
     node.edges().push_back(Edge(target_epsilon));
     targets = node.targets_for('a');
     EXPECT_EQ(3UL, targets.size());
@@ -261,10 +260,10 @@ TEST(TestIntermediate, NodeEdges)
 TEST(TestIntermediate, BuildTargetsByInput)
 {
     Node node;
-    node_p target_a = make_shared<Node>();
-    node_p target_b = make_shared<Node>();
-    node_p target_b2 = make_shared<Node>();
-    node_p target_other = make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
+    node_p target_b = boost::make_shared<Node>();
+    node_p target_b2 = boost::make_shared<Node>();
+    node_p target_other = boost::make_shared<Node>();
     node.edges().push_back(Edge::make_from_vector(target_a, false, byte_vector_t(1, 'a')));
     node.edges().push_back(Edge::make_from_vector(target_b, false, byte_vector_t(1, 'b')));
     node.edges().push_back(Edge::make_from_vector(target_b2, false, byte_vector_t(1, 'b')));
@@ -676,25 +675,24 @@ TEST(TestIntermediate, ReaderExcessOutput)
 TEST(TestIntermediate, Writer)
 {
     using namespace IronAutomata::Intermediate;
-    using boost::make_shared;
 
     stringstream s;
 
     {
         Automata a;
-        node_p   node   = a.start_node()       = make_shared<Node>();
-        output_p output = node->first_output() = make_shared<Output>();
+        node_p   node   = a.start_node()       = boost::make_shared<Node>();
+        output_p output = node->first_output() = boost::make_shared<Output>();
 
         output->content().push_back('7');
         output->content().push_back('3');
 
-        output_p other_output = output->next_output() = make_shared<Output>();
+        output_p other_output = output->next_output() = boost::make_shared<Output>();
         other_output->content().push_back('9');
 
         node->edges().push_back(Edge());
         Edge& edge = node->edges().back();
 
-        node_p other_node = edge.target() = make_shared<Node>();
+        node_p other_node = edge.target() = boost::make_shared<Node>();
         edge.add('5');
 
         write_automata(a, s);

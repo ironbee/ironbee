@@ -31,7 +31,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 using namespace std;
-using boost::make_shared;
 
 namespace IronBee {
 namespace CLIPP {
@@ -156,7 +155,7 @@ SetModifier::SetModifier(
     const string& key,
     const string& value
 ) :
-    m_state(make_shared<State>())
+    m_state(boost::make_shared<State>())
 {
     m_state->which = which;
     m_state->mode  = mode;

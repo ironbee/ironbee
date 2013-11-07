@@ -37,7 +37,6 @@
 #include <iostream>
 
 using namespace std;
-using boost::make_shared;
 
 namespace IronBee {
 namespace CLIPP {
@@ -147,7 +146,7 @@ struct EditModifier::State
 };
 
 EditModifier::EditModifier(const string& which) :
-    m_state(make_shared<State>())
+    m_state(boost::make_shared<State>())
 {
     if (which == "request") {
         m_state->textify   = textify_request;
@@ -212,7 +211,7 @@ bool EditModifier::operator()(Input::input_p& input)
         "clipp" + boost::lexical_cast<string>(getpid()) + ".txt"
     );
 
-    boost::shared_ptr<data_t> data = make_shared<data_t>();
+    boost::shared_ptr<data_t> data = boost::make_shared<data_t>();
     data->old_source = input->source;
     input->source = data;
     BOOST_FOREACH(Input::Transaction& tx, input->connection.transactions) {

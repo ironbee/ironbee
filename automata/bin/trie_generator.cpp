@@ -44,7 +44,6 @@
 
 using namespace std;
 using namespace IronAutomata::Intermediate;
-using boost::make_shared;
 
 /**
  * Returns next node for an input of @a c at node @a node or node_p() if none.
@@ -69,7 +68,7 @@ node_p find_next(const node_p& node, uint8_t c)
 void add_word(Automata& a, const string& s)
 {
     if (! a.start_node()) {
-        a.start_node() = make_shared<Node>();
+        a.start_node() = boost::make_shared<Node>();
     }
 
     node_p current_node = a.start_node();
@@ -92,13 +91,13 @@ void add_word(Automata& a, const string& s)
 
         current_node->edges().push_back(Edge());
         Edge& edge = current_node->edges().back();
-        edge.target() = make_shared<Node>();
+        edge.target() = boost::make_shared<Node>();
         edge.add(c);
         current_node = edge.target();
     }
 
     assert(! current_node->first_output());
-    output_p output = make_shared<Output>();
+    output_p output = boost::make_shared<Output>();
     current_node->first_output() = output;
 
     IronAutomata::buffer_t content_buffer;

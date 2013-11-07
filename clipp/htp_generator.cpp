@@ -34,7 +34,6 @@
 #include <fstream>
 
 using namespace std;
-using boost::make_shared;
 
 namespace {
 
@@ -84,7 +83,7 @@ HTPGenerator::HTPGenerator()
 }
 
 HTPGenerator::HTPGenerator(const std::string& input_path) :
-    m_state(make_shared<State>(input_path))
+    m_state(boost::make_shared<State>(input_path))
 {
     // nop
 }

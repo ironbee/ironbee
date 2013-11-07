@@ -32,13 +32,12 @@
 
 using namespace std;
 using namespace IronAutomata::Intermediate;
-using boost::make_shared;
 
 TEST(TestOptimizeEdges, Basic)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
-    node_p target_b = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
+    node_p target_b = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
@@ -72,9 +71,9 @@ TEST(TestOptimizeEdges, Basic)
 
 TEST(TestOptimizeEdges, NonDeterministic)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
-    node_p target_b = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
+    node_p target_b = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
@@ -104,9 +103,9 @@ TEST(TestOptimizeEdges, NonDeterministic)
 
 TEST(TestOptimizeEdges, Bitmap)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
-    node_p target_b = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
+    node_p target_b = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
@@ -142,8 +141,8 @@ TEST(TestOptimizeEdges, Bitmap)
 
 TEST(TestOptimizeEdges, ManyValues)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
@@ -166,8 +165,8 @@ TEST(TestOptimizeEdges, ManyValues)
 
 TEST(TestOptimizeEdges, ThirtyTwo)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
@@ -190,8 +189,8 @@ TEST(TestOptimizeEdges, ThirtyTwo)
 
 TEST(TestOptimizeEdges, ThirtyOne)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
@@ -212,8 +211,8 @@ TEST(TestOptimizeEdges, ThirtyOne)
 
 TEST(TestOptimizeEdges, Advance)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
@@ -245,9 +244,9 @@ TEST(TestOptimizeEdges, Advance)
 
 TEST(TestOptimizeEdges, Epsilon)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
-    node_p target_b = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
+    node_p target_b = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
@@ -275,9 +274,9 @@ TEST(TestOptimizeEdges, Epsilon)
 
 TEST(TestOptimizeEdges, UseDefault)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
-    node_p target_b = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
+    node_p target_b = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
@@ -305,9 +304,9 @@ TEST(TestOptimizeEdges, UseDefault)
 
 TEST(TestOptimizeEdge, UseEpsilons)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
-    node_p target_b = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
+    node_p target_b = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
@@ -338,8 +337,8 @@ TEST(TestOptimizeEdge, UseEpsilons)
 
 TEST(TestOptimizeEdge, SingleDefault)
 {
-    node_p node = make_shared<Node>();
-    node_p target_a = make_shared<Node>();
+    node_p node = boost::make_shared<Node>();
+    node_p target_a = boost::make_shared<Node>();
 
     Edge edge;
     edge.target() = target_a;
