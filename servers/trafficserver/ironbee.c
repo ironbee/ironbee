@@ -1204,9 +1204,10 @@ static int next_line(const char **linep, size_t *lenp, http_lineend_t letype)
 
         /* skip to next start-of-line from where we are */
         line = strchr(line, '\n');
-        if (line++ == NULL) {
+        if (line == NULL) {
             return -1;
         }
+        ++line;
         if ( (line[0] == '\r') && (line[1] == '\n') ) {
             return 0; /* blank line = no more hdr lines */
         }
@@ -2570,7 +2571,7 @@ static ib_status_t logger_close(
 }
 
 /**
- * Initialize a new server plugin module instance. 
+ * Initialize a new server plugin module instance.
  *
  * @param[in] ib Engine this module is operating on.
  * @param[in] module This module structure.
