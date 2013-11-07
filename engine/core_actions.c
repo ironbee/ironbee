@@ -401,7 +401,7 @@ static ib_status_t act_setflags_create(
  *
  * @returns Status code
  */
-static ib_status_t act_setflag_execute(
+static ib_status_t act_setflags_execute(
     const ib_rule_exec_t *rule_exec,
     void *data,
     void *cbdata)
@@ -2203,7 +2203,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             "setflag",
                             act_setflags_create, NULL,
                             NULL, /* no destroy function */ NULL,
-                            act_setflag_execute, NULL);
+                            act_setflags_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }
