@@ -2092,12 +2092,14 @@ static ib_status_t tx_var_flags_set(
 {
     assert(tx != NULL);
 
-    const ib_tx_flag_map_t *flagmap;
-
-    for (flagmap = ib_core_vars_tx_flags();  flagmap->name != NULL;  ++flagmap)
+    for (
+        const ib_tx_flag_map_t *flagmap = ib_core_vars_tx_flags();
+        flagmap->name != NULL;
+        ++flagmap
+    )
     {
         /* If this flag is being set, set the var value. */
-        if (flagmap->tx_flag | flag) {
+        if (flagmap->tx_flag & flag) {
             ib_var_target_t *target;
             ib_field_t      *field;
             ib_status_t      rc;
