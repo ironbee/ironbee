@@ -373,11 +373,15 @@ static ib_status_t ib_field_format_escape(
                     snprintf(buf, bufsize, "list[%zd]", len);
                 }
                 else {
-                    ib_field_format_escape(
+                    rc = ib_field_format_escape(
                         mp,
                         (const ib_field_t *)node->data,
                         buffer,
-                        buffer_sz);
+                        buffer_sz
+                    );
+                    if (rc != IB_OK) {
+                        break;
+                    }
                 }
             }
             break;
