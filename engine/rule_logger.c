@@ -1522,7 +1522,8 @@ static void log_tfns(
                               "TFN %s() %s \"%.*s:%.*s\" %s %s",
                               ib_tfn_name(tfn->tfn),
                               ib_field_type_name(value->in->type),
-                              (int)tgt->original->nlen, tgt->original->name,
+                              (tgt->original ? (int)tgt->original->nlen : 0),
+                              (tgt->original ? tgt->original->name : ""),
                               (int)value->in->nlen, value->in->name,
                               buf,
                               ( value->status == IB_OK ?
