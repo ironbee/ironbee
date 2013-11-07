@@ -536,50 +536,12 @@ namespace {
         IronBee::Transaction tx
     ) const
     {
-        ib_num_t         val;
-        ib_field_t      *cfield;
-        ib_var_target_t *target;
-
         if (m_clear) {
-            val = 0;
-            ib_tx_flags_set(tx.ib(), m_flag);
+            IronBee::throw_if_error(ib_tx_var_flags_unset(tx.ib(), m_flag));
         }
         else {
-            val = 1;
-            ib_tx_flags_set(tx.ib(), m_flag);
+            IronBee::throw_if_error(ib_tx_var_flags_set(tx.ib(), m_flag));
         }
-
-        /* Try to get the field. */
-        IronBee::throw_if_error(
-            ib_var_target_acquire_from_string(
-                &target,
-                tx.memory_pool().ib(),
-                ib_var_store_config(tx.ib()->var_store),
-                m_field_name.data(),
-                m_field_name.length(),
-                NULL,
-                NULL)
-        );
-
-        /* Create a field to use to set the value. */
-        IronBee::throw_if_error(
-            ib_field_create(
-                &cfield,
-                tx.memory_pool().ib(),
-                m_field_name.data(),
-                m_field_name.length(),
-                IB_FTYPE_NUM,
-                ib_ftype_num_in(&val))
-        );
-
-        /* Set the value. */
-        IronBee::throw_if_error(
-            ib_var_target_set(
-                target,
-                tx.memory_pool().ib(),
-                tx.ib()->var_store,
-                cfield)
-        );
     }
     /* End SetFlag Impl */
 

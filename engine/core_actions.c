@@ -408,64 +408,24 @@ static ib_status_t act_setflags_execute(
 {
     /* Data will be a setflag_data_t */
     const setflag_data_t *opdata = (const setflag_data_t *)data;
-    ib_num_t              value;
     ib_status_t           rc;
-    ib_field_t           *field;
     ib_tx_t              *tx = rule_exec->tx;
-    ib_var_target_t      *target = NULL;
 
     switch (opdata->op) {
 
     case setflag_op_set:
-        ib_tx_flags_set(tx, opdata->flag->tx_flag);
-        value = 1;
+        rc = ib_tx_var_flags_set(tx, opdata->flag->tx_flag);
         break;
 
     case setflag_op_clear:
-        ib_tx_flags_unset(tx, opdata->flag->tx_flag);
-        value = 0;
+        rc = ib_tx_var_flags_unset(tx, opdata->flag->tx_flag);
         break;
 
     default:
         return IB_EINVAL;
     }
 
-    /* Try to get the field. */
-    rc = ib_var_target_acquire_from_string(
-        &target,
-        tx->mp,
-        ib_var_store_config(tx->var_store),
-        opdata->flag->tx_name,
-        strlen(opdata->flag->tx_name),
-        NULL,
-        NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Create a field to use to set the value. */
-    rc = ib_field_create(
-        &field,
-        tx->mp,
-        opdata->flag->tx_name,
-        strlen(opdata->flag->tx_name),
-        IB_FTYPE_NUM,
-        ib_ftype_num_in(&value));
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Set the value. */
-    rc = ib_var_target_set(
-        target,
-        tx->mp,
-        tx->var_store,
-        field);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    return IB_OK;
+    return rc;
 }
 
 /**
