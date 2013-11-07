@@ -1167,43 +1167,29 @@ static ib_status_t report_status_block_to_server(
      */
     ib_rule_log_debug(rule_exec, "Setting HTTP error response data.");
 
-<<<<<<< HEAD
     /* Get the error page from the rule engine function. */
-=======
->>>>>>> rule_engine: Expressing error pages in terms of a callback function.
     rc = rule_engine->error_page_fn(
         tx,
         &body,
         &body_len,
         rule_engine->error_page_data);
     if (rc != IB_OK) {
-<<<<<<< HEAD
         /* If there was an error, and it was not a declination, log. */
-=======
->>>>>>> rule_engine: Expressing error pages in terms of a callback function.
         if (rc != IB_DECLINED) {
             ib_rule_log_error(rule_exec, "Custom error page failed.");
         }
 
-<<<<<<< HEAD
         /* As a fail-back, call the default function. */
         rc = default_error_page_fn(tx, &body, &body_len, NULL);
         if (rc != IB_OK) {
             /* This should be dead code as the default fn should not fail. */
-=======
-        rc = default_error_page_fn(tx, &body, &body_len, NULL);
-        if (rc != IB_OK) {
->>>>>>> rule_engine: Expressing error pages in terms of a callback function.
             ib_rule_log_error(rule_exec, "Default error page failed.");
             body = (uint8_t *)"Error";
             body_len = sizeof("Error")-1;
         }
     }
 
-<<<<<<< HEAD
     /* Report the error page back to the server. */
-=======
->>>>>>> rule_engine: Expressing error pages in terms of a callback function.
     rc = ib_server_error_body(ib->server, tx, body, body_len);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_rule_log_notice(
