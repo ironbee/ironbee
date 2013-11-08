@@ -160,7 +160,7 @@ local add_action_to_rule = function(
     local rc
 
     -- Detect inverted actions (actions starting with !)
-    local is_inverted = ffi.new("ib_rule_action_t")
+    local is_inverted
 
     if string.sub(name, 1, 1) == '!' then
         name = string.sub(name, 2)
