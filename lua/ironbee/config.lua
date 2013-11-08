@@ -151,6 +151,246 @@ local add_fields = function(ib, rule, prule, field)
     return ffi.C.IB_OK
 end
 
+-- Called by build_rule to add actions to rules.
+local add_action_to_rule = function(
+    ib, 
+    name,
+    arg,
+    rule
+)
+    local rc          -- Status code.
+    local is_inverted -- Detect inverted actions (actions starting with !).
+    local action_inst = ffi.new("ib_action_inst_t*[1]")
+
+    if string.sub(name, 1, 1) == '!' then
+        name = string.sub(name, 2)
+
+        -- fire false actions.
+        is_inverted = ffi.C.IB_RULE_ACTION_FALSE
+    else
+        -- fire true actions.
+        is_inverted = ffi.C.IB_RULE_ACTION_TRUE
+    end
+
+    rc = ffi.C.ib_action_inst_create(
+        ib.ib_engine,
+        name,
+        arg,
+        0,
+        action_inst)
+    if rc ~= ffi.C.IB_OK then
+        ib:logError(
+            "Failed to create action %s instance for rule.", name)
+        return rc
+    end
+
+    -- Add the action instance.
+    rc = ffi.C.ib_rule_add_action(
+        ib.ib_engine,
+        rule,
+        action_inst[0],
+        is_inverted)
+    if rc ~= ffi.C.IB_OK then
+        ib:logError("Failed to add action instance \"%s\" to rule.", action)
+        return rc
+    end
+
+    return ffi.C.IB_OK
+end
+
+-- Called by build_rule to add the operator to a rule.
+-- @param[in] ib IronBee engine.
+-- @param[in] ctx Configuration context.
+-- @param[in] rule The lua rule structure.
+-- @param[in] prule the C rule pointer.
+--
+-- @returns
+-- - IB_OK On success.
+-- - Other on failure.
+--
+local add_operator = function(
+    ib,
+    ctx,
+    rule,
+    prule)
+
+    local rc
+
+    -- Create operator instance.
+    local opinst = ffi.new("void*[1]")
+    local op_inst_create_stream_flags
+    local op = ffi.new("ib_operator_t*[1]")
+
+    -- Set the flag values.
+    if rule.is_streaming() then
+        op_inst_create_stream_flags = IB_OP_CAPABILITY_STREAM
+    else
+        op_inst_create_stream_flags = IB_OP_CAPABILITY_NON_STREAM
+    end
+
+    local opname
+
+    -- Get the operator instance. If not defined, nop is used.
+    if rule.data.op == nil or #rule.data.op == 0 then
+        opname = "nop"
+    elseif string.sub(rule.data.op, 1, 1) == '!' then
+        opname = string.sub(rule.data.op, 2)
+    else
+        opname = rule.data.op
+    end
+
+    rc = ffi.C.ib_operator_lookup(
+        ib.ib_engine,
+        opname,
+        ffi.cast("const ib_operator_t**", op))
+    if rc ~= ffi.C.IB_OK then
+        ib:logError("Could not locate operator %s", opname)
+        return rc
+    end
+
+    -- C operator parameter copy. This is passed to the operater inst constructor and set in the rule.
+    local cop_params = ffi.C.ib_mpool_memdup(
+        ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+        tostring(rule.data.op_arg),
+        #(tostring(rule.data.op_arg)) + 1)
+
+    -- Create the operator.
+    rc = ffi.C.ib_operator_inst_create(
+        op[0],
+        ctx,
+        op_inst_create_stream_flags,
+        cop_params,
+        opinst)
+    if rc ~= ffi.C.IB_OK then
+        ib:logError("Failed to create operator instance for %s.", op)
+        return rc
+    end
+
+    -- Set operator
+    rc = ffi.C.ib_rule_set_operator(
+        ib.ib_engine,
+        prule[0],
+        op[0],
+        opinst[0])
+    if rc ~= ffi.C.IB_OK then
+        ib:logError("Failed to set rule operator.")
+        return rc
+    end
+
+    -- Copy the parameters used to construct the operator instance into the rule for logging.
+    ib:logDebug("Setting rule op inst params: %s", ffi.string(cop_params));
+    rc = ffi.C.ib_rule_set_op_params(prule[0], cop_params);
+    if rc ~= ffi.C.IB_OK then
+        ib:logError("Failed to copy params %s.", ffi.string(cop_params))
+        return rc
+    end
+
+    -- Invert the operator.
+    if string.sub(rule.data.op, 1, 1) == '!' then
+        rc = ffi.C.ib_rule_set_invert(prule[0], 1)
+        if rc ~= ffi.C.IB_OK then
+            ib:logError("Failed to invert operator %s.", op)
+            return rc
+        end
+    end
+
+    return ffi.C.IB_OK
+end
+
+-- Add actions from the lua rule to the c rule pointer.
+--
+-- @param[in] ib IronBee engine.
+-- @param[in] ctx Configuration context.
+-- @param[in] rule The lua rule structure.
+-- @param[in] prule the C rule pointer.
+--
+-- @returns
+-- - IB_OK On success.
+-- - Other on failure.
+local add_actions = function(
+    ib,
+    ctx,
+    rule,
+    prule)
+
+    local rc
+
+    for _, action in ipairs(rule.data.actions) do
+        local name, arg = action.name, action.argument
+
+        if name == "logdata" then
+            local expand = ffi.new("bool[1]")
+
+            prule[0].meta.data =
+                ffi.C.ib_mpool_memdup(
+                    ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+                    arg,
+                    #arg+1)
+            ffi.C.ib_data_expand_test_str(arg, expand)
+
+            if expand[0] ~= 0 then
+                prule[0].meta.flags = ffi.C.ib_set_flag(
+                    prule[0].meta.flags,
+                IB_RULEMD_FLAG_EXPAND_DATA)
+            end
+        elseif name == "severity" then
+            local severity = tonumber(arg)
+            if severity > 255 then
+                ib:logError("Severity exceeds max value: %d", severity)
+            elseif severity < 0 then
+                ib:logError("Severity is less than 0: %d", severity)
+            else
+                prule[0].meta.severity = severity
+            end
+        elseif name == "confidence" then
+            local confidence = tonumber(arg)
+            if confidence > 255 then
+                ib:logError("Confidence exceeds max value: %d", confidence)
+            elseif confidence < 0 then
+                ib:logError("Confidence is less than 0: %d", severity)
+            else
+                prule[0].meta.confidence = confidence
+            end
+        elseif name == 'capture' then
+            rc = ffi.C.ib_rule_set_capture(ib.ib_engine, prule[0], arg)
+            if rc ~= ffi.C.IB_OK then
+                ib:loggerError("Failed to set capture value on rule.")
+            end
+        elseif name == 't' then
+            if ffi.C.ib_rule_allow_tfns(prule[0]) then
+                rc = ffi.C.ib_rule_add_tfn(ib.ib_engine, prule[0], arg)
+                if rc == ffi.C.IB_ENOENT then
+                    ib:logError("Unknown transformation: \"%s\".", arg)
+                elseif rc ~= ffi.C.IB_OK then
+                    ib:logError("Error adding transformation \"%s\".", arg)
+                end
+            else
+                ib:logError("Transformations not supported for this rule.")
+            end
+        -- Handling of Actions
+        else
+            rc = add_action_to_rule(ib, name, arg, prule[0])
+            if rc ~= ffi.C.IB_OK then
+                return rc
+            end
+        end
+    end
+
+    -- While we're building up actions, add the wagle action
+    -- which flags that this rule is subject to Waggle rule injection.
+    if rule.data.waggle_owned then
+        -- Non-predicate rules should be claimed by Waggle.
+        rc = add_action_to_rule(ib, "waggle", "", prule[0])
+        if rc ~= ffi.C.IB_OK then
+            ib:logError("Failed to add wagle action to rule.")
+            return rc
+        end
+    end
+
+
+    return ffi.C.IB_OK
+end
+
 -- Create, setup, and register a rule in the given ironbee engine.
 -- @param[in] ib IronBee Engine.
 -- @param[in] ctx The context the rules should be added to.
@@ -188,98 +428,17 @@ local build_rule = function(ib, ctx, chain, db)
                 IB_RULE_FLAG_ACTION)
         end
 
-        for _, action in ipairs(rule.data.actions) do
-            local name, arg = action.name, action.argument
+        -- Add operator to the rule.
+        rc = add_operator(ib, ctx, rule, prule)
+        if rc ~= ffi.C.IB_OK then
+            ib:logError("Failed to add operator to rule.")
+            return rc
+        end
 
-            if name == "logdata" then
-                local expand = ffi.new("bool[1]")
-
-                prule[0].meta.data =
-                    ffi.C.ib_mpool_memdup(
-                        ffi.C.ib_engine_pool_main_get(ib.ib_engine),
-                        arg,
-                        #arg+1)
-                ffi.C.ib_data_expand_test_str(arg, expand)
-
-                if expand[0] ~= 0 then
-                    prule[0].meta.flags = ffi.C.ib_set_flag(
-                        prule[0].meta.flags,
-                        IB_RULEMD_FLAG_EXPAND_DATA)
-                end
-            elseif name == "severity" then
-                local severity = tonumber(arg)
-                if severity > 255 then
-                    ib:logError("Severity exceeds max value: %d", severity)
-                elseif severity < 0 then
-                    ib:logError("Severity is less than 0: %d", severity)
-                else
-                    prule[0].meta.severity = severity
-                end
-            elseif name == "confidence" then
-                local confidence = tonumber(arg)
-                if confidence > 255 then
-                    ib:logError("Confidence exceeds max value: %d", confidence)
-                elseif confidence < 0 then
-                    ib:logError("Confidence is less than 0: %d", severity)
-                else
-                    prule[0].meta.confidence = confidence
-                end
-            elseif name == 'capture' then
-                rc = ffi.C.ib_rule_set_capture(ib.ib_engine, prule[0], arg)
-                if rc ~= ffi.C.IB_OK then
-                    ib:loggerError("Failed to set capture value on rule.")
-                end
-            elseif name == 't' then
-                if ffi.C.ib_rule_allow_tfns(prule[0]) then
-                    rc = ffi.C.ib_rule_add_tfn(ib.ib_engine, prule[0], arg)
-                    if rc == ffi.C.IB_ENOENT then
-                        ib:logError("Unknown transformation: \"%s\".", arg)
-                    elseif rc ~= ffi.C.IB_OK then
-                        ib:logError("Error adding transformation \"%s\".", arg)
-                    end
-                else
-                    ib:logError("Transformations not supported for this rule.")
-                end
-            -- Handling of Actions
-            else
-
-                -- Detect inverted actions (actions starting with !)
-                local is_inverted = ffi.new("ib_rule_action_t")
-                if string.sub(name, 1, 1) == '!' then
-                    name = string.sub(name, 2)
-
-                    -- fire false actions.
-                    is_inverted = ffi.C.IB_RULE_ACTION_FALSE
-                else
-                    -- fire true actions.
-                    is_inverted = ffi.C.IB_RULE_ACTION_TRUE
-                end
-
-                -- Create the action instance.
-                local action_inst = ffi.new("ib_action_inst_t*[1]")
-                rc = ffi.C.ib_action_inst_create(
-                    ib.ib_engine,
-                    name,
-                    arg,
-                    0,
-                    action_inst)
-                if rc ~= ffi.C.IB_OK then
-                    ib:logError(
-                        "Failed to create action %s instance for rule.", name)
-                    return rc
-                end
-
-                -- Add the action instance.
-                rc = ffi.C.ib_rule_add_action(
-                    ib.ib_engine,
-                    prule[0],
-                    action_inst[0],
-                    is_inverted)
-                if rc ~= ffi.C.IB_OK then
-                    ib:logError("Failed to add action instance to rule.")
-                    return rc
-                end
-            end
+        rc = add_actions(ib, ctx, rule, prule)
+        if rc ~= ffi.C.IB_OK then
+            ib:logError("Failed to add actions to rule.")
+            return rc
         end
 
         -- Set tags
@@ -333,84 +492,6 @@ local build_rule = function(ib, ctx, chain, db)
         else
             for _, field in ipairs(rule.data.fields) do
                 add_fields(ib, rule, prule, field)
-            end
-        end
-
-        -- Create operator instance.
-        local opinst = ffi.new("void*[1]")
-        local op_inst_create_stream_flags
-        local op = ffi.new("ib_operator_t*[1]")
-
-        -- Set the flag values.
-        if rule.is_streaming() then
-            op_inst_create_stream_flags = IB_OP_CAPABILITY_STREAM
-        else
-            op_inst_create_stream_flags = IB_OP_CAPABILITY_NON_STREAM
-        end
-
-        local opname
-
-        -- Get the operator instance. If not defined, nop is used.
-        if rule.data.op == nil or #rule.data.op == 0 then
-            opname = "nop"
-        elseif string.sub(rule.data.op, 1, 1) == '!' then
-            opname = string.sub(rule.data.op, 2)
-        else
-            opname = rule.data.op
-        end
-
-        rc = ffi.C.ib_operator_lookup(
-            ib.ib_engine,
-            opname,
-            ffi.cast("const ib_operator_t**", op))
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Could not locate operator %s", opname)
-            return rc
-        end
-
-        -- C operator parameter copy. This is passed to the operater inst constructor and set in the rule.
-        local cop_params = ffi.C.ib_mpool_memdup(
-            ffi.C.ib_engine_pool_main_get(ib.ib_engine),
-            tostring(rule.data.op_arg),
-            #(tostring(rule.data.op_arg)) + 1)
-
-        -- Create the operator.
-        rc = ffi.C.ib_operator_inst_create(
-            op[0],
-            ctx,
-            op_inst_create_stream_flags,
-            cop_params,
-            opinst)
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Failed to create operator instance for %s.", op)
-            return rc
-        end
-
-        -- Set operator
-        rc = ffi.C.ib_rule_set_operator(
-            ib.ib_engine,
-            prule[0],
-            op[0],
-            opinst[0])
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Failed to set rule operator.")
-            return rc
-        end
-
-        -- Copy the parameters used to construct the operator instance into the rule for logging.
-        ib:logInfo("Setting rule op inst params: %s", ffi.string(cop_params));
-        rc = ffi.C.ib_rule_set_op_params(prule[0], cop_params);
-        if rc ~= ffi.C.IB_OK then
-            ib:logError("Failed to copy params %s.", ffi.string(cop_params))
-            return rc
-        end
-
-        -- Invert the operator.
-        if string.sub(rule.data.op, 1, 1) == '!' then
-            rc = ffi.C.ib_rule_set_invert(prule[0], 1)
-            if rc ~= ffi.C.IB_OK then
-                ib:logError("Failed to invert operator %s.", op)
-                return rc
             end
         end
 
