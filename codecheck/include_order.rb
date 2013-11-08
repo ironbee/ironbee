@@ -326,13 +326,14 @@ CANONICAL_INCLUDE_ORDER = [
   '<strings.h>',
   '<time.h>',
   '<unistd.h>',
+  '<arpa/inet.h>',
+  '<netinet/in.h>',
   '<sys/ipc.h>',
   '<sys/sem.h>',
+  '<sys/socket.h>',
   '<sys/stat.h>',
   '<sys/time.h>',
-  '<sys/types.h>',
-  '<arpa/inet.h>',
-  '<netinet/in.h>'
+  '<sys/types.h>'
 ]
 
 def extract_includes(path)

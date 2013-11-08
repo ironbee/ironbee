@@ -43,6 +43,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <strings.h>
 #include <unistd.h>
 
 

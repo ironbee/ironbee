@@ -36,6 +36,7 @@
 #include "gtest/gtest.h"
 
 #include <stdexcept>
+#include <ctype.h>
 
 const size_t BufSize = 512;
 const size_t CallBufSize = BufSize + 32;

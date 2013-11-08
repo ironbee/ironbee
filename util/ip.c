@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include <arpa/inet.h>
+#include <sys/socket.h>
 
 ib_status_t ib_ip4_str_to_ip(
     const char *s,

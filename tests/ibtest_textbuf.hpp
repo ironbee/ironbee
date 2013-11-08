@@ -33,6 +33,7 @@
 #include <stdexcept>
 #include <assert.h>
 #include <stdio.h>
+#include <ctype.h>
 
 /**
  * Utility class for handing blocks of text and formatting them in an escaped, printable, fashion.
