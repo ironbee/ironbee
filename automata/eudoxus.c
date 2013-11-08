@@ -29,6 +29,7 @@
 #include "ironbee_config_auto.h"
 
 #ifndef _DARWIN_C_SOURCE
+#ifndef __FreeBSD__
 // Tell glibc to enable fileno()
 #ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE
@@ -36,6 +37,7 @@
 // Tell glibc to enable vasprintf()
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #endif
 #endif
 
