@@ -206,3 +206,10 @@ TEST_F(CoreActionTest, integration) {
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);
 }
+
+TEST_F(CoreActionTest, DoubleSetFlag) {
+    ASSERT_EQ(IB_OK, ib_tx_var_flags_set(ib_tx, IB_TX_FINSPECT_RSPBODY));
+    ASSERT_EQ(IB_OK, ib_tx_var_flags_set(ib_tx, IB_TX_FINSPECT_RSPBODY));
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FINSPECT_RSPBODY);
+}
+
