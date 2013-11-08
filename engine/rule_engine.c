@@ -5334,6 +5334,8 @@ ib_status_t ib_rule_set_capture(
         return IB_EINVAL;
     }
 
+    assert(rule->opinst != NULL);
+
     /* If the operator doesn't support capture, return an error */
     if (
         ! ib_flags_any(
