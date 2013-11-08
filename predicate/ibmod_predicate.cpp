@@ -96,7 +96,6 @@ namespace IB = IronBee;
 namespace P  = IB::Predicate;
 using boost::bind;
 using boost::scoped_ptr;
-using boost::shared_ptr;
 
 namespace {
 
@@ -445,7 +444,7 @@ private:
      * delete_c_trampoline() as the shared pointer deleter.  The result is
      * that all trampolines are deleted when this instance is destructed.
      **/
-    vector<shared_ptr<void> > m_trampolines;
+    vector<boost::shared_ptr<void> > m_trampolines;
 
     /**
      * Call factory to use for all node creation.
@@ -1230,7 +1229,7 @@ void Delegate::register_trampoline_data(void* cdata)
     assert(cdata);
 
     m_trampolines.push_back(
-        shared_ptr<void>(cdata, IB::delete_c_trampoline)
+        boost::shared_ptr<void>(cdata, IB::delete_c_trampoline)
     );
 }
 

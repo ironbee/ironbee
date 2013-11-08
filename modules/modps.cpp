@@ -43,7 +43,6 @@
 
 using namespace std;
 
-using boost::function;
 using boost::bind;
 
 using IronBee::ParserSuite::span_t;
@@ -110,7 +109,7 @@ struct result_list_type
 //! Operator executor function.
 template <typename ResultType>
 int executor(
-    function<ResultType(span_t&)>               parser,
+    boost::function<ResultType(span_t&)>               parser,
     const typename result_list_type<ResultType>::type& result_list,
     IronBee::Transaction                        tx,
     IronBee::ConstField                         input,
@@ -154,7 +153,7 @@ int executor(
 //! Operator generator function.
 template <typename ResultType>
 IronBee::Operator::operator_instance_t generator(
-    function<ResultType(span_t&)>               parser,
+    boost::function<ResultType(span_t&)>               parser,
     const typename result_list_type<ResultType>::type& result_list,
     const char*                                 param
 )
