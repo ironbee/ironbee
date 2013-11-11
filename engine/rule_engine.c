@@ -1167,26 +1167,27 @@ static ib_status_t report_status_block_to_server(
      */
     ib_rule_log_debug(rule_exec, "Setting HTTP error response data.");
 
+    /* There is always a function that provides the error page. Assert such. */
+    assert(rule_engine->error_page_fn);
+
     /* Get the error page from the rule engine function. */
     rc = rule_engine->error_page_fn(
         tx,
         &body,
         &body_len,
-        rule_engine->error_page_data);
+        rule_engine->error_page_cbdata);
     if (rc != IB_OK) {
-        /* If there was an error, and it was not a declination, log. */
+        /* If there was an error, and it was not IB_DECLINED, log. */
         if (rc != IB_DECLINED) {
-            ib_rule_log_error(rule_exec, "Custom error page failed.");
+            ib_rule_log_error(
+                rule_exec,
+                "Custom error page failed: %s",
+                ib_status_to_string(rc));
         }
 
-        /* As a fail-back, call the default function. */
+        /* As a fall-back, call the default function. */
         rc = default_error_page_fn(tx, &body, &body_len, NULL);
-        if (rc != IB_OK) {
-            /* This should be dead code as the default fn should not fail. */
-            ib_rule_log_error(rule_exec, "Default error page failed.");
-            body = (uint8_t *)"Error";
-            body_len = sizeof("Error")-1;
-        }
+        assert(rc == IB_OK && "Default error page failed.");
     }
 
     /* Report the error page back to the server. */
@@ -3192,7 +3193,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
 
     /* Setup the error page. */
     rule_engine->error_page_fn = default_error_page_fn;
-    rule_engine->error_page_data = NULL;
+    rule_engine->error_page_cbdata = NULL;
 
     *p_rule_engine = rule_engine;
     return IB_OK;
@@ -5441,14 +5442,15 @@ ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
 void ib_rule_set_error_page_fn(
     ib_engine_t             *ib,
     ib_rule_error_page_fn_t  error_page_fn,
-    void                    *error_page_data
+    void                    *error_page_cbdata
 )
 {
     assert(ib != NULL);
     assert(ib->rule_engine != NULL);
+    assert(error_page_fn != NULL);
 
     ib->rule_engine->error_page_fn = error_page_fn;
-    ib->rule_engine->error_page_data = error_page_data;
+    ib->rule_engine->error_page_cbdata = error_page_cbdata;
 }
 
 ib_status_t ib_rule_register_external_driver(

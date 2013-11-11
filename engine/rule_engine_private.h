@@ -36,8 +36,8 @@
  * stored in the 'rule_list' field of ib_ruleset_phase_t.
  */
 typedef struct {
-    ib_rule_t             *rule;         /**< The rule itself */
-    ib_flags_t             flags;        /**< Rule flags (IB_RULECTX_FLAG_xx) */
+    ib_rule_t  *rule;  /**< The rule itself */
+    ib_flags_t  flags; /**< Rule flags (IB_RULECTX_FLAG_xx) */
 } ib_rule_ctx_data_t;
 
 /**
@@ -55,7 +55,7 @@ typedef struct {
  * The elements of the phases list are ib_rule_ctx_data_t objects.
  */
 typedef struct {
-    ib_ruleset_phase_t     phases[IB_RULE_PHASE_COUNT];
+    ib_ruleset_phase_t phases[IB_RULE_PHASE_COUNT];
 } ib_ruleset_t;
 
 /**
@@ -93,10 +93,10 @@ struct ib_rule_target_t {
  * Rule engine.
  */
 struct ib_rule_engine_t {
-    ib_list_t            *rule_list;        /**< All registered rules. */
-    ib_hash_t            *rule_hash;        /**< All rules by rule-id. */
-    ib_hash_t            *external_drivers; /**< Drivers for external rules. */
-    ib_list_t            *ownership_cbs;    /**< List of ownership callbacks. */
+    ib_list_t *rule_list;        /**< All registered rules. */
+    ib_hash_t *rule_hash;        /**< All rules by rule-id. */
+    ib_hash_t *external_drivers; /**< Drivers for external rules. */
+    ib_list_t *ownership_cbs;    /**< List of ownership callbacks. */
 
     /**
      * Rule injection callbacks.
@@ -109,9 +109,9 @@ struct ib_rule_engine_t {
     ib_rule_error_page_fn_t  error_page_fn;
 
     /**
-     * Callback data for ib_rule_engine_t::error_page_data.
+     * Callback data for ib_rule_engine_t::error_page_cbdata.
      */
-    void                    *error_page_data;
+    void *error_page_cbdata;
 
     /* Var Sources */
     struct {

@@ -55,17 +55,26 @@ extern "C" {
 class ErrorPageModule : public IronBee::ModuleDelegate
 {
 public:
+    /**
+     * A version of @ref ib_rule_error_page_fn_t without the callback data.
+     *
+     * This will be used by @ref IronBee::make_c_trampoline to replace
+     * IronBee's default error page function.
+     *
+     * @param[in] tx The transaction.
+     * @param[out] page A pointer to the error page.
+     * @param[out] page_sz The length of @a page.
+     */
     typedef ib_status_t(error_page_fn_t)(
         ib_tx_t        *tx,
         const uint8_t **page,
         size_t         *page_sz);
     /**
      * Constructor.
+     *
      * @param[in] module The IronBee++ module.
      */
     explicit ErrorPageModule(IronBee::Module module);
-
-    ~ErrorPageModule();
 
 private:
 
@@ -75,6 +84,13 @@ private:
      * Note that m_trampoline_pair.second must be destroyed.
      */
     std::pair<ib_rule_error_page_fn_t, void*> m_trampoline_pair;
+
+    /**
+     * Holds callback data associated with @ref ib_rule_error_page_fn_t.
+     *
+     * This member ensures that IronBee::delete_c_trampoline is called.
+     */
+    boost::shared_ptr<void> m_trampoline_data;
 
     /**
      * Produce an error page for the given transaction.
@@ -94,7 +110,17 @@ private:
         const uint8_t **page,
         size_t         *page_sz);
 
-    void directive(
+    /**
+     * Implement the HTTP Status Code directive.
+     *
+     * @param[in] cp Configuration parser.
+     * @param[in] name The directive.
+     * @param[in] param1 The status code.
+     * @param[in] param2 The error page file name.
+     *
+     * @throws @ref IronBee::exception.
+     */
+    void httpStatusCodeContentsDirective(
         IronBee::ConfigurationParser  cp,
         const char                   *name,
         const char                   *param1,
@@ -104,13 +130,19 @@ private:
 IBPP_BOOTSTRAP_MODULE_DELEGATE("ErrorPageModule", ErrorPageModule);
 
 /**
+ * A map from the status number to a file name.
+ */
+typedef std::map<ib_num_t, std::string> status_to_file_map_t;
+
+/**
  * Context configuration value for the ErrorPageModule.
  */
 struct ErrorPageCtxConfig {
+
     /**
      * The mapping from an HTTP status code to the file to return.
      */
-    std::map<ib_num_t, std::string> status_to_file;
+    status_to_file_map_t status_to_file;
 
     /**
      * The mapping from an HTTP status code to the memory mapped file.
@@ -128,8 +160,13 @@ ErrorPageModule::ErrorPageModule(IronBee::Module module):
     /* Build the C callback for ib_rule_set_error_page_fn(). */
     m_trampoline_pair(
         IronBee::make_c_trampoline<error_page_fn_t>(
-            boost::bind(&ErrorPageModule::error_page_fn, this, _1, _2, _3)))
+            boost::bind(&ErrorPageModule::error_page_fn, this, _1, _2, _3))),
+
+    m_trampoline_data(
+        m_trampoline_pair.second, 
+        IronBee::delete_c_trampoline)
 {
+
     /* Register the callback with the IronBee engine. */
     ib_rule_set_error_page_fn(
         module.engine().ib(),
@@ -141,16 +178,13 @@ ErrorPageModule::ErrorPageModule(IronBee::Module module):
         param2(
             "HttpStatusCodeContents",
             boost::bind(
-                &ErrorPageModule::directive, this, _1, _2, _3, _4));
+                &ErrorPageModule::httpStatusCodeContentsDirective,
+                this, _1, _2, _3, _4));
 
     module.set_configuration_data<ErrorPageCtxConfig>();
 }
 
-ErrorPageModule::~ErrorPageModule() {
-    IronBee::delete_c_trampoline(m_trampoline_pair.second);
-}
-
-void ErrorPageModule::directive(
+void ErrorPageModule::httpStatusCodeContentsDirective(
         IronBee::ConfigurationParser  cp,
         const char                   *name,
         const char                   *param1,
@@ -165,7 +199,7 @@ void ErrorPageModule::directive(
     IronBee::throw_if_error(ib_string_to_num(param1, 10, &num));
 
     /* Set the mapping in the context configuration. */
-    cfg.status_to_file[num] = std::string(param2);
+    cfg.status_to_file[num] = param2;
 
     try {
         cfg.status_to_mapped_file_source[num] =
@@ -183,30 +217,30 @@ ib_status_t ErrorPageModule::error_page_fn(
     const uint8_t **page,
     size_t *len)
 {
-    IronBee::Transaction txpp(tx);
+    IronBee::Transaction ib_tx(tx);
 
     ErrorPageCtxConfig &cfg =
         module().configuration_data<ErrorPageCtxConfig>(
-            txpp.context());
+            ib_tx.context());
 
     ib_log_debug_tx(
-        tx,
+        ib_tx.ib(),
         "Returning custom error page with status %" PRId64 " for context %s.",
-        tx->block_status,
-        txpp.context().name());
+        ib_tx.ib()->block_status,
+        ib_tx.context().name());
 
 
-    std::map<ib_num_t, std::string>::iterator itr =
-        cfg.status_to_file.find(tx->block_status);
+    status_to_file_map_t::iterator itr =
+        cfg.status_to_file.find(ib_tx.ib()->block_status);
 
     /* If we can't find a mapping, decline. The default will take over. */
     if (itr == cfg.status_to_file.end()) {
         ib_log_debug_tx(
-            tx,
+            ib_tx.ib(),
             "No custom page mapped for status %" PRId64 " and context %s. "
             "Declining.",
-            tx->block_status,
-            txpp.context().name());
+            ib_tx.ib()->block_status,
+            ib_tx.context().name());
         return IB_DECLINED;
     }
 
@@ -215,7 +249,7 @@ ib_status_t ErrorPageModule::error_page_fn(
         cfg.status_to_mapped_file_source[tx->block_status];
 
     ib_log_debug_tx(
-        tx,
+        ib_tx.ib(),
         "Using custom error page file %.*s.",
         static_cast<int>(file.length()),
         file.data());
@@ -223,6 +257,5 @@ ib_status_t ErrorPageModule::error_page_fn(
     *page = reinterpret_cast<const uint8_t*>(source.data());
     *len = source.size();
 
-    /* Until we write this, decline the action. */
     return IB_OK;
 }

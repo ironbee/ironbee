@@ -17,9 +17,9 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief IronBee --- PCRE module tests
+/// @brief IronBee --- Error Page module tests
 ///
-/// @author Brian Rectanus <brectanus@qualys.com>
+/// @author Sam Baskinger <sbaskinger@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
 #include "gtest/gtest.h"
@@ -64,61 +64,62 @@ TEST_F(ErrorPage, file_not_found) {
 /* File-local resources for following tests. */
 namespace {
 
-    int         mock_error_status;
-    std::string mock_error_body;
+int         mock_error_status;
+std::string mock_error_body;
 
-    /**
-     * Impl for ib_server_t::err_body_fn.
-     *
-     * This captures a copy of the provided error page.
-     * This is compared in unit tests later.
-     * Users of this function should clear the shared state variable,
-     * @ref mock_error_body.
-     *
-     * @param[in] tx Transaction.
-     * @param[in] data The error page data.
-     * @param[in] len The length of @a data.
-     * @param[in] cbdata Unused callback data.
-     *
-     * @returns IB_OK.
-     */
-    ib_status_t mock_error_body_fn(
-        ib_tx_t       *tx,
-        const uint8_t *data,
-        size_t         len,
-        void          *cbdata
-    )
-    {
-        mock_error_body = std::string(
-            reinterpret_cast<const char *>(data),
-            len);
+extern "C" {
+/**
+ * Impl for ib_server_t::err_body_fn.
+ *
+ * This captures a copy of the provided error page.
+ * Users of this function should clear the shared state variable,
+ * @ref mock_error_body.
+ *
+ * @param[in] tx Transaction.
+ * @param[in] data The error page data.
+ * @param[in] len The length of @a data.
+ * @param[in] cbdata Unused callback data.
+ *
+ * @returns IB_OK.
+ */
+ib_status_t mock_error_body_fn(
+    ib_tx_t       *tx,
+    const uint8_t *data,
+    size_t         len,
+    void          *cbdata
+)
+{
+    mock_error_body = std::string(
+        reinterpret_cast<const char *>(data),
+        len);
 
-        return IB_OK;
-    }
-
-    /**
-     * Impl for ib_server_t::err_fn.
-     *
-     * This captures @a status in to the shared state variable
-     * @ref mock_error_status. This value should be cleared before
-     * this function is used.
-     *
-     * @param[in] tx Transaction.
-     * @param[in] state The HTTP error status.
-     * @param[in] cbdata Unused callback data.
-     *
-     * @returns IB_OK.
-     */
-    ib_status_t mock_error_fn(
-        ib_tx_t *tx,
-        int status,
-        void *cbdata
-    )
-    {
-        mock_error_status = status;
-        return IB_OK;
-    }
+    return IB_OK;
 }
+
+/**
+ * Impl for ib_server_t::err_fn.
+ *
+ * This captures @a status into the shared state variable
+ * @ref mock_error_status. This value should be cleared before
+ * this function is used.
+ *
+ * @param[in] tx Transaction.
+ * @param[in] state The HTTP error status.
+ * @param[in] cbdata Unused callback data.
+ *
+ * @returns IB_OK.
+ */
+ib_status_t mock_error_fn(
+    ib_tx_t *tx,
+    int status,
+    void *cbdata
+)
+{
+    mock_error_status = status;
+    return IB_OK;
+}
+} /* Close extern "C". */
+} /* Close namespace. */
 
 /* Test that the custom error page file is served. */
 TEST_F(ErrorPage, basic_file) {
