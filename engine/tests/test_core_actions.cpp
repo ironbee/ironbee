@@ -208,13 +208,13 @@ TEST_F(CoreActionTest, integration) {
 }
 
 TEST_F(CoreActionTest, DoubleSetFlag) {
-    ASSERT_EQ(IB_OK, ib_tx_var_flags_set(ib_tx, IB_TX_FINSPECT_RSPBODY));
-    ASSERT_EQ(IB_OK, ib_tx_var_flags_set(ib_tx, IB_TX_FINSPECT_RSPBODY));
+    ASSERT_EQ(IB_OK, ib_tx_flags_set(ib_tx, IB_TX_FINSPECT_RSPBODY));
+    ASSERT_EQ(IB_OK, ib_tx_flags_set(ib_tx, IB_TX_FINSPECT_RSPBODY));
     ASSERT_TRUE(ib_tx->flags & IB_TX_FINSPECT_RSPBODY);
 }
 
 TEST_F(CoreActionTest, DoubleUnSetFlag) {
-    ASSERT_EQ(IB_OK, ib_tx_var_flags_unset(ib_tx, IB_TX_FINSPECT_RSPBODY));
-    ASSERT_EQ(IB_OK, ib_tx_var_flags_unset(ib_tx, IB_TX_FINSPECT_RSPBODY));
+    ASSERT_EQ(IB_OK, ib_tx_flags_unset(ib_tx, IB_TX_FINSPECT_RSPBODY));
+    ASSERT_EQ(IB_OK, ib_tx_flags_unset(ib_tx, IB_TX_FINSPECT_RSPBODY));
     ASSERT_FALSE(ib_tx->flags & IB_TX_FINSPECT_RSPBODY);
 }
