@@ -1439,7 +1439,8 @@ static ib_status_t modlua_context_destroy(
 /**
  * @param[in] ib IronBee engine.
  * @param[in] rule The rule to consider.
- * @param[in] cbdata Callback data.
+ * @param[in] cbdata A pointer to this module's 
+ *            @ref ib_module_t registerd with @a ib.
  *
  * @returns
  * - IB_OK On success.
@@ -1463,12 +1464,9 @@ static ib_status_t modlua_ownership_fn(
     assert(rule->ctx != NULL);
     assert(cbdata != NULL);
 
-    ib_module_t  *module = (ib_module_t *)cbdata;
-    ib_context_t *ctx    = rule->ctx;
-    modlua_cfg_t *cfg    = NULL;
-    ib_status_t   rc;
-    ib_mpool_t   *tmpmp;
-    ib_list_t    *actions;
+    ib_status_t  rc;
+    ib_mpool_t  *tmpmp;
+    ib_list_t   *actions;
 
     rc = ib_mpool_create(&tmpmp, "tmptmp", ib_engine_pool_main_get(ib));
     if (rc != IB_OK) {
@@ -1489,15 +1487,21 @@ static ib_status_t modlua_ownership_fn(
         NULL
     );
     if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot find action %s.", modlua_waggle_action_name);
+        ib_log_debug(ib, "Cannot find action %s.", modlua_waggle_action_name);
         goto cleanup;
     }
 
     if (ib_list_elements(actions) > 0) {
+
+        const ib_context_t *ctx    = rule->ctx;
+        const modlua_cfg_t *cfg    = NULL;
+        const ib_module_t  *module = (const ib_module_t *)cbdata;
+
         /* Fetch the module configuration. */
         rc = ib_context_module_config(ctx, module, &cfg);
         if (rc != IB_OK) {
             ib_log_error(ib, "Cannot retrieve module configuration.");
+            rc = IB_OK;
             goto cleanup;
         }
 
@@ -1568,7 +1572,7 @@ static ib_status_t modlua_injection_helper(
  * @param[in] ib IronBee engine.
  * @param[in] rule_exec The rule execution environment.
  * @param[out] rule_list The list of rules to append to.
- * @param[in] cbdata Callback data.
+ * @param[in] cbdata A pointer to @a ib 's registered @ref ib_module_t.
  *
  * @returns
  * - IB_OK On success.
