@@ -761,6 +761,17 @@ ib_status_t ib_logger_standard_formatter(
         strcat(msg->prefix, line_info);
     }
 
+    /* If this is a transaction, add the TX id */
+    if (rec->tx != NULL) {
+        static const size_t c_line_info_size = 43;
+        char                line_info[c_line_info_size];
+
+        strcpy(line_info, "[tx:");
+        strcat(line_info, rec->tx->id);
+        strcat(line_info, "] ");
+        strcat(msg->prefix, line_info);
+    }
+
     msg->msg_sz = log_msg_sz;
     msg->msg = malloc(log_msg_sz);
     if (msg->msg == NULL) {
