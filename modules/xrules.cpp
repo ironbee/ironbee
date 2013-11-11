@@ -537,10 +537,10 @@ namespace {
     ) const
     {
         if (m_clear) {
-            IronBee::throw_if_error(ib_tx_var_flags_unset(tx.ib(), m_flag));
+            IronBee::throw_if_error(ib_tx_flags_unset(tx.ib(), m_flag));
         }
         else {
-            IronBee::throw_if_error(ib_tx_var_flags_set(tx.ib(), m_flag));
+            IronBee::throw_if_error(ib_tx_flags_set(tx.ib(), m_flag));
         }
     }
     /* End SetFlag Impl */
