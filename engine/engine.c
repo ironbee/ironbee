@@ -2109,8 +2109,7 @@ static ib_status_t tx_var_flags_set(
                 &target,
                 tx->mp,
                 ib_var_store_config(tx->var_store),
-                flagmap->tx_name,
-                strlen(flagmap->tx_name),
+                IB_S2SL(flagmap->tx_name),
                 NULL,
                 NULL);
             if (rc != IB_OK) {
@@ -2121,8 +2120,7 @@ static ib_status_t tx_var_flags_set(
             rc = ib_field_create(
                 &field,
                 tx->mp,
-                flagmap->tx_name,
-                strlen(flagmap->tx_name),
+                IB_S2SL(flagmap->tx_name),
                 IB_FTYPE_NUM,
                 ib_ftype_num_in(&flag_value));
             if (rc != IB_OK) {
@@ -2144,13 +2142,13 @@ static ib_status_t tx_var_flags_set(
     return IB_OK;
 }
 
-ib_status_t ib_tx_var_flags_set(ib_tx_t *tx, ib_flags_t flag)
+ib_status_t ib_tx_flags_set(ib_tx_t *tx, ib_flags_t flag)
 {
     tx->flags |= flag;
     return tx_var_flags_set(tx, flag, 1);
 }
 
-ib_status_t ib_tx_var_flags_unset(ib_tx_t *tx, ib_flags_t flag)
+ib_status_t ib_tx_flags_unset(ib_tx_t *tx, ib_flags_t flag)
 {
     tx->flags &= (~flag);
     return tx_var_flags_set(tx, flag, 0);

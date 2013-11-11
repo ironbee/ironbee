@@ -414,11 +414,11 @@ static ib_status_t act_setflags_execute(
     switch (opdata->op) {
 
     case setflag_op_set:
-        rc = ib_tx_var_flags_set(tx, opdata->flag->tx_flag);
+        rc = ib_tx_flags_set(tx, opdata->flag->tx_flag);
         break;
 
     case setflag_op_clear:
-        rc = ib_tx_var_flags_unset(tx, opdata->flag->tx_flag);
+        rc = ib_tx_flags_unset(tx, opdata->flag->tx_flag);
         break;
 
     default:

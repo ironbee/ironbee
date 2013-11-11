@@ -382,7 +382,7 @@ ib_status_t DLL_PUBLIC ib_conn_set_module_data(
  * - IB_OK On success.
  * - Other on var errors.
  */
-ib_status_t DLL_PUBLIC ib_tx_var_flags_set(ib_tx_t *tx, ib_flags_t flags);
+ib_status_t DLL_PUBLIC ib_tx_flags_set(ib_tx_t *tx, ib_flags_t flags);
 
 /**
  * Unset @a flags in the @a tx and the corresponding var value.
@@ -394,7 +394,7 @@ ib_status_t DLL_PUBLIC ib_tx_var_flags_set(ib_tx_t *tx, ib_flags_t flags);
  * - IB_OK On success.
  * - Other on var errors.
  */
-ib_status_t DLL_PUBLIC ib_tx_var_flags_unset(ib_tx_t *tx, ib_flags_t flags);
+ib_status_t DLL_PUBLIC ib_tx_flags_unset(ib_tx_t *tx, ib_flags_t flags);
 
 /**
  * Destroy a connection structure.
@@ -533,26 +533,6 @@ ib_status_t DLL_PUBLIC ib_tx_server_header(
     const char *value,
     ib_rx_t *rx
 );
-
-/**
- * Set transaction flags.
- *
- * @param tx Transaction structure
- * @param flag Flags
- *
- * @returns All current flags
- */
-#define ib_tx_flags_set(tx, flag) do { (tx)->flags |= (flag); } while(0)
-
-/**
- * Unset transaction flags.
- *
- * @param tx Transaction structure
- * @param flag Flags
- *
- * @returns All current flags
- */
-#define ib_tx_flags_unset(tx, flag) do { (tx)->flags &= ~(flag); } while(0)
 
 /**
  * Check if transaction flags are all set.
