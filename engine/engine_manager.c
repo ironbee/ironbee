@@ -499,7 +499,7 @@ ib_status_t ib_manager_engine_create(
     assert(config_file != NULL);
 
     ib_status_t          rc;
-    ib_manager_engine_t *wrapper;
+    ib_manager_engine_t *wrapper = NULL;
 
     /* Grab the engine creation lock to serialize engine creation. */
     rc = ib_lock_lock(&manager->manager_lck);
