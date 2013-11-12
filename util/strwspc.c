@@ -229,9 +229,9 @@ static ib_status_t ws_remove(const uint8_t *data_in,
     oend = data_out + dlen_out;
     iend = data_in + dlen_in;
     while (data_in < iend) {
-        assert (optr <= oend);
         uint8_t c = *data_in;
         if (isspace(c) == 0) {
+            assert (optr <= oend);
             *optr = c;
             ++optr;
         }
