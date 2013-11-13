@@ -1440,7 +1440,7 @@ static ib_status_t modlua_context_destroy(
  * @param[in] ib IronBee engine.
  * @param[in] rule The rule to consider.
  * @param[in] cbdata A pointer to this module's
- *            @ref ib_module_t registerd with @a ib.
+ *            @ref ib_module_t registered with @a ib.
  *
  * @returns
  * - IB_OK On success.
