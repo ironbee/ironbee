@@ -295,7 +295,7 @@ TEST_F(CoreOperatorsTest, NeTest)
 }
 
 TEST_F(CoreOperatorsTest, IpMatchSegfault) {
-    ib_num_t call_result = 17; /* 17 is a arbitrary value. */
+    ib_num_t call_result = 17; /* 17 is an arbitrary value. */
     const ib_operator_t *op;
     void *instance_data;
     ib_field_t *field;
