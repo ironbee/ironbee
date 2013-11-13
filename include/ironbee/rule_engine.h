@@ -100,7 +100,7 @@ struct ib_rule_t {
  * @param[in] tx The transaction for which the error page should be
  *            generated.
  * @param[out] body The page body. If the memory segment holding the
- *             body must be allocated, it is recommended that it 
+ *             body must be allocated, it is recommended that it
  *             should be done so out of the tx's memory pool.
  *             Regardless, whatever memory is used, it must
  *             last until the error page is served by IronBee

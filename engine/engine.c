@@ -2153,4 +2153,3 @@ ib_status_t ib_tx_flags_unset(ib_tx_t *tx, ib_flags_t flag)
     tx->flags &= (~flag);
     return tx_var_flags_set(tx, flag, 0);
 }
-

@@ -163,7 +163,7 @@ ErrorPageModule::ErrorPageModule(IronBee::Module module):
             boost::bind(&ErrorPageModule::error_page_fn, this, _1, _2, _3))),
 
     m_trampoline_data(
-        m_trampoline_pair.second, 
+        m_trampoline_pair.second,
         IronBee::delete_c_trampoline)
 {
 
