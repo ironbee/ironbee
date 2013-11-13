@@ -85,7 +85,7 @@ unset CFLAGS
 unset CXXFLAGS
 unset FFLAGS
 %if %{with trafficserver}
-%define ts_flags --with-trafficserver
+%define ts_flags --with-trafficserver=%{_exec_prefix}
 %else
 %define ts_flags --without-trafficserver
 %endif
