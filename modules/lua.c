@@ -1779,33 +1779,6 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     return IB_OK;
 }
 
-static ib_status_t modlua_dir_commit_rules(
-    ib_cfgparser_t *cp,
-    const char *name,
-    const ib_list_t *list,
-    void *cbdata)
-{
-    assert(cp != NULL);
-    assert(cp->ib != NULL);
-
-    ib_context_t *ctx = NULL;
-    modlua_cfg_t *cfg = NULL;
-    ib_engine_t *ib = cp->ib;
-    ib_status_t rc;
-
-    rc = ib_cfgparser_context_current(cp, &ctx);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = modlua_cfg_get(ib, ctx, &cfg);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    return modlua_commit_configuration(ib, cfg);
-}
-
 /* -- Module Configuration -- */
 
 static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
@@ -2107,11 +2080,6 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "LuaInclude",
         modlua_dir_lua_include,
-        NULL
-    ),
-    IB_DIRMAP_INIT_LIST(
-        "LuaCommitRules",
-        modlua_dir_commit_rules,
         NULL
     ),
 

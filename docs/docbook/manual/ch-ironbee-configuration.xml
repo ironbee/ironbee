@@ -726,25 +726,6 @@ Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block
             </itemizedlist>
         </section>
     <section>
-        <title>LuaCommitRules</title>
-        <para><emphasis role="bold">Description:</emphasis> Signal the lua module to add (commit)
-            all lua defined rules to the rule engine. Note this is a temporary fix and will be
-            removed in a later version.</para>
-        <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>LuaCommitRules</literal></para>
-        <para><emphasis role="bold">Default:</emphasis> None</para>
-        <para><emphasis role="bold">Context:</emphasis> Main</para>
-        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
-        <para><emphasis role="bold">Module:</emphasis> lua</para>
-        <para><emphasis role="bold">Version:</emphasis> 0.7</para>
-        <para>DEPRECATED: Do not use after IronBee 0.7</para>
-        <para>Example:<programlisting>LuaInclude "rules1.lua"
-LuaInclude "rules2.lua"
-LuaInclude "rules3.lua"
- ...
-LuaCommitRules</programlisting></para>
-    </section>
-    <section>
         <title>LuaLoadModule</title>
         <para><emphasis role="bold">Description:</emphasis> Load a Lua module (similar to
             LoadModule).</para>

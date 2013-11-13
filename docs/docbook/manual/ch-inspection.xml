@@ -282,8 +282,7 @@ done</programlisting></para>
 LoadModule ibmod_lua.so
 
 # Include rules via a lua script and commit.
-LuaInclude rules.lua
-LuaCommitRules</programlisting></para>
+LuaInclude rules.lua</programlisting></para>
             <para>Including a lua script at configuration using <literal>LuaInclude</literal> allows
                 the full power of Lua to configure the rules. The included Lua script is executed at
                 config time, providing a vast amount of power over rule configuration. Within Lua,

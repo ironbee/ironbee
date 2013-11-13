@@ -46,8 +46,6 @@
  *                    in the context of a configuration DSL. The
  *                    @ref Waggle rule language is part of
  *                    that configuration DSL.
- * 5. @c LuaCommitRules - Take rules defined in @ref Waggle and
- *                       integrate them into the engine.
  *
  * @section LuaConfiguration Configuring IronBee through Lua
  *

@@ -4,8 +4,7 @@ class TestLuaWaggle < Test::Unit::TestCase
   def make_config(file, extras = {})
     return {
       :config => "LoadModule \"ibmod_lua.so\"\n" +
-        "LuaInclude \"#{file}\"\n" +
-        "LuaCommitRules",
+        "LuaInclude \"#{file}\"\n",
       :default_site_config => "RuleEnable all",
     }.merge(extras)
   end

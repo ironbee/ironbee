@@ -5,8 +5,7 @@ class TestLuaPredicate < Test::Unit::TestCase
     return {
       :config => "LoadModule \"ibmod_lua.so\"\n" +
         "LoadModule \"../../predicate/.libs/ibmod_predicate.so\"\n" +
-        "LuaInclude \"#{file}\"\n" +
-        "LuaCommitRules",
+        "LuaInclude \"#{file}\"\n",
       :default_site_config => "RuleEnable all",
     }.merge(extras)
   end

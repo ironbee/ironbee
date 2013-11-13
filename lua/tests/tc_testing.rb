@@ -49,7 +49,6 @@ class TestTesting < Test::Unit::TestCase
         'RuleEngineLogData all',
         'LoadModule "ibmod_lua.so"',
         'LuaInclude %s' % [File.join(TEST_DIR, "waggle01.lua")],
-        'LuaCommitRules'
       ].join("\n"),
       :default_site_config => <<-EOS
         RuleEnable all
