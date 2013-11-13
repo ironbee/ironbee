@@ -7,6 +7,12 @@
 %define _release 1
 %endif
 
+%if %{?sysconfdir:0}%{!?sysconfdir:1}
+%define _sysconfdir /etc
+%else
+%define _sysconfdir %{sysconfdir}
+%endif
+
 # Default: DO NOT build the httpd module
 %bcond_with httpd
 
@@ -73,8 +79,6 @@ Ironbee Apache HTTPD Plugin
 %prep
 %setup -q
 
-%define _sysconfdir /etc/ironbee
-
 %build
 #We have to unset existing CFLAGS for LuaJIT compilation
 unset CFLAGS
@@ -121,14 +125,14 @@ rm -rf $RPM_BUILD_ROOT
 %if %{with trafficserver}
 %post trafficserver
 if [ "$1" -ge 1 ]; then
-   configfile=/etc/trafficserver/plugin.config
+   configfile=%{_sysconfdir}/trafficserver/plugin.config
    # Remove existing Ironbee plugin configuration segment.
    sed -i.save -e '/^### START IRONBEE PLUGIN/,/^### END IRONBEE PLUGIN/d' $configfile
 
    if ! grep -q "### START IRONBEE PLUGIN" "$configfile" ; then
       echo "### START IRONBEE PLUGIN" >>$configfile
       echo %{_libexecdir}/libloader.so %{_libdir}/libhtp.so %{_libdir}/libironbee.so >>$configfile
-      echo %{_libexecdir}/ts_ironbee.so %{_sysconfdir}/ironbee.conf >>$configfile
+      echo %{_libexecdir}/ts_ironbee.so %{_sysconfdir}/ironbee/ironbee.conf >>$configfile
       echo "### END IRONBEE PLUGIN" >>$configfile
    fi
 fi
@@ -170,8 +174,8 @@ fi
 %attr(0755,root,root) %{_libdir}/ironbee
 %attr(0755,root,root) %{_libexecdir}/ibmod_*
 %attr(0755,root,root) %{_libdir}/pkgconfig/*.*
-%attr(0644,root,root) %{_sysconfdir}/ironbee.conf.example
-%config(noreplace) %attr(0644,root,root) %{_sysconfdir}/ironbee.conf
+%attr(0644,root,root) %{_sysconfdir}/ironbee/ironbee.conf.example
+%config(noreplace) %attr(0644,root,root) %{_sysconfdir}/ironbee/ironbee.conf
 
 %files devel
 %attr(0755,root,root) %{_bindir}/ac_generator
