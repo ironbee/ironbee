@@ -666,8 +666,21 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
         return IB_OK;
     }
 
-    /* Generate the request line event if it hasn't been seen */
     if (! ib_tx_flags_isset(tx, IB_TX_FREQ_SEENLINE)) {
+        if (tx->request_line == NULL) {
+            ib_log_error_tx(tx, "Request has no request line.");
+            return IB_EINVAL;
+        }
+
+        rc = ib_state_notify_request_started(ib, tx, tx->request_line);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        rc = ib_state_notify_request_header_finished(ib, tx);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     /* Note that we have request data */
