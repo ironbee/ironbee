@@ -1932,6 +1932,17 @@ static ib_status_t modlua_dir_lua_include(ib_cfgparser_t *cp,
     }
 
     lua_pop(L, lua_gettop(L));
+
+    rc = modlua_commit_configuration(ib, cfg);
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Could not commit LuaInclude configurations from file %s.",
+            p1);
+        return rc;
+    }
+
+
     return IB_OK;
 }
 
