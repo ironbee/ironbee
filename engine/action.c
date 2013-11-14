@@ -78,7 +78,7 @@ ib_status_t ib_action_register(
     return rc;
 }
 
-ib_status_t ib_action_inst_create_ex(
+ib_status_t ib_action_inst_create(
     ib_engine_t *ib,
     const char *name,
     const char *parameters,
@@ -133,18 +133,6 @@ ib_status_t ib_action_inst_create_ex(
     }
 
     return rc;
-}
-
-ib_status_t ib_action_inst_create(ib_engine_t *ib,
-                                  const char *name,
-                                  const char *parameters,
-                                  ib_action_inst_t **act_inst)
-{
-    return ib_action_inst_create_ex(
-        ib,
-        name,
-        parameters,
-        act_inst);
 }
 
 ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst)
