@@ -1886,7 +1886,9 @@ void ib_rule_log_execution(
             rule_type = "PHASE";
         }
 
-        rule_log_exec(rule_exec, "RULE_START %s", rule_type);
+        rule_log_exec(rule_exec, "RULE_START %s %s",
+                      rule_type,
+                      ib_rule_phase_name(rule_exec->phase));
     }
 
     /*
