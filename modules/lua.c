@@ -74,18 +74,6 @@
 /* Define the public module symbol. */
 IB_MODULE_DECLARE();
 
-/**
- * Callback type for functions executed protected by global lock.
- *
- * This callback should take a @c ib_engine_t* which is used
- * for logging, a @c lua_State* which is used to create the
- * new thread, and a @c lua_State** which will be assigned a
- * new @c lua_State*.
- */
-typedef ib_status_t(*critical_section_fn_t)(ib_engine_t *ib,
-                                            lua_State *parent,
-                                            lua_State **out_new);
-
 /* -- Lua Routines -- */
 
 #define IB_FFI_MODULE_WRAPPER     _IRONBEE_CALL_MODULE_HANDLER
@@ -884,7 +872,7 @@ ib_status_t modlua_module_load_lua(
     }
 
     lua_pushlightuserdata(L, ib); /* Push ib engine. */
-    lua_pushlightuserdata(L, module); /* Push module engine. */
+    lua_pushlightuserdata(L, module); /* Push module. */
     lua_pushstring(L, file);
     lua_pushinteger(L, module->idx);
 

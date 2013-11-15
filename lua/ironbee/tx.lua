@@ -107,14 +107,25 @@ _M.add = function(self, name, value)
               #value
             )
         elseif type(value) == 'number' then
-            local fieldValue_p = ffi.new("ib_num_t[1]", value)
-            rc = ffi.C.ib_field_create(
-              ib_field,
-              tx.mp,
-              ffi.cast("char*", ""), 0,
-              ffi.C.IB_FTYPE_NUM,
-              fieldValue_p
-            )
+            if value == math.floor(value) then
+                local fieldValue_p = ffi.new("ib_num_t[1]", value)
+                rc = ffi.C.ib_field_create(
+                    ib_field,
+                    tx.mp,
+                    ffi.cast("char*", ""), 0,
+                    ffi.C.IB_FTYPE_NUM,
+                    fieldValue_p
+                )
+            else
+                local fieldValue_p = ffi.new("ib_float_t[1]", value)
+                rc = ffi.C.ib_field_create(
+                    ib_field,
+                    tx.mp,
+                    ffi.cast("char*", ""), 0,
+                    ffi.C.IB_FTYPE_NUM,
+                    fieldValue_p
+                )
+            end
         end
         if rc ~= ffi.C.IB_OK then
             self:logError("Could not create field for %s", name)
@@ -499,7 +510,7 @@ _M.getVarField = function(self, name)
 
     rc = ffi.C.ib_var_source_get(ib_source, ib_field, tx.var_store)
     if rc ~= ffi.C.IB_OK then
-        self:logError("Could not get value for %s", name)
+        self:logDebug("Could not get value for %s", name)
     end
 
     return ib_field[0]

@@ -67,10 +67,13 @@ TEST_EXTRAS = \
        PcreModuleTest.test_match_capture.config \
        PcreModuleTest.test_match_capture_named.config \
        test_module_rules_lua.lua \
+       test_lua_modules.lua \
        TestIronBeeModuleRulesLua.operator_test.config
 
 if ENABLE_LUA
-test_module_rules_lua_SOURCES = test_module_rules_lua.cpp
+test_module_rules_lua_SOURCES = \
+	test_module_rules_lua.cpp \
+	test_lua_modules.cpp
 test_module_rules_lua_CPPFLAGS = \
     -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
     $(AM_CPPFLAGS) \

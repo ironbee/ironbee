@@ -48,11 +48,6 @@ local lua_modules = {}
 -- Similar to lua_modules, but the keys here are by name.
 local lua_modules_by_name = {}
 
--- A set of Lua tables that represent module configurations.
--- The format of this table is that lua_module_configs[module_index]
--- which returns a table of configuration tables.
-local lua_module_configs = {}
-
 -- A map of Lua module config directives to callback tables.
 -- A callback table, t,contains t.fn which is the actuall
 -- Lua callback function. The table also contains t.type, the
@@ -164,7 +159,7 @@ moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
     t.index = index
 
     -- IronBee module structure pointer. Lua need never unpack this.
-    t.ib_module = mod
+    t.ib_module = ffi.cast("ib_module_t *", mod)
 
     -- Where event callbacks are stored.
     t.events = {}
@@ -264,6 +259,68 @@ moduleapi.register_subblock_directive = function(self, name, fn)
     return self:register_directive(name, ffi.C.IB_DIRTYPE_SBLK1, fn)
 end
 
+moduleapi.num = function(self, name, num)
+    return { "ib_num_t "..name..";\n", name, num }
+end
+moduleapi.string = function(self, name, lua_str)
+    local mp = ffi.C.ib_engine_pool_main_get(self.ib_engine)
+
+    local c_str = ffi.C.ib_mpool_strdup(mp, lua_str)
+
+    return { "char * "..name..";\n", name, c_str }
+end
+moduleapi.float = function(self, name, flt)
+    return { "ib_float_t "..name..";\n", name, flt }
+end
+moduleapi.void = function(self, name, ptr)
+    return { "void * "..name..";\n", name, ptr }
+end
+
+-- Declear the module configuration by taking a list of named types.
+--
+-- Named types are created by calling 
+--   - moduleapi.num("name"),
+--   - moduleapi.string("name"),
+--   - moduleapi.void("name"),
+--
+-- It is an error to call this twice.
+--
+moduleapi.declare_config = function(self, config_table)
+
+    self.config_name = string.format("ib_luamod_%d_config_t", self.index)
+
+    local struct_body = ""
+    for k, v in ipairs(config_table) do
+        struct_body = struct_body .. v[1]
+    end
+
+    local struct =
+        string.format(
+            "typedef struct %s { %s } %s;",
+            self.config_name,
+            struct_body,
+            self.config_name)
+
+    ffi.cdef(struct)
+
+    -- After the configuration is declared, set it up in the module.
+    local mp = ffi.C.ib_engine_pool_main_get(self.ib_engine)
+    local sz = ffi.sizeof(self.config_name, 1)
+    local default_config = 
+        ffi.cast(self.config_name .. "*", ffi.C.ib_mpool_alloc(mp, sz))
+    self.ib_module.gclen = sz
+    self.ib_module.gcdata = default_config
+
+    -- Assign default configurations.
+    for k, v in ipairs(config_table) do
+        if #v > 1 then
+            default_config[v[2]] = v[3]
+        end
+    end
+
+    return default_config
+end
+
 -- The module api provides the user functions to register callbacks by.
 for k,v in pairs(stateToInt) do
     moduleapi[k] = function(self, func)
@@ -354,14 +411,6 @@ _M.load_module = function(
         return tonumber(ffi.C.IB_EINVAL)
     end
 
-    -- Create an empty main configuration for every module.
-    _M.create_configuration(
-        ib,
-        index,
-        {
-            ffi.string(ffi.C.ib_context_name_get(ffi.C.ib_context_main(ib)))
-        })
-
     -- Register the module to the internal table.
     lua_modules_by_name[name] = t
     lua_modules[index] = t
@@ -392,90 +441,6 @@ _M.get_callback = function(ib, module_index, event)
     return handler
 end
 
--- Create a new, empty module configuration table if it does not exist.
---
--- This is used for fetching configuration during configuration time.
---
--- This is where users should store module configurations such as those
--- provided through configuration directives.
---
--- If a parent configuration context is given, it is set as
--- the returned configuration table's metatable's __index value. The
--- returned configuration will then inherit from the parent configuration.
---
--- @param[in] ib IronBee engine.
--- @param[in] module_index The index of the Lua module in the engine.
--- @param[in] ctxlst The name of the context which the
---            configuration should be created for.
--- @param[in] prev_ctx_name The name of the previous configuration, if any.
---            This may be nil.
---
--- @returns Configuration table.
-_M.create_configuration = function(ib, module_index, ctxlst)
-
-    -- If this is the first config, init the table of all configs.
-    if lua_module_configs[module_index] == nil then
-        lua_module_configs[module_index] = {}
-    end
-
-    -- Table of all this module's configurations.
-    local configs = lua_module_configs[module_index]
-    local config = nil
-    local prev_config = nil
-
-    -- Ensure that each configuration exists. Return the most precise.
-    for k, ctx_name in pairs(ctxlst) do
-        config = configs[ctx_name]
-
-        if config == nil then
-            -- New, empty configuration.
-            config = {}
-
-            -- Store this new configuration.
-            configs[ctx_name] = config
-
-            if prev_config ~= nil then
-                setmetatable(config, { __index = prev_config })
-            end
-
-            -- Store prev_config_name for next iteration.
-            prev_config_name = ctx_name
-        end
-
-        prev_config = config
-    end
-
-    return config
-end
-
--- Return the closest matching configuration context.
---
--- This is used for fetching configuration during runtime.
---
--- @param[in] ctxlist A list of configuration contexts to check for
---            from most general to most specific. If a string is
---            give, then only that configuration is checked for and
---            nil returned if it does not exist.
-_M.get_configuration = function(ib, module_index, ctxlst)
-    -- If ctxlist is a table, iterate DOWN from #ctxlst to find the
-    -- most precise configuration table we can for our user.
-    local i = #ctxlst
-
-    local ibe = ibengine:new(ib)
-
-    while (i > 0) do
-        local t = lua_module_configs[module_index][tostring(ctxlst[i])]
-        if t ~= nil then
-            return t
-        end
-        i = i - 1
-    end
-
-    -- Fallback is to treat the input as a string and fetch whatever we
-    -- can find.
-    return lua_module_configs[module_index][tostring(ctxlst)]
-end
-
 -- This function is called by C to dispatch an event to a lua module.
 --
 -- @param[in] handler Function to call. This should take @a args as input.
@@ -495,12 +460,15 @@ end
 _M.dispatch_module = function(
     handler,
     ib_engine,
-    module_index,
+    ib_module,
     event,
     ctxlst,
     ib_conn,
     ib_tx,
     ib_ctx)
+
+    ib_engine = ffi.cast("ib_engine_t *", ib_engine)
+    ib_module = ffi.cast("ib_module_t *", ib_module)
 
     local args
 
@@ -510,14 +478,25 @@ _M.dispatch_module = function(
         args = ibtx:new(ib_engine, ib_tx)
     end
 
+    -- Get the moduleapi object.
+    local lua_module = lua_modules[tonumber(ib_module.idx)]
+    if lua_module == nil then
+        args:logError("Cannot find module %s.", tonumber(ib_module.idx))
+        return 1
+    end
+
+    -- If a configuration name is specified, fetch the config for this contex.
+    if lua_module.config_name then
+        local cfg = ffi.new(lua_module.config_name .. " *[1]")
+        ffi.C.ib_context_module_config(ib_ctx, ib_module, cfg)
+        args.config = cfg[0]
+    end
+
     -- Event type.
     args.event = event
 
     -- Event name.
     args.event_name = intToState[tonumber(args.event)]
-
-    -- Configuration to use.
-    args.config = _M.get_configuration(ib_engine, module_index, ctxlst)
 
     if ib_conn ~= nil then
         -- Connection.

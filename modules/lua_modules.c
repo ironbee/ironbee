@@ -45,76 +45,19 @@ struct modlua_modules_cbdata_t {
 typedef struct modlua_modules_cbdata_t modlua_modules_cbdata_t;
 
 /**
- * Create a near-empty module structure.
+ * Callback data for the modlua_luamod_init function.
  *
- * @param[in,out] ib Engine with which to initialize and register
- *                a module structure with no callbacks. Callbacks
- *                are dynamically assigned after the lua file is
- *                evaluated and loaded.
- * @param[in] file The file name. This is used as an identifier.
- * @param[out] module The module that will be allocated with
- *             ib_module_create.
- *
- * @returns
- *   - IB_OK on success.
- *   - IB_EALLOC on a memory error.
- *   - Any error from the ib_engine registration process.
+ * This is used to initialize Lua Modules.
  */
-static ib_status_t build_near_empty_module(
-    ib_engine_t *ib,
-    const char *file,
-    ib_module_t **module)
-{
-    assert(ib);
-    assert(file);
-    assert(module);
-
-    ib_status_t rc;
-    ib_mpool_t *mp;
-
-    mp = ib_engine_pool_main_get(ib);
-
-    const char *module_name = ib_mpool_strdup(mp, file);
-
-    /* Create the Lua module as if it was a normal module. */
-    ib_log_debug3(ib, "Creating lua module structure");
-    rc = ib_module_create(module, ib);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Initialize the loaded module. */
-    ib_log_debug3(ib, "Init lua module structure");
-    IB_MODULE_INIT_DYNAMIC(
-        *module,                        /* Module */
-        file,                           /* Module code filename */
-        NULL,                           /* Module data */
-        ib,                             /* Engine */
-        module_name,                    /* Module name */
-        NULL,                           /* Global config data */
-        0,                              /* Global config data length */
-        NULL,                           /* Config copier */
-        NULL,                           /* Config copier data */
-        NULL,                           /* Configuration field map */
-        NULL,                           /* Config directive map */
-        NULL,                           /* Initialize function */
-        NULL,                           /* Callback data */
-        NULL,                           /* Finish function */
-        NULL                            /* Callback data */
-    );
-
-    /* Initialize and register the new lua module with the engine. */
-    ib_log_debug3(ib, "Init lua module");
-    rc = ib_module_register(*module, ib);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to initialize / register a lua module.");
-        return rc;
-    }
-
-    ib_log_debug3(ib, "Empty lua module created.");
-
-    return rc;
-}
+typedef struct modlua_luamod_init_t {
+    lua_State   *L;          /**< Lua execution stack. */
+    const char  *file;       /**< Lua File to load. */
+    /**
+     * The Lua module. Not the user's module written in Lua.
+     */
+    ib_module_t *modlua;
+    modlua_cfg_t *modlua_cfg; /**< Configuration for lua_module. */
+} modlua_luamod_init_t;
 
 /**
  * Push the specified handler for a lua module on top of the Lua stack L.
@@ -523,7 +466,7 @@ static ib_status_t modlua_null(
     }
 
     lua_pushlightuserdata(L, ib);
-    lua_pushinteger(L, module->idx);
+    lua_pushlightuserdata(L, module);
     lua_pushinteger(L, event);
     rc = modlua_push_config_path(ib, ctx, L);
     if (rc != IB_OK) {
@@ -628,7 +571,7 @@ static ib_status_t modlua_callback_setup(
     }
 
     lua_pushlightuserdata(L, ib);
-    lua_pushinteger(L, module->idx);
+    lua_pushlightuserdata(L, module);
     lua_pushinteger(L, event);
     rc = modlua_push_config_path(ib, conn->ctx, L);
     if (rc != IB_OK) {
@@ -894,8 +837,8 @@ static ib_status_t modlua_ctx(
 
     /* Push handler arguments... */
     /* Push ib... */
-    lua_pushlightuserdata(L, ib);             /* Push module index... */
-    lua_pushinteger(L, module->idx);          /* Push event type... */
+    lua_pushlightuserdata(L, ib);             /* Push engine... */
+    lua_pushlightuserdata(L, module);         /* Push module... */
     lua_pushinteger(L, event);                /* Push event type... */
     rc = modlua_push_config_path(ib, ctx, L); /* Push ctx path table... */
     if (rc != IB_OK) {
@@ -1043,6 +986,53 @@ static ib_status_t modlua_module_load_wire_callbacks(
     return IB_OK;
 }
 
+/**
+ * Initialize a dynamically created Lua module.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] module The created module structure.
+ * @param[in] cbdata Other variables required for proper initialization
+ *            not provided for in the module init api.
+ */
+static ib_status_t modlua_luamod_init(
+    ib_engine_t *ib,
+    ib_module_t *module,
+    void        *cbdata
+)
+{
+    modlua_luamod_init_t *cfg = (modlua_luamod_init_t *)cbdata;
+
+    lua_State    *L          = cfg->L;
+    ib_module_t  *modlua     = cfg->modlua;
+    modlua_cfg_t *modlua_cfg = cfg->modlua_cfg;
+    const char   *file       = cfg->file;
+    ib_status_t   rc;
+
+    /* Load the modules into the main Lua stack. Also register directives. */
+    rc = modlua_module_load_lua(ib, true, file, module, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to load lua modules: %s", file);
+        return rc;
+    }
+
+    /* If the previous succeeds, record that we should reload it on each tx. */
+    rc = modlua_record_reload(ib, modlua_cfg, MODLUA_RELOAD_MODULE, NULL, file);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to record module file name to reload.");
+        return rc;
+    }
+
+    /* Write up the callbacks. */
+    rc = modlua_module_load_wire_callbacks(ib, modlua, file, module, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed register lua callbacks for module : %s", file);
+        return rc;
+    }
+
+
+    return IB_OK;
+}
+
 ib_status_t modlua_module_load(
     ib_engine_t *ib,
     ib_module_t *lua_module,
@@ -1055,37 +1045,58 @@ ib_status_t modlua_module_load(
     assert(cfg != NULL);
     assert(cfg->L != NULL);
 
-    lua_State *L = cfg->L;
+    lua_State   *L = cfg->L;
     ib_module_t *module;
-    ib_status_t rc;
+    ib_status_t  rc;
+    ib_mpool_t  *mp = ib_engine_pool_main_get(ib);
+    const char  *module_name = ib_mpool_strdup(mp, file);
+    modlua_luamod_init_t *modlua_luamod_init_cbdata;
 
-    rc = build_near_empty_module(ib, file, &module);
+    /* Create the Lua module as if it was a normal module. */
+    ib_log_debug3(ib, "Creating lua module structure");
+    rc = ib_module_create(&module, ib);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot initialize empty lua module structure.");
+        ib_log_error(ib, "Cannot allocate module structure.");
         return rc;
     }
 
-    /* Load the modules into the main Lua stack. Also register directives. */
-    rc = modlua_module_load_lua(ib, true, file, module, L);
+    modlua_luamod_init_cbdata =
+        ib_mpool_alloc(mp, sizeof(*modlua_luamod_init_cbdata));
+
+    modlua_luamod_init_cbdata->L    = L;
+    modlua_luamod_init_cbdata->file = file;
+    modlua_luamod_init_cbdata->modlua = lua_module;
+    modlua_luamod_init_cbdata->modlua_cfg = cfg;
+
+    /* Initialize the loaded module. */
+    ib_log_debug3(ib, "Init lua module structure");
+    IB_MODULE_INIT_DYNAMIC(
+        module,                         /* Module */
+        file,                           /* Module code filename */
+        NULL,                           /* Module data */
+        ib,                             /* Engine */
+        module_name,                    /* Module name */
+        NULL,                           /* Global config data */
+        0,                              /* Global config data length */
+        NULL,                           /* Config copier */
+        NULL,                           /* Config copier data */
+        NULL,                           /* Configuration field map */
+        NULL,                           /* Config directive map */
+        modlua_luamod_init,             /* Initialize function */
+        modlua_luamod_init_cbdata,     /* Callback data */
+        NULL,                           /* Finish function */
+        NULL                            /* Callback data */
+    );
+
+    /* Initialize and register the new lua module with the engine. */
+    ib_log_debug3(ib, "Init lua module");
+    rc = ib_module_register(module, ib);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to load lua modules: %s", file);
+        ib_log_error(ib, "Failed to initialize / register a lua module.");
         return rc;
     }
 
-    /* If the previous succeeds, record that we should reload it on each tx. */
-    rc = modlua_record_reload(ib, cfg, MODLUA_RELOAD_MODULE, NULL, file);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to record module file name to reload.");
-        return rc;
-    }
-
-    /* Write up the callbacks. */
-    rc = modlua_module_load_wire_callbacks(ib, lua_module, file, module, L);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed register lua callbacks for module : %s", file);
-        return rc;
-    }
-
+    ib_log_debug3(ib, "Lua module created.");
 
     return rc;
 }
