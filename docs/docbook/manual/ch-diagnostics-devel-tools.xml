@@ -49,7 +49,7 @@ Rule FLAGS:block.count() @gt 0 \
 [] REQ_HEADER Accept-Language: en-US,en;q=0.5
 [] REQ_HEADER Connection: keep-alive
 [] PHASE REQUEST_HEADER      
-[] PHASE REQUEST_BODY
+[] PHASE REQUEST
 [rule:"site/.../test/1" rev:1] RULE_START PHASE
 [rule:"site/.../test/1" rev:1] TARGET "REQUEST_URI" BYTESTR "request_uri" "\/?a=1&amp;b=dirty&amp;c=attack&amp;d=4"[rule:"site/.../test/1" rev:1] OP rx("dirty|attack") TRUE
 [rule:"site/.../test/1" rev:1] ACTION event("") 

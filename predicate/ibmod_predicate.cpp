@@ -134,9 +134,9 @@ const char* c_trace_directive = "PredicateTrace";
 const ib_rule_phase_num_t c_phases[] = {
     IB_PHASE_NONE, /* Special: Executed in every phase. */
     IB_PHASE_REQUEST_HEADER,
-    IB_PHASE_REQUEST_BODY,
+    IB_PHASE_REQUEST,
     IB_PHASE_RESPONSE_HEADER,
-    IB_PHASE_RESPONSE_BODY
+    IB_PHASE_RESPONSE
 };
 //! Number of phases in c_phases.
 const size_t c_num_phases = sizeof(c_phases) / sizeof(ib_rule_phase_num_t);

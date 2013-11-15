@@ -127,7 +127,7 @@ TEST(TestVar, SourceBasic)
         "test",
         sizeof("test") - 1,
         IB_PHASE_REQUEST_HEADER,
-        IB_PHASE_REQUEST_BODY
+        IB_PHASE_REQUEST
     );
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(source);
@@ -141,7 +141,7 @@ TEST(TestVar, SourceBasic)
         EXPECT_EQ(string("test"), string(n, nlen));
     }
     EXPECT_EQ(IB_PHASE_REQUEST_HEADER, ib_var_source_initial_phase(source));
-    EXPECT_EQ(IB_PHASE_REQUEST_BODY, ib_var_source_final_phase(source));
+    EXPECT_EQ(IB_PHASE_REQUEST, ib_var_source_final_phase(source));
     EXPECT_TRUE(ib_var_source_is_indexed(source));
 }
 
@@ -162,7 +162,7 @@ TEST(TestVar, SourceRegisterInvalid)
         config,
         "a", 1,
         IB_PHASE_REQUEST_HEADER,
-        IB_PHASE_REQUEST_BODY
+        IB_PHASE_REQUEST
     );
     ASSERT_EQ(IB_EEXIST, rc);
     ASSERT_FALSE(source);
@@ -172,7 +172,7 @@ TEST(TestVar, SourceRegisterInvalid)
         &source,
         config,
         "b", 1,
-        IB_PHASE_REQUEST_BODY,
+        IB_PHASE_REQUEST,
         IB_PHASE_REQUEST_HEADER
     );
     ASSERT_EQ(IB_EINVAL, rc);

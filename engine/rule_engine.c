@@ -156,13 +156,13 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
-        IB_PHASE_REQUEST_BODY,
+        IB_PHASE_REQUEST,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_ALLOW_CHAIN |
           PHASE_FLAG_ALLOW_TFNS |
           PHASE_FLAG_REQUEST ),
-        "REQUEST_BODY",
+        "REQUEST",
         "Request Body",
         IB_OP_CAPABILITY_NON_STREAM,
         handle_request_event
@@ -182,13 +182,13 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
-        IB_PHASE_RESPONSE_BODY,
+        IB_PHASE_RESPONSE,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_ALLOW_CHAIN |
           PHASE_FLAG_ALLOW_TFNS |
           PHASE_FLAG_RESPONSE ),
-        "RESPONSE_BODY",
+        "RESPONSE",
         "Response Body",
         IB_OP_CAPABILITY_NON_STREAM,
         handle_response_event
@@ -235,7 +235,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         true,
-        IB_PHASE_STR_REQUEST_HEADER,
+        IB_PHASE_REQUEST_HEADER_STREAM,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
@@ -247,7 +247,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         true,
-        IB_PHASE_STR_REQUEST_BODY,
+        IB_PHASE_REQUEST_BODY_STREAM,
         IB_STATE_HOOK_TXDATA,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
@@ -259,7 +259,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         true,
-        IB_PHASE_STR_RESPONSE_HEADER,
+        IB_PHASE_RESPONSE_HEADER_STREAM,
         IB_STATE_HOOK_HEADER,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
@@ -271,7 +271,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         true,
-        IB_PHASE_STR_RESPONSE_BODY,
+        IB_PHASE_RESPONSE_BODY_STREAM,
         IB_STATE_HOOK_TXDATA,
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
@@ -309,15 +309,15 @@ static phase_lookup_t phase_lookup_table[] =
 {
     /* Standard phases */
     { "REQUEST_HEADER",          false, IB_PHASE_REQUEST_HEADER },
-    { "REQUEST",                 false, IB_PHASE_REQUEST_BODY },
+    { "REQUEST",                 false, IB_PHASE_REQUEST },
     { "RESPONSE_HEADER",         false, IB_PHASE_RESPONSE_HEADER },
-    { "RESPONSE",                false, IB_PHASE_RESPONSE_BODY },
+    { "RESPONSE",                false, IB_PHASE_RESPONSE },
     { "POSTPROCESS",             false, IB_PHASE_POSTPROCESS },
     /* Stream inspection phases */
-    { "REQUEST_HEADER_STREAM",   true,  IB_PHASE_STR_REQUEST_HEADER },
-    { "REQUEST_BODY_STREAM",     true,  IB_PHASE_STR_REQUEST_BODY },
-    { "RESPONSE_HEADER_STREAM",  true,  IB_PHASE_STR_RESPONSE_HEADER },
-    { "RESPONSE_BODY_STREAM",    true,  IB_PHASE_STR_RESPONSE_BODY },
+    { "REQUEST_HEADER_STREAM",   true,  IB_PHASE_REQUEST_HEADER_STREAM },
+    { "REQUEST_BODY_STREAM",     true,  IB_PHASE_REQUEST_BODY_STREAM },
+    { "RESPONSE_HEADER_STREAM",  true,  IB_PHASE_RESPONSE_HEADER_STREAM },
+    { "RESPONSE_BODY_STREAM",    true,  IB_PHASE_RESPONSE_BODY_STREAM },
     /* List terminator */
     { NULL,                      false, IB_PHASE_INVALID },
 };

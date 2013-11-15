@@ -47,7 +47,7 @@ TEST_F(TestStandardIronBee, var)
 
     m_transaction.ib()->rule_exec =
         mp.allocate<ib_rule_exec_t>();
-    m_transaction.ib()->rule_exec->phase = IB_PHASE_REQUEST_BODY;
+    m_transaction.ib()->rule_exec->phase = IB_PHASE_REQUEST;
 
     rc = ib_var_source_acquire(
         &source,

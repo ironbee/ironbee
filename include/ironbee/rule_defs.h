@@ -38,19 +38,19 @@ extern "C" {
  * Rule phase number.
  */
 typedef enum {
-    IB_PHASE_INVALID = -1,        /**< Invalid; used to terminate list */
-    IB_PHASE_NONE,                /**< No phase */
-    IB_PHASE_REQUEST_HEADER,      /**< Request header available. */
-    IB_PHASE_REQUEST_BODY,        /**< Request body available. */
-    IB_PHASE_RESPONSE_HEADER,     /**< Response header available. */
-    IB_PHASE_RESPONSE_BODY,       /**< Response body available. */
-    IB_PHASE_POSTPROCESS,         /**< Post-processing phase. */
-    IB_PHASE_LOGGING,             /**< Logging phase. */
-    IB_PHASE_STR_REQUEST_HEADER,  /**< Stream: Req. header available. */
-    IB_PHASE_STR_REQUEST_BODY,    /**< Stream: Req. body available. */
-    IB_PHASE_STR_RESPONSE_HEADER, /**< Stream: Resp. header available. */
-    IB_PHASE_STR_RESPONSE_BODY,   /**< Stream: Resp. body available. */
-    IB_RULE_PHASE_COUNT,          /**< Size of rule phase lists */
+    IB_PHASE_INVALID = -1,           /**< Invalid; used to terminate list */
+    IB_PHASE_NONE,                   /**< No phase */
+    IB_PHASE_REQUEST_HEADER,         /**< Request header available. */
+    IB_PHASE_REQUEST,                /**< Request body available. */
+    IB_PHASE_RESPONSE_HEADER,        /**< Response header available. */
+    IB_PHASE_RESPONSE,               /**< Response body available. */
+    IB_PHASE_POSTPROCESS,            /**< Post-processing phase. */
+    IB_PHASE_LOGGING,                /**< Logging phase. */
+    IB_PHASE_REQUEST_HEADER_STREAM,  /**< Stream: Req. header available. */
+    IB_PHASE_REQUEST_BODY_STREAM,    /**< Stream: Req. body available. */
+    IB_PHASE_RESPONSE_HEADER_STREAM, /**< Stream: Resp. header available. */
+    IB_PHASE_RESPONSE_BODY_STREAM,   /**< Stream: Resp. body available. */
+    IB_RULE_PHASE_COUNT,             /**< Size of rule phase lists */
 } ib_rule_phase_num_t;
 
 /**

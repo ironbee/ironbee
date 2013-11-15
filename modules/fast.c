@@ -189,12 +189,12 @@ static const fast_collection_spec_t c_request_header_collections[] = {
     { NULL, NULL }
 };
 
-/** Bytestrings to feed during REQUEST_BODY phase. */
+/** Bytestrings to feed during REQUEST phase. */
 static const char *c_request_body_bytestrings[] = {
     NULL
 };
 
-/** Collections to feed during REQUEST_BODY phase. */
+/** Collections to feed during REQUEST phase. */
 static const fast_collection_spec_t c_request_body_collections[] = {
     { "REQUEST_BODY_PARAMS", "=" },
     { NULL, NULL }
@@ -213,12 +213,12 @@ static const fast_collection_spec_t c_response_header_collections[] = {
     { NULL, NULL }
 };
 
-/** Bytestrings to feed during RESPONSE_BODY phase. */
+/** Bytestrings to feed during RESPONSE phase. */
 static const char *c_response_body_bytestrings[] = {
     NULL
 };
 
-/** Collections to feed during RESPONSE_BODY phase. */
+/** Collections to feed during RESPONSE phase. */
 static const fast_collection_spec_t c_response_body_collections[] = {
     { NULL, NULL }
 };
@@ -1252,7 +1252,7 @@ ib_status_t fast_rule_injection_request_header(
 }
 
 /**
- * Called at REQUEST_BODY phase to determine additional rules to inject.
+ * Called at REQUEST phase to determine additional rules to inject.
  *
  * @param[in] ib        IronBee engine.
  * @param[in] rule_exec Current rule execution context.
@@ -1317,7 +1317,7 @@ ib_status_t fast_rule_injection_response_header(
 }
 
 /**
- * Called at RESPONSE_BODY phase to determine additional rules to inject.
+ * Called at RESPONSE phase to determine additional rules to inject.
  *
  * @param[in] ib        IronBee engine.
  * @param[in] rule_exec Current rule execution context.
@@ -1601,7 +1601,7 @@ ib_status_t fast_dir_fast_automata(
     rc = ib_rule_register_injection_fn(
         ib,
         MODULE_NAME_STR,
-        IB_PHASE_REQUEST_BODY,
+        IB_PHASE_REQUEST,
         fast_rule_injection_request_body, runtime
     );
     FAST_CHECK_RC("Error registering injection for request header phase.");
@@ -1615,7 +1615,7 @@ ib_status_t fast_dir_fast_automata(
     rc = ib_rule_register_injection_fn(
         ib,
         MODULE_NAME_STR,
-        IB_PHASE_RESPONSE_BODY,
+        IB_PHASE_RESPONSE,
         fast_rule_injection_response_body, runtime
     );
     FAST_CHECK_RC("Error registering injection for response header phase.");

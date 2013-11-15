@@ -55,12 +55,12 @@ typedef struct {
     ib_rule_phase_num_t final;
 } indexed_key_t;
 indexed_key_t indexed_keys[] = {
-{"ARGS",                  IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_BODY},
+{"ARGS",                  IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST},
 {"FLAGS",                 IB_PHASE_NONE,            IB_PHASE_NONE},
 {"auth_password",         IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
 {"auth_type",             IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
 {"auth_username",         IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
-{"request_body_params",   IB_PHASE_REQUEST_BODY,    IB_PHASE_REQUEST_BODY},
+{"request_body_params",   IB_PHASE_REQUEST,         IB_PHASE_REQUEST},
 {"request_content_type",  IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
 {"request_cookies",       IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
 {"request_filename",      IB_PHASE_REQUEST_HEADER,  IB_PHASE_REQUEST_HEADER},
