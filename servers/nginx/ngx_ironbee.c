@@ -551,7 +551,7 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
 
     /* Create the IronBee engine manager */
     rc = ib_manager_create(&(mod_data->manager),  /* Engine Manager */
-                           ngxib_server(),        /* Server object */
+                           ib_plugin(),           /* Server object */
                            proc->max_engines);    /* Max engines */
     if (rc != IB_OK) {
         cleanup_return IB2NG(rc);

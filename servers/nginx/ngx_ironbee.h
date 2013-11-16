@@ -153,7 +153,6 @@ int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx);
 /* Misc symbols that need visibility across source files */
 extern ngx_module_t  ngx_ironbee_module;         /* The module struct */
 ngx_int_t ngxib_handler(ngx_http_request_t *r);  /* Handler for Request Data */
-ib_server_t *ngxib_server(void);                 /* The ironbee server */
 
 /* new stuff for module */
 typedef struct module_data_t {

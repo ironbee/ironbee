@@ -350,7 +350,7 @@ static ib_status_t ib_errclose_callback(
  *
  * @return pointer to the ib_server instance for nginx
  */
-ib_server_t *ngxib_server(void)
+ib_server_t *ib_plugin(void)
 {
     static ib_server_t ibplugin = {
         IB_SERVER_HEADER_DEFAULTS,

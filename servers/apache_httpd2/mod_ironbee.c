@@ -344,6 +344,10 @@ ib_server_t DLL_LOCAL ibplugin = {
     ib_errclose_callback,
     NULL
 };
+ib_server_t *ib_plugin(void)
+{
+    return &ibplugin;
+}
 
 /* BOOTSTRAP: lift logger straight from the old mod_ironbee */
 

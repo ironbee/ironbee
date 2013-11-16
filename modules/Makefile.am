@@ -27,6 +27,8 @@ module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_fast.la \
                      ibmod_libinjection.la \
                      ibmod_log_pipe.la \
+                     ibmod_ident.la \
+                     ibmod_ident_authbasic.la \
                      ibmod_sqltfn.la
 noinst_LTLIBRARIES =
 
@@ -60,6 +62,16 @@ ibmod_log_pipe_la_SOURCES = log_pipe.c
 ibmod_log_pipe_la_CFLAGS = $(AM_CFLAGS) -D_GNU_SOURCE
 ibmod_log_pipe_la_CPPFLAGS = $(AM_CPPFLAGS)
 ibmod_log_pipe_la_LDFLAGS = $(AM_LDFLAGS)
+
+ibmod_ident_la_SOURCES = ident.c
+ibmod_ident_la_CFLAGS = $(AM_CFLAGS) -D_GNU_SOURCE
+ibmod_ident_la_CPPFLAGS = $(AM_CPPFLAGS)
+ibmod_ident_la_LDFLAGS = $(AM_LDFLAGS)
+
+ibmod_ident_authbasic_la_SOURCES = ident_authbasic.c
+ibmod_ident_authbasic_la_CFLAGS = $(AM_CFLAGS) -D_GNU_SOURCE
+ibmod_ident_authbasic_la_CPPFLAGS = $(AM_CPPFLAGS)
+ibmod_ident_authbasic_la_LDFLAGS = $(AM_LDFLAGS)
 
 ibmod_htp_la_SOURCES = modhtp.c
 ibmod_htp_la_LDFLAGS = $(AM_LDFLAGS)
