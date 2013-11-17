@@ -523,11 +523,17 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
 
     ib_status_t rc;
 
+    /* Check for data first. */
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+        ib_log_debug_tx(tx, "No request data: Ignoring %s",
+                        ib_state_event_name(request_header_data_event));
+        return IB_OK;
+    }
+
     /* Mark the time. */
     if (tx->t.request_started == 0) {
         tx->t.request_started = ib_clock_get_time();
     }
-    ib_tx_flags_set(tx, IB_TX_FREQ_HAS_DATA);
 
     if ( tx->request_header == NULL ) {
         tx->request_header = header;
@@ -554,6 +560,13 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     assert(tx != NULL);
 
     ib_status_t rc;
+
+    /* Check for data first. */
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+        ib_log_debug_tx(tx, "No request data: Ignoring %s",
+                        ib_state_event_name(request_header_finished_event));
+        return IB_OK;
+    }
 
     /* Validate. */
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
@@ -615,18 +628,18 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
 
     ib_status_t rc;
 
+    /* Check for data first. */
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+        ib_log_debug_tx(tx, "No request data: Ignoring %s",
+                        ib_state_event_name(request_body_data_event));
+        return IB_OK;
+    }
+
     /* We should never get NULL data */
     if ( (txdata->data == NULL) || (txdata->dlen == 0) ) {
         ib_log_debug_tx(tx, "Request body data with no data.  Ignoring.");
         return IB_OK;
     }
-
-    /* Generate the request line event if it hasn't been seen */
-    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_SEENLINE)) {
-    }
-
-    /* Note that we have request data */
-    ib_tx_flags_set(tx, IB_TX_FREQ_HAS_DATA);
 
     /* Validate. */
     if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
@@ -658,6 +671,13 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     assert(tx != NULL);
 
     ib_status_t rc;
+
+    /* Check for data first. */
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+        ib_log_debug_tx(tx, "No request data: Ignoring %s",
+                        ib_state_event_name(request_finished_event));
+        return IB_OK;
+    }
 
     /* Validate. */
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED)) {
@@ -716,6 +736,13 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
     ib_status_t rc;
 
+    /* Check for data first. */
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+        ib_log_debug_tx(tx, "No request data: Ignoring %s",
+                        ib_state_event_name(response_started_event));
+        return IB_OK;
+    }
+
     tx->t.response_started = ib_clock_get_time();
 
     /* Validate. */
@@ -769,11 +796,17 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
 
     ib_status_t rc;
 
+    /* Check for data first. */
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+        ib_log_debug_tx(tx, "No request data: Ignoring %s",
+                        ib_state_event_name(response_header_data_event));
+        return IB_OK;
+    }
+
     /* Mark the time. */
     if (tx->t.response_started == 0) {
         tx->t.response_started = ib_clock_get_time();
     }
-    ib_tx_flags_set(tx, IB_TX_FRES_HAS_DATA);
 
     if ( tx->response_header == NULL ) {
         tx->response_header = header;
@@ -800,6 +833,13 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     assert(tx != NULL);
 
     ib_status_t rc;
+
+    /* Check for data first. */
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+        ib_log_debug_tx(tx, "No request data: Ignoring %s",
+                        ib_state_event_name(response_header_finished_event));
+        return IB_OK;
+    }
 
     /* Generate the response line event if it hasn't been seen */
     if (! ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
@@ -861,7 +901,14 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    /* We should never get NULL data */
+    /* Check for data first. */
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+        ib_log_debug_tx(tx, "No request data: Ignoring %s",
+                        ib_state_event_name(response_body_data_event));
+        return IB_OK;
+    }
+
+    /* We should never get empty data */
     if ( (txdata->data == NULL) || (txdata->dlen == 0) ) {
         ib_log_debug_tx(tx, "Response body data with no data.  Ignoring.");
         return IB_OK;
@@ -891,9 +938,9 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     /* On the first call, record the time and mark that there is a body. */
     if (tx->t.response_body == 0) {
         tx->t.response_body = ib_clock_get_time();
+        ib_tx_flags_set(tx, IB_TX_FRES_HAS_DATA);
         ib_tx_flags_set(tx, IB_TX_FRES_SEENBODY);
     }
-    ib_tx_flags_set(tx, IB_TX_FRES_HAS_DATA);
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_txdata(ib, tx, response_body_data_event, txdata);
