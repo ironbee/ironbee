@@ -1170,18 +1170,22 @@ void ib_tx_destroy(ib_tx_t *tx)
 
     ib_log_debug3_tx(tx, "TX DESTROY p=%p id=%s", tx, tx->id);
 
-    /* Make sure that the post processing state was notified. */
-    // TODO: Remove the need for this
-    if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
-        ib_log_warning_tx(tx,
-                          "Post processing not run on transaction!");
-    }
+    if (   ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)
+        || ib_tx_flags_isset(tx, IB_TX_FRES_HAS_DATA) )
+    {
+        /* Make sure that the post processing state was notified. */
+        // TODO: Remove the need for this
+        if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+            ib_log_warning_tx(tx,
+                              "Post processing not run on transaction!");
+        }
 
-    /* Make sure that the post processing state was notified. */
-    // TODO: Remove the need for this
-    if (! ib_tx_flags_isset(tx, IB_TX_FLOGGING)) {
-        ib_log_warning_tx(tx,
-                          "Logging not run on transaction!");
+        /* Make sure that the post processing state was notified. */
+        // TODO: Remove the need for this
+        if (! ib_tx_flags_isset(tx, IB_TX_FLOGGING)) {
+            ib_log_warning_tx(tx,
+                              "Logging not run on transaction!");
+        }
     }
 
     /* Find the tx in the list */
