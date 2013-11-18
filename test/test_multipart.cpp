@@ -969,7 +969,8 @@ TEST_F(Multipart, WithFileExternallyStored) {
     ASSERT_EQ(6, statbuf.st_size);
 
     char buf[7];
-    read(fd, buf, 6);
+    ssize_t result = read(fd, buf, 6);
+    ASSERT_EQ(6, result);
     buf[6] = '\0';
 
     ASSERT_STREQ("GHIJKL", buf);
