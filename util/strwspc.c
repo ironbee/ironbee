@@ -103,7 +103,7 @@ static void ws_count(bool force_other_zero,
 
     /* Loop through the whole string */
     end = data + dlen;
-    while (data <= end) {
+    while (data < end) {
         uint8_t c = *data;
         if (isspace(c) == 0) {
             runlen = 0;
