@@ -34,15 +34,28 @@
 #include <assert.h>
 
 /**
- * Lua Module callback structure.
+ * A container to hold both ibmod_lua and a user-defined Lua module.
+ *
+ * This is used as callback data to event handlers that need to know
+ * which user-defined module they were registered as, as well as, 
+ * which modules the ibmod_lua module was registered as.
  */
-struct modlua_modules_cbdata_t {
+struct modlua_modules_t {
     /**
      * The Lua module pointer, not the pointer to a Lua-implemented module.
+     *
+     * This is used to retrieve shared runtimes and other global configuration.
      */
-    ib_module_t *lua_module;
+    ib_module_t *modlua;
+
+    /**
+     * Pointer to the Lua module created by the user. This represents Lua code.
+     *
+     * This is used when calling the Lua code to fetch configurations, etc.
+     */
+    ib_module_t *module;
 };
-typedef struct modlua_modules_cbdata_t modlua_modules_cbdata_t;
+typedef struct modlua_modules_t modlua_modules_t;
 
 /**
  * Callback data for the modlua_luamod_init function.
@@ -56,7 +69,7 @@ typedef struct modlua_luamod_init_t {
      * The Lua module. Not the user's module written in Lua.
      */
     ib_module_t *modlua;
-    modlua_cfg_t *modlua_cfg; /**< Configuration for lua_module. */
+    modlua_cfg_t *modlua_cfg; /**< Configuration for modlua. */
 } modlua_luamod_init_t;
 
 /**
@@ -68,14 +81,16 @@ typedef struct modlua_luamod_init_t {
  */
 static ib_status_t modlua_push_lua_handler(
     ib_engine_t *ib,
-    ib_module_t *module,
+    modlua_modules_t *modlua_modules,
     ib_state_event_type_t event,
     lua_State *L)
 {
     assert(ib);
-    assert(module);
+    assert(modlua_modules->module);
     assert(L);
 
+    /* Use the user-defined lua module. Do not use ibmod_lua.so. */
+    ib_module_t *module = modlua_modules->module;
     int isfunction;
     int lua_rc;
 
@@ -184,12 +199,10 @@ static ib_status_t modlua_push_lua_handler(
  */
 static ib_status_t modlua_push_dispatcher(
     ib_engine_t *ib,
-    ib_module_t *module,
     ib_state_event_type_t event,
     lua_State *L)
 {
     assert(ib != NULL);
-    assert(module != NULL);
     assert(L != NULL);
 
     lua_getglobal(L, "modlua"); /* Get the package. */
@@ -239,17 +252,17 @@ static ib_status_t modlua_push_dispatcher(
  */
 static ib_status_t module_has_callback(
     ib_engine_t *ib,
-    ib_module_t *module,
+    modlua_modules_t *ibmod_modules,
     ib_state_event_type_t event,
     lua_State *L)
 {
     assert(ib != NULL);
-    assert(module != NULL);
+    assert(ibmod_modules->module != NULL);
     assert(L != NULL);
 
     ib_status_t rc;
 
-    rc = modlua_push_lua_handler(ib, module, event, L);
+    rc = modlua_push_lua_handler(ib, ibmod_modules, event, L);
 
     /* Pop the lua handler off the stack. We're just checking for it. */
     lua_pop(L, 1);
@@ -267,15 +280,17 @@ static ib_status_t module_has_callback(
  */
 static ib_status_t modlua_callback_dispatch_base(
     ib_engine_t *ib,
-    ib_module_t *module,
+    modlua_modules_t *ibmod_modules,
     lua_State *L)
 {
     assert(ib != NULL);
-    assert(module != NULL);
+    assert(ibmod_modules->modlua != NULL);
+    assert(ibmod_modules->module != NULL);
     assert(L != NULL);
 
     ib_status_t rc;
     int lua_rc;
+    ib_module_t *module = ibmod_modules->module; /* Lua-defined module. */
 
     ib_log_debug(ib, "Calling handler for lua module: %s", module->name);
 
@@ -383,24 +398,21 @@ static ib_status_t modlua_callback_dispatch(
     assert(conn != NULL);
 
     ib_status_t rc;
-    ib_module_t *module = NULL;
     lua_State *L;
     modlua_runtime_t *lua = NULL;
-    modlua_modules_cbdata_t *modlua_modules_cbdata =
-        (modlua_modules_cbdata_t *)cbdata;
+    modlua_modules_t *modlua_modules =
+        (modlua_modules_t *)cbdata;
 
-    assert(modlua_modules_cbdata != NULL);
-    assert(modlua_modules_cbdata->lua_module != NULL);
-    module = modlua_modules_cbdata->lua_module;
+    assert(modlua_modules != NULL);
 
-    rc = modlua_runtime_get(conn, module, &lua);
+    rc = modlua_runtime_get(conn, modlua_modules->modlua, &lua);
     if (rc != IB_OK) {
         return rc;
     }
 
     L = lua->L;
 
-    return modlua_callback_dispatch_base(ib, module, L);
+    return modlua_callback_dispatch_base(ib, modlua_modules, L);
 }
 
 /**
@@ -415,20 +427,23 @@ static ib_status_t modlua_null(
 
     ib_status_t rc;
     lua_State *L = NULL;
-    ib_module_t *module = NULL;
+    ib_module_t *module = NULL; /* A module in lua code. */
+    ib_module_t *modlua = NULL; /* ibmod_lua.so. */
     ib_context_t *ctx;
     modlua_cfg_t *cfg = NULL;
     modlua_runtime_t *runtime = NULL;
-    modlua_modules_cbdata_t *modlua_modules_cbdata =
-        (modlua_modules_cbdata_t *)cbdata;
+    modlua_modules_t *modlua_modules =
+        (modlua_modules_t *)cbdata;
 
-    assert(modlua_modules_cbdata != NULL);
-    assert(modlua_modules_cbdata->lua_module != NULL);
-    module = modlua_modules_cbdata->lua_module;
+    assert(modlua_modules != NULL);
+    assert(modlua_modules->modlua != NULL);
+    assert(modlua_modules->module != NULL);
+    modlua = modlua_modules->modlua;
+    module = modlua_modules->module;
 
     ctx = ib_context_main(ib);
 
-    rc = ib_context_module_config(ctx, module, &cfg);
+    rc = ib_context_module_config(ctx, modlua, &cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Could not retrieve module configuration.");
         return rc;
@@ -442,7 +457,7 @@ static ib_status_t modlua_null(
 
     L = runtime->L;
 
-    rc = modlua_reload_ctx_except_main(ib, module, ctx, L);
+    rc = modlua_reload_ctx_except_main(ib, modlua, ctx, L);
     if (rc != IB_OK) {
         modlua_releasestate(ib, cfg, runtime);
         ib_log_error(ib, "Could not configure Lua stack.");
@@ -450,7 +465,7 @@ static ib_status_t modlua_null(
     }
 
     /* Push Lua dispatch method to stack. */
-    rc = modlua_push_dispatcher(ib, module, event, L);
+    rc = modlua_push_dispatcher(ib, event, L);
     if (rc != IB_OK) {
         modlua_releasestate(ib, cfg, runtime);
         ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
@@ -458,7 +473,7 @@ static ib_status_t modlua_null(
     }
 
     /* Push Lua handler onto the table. */
-    rc = modlua_push_lua_handler(ib, module, event, L);
+    rc = modlua_push_lua_handler(ib, modlua_modules, event, L);
     if (rc != IB_OK) {
         modlua_releasestate(ib, cfg, runtime);
         ib_log_error(ib, "Cannot push modlua event handler to stack.");
@@ -478,7 +493,7 @@ static ib_status_t modlua_null(
     lua_pushnil(L);                /* Transaction (tx) is nil. */
     lua_pushlightuserdata(L, ctx); /* Configuration context. */
 
-    rc = modlua_callback_dispatch_base(ib, module, L);
+    rc = modlua_callback_dispatch_base(ib, modlua_modules, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failure while executing callback handler.");
         /* Do not return. We must join the Lua thread. */
@@ -530,14 +545,14 @@ static ib_status_t modlua_callback_setup(
     ib_module_t *module;
     lua_State *L = NULL;
     modlua_runtime_t *lua = NULL;
-    modlua_modules_cbdata_t *modlua_modules_cbdata =
-        (modlua_modules_cbdata_t *)cbdata;
+    modlua_modules_t *modlua_modules =
+        (modlua_modules_t *)cbdata;
 
-    assert(modlua_modules_cbdata != NULL);
-    assert(modlua_modules_cbdata->lua_module != NULL);
-    module = modlua_modules_cbdata->lua_module;
+    assert(modlua_modules != NULL);
+    assert(modlua_modules->modlua != NULL);
+    module = modlua_modules->module;
 
-    rc = modlua_runtime_get(conn, module, &lua);
+    rc = modlua_runtime_get(conn, modlua_modules->modlua, &lua);
     if (rc != IB_OK) {
         return rc;
     }
@@ -557,14 +572,14 @@ static ib_status_t modlua_callback_setup(
     L = lua->L;
 
     /* Push Lua dispatch method to stack. */
-    rc = modlua_push_dispatcher(ib, module, event, L);
+    rc = modlua_push_dispatcher(ib, event, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
         return rc;
     }
 
     /* Push Lua handler onto the table. */
-    rc = modlua_push_lua_handler(ib, module, event, L);
+    rc = modlua_push_lua_handler(ib, modlua_modules, event, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Cannot push modlua event handler to stack.");
         return rc;
@@ -792,17 +807,19 @@ static ib_status_t modlua_ctx(
     ib_status_t rc;
     lua_State *L;
     modlua_cfg_t *cfg = NULL;
-    ib_module_t *module = NULL;
+    ib_module_t *module = NULL; /* A module in lua code. */
+    ib_module_t *modlua = NULL; /* ibmod_lua.so. */
     modlua_runtime_t *runtime;
 
-    modlua_modules_cbdata_t *modlua_modules_cbdata =
-        (modlua_modules_cbdata_t *)cbdata;
+    modlua_modules_t *modlua_modules =
+        (modlua_modules_t *)cbdata;
 
-    assert(modlua_modules_cbdata != NULL);
-    assert(modlua_modules_cbdata->lua_module != NULL);
-    module = modlua_modules_cbdata->lua_module;
+    assert(modlua_modules != NULL);
+    assert(modlua_modules->modlua != NULL);
+    module = modlua_modules->module;
+    modlua = modlua_modules->modlua;
 
-    rc = ib_context_module_config(ctx, module, &cfg);
+    rc = ib_context_module_config(ctx, modlua, &cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Could not retrieve module configuration.");
         return rc;
@@ -815,21 +832,21 @@ static ib_status_t modlua_ctx(
     }
     L = runtime->L;
 
-    rc = modlua_reload_ctx_except_main(ib, module, ctx, L);
+    rc = modlua_reload_ctx_except_main(ib, modlua, ctx, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Could not configure Lua stack.");
         return rc;
     }
 
     /* Push Lua dispatch method to stack. */
-    rc = modlua_push_dispatcher(ib, module, event, L);
+    rc = modlua_push_dispatcher(ib, event, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
         return rc;
     }
 
     /* Push Lua handler onto the table. */
-    rc = modlua_push_lua_handler(ib, module, event, L);
+    rc = modlua_push_lua_handler(ib, modlua_modules, event, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Cannot push modlua event handler to stack.");
         return rc;
@@ -849,7 +866,7 @@ static ib_status_t modlua_ctx(
     lua_pushnil(L);                /* Transaction (tx) is nil... */
     lua_pushlightuserdata(L, ctx); /* Push configuration context. */
 
-    rc = modlua_callback_dispatch_base(ib, module, L);
+    rc = modlua_callback_dispatch_base(ib, modlua_modules, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failure while executing callback handler.");
         /* Do not return. We must join the Lua thread. */
@@ -864,7 +881,7 @@ static ib_status_t modlua_ctx(
  * Called by modlua_module_load to wire the callbacks in @a ib.
  *
  * @param[in] ib IronBee engine.
- * @param[in] lua_module The Lua module. Not the user's Lua-implemented module.
+ * @param[in] modlua The Lua module. Not the user's Lua-implemented module.
  * @param[in] file The file we are loading.
  * @param[in] module The Lua-implemented registered module structure.
  * @param[in,out] L The lua context that @a file will be loaded into as
@@ -876,21 +893,21 @@ static ib_status_t modlua_ctx(
  */
 static ib_status_t modlua_module_load_wire_callbacks(
     ib_engine_t *ib,
-    ib_module_t *lua_module,
+    ib_module_t *modlua,
     const char *file,
     ib_module_t *module,
     lua_State *L)
 {
 
     assert(ib != NULL);
-    assert(lua_module != NULL);
+    assert(modlua != NULL);
     assert(file != NULL);
     assert(module != NULL);
     assert(L != NULL);
 
     ib_status_t rc;
     ib_mpool_t *mp;
-    modlua_modules_cbdata_t *ibmod_modules_cbdata = NULL;
+    modlua_modules_t *ibmod_modules_cbdata = NULL;
 
     mp = ib_engine_pool_main_get(ib);
     if (mp == NULL) {
@@ -907,11 +924,12 @@ static ib_status_t modlua_module_load_wire_callbacks(
         ib_log_error(ib, "Failed to allocate callback data.");
         return IB_EALLOC;
     }
-    ibmod_modules_cbdata->lua_module = lua_module;
+    ibmod_modules_cbdata->modlua = modlua;
+    ibmod_modules_cbdata->module = module;
 
     for (ib_state_event_type_t event = 0; event < IB_STATE_EVENT_NUM; ++event) {
 
-        rc = module_has_callback(ib, module, event, L);
+        rc = module_has_callback(ib, ibmod_modules_cbdata, event, L);
         if (rc == IB_OK) {
             switch(ib_state_hook_type(event)) {
                 case IB_STATE_HOOK_NULL:
@@ -1016,7 +1034,13 @@ static ib_status_t modlua_luamod_init(
     }
 
     /* If the previous succeeds, record that we should reload it on each tx. */
-    rc = modlua_record_reload(ib, modlua_cfg, MODLUA_RELOAD_MODULE, NULL, file);
+    rc = modlua_record_reload(
+        ib,
+        modlua_cfg,
+        MODLUA_RELOAD_MODULE,
+        module,
+        NULL,
+        file);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to record module file name to reload.");
         return rc;
@@ -1035,12 +1059,12 @@ static ib_status_t modlua_luamod_init(
 
 ib_status_t modlua_module_load(
     ib_engine_t *ib,
-    ib_module_t *lua_module,
+    ib_module_t *modlua,
     const char *file,
     modlua_cfg_t *cfg)
 {
     assert(ib != NULL);
-    assert(lua_module != NULL);
+    assert(modlua != NULL);
     assert(file != NULL);
     assert(cfg != NULL);
     assert(cfg->L != NULL);
@@ -1065,7 +1089,7 @@ ib_status_t modlua_module_load(
 
     modlua_luamod_init_cbdata->L    = L;
     modlua_luamod_init_cbdata->file = file;
-    modlua_luamod_init_cbdata->modlua = lua_module;
+    modlua_luamod_init_cbdata->modlua = modlua;
     modlua_luamod_init_cbdata->modlua_cfg = cfg;
 
     /* Initialize the loaded module. */

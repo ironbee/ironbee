@@ -297,7 +297,7 @@ static ib_status_t modlua_reload_ctx(
                     ib,
                     false,
                     reload->file,
-                    module,
+                    reload->module,
                     L);
                 break;
             case MODLUA_RELOAD_RULE:
@@ -322,11 +322,12 @@ static ib_status_t modlua_reload_ctx(
 }
 
 ib_status_t modlua_record_reload(
-    ib_engine_t *ib,
-    modlua_cfg_t *cfg,
-    modlua_reload_type_t type,
-    const char *rule_id,
-    const char *file
+    ib_engine_t          *ib,
+    modlua_cfg_t         *cfg,
+    modlua_reload_type_t  type,
+    ib_module_t          *module,
+    const char           *rule_id,
+    const char           *file
 )
 {
     assert(ib != NULL);
@@ -349,6 +350,9 @@ ib_status_t modlua_record_reload(
 
     /* Record type. */
     data->type = type;
+
+    /* Record what the user gave us for a module structure. */
+    data->module = module;
 
     /* Copy file name. */
     data->file = ib_mpool_strdup(mp, file);

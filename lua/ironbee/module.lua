@@ -485,6 +485,8 @@ _M.dispatch_module = function(
         return 1
     end
 
+    args:logInfo("------------ MOD IDX "..tostring(ib_module.idx))
+
     -- If a configuration name is specified, fetch the config for this contex.
     if lua_module.config_name then
         local cfg = ffi.new(lua_module.config_name .. " *[1]")

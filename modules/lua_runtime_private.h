@@ -65,9 +65,10 @@ typedef enum modlua_reload_type_t modlua_reload_type_t;
  * context and as few as possible should be put in site contexts.
  */
 struct modlua_reload_t {
-    modlua_reload_type_t type; /**< Is this a module or a rule? */
-    const char *file; /**< File holding the rule or module code. */
-    const char *rule_id; /**< Rule if this is a rule type. */
+    modlua_reload_type_t  type;    /**< Is this a module or a rule? */
+    ib_module_t          *module;  /**< Lua module (not ibmod_lua.so). */ 
+    const char           *file;    /**< File of the rule or module code. */
+    const char           *rule_id; /**< Rule if this is a rule type. */
 };
 typedef struct modlua_reload_t modlua_reload_t;
 
@@ -190,15 +191,18 @@ ib_status_t modlua_reload_ctx_main(
  * @param[in] ib IronBee engine.
  * @param[in] cfg Configuration.
  * @param[in] type The type of the thing to reload.
+ * @param[in] module For MODLUA_RELOAD_MODULE types this is a pointer
+ *            to the Lua script's module structure.
  * @param[in] rule_id The rule id. This is copied.
  * @param[in] file Where is the Lua file to load. This is copied.
  */
 ib_status_t modlua_record_reload(
-    ib_engine_t *ib,
-    modlua_cfg_t *cfg,
-    modlua_reload_type_t type,
-    const char *rule_id,
-    const char *file
+    ib_engine_t          *ib,
+    modlua_cfg_t         *cfg,
+    modlua_reload_type_t  type,
+    ib_module_t          *module,
+    const char           *rule_id,
+    const char           *file
 );
 
 ib_status_t modlua_releasestate(

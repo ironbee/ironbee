@@ -33,31 +33,37 @@ class LuaModule : public BaseTransactionFixture
 };
 
 TEST_F(LuaModule, load_module) {
-    std::vector<char> cwd(PATH_MAX);
 
+    ib_var_source_t   *source;         /* Used to check the results. */
+    const ib_field_t  *field;          /* Used to check the results. */
+    ib_num_t           num;            /* Used to check the results. */
+    std::vector<char>  cwd(PATH_MAX);  /* Used to build the module path. */
+
+    /* Where is this test file executing? */
     ASSERT_FALSE(getcwd(&(cwd[0]), cwd.size()) == NULL);
 
+    /* Build the module path using the CWD. */
     const std::string lua_mod_path =
         std::string(&(cwd[0]))+"/test_lua_modules.lua";
 
+    /* Configure IronBee. */
     configureIronBeeByString(
-            "LogLevel       info\n"
-            "LoadModule     ibmod_lua.so\n"
-            "SensorId       B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
-            "SensorName     UnitTesting\n"
-            "SensorHostname unit-testing.sensor.tld\n"
-            "LuaLoadModule "+lua_mod_path+"\n"
-            "<Site test-site>\n"
-            "    SiteId AAAABBBB-1111-2222-3333-000000000000\n"
-            "    Hostname somesite.com\n"
-            "</Site>\n"
+        "LogLevel       info\n"
+        "LoadModule     ibmod_lua.so\n"
+        "SensorId       B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+        "SensorName     UnitTesting\n"
+        "SensorHostname unit-testing.sensor.tld\n"
+        "LuaLoadModule "+lua_mod_path+"\n"
+        "<Site test-site>\n"
+        "    SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+        "    Hostname somesite.com\n"
+        "</Site>\n"
     );
+
+    /* Execute the test. */
     performTx();
 
-    ib_var_source_t *source;
-    const ib_field_t *field;
-    ib_num_t          num;
-
+    /* Check the test. */
     ASSERT_EQ(
         IB_OK,
         ib_var_source_acquire(
@@ -65,8 +71,9 @@ TEST_F(LuaModule, load_module) {
             ib_tx->mp,
             ib_var_store_config(ib_tx->var_store),
             IB_S2SL("LUA_MODULE_COUNTER")));
-    ASSERT_EQ(IB_OK, ib_var_source_get_const(source, &field, ib_tx->var_store));
-
+    ASSERT_EQ(
+        IB_OK,
+        ib_var_source_get_const(source, &field, ib_tx->var_store));
     ASSERT_EQ(IB_OK, ib_field_value(field, ib_ftype_num_out(&num)));
     ASSERT_EQ(101, num);
 

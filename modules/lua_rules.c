@@ -197,6 +197,7 @@ static ib_status_t modlua_rule_driver(
         cp->ib,
         cfg,
         MODLUA_RELOAD_RULE,
+        NULL,
         ib_rule_id(rule),
         location);
     if (rc != IB_OK) {
