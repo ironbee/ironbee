@@ -927,7 +927,7 @@ TEST_F(Multipart, WithFile) {
     ASSERT_EQ(6, part->file->len);
 }
 
-TEST_F(Multipart, WithFileExternllyStored) {
+TEST_F(Multipart, WithFileExternallyStored) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
