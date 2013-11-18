@@ -609,12 +609,19 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
     }
 
     hdr_action_t *x;
+    ib_tx_t *tx = ctx->tx;
+    ib_ssn_ctx *ssn = ctx->ssn;
 
-    TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s txn_count=%d",
-            ctx->tx->conn, ctx->tx, ctx->tx->id, ctx->ssn->txn_count);
-    tx_finish(ctx->tx);
-    ib_tx_destroy(ctx->tx);
+    assert(tx != NULL);
+
+    TSMutexLock(ssn->mutex);
+
     ctx->tx = NULL;
+    TSDebug("ironbee",
+            "TX DESTROY: conn=>%p tx_count=%zd tx=%p id=%s txn_count=%d",
+            tx->conn, tx->conn->tx_count, tx, tx->id, ssn->txn_count);
+    tx_finish(tx);
+    ib_tx_destroy(tx);
 
     if (ctx->out.output_buffer) {
         TSIOBufferDestroy(ctx->out.output_buffer);
@@ -632,30 +639,36 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
     }
 
     /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
-    if (ctx->ssn) {
+    if (ctx->ssn != NULL) {
+        ctx->ssn = NULL;
+
         /* If it's closing, the contp and with it the mutex are already gone.
          * Trust TS not to create more TXNs after signalling SSN close!
          */
-        if (ctx->ssn->closing) {
-            tx_list_destroy(ctx->ssn->iconn);
-            if (ctx->ssn->iconn) {
-                ib_engine_t *ib = ctx->ssn->iconn->ib;
+        if (ssn->closing) {
+            tx_list_destroy(ssn->iconn);
+            if (ssn->iconn) {
+                ib_conn_t *conn = ssn->iconn;
+                ib_engine_t *ib = conn->ib;
+
+                ssn->iconn = NULL;
                 TSDebug("ironbee",
                         "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
-                ib_state_notify_conn_closed(ib, ctx->ssn->iconn);
-                TSDebug("ironbee", "CONN DESTROY: conn=%p", ctx->ssn->iconn);
-                ib_conn_destroy(ctx->ssn->iconn);
+                ib_state_notify_conn_closed(ib, conn);
+                TSDebug("ironbee", "CONN DESTROY: conn=%p", conn);
+                ib_conn_destroy(conn);
             }
-            TSContDestroy(ctx->ssn->contp);
-            TSfree(ctx->ssn);
+            TSContDataSet(ssn->contp, NULL);
+            TSContDestroy(ssn->contp);
+            TSMutexUnlock(ssn->mutex);
+            TSfree(ssn);
         }
         else {
-            TSMutexLock(ctx->ssn->mutex);
-            --ctx->ssn->txn_count;
-            TSMutexUnlock(ctx->ssn->mutex);
+            --(ssn->txn_count);
         }
     }
     TSfree(ctx);
+    TSMutexUnlock(ssn->mutex);
 }
 
 /**
@@ -679,16 +692,25 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * ctx)
     TSMutexLock(ctx->mutex);
     if (ctx->txn_count == 0) { /* TXN_CLOSE happened already */
         if (ctx->iconn) {
-            tx_list_destroy(ctx->iconn);
+            ib_conn_t *conn = ctx->iconn;
+            ctx->iconn = NULL;
+
+            tx_list_destroy(conn);
             TSDebug("ironbee",
                     "ib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
-            ib_state_notify_conn_closed(ctx->iconn->ib, ctx->iconn);
-            TSDebug("ironbee", "CONN DESTROY: conn=%p", ctx->iconn);
-            ib_conn_destroy(ctx->iconn);
+            ib_state_notify_conn_closed(conn->ib, conn);
+            TSDebug("ironbee", "CONN DESTROY: conn=%p", conn);
+            ib_conn_destroy(conn);
         }
+
+        /* Store off the continuation pointer */
+        TSCont contp = ctx->contp;
+        TSContDataSet(contp, NULL);
+        ctx->contp = NULL;
+
         /* Unlock has to come first 'cos ContDestroy destroys the mutex */
         TSMutexUnlock(ctx->mutex);
-        TSContDestroy(ctx->contp);
+        TSContDestroy(contp);
         TSfree(ctx);
     }
     else {
@@ -1058,9 +1080,13 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 static int out_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ib_txn_ctx *data = TSContDataGet(contp);
-    if (data->out.buflen == (unsigned int)-1) {
-        TSDebug("ironbee", "\tout_data_event: buflen = -1");
-        //ib_log_debug(ironbee, 9, "ironbee/out_data_event(): buflen = -1");
+
+    if ( (data == NULL) || (data->tx == NULL) ) {
+        TSDebug("ironbee", "\tout_data_event: tx == NULL");
+        return 0;
+    }
+    else if (data->out.buflen == (unsigned int)-1) {
+        TSDebug("ironbee", "\tout_data_event: buflen == -1");
         return 0;
     }
     ibd_ctx direction;
@@ -1084,9 +1110,13 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
 static int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ib_txn_ctx *data = TSContDataGet(contp);
-    if (data->out.buflen == (unsigned int)-1) {
-        TSDebug("ironbee", "\tin_data_event: buflen = -1");
-        //ib_log_debug(ironbee, 9, "ironbee/in_data_event(): buflen = -1");
+
+    if ( (data == NULL) || (data->tx == NULL) ) {
+        TSDebug("ironbee", "\tin_data_event: tx == NULL");
+        return 0;
+    }
+    else if (data->out.buflen == (unsigned int)-1) {
+        TSDebug("ironbee", "\tin_data_event: buflen == -1");
         return 0;
     }
     ibd_ctx direction;
@@ -2419,12 +2449,12 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         {
             ib_txn_ctx *ctx = TSContDataGet(contp);
 
-            if (ctx->tx != NULL) {
+            TSContDataSet(contp, NULL);
+            TSContDestroy(contp);
+            if ( (ctx != NULL) && (ctx->tx != NULL) ) {
                 TSDebug("ironbee", "TXN Close: %p\n", (void *)contp);
                 ib_txn_ctx_destroy(ctx);
             }
-            TSContDataSet(contp, NULL);
-            TSContDestroy(contp);
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
         }
