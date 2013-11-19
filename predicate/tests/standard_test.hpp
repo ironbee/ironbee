@@ -51,27 +51,23 @@ protected:
     // The following copy the value out and thus are safe to use text
     // as there is no need to keep the expression tree around.
     bool eval_bool(
-        const std::string& text
+        IronBee::Predicate::node_p n
     );
 
     std::string eval_s(
-        const std::string& text
+        IronBee::Predicate::node_p n
     );
 
     int64_t eval_n(
-        const std::string& text
+        IronBee::Predicate::node_p n
     );
 
-    IronBee::Predicate::node_cp transform(
+    IronBee::Predicate::node_p transform(
         IronBee::Predicate::node_p n
     ) const;
 
     std::string transform(
         const std::string& s
-    ) const;
-
-    void reset(
-        IronBee::Predicate::node_p n
     ) const;
 };
 

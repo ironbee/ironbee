@@ -23,6 +23,7 @@
  **/
 
 #include <predicate/bfs.hpp>
+#include <predicate/eval.hpp>
 #include <predicate/parse.hpp>
 
 #ifndef __PREDICATE__TEST_PARSE_FIXTURE__
@@ -44,11 +45,12 @@ public:
     }
 
 protected:
-    virtual void calculate(
-        IronBee::Predicate::EvalContext
-    )
+    virtual void eval_calculate(
+        IronBee::Predicate::GraphEvalState& graph_eval_state,
+        IronBee::Predicate::EvalContext     context
+    ) const
     {
-        finish();
+        graph_eval_state[index()].finish_false(context);
     }
 
 private:

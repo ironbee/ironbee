@@ -74,21 +74,23 @@ ValueList StandardTest::eval(node_p n)
         );
     }
 
-    reset(g.root(i));
-    return g.root(i)->eval(m_transaction);
+    size_t index_limit;
+    bfs_down(g.root(i), make_indexer(index_limit));
+    GraphEvalState ges(index_limit);
+    bfs_down(g.root(i), make_initializer(ges, m_transaction));
+    return ges.eval(g.root(i), m_transaction);
 }
 
-bool StandardTest::eval_bool(const string& text)
+bool StandardTest::eval_bool(node_p n)
 {
-    node_p n = parse(text);
-    return ! eval(n).empty();
+    ValueList result = eval(n);
+    return result && ! result.empty();
 }
 
-string StandardTest::eval_s(const string& text)
+string StandardTest::eval_s(node_p n)
 {
-    node_p n = parse(text);
     ValueList vals = eval(n);
-    if (vals.empty()) {
+    if (! vals || vals.empty()) {
         throw runtime_error("eval_s called on null value.");
     }
     if (vals.size() != 1) {
@@ -98,17 +100,16 @@ string StandardTest::eval_s(const string& text)
     return bs.to_s();
 }
 
-int64_t StandardTest::eval_n(const string& text)
+int64_t StandardTest::eval_n(node_p n)
 {
-    node_p n = parse(text);
     ValueList vals = eval(n);
-    if (vals.size() != 1) {
+    if (! vals || vals.size() != 1) {
         throw runtime_error("eval_n called on invalid value.");
     }
     return vals.front().value_as_number();
 }
 
-node_cp StandardTest::transform(node_p n) const
+node_p StandardTest::transform(node_p n) const
 {
     MergeGraph G;
     Reporter r;
@@ -123,14 +124,4 @@ node_cp StandardTest::transform(node_p n) const
 string StandardTest::transform(const std::string& s) const
 {
     return transform(parse(s))->to_s();
-}
-
-void StandardTest::reset(node_p n) const
-{
-    bfs_down(
-        n,
-        boost::make_function_output_iterator(
-            bind(&Node::reset, _1)
-        )
-    );
 }
