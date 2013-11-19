@@ -71,11 +71,11 @@ TEST_F(TestStandardIronBee, var)
     );
     EXPECT_EQ(IB_OK, rc);
 
-    EXPECT_EQ("test", eval_s("(var 'TestStandard.Var')"));
-    EXPECT_EQ("test", eval_s("(var 'TestStandard.Var' 'REQUEST_HEADER' 'REQUEST')"));
-    EXPECT_THROW(eval_bool("(var 'foo' 'bar' 'baz')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(var 'foo' 'REQUEST_HEADER')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(var 'foo' 'REQUEST_HEADER' 'REQUEST' 'baz')"), IronBee::einval);
+    EXPECT_EQ("test", eval_s(parse("(var 'TestStandard.Var')")));
+    EXPECT_EQ("test", eval_s(parse("(var 'TestStandard.Var' 'REQUEST_HEADER' 'REQUEST')")));
+    EXPECT_THROW(eval_bool(parse("(var 'foo' 'bar' 'baz')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(var 'foo' 'REQUEST_HEADER')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(var 'foo' 'REQUEST_HEADER' 'REQUEST' 'baz')")), IronBee::einval);
 }
 
 TEST_F(TestStandardIronBee, Field)
@@ -85,29 +85,29 @@ TEST_F(TestStandardIronBee, Field)
 
 TEST_F(TestStandardIronBee, Operator)
 {
-    EXPECT_TRUE(eval_bool("(operator 'istreq' 'fOo' 'foo')"));
-    EXPECT_FALSE(eval_bool("(operator 'istreq' 'fOo' 'bar')"));
-    EXPECT_THROW(eval_bool("(operator 'dne' 'a' 'b')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(operator)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(operator 'a')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(operator 'a' 'b')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(operator 'a' 'b' 'c' 'd')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(operator 'a' null 'c')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(operator null 'b' 'c')"), IronBee::einval);
+    EXPECT_TRUE(eval_bool(parse("(operator 'istreq' 'fOo' 'foo')")));
+    EXPECT_FALSE(eval_bool(parse("(operator 'istreq' 'fOo' 'bar')")));
+    EXPECT_THROW(eval_bool(parse("(operator 'dne' 'a' 'b')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(operator)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(operator 'a')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(operator 'a' 'b')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(operator 'a' 'b' 'c' 'd')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(operator 'a' null 'c')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(operator null 'b' 'c')")), IronBee::einval);
 }
 
 TEST_F(TestStandardIronBee, FOperator)
 {
-    EXPECT_EQ("foo", eval_s("(foperator 'istreq' 'fOo' 'foo')"));
+    EXPECT_EQ("foo", eval_s(parse("(foperator 'istreq' 'fOo' 'foo')")));
 }
 
 TEST_F(TestStandardIronBee, transformation)
 {
-    EXPECT_EQ("foo", eval_s("(transformation 'lowercase' 'fOO')"));
-    EXPECT_THROW(eval_s("(transformation)"), IronBee::einval);
-    EXPECT_THROW(eval_s("(transformation 'a')"), IronBee::einval);
-    EXPECT_THROW(eval_s("(transformation 'a' 'b' 'c')"), IronBee::einval);
-    EXPECT_THROW(eval_s("(transformation null 'b')"), IronBee::einval);
+    EXPECT_EQ("foo", eval_s(parse("(transformation 'lowercase' 'fOO')")));
+    EXPECT_THROW(eval_s(parse("(transformation)")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(transformation 'a')")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(transformation 'a' 'b' 'c')")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(transformation null 'b')")), IronBee::einval);
 }
 
 TEST_F(TestStandardIronBee, phase)
@@ -119,26 +119,26 @@ TEST_F(TestStandardIronBee, phase)
     m_transaction.ib()->rule_exec = &rule_exec;
 
     rule_exec.phase = IB_PHASE_REQUEST_HEADER;
-    EXPECT_FALSE(eval_bool("(isFinished (waitPhase 'response_header' 'foo'))"));
+    EXPECT_FALSE(eval_bool(parse("(isFinished (waitPhase 'response_header' 'foo'))")));
     rule_exec.phase = IB_PHASE_RESPONSE_HEADER;
-    EXPECT_TRUE(eval_bool("(isFinished (waitPhase 'response_header' 'foo'))"));
+    EXPECT_TRUE(eval_bool(parse("(isFinished (waitPhase 'response_header' 'foo'))")));
 
     rule_exec.phase = IB_PHASE_REQUEST_HEADER;
-    EXPECT_TRUE(eval_bool("(isFinished (finishPhase 'request_header' (sequence 0)))"));
+    EXPECT_TRUE(eval_bool(parse("(isFinished (finishPhase 'request_header' (sequence 0)))")));
     rule_exec.phase = IB_PHASE_RESPONSE_HEADER;
-    EXPECT_FALSE(eval_bool("(isFinished (finishPhase 'request_header' (sequence 0)))"));
+    EXPECT_FALSE(eval_bool(parse("(isFinished (finishPhase 'request_header' (sequence 0)))")));
 
-    EXPECT_THROW(eval_s("(waitPhase)"), IronBee::einval);
-    EXPECT_THROW(eval_s("(waitPhase 'request_header')"), IronBee::einval);
-    EXPECT_THROW(eval_s("(waitPhase 'request_header' 'b' 'c')"), IronBee::einval);
-    EXPECT_THROW(eval_s("(waitPhase null 'b')"), IronBee::einval);
-    EXPECT_THROW(eval_s("(waitPhase 'foo' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(waitPhase)")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(waitPhase 'request_header')")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(waitPhase 'request_header' 'b' 'c')")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(waitPhase null 'b')")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(waitPhase 'foo' 'b')")), IronBee::einval);
 
-    EXPECT_THROW(eval_s("(finishPhase)"), IronBee::einval);
-    EXPECT_THROW(eval_s("(finishPhase 'request_header')"), IronBee::einval);
-    EXPECT_THROW(eval_s("(finishPhase 'request_header' 'b' 'c')"), IronBee::einval);
-    EXPECT_THROW(eval_s("(finishPhase null 'b')"), IronBee::einval);
-    EXPECT_THROW(eval_s("(finishPhase 'foo' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(finishPhase)")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(finishPhase 'request_header')")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(finishPhase 'request_header' 'b' 'c')")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(finishPhase null 'b')")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(finishPhase 'foo' 'b')")), IronBee::einval);
 
     m_transaction.ib()->rule_exec = old_rule_exec;
 }
@@ -169,11 +169,15 @@ public:
             );
     }
 
-protected:
-    virtual void calculate(EvalContext context)
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const
     {
-        add_value(m_value);
-        finish();
+        NodeEvalState& nes = graph_eval_state[index()];
+        nes.setup_local_values(context);
+        nes.add_value(m_value);
+        nes.finish();
     }
 
 private:
@@ -210,14 +214,14 @@ TEST_F(TestStandardIronBee, Ask)
     m_factory.add<TestAsk>();
 
     /* Test dynamic behavior. */
-    EXPECT_EQ("foo", eval_s("(ask 'foo' (test_ask))"));
+    EXPECT_EQ("foo", eval_s(parse("(ask 'foo' (test_ask))")));
 
     /* Test sublike behavior. */
-    EXPECT_EQ("1", eval_s("(ask 'a' (gather (cat (setName 'a' '1') (setName 'b' 2) (setName 'c' 3))))"));
-    EXPECT_TRUE(eval_bool("(isLonger 1 (ask 'a' (gather (cat (setName 'a' '1') (setName 'b' 2) (setName 'a' 3)))))"));
+    EXPECT_EQ("1", eval_s(parse("(ask 'a' (gather (cat (setName 'a' '1') (setName 'b' 2) (setName 'c' 3))))")));
+    EXPECT_TRUE(eval_bool(parse("(isLonger 1 (ask 'a' (gather (cat (setName 'a' '1') (setName 'b' 2) (setName 'a' 3)))))")));
 
-    EXPECT_THROW(eval_bool("(ask)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(ask 1 'b')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(ask 'a')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(ask 'a' 'b' 'c')"), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(ask)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(ask 1 'b')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(ask 'a')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(ask 'a' 'b' 'c')")), IronBee::einval);
 }

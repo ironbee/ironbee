@@ -138,8 +138,12 @@ void Var::pre_eval(Environment environment, NodeReporter reporter)
     }
 }
 
-void Var::calculate(EvalContext context)
+void Var::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
     Value value;
     bool time_to_finish = false;
     ib_rule_phase_num_t current_phase = context.ib()->rule_exec->phase;
@@ -176,9 +180,9 @@ void Var::calculate(EvalContext context)
         time_to_finish = true;
     }
 
-    if (is_aliased()) {
+    if (my_state.is_aliased()) {
         if (time_to_finish) {
-            finish();
+            my_state.finish();
         }
         return;
     }
@@ -194,13 +198,14 @@ void Var::calculate(EvalContext context)
         value.is_dynamic() ||
         value.type() != Value::LIST
     ) {
-        add_value(value);
-        finish();
+        my_state.setup_local_values(context);
+        my_state.add_value(value);
+        my_state.finish();
     }
     else {
-        alias(value.value_as_list<Value>());
+        my_state.alias(value.value_as_list<Value>());
         if (time_to_finish) {
-            finish();
+            my_state.finish();
         }
     }
 }
@@ -286,7 +291,11 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
     );
 }
 
-Value Operator::value_calculate(Value v, EvalContext context)
+Value Operator::value_calculate(
+    Value           v,
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     static const char* c_capture_name = "predicate_operator_capture";
 
@@ -331,11 +340,14 @@ Value Operator::value_calculate(Value v, EvalContext context)
     }
 }
 
-void Operator::calculate(EvalContext context)
+void Operator::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     const node_p& input_node = children().back();
 
-    map_calculate(input_node, context);
+    map_calculate(input_node, graph_eval_state, context);
 }
 
 string FOperator::name() const
@@ -343,7 +355,11 @@ string FOperator::name() const
     return "foperator";
 }
 
-Value FOperator::value_calculate(Value v, EvalContext context)
+Value FOperator::value_calculate(
+    Value           v,
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     if (! m_data) {
         BOOST_THROW_EXCEPTION(
@@ -421,7 +437,11 @@ void Transformation::pre_eval(Environment environment, NodeReporter reporter)
     );
 }
 
-Value Transformation::value_calculate(Value v, EvalContext context)
+Value Transformation::value_calculate(
+    Value           v,
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     if (! m_data) {
         BOOST_THROW_EXCEPTION(
@@ -434,9 +454,12 @@ Value Transformation::value_calculate(Value v, EvalContext context)
     return m_data->transformation.execute(context.memory_pool(), v);
 }
 
-void Transformation::calculate(EvalContext context)
+void Transformation::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
 struct WaitPhase::data_t
@@ -480,11 +503,15 @@ void WaitPhase::pre_eval(Environment environment, NodeReporter reporter)
     m_data->phase = phase_lookup(phase_string);
 }
 
-void WaitPhase::calculate(EvalContext context)
+void WaitPhase::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
     if (context.ib()->rule_exec->phase == m_data->phase) {
-        children().back()->eval(context);
-        forward(children().back());
+        graph_eval_state.eval(children().back(), context);
+        my_state.forward(children().back());
     }
 }
 
@@ -529,17 +556,26 @@ void FinishPhase::pre_eval(Environment environment, NodeReporter reporter)
     m_data->phase = phase_lookup(phase_string);
 }
 
-Value FinishPhase::value_calculate(Value v, EvalContext context)
+Value FinishPhase::value_calculate(
+    Value           v,
+    GraphEvalState& ,
+    EvalContext
+) const
 {
     return v;
 }
 
-void FinishPhase::calculate(EvalContext context)
+void FinishPhase::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
-    map_calculate(children().back(), context);
+    NodeEvalState& my_state = graph_eval_state[index()];
+
+    map_calculate(children().back(), graph_eval_state, context);
 
     if (context.ib()->rule_exec->phase == m_data->phase) {
-        finish();
+        my_state.finish();
     }
 }
 
@@ -566,16 +602,22 @@ bool Ask::validate(NodeReporter reporter) const
     return result;
 }
 
-void Ask::calculate(EvalContext context)
+void Ask::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
+
     Value param_field = literal_value(children().front());
     IronBee::ConstByteString param = param_field.value_as_byte_string();
 
-    children().back()->eval(context);
-    Value collection = simple_value(children().back());
+    graph_eval_state.eval(children().back(), context);
+    Value collection =
+        simple_value(graph_eval_state.final(children().back()->index()));
 
     if (collection.type() != Value::LIST) {
-        finish();
+        my_state.finish();
     }
     else {
         if (collection.is_dynamic()) {
@@ -583,15 +625,16 @@ void Ask::calculate(EvalContext context)
                 param.const_data(), param.length()
             );
             if (! result || result.empty()) {
-                finish();
+                my_state.finish();
             }
             else {
-                alias(result);
-                finish();
+                my_state.alias(result);
+                my_state.finish();
             }
         }
         else {
             // Fall back to namedi like behavior.
+            my_state.setup_local_values(context);
             BOOST_FOREACH(const Value& v, collection.value_as_list<Value>()) {
                 if (
                     v.name_length() == param.length() &&
@@ -602,10 +645,10 @@ void Ask::calculate(EvalContext context)
                     )
                 )
                 {
-                    add_value(v);
+                    my_state.add_value(v);
                 }
             }
-            finish();
+            my_state.finish();
         }
     }
 }

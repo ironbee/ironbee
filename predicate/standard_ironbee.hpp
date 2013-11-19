@@ -57,8 +57,11 @@ public:
     virtual void pre_eval(Environment environment, NodeReporter reporter);
 
 protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
 private:
     //! Hidden complex implementation details.
@@ -104,8 +107,15 @@ public:
     virtual void pre_eval(Environment environment, NodeReporter reporter);
 
 protected:
-    virtual void calculate(EvalContext context);
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
     //! Hidden complex implementation details.
     struct data_t;
@@ -129,7 +139,11 @@ public:
     virtual std::string name() const;
 
 protected:
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -155,8 +169,15 @@ public:
     virtual void pre_eval(Environment environment, NodeReporter reporter);
 
 protected:
-    virtual void calculate(EvalContext context);
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
 private:
     //! Hidden complex implementation details.
@@ -186,7 +207,10 @@ public:
     virtual void pre_eval(Environment environment, NodeReporter reporter);
 
 protected:
-    virtual void calculate(EvalContext context);
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
 private:
     //! Hidden complex implementation details.
@@ -216,8 +240,15 @@ public:
     virtual void pre_eval(Environment environment, NodeReporter reporter);
 
 protected:
-    virtual Value value_calculate(Value v, EvalContext context);
-    virtual void calculate(EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
 private:
     //! Hidden complex implementation details.
@@ -241,7 +272,10 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-    virtual void calculate(EvalContext context);
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
