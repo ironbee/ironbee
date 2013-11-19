@@ -514,7 +514,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_context_pop(ib_cfgparser_t *cp,
                                                 ib_context_t **pcctx);
 
 /**
- * Get the current context off the stack
+ * Get the current context
  *
  * @param cp Parser
  * @param pctx Address which the current context will be written
