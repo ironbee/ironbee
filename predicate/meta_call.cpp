@@ -25,6 +25,7 @@
 #include <predicate/meta_call.hpp>
 
 #include <predicate/call_factory.hpp>
+#include <predicate/eval.hpp>
 #include <predicate/less.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/reporter.hpp>
@@ -104,30 +105,35 @@ bool AbelianCall::transform(
     return true;
 }
 
-void MapCall::reset()
+void MapCall::eval_initialize(
+    NodeEvalState& my_state,
+    EvalContext    context
+) const
 {
-    Call::reset();
-    if (m_input_locations.get()) {
-        m_input_locations->clear();
-    }
-    else {
-        m_input_locations.reset(new input_locations_t());
-    }
+    Call::eval_initialize(my_state, context);
+    my_state.state() =
+        boost::shared_ptr<input_locations_t>(new input_locations_t());
+    my_state.setup_local_values(context);
 }
 
 void MapCall::map_calculate(
-    const node_p& input,
-    EvalContext   eval_context,
-    bool          eval_input,
-    bool          auto_finish
-)
+    const node_p&   input,
+    GraphEvalState& graph_eval_state,
+    EvalContext     context,
+    bool            eval_input,
+    bool            auto_finish
+) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
     if (eval_input) {
-        input->eval(eval_context);
+        graph_eval_state.eval(input, context);
     }
 
-    ValueList inputs = input->values();
-    input_locations_t& input_locations = *m_input_locations.get();
+    ValueList inputs = graph_eval_state.values(input->index());
+    input_locations_t& input_locations =
+        *boost::any_cast<boost::shared_ptr<input_locations_t> >(
+            my_state.state()
+        );
 
     // Check empty check is necessary as an empty list is allowed to change
     // to a different list to support values forwarding.
@@ -138,10 +144,10 @@ void MapCall::map_calculate(
                 i,
                 make_pair(input, inputs.begin())
             );
-            Value result = value_calculate(inputs.front(), eval_context);
+            Value result = value_calculate(inputs.front(), graph_eval_state, context);
 
             if (result) {
-                add_value(result);
+                my_state.add_value(result);
             }
         }
 
@@ -156,16 +162,16 @@ void MapCall::map_calculate(
             current = consider, consider = boost::next(current)
         ) {
             Value v = *consider;
-            Value result = value_calculate(v, eval_context);
+            Value result = value_calculate(v, graph_eval_state, context);
             if (result) {
-                add_value(result);
+                my_state.add_value(result);
             }
         }
         i->second = current;
     }
 
-    if (auto_finish && input->is_finished()) {
-        finish();
+    if (auto_finish && graph_eval_state.is_finished(input->index())) {
+        my_state.finish();
     }
 }
 
@@ -193,7 +199,10 @@ bool AliasCall::transform(
     return true;
 }
 
-void AliasCall::calculate(EvalContext context)
+void AliasCall::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     BOOST_THROW_EXCEPTION(
         IronBee::einval() << errinfo_what(

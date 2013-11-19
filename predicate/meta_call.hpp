@@ -19,7 +19,7 @@
  * @file
  * @brief Predicate --- Helpful parents for Call nodes.
  *
- * XXX
+ * A variety of classes to implement common behavior across Calls.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -67,29 +67,41 @@ private:
  * Base class for calls that behave like maps.
  *
  * This class provides a protected method, map_calculate() to its children
- * which can be used in calculate() to easily apply a Value to Value function
- * to an input node to generate outputs.
+ * which can be used in eval_calculate() to easily apply a Value to Value
+ * function to an input node to generate outputs.
  *
  * To use, subclass and implement value_calculate().  Then call
- * map_calculate() appropriately from calculate().  map_calculate() will
+ * map_calculate() appropriately from eval_calculate().  map_calculate() will
  * call value_calculate() on each value of the input and add the result if
  * non-NULL.
+ *
+ * @warning MapCall makes use of the node evaluation state
+ * (see NodeEvalState::state()), which means it should not be used by
+ * subclasses.
  **/
 class MapCall :
     virtual public Predicate::Call
 {
 protected:
-    //! Resets input location.
-    virtual void reset();
+    //! Initialize input location.
+    virtual void eval_initialize(
+        NodeEvalState& my_state,
+        EvalContext    context
+    ) const;
 
     /**
      * Per-Value calculate function.  Must be implemented by child class.
      *
-     * @param[in] v            Input value.
-     * @param[in] eval_context Evaluation context.
+     * @param[in] v                Input value.
+     * @param[in] graph_eval_state Graph evaluation state.
+     * @param[in] context          Evaluation context.
      * @return Output value; may be NULL.
      **/
-    virtual Value value_calculate(Value v, EvalContext eval_context) = 0;
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const = 0;
 
     /**
      * Apply value_calculate() to every value of @a input.
@@ -102,31 +114,31 @@ protected:
      * unfinished, it will remember which values of @a input it has processed
      * and look for new ones the next time it is called.
      *
-     * @param[in] input        Node whose values should be used as inputs.
-     * @param[in] eval_context Evaluation context.
-     * @param[in] eval_input   If true (the default), @a input will have
-     *                         Node::eval() called on it first.  If you are
-     *                         going to eval input yourself before calling
-     *                         this function, set to false for a performance
-     *                         gain.
-     * @param[in] auto_finish  If true (the default), Node::finish() will be
-     *                         called on this node if @a input is finished.
-     *                         Set to false, if this is undesired, e.g., if
-     *                         you are going to use map_calculate() on
-     *                         multiple children.
+     * @param[in] input            Node whose values should be used as inputs.
+     * @param[in] graph_eval_state Graph evaluation state.
+     * @param[in] context          Evaluation context.
+     * @param[in] eval_input       If true (the default), @a input will have
+     *                             Node::eval() called on it first.  If you
+     *                             are going to eval input yourself before
+     *                             calling this function, set to false for a
+     *                             performance gain.
+     * @param[in] auto_finish      If true (the default), Node::finish() will
+     *                             be called on this node if @a input is
+     *                             finished.  Set to false, if this is
+     *                             undesired, e.g., if you are going to use
+     *                             map_calculate() on multiple children.
      **/
     void map_calculate(
-        const node_p& input,
-        EvalContext   eval_context,
-        bool          eval_input  = true,
-        bool          auto_finish = true
-    );
+        const node_p&   input,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context,
+        bool            eval_input  = true,
+        bool            auto_finish = true
+    ) const;
 
 private:
     //! Type of @ref m_input_locations.
     typedef std::map<node_p, ValueList::const_iterator> input_locations_t;
-    //! Map of node to location in its value list calculated so far.
-    boost::thread_specific_ptr<input_locations_t> m_input_locations;
 };
 
 /**
@@ -153,7 +165,10 @@ protected:
     );
 
     //! Throws exception.
-    virtual void calculate(EvalContext context);
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
 private:
     const std::string m_into;
