@@ -2164,3 +2164,9 @@ ib_status_t ib_tx_flags_unset(ib_tx_t *tx, ib_flags_t flag)
     tx->flags &= (~flag);
     return tx_var_flags_set(tx, flag, 0);
 }
+
+const char *ib_engine_sensor_id(const ib_engine_t *ib) {
+    assert(ib != NULL);
+
+    return ib->sensor_id_str;
+}

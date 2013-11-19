@@ -762,6 +762,14 @@ ib_status_t DLL_PUBLIC ib_fctl_drain(ib_fctl_t *fc,
 
 
 /**
+ * Return the sensor ID.
+ *
+ * @param[in] ib IronBee engine.
+ *
+ * @returns The sensor ID value in the engine.
+ */
+const char DLL_PUBLIC *ib_engine_sensor_id(const ib_engine_t *ib);
+/**
  * @} IronBeeFilter
  */
 
