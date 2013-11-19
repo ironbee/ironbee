@@ -23,6 +23,7 @@
  */
 
 #include <predicate/dot2.hpp>
+#include <predicate/eval.hpp>
 #include <predicate/merge_graph.hpp>
 
 #include <boost/algorithm/string/join.hpp>
@@ -270,12 +271,14 @@ void render_value(
 /**
  * Render values of a node.
  *
- * @param[out] out  Where to write.
- * @param[in]  node Node to write values of.
+ * @param[out] out              Where to write.
+ * @param[in]  graph_eval_state Graph evaluation state.
+ * @param[in]  node             Node to write values of.
  **/
 void render_values(
-    ostream&       out,
-    const node_cp& node
+    ostream&              out,
+    const GraphEvalState& graph_eval_state,
+    const node_cp&        node
 )
 {
     out << "  { rank = same; \"" << node
@@ -284,7 +287,7 @@ void render_values(
         << "\" [weight=1000, dir=none, penwidth=0.5];\n"
         << "  \"value-" << node << "\" ["
         << "fontsize=10, shape=none, label=<";
-    render_valuelist(out, node->values());
+    render_valuelist(out, graph_eval_state.values(node->index()));
     out << ">];" << endl;
 }
 
@@ -464,13 +467,15 @@ void nh_validate(
 
 //! Node Hook: Value
 void nh_value(
-    ostream&       out,
-    string&        extra,
-    const node_cp& node
+    const GraphEvalState& graph_eval_state,
+    ostream&              out,
+    string&               extra,
+    const node_cp&        node
 )
 {
-    const ValueList& values = node->values();
-    bool finished = node->is_finished();
+    size_t index = node->index();
+    const ValueList& values = graph_eval_state.values(index);
+    bool finished = graph_eval_state.is_finished(index);
     list<string> styles;
 
     if (finished) {
@@ -480,7 +485,7 @@ void nh_value(
     if (! values.empty()) {
         styles.push_back("filled");
         extra += ", fillcolor=\"#BDECB6\"";
-        render_values(out, node);
+        render_values(out, graph_eval_state, node);
     }
 
     if (! styles.empty()) {
@@ -512,13 +517,17 @@ void to_dot2_validate(
 }
 
 void to_dot2_value(
-    ostream&            out,
-    const MergeGraph&   G,
-    const node_clist_t& initial,
-    root_namer_t        root_namer
+    ostream&              out,
+    const MergeGraph&     G,
+    const GraphEvalState& graph_eval_state,
+    const node_clist_t&   initial,
+    root_namer_t          root_namer
 )
 {
-    to_dot2_base(out, G, initial, root_namer, nh_value);
+    to_dot2_base(
+        out, G, initial, root_namer,
+        boost::bind(nh_value, boost::cref(graph_eval_state), _1, _2, _3)
+    );
 }
 
 } // Predicate

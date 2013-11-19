@@ -77,18 +77,20 @@ void to_dot2_validate(
 /*
  * Write @a G out to @a out in GraphViz format with values.
  *
- * @param[in] out        Where to write output.
- * @param[in] G          Graph to render.
- * @param[in] initial    Initial vector for search.  If empty, will default
- *                       to all nodes in graph.
+ * @param[in] out              Where to write output.
+ * @param[in] G                Graph to render.
+ * @param[in] graph_eval_state Evaluation state of @a G to render.
+ * @param[in] initial          Initial vector for search.  If empty, will
+ *                             default to roots of @a G.
  * @param[in] root_namer If provided, additional roots will be rendered and
  *                       attached to their appropriate nodes.
  **/
 void to_dot2_value(
-    std::ostream& out,
-    const MergeGraph& G,
+    std::ostream&                 out,
+    const MergeGraph&             G,
+    const GraphEvalState&         graph_eval_state,
     const node_clist_t& initial = node_clist_t(),
-    root_namer_t root_namer = root_namer_t()
+    root_namer_t root_namer =     root_namer_t()
 );
 
 } // Predicate
