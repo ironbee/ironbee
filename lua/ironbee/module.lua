@@ -308,8 +308,10 @@ moduleapi.declare_config = function(self, config_table)
     local sz = ffi.sizeof(self.config_name, 1)
     local default_config = 
         ffi.cast(self.config_name .. "*", ffi.C.ib_mpool_alloc(mp, sz))
-    self.ib_module.gclen = sz
-    self.ib_module.gcdata = default_config
+    local rc = ffi.C.ib_module_config_initialize(
+        self.ib_module,
+        default_config,
+        sz)
 
     -- Assign default configurations.
     for k, v in ipairs(config_table) do
