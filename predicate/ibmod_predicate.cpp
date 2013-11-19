@@ -70,6 +70,7 @@
 #include <predicate/bfs.hpp>
 #include <predicate/dag.hpp>
 #include <predicate/dot2.hpp>
+#include <predicate/eval.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/parse.hpp>
 #include <predicate/pre_eval_graph.hpp>
@@ -83,6 +84,7 @@
 #include <ironbee/rule_engine.h>
 
 #include <boost/bind.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <boost/foreach.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/shared_ptr.hpp>
@@ -485,6 +487,16 @@ private:
      **/
     list<P::node_p> m_roots;
 
+    //! Index limit.
+    size_t m_index_limit;
+
+    /**
+     * Root limit.
+     *
+     * This should be the same as the number of *distinct* root nodes.
+     **/
+    size_t m_root_limit;
+
     //! Whether to output a debug report.
     bool m_write_debug_report;
     //! Where to write a debug report.
@@ -492,6 +504,68 @@ private:
     //! Keep extra data past configuration?
     bool m_keep_data;
 };
+
+/**
+ * Per-transaction data.
+ *
+ * An instance is created at the beginning of each transaction and destroyed
+ * when the transaction memory pool is destroyed.  It holds the graph
+ * evaluation state and which root nodes (and thus which rules) have fired
+ * this transaction.  The latter is needed to prevent phaseless rules from
+ * firing each phase after they become true.
+ **/
+class PerTransaction
+{
+public:
+    /**
+     * Constructor.
+     *
+     * The graph should index nodes such with N roots, those roots have the
+     * first N indices with non-root nodes having higher indices.
+     *
+     * @param[in] index_limit Upper limit on node indices.  Should be one more
+     *                        than largest index.
+     * @param[in] root_limit  Upper limit on root indices.  Should be one more
+     *                        than largest index of a root.
+     **/
+    PerTransaction(size_t index_limit, size_t root_limit);
+
+    // These methods are intentionally inlined as they are both
+    // simple and performance critical.
+
+    //! Graph eval state.
+    P::GraphEvalState& graph_eval_state()
+    {
+        return m_graph_eval_state;
+    }
+    //! Graph eval state.
+    const P::GraphEvalState& graph_eval_state() const
+    {
+        return m_graph_eval_state;
+    }
+
+    //! Has root with index @a i fired?
+    bool root_fired(size_t i) const
+    {
+        return m_roots_fired[i];
+    }
+
+    //! Mark root with index @a i as fired.
+    void set_root_fired(size_t i)
+    {
+        assert(! root_fired(i));
+        m_roots_fired[i] = 1;
+    }
+
+private:
+    //! Graph evaluation state.
+    P::GraphEvalState m_graph_eval_state;
+    //! Which roots have fired.
+    boost::dynamic_bitset<> m_roots_fired;
+};
+
+//! Shared pointer to PerTransaction.
+typedef boost::shared_ptr<PerTransaction> per_transaction_p;
 
 // Implementation
 
@@ -560,6 +634,9 @@ void PerContext::inject(
     };
     IB::Transaction tx(rule_exec->tx);
     assert(tx);
+    per_transaction_p per_tx =
+        tx.get_module_data<per_transaction_p>(delegate()->module());
+    assert(per_tx);
     size_t num_considered = 0;
     size_t num_injected = 0;
 
@@ -570,21 +647,24 @@ void PerContext::inject(
             PerContext::rules_by_node_t::const_reference v,
             m_rules[phase]
         ) {
+            size_t index = v.first->index();
+
             // Only calculate if tracing as .size() might be O(n).
             size_t n = (m_write_trace ? v.second.size() : 0);
             num_considered += n;
 
-            // Check user data.
-            if (! v.first->get_user_data().empty()) {
+            // For phaseless rules, check if fired.
+            if (phase == IB_PHASE_NONE && per_tx->root_fired(index)) {
                 continue;
             }
 
-            if (! v.first->eval(tx).empty()) {
+            per_tx->graph_eval_state().eval(v.first, tx);
+            if (! per_tx->graph_eval_state().empty(index)) {
                 copy(
                     v.second.begin(), v.second.end(),
                     back_inserter(rule_list)
                 );
-                v.first->set_user_data(true);
+                per_tx->set_root_fired(index);
                 num_injected += n;
             }
         }
@@ -630,7 +710,11 @@ void PerContext::inject(
                        << " inject=" << num_injected
                        << endl;
 
-            to_dot2_value(*trace_out, delegate()->graph(), initial,
+            to_dot2_value(
+                *trace_out,
+                delegate()->graph(),
+                per_tx->graph_eval_state(),
+                initial,
                 boost::bind(
                     &PerContext::root_namer,
                     this,
@@ -672,6 +756,13 @@ string PerContext::root_namer(ib_rule_phase_num_t phase, size_t index) const
         result += rule->meta.full_id;
     }
     return result;
+}
+
+PerTransaction::PerTransaction(size_t index_limit, size_t root_limit) :
+    m_graph_eval_state(index_limit),
+    m_roots_fired(root_limit)
+{
+    // nop
 }
 
 Delegate::Delegate(IB::Module module) :
@@ -899,6 +990,20 @@ void Delegate::context_close(IB::Context context)
             }
         }
 
+        // Index
+        {
+            P::bfs_down(
+                graph().roots().first, graph().roots().second,
+                P::make_indexer(m_index_limit)
+            );
+            m_root_limit = 0;
+            BOOST_FOREACH(const P::node_p& root, graph().roots()) {
+                if (root->index() >= m_root_limit) {
+                    m_root_limit = root->index() + 1;
+                }
+            }
+        }
+
         // Pre-Evaluate
         {
             num_errors = 0;
@@ -1054,15 +1159,14 @@ void Delegate::request_started(
     IB::Transaction tx
 ) const
 {
+    per_transaction_p per_tx(new PerTransaction(
+        m_index_limit, m_root_limit
+    ));
     P::bfs_down(
         m_roots.begin(), m_roots.end(),
-        boost::make_function_output_iterator(
-            bind(&P::Node::reset, _1)
-        )
+        P::make_initializer(per_tx->graph_eval_state(), tx)
     );
-    BOOST_FOREACH(const P::node_p& root, m_roots) {
-        root->set_user_data(boost::any());
-    }
+    tx.set_module_data(module(), per_tx);
 }
 
 void Delegate::assert_valid(
