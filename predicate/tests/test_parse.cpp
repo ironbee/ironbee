@@ -23,6 +23,7 @@
  **/
 
 #include <predicate/parse.hpp>
+#include <predicate/eval.hpp>
 
 #include "gtest/gtest.h"
 
@@ -38,9 +39,12 @@ public:
     }
 
 protected:
-    virtual void calculate(EvalContext)
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const
     {
-        finish();
+        graph_eval_state[index()].finish_false(context);
     }
 };
 
