@@ -163,7 +163,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_ALLOW_TFNS |
           PHASE_FLAG_REQUEST ),
         "REQUEST",
-        "Request Body",
+        "Request",
         IB_OP_CAPABILITY_NON_STREAM,
         handle_request_event
     },
@@ -189,7 +189,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_ALLOW_TFNS |
           PHASE_FLAG_RESPONSE ),
         "RESPONSE",
-        "Response Body",
+        "Response",
         IB_OP_CAPABILITY_NON_STREAM,
         handle_response_event
     },
