@@ -48,12 +48,19 @@ public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
-
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -69,12 +76,19 @@ public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
-
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -84,28 +98,23 @@ class Sequence :
     public Call
 {
 public:
-    //! Constructor.
-    Sequence();
-
-    //! See Node::reset().
-    virtual void reset();
-
     //! See Call::name()
     virtual std::string name() const;
 
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_initialize().
+    virtual void eval_initialize(
+        NodeEvalState& node_eval_state,
+        EvalContext    context
+    ) const;
 
-private:
-    //! Hidden complex implementation details.
-    struct data_t;
-
-    //! Hidden complex implementation details.
-    boost::scoped_ptr<data_t> m_data;
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**

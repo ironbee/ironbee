@@ -72,21 +72,25 @@ string P::name() const
     return "p";
 }
 
-void P::calculate(EvalContext context)
+void P::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     list<string> value_strings;
     BOOST_FOREACH(const node_p& n, children()) {
-        n->eval(context);
         value_strings.push_back(
-            p_construct_value_string(n->values())
+            p_construct_value_string(
+                graph_eval_state.eval(n, context)
+            )
         );
     }
 
     cerr << boost::algorithm::join(value_strings, "; ") << endl;
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
-Value P::value_calculate(Value v, EvalContext context)
+Value P::value_calculate(Value v, GraphEvalState&, EvalContext) const
 {
     return v;
 }
@@ -101,12 +105,15 @@ string Identity::name() const
     return "identity";
 }
 
-void Identity::calculate(EvalContext context)
+void Identity::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
-    map_calculate(children().front(), context);
+    map_calculate(children().front(), graph_eval_state, context);
 }
 
-Value Identity::value_calculate(Value v, EvalContext context)
+Value Identity::value_calculate(Value v, GraphEvalState&, EvalContext) const
 {
     return v;
 }
@@ -116,24 +123,19 @@ bool Identity::validate(NodeReporter reporter) const
     return Validate::n_children(reporter, 1);
 }
 
-struct Sequence::data_t
-{
-    int64_t current;
-};
-
-Sequence::Sequence() :
-    m_data(new data_t())
-{
-};
-
 string Sequence::name() const
 {
     return "sequence";
 }
 
-void Sequence::reset()
+void Sequence::eval_initialize(
+    NodeEvalState& node_eval_state,
+    EvalContext    context
+) const
 {
-    m_data->current = literal_value(children().front()).value_as_number();
+    node_eval_state.state() =
+        literal_value(children().front()).value_as_number();
+    node_eval_state.setup_local_values(context);
 }
 
 bool Sequence::validate(NodeReporter reporter) const
@@ -152,8 +154,13 @@ bool Sequence::validate(NodeReporter reporter) const
     return result;
 }
 
-void Sequence::calculate(EvalContext context)
+void Sequence::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
+
     // Figure out parameters.
     int64_t start;
     int64_t end = -1;
@@ -174,12 +181,14 @@ void Sequence::calculate(EvalContext context)
     }
 
     // Output current.
-    add_value(
-        Field::create_number(context.memory_pool(), "", 0, m_data->current)
+    ib_num_t current = boost::any_cast<ib_num_t>(my_state.state());
+    my_state.add_value(
+        Field::create_number(context.memory_pool(), "", 0, current)
     );
 
     // Advance current.
-    m_data->current += step;
+    current += step;
+    my_state.state() = current;
 
     // Figure out if infinite.
     if (
@@ -192,10 +201,10 @@ void Sequence::calculate(EvalContext context)
     // Figure out if done.  Note >/< and not >=/<=.
     // Also note never finished if step == 0.
     if (
-        (step > 0 && m_data->current > end)  ||
-        (step < 0 && m_data->current < end)
+        (step > 0 && current > end)  ||
+        (step < 0 && current < end)
     ) {
-        finish();
+        my_state.finish();
     }
 }
 
