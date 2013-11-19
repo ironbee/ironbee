@@ -59,9 +59,8 @@ public:
     //! See Node::post_transform().
     void post_transform(NodeReporter reporter) const;
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
 };
 
 /**
@@ -99,9 +98,8 @@ public:
    //! See Node::post_transform().
    void post_transform(NodeReporter reporter) const;
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
 
 private:
     //! Name.

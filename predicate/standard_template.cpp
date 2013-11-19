@@ -40,7 +40,7 @@ string Ref::name() const
     return "ref";
 }
 
-void Ref::calculate(EvalContext context)
+void Ref::eval_calculate(GraphEvalState&, EvalContext) const
 {
     BOOST_THROW_EXCEPTION(
         einval() << errinfo_what(
@@ -105,7 +105,7 @@ string Template::name() const
     return m_name;
 }
 
-void Template::calculate(EvalContext context)
+void Template::eval_calculate(GraphEvalState&, EvalContext) const
 {
     BOOST_THROW_EXCEPTION(
         einval() << errinfo_what(
