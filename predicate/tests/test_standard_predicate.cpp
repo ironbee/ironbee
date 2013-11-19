@@ -35,13 +35,13 @@ class TestStandardPredicate :
 
 TEST_F(TestStandardPredicate, IsLonger)
 {
-    EXPECT_TRUE(eval_bool("(isLonger 2 (cat 'a' 'b' 'c'))"));
-    EXPECT_FALSE(eval_bool("(isLonger 3 (cat 'a' 'b' 'c'))"));
+    EXPECT_TRUE(eval_bool(parse("(isLonger 2 (cat 'a' 'b' 'c'))")));
+    EXPECT_FALSE(eval_bool(parse("(isLonger 3 (cat 'a' 'b' 'c'))")));
     EXPECT_EQ("null", transform("(isLonger 1 'a')"));
 
-    EXPECT_THROW(eval_bool("(isLonger))"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(isLonger 'a' 'b'))"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(isLonger 2 'b' 'c'))"), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isLonger))")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isLonger 'a' 'b'))")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isLonger 2 'b' 'c'))")), IronBee::einval);
 }
 
 TEST_F(TestStandardPredicate, IsLiteral)
@@ -52,38 +52,38 @@ TEST_F(TestStandardPredicate, IsLiteral)
     EXPECT_EQ("''", transform("(isLiteral 5.2)"));
     EXPECT_EQ("null", transform("(isLiteral (A))"));
 
-    EXPECT_THROW(eval_bool("(isLiteral))"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(isLiteral 'a' 'b'))"), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isLiteral))")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isLiteral 'a' 'b'))")), IronBee::einval);
 }
 
 TEST_F(TestStandardPredicate, IsSimple)
 {
-    EXPECT_TRUE(eval_bool("(isSimple (cat 'a'))"));
-    EXPECT_FALSE(eval_bool("(isSimple (cat 'a' 'b' 'c'))"));
+    EXPECT_TRUE(eval_bool(parse("(isSimple (cat 'a'))")));
+    EXPECT_FALSE(eval_bool(parse("(isSimple (cat 'a' 'b' 'c'))")));
     EXPECT_EQ("''", transform("(isSimple 'a')"));
 
-    EXPECT_THROW(eval_bool("(isSimple))"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(isSimple 'a' 'b'))"), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isSimple))")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isSimple 'a' 'b'))")), IronBee::einval);
 }
 
 TEST_F(TestStandardPredicate, IsFinished)
 {
-    EXPECT_TRUE(eval_bool("(isFinished (cat 'a'))"));
+    EXPECT_TRUE(eval_bool(parse("(isFinished (cat 'a'))")));
     // @todo Uncomment once we have sequence.
-    //EXPECT_FALSE(eval_bool("(isFinished (sequence 0))"));
+    //EXPECT_FALSE(eval_bool(parse("(isFinished (sequence 0))")));
     EXPECT_EQ("''", transform("(isFinished 'a')"));
 
-    EXPECT_THROW(eval_bool("(isFinished))"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(isFinished 'a' 'b'))"), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isFinished))")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isFinished 'a' 'b'))")), IronBee::einval);
 }
 
 TEST_F(TestStandardPredicate, IsHomogeneous)
 {
-    EXPECT_TRUE(eval_bool("(isHomogeneous (cat 'a' 'b'))"));
-    EXPECT_FALSE(eval_bool("(isHomogeneous (cat 'a' 1))"));
+    EXPECT_TRUE(eval_bool(parse("(isHomogeneous (cat 'a' 'b'))")));
+    EXPECT_FALSE(eval_bool(parse("(isHomogeneous (cat 'a' 1))")));
 
     EXPECT_EQ("''", transform("(isHomogeneous 'a')"));
 
-    EXPECT_THROW(eval_bool("(isHomogeneous))"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(isHomogeneous 'a' 'b'))"), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isHomogeneous))")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(isHomogeneous 'a' 'b'))")), IronBee::einval);
 }

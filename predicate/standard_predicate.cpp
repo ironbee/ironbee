@@ -64,7 +64,7 @@ bool IsLonger::transform(
 {
     if (children().back()->is_literal()) {
         int64_t n = literal_value(children().front()).value_as_number();
-        // @todo Simplify this after adding validation that n >= 1.
+        // @todo Simplify this after    adding validation that n >= 1.
         if (n >= 1) {
             node_p me = shared_from_this();
             node_p replacement = c_false;
@@ -75,23 +75,28 @@ bool IsLonger::transform(
     return false;
 }
 
-void IsLonger::calculate(EvalContext context)
+void IsLonger::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
-    int64_t n = literal_value(children().front()).value_as_number();
+    NodeEvalState& my_state = graph_eval_state[index()];
+    int64_t n =
+        literal_value(children().front()).value_as_number();
 
     // @todo Move this to validation and change below to an assert.
     if (n <= 0) {
-        finish_true();
+        my_state.finish_true(context);
     }
 
     const node_p& child = children().back();
-    ValueList values = child->eval(context);
+    ValueList values = graph_eval_state.eval(child, context);
 
     if (values.size() > size_t(n)) {
-        finish_true();
+        my_state.finish_true(context);
     }
-    else if (child->is_finished()) {
-        finish_false();
+    else if (graph_eval_state.is_finished(child->index())) {
+        my_state.finish_false(context);
     }
 }
 
@@ -124,7 +129,7 @@ bool IsLiteral::transform(
     return true;
 }
 
-void IsLiteral::calculate(EvalContext context)
+void IsLiteral::eval_calculate(GraphEvalState&, EvalContext) const
 {
     BOOST_THROW_EXCEPTION(
         einval() << errinfo_what(
@@ -152,16 +157,17 @@ bool IsSimple::transform(
     return transform_to_true_if_literal(merge_graph, shared_from_this());
 }
 
-void IsSimple::calculate(EvalContext context)
+void IsSimple::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
     const node_p& child = children().back();
-    ValueList values = child->eval(context);
+    ValueList values = graph_eval_state.eval(child, context);
 
     if (values.size() > 1) {
-        finish_false();
+        my_state.finish_false(context);
     }
-    else if (child->is_finished()) {
-        finish_true();
+    else if (graph_eval_state.is_finished(child->index())) {
+        my_state.finish_true(context);
     }
 }
 
@@ -184,29 +190,19 @@ bool IsFinished::transform(
     return transform_to_true_if_literal(merge_graph, shared_from_this());
 }
 
-void IsFinished::calculate(EvalContext context)
+void IsFinished::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
     const node_p& child = children().back();
-    child->eval(context);
-    if (child->is_finished()) {
-        finish_true();
+    graph_eval_state.eval(child, context);
+    if (graph_eval_state.is_finished(child->index())) {
+        my_state.finish_true(context);
     }
 }
 
 bool IsFinished::validate(NodeReporter reporter) const
 {
     return Validate::n_children(reporter, 1);
-}
-
-struct IsHomogeneous::data_t
-{
-    boost::thread_specific_ptr<ValueList::const_iterator> location;
-};
-
-IsHomogeneous::IsHomogeneous() :
-    m_data(new data_t())
-{
-    // nop
 }
 
 string IsHomogeneous::name() const
@@ -223,26 +219,26 @@ bool IsHomogeneous::transform(
     return transform_to_true_if_literal(merge_graph, shared_from_this());
 }
 
-void IsHomogeneous::reset()
+void IsHomogeneous::eval_initialize(
+    NodeEvalState& node_eval_state,
+    EvalContext    context
+) const
 {
-    if (m_data->location.get()) {
-        *(m_data->location) = ValueList::const_iterator();
-    }
-    else {
-        m_data->location.reset(new ValueList::const_iterator());
-    }
+    node_eval_state.state() = ValueList::const_iterator();
 }
 
-void IsHomogeneous::calculate(EvalContext context)
+void IsHomogeneous::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
     const node_p& child = children().back();
-    ValueList values = child->eval(context);
-    ValueList::const_iterator& location = *m_data->location.get();
+    ValueList values = graph_eval_state.eval(child, context);
+    ValueList::const_iterator location =
+        boost::any_cast<ValueList::const_iterator>(my_state.state());
 
     // Special case if no values yet.
     if (values.empty()) {
-        if (child->is_finished()) {
-            finish_true();
+        if (graph_eval_state.is_finished(child->index())) {
+            my_state.finish_true(context);
         }
         return;
     }
@@ -258,14 +254,17 @@ void IsHomogeneous::calculate(EvalContext context)
 
     while (location != end) {
         if (location->type() != type) {
-            finish_false();
+            my_state.finish_false(context);
             return;
         }
         ++location;
     }
 
-    if (child->is_finished()) {
-        finish_true();
+    if (graph_eval_state.is_finished(child->index())) {
+        my_state.finish_true(context);
+    }
+    else {
+        my_state.state() = location;
     }
 }
 

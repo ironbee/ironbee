@@ -63,9 +63,8 @@ public:
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
 };
 
 //! Is child literal?
@@ -90,9 +89,8 @@ public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
 };
 
 //! Is child simple?
@@ -117,9 +115,8 @@ public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
 };
 
 //! Is child finished?
@@ -144,9 +141,8 @@ public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
 };
 
 //! Do all values of child have the same type?
@@ -154,9 +150,6 @@ class IsHomogeneous :
     public Call
 {
 public:
-    //! Constructor.
-    IsHomogeneous();
-
     //! See Call::name()
     virtual std::string name() const;
 
@@ -171,22 +164,17 @@ public:
        NodeReporter       reporter
    );
 
-   //! See Node::reset()
-   virtual void reset();
+   //! See Node::eval_initialize()
+   virtual void eval_initialize(
+       NodeEvalState& node_eval_state,
+       EvalContext    context
+   ) const;
 
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext);
-
-private:
-    //! Hidden complex implementation details.
-    struct data_t;
-
-    //! Hidden complex implementation details.
-    boost::scoped_ptr<data_t> m_data;
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
 };
 
 /**
