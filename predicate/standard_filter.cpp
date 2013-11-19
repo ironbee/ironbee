@@ -110,12 +110,19 @@ string Eq::name() const
     return "eq";
 }
 
-void Eq::calculate(EvalContext context)
+void Eq::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
-Value Eq::value_calculate(Value v, EvalContext context)
+Value Eq::value_calculate(
+    Value           v,
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     Value f = literal_value(children().front());
     return value_equal(f, v) ? v : Value();
@@ -135,12 +142,12 @@ string Ne::name() const
     return "ne";
 }
 
-void Ne::calculate(EvalContext context)
+void Ne::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
-Value Ne::value_calculate(Value v, EvalContext context)
+Value Ne::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     Value f = literal_value(children().front());
     return (! value_equal(f, v)) ? v : Value();
@@ -160,12 +167,12 @@ string Lt::name() const
     return "lt";
 }
 
-void Lt::calculate(EvalContext context)
+void Lt::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
-Value Lt::value_calculate(Value v, EvalContext context)
+Value Lt::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     Value f = literal_value(children().front());
     return value_less(f, v) ? v : Value();
@@ -192,12 +199,12 @@ string Le::name() const
     return "le";
 }
 
-void Le::calculate(EvalContext context)
+void Le::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
-Value Le::value_calculate(Value v, EvalContext context)
+Value Le::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     Value f = literal_value(children().front());
     return (value_less(f, v) || value_equal(f, v)) ? v : Value();
@@ -224,12 +231,12 @@ string Gt::name() const
     return "gt";
 }
 
-void Gt::calculate(EvalContext context)
+void Gt::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
-Value Gt::value_calculate(Value v, EvalContext context)
+Value Gt::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     Value f = literal_value(children().front());
     return (! value_less(f, v) && ! value_equal(f, v)) ? v : Value();
@@ -256,12 +263,12 @@ string Ge::name() const
     return "ge";
 }
 
-void Ge::calculate(EvalContext context)
+void Ge::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
-Value Ge::value_calculate(Value v, EvalContext context)
+Value Ge::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     Value f = literal_value(children().front());
     return (! value_less(f, v)) ? v : Value();
@@ -299,12 +306,19 @@ string Typed::name() const
     return "typed";
 }
 
-void Typed::calculate(EvalContext context)
+void Typed::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
-Value Typed::value_calculate(Value v, EvalContext context)
+Value Typed::value_calculate(
+    Value           v,
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     return (v.type() == m_data->type) ? v : Value();
 }
@@ -365,12 +379,12 @@ string Named::name() const
     return "named";
 }
 
-void Named::calculate(EvalContext context)
+void Named::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
-Value Named::value_calculate(Value v, EvalContext context)
+Value Named::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     ConstByteString name =
         literal_value(children().front()).value_as_byte_string();
@@ -397,9 +411,9 @@ string NamedI::name() const
     return "namedi";
 }
 
-void NamedI::calculate(EvalContext context)
+void NamedI::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
 namespace {
@@ -411,7 +425,7 @@ bool namedi_caseless_compare(char a, char b)
 
 }
 
-Value NamedI::value_calculate(Value v, EvalContext context)
+Value NamedI::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     ConstByteString name =
         literal_value(children().front()).value_as_byte_string();
@@ -464,12 +478,12 @@ string NamedRx::name() const
     return "namedRx";
 }
 
-void NamedRx::calculate(EvalContext context)
+void NamedRx::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
-Value NamedRx::value_calculate(Value v, EvalContext context)
+Value NamedRx::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     if (
         regex_search(

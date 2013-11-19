@@ -50,10 +50,17 @@ public:
 
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -71,10 +78,17 @@ public:
 
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -92,10 +106,17 @@ public:
 
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -114,10 +135,17 @@ public:
 
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -136,10 +164,17 @@ public:
 
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -158,10 +193,17 @@ public:
 
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -185,10 +227,17 @@ public:
 
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
 private:
     //! Hidden complex implementation details.
@@ -213,10 +262,17 @@ public:
 
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -234,10 +290,17 @@ public:
 
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -275,10 +338,17 @@ public:
 
 protected:
     //! See MapCall::value_calculate()
-    virtual Value value_calculate(Value v, EvalContext context);
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 
 private:
     //! Hidden complex implementation details.
