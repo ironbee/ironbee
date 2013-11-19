@@ -23,6 +23,9 @@
  **/
 
 #include <predicate/dag.hpp>
+
+#include <predicate/call_helpers.hpp>
+#include <predicate/eval.hpp>
 #include <ironbeepp/test_fixture.hpp>
 
 #include "gtest/gtest.h"
@@ -46,11 +49,15 @@ public:
         return "dummy_call";
     }
 
-protected:
-    virtual void calculate(EvalContext)
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const
     {
-        add_value(Value(&c_field));
-        finish();
+        NodeEvalState& my_state = graph_eval_state[index()];
+        my_state.setup_local_values(context);
+        my_state.add_value(Value(&c_field));
+        my_state.finish();
     }
 };
 
@@ -70,14 +77,6 @@ TEST_F(TestDAG, Node)
     EXPECT_EQ("(dummy_call)", n->to_s());
     EXPECT_TRUE(n->children().empty());
     EXPECT_TRUE(n->parents().empty());
-    EXPECT_FALSE(n->is_finished());
-    EXPECT_TRUE(n->values().empty());
-
-    EXPECT_EQ(&c_field, n->eval(m_transaction).front().ib());
-    EXPECT_TRUE(n->is_finished());
-
-    n->reset();
-    EXPECT_FALSE(n->is_finished());
 
     node_p n2(new DummyCall);
     n->add_child(n2);
@@ -85,18 +84,38 @@ TEST_F(TestDAG, Node)
     EXPECT_EQ(n2, n->children().front());
     EXPECT_EQ(1UL, n2->parents().size());
     EXPECT_EQ(n, n2->parents().front().lock());
+
+    n->set_index(0);
+    GraphEvalState ges(1);
+
+    EXPECT_FALSE(ges.is_finished(0));
+    EXPECT_TRUE(ges.empty(0));
+
+    n->eval_initialize(ges[0], m_transaction);
+    ges.eval(n, m_transaction);
+    EXPECT_EQ(&c_field, ges.values(0).front().ib());
+    EXPECT_TRUE(ges.is_finished(0));
 }
 
 TEST_F(TestDAG, String)
 {
-    String n("node");
-    EXPECT_EQ("'node'", n.to_s());
-    EXPECT_EQ("node", n.value_as_s());
+    String* s = new String("node");
+    node_p n(s);
+    EXPECT_EQ("'node'", n->to_s());
+    EXPECT_EQ("node", s->value_as_s());
+    EXPECT_EQ("node", literal_value(n).value_as_byte_string().to_s());
+    EXPECT_TRUE(n->is_literal());
+
+    n->set_index(0);
+    GraphEvalState ges(1);
+
+    n->eval_initialize(ges[0], m_transaction);
+    ges.eval(n, m_transaction);
+    EXPECT_TRUE(ges.is_finished(0));
     EXPECT_EQ(
         "node",
-        n.eval(EvalContext()).front().value_as_byte_string().to_s()
+        ges.values(0).front().value_as_byte_string().to_s()
     );
-    EXPECT_TRUE(n.is_literal());
 }
 
 TEST_F(TestDAG, StringEscaping)
@@ -109,26 +128,38 @@ TEST_F(TestDAG, StringEscaping)
 
 TEST_F(TestDAG, Integer)
 {
-    Integer n(0);
-    EXPECT_EQ("0", n.to_s());
-    EXPECT_EQ(0, n.value_as_i());
-    EXPECT_EQ(
-        0,
-        n.eval(EvalContext()).front().value_as_number()
-    );
-    EXPECT_TRUE(n.is_literal());
+    Integer* i = new Integer(0);
+    node_p n(i);
+    EXPECT_EQ("0", n->to_s());
+    EXPECT_EQ(0, i->value_as_i());
+    EXPECT_EQ(0, literal_value(n).value_as_number());
+    EXPECT_TRUE(n->is_literal());
+
+    n->set_index(0);
+    GraphEvalState ges(1);
+
+    n->eval_initialize(ges[0], m_transaction);
+    ges.eval(n, m_transaction);
+    EXPECT_TRUE(ges.is_finished(0));
+    EXPECT_EQ(0, ges.values(0).front().value_as_number());
 }
 
 TEST_F(TestDAG, Float)
 {
-    Float n(1.2);
-    EXPECT_FLOAT_EQ(1.2, boost::lexical_cast<long double>(n.to_s()));
-    EXPECT_FLOAT_EQ(1.2, n.value_as_f());
-    EXPECT_FLOAT_EQ(
-        1.2,
-        n.eval(EvalContext()).front().value_as_float()
-    );
-    EXPECT_TRUE(n.is_literal());
+    Float* f = new Float(1.2);
+    node_p n(f);
+    EXPECT_FLOAT_EQ(1.2, boost::lexical_cast<long double>(n->to_s()));
+    EXPECT_FLOAT_EQ(1.2, f->value_as_f());
+    EXPECT_FLOAT_EQ(1.2, literal_value(n).value_as_float());
+    EXPECT_TRUE(n->is_literal());
+
+    n->set_index(0);
+    GraphEvalState ges(1);
+
+    n->eval_initialize(ges[0], m_transaction);
+    ges.eval(n, m_transaction);
+    EXPECT_TRUE(ges.is_finished(0));
+    EXPECT_EQ(1.2, ges.values(0).front().value_as_float());
 }
 
 TEST_F(TestDAG, Call)
@@ -136,8 +167,6 @@ TEST_F(TestDAG, Call)
     node_p n(new DummyCall);
 
     EXPECT_EQ("(dummy_call)", n->to_s());
-    EXPECT_EQ(&c_field, n->eval(m_transaction).front().ib());
-    EXPECT_TRUE(n->is_finished());
 
     node_p a1(new DummyCall);
     n->add_child(a1);
@@ -146,6 +175,14 @@ TEST_F(TestDAG, Call)
 
     EXPECT_EQ("(dummy_call (dummy_call) 'foo')", n->to_s());
     EXPECT_FALSE(n->is_literal());
+
+    n->set_index(0);
+    GraphEvalState ges(1);
+
+    n->eval_initialize(ges[0], m_transaction);
+    ges.eval(n, m_transaction);
+    EXPECT_EQ(&c_field, ges.values(0).front().ib());
+    EXPECT_TRUE(ges.is_finished(0));
 }
 
 TEST_F(TestDAG, OutputOperator)
@@ -160,11 +197,20 @@ TEST_F(TestDAG, OutputOperator)
 
 TEST_F(TestDAG, Null)
 {
-    Null n;
-    EXPECT_EQ("null", n.to_s());
-    EXPECT_TRUE(n.eval(EvalContext()).empty());
-    EXPECT_TRUE(n.is_finished());
-    EXPECT_TRUE(n.is_literal());
+    Null* nu = new Null;
+    node_p n(nu);
+
+    EXPECT_EQ("null", n->to_s());
+    EXPECT_TRUE(n->is_literal());
+
+    n->set_index(0);
+    GraphEvalState ges(1);
+
+    n->eval_initialize(ges[0], m_transaction);
+    ges.eval(n, m_transaction);
+
+    EXPECT_TRUE(ges.empty(0));
+    EXPECT_TRUE(ges.is_finished(0));
 }
 
 TEST_F(TestDAG, DeepCall)
@@ -207,73 +253,4 @@ TEST_F(TestDAG, ModifyChildren)
     EXPECT_EQ(p, c1->parents().front().lock());
     EXPECT_EQ(p, boost::next(c1->parents().begin())->lock());
     EXPECT_TRUE(c2->parents().empty());
-}
-
-namespace {
-
-class test_thread_worker
-{
-public:
-    test_thread_worker(Value v, EvalContext c, node_p n) :
-        m_v(v), m_c(c), m_n(n)
-    {
-        // nop
-    }
-
-    void operator()()
-    {
-        for (int i = 0; i < 10000; ++i) {
-            if (m_n->eval(m_c).front() != m_v) {
-                throw runtime_error("FAIL");
-            }
-            usleep(i % 100);
-        }
-    }
-
-private:
-    Value m_v;
-    EvalContext m_c;
-    node_p m_n;
-};
-
-class ConstantCall : public Call
-{
-public:
-    ConstantCall(Value a, Value b) : m_a(a), m_b(b) {}
-
-    virtual string name() const
-    {
-        return "constant_call";
-    }
-
-protected:
-    virtual void calculate(EvalContext context)
-    {
-        add_value(context ? m_a : m_b);
-        finish();
-    }
-
-private:
-    Value m_a;
-    Value m_b;
-};
-
-}
-
-TEST_F(TestDAG, Threaded)
-{
-    ib_tx_t dummy_tx;
-    dummy_tx.rule_exec = NULL;
-    ib_field_t dummy_field;
-    EvalContext nonnull(&dummy_tx);
-    Value a(&dummy_field); // non-null
-    Value b; // null
-
-    node_p n(new ConstantCall(a, b));
-
-    // Failure will be a thread throwing an exception.
-    boost::thread_group g;
-    g.create_thread(test_thread_worker(a, nonnull, n));
-    g.create_thread(test_thread_worker(b, EvalContext(), n));
-    g.join_all();
 }

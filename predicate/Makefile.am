@@ -12,6 +12,7 @@ module_LTLIBRARIES = ibmod_predicate.la
 noinst_LTLIBRARIES = libpredicate.la
 libpredicate_la_SOURCES = \
     dag.cpp                  \
+    eval.cpp                 \
     call_factory.cpp         \
     call_helpers.cpp         \
     parse.cpp                \
@@ -41,6 +42,7 @@ EXTRA_DIST = \
 		call_factory.hpp          \
 		call_helpers.hpp          \
 		dag.hpp                   \
+    eval.hpp                  \
 		dot.hpp                   \
 		dot2.hpp                  \
 		ibmod_predicate.hpp       \

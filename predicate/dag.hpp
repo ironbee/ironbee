@@ -56,6 +56,9 @@ class NodeReporter;
 class MergeGraph;
 // Defined in call_factory.hpp
 class CallFactory;
+// Defined in eval.hpp.
+class GraphEvalState;
+class NodeEvalState;
 
 /// @cond internal
 namespace Impl {
@@ -133,11 +136,11 @@ typedef std::list<node_cp> node_clist_t;
  * subclassed.  For literal values, instantiate Null or String.  For
  * call values, create and instantiate a subclass of Call.
  *
- * Nodes are not thread safe except for values.  Values are per-node and
- * reset(), has_value(), and value() can be called safely from multiple
- * threads, resulting in the value for that particular thread.  Subclasses
- * that implement calculate() in a thread-safe manner can then have eval()
- * called safely from multiple threads.
+ * This class hierarchy defines how to evaluate (through eval_calculate(),
+ * eval_initialize()) but does not store the data.
+ * Data is stored separately in GraphEvalState and NodeEvalState.  This
+ * separation allows simultaneous evaluations of the DAG across different
+ * EvalContext.
  *
  * @sa Call
  * @sa Literal
@@ -158,21 +161,10 @@ public:
     virtual ~Node();
 
     /**
-     * S-Expression.
-     *
-     * An S-expression representation of the expression tree rooted at this
-     * node.  See parse.hpp for detailed grammar.
-     *
-     * This method returns a string reference, but this reference is not
-     * stable if this node or any children are changed.  It should be copied
-     * if needed beyond such operations.
-     *
-     * S-Expressions are calculated dynamically and cached, so calling this
-     * method is cheap.
-     *
-     * @return S-Expression of expression tree rooted at node.
+     * @name Graph Structure Manipulation
+     * These routines are used to modify the structure of the graph.
      **/
-    virtual const std::string& to_s() const = 0;
+    ///@{
 
     /**
      * Add a child.
@@ -219,6 +211,26 @@ public:
      **/
     virtual void replace_child(const node_p& child, const node_p& with);
 
+    ///@}
+
+
+    /**
+     * S-Expression.
+     *
+     * An S-expression representation of the expression tree rooted at this
+     * node.  See parse.hpp for detailed grammar.
+     *
+     * This method returns a string reference, but this reference is not
+     * stable if this node or any children are changed.  It should be copied
+     * if needed beyond such operations.
+     *
+     * S-Expressions are calculated dynamically and cached, so calling this
+     * method is cheap.
+     *
+     * @return S-Expression of expression tree rooted at node.
+     **/
+    virtual const std::string& to_s() const = 0;
+
     //! Children accessor -- const.
     const node_list_t& children() const
     {
@@ -230,44 +242,14 @@ public:
         return m_parents;
     }
 
-    /**
-     * Is node finished in this thread.
-     *
-     * Finished nodes guarantee that values() will not changed until the next
-     * reset.  Unfinished nodes may add additional values (but will not change
-     * or remove existing) values if eval() is called again; in particular,
-     * if the Context changes.
-     **/
-    bool is_finished() const;
-
-    /**
-     * Values of node in this thread.
-     *
-     * Iterators from the returned list are invalidated by reset() and
-     * may be invalidated when the list goes from empty to non-empty.  Once
-     * the list is non-empty, iterators will not be invalidated except by
-     * reset().  This contract allows for forwarding (see forward()).
-     *
-     * @sa finished()
-     **/
-    ValueList values() const;
-
-    //! True iff node is a literal, in which case eval(EvalContext()) is valid.
+    //! True iff node is a literal.
     bool is_literal() const;
 
-    //! Call calculate() if unfinished.
-    ValueList eval(EvalContext context);
-
     /**
-     * Reset to no values and unfinished for this thread.
-     *
-     * If a child class overrides it, it probably wants to store the data it
-     * resets in thread local data.  That is, as a node may be in use by
-     * multiple threads simultaneously, represented distinct evaluations, any
-     * calculation dependent data should be thread local, just as the values
-     * of the node are.
+     * @name Lifecycle
+     * These routine implement the graph lifecycle.
      **/
-    virtual void reset();
+    ///@{
 
     /**
      * Perform pre-transformation validations.
@@ -338,128 +320,71 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
     /**
-     * Preform any one time preparations needed for evaluation.
+     * Preform any state preparations needed for evaluation.
      *
      * This method is called after all transformations are complete but before
      * any evaluation.  It provides the environment of the node and should be
      * used to do any setup needed to calculate values.
      *
-     * @param[in] environment Environment for evaluation.
-     * @param[in] reporter    Reporter to report errors with.
+     * @param[in]  environment Environment for evaluation.
+     * @param[in]  reporter    Reporter to report errors with.
      **/
     virtual void pre_eval(Environment environment, NodeReporter reporter);
 
-    /**
-     * Set user specific data.
-     *
-     * This data is per-thread.
-     **/
-    void set_user_data(boost::any data);
+    ///@}
 
     /**
-     * Get user specific data.
-     *
-     * This data is per-thread.
+     * @name Evaluation Support
+     * Methods to support evaluation.  These methods are usually not called
+     * directly, but instead are called from GraphEvalState and NodeEvalState.
+     * They are public to allow for certain low level interactions with nodes.
      **/
-    boost::any get_user_data() const;
+    ///@{
 
-protected:
+    //! Set index of node to @a index.
+    void set_index(size_t index);
+
+    //! Access index.
+    // Intentionally inline.
+    size_t index() const
+    {
+        return m_index;
+    }
+
     /**
-     * Calculate value.
+     * Initialize node eval state.
      *
-     * Subclass classes should implement this to calculate and call
-     * add_value() and finish() appropriately.
+     * This method is called before each evaluation run.  It should setup
+     * any state or initial values of @a node_eval_state.  See
+     * NodeEvalState::state().
      *
-     * It is important to make this thread safe if intending to use Predicate
-     * in a multithreaded situation.
+     * @param[in] node_eval_state Node eval state to setup.
+     * @param[in] context         Evaluation context.
+     **/
+    virtual void eval_initialize(
+        NodeEvalState& node_eval_state,
+        EvalContext    context
+    ) const;
+
+    /**
+     * Calculate value and update state.
+     *
+     * Subclass classes should implement this to calculate and call methods
+     * of @a node_eval_state appropriately to add values and finish.
      *
      * This method will be called any time eval() is called while the node is
      * unfinished.  It will not be called on a finished node.
      *
-     * @param [in] context Context of calculation.
+     * @param[in] graph_eval_state Graph evaluation state.
+     * @param[in] context          Context of calculation.
      * @return Value of node.
      */
-    virtual void calculate(EvalContext context) = 0;
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const = 0;
 
-    /**
-     * Add a value (thread specific).
-     *
-     * Should only be called from calculate().
-     *
-     * @sa finished()
-     * @sa values()
-     * @sa finish()
-     *
-     * @throw einval if called on a finished() node.
-     **/
-    void add_value(Value v);
-
-    /**
-     * Mark node as finished.
-     *
-     * Should only be called from calculate().
-     *
-     * @sa finished()
-     * @sa add_value()
-     *
-     * @throw einval if called on a finished() node.
-     **/
-    void finish();
-
-    /**
-     * Forward behavior to another node.
-     *
-     * May only be called if this node is unfinished and has no values.  All
-     * calls to finished() and values() will be forwarded to the other node
-     * until the next reset.  This nodes calculate will not be called.
-     *
-     * @throw einval if called on a finished() node.
-     * @throw einval if called on a node with non-empty values.
-     * @throw einval if called on a node already being forwarded.
-     **/
-    void forward(const node_p& other);
-
-    /**
-     * Alias a list.
-     *
-     * May only be called if this node is unfinished and has no values.  Sets
-     * values to an alias of the given list.  It is up to the caller to
-     * guarantee that the list only grows and to call finish once the list is
-     * done growing.
-     *
-     * Once a node is aliased, it unlikely there is any more to do with the
-     * value besides finish.  Thus, if you call alias(), be sure to check if
-     * already aliased() in subsequent calls.
-     *
-     * @throw einval if called on a finished() node.
-     * @throw einval if called on a node with non-empty values.
-     * @throw einval if called on a forwarded node.
-     **/
-    void alias(ValueList list);
-
-    /**
-     * Is node forwarding?
-     **/
-    bool is_forwarding() const;
-
-    /**
-     * Is node aliased?
-     **/
-    bool is_aliased() const;
-
-    /**
-     * Finish node as true.
-     *
-     * Convenience method for finishing the current node with a truthy value.
-     **/
-    void finish_true();
-
-   /**
-    * Finish node as false.
-    *
-    * Convenience method for finishing the current node with a falsy value.
-    **/
-   void finish_false();
+    ///@}
 
 private:
     /**
@@ -470,21 +395,12 @@ private:
      **/
     void unlink_from_child(const node_p& child) const;
 
-    //! Per-thread value information.
-    class per_thread_t;
-
-    //! Fetch per-thread info for this thread.
-    per_thread_t& lookup_value();
-    //! Fetch per-thread info for this thread.
-    const per_thread_t& lookup_value() const;
-
-    //! Thread specific value.
-    boost::thread_specific_ptr<per_thread_t> m_value;
-
     //! List of parents (note weak pointers).
     weak_node_list_t m_parents;
     //! List of children.
     node_list_t m_children;
+    //! Index.
+    size_t m_index;
 };
 
 //! Ostream output operator.
@@ -498,7 +414,7 @@ std::ostream& operator<<(std::ostream& out, const Node& node);
  *
  * This class is unique in the class hierarchy as being subclassable.  Users
  * should create subclasses for specific functions.  Subclasses must implement
- * name() and calculate().  Subclasses may also define add_child(),
+ * name() and eval_calculate().  Subclasses may also define add_child(),
  * remove_child(), and replace_child() but must call the parents methods
 * within.
  **/
@@ -560,14 +476,52 @@ class Literal :
 
 private:
     //! Private constructor to limit subclassing.
-    Literal() {}
+    Literal();
+
 public:
+    //! Values of literal.
+    // Intentionally inline.
+    virtual ValueList literal_values() const
+    {
+        return m_values;
+    }
+
     //! @throw IronBee::einval always.
     virtual void add_child(const node_p&);
     //! @throw IronBee::einval always.
     virtual void remove_child(const node_p&);
     //! @throw IronBee::einval always.
     virtual void replace_child(const node_p& child, const node_p& with);
+
+    //! @throw IronBee::einval always.
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext    context
+    ) const;
+
+    //! Set value based on literal_values() and finish.
+    virtual void eval_initialize(
+        NodeEvalState& node_eval_state,
+        EvalContext    context
+    ) const;
+
+protected:
+    /**
+     * Add a value to literal values.
+     *
+     * Subclasses should call this as part of their constructor or pre-eval.
+     *
+     * @param[in] v Value to add.
+     **/
+    void add_literal_value(Value v);
+
+private:
+    //! Memory pool for m_values.
+    ScopedMemoryPool m_memory_pool;
+
+    // Note not a ConstList.
+    //! Values returned by literal_values().
+    List<Value> m_values;
 };
 
 /**
@@ -610,10 +564,6 @@ public:
      **/
     static std::string escape(const std::string& s);
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
-
 private:
     //! Value as a C++ string.
     const std::string m_value_as_s;
@@ -621,8 +571,6 @@ private:
     const std::string m_s;
     //! Memory pool to create field value from.  Alias of m_value_as_s.
     boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
-    //! Value added by calculate().
-    Value m_value_as_field;
 };
 
 /**
@@ -637,10 +585,6 @@ class Null :
 public:
     //! S-expression: null
     virtual const std::string& to_s() const;
-
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
 };
 
 /**
@@ -673,10 +617,6 @@ public:
         return m_s;
     }
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
-
 private:
     //! Value as integer.
     int64_t m_value_as_i;
@@ -684,8 +624,6 @@ private:
     const std::string m_s;
     //! Memory pool to create field value from.
     boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
-    //! Value added by calculate().
-    Value m_value_as_field;
 };
 
 /**
@@ -718,10 +656,6 @@ public:
         return m_s;
     }
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext context);
-
 private:
     //! Value as integer.
     long double m_value_as_f;
@@ -729,8 +663,6 @@ private:
     const std::string m_s;
     //! Memory pool to create field value from.
     boost::shared_ptr<IronBee::ScopedMemoryPool> m_pool;
-    //! Value added by calculate().
-    Value m_value_as_field;
 };
 
 } // Predicate

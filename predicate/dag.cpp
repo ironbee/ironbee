@@ -23,6 +23,7 @@
  */
 
 #include <predicate/dag.hpp>
+#include <predicate/eval.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/reporter.hpp>
 
@@ -36,225 +37,6 @@ using namespace std;
 
 namespace IronBee {
 namespace Predicate {
-
-namespace {
-static IronBee::ScopedMemoryPool c_static_pool;
-static const Value
-    c_empty_string(
-        IronBee::Field::create_byte_string(
-            c_static_pool,
-            "", 0,
-            IronBee::ByteString::create(c_static_pool)
-        )
-    );
-
-}
-
-/**
- * Per-Thread node information.
- *
- * This class holds the node information that is specific to a single thread,
- * that is, the state of the node during an evaluation run.
- **/
-class Node::per_thread_t
-{
-public:
-    //! Constructor.
-    per_thread_t() :
-        m_pool("node value private pool"),
-        m_finished(false),
-        m_own_values(List<Value>::create(m_pool)),
-        m_values(m_own_values),
-        m_phase(IB_PHASE_NONE)
-    {
-        // nop
-    }
-
-    //! Forward values and finished queries to node @a to.
-    void forward(const node_p& to)
-    {
-        if (is_forwarding()) {
-            BOOST_THROW_EXCEPTION(
-                IronBee::einval() << errinfo_what(
-                    "Can't forward a forwarded node."
-                )
-            );
-        }
-        if (is_finished()) {
-            BOOST_THROW_EXCEPTION(
-                IronBee::einval() << errinfo_what(
-                    "Can't finish an already finished node."
-                )
-            );
-        }
-        if (! m_values.empty()) {
-            BOOST_THROW_EXCEPTION(
-                IronBee::einval() << errinfo_what(
-                    "Can't combine existing values with forwarded values."
-                )
-            );
-        }
-        m_forward = to;
-    }
-
-    //! Read accessor for forward node.
-    const node_p& forward_node() const
-    {
-        return m_forward;
-    }
-
-    //! Is node finished?
-    bool is_finished() const
-    {
-        return m_forward ?
-            m_forward->lookup_value().is_finished() :
-            m_finished;
-    }
-
-    //! Is node forwarding?
-    bool is_forwarding() const
-    {
-        return m_forward;
-    }
-
-    //! Is node aliased?
-    bool is_aliased() const
-    {
-        return m_values != m_own_values;
-    }
-
-    //! Value list.
-    ValueList values() const
-    {
-        return m_forward ?
-            m_forward->lookup_value().values() :
-            ValueList(m_values);
-    }
-
-    //! Reset node.
-    void reset()
-    {
-        m_forward.reset();
-        m_finished = false;
-        m_values = m_own_values;
-        m_own_values.clear();
-        m_phase = IB_PHASE_NONE;
-    }
-
-    //! Last phase evaluated.
-    ib_rule_phase_num_t phase() const
-    {
-        return m_phase;
-    }
-
-    //! Update last phase evaluated.
-    void set_phase(ib_rule_phase_num_t phase)
-    {
-        m_phase = phase;
-    }
-
-    //! Add @a value to values list.
-    void add_value(Value value)
-    {
-        if (is_forwarding()) {
-            BOOST_THROW_EXCEPTION(
-                einval() << errinfo_what(
-                    "Can't add value to forwarded node."
-                )
-            );
-        }
-        if (is_finished()) {
-            BOOST_THROW_EXCEPTION(
-                IronBee::einval() << errinfo_what(
-                    "Can't add value to finished node."
-                )
-            );
-        }
-        if (m_own_values != m_values) {
-            BOOST_THROW_EXCEPTION(
-                IronBee::einval() << errinfo_what(
-                    "Can't add value to aliased node."
-                )
-            );
-        }
-        m_own_values.push_back(value);
-    }
-
-    //! Finish node.
-    void finish()
-    {
-        if (is_forwarding()) {
-            BOOST_THROW_EXCEPTION(
-                IronBee::einval() << errinfo_what(
-                    "Can't finish a forwarded node."
-                )
-            );
-        }
-        if (is_finished()) {
-            BOOST_THROW_EXCEPTION(
-                IronBee::einval() << errinfo_what(
-                    "Can't finish an already finished node."
-                )
-            );
-        }
-        m_finished = true;
-    }
-
-    //! Alias value list @a other.
-    void alias(ValueList other)
-    {
-        if (is_forwarding()) {
-            BOOST_THROW_EXCEPTION(
-                einval() << errinfo_what(
-                    "Can't alias a forwarded node."
-                )
-            );
-        }
-        if (is_finished()) {
-            BOOST_THROW_EXCEPTION(
-                einval() << errinfo_what(
-                    "Can't alias a finished node."
-                )
-            );
-        }
-        if (m_values != m_own_values) {
-            BOOST_THROW_EXCEPTION(
-                einval() << errinfo_what(
-                    "Can't alias an aliased node."
-                )
-            );
-        }
-        m_values = other;
-    }
-
-    //! Set user data.
-    void set_user_data(boost::any data)
-    {
-        m_user_data = data;
-    }
-
-    //! Get user data.
-    boost::any get_user_data() const
-    {
-        return m_user_data;
-    }
-
-private:
-    //! What node forwarding to.
-    node_p m_forward;
-    //! Local memory pool.
-    IronBee::ScopedMemoryPool m_pool;
-    //! Is node finished.
-    bool m_finished;
-    //! Value list owned by node.
-    List<Value> m_own_values;
-    //! Value list to use for values; might be @ref m_own_values.
-    ValueList m_values;
-    //! User data.
-    boost::any m_user_data;
-    //! Last phase evaluated at.
-    ib_rule_phase_num_t m_phase;
-};
 
 Node::Node()
 {
@@ -276,123 +58,6 @@ Node::~Node()
             }
         }
     }
-}
-
-Node::per_thread_t& Node::lookup_value()
-{
-    per_thread_t* v = m_value.get();
-    if (! v) {
-        v = new per_thread_t();
-        m_value.reset(v);
-    }
-    return *v;
-}
-
-const Node::per_thread_t& Node::lookup_value() const
-{
-    static const per_thread_t empty_value;
-    const per_thread_t* v = m_value.get();
-    if (! v) {
-        return empty_value;
-    }
-    else {
-        return *v;
-    }
-}
-
-ValueList Node::eval(EvalContext context)
-{
-    per_thread_t& v = lookup_value();
-
-    // In certain cases, e.g., literals, we run without a context or
-    // rule_exec.  Then, always calculate.
-    ib_rule_phase_num_t phase = IB_PHASE_NONE;
-    if (context.ib() && context.ib()->rule_exec) {
-        phase = context.ib()->rule_exec->phase;
-    }
-    if (v.is_forwarding()) {
-        return v.forward_node()->eval(context);
-    }
-
-    if (
-        ! v.is_forwarding() &&
-        ! v.is_finished() &&
-        (v.phase() != phase || phase == IB_PHASE_NONE)
-    ) {
-        v.set_phase(phase);
-        calculate(context);
-    }
-    return v.values();
-}
-
-ValueList Node::values() const
-{
-    return lookup_value().values();
-}
-
-void Node::reset()
-{
-    lookup_value().reset();
-}
-
-bool Node::is_finished() const
-{
-    return lookup_value().is_finished();
-}
-
-bool Node::is_forwarding() const
-{
-    return lookup_value().is_forwarding();
-}
-
-bool Node::is_aliased() const
-{
-    return lookup_value().is_aliased();
-}
-
-void Node::add_value(Value value)
-{
-    lookup_value().add_value(value);
-}
-
-void Node::finish()
-{
-    lookup_value().finish();
-}
-
-void Node::alias(ValueList other)
-{
-    lookup_value().alias(other);
-}
-
-void Node::finish_true()
-{
-    if (! values().empty()) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "Can't finish a node as true if it already has values."
-            )
-        );
-    }
-    add_value(c_empty_string);
-    finish();
-}
-
-void Node::finish_false()
-{
-    if (! values().empty()) {
-        BOOST_THROW_EXCEPTION(
-            IronBee::einval() << errinfo_what(
-                "Can't finish a node as false if it already has values."
-            )
-        );
-    }
-    finish();
-}
-
-void Node::forward(const node_p& other)
-{
-    lookup_value().forward(other);
 }
 
 void Node::add_child(const node_p& child)
@@ -520,19 +185,22 @@ void Node::pre_eval(Environment environment, NodeReporter reporter)
     // nop
 }
 
+void Node::set_index(size_t index)
+{
+    m_index = index;
+}
+
+void Node::eval_initialize(
+    NodeEvalState& node_eval_state,
+    EvalContext    context
+) const
+{
+    // nop
+}
+
 bool Node::is_literal() const
 {
     return dynamic_cast<const Literal*>(this);
-}
-
-void Node::set_user_data(boost::any data)
-{
-    lookup_value().set_user_data(data);
-}
-
-boost::any Node::get_user_data() const
-{
-    return lookup_value().get_user_data();
 }
 
 ostream& operator<<(ostream& out, const Node& node)
@@ -544,8 +212,9 @@ ostream& operator<<(ostream& out, const Node& node)
 String::String(const string& value) :
     m_value_as_s(value),
     m_s("'" + String::escape(value) + "'"),
-    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::String")),
-    m_value_as_field(
+    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::String"))
+{
+    add_literal_value(
         IronBee::Field::create_byte_string(
             *m_pool,
             "", 0,
@@ -554,9 +223,7 @@ String::String(const string& value) :
                 m_value_as_s
             )
         )
-    )
-{
-    // nop
+    );
 }
 
 string String::escape(const std::string& s)
@@ -577,63 +244,38 @@ string String::escape(const std::string& s)
     return escaped;
 }
 
-void String::calculate(EvalContext)
-{
-    add_value(m_value_as_field);
-    finish();
-}
-
 const string& Null::to_s() const
 {
     static std::string s_null("null");
     return s_null;
 }
 
-void Null::calculate(EvalContext)
-{
-    finish_false();
-}
-
 Integer::Integer(int64_t value) :
     m_value_as_i(value),
     m_s(boost::lexical_cast<string>(value)),
-    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::Integer")),
-    m_value_as_field(
+    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::Integer"))
+{
+    add_literal_value(
         IronBee::Field::create_number(
             *m_pool,
             "", 0,
             value
         )
-    )
-{
-    // nop
-}
-
-void Integer::calculate(EvalContext)
-{
-    add_value(m_value_as_field);
-    finish();
+    );
 }
 
 Float::Float(long double value) :
     m_value_as_f(value),
     m_s(boost::lexical_cast<string>(value)),
-    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::Float")),
-    m_value_as_field(
+    m_pool(new IronBee::ScopedMemoryPool("IronBee::Predicate::Float"))
+{
+    add_literal_value(
         IronBee::Field::create_float(
             *m_pool,
             "", 0,
             value
         )
-    )
-{
-    // nop
-}
-
-void Float::calculate(EvalContext)
-{
-    add_value(m_value_as_field);
-    finish();
+    );
 }
 
 // Don't use recalculate_s() as we don't want to update parents.
@@ -712,6 +354,12 @@ void Call::reset_s() const
     m_calculated_s = false;
 }
 
+Literal::Literal() :
+    m_values(List<Value>::create(m_memory_pool))
+{
+    // nop
+}
+
 void Literal::add_child(const node_p&)
 {
     BOOST_THROW_EXCEPTION(
@@ -737,6 +385,32 @@ void Literal::replace_child(const node_p& child, const node_p& with)
             "Literals can not have children."
         )
     );
+}
+
+void Literal::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    BOOST_THROW_EXCEPTION(
+        IronBee::einval() << errinfo_what(
+            "Literals cannot be unfinished."
+        )
+    );
+}
+
+void Literal::eval_initialize(
+    NodeEvalState& node_eval_state,
+    EvalContext    context
+) const
+{
+    node_eval_state.alias(literal_values());
+    node_eval_state.finish();
+}
+
+void Literal::add_literal_value(Value v)
+{
+    m_values.push_back(v);
 }
 
 } // Predicate

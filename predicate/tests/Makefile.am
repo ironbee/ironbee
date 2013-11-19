@@ -11,6 +11,7 @@ check_PROGRAMS = \
 	test_bfs \
 	test_call_factory \
 	test_dag \
+	test_eval \
 	test_leaves \
 	test_less \
 	test_merge_graph \
@@ -30,6 +31,7 @@ EXTRA_TEST = parse_fixture.hpp standard_test.hpp
 TESTS = $(check_PROGRAMS)
 
 test_dag_SOURCES = test_dag.cpp
+test_eval_SOURCES = test_eval.cpp
 test_standard_boolean_SOURCES = test_standard_boolean.cpp standard_test.cpp
 test_standard_development_SOURCES = test_standard_development.cpp standard_test.cpp
 test_standard_filter_SOURCES = test_standard_filter.cpp standard_test.cpp
