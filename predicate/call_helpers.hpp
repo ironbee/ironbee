@@ -27,7 +27,7 @@
 #ifndef __PREDICATE__CALL_HELPERS__
 #define __PREDICATE__CALL_HELPERS__
 
-#include <predicate/dag.hpp>
+#include <predicate/eval.hpp>
 
 namespace IronBee {
 namespace Predicate {
@@ -39,18 +39,29 @@ namespace Predicate {
  * @return Only value or Value() if no values.
  * @throw einval if @a node is not finished or not simple.
  **/
-Value simple_value(const node_cp& node);
+Value simple_value(const NodeEvalState& node);
 
 /**
  * Check and extract literal value from literal node.
  *
- * @note Node does not to be evaluated first.
+ * @note No eval state necessary.
  *
  * @param[in] node Node to extract value from.
  * @return Only value or Value() if Null.
  * @throw einval if @a node is not literal.
  **/
-Value literal_value(const node_p& node);
+Value literal_value(const node_cp& node);
+
+/**
+ * Check and extract literal values from literal node.
+ *
+ * @note No eval state necessary.
+ *
+ * @param[in] node Node to extract value from.
+ * @return Values.
+ * @throw einval if @a node is not literal.
+ **/
+ValueList literal_values(const node_cp& node);
 
 } // Predicate
 } // IronBee

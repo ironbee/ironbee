@@ -27,16 +27,16 @@
 namespace IronBee {
 namespace Predicate {
 
-Value simple_value(const node_cp& node)
+Value simple_value(const NodeEvalState& node_eval_state)
 {
-    if (! node->is_finished()) {
+    if (! node_eval_state.is_finished()) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
                 "Asked for simple value of unfinished node."
             )
         );
     }
-    if (node->values().size() > 1) {
+    if (node_eval_state.values().size() > 1) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
                 "Asked for simple values of non-simple node."
@@ -44,27 +44,35 @@ Value simple_value(const node_cp& node)
         );
     }
 
-    if (node->values().empty()) {
+    if (node_eval_state.values().empty()) {
         return Value();
     }
     else {
-        return node->values().front();
+        return node_eval_state.values().front();
     }
 }
 
-Value literal_value(const node_p& node)
+Value literal_value(const node_cp& node)
+{
+    ValueList values = literal_values(node);
+    if (values.empty()) {
+        return Value();
+    }
+    else {
+        return values.front();
+    }
+}
+
+ValueList literal_values(const node_cp& node)
 {
     if (! node->is_literal()) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
-                "Asked for literal value of non-literal node."
+                "Asked for literal values of non-literal node."
             )
         );
     }
-    if (! node->is_finished()) {
-        node->eval(EvalContext());
-    }
-    return simple_value(node);
+    return dynamic_cast<const Literal&>(*node).literal_values();
 }
 
 } // Predicate
