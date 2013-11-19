@@ -63,7 +63,7 @@ bool False::transform(
     return true;
 }
 
-void False::calculate(EvalContext)
+void False::eval_calculate(GraphEvalState&, EvalContext) const
 {
     BOOST_THROW_EXCEPTION(
         einval() << errinfo_what(
@@ -95,7 +95,7 @@ bool True::transform(
     return true;
 }
 
-void True::calculate(EvalContext)
+void True::eval_calculate(GraphEvalState&, EvalContext) const
 {
     BOOST_THROW_EXCEPTION(
         einval() << errinfo_what(
@@ -114,21 +114,26 @@ string Or::name() const
     return "or";
 }
 
-void Or::calculate(EvalContext context)
+void Or::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     assert(children().size() >= 2);
+    NodeEvalState& my_state = graph_eval_state[index()];
     bool unfinished_child = false;
     BOOST_FOREACH(const node_p& child, children()) {
-        if (! child->eval(context).empty()) {
-            finish_true();
+        size_t child_index = child->index();
+        if (! graph_eval_state.eval(child, context).empty()) {
+            my_state.finish_true(context);
             return;
         }
-        if (! child->is_finished()) {
+        if (! graph_eval_state.is_finished(child_index)) {
             unfinished_child = true;
         }
     }
     if (! unfinished_child) {
-        finish_false();
+        my_state.finish_false(context);
     }
 }
 
@@ -144,7 +149,7 @@ bool Or::transform(
     node_list_t to_remove;
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
-            if (! child->eval(EvalContext()).empty()) {
+            if (! literal_values(child).empty()) {
                 node_p replacement = c_true;
                 merge_graph.replace(me, replacement);
                 return true;
@@ -187,23 +192,31 @@ string And::name() const
     return "and";
 }
 
-void And::calculate(EvalContext context)
+void And::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     assert(children().size() >= 2);
+    NodeEvalState& my_state = graph_eval_state[index()];
     bool unfinished_child = false;
     BOOST_FOREACH(const node_p& child, children()) {
-        child->eval(context);
-        if (child->is_finished() && child->values().empty()) {
-            finish_false();
+        graph_eval_state.eval(child, context);
+        size_t child_index = child->index();
+        if (
+            graph_eval_state.is_finished(child_index) &&
+            graph_eval_state.values(child_index).empty()
+        ) {
+            my_state.finish_false(context);
             return;
         }
-        if (! child->is_finished()) {
+        if (! graph_eval_state.is_finished(child_index)) {
             unfinished_child = true;
         }
     }
     if (! unfinished_child) {
         // No unfinished children; no empty children.
-        finish_true();
+        my_state.finish_true(context);
     }
 }
 
@@ -219,7 +232,7 @@ bool And::transform(
     node_list_t to_remove;
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
-            if (child->eval(EvalContext()).empty()) {
+            if (literal_values(child).empty()) {
                 node_p replacement = c_false;
                 merge_graph.replace(me, replacement);
                 return true;
@@ -262,17 +275,23 @@ string Not::name() const
     return "not";
 }
 
-void Not::calculate(EvalContext context)
+void Not::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
+
     assert(children().size() == 1);
     const node_p& child = children().front();
-    child->eval(context);
-    if (! child->values().empty()) {
-        assert(values().empty());
-        finish_false();
+    graph_eval_state.eval(child, context);
+    size_t child_index = child->index();
+    if (! graph_eval_state.values(child_index).empty()) {
+        assert(! my_state.values());
+        my_state.finish_false(context);
     }
-    else if (child->is_finished()) {
-        finish_true();
+    else if (graph_eval_state.is_finished(child_index)) {
+        my_state.finish_true(context);
     }
 }
 
@@ -288,7 +307,7 @@ bool Not::transform(
 
     if (child->is_literal()) {
         node_p replacement;
-        if (! child->eval(EvalContext()).empty()) {
+        if (! literal_values(child).empty()) {
             replacement = c_false;
         }
         else {
@@ -312,9 +331,14 @@ string If::name() const
     return "if";
 }
 
-void If::calculate(EvalContext context)
+void If::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     assert(children().size() == 3);
+    NodeEvalState& my_state = graph_eval_state[index()];
+
     node_list_t::const_iterator i;
     i = children().begin();
     const node_p& pred = *i;
@@ -322,14 +346,16 @@ void If::calculate(EvalContext context)
     const node_p& true_value = *i;
     ++i;
     const node_p& false_value = *i;
-    pred->eval(context);
-    if (! pred->values().empty()) {
-        true_value->eval(context);
-        forward(true_value);
+
+    graph_eval_state.eval(pred, context);
+
+    if (! graph_eval_state.values(pred->index()).empty()) {
+        graph_eval_state.eval(true_value, context);
+        my_state.forward(true_value);
     }
-    else if (pred->is_finished()) {
-        false_value->eval(context);
-        forward(false_value);
+    else if (graph_eval_state.is_finished(pred->index())) {
+        graph_eval_state.eval(false_value, context);
+        my_state.forward(false_value);
     }
 }
 
@@ -351,7 +377,7 @@ bool If::transform(
 
     if (pred->is_literal()) {
         node_p replacement;
-        if (! pred->eval(EvalContext()).empty()) {
+        if (! literal_values(pred).empty()) {
             replacement = true_value;
         }
         else {
@@ -375,22 +401,26 @@ string OrSC::name() const
     return "orSC";
 }
 
-void OrSC::calculate(EvalContext context)
+void OrSC::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     assert(children().size() >= 2);
+    NodeEvalState& my_state = graph_eval_state[index()];
     BOOST_FOREACH(const node_p& child, children()) {
-        if (! child->eval(context).empty()) {
-            finish_true();
+        if (! graph_eval_state.eval(child, context).empty()) {
+            my_state.finish_true(context);
             return;
         }
-        if (! child->is_finished()) {
+        if (! graph_eval_state.is_finished(child->index())) {
             // Don't evaluate further children until we know this one is
             // false.
             return;
         }
     }
     // Only reach here if all children are finished and false.
-    finish_false();
+    my_state.finish_false(context);
 }
 
 bool OrSC::transform(
@@ -405,7 +435,7 @@ bool OrSC::transform(
     node_list_t to_remove;
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
-            if (! child->eval(EvalContext()).empty()) {
+            if (! literal_values(child).empty()) {
                 node_p replacement = c_true;
                 merge_graph.replace(me, replacement);
                 return true;
@@ -446,22 +476,29 @@ string AndSC::name() const
     return "andSC";
 }
 
-void AndSC::calculate(EvalContext context)
+void AndSC::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     assert(children().size() >= 2);
+    NodeEvalState& my_state = graph_eval_state[index()];
     BOOST_FOREACH(const node_p& child, children()) {
-        child->eval(context);
-        if (child->is_finished() && child->values().empty()) {
-            finish_false();
+        graph_eval_state.eval(child, context);
+        if (
+            graph_eval_state.is_finished(child->index()) &&
+            graph_eval_state.values(child->index()).empty()
+        ) {
+            my_state.finish_false(context);
             return;
         }
-        if (child->values().empty()) {
+        if (graph_eval_state.values(child->index()).empty()) {
             // Do not proceed until child is known to be truthy.
             return;
         }
     }
     // Only reached if all children are truthy.
-    finish_true();
+    my_state.finish_true(context);
 }
 
 bool AndSC::transform(
@@ -476,7 +513,7 @@ bool AndSC::transform(
     node_list_t to_remove;
     BOOST_FOREACH(const node_p& child, children()) {
         if (child->is_literal()) {
-            if (child->eval(EvalContext()).empty()) {
+            if (literal_values(child).empty()) {
                 node_p replacement = c_false;
                 merge_graph.replace(me, replacement);
                 return true;

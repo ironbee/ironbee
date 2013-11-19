@@ -59,9 +59,8 @@ public:
    //! See Node::validate().
    virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
 };
 
 /**
@@ -88,9 +87,8 @@ public:
    //! See Node::validate().
    virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    //! See Node::calculate()
-    virtual void calculate(EvalContext);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(GraphEvalState&, EvalContext) const;
 };
 
 /**
@@ -118,8 +116,11 @@ public:
    //! See Node::validate().
    virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -147,8 +148,11 @@ public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -175,8 +179,11 @@ public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -203,8 +210,11 @@ public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -232,8 +242,11 @@ public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -261,8 +274,11 @@ public:
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 
