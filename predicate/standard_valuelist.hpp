@@ -54,9 +54,19 @@ public:
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
 
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
 protected:
-    virtual Value value_calculate(Value v, EvalContext context);
-    virtual void calculate(EvalContext context);
+    //! See MapCall::value_calculate().
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -66,9 +76,6 @@ class Cat :
     public Call
 {
 public:
-    //! Constructor.
-    Cat();
-
     //! See Call:name()
     virtual std::string name() const;
 
@@ -83,17 +90,17 @@ public:
         NodeReporter       reporter
     );
 
-protected:
-    virtual void reset();
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_initialize()
+    virtual void eval_initialize(
+        NodeEvalState& node_eval_state,
+        EvalContext    context
+    ) const;
 
-private:
-    //! Hidden complex implementation details.
-    class impl_t;
-    friend class impl_t;
-
-    //! Hidden complex implementation details.
-    boost::scoped_ptr<impl_t> m_impl;
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -109,8 +116,11 @@ public:
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -120,25 +130,23 @@ class Rest :
     public Call
 {
 public:
-    //! Constructor.
-    Rest();
-
     //! See Call:name()
     virtual std::string name() const;
 
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void reset();
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_initialize()
+    virtual void eval_initialize(
+        NodeEvalState& node_eval_state,
+        EvalContext    context
+    ) const;
 
-private:
-    //! Hidden complex implementation details.
-    struct data_t;
-
-    //! Hidden complex implementation details.
-    boost::scoped_ptr<data_t> m_data;
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -154,8 +162,11 @@ public:
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -171,8 +182,11 @@ public:
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**
@@ -188,8 +202,11 @@ public:
     //! See Node::validate()
     virtual bool validate(NodeReporter reporter) const;
 
-protected:
-    virtual void calculate(EvalContext context);
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
 };
 
 /**

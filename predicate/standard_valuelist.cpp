@@ -45,7 +45,11 @@ string SetName::name() const
     return "setName";
 }
 
-Value SetName::value_calculate(Value v, EvalContext context)
+Value SetName::value_calculate(
+    Value           v,
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
     Value name = literal_value(children().front());
     ConstByteString name_bs = name.value_as_byte_string();
@@ -53,9 +57,12 @@ Value SetName::value_calculate(Value v, EvalContext context)
     return v.dup(v.memory_pool(), name_bs.const_data(), name_bs.length());
 }
 
-void SetName::calculate(EvalContext context)
+void SetName::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
-    map_calculate(children().back(), context);
+    map_calculate(children().back(), graph_eval_state, context);
 }
 
 bool SetName::validate(NodeReporter reporter) const
@@ -66,6 +73,8 @@ bool SetName::validate(NodeReporter reporter) const
         Validate::nth_child_is_not_null(reporter, 1)
         ;
 }
+
+namespace {
 
 /**
  * Implementation details of Cat.
@@ -90,42 +99,19 @@ bool SetName::validate(NodeReporter reporter) const
  * This class is a friend of Cat and all routines take a `me` argument being
  * the Cat instance they are working on behalf of.
  **/
-class Cat::impl_t
+class cat_impl_t
 {
-private:
-    //! Per thread data.
-    struct data_t
-    {
-        //! Last unfinished child processed.
-        node_list_t::const_iterator last_unfinished;
-        /**
-         * Last value added from @ref last_unfinished.
-         *
-         * A singular value means no children of @ref last_unfinished have
-         * been added.
-         **/
-        ValueList::const_iterator last_value_added;
-    };
-
-    //! Data.
-    boost::thread_specific_ptr<data_t> m_data;
-
 public:
     /**
-     * Reset.
+     * Constructor.
      *
      * Set @ref last_unfinished to be the first child and
      * @ref last_value_added to be singular.
      **/
-    void reset(Cat& me)
+    explicit
+    cat_impl_t(const Cat& me)
     {
-        if (m_data.get()) {
-            *m_data = data_t();
-        }
-        else {
-            m_data.reset(new data_t());
-        }
-        m_data->last_unfinished = me.children().begin();
+        m_last_unfinished = me.children().begin();
     }
 
     /**
@@ -134,30 +120,31 @@ public:
      * After this, @ref last_unfinished and @ref last_value_added will be
      * updated.
      **/
-    void calculate(Cat& me, EvalContext context)
+    void eval_calculate(
+        const Cat&      me,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    )
     {
-        // Cache to avoid repeated thread local lookups.
-        data_t& data = *m_data;
-
         // Add any new children from last_unfinished.
-        add_from_current(me, data, context);
+        add_from_current(me, graph_eval_state, context);
         // If last_unfinished is still unfinished, nothing more to do.
-        if (! (*data.last_unfinished)->is_finished()) {
+        if (! graph_eval_state.is_finished((*m_last_unfinished)->index())) {
             return;
         }
 
         // Need to find new leftmost unfinished child.  Do so, adding any
         // values from finished children along the way.
-        add_until_next_unfinished(me, data, context);
+        add_until_next_unfinished(me, graph_eval_state, context);
 
         // If no new leftmost unfinished child, all done.  Finish.
-        if (data.last_unfinished == me.children().end()) {
-            me.finish();
+        if (m_last_unfinished == me.children().end()) {
+            graph_eval_state[me.index()].finish();
         }
         // Otherwise, need to add children from the new last_unfinished.
         else {
-            data.last_value_added = ValueList::const_iterator();
-            add_from_current(me, data, context);
+            m_last_value_added = ValueList::const_iterator();
+            add_from_current(me, graph_eval_state, context);
         }
     }
 
@@ -167,32 +154,36 @@ private:
      *
      * Updates @ref last_value_added.
      **/
-    static
     void add_from_current(
-        Cat&        me,
-        data_t&     data,
-        EvalContext context
+        const Cat&      me,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
     )
     {
-        const ValueList& values = (*data.last_unfinished)->eval(context);
+        const ValueList& values = graph_eval_state.eval(
+            *m_last_unfinished,
+            context
+        );
 
-        if (values.empty() && ! (*data.last_unfinished)->is_finished()) {
+        if ((! values || values.empty()) &&
+            ! graph_eval_state.is_finished((*m_last_unfinished)->index())
+        ) {
             return;
         }
-        else if (! values.empty()) {
-            if (data.last_value_added == ValueList::const_iterator()) {
-                me.add_value(values.front());
-                data.last_value_added = values.begin();
+        else if (values && ! values.empty()) {
+            if (m_last_value_added == ValueList::const_iterator()) {
+                graph_eval_state[me.index()].add_value(values.front());
+                m_last_value_added = values.begin();
             }
-            ValueList::const_iterator n = data.last_value_added;
+            ValueList::const_iterator n = m_last_value_added;
             ValueList::const_iterator end = values.end();
             for (;;) {
                 ++n;
                 if (n == end) {
                     break;
                 }
-                me.add_value(*n);
-                data.last_value_added = n;
+                graph_eval_state[me.index()].add_value(*n);
+                m_last_value_added = n;
             }
         }
     }
@@ -204,35 +195,47 @@ private:
      * If no unfinished children, @ref last_unfinished will end up as
      * `me.children().end()`.
      **/
-    static
     void add_until_next_unfinished(
-        Cat&        me,
-        data_t&     data,
-        EvalContext context
+        const Cat&      me,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
     )
     {
-        assert((*data.last_unfinished)->is_finished());
+        assert(graph_eval_state.is_finished((*m_last_unfinished)->index()));
+        NodeEvalState& my_state = graph_eval_state[me.index()];
         for (
-            ++data.last_unfinished;
-            data.last_unfinished != me.children().end();
-            ++data.last_unfinished
+            ++m_last_unfinished;
+            m_last_unfinished != me.children().end();
+            ++m_last_unfinished
         ) {
-            const ValueList& values = (*data.last_unfinished)->eval(context);
-            if (! (*data.last_unfinished)->is_finished()) {
+            const ValueList& values =
+                graph_eval_state.eval(*m_last_unfinished, context);
+            if (
+                ! graph_eval_state.is_finished((*m_last_unfinished)->index())
+            ) {
                 break;
             }
-            BOOST_FOREACH(Value v, values) {
-                me.add_value(v);
+            if (values) {
+                BOOST_FOREACH(Value v, values) {
+                    my_state.add_value(v);
+                }
             }
         }
     }
+
+    //! Last unfinished child processed.
+    node_list_t::const_iterator m_last_unfinished;
+
+    /**
+     * Last value added from @ref last_unfinished.
+     *
+     * A singular value means no children of @ref m_last_unfinished have
+     * been added.
+     **/
+    ValueList::const_iterator m_last_value_added;
 };
 
-Cat::Cat() :
-    m_impl(new impl_t())
-{
-    // nop
-}
+} // cat_impl_t
 
 string Cat::name() const
 {
@@ -282,14 +285,24 @@ bool Cat::transform(
     return result;
 }
 
-void Cat::reset()
+void Cat::eval_initialize(
+    NodeEvalState& node_eval_state,
+    EvalContext    context
+) const
 {
-    m_impl->reset(*this);
+    node_eval_state.setup_local_values(context);
+    node_eval_state.state() =
+        boost::shared_ptr<cat_impl_t>(new cat_impl_t(*this));
 }
 
-void Cat::calculate(EvalContext context)
+void Cat::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
-    m_impl->calculate(*this, context);
+    boost::any_cast<boost::shared_ptr<cat_impl_t> >(
+        graph_eval_state[index()].state()
+    )->eval_calculate(*this, graph_eval_state, context);
 }
 
 string First::name() const
@@ -297,16 +310,21 @@ string First::name() const
     return "first";
 }
 
-void First::calculate(EvalContext context)
+void First::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
     const node_p& child = children().front();
-    ValueList values = child->eval(context);
+    ValueList values = graph_eval_state.eval(child, context);
     if (! values.empty()) {
-        add_value(values.front());
-        finish();
+        my_state.setup_local_values(context);
+        my_state.add_value(values.front());
+        my_state.finish();
     }
-    else if (child->is_finished()) {
-        finish();
+    else if (graph_eval_state.is_finished(child->index())) {
+        my_state.finish_false(context);
     }
 }
 
@@ -315,42 +333,36 @@ bool First::validate(NodeReporter reporter) const
     return Validate::n_children(reporter, 1);
 }
 
-struct Rest::data_t
-{
-    boost::thread_specific_ptr<ValueList::const_iterator> location;
-};
-
-Rest::Rest() :
-    m_data(new data_t())
-{
-    // nop
-}
-
 string Rest::name() const
 {
     return "rest";
 }
 
-void Rest::reset()
+void Rest::eval_initialize(
+    NodeEvalState& node_eval_state,
+    EvalContext    context
+) const
 {
-    if (m_data->location.get()) {
-        *(m_data->location) = ValueList::const_iterator();
-    }
-    else {
-        m_data->location.reset(new ValueList::const_iterator());
-    }
+    node_eval_state.state() = ValueList::const_iterator();
+    node_eval_state.setup_local_values(context);
 }
 
-void Rest::calculate(EvalContext context)
+void Rest::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
+
     const node_p& child = children().front();
-    ValueList values = child->eval(context);
-    ValueList::const_iterator& location = *(m_data->location.get());
+    ValueList values = graph_eval_state.eval(child, context);
+    ValueList::const_iterator location =
+        boost::any_cast<ValueList::const_iterator>(my_state.state());
 
     // Special case if no values yet.
     if (values.empty()) {
-        if (child->is_finished()) {
-            finish();
+        if (graph_eval_state.is_finished(child->index())) {
+            my_state.finish();
         }
         return;
     }
@@ -365,13 +377,16 @@ void Rest::calculate(EvalContext context)
     ++next_location;
     const ValueList::const_iterator end = values.end();
     while (next_location != end) {
-        add_value(*next_location);
+        my_state.add_value(*next_location);
         location = next_location;
         ++next_location;
     }
 
-    if (child->is_finished()) {
-        finish();
+    if (graph_eval_state.is_finished(child->index())) {
+        my_state.finish();
+    }
+    else {
+        my_state.state() = location;
     }
 }
 
@@ -385,21 +400,26 @@ string Nth::name() const
     return "nth";
 }
 
-void Nth::calculate(EvalContext context)
+void Nth::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
+    NodeEvalState& my_state = graph_eval_state[index()];
+
     int64_t n = literal_value(children().front()).value_as_number();
 
     if (n <= 0) {
-        finish();
+        my_state.finish_false(context);
         return;
     }
 
     const node_p& child = children().back();
-    ValueList values = child->eval(context);
+    ValueList values = graph_eval_state.eval(child, context);
 
     if (values.size() < size_t(n)) {
-        if (child->is_finished()) {
-            finish();
+        if (graph_eval_state.is_finished(child->index())) {
+            my_state.finish_false(context);
         }
         return;
     }
@@ -407,8 +427,9 @@ void Nth::calculate(EvalContext context)
     ValueList::const_iterator i = values.begin();
     advance(i, n - 1);
 
-    add_value(*i);
-    finish();
+    my_state.setup_local_values(context);
+    my_state.add_value(*i);
+    my_state.finish();
 }
 
 bool Nth::validate(NodeReporter reporter) const
@@ -424,21 +445,28 @@ string Scatter::name() const
     return "scatter";
 }
 
-void Scatter::calculate(EvalContext context)
+void Scatter::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
-    const node_p& child = children().front();
-    child->eval(context);
+    NodeEvalState& my_state = graph_eval_state[index()];
 
-    if (! child->is_finished()) {
+    const node_p& child = children().front();
+
+    graph_eval_state.eval(child, context);
+
+    if (! graph_eval_state.is_finished(child->index())) {
         return;
     }
 
-    Value value = simple_value(child);
+    Value value = simple_value(graph_eval_state.final(child->index()));
     if (value) {
+        my_state.setup_local_values(context);
         BOOST_FOREACH(Value v, value.value_as_list<Value>()) {
-            add_value(v);
+            my_state.add_value(v);
         }
-        finish();
+        my_state.finish();
     }
 }
 
@@ -452,30 +480,37 @@ string Gather::name() const
     return "gather";
 }
 
-void Gather::calculate(EvalContext context)
+void Gather::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
 {
-    const node_p& child = children().front();
-    child->eval(context);
+    NodeEvalState& my_state = graph_eval_state[index()];
 
-    if (! child->is_finished()) {
+    const node_p& child = children().front();
+
+    graph_eval_state.eval(child, context);
+
+    if (! graph_eval_state.is_finished(child->index())) {
         return;
     }
 
     List<Value> values =
         List<Value>::create(context.memory_pool());
-
+    ValueList child_values = graph_eval_state.values(child->index());
     copy(
-        child->values().begin(), child->values().end(),
+        child_values.begin(), child_values.end(),
         back_inserter(values)
     );
 
-    add_value(Field::create_no_copy_list(
+    my_state.setup_local_values(context);
+    my_state.add_value(Field::create_no_copy_list(
         context.memory_pool(),
         "", 0,
         values
     ));
 
-    finish();
+    my_state.finish();
 }
 
 bool Gather::validate(NodeReporter reporter) const

@@ -36,27 +36,27 @@ class TestStandardValueList :
 
 TEST_F(TestStandardValueList, Name)
 {
-    EXPECT_TRUE(eval_bool("(setName 'a' 'b')"));
-    EXPECT_EQ("b", eval_s("(setName 'a' 'b')"));
-    EXPECT_THROW(eval_bool("(setName)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(setName null 'a')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(setName 'a')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(setName 'a' 'b' 'c')"), IronBee::einval);
+    EXPECT_TRUE(eval_bool(parse("(setName 'a' 'b')")));
+    EXPECT_EQ("b", eval_s(parse("(setName 'a' 'b')")));
+    EXPECT_THROW(eval_bool(parse("(setName)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(setName null 'a')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(setName 'a')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(setName 'a' 'b' 'c')")), IronBee::einval);
 }
 
 TEST_F(TestStandardValueList, CatFirstRest)
 {
-    EXPECT_EQ("a", eval_s("(first 'a')"));
-    EXPECT_EQ("a", eval_s("(first (cat 'a'))"));
-    EXPECT_EQ("a", eval_s("(first (cat 'a' 'b'))"));
-    EXPECT_EQ("b", eval_s("(first (rest (cat 'a' 'b')))"));
-    EXPECT_EQ("b", eval_s("(first (rest (cat 'a' 'b' 'c')))"));
-    EXPECT_EQ("b", eval_s("(first (rest (cat 'a' (cat 'b' 'c'))))"));
+    EXPECT_EQ("a", eval_s(parse("(first 'a')")));
+    EXPECT_EQ("a", eval_s(parse("(first (cat 'a'))")));
+    EXPECT_EQ("a", eval_s(parse("(first (cat 'a' 'b'))")));
+    EXPECT_EQ("b", eval_s(parse("(first (rest (cat 'a' 'b')))")));
+    EXPECT_EQ("b", eval_s(parse("(first (rest (cat 'a' 'b' 'c')))")));
+    EXPECT_EQ("b", eval_s(parse("(first (rest (cat 'a' (cat 'b' 'c'))))")));
 
-    EXPECT_THROW(eval_s("(first 'a' 'b')"), IronBee::einval);
-    EXPECT_THROW(eval_s("(first)"), IronBee::einval);
-    EXPECT_THROW(eval_s("(rest 'a' 'b')"), IronBee::einval);
-    EXPECT_THROW(eval_s("(rest)"), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(first 'a' 'b')")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(first)")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(rest 'a' 'b')")), IronBee::einval);
+    EXPECT_THROW(eval_s(parse("(rest)")), IronBee::einval);
 }
 
 TEST_F(TestStandardValueList, CatTransform)
@@ -75,45 +75,48 @@ TEST_F(TestStandardValueList, CatIncremental)
     node_p n = parse("(cat (sequence 0 1) (sequence 0 3))");
     Reporter r;
 
-    reset(n);
+    size_t index_limit;
+    bfs_down(n, make_indexer(index_limit));
+    GraphEvalState ges(index_limit);
+    bfs_down(n, make_initializer(ges, m_transaction));
 
-    n->eval(m_transaction);
-    EXPECT_EQ(1UL, n->values().size());
-    EXPECT_FALSE(n->is_finished());
-    n->eval(m_transaction);
-    EXPECT_EQ(4UL, n->values().size());
-    EXPECT_FALSE(n->is_finished());
-    n->eval(m_transaction);
-    EXPECT_EQ(5UL, n->values().size());
-    EXPECT_FALSE(n->is_finished());
-    n->eval(m_transaction);
-    EXPECT_EQ(6UL, n->values().size());
-    EXPECT_TRUE(n->is_finished());
-    n->eval(m_transaction);
+    ges.eval(n, m_transaction);
+    EXPECT_EQ(1UL, ges.values(n->index()).size());
+    EXPECT_FALSE(ges.is_finished(n->index()));
+    ges.eval(n, m_transaction);
+    EXPECT_EQ(4UL, ges.values(n->index()).size());
+    EXPECT_FALSE(ges.is_finished(n->index()));
+    ges.eval(n, m_transaction);
+    EXPECT_EQ(5UL, ges.values(n->index()).size());
+    EXPECT_FALSE(ges.is_finished(n->index()));
+    ges.eval(n, m_transaction);
+    EXPECT_EQ(6UL, ges.values(n->index()).size());
+    EXPECT_TRUE(ges.is_finished(n->index()));
+    ges.eval(n, m_transaction);
 }
 
 TEST_F(TestStandardValueList, Nth)
 {
-    EXPECT_EQ("a", eval_s("(nth 1 'a')"));
-    EXPECT_EQ("a", eval_s("(nth 1 (cat 'a' 'b' 'c'))"));
-    EXPECT_EQ("b", eval_s("(nth 2 (cat 'a' 'b' 'c'))"));
-    EXPECT_EQ("c", eval_s("(nth 3 (cat 'a' 'b' 'c'))"));
-    EXPECT_FALSE(eval_bool("(nth 0 (cat 'a' 'b' 'c'))"));
+    EXPECT_EQ("a", eval_s(parse("(nth 1 'a')")));
+    EXPECT_EQ("a", eval_s(parse("(nth 1 (cat 'a' 'b' 'c'))")));
+    EXPECT_EQ("b", eval_s(parse("(nth 2 (cat 'a' 'b' 'c'))")));
+    EXPECT_EQ("c", eval_s(parse("(nth 3 (cat 'a' 'b' 'c'))")));
+    EXPECT_FALSE(eval_bool(parse("(nth 0 (cat 'a' 'b' 'c'))")));
 
-    EXPECT_THROW(eval_bool("(nth -3 (cat 'a' 'b' 'c'))"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(nth)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(nth 1)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(nth 'a' 'b')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(nth 1 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(nth -3 (cat 'a' 'b' 'c'))")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(nth)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(nth 1)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(nth 'a' 'b')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(nth 1 'a' 'b')")), IronBee::einval);
 }
 
 TEST_F(TestStandardValueList, ScatterGather)
 {
-    EXPECT_EQ("a", eval_s("(first (scatter (gather (cat 'a' 'b'))))"));
-    EXPECT_EQ("b", eval_s("(rest (scatter (gather (cat 'a' 'b'))))"));
+    EXPECT_EQ("a", eval_s(parse("(first (scatter (gather (cat 'a' 'b'))))")));
+    EXPECT_EQ("b", eval_s(parse("(rest (scatter (gather (cat 'a' 'b'))))")));
 
-    EXPECT_THROW(eval_bool("(scatter)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(scatter 'a' 'b')"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(gather)"), IronBee::einval);
-    EXPECT_THROW(eval_bool("(gather 'a' 'b')"), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(scatter)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(scatter 'a' 'b')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(gather)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(gather 'a' 'b')")), IronBee::einval);
 }
