@@ -38,6 +38,8 @@ IronBee v0.9.0
 
 - Fixed bug causing Predicate rules to fire multiple times.
 
+- Predicate evaluation state has been moved out of the Node subclasses and into a NodeEvalState class.  This improves const correctness and removes the dependence of Predicate on specific multithreading approaches.  In particular, Predicate now works with continuation approaches.
+
 **Fast**
 
 - Added `extract_waggle.rb` to extract fast patterns from waggle rules and updated `build.rb` to use appropriately for `.lua` and `.waggle` files.
