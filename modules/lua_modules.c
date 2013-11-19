@@ -63,17 +63,21 @@ typedef struct modlua_modules_t modlua_modules_t;
  * This is used to initialize Lua Modules.
  */
 typedef struct modlua_luamod_init_t {
-    lua_State   *L;          /**< Lua execution stack. */
     const char  *file;       /**< Lua File to load. */
     /**
      * The Lua module. Not the user's module written in Lua.
      */
-    ib_module_t *modlua;
+    ib_module_t  *modlua;
     modlua_cfg_t *modlua_cfg; /**< Configuration for modlua. */
 } modlua_luamod_init_t;
 
 /**
  * Push the specified handler for a lua module on top of the Lua stack L.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] modlua_modules Lua and lua-defined modules.
+ * @param[in] event the even type.
+ * @param[out] L the execution evironment to modify.
  *
  * @returns
  *   - IB_OK on success. The stack is 1 element higher.
@@ -86,6 +90,7 @@ static ib_status_t modlua_push_lua_handler(
     lua_State *L)
 {
     assert(ib);
+    assert(modlua_modules);
     assert(modlua_modules->module);
     assert(L);
 
@@ -188,9 +193,8 @@ static ib_status_t modlua_push_lua_handler(
  * using the FFI and hand the user a final table.
  *
  * @param[in] ib IronBee engine.
- * @param[in] module The module to check.
  * @param[in] event The event to check for.
- * @param[in,out] L The Lua state to push the dispatcher onto.
+ * @param[out] L The Lua state to push the dispatcher onto.
  *
  * @returns
  *   - IB_OK if a handler exists.
@@ -239,7 +243,7 @@ static ib_status_t modlua_push_dispatcher(
  * Check if a Lua module has a callback handler for a particular event.
  *
  * @param[in] ib IronBee engine.
- * @param[in] module The module to check.
+ * @param[in] ibmod_modules Lua and lua-defined modules.
  * @param[in] event The event to check for.
  * @param[in] L The Lua state that is checked. While it is an "in"
  *            parameter, it is manipulated and returned to its
@@ -257,7 +261,7 @@ static ib_status_t module_has_callback(
     lua_State *L)
 {
     assert(ib != NULL);
-    assert(ibmod_modules->module != NULL);
+    assert(ibmod_modules != NULL);
     assert(L != NULL);
 
     ib_status_t rc;
@@ -277,6 +281,14 @@ static ib_status_t module_has_callback(
  * called by a wrapper function that unwraps Lua values from
  * the connection or module for us, but in the case of a null event
  * callback, this is called directly
+ * 
+ * @param[in] ib IronBee engine.
+ * @param[in] ibmod_modules The lua module and the user's lua-defined module.
+ * @param[in] L Lua runtime environment.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
  */
 static ib_status_t modlua_callback_dispatch_base(
     ib_engine_t *ib,
@@ -378,7 +390,7 @@ static ib_status_t modlua_callback_dispatch_base(
  * @param[in] tx The transaction. This may be null.
  * @param[in] conn The connection. This may not be null. We require it to,
  *            at a minimum, find the Lua runtime stack.
- * @param[in] cbdata The callback data. This may not be null.
+ * @param[in] modlua_modules The lua modules and the user's lua-defined module.
  *
  * @returns
  *   - The result of the module dispatch call.
@@ -392,18 +404,17 @@ static ib_status_t modlua_callback_dispatch(
     ib_state_event_type_t event,
     ib_tx_t *tx,
     ib_conn_t *conn,
-    void *cbdata)
+    modlua_modules_t *modlua_modules
+)
 {
     assert(ib != NULL);
     assert(conn != NULL);
+    assert(modlua_modules != NULL);
+    assert(modlua_modules->modlua != NULL);
 
     ib_status_t rc;
     lua_State *L;
     modlua_runtime_t *lua = NULL;
-    modlua_modules_t *modlua_modules =
-        (modlua_modules_t *)cbdata;
-
-    assert(modlua_modules != NULL);
 
     rc = modlua_runtime_get(conn, modlua_modules->modlua, &lua);
     if (rc != IB_OK) {
@@ -417,33 +428,36 @@ static ib_status_t modlua_callback_dispatch(
 
 /**
  * Dispatch a null event into a Lua module.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] event The event type.
+ * @param[in] cbdata A pointer to a modlua_modules_t with the lua module
+ *            and the user's lua-defined module struct in it.
+ * 
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
  */
 static ib_status_t modlua_null(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    void *cbdata)
+    ib_engine_t           *ib,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
-    assert(ib);
+    assert(ib != NULL);
+    assert(cbdata != NULL);
 
-    ib_status_t rc;
-    lua_State *L = NULL;
-    ib_module_t *module = NULL; /* A module in lua code. */
-    ib_module_t *modlua = NULL; /* ibmod_lua.so. */
-    ib_context_t *ctx;
-    modlua_cfg_t *cfg = NULL;
-    modlua_runtime_t *runtime = NULL;
-    modlua_modules_t *modlua_modules =
-        (modlua_modules_t *)cbdata;
+    ib_status_t       rc;
+    lua_State        *L              = NULL;
+    ib_context_t     *ctx            = ib_context_main(ib);
+    modlua_cfg_t     *cfg            = NULL;
+    modlua_runtime_t *runtime        = NULL;
+    modlua_modules_t *modlua_modules = (modlua_modules_t *)cbdata;
 
-    assert(modlua_modules != NULL);
     assert(modlua_modules->modlua != NULL);
     assert(modlua_modules->module != NULL);
-    modlua = modlua_modules->modlua;
-    module = modlua_modules->module;
 
-    ctx = ib_context_main(ib);
-
-    rc = ib_context_module_config(ctx, modlua, &cfg);
+    rc = ib_context_module_config(ctx, modlua_modules->modlua, &cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Could not retrieve module configuration.");
         return rc;
@@ -457,7 +471,7 @@ static ib_status_t modlua_null(
 
     L = runtime->L;
 
-    rc = modlua_reload_ctx_except_main(ib, modlua, ctx, L);
+    rc = modlua_reload_ctx_except_main(ib, modlua_modules->modlua, ctx, L);
     if (rc != IB_OK) {
         modlua_releasestate(ib, cfg, runtime);
         ib_log_error(ib, "Could not configure Lua stack.");
@@ -481,7 +495,7 @@ static ib_status_t modlua_null(
     }
 
     lua_pushlightuserdata(L, ib);
-    lua_pushlightuserdata(L, module);
+    lua_pushlightuserdata(L, modlua_modules->module);
     lua_pushinteger(L, event);
     rc = modlua_push_config_path(ib, ctx, L);
     if (rc != IB_OK) {
@@ -525,32 +539,29 @@ static ib_status_t modlua_null(
  * @param[in] tx The transaction. This may be null.
  * @param[in] conn The connection. This may not be null. We require it to,
  *            at a minimum, find the Lua runtime stack.
- * @param[in] cbdata The callback data. This may not be null.
+ * @param[in] cbdata A modlua_modules_t containing both the lua module
+ *            and the user's lua-defined module.
  *
  * @returns
  *   - IB_OK on success.
  *   - IB_EOTHER on a Lua runtime error.
  */
 static ib_status_t modlua_callback_setup(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_tx_t *tx,
-    ib_conn_t *conn,
-    void *cbdata)
+    ib_engine_t           *ib,
+    ib_state_event_type_t  event,
+    ib_tx_t               *tx,
+    ib_conn_t             *conn,
+    modlua_modules_t      *modlua_modules
+)
 {
     assert(ib != NULL);
     assert(conn != NULL);
-
-    ib_status_t rc;
-    ib_module_t *module;
-    lua_State *L = NULL;
-    modlua_runtime_t *lua = NULL;
-    modlua_modules_t *modlua_modules =
-        (modlua_modules_t *)cbdata;
-
     assert(modlua_modules != NULL);
     assert(modlua_modules->modlua != NULL);
-    module = modlua_modules->module;
+
+    ib_status_t       rc;
+    lua_State        *L              = NULL;
+    modlua_runtime_t *lua            = NULL;
 
     rc = modlua_runtime_get(conn, modlua_modules->modlua, &lua);
     if (rc != IB_OK) {
@@ -586,7 +597,7 @@ static ib_status_t modlua_callback_setup(
     }
 
     lua_pushlightuserdata(L, ib);
-    lua_pushlightuserdata(L, module);
+    lua_pushlightuserdata(L, modlua_modules->module);
     lua_pushinteger(L, event);
     rc = modlua_push_config_path(ib, conn->ctx, L);
     if (rc != IB_OK) {
@@ -611,6 +622,16 @@ static ib_status_t modlua_callback_setup(
 
 /**
  * Dispatch a connection event into a Lua module.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] conn Connection.
+ * @param[in] event The event type.
+ * @param[in] cbdata A modlua_modules_t containing the lua module and the
+ *            user's lua-defined  module.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
  */
 static ib_status_t modlua_conn(
     ib_engine_t *ib,
@@ -618,19 +639,21 @@ static ib_status_t modlua_conn(
     ib_state_event_type_t event,
     void *cbdata)
 {
-    assert(ib);
-    assert(conn);
+    assert(ib != NULL);
+    assert(conn != NULL);
+    assert(cbdata != NULL);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    modlua_modules_t *modlua_modules = (modlua_modules_t *)cbdata;
 
-    rc = modlua_callback_setup(ib, event, NULL, conn, cbdata);
+    rc = modlua_callback_setup(ib, event, NULL, conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, NULL, conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, NULL, conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
@@ -640,6 +663,16 @@ static ib_status_t modlua_conn(
 
 /**
  * Dispatch a transaction event into a Lua module.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction.
+ * @param[in] event The event type.
+ * @param[in] cbdata A modlua_modules_t containing the lua module and the
+ *            user's lua-defined  module.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
  */
 static ib_status_t modlua_tx(
     ib_engine_t *ib,
@@ -647,20 +680,22 @@ static ib_status_t modlua_tx(
     ib_state_event_type_t event,
     void *cbdata)
 {
-    assert(tx);
-    assert(tx->conn);
-    assert(ib);
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(tx->conn != NULL);
+    assert(cbdata != NULL);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    modlua_modules_t *modlua_modules = (modlua_modules_t *)cbdata;
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_setup(ib, event, tx, tx->conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
@@ -670,6 +705,12 @@ static ib_status_t modlua_tx(
 
 /**
  * Dispatch a transaction data event into a Lua module.
+ * @param[in] cbdata A modlua_modules_t containing the lua module and the
+ *            user's lua-defined  module.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
  */
 static ib_status_t modlua_txdata(
     ib_engine_t *ib,
@@ -681,17 +722,19 @@ static ib_status_t modlua_txdata(
     assert(ib);
     assert(tx);
     assert(tx->conn);
+    assert(cbdata != NULL);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    modlua_modules_t *modlua_modules = (modlua_modules_t *)cbdata;
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_setup(ib, event, tx, tx->conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
@@ -701,6 +744,12 @@ static ib_status_t modlua_txdata(
 
 /**
  * Dispatch a header callback hook.
+ * @param[in] cbdata A modlua_modules_t containing the lua module and the
+ *            user's lua-defined  module.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
  */
 static ib_status_t modlua_header(
     ib_engine_t *ib,
@@ -712,17 +761,19 @@ static ib_status_t modlua_header(
     assert(ib);
     assert(tx);
     assert(tx->conn);
+    assert(cbdata != NULL);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    modlua_modules_t *modlua_modules = (modlua_modules_t *)cbdata;
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_setup(ib, event, tx, tx->conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
@@ -732,6 +783,12 @@ static ib_status_t modlua_header(
 
 /**
  * Dispatch a request line callback hook.
+ * @param[in] cbdata A modlua_modules_t containing the lua module and the
+ *            user's lua-defined  module.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
  */
 static ib_status_t modlua_reqline(
     ib_engine_t *ib,
@@ -743,17 +800,19 @@ static ib_status_t modlua_reqline(
     assert(ib);
     assert(tx);
     assert(tx->conn);
+    assert(cbdata != NULL);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    modlua_modules_t *modlua_modules = (modlua_modules_t *)cbdata;
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_setup(ib, event, tx, tx->conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
@@ -763,6 +822,12 @@ static ib_status_t modlua_reqline(
 
 /**
  * Dispatch a response line callback hook.
+ * @param[in] cbdata A modlua_modules_t containing the lua module and the
+ *            user's lua-defined  module.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
  */
 static ib_status_t modlua_respline(
     ib_engine_t *ib,
@@ -774,17 +839,19 @@ static ib_status_t modlua_respline(
     assert(ib);
     assert(tx);
     assert(tx->conn);
+    assert(cbdata != NULL);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    modlua_modules_t *modlua_modules = (modlua_modules_t *)cbdata;
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_setup(ib, event, tx, tx->conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, modlua_modules);
     if (rc != IB_OK) {
         return rc;
     }
@@ -794,6 +861,12 @@ static ib_status_t modlua_respline(
 
 /**
  * Dispatch a context event into a Lua module.
+ * @param[in] cbdata A modlua_modules_t containing the lua module and the
+ *            user's lua-defined  module.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
  */
 static ib_status_t modlua_ctx(
     ib_engine_t *ib,
@@ -801,25 +874,21 @@ static ib_status_t modlua_ctx(
     ib_state_event_type_t event,
     void *cbdata)
 {
-    assert(ctx);
     assert(ib);
+    assert(ctx);
+    assert(cbdata != NULL);
 
-    ib_status_t rc;
-    lua_State *L;
-    modlua_cfg_t *cfg = NULL;
-    ib_module_t *module = NULL; /* A module in lua code. */
-    ib_module_t *modlua = NULL; /* ibmod_lua.so. */
+    ib_status_t       rc;
+    lua_State        *L;
+    modlua_cfg_t     *cfg = NULL;
     modlua_runtime_t *runtime;
 
-    modlua_modules_t *modlua_modules =
-        (modlua_modules_t *)cbdata;
-
+    modlua_modules_t *modlua_modules = (modlua_modules_t *)cbdata;
     assert(modlua_modules != NULL);
     assert(modlua_modules->modlua != NULL);
-    module = modlua_modules->module;
-    modlua = modlua_modules->modlua;
+    assert(modlua_modules->module != NULL);
 
-    rc = ib_context_module_config(ctx, modlua, &cfg);
+    rc = ib_context_module_config(ctx, modlua_modules->modlua, &cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Could not retrieve module configuration.");
         return rc;
@@ -832,7 +901,7 @@ static ib_status_t modlua_ctx(
     }
     L = runtime->L;
 
-    rc = modlua_reload_ctx_except_main(ib, modlua, ctx, L);
+    rc = modlua_reload_ctx_except_main(ib, modlua_modules->modlua, ctx, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Could not configure Lua stack.");
         return rc;
@@ -855,7 +924,7 @@ static ib_status_t modlua_ctx(
     /* Push handler arguments... */
     /* Push ib... */
     lua_pushlightuserdata(L, ib);             /* Push engine... */
-    lua_pushlightuserdata(L, module);         /* Push module... */
+    lua_pushlightuserdata(L, modlua_modules->module);
     lua_pushinteger(L, event);                /* Push event type... */
     rc = modlua_push_config_path(ib, ctx, L); /* Push ctx path table... */
     if (rc != IB_OK) {
@@ -894,9 +963,10 @@ static ib_status_t modlua_ctx(
 static ib_status_t modlua_module_load_wire_callbacks(
     ib_engine_t *ib,
     ib_module_t *modlua,
-    const char *file,
+    const char  *file,
     ib_module_t *module,
-    lua_State *L)
+    lua_State   *L
+)
 {
 
     assert(ib != NULL);
@@ -1011,6 +1081,10 @@ static ib_status_t modlua_module_load_wire_callbacks(
  * @param[in] module The created module structure.
  * @param[in] cbdata Other variables required for proper initialization
  *            not provided for in the module init api.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
  */
 static ib_status_t modlua_luamod_init(
     ib_engine_t *ib,
@@ -1018,13 +1092,23 @@ static ib_status_t modlua_luamod_init(
     void        *cbdata
 )
 {
+    assert(ib != NULL);
+    assert(module != NULL);
+    assert(cbdata != NULL);
+
     modlua_luamod_init_t *cfg = (modlua_luamod_init_t *)cbdata;
 
-    lua_State    *L          = cfg->L;
-    ib_module_t  *modlua     = cfg->modlua;
-    modlua_cfg_t *modlua_cfg = cfg->modlua_cfg;
-    const char   *file       = cfg->file;
-    ib_status_t   rc;
+    /* Validate the passed along configuration. */
+    assert(cfg->modlua != NULL);
+    assert(cfg->modlua_cfg != NULL);
+    assert(cfg->modlua_cfg->L != NULL);
+    assert(cfg->file != NULL);
+
+    ib_module_t          *modlua     = cfg->modlua;
+    modlua_cfg_t         *modlua_cfg = cfg->modlua_cfg;
+    lua_State            *L          = cfg->modlua_cfg->L;
+    const char           *file       = cfg->file;
+    ib_status_t           rc;
 
     /* Load the modules into the main Lua stack. Also register directives. */
     rc = modlua_module_load_lua(ib, true, file, module, L);
@@ -1057,11 +1141,24 @@ static ib_status_t modlua_luamod_init(
     return IB_OK;
 }
 
+/**
+ * Load a Lua-defined module.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] modlua The ibmod_lua module structure.
+ * @param[in] file The file that the user's lua-defined module resides in.
+ * @param[in] cfg The module configuration for @a modlua.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
 ib_status_t modlua_module_load(
     ib_engine_t *ib,
     ib_module_t *modlua,
     const char *file,
-    modlua_cfg_t *cfg)
+    modlua_cfg_t *cfg
+)
 {
     assert(ib != NULL);
     assert(modlua != NULL);
@@ -1069,12 +1166,17 @@ ib_status_t modlua_module_load(
     assert(cfg != NULL);
     assert(cfg->L != NULL);
 
-    lua_State   *L = cfg->L;
     ib_module_t *module;
     ib_status_t  rc;
-    ib_mpool_t  *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t  *mp          = ib_engine_pool_main_get(ib);
     const char  *module_name = ib_mpool_strdup(mp, file);
-    modlua_luamod_init_t *modlua_luamod_init_cbdata;
+    modlua_luamod_init_t *modlua_luamod_init_cbdata =
+        ib_mpool_alloc(mp, sizeof(*modlua_luamod_init_cbdata));
+
+    if (modlua_luamod_init_cbdata == NULL) {
+        ib_log_error(ib, "Could not allocate module init structure.");
+        return IB_EALLOC;
+    }
 
     /* Create the Lua module as if it was a normal module. */
     ib_log_debug3(ib, "Creating lua module structure");
@@ -1084,12 +1186,8 @@ ib_status_t modlua_module_load(
         return rc;
     }
 
-    modlua_luamod_init_cbdata =
-        ib_mpool_alloc(mp, sizeof(*modlua_luamod_init_cbdata));
-
-    modlua_luamod_init_cbdata->L    = L;
-    modlua_luamod_init_cbdata->file = file;
-    modlua_luamod_init_cbdata->modlua = modlua;
+    modlua_luamod_init_cbdata->file       = file;
+    modlua_luamod_init_cbdata->modlua     = modlua;
     modlua_luamod_init_cbdata->modlua_cfg = cfg;
 
     /* Initialize the loaded module. */
@@ -1107,7 +1205,7 @@ ib_status_t modlua_module_load(
         NULL,                           /* Configuration field map */
         NULL,                           /* Config directive map */
         modlua_luamod_init,             /* Initialize function */
-        modlua_luamod_init_cbdata,     /* Callback data */
+        modlua_luamod_init_cbdata,      /* Callback data */
         NULL,                           /* Finish function */
         NULL                            /* Callback data */
     );
