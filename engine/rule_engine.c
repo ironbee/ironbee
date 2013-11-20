@@ -3709,6 +3709,9 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
         ib_list_t            *phase_rule_list;
         ib_rule_phase_num_t   phase_num;
         ib_rule_t            *rule;
+        const ib_list_node_t *onode;
+        size_t                owners = 0;
+        const char           *owner_name = NULL;
 
         ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
         assert(ctx_rule != NULL);
@@ -3722,6 +3725,65 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
         }
 
         phase_num = rule->meta.phase;
+
+        /* Give the ownership functions a shot at the rule */
+        IB_LIST_LOOP_CONST(ib->rule_engine->ownership_cbs, onode) {
+            const ib_rule_ownership_cb_t *cb =
+                (const ib_rule_ownership_cb_t *)onode->data;
+            ib_status_t orc;
+
+            orc = cb->fn(ib, rule, cb->data);
+            if (orc == IB_OK) {
+                ib_log_debug3(ib,
+                              "Ownership callback \"%s\" has taken ownership "
+                              "of rule \"%s\" phase=%d context=\"%s\"",
+                              cb->name,
+                              ib_rule_id(rule), phase_num,
+                              ib_context_full_get(ctx));
+                ++owners;
+                owner_name = cb->name;
+
+                /* Report multiple owners as an error. */
+                if (owners > 1) {
+                    ib_log_error(
+                        ib,
+                        "Rule owned by \"%s\" was also claimed by \"%s\" "
+                        "in rule \"%s\" phase=%d context=\"%s\".",
+                        owner_name,
+                        cb->name,
+                        ib_rule_id(rule),
+                        phase_num,
+                        ib_context_full_get(ctx));
+                }
+                break;
+            }
+            /* Ownership may only return IB_OK or IB_DECLINED. */
+            else if (orc != IB_DECLINED) {
+                ib_log_error(ib,
+                             "Ownership callback \"%s\" returned an error "
+                             "for rule \"%s\" phase=%d context=\"%s\": %s",
+                             cb->name,
+                             ib_rule_id(rule), phase_num,
+                             ib_context_full_get(ctx),
+                             ib_status_to_string(orc));
+                return IB_EUNKNOWN;
+            }
+        }
+        if (owners > 0) {
+            continue;
+        }
+
+        /* Rules in default engine need phases. */
+        /* Sanity checks */
+        if( (rule->phase_meta->flags & PHASE_FLAG_IS_VALID) == 0) {
+            ib_log_error(ib, "Cannot register rule: Phase is invalid");
+            return IB_EINVAL;
+        }
+        if (! is_phase_num_valid(phase_num) || phase_num == IB_PHASE_NONE) {
+            ib_log_error(ib, "Cannot register rule: Invalid phase %d", phase_num);
+            return IB_EINVAL;
+        }
+        assert (rule->meta.phase == rule->phase_meta->phase_num);
 
         /* Determine what phase list to add it into */
         ruleset_phase = &(ctx->rules->ruleset.phases[phase_num]);
@@ -4476,77 +4538,6 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                       "Registered rule \"%s\" chained from rule \"%s\".",
                       ib_rule_id(rule), ib_rule_id(rule->chained_from));
     }
-
-    /* Give the ownership functions a shot at the rule */
-    {
-        const ib_list_node_t *onode;
-        int                   owners     = 0;
-        const char           *owner_name = NULL;
-        IB_LIST_LOOP_CONST(ib->rule_engine->ownership_cbs, onode) {
-            const ib_rule_ownership_cb_t *cb =
-                (const ib_rule_ownership_cb_t *)onode->data;
-            ib_status_t orc;
-
-            orc = cb->fn(ib, rule, cb->data);
-            if (orc == IB_OK) {
-                ib_log_debug3(ib,
-                              "Ownership callback \"%s\" has taken ownership "
-                              "of rule \"%s\" phase=%d context=\"%s\".",
-                              cb->name,
-                              ib_rule_id(rule), phase_num,
-                              ib_context_full_get(ctx));
-                ++owners;
-                owner_name = cb->name;
-
-                /* Report multiple owners as an error. */
-                if (owners > 1) {
-                    ib_log_error(
-                        ib,
-                        "Rule owned by \"%s\" was also claimed by \"%s\" "
-                        "in rule \"%s\" phase=%d context=\"%s\".",
-                        owner_name,
-                        cb->name,
-                        ib_rule_id(rule),
-                        phase_num,
-                        ib_context_full_get(ctx));
-                }
-            }
-
-            /* Ownership may only return IB_OK or IB_DECLINED. */
-            else if (orc != IB_DECLINED) {
-                ib_log_error(ib,
-                             "Ownership callback \"%s\" returned an error "
-                             "for rule \"%s\" phase=%d context=\"%s\": %s",
-                             cb->name,
-                             ib_rule_id(rule), phase_num,
-                             ib_context_full_get(ctx),
-                             ib_status_to_string(orc));
-                return IB_EUNKNOWN;
-            }
-        }
-
-        /* Single owner, stop processing. Success. */
-        if (owners == 1) {
-            return IB_OK;
-        }
-
-        /* Multiple owners, an error is reported. */
-        else if (owners > 1) {
-            return IB_EEXIST;
-        }
-    }
-
-    /* Rules in default engine need phases. */
-    /* Sanity checks */
-    if( (rule->phase_meta->flags & PHASE_FLAG_IS_VALID) == 0) {
-        ib_log_error(ib, "Cannot register rule: Phase is invalid");
-        return IB_EINVAL;
-    }
-    if (! is_phase_num_valid(phase_num) || phase_num == IB_PHASE_NONE) {
-        ib_log_error(ib, "Cannot register rule: Invalid phase %d", phase_num);
-        return IB_EINVAL;
-    }
-    assert (rule->meta.phase == rule->phase_meta->phase_num);
 
     /* Put this rule in the hash */
     lookup = NULL;
