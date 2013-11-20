@@ -4440,15 +4440,12 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
 {
     ib_status_t          rc;
     ib_rule_context_t   *context_rules;
-    ib_rule_phase_num_t  phase_num;
     ib_rule_t           *lookup;
 
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(rule != NULL);
     assert(rule->phase_meta != NULL);
-
-    phase_num = rule->meta.phase;
 
     /* Verify that we have a valid operator */
     if (rule->opinst == NULL) {
