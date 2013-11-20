@@ -217,4 +217,3 @@ TEST_F(TestEval, GraphEvalState)
     EXPECT_TRUE(ges.is_finished(3));
     EXPECT_TRUE(ges.is_finished(4));
 }
-

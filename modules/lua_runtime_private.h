@@ -66,7 +66,7 @@ typedef enum modlua_reload_type_t modlua_reload_type_t;
  */
 struct modlua_reload_t {
     modlua_reload_type_t  type;    /**< Is this a module or a rule? */
-    ib_module_t          *module;  /**< Lua module (not ibmod_lua.so). */ 
+    ib_module_t          *module;  /**< Lua module (not ibmod_lua.so). */
     const char           *file;    /**< File of the rule or module code. */
     const char           *rule_id; /**< Rule if this is a rule type. */
 };

@@ -153,4 +153,25 @@ class TestPredicate < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /PredicateTrace/
   end
+
+  def test_context_phaseless
+    foo_config = <<-EOS
+      Action id:1 clipp_announce:outer "predicate:(true)"
+      <Location /foo>
+          Action id:2 phase:REQUEST_HEADER clipp_announce:inner "predicate:(true)"
+      </Location>
+    EOS
+    clipp(CONFIG.merge(
+      :default_site_config => foo_config
+    )) do
+      transaction do |t|
+        t.request(
+          raw: "GET /foo HTTP/1.1"
+        )
+      end
+    end
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: outer/
+    assert_log_match /CLIPP ANNOUNCE: inner/
+  end
 end

@@ -37,7 +37,7 @@
  * A container to hold both ibmod_lua and a user-defined Lua module.
  *
  * This is used as callback data to event handlers that need to know
- * which user-defined module they were registered as, as well as, 
+ * which user-defined module they were registered as, as well as,
  * which modules the ibmod_lua module was registered as.
  */
 struct modlua_modules_t {
@@ -281,7 +281,7 @@ static ib_status_t module_has_callback(
  * called by a wrapper function that unwraps Lua values from
  * the connection or module for us, but in the case of a null event
  * callback, this is called directly
- * 
+ *
  * @param[in] ib IronBee engine.
  * @param[in] ibmod_modules The lua module and the user's lua-defined module.
  * @param[in] L Lua runtime environment.
@@ -433,7 +433,7 @@ static ib_status_t modlua_callback_dispatch(
  * @param[in] event The event type.
  * @param[in] cbdata A pointer to a modlua_modules_t with the lua module
  *            and the user's lua-defined module struct in it.
- * 
+ *
  * @returns
  * - IB_OK On success.
  * - Other on error.

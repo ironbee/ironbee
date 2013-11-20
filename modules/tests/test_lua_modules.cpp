@@ -28,7 +28,7 @@ extern "C" {
 #include <unistd.h>
 }
 
-class LuaModule : public BaseTransactionFixture 
+class LuaModule : public BaseTransactionFixture
 {
 };
 
