@@ -138,8 +138,8 @@ bool RawGenerator::operator()(Input::input_p& out_input)
 
 const std::string RawGenerator::local_ip    = "1.2.3.4";
 const std::string RawGenerator::remote_ip   = "5.6.7.8";
-const uint16_t    RawGenerator::local_port  = 1234;
-const uint16_t    RawGenerator::remote_port = 80;
+const uint16_t    RawGenerator::local_port  = 80;
+const uint16_t    RawGenerator::remote_port = 1234;
 
 } // CLIPP
 } // IronBee
