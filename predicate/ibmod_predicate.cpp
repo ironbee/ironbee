@@ -640,15 +640,12 @@ void PerContext::inject(
     size_t num_considered = 0;
     size_t num_injected = 0;
 
-    cout << "inject " << context << " " << ib_rule_phase_name(rule_exec->phase) << endl;
     for (size_t i = 0; i < sizeof(phases)/sizeof(*phases); ++i) {
         ib_rule_phase_num_t phase = phases[i];
-        cout << "  considering phase " << ib_rule_phase_name(phase) << endl;
         BOOST_FOREACH(
             PerContext::rules_by_node_t::const_reference v,
             m_rules[phase]
         ) {
-            cout << "  considering " << *v.first << endl;
             size_t index = v.first->index();
 
             // Only calculate if tracing as .size() might be O(n).
@@ -657,19 +654,16 @@ void PerContext::inject(
 
             // Check if fired.
             if (phase == IB_PHASE_NONE && per_tx->root_fired(index)) {
-                cout << "  already fired, skipping" << endl;
                 continue;
             }
 
             per_tx->graph_eval_state().eval(v.first, tx);
             if (! per_tx->graph_eval_state().empty(index)) {
-                cout << "  injecting" << endl;
                 copy(
                     v.second.begin(), v.second.end(),
                     back_inserter(rule_list)
                 );
                 if (phase == IB_PHASE_NONE) {
-                    cout << "  marking" << endl;
                     per_tx->set_root_fired(index);
                 }
                 num_injected += n;
