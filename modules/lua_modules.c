@@ -77,7 +77,7 @@ typedef struct modlua_luamod_init_t {
  * @param[in] ib IronBee engine.
  * @param[in] modlua_modules Lua and lua-defined modules.
  * @param[in] event the even type.
- * @param[out] L the execution evironment to modify.
+ * @param[out] L the execution environment to modify.
  *
  * @returns
  *   - IB_OK on success. The stack is 1 element higher.
