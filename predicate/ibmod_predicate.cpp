@@ -1145,9 +1145,21 @@ ib_status_t Delegate::injection(
     try {
         IB::List<const ib_rule_t*> rule_list(ib_rule_list);
         IB::ConstTransaction tx(rule_exec->tx);
-        PerContext& per_context =
-            module().configuration_data<PerContext>(tx.context());
-        per_context.inject(tx.context(), rule_exec, rule_list);
+
+        // The top, parent-less, context is the engine context and we do
+        // not have per-context data for it.  So stop just before that.
+        // It is necessary to inject parent contexts as rules are not provided
+        // for ownership until context close, thus child contexts are created
+        // with no predicate rules.
+        for (
+            IB::Context ctx = tx.context();
+            ctx.parent();
+            ctx = ctx.parent()
+        ) {
+            PerContext& per_context =
+                module().configuration_data<PerContext>(ctx);
+            per_context.inject(ctx, rule_exec, rule_list);
+        }
     }
     catch (...) {
         return IB::convert_exception(module().engine());
