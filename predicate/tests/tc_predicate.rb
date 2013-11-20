@@ -174,4 +174,19 @@ class TestPredicate < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: outer/
     assert_log_match /CLIPP ANNOUNCE: inner/
   end
+
+  def test_enable_disable
+    clipp(CONFIG.merge(
+      :input_hashes => [make_request('foobar')],
+      :default_site_config => <<-EOS
+        Action id:1 phase:REQUEST_HEADER clipp_announce:yes "predicate:(field 'REQUEST_URI')"
+        Action id:2 phase:REQUEST_HEADER clipp_announce:no "predicate:(field 'REQUEST_URI')"
+        RuleDisable id:2
+      EOS
+    ))
+    assert_no_issues
+    assert_log_no_match /NOTICE/
+    assert_log_match /CLIPP ANNOUNCE: yes/
+    assert_log_no_match /CLIPP ANNOUNCE: no/
+  end
 end
