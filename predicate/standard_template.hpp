@@ -64,17 +64,30 @@ public:
 };
 
 /**
- * XXX
+ * Call that transforms based on an expression and ref subsitution.
+ *
+ * A template call is initialized with a body expression tree and an argument
+ * list.  At transformation, the body is traversed and any ref nodes are
+ * replaced by replacing a ref node whose name is at position @c i in the
+ * argument list with the @c ith child.
  **/
 class Template :
     public Call
 {
 public:
-    //! Constructor.  See Template.
+    /**
+     * Constructor.
+     *
+     * @param[in] name Name of template.
+     * @param[in] args List of arguments.  All ref nodes in @a body must
+     *                 use one of these.
+     * @param[in] body Body.  Any ref nodes in body will be replaced by
+     *                 children of this node according to @a args.
+     **/
     Template(
-        const std::string& name,
+        const std::string&          name,
         const template_arg_list_t&  args,
-        const node_cp&     body
+        const node_cp&              body
     );
 
     //! See Call::name()
@@ -113,7 +126,9 @@ private:
 /**
  * Create a Template generator.
  *
- * XXX
+ * @param[in] args Template arguments.
+ * @param[in] body Template body.
+ * @return Generator suitable for registration with call factory.
  **/
 CallFactory::generator_t define_template(
     const template_arg_list_t& args,
@@ -123,7 +138,9 @@ CallFactory::generator_t define_template(
 /**
  * Load all standard Template calls into a CallFactory.
  *
- * XXX
+ * Adds Ref to @a to.  Templates need to be added as they are defined.
+ *
+ * @sa define_template()
  *
  * @param [in] to CallFactory to load into.
  **/
