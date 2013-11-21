@@ -654,7 +654,7 @@ public:
         sendRequestBody();
         BaseFixture::finishRequest(ib_tx);
     }
-    void sendRequestLine(const char *method,
+    virtual void sendRequestLine(const char *method,
                          const char *uri,
                          const char *proto)
     {

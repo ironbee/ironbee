@@ -364,8 +364,7 @@ namespace {
         /* After applying the TX, set the value. */
         IronBee::Field f = IronBee::Field::create_float(
             tx.memory_pool(),
-            "XRULES:SCALE_THREAT",
-            sizeof("XRULES:SCALE_THREAT")-1,
+            IB_S2SL("XRULES:SCALE_THREAT"),
             mdata->scale_threat);
 
         IronBee::throw_if_error(
@@ -1339,10 +1338,10 @@ namespace {
     )
     {
         if (actions.overrides(m_action)) {
-            const std::string tx_path(tx.path());
+            const std::string tx_path(tx.ib()->path);
 
-            if (m_path.length() <= tx_path.length() &&
-                m_path.compare(0, m_path.length(), tx_path) == 0)
+            if (tx_path.length() >= m_path.length() &&
+                tx_path.compare(0, m_path.length(), m_path) == 0)
             {
                 actions.set(m_action);
             }
@@ -2129,7 +2128,7 @@ void XRulesModule::on_handle_context_transaction(
         itr != cfg.req_xrules.end();
         ++itr)
     {
-            (**itr)(tx, actions);
+        (**itr)(tx, actions);
     }
 
     actions.apply(mdata, tx);
