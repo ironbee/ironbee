@@ -1709,7 +1709,7 @@ static ib_status_t start_ib_request(
     ib_status_t           rc;
     ib_parsed_req_line_t *rline;
 
-    rc = ib_parsed_req_line_create(tx, &rline,
+    rc = ib_parsed_req_line_create(&rline, tx,
                                    line_buf, line_len,
                                    NULL, 0,
                                    NULL, 0,
@@ -1752,7 +1752,7 @@ static ib_status_t start_ib_response(
     ib_status_t            rc;
     ib_parsed_resp_line_t *rline;
 
-    rc = ib_parsed_resp_line_create(tx, &rline,
+    rc = ib_parsed_resp_line_create(&rline, tx,
                                     line_buf, line_len,
                                     NULL, 0,
                                     NULL, 0,

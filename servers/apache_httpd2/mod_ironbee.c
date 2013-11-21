@@ -457,7 +457,7 @@ static int ironbee_headers_in(request_rec *r)
 
         ctx->state |= NOTIFY_REQ_START;
 
-        rc = ib_parsed_req_line_create(ctx->tx, &rline,
+        rc = ib_parsed_req_line_create(&rline, ctx->tx,
                                        r->the_request, strlen(r->the_request),
                                        r->method, strlen(r->method),
                                        r->unparsed_uri, strlen(r->unparsed_uri),
@@ -586,7 +586,7 @@ static apr_status_t ironbee_header_filter(ap_filter_t *f,
             reason = "Other";
     }
 
-    rc = ib_parsed_resp_line_create(ctx->tx, &rline, NULL, 0,
+    rc = ib_parsed_resp_line_create(&rline, ctx->tx, NULL, 0,
                                     "HTTP/1.1", 8,
                                     cstatus, strlen(cstatus),
                                     reason, strlen(reason));
@@ -1255,7 +1255,7 @@ static ib_status_t logger_format(
 }
 
 /**
- * Initialize a new server plugin module instance. 
+ * Initialize a new server plugin module instance.
  *
  * @param[in] ib Engine this module is operating on.
  * @param[in] module This module structure.

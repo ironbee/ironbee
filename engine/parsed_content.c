@@ -140,16 +140,18 @@ ib_status_t ib_parsed_tx_each_header(
     return rc;
 }
 
-ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
-                                       ib_parsed_resp_line_t **line,
-                                       const char *raw,
-                                       size_t raw_len,
-                                       const char *protocol,
-                                       size_t protocol_len,
-                                       const char *status,
-                                       size_t status_len,
-                                       const char *msg,
-                                       size_t msg_len)
+ib_status_t ib_parsed_resp_line_create(
+    ib_parsed_resp_line_t **line,
+    ib_tx_t                *tx,
+    const char             *raw,
+    size_t                  raw_len,
+    const char             *protocol,
+    size_t                  protocol_len,
+    const char             *status,
+    size_t                  status_len,
+    const char             *msg,
+    size_t                  msg_len
+)
 {
     ib_status_t rc = IB_OK;
 
@@ -284,16 +286,18 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
     return IB_OK;
 }
 
-ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
-                                      ib_parsed_req_line_t **line,
-                                      const char *raw,
-                                      size_t raw_len,
-                                      const char *method,
-                                      size_t method_len,
-                                      const char *uri,
-                                      size_t uri_len,
-                                      const char *protocol,
-                                      size_t protocol_len)
+ib_status_t ib_parsed_req_line_create(
+    ib_parsed_req_line_t **line,
+    ib_tx_t               *tx,
+    const char            *raw,
+    size_t                 raw_len,
+    const char            *method,
+    size_t                 method_len,
+    const char            *uri,
+    size_t                 uri_len,
+    const char            *protocol,
+    size_t                 protocol_len
+)
 {
     ib_status_t rc = IB_OK;
 

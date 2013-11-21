@@ -383,7 +383,7 @@ public:
         line += proto;
         line += "\r\n";
 
-        rc = ib_parsed_req_line_create(tx, &parsed,
+        rc = ib_parsed_req_line_create(&parsed, tx,
                                        line.data(), line.length(),
                                        method, strlen(method),
                                        uri, strlen(uri),
@@ -480,7 +480,7 @@ public:
         }
         line += "\r\n";
 
-        rc = ib_parsed_resp_line_create(tx, &parsed,
+        rc = ib_parsed_resp_line_create(&parsed, tx,
                                         line.data(), line.length(),
                                         proto, strlen(proto),
                                         status, strlen(status),

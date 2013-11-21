@@ -129,7 +129,8 @@ typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
  */
 ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_wrapper_create(
     ib_parsed_name_value_pair_list_wrapper_t **header,
-    struct ib_tx_t *tx);
+    struct ib_tx_t *tx
+);
 
 /**
  * Link the arguments to a new list element and append it to this list.
@@ -209,8 +210,8 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_each_header(
  * @returns IB_OK or IB_EALLOC.
  */
 ib_status_t DLL_PUBLIC ib_parsed_resp_line_create(
-    struct ib_tx_t *tx,
     ib_parsed_resp_line_t **line,
+    struct ib_tx_t *tx,
     const char *raw,
     size_t raw_len,
     const char *protocol,
@@ -247,8 +248,8 @@ ib_status_t DLL_PUBLIC ib_parsed_resp_line_create(
  * @returns IB_OK or IB_EALLOC.
  */
 ib_status_t DLL_PUBLIC ib_parsed_req_line_create(
-    struct ib_tx_t *tx,
     ib_parsed_req_line_t **line,
+    struct ib_tx_t *tx,
     const char *raw,
     size_t raw_len,
     const char *method,

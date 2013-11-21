@@ -80,8 +80,8 @@ ParsedRequestLine ParsedRequestLine::create_alias(
     ib_parsed_req_line_t *ib_prl;
     throw_if_error(
         ib_parsed_req_line_create(
-            transaction.ib(),
             &ib_prl,
+            transaction.ib(),
             raw,
             raw_length,
             method,
