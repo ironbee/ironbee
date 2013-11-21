@@ -1497,7 +1497,7 @@ static ib_status_t get_http_header(
             goto cleanup;
         }
     }
-    line_len = (line_end - hdr_buf) + 2;
+    line_len = (line_end - hdr_buf);
 
     *phdr_buf  = hdr_buf;
     *phdr_len  = strlen(hdr_buf);
