@@ -38,7 +38,7 @@ using namespace std;
 namespace IronBee {
 namespace Predicate {
 
-// m_index intentionally left uninitalized to allow valgrind to detect uses
+// m_index intentionally left uninitialized to allow valgrind to detect uses
 // of it before set_index() is called.
 Node::Node()
 {

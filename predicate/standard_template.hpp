@@ -64,7 +64,7 @@ public:
 };
 
 /**
- * Call that transforms based on an expression and ref subsitution.
+ * Call that transforms based on an expression and ref substitution.
  *
  * A template call is initialized with a body expression tree and an argument
  * list.  At transformation, the body is traversed and any ref nodes are
