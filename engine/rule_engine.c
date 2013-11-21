@@ -2193,7 +2193,6 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec, "Failed to block: %s",
                               ib_status_to_string(rc));
-            rc = IB_OK;
         }
         else {
             ib_log_debug_tx(tx,
