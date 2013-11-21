@@ -971,15 +971,17 @@ static ib_status_t report_close_block_to_server(
     ib_tx_t           *tx = rule_exec->tx;
     ib_conn_t         *conn = rule_exec->tx->conn;
 
+    ib_log_debug_tx(tx, "Reporting close block to server.");
+
     rc = ib_server_error_close(server, conn, tx);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
-        ib_rule_log_notice(
-            rule_exec,
+        ib_log_debug_tx(
+            tx,
             "Server not willing close connection.");
     }
     else if (rc != IB_OK) {
-        ib_rule_log_error(
-            rule_exec,
+        ib_log_notice_tx(
+            tx,
             "Server failed to close connection: %s.",
             ib_status_to_string(rc));
     }
@@ -1005,21 +1007,23 @@ static ib_status_t report_status_block_to_server(
     ib_status_t  rc;
     ib_engine_t *ib = rule_exec->ib;
     ib_tx_t     *tx = rule_exec->tx;
-    ib_rule_log_debug(
-        rule_exec,
+    ib_log_debug_tx(tx, "Reporting status block to server.");
+
+    ib_log_debug_tx(
+        tx,
         "Setting HTTP error response: status=%" PRId64,
          rule_exec->tx->block_status);
 
     rc = ib_server_error_response(ib->server, tx, tx->block_status);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
-        ib_rule_log_notice(
-            rule_exec,
+        ib_log_debug_tx(
+            tx,
             "Server not willing to set HTTP error response.");
         return IB_OK;
     }
     else if (rc != IB_OK) {
-        ib_rule_log_error(
-            rule_exec,
+        ib_log_notice_tx(
+            tx,
             "Server failed to set HTTP error response: %s",
             ib_status_to_string(rc));
         return rc;
@@ -1036,14 +1040,14 @@ static ib_status_t report_status_block_to_server(
         default_block_document,
         default_block_document_len);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
-        ib_rule_log_notice(
-            rule_exec,
+        ib_log_debug_tx(
+            tx,
             "Server not willing to set HTTP error response data.");
         return IB_OK;
     }
     else if (rc != IB_OK) {
-        ib_rule_log_error(
-            rule_exec,
+        ib_log_notice_tx(
+            tx,
             "Server failed to set HTTP error response data: %s",
             ib_status_to_string(rc));
         return rc;
@@ -1080,13 +1084,18 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
     ib_status_t  rc = IB_OK;
     ib_tx_t     *tx = rule_exec->tx;
 
+    /* Check if the transaction was already blocked. */
+    if (ib_tx_flags_isset(tx, IB_TX_FBLOCKED)) {
+        return IB_OK;
+    }
+
     switch(tx->block_method) {
         case IB_BLOCK_METHOD_STATUS:
             rc = report_status_block_to_server(rule_exec);
 
             /* Failover. */
             if (rc != IB_OK) {
-                ib_rule_log_info( rule_exec, "Failing back to close block.");
+                ib_log_debug_tx(tx, "Failing back to close block.");
                 rc = report_close_block_to_server(rule_exec);
             }
             break;
@@ -1095,10 +1104,14 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
 
             /* Failover */
             if (rc != IB_OK) {
-                ib_rule_log_info(rule_exec, "Failing back to status block.");
+                ib_log_debug_tx(tx, "Failing back to status block.");
                 rc = report_status_block_to_server(rule_exec);
             }
             break;
+    }
+
+    if (rc == IB_OK) {
+        ib_tx_flags_set(tx, IB_TX_FBLOCKED);
     }
 
     return rc;
@@ -1948,16 +1961,21 @@ static bool rule_allow(const ib_tx_t *tx,
                        const ib_rule_t *rule,
                        bool check_phase)
 {
+    /* Check if the transaction was already blocked. */
+    if (ib_tx_flags_isset(tx, IB_TX_FBLOCKED)) {
+        return false;
+    }
+
     /* Check the ALLOW_ALL flag */
     if ( (meta->phase_num != IB_PHASE_POSTPROCESS) &&
          (meta->phase_num != IB_PHASE_LOGGING) &&
          (ib_tx_flags_isset(tx, IB_TX_ALLOW_ALL) == 1) )
     {
-        ib_rule_log_tx_debug(tx,
-                             "Skipping phase %d/\"%s\" in context \"%s\": "
-                             "ALLOW set",
-                             meta->phase_num, meta->name,
-                             ib_context_full_get(tx->ctx));
+        ib_log_debug_tx(tx,
+                        "Skipping phase %d/\"%s\" in context \"%s\": "
+                        "ALLOW_ALL set.",
+                        meta->phase_num, meta->name,
+                        ib_context_full_get(tx->ctx));
         return true;
     }
 
@@ -1965,22 +1983,22 @@ static bool rule_allow(const ib_tx_t *tx,
     if ( (ib_flags_all(meta->flags, PHASE_FLAG_REQUEST)) &&
          (ib_tx_flags_isset(tx, IB_TX_ALLOW_REQUEST) == 1) )
     {
-        ib_rule_log_tx_debug(tx,
-                             "Skipping phase %d/\"%s\" in context \"%s\": "
-                             "ALLOW_REQUEST set",
-                             meta->phase_num, meta->name,
-                             ib_context_full_get(tx->ctx));
+        ib_log_debug_tx(tx,
+                        "Skipping phase %d/\"%s\" in context \"%s\": "
+                        "ALLOW_REQUEST set.",
+                        meta->phase_num, meta->name,
+                        ib_context_full_get(tx->ctx));
         return true;
     }
 
     /* If check_phase is true, check the ALLOW_PHASE flag */
     if ( check_phase && (ib_tx_flags_isset(tx, IB_TX_ALLOW_PHASE) == 1) )
     {
-        ib_rule_log_tx_debug(tx,
-                             "Skipping remaining rules phase %d/\"%s\" "
-                             "in context \"%s\": ALLOW_PHASE set",
-                             meta->phase_num, meta->name,
-                             ib_context_full_get(tx->ctx));
+        ib_log_debug_tx(tx,
+                        "Skipping remaining rules phase %d/\"%s\" "
+                        "in context \"%s\": ALLOW_PHASE set.",
+                        meta->phase_num, meta->name,
+                        ib_context_full_get(tx->ctx));
         return true;
     }
 
@@ -2125,7 +2143,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(cbdata != NULL);
 
     /* If this is an empty request, ignore the transaction */
-    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA | IB_TX_FRES_HAS_DATA)) {
+    if (! ib_flags_any(tx->flags, IB_TX_FREQ_HAS_DATA | IB_TX_FRES_HAS_DATA)) {
         return IB_OK;
     }
 
@@ -2160,38 +2178,36 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                       meta->phase_num, phase_name(meta),
                       ib_list_elements(rules));
 
-    /* Clear the phase allow flag since we are processing a new phase. */
-    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
-
-    /* Check if this phase should be skipped. Is the whole TX is allowed? */
-    if (rule_allow(tx, meta, NULL, false)) {
+    /* Check if this phase should be skipped. */
+    if (rule_allow(tx, meta, NULL, true)) {
         rc = IB_OK;
         goto finish;
     }
 
     /* If we're blocking, skip processing */
-    if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE | IB_TX_BLOCK_IMMEDIATE) &&
+    if (ib_flags_any(tx->flags, IB_TX_BLOCK_PHASE | IB_TX_BLOCK_IMMEDIATE) &&
         (ib_flags_any(meta->flags, PHASE_FLAG_FORCE) == false) )
     {
-        ib_rule_log_tx_debug(tx,
-                             "Not executing rules for phase %d/\"%s\" "
-                             "in context \"%s\" because transaction previously "
-                             "has been blocked with status %" PRId64,
-                             meta->phase_num, phase_name(meta),
-                             ib_context_full_get(ctx), tx->block_status);
-
-        /* Report blocking to server if blocking was set prior to rules. */
-        if (meta->phase_num == IB_PHASE_REQUEST_HEADER) {
-            rc = report_block_to_server(rule_exec);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Failed to block: %s",
-                                  ib_status_to_string(rc));
-            }
+        /* Report blocking to server. */
+        rc = report_block_to_server(rule_exec);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec, "Failed to block: %s",
+                              ib_status_to_string(rc));
+            rc = IB_OK;
         }
-
-        rc = IB_OK;
-        goto finish;
+        else {
+            ib_log_debug_tx(tx,
+                            "Not executing rules for phase %d/\"%s\" "
+                            "in context \"%s\": transaction was blocked.",
+                            meta->phase_num, phase_name(meta),
+                            ib_context_full_get(ctx));
+            rc = IB_OK;
+            goto finish;
+        }
     }
+
+    /* Clear the phase allow flag since we are processing a new phase. */
+    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
 
     /* Sanity check */
     if (ruleset_phase->phase_num != meta->phase_num) {
