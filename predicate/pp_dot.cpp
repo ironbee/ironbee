@@ -146,69 +146,75 @@ int main(int argc, char **argv)
     }
     // End command line options
 
-    P::CallFactory call_factory;
-    string line;
+    try {
+        P::CallFactory call_factory;
+        string line;
 
-    P::Standard::load(call_factory);
+        P::Standard::load(call_factory);
 
-    // For Graph Mode
-    P::MergeGraph G;
-    root_names_t root_names;
+        // For Graph Mode
+        P::MergeGraph G;
+        root_names_t root_names;
 
-    while (getline(cin, line)) {
-        // Handle a define line.
-        if (
-            line.length() > c_define.length() &&
-            line.substr(0, c_define.length()) == c_define
-        ) {
-            // Define line.
-            size_t name_at = line.find_first_of(" ") + 1;
-            size_t args_at = line.find_first_of(" ", name_at) + 1;
-            size_t body_at = line.find_first_of(" ", args_at) + 1;
-
+        while (getline(cin, line)) {
+            // Handle a define line.
             if (
-                name_at == string::npos ||
-                args_at == string::npos ||
-                body_at == string::npos
+                line.length() > c_define.length() &&
+                line.substr(0, c_define.length()) == c_define
             ) {
-                cerr << "ERROR: Parsing define: " << line;
-                return 1;
+                // Define line.
+                size_t name_at = line.find_first_of(" ") + 1;
+                size_t args_at = line.find_first_of(" ", name_at) + 1;
+                size_t body_at = line.find_first_of(" ", args_at) + 1;
+
+                if (
+                    name_at == string::npos ||
+                    args_at == string::npos ||
+                    body_at == string::npos
+                ) {
+                    cerr << "ERROR: Parsing define: " << line;
+                    return 1;
+                }
+
+                bool success = handle_define(
+                    call_factory,
+                    line.substr(name_at, args_at - name_at - 1),
+                    line.substr(args_at, body_at - args_at - 1),
+                    line.substr(body_at)
+                );
+                if (! success) {
+                    return 1;
+                }
+
+                continue;
             }
 
-            bool success = handle_define(
-                call_factory,
-                line.substr(name_at, args_at - name_at - 1),
-                line.substr(args_at, body_at - args_at - 1),
-                line.substr(body_at)
-            );
-            if (! success) {
-                return 1;
+            // If in expression mode and not a define line, treat as a sexpr.
+            if (expr_mode) {
+                bool success = handle_expr(call_factory, line, no_post_validation);
+                if (! success) {
+                    return 1;
+                }
             }
-
-            continue;
+            else {
+                // Graph mode.
+                bool success = handle_graph_line(call_factory, G, root_names, line);
+                if (! success) {
+                    return 1;
+                }
+            }
         }
 
-        // If in expression mode and not a define line, treat as a sexpr.
-        if (expr_mode) {
-            bool success = handle_expr(call_factory, line, no_post_validation);
-            if (! success) {
-                return 1;
-            }
-        }
-        else {
-            // Graph mode.
-            bool success = handle_graph_line(call_factory, G, root_names, line);
+        if (graph_mode) {
+            bool success = handle_graph_finish(call_factory, G, root_names, no_post_validation);
             if (! success) {
                 return 1;
             }
         }
     }
-
-    if (graph_mode) {
-        bool success = handle_graph_finish(call_factory, G, root_names, no_post_validation);
-        if (! success) {
-            return 1;
-        }
+    catch (const exception& e) {
+        cerr << "Error: " << e.what() << endl;
+        return 1;
     }
 
     return 0;
