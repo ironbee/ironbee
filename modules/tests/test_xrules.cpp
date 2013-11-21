@@ -36,6 +36,11 @@
 class XRulesTest :
     public BaseTransactionFixture
 {
+public:
+    virtual void sendRequestLine()
+    {
+        BaseTransactionFixture::sendRequestLine("GET", "/foo/bar", "HTTP/1.1");
+    }
 };
 
 TEST_F(XRulesTest, Load) {
@@ -103,11 +108,34 @@ TEST_F(XRulesTest, Path) {
     std::string config =
         std::string(
             "LogLevel INFO\n"
+            "LoadModule \"ibmod_htp.so\"\n"
             "LoadModule \"ibmod_xrules.so\"\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
             "SensorName UnitTesting\n"
             "SensorHostname unit-testing.sensor.tld\n"
-            "XRulePath \"/\" block priority=1\n"
+            "XRulePath \"/foo/bar\" block priority=1\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+}
+
+TEST_F(XRulesTest, PathPrefix) {
+    std::string config =
+        std::string(
+            "LogLevel INFO\n"
+            "LoadModule \"ibmod_htp.so\"\n"
+            "LoadModule \"ibmod_xrules.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "XRulePath \"/fo\" block priority=1\n"
             "<Site test-site>\n"
             "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
             "   Hostname somesite.com\n"

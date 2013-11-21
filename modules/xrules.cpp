@@ -1302,10 +1302,10 @@ namespace {
     )
     {
         if (actions.overrides(m_action)) {
-            const std::string tx_path(tx.path());
+            const std::string tx_path(tx.ib()->path);
 
-            if (m_path.length() <= tx_path.length() &&
-                m_path.compare(0, m_path.length(), tx_path) == 0)
+            if (tx_path.length() >= m_path.length() &&
+                tx_path.compare(0, m_path.length(), m_path) == 0)
             {
                 actions.set(m_action);
             }
@@ -2098,7 +2098,7 @@ void XRulesModule::on_request_header_finished(
         itr != cfg.req_xrules.end();
         ++itr)
     {
-            (**itr)(tx, actions);
+        (**itr)(tx, actions);
     }
 
     actions.apply(mdata, tx);
