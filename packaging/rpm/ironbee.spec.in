@@ -33,9 +33,19 @@ URL:            http://www.ironbee.com
 BuildRequires: autoconf, automake, libtool, gcc, gcc-c++
 BuildRequires: pcre-devel, zlib-devel, libxml2-devel
 BuildRequires: uuid-devel
-BuildRequires: boost-devel >= 1.49
 
-Requires: boost >= 1.49
+%define boost_version 1.49
+BuildRequires: boost-devel >= %{boost_version}
+
+# Require only the parts of boost that ironbee actually uses.
+Requires: boost-chrono >= %{boost_version}
+Requires: boost-date-time >= %{boost_version}
+Requires: boost-filesystem >= %{boost_version}
+Requires: boost-iostreams >= %{boost_version}
+Requires: boost-program-options >= %{boost_version}
+Requires: boost-regex >= %{boost_version}
+Requires: boost-system >= %{boost_version}
+Requires: boost-thread >= %{boost_version}
 
 %if %{with trafficserver}
 BuildRequires: trafficserver-devel >= 3.1.4
