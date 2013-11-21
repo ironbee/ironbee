@@ -107,13 +107,9 @@ end
 -- 
 local insert_follows
 insert_follows = function(list, rule, db, seen)
-    -- Check we have a seen DB.
-    if seen== nil then
-        seen= {}
-    end
 
     -- Check if the given rule is in it.
-    if seen[rule.id] ~= nil then
+    if seen[rule.data.id] ~= nil then
         error( {
             sig_id = rule.data.id,
             sig_rev = rule.data.version,
@@ -121,12 +117,16 @@ insert_follows = function(list, rule, db, seen)
         }, 1)
     end
 
+    -- Mark this rule as already followed.
+    seen[rule.data.id] = 1
+
     for _, rule_link in ipairs(rule.data.follows) do
-        seen[rule_link.rule] = 1
         insert_follows(list, db.db[rule_link.rule], db, seen)
-        seen[rule_link.rule] = nil
         table.insert(list, rule_link)
     end
+
+    -- Unmark this rule.
+    seen[rule.data.id] = nil
 end
 
 -- Plan a single rule and all its dependencies.
@@ -180,7 +180,7 @@ Planner.plan_rule = function(self, rule, db)
             self.m_inplan[rule_link.rule] = #self.m_plan
         end
 
-        insert_follows(rule_chain, rule, db)
+        insert_follows(rule_chain, rule, db, {})
     end
     table.insert(rule_chain, { rule = rule.data.id, result = true })
 
