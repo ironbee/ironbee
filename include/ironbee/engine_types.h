@@ -144,6 +144,7 @@ typedef enum {
 #define IB_TX_FINSPECT_REQURI    (1ULL << 31) /**< Inspect request uri. */
 #define IB_TX_FINSPECT_REQPARAMS (1ULL << 32) /**< Inspect request params. */
 #define IB_TX_FBLOCKING_MODE     (1ULL << 33) /**< Blocking mode employed. */
+#define IB_TX_FBLOCKED           (1ULL << 34) /**< Transaction blocked. */
 
 /** Capture collection name */
 #define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */
