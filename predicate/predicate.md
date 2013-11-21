@@ -33,7 +33,7 @@ The predicate system is conceptually divided into three parts:
 * Graph: The graph component gathers all predicate expressions and merges common subexpression, forming a directed acyclic graph (DAG).  It then executes a variety of validation and transformations on the DAG.  Each input predicate expression corresponds to a *root* node in the DAG.
 * Evaluation: At each transaction, all nodes in the DAG for that phase are evaluated.  For each root node that is true, the corresponding rules are injected.
 
-A reference guide to the available functions (Calls) is at `reference.md`.  A guide to developing additional Calls is at `developer.md`.
+A reference guide to the available functions (Calls) is at `reference.md`.
 
 Expressions
 -----------
