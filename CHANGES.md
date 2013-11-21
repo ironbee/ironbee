@@ -62,6 +62,42 @@ IronBee v0.9.0
 
 - The `IBPPTestFixture` class used in IronBee++ test fixtures has been promoted to part of the public API as `IronBee::TestFixture`.  This makes it easier for other IronBee++ based code to write unit tests.
 
+IronBee v0.8.1
+--------------
+
+**Build**
+
+* Use EXTRA_LDFLAGS from apxs, but do not use non-existent library search paths.
+
+**Engine**
+
+* Do not process events when there is no data.
+
+**Rule Engine**
+
+* Fixed issues blocking outside of rules in response (XRules).
+
+**XRules**
+
+* Fixed path comparison that should have been a prefix match.
+
+**Waggle**
+
+* Fixed capture action (really a modifier).
+* Fixed loop detection in follows().
+
+**Bugs**
+
+* Fixed a mis-placed assert() in whitespace removal.
+
+**Clipp**
+
+* Fixed issues with assert_log_evry_input_no_match.
+
+**LibHTP**
+
+* Updated LibHTP parser to v0.5.9.
+
 IronBee v0.8.0
 --------------
 
