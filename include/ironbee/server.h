@@ -53,9 +53,6 @@ extern "C" {
 /** Server plugin Structure */
 typedef struct ib_server_t ib_server_t;
 
-/** Get a handle on the server, which is always called ibplugin */
-extern ib_server_t *ib_plugin();
-
 /* Request vs Response, for functions likely to share code */
 typedef enum {
     IB_SERVER_REQUEST = 0x01,

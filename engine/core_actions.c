@@ -1650,7 +1650,7 @@ static ib_status_t act_set_request_header_execute(
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
-    assert(rule_exec->ib->server);
+    assert(ib_engine_server_get(rule_exec->ib));
     assert(data);
 
     ib_status_t rc;
@@ -1687,7 +1687,7 @@ static ib_status_t act_set_request_header_execute(
                       (int)name_len, name, (int)value_len, value);
 
     /* Note: ignores lengths for now */
-    rc = ib_server_header(rule_exec->ib->server, tx,
+    rc = ib_server_header(ib_engine_server_get(rule_exec->ib), tx,
                           IB_SERVER_REQUEST, IB_HDR_SET,
                           name, value, NULL);
 
@@ -1709,7 +1709,7 @@ static ib_status_t act_edit_request_header_execute(
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
-    assert(rule_exec->ib->server);
+    assert(ib_engine_server_get(rule_exec->ib));
     assert(data);
 
     ib_status_t rc;
@@ -1747,7 +1747,7 @@ static ib_status_t act_edit_request_header_execute(
                       (int)name_len, name, (int)value_len, value);
 
     /* Note: ignores lengths for now */
-    rc = ib_server_header(tx->ib->server, tx, IB_SERVER_REQUEST, IB_HDR_EDIT,
+    rc = ib_server_header(ib_engine_server_get(tx->ib), tx, IB_SERVER_REQUEST, IB_HDR_EDIT,
                           name, value, act_data->rx);
 
     return rc;
@@ -1768,7 +1768,7 @@ static ib_status_t act_del_request_header_execute(
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
-    assert(rule_exec->ib->server);
+    assert(ib_engine_server_get(rule_exec->ib));
     assert(data);
 
     ib_status_t rc;
@@ -1791,7 +1791,7 @@ static ib_status_t act_del_request_header_execute(
     ib_rule_log_debug(rule_exec, "Deleting request header \"%.*s\"",
                       (int)name_len, name);
     /* Note: ignores lengths for now */
-    rc = ib_server_header(rule_exec->ib->server,
+    rc = ib_server_header(ib_engine_server_get(rule_exec->ib),
                           rule_exec->tx,
                           IB_SERVER_REQUEST,
                           IB_HDR_UNSET,
@@ -1816,7 +1816,7 @@ static ib_status_t act_set_response_header_execute(
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
-    assert(rule_exec->ib->server);
+    assert(ib_engine_server_get(rule_exec->ib));
     assert(data);
 
     ib_status_t rc;
@@ -1854,7 +1854,7 @@ static ib_status_t act_set_response_header_execute(
                       (int)name_len, name, (int)value_len, value);
 
     /* Note: ignores lengths for now */
-    rc = ib_server_header(tx->ib->server, tx,
+    rc = ib_server_header(ib_engine_server_get(tx->ib), tx,
                           IB_SERVER_RESPONSE, IB_HDR_SET,
                           name, value, NULL);
 
@@ -1878,7 +1878,7 @@ static ib_status_t act_edit_response_header_execute(
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
-    assert(rule_exec->ib->server);
+    assert(ib_engine_server_get(rule_exec->ib));
     assert(data);
 
     ib_status_t rc;
@@ -1916,7 +1916,7 @@ static ib_status_t act_edit_response_header_execute(
                     (int)name_len, name, (int)value_len, value);
 
     /* Note: ignores lengths for now */
-    rc = ib_server_header(tx->ib->server, tx,
+    rc = ib_server_header(ib_engine_server_get(tx->ib), tx,
                           IB_SERVER_RESPONSE, IB_HDR_EDIT,
                           name, value, act_data->rx);
 
@@ -1939,7 +1939,7 @@ static ib_status_t act_del_response_header_execute(
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
-    assert(rule_exec->ib->server);
+    assert(ib_engine_server_get(rule_exec->ib));
     assert(data);
 
     ib_status_t rc;
@@ -1963,7 +1963,7 @@ static ib_status_t act_del_response_header_execute(
                       (int)name_len, name);
 
     /* Note: ignores lengths for now */
-    rc = ib_server_header(rule_exec->ib->server,
+    rc = ib_server_header(ib_engine_server_get(rule_exec->ib),
                           rule_exec->tx,
                           IB_SERVER_RESPONSE,
                           IB_HDR_UNSET,

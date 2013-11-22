@@ -42,6 +42,7 @@ class HooksRegistrar;
 class Context;
 class Notifier;
 class Server;
+class ConstServer;
 class MemoryPool;
 class VarConfig;
 class ConstVarConfig;
@@ -148,6 +149,9 @@ public:
 
     //! Var Config.
     ConstVarConfig var_config() const;
+
+    //! Server.
+    ConstServer server() const;
 
 private:
     const ib_engine_t* m_ib;

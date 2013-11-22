@@ -1093,12 +1093,12 @@ static ib_status_t report_close_block_to_server(
 {
     assert(rule_exec != NULL);
     assert(rule_exec->ib != NULL);
-    assert(rule_exec->ib->server != NULL);
+    assert(ib_engine_server_get(rule_exec->ib) != NULL);
     assert(rule_exec->tx != NULL);
     assert(rule_exec->tx->conn != NULL);
 
     ib_status_t        rc;
-    const ib_server_t *server = rule_exec->ib->server;
+    const ib_server_t *server = ib_engine_server_get(rule_exec->ib);
     ib_tx_t           *tx = rule_exec->tx;
     ib_conn_t         *conn = rule_exec->tx->conn;
 
@@ -1131,7 +1131,7 @@ static ib_status_t report_status_block_to_server(
 ) {
     assert(rule_exec != NULL);
     assert(rule_exec->ib != NULL);
-    assert(rule_exec->ib->server != NULL);
+    assert(ib_engine_server_get(rule_exec->ib) != NULL);
     assert(rule_exec->ib->rule_engine != NULL);
     assert(rule_exec->tx != NULL);
     assert(rule_exec->tx->ctx != NULL);
@@ -1149,7 +1149,8 @@ static ib_status_t report_status_block_to_server(
         "Setting HTTP error response: status=%" PRId64,
          rule_exec->tx->block_status);
 
-    rc = ib_server_error_response(ib->server, tx, tx->block_status);
+    rc = ib_server_error_response(ib_engine_server_get(ib), tx,
+                                  tx->block_status);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_log_debug_tx(
             tx,
@@ -1194,7 +1195,7 @@ static ib_status_t report_status_block_to_server(
     }
 
     /* Report the error page back to the server. */
-    rc = ib_server_error_body(ib->server, tx, body, body_len);
+    rc = ib_server_error_body(ib_engine_server_get(ib), tx, body, body_len);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_log_debug_tx(
             tx,
@@ -1233,7 +1234,7 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
 {
     assert(rule_exec != NULL);
     assert(rule_exec->ib != NULL);
-    assert(rule_exec->ib->server != NULL); /* Required deeper in call stack. */
+    assert(ib_engine_server_get(rule_exec->ib) != NULL); /* Required deeper in call stack. */
     assert(rule_exec->tx != NULL);
     assert(rule_exec->tx->ctx != NULL);
 

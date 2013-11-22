@@ -62,6 +62,11 @@ ConstVarConfig ConstEngine::var_config() const
     return ConstVarConfig(ib_engine_var_config_get_const(ib()));
 }
 
+ConstServer ConstEngine::server() const
+{
+    return ConstServer(ib_engine_server_get(ib()));
+}
+
 Engine::Engine() :
     m_ib(NULL)
 {

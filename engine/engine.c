@@ -514,6 +514,13 @@ failed:
     return rc;
 }
 
+const ib_server_t *ib_engine_server_get(const ib_engine_t *ib)
+{
+    assert(ib != NULL);
+
+    return ib->server;
+}
+
 ib_logger_t* ib_engine_logger_get(const ib_engine_t *ib)
 {
     assert(ib != NULL);
@@ -1104,9 +1111,9 @@ ib_status_t ib_tx_server_error(
 {
     assert(tx != NULL);
     assert(tx->ib != NULL);
-    assert(tx->ib->server != NULL);
+    assert(ib_engine_server_get(tx->ib) != NULL);
 
-    return ib_server_error_response(tx->ib->server, tx, status);
+    return ib_server_error_response(ib_engine_server_get(tx->ib), tx, status);
 }
 
 ib_status_t ib_tx_server_error_header(
@@ -1117,11 +1124,11 @@ ib_status_t ib_tx_server_error_header(
 {
     assert(tx != NULL);
     assert(tx->ib != NULL);
-    assert(tx->ib->server != NULL);
+    assert(ib_engine_server_get(tx->ib) != NULL);
     assert(name != NULL);
     assert(value != NULL);
 
-    return ib_server_error_header(tx->ib->server, tx, name, value);
+    return ib_server_error_header(ib_engine_server_get(tx->ib), tx, name, value);
 }
 
 ib_status_t ib_tx_server_error_data(
@@ -1132,10 +1139,10 @@ ib_status_t ib_tx_server_error_data(
 {
     assert(tx != NULL);
     assert(tx->ib != NULL);
-    assert(tx->ib->server != NULL);
+    assert(ib_engine_server_get(tx->ib) != NULL);
     assert(data != NULL);
 
-    return ib_server_error_body(tx->ib->server, tx, data, dlen);
+    return ib_server_error_body(ib_engine_server_get(tx->ib), tx, data, dlen);
 }
 
 ib_status_t ib_tx_server_header(
@@ -1149,11 +1156,11 @@ ib_status_t ib_tx_server_header(
 {
     assert(tx != NULL);
     assert(tx->ib != NULL);
-    assert(tx->ib->server != NULL);
+    assert(ib_engine_server_get(tx->ib) != NULL);
     assert(hdr != NULL);
     assert(value != NULL);
 
-    return ib_server_header(tx->ib->server, tx, dir, action, hdr, value, rx);
+    return ib_server_header(ib_engine_server_get(tx->ib), tx, dir, action, hdr, value, rx);
 }
 
 

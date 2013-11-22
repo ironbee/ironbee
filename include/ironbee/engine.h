@@ -127,6 +127,14 @@ ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib,
                                         const ib_server_t *server);
 
 /**
+ * Return the server object for an engine.
+ *
+ * @param[in] ib Engine to fetch server for.
+ * @returns Server.
+ **/
+const ib_server_t DLL_PUBLIC *ib_engine_server_get(const ib_engine_t *ib);
+
+/**
  * Return the logger object constructed for this engine.
  *
  * Use the returned object to add writers or change the log level.
