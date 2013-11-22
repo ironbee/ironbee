@@ -881,7 +881,7 @@ namespace {
         else if (has_action(ACTION_ENABLERESPONSEBODYINSPECTION, mr)) {
             return action_ptr(
                 new SetFlag(
-                    "FLAGS:inspectResponseHeader",
+                    "FLAGS:inspectResponseBody",
                     IB_TX_FINSPECT_RSPBODY,
                     false,
                     priority));
@@ -889,7 +889,7 @@ namespace {
         else if (has_action(ACTION_DISABLERESPONSEBODYINSPECTION, mr)) {
             return action_ptr(
                 new SetFlag(
-                    "FLAGS:inspectResponseHeader",
+                    "FLAGS:inspectResponseBody",
                     IB_TX_FINSPECT_RSPBODY,
                     true,
                     priority));
