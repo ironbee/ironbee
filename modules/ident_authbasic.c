@@ -27,13 +27,13 @@
  */
 
 #include <ironbee/context.h>
-#include <ironbee/module.h>
 #include <ironbee/engine_state.h>
-#include <ironbee/parsed_content.h>
 #include <ironbee/ident.h>
+#include <ironbee/module.h>
+#include <ironbee/parsed_content.h>
 
-#include <ctype.h>
 #include <assert.h>
+#include <ctype.h>
 
 /** Module name. */
 #define MODULE_NAME        ident_authbasic

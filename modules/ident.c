@@ -22,19 +22,19 @@
  *
  */
 
-
-#include <ironbee/context.h>
-#include <ironbee/module.h>
-#include <ironbee/engine_state.h>
-#include <ironbee/server.h>
-#include <ironbee/hash.h>
 #include <ironbee/ident.h>
 
+#include <ironbee/context.h>
+#include <ironbee/engine_state.h>
+#include <ironbee/hash.h>
+#include <ironbee/module.h>
+#include <ironbee/server.h>
+
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <ctype.h>
 
 /** Module name. */
 #define MODULE_NAME        ident

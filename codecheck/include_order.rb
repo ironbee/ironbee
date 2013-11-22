@@ -157,6 +157,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/file.h>',
   '<ironbee/flags.h>',
   '<ironbee/hash.h>',
+  '<ironbee/ident.h>',
   '<ironbee/ip.h>',
   '<ironbee/ipset.h>',
   '<ironbee/json.h>',
