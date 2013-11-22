@@ -143,20 +143,22 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
                buf_len > 0) {
             ib_log_debug_tx(ctx->tx, "Feeding %zd bytes request data to ironbee",
                             buf_len);
-            ib_state_notify_request_body_data(ctx->tx->ib, ctx->tx, buf, buf_len);
+            ib_state_notify_request_body_data(ctx->tx->ib, ctx->tx,
+                                              (const char*)buf, buf_len);
             count += buf_len;
         }
-        if (buf_len == NGX_ERROR) {
+        if ((int)buf_len == NGX_ERROR) {
             ib_log_error_tx(ctx->tx, "Error reading request body in temp file");
         }
     }
 
     for (link = rb->bufs; link != NULL; link = link->next) {
-        suze_t len = (link->buf->last - link->buf->pos);
+        size_t len = (link->buf->last - link->buf->pos);
         ib_log_debug_tx(ctx->tx, "Feeding %zd bytes request data to ironbee",
                         len);
         if (len > 0) {
-            ib_state_notify_request_body_data(ctx->tx->ib, ctx->tx, link->buf->pos, len);
+            ib_state_notify_request_body_data(ctx->tx->ib, ctx->tx,
+                                              (const char*)link->buf->pos, len);
         }
     }
     ctx->body_done = 1;

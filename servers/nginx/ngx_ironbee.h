@@ -118,32 +118,10 @@ ib_status_t ngxib_conn_init(ib_engine_t *ib,
                             ib_state_event_type_t event,
                             void *cbdata);
 
-#if OLD_LOGGING
 /**
- * IronBee / Nginx logger.
- *
- * Performs IronBee logging for the NGX plugin.
- *
- * @param[in] level IronBee log level
- * @param[in] cbdata Callback data (unused)
- * @param[in] buf Formatted buffer
- * @param[in] calldata Context-sensitive data descriptor
+ * Export the server object
  */
-void ngxib_logger(
-    int                 level,
-    void               *cbdata,
-    const char         *buf,
-    ib_log_call_data_t *calldata
-);
-
-/* Dummy function to set IronBee log level */
-ib_log_level_t ngxib_loglevel(const ib_engine_t *ib, void *cbdata);
-
-/* Set/retrieve global log descriptor.  A fudge for the absence of appdata
- * pointer in ironbee logger API.
- */
-ngx_log_t *ngxib_log(ngx_log_t *log);
-#endif
+ib_server_t *ib_plugin(void);
 
 int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx);
 

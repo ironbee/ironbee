@@ -233,12 +233,11 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
 
     for (link = in; link != NULL; link = link->next) {
         /* Feed the data to ironbee */
-        itxdata.data = link->buf->pos;
-        itxdata.dlen = link->buf->last - link->buf->pos;
-        ib_log_debug_tx(ctx->tx, "ironbee_body_out: %d bytes",
-                        (int)itxdata.dlen);
-        if (itxdata.dlen > 0) {
-            ib_state_notify_response_body_data(ctx->tx->ib, ctx->tx, &itxdata);
+        const char *data = (const char*)link->buf->pos;
+        size_t dlen = link->buf->last - link->buf->pos;
+        ib_log_debug_tx(ctx->tx, "ironbee_body_out: %d bytes", (int)dlen);
+        if (dlen > 0) {
+            ib_state_notify_response_body_data(ctx->tx->ib, ctx->tx, data, dlen);
         }
 
         /* If IronBee just signaled an error, switch to discard data mode,
@@ -266,10 +265,10 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
 #if NO_COPY_REQUIRED
             ctx->response_ptr->buf = link->buf;
 #else
-            if (itxdata.dlen > 0) {
-                ctx->response_ptr->buf = ngx_create_temp_buf(r->pool, itxdata.dlen);
-                memcpy(ctx->response_ptr->buf->pos, link->buf->pos, itxdata.dlen);
-                ctx->response_ptr->buf->last += itxdata.dlen;
+            if (dlen > 0) {
+                ctx->response_ptr->buf = ngx_create_temp_buf(r->pool, dlen);
+                memcpy(ctx->response_ptr->buf->pos, link->buf->pos, dlen);
+                ctx->response_ptr->buf->last += dlen;
             }
             else {
                 ctx->response_ptr->buf = ngx_palloc(r->pool, sizeof(ngx_buf_t));
