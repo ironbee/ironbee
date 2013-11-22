@@ -270,14 +270,6 @@ protected:
         callback_e                   which_cb
     )
     {
-        typedef ib_status_t (*ib_callback_t)(
-            ib_engine_t*,
-            ib_tx_t*,
-            ib_state_event_type_t,
-            const char*, size_t,
-            void*
-        );
-
         const ib_hook_t* hook;
         ib_state_event_type_t ib_logevent =
             static_cast<ib_state_event_type_t>(event);
