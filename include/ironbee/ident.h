@@ -32,9 +32,9 @@ extern "C" {
 
 /** Identity provider struct */
 typedef struct ib_ident_provider_t {
-    ib_state_event_type_t event;
-    const char *(*check_id)(ib_tx_t *tx);
-    ib_status_t (*challenge)(ib_tx_t *tx);
+    ib_state_event_type_t event;           /** Event to act on */
+    const char *(*check_id)(ib_tx_t *tx);  /** Check identity */
+    ib_status_t (*challenge)(ib_tx_t *tx); /** Challenge client to identify */
 } ib_ident_provider_t;
 
 /**

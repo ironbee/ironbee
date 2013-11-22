@@ -51,11 +51,24 @@ typedef struct ident_cfg_t {
     bool accept_any;
 } ident_cfg_t;
 
+/**
+ * A Null identity check for the null (unconfigured) identity provider
+ *
+ * @param tx The tx
+ * @return NULL
+ */
 static const char *dummy_id(ib_tx_t *tx)
 {
     ib_log_info_tx(tx, "Dummy ident check doing nothing");
     return NULL;
 }
+/**
+ * A Null identity challenge.  Log an error and - since we have no
+ * ident protocol - return 403 to forbid the Client.
+ *
+ * @param tx The tx
+ * @return IB_OK
+ */
 static ib_status_t dummy_forbid(ib_tx_t *tx)
 {
     /* If we're supposed to issue a challenge but have no method,
@@ -65,21 +78,46 @@ static ib_status_t dummy_forbid(ib_tx_t *tx)
     ib_server_error_response(ib_plugin(), tx, 403);
     return IB_OK;
 }
+/**
+ * A null identity provider, to run in case ident module is misconfigured.
+ */
 static ib_ident_provider_t ident_dummy_provider = {
 	request_header_finished_event,
 	dummy_id,
 	dummy_forbid
 };
 
+/**
+ * A hash of registered ident providers, indexed by name (case-insensitive).
+ * NOTE: in the unlikely event of a name clash, this will fail.
+ */
 static ib_hash_t *ident_providers;
 
-/* Export register function so a module can register a provider */
+/**
+ * Function exported to enable a module to register an ident provider
+ *
+ * @param name Provider name (referenced in IdentType directive)
+ * @param provider The identity provider
+ * @return status
+ */
 ib_status_t ib_ident_provider_register(const char *name,
                                        ib_ident_provider_t *provider)
 {
     return ib_hash_set(ident_providers, name, provider);
 }
 
+/**
+ * Configuration function to select what ident regime to operate
+ * Implements IdentMode directive
+ *
+ * @param cp IronBee configuration parser
+ * @param name Unused
+ * @param p1 Select whether ident is "Off" (do nothing),
+ *           "Log" (Log user id or unidentified) or
+ *           "Require" (Log id and issue challenge if unidentified)
+ * @param dummy Unused
+ * @return OK, or EINVAL if p1 is unrecognised
+ */
 static ib_status_t ident_mode(ib_cfgparser_t *cp, const char *name,
                               const char *p1, void *dummy)
 {
@@ -106,6 +144,19 @@ static ib_status_t ident_mode(ib_cfgparser_t *cp, const char *name,
     }
     return rc;
 }
+/**
+ * Configuration function to select ident provider
+ * Implements IdentType directive
+ *
+ * @param cp IronBee configuration parser
+ * @param name Unused
+ * @param p1 Select ident provider
+ * @param p2 Optional.  If set to "any", ident will be checked by all
+ *           available providers if the configured provider doesn't
+ *           identify.  Expected to be used in "Log" mode.
+ * @param dummy Unused
+ * @return status
+ */
 static ib_status_t ident_type(ib_cfgparser_t *cp, const char *name,
                               const char *p1, const char *p2, void *dummy)
 {
@@ -135,6 +186,22 @@ static ib_status_t ident_type(ib_cfgparser_t *cp, const char *name,
     return rc;
 }
 
+/**
+ * Main identity handler.  Called both on request_header_finished and
+ * request_finished: the configured provider decides which event to
+ * run on, and skips (returns immediately) on the other event.
+ *
+ * If configured mode is "Off", just returns.  Otherwise calls provider's
+ * check_id function to check and log user ID. Optionally cycles through
+ * other providers.  Finally, if client is not identified and mode is
+ * "Require", calls provider's challenge function to ask client to
+ * authenticate (e.g. HTTP 401).
+ *
+ * @param ib The engine
+ * @param tx The transaction
+ * @param event Event that triggered the call
+ * @param cbdata Unused
+ */
 static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
                                  ib_state_event_type_t event,
                                  void *cbdata)
@@ -182,6 +249,7 @@ static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
              !userid && !ib_hash_iterator_at_end(iterator);
              ib_hash_iterator_next(iterator)) {
             ib_hash_iterator_fetch(NULL, NULL, &p, iterator);
+            /* configured provider already checked - so skip it now */
             if (p->check_id != provider->check_id) {
                 userid = p->check_id(tx);
             }
@@ -202,6 +270,15 @@ static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
     return provider->challenge(tx);
 }
 
+/**
+ * Initialisation function
+ * Initialise providers, and register the main ident handler
+ *
+ * @param ib The engine
+ * @param m The module
+ * @param cbdata Unused
+ * @return status
+ */
 static ib_status_t ident_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     ib_status_t rc;

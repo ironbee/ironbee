@@ -47,6 +47,16 @@ typedef struct ident_authbasic_cfg_t {
     const char *realm;
 } ident_authbasic_cfg_t;
 
+/**
+ * Get the value of an HTTP header
+ *
+ * @param pool Pool to allocate from
+ * @param wrapper The header wrapper
+ * @param name The header name
+ * @return Header value, or NULL if not set
+ *
+ * FIXME: make this a general utility function
+ */
 static const char *header_get(ib_mpool_t *pool,
                               ib_parsed_header_wrapper_t *wrapper,
                               const char *name)
@@ -67,7 +77,13 @@ static const char *header_get(ib_mpool_t *pool,
     return ib_mpool_memdup_to_str(pool, ib_bytestr_ptr(p->value),
                                   ib_bytestr_length(p->value));
 }
-/* simplify base64 code from APR (omitting bits we don't need) */
+/**
+ * Decode a Base64-encoded string.  Code based on APR's base64 module.
+ *
+ * @param pool Pool to allocate from
+ * @param encoded The encoded string
+ * @return The decoded string
+ */
 static char *base64_decode(ib_mpool_t *pool, const char *encoded)
 {
     /* ASCII table */
@@ -134,16 +150,19 @@ static char *base64_decode(ib_mpool_t *pool, const char *encoded)
 
     return decoded;
 }
+/**
+ * Decode HTTP Basic authentication
+ * NOTE: this makes no attempt to check a password!
+ * We only return a username set by a client.
+ *
+ * If we want to enable checking passwords then we'll want
+ * another framework for password lookups (c.f. apache httpd).
+ *
+ * @param tx The transaction
+ * @return The HTTP basic authenticated username, or NULL if not authenticated
+ */
 static const char *basic_get_user(ib_tx_t *tx)
 {
-    /* Decode HTTP Basic authentication
-     * NOTE: this makes no attempt to check a password!
-     * We only return a username set by a client.
-     *
-     * If we want to enable checking passwords then we'll want
-     * another framework for password lookups (c.f. apache httpd).
-     */
-
     const char *authorization;
     const char *p;
     char *decoded;
@@ -180,6 +199,12 @@ static const char *basic_get_user(ib_tx_t *tx)
 
     return decoded;
 }
+/**
+ * Issue an HTTP Basic Authentication Challenge
+ *
+ * @param tx The transaction
+ * @return status
+ */
 static ib_status_t basic_challenge(ib_tx_t *tx)
 {
     /* Enforce basic authn on a client that didn't authenticate */
@@ -205,16 +230,31 @@ static ib_status_t basic_challenge(ib_tx_t *tx)
     return IB_OK;
 }
 
-ib_ident_provider_t ident_authbasic_provider = {
-    request_header_finished_event,
-    basic_get_user,
-    basic_challenge
-};
-
+/**
+ * Initialisation function: register HTTP Basic provider with ident module
+ *
+ * @param ib The engine
+ * @param m The module
+ * @param cbdata Unusued
+ * @return status
+ */
 static ib_status_t ident_authbasic_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
+    static ib_ident_provider_t ident_authbasic_provider = {
+        request_header_finished_event,
+        basic_get_user,
+        basic_challenge
+    };
     return ib_ident_provider_register("authbasic", &ident_authbasic_provider);
 }
+/**
+ * Configuration function to set basic authentication realm
+ *
+ * @param cp IronBee configuration parser
+ * @param name Unused
+ * @param p1 Realm value to set
+ * @return OK
+ */
 static ib_status_t ident_authbasic_realm(ib_cfgparser_t *cp, const char *name,
                                          const char *p1, void *dummy)
 {
