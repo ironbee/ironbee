@@ -166,7 +166,7 @@ TEST_F(ParsedContentHeaderTest, list_err)
 
     ASSERT_IB_OK(ib_parsed_name_value_pair_list_wrapper_create(
         &headers,
-        tx));
+        tx->mp));
 
     ASSERT_TRUE(headers!=NULL);
 
@@ -209,7 +209,7 @@ TEST_F(ParsedContentHeaderTest, list_ok)
 
     ASSERT_IB_OK(ib_parsed_name_value_pair_list_wrapper_create(
         &headers,
-        tx));
+        tx->mp));
 
     ASSERT_TRUE(headers!=NULL);
 

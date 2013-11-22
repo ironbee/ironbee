@@ -379,7 +379,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
                         (int)r->headers_out.status);
         cleanup_return NGX_ERROR;
     }
-    rc = ib_parsed_resp_line_create(&rline, ctx->tx, NULL, 0,
+    rc = ib_parsed_resp_line_create(&rline, ctx->tx->mp, NULL, 0,
                                     proto, strlen(proto),
                                     status, status_len,
                                     reason, reason_len);
@@ -388,7 +388,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
 
     ib_state_notify_response_started(ctx->tx->ib, ctx->tx, rline);
 
-    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
+    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx->mp);
     if (rc != IB_OK)
         cleanup_return NGX_ERROR;
 
@@ -455,7 +455,7 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
     ib_tx_create(&ctx->tx, iconn, ctx);
 
     /* Notify IronBee of request line and headers */
-    rc = ib_parsed_req_line_create(&rline, ctx->tx,
+    rc = ib_parsed_req_line_create(&rline, ctx->tx->mp,
                                    (const char*)r->request_line.data,
                                    r->request_line.len,
                                    (const char*)r->method_name.data,
@@ -469,7 +469,7 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
 
     ib_state_notify_request_started(ctx->tx->ib, ctx->tx, rline);
 
-    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
+    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx->mp);
     if (rc != IB_OK)
         cleanup_return NGX_ERROR;
 

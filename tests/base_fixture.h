@@ -383,7 +383,7 @@ public:
         line += proto;
         line += "\r\n";
 
-        rc = ib_parsed_req_line_create(&parsed, tx,
+        rc = ib_parsed_req_line_create(&parsed, tx->mp,
                                        line.data(), line.length(),
                                        method, strlen(method),
                                        uri, strlen(uri),
@@ -410,7 +410,7 @@ public:
                             ib_parsed_header_wrapper_t **pparsed)
     {
         ib_status_t rc;
-        rc = ib_parsed_name_value_pair_list_wrapper_create(pparsed, tx);
+        rc = ib_parsed_name_value_pair_list_wrapper_create(pparsed, tx->mp);
         if (rc != IB_OK) {
             notifyError("request header");
         }
@@ -480,7 +480,7 @@ public:
         }
         line += "\r\n";
 
-        rc = ib_parsed_resp_line_create(&parsed, tx,
+        rc = ib_parsed_resp_line_create(&parsed, tx->mp,
                                         line.data(), line.length(),
                                         proto, strlen(proto),
                                         status, strlen(status),
@@ -505,7 +505,7 @@ public:
                              ib_parsed_header_wrapper_t **pparsed)
     {
         ib_status_t rc;
-        rc = ib_parsed_name_value_pair_list_wrapper_create(pparsed, tx);
+        rc = ib_parsed_name_value_pair_list_wrapper_create(pparsed, tx->mp);
         if (rc != IB_OK) {
             notifyError("response header");
         }

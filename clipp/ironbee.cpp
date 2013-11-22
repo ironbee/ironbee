@@ -163,7 +163,7 @@ public:
 
         IronBee::ParsedRequestLine prl =
             IronBee::ParsedRequestLine::create_alias(
-                m_transaction,
+                m_transaction.memory_pool(),
                 event.raw.data,      event.raw.length,
                 event.method.data,   event.method.length,
                 event.uri.data,      event.uri.length,
@@ -243,7 +243,7 @@ public:
 
         IronBee::ParsedResponseLine prl =
             IronBee::ParsedResponseLine::create_alias(
-                m_transaction,
+                m_transaction.memory_pool(),
                 event.raw.data,      event.raw.length,
                 event.protocol.data, event.protocol.length,
                 event.status.data,   event.status.length,

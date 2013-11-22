@@ -41,7 +41,7 @@ typedef struct ib_parsed_resp_line_t ib_parsed_resp_line_t;
 
 namespace IronBee {
 
-class Transaction;
+class MemoryPool;
 class ByteString;
 
 /**
@@ -175,11 +175,7 @@ public:
    /**
     * Create a ParsedResponseLine, aliasing memory.
     *
-    * All memory is aliased and its lifetime must exceed the lifetime of the
-    * parsed request line, and thus the lifetime of @a transaction.
-    *
-    * @param[in] transaction     Associated transaction.  Determine memory
-    *                            pool and lifetime.
+    * @param[in] memory_pool     Memory pool to create from.
     * @param[in] raw             Raw response line.
     * @param[in] raw_length      Length of @a raw.
     * @param[in] protocol        HTTP protocol.
@@ -192,7 +188,7 @@ public:
     **/
    static
    ParsedResponseLine create_alias(
-       Transaction transaction,
+       MemoryPool memory_pool,
        const char* raw,
        size_t raw_length,
        const char* protocol,

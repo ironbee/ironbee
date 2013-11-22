@@ -36,7 +36,7 @@
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/throw.hpp>
-#include <ironbeepp/transaction.hpp>
+#include <ironbeepp/memory_pool.hpp>
 
 #include <ironbee/parsed_content.h>
 
@@ -50,7 +50,6 @@ typedef struct ib_parsed_name_value_pair_list_t
 
 namespace IronBee {
 
-class Transaction;
 class ParsedNameValue;
 class MemoryPool;
 
@@ -220,23 +219,23 @@ namespace Internal {
 /**
  * Turn a sequence of ParsedNameValues into a C API appropriate type.
  *
- * @param[in] transaction Transaction to associate with.
+ * @param[in] memory_pool Memory pool to allocate from.
  * @param[in] begin       Beginning of sequence.
  * @param[in] end         End of sequence.
  * @returns ib_parsed_name_value_pair_list_wrapper_t for use in C API.
  **/
 template <typename Iterator>
 ib_parsed_name_value_pair_list_wrapper_t* make_pnv_list(
-    Transaction transaction,
-    Iterator    begin,
-    Iterator    end
+    MemoryPool memory_pool,
+    Iterator   begin,
+    Iterator   end
 )
 {
     ib_parsed_name_value_pair_list_wrapper_t* ib_pnv_list;
     throw_if_error(
         ib_parsed_name_value_pair_list_wrapper_create(
             &ib_pnv_list,
-            transaction.ib()
+            memory_pool.ib()
         )
     );
 

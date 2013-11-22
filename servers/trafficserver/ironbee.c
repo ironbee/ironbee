@@ -1707,7 +1707,7 @@ static ib_status_t start_ib_request(
     ib_status_t           rc;
     ib_parsed_req_line_t *rline;
 
-    rc = ib_parsed_req_line_create(&rline, tx,
+    rc = ib_parsed_req_line_create(&rline, tx->mp,
                                    line_buf, line_len,
                                    NULL, 0,
                                    NULL, 0,
@@ -1750,7 +1750,7 @@ static ib_status_t start_ib_response(
     ib_status_t            rc;
     ib_parsed_resp_line_t *rline;
 
-    rc = ib_parsed_resp_line_create(&rline, tx,
+    rc = ib_parsed_resp_line_create(&rline, tx->mp,
                                     line_buf, line_len,
                                     NULL, 0,
                                     NULL, 0,
@@ -1899,7 +1899,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
      * the actual headers.  So we'll skip the first line, which we already
      * dealt with.
      */
-    rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
+    rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx->mp);
     if (rv != IB_OK) {
         ib_rc = ib_error_callback(data->tx, 500, NULL);
         TSError("Error creating ironbee header wrapper.  Disabling checks!");

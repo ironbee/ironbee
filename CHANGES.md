@@ -26,6 +26,8 @@ IronBee v0.9.0
 
 - `ib_txdata_t` has been replaced with a `const char*`, `size_t` pair of arguments in all places.
 
+- The parsed content interface (`parsed_content.h`) has been changed to take `ib_mpool_t` in place of `ib_tx_t`.
+
 **Predicate**
 
 - The Field call is now known as Var.  Field continues to exist as an alias for Var.

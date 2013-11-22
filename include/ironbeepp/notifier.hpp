@@ -173,7 +173,10 @@ Notifier Notifier::request_header_data(
         ib_state_notify_request_header_data(
             m_engine.ib(),
             transaction.ib(),
-            Internal::make_pnv_list(transaction, header_begin, header_end)
+            Internal::make_pnv_list(
+                transaction.memory_pool(),
+                header_begin, header_end
+            )
         )
     );
 
@@ -191,7 +194,10 @@ Notifier Notifier::response_header_data(
         ib_state_notify_response_header_data(
             m_engine.ib(),
             transaction.ib(),
-            Internal::make_pnv_list(transaction, header_begin, header_end)
+            Internal::make_pnv_list(
+                transaction.memory_pool(),
+                header_begin, header_end
+            )
         )
     );
 

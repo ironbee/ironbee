@@ -1,5 +1,5 @@
 #include <ironbeepp/parsed_response_line.hpp>
-#include <ironbeepp/transaction.hpp>
+#include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/throw.hpp>
 
@@ -66,7 +66,7 @@ ParsedResponseLine::ParsedResponseLine(ib_type ib_parsed_response_line) :
 }
 
 ParsedResponseLine ParsedResponseLine::create_alias(
-    Transaction transaction,
+    MemoryPool memory_pool,
     const char* raw,
     size_t raw_length,
     const char* protocol,
@@ -81,7 +81,7 @@ ParsedResponseLine ParsedResponseLine::create_alias(
     throw_if_error(
         ib_parsed_resp_line_create(
             &ib_prl,
-            transaction.ib(),
+            memory_pool.ib(),
             raw,
             raw_length,
             protocol,

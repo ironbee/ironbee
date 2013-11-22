@@ -27,17 +27,11 @@
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/memory_pool.hpp>
 
-#include <ironbeepp/test_fixture.hpp>
-
 #include "gtest/gtest.h"
 
 using namespace IronBee;
 
-class TestParsedRequestLine : public ::testing::Test, public TestFixture
-{
-};
-
-TEST_F(TestParsedRequestLine, basic)
+TEST(TestParsedRequestLine, basic)
 {
     MemoryPool mp = MemoryPool::create();
 
@@ -46,7 +40,6 @@ TEST_F(TestParsedRequestLine, basic)
     ParsedRequestLine prl(&ib_prl);
 
     ASSERT_TRUE(prl);
-
 
     ib_prl.raw = ByteString::create(mp, "raw").ib();
     EXPECT_EQ(ib_prl.raw, prl.raw().ib());
@@ -61,15 +54,17 @@ TEST_F(TestParsedRequestLine, basic)
     EXPECT_EQ(ib_prl.protocol, prl.protocol().ib());
 }
 
-TEST_F(TestParsedRequestLine, create)
+TEST(TestParsedRequestLine, create)
 {
+    MemoryPool mp = MemoryPool::create();
+
     const char* raw      = "raw";
     const char* method   = "foo";
     const char* uri      = "bar";
     const char* protocol = "baz";
 
     ConstParsedRequestLine prl = ParsedRequestLine::create_alias(
-        m_transaction,
+        mp,
         raw,      3,
         method,   3,
         uri,      3,

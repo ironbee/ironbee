@@ -43,8 +43,6 @@ extern "C" {
  * @{
  */
 
-struct ib_tx_t;
-
 /**
  * A link list element representing the HTTP header.
  */
@@ -124,12 +122,12 @@ typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
  * is released.
  *
  * @param[out] header The header object that will be constructed.
- * @param[in] tx The transaction that will allocate the header object.
+ * @param[in] mp Memory pool to allocate from.
  * @returns IB_OK or IB_EALLOC if mp could not allocate memory.
  */
 ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_wrapper_create(
     ib_parsed_name_value_pair_list_wrapper_t **header,
-    struct ib_tx_t *tx
+    ib_mpool_t *mp
 );
 
 /**
@@ -197,8 +195,8 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_each_header(
  *
  * @note The @a msg parameter may be NULL if no message is specified.
  *
- * @param[in] tx The transaction whose memory pool will be used.
  * @param[out] line The resultant object will be stored here.
+ * @param[in] mp Memory pool to allocate from.
  * @param[in] raw The raw HTTP response line (NULL if not available)
  * @param[in] raw_len The length of @a raw.
  * @param[in] protocol The HTTP protocol.
@@ -211,7 +209,7 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_each_header(
  */
 ib_status_t DLL_PUBLIC ib_parsed_resp_line_create(
     ib_parsed_resp_line_t **line,
-    struct ib_tx_t *tx,
+    ib_mpool_t *mp,
     const char *raw,
     size_t raw_len,
     const char *protocol,
@@ -235,8 +233,8 @@ ib_status_t DLL_PUBLIC ib_parsed_resp_line_create(
  *
  * @note The @a protocol parameter should be NULL for HTTP/0.9 requests.
  *
- * @param[in] tx The transaction whose memory pool is used.
  * @param[out] line The resultant object is placed here.
+ * @param[in] mp Memory pool to allocate from.
  * @param[in] raw The raw HTTP response line (NULL if not available)
  * @param[in] raw_len The length of @a raw.
  * @param[in] method The method.
@@ -249,7 +247,7 @@ ib_status_t DLL_PUBLIC ib_parsed_resp_line_create(
  */
 ib_status_t DLL_PUBLIC ib_parsed_req_line_create(
     ib_parsed_req_line_t **line,
-    struct ib_tx_t *tx,
+    ib_mpool_t *mp,
     const char *raw,
     size_t raw_len,
     const char *method,

@@ -2907,7 +2907,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
 
     /* Wrap up the request line */
-    rc = ib_parsed_name_value_pair_list_wrapper_create(&hdrs, tx);
+    rc = ib_parsed_name_value_pair_list_wrapper_create(&hdrs, tx->mp);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error creating name/value pair list: %s",
                         ib_status_to_string(rc));
