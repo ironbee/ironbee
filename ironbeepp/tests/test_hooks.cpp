@@ -26,7 +26,6 @@
 #include <ironbeepp/connection.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/transaction.hpp>
-#include <ironbeepp/transaction_data.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
@@ -75,7 +74,8 @@ public:
         ParsedRequestLine     parsed_request_line;
         ParsedResponseLine    parsed_response_line;
         Connection            connection;
-        TransactionData       transaction_data;
+        const char*           data;
+        size_t                data_length;
         Context               context;
     };
 
@@ -164,14 +164,15 @@ public:
             Engine engine,
             Transaction transaction,
             Engine::state_event_e event,
-            TransactionData transaction_data
+            const char* data, size_t data_length
         )
         {
             m_info.which = CB_TRANSACTION_DATA;
             m_info.engine = engine;
             m_info.transaction = transaction;
             m_info.event = event;
-            m_info.transaction_data = transaction_data;
+            m_info.data = data;
+            m_info.data_length = data_length;
         }
 
         void operator()(
@@ -261,6 +262,43 @@ protected:
         EXPECT_EQ(CB_NULL, info.which);
         EXPECT_EQ(m_engine, info.engine);
         EXPECT_EQ(event, info.event);
+    }
+
+    void test_data_argument(
+        Engine::state_event_e        event,
+        handler_info_t&              info,
+        callback_e                   which_cb
+    )
+    {
+        typedef ib_status_t (*ib_callback_t)(
+            ib_engine_t*,
+            ib_tx_t*,
+            ib_state_event_type_t,
+            const char*, size_t,
+            void*
+        );
+
+        const ib_hook_t* hook;
+        ib_state_event_type_t ib_logevent =
+            static_cast<ib_state_event_type_t>(event);
+        info = handler_info_t();
+        const ib_list_node_t *node =
+            ib_list_last_const(m_engine.ib()->hooks[event]);
+        EXPECT_TRUE(node != NULL);
+        hook = (const ib_hook_t *)node->data;
+        const char d(1);
+        ib_status_t rc =
+            (hook->callback.txdata)(
+                m_engine.ib(), m_transaction.ib(),
+                ib_logevent, &d, 7, hook->cbdata
+            );
+        EXPECT_EQ(IB_OK, rc);
+        EXPECT_EQ(which_cb, info.which);
+        EXPECT_EQ(m_engine, info.engine);
+        EXPECT_EQ(m_transaction, info.transaction);
+        EXPECT_EQ(event, info.event);
+        EXPECT_EQ(&d, info.data);
+        EXPECT_EQ(7UL, info.data_length);
     }
 
     template <typename DataType, typename MemberType>
@@ -402,11 +440,10 @@ protected:
         handler_info_t&       info
     )
     {
-        test_one_argument<ib_txdata_t>(
+        test_data_argument(
             event,
             info,
-            CB_TRANSACTION_DATA,
-            &handler_info_t::transaction_data
+            CB_TRANSACTION_DATA
         );
     }
 

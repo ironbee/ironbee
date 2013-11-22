@@ -690,8 +690,8 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
     int growing = 0;
     apr_bucket *b;
     apr_bucket *bnext;
-    ib_txdata_t itxdata;
     const char *buf;
+    size_t buf_len;
     ironbee_req_ctx *rctx = ap_get_module_config(f->r->request_config,
                                                  &ironbee_module);
 
@@ -753,10 +753,9 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
 
         /* Now read the bucket and feed to ironbee */
         growing = (b->length == (apr_size_t)-1) ? 1 : growing;
-        apr_bucket_read(b, &buf, &itxdata.dlen, APR_BLOCK_READ);
-        itxdata.data = (uint8_t *)buf;
-        bytecount += itxdata.dlen;
-        ib_state_notify_response_body_data(rctx->tx->ib, rctx->tx, &itxdata);
+        apr_bucket_read(b, &buf, &buf_len, APR_BLOCK_READ);
+        bytecount += buf_len;
+        ib_state_notify_response_body_data(rctx->tx->ib, rctx->tx, buf, buf_len);
 
         /* If Ironbee just signalled an error, switch to discard data mode,
          * dump anything we already have buffered,
@@ -835,7 +834,7 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
     apr_bucket *bnext;
     int growing = 0;
     const char *buf;
-    ib_txdata_t itxdata;
+    size_t buf_len;
     apr_status_t bytecount = 0;
 
     /* If this is a dummy call, bail out */
@@ -895,10 +894,9 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
 
             /* Now read the bucket and feed to ironbee */
             growing = (b->length == (apr_size_t)-1) ? 1 : growing;
-            apr_bucket_read(b, &buf, &itxdata.dlen, APR_BLOCK_READ);
-            itxdata.data = (uint8_t*) buf;
-            bytecount += itxdata.dlen;
-            ib_state_notify_request_body_data(rctx->tx->ib, rctx->tx, &itxdata);
+            apr_bucket_read(b, &buf, &buf_len, APR_BLOCK_READ);
+            bytecount += buf_len;
+            ib_state_notify_request_body_data(rctx->tx->ib, rctx->tx, buf, buf_len);
 
             /* If Ironbee just signalled an error, switch to discard data mode,
              * and dump anything we already have buffered,

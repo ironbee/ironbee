@@ -716,7 +716,8 @@ static ib_status_t modlua_txdata(
     ib_engine_t *ib,
     ib_tx_t *tx,
     ib_state_event_type_t event,
-    ib_txdata_t *txdata,
+    const char *data,
+    size_t data_length,
     void *cbdata)
 {
     assert(ib);

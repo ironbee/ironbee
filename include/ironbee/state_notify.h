@@ -125,13 +125,15 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_header_finished(
  *
  * @param ib Engine handle
  * @param tx Transaction
- * @param txdata Transaction data
+ * @param data Transaction data
+ * @param data_length Length of @a data.
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_state_notify_request_body_data(ib_engine_t *ib,
                                                          ib_tx_t *tx,
-                                                         ib_txdata_t *txdata);
+                                                         const char *data,
+                                                         size_t data_length);
 
 /**
  * Notify the state machine that the entire request is finished.
@@ -193,12 +195,14 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_header_finished(ib_engine_t *ib,
  * @param ib Engine handle
  * @param tx Transaction
  * @param txdata Transaction data
+ * @param data_length Length of @a data
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_state_notify_response_body_data(ib_engine_t *ib,
                                                           ib_tx_t *tx,
-                                                          ib_txdata_t *txdata);
+                                                          const char *data,
+                                                          size_t data_length);
 
 /**
  * Notify the state machine that the entire response is finished.

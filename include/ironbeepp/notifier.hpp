@@ -43,7 +43,6 @@
 namespace IronBee {
 
 class Connection;
-class TransactionData;
 class ParsedRequestLine;
 class ParsedResponseLine;
 
@@ -112,8 +111,9 @@ public:
 
     //! Notify request_body_data event.
     Notifier request_body_data(
-        Transaction     transaction,
-        TransactionData transaction_data
+        Transaction transaction,
+        const char* data,
+        size_t      data_length
     );
 
     //! Notify request_finished event.
@@ -148,8 +148,9 @@ public:
 
     //! Notify response_body_data event.
     Notifier response_body_data(
-        Transaction     transaction,
-        TransactionData transaction_data
+        Transaction transaction,
+        const char* data,
+        size_t      data_length
     );
 
     //! Notify response_finished event.

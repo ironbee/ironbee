@@ -255,7 +255,7 @@ typedef struct {
     ib_status_t (*ib_notify_header)(ib_engine_t*, ib_tx_t*,
                  ib_parsed_header_wrapper_t*);
     ib_status_t (*ib_notify_header_finished)(ib_engine_t*, ib_tx_t*);
-    ib_status_t (*ib_notify_body)(ib_engine_t*, ib_tx_t*, ib_txdata_t*);
+    ib_status_t (*ib_notify_body)(ib_engine_t*, ib_tx_t*, const char*, size_t);
     ib_status_t (*ib_notify_end)(ib_engine_t*, ib_tx_t*);
     ib_status_t (*ib_notify_post)(ib_engine_t*, ib_tx_t*);
     ib_status_t (*ib_notify_log)(ib_engine_t*, ib_tx_t*);
@@ -782,13 +782,12 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
          * Feed buffered data to ironbee
          */
         if (ibd->data->buflen != 0) {
-            ib_txdata_t itxdata;
-            itxdata.data = (uint8_t *)ibd->data->buf;
-            itxdata.dlen = ibd->data->buflen;
+            const char *buf = ibd->data->buf;
+            size_t buf_length = ibd->data->buflen;
             TSDebug("ironbee",
                     "process_data: calling ib_state_notify_%s_body() %s:%d",
                     ibd->ibd->dir_label, __FILE__, __LINE__);
-            (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx, &itxdata);
+            (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx, buf, buf_length);
         }
         TSfree(ibd->data->buf);
         ibd->data->buf = NULL;
@@ -875,16 +874,15 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
                 }
                 else {
                     if (ibd->data->buflen > 0) {
-                        ib_txdata_t itxdata;
-                        itxdata.data = (uint8_t *)ibd->data->buf;
-                        itxdata.dlen = ibd->data->buflen;
+                        const char *buf = ibd->data->buf;
+                        size_t buf_length = ibd->data->buflen;
                         TSDebug("ironbee",
                                 "process_data: calling ib_state_notify_%s_body() "
                                 "%s:%d",
                                 ((ibd->ibd->dir == IBD_REQ)?"request":"response"),
                                 __FILE__, __LINE__);
                         (*ibd->ibd->ib_notify_body)(data->tx->ib, data->tx,
-                                                    (ilength!=0) ? &itxdata : NULL);
+                                                    (ilength!=0) ? buf : NULL, buf_length);
                     }
                     if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
                                                         * so we discard all this data
@@ -2322,15 +2320,14 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
              *       the error body will never get caught by an event.
              */
             if ((txndata->status != 0) && (txndata->err_body != NULL)) {
-                ib_txdata_t itxdata;
-                itxdata.data = (uint8_t *)txndata->err_body;
-                itxdata.dlen = strlen(txndata->err_body);
+                const char *data = txndata->err_body;
+                size_t data_length = strlen(txndata->err_body);
                 TSDebug("ironbee",
                         "error_response: calling ib_state_notify_response_body_data() %s:%d",
                         __FILE__, __LINE__);
                 ib_state_notify_response_body_data(txndata->tx->ib,
                                                    txndata->tx,
-                                                   &itxdata);
+                                                   data, data_length);
             }
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);

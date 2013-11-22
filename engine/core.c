@@ -2242,7 +2242,8 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
 static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
                                                ib_tx_t *tx,
                                                ib_state_event_type_t event,
-                                               ib_txdata_t *txdata,
+                                               const char *data,
+                                               size_t data_length,
                                                void *cbdata)
 {
     assert(ib != NULL);
@@ -2251,17 +2252,17 @@ static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
     void *data_copy;
     ib_status_t rc;
 
-    if (txdata == NULL) {
+    if (data == NULL) {
         return IB_OK;
     }
 
-    data_copy = ib_mpool_memdup(tx->mp, txdata->data, txdata->dlen);
+    data_copy = ib_mpool_memdup(tx->mp, data, data_length);
 
     // TODO: Add a limit to this: size and type
     rc = ib_stream_push(tx->request_body,
                         IB_STREAM_DATA,
                         data_copy,
-                        txdata->dlen);
+                        data_length);
 
     return rc;
 }
@@ -2269,7 +2270,8 @@ static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
 static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
                                                 ib_tx_t *tx,
                                                 ib_state_event_type_t event,
-                                                ib_txdata_t *txdata,
+                                                const char *data,
+                                                size_t data_length,
                                                 void *cbdata)
 {
     assert(ib != NULL);
@@ -2278,7 +2280,7 @@ static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
     void *data_copy;
     ib_status_t rc;
 
-    if (txdata == NULL) {
+    if (data == NULL) {
         return IB_OK;
     }
 
@@ -2286,13 +2288,13 @@ static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
         return IB_OK;
     }
 
-    data_copy = ib_mpool_memdup(tx->mp, txdata->data, txdata->dlen);
+    data_copy = ib_mpool_memdup(tx->mp, data, data_length);
 
     // TODO: Add a limit to this: size and type
     rc = ib_stream_push(tx->response_body,
                         IB_STREAM_DATA,
                         data_copy,
-                        txdata->dlen);
+                        data_length);
 
     return rc;
 }

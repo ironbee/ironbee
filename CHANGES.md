@@ -24,6 +24,8 @@ IronBee v0.9.0
 
 - Moved request_header_finished_event after site context selection so that it has the correct configuration context.  Additionally added a request_header_process_event before site context selection to be used to process any header data prior to site context selection (e.g., normalize hostname, etc.)
 
+- `ib_txdata_t` has been replaced with a `const char*`, `size_t` pair of arguments in all places.
+
 **Predicate**
 
 - The Field call is now known as Var.  Field continues to exist as an alias for Var.

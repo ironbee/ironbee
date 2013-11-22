@@ -2,7 +2,6 @@
 #include <ironbeepp/connection.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/transaction.hpp>
-#include <ironbeepp/transaction_data.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
@@ -229,25 +228,27 @@ ib_status_t transaction(
 /**
  * Hooks handler for transaction_data callbacks.
  *
- * @param[in] ib_engine           The IronBee engine.
- * @param[in] ib_tx               Current transaction.
- * @param[in] event               Which event happened.
- * @param[in] ib_transaction_data Data of event.
- * @param[in] cbdata              Callback data: contains C++ functional to
- *                                forward to.
+ * @param[in] ib_engine   The IronBee engine.
+ * @param[in] ib_tx       Current transaction.
+ * @param[in] event       Which event happened.
+ * @param[in] data        Data of event.
+ * @param[in] data_length Length of @a data.
+ * @param[in] cbdata      Callback data: contains C++ functional to forward
+ *                        to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t transaction_data(
     ib_engine_t*          ib_engine,
     ib_tx_t*              ib_tx,
     ib_state_event_type_t event,
-    ib_txdata_t*          ib_transaction_data,
+    const char*           data,
+    size_t                data_length,
     void*                 cbdata
 )
 {
     assert(ib_engine != NULL);
     assert(ib_tx != NULL);
-    assert(ib_transaction_data != NULL);
+    assert(data != NULL);
     assert(cbdata != NULL);
 
     try {
@@ -255,7 +256,7 @@ ib_status_t transaction_data(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
-            TransactionData(ib_transaction_data)
+            data, data_length
         );
     }
     catch (...) {

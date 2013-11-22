@@ -27,7 +27,6 @@ libibpp_la_SOURCES = \
     configuration_parser.cpp \
     connection.cpp \
     transaction.cpp \
-    transaction_data.cpp \
     clock.cpp \
     parsed_request_line.cpp \
     parsed_response_line.cpp \

@@ -504,12 +504,13 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
 static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
                                           ib_tx_t *tx,
                                           ib_state_event_type_t event,
-                                          ib_txdata_t *txdata)
+                                          const char *data,
+                                          size_t data_length)
 {
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
-    assert(txdata != NULL);
+    assert(data != NULL);
 
     const ib_list_node_t *node;
     ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_TXDATA);
@@ -530,7 +531,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
 
     IB_LIST_LOOP_CONST(ib->hooks[event], node) {
         const ib_hook_t *hook = (const ib_hook_t *)node->data;
-        rc = hook->callback.txdata(ib, tx, event, txdata, hook->cbdata);
+        rc = hook->callback.txdata(ib, tx, event, data, data_length, hook->cbdata);
         if (rc == IB_DECLINED) {
             ib_log_debug_tx(tx, "Hook declined: %s",
                             ib_state_event_name(event));
@@ -664,12 +665,13 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
 
 ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
                                               ib_tx_t *tx,
-                                              ib_txdata_t *txdata)
+                                              const char *data,
+                                              size_t data_length)
 {
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
-    assert(txdata != NULL);
+    assert(data != NULL);
 
     ib_status_t rc;
 
@@ -681,7 +683,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     }
 
     /* We should never get NULL data */
-    if ( (txdata->data == NULL) || (txdata->dlen == 0) ) {
+    if ( (data == NULL) || (data_length == 0) ) {
         ib_log_debug_tx(tx, "Request body data with no data.  Ignoring.");
         return IB_OK;
     }
@@ -720,7 +722,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_txdata(ib, tx, request_body_data_event, txdata);
+    rc = ib_state_notify_txdata(ib, tx, request_body_data_event, data, data_length);
     if (rc != IB_OK) {
         return rc;
     }
@@ -970,12 +972,13 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
 
 ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
                                                ib_tx_t *tx,
-                                               ib_txdata_t *txdata)
+                                               const char *data,
+                                               size_t data_length)
 {
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
-    assert(txdata != NULL);
+    assert(data != NULL);
 
     ib_status_t rc;
 
@@ -987,7 +990,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     }
 
     /* We should never get empty data */
-    if ( (txdata->data == NULL) || (txdata->dlen == 0) ) {
+    if ( (data == NULL) || (data_length == 0) ) {
         ib_log_debug_tx(tx, "Response body data with no data.  Ignoring.");
         return IB_OK;
     }
@@ -1021,7 +1024,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_txdata(ib, tx, response_body_data_event, txdata);
+    rc = ib_state_notify_txdata(ib, tx, response_body_data_event, data, data_length);
     if (rc != IB_OK) {
         return rc;
     }

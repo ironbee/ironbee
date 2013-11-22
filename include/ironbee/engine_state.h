@@ -96,8 +96,8 @@ extern "C" {
  *
  * - Connection event hook callbacks receive a @ref ib_conn_t parameter.
  * - Transaction event hook callbacks receive a @ref ib_tx_t parameter.
- * - Transaction Data event hook callbacks receive a @ref ib_txdata_t
- *   parameter.
+ * - Transaction Data event hook callbacks receive a @ref const char* and
+ *   size_t parameter.
  *
  * @note Config contexts and some fields are populated during the server
  *       events and thus the following handler event is what should be used
@@ -296,7 +296,7 @@ typedef enum {
                              * (Hook type: @ref ib_state_conn_hook_fn_t) */
     IB_STATE_HOOK_TX,       /**< Hook receives ib_tx_t
                              * (Hook type: @ref ib_state_tx_hook_fn_t) */
-    IB_STATE_HOOK_TXDATA,   /**< Hook receives ib_txdata_t
+    IB_STATE_HOOK_TXDATA,   /**< Hook receives data and length
                              * (Hook type: @ref ib_state_txdata_hook_fn_t) */
     IB_STATE_HOOK_REQLINE,  /**< Hook receives ib_parsed_req_t
                              * (Hook type: @ref ib_state_request_line_fn_t) */
@@ -481,14 +481,15 @@ typedef ib_status_t (*ib_state_tx_hook_fn_t)(
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
  * @param[in] event Which event trigger the callback.
- * @param[in] txdata Transaction data.
+ * @param[in] data Transaction data.
+ * @param[in] data_length Length of @a data.
  * @param[in] cbdata Callback data
  */
 typedef ib_status_t (*ib_state_txdata_hook_fn_t)(
     ib_engine_t *ib,
     ib_tx_t *tx,
     ib_state_event_type_t event,
-    ib_txdata_t *txdata,
+    const char *data, size_t data_length,
     void *cbdata
 );
 

@@ -2564,11 +2564,12 @@ ib_status_t modhtp_handle_context_tx(
 /**
  * Request Body Data Hook
  *
- * @param[in] ib      IronBee engine.
- * @param[in] itx     Transaction.
- * @param[in] event   Which event trigger the callback.
- * @param[in] itxdata Transaction data.
- * @param[in] cbdata  Callback data; this module.
+ * @param[in] ib             IronBee engine.
+ * @param[in] itx            Transaction.
+ * @param[in] event          Which event trigger the callback.
+ * @param[in] itxdata        Transaction data.
+ * @param[in] itxdata_length Length of @a itxdata.
+ * @param[in] cbdata         Callback data; this module.
  *
  * @returns Status code
  */
@@ -2577,13 +2578,13 @@ ib_status_t modhtp_request_body_data(
     ib_engine_t           *ib,
     ib_tx_t               *itx,
     ib_state_event_type_t  event,
-    ib_txdata_t           *itxdata,
+    const char            *itxdata,
+    size_t                 itxdata_length,
     void                  *cbdata
 )
 {
     assert(ib      != NULL);
     assert(itx     != NULL);
-    assert(itxdata != NULL);
     assert(cbdata  != NULL);
 
     const ib_module_t *m = (const ib_module_t *)cbdata;
@@ -2592,7 +2593,7 @@ ib_status_t modhtp_request_body_data(
     htp_status_t           hrc;
 
     /* Ignore NULL / zero length body data */
-    if ( (itxdata->data == NULL) || (itxdata->dlen == 0) ) {
+    if ( (itxdata == NULL) || (itxdata_length == 0) ) {
         return IB_OK;
     }
 
@@ -2602,11 +2603,11 @@ ib_status_t modhtp_request_body_data(
     ib_log_debug_tx(itx,
                     "SEND REQUEST BODY DATA TO LIBHTP: size=%zd "
                     "modhtp_iface_request_body_data",
-                    itxdata->dlen);
+                    itxdata_length);
 
     /* Hand the request body data to libhtp. */
     hrc = htp_tx_req_process_body_data(txdata->htx,
-                                       itxdata->data, itxdata->dlen);
+                                       itxdata, itxdata_length);
     return modhtp_check_htprc(hrc, txdata, "htp_tx_req_process_body_data");
 }
 
@@ -2844,11 +2845,12 @@ ib_status_t modhtp_response_header_finished(
 /**
  * Response Body Data Hook
  *
- * @param[in] ib      IronBee engine.
- * @param[in] itx     Transaction.
- * @param[in] event   Which event trigger the callback.
- * @param[in] itxdata Transaction data.
- * @param[in] cbdata  Callback data; this module.
+ * @param[in] ib             IronBee engine.
+ * @param[in] itx            Transaction.
+ * @param[in] event          Which event trigger the callback.
+ * @param[in] itxdata        Transaction data.
+ * @param[in] itxdata_length Length of @a itxdata.
+ * @param[in] cbdata         Callback data; this module.
  *
  * @returns Status code
  */
@@ -2857,13 +2859,13 @@ ib_status_t modhtp_response_body_data(
     ib_engine_t           *ib,
     ib_tx_t               *itx,
     ib_state_event_type_t  event,
-    ib_txdata_t           *itxdata,
+    const char            *itxdata,
+    size_t                 itxdata_length,
     void                  *cbdata
 )
 {
     assert(ib      != NULL);
     assert(itx     != NULL);
-    assert(itxdata != NULL);
     assert(cbdata  != NULL);
 
     const ib_module_t *m = (const ib_module_t *)cbdata;
@@ -2872,7 +2874,7 @@ ib_status_t modhtp_response_body_data(
     htp_status_t           hrc;
 
     /* Ignore NULL / zero length body data */
-    if ( (itxdata->data == NULL) || (itxdata->dlen == 0) ) {
+    if ( (itxdata == NULL) || (itxdata_length == 0) ) {
         return IB_OK;
     }
 
@@ -2884,7 +2886,7 @@ ib_status_t modhtp_response_body_data(
                     "modhtp_iface_response_body_data");
 
     hrc = htp_tx_res_process_body_data(txdata->htx,
-                                       itxdata->data, itxdata->dlen);
+                                       itxdata, itxdata_length);
     return modhtp_check_htprc(hrc, txdata, "htp_tx_res_process_body_data");
 }
 

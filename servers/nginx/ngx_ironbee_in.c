@@ -87,7 +87,6 @@ int ngxib_has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
  */
 ngx_int_t ngxib_handler(ngx_http_request_t *r)
 {
-    ib_txdata_t itxdata;
     ngx_chain_t *link;
     ngxib_req_ctx *ctx;
     ngx_int_t rv = NGX_DECLINED;
@@ -137,28 +136,27 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
         /* Reader has put request body in temp file */
         off_t count = 0;
         u_char buf[BUFSIZE];
+        size_t buf_len;
         ib_log_debug_tx(ctx->tx, "Reading request body in temp file");
-        while (itxdata.dlen = ngx_read_file(&rb->temp_file->file,
-                                            buf, BUFSIZE, count),
-               (int)itxdata.dlen > 0) {
-            itxdata.data = buf;
-            ib_log_debug_tx(ctx->tx, "Feeding %d bytes request data to ironbee",
-                            (int)itxdata.dlen);
-            ib_state_notify_request_body_data(ctx->tx->ib, ctx->tx, &itxdata);
-            count += itxdata.dlen;
+        while (buf_len = ngx_read_file(&rb->temp_file->file,
+                         buf, BUFSIZE, count),
+               buf_len > 0) {
+            ib_log_debug_tx(ctx->tx, "Feeding %zd bytes request data to ironbee",
+                            buf_len);
+            ib_state_notify_request_body_data(ctx->tx->ib, ctx->tx, buf, buf_len);
+            count += buf_len;
         }
-        if ((int)itxdata.dlen == NGX_ERROR) {
+        if (buf_len == NGX_ERROR) {
             ib_log_error_tx(ctx->tx, "Error reading request body in temp file");
         }
     }
 
     for (link = rb->bufs; link != NULL; link = link->next) {
-        itxdata.data = link->buf->pos;
-        itxdata.dlen = (link->buf->last - link->buf->pos);
-        ib_log_debug_tx(ctx->tx, "Feeding %d bytes request data to ironbee",
-                        (int)itxdata.dlen);
-        if (itxdata.dlen > 0) {
-            ib_state_notify_request_body_data(ctx->tx->ib, ctx->tx, &itxdata);
+        suze_t len = (link->buf->last - link->buf->pos);
+        ib_log_debug_tx(ctx->tx, "Feeding %zd bytes request data to ironbee",
+                        len);
+        if (len > 0) {
+            ib_state_notify_request_body_data(ctx->tx->ib, ctx->tx, link->buf->pos, len);
         }
     }
     ctx->body_done = 1;

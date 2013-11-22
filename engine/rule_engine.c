@@ -2560,13 +2560,18 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
 /**
  * Execute a single stream txdata rule, and it's actions
  *
- * @param[in] rule_exec Rule execution object
- * @param[in,out] txdata Transaction data
+ * @param[in] rule_exec   Rule execution object
+ * @param[in] data        Transaction data.
+ * @param[in] data_length Length of @a data.
  *
  * @returns Status code
  */
-static ib_status_t execute_stream_txdata_rule(ib_rule_exec_t *rule_exec,
-                                              ib_txdata_t *txdata)
+static
+ib_status_t execute_stream_txdata_rule(
+    ib_rule_exec_t *rule_exec,
+    const char     *data,
+    size_t          data_length
+)
 {
     ib_status_t    rc = IB_OK;
     ib_field_t    *value = NULL;
@@ -2574,7 +2579,7 @@ static ib_status_t execute_stream_txdata_rule(ib_rule_exec_t *rule_exec,
     assert(rule_exec != NULL);
     assert(rule_exec->rule != NULL);
     assert(rule_exec->rule->phase_meta->is_stream);
-    assert(txdata != NULL);
+    assert(data != NULL);
 
 
     /*
@@ -2589,7 +2594,7 @@ static ib_status_t execute_stream_txdata_rule(ib_rule_exec_t *rule_exec,
     rc = ib_field_create_bytestr_alias(&value,
                                        rule_exec->tx->mp,
                                        "txdata", 3,
-                                       txdata->data, txdata->dlen);
+                                       (const uint8_t *)data, data_length);
     if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
                           "Error creating field for stream "
@@ -2663,7 +2668,8 @@ static ib_status_t execute_stream_header_rule(ib_rule_exec_t *rule_exec,
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
  * @param[in] event Event type.
- * @param[in] txdata Transaction data (or NULL)
+ * @param[in] data Transaction data (or NULL)
+ * @param[in] data_length Length of @a data.
  * @param[in] header Parsed header (or NULL)
  * @param[in] meta Phase meta data
  *
@@ -2673,16 +2679,17 @@ static ib_status_t execute_stream_header_rule(ib_rule_exec_t *rule_exec,
 static ib_status_t run_stream_rules(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     ib_state_event_type_t event,
-                                    ib_txdata_t *txdata,
+                                    const char *data,
+                                    size_t data_length,
                                     ib_parsed_header_t *header,
                                     const ib_rule_phase_meta_t *meta)
 {
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->rule_exec != NULL);
-    assert( (txdata != NULL) || (header != NULL) );
+    assert( (data != NULL) || (header != NULL) );
     assert(meta != NULL);
-    assert( (meta->hook_type != IB_STATE_HOOK_TXDATA) || (txdata != NULL) );
+    assert( (meta->hook_type != IB_STATE_HOOK_TXDATA) || (data != NULL) );
     assert( (meta->hook_type != IB_STATE_HOOK_HEADER) || (header != NULL) );
 
     ib_context_t             *ctx = tx->ctx;
@@ -2777,8 +2784,8 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
          * operator returns an error.  This needs further discussion to
          * determine what the correct behavior should be.
          */
-        if (txdata != NULL) {
-            rc = execute_stream_txdata_rule(rule_exec, txdata);
+        if (data != NULL) {
+            rc = execute_stream_txdata_rule(rule_exec, data, data_length);
         }
         else if (header != NULL) {
             rc = execute_stream_header_rule(rule_exec, header);
@@ -2833,7 +2840,7 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
 
     if (header != NULL) {
         ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
-        rc = run_stream_rules(ib, tx, event, NULL, header, meta);
+        rc = run_stream_rules(ib, tx, event, NULL, 0, header, meta);
         ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
     }
     return rc;
@@ -2845,7 +2852,8 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
  * @param[in] event Event type.
- * @param[in] txdata Transaction data.
+ * @param[in] data Transaction data.
+ * @param[in] data_length Length of @a data.
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t)
  *
  * @returns Status code
@@ -2853,20 +2861,21 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
 static ib_status_t run_stream_txdata_rules(ib_engine_t *ib,
                                            ib_tx_t *tx,
                                            ib_state_event_type_t event,
-                                           ib_txdata_t *txdata,
+                                           const char *data,
+                                           size_t data_length,
                                            void *cbdata)
 {
     assert(ib != NULL);
     assert(cbdata != NULL);
 
-    if (txdata == NULL) {
+    if (data == NULL) {
         return IB_OK;
     }
-    const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
+    const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *)cbdata;
     ib_status_t rc;
 
     ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
-    rc = run_stream_rules(ib, tx, event, txdata, NULL, meta);
+    rc = run_stream_rules(ib, tx, event, data, data_length, NULL, meta);
     ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
     return rc;
 }
@@ -2960,7 +2969,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     /* Now, process the request line */
     if ( (hdrs != NULL) && (hdrs->head != NULL) ) {
         ib_rule_log_tx_trace(tx, "Running header line through stream header");
-        rc = run_stream_rules(ib, tx, event, NULL, hdrs->head, meta);
+        rc = run_stream_rules(ib, tx, event, NULL, 0, hdrs->head, meta);
         if (rc != IB_OK) {
             ib_rule_log_tx_error(tx,
                                  "Error processing tx request line: %s",
@@ -2973,7 +2982,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     if ( (tx->request_header != NULL) && (tx->request_header->head != NULL) ) {
         ib_rule_log_tx_trace(tx, "Running header through stream header");
         rc = run_stream_rules(
-            ib, tx, event, NULL, tx->request_header->head, meta);
+            ib, tx, event, NULL, 0, tx->request_header->head, meta);
         if (rc != IB_OK) {
             ib_rule_log_tx_error(tx,
                                  "Error processing tx request line: %s",

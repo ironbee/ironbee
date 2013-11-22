@@ -177,7 +177,6 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
     ib_status_t rc;
     ib_num_t num;
     ngx_int_t rv = NGX_OK;
-    ib_txdata_t itxdata;
 
     if (r->internal)
         return ngx_http_next_body_filter(r, in);

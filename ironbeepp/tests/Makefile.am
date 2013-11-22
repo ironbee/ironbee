@@ -36,7 +36,6 @@ check_PROGRAMS = \
 	test_site \
 	test_throw \
 	test_transaction \
-	test_transaction_data \
 	test_transformation \
 	test_var
 

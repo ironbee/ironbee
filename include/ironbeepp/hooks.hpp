@@ -36,7 +36,6 @@
 namespace IronBee {
 
 class Transaction;
-class TransactionData;
 class Connection;
 class ParsedNameValue;
 class ParsedRequestLine;
@@ -187,7 +186,7 @@ public:
     > transaction_t;
 
     /**
-     * Call back type that takes a TransactionData argument.
+     * Call back type that takes pointer and length arguments.
      *
      * Parameters are:
      * - IronBee engine.
@@ -200,7 +199,8 @@ public:
             Engine,
             Transaction,
             Engine::state_event_e,
-            TransactionData
+            const char*,
+            size_t
         )
     > transaction_data_t;
 

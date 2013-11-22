@@ -601,12 +601,12 @@ failed:
 }
 
 ib_status_t ib_field_create_bytestr_alias(
-    ib_field_t **pf,
-    ib_mpool_t  *mp,
-    const char  *name,
-    size_t       nlen,
-    uint8_t     *val,
-    size_t       vlen
+    ib_field_t    **pf,
+    ib_mpool_t     *mp,
+    const char     *name,
+    size_t          nlen,
+    const uint8_t  *val,
+    size_t          vlen
 )
 {
     ib_status_t rc;

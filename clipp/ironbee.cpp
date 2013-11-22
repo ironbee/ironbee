@@ -215,19 +215,10 @@ public:
             return;
         }
 
-        // Copy because IronBee needs mutable input.
-        char* mutable_data = strndup(event.data.data, event.data.length);
-        m_connection.memory_pool().register_cleanup(
-            boost::bind(free, mutable_data)
+        m_engine.notify().request_body_data(
+            m_transaction,
+            event.data.data, event.data.length
         );
-        IronBee::TransactionData data =
-            IronBee::TransactionData::create_alias(
-                m_connection.memory_pool(),
-                mutable_data,
-                event.data.length
-            );
-
-        m_engine.notify().request_body_data(m_transaction, data);
     }
 
     void request_finished(const Input::NullEvent& event)
@@ -304,19 +295,10 @@ public:
             return;
         }
 
-        // Copy because IronBee needs mutable input.
-        char* mutable_data = strndup(event.data.data, event.data.length);
-        m_connection.memory_pool().register_cleanup(
-            boost::bind(free, mutable_data)
+        m_engine.notify().response_body_data(
+            m_transaction,
+            event.data.data, event.data.length
         );
-        IronBee::TransactionData data =
-            IronBee::TransactionData::create_alias(
-                m_connection.memory_pool(),
-                mutable_data,
-                event.data.length
-            );
-
-        m_engine.notify().response_body_data(m_transaction, data);
     }
 
     void response_finished(const Input::NullEvent& event)

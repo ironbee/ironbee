@@ -24,7 +24,6 @@
 
 #include <ironbeepp/notifier.hpp>
 #include <ironbeepp/connection.hpp>
-#include <ironbeepp/transaction_data.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
 
@@ -96,15 +95,16 @@ Notifier Notifier::request_header_finished(
 }
 
 Notifier Notifier::request_body_data(
-    Transaction     transaction,
-    TransactionData transaction_data
+    Transaction transaction,
+    const char* data,
+    size_t      data_length
 )
 {
     throw_if_error(
         ib_state_notify_request_body_data(
             m_engine.ib(),
             transaction.ib(),
-            transaction_data.ib()
+            data, data_length
         )
     );
     return *this;
@@ -160,15 +160,16 @@ Notifier Notifier::response_header_finished(
 }
 
 Notifier Notifier::response_body_data(
-    Transaction     transaction,
-    TransactionData transaction_data
+    Transaction transaction,
+    const char* data,
+    size_t      data_length
 )
 {
     throw_if_error(
         ib_state_notify_response_body_data(
             m_engine.ib(),
             transaction.ib(),
-            transaction_data.ib()
+            data, data_length
         )
     );
     return *this;
