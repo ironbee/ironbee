@@ -24,6 +24,7 @@
 #ifndef _IB_IDENT_H_
 #define _IB_IDENT_H_
 
+#include <ironbee/engine_state.h>
 #include <ironbee/engine_types.h>
 
 #ifdef __cplusplus
