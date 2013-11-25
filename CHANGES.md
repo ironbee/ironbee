@@ -26,7 +26,7 @@ IronBee v0.9.0
 
 - `ib_txdata_t` has been replaced with a `const char*`, `size_t` pair of arguments in all places.
 
-- The parsed content interface (`parsed_content.h`) has been changed to take `ib_mpool_t` in place of `ib_tx_t`.
+- The parsed content interface (`parsed_content.h`) has been changed to take `ib_mpool_t` in place of `ib_tx_t`.  The header structures and methods have also been refactored to simpler names.
 
 **Predicate**
 
