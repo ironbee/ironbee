@@ -2,7 +2,7 @@
 #include <ironbeepp/connection.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/transaction.hpp>
-#include <ironbeepp/parsed_name_value.hpp>
+#include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
 #include <ironbeepp/catch.hpp>
@@ -72,7 +72,7 @@ ib_status_t header_data(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
-            ParsedNameValue(ib_header)
+            ParsedHeader(ib_header)
         );
     }
     catch (...) {

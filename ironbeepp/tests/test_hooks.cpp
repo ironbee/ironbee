@@ -26,7 +26,7 @@
 #include <ironbeepp/connection.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/transaction.hpp>
-#include <ironbeepp/parsed_name_value.hpp>
+#include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
 
@@ -70,7 +70,7 @@ public:
         Transaction           transaction;
         Engine::state_event_e event;
 
-        ParsedNameValue       parsed_name_value;
+        ParsedHeader       parsed_header;
         ParsedRequestLine     parsed_request_line;
         ParsedResponseLine    parsed_response_line;
         Connection            connection;
@@ -110,14 +110,14 @@ public:
             Engine engine,
             Transaction transaction,
             Engine::state_event_e event,
-            ParsedNameValue parsed_name_value
+            ParsedHeader parsed_header
         )
         {
             m_info.which = CB_HEADER_DATA;
             m_info.engine = engine;
             m_info.transaction = transaction;
             m_info.event = event;
-            m_info.parsed_name_value = parsed_name_value;
+            m_info.parsed_header = parsed_header;
         }
 
         void operator()(
@@ -375,7 +375,7 @@ protected:
             event,
             info,
             CB_HEADER_DATA,
-            &handler_info_t::parsed_name_value
+            &handler_info_t::parsed_header
         );
     }
 

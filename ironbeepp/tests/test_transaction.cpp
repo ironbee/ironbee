@@ -29,7 +29,7 @@
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/clock.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
-#include <ironbeepp/parsed_name_value.hpp>
+#include <ironbeepp/parsed_header.hpp>
 
 // For ugly workaround.
 #include "engine/engine_private.h"

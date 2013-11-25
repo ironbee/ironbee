@@ -56,7 +56,7 @@ class MemoryPool;
 class Transaction;
 class Connection;
 class ParsedRequestLine;
-class ParsedNameValue;
+class ParsedHeader;
 class VarStore;
 class ConstVarStore;
 
@@ -184,9 +184,9 @@ public:
      * Parsed header.
      *
      * This method returns the first parsed header.  Later individual
-     * headers can be accessed via ParsedNameValue::next().
+     * headers can be accessed via ParsedHeader::next().
      **/
-    ParsedNameValue request_header() const;
+    ParsedHeader request_header() const;
 
     /**
      * @name Flags

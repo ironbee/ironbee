@@ -38,7 +38,7 @@ namespace CLIPP {
 namespace {
 
 class adapt_header :
-    public unary_function<const Input::header_t, IronBee::ParsedNameValue>
+    public unary_function<const Input::header_t, IronBee::ParsedHeader>
 {
 public:
     explicit adapt_header(IronBee::MemoryPool mp) :
@@ -47,9 +47,9 @@ public:
         // nop
     }
 
-    IronBee::ParsedNameValue operator()(const Input::header_t& header) const
+    IronBee::ParsedHeader operator()(const Input::header_t& header) const
     {
-        return IronBee::ParsedNameValue::create(
+        return IronBee::ParsedHeader::create(
             m_mp,
             IronBee::ByteString::create_alias(
                 m_mp, header.first.data, header.first.length

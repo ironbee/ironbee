@@ -78,7 +78,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/module_delegate.hpp>',
   '<ironbeepp/notifier.hpp>',
   '<ironbeepp/operator.hpp>',
-  '<ironbeepp/parsed_name_value.hpp>',
+  '<ironbeepp/parsed_header.hpp>',
   '<ironbeepp/parsed_request_line.hpp>',
   '<ironbeepp/parsed_response_line.hpp>',
   '<ironbeepp/server.hpp>',

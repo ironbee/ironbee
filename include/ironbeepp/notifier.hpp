@@ -32,7 +32,7 @@
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/engine.hpp>
-#include <ironbeepp/parsed_name_value.hpp>
+#include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/throw.hpp>
 #include <ironbeepp/transaction.hpp>
 
@@ -101,7 +101,7 @@ public:
     //! Notify request_header_data event.
     Notifier request_header_data(
         Transaction                       transaction,
-        const std::list<ParsedNameValue>& header
+        const std::list<ParsedHeader>& header
     );
 
     //! Notify request_header_finished event.
@@ -138,7 +138,7 @@ public:
     //! Notify response_header_data event.
     Notifier response_header_data(
         Transaction                       transaction,
-        const std::list<ParsedNameValue>& header
+        const std::list<ParsedHeader>& header
     );
 
     //! Notify response_header_finished event.

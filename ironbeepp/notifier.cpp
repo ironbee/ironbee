@@ -75,7 +75,7 @@ Notifier Notifier::request_started(
 
 Notifier Notifier::request_header_data(
     Transaction                       transaction,
-    const std::list<ParsedNameValue>& header
+    const std::list<ParsedHeader>& header
 )
 {
     return request_header_data(transaction, header.begin(), header.end());
@@ -140,7 +140,7 @@ Notifier Notifier::response_started(
 
 Notifier Notifier::response_header_data(
     Transaction                       transaction,
-    const std::list<ParsedNameValue>& header
+    const std::list<ParsedHeader>& header
 )
 {
     return response_header_data(transaction, header.begin(), header.end());

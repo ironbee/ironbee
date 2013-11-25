@@ -5,7 +5,7 @@
 #include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/clock.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
-#include <ironbeepp/parsed_name_value.hpp>
+#include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/throw.hpp>
 #include <ironbeepp/var.hpp>
 
@@ -151,9 +151,9 @@ ParsedRequestLine ConstTransaction::request_line() const
     return ParsedRequestLine(ib()->request_line);
 }
 
-ParsedNameValue ConstTransaction::request_header() const
+ParsedHeader ConstTransaction::request_header() const
 {
-    return ParsedNameValue(ib()->request_header->head);
+    return ParsedHeader(ib()->request_header->head);
 }
 
 ConstVarStore ConstTransaction::var_store() const

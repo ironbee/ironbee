@@ -29,7 +29,7 @@ check_PROGRAMS = \
 	test_module_bootstrap_b \
 	test_module_delegate \
 	test_operator \
-	test_parsed_name_value \
+	test_parsed_header \
 	test_parsed_request_line \
 	test_parsed_response_line \
 	test_server \
@@ -62,7 +62,7 @@ test_module_bootstrap_b_SOURCES       = test_module_bootstrap_b.cpp
 test_module_delegate_SOURCES          = test_module_delegate.cpp
 test_module_SOURCES                   = test_module.cpp
 test_operator_SOURCES                 = test_operator.cpp
-test_parsed_name_value_SOURCES        = test_parsed_name_value.cpp
+test_parsed_header_SOURCES        = test_parsed_header.cpp
 test_parsed_request_line_SOURCES      = test_parsed_request_line.cpp
 test_parsed_response_line_SOURCES     = test_parsed_response_line.cpp
 test_server_SOURCES                   = test_server.cpp

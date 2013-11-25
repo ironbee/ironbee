@@ -37,7 +37,7 @@ namespace IronBee {
 
 class Transaction;
 class Connection;
-class ParsedNameValue;
+class ParsedHeader;
 class ParsedRequestLine;
 class ParsedResponseLine;
 
@@ -100,7 +100,7 @@ public:
     > null_t;
 
     /**
-     * Call back type that takes ParsedNameValue argument.
+     * Call back type that takes ParsedHeader argument.
      *
      * Parameters are:
      * - IronBee engine.
@@ -113,7 +113,7 @@ public:
             Engine,
             Transaction,
             Engine::state_event_e,
-            ParsedNameValue
+            ParsedHeader
         )
     > header_data_t;
 

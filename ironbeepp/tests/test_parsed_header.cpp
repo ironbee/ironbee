@@ -17,12 +17,12 @@
 
 /**
  * @file
- * @brief IronBee++ Internals --- ParsedNameValue Tests
+ * @brief IronBee++ Internals --- ParsedHeader Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <ironbeepp/parsed_name_value.hpp>
+#include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/memory_pool.hpp>
@@ -31,13 +31,13 @@
 
 using namespace IronBee;
 
-TEST(TestParsedNameValue, basic)
+TEST(TestParsedHeader, basic)
 {
     MemoryPool mp = MemoryPool::create();
 
     ib_parsed_header_t ib_pnv;
 
-    ParsedNameValue pnv(&ib_pnv);
+    ParsedHeader pnv(&ib_pnv);
 
     ASSERT_TRUE(pnv);
 
@@ -52,11 +52,11 @@ TEST(TestParsedNameValue, basic)
     EXPECT_EQ(ib_pnv.next, pnv.next().ib());
 }
 
-TEST(TestParsedNameValue, create)
+TEST(TestParsedHeader, create)
 {
     MemoryPool mp = MemoryPool::create();
 
-    ParsedNameValue pnv = ParsedNameValue::create(
+    ParsedHeader pnv = ParsedHeader::create(
         mp,
         ByteString::create(mp, "foo"),
         ByteString::create(mp, "bar")

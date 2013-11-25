@@ -30,7 +30,7 @@
 #include <ironbeepp/list.hpp>
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
-#include <ironbeepp/parsed_name_value.hpp>
+#include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/transaction.hpp>
 
 /* C includes. */

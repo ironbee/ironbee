@@ -27,7 +27,7 @@
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
-#include <ironbeepp/parsed_name_value.hpp>
+#include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/transaction.hpp>
 
 /* C includes. */
@@ -206,7 +206,7 @@ private:
         IronBee::Engine ib,
         IronBee::Transaction tx,
         IronBee::Engine::state_event_e event,
-        IronBee::ParsedNameValue header) const
+        IronBee::ParsedHeader header) const
     {
         if (get_mode() != RUNNING) {
             ib_status_t rc = ib_tx_server_header(

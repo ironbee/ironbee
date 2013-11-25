@@ -17,9 +17,9 @@
 
 /**
  * @file
- * @brief IronBee++ --- ParsedNameValue
+ * @brief IronBee++ --- ParsedHeader
  *
- * This file defines (Const)ParsedNameValue, a wrapper for
+ * This file defines (Const)ParsedHeader, a wrapper for
  * ib_parsed_header_t.
  *
  * @remark Developers should be familiar with @ref ironbeepp to understand
@@ -45,41 +45,40 @@
 #include <ostream>
 
 // IronBee C Type
-typedef struct ib_parsed_header_t
-     ib_parsed_header_t;
+typedef struct ib_parsed_header_t ib_parsed_header_t;
 
 namespace IronBee {
 
-class ParsedNameValue;
+class ParsedHeader;
 class MemoryPool;
 
 /**
- * Const ParsedNameValue; equivalent to a const pointer to ib_parsed_header_t.
+ * Const ParsedHeader; equivalent to a const pointer to ib_parsed_header_t.
  *
  * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
  * singularity via CommonSemantics.
  *
- * See ParsedNameValue for discussion of ParsedNameValue
+ * See ParsedHeader for discussion of ParsedHeader
  *
- * @sa ParsedNameValue
+ * @sa ParsedHeader
  * @sa ironbeepp
  * @sa ib_parsed_header_t
  * @nosubgrouping
  **/
-class ConstParsedNameValue :
-    public CommonSemantics<ConstParsedNameValue>
+class ConstParsedHeader :
+    public CommonSemantics<ConstParsedHeader>
 {
 public:
     //! C Type.
     typedef const ib_parsed_header_t* ib_type;
 
     /**
-     * Construct singular ConstParsedNameValue.
+     * Construct singular ConstParsedHeader.
      *
-     * All behavior of a singular ConstParsedNameValue is undefined except for
+     * All behavior of a singular ConstParsedHeader is undefined except for
      * assignment, copying, comparison, and evaluate-as-bool.
      **/
-    ConstParsedNameValue();
+    ConstParsedHeader();
 
     /**
      * @name C Interoperability
@@ -94,9 +93,9 @@ public:
         return m_ib;
     }
 
-    //! Construct ParsedNameValue from ib_parsed_header_t.
+    //! Construct ParsedHeader from ib_parsed_header_t.
     explicit
-    ConstParsedNameValue(ib_type ib_parsed_name_value);
+    ConstParsedHeader(ib_type ib_parsed_header);
 
     ///@}
 
@@ -107,58 +106,58 @@ public:
     ByteString value() const;
 
     //! Next name/value.
-    ParsedNameValue next() const;
+    ParsedHeader next() const;
 
 private:
     ib_type m_ib;
 };
 
 /**
- * ParsedNameValue; equivalent to a pointer to
+ * ParsedHeader; equivalent to a pointer to
  * ib_parsed_header_t.
  *
- * ParsedNameValue can be treated as ConstParsedNameValue.  See @ref
+ * ParsedHeader can be treated as ConstParsedHeader.  See @ref
  * ironbeepp for details on IronBee++ object semantics.
  *
- * ParsedNameValue is forms a simple linked list of pairs of byte strings.  It
+ * ParsedHeader is forms a simple linked list of pairs of byte strings.  It
  * is used as part of the parsed content interface which provides a very
  * simple (minimal dependency) API for external input providers.
  *
- * ParsedNameValue adds no functionality to ConstParsedNameValue except for
+ * ParsedHeader adds no functionality to ConstParsedHeader except for
  * exposing a non-const @c ib_parsed_header_t* via ib().
  *
- * @sa ConstParsedNameValue
+ * @sa ConstParsedHeader
  * @sa ironbeepp
  * @sa ib_parsed_header_t
  * @nosubgrouping
  **/
-class ParsedNameValue :
-    public ConstParsedNameValue
+class ParsedHeader :
+    public ConstParsedHeader
 {
 public:
     //! C Type.
     typedef ib_parsed_header_t* ib_type;
 
     /**
-     * Remove the constness of a ConstParsedNameValue.
+     * Remove the constness of a ConstParsedHeader.
      *
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
-     * @param[in] parsed_name_value ConstParsedNameValue to remove const from.
-     * @returns ParsedNameValue pointing to same underlying parsed_name_value
-     *          as @a parsed_name_value.
+     * @param[in] parsed_header ConstParsedHeader to remove const from.
+     * @returns ParsedHeader pointing to same underlying parsed_header
+     *          as @a parsed_header.
      **/
-    static ParsedNameValue remove_const(
-        ConstParsedNameValue parsed_name_value
+    static ParsedHeader remove_const(
+        ConstParsedHeader parsed_header
     );
 
     /**
-     * Construct singular ParsedNameValue.
+     * Construct singular ParsedHeader.
      *
-     * All behavior of a singular ParsedNameValue is undefined except for
+     * All behavior of a singular ParsedHeader is undefined except for
      * assignment, copying, comparison, and evaluate-as-bool.
      **/
-    ParsedNameValue();
+    ParsedHeader();
 
     /**
      * @name C Interoperability
@@ -172,22 +171,22 @@ public:
         return m_ib;
     }
 
-    //! Construct ParsedNameValue from ib_parsed_header_t.
+    //! Construct ParsedHeader from ib_parsed_header_t.
     explicit
-    ParsedNameValue(ib_type ib_parsed_name_value);
+    ParsedHeader(ib_type ib_parsed_header);
 
     ///@}
 
     /**
-     * Create a ParsedNameValue.
+     * Create a ParsedHeader.
      *
      * @param[in] pool  Memory pool to use for allocations.
      * @param[in] name  Name.
      * @param[in] value Value.
-     * @returns ParsedNameValue
+     * @returns ParsedHeader
      **/
     static
-    ParsedNameValue create(
+    ParsedHeader create(
         MemoryPool pool,
         ByteString name,
         ByteString value
@@ -198,18 +197,18 @@ private:
 };
 
 /**
- * Output operator for ParsedNameValue.
+ * Output operator for ParsedHeader.
  *
- * Output IronBee::ParsedNameValue[@e value] where @e value is the name and
+ * Output IronBee::ParsedHeader[@e value] where @e value is the name and
  * value joined by a colon.
  *
  * @param[in] o Ostream to output to.
- * @param[in] parsed_name_value ParsedNameValue to output.
+ * @param[in] parsed_header ParsedHeader to output.
  * @return @a o
  **/
 std::ostream& operator<<(
     std::ostream&               o,
-    const ConstParsedNameValue& parsed_name_value
+    const ConstParsedHeader& parsed_header
 );
 
 
@@ -217,7 +216,7 @@ namespace Internal {
 /// @cond Internal
 
 /**
- * Turn a sequence of ParsedNameValues into a C API appropriate type.
+ * Turn a sequence of ParsedHeaders into a C API appropriate type.
  *
  * @param[in] memory_pool Memory pool to allocate from.
  * @param[in] begin       Beginning of sequence.
@@ -240,7 +239,7 @@ ib_parsed_headers_t* make_pnv_list(
     );
 
     BOOST_FOREACH(
-        ParsedNameValue pnv,
+        ParsedHeader pnv,
         std::make_pair(begin, end)
     ) {
         // This will reconstruct the bytestrings but not copy the data.
