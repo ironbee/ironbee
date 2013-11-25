@@ -34,6 +34,7 @@
 #include <ironbee/engine_manager.h>
 #include "ngx_ironbee.h"
 #include <ironbee/state_notify.h>
+#include <nginx.h>
 
 struct ngxib_conn_t {
     ib_conn_t   *iconn;
@@ -74,7 +75,7 @@ static ib_status_t conn_init(
     iconn->local_port = ((struct sockaddr_in*)conn->local_sockaddr)->sin_port;
 
     /* Get the remote address */
-#if OLDVERSION
+#if ( nginx_version < 1005003 )
     len = ngx_sock_ntop(conn->sockaddr, buf, INET6_ADDRSTRLEN, 0);
 #else
     len = ngx_sock_ntop(conn->sockaddr, conn->socklen, buf, INET6_ADDRSTRLEN, 0);
@@ -85,7 +86,7 @@ static ib_status_t conn_init(
     }
 
     /* Get the local address.  Unfortunately this comes from config */
-#if OLDVERSION
+#if nginx_version < 1005003
     len = ngx_sock_ntop(conn->local_sockaddr, buf, INET6_ADDRSTRLEN, 0);
 #else
     len = ngx_sock_ntop(conn->local_sockaddr, conn->socklen, buf, INET6_ADDRSTRLEN, 0);
