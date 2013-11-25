@@ -74,14 +74,22 @@ static ib_status_t conn_init(
     iconn->local_port = ((struct sockaddr_in*)conn->local_sockaddr)->sin_port;
 
     /* Get the remote address */
+#if OLDVERSION
     len = ngx_sock_ntop(conn->sockaddr, buf, INET6_ADDRSTRLEN, 0);
+#else
+    len = ngx_sock_ntop(conn->sockaddr, conn->socklen, buf, INET6_ADDRSTRLEN, 0);
+#endif
     iconn->remote_ipstr = ib_mpool_memdup_to_str(iconn->mp, buf, len);
     if (iconn->remote_ipstr == NULL) {
         return IB_EALLOC;
     }
 
     /* Get the local address.  Unfortunately this comes from config */
+#if OLDVERSION
     len = ngx_sock_ntop(conn->local_sockaddr, buf, INET6_ADDRSTRLEN, 0);
+#else
+    len = ngx_sock_ntop(conn->local_sockaddr, conn->socklen, buf, INET6_ADDRSTRLEN, 0);
+#endif
     iconn->local_ipstr = ib_mpool_memdup_to_str(iconn->mp, buf, len);
     if (iconn->local_ipstr == NULL) {
         return IB_EALLOC;
