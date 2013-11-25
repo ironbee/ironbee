@@ -270,19 +270,20 @@ static void logger_log(
 }
 
 void ib_logger_log_msg(
-    ib_logger_t       *logger,
-    const char        *file,
-    const char        *function,
-    size_t             line_number,
-    const ib_engine_t *engine,
-    const ib_module_t *module,
-    const ib_conn_t   *conn,
-    const ib_tx_t     *tx,
-    ib_logger_level_t  level,
-    const uint8_t     *msg,
-    size_t             msg_sz,
-    ib_logger_msg_fn_t msg_fn,
-    void              *msg_fn_data
+    ib_logger_t         *logger,
+    ib_logger_logtype_t  type,
+    const char          *file,
+    const char          *function,
+    size_t               line_number,
+    const ib_engine_t   *engine,
+    const ib_module_t   *module,
+    const ib_conn_t     *conn,
+    const ib_tx_t       *tx,
+    ib_logger_level_t    level,
+    const uint8_t       *msg,
+    size_t               msg_sz,
+    ib_logger_msg_fn_t   msg_fn,
+    void                *msg_fn_data
 )
 {
     ib_status_t      rc;
@@ -302,6 +303,7 @@ void ib_logger_log_msg(
         return;
     }
 
+    rec.type        = type;
     rec.line_number = line_number;
     rec.file        = file;
     rec.function    = function;
@@ -358,16 +360,17 @@ exit:
 }
 
 void ib_logger_log_va(
-    ib_logger_t       *logger,
-    const char        *file,
-    const char        *function,
-    size_t             line_number,
-    const ib_engine_t *engine,
-    const ib_module_t *module,
-    const ib_conn_t   *conn,
-    const ib_tx_t     *tx,
-    ib_logger_level_t  level,
-    const char        *msg,
+    ib_logger_t         *logger,
+    ib_logger_logtype_t  type,
+    const char          *file,
+    const char          *function,
+    size_t               line_number,
+    const ib_engine_t   *engine,
+    const ib_module_t   *module,
+    const ib_conn_t     *conn,
+    const ib_tx_t       *tx,
+    ib_logger_level_t    level,
+    const char          *msg,
     ...
 )
 {
@@ -376,6 +379,7 @@ void ib_logger_log_va(
     va_start(ap, msg);
     ib_logger_log_va_list(
         logger,
+        type,
         file,
         function,
         line_number,
@@ -391,17 +395,18 @@ void ib_logger_log_va(
 }
 
 void ib_logger_log_va_list(
-    ib_logger_t       *logger,
-    const char        *file,
-    const char        *function,
-    size_t             line_number,
-    const ib_engine_t *engine,
-    const ib_module_t *module,
-    const ib_conn_t   *conn,
-    const ib_tx_t     *tx,
-    ib_logger_level_t  level,
-    const char        *msg,
-    va_list            ap
+    ib_logger_t         *logger,
+    ib_logger_logtype_t  type,
+    const char          *file,
+    const char          *function,
+    size_t               line_number,
+    const ib_engine_t   *engine,
+    const ib_module_t   *module,
+    const ib_conn_t     *conn,
+    const ib_tx_t       *tx,
+    ib_logger_level_t    level,
+    const char          *msg,
+    va_list              ap
 )
 {
     ib_status_t      rc;
@@ -427,6 +432,7 @@ void ib_logger_log_va_list(
 
     log_msg_sz = vsnprintf((char *)log_msg, log_msg_sz, msg, ap);
 
+    rec.type        = type;
     rec.line_number = line_number;
     rec.file        = file;
     rec.function    = function;
@@ -727,6 +733,10 @@ ib_status_t ib_logger_standard_formatter(
     struct tm                *tminfo;
     time_t                    timet;
     ib_logger_standard_msg_t *msg;
+
+    if (rec->type != IB_LOGGER_ERRORLOG_TYPE) {
+        return IB_DECLINED;
+    }
 
     msg = malloc(sizeof(*msg));
     if (msg == NULL) {

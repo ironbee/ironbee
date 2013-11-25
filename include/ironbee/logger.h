@@ -63,6 +63,17 @@ typedef enum {
 } ib_logger_level_t;
 
 /**
+ * Different types of messages that flow through the logger.
+ *
+ * This type is used by formatters to know if they can or should
+ * attempt to format an @ref ib_logger_rec_t.
+ */
+typedef enum {
+    IB_LOGGER_ERRORLOG_TYPE, /**< Normal user error log. */
+    IB_LOGGER_TXLOG_TYPE     /**< Transaction log. */
+} ib_logger_logtype_t;
+
+/**
  * String to level conversion.
  *
  * Attempts to convert @a s as both a number and a symbolic name (e.g. "debug")
@@ -205,15 +216,16 @@ typedef ib_status_t (*ib_logger_reopen_fn)(ib_logger_t *logger, void *data);
  * should be considered read-only.
  */
 struct ib_logger_rec_t {
-    size_t             line_number; /* Line number of the logging statement. */
-    const char        *file;        /* File of the logging statement. */
-    const char        *function;    /* The current function. */
-    ib_time_t          timestamp;   /* When the logging statement was made.*/
-    const ib_module_t *module;      /* The current module. May be null. */
-    const ib_conn_t   *conn;        /* The current connection. May be null. */
-    const ib_tx_t     *tx;          /* The current transaction. May be null. */
-    const ib_engine_t *engine;      /* The IronBee engine. */
-    ib_logger_level_t  level;       /* The log level. */
+    ib_logger_logtype_t type;        /**< Kind of message this is. */
+    size_t              line_number; /**< Line num of the logging rec. */
+    const char         *file;        /**< File of the logging statement. */
+    const char         *function;    /**< The current function. */
+    ib_time_t           timestamp;   /**< When the logging rec was made.*/
+    const ib_module_t  *module;      /**< The current module. May be null. */
+    const ib_conn_t    *conn;        /**< The current conn. May be null. */
+    const ib_tx_t      *tx;          /**< The current tx. May be null. */
+    const ib_engine_t  *engine;      /**< The IronBee engine. */
+    ib_logger_level_t   level;       /**< The log level. */
 };
 
 /**
@@ -236,6 +248,7 @@ struct ib_logger_rec_t {
  * formating functions of all loggers.
  *
  * @param[in] logger The logger.
+ * @param[in] type The type of log record being reported.
  * @param[in] file Optional current file (may be null).
  * @param[in] function Optional current function (may be null).
  * @param[in] line_number The current line number.
@@ -253,21 +266,22 @@ struct ib_logger_rec_t {
  * @param[in] msg_fn_data Data passed to @a msg_fn.
 */
 void ib_logger_log_msg(
-    ib_logger_t       *logger,
-    const char        *file,
-    const char        *function,
-    size_t             line_number,
-    const ib_engine_t *engine,
-    const ib_module_t *module,
-    const ib_conn_t   *conn,
-    const ib_tx_t     *tx,
-    ib_logger_level_t  level,
-    const uint8_t     *msg,
-    size_t             msg_sz,
-    ib_logger_msg_fn_t msg_fn,
-    void              *msg_fn_data
+    ib_logger_t         *logger,
+    ib_logger_logtype_t  type,
+    const char          *file,
+    const char          *function,
+    size_t               line_number,
+    const ib_engine_t   *engine,
+    const ib_module_t   *module,
+    const ib_conn_t     *conn,
+    const ib_tx_t       *tx,
+    ib_logger_level_t    level,
+    const uint8_t       *msg,
+    size_t               msg_sz,
+    ib_logger_msg_fn_t   msg_fn,
+    void                *msg_fn_data
 )
-NONNULL_ATTRIBUTE(1, 5);
+NONNULL_ATTRIBUTE(1, 6);
 
 /**
  * Submit a log message using printf style arguments for the message.
@@ -276,6 +290,7 @@ NONNULL_ATTRIBUTE(1, 5);
  * log message which will be passed down the logging pipeline.
  *
  * @param[in] logger The logger.
+ * @param[in] type The type of log record being reported.
  * @param[in] file Optional current file (may be null).
  * @param[in] function Optional current function (may be null).
  * @param[in] line_number The current line number.
@@ -288,20 +303,21 @@ NONNULL_ATTRIBUTE(1, 5);
  * @param[in] msg The user's format, followed by format arguments.
  */
 void ib_logger_log_va(
-    ib_logger_t       *logger,
-    const char        *file,
-    const char        *function,
-    size_t             line_number,
-    const ib_engine_t *engine,
-    const ib_module_t *module,
-    const ib_conn_t   *conn,
-    const ib_tx_t     *tx,
-    ib_logger_level_t  level,
-    const char        *msg,
+    ib_logger_t         *logger,
+    ib_logger_logtype_t  type,
+    const char          *file,
+    const char          *function,
+    size_t               line_number,
+    const ib_engine_t   *engine,
+    const ib_module_t   *module,
+    const ib_conn_t     *conn,
+    const ib_tx_t       *tx,
+    ib_logger_level_t    level,
+    const char          *msg,
     ...
 )
-NONNULL_ATTRIBUTE(1, 5, 10)
-PRINTF_ATTRIBUTE(10, 11);
+NONNULL_ATTRIBUTE(1, 6, 11)
+PRINTF_ATTRIBUTE(11, 12);
 
 /**
  * Submit a log message using vprintf style arguments for the message.
@@ -310,6 +326,7 @@ PRINTF_ATTRIBUTE(10, 11);
  * log message which will be passed down the logging pipeline.
  *
  * @param[in] logger The logger.
+ * @param[in] type The type of log record being reported.
  * @param[in] line_number The current line number.
  * @param[in] file Optional current file (may be null).
  * @param[in] function Optional current function (may be null).
@@ -323,20 +340,21 @@ PRINTF_ATTRIBUTE(10, 11);
  * @param[in] ap The list of arguments.
  */
 void ib_logger_log_va_list(
-    ib_logger_t       *logger,
-    const char        *file,
-    const char        *function,
-    size_t             line_number,
-    const ib_engine_t *engine,
-    const ib_module_t *module,
-    const ib_conn_t   *conn,
-    const ib_tx_t     *tx,
-    ib_logger_level_t  level,
-    const char        *msg,
-    va_list            ap
+    ib_logger_t         *logger,
+    ib_logger_logtype_t  type,
+    const char          *file,
+    const char          *function,
+    size_t               line_number,
+    const ib_engine_t   *engine,
+    const ib_module_t   *module,
+    const ib_conn_t     *conn,
+    const ib_tx_t       *tx,
+    ib_logger_level_t    level,
+    const char          *msg,
+    va_list              ap
 )
-NONNULL_ATTRIBUTE(1, 5, 10)
-VPRINTF_ATTRIBUTE(10);
+NONNULL_ATTRIBUTE(1, 6, 11)
+VPRINTF_ATTRIBUTE(11);
 
 /**
  * Create a new logger.

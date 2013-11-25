@@ -90,6 +90,7 @@ void DLL_PUBLIC ib_log_tx_vex(
 
     ib_logger_log_va_list(
         ib_engine_logger_get(tx->ib),
+        IB_LOGGER_ERRORLOG_TYPE,
         file,
         func,
         (int)line,
@@ -117,6 +118,7 @@ void DLL_PUBLIC ib_log_vex_ex(
 {
     ib_logger_log_va_list(
         ib_engine_logger_get(ib),
+        IB_LOGGER_ERRORLOG_TYPE,
         file,
         func,
         (int)line,
