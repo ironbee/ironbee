@@ -91,7 +91,7 @@ class ParsedContentHeaderTest : public ParsedContentTest
     std::list<const char*> values;
     int count;
 
-    ib_parsed_header_wrapper_t *headers;
+    ib_parsed_headers_t *headers;
 
     const char *name1;
     const char *value1;
@@ -147,105 +147,6 @@ TEST_F(ParsedContentTest, create_destroy)
 
     ASSERT_IB_OK(ib_tx_create(&tx, c, NULL));
     ASSERT_TRUE(tx!=NULL);
-
-    ib_tx_destroy(tx);
-    ib_conn_destroy(c);
-}
-
-
-TEST_F(ParsedContentHeaderTest, list_err)
-{
-    resetRuleBasePath();
-    resetModuleBasePath();
-    configureIronBee();
-
-    ib_status_t rc;
-    ib_tx_t *tx;
-    ib_conn_t *c = buildIronBeeConnection();
-    ASSERT_IB_OK(ib_tx_create(&tx, c, NULL));
-
-    ASSERT_IB_OK(ib_parsed_name_value_pair_list_wrapper_create(
-        &headers,
-        tx->mp));
-
-    ASSERT_TRUE(headers!=NULL);
-
-    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
-                                                    name1,
-                                                    strlen(name1),
-                                                    value1,
-                                                    strlen(value1)));
-    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
-                                                    name2,
-                                                    strlen(name2),
-                                                    value2,
-                                                    strlen(value2)));
-    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
-                                                    name3,
-                                                    strlen(name3),
-                                                    value3,
-                                                    strlen(value3)));
-
-
-    rc = ib_parsed_tx_each_header(headers,
-                                  &ParsedContentHeaderTest::list_callback1,
-                                  this);
-    ASSERT_EQ(IB_EOTHER, rc);
-    ASSERT_EQ(1, count);
-    ib_tx_destroy(tx);
-    ib_conn_destroy(c);
-}
-
-TEST_F(ParsedContentHeaderTest, list_ok)
-{
-    resetRuleBasePath();
-    resetModuleBasePath();
-    configureIronBee();
-
-    ib_status_t rc;
-    ib_tx_t *tx;
-    ib_conn_t *c = buildIronBeeConnection();
-    ASSERT_IB_OK(ib_tx_create(&tx, c, NULL));
-
-    ASSERT_IB_OK(ib_parsed_name_value_pair_list_wrapper_create(
-        &headers,
-        tx->mp));
-
-    ASSERT_TRUE(headers!=NULL);
-
-    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
-                                                    name1,
-                                                    strlen(name1),
-                                                    value1,
-                                                    strlen(value1)));
-    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
-                                                    name2,
-                                                    strlen(name2),
-                                                    value2,
-                                                    strlen(value2)));
-    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
-                                                    name3,
-                                                    strlen(name3),
-                                                    value3,
-                                                    strlen(value3)));
-
-
-    rc = ib_parsed_tx_each_header(headers,
-                                  &ParsedContentHeaderTest::list_callback2,
-                                  this);
-    ASSERT_EQ(3U, names.size());
-    ASSERT_EQ(3U, values.size());
-    ASSERT_EQ(IB_OK, rc);
-
-    std::list<const char*>::const_iterator it = names.begin();
-    ASSERT_MEMEQ(name1, *it, strlen(name1));
-    ASSERT_MEMEQ(name2, *(++it), strlen(name2));
-    ASSERT_MEMEQ(name3, *(++it), strlen(name3));
-
-    it = values.begin();
-    ASSERT_MEMEQ(value1, *it, strlen(value1));
-    ASSERT_MEMEQ(value2, *(++it), strlen(value2));
-    ASSERT_MEMEQ(value3, *(++it), strlen(value3));
 
     ib_tx_destroy(tx);
     ib_conn_destroy(c);

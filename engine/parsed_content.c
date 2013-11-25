@@ -31,14 +31,14 @@
 
 #include <assert.h>
 
-ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
-    ib_parsed_name_value_pair_list_wrapper_t **headers,
+ib_status_t ib_parsed_headers_create(
+    ib_parsed_headers_t **headers,
     ib_mpool_t *mp)
 {
     assert(headers != NULL);
     assert(mp != NULL);
 
-    ib_parsed_name_value_pair_list_wrapper_t *headers_tmp =
+    ib_parsed_headers_t *headers_tmp =
         ib_mpool_calloc(mp, 1, sizeof(*headers_tmp));
 
     if ( headers_tmp == NULL ) {
@@ -57,8 +57,8 @@ ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
     return IB_OK;
 }
 
-ib_status_t ib_parsed_name_value_pair_list_add(
-    ib_parsed_name_value_pair_list_wrapper_t *headers,
+ib_status_t ib_parsed_headers_add(
+    ib_parsed_headers_t *headers,
     const char *name,
     size_t name_len,
     const char *value,
@@ -71,7 +71,7 @@ ib_status_t ib_parsed_name_value_pair_list_add(
     assert(name != NULL);
     assert(value != NULL);
 
-    ib_parsed_name_value_pair_list_t *ele;
+    ib_parsed_header_t *ele;
 
     ele = ib_mpool_alloc(headers->mpool, sizeof(*ele));
     if (ele == NULL) {
@@ -111,31 +111,6 @@ ib_status_t ib_parsed_name_value_pair_list_add(
     }
 
     return IB_OK;
-}
-
-ib_status_t ib_parsed_tx_each_header(
-    ib_parsed_name_value_pair_list_wrapper_t *headers,
-    ib_parsed_tx_each_header_callback callback,
-    void* user_data)
-{
-    assert(headers!=NULL);
-
-    ib_status_t rc = IB_OK;
-
-    /* Loop over headers elements until the end of the list is reached or
-     * IB_OK is not returned by the callback. */
-    for(const ib_parsed_name_value_pair_list_t *le = headers->head;
-        le != NULL && rc == IB_OK;
-        le = le->next)
-    {
-        rc = callback((const char *)ib_bytestr_const_ptr(le->name),
-                      ib_bytestr_size(le->name),
-                      (const char *)ib_bytestr_const_ptr(le->value),
-                      ib_bytestr_size(le->value),
-                      user_data);
-    }
-
-    return rc;
 }
 
 ib_status_t ib_parsed_resp_line_create(
@@ -431,9 +406,9 @@ ib_status_t ib_parsed_req_line_create(
     return IB_OK;
 }
 
-ib_status_t ib_parsed_name_value_pair_list_append(
-    ib_parsed_name_value_pair_list_wrapper_t *head,
-    const ib_parsed_name_value_pair_list_wrapper_t *tail)
+ib_status_t ib_parsed_headers_append(
+    ib_parsed_headers_t *head,
+    const ib_parsed_headers_t *tail)
 {
     assert(head != NULL);
     assert(tail != NULL);

@@ -336,7 +336,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
 {
     ngxib_req_ctx *ctx;
     ib_parsed_resp_line_t *rline;
-    ib_parsed_header_wrapper_t *ibhdrs;
+    ib_parsed_headers_t *ibhdrs;
     ib_status_t rc;
 
     ngx_list_part_t *part;
@@ -388,14 +388,14 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
 
     ib_state_notify_response_started(ctx->tx->ib, ctx->tx, rline);
 
-    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx->mp);
+    rc = ib_parsed_headers_create(&ibhdrs, ctx->tx->mp);
     if (rc != IB_OK)
         cleanup_return NGX_ERROR;
 
     for (part = &r->headers_out.headers.part; part != NULL; part = part->next) {
         hdr = part->elts;
         for (i = 0; i < part->nelts; ++i) {
-            ib_parsed_name_value_pair_list_add(ibhdrs,
+            ib_parsed_headers_add(ibhdrs,
                                                (const char*)hdr->key.data,
                                                hdr->key.len,
                                                (const char*)hdr->value.data,
@@ -433,7 +433,7 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
     ngxib_req_ctx *ctx;
     ib_conn_t *iconn;
     ib_parsed_req_line_t *rline;
-    ib_parsed_header_wrapper_t *ibhdrs;
+    ib_parsed_headers_t *ibhdrs;
     ib_status_t rc;
 
     ngx_list_part_t *part;
@@ -469,14 +469,14 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
 
     ib_state_notify_request_started(ctx->tx->ib, ctx->tx, rline);
 
-    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx->mp);
+    rc = ib_parsed_headers_create(&ibhdrs, ctx->tx->mp);
     if (rc != IB_OK)
         cleanup_return NGX_ERROR;
 
     for (part = &r->headers_in.headers.part; part != NULL; part = part->next) {
         hdr = part->elts;
         for (i = 0; i < part->nelts; ++i) {
-            ib_parsed_name_value_pair_list_add(ibhdrs,
+            ib_parsed_headers_add(ibhdrs,
                                                (const char*)hdr->key.data,
                                                hdr->key.len,
                                                (const char*)hdr->value.data,

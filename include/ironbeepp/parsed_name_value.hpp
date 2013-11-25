@@ -20,7 +20,7 @@
  * @brief IronBee++ --- ParsedNameValue
  *
  * This file defines (Const)ParsedNameValue, a wrapper for
- * ib_parsed_name_value_pair_list_t.
+ * ib_parsed_header_t.
  *
  * @remark Developers should be familiar with @ref ironbeepp to understand
  * aspects of this code, e.g., the public/non-virtual inheritance.
@@ -45,8 +45,8 @@
 #include <ostream>
 
 // IronBee C Type
-typedef struct ib_parsed_name_value_pair_list_t
-     ib_parsed_name_value_pair_list_t;
+typedef struct ib_parsed_header_t
+     ib_parsed_header_t;
 
 namespace IronBee {
 
@@ -54,7 +54,7 @@ class ParsedNameValue;
 class MemoryPool;
 
 /**
- * Const ParsedNameValue; equivalent to a const pointer to ib_parsed_name_value_pair_list_t.
+ * Const ParsedNameValue; equivalent to a const pointer to ib_parsed_header_t.
  *
  * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
  * singularity via CommonSemantics.
@@ -63,7 +63,7 @@ class MemoryPool;
  *
  * @sa ParsedNameValue
  * @sa ironbeepp
- * @sa ib_parsed_name_value_pair_list_t
+ * @sa ib_parsed_header_t
  * @nosubgrouping
  **/
 class ConstParsedNameValue :
@@ -71,7 +71,7 @@ class ConstParsedNameValue :
 {
 public:
     //! C Type.
-    typedef const ib_parsed_name_value_pair_list_t* ib_type;
+    typedef const ib_parsed_header_t* ib_type;
 
     /**
      * Construct singular ConstParsedNameValue.
@@ -87,14 +87,14 @@ public:
      **/
     ///@{
 
-    //! const ib_parsed_name_value_pair_list_t accessor.
+    //! const ib_parsed_header_t accessor.
     // Intentionally inlined.
     ib_type ib() const
     {
         return m_ib;
     }
 
-    //! Construct ParsedNameValue from ib_parsed_name_value_pair_list_t.
+    //! Construct ParsedNameValue from ib_parsed_header_t.
     explicit
     ConstParsedNameValue(ib_type ib_parsed_name_value);
 
@@ -115,7 +115,7 @@ private:
 
 /**
  * ParsedNameValue; equivalent to a pointer to
- * ib_parsed_name_value_pair_list_t.
+ * ib_parsed_header_t.
  *
  * ParsedNameValue can be treated as ConstParsedNameValue.  See @ref
  * ironbeepp for details on IronBee++ object semantics.
@@ -125,11 +125,11 @@ private:
  * simple (minimal dependency) API for external input providers.
  *
  * ParsedNameValue adds no functionality to ConstParsedNameValue except for
- * exposing a non-const @c ib_parsed_name_value_pair_list_t* via ib().
+ * exposing a non-const @c ib_parsed_header_t* via ib().
  *
  * @sa ConstParsedNameValue
  * @sa ironbeepp
- * @sa ib_parsed_name_value_pair_list_t
+ * @sa ib_parsed_header_t
  * @nosubgrouping
  **/
 class ParsedNameValue :
@@ -137,7 +137,7 @@ class ParsedNameValue :
 {
 public:
     //! C Type.
-    typedef ib_parsed_name_value_pair_list_t* ib_type;
+    typedef ib_parsed_header_t* ib_type;
 
     /**
      * Remove the constness of a ConstParsedNameValue.
@@ -166,13 +166,13 @@ public:
      **/
     ///@{
 
-    //! ib_parsed_name_value_pair_list_t accessor.
+    //! ib_parsed_header_t accessor.
     ib_type ib() const
     {
         return m_ib;
     }
 
-    //! Construct ParsedNameValue from ib_parsed_name_value_pair_list_t.
+    //! Construct ParsedNameValue from ib_parsed_header_t.
     explicit
     ParsedNameValue(ib_type ib_parsed_name_value);
 
@@ -222,18 +222,18 @@ namespace Internal {
  * @param[in] memory_pool Memory pool to allocate from.
  * @param[in] begin       Beginning of sequence.
  * @param[in] end         End of sequence.
- * @returns ib_parsed_name_value_pair_list_wrapper_t for use in C API.
+ * @returns ib_parsed_headers_t for use in C API.
  **/
 template <typename Iterator>
-ib_parsed_name_value_pair_list_wrapper_t* make_pnv_list(
+ib_parsed_headers_t* make_pnv_list(
     MemoryPool memory_pool,
     Iterator   begin,
     Iterator   end
 )
 {
-    ib_parsed_name_value_pair_list_wrapper_t* ib_pnv_list;
+    ib_parsed_headers_t* ib_pnv_list;
     throw_if_error(
-        ib_parsed_name_value_pair_list_wrapper_create(
+        ib_parsed_headers_create(
             &ib_pnv_list,
             memory_pool.ib()
         )
@@ -248,7 +248,7 @@ ib_parsed_name_value_pair_list_wrapper_t* make_pnv_list(
         // structures but added to list as members.  IronBee++ hides that
         // asymmetry.
         throw_if_error(
-            ib_parsed_name_value_pair_list_add(
+            ib_parsed_headers_add(
                 ib_pnv_list,
                 pnv.name().const_data(),
                 pnv.name().length(),

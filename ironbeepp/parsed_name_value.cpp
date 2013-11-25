@@ -62,8 +62,8 @@ ParsedNameValue ParsedNameValue::create(
     ByteString value
 )
 {
-    ib_parsed_name_value_pair_list_t* ib_pnv
-        = pool.allocate<ib_parsed_name_value_pair_list_t>();
+    ib_parsed_header_t* ib_pnv
+        = pool.allocate<ib_parsed_header_t>();
     ib_pnv->name = name.ib();
     ib_pnv->value = value.ib();
     ib_pnv->next = NULL;

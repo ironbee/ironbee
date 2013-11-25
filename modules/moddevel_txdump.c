@@ -492,13 +492,13 @@ static void moddevel_txdump_header(
     const ib_moddevel_txdump_t       *txdump,
     size_t                            nspaces,
     const char                       *label,
-    const ib_parsed_header_wrapper_t *header)
+    const ib_parsed_headers_t *header)
 {
     assert(tx != NULL);
     assert(txdump != NULL);
     assert(label != NULL);
 
-    const ib_parsed_name_value_pair_list_t *node;
+    const ib_parsed_header_t *node;
 
     if (header == NULL) {
         moddevel_txdump(tx, txdump, nspaces, "%s unavailable", label);

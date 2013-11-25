@@ -462,7 +462,7 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
                                                ib_tx_t *tx,
                                                ib_state_event_type_t event,
-                                               ib_parsed_header_wrapper_t *header)
+                                               ib_parsed_headers_t *header)
 {
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
@@ -548,7 +548,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
 
 ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
                                                 ib_tx_t *tx,
-                                                ib_parsed_header_wrapper_t *header)
+                                                ib_parsed_headers_t *header)
 {
     assert(ib != NULL);
     assert(tx != NULL);
@@ -572,7 +572,7 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
         tx->request_header = header;
     }
     else {
-        rc = ib_parsed_name_value_pair_list_append(tx->request_header,
+        rc = ib_parsed_headers_append(tx->request_header,
                                                    header);
 
         if (rc != IB_OK) {
@@ -858,7 +858,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
 ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
                                                  ib_tx_t *tx,
-                                                 ib_parsed_header_wrapper_t *header)
+                                                 ib_parsed_headers_t *header)
 {
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
@@ -883,7 +883,7 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
         tx->response_header = header;
     }
     else {
-        rc = ib_parsed_name_value_pair_list_append(tx->response_header,
+        rc = ib_parsed_headers_append(tx->response_header,
                                                    header);
 
         if (rc != IB_OK) {

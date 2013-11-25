@@ -117,8 +117,8 @@ TEST_F(TestTransaction, basic)
     ib_tx.request_line = (ib_parsed_req_line_t*)1238;
     EXPECT_EQ(ib_tx.request_line, tx.request_line().ib());
 
-    ib_parsed_name_value_pair_list_wrapper_t plw;
-    plw.head = (ib_parsed_name_value_pair_list_t*)1239;
+    ib_parsed_headers_t plw;
+    plw.head = (ib_parsed_header_t*)1239;
     ib_tx.request_header = &plw;
     EXPECT_EQ(ib_tx.request_header->head, tx.request_header().ib());
 

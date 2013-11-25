@@ -357,12 +357,12 @@ static ib_status_t create_header_alias_list(
     ib_engine_t *ib,
     ib_tx_t *tx,
     const char *name,
-    ib_parsed_header_wrapper_t *header)
+    ib_parsed_headers_t *header)
 {
     ib_field_t *f;
     ib_list_t *header_list;
     ib_status_t rc;
-    ib_parsed_name_value_pair_list_t *nvpair;
+    ib_parsed_header_t *nvpair;
     ib_var_source_t *source;
 
     assert(ib != NULL);

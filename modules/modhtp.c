@@ -496,7 +496,7 @@ static ib_status_t modhtp_set_header(
     assert(fn != NULL);
     assert(fname != NULL);
 
-    const ib_parsed_name_value_pair_list_t *node;
+    const ib_parsed_header_t *node;
 
     for (node = header;  node != NULL;  node = node->next) {
         htp_status_t hrc;
@@ -726,7 +726,7 @@ static inline ib_status_t modhtp_set_hostname(
 
     /* See if there's a host name in IronBee's parsed header */
     if (itx->request_header != NULL) {
-        const ib_parsed_name_value_pair_list_t *node;
+        const ib_parsed_header_t *node;
         for (node = itx->request_header->head;
              node != NULL;
              node = node->next)

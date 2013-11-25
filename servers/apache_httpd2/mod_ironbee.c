@@ -359,7 +359,7 @@ ib_server_t DLL_LOCAL ibplugin = {
  */
 static int ironbee_sethdr(void *data, const char *key, const char *value)
 {
-    ib_parsed_name_value_pair_list_add((ib_parsed_header_wrapper_t*)data,
+    ib_parsed_headers_add((ib_parsed_headers_t*)data,
                                        key, strlen(key),
                                        value, strlen(value));
     return 1;
@@ -453,7 +453,7 @@ static int ironbee_headers_in(request_rec *r)
 
         /* First construct and notify the request line */
         ib_parsed_req_line_t *rline;
-        ib_parsed_header_wrapper_t *ibhdrs;
+        ib_parsed_headers_t *ibhdrs;
 
         ctx->state |= NOTIFY_REQ_START;
 
@@ -474,9 +474,9 @@ static int ironbee_headers_in(request_rec *r)
         }
 
         /* Now the request headers */
-        rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx->mp);
+        rc = ib_parsed_headers_create(&ibhdrs, ctx->tx->mp);
         if (rc != IB_OK) {
-            rc_what = "ib_parsed_name_value_pair_list_wrapper_create";
+            rc_what = "ib_parsed_headers_create";
             goto finished;
         }
 
@@ -557,7 +557,7 @@ static apr_status_t ironbee_header_filter(ap_filter_t *f,
     ap_filter_t *nextf = f->next;
     ib_status_t rc;
     ib_parsed_resp_line_t *rline;
-    ib_parsed_header_wrapper_t *ibhdrs;
+    ib_parsed_headers_t *ibhdrs;
     const char *cstatus;
     const char *reason;
     ironbee_req_ctx *ctx = ap_get_module_config(f->r->request_config,
@@ -603,10 +603,10 @@ static apr_status_t ironbee_header_filter(ap_filter_t *f,
     }
 
     /* Notify Ironbee of output headers */
-    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx->mp);
+    rc = ib_parsed_headers_create(&ibhdrs, ctx->tx->mp);
     if (rc != IB_OK) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
-                      "ib_parsed_name_value_pair_list_wrapper_create failed with %d", rc);
+                      "ib_parsed_headers_create failed with %d", rc);
         goto header_filter_cleanup;
     }
     apr_table_do(ironbee_sethdr, ibhdrs, f->r->headers_out, NULL);

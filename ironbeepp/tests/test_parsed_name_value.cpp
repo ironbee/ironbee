@@ -35,7 +35,7 @@ TEST(TestParsedNameValue, basic)
 {
     MemoryPool mp = MemoryPool::create();
 
-    ib_parsed_name_value_pair_list_t ib_pnv;
+    ib_parsed_header_t ib_pnv;
 
     ParsedNameValue pnv(&ib_pnv);
 
@@ -47,7 +47,7 @@ TEST(TestParsedNameValue, basic)
     ib_pnv.value = ByteString::create(mp, "bar").ib();
     EXPECT_EQ(ib_pnv.value, pnv.value().ib());
 
-    ib_parsed_name_value_pair_list_t ib_pnv2;
+    ib_parsed_header_t ib_pnv2;
     ib_pnv.next = &ib_pnv2;
     EXPECT_EQ(ib_pnv.next, pnv.next().ib());
 }

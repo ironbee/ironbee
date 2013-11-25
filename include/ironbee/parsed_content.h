@@ -46,30 +46,24 @@ extern "C" {
 /**
  * A link list element representing the HTTP header.
  */
-typedef struct ib_parsed_name_value_pair_list_t {
+typedef struct ib_parsed_header_t {
     ib_bytestr_t *name;  /**< Name. */
     ib_bytestr_t *value; /**< Value the name describes. */
-    struct ib_parsed_name_value_pair_list_t *next; /**< Next element. */
-} ib_parsed_name_value_pair_list_t;
+    struct ib_parsed_header_t *next; /**< Next element. */
+} ib_parsed_header_t;
 
 /**
- * A list wrapper of ib_Parsed_name_value_pair_list_t.
+ * A list wrapper of @ref ib_parsed_header_t.
  *
  * This is used to quickly build a new list. Afterwards the resultant list
  * can be treated as a simple linked list terminated with next==NULL.
  */
-typedef struct ib_parsed_name_value_pair_list_wrapper_t {
+typedef struct ib_parsed_headers_t {
     ib_mpool_t *mpool;                      /**< Pool to allocate elements. */
-    ib_parsed_name_value_pair_list_t *head; /**< Head of the list. */
-    ib_parsed_name_value_pair_list_t *tail; /**< Tail of the list. */
+    ib_parsed_header_t *head; /**< Head of the list. */
+    ib_parsed_header_t *tail; /**< Tail of the list. */
     size_t size;                            /**< Size of the list. */
-} ib_parsed_name_value_pair_list_wrapper_t;
-
-
-typedef struct ib_parsed_name_value_pair_list_wrapper_t
-    ib_parsed_header_wrapper_t;
-typedef struct ib_parsed_name_value_pair_list_wrapper_t
-    ib_parsed_trailer_wrapper_t;
+} ib_parsed_headers_t;
 
 /**
  * A structure representing the parsed HTTP request line.
@@ -92,28 +86,6 @@ typedef struct ib_parsed_resp_line_t {
 } ib_parsed_resp_line_t;
 
 /**
- * An opaque list representation of a header list.
- */
-typedef struct ib_parsed_name_value_pair_list_t ib_parsed_header_t;
-
-/**
- * A trailer is structurally identical to an ib_parsed_header_t.
- */
-typedef struct ib_parsed_name_value_pair_list ib_parsed_trailer_t;
-
-
-/**
- * Callback for iterating through a list of name/value
- * pairs within the HTTP header.
- * IB_OK must be returned. Otherwise the loop will terminate prematurely.
- */
-typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
-                                                         size_t name_len,
-                                                         const char *value,
-                                                         size_t value_len,
-                                                         void* user_data);
-
-/**
  * Construct a HTTP header (or trailer) object.
  *
  * This calloc's @a **header from @a mp.
@@ -125,8 +97,8 @@ typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
  * @param[in] mp Memory pool to allocate from.
  * @returns IB_OK or IB_EALLOC if mp could not allocate memory.
  */
-ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_wrapper_create(
-    ib_parsed_name_value_pair_list_wrapper_t **header,
+ib_status_t DLL_PUBLIC ib_parsed_headers_create(
+    ib_parsed_headers_t **header,
     ib_mpool_t *mp
 );
 
@@ -147,39 +119,25 @@ ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_wrapper_create(
  * @returns IB_OK on success. IB_EALLOC if the list element could not be
  *          allocated.
  */
-ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_add(
-    ib_parsed_name_value_pair_list_wrapper_t *header,
+ib_status_t DLL_PUBLIC ib_parsed_headers_add(
+    ib_parsed_headers_t *header,
     const char *name,
     size_t name_len,
     const char *value,
     size_t value_len);
 
+
 /**
- * Apply @a callback to each name-value header pair in @a header.
+ * Append the @a tail list to the @a head list.
  *
- * This function may also be used for ib_parsed_trailer_t* objects as
- * they are typedefs of the same struct.
- *
- * This function will forward the @a user_data value to the callback for
- * use by the user's code.
- *
- * This function will prematurely terminate iteration if @a callback does not
- * return IB_OK. The last return code from @a callback is the return code
- * of this function.
- *
- * @param[in] header The list to be iterated through.
- * @param[in] callback The function supplied by the caller to process the
- *            name-value pairs.
- * @param[in] user_data A pointer that is forwarded to the callback so
- *            the user can pass some context around.
- * @returns The last return code of @a callback. If @a callback returns
- *          a value that is not IB_OK iteration is prematurely terminated
- *          and that return code is returned.
+ * This modifies the @a head list but leaves the @a tail list untouched.
+ * However, the @a tail list should not be used as it may be indirectly
+ * appended to by calls to ib_parsed_headers_append or
+ * ib_parsed_headers_add on @a head.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_each_header(
-    ib_parsed_name_value_pair_list_wrapper_t *header,
-    ib_parsed_tx_each_header_callback callback,
-    void* user_data);
+ib_status_t DLL_PUBLIC ib_parsed_headers_append(
+    ib_parsed_headers_t *head,
+    const ib_parsed_headers_t *tail);
 
 /**
  * Create a struct to link the response line components.
@@ -257,17 +215,6 @@ ib_status_t DLL_PUBLIC ib_parsed_req_line_create(
     const char *protocol,
     size_t protocol_len);
 
-/**
- * Append the @a tail list to the @a head list.
- *
- * This modifies the @a head list but leaves the @a tail list untouched.
- * However, the @a tail list should not be used as it may be indirectly
- * appended to by calls to ib_parsed_name_value_pair_list_append or
- * ib_parsed_name_value_pair_list_add on @a head.
- */
-ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_append(
-    ib_parsed_name_value_pair_list_wrapper_t *head,
-    const ib_parsed_name_value_pair_list_wrapper_t *tail);
 /**
  * @} IronBeeParsedContent
  */

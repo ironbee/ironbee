@@ -371,7 +371,7 @@ protected:
         handler_info_t&       info
     )
     {
-        test_one_argument<ib_parsed_name_value_pair_list_t>(
+        test_one_argument<ib_parsed_header_t>(
             event,
             info,
             CB_HEADER_DATA,

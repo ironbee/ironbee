@@ -1599,9 +1599,9 @@ static ib_status_t ib_auditlog_add_part_http_head_fields(
     ib_mpool_t *mpool,
     ib_list_t *list,
     const char *label,
-    ib_parsed_header_wrapper_t *header )
+    ib_parsed_headers_t *header )
 {
-    ib_parsed_name_value_pair_list_t *nvpair;
+    ib_parsed_header_t *nvpair;
     ib_status_t rc;
     ib_field_t *f;
 

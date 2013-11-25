@@ -253,7 +253,7 @@ typedef struct {
     TSReturnCode (*hdr_get)(TSHttpTxn, TSMBuffer *, TSMLoc *);
 
     ib_status_t (*ib_notify_header)(ib_engine_t*, ib_tx_t*,
-                 ib_parsed_header_wrapper_t*);
+                 ib_parsed_headers_t*);
     ib_status_t (*ib_notify_header_finished)(ib_engine_t*, ib_tx_t*);
     ib_status_t (*ib_notify_body)(ib_engine_t*, ib_tx_t*, const char*, size_t);
     ib_status_t (*ib_notify_end)(ib_engine_t*, ib_tx_t*);
@@ -1803,7 +1803,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     ib_status_t ib_rc;
     int nhdrs = 0;
     int body_len = 0;
-    ib_parsed_header_wrapper_t *ibhdrs;
+    ib_parsed_headers_t *ibhdrs;
 
     if (data->tx == NULL) {
         return HDR_OK;
@@ -1899,7 +1899,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
      * the actual headers.  So we'll skip the first line, which we already
      * dealt with.
      */
-    rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx->mp);
+    rv = ib_parsed_headers_create(&ibhdrs, data->tx->mp);
     if (rv != IB_OK) {
         ib_rc = ib_error_callback(data->tx, 500, NULL);
         TSError("Error creating ironbee header wrapper.  Disabling checks!");
@@ -1927,7 +1927,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         /* Ironbee presumably wants to know of anything zero-length
          * so don't reject on those grounds!
          */
-        rv = ib_parsed_name_value_pair_list_add(ibhdrs,
+        rv = ib_parsed_headers_add(ibhdrs,
                                                 line, n_len,
                                                 lptr, v_len);
         if (!body_len && (ibd->dir == IBD_REQ)) {

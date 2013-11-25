@@ -343,13 +343,13 @@ public:
      * @param[in] name Header name
      * @param[in] value Header value
      */
-    void addHeader(ib_parsed_header_wrapper_t *parsed,
+    void addHeader(ib_parsed_headers_t *parsed,
                    const char *name,
                    const char *value)
     {
         ib_status_t            rc;
 
-        rc = ib_parsed_name_value_pair_list_add(parsed,
+        rc = ib_parsed_headers_add(parsed,
                                                 name,
                                                 strlen(name),
                                                 value,
@@ -407,10 +407,10 @@ public:
      * @returns Status code
      */
     void startRequestHeader(ib_tx_t *tx,
-                            ib_parsed_header_wrapper_t **pparsed)
+                            ib_parsed_headers_t **pparsed)
     {
         ib_status_t rc;
-        rc = ib_parsed_name_value_pair_list_wrapper_create(pparsed, tx->mp);
+        rc = ib_parsed_headers_create(pparsed, tx->mp);
         if (rc != IB_OK) {
             notifyError("request header");
         }
@@ -423,7 +423,7 @@ public:
      * @param[in] parsed Parsed header
      */
     void sendRequestHeader(ib_tx_t *tx,
-                           ib_parsed_header_wrapper_t *parsed)
+                           ib_parsed_headers_t *parsed)
     {
         ib_status_t rc;
 
@@ -502,10 +502,10 @@ public:
      * @param[out] pparsed Pointer to new parsed name / value pair
      */
     void startResponseHeader(ib_tx_t *tx,
-                             ib_parsed_header_wrapper_t **pparsed)
+                             ib_parsed_headers_t **pparsed)
     {
         ib_status_t rc;
-        rc = ib_parsed_name_value_pair_list_wrapper_create(pparsed, tx->mp);
+        rc = ib_parsed_headers_create(pparsed, tx->mp);
         if (rc != IB_OK) {
             notifyError("response header");
         }
@@ -518,7 +518,7 @@ public:
      * @param[in] parsed Parsed header
      */
     void sendResponseHeader(ib_tx_t *tx,
-                            ib_parsed_header_wrapper_t *parsed)
+                            ib_parsed_headers_t *parsed)
     {
         ib_status_t rc;
         rc = ib_state_notify_response_header_data(ib_engine, tx, parsed);
@@ -822,8 +822,8 @@ public:
 protected:
     ib_conn_t                  *ib_conn;
     ib_tx_t                    *ib_tx;
-    ib_parsed_header_wrapper_t *ib_reqhdr;
-    ib_parsed_header_wrapper_t *ib_rsphdr;
+    ib_parsed_headers_t *ib_reqhdr;
+    ib_parsed_headers_t *ib_rsphdr;
 };
 
 /**

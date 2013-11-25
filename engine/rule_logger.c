@@ -1265,10 +1265,10 @@ static void log_tx_response_line(
 static void log_tx_header(
     const ib_rule_exec_t *rule_exec,
     const char *label,
-    const ib_parsed_name_value_pair_list_wrapper_t *wrap
+    const ib_parsed_headers_t *wrap
 )
 {
-    ib_parsed_name_value_pair_list_t *nvpair;
+    ib_parsed_header_t *nvpair;
 
     for (nvpair = wrap->head;  nvpair != NULL;  nvpair = nvpair->next) {
         rule_log_exec(rule_exec,

@@ -58,10 +58,11 @@ typedef struct ident_authbasic_cfg_t {
  * FIXME: make this a general utility function
  */
 static const char *header_get(ib_mpool_t *pool,
-                              ib_parsed_header_wrapper_t *wrapper,
+                              ib_parsed_headers_t *wrapper,
                               const char *name)
 {
-    ib_parsed_name_value_pair_list_t *p;
+    ib_parsed_header_t *p;
+
     /* To check "last" condition in for() would be to omit the last element.
      * So check each element before checking for end-of-list
      */

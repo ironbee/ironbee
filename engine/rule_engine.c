@@ -2621,7 +2621,7 @@ static ib_status_t execute_stream_header_rule(ib_rule_exec_t *rule_exec,
 {
     ib_status_t          rc = IB_OK;
     ib_field_t          *value;
-    ib_parsed_name_value_pair_list_t *nvpair;
+    ib_parsed_header_t *nvpair;
 
     assert(rule_exec != NULL);
     assert(header != NULL);
@@ -2895,7 +2895,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
                                        ib_state_event_type_t event,
                                        void *cbdata)
 {
-    ib_parsed_header_wrapper_t *hdrs;
+    ib_parsed_headers_t *hdrs;
     ib_status_t rc;
 
     assert(ib != NULL);
@@ -2907,7 +2907,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
 
     /* Wrap up the request line */
-    rc = ib_parsed_name_value_pair_list_wrapper_create(&hdrs, tx->mp);
+    rc = ib_parsed_headers_create(&hdrs, tx->mp);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error creating name/value pair list: %s",
                         ib_status_to_string(rc));
@@ -2917,7 +2917,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
          (tx->request_line->method != NULL) &&
          (ib_bytestr_const_ptr(tx->request_line->method) != NULL) )
     {
-        rc = ib_parsed_name_value_pair_list_add(
+        rc = ib_parsed_headers_add(
             hdrs,
             "method", 6,
             (const char *)ib_bytestr_const_ptr(tx->request_line->method),
@@ -2935,7 +2935,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
          (tx->request_line->uri != NULL) &&
          (ib_bytestr_const_ptr(tx->request_line->uri) != NULL) )
     {
-        rc = ib_parsed_name_value_pair_list_add(
+        rc = ib_parsed_headers_add(
             hdrs,
             "uri", 3,
             (const char *)ib_bytestr_const_ptr(tx->request_line->uri),
@@ -2952,7 +2952,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
          (tx->request_line->protocol != NULL) &&
          (ib_bytestr_const_ptr(tx->request_line->protocol) != NULL) )
     {
-        rc = ib_parsed_name_value_pair_list_add(
+        rc = ib_parsed_headers_add(
             hdrs,
             "protocol", 8,
             (const char *)ib_bytestr_const_ptr(tx->request_line->protocol),

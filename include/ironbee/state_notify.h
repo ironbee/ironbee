@@ -91,7 +91,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_started(
  *
  * Upon subsequent calls to ib_state_notify_request_header_data the
  * original @a header structure is appended to
- * (using ib_parsed_name_value_pair_list_append).
+ * (using ib_parsed_headers_append).
  *
  * After the header is received @a tx->request_header contains a list
  * of all name/value pairs and is available via @a tx when
@@ -106,7 +106,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_started(
 ib_status_t ib_state_notify_request_header_data(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_parsed_header_wrapper_t *header);
+    ib_parsed_headers_t *header);
 
 /**
  * Notify the state machine that the request header is available.
@@ -176,7 +176,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_started(
 ib_status_t ib_state_notify_response_header_data(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_parsed_header_wrapper_t *header);
+    ib_parsed_headers_t *header);
 
 /**
  * Notify the state machine that the response header is available.
