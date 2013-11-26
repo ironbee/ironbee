@@ -37,7 +37,7 @@
  * Load a Lua module from a .lua file.
  *
  * @param[in] ib IronBee engine.
- * @param[in] lua_module The Lua module. Not a Lua-implemented module.
+ * @param[in] modlua The Lua module. Not a Lua-implemented module.
  * @param[in] file The Lua file to load.
  * @param[in] cfg The configuration of the lua module.
  *
@@ -49,7 +49,7 @@
  */
 ib_status_t modlua_module_load(
     ib_engine_t  *ib,
-    ib_module_t  *lua_module,
+    ib_module_t  *modlua,
     const char   *file,
     modlua_cfg_t *cfg
 );

@@ -539,8 +539,8 @@ static ib_status_t modlua_null(
  * @param[in] tx The transaction. This may be null.
  * @param[in] conn The connection. This may not be null. We require it to,
  *            at a minimum, find the Lua runtime stack.
- * @param[in] cbdata A modlua_modules_t containing both the lua module
- *            and the user's lua-defined module.
+ * @param[in] modlua_modules Both the lua module and the user's
+ *            lua-defined module.
  *
  * @returns
  *   - IB_OK on success.
@@ -705,6 +705,12 @@ static ib_status_t modlua_tx(
 
 /**
  * Dispatch a transaction data event into a Lua module.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction.
+ * @param[in] event Event type.
+ * @param[in] data Transaction data.
+ * @param[in] data_length Transaction data length.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
  *
@@ -713,12 +719,13 @@ static ib_status_t modlua_tx(
  * - Other on error.
  */
 static ib_status_t modlua_txdata(
-    ib_engine_t *ib,
-    ib_tx_t *tx,
-    ib_state_event_type_t event,
-    const char *data,
-    size_t data_length,
-    void *cbdata)
+    ib_engine_t           *ib,
+    ib_tx_t               *tx,
+    ib_state_event_type_t  event,
+    const char            *data,
+    size_t                 data_length,
+    void                  *cbdata
+)
 {
     assert(ib);
     assert(tx);
@@ -745,6 +752,11 @@ static ib_status_t modlua_txdata(
 
 /**
  * Dispatch a header callback hook.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction.
+ * @param[in] event Event type.
+ * @param[in] header Parsed header data.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
  *
@@ -784,6 +796,11 @@ static ib_status_t modlua_header(
 
 /**
  * Dispatch a request line callback hook.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction.
+ * @param[in] event Event type.
+ * @param[in] line Parsed request line.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
  *
@@ -823,6 +840,11 @@ static ib_status_t modlua_reqline(
 
 /**
  * Dispatch a response line callback hook.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction.
+ * @param[in] event Event type.
+ * @param[in] line The parsed response line.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
  *
@@ -862,6 +884,10 @@ static ib_status_t modlua_respline(
 
 /**
  * Dispatch a context event into a Lua module.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] ctx Context.
+ * @param[in] event Event type.
  * @param[in] cbdata A modlua_modules_t containing the lua module and the
  *            user's lua-defined  module.
  *
