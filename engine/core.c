@@ -97,11 +97,6 @@ static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-0000000
 #define X_RULE_BASE_PATH IB_XSTRINGIFY(RULE_BASE_PATH) "/"
 #endif
 
-
-/* Instantiate a module global configuration. */
-static ib_core_cfg_t core_global_cfg;
-
-
 #define IB_ALPART_HEADER                  (1<< 0)
 #define IB_ALPART_EVENTS                  (1<< 1)
 #define IB_ALPART_HTTP_REQUEST_METADATA   (1<< 2)
@@ -296,45 +291,6 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
 /* -- Logger API Implementations -- */
 
 /**
- * Get the main core configuration
- *
- * @param[in] ib IronBee engine
- * @param[in] global Force global configuration
- *
- * @returns Main core configuration
- */
-static ib_core_cfg_t *core_get_main_config(const ib_engine_t *ib,
-                                           bool global)
-{
-    assert(ib != NULL);
-
-    ib_core_cfg_t *config = NULL;
-    ib_context_t  *main_ctx = NULL;
-
-    if (global) {
-        return &core_global_cfg;
-    }
-
-    /* Get the core context core configuration. */
-    main_ctx = ib_context_main(ib);
-    if (main_ctx != NULL) {
-        ib_status_t rc;
-
-        rc = ib_core_context_config(main_ctx, &config);
-
-        /* When a module fails to find its context, use the global one. */
-        if (rc != IB_OK) {
-            config = &core_global_cfg;
-        }
-    }
-    else {
-        /* If there is no main context, use the global one. */
-        config = &core_global_cfg;
-    }
-    return config;
-}
-
-/**
  * Take the @a cfg FILE pointer for the log file and give it to the logger.
  *
  * @param[in] ib Engine to be modified.
@@ -506,7 +462,7 @@ static ib_status_t audit_write_log(ib_engine_t *ib, ib_auditlog_t *log)
         ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
     }
 
-    /* Close the log if required. */
+    /* Close the audit log and write to the index file. */
     rc = core_audit_close(ib, log);
     if (rc != IB_OK) {
         return rc;
@@ -3817,7 +3773,8 @@ static ib_status_t core_set_value(ib_cfgparser_t *cp,
     /* Get the core module config. */
     rc = ib_core_context_config(ib->ctx, &corecfg);
     if (rc != IB_OK) {
-        corecfg = &core_global_cfg;
+        ib_cfg_log_error(cp, "Failed to fetch ctx config for core module.");
+        return rc;
     }
 
     if (strcasecmp("RuleEngineDebugLogLevel", name) == 0) {
@@ -3927,7 +3884,8 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     /* Get the core module config. */
     rc = ib_core_context_config(cp->cur_ctx, &corecfg);
     if (rc != IB_OK) {
-        corecfg = &core_global_cfg;
+        ib_cfg_log_error(cp, "Failed to fetch config for core module.");
+        return rc;
     }
 
     /* Initialize the fields list */
@@ -4548,20 +4506,18 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     assert(event == context_destroy_event);
     assert(cbdata != NULL);
 
-    ib_core_cfg_t *config;
-    ib_status_t rc;
+    if (ctx == ib_context_main(ib)) {
 
-    /* Get the current context config. */
-    rc = ib_core_context_config(ctx, &config);
-    if (rc != IB_OK) {
-        ib_log_alert(ib,
-                     "Failed to fetch core module context config: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
+        ib_core_cfg_t *config;
+        ib_status_t rc;
 
-    /* Close the log file in the main configuration only */
-    if (config == core_get_main_config(ib, false)) {
+        rc = ib_core_context_config(ctx, &config);
+        if (rc != IB_OK) {
+            ib_log_alert(ib,
+                        "Failed to fetch core module main context config.");
+            return rc;
+        }
+
         core_log_file_close(ib, config);
     }
 
@@ -4585,12 +4541,19 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_core_module_data_t *core_data;
     ib_filter_t *fbuffer;
     ib_status_t rc;
+    ib_mpool_t *mp;
 
-    /* Get the core module config. */
-    rc = ib_core_context_config(ib->ctx, &corecfg);
+    mp = ib_engine_pool_main_get(ib);
+
+    corecfg = ib_mpool_calloc(mp, sizeof(*corecfg), 1);
+    if (corecfg == NULL) {
+        ib_log_error(ib, "Failed to create configuration memory segment.");
+        return IB_EALLOC;
+    }
+
+    rc = ib_module_config_initialize(m, corecfg, sizeof(*corecfg));
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch core module config: %s",
-                     ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to set configuration data for core module.");
         return rc;
     }
 
@@ -4617,6 +4580,21 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->block_method         = IB_BLOCK_METHOD_STATUS;
     corecfg->inspection_engine_options = IB_IEOPT_DEFAULT;
     corecfg->protection_engine_options = IB_PEOPT_DEFAULT;
+
+    rc = ib_list_create(&(corecfg->auditlog_handlers), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to create auditlog handlers list in corecfg.");
+        return rc;
+    }
+
+    rc = ib_list_create(&(corecfg->auditlog_handlers_data), mp);
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failed to create auditlog handlers callback "
+            "data list in corecfg.");
+        return rc;
+    }
 
     /* Initialize core module limits to "off." */
     corecfg->limits.request_body_buffer_limit         = -1;
@@ -4928,7 +4906,10 @@ ib_status_t DLL_PUBLIC ib_core_limits_get(
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,           /**< Default metadata */
     MODULE_NAME_STR,                     /**< Module name */
-    IB_MODULE_CONFIG(&core_global_cfg),  /**< Global config data */
+    NULL,                                /**< Config data. */
+    0,                                   /**< Config data length. */
+    NULL,                                /**< Config copy function. */
+    NULL,                                /**< Copy function cbdata. */
     core_config_map,                     /**< Configuration field map */
     core_directive_map,                  /**< Config directive map */
     core_init,                           /**< Initialize function */
