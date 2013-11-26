@@ -128,6 +128,32 @@ typedef struct {
 } ib_rule_parser_data_t;
 
 /**
+ * Rule trace data
+ */
+typedef struct {
+    /* This can go away if we ever have a rule_by_index index. */
+    /**
+     * Rule being traced.
+     **/
+    const ib_rule_t *rule;
+
+    /**
+     * Evaluation time (microseconds).
+     *
+     * This is the amount of time spent evaluating this rule.  The time spent
+     * in chained rules is counted in those rules.  If this rule is evaluated
+     * multiple times in a single transaction, the time will be the total over
+     * all runs.  See evaluation_n.
+     **/
+    ib_time_t        evaluation_time; /**< Microseconds to evaluate */
+
+    /**
+     * Number of times evaluated.
+     **/
+    size_t evaluation_n;
+} ib_rule_trace_t;
+
+/**
  * Rule execution data
  */
 struct ib_rule_exec_t {
@@ -160,6 +186,10 @@ struct ib_rule_exec_t {
 
     /* Stack of values for the FIELD* targets */
     ib_list_t              *value_stack; /**< Stack of values */
+
+#ifdef IB_RULE_TRACE
+    ib_rule_trace_t        *traces; /**< Rule trace information. */
+#endif
 };
 
 /**

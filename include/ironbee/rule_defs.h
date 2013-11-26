@@ -92,6 +92,7 @@ typedef enum {
 #define IB_RULE_FLAG_NO_TGT   (1 << 9)  /**< Rule has no targets (for action) */
 #define IB_RULE_FLAG_ACTION   (IB_RULE_FLAG_FORCE_EN|IB_RULE_FLAG_NO_TGT)
 #define IB_RULE_FLAG_FIELDS   (1 << 10) /**< Create FIELD_xxx fields */
+#define IB_RULE_FLAG_TRACE    (1 << 11) /**< Trace rule */
 
 /**
  * Rule execution flags

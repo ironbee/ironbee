@@ -229,6 +229,21 @@ if test "$mpool_valgrind" != "no"; then
     AC_DEFINE([IB_MPOOL_VALGRIND], [1], [Valgrind support in mpool.])
 fi
 
+### Rule Tracing
+AC_ARG_ENABLE(rule-trace,
+              AS_HELP_STRING([--rule-trace],
+                             [Instrument rule engine.]),
+[
+  rule_trace=$enableval
+],
+[
+  rule_trace="no"
+])
+
+if test "$rule_trace" != "no"; then
+    AC_DEFINE([IB_RULE_TRACE], [1], [Trace rules.])
+fi
+
 ### CPP
 AC_ARG_ENABLE(cpp,
               AS_HELP_STRING([--disable-cpp],

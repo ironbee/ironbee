@@ -601,6 +601,14 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
     exec->rule_result = 0;
     exec->exec_log = NULL;
 
+#ifdef IB_RULE_TRACE
+    exec->traces = ib_mpool_calloc(
+        tx->mp,
+        exec->ib->rule_engine->index_limit,
+        sizeof(*(exec->traces))
+    );
+#endif
+
     /* Pass the new object back to the caller if required */
     if (rule_exec != NULL) {
         *rule_exec = exec;
@@ -2008,6 +2016,10 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
 {
     ib_status_t         rc = IB_OK;
     ib_status_t         trc;          /* Temporary status code */
+#ifdef IB_RULE_TRACE
+    ib_time_t pre_time;
+    ib_time_t post_time;
+#endif
 
     assert(rule_exec != NULL);
     assert(rule != NULL);
@@ -2038,11 +2050,25 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
      * returns an error.  This needs further discussion to determine what the
      * correct behavior should be.
      */
+#ifdef IB_RULE_TRACE
+    if (rule->flags & IB_RULE_FLAG_TRACE) {
+        pre_time = ib_clock_get_time();
+    }
+#endif
     trc = execute_phase_rule_targets(rule_exec);
     if (trc != IB_OK) {
         rc = trc;
         goto cleanup;
     }
+#ifdef IB_RULE_TRACE
+    if (rule->flags & IB_RULE_FLAG_TRACE) {
+        post_time = ib_clock_get_time();
+        rule_exec->traces[rule->meta.index].rule = rule;
+        rule_exec->traces[rule->meta.index].evaluation_time +=
+            (post_time - pre_time);
+        ++rule_exec->traces[rule->meta.index].evaluation_n;
+    }
+#endif
 
     /*
      * Execute chained rule
