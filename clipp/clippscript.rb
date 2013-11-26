@@ -284,7 +284,7 @@ private
       if mode == :request
         request_body(data: d)
       else
-        response_boyd(data: d)
+        response_body(data: d)
       end
     end
 
