@@ -28,6 +28,8 @@ IronBee v0.9.0
 
 - The parsed content interface (`parsed_content.h`) has been changed to take `ib_mpool_t` in place of `ib_tx_t`.  The header structures and methods have also been refactored to simpler names.
 
+- Added rule tracing.  To use, configure IronBee with --enable-rule-trace.  This will add instrumentation code to the rule engine and enable the `RuleTrace` and `RuleTraceFile` directives.  `RuleTrace` takes a rule id as a parameter and enables tracing for that rule.  Traces will be output at the end of each transaction to either stderr or the file specified by `RuleTraceFile`.  Output is CSV of local ip, local port, remote ip, remote port, transaction id, rule id, number of times rule was evaluated, and total number of microseconds spent evaluating rule.  `RuleTraceFile` is context specific.
+
 **Predicate**
 
 - The Field call is now known as Var.  Field continues to exist as an alias for Var.
