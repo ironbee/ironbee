@@ -68,7 +68,6 @@ test_parsed_response_line_SOURCES     = test_parsed_response_line.cpp
 test_server_SOURCES                   = test_server.cpp
 test_site_SOURCES                     = test_site.cpp
 test_throw_SOURCES                    = test_throw.cpp
-test_transaction_data_SOURCES         = test_transaction_data.cpp
 test_transaction_SOURCES              = test_transaction.cpp
 test_transformation_SOURCES           = test_transformation.cpp
 test_var_SOURCES                      = test_var.cpp
