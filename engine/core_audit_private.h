@@ -94,7 +94,10 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
  *
  * @param[in] ib IronBee engine.
  * @param[in] log The log record.
- * @return IB_OK or other. See log file for details of failure.
+ *
+ * @return
+ * - IB_OK On success.
+ * - Other on failure. See log file for details.
  */
 ib_status_t core_audit_open(ib_engine_t *ib,
                             ib_auditlog_t *log);
@@ -130,6 +133,16 @@ ib_status_t core_audit_write_part(ib_engine_t *ib,
 ib_status_t core_audit_write_footer(ib_engine_t *ib,
                                     ib_auditlog_t *log);
 
+/**
+ * Close the audit log file and write to the index file.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] log The audit log we've just written to a file.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure.
+ */
 ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log);
 
 #endif // _IB_CORE_AUDIT_PRIVATE_H_

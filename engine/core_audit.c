@@ -457,6 +457,16 @@ ib_status_t core_audit_open(ib_engine_t *ib,
         corecfg->auditlog_index_hp = auditlog_index_hp;
     }
 
+    /* Notify all handlers that the given audit log has been opened. */
+    rc = ib_core_dispatch_auditlog(
+        log->tx,
+        IB_CORE_AUDITLOG_OPENED,
+        log);
+    if (rc != IB_OK) {
+        ib_log_error(log->ib, "Failed to dispatch auditlog to handlers.");
+        return rc;
+    }
+
     return IB_OK;
 }
 
@@ -643,6 +653,7 @@ static ib_status_t core_audit_get_index_line(ib_engine_t *ib,
     return rc;
 }
 
+///! Close the auditlog and write to the index file.
 ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
 {
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
@@ -664,6 +675,16 @@ ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
                      "Failure accessing core module: %s",
                      ib_status_to_string(ib_rc));
         goto cleanup;
+    }
+
+    /* Notify all handlers that the given audit log is about to close. */
+    ib_rc = ib_core_dispatch_auditlog(
+        log->tx,
+        IB_CORE_AUDITLOG_CLOSED,
+        log);
+    if (ib_rc != IB_OK) {
+        ib_log_error(log->ib, "Failed to dispatch auditlog to handlers.");
+        return ib_rc;
     }
 
     /* Close the audit log. */
