@@ -223,8 +223,8 @@ static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
         return IB_OK;
     }
     if (cfg->type != NULL) {
-        ib_hash_get(ident_providers, &provider, cfg->type);
-        if (provider == NULL) {
+        rc = ib_hash_get(ident_providers, &provider, cfg->type);
+        if (rc != IB_OK || provider == NULL) {
             ib_log_error_tx(tx, "Identifier '%s' configured but not available", cfg->type);
             provider = &ident_dummy_provider;
         }
