@@ -229,6 +229,12 @@ struct ib_logger_rec_t {
  * If the resulting message is 0 length, then it is assumed that there is no
  * message and the message is not logged.
  *
+ * @note This function may be used if the user would like to pass
+ * binary data (a C struct) to the formatter as the user message. In this
+ * use @a msg should be NULL and @a msg_sz should be 0. The resulting
+ * data from @a msg_fn will then be forwarded, not copied, to the
+ * formating functions of all loggers.
+ *
  * @param[in] logger The logger.
  * @param[in] file Optional current file (may be null).
  * @param[in] function Optional current function (may be null).
