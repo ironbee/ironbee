@@ -62,6 +62,19 @@
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
+/* Configuration */
+typedef struct {
+    /* Where to trace rules to. */
+    const char *trace_path;
+    /* List of rules being traced. Element: ib_rule_t* */
+    ib_list_t *trace_rules;
+} per_context_t;
+
+/** Initial value for per-context data. */
+static per_context_t c_per_context_initial = {
+    NULL, NULL
+};
+
 /**
  * Parse rule's operator.
  *
@@ -1453,6 +1466,239 @@ cleanup:
     return rc;
 }
 
+/* ifdef is because only rule tracing code currently uses this method.  Remove
+ * ifdef if used outside of rule tracing. */
+#ifdef IB_RULE_TRACE
+
+/**
+ * Fetch per-context configuration for @a ctx.
+ *
+ * @param[in] ctx Context to fetch configuration for.
+ * @return Fetch configuration.
+ **/
+static
+per_context_t *fetch_per_context(ib_context_t *ctx)
+{
+    assert(ctx != NULL);
+
+    ib_status_t    rc;
+    per_context_t *per_context = NULL;
+    ib_module_t   *module      = NULL;
+
+    rc = ib_engine_module_get(
+        ib_context_get_engine(ctx),
+        MODULE_NAME_STR,
+        &module
+    );
+    assert(rc == IB_OK);
+
+    rc = ib_context_module_config(ctx, module, &per_context);
+    assert(rc == IB_OK);
+
+    return per_context;
+}
+#endif
+
+/**
+ * Parse RuleTrace directive.
+ *
+ * Outputs warning if IB_RULE_TRACE not defined.
+ *
+ * @param[in] cp Configuration parser.
+ * @param[in] name Name of directive.
+ * @param[in] rule_id Parameter; ID of rule to trace.
+ * @param[in] cbdata Callback data; Unused.
+ * @returns IB_OK on success; IB_E* on error.
+ **/
+static
+ib_status_t parse_ruletrace_params(
+    ib_cfgparser_t *cp,
+    const char     *name,
+    const char     *rule_id,
+    void           *cbdata
+)
+{
+    assert(cp != NULL);
+    assert(rule_id != NULL);
+
+#ifdef IB_RULE_TRACE
+    ib_mpool_t *mp = ib_engine_pool_main_get(cp->ib);
+    ib_status_t rc;
+    ib_rule_t *rule;
+    per_context_t *per_context = fetch_per_context(cp->cur_ctx);
+
+    rc = ib_rule_lookup(cp->ib, cp->cur_ctx, rule_id, &rule);
+    if (rc == IB_ENOENT) {
+        ib_cfg_log_error(
+            cp,
+            "RuleTrace could not find rule with id: %s",
+            rule_id
+        );
+        return IB_ENOENT;
+    }
+    else if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "RuleTrace experienced unexpected error looking up rule: %s (%s)",
+            rule_id, ib_status_to_string(rc)
+        );
+        return rc;
+    }
+
+    ib_flags_set(rule->flags, IB_RULE_FLAG_TRACE);
+
+    if (per_context->trace_rules == NULL) {
+        rc = ib_list_create(&per_context->trace_rules, mp);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(
+                cp,
+                "RuleTrace could not create traced rules list: %s (%s)",
+                rule_id, ib_status_to_string(rc)
+            );
+            return rc;
+        }
+    }
+    rc = ib_list_push(per_context->trace_rules, rule);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "RuleTrace could not pushed traced rules: %s (%s)",
+            rule_id, ib_status_to_string(rc)
+        );
+        return rc;
+    }
+
+    return IB_OK;
+#else
+    ib_cfg_log_warning(
+        cp,
+        "IronBee compiled without rule tracing.  "
+        "RuleTrace will have no effect."
+    );
+    return IB_OK;
+#endif
+}
+
+/**
+ * Parse RuleTraceFile directive.
+ *
+ * Outputs warning if IB_RULE_TRACE not defined.
+ *
+ * @param[in] cp Configuration parser.
+ * @param[in] name Name of directive.
+ * @param[in] rule_id Parameter; ID of rule to trace.
+ * @param[in] cbdata Callback data; Unused.
+ * @returns IB_OK on success; IB_E* on error.
+ **/
+static
+ib_status_t parse_ruletracefile_params(
+    ib_cfgparser_t *cp,
+    const char     *name,
+    const char     *path,
+    void           *cbdata
+)
+{
+#ifdef IB_RULE_TRACE
+    per_context_t *per_context = fetch_per_context(cp->cur_ctx);
+
+    per_context->trace_path = path;
+
+    return IB_OK;
+#else
+    ib_cfg_log_warning(
+        cp,
+        "IronBee compiled without rule tracing.  "
+        "RuleTraceFile will have no effect."
+    );
+    return IB_OK;
+#endif
+}
+
+/**
+ * Handle postprocessing.
+ *
+ * Does nothing unless IB_RULE_TRACE is defined, in which case, outputs
+ * traces.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction.
+ * @param[in] event Current event.
+ * @param[in] cbdata Callback data; unused.
+ * @returns IB_OK on success; IB_EOTHER on file system failure.
+ **/
+static
+ib_status_t postprocess(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_state_event_type_t event,
+    void *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+
+#ifdef IB_RULE_TRACE
+    per_context_t *per_context = fetch_per_context(tx->ctx);
+    if (per_context->trace_rules != NULL) {
+        ib_list_node_t *node;
+        FILE *trace_fp = stderr;
+        if (per_context->trace_path) {
+            trace_fp = fopen(per_context->trace_path, "a");
+            if (trace_fp == NULL) {
+                ib_log_error_tx(
+                    tx,
+                    "Could not open trace file: %s",
+                    per_context->trace_path
+                );
+                return IB_EOTHER;
+            }
+        }
+
+        IB_LIST_LOOP(per_context->trace_rules, node) {
+            const ib_rule_t *rule =
+                (const ib_rule_t *)ib_list_node_data_const(node);
+
+            fprintf(trace_fp, "%s,%d,%s,%d,%s,%s,%zd,%" PRIu64 "\n",
+                tx->conn->local_ipstr, tx->conn->local_port,
+                tx->conn->remote_ipstr, tx->conn->remote_port,
+                tx->id,
+                rule->meta.full_id,
+                tx->rule_exec->traces[rule->meta.index].evaluation_n,
+                tx->rule_exec->traces[rule->meta.index].evaluation_time
+            );
+        }
+    }
+#endif
+
+    return IB_OK;
+}
+
+/**
+ * Initialize module.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] m Module.
+ * @param[in] cbdata Callback data; unused.
+ * @returns IB_OK
+ **/
+static
+ib_status_t rules_init(
+    ib_engine_t *ib,
+    ib_module_t *m,
+    void        *cbdata
+)
+{
+    assert(ib != NULL);
+
+    ib_hook_tx_register(
+        ib,
+        handle_postprocess_event,
+        postprocess,  NULL
+    );
+
+    return IB_OK;
+}
+
 static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
 
     /* Give the config parser a callback for the Rule and RuleExt directive */
@@ -1498,6 +1744,18 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
         NULL
     ),
 
+    IB_DIRMAP_INIT_PARAM1(
+        "RuleTrace",
+        parse_ruletrace_params,
+        NULL
+    ),
+
+    IB_DIRMAP_INIT_PARAM1(
+        "RuleTraceFile",
+        parse_ruletracefile_params,
+        NULL
+    ),
+
     /* signal the end of the list */
     IB_DIRMAP_INIT_LAST
 };
@@ -1506,10 +1764,10 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,           /* Default metadata */
     MODULE_NAME_STR,                     /* Module name */
-    IB_MODULE_CONFIG_NULL,               /* Global config data */
+    IB_MODULE_CONFIG(&c_per_context_initial), /* Global config data */
     NULL,                                /* Configuration field map */
     rules_directive_map,                 /* Config directive map */
-    NULL,                                /* Initialize function */
+    rules_init,                          /* Initialize function */
     NULL,                                /* Callback data */
     NULL,                                /* Finish function */
     NULL,                                /* Callback data */
