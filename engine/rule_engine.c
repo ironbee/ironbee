@@ -604,8 +604,6 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
     exec->cur_result = 0;
     exec->rule_status = IB_OK;
     exec->rule_result = 0;
-    tx->rule_exec = exec;
-
     exec->exec_log = NULL;
 
     /* Pass the new object back to the caller if required */
@@ -4002,13 +4000,15 @@ static ib_status_t rule_engine_tx_started(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Create the rule engine execution environment object */
-    rc = rule_exec_create(tx, NULL);
+    ib_rule_exec_t *rule_exec;
+    rc = rule_exec_create(tx, &rule_exec);
     if (rc != IB_OK) {
         ib_rule_log_tx_error(tx,
                              "Failed to create rule execution object: %s",
                              ib_status_to_string(rc));
         return rc;
     }
+    tx->rule_exec = rule_exec;
 
     return IB_OK;
 }
