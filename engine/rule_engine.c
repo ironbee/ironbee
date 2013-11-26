@@ -553,11 +553,6 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
     ib_status_t rc;
     ib_rule_exec_t *exec;
 
-    /* Don't allow the user to create a second rule exec object */
-    if (tx->rule_exec != NULL) {
-        return IB_EINVAL;
-    }
-
     /* Create the execution object */
     exec = (ib_rule_exec_t *)ib_mpool_alloc(tx->mp, sizeof(*exec));
     if (exec == NULL) {
@@ -3998,9 +3993,13 @@ static ib_status_t rule_engine_tx_started(ib_engine_t *ib,
     assert(cbdata == NULL);
 
     ib_status_t rc;
-
-    /* Create the rule engine execution environment object */
     ib_rule_exec_t *rule_exec;
+
+    /* Don't allow the user to create a second rule exec object */
+    if (tx->rule_exec != NULL) {
+        return IB_EINVAL;
+    }
+    /* Create the rule engine execution environment object */
     rc = rule_exec_create(tx, &rule_exec);
     if (rc != IB_OK) {
         ib_rule_log_tx_error(tx,
