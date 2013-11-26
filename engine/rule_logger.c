@@ -1536,17 +1536,19 @@ static void log_tfns(
                 return;
             }
 
-            rule_log_exec(
-                rule_exec,
-                "TFN %s() %s \"%.*s\" %s %s",
-                ib_tfn_name(tfn->tfn),
-                ib_field_type_name(tgt->original->type),
-                (tgt->original ? (int)tgt->original->nlen : 0),
-                (tgt->original ? tgt->original->name : ""),
-                buf,
-                ( tfn->value.status == IB_OK ?
-                    "" : ib_status_to_string(tfn->value.status))
-            );
+            if (tgt->original) {
+                rule_log_exec(
+                    rule_exec,
+                    "TFN %s() %s \"%.*s\" %s %s",
+                    ib_tfn_name(tfn->tfn),
+                    ib_field_type_name(tgt->original->type),
+                    (int)tgt->original->nlen,
+                    tgt->original->name,
+                    buf,
+                    ( tfn->value.status == IB_OK ?
+                        "" : ib_status_to_string(tfn->value.status))
+                );
+            }
         }
     }
 
