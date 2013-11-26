@@ -4134,16 +4134,6 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     assert(ib != NULL);
     assert(ctx != NULL);
 
-    /* Open context's rule set (if required) */
-#if 0
-    rc = ib_rule_engine_ctx_open(ib, NULL, ctx);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to initialize rules for context \"%s\"",
-                     ib_context_full_get(ctx));
-        return rc;
-    }
-#endif
-
     /* Look up the generic rule phase */
     rc = find_meta(is_stream, IB_PHASE_NONE, &phase_meta);
     if (rc != IB_OK) {
