@@ -4486,6 +4486,82 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
     return IB_OK;
 }
 
+typedef struct core_auditlog_fn_t {
+     ib_core_auditlog_fn_t  handler; /**< Audit log handler. */
+     void                  *cbdata;  /**< Associated callback data. */
+} core_auditlog_fn_t;
+
+ib_status_t ib_core_add_auditlog_handler(
+    ib_context_t          *ctx,
+    ib_core_auditlog_fn_t  auditlog_fn,
+    void                  *auditlog_cbdata
+)
+{
+    assert(ctx != NULL);
+    assert(auditlog_fn != NULL);
+
+    ib_status_t    rc;
+    ib_core_cfg_t *config;
+    core_auditlog_fn_t *handler;
+
+    rc = ib_core_context_config(ctx, &config);
+    if (rc != IB_OK) {
+        ib_log_error(ctx->ib, "Failed to fetch core configuration.");
+        return rc;
+    }
+
+    handler =
+        (core_auditlog_fn_t *)ib_mpool_calloc(ctx->mp, sizeof(*handler), 1);
+    handler->handler = auditlog_fn;
+    handler->cbdata  = auditlog_cbdata;
+
+    rc = ib_list_push(config->auditlog_handlers, handler);
+    if (rc != IB_OK) {
+        ib_log_error(ctx->ib, "Failed to add auditlog handler to context.");
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_core_dispatch_auditlog(
+    ib_tx_t                   *tx,
+    ib_core_auditlog_event_en  event,
+    ib_auditlog_t             *auditlog
+)
+{
+    assert(tx != NULL);
+    assert(tx->ib != NULL);
+    assert(tx->ctx != NULL);
+
+    ib_status_t         rc;
+    ib_engine_t        *ib = tx->ib;
+    ib_context_t       *ctx = tx->ctx;
+    ib_core_cfg_t      *config;
+
+    const ib_list_node_t *node;
+
+    rc = ib_core_context_config(ctx, &config);
+    if (rc != IB_OK) {
+        ib_log_error(ctx->ib, "Failed to fetch core configuration.");
+        return rc;
+    }
+
+    IB_LIST_LOOP_CONST(config->auditlog_handlers, node) {
+        const core_auditlog_fn_t *handler = 
+            (const core_auditlog_fn_t *)ib_list_node_data_const(node);
+        rc = handler->handler(ib, tx, event, auditlog, handler->cbdata);
+        if (rc != IB_OK) {
+            ib_log_warning_tx(
+                tx,
+                "Audit log handler returned status: %s",
+                ib_status_to_string(rc));
+        }
+    }
+
+    return IB_OK;
+}
+
 /**
  * Destroy the core module context
  *
@@ -4584,15 +4660,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     rc = ib_list_create(&(corecfg->auditlog_handlers), mp);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create auditlog handlers list in corecfg.");
-        return rc;
-    }
-
-    rc = ib_list_create(&(corecfg->auditlog_handlers_data), mp);
-    if (rc != IB_OK) {
-        ib_log_error(
-            ib,
-            "Failed to create auditlog handlers callback "
-            "data list in corecfg.");
         return rc;
     }
 
@@ -4901,6 +4968,58 @@ ib_status_t DLL_PUBLIC ib_core_limits_get(
 }
 
 /**
+ * Configuration context copy.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] module The core module.
+ * @param[out] dst The destination configuration struct.
+ * @param[in] src The source configuration.
+ * @param[in] len The length of dst and src.
+ * @param[in] cbdata Callback data. Unused.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error.
+ */
+static ib_status_t core_config_copy(
+    ib_engine_t *ib,
+    ib_module_t *module,
+    void        *dst,
+    const void  *src,
+    size_t       len,
+    void        *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(dst != NULL);
+    assert(src != NULL);
+
+    ib_mpool_t           *mp = ib_engine_pool_main_get(ib);
+    ib_core_cfg_t        *dst_cfg = (ib_core_cfg_t *)dst;
+    const ib_core_cfg_t  *src_cfg = (const ib_core_cfg_t *)src;
+    const ib_list_node_t *node;
+    ib_status_t           rc;
+
+    /* First, do a shallow copy. */
+    memcpy(dst, src, len);
+
+    rc = ib_list_create(&(dst_cfg->auditlog_handlers), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to copy core configuration.");
+        return rc;
+    }
+
+    /* Copy the handler list into the sub context. */
+    IB_LIST_LOOP_CONST(src_cfg->auditlog_handlers, node) {
+        ib_list_push(
+            dst_cfg->auditlog_handlers, 
+            (void *)ib_list_node_data_const(node));
+    }
+
+    return IB_OK;
+}
+
+/**
  * Static core module structure.
  */
 IB_MODULE_INIT(
@@ -4908,7 +5027,7 @@ IB_MODULE_INIT(
     MODULE_NAME_STR,                     /**< Module name */
     NULL,                                /**< Config data. */
     0,                                   /**< Config data length. */
-    NULL,                                /**< Config copy function. */
+    core_config_copy,                    /**< Config copy function. */
     NULL,                                /**< Copy function cbdata. */
     core_config_map,                     /**< Configuration field map */
     core_directive_map,                  /**< Config directive map */

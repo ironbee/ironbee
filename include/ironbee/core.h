@@ -81,6 +81,35 @@ struct ib_core_vars_t {
     ib_var_target_t *flag_block;
 };
 
+typedef enum {
+    IB_CORE_AUDITLOG_OPENED, /**< An audit log is about to be written. */
+
+    /**
+     * And audit log has just been written to a file.
+     *
+     * That file is about to be closed and renamed to the final file name,
+     * but is still open.
+     */
+    IB_CORE_AUDITLOG_CLOSED
+} ib_core_auditlog_event_en;
+
+/**
+ * Auditlog event handlers.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction.
+ * @param[in] event The event type this is.
+ * @param[in] audit_log The audit log.
+ * @param[in] cbdata Callback data.
+ */
+typedef ib_status_t (*ib_core_auditlog_fn_t)(
+    ib_engine_t               *ib,
+    ib_tx_t                   *tx,
+    ib_core_auditlog_event_en  event,
+    ib_auditlog_t             *auditlog,
+    void                      *cbdata
+);
+
 /**
  * Core configuration.
  */
@@ -101,6 +130,16 @@ struct ib_core_cfg_t {
     const ib_logformat_t *auditlog_index_hp; /**< Audit log index fmt helper */
     const char       *auditlog_dir;      /**< Audit log base directory */
     const char       *auditlog_sdir_fmt; /**< Audit log sub-directory format */
+    /**
+     * List of @ref ib_core_auditlog_fn_t and associated callback data.
+     *
+     * The particular struct is used as the list element is private
+     * to core and necessary to hold the function pointer.
+     *
+     * C99 does not allow for function pointers to be stored in void*
+     * containers.
+     */
+    ib_list_t        *auditlog_handlers;
     const char       *audit;             /**< Active audit provider key */
     const char       *data;              /**< Active data provider key */
     const char       *module_base_path;  /**< Module base path. */
@@ -154,6 +193,41 @@ ib_status_t DLL_PUBLIC ib_core_context_config(
 ib_status_t DLL_PUBLIC ib_core_limits_get(
     ib_context_t *ctx,
     const ib_tx_limits_t **limits);
+
+/**
+ * Add a @ref ib_core_auditlog_fn_t to the core module.
+ *
+ * @param[in] ctx The context to add this to.
+ * @param[in] auditlog_fn Audit log handler function.
+ * @param[in] auditlog_cbdata Callback data for @a auditlog_fn.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure.
+ */
+ib_status_t DLL_PUBLIC ib_core_add_auditlog_handler(
+    ib_context_t          *ctx,
+    ib_core_auditlog_fn_t  auditlog_fn,
+    void                  *auditlog_cbdata
+);
+
+/**
+ * Dispatch a audit log to all audit log handlers.
+ *
+ * @param[in] tx Transaction.
+ * @param[in] event The type of event.
+ * @param[in] auditlog The audit log.
+ *
+ * @returns
+ * - IB_OK
+ * - Other if there was an error dispatching the event. Errors in 
+ *   handlers are logged but do not cause this dispatch routine to fail.
+ */
+ib_status_t DLL_PUBLIC ib_core_dispatch_auditlog(
+    ib_tx_t                   *tx,
+    ib_core_auditlog_event_en  event,
+    ib_auditlog_t             *auditlog
+);
 
 /**
  * @} IronBeeCore
