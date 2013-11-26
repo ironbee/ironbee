@@ -51,6 +51,7 @@ extern "C" {
  * Rule meta data
  */
 typedef struct {
+    size_t                 index;           /**< Index */
     const char            *id;              /**< Rule ID */
     const char            *full_id;         /**< Rule's "full" ID */
     const char            *chain_id;        /**< Rule's chain ID */

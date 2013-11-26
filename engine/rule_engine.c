@@ -3167,6 +3167,9 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
         return IB_EALLOC;
     }
 
+    /* Indices start at 0 */
+    rule_engine->index_limit = 0;
+
     /* Create the rule list */
     rc = ib_list_create(&(rule_engine->rule_list), mp);
     if (rc != IB_OK) {
@@ -4155,6 +4158,8 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     rule->meta.revision = 1;
     rule->meta.config_file = file;
     rule->meta.config_line = lineno;
+    rule->meta.index = ib->rule_engine->index_limit;
+    ++ib->rule_engine->index_limit;
     rule->ctx = ctx;
     rule->opinst = NULL;
 

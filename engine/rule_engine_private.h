@@ -97,6 +97,7 @@ struct ib_rule_engine_t {
     ib_hash_t *rule_hash;        /**< All rules by rule-id. */
     ib_hash_t *external_drivers; /**< Drivers for external rules. */
     ib_list_t *ownership_cbs;    /**< List of ownership callbacks. */
+    size_t     index_limit;      /**< One more than highest rule index. */
 
     /**
      * Rule injection callbacks.
