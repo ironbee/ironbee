@@ -194,7 +194,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_header_finished(ib_engine_t *ib,
  *
  * @param ib Engine handle
  * @param tx Transaction
- * @param txdata Transaction data
+ * @param data Transaction data
  * @param data_length Length of @a data
  *
  * @returns Status code

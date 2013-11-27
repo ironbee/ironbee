@@ -1586,7 +1586,7 @@ ib_status_t parse_ruletrace_params(
  *
  * @param[in] cp Configuration parser.
  * @param[in] name Name of directive.
- * @param[in] rule_id Parameter; ID of rule to trace.
+ * @param[in] path Path to write traces to.
  * @param[in] cbdata Callback data; Unused.
  * @returns IB_OK on success; IB_E* on error.
  **/

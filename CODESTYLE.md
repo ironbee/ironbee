@@ -38,18 +38,18 @@ Generally this style is as follows (taken from the Apache guide):
   the arguments to the function. There is a single space following commas
   in argument lists and the semi-colons in for statements.
 
-* Inside a switch() statement, the case keywords are indented to the same
+* Inside a `switch` statement, the `case` keywords are indented to the same
   level as the switch line.
 
 * Operators in expressions should be surrounded by a single space before
-  and after, except for unary increment (++), decrement (--), and
-  negation (!) operators.
+  and after, except for unary increment (`++`), decrement (`--`), and
+  negation (`!`) operators.
 
 * There is no whitespace between a cast and the item modified
-  (e.g., "(int)j" and not "(int) j").
+  (e.g., `(int)j` and not `(int) j`).
 
 * If a cast is to a pointer type, there is a space between the type and
-  the * character (e.g., "(char *)i" instead of "(char*)i")
+  the * character (e.g., `(char *)i` instead of `(char*)i1)
 
 Code formatted with GNU indent should also be acceptable with the following
 options (as in the Apache style):
@@ -65,60 +65,55 @@ directly related to code formatting.
 
 * All source files must have a license/copyright banner such as follows:
 
-```
-/*****************************************************************************
- * Licensed to Qualys, Inc. (QUALYS) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * QUALYS licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ****************************************************************************/
-```
+        /*****************************************************************************
+         * Licensed to Qualys, Inc. (QUALYS) under one or more
+         * contributor license agreements.  See the NOTICE file distributed with
+         * this work for additional information regarding copyright ownership.
+         * QUALYS licenses this file to You under the Apache License, Version 2.0
+         * (the "License"); you may not use this file except in compliance with
+         * the License.  You may obtain a copy of the License at
+         *
+         *     http://www.apache.org/licenses/LICENSE-2.0
+         *
+         * Unless required by applicable law or agreed to in writing, software
+         * distributed under the License is distributed on an "AS IS" BASIS,
+         * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+         * See the License for the specific language governing permissions and
+         * limitations under the License.
+         ****************************************************************************/
 
 * All source files MUST have a doxygen block such as follows:
 
-```
-/**
- * @file
- * @brief IronBee --- SubTitle
- *
- * Some description here.
- *
- * @author Author One <author1@company.com>
- * @author Author Two <author2@company.com>
- */
-```
+        /**
+         * @file
+         * @brief IronBee --- SubTitle
+         *
+         * Some description here.
+         *
+         * @author Author One <author1@company.com>
+         * @author Author Two <author2@company.com>
+         */
 
 * All public functions MUST include doxygen documentation such as follows.
   This documentation MUST be in the public header file.
 
-```
-/**
- * Some brief description.
- *
- * Some more detailed description.
- *
- * @param[in] p1 Parameter 1 description
- * @param[in] p1 Parameter 2 description
- * @param[out] p3 Address which blah is written
- *
- * @returns Status code
- */
-```
+        /**
+         * Some brief description.
+         *
+         * Some more detailed description.
+         *
+         * @param[in] p1 Parameter 1 description
+         * @param[in] p1 Parameter 2 description
+         * @param[out] p3 Address which blah is written
+         *
+         * @returns Status code
+         */
 
 * All private functions SHOULD have doxygen documentation such as above.  Any
-  doxygen documentation in .c or _private.h files is automatically treated as
-  private.  If a private function must be in a public header file surround it
-  and the code in question with '@cond internal' and '@endcond internal'.
+  doxygen documentation in `.c` or `_private.h` files is automatically
+  treated as private.  If a private function must be in a public header file
+  surround it and the code in question with `@cond internal` and `@endcond
+  internal`.
 
 * All callbacks must support callback data.  Callback data is a `void *` that
   is provided with the function pointer at registration and is passed as the

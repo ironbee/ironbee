@@ -280,6 +280,8 @@ ValueList GraphEvalState::eval(const node_p& node, EvalContext context)
     return node_eval_state.values();
 }
 
+// Doxygen confused by this code.
+#ifndef DOXYGEN_SKIP
 namespace Impl {
 
 make_indexer_helper_t::make_indexer_helper_t(size_t& index_limit) :
@@ -310,6 +312,7 @@ void make_initializer_helper_t::operator()(const node_p& node)
 }
 
 }
+#endif
 
 boost::function_output_iterator<Impl::make_indexer_helper_t>
 make_indexer(size_t& index_limit)

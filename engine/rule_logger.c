@@ -1466,6 +1466,7 @@ void ib_rule_log_phase(
 /**
  * Log a rule's transformations
  *
+ * @param[in] mp Memory pool.
  * @param[in] rule_exec Rule execution object
  * @param[in] tgt Rule target logging object
  * @param[in] rslt Matching result field (or NULL)

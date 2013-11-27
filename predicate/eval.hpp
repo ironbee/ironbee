@@ -364,7 +364,7 @@ public:
     /**
      * True if node has no values.
      *
-     * @param[in] Index of node to check emptyness of.
+     * @param[in] index Index of node to check emptyness of.
      * @return true iff node has singular or empty value list.
      **/
     bool empty(size_t index) const;

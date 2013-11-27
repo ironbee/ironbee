@@ -227,7 +227,7 @@ private:
     node_list_t::const_iterator m_last_unfinished;
 
     /**
-     * Last value added from @ref last_unfinished.
+     * Last value added from @ref m_last_unfinished.
      *
      * A singular value means no children of @ref m_last_unfinished have
      * been added.
