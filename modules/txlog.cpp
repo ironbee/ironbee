@@ -100,26 +100,59 @@ namespace {
  */
 class TxLogData {
 public:
+    //! The response blocking method or "-".
     std::string responseBlockMethod;
+
+    //! The response blocking action or "-".
     std::string responseBlockAction;
+
+    //! The request blocking method or "-".
     std::string requestBlockMethod;
+
+    //! The request blocking action or "-".
     std::string requestBlockAction;
+
+    //! The name of the auditlog file or "-".
     std::string auditlogFile;
 
-
-    ///! Constructor.
+    /**
+     * Constructor.
+     */
     TxLogData();
 
+    /**
+     * Record data about a response from a transaction.
+     *
+     * @param[in] tx The transaction to examine.
+     */
     void recordResponseData(IronBee::ConstTransaction tx);
 
+    /**
+     * Record data about a request from a transaction.
+     *
+     * @param[in] tx The transaction to examine.
+     */
     void recordRequestData(IronBee::ConstTransaction tx);
 
+    /**
+     * Record auditlog information in the given transaction.
+     *
+     * @param[in] tx Transaction.
+     * @param[in] auditlog The auditlog to examine.
+     */
     void recordAuditLogData(
         IronBee::ConstTransaction tx,
         ib_auditlog_t *auditlog);
 
 private:
 
+    /**
+     * Record data about blocking status into @a action and @a method.
+     *
+     * @param[in] tx Transaction.
+     * @param[out] action The blocking action currently in use.
+     * @param[out] method The blocking method currently in use.
+     */
     void recordBlockData(
         IronBee::ConstTransaction tx,
         std::string &action,
@@ -127,6 +160,63 @@ private:
 
 };
 
+TxLogData::TxLogData() :
+    responseBlockMethod("-"),
+    responseBlockAction("-"),
+    requestBlockMethod("-"),
+    requestBlockAction("-"),
+    auditlogFile("-")
+{
+}
+
+void TxLogData::recordBlockData(
+    IronBee::ConstTransaction tx,
+    std::string &action,
+    std::string &method
+)
+{
+
+    /* Insert Request Action */
+    if (ib_tx_flags_isset(tx.ib(), IB_TX_ALLOW_REQUEST | IB_TX_ALLOW_ALL)) {
+        action = "Allow";
+        method = "-";
+    }
+    else if(ib_tx_flags_isset(tx.ib(), IB_TX_FBLOCKED))
+    {
+        action = "Blocked";
+
+        switch(tx.ib()->block_method) {
+        case IB_BLOCK_METHOD_STATUS:
+            method = "Close";
+            break;
+        case IB_BLOCK_METHOD_CLOSE:
+            method = "ErrorPage";
+            break;
+        default:
+            method = "-";
+        }
+    }
+    else {
+        action = "Passed";
+        method = "-";
+    }
+}
+
+void TxLogData::recordResponseData(IronBee::ConstTransaction tx) {
+    recordBlockData(tx, responseBlockAction, responseBlockMethod);
+}
+
+void TxLogData::recordRequestData(IronBee::ConstTransaction tx) {
+    recordBlockData(tx, requestBlockAction, requestBlockMethod);
+}
+
+void TxLogData::recordAuditLogData(
+    IronBee::ConstTransaction tx,
+    ib_auditlog_t *auditlog
+)
+{
+    auditlogFile = auditlog->cfg_data->full_path;
+}
 extern "C" {
 
 /**
@@ -344,8 +434,11 @@ public:
     explicit TxLogModule(IronBee::Module module);
 
 private:
+
+    ///! Container for C callback and callback data.
     std::pair<ib_core_auditlog_fn_t, void *> m_recordAuditLogInfoTrampoline;
 
+    ///! Object that destroys m_recordAuditLogInfoTrampoline.second, void *.
     boost::shared_ptr<void> m_recordAuditLogInfoTrampolinePtr;
 
     ///! Enable/Disable directive callback.
@@ -395,11 +488,13 @@ private:
         IronBee::Transaction tx
     );
 
+    ///! Callback that collects information about a request so as to log it.
     void handleRequest(
         IronBee::Engine      ib,
         IronBee::Transaction tx
     );
 
+    ///! Callback that collects information about a response so as to log it.
     void handleResponse(
         IronBee::Engine      ib,
         IronBee::Transaction tx
@@ -470,8 +565,10 @@ TxLogModule::TxLogModule(IronBee::Module module):
         IronBee::delete_c_trampoline
     )
 {
+    /* Set the default configuration. */
     module.set_configuration_data(TxLogConfig());
 
+    /* Register configuration directives. */
     module.engine().register_configuration_directives()
         .on_off(
             "TxLogEnabled",
@@ -490,6 +587,7 @@ TxLogModule::TxLogModule(IronBee::Module module):
             boost::bind(&TxLogModule::logAgeLimitDirective, this, _1, _2, _3))
         ;
 
+    /* Register engine callbacks. */
     module.engine().register_hooks()
         .transaction(
             IronBee::Engine::transaction_started,
@@ -505,6 +603,7 @@ TxLogModule::TxLogModule(IronBee::Module module):
             boost::bind(&TxLogModule::handleResponse, this, _1, _2))
         ;
 
+    /* Register a core module auditlog callback. */
     IronBee::throw_if_error(
         ib_core_add_auditlog_handler(
             module.engine().main_context().ib(),
@@ -573,62 +672,6 @@ void TxLogModule::logAgeLimitDirective(
 
     IronBee::throw_if_error(
         ib_string_to_num(param1, 10, &cfg.pub_cfg.max_age));
-}
-
-TxLogData::TxLogData():
-    responseBlockMethod("-"),
-    responseBlockAction("-"),
-    requestBlockMethod("-"),
-    requestBlockAction("-"),
-    auditlogFile("-")
-{
-}
-
-void TxLogData::recordBlockData(
-    IronBee::ConstTransaction tx,
-    std::string &action,
-    std::string &method) {
-
-    /* Insert Request Action */
-    if (ib_tx_flags_isset(tx.ib(), IB_TX_ALLOW_REQUEST | IB_TX_ALLOW_ALL)) {
-        action = "Allow";
-        method = "-";
-    }
-    else if(ib_tx_flags_isset(tx.ib(), IB_TX_FBLOCKED))
-    {
-        action = "Blocked";
-
-        switch(tx.ib()->block_method) {
-        case IB_BLOCK_METHOD_STATUS:
-            method = "Close";
-            break;
-        case IB_BLOCK_METHOD_CLOSE:
-            method = "ErrorPage";
-            break;
-        default:
-            method = "-";
-        }
-    }
-    else {
-        action = "Passed";
-        method = "-";
-    }
-}
-
-void TxLogData::recordResponseData(IronBee::ConstTransaction tx) {
-    recordBlockData(tx, responseBlockAction, responseBlockMethod);
-}
-
-void TxLogData::recordRequestData(IronBee::ConstTransaction tx) {
-    recordBlockData(tx, requestBlockAction, requestBlockMethod);
-}
-
-void TxLogData::recordAuditLogData(
-    IronBee::ConstTransaction tx,
-    ib_auditlog_t *auditlog
-)
-{
-    auditlogFile = auditlog->cfg_data->full_path;
 }
 
 ib_status_t TxLogModule::recordAuditLogInfo(
