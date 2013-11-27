@@ -49,6 +49,62 @@ extern "C" {
  * @{
  */
 
+
+/**
+ * Audit log part generator function.
+ *
+ * This function is called repetitively to generate the data logged
+ * in an audit log part. The function should return zero when there
+ * is no more data to log.
+ *
+ * @param part Audit log part
+ * @param chunk Address in which chunk is written
+ *
+ * @returns Size of the chunk or zero to indicate completion
+ */
+typedef size_t (*ib_auditlog_part_gen_fn_t)(ib_auditlog_part_t *part,
+                                            const uint8_t **chunk);
+
+/* Forward define this structure. */
+typedef struct ib_core_audit_cfg_t ib_core_audit_cfg_t;
+
+typedef struct ib_core_cfg_t ib_core_cfg_t;
+
+/**
+ * Core audit configuration structure
+ */
+struct ib_core_audit_cfg_t {
+    FILE                *index_fp;      /**< Index file pointer */
+    FILE                *fp;            /**< Audit log file pointer */
+    const char          *fn;            /**< Audit log file name */
+    const char          *full_path;     /**< Audit log full path */
+    const char          *temp_path;     /**< Full path to temporary file */
+    int                  parts_written; /**< Parts written so far */
+    const char          *boundary;      /**< Audit log boundary */
+    ib_tx_t             *tx;            /**< Transaction being logged */
+    const ib_core_cfg_t *core_cfg;      /**< Core configuration */
+};
+
+/** Audit Log */
+struct ib_auditlog_t {
+    ib_engine_t         *ib;              /**< Engine handle */
+    ib_mpool_t          *mp;              /**< Connection memory pool */
+    ib_context_t        *ctx;             /**< Config context */
+    ib_tx_t             *tx;              /**< Transaction being logged */
+    ib_core_audit_cfg_t *cfg_data;        /**< Implementation config data */
+    ib_list_t           *parts;           /**< List of parts */
+};
+
+/** Audit Log Part */
+struct ib_auditlog_part_t {
+    ib_auditlog_t      *log;             /**< Audit log */
+    const char         *name;            /**< Part name */
+    const char         *content_type;    /**< Part content type */
+    void               *part_data;       /**< Arbitrary part data */
+    void               *gen_data;        /**< Data for generator function */
+    ib_auditlog_part_gen_fn_t fn_gen;    /**< Data generator function */
+};
+
 /**
  * The possible states of the IronBee audit engine.
  */
@@ -113,7 +169,6 @@ typedef ib_status_t (*ib_core_auditlog_fn_t)(
 /**
  * Core configuration.
  */
-typedef struct ib_core_cfg_t ib_core_cfg_t;
 struct ib_core_cfg_t {
     const char       *log_uri;           /**< Log URI */
     FILE             *log_fp;            /**< File pointer for log. */

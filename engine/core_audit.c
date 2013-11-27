@@ -49,7 +49,7 @@
 #endif
 
 typedef struct {
-    core_audit_cfg_t *cfg;
+    ib_core_audit_cfg_t *cfg;
     ib_auditlog_t *log;
     const ib_tx_t *tx;
     const ib_conn_t *conn;
@@ -62,7 +62,7 @@ static const size_t LOGFORMAT_MAX_LINE_LENGTH = 8192;
 
 ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
                                       ib_auditlog_t *log,
-                                      core_audit_cfg_t *cfg,
+                                      ib_core_audit_cfg_t *cfg,
                                       ib_core_cfg_t *corecfg)
 {
     const int dtmp_sz = 64;
@@ -219,7 +219,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
 
 ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
                                            ib_auditlog_t *log,
-                                           core_audit_cfg_t *cfg,
+                                           ib_core_audit_cfg_t *cfg,
                                            ib_core_cfg_t *corecfg)
 {
     char* index_file;
@@ -384,7 +384,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
 ib_status_t core_audit_open(ib_engine_t *ib,
                             ib_auditlog_t *log)
 {
-    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    ib_core_audit_cfg_t *cfg = (ib_core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
@@ -405,7 +405,7 @@ ib_status_t core_audit_open(ib_engine_t *ib,
 
     assert(NULL != corecfg);
 
-    /* Copy the FILE* into the core_audit_cfg_t. */
+    /* Copy the FILE* into the ib_core_audit_cfg_t. */
     if (log->ctx->auditlog->index_fp != NULL) {
         cfg->index_fp = log->ctx->auditlog->index_fp;
     }
@@ -473,7 +473,7 @@ ib_status_t core_audit_open(ib_engine_t *ib,
 ib_status_t core_audit_write_header(ib_engine_t *ib,
                                     ib_auditlog_t *log)
 {
-    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    ib_core_audit_cfg_t *cfg = (ib_core_audit_cfg_t *)log->cfg_data;
     char header[256];
     size_t hlen;
     int ret = snprintf(header, sizeof(header),
@@ -506,7 +506,7 @@ ib_status_t core_audit_write_part(ib_engine_t *ib,
                                   ib_auditlog_part_t *part)
 {
     ib_auditlog_t *log = part->log;
-    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    ib_core_audit_cfg_t *cfg = (ib_core_audit_cfg_t *)log->cfg_data;
     const uint8_t *chunk;
     size_t chunk_size;
 
@@ -540,7 +540,7 @@ ib_status_t core_audit_write_part(ib_engine_t *ib,
 ib_status_t core_audit_write_footer(ib_engine_t *ib,
                                     ib_auditlog_t *log)
 {
-    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    ib_core_audit_cfg_t *cfg = (ib_core_audit_cfg_t *)log->cfg_data;
 
     if (cfg->parts_written > 0) {
         fprintf(cfg->fp, "\r\n--%s--\r\n", cfg->boundary);
@@ -619,7 +619,7 @@ static ib_status_t core_audit_get_index_line(ib_engine_t *ib,
     assert(line_len != NULL);
     assert(log->tx != NULL);
 
-    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    ib_core_audit_cfg_t *cfg = (ib_core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_tx_t *tx = log->tx;
     ib_conn_t *conn = tx->conn;
@@ -656,7 +656,7 @@ static ib_status_t core_audit_get_index_line(ib_engine_t *ib,
 ///! Close the auditlog and write to the index file.
 ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
 {
-    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    ib_core_audit_cfg_t *cfg = (ib_core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_status_t ib_rc = IB_OK;
     int sys_rc;

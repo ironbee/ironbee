@@ -46,24 +46,6 @@
  */
 #define IB_AUDITLOG_VERSION 201212210
 
-/* Forward define this structure. */
-typedef struct core_audit_cfg_t core_audit_cfg_t;
-
-/**
- * Core audit configuration structure
- */
-struct core_audit_cfg_t {
-    FILE                *index_fp;      /**< Index file pointer */
-    FILE                *fp;            /**< Audit log file pointer */
-    const char          *fn;            /**< Audit log file name */
-    const char          *full_path;     /**< Audit log full path */
-    const char          *temp_path;     /**< Full path to temporary file */
-    int                  parts_written; /**< Parts written so far */
-    const char          *boundary;      /**< Audit log boundary */
-    ib_tx_t             *tx;            /**< Transaction being logged */
-    const ib_core_cfg_t *core_cfg;      /**< Core configuration */
-};
-
 /**
  * Set cfg->fn to the file name and cfg->fp to the FILE* of the audit log.
  *
@@ -75,12 +57,12 @@ struct core_audit_cfg_t {
  */
 ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
                                       ib_auditlog_t *log,
-                                      core_audit_cfg_t *cfg,
+                                      ib_core_audit_cfg_t *cfg,
                                       ib_core_cfg_t *corecfg);
 
 ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
                                            ib_auditlog_t *log,
-                                           core_audit_cfg_t *cfg,
+                                           ib_core_audit_cfg_t *cfg,
                                            ib_core_cfg_t *corecfg);
 
 /**

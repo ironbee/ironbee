@@ -1049,7 +1049,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     assert(log != NULL);
     assert(log->tx != NULL);
 
-    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    ib_core_audit_cfg_t *cfg = (ib_core_audit_cfg_t *)log->cfg_data;
     ib_engine_t *ib = log->ib;
     ib_tx_t *tx = log->tx;
     ib_num_t tx_num = tx->conn->tx_count;
@@ -1363,8 +1363,8 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     ib_list_t *list;
     char *tstamp;
     ib_status_t rc;
-    const core_audit_cfg_t *core_audit_cfg =
-        (const core_audit_cfg_t *)log->cfg_data;
+    const ib_core_audit_cfg_t *core_audit_cfg =
+        (const ib_core_audit_cfg_t *)log->cfg_data;
     const ib_core_cfg_t *core_cfg = core_audit_cfg->core_cfg;
 
     /* Generate a list of fields in this part. */
@@ -1480,8 +1480,8 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     ib_field_t *f;
     ib_list_t *list;
     char *tstamp;
-    const core_audit_cfg_t *core_audit_cfg =
-        (const core_audit_cfg_t *)log->cfg_data;
+    const ib_core_audit_cfg_t *core_audit_cfg =
+        (const ib_core_audit_cfg_t *)log->cfg_data;
     const ib_core_cfg_t *core_cfg = core_audit_cfg->core_cfg;
     ib_var_store_t *var_store = tx->var_store;
     ib_status_t rc;
@@ -1774,7 +1774,7 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
     ib_auditlog_t *log;
     ib_core_cfg_t *corecfg;
     ib_core_module_tx_data_t *core_txdata;
-    core_audit_cfg_t *cfg;
+    ib_core_audit_cfg_t *cfg;
     ib_list_t *events;
     int boundary_rand = rand(); /// @todo better random num
     char boundary[46];
@@ -1845,7 +1845,7 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
              boundary_rand, log->tx->id ? log->tx->id : "FixMe-No-Tx-on-Audit");
 
     /* Create the core config. */
-    cfg = (core_audit_cfg_t *)ib_mpool_calloc(log->mp, 1, sizeof(*cfg));
+    cfg = (ib_core_audit_cfg_t *)ib_mpool_calloc(log->mp, 1, sizeof(*cfg));
     if (cfg == NULL) {
         return IB_EALLOC;
     }
