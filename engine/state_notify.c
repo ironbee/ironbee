@@ -572,8 +572,7 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
         tx->request_header = header;
     }
     else {
-        rc = ib_parsed_headers_append(tx->request_header,
-                                                   header);
+        rc = ib_parsed_headers_append(tx->request_header, header);
 
         if (rc != IB_OK) {
             return rc;
@@ -883,8 +882,7 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
         tx->response_header = header;
     }
     else {
-        rc = ib_parsed_headers_append(tx->response_header,
-                                                   header);
+        rc = ib_parsed_headers_append(tx->response_header, header);
 
         if (rc != IB_OK) {
             return rc;

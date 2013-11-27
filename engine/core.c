@@ -4590,7 +4590,7 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
         rc = ib_core_context_config(ctx, &config);
         if (rc != IB_OK) {
             ib_log_alert(ib,
-                        "Failed to fetch core module main context config.");
+                         "Failed to fetch core module main context config.");
             return rc;
         }
 

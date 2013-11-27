@@ -350,10 +350,8 @@ public:
         ib_status_t            rc;
 
         rc = ib_parsed_headers_add(parsed,
-                                                name,
-                                                strlen(name),
-                                                value,
-                                                strlen(value));
+                                   name, strlen(name),
+                                   value, strlen(value));
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to add name/value to header.");
         }
@@ -640,8 +638,8 @@ public:
         BaseFixture::finishRequest(ib_tx);
     }
     virtual void sendRequestLine(const char *method,
-                         const char *uri,
-                         const char *proto)
+                                 const char *uri,
+                                 const char *proto)
     {
         BaseFixture::sendRequestLine(ib_tx, method, uri, proto);
     }
@@ -820,8 +818,8 @@ public:
     }
 
 protected:
-    ib_conn_t                  *ib_conn;
-    ib_tx_t                    *ib_tx;
+    ib_conn_t           *ib_conn;
+    ib_tx_t             *ib_tx;
     ib_parsed_headers_t *ib_reqhdr;
     ib_parsed_headers_t *ib_rsphdr;
 };
