@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-/* Demo ident module: implement HTTP Basic authn because it offers
+/**
+ * @file
+ * @brief Demo ident module: Proof of concept.
+ *
+ * Demo ident module: implement HTTP Basic authn because it offers
  * a simple proof-of-concept for an ident framework
  *
  * NOTE: this makes no attempt to check a password!
@@ -24,6 +28,9 @@
  * another framework for password lookups (c.f. apache httpd).
  * But in the case of basic authn, I'm not convinced that would
  * add value to ironbee.
+ *
+ *
+ * @author Nick Kew <nkew@qualys.com>
  */
 
 #include <ironbee/context.h>
