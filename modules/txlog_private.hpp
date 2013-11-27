@@ -26,6 +26,8 @@
 #ifndef __MODULES__TXLOG_PRIVATE_H__
 #define __MODULES__TXLOG_PRIVATE_H__
 
+#include "txlog.h"
+
 /**
  * Context configuration value for the TxLogModule.
  */
