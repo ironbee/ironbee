@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2308 
+personal_ws-1.1 en 2343 
 malloc'ed
 malloced
 libnet
@@ -21,6 +21,7 @@ arg
 userdata
 apr
 dat
+ASF
 onEventHandleContextConn
 IronBeeEngineVar
 DBs
@@ -85,6 +86,7 @@ gdb
 typecheck
 IronBeeEngineVarTarget
 ctx
+authbasic
 EOB
 ENH
 AuditLogDirMode
@@ -122,6 +124,7 @@ dyn
 ibd
 fns
 fn's
+ErrorPage
 fOO
 fOo
 IronBeeUtilIP
@@ -192,6 +195,7 @@ hte
 regcomp
 parsable
 dddd
+TxLogAgeLimit
 hti
 prefixlen
 args
@@ -201,7 +205,9 @@ jit
 htp
 argv
 irc
+APR's
 Sosospider
+ios
 SubclassType
 cidr
 stdin
@@ -233,6 +239,7 @@ ist
 LGE
 responseBody
 responsebody
+IdentType
 protobuf
 leq
 IronBeeSite
@@ -307,6 +314,7 @@ IsNum
 lst
 ParsedResponseLine
 ConstField
+nprbytes
 LTS
 lvl
 libwww
@@ -379,10 +387,10 @@ sam
 pos
 DisableRequestParamInspection
 apache
-pre
 ret
-mymodule
+pre
 MyModule
+mymodule
 pri
 TransactionData
 DOCTYPE
@@ -435,6 +443,7 @@ EnableRequestHeaderInspection
 cout
 TestEscapeJSONCStrings
 rsp
+txlogdata
 prepend
 spi
 onEventResponseDataHeaders
@@ -458,7 +467,7 @@ ssl
 ResponseHeaderData
 ssn
 ruleUpdateTagetById
-WAF
+waf
 STL
 IronBeeUtilStringEscape
 IronBeeLog
@@ -666,6 +675,7 @@ lineptr
 gf
 eq
 gg
+TxLogEnabled
 dw
 unparse
 nocase
@@ -761,13 +771,13 @@ sa
 mbols
 sb
 rh
-dtor
-enum
 DSTR
+enum
+dtor
 REQHDRS
+sd
 ps
 p's
-sd
 patricia
 hashfunc
 tb
@@ -873,6 +883,7 @@ This'll
 calloc's
 eval
 SonyEricsson
+requestBlockMethod
 strrstr
 ResponseStarted
 PersonalityParam
@@ -959,6 +970,7 @@ ibapi
 corecfg
 ConstConnection
 eudoxus
+misconfigured
 prequal
 func
 RequestBuffering
@@ -1012,6 +1024,7 @@ userId
 portably
 libloader
 InstanceData
+RuleTrace
 onEventHandleResponseHeaders
 ConfigurationMapInit
 IronBeeProvider
@@ -1124,6 +1137,7 @@ SiteHost
 sitehost
 DebugLog
 debuglog
+unconfigured
 enoent
 lualib
 BlockAllow
@@ -1178,6 +1192,7 @@ subclasses
 etype
 randomizer
 IronBeeUtilList
+ident
 exnlen
 TSHttpTxnClientRespGet
 ConstConnectionData
@@ -1219,10 +1234,12 @@ xdata
 dereferenced
 fputs
 lineno
+stdmsg
 AdsBot
 somebits
 buflen
 logmsg
+TxLogModule
 libs
 onEventRequestHeadersData
 rootdir
@@ -1258,6 +1275,7 @@ copyable
 SetVars
 Dataless
 delims
+TxLogBaseDirectory
 iconn
 multithreaded
 pengine
@@ -1302,6 +1320,7 @@ evaled
 minimo
 VarFilter
 LoadEudoxus
+seekp
 IronBeeCore
 firefox
 MIDP
@@ -1322,6 +1341,7 @@ nbsp
 FMODIFIED
 minlen
 abcabcabc
+logstr
 Qualys
 psize
 IronBeeEngine
@@ -1363,6 +1383,8 @@ ptime
 ttoWrite
 onEventConnFinished
 config
+txlog
+TxLog
 toFloat
 Unmark
 ODBC
@@ -1521,6 +1543,7 @@ nginx
 fennec
 RawGenerator
 pdso
+txlogs
 vendorRuleId
 olen
 ConnOpened
@@ -1544,6 +1567,7 @@ returnedTrueOnly
 TxContext
 memdup
 nsec
+RuleTraceFile
 HandleRequestHeader
 modradix
 DetectionOnly
@@ -1648,6 +1672,7 @@ constructable
 implementers
 kvset
 inspectRequestParams
+recs
 ababa
 IronBeeUtilStringValue
 rbuf
@@ -1671,6 +1696,7 @@ cpatt
 SiteLocation
 dalloc
 PartialValid
+TxLogSizeLimit
 inspectRequestHeader
 gettimeofday
 mpage
@@ -1716,6 +1742,7 @@ nHost
 kvstore's
 Googlebot
 checkflag
+requestBlockAction
 AhoCorasic
 ahocorasic
 NUMMULT
@@ -1739,6 +1766,7 @@ RequestBodyLogLimit
 ironautomata
 IronAutomata
 Parameterized
+IdentMode
 unregister
 ninit
 TimingInfo
@@ -1759,6 +1787,7 @@ LogData
 logdata
 gcdata
 myprefix
+AuthBasicRealm
 ruleExec
 LargeAllocations
 nstate
@@ -1853,6 +1882,7 @@ MyHeader
 EnableResponseHeaderInspection
 archiver
 suboptimal
+ParsedHeaders
 newsgator
 NewsGator
 ParseTreeTests
@@ -1983,7 +2013,9 @@ xname
 unaliased
 IronBeeUtilFlags
 elementtype
+TxLogBaseFileName
 hashequal
+ConstParsedHeader
 infos
 webpage
 calldata
@@ -2151,6 +2183,7 @@ nomem
 tolower
 fndata
 Noncopyable
+auditlogs
 onEventResponseDataHeader
 AbAb
 abab
@@ -2181,6 +2214,7 @@ copyless
 ConstLocation
 ConfigurationDirectives
 ConstByteStrings
+headerNvp
 bytestr
 ByteStr
 htonl
@@ -2196,6 +2230,7 @@ htree
 referants
 endian
 trimLeft
+ParsedHeader
 ParseTreeTest
 invis
 perror

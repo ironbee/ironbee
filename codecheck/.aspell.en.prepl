@@ -91,6 +91,8 @@ ctrl variable
 wirte Write
 liea with
 enval EINVAL
+constructred Constructed
+constructred constructed
 byestring ByteString
 byestring bytestring
 htis this
@@ -105,6 +107,7 @@ evaluaton evaluation
 sould should
 ignoreme ignored
 availbe available
+reqest Request
 fiels FIELDS
 mutale mutable
 registerring Registering
@@ -126,6 +129,7 @@ allcation allocation
 ironbeeenginevarexpanduration IronBeeEngineVarExpand
 trailser Trailer
 kstore kvstore
+ingore ignore
 ironbeeenginevarsourceuration IronBeeEngineVarSource
 contet context
 cominging combining

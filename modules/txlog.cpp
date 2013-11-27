@@ -164,7 +164,7 @@ ib_status_t txlog_logger_format_fn(
     ib_logger_standard_msg_t *stdmsg;
     std::ostringstream logstr;
 
-    /* Wrap some types into IronBeePP. */
+    /* Wrap some types into IronBee++. */
     IronBee::ConstTransaction tx(rec->tx);
     IronBee::ConstModule      module(rec->module);
 
@@ -250,7 +250,7 @@ ib_status_t txlog_logger_format_fn(
     logstr << "[" << txlogdata.requestBlockAction
            << " " << txlogdata.requestBlockMethod
            << "]";
-    /* Insert Reponse */
+    /* Insert Response */
     logstr << "[" << tx.response_line().protocol().to_s()
            << " " << tx.response_line().status().to_s()
            << " " << tx.response_line().message().to_s()
@@ -291,7 +291,7 @@ ib_status_t txlog_logger_format_fn(
     logstr << "[" << "-" // "remote client waf request size." // FIXME
            << " " << "-" // "waf to origin request size" // FIXME
            << " " << "-" // "origin to waf response size" // FIXME
-           << " " << "-" // "waf to remote resposne size" // FIXME
+           << " " << "-" // "waf to remote response size" // FIXME
            << "]";
 
     /* Insert generated audit log. */
@@ -589,7 +589,7 @@ void TxLogData::recordBlockData(
     std::string &action,
     std::string &method) {
 
-    /* Insert Reqest Action */
+    /* Insert Request Action */
     if (ib_tx_flags_isset(tx.ib(), IB_TX_ALLOW_REQUEST | IB_TX_ALLOW_ALL)) {
         action = "Allow";
         method = "-";

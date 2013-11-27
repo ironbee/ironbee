@@ -245,7 +245,7 @@ struct ib_logger_rec_t {
  * binary data (a C struct) to the formatter as the user message. In this
  * use @a msg should be NULL and @a msg_sz should be 0. The resulting
  * data from @a msg_fn will then be forwarded, not copied, to the
- * formating functions of all loggers.
+ * formatting functions of all loggers.
  *
  * @param[in] logger The logger.
  * @param[in] type The type of log record being reported.

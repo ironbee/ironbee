@@ -18,7 +18,7 @@
  * @file
  * @brief Demo ident module: Proof of concept.
  *
- * Demo ident module: implement HTTP Basic authn because it offers
+ * Demo ident module: implement HTTP Basic auth because it offers
  * a simple proof-of-concept for an ident framework
  *
  * NOTE: this makes no attempt to check a password!
@@ -26,7 +26,7 @@
  *
  * If we want to enable checking passwords then we'll want
  * another framework for password lookups (c.f. apache httpd).
- * But in the case of basic authn, I'm not convinced that would
+ * But in the case of basic auth, I'm not convinced that would
  * add value to ironbee.
  *
  *
@@ -140,7 +140,7 @@ static char *base64_decode(ib_mpool_t *pool, const char *encoded)
         nprbytes -= 4;
     }
 
-    /* Note: (nprbytes == 1) would be an error, so just ingore that case */
+    /* Note: (nprbytes == 1) would be an error, so just ignore that case */
     if (nprbytes > 1) {
         *(bufout++) =
             (unsigned char) (pr2six[*bufin] << 2 | pr2six[bufin[1]] >> 4);
@@ -215,7 +215,7 @@ static const char *basic_get_user(ib_tx_t *tx)
  */
 static ib_status_t basic_challenge(ib_tx_t *tx)
 {
-    /* Enforce basic authn on a client that didn't authenticate */
+    /* Enforce basic auth on a client that didn't authenticate */
     char *challenge;
     ident_authbasic_cfg_t *cfg;
     ib_status_t rc;
@@ -239,11 +239,11 @@ static ib_status_t basic_challenge(ib_tx_t *tx)
 }
 
 /**
- * Initialisation function: register HTTP Basic provider with ident module
+ * Initialization function: register HTTP Basic provider with ident module
  *
  * @param ib The engine
  * @param m The module
- * @param cbdata Unusued
+ * @param cbdata Unused
  * @return status
  */
 static ib_status_t ident_authbasic_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)

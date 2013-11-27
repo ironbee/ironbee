@@ -110,7 +110,7 @@ ib_status_t DLL_PUBLIC ib_parsed_headers_create(
  * @param[in] name      Name of header.
  * @param[in] name_len  Length of @a name.
  * @param[in] value     Value of header.
- * @param[in] value_len Length of @ avalue.
+ * @param[in] value_len Length of @a value.
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
@@ -185,9 +185,9 @@ ib_status_t DLL_PUBLIC ib_parsed_req_line_create(
  * Currently @a raw, @a protocol, @a status, and @a msg are copied.  Future
  * versions will likely change this to avoid copies.
  *
- * @param[out] line         Constructred line.
+ * @param[out] line         Constructed line.
  * @param[in]  mp           Memory pool to allocate from.
- * @param[in]  raw          Raw response line.  If NULL, will be constructred
+ * @param[in]  raw          Raw response line.  If NULL, will be constructed
  *                          from other arguments.
  * @param[in]  raw_len      Length of @a raw.
  * @param[in]  protocol     Protocol.  If NULL, empty string will be used.

@@ -116,7 +116,7 @@ ib_status_t ib_ident_provider_register(const char *name,
  *           "Log" (Log user id or unidentified) or
  *           "Require" (Log id and issue challenge if unidentified)
  * @param dummy Unused
- * @return OK, or EINVAL if p1 is unrecognised
+ * @return OK, or EINVAL if p1 is unrecognized
  */
 static ib_status_t ident_mode(ib_cfgparser_t *cp, const char *name,
                               const char *p1, void *dummy)
@@ -271,8 +271,8 @@ static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
 }
 
 /**
- * Initialisation function
- * Initialise providers, and register the main ident handler
+ * Initialization function
+ * Initialize providers, and register the main ident handler
  *
  * @param ib The engine
  * @param m The module
