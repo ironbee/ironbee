@@ -40,9 +40,10 @@
 #include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/transaction.hpp>
 
+#include <ironbee/core.h>
+#include <ironbee/logevent.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
-#include <ironbee/core.h>
 
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -53,6 +54,14 @@
 
 /* Include our own public header file. */
 #include "txlog.h"
+
+/**
+ * Context configuration value for the TxLogModule.
+ */
+struct TxLogConfig {
+    ib_txlog_module_cfg_t pub_cfg; /**< Public configuration information. */
+    TxLogConfig();
+};
 
 /* Enable PRId64 printf. */
 extern "C" {
@@ -72,20 +81,14 @@ ib_status_t ib_txlog_get_config(
     assert(ctx != NULL);
     assert(cfg != NULL);
 
-    ib_status_t  rc;
-    ib_module_t *module;
+    IronBee::Engine engine(const_cast<ib_engine_t *>(ib));
+    IronBee::Context context(const_cast<ib_context_t *>(ctx));
+    IronBee::Module module =
+        IronBee::Module::with_name(engine, TXLOG_MODULE_NAME);
 
-    rc = ib_engine_module_get(ib, TXLOG_MODULE_NAME, &module);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Could not fetch module " TXLOG_MODULE_NAME);
-        return rc;
-    }
+    TxLogConfig& mod_cfg = module.configuration_data<TxLogConfig>(context);
 
-    rc = ib_context_module_config(ctx, module, cfg);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Could not fetch config for " TXLOG_MODULE_NAME);
-        return rc;
-    }
+    *cfg = &mod_cfg.pub_cfg;
 
     return IB_OK;
 }
@@ -150,6 +153,14 @@ ib_status_t txlog_logger_format_fn(
     void          *data
 )
 {
+    assert(logger != NULL);
+    assert(rec != NULL);
+
+    /* Do not handle non-tx recs. */
+    if (rec->tx == NULL || rec->type != IB_LOGGER_TXLOG_TYPE) {
+        return IB_DECLINED;
+    }
+
     ib_logger_standard_msg_t *stdmsg;
     std::ostringstream logstr;
 
@@ -160,10 +171,6 @@ ib_status_t txlog_logger_format_fn(
     /* Fetch some telemetry from our tx. */
     TxLogData &txlogdata = IronBee::Transaction::remove_const(tx)
         .get_module_data<TxLogData&>(module);
-
-    if (rec->tx == NULL || rec->type != IB_LOGGER_TXLOG_TYPE) {
-        return IB_DECLINED;
-    }
 
     /* Setup posix time formatting. */
     logstr.imbue(
@@ -185,9 +192,14 @@ ib_status_t txlog_logger_format_fn(
            << "]" ;
 
     /* Insert UUIDs. */
-    logstr << "[" << ib_engine_sensor_id(tx.engine().ib())
-           << " " << tx.context().site().id_as_s()
-           << " " << tx.id()
+    logstr << "[" << ib_engine_sensor_id(tx.engine().ib());
+    if (tx.context().site().ib() == NULL) {
+        logstr << " -";
+    }
+    else {
+        logstr << " " << tx.context().site().id_as_s();
+    }
+    logstr << " " << tx.id()
            << "]";
 
     /* Insert IP information. */
@@ -286,7 +298,14 @@ ib_status_t txlog_logger_format_fn(
     logstr << "[AuditLog " << txlogdata.auditlogFile << " ]";
 
     /* Insert events. */
-    // [Event SQLi REQUEST_URI_PARAM:b qrs/sqli/2 150003] [Event SQLi REQUEST_URI_PARAM:b qrs/sqli/5 150003]
+    IronBee::ConstList<ib_logevent_t *> eventList(tx.ib()->logevents);
+    BOOST_FOREACH(const ib_logevent_t *e, eventList) {
+        logstr << "[ Event " 
+               << " " << "-" // FIXME - category
+               << " " << "-" // FIXME - matched location
+               << " " << e->rule_id
+               << " " << e->event_id << "]";
+    }
 
     /* Build stdmsg and return it. */
     stdmsg =
@@ -325,9 +344,9 @@ public:
     explicit TxLogModule(IronBee::Module module);
 
 private:
-    boost::shared_ptr<
-        std::pair<ib_core_auditlog_fn_t, void *>
-    > m_recordAuditLogInfoTrampoline;
+    std::pair<ib_core_auditlog_fn_t, void *> m_recordAuditLogInfoTrampoline;
+
+    boost::shared_ptr<void> m_recordAuditLogInfoTrampolinePtr;
 
     ///! Enable/Disable directive callback.
     void onOffDirective(
@@ -408,14 +427,6 @@ private:
 IBPP_BOOTSTRAP_MODULE_DELEGATE(TXLOG_MODULE_NAME, TxLogModule);
 
 /**
- * Context configuration value for the TxLogModule.
- */
-struct TxLogConfig {
-    ib_txlog_module_cfg_t pub_cfg; /**< Public configuration information. */
-    TxLogConfig();
-};
-
-/**
  * Setup some good defaults.
  */
 TxLogConfig::TxLogConfig() {
@@ -424,12 +435,12 @@ TxLogConfig::TxLogConfig() {
     memset(&pub_cfg, 0, sizeof(pub_cfg));
 
     /* Now set all the values we care about. */
-    pub_cfg.is_enabled   = true;
-    pub_cfg.log_basename = "txlog";
-    pub_cfg.log_basedir  = "/var/log/ironbee/txlogs";
-    pub_cfg.max_size     = 5 * 1024;
-    pub_cfg.max_age      = 60 * 10;
-    pub_cfg.logger_format_fn = txlog_logger_format_fn;
+    pub_cfg.is_enabled       = true;
+    pub_cfg.log_basename     = "txlog";
+    pub_cfg.log_basedir      = "/var/log/ironbee/txlogs";
+    pub_cfg.max_size         = 5 * 1024;
+    pub_cfg.max_age          = 60 * 10;
+    pub_cfg.logger_format_fn = &txlog_logger_format_fn;
 }
 
 /* Implementation */
@@ -440,24 +451,26 @@ TxLogModule::TxLogModule(IronBee::Module module):
 
     /* Store the c trampoline so it is cleaned up with the module. */
     m_recordAuditLogInfoTrampoline(
-        new std::pair<ib_core_auditlog_fn_t, void *>(
-            IronBee::make_c_trampoline<
-                ib_status_t(
-                    ib_engine_t *,
-                    ib_tx_t *,
-                    ib_core_auditlog_event_en,
-                    ib_auditlog_t *
-                    )
-                >
-            (
-                boost::bind(
-                    &TxLogModule::recordAuditLogInfo, this, _1, _2, _3, _4)
+        IronBee::make_c_trampoline<
+            ib_status_t(
+                ib_engine_t *,
+                ib_tx_t *,
+                ib_core_auditlog_event_en,
+                ib_auditlog_t *
             )
-        ),
+        >
+        (
+            boost::bind(&TxLogModule::recordAuditLogInfo, this, _1, _2, _3, _4)
+        )
+    ),
+
+    /* Stuff the void* into a smart pointer to auto-delete it. */
+    m_recordAuditLogInfoTrampolinePtr(
+        m_recordAuditLogInfoTrampoline.second,
         IronBee::delete_c_trampoline
     )
 {
-    module.set_configuration_data<TxLogConfig>();
+    module.set_configuration_data(TxLogConfig());
 
     module.engine().register_configuration_directives()
         .on_off(
@@ -495,8 +508,8 @@ TxLogModule::TxLogModule(IronBee::Module module):
     IronBee::throw_if_error(
         ib_core_add_auditlog_handler(
             module.engine().main_context().ib(),
-            m_recordAuditLogInfoTrampoline->first,
-            m_recordAuditLogInfoTrampoline->second
+            m_recordAuditLogInfoTrampoline.first,
+            m_recordAuditLogInfoTrampoline.second
         ),
         "Failed to register auditlog handler with core module."
     );
@@ -670,6 +683,9 @@ void TxLogModule::transactionFinishedHandler(
     IronBee::Transaction tx
 )
 {
+    assert(ib.ib() != NULL);
+    assert(tx.ib() != NULL);
+
     ib_logger_log_va(
         ib_engine_logger_get(ib.ib()),
         IB_LOGGER_TXLOG_TYPE,
