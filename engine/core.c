@@ -4548,7 +4548,7 @@ ib_status_t ib_core_dispatch_auditlog(
     }
 
     IB_LIST_LOOP_CONST(config->auditlog_handlers, node) {
-        const core_auditlog_fn_t *handler = 
+        const core_auditlog_fn_t *handler =
             (const core_auditlog_fn_t *)ib_list_node_data_const(node);
         rc = handler->handler(ib, tx, event, auditlog, handler->cbdata);
         if (rc != IB_OK) {
@@ -5012,7 +5012,7 @@ static ib_status_t core_config_copy(
     /* Copy the handler list into the sub context. */
     IB_LIST_LOOP_CONST(src_cfg->auditlog_handlers, node) {
         ib_list_push(
-            dst_cfg->auditlog_handlers, 
+            dst_cfg->auditlog_handlers,
             (void *)ib_list_node_data_const(node));
     }
 

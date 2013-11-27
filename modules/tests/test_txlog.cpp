@@ -118,4 +118,3 @@ TEST_F(TxLogTest, Load) {
     ASSERT_TRUE(ib_tx);
     std::cout << "Log string is: " << test_log.str();
 }
-

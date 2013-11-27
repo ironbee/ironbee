@@ -275,7 +275,7 @@ ib_status_t DLL_PUBLIC ib_core_add_auditlog_handler(
  *
  * @returns
  * - IB_OK
- * - Other if there was an error dispatching the event. Errors in 
+ * - Other if there was an error dispatching the event. Errors in
  *   handlers are logged but do not cause this dispatch routine to fail.
  */
 ib_status_t DLL_PUBLIC ib_core_dispatch_auditlog(

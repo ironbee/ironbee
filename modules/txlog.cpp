@@ -106,7 +106,7 @@ public:
     std::string requestBlockAction;
     std::string auditlogFile;
 
-     
+
     ///! Constructor.
     TxLogData();
 
@@ -134,13 +134,13 @@ extern "C" {
  *
  * It produces a @ref ib_logger_standard_msg_t in @a writer_record.
  *
- * The produced @a writer_record should be freed with 
+ * The produced @a writer_record should be freed with
  * ib_logger_standard_msg_free().
  *
  * @param[in] logger The logger.
  * @param[in] rec The record to produce @a writer_record from.
  * @param[in] log_msg_sz The length of @a log_msg.
- * @param[out] writer_record A @ref ib_logger_standard_msg_t if this returns 
+ * @param[out] writer_record A @ref ib_logger_standard_msg_t if this returns
  *             IB_OK. Unset otherwise. This must be a ib_logger_std_msg_t **.
  * @param[in] data Callback data.
  */
@@ -300,7 +300,7 @@ ib_status_t txlog_logger_format_fn(
     /* Insert events. */
     IronBee::ConstList<ib_logevent_t *> eventList(tx.ib()->logevents);
     BOOST_FOREACH(const ib_logevent_t *e, eventList) {
-        logstr << "[ Event " 
+        logstr << "[ Event "
                << " " << "-" // FIXME - category
                << " " << "-" // FIXME - matched location
                << " " << e->rule_id

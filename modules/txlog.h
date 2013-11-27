@@ -37,8 +37,8 @@ extern "C" {
  */
 struct ib_txlog_module_cfg_t {
     bool        is_enabled;   /**< Logging enabled for this context? */
-    const char *log_basename; /**< Base name to log files as. */      
-    const char *log_basedir;  /**< Base directory to log files in. */      
+    const char *log_basename; /**< Base name to log files as. */
+    const char *log_basedir;  /**< Base directory to log files in. */
     ib_num_t    max_size;     /**< Maximum size of a log file, in bytes. */
     ib_num_t    max_age;      /**< Maximum age of a log file, in seconds. */
 
@@ -67,4 +67,3 @@ ib_status_t DLL_PUBLIC ib_txlog_get_config(
 #endif
 
 #endif /* __MODULES__TXLOG_H__ */
-
