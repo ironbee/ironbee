@@ -20,6 +20,7 @@ CANONICAL_INCLUDE_ORDER = [
 
   # Dirty hack section
   '"user_agent_private.h"',
+  '"txlog.h"',
   '<ironbee/module_sym.h>',
 
   # predicate
@@ -210,6 +211,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/date_time/local_time/local_time.hpp>',
   '<boost/date_time/posix_time/posix_time.hpp>',
   '<boost/date_time/posix_time/ptime.hpp>',
+  '<boost/date_time/time_facet.hpp>',
   '<boost/date_time/time_zone_base.hpp>',
   '<boost/dynamic_bitset.hpp>',
   '<boost/enable_shared_from_this.hpp>',

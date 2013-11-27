@@ -26,18 +26,21 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbeepp/connection.hpp>
+/* Include our own public header file. */
+#include "txlog.h"
+
 #include <ironbeepp/configuration_directives.hpp>
 #include <ironbeepp/configuration_parser.hpp>
+#include <ironbeepp/connection.hpp>
 #include <ironbeepp/c_trampoline.hpp>
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/module_bootstrap.hpp>
 #include <ironbeepp/module_delegate.hpp>
-#include <ironbeepp/site.hpp>
+#include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
-#include <ironbeepp/parsed_header.hpp>
+#include <ironbeepp/site.hpp>
 #include <ironbeepp/transaction.hpp>
 
 #include <ironbee/core.h>
@@ -46,14 +49,11 @@
 #include <ironbee/string.h>
 
 #include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/date_time/time_facet.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/time_facet.hpp>
 #include <boost/function.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
-
-/* Include our own public header file. */
-#include "txlog.h"
+#include <boost/shared_ptr.hpp>
 
 /**
  * Context configuration value for the TxLogModule.
