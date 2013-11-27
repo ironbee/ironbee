@@ -35,8 +35,8 @@
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/common_semantics.hpp>
-#include <ironbeepp/throw.hpp>
 #include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbee/parsed_content.h>
 
