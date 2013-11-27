@@ -283,18 +283,10 @@ ib_status_t txlog_logger_format_fn(
            << "]";
 
     /* Insert generated audit log. */
-    if (true) { // FIXME bogus preciate.
-        // FIXME  get audit log info
-    }
-    else {
-        logstr << "[ - - ]";
-    }
+    logstr << "[AuditLog " << txlogdata.auditlogFile << " ]";
 
     /* Insert events. */
-    //[AuditLog A3789568-51B9-4EE6-ABA3-A8743A5297C8/20131230/133457/8AE40B17-5EE3-4CDD-AB27-87656859179C] [Event SQLi REQUEST_URI_PARAM:b qrs/sqli/2 150003] [Event SQLi REQUEST_URI_PARAM:b qrs/sqli/5 150003]
-
-
-    /* Format the transaction into logstr to be returned in the arg log_msg. */
+    // [Event SQLi REQUEST_URI_PARAM:b qrs/sqli/2 150003] [Event SQLi REQUEST_URI_PARAM:b qrs/sqli/5 150003]
 
     /* Build stdmsg and return it. */
     stdmsg =
@@ -574,7 +566,8 @@ TxLogData::TxLogData():
     responseBlockMethod("-"),
     responseBlockAction("-"),
     requestBlockMethod("-"),
-    requestBlockAction("-")
+    requestBlockAction("-"),
+    auditlogFile("-")
 {
 }
 
@@ -622,7 +615,7 @@ void TxLogData::recordAuditLogData(
     ib_auditlog_t *auditlog
 )
 {
-    // FIXME - not working auditlogFile = auditlog->full_path;
+    auditlogFile = auditlog->cfg_data->full_path;
 }
 
 ib_status_t TxLogModule::recordAuditLogInfo(
