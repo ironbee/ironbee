@@ -67,7 +67,7 @@ static const char *header_get(ib_mpool_t *pool,
      * So check each element before checking for end-of-list
      */
     for (p = wrapper->head;
-         strncasecmp(name, (const char*)ib_bytestr_ptr(p->name),
+         strncasecmp(name, (const char *)ib_bytestr_ptr(p->name),
                      ib_bytestr_length(p->name));
          p = p->next) {
         if (p == wrapper->tail) {
@@ -108,7 +108,7 @@ static char *base64_decode(ib_mpool_t *pool, const char *encoded)
     };
     char *decoded;
     int len;
-    register const unsigned char *bufin = (const unsigned char*) encoded;
+    register const unsigned char *bufin = (const unsigned char *)encoded;
     register unsigned char *bufout;
     register unsigned int nprbytes;
 
@@ -119,8 +119,8 @@ static char *base64_decode(ib_mpool_t *pool, const char *encoded)
 
     decoded = ib_mpool_alloc(pool, len+1);
     assert(decoded != NULL);
-    bufout = (unsigned char *) decoded;
-    bufin = (const unsigned char*) encoded;
+    bufout = (unsigned char *)decoded;
+    bufin = (const unsigned char *)encoded;
 
     while (nprbytes > 4) {
         *(bufout++) =
