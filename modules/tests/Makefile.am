@@ -47,6 +47,13 @@ test_error_page_LDADD     = \
     $(LDADD) \
     $(top_builddir)/ironbeepp/libibpp.la
 
+check_PROGRAMS += test_txlog
+test_txlog_SOURCES = test_txlog.cpp
+test_txlog_LDADD = \
+    $(LDADD) \
+    $(top_builddir)/modules/ibmod_txlog.la \
+    $(top_builddir)/ironbeepp/libibpp.la
+
 noinst_PROGRAMS = psparse
 psparse_LDADD = ../libparser_suite.la
 psparse_SOURCES = psparse.cpp
