@@ -684,7 +684,7 @@ ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
         log);
     if (ib_rc != IB_OK) {
         ib_log_error(log->ib, "Failed to dispatch auditlog to handlers.");
-        return ib_rc;
+        goto cleanup;
     }
 
     /* Close the audit log. */
