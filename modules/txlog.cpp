@@ -28,6 +28,7 @@
 
 /* Include our own public header file. */
 #include "txlog.h"
+#include "txlog_private.hpp"
 
 #include <ironbeepp/configuration_directives.hpp>
 #include <ironbeepp/configuration_parser.hpp>
@@ -55,42 +56,12 @@
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/shared_ptr.hpp>
 
-/**
- * Context configuration value for the TxLogModule.
- */
-struct TxLogConfig {
-    ib_txlog_module_cfg_t pub_cfg; /**< Public configuration information. */
-    TxLogConfig();
-};
-
 /* Enable PRId64 printf. */
 extern "C" {
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
 #include <inttypes.h>
-}
-
-ib_status_t ib_txlog_get_config(
-    const ib_engine_t            *ib,
-    const ib_context_t           *ctx,
-    const ib_txlog_module_cfg_t **cfg
-)
-{
-    assert(ib != NULL);
-    assert(ctx != NULL);
-    assert(cfg != NULL);
-
-    IronBee::Engine engine(const_cast<ib_engine_t *>(ib));
-    IronBee::Context context(const_cast<ib_context_t *>(ctx));
-    IronBee::Module module =
-        IronBee::Module::with_name(engine, TXLOG_MODULE_NAME);
-
-    TxLogConfig& mod_cfg = module.configuration_data<TxLogConfig>(context);
-
-    *cfg = &mod_cfg.pub_cfg;
-
-    return IB_OK;
 }
 
 namespace {
