@@ -862,7 +862,7 @@ static ib_status_t default_logger_format(
         fprintf(cfg->file, "Out of memory.  Unable to log.");
         fflush(cfg->file);
     }
-    else if (rc != IB_OK) {
+    else if (rc != IB_OK && rc != IB_DECLINED) {
         ib_logger_standard_msg_free(
             *(ib_logger_standard_msg_t **)writer_record);
         fprintf(cfg->file, "Unexpected error.");
