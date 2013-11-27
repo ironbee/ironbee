@@ -26,6 +26,9 @@
 #ifndef __MODULES__TXLOG_H__
 #define __MODULES__TXLOG_H__
 
+#include <ironbee/field.h>
+#include <ironbee/logger.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
