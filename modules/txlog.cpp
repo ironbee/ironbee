@@ -227,6 +227,7 @@ ib_status_t txlog_logger_format_fn(
 
     /* Wrap some types into IronBee++. */
     IronBee::ConstTransaction tx(rec->tx);
+    IronBee::ConstConnection  conn(rec->conn);
     IronBee::ConstModule      module(rec->module);
 
     /* Fetch some telemetry from our tx. */
@@ -254,11 +255,16 @@ ib_status_t txlog_logger_format_fn(
 
     /* Insert UUIDs. */
     logstr << "[" << ib_engine_sensor_id(tx.engine().ib());
-    if (tx.context().site().ib() == NULL) {
+    if (
+        conn == IronBee::ConstConnection() ||
+        conn.context() == IronBee::ConstContext() ||
+        conn.context().site() == IronBee::ConstSite() 
+    )
+    {
         logstr << " -";
     }
     else {
-        logstr << " " << tx.context().site().id_as_s();
+        logstr << " " << conn.context().site().id_as_s();
     }
     logstr << " " << tx.id()
            << "]";
@@ -361,7 +367,7 @@ ib_status_t txlog_logger_format_fn(
     /* Insert events. */
     IronBee::ConstList<ib_logevent_t *> eventList(tx.ib()->logevents);
     BOOST_FOREACH(const ib_logevent_t *e, eventList) {
-        logstr << "[ Event "
+        logstr << "[Event " 
                << " " << "-" // FIXME - category
                << " " << "-" // FIXME - matched location
                << " " << e->rule_id
