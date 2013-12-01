@@ -89,7 +89,7 @@ TEST_F(TxLogTest, Load) {
             "<Site test-site>\n"
             "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
             "   Hostname somesite.com\n"
-            "   Action id:1 rev:1  phase:request_header event alert\n"
+            "   Action id:1 rev:1  phase:request_header event\n"
             "</Site>\n"
         );
 
