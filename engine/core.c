@@ -3389,7 +3389,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             int status;
             const char *status_str;
 
-            status_str = p1 + strlen("status=");
+            status_str = p1 + sizeof("status=")-1;
             status  = atoi(status_str);
 
             if (!(status <= 200 && status < 600))
