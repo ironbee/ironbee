@@ -29,7 +29,7 @@
 class CoreTest : public BaseTransactionFixture {
 };
 
-TEST_F(CoreTest, BlockingModee) {
+TEST_F(CoreTest, BlockingMode) {
     ib_core_cfg_t *corecfg;
     ib_module_t   *module;
 
@@ -55,6 +55,35 @@ TEST_F(CoreTest, BlockingModee) {
         ib_context_module_config(ib_context_main(ib_engine), module, &corecfg));
 
     ASSERT_EQ(200, corecfg->block_status);
+    ASSERT_EQ(IB_BLOCK_METHOD_STATUS, corecfg->block_method);
+}
+
+TEST_F(CoreTest, BlockingMode2) {
+    ib_core_cfg_t *corecfg;
+    ib_module_t   *module;
+
+    std::string config = 
+        std::string(
+            "LogLevel INFO\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "<Site test-site>\n"
+            "   BlockingMethod status=403\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname UnitTest\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+
+    ASSERT_EQ(IB_OK, ib_engine_module_get(ib_engine, "core", &module));
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_context_module_config(ib_context_main(ib_engine), module, &corecfg));
+
+    ASSERT_EQ(403, corecfg->block_status);
     ASSERT_EQ(IB_BLOCK_METHOD_STATUS, corecfg->block_method);
 }
 
