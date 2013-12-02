@@ -4,6 +4,8 @@
 
 - Fixed [#63] Final response body data callback missing on compressed responses.
 
+- Do not consume a valid byte that comes after an invalid UTF-8 character.
+
 
 0.5.9 (19 November 2013)
 ------------------------
