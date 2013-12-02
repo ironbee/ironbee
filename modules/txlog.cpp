@@ -154,7 +154,7 @@ void TxLogData::recordBlockData(
     }
     else if(ib_tx_flags_isset(tx.ib(), IB_TX_FBLOCKED))
     {
-        action = "Blocked";
+        action = "Block";
 
         switch(tx.ib()->block_method) {
         case IB_BLOCK_METHOD_STATUS:
@@ -168,7 +168,7 @@ void TxLogData::recordBlockData(
         }
     }
     else {
-        action = "Passed";
+        action = "Pass";
         method = "-";
     }
 }
@@ -243,7 +243,7 @@ ib_status_t txlog_logger_format_fn(
                 boost::posix_time::ptime,
                 char
             > (
-                "%Y-%m-%d %H:%M:%S %q"
+                "%Y-%m-%d %H:%M:%S"
             )
         )
     );
@@ -271,15 +271,16 @@ ib_status_t txlog_logger_format_fn(
 
     /* Insert IP information. */
     logstr << "[" << "-" // FIXME - remote ip
-           << " " << "-" // FIXME - remove port
-           << " " << "-" // FIXME - local port
+           << " " << "-" // FIXME - remote port
+           << " " << "-" // FIXME - local  ip
+           << " " << "-" // FIXME - local  port
            << " " << "-" // FIXME - origin ip
            << " " << "-" // FIXME - origin port
            << "]";
 
     /* Insert encryption info. */
     logstr << "["
-           << " - " /* TODO - when encryption info is available, replace. */
+           << " - " /* TODO: when encryption info is available, replace. */
            << "]";
 
     /* Insert HTTP Status info. */
@@ -290,7 +291,7 @@ ib_status_t txlog_logger_format_fn(
 
     /* Insert HTTP Request Normalized Data */
     logstr << "[" << tx.hostname()
-           << " " << "Order=-" /* TODO - replace when available. */
+           << " " << "-" /* TODO: Order=header order. Replace when available. */
            << "]";
 
     /* Insert request headers. */
@@ -324,8 +325,9 @@ ib_status_t txlog_logger_format_fn(
            << "]";
 
     /* Insert Response Normalized Data */
-    logstr << "[\"Order=-\"]"; /* TODO - replace when available. */
+    logstr << "[ - ]";  /* TODO: Order=header order. Replace when available. */
 
+    logstr << "[";
     /* Insert response headers. */
     if (tx.response_header()) {
         for (
@@ -362,7 +364,7 @@ ib_status_t txlog_logger_format_fn(
            << "]";
 
     /* Insert generated audit log. */
-    logstr << "[AuditLog " << txlogdata.auditlogFile << " ]";
+    logstr << "[AuditLog " << txlogdata.auditlogFile << "]";
 
     /* Insert events. */
     IronBee::ConstList<ib_logevent_t *> eventList(tx.ib()->logevents);
@@ -439,14 +441,14 @@ private:
         const char                   *param1
     );
 
-    ///! TxLogSizeLimit config directive callback.
+    ///! TxLogFlushSizeLimit config directive callback.
     void logSizeLimitDirective(
         IronBee::ConfigurationParser  cp,
         const char                   *name,
         const char                   *param1
     );
 
-    ///! TxLogAgeLimit config directive callback.
+    ///! TxLogFlushAgeLimit config directive callback.
     void logAgeLimitDirective(
         IronBee::ConfigurationParser  cp,
         const char                   *name,
@@ -509,7 +511,7 @@ TxLogConfig::TxLogConfig() {
     /* Now set all the values we care about. */
     pub_cfg.is_enabled       = true;
     pub_cfg.log_basename     = "txlog";
-    pub_cfg.log_basedir      = "/var/log/ironbee/txlogs";
+    pub_cfg.log_basedir      = IB_PREFIX "/txlogs";
     pub_cfg.max_size         = 5 * 1024;
     pub_cfg.max_age          = 60 * 10;
     pub_cfg.logger_format_fn = &txlog_logger_format_fn;
@@ -557,10 +559,10 @@ TxLogModule::TxLogModule(IronBee::Module module):
             "TxLogBaseFileName",
             boost::bind(&TxLogModule::logBaseNameDirective, this, _1, _2, _3))
         .param1(
-            "TxLogSizeLimit",
+            "TxLogFlushSizeLimit",
             boost::bind(&TxLogModule::logSizeLimitDirective, this, _1, _2, _3))
         .param1(
-            "TxLogAgeLimit",
+            "TxLogFlushAgeLimit",
             boost::bind(&TxLogModule::logAgeLimitDirective, this, _1, _2, _3))
         ;
 

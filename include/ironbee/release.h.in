@@ -79,6 +79,13 @@ extern "C" {
                                 (IB_VERSION_MICRO))
 
 /**
+ * IronBee installation prefix.
+ *
+ * This is the value passed to @c configure @c--prefix=.
+ */
+#define IB_PREFIX IB_STRINGIFY(@prefix@)
+
+/**
  * ABI version number.
  *
  * This number must be incremented each time the ABI changes. If a
