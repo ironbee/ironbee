@@ -3278,11 +3278,11 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         }
         /* The only argument is status=<int>.
          * Check for it. If OK, set status_str. */
-        else if (strncasecmp(p1, "status=", strlen("status=")-1) == 0) {
+        else if (strncasecmp(p1, "status=", sizeof("status=")-1) == 0) {
             int status;
             const char *status_str;
 
-            status_str = p1 + strlen("status=");
+            status_str = p1 + sizeof("status=")-1;
             status  = atoi(status_str);
 
             if (status < 200 || status >= 600)
