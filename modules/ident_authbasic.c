@@ -38,6 +38,7 @@
 #include <ironbee/ident.h>
 #include <ironbee/module.h>
 #include <ironbee/parsed_content.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -234,7 +235,12 @@ static ib_status_t basic_challenge(ib_tx_t *tx)
     sprintf(challenge, "Basic realm=\"%s\"", cfg->realm);
 
     ib_server_error_response(ib_engine_server_get(tx->ib), tx, 401);
-    ib_server_error_header(ib_engine_server_get(tx->ib), tx, "WWW-Authenticate", challenge);
+    ib_server_error_header(
+        ib_engine_server_get(tx->ib),
+        tx,
+        IB_S2SL("WWW-Authenticate"),
+        IB_S2SL(challenge)
+    );
     return IB_OK;
 }
 

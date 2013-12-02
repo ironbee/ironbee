@@ -176,17 +176,30 @@ static int edit_header(void *v, const char *key, const char *val)
  * @param[in] tx - Ironbee transaction
  * @param[in] dir - Request/Response
  * @param[in] action - Requested header manipulation
- * @param[in] hdr - Header
- * @param[in] value - Header Value
+ * @param[in] name Name of header.
+ * @param[in] name_length Length of @a name.
+ * @param[in] value value of header.
+ * @param[in] value_length Length of @a value.
  * @param[in] rx - Compiled regexp of value (if applicable)
  * @return status (OK, Declined if called too late, Error if called with
  *                 invalid data).  NOTIMPL should never happen.
  */
-static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
-                                      ib_server_header_action_t action,
-                                      const char *hdr, const char *value,
-                                      ib_rx_t *rx, void *cbdata)
+static
+ib_status_t ib_header_callback(
+    ib_tx_t                   *tx,
+    ib_server_direction_t      dir,
+    ib_server_header_action_t  action,
+    const char                *name,
+    size_t                     name_length,
+    const char                *value,
+    size_t                     value_length,
+    ib_rx_t                   *rx,
+    void                      *cbdata
+)
 {
+    char *nul_name;
+    char *nul_value;
+    ib_status_t rc;
     ironbee_req_ctx *ctx = tx->sctx;
     apr_table_t *headers = (dir == IB_SERVER_REQUEST)
                                 ? ctx->r->headers_in : ctx->r->headers_out;
@@ -195,39 +208,57 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
         (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
         return IB_DECLINED;  /* too late for requested op */
 
+    nul_name = strndup(name, name_length);
+    if (nul_name == NULL) {
+        return IB_EALLOC;
+    }
+    nul_value = strndup(value, value_length);
+    if (nul_value == NULL) {
+        rc = IB_EALLOC;
+        goto cleanup;
+    }
+
     switch (action) {
       case IB_HDR_SET:
-        apr_table_set(headers, hdr, value);
-        return IB_OK;
+        apr_table_set(headers, nul_name, nul_value);
+        rc = IB_OK;
+        goto cleanup;
       case IB_HDR_UNSET:
-        apr_table_unset(headers, hdr);
-        return IB_OK;
+        apr_table_unset(headers, nul_name);
+        rc = IB_OK;
+        goto cleanup;
       case IB_HDR_ADD:
-        apr_table_add(headers, hdr, value);
-        return IB_OK;
+        apr_table_add(headers, nul_name, nul_value);
+        rc = IB_OK;
+        goto cleanup;
       case IB_HDR_MERGE:
       case IB_HDR_APPEND:
-        apr_table_merge(headers, hdr, value);
-        return IB_OK;
+        apr_table_merge(headers, nul_name, nul_value);
+        rc = IB_OK;
+        goto cleanup;
       case IB_HDR_EDIT:
-        if (apr_table_get(headers, hdr)) {
+        if (apr_table_get(headers, nul_name)) {
             edit_do ed;
 
             /* Check we were passed something valid */
             if (rx == NULL) {
-                if (rx = ib_rx_compile(tx->mp, value), rx == NULL) {
+                if (rx = ib_rx_compile(tx->mp, nul_value), rx == NULL) {
                     ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, ctx->r,
-                                  "Failed to compile %s as regexp", value);
-                    return IB_EINVAL;
+                                  "Failed to compile %s as regexp", nul_value);
+                    rc = IB_EINVAL;
+                    goto cleanup;
                 }
             }
 
             ed.mp = tx->mp;
             ed.rx = rx;
             ed.t = apr_table_make(ctx->r->pool, 5);
-            if (!apr_table_do(edit_header, (void *) &ed, headers, hdr, NULL))
-                return IB_EINVAL;
-            apr_table_unset(headers, hdr);
+            if (!apr_table_do(edit_header, (void *) &ed, headers, nul_name, NULL))
+            {
+                rc = IB_EINVAL;
+                goto cleanup;
+            }
+            apr_table_unset(headers, nul_name);
             if (dir == IB_SERVER_REQUEST)
                 ctx->r->headers_in = apr_table_overlay(ctx->r->pool,
                                                        headers, ed.t);
@@ -235,9 +266,16 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
                 ctx->r->headers_out = apr_table_overlay(ctx->r->pool,
                                                         headers, ed.t);
         }
-        return IB_OK;
+        rc = IB_OK;
+        goto cleanup;
     }
-    return IB_ENOTIMPL;
+
+    rc = IB_ENOTIMPL;
+
+cleanup:
+    free(nul_name);
+    free(nul_value);
+    return rc;
 }
 /**
  * Ironbee callback function to set an HTTP error status.
@@ -270,20 +308,38 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 /**
  * Ironbee callback function to set an HTTP header for an ErrorDocument.
  *
- * @param[in] tx - Ironbee transaction
- * @param[in] hdr - Header to set
- * @param[in] val - Value to set
+ * @param[in] tx Ironbee transaction
+ * @param[in] name Name of header.
+ * @param[in] name_length Length of @a name.
+ * @param[in] value value of header.
+ * @param[in] value_length Length of @a value.
  * @return OK, or Declined if called too late, or EINVAL.
  */
-static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *val, void *cbdata)
+static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *name, size_t name_length, const char *value, size_t value_length, void *cbdata)
 {
     ironbee_req_ctx *ctx = tx->sctx;
+    char *nul_name;
+    char *nul_value;
+
     if (ctx->state & START_RESPONSE)
         return IB_DECLINED;
-    if (!hdr || !val)
+    if (!name || !value)
         return IB_EINVAL;
 
-    apr_table_set(ctx->r->err_headers_out, hdr, val);
+    nul_name = strndup(name, name_length);
+    if (nul_name == NULL) {
+        return IB_EALLOC;
+    }
+    nul_value = strndup(value, value_length);
+    if (nul_value == NULL) {
+        free(nul_name);
+        return IB_EALLOC;
+    }
+
+    apr_table_set(ctx->r->err_headers_out, nul_name, nul_value);
+
+    free(nul_name);
+    free(nul_value);
     return IB_OK;
 }
 
@@ -301,7 +357,7 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *
  */
 static ib_status_t ib_errdata_callback(
     ib_tx_t *tx,
-    const uint8_t *data,
+    const char *data,
     size_t dlen,
     void *cbdata)
 {

@@ -352,10 +352,18 @@ static bool is_error_status(int status)
 /**
  * Callback functions for Ironbee to signal to us
  */
-static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
-                                      ib_server_header_action_t action,
-                                      const char *hdr, const char *value,
-                                      ib_rx_t *rx, void *cbdata)
+static
+ib_status_t ib_header_callback(
+    ib_tx_t                   *tx,
+    ib_server_direction_t      dir,
+    ib_server_header_action_t  action,
+    const char                *name,
+    size_t                     name_length,
+    const char                *value,
+    size_t                     value_length,
+    ib_rx_t                   *rx,
+    void                      *cbdata
+)
 {
     ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
     hdr_action_t *header;
@@ -383,8 +391,8 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
     header->dir = dir;
     /* FIXME: deferring merge support - implementing append instead */
     header->action = action = action == IB_HDR_MERGE ? IB_HDR_APPEND : action;
-    header->hdr = TSstrdup(hdr);
-    header->value = TSstrdup(value);
+    header->hdr = TSstrndup(name, name_length);
+    header->value = TSstrndup(value, value_length);
     header->rx = rx;
 
     return IB_OK;
@@ -495,18 +503,26 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
     return IB_ENOTIMPL;
 }
 
-static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *val, void *cbdata)
+static
+ib_status_t ib_errhdr_callback(
+    ib_tx_t    *tx,
+    const char *name,
+    size_t      name_length,
+    const char *value,
+    size_t      value_length,
+    void       *cbdata
+)
 {
     ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
     hdr_list *hdrs;
     /* We can't return an error after the response has started */
     if (ctx->state & START_RESPONSE)
         return IB_DECLINED;
-    if (!hdr || !val)
+    if (!name || !value)
         return IB_EINVAL;
     hdrs = TSmalloc(sizeof(*hdrs));
-    hdrs->hdr = TSstrdup(hdr);
-    hdrs->value = TSstrdup(val);
+    hdrs->hdr = TSstrndup(name, name_length);
+    hdrs->value = TSstrndup(value, value_length);
     hdrs->next = ctx->err_hdrs;
     ctx->err_hdrs = hdrs;
     return IB_OK;
@@ -514,7 +530,7 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *
 
 static ib_status_t ib_errbody_callback(
     ib_tx_t *tx,
-    const uint8_t *data,
+    const char *data,
     size_t dlen,
     void *cbdata)
 {

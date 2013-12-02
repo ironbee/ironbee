@@ -31,10 +31,9 @@
 #include <ironbeepp/transaction.hpp>
 
 /* C includes. */
-extern "C" {
 #include <ironbee/engine.h>
 #include <ironbee/server.h>
-}
+#include <ironbee/string.h>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -213,8 +212,8 @@ private:
                 tx.ib(),
                 IB_SERVER_RESPONSE,
                 IB_HDR_SET,
-                "Connection",
-                "close",
+                IB_S2SL("Connection"),
+                IB_S2SL("close"),
                 NULL);
             if (rc != IB_OK) {
             }

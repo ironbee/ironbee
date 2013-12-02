@@ -41,6 +41,7 @@ libironbee_la_SOURCES =                  \
     parsed_content.c                     \
     rule_engine.c                        \
     rule_logger.c                        \
+    server.c                             \
     site.c                               \
     state_notify.c                       \
     transformation.c                     \

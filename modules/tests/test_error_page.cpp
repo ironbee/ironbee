@@ -83,15 +83,13 @@ extern "C" {
  * @returns IB_OK.
  */
 ib_status_t mock_error_body_fn(
-    ib_tx_t       *tx,
-    const uint8_t *data,
-    size_t         len,
-    void          *cbdata
+    ib_tx_t    *tx,
+    const char *data,
+    size_t      len,
+    void       *cbdata
 )
 {
-    mock_error_body = std::string(
-        reinterpret_cast<const char *>(data),
-        len);
+    mock_error_body = std::string(data, len);
 
     return IB_OK;
 }

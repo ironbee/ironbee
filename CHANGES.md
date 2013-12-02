@@ -30,6 +30,8 @@ IronBee v0.9.0
 
 - Added rule tracing.  To use, configure IronBee with --enable-rule-trace.  This will add instrumentation code to the rule engine and enable the `RuleTrace` and `RuleTraceFile` directives.  `RuleTrace` takes a rule id as a parameter and enables tracing for that rule.  Traces will be output at the end of each transaction to either stderr or the file specified by `RuleTraceFile`.  Output is CSV of local ip, local port, remote ip, remote port, transaction id, rule id, number of times rule was evaluated, and total number of microseconds spent evaluating rule.  `RuleTraceFile` is context specific.
 
+- Server callbacks now take pointer-length strings rather than NUL-terminated strings.
+
 **Predicate**
 
 - The Field call is now known as Var.  Field continues to exist as an alias for Var.

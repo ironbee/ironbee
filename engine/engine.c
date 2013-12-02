@@ -1118,8 +1118,8 @@ ib_status_t ib_tx_server_error(
 
 ib_status_t ib_tx_server_error_header(
     ib_tx_t *tx,
-    const char *name,
-    const char *value
+    const char *name, size_t name_len,
+    const char *value, size_t value_len
 )
 {
     assert(tx != NULL);
@@ -1128,12 +1128,12 @@ ib_status_t ib_tx_server_error_header(
     assert(name != NULL);
     assert(value != NULL);
 
-    return ib_server_error_header(ib_engine_server_get(tx->ib), tx, name, value);
+    return ib_server_error_header(ib_engine_server_get(tx->ib), tx, name, name_len, value, value_len);
 }
 
 ib_status_t ib_tx_server_error_data(
     ib_tx_t *tx,
-    const uint8_t *data,
+    const char *data,
     size_t dlen
 )
 {
@@ -1146,21 +1146,23 @@ ib_status_t ib_tx_server_error_data(
 }
 
 ib_status_t ib_tx_server_header(
-    ib_tx_t *tx,
-    ib_server_direction_t dir,
-    ib_server_header_action_t action,
-    const char *hdr,
-    const char *value,
-    ib_rx_t *rx
+    ib_tx_t                   *tx,
+    ib_server_direction_t      dir,
+    ib_server_header_action_t  action,
+    const char                *name,
+    size_t                     name_length,
+    const char                *value,
+    size_t                     value_length,
+    ib_rx_t                   *rx
 )
 {
     assert(tx != NULL);
     assert(tx->ib != NULL);
     assert(ib_engine_server_get(tx->ib) != NULL);
-    assert(hdr != NULL);
+    assert(name != NULL);
     assert(value != NULL);
 
-    return ib_server_header(ib_engine_server_get(tx->ib), tx, dir, action, hdr, value, rx);
+    return ib_server_header(ib_engine_server_get(tx->ib), tx, dir, action, name, name_length, value, value_length, rx);
 }
 
 

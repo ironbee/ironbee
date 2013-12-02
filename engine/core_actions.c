@@ -1686,10 +1686,9 @@ static ib_status_t act_set_request_header_execute(
     ib_rule_log_debug(rule_exec, "Setting request header \"%.*s\"=\"%.*s\"",
                       (int)name_len, name, (int)value_len, value);
 
-    /* Note: ignores lengths for now */
     rc = ib_server_header(ib_engine_server_get(rule_exec->ib), tx,
                           IB_SERVER_REQUEST, IB_HDR_SET,
-                          name, value, NULL);
+                          name, name_len, value, value_len, NULL);
 
     return rc;
 }
@@ -1746,9 +1745,15 @@ static ib_status_t act_edit_request_header_execute(
                       "Applying regexp to request header \"%.*s\"=~\"%.*s\"",
                       (int)name_len, name, (int)value_len, value);
 
-    /* Note: ignores lengths for now */
-    rc = ib_server_header(ib_engine_server_get(tx->ib), tx, IB_SERVER_REQUEST, IB_HDR_EDIT,
-                          name, value, act_data->rx);
+    rc = ib_server_header(
+        ib_engine_server_get(tx->ib),
+        tx,
+        IB_SERVER_REQUEST,
+        IB_HDR_EDIT,
+        name, name_len,
+        value, value_len,
+        act_data->rx
+    );
 
     return rc;
 }
@@ -1790,13 +1795,14 @@ static ib_status_t act_del_request_header_execute(
 
     ib_rule_log_debug(rule_exec, "Deleting request header \"%.*s\"",
                       (int)name_len, name);
-    /* Note: ignores lengths for now */
+
     rc = ib_server_header(ib_engine_server_get(rule_exec->ib),
                           rule_exec->tx,
                           IB_SERVER_REQUEST,
                           IB_HDR_UNSET,
-                          name,
-                          "", NULL);
+                          name, name_len,
+                          "", 0,
+                          NULL);
 
     return rc;
 }
@@ -1853,10 +1859,9 @@ static ib_status_t act_set_response_header_execute(
     ib_rule_log_debug(rule_exec, "Setting response header \"%.*s\"=\"%.*s\"",
                       (int)name_len, name, (int)value_len, value);
 
-    /* Note: ignores lengths for now */
     rc = ib_server_header(ib_engine_server_get(tx->ib), tx,
                           IB_SERVER_RESPONSE, IB_HDR_SET,
-                          name, value, NULL);
+                          name, name_len, value, value_len, NULL);
 
     return rc;
 }
@@ -1915,10 +1920,9 @@ static ib_status_t act_edit_response_header_execute(
     ib_log_debug_tx(tx, "Applying regexp to response header \"%.*s\"=~\"%.*s\"",
                     (int)name_len, name, (int)value_len, value);
 
-    /* Note: ignores lengths for now */
     rc = ib_server_header(ib_engine_server_get(tx->ib), tx,
                           IB_SERVER_RESPONSE, IB_HDR_EDIT,
-                          name, value, act_data->rx);
+                          name, name_len, value, value_len, act_data->rx);
 
     return rc;
 }
@@ -1967,8 +1971,9 @@ static ib_status_t act_del_response_header_execute(
                           rule_exec->tx,
                           IB_SERVER_RESPONSE,
                           IB_HDR_UNSET,
-                          name,
-                          "", NULL);
+                          name, name_len,
+                          "", 0,
+                          NULL);
 
     return rc;
 }

@@ -452,17 +452,21 @@ ib_status_t DLL_PUBLIC ib_tx_server_error(
  * Set server error header.
  *
  * @param[in] tx The transaction.
- * @param[in] name The null-terminated name of the header.
- * @param[in] value The null-terminated value of the header.
+ * @param[in] name Name of header.
+ * @param[in] name_length Length of @a name.
+ * @param[in] value value of header.
+ * @param[in] value_length Length of @a value.
  *
  * @returns
  *   - IB_OK On success.
  *   - IB_ENOTIMPL If not implemented by the server plugin.
  */
 ib_status_t DLL_PUBLIC ib_tx_server_error_header(
-    ib_tx_t *tx,
+    ib_tx_t    *tx,
     const char *name,
-    const char *value
+    size_t      name_length,
+    const char *value,
+    size_t      value_length
 );
 
 /**
@@ -478,7 +482,7 @@ ib_status_t DLL_PUBLIC ib_tx_server_error_header(
  */
 ib_status_t DLL_PUBLIC ib_tx_server_error_data(
     ib_tx_t *tx,
-    const uint8_t *data,
+    const char *data,
     size_t dlen
 );
 
@@ -489,8 +493,10 @@ ib_status_t DLL_PUBLIC ib_tx_server_error_data(
  * @param[in] dir Direction. This indicates if this is for the request or
  *            the response of the HTTP transaction.
  * @param[in] action How to add this header. Add, delete, set, etc.
- * @param[in] hdr Null-terminated header name string.
- * @param[in] value Null-terminated header value string.
+ * @param[in] name Name of header.
+ * @param[in] name_length Length of @a name.
+ * @param[in] value value of header.
+ * @param[in] value_length Length of @a value.
  * @param[in] rx The regular expression if the action is @ref IB_HDR_EDIT.
  *
  * @returns
@@ -498,12 +504,14 @@ ib_status_t DLL_PUBLIC ib_tx_server_error_data(
  *   - IB_ENOTIMPL If not implemented by the server plugin.
  */
 ib_status_t DLL_PUBLIC ib_tx_server_header(
-    ib_tx_t *tx,
-    ib_server_direction_t dir,
-    ib_server_header_action_t action,
-    const char *hdr,
-    const char *value,
-    ib_rx_t *rx
+    ib_tx_t                   *tx,
+    ib_server_direction_t      dir,
+    ib_server_header_action_t  action,
+    const char                *name,
+    size_t                     name_length,
+    const char                *value,
+    size_t                     value_length,
+    ib_rx_t                   *rx
 );
 
 /**

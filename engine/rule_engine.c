@@ -1105,7 +1105,7 @@ static ib_status_t report_close_block_to_server(
 
     ib_log_debug_tx(tx, "Reporting close block to server.");
 
-    rc = ib_server_error_close(server, conn, tx);
+    rc = ib_server_close(server, conn, tx);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_log_debug_tx(
             tx,
@@ -1196,7 +1196,7 @@ static ib_status_t report_status_block_to_server(
     }
 
     /* Report the error page back to the server. */
-    rc = ib_server_error_body(ib_engine_server_get(ib), tx, body, body_len);
+    rc = ib_server_error_body(ib_engine_server_get(ib), tx, (const char *)body, body_len);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_log_debug_tx(
             tx,

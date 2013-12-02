@@ -431,8 +431,10 @@ ib_status_t clipp_header(
     ib_tx_t*                  tx,
     ib_server_direction_t     dir,
     ib_server_header_action_t action,
-    const char*               hdr,
+    const char*               name,
+    size_t                    name_length,
     const char*               value,
+    size_t                    value_length,
     ib_rx_t*                  rx,
     void*
 )
@@ -447,10 +449,10 @@ ib_status_t clipp_header(
     };
 
     ib_log_alert_tx(tx,
-        "clipp_header: dir=%s action=%s hdr=%s value=%s",
+        "clipp_header: dir=%s action=%s hdr=%.*s value=%.*s",
         (dir == IB_SERVER_REQUEST ? "request" : "response"),
         c_header_actions[action],
-        hdr, value
+        (int)name_length, name, (int)value_length, value
     );
 
     return IB_OK;
