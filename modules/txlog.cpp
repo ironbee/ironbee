@@ -258,7 +258,7 @@ ib_status_t txlog_logger_format_fn(
     if (
         conn == IronBee::ConstConnection() ||
         conn.context() == IronBee::ConstContext() ||
-        conn.context().site() == IronBee::ConstSite() 
+        conn.context().site() == IronBee::ConstSite()
     )
     {
         logstr << " -";
@@ -369,7 +369,7 @@ ib_status_t txlog_logger_format_fn(
     /* Insert events. */
     IronBee::ConstList<ib_logevent_t *> eventList(tx.ib()->logevents);
     BOOST_FOREACH(const ib_logevent_t *e, eventList) {
-        logstr << "[Event " 
+        logstr << "[Event "
                << " " << "-" // FIXME - category
                << " " << "-" // FIXME - matched location
                << " " << e->rule_id
