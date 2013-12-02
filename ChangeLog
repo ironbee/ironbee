@@ -6,6 +6,9 @@
 
 - Do not consume a valid byte that comes after an invalid UTF-8 character.
 
+- Use case insensitive comparison for content-coding values. Warn if unknown
+  response content encoding is encountered.
+
 
 0.5.9 (19 November 2013)
 ------------------------
