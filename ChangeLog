@@ -1,4 +1,10 @@
 
+0.5.10
+------
+
+- Fixed [#63] Final response body data callback missing on compressed responses.
+
+
 0.5.9 (19 November 2013)
 ------------------------
 
