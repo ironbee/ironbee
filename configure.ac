@@ -527,7 +527,7 @@ if test "${cpp_code}" = 1; then
 fi
 
 dnl Example modules should go last.
-TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} example_modules"
+TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} example_servers example_modules"
 
 dnl Some subdirectories should go very early.
 TOPLEVEL_SUBDIRS="tests util engine ${TOPLEVEL_SUBDIRS}"
