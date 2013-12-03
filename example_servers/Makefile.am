@@ -2,7 +2,9 @@ ACLOCAL_AMFLAGS = -I ../acinclude
 
 include $(top_srcdir)/build/common.mk
 
-LDADD = $(LIBADD) $(top_builddir)/engine/libironbee.la
+LDADD = $(LIBADD) \
+  $(top_builddir)/engine/libironbee.la \
+  $(top_builddir)/util/libibutil.la
 
 if FREEBSD
 AM_LDFLAGS += -L/usr/local/lib -module -avoid-version -lssp_nonshared
