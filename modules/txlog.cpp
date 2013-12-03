@@ -322,12 +322,12 @@ static ib_status_t txlog_logger_format_fn(
            << "]";
 
     /* Insert IP information. */
-    logstr << "[" << "-" // FIXME - remote ip
-           << " " << "-" // FIXME - remote port
-           << " " << "-" // FIXME - local  ip
-           << " " << "-" // FIXME - local  port
-           << " " << "-" // FIXME - origin ip
-           << " " << "-" // FIXME - origin port
+    logstr << "[" << conn.remote_ip_string()
+           << " " << conn.remote_port()
+           << " " << conn.local_ip_string()
+           << " " << conn.local_port()
+           << " " << "-" // FIXME - origin ip - ts provided?
+           << " " << "-" // FIXME - origin port - ts provided?
            << "]";
 
     /* Insert encryption info. */
@@ -392,7 +392,7 @@ static ib_status_t txlog_logger_format_fn(
         }
     }
     else {
-        logstr << " -  ";
+        logstr << "- ";
     }
     /* Erase the extra trailing space. */
     logstr.seekp(-1, std::ios_base::cur);
@@ -407,10 +407,10 @@ static ib_status_t txlog_logger_format_fn(
     logstr << "[-]";
 
     /* Insert content stats. */
-    logstr << "[" << "-" // "remote client waf request size." // FIXME
-           << " " << "-" // "waf to origin request size" // FIXME
-           << " " << "-" // "origin to waf response size" // FIXME
-           << " " << "-" // "waf to remote response size" // FIXME
+    logstr << "[" << "-" // FIXME - remote client waf req size - ts provided?
+           << " " << "-" // FIXME - waf to origin req size - ts provided?
+           << " " << "-" // FIXME - origin to waf response size - ts provided?
+           << " " << "-" // FIXME - waf to remote response size - ts provided?
            << "]";
 
     /* Insert generated audit log. */
