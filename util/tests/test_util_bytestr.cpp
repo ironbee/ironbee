@@ -58,7 +58,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_mem)
     ib_bytestr_t *bs;
     ib_status_t rc;
     uint8_t data[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
-    uint8_t *ptr;
+    const uint8_t *ptr;
 
     rc = ib_bytestr_dup_mem(&bs, MemPool(), data, sizeof(data));
     ASSERT_EQ(IB_OK, rc);
@@ -75,8 +75,8 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_nulstr)
 {
     ib_bytestr_t *bs;
     ib_status_t rc;
-    char data[] = "abcdef";
-    uint8_t *ptr;
+    const char data[] = "abcdef";
+    const uint8_t *ptr;
 
     rc = ib_bytestr_dup_nulstr(&bs, MemPool(), data);
     ASSERT_EQ(IB_OK, rc);
@@ -84,7 +84,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_nulstr)
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
     ASSERT_EQ(6UL, ib_bytestr_size(bs));
     ptr = ib_bytestr_const_ptr(bs);
-    ASSERT_NE(data, ptr);
+    ASSERT_NE((uint8_t*)data, ptr);
     ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
 }
 
@@ -94,7 +94,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_mem)
     ib_bytestr_t *bs;
     ib_status_t rc;
     uint8_t data[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
-    uint8_t *ptr;
+    const uint8_t *ptr;
 
     rc = ib_bytestr_alias_mem(&bs, MemPool(), data, sizeof(data));
     ASSERT_EQ(IB_OK, rc);
@@ -114,7 +114,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_nulstr)
     ib_bytestr_t *bs;
     ib_status_t rc;
     char data[] = "abcdef";
-    uint8_t *ptr;
+    const uint8_t *ptr;
 
     rc = ib_bytestr_alias_nulstr(&bs, MemPool(), data);
     ASSERT_EQ(IB_OK, rc);
@@ -122,7 +122,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_nulstr)
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
     ASSERT_EQ(6UL, ib_bytestr_size(bs));
     ptr = ib_bytestr_const_ptr(bs);
-    ASSERT_EQ((uint8_t *, ptr);
+    ASSERT_EQ((uint8_t *)data, ptr);
     ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
     rc = ib_bytestr_append_nulstr(bs, "foo");
     ASSERT_EQ(IB_EINVAL, rc);
@@ -137,8 +137,8 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     char data1[] = "abcdef";
     char data2[] = "ghijkl";
     char data3[] = "foo";
-    uint8_t data4[] = { 'b', 'a', 'r' };
-    uint8_t *ptr;
+    const uint8_t data4[] = { 'b', 'a', 'r' };
+    const uint8_t *ptr;
 
     rc = ib_bytestr_dup_nulstr(&bs1, MemPool(), data1);
     ASSERT_EQ(IB_OK, rc);

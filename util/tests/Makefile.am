@@ -17,6 +17,7 @@ endif
 
 check_PROGRAMS = \
 	test_util_array \
+	test_util_bytestr \
 	test_util_cfgmap \
 	test_util_clock \
 	test_util_decode \
@@ -74,6 +75,8 @@ test_util_types_SOURCES = test_util_types.cpp
 test_util_flags_SOURCES = test_util_flags.cpp
 
 test_util_array_SOURCES = test_util_array.cpp
+
+test_util_bytestr_SOURCES = test_util_bytestr.cpp
 
 test_util_logformat_SOURCES = test_util_logformat.cpp
 
