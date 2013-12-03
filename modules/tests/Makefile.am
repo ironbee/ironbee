@@ -1,5 +1,8 @@
 include $(top_srcdir)/build/tests.mk
 
+# Test_txlog uses ../txlog_api.cpp.
+AUTOMAKE_OPTIONS = subdir-objects
+
 LDADD = \
     $(top_builddir)/util/libibutil.la \
     $(top_builddir)/engine/libironbee.la \
