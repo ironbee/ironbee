@@ -26,13 +26,13 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbeepp/context.hpp>
+#include <ironbeepp/engine.hpp>
+#include <ironbeepp/module.hpp>
+
+#include "txlog_private.hpp"
 /* Include our own public header file. */
 #include "txlog.h"
-#include "txlog_private.hpp"
-
-#include <ironbeepp/engine.hpp>
-#include <ironbeepp/context.hpp>
-#include <ironbeepp/module.hpp>
 
 ib_status_t ib_txlog_get_config(
     const ib_engine_t            *ib,

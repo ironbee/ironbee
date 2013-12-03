@@ -20,7 +20,6 @@ CANONICAL_INCLUDE_ORDER = [
 
   # Dirty hack section
   '"user_agent_private.h"',
-  '"txlog.h"',
   '<ironbee/module_sym.h>',
 
   # predicate
@@ -91,6 +90,8 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/transformation.hpp>',
   '<ironbeepp/var.hpp>',
 
+  '"txlog_private.hpp"',
+
   '"collection_manager_private.h"',
   '"core_audit_private.h"',
   '"core_private.h"',
@@ -115,6 +116,7 @@ CANONICAL_INCLUDE_ORDER = [
   '"rule_logger_private.h"',
   '"rules_lua_private.h"',
   '"state_notify_private.h"',
+  '"txlog.h"',
   '"user_agent_private.h"',
 
   # Automata
@@ -359,10 +361,10 @@ all_ironbee_code do |path|
   private_name = nil
   if path =~ /(\.c(pp)?)$/
     self_name = Regexp.new(
-      "(ironbee|ironautomata|predicate)/(.+/)?" + File.basename(path, $1) + '\.h' + ($2 || "")
+      "(ironbee|ironautomata|predicate|modules)/(.+/)?" + File.basename(path, $1) + '\.h(pp)?'
     )
     private_name = Regexp.new(
-      '^"' + File.basename(path, $1) + '(_private)?\.h' + ($2 || "")
+      '^"' + File.basename(path, $1) + '(_private)?\.h(pp)?'
     )
   end
   extract_includes(path).each do |i|
@@ -377,7 +379,7 @@ all_ironbee_code do |path|
 
     if index.nil?
       puts "Unknown include in #{path}: #{i}"
-    elsif index <= last_index
+    elsif index < last_index
       puts "Include out of order in #{path}: #{i} (#{index} vs #{last_index})"
     else
       last_index = index

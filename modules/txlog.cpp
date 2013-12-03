@@ -27,8 +27,8 @@
 #include "ironbee_config_auto.h"
 
 /* Include our own public header file. */
-#include "txlog.h"
 #include "txlog_private.hpp"
+#include "txlog.h"
 
 #include <ironbeepp/configuration_directives.hpp>
 #include <ironbeepp/configuration_parser.hpp>

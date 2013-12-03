@@ -22,11 +22,10 @@
 /// @author Sam Baskinger <sbaskinger@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
-#include "gtest/gtest.h"
-
-#include "base_fixture.h"
-
 #include "../txlog.h"
+
+#include "gtest/gtest.h"
+#include "base_fixture.h"
 
 #include <string>
 
