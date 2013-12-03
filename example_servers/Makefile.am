@@ -10,6 +10,6 @@ else
 AM_LDFLAGS += -module -avoid-version
 endif
 
-bin_PROGRAMS = parsed_c
+noinst_PROGRAMS = parsed_c
 
 parsed_c_SOURCES = parsed_c.c
