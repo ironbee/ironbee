@@ -293,7 +293,7 @@ fi
 DOXYGEN=$doxygen
 
 DOXYGEN_TOP=`cd $srcdir;pwd`
-DOXYGEN_DIRS="include util engine modules automata fast lua predicate example_modules"
+DOXYGEN_DIRS="include util engine modules automata fast lua predicate example_modules example_servers"
 MARKDOWN_DOXYGEN_FILES=`cd $srcdir;find . lua -type f -maxdepth 1 -name '*.md'`
 EXTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp'`
 INTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' -o -name '*.cc'`
@@ -677,6 +677,7 @@ AC_CONFIG_FILES([modules/Makefile])
 AC_CONFIG_FILES([modules/tests/Makefile])
 AC_CONFIG_FILES([example_modules/Makefile])
 AC_CONFIG_FILES([example_modules/tests/Makefile])
+AC_CONFIG_FILES([example_servers/Makefile])
 
 AC_CONFIG_FILES([etc/Makefile])
 
