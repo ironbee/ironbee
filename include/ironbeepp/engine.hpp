@@ -138,6 +138,12 @@ public:
         return m_ib;
     }
 
+    //! Return the sensor ID for this engine.
+    const char* sensor_id() const
+    {
+        return ib_engine_sensor_id(ib());
+    }
+
     //! Construct Engine from ib_engine_t.
     explicit
     ConstEngine(const ib_engine_t* ib_engine);

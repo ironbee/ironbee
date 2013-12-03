@@ -227,7 +227,10 @@ public:
         flag_response_seen_body    = IB_TX_FRES_SEENBODY,
         flag_response_seen_trailer = IB_TX_FRES_SEENTRAILER,
         flag_response_finished     = IB_TX_FRES_FINISHED,
-        flag_suspicious            = IB_TX_FSUSPICIOUS
+        flag_suspicious            = IB_TX_FSUSPICIOUS,
+        flag_fblocked              = IB_TX_FBLOCKED,
+        flag_allow_request         = IB_TX_ALLOW_REQUEST,
+        flag_allow_all             = IB_TX_ALLOW_ALL
     };
 
     //! All flags.
@@ -309,6 +312,29 @@ public:
     bool is_suspicious() const
     {
         return flags() & flag_suspicious;
+    }
+
+    //! flags() & flag_allow_request
+    bool is_allow_request() const
+    {
+        return flags() & flag_allow_request;
+    }
+
+    //! flags() & flag_allow_all
+    bool is_allow_all() const
+    {
+        return flags() & flag_allow_all;
+    }
+
+    //! flags() & flag_fblocked
+    bool is_fblocked() const
+    {
+        return flags() & flag_fblocked;
+    }
+
+    ib_block_method_t block_method() const
+    {
+        return ib()->block_method;
     }
 
     ///@}
