@@ -435,12 +435,12 @@ static ib_status_t txlog_logger_format_fn(
     }
 
     stdmsg->prefix = NULL;
-    stdmsg->msg_sz = logstr.tellp()+1L;
+    stdmsg->msg_sz = size_t(logstr.tellp())+1;
     stdmsg->msg    =
         reinterpret_cast<uint8_t *>(
             strndup(
                 reinterpret_cast<const char *>(
-                    logstr.str().data()), logstr.tellp()+1L));
+                    logstr.str().data()), size_t(logstr.tellp())+1));
 
     *reinterpret_cast<void **>(writer_record) = stdmsg;
     return IB_OK;
