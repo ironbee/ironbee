@@ -33,7 +33,7 @@ TEST_F(CoreTest, BlockingMode) {
     ib_core_cfg_t *corecfg;
     ib_module_t   *module;
 
-    std::string config = 
+    std::string config =
         std::string(
             "LogLevel INFO\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
@@ -62,7 +62,7 @@ TEST_F(CoreTest, BlockingMode2) {
     ib_core_cfg_t *corecfg;
     ib_module_t   *module;
 
-    std::string config = 
+    std::string config =
         std::string(
             "LogLevel INFO\n"
             "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
@@ -86,4 +86,3 @@ TEST_F(CoreTest, BlockingMode2) {
     ASSERT_EQ(403, corecfg->block_status);
     ASSERT_EQ(IB_BLOCK_METHOD_STATUS, corecfg->block_method);
 }
-
