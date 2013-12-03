@@ -72,19 +72,19 @@ namespace {
 class TxLogData {
 public:
     //! The response blocking method or "-".
-    std::string responseBlockMethod;
+    const std::string& responseBlockMethod() const;
 
     //! The response blocking action or "-".
-    std::string responseBlockAction;
+    const std::string& responseBlockAction() const;
 
     //! The request blocking method or "-".
-    std::string requestBlockMethod;
+    const std::string& requestBlockMethod() const;
 
     //! The request blocking action or "-".
-    std::string requestBlockAction;
+    const std::string& requestBlockAction() const;
 
     //! The name of the auditlog file or "-".
-    std::string auditlogFile;
+    const std::string& auditlogFile() const;
 
     /**
      * Constructor.
@@ -92,30 +92,51 @@ public:
     TxLogData();
 
     /**
-     * Record data about a response from a transaction.
+     * Sets response block and action data.
+     *
+     * - TxLogData::m_responseBlockAction
+     * - TxLogData::m_responseBlockMethod
      *
      * @param[in] tx The transaction to examine.
      */
     void recordResponseData(IronBee::ConstTransaction tx);
 
     /**
-     * Record data about a request from a transaction.
+     * Sets request block and action data.
+     *
+     * - TxLogData::m_requestBlockAction
+     * - TxLogData::m_requestBlockMethod
      *
      * @param[in] tx The transaction to examine.
      */
     void recordRequestData(IronBee::ConstTransaction tx);
 
     /**
-     * Record auditlog information in the given transaction.
+     * Sets TxLogData::m_auditlogFile.
      *
      * @param[in] tx Transaction.
      * @param[in] auditlog The auditlog to examine.
      */
     void recordAuditLogData(
         IronBee::ConstTransaction tx,
-        ib_auditlog_t *auditlog);
+        ib_auditlog_t*            auditlog);
 
 private:
+
+    //! The response blocking method or "-".
+    std::string m_responseBlockMethod;
+
+    //! The response blocking action or "-".
+    std::string m_responseBlockAction;
+
+    //! The request blocking method or "-".
+    std::string m_requestBlockMethod;
+
+    //! The request blocking action or "-".
+    std::string m_requestBlockAction;
+
+    //! The name of the auditlog file or "-".
+    std::string m_auditlogFile;
 
     /**
      * Record data about blocking status into @a action and @a method.
@@ -124,39 +145,64 @@ private:
      * @param[out] action The blocking action currently in use.
      * @param[out] method The blocking method currently in use.
      */
-    void recordBlockData(
+    static void recordBlockData(
         IronBee::ConstTransaction tx,
-        std::string &action,
-        std::string &method);
+        std::string&              action,
+        std::string&              method);
 
 };
 
+const std::string& TxLogData::responseBlockMethod() const
+{
+    return m_responseBlockMethod;
+}
+
+const std::string& TxLogData::responseBlockAction() const
+{
+    return m_responseBlockAction;
+}
+
+const std::string& TxLogData::requestBlockMethod() const
+{
+    return m_requestBlockMethod;
+}
+
+const std::string& TxLogData::requestBlockAction() const
+{
+    return m_requestBlockAction;
+}
+
+const std::string& TxLogData::auditlogFile() const
+{
+    return m_auditlogFile;
+}
+
 TxLogData::TxLogData() :
-    responseBlockMethod("-"),
-    responseBlockAction("-"),
-    requestBlockMethod("-"),
-    requestBlockAction("-"),
-    auditlogFile("-")
+    m_responseBlockMethod("-"),
+    m_responseBlockAction("-"),
+    m_requestBlockMethod("-"),
+    m_requestBlockAction("-"),
+    m_auditlogFile("-")
 {
 }
 
 void TxLogData::recordBlockData(
     IronBee::ConstTransaction tx,
-    std::string &action,
-    std::string &method
+    std::string&              action,
+    std::string&              method
 )
 {
 
     /* Insert Request Action */
-    if (ib_tx_flags_isset(tx.ib(), IB_TX_ALLOW_REQUEST | IB_TX_ALLOW_ALL)) {
+    if (tx.is_allow_request() || tx.is_allow_all()) {
         action = "Allow";
         method = "-";
     }
-    else if(ib_tx_flags_isset(tx.ib(), IB_TX_FBLOCKED))
+    else if(tx.is_fblocked())
     {
         action = "Block";
 
-        switch(tx.ib()->block_method) {
+        switch(tx.block_method()) {
         case IB_BLOCK_METHOD_STATUS:
             method = "Close";
             break;
@@ -173,12 +219,14 @@ void TxLogData::recordBlockData(
     }
 }
 
-void TxLogData::recordResponseData(IronBee::ConstTransaction tx) {
-    recordBlockData(tx, responseBlockAction, responseBlockMethod);
+void TxLogData::recordResponseData(IronBee::ConstTransaction tx)
+{
+    recordBlockData(tx, m_responseBlockAction, m_responseBlockMethod);
 }
 
-void TxLogData::recordRequestData(IronBee::ConstTransaction tx) {
-    recordBlockData(tx, requestBlockAction, requestBlockMethod);
+void TxLogData::recordRequestData(IronBee::ConstTransaction tx)
+{
+    recordBlockData(tx, m_requestBlockAction, m_requestBlockMethod);
 }
 
 void TxLogData::recordAuditLogData(
@@ -186,8 +234,11 @@ void TxLogData::recordAuditLogData(
     ib_auditlog_t *auditlog
 )
 {
-    auditlogFile = auditlog->cfg_data->full_path;
+    m_auditlogFile = auditlog->cfg_data->full_path;
 }
+
+} /* Anonymous namespace. */
+
 extern "C" {
 
 /**
@@ -202,16 +253,22 @@ extern "C" {
  * @param[in] rec The record to produce @a writer_record from.
  * @param[in] log_msg_sz The length of @a log_msg.
  * @param[out] writer_record A @ref ib_logger_standard_msg_t if this returns
- *             IB_OK. Unset otherwise. This must be a ib_logger_std_msg_t **.
+ *             IB_OK. Unset otherwise. This must be a `ib_logger_std_msg_t **`.
  * @param[in] data Callback data.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_DECLINE If the ib_logger_rec_t::type of @a rec is not
+ *   @ref IB_LOGGER_TXLOG_TYPE.
+ * - Other on error.
  */
-ib_status_t txlog_logger_format_fn(
-    ib_logger_t   *logger,
-    const          ib_logger_rec_t *rec,
-    const uint8_t *log_msg,
-    const size_t   log_msg_sz,
-    void          *writer_record,
-    void          *data
+static ib_status_t txlog_logger_format_fn(
+    ib_logger_t           *logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *data
 )
 {
     assert(logger != NULL);
@@ -254,13 +311,8 @@ ib_status_t txlog_logger_format_fn(
            << "]" ;
 
     /* Insert UUIDs. */
-    logstr << "[" << ib_engine_sensor_id(tx.engine().ib());
-    if (
-        conn == IronBee::ConstConnection() ||
-        conn.context() == IronBee::ConstContext() ||
-        conn.context().site() == IronBee::ConstSite()
-    )
-    {
+    logstr << "[" << tx.engine().sensor_id();
+    if (! conn || ! conn.context() || ! conn.context().site()) {
         logstr << " -";
     }
     else {
@@ -279,9 +331,7 @@ ib_status_t txlog_logger_format_fn(
            << "]";
 
     /* Insert encryption info. */
-    logstr << "["
-           << " - " /* TODO: when encryption info is available, replace. */
-           << "]";
+    logstr << "[-]"; /* TODO: when encryption info is available, replace. */
 
     /* Insert HTTP Status info. */
     logstr << "[" << tx.request_line().method().to_s()
@@ -304,19 +354,19 @@ ib_status_t txlog_logger_format_fn(
         )
         {
             logstr << '"' << headerNvp.name().to_s()
-                << '=' << headerNvp.value().to_s()
-                << "\" ";
+                   << '=' << headerNvp.value().to_s()
+                   << "\" ";
         }
     }
     else {
-        logstr << " -  ";
+        logstr << "- ";
     }
     /* Erase the extra trailing space. */
     logstr.seekp(-1, std::ios_base::cur);
     logstr << "]";
 
-    logstr << "[" << txlogdata.requestBlockAction
-           << " " << txlogdata.requestBlockMethod
+    logstr << "[" << txlogdata.requestBlockAction()
+           << " " << txlogdata.requestBlockMethod()
            << "]";
     /* Insert Response */
     logstr << "[" << tx.response_line().protocol().to_s()
@@ -325,7 +375,7 @@ ib_status_t txlog_logger_format_fn(
            << "]";
 
     /* Insert Response Normalized Data */
-    logstr << "[ - ]";  /* TODO: Order=header order. Replace when available. */
+    logstr << "[-]";  /* TODO: Order=header order. Replace when available. */
 
     logstr << "[";
     /* Insert response headers. */
@@ -349,12 +399,12 @@ ib_status_t txlog_logger_format_fn(
     logstr << "]";
 
     /* Insert the response actions. */
-    logstr << "[" << txlogdata.responseBlockAction
-           << " " << txlogdata.responseBlockMethod
+    logstr << "[" << txlogdata.responseBlockAction()
+           << " " << txlogdata.responseBlockMethod()
            << "]";
 
     /* Insert Session. */
-    logstr << "[ - ]";
+    logstr << "[-]";
 
     /* Insert content stats. */
     logstr << "[" << "-" // "remote client waf request size." // FIXME
@@ -364,7 +414,7 @@ ib_status_t txlog_logger_format_fn(
            << "]";
 
     /* Insert generated audit log. */
-    logstr << "[AuditLog " << txlogdata.auditlogFile << "]";
+    logstr << "[AuditLog " << txlogdata.auditlogFile() << "]";
 
     /* Insert events. */
     IronBee::ConstList<ib_logevent_t *> eventList(tx.ib()->logevents);
@@ -385,19 +435,18 @@ ib_status_t txlog_logger_format_fn(
     }
 
     stdmsg->prefix = NULL;
-    stdmsg->msg_sz = logstr.str().length();
+    stdmsg->msg_sz = logstr.tellp()+1L;
     stdmsg->msg    =
         reinterpret_cast<uint8_t *>(
             strndup(
                 reinterpret_cast<const char *>(
-                    logstr.str().data()), logstr.str().length()));
+                    logstr.str().data()), logstr.tellp()+1L));
 
     *reinterpret_cast<void **>(writer_record) = stdmsg;
     return IB_OK;
 }
 
 } /* extern "C" */
-} /* Anonymous namespace. */
 
 /**
  * Transaction log module.
@@ -423,61 +472,56 @@ private:
     ///! Enable/Disable directive callback.
     void onOffDirective(
         IronBee::ConfigurationParser  cp,
-        const char                   *name,
         bool                          enabled
-    );
+    ) const;
 
     ///! TxLogBaseFileName config directive callback.
     void logBaseNameDirective(
         IronBee::ConfigurationParser  cp,
-        const char                   *name,
         const char                   *param1
-    );
+    ) const;
 
     ///! TxLogBaseDirectory config directive callback.
     void logBaseDirDirective(
         IronBee::ConfigurationParser  cp,
-        const char                   *name,
         const char                   *param1
-    );
+    ) const;
 
     ///! TxLogFlushSizeLimit config directive callback.
     void logSizeLimitDirective(
         IronBee::ConfigurationParser  cp,
-        const char                   *name,
         const char                   *param1
-    );
+    ) const;
 
     ///! TxLogFlushAgeLimit config directive callback.
     void logAgeLimitDirective(
         IronBee::ConfigurationParser  cp,
-        const char                   *name,
         const char                   *param1
-    );
+    ) const;
 
     ///! Callback to log @a tx through the Logger of @a ib.
     void transactionFinishedHandler(
         IronBee::Engine      ib,
         IronBee::Transaction tx
-    );
+    ) const;
 
     ///! Callback to log @a tx through the Logger of @a ib.
     void transactionStartedHandler(
         IronBee::Engine      ib,
         IronBee::Transaction tx
-    );
+    ) const;
 
     ///! Callback that collects information about a request so as to log it.
     void handleRequest(
         IronBee::Engine      ib,
         IronBee::Transaction tx
-    );
+    ) const;
 
     ///! Callback that collects information about a response so as to log it.
     void handleResponse(
         IronBee::Engine      ib,
         IronBee::Transaction tx
-    );
+    ) const;
 
     /**
      * Is a @ref ib_core_auditlog_fn_t to collect data about auditlogs.
@@ -495,7 +539,8 @@ private:
         ib_engine_t               *ib,
         ib_tx_t                   *tx,
         ib_core_auditlog_event_en  event,
-        ib_auditlog_t             *auditlog);
+        ib_auditlog_t             *auditlog
+    ) const;
 };
 
 IBPP_BOOTSTRAP_MODULE_DELEGATE(TXLOG_MODULE_NAME, TxLogModule);
@@ -503,7 +548,8 @@ IBPP_BOOTSTRAP_MODULE_DELEGATE(TXLOG_MODULE_NAME, TxLogModule);
 /**
  * Setup some good defaults.
  */
-TxLogConfig::TxLogConfig() {
+TxLogConfig::TxLogConfig()
+{
 
     /* First, zero-out the C-struct. */
     memset(&pub_cfg, 0, sizeof(pub_cfg));
@@ -551,19 +597,19 @@ TxLogModule::TxLogModule(IronBee::Module module):
     module.engine().register_configuration_directives()
         .on_off(
             "TxLogEnabled",
-            boost::bind(&TxLogModule::onOffDirective, this, _1, _2, _3))
+            boost::bind(&TxLogModule::onOffDirective, this, _1, _3))
         .param1(
             "TxLogBaseDirectory",
-            boost::bind(&TxLogModule::logBaseDirDirective, this, _1, _2, _3))
+            boost::bind(&TxLogModule::logBaseDirDirective, this, _1, _3))
         .param1(
             "TxLogBaseFileName",
-            boost::bind(&TxLogModule::logBaseNameDirective, this, _1, _2, _3))
+            boost::bind(&TxLogModule::logBaseNameDirective, this, _1, _3))
         .param1(
             "TxLogFlushSizeLimit",
-            boost::bind(&TxLogModule::logSizeLimitDirective, this, _1, _2, _3))
+            boost::bind(&TxLogModule::logSizeLimitDirective, this, _1, _3))
         .param1(
             "TxLogFlushAgeLimit",
-            boost::bind(&TxLogModule::logAgeLimitDirective, this, _1, _2, _3))
+            boost::bind(&TxLogModule::logAgeLimitDirective, this, _1, _3))
         ;
 
     /* Register engine callbacks. */
@@ -595,8 +641,8 @@ TxLogModule::TxLogModule(IronBee::Module module):
 
 void TxLogModule::onOffDirective(
         IronBee::ConfigurationParser  cp,
-        const char                   *name,
-        bool                          enabled)
+        bool                          enabled
+) const
 {
     TxLogConfig &cfg =
         module().configuration_data<TxLogConfig>(cp.current_context());
@@ -607,8 +653,8 @@ void TxLogModule::onOffDirective(
 
 void TxLogModule::logBaseNameDirective(
         IronBee::ConfigurationParser  cp,
-        const char                   *name,
-        const char                   *param1)
+        const char                   *param1
+) const
 {
     TxLogConfig &cfg =
         module().configuration_data<TxLogConfig>(cp.current_context());
@@ -619,8 +665,8 @@ void TxLogModule::logBaseNameDirective(
 
 void TxLogModule::logBaseDirDirective(
         IronBee::ConfigurationParser  cp,
-        const char                   *name,
-        const char                   *param1)
+        const char                   *param1
+) const
 {
     TxLogConfig &cfg =
         module().configuration_data<TxLogConfig>(cp.current_context());
@@ -631,8 +677,8 @@ void TxLogModule::logBaseDirDirective(
 
 void TxLogModule::logSizeLimitDirective(
         IronBee::ConfigurationParser  cp,
-        const char                   *name,
-        const char                   *param1)
+        const char                   *param1
+) const
 {
     TxLogConfig &cfg =
         module().configuration_data<TxLogConfig>(cp.current_context());
@@ -643,8 +689,8 @@ void TxLogModule::logSizeLimitDirective(
 
 void TxLogModule::logAgeLimitDirective(
         IronBee::ConfigurationParser  cp,
-        const char                   *name,
-        const char                   *param1)
+        const char                   *param1
+) const
 {
     TxLogConfig &cfg =
         module().configuration_data<TxLogConfig>(cp.current_context());
@@ -658,7 +704,7 @@ ib_status_t TxLogModule::recordAuditLogInfo(
     ib_tx_t                   *ib_tx,
     ib_core_auditlog_event_en  event,
     ib_auditlog_t             *auditlog
-)
+) const
 {
     if (event == IB_CORE_AUDITLOG_CLOSED) {
         IronBee::Transaction tx(ib_tx);
@@ -675,7 +721,7 @@ ib_status_t TxLogModule::recordAuditLogInfo(
 void TxLogModule::transactionStartedHandler(
     IronBee::Engine      ib,
     IronBee::Transaction tx
-)
+) const
 {
     tx.set_module_data(module(), TxLogData());
 }
@@ -683,7 +729,7 @@ void TxLogModule::transactionStartedHandler(
 void TxLogModule::handleRequest(
     IronBee::Engine      ib,
     IronBee::Transaction tx
-)
+) const
 {
     TxLogData &data = tx.get_module_data<TxLogData&>(module());
 
@@ -693,7 +739,7 @@ void TxLogModule::handleRequest(
 void TxLogModule::handleResponse(
     IronBee::Engine      ib,
     IronBee::Transaction tx
-)
+) const
 {
     TxLogData &data = tx.get_module_data<TxLogData&>(module());
 
@@ -703,10 +749,10 @@ void TxLogModule::handleResponse(
 void TxLogModule::transactionFinishedHandler(
     IronBee::Engine      ib,
     IronBee::Transaction tx
-)
+) const
 {
-    assert(ib.ib() != NULL);
-    assert(tx.ib() != NULL);
+    assert(ib);
+    assert(tx);
 
     ib_logger_log_va(
         ib_engine_logger_get(ib.ib()),
