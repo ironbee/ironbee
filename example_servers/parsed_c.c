@@ -29,7 +29,7 @@
  * example is single threaded, although some multithreaded considerations are
  * commented on.
  *
- * This is intended an example only.  IronBee comes with a command line
+ * This is intended as an example only.  IronBee comes with a command line
  * interface, clipp, with a wide feature set including a variety of input
  * formats and multithreaded support.
  *
@@ -40,8 +40,8 @@
  * For server callbacks, see server_close(), server_error(),
  * server_error_header(), server_error_data(), and server_header().
  *
- * For an example server in C++, see parsed_cpp.cpp.  The C++ makes use of
- * ParserSuite to parse raw HTTP and feed it to IronBee.
+ * For an example server in C++, see parsed_cpp.cpp.  The C++ edition makes
+ * use of ParserSuite to parse raw HTTP and feed it to IronBee.
  */
 
 #include <ironbee/config.h>       /* For ib_cfgparser_* */
@@ -109,8 +109,8 @@ struct header_t
 /**
  * Maximum number of headers.
  *
- * This constant allows us to have headers as arrays of known size when it
- * turn lets us initializer our structures directly.
+ * This constant is used to declare fixed sized arrays of headers, allowing
+ * for easier initialization.
  **/
 #define MAX_HEADERS 10
 
@@ -150,8 +150,8 @@ struct response_t
  **/
 static const request_t c_request = {
     .line = {
-        .raw      = "GET /hello/world HTTP/1.1",
-        .method   = "GET",
+        .raw      = "POST /hello/world HTTP/1.1",
+        .method   = "POST",
         .uri      = "/hello/world",
         .protocol = "HTTP/1.1"
     },
@@ -483,7 +483,7 @@ ib_status_t send_to_ironbee(
      * Create Connection
      *
      * A connection is some TCP/IP information and a sequence of transactions.
-     * Its primary purpose is to associated transactions.
+     * Its primary purpose is to associate transactions.
      *
      * IronBee allows for multithreading so long as a single connection (and
      * its tranactions) is only be used in one thread at a time.  Thus, a
@@ -546,7 +546,8 @@ ib_status_t send_to_ironbee(
      * - Request Finished indicating the end of the request.
      * - A similar sequence of events for the response.
      *
-     * Each transaction is a single request and response.
+     * Each transaction is a single request and response.  A connection may
+     * contain multiple transactions.
      */
 
     /* Request Started */
@@ -580,7 +581,7 @@ ib_status_t send_to_ironbee(
 
         rc = convert_headers(&headers, request->headers, tx->mp);
         if (rc != IB_OK) {
-            ib_log_error(engine, "Error converting headers: %s",
+            ib_log_error(engine, "Error converting request headers: %s",
                          ib_status_to_string(rc));
             return rc;
         }
@@ -652,7 +653,7 @@ ib_status_t send_to_ironbee(
 
         rc = convert_headers(&headers, response->headers, tx->mp);
         if (rc != IB_OK) {
-            ib_log_error(engine, "Error converting headers: %s",
+            ib_log_error(engine, "Error converting response headers: %s",
                          ib_status_to_string(rc));
             return rc;
         }
