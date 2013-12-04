@@ -291,7 +291,7 @@ static ib_status_t txlog_logger_format_fn(
     TxLogData &txlogdata = IronBee::Transaction::remove_const(tx)
         .get_module_data<TxLogData&>(module);
 
-    /* Setup posix time formatting. */
+    /* Setup posix time formatting. The timezone %q is replaced with -00:00.*/
     logstr.imbue(
         std::locale(
             logstr.getloc(),
@@ -300,7 +300,7 @@ static ib_status_t txlog_logger_format_fn(
                 boost::posix_time::ptime,
                 char
             > (
-                "%Y-%m-%d %H:%M:%S"
+                "%Y-%m-%dT%H:%M:%S-00:00"
             )
         )
     );
