@@ -3476,13 +3476,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             return rc;
         }
 
-        if (strcasecmp(p1_unescaped, "ROLLOVER") == 0) {
+        if (strcasecmp(p1_unescaped, "FLUSH_PARTIAL") == 0) {
             corecfg->limits.request_body_buffer_limit_action =
-                IB_CORE_LIMIT_ROLLOVER;
+                IB_BUFFER_LIMIT_ACTION_FLUSH_PARTIAL;
         }
-        else if (strcasecmp(p1_unescaped, "REJECT") == 0) {
+        else if (strcasecmp(p1_unescaped, "FLUSH_ALL") == 0) {
             corecfg->limits.request_body_buffer_limit_action =
-                IB_CORE_LIMIT_REJECT;
+                IB_BUFFER_LIMIT_ACTION_FLUSH_ALL;
         }
         else {
             ib_cfg_log_error(cp, "Unknown limit action: %s", p1);
@@ -3505,13 +3505,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             return rc;
         }
 
-        if (strcasecmp(p1_unescaped, "ROLLOVER") == 0) {
+        if (strcasecmp(p1_unescaped, "FlushPartial") == 0) {
             corecfg->limits.response_body_buffer_limit_action =
-                IB_CORE_LIMIT_ROLLOVER;
+                IB_BUFFER_LIMIT_ACTION_FLUSH_PARTIAL;
         }
-        else if (strcasecmp(p1_unescaped, "REJECT") == 0) {
+        else if (strcasecmp(p1_unescaped, "FlushAll") == 0) {
             corecfg->limits.response_body_buffer_limit_action =
-                IB_CORE_LIMIT_REJECT;
+                IB_BUFFER_LIMIT_ACTION_FLUSH_ALL;
         }
         else {
             ib_cfg_log_error(cp, "Unknown limit action: %s", p1);
@@ -4665,9 +4665,9 @@ static ib_status_t core_init(ib_engine_t *ib,
 
     /* Initialize core module limits to "off." */
     corecfg->limits.request_body_buffer_limit         = -1;
-    corecfg->limits.request_body_buffer_limit_action  = IB_CORE_LIMIT_ROLLOVER;
+    corecfg->limits.request_body_buffer_limit_action  = IB_BUFFER_LIMIT_ACTION_FLUSH_PARTIAL;
     corecfg->limits.response_body_buffer_limit        = -1;
-    corecfg->limits.response_body_buffer_limit_action = IB_CORE_LIMIT_ROLLOVER;
+    corecfg->limits.response_body_buffer_limit_action = IB_BUFFER_LIMIT_ACTION_FLUSH_PARTIAL;
     corecfg->limits.request_body_log_limit            = -1;
     corecfg->limits.response_body_log_limit           = -1;
 

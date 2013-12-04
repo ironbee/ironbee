@@ -32,6 +32,8 @@ IronBee v0.9.0
 
 - Server callbacks now take pointer-length strings rather than NUL-terminated strings.
 
+- Change buffer limit actions from Reject/RollOver to FlushAll/FlushPartial.
+
 **Predicate**
 
 - The Field call is now known as Var.  Field continues to exist as an alias for Var.

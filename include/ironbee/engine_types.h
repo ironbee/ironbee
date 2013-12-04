@@ -200,8 +200,8 @@ struct ib_conn_t {
  * Actions available in @ref ib_tx_limits_t when a limit is exceeded.
  */
 typedef enum ib_tx_limits_actions_t {
-    IB_CORE_LIMIT_ROLLOVER, /**< Continue processing. */
-    IB_CORE_LIMIT_REJECT    /**< Reject the extra data. */
+    IB_BUFFER_LIMIT_ACTION_FLUSH_PARTIAL,/**< Flush enough buffer to continue. */
+    IB_BUFFER_LIMIT_ACTION_FLUSH_ALL,    /**< Flush entire buffer, then continue. */
 } ib_tx_limits_actions_t;
 
 /**
@@ -216,7 +216,7 @@ struct ib_tx_limits_t {
     ssize_t request_body_buffer_limit;
 
     /**
-     * Reject or RollOver.
+     * What action to perform if a limit is reached.
      */
     ib_tx_limits_actions_t request_body_buffer_limit_action;
 
@@ -228,7 +228,7 @@ struct ib_tx_limits_t {
     ssize_t response_body_buffer_limit;
 
     /**
-     * Reject or RollOver.
+     * What action to perform if a limit is reached.
      */
     ib_tx_limits_actions_t response_body_buffer_limit_action;
 

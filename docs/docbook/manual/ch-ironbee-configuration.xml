@@ -887,25 +887,25 @@ Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block
             <para><emphasis role="bold">Context:</emphasis> Any</para>
             <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.9.0</para>
         </section>
         <section>
             <title>RequestBodyBufferLimitAction</title>
             <para><emphasis role="bold">Description:</emphasis> Configures what happens when the
                 buffer is smaller than the request body.</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal>RequestBodyBufferLimitAction Reject|RollOver</literal></para>
-            <para><emphasis role="bold">Default:</emphasis> None</para>
+                <literal>RequestBodyBufferLimitAction FlushAll|FlushPartial</literal></para>
+            <para><emphasis role="bold">Default:</emphasis> FlushPartial</para>
             <para><emphasis role="bold">Context:</emphasis> Any</para>
             <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
-            <para>When <literal>Reject</literal> is configured, the transaction with a body larger
-                than the buffer will be blocked. With <literal>RollOver</literal> selected, the
-                buffer will be used to keep as much data as possible, but any overflowing data will
-                be allowed to the backend. Request headers will be sent before the first overflow
-                batch. In detection-only mode, <literal>Reject</literal> is converted to
-                    <literal>RollOver</literal>.</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.9.0</para>
+            <para>When <literal>FlushAll</literal> is configured, the transaction with a body larger
+                than the buffer will flush the existing buffer, sending it to the backend, then continue
+                to fill the buffer with the remaining data. With <literal>FlushPartial</literal> selected,
+                the buffer will be used to keep as much data as possible, but any overflowing data will be
+                flushed and sent to the backend. Request headers will be sent before the first overflow
+                batch.</para>
         </section>
         <section>
             <title>ResponseBuffering</title>
@@ -938,25 +938,25 @@ Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block
             <para><emphasis role="bold">Context:</emphasis> Any</para>
             <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.9.0</para>
         </section>
         <section>
             <title>ResponseBodyBufferLimitAction</title>
             <para><emphasis role="bold">Description:</emphasis> Configures what happens when the
                 buffer is smaller than the response body.</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal>ResponseBodyBufferLimitAction Reject|RollOver</literal></para>
-            <para><emphasis role="bold">Default:</emphasis> None</para>
+                <literal>ResponseBodyBufferLimitAction FlushAll|FlushPartial</literal></para>
+            <para><emphasis role="bold">Default:</emphasis> FlushPartial</para>
             <para><emphasis role="bold">Context:</emphasis> Any</para>
             <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
-            <para>When <literal>Reject</literal> is configured, the transaction with a body larger
-            than the buffer will be blocked. With <literal>RollOver</literal> selected, the buffer
-            will be used to keep as much data as possible, but any overflowing data will be allowed
-            to the client. Response headers will be sent before the first overflow batch. In
-            detection-only mode, <literal>Reject</literal> is converted to
-                <literal>RollOver</literal>.</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.9.0</para>
+            <para>When <literal>FlushAll</literal> is configured, the transaction with a body larger
+                than the buffer will flush the existing buffer, sending it to the client, then continue
+                to fill the buffer with the remaining data. With <literal>FlushPartial</literal> selected,
+                the buffer will be used to keep as much data as possible, but any overflowing data will be
+                flushed and sent to the client. Request headers will be sent before the first overflow
+                batch.</para>
         </section>
         <section>
             <title>Rule</title>
