@@ -38,6 +38,7 @@
 namespace IronBee {
 
 class ConfigurationDirectivesRegistrar;
+class ConfigurationParser;
 class HooksRegistrar;
 class Context;
 class Notifier;
@@ -330,6 +331,14 @@ public:
 
     //! Var Config.
     VarConfig var_config() const;
+
+    //! Tell engine configuration has started.
+    void configuration_started(
+        ConfigurationParser configuration_parser
+    ) const;
+
+    //! Tell engine configuration is finished.
+    void configuration_finished() const;
 
 private:
     ib_engine_t* m_ib;

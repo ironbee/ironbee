@@ -327,7 +327,11 @@ void load_configuration(IronBee::Engine engine, const std::string& path)
     IronBee::ConfigurationParser parser
         = IronBee::ConfigurationParser::create(engine);
 
+    engine.configuration_started(parser);
+
     parser.parse_file(path);
+
+    engine.configuration_finished();
 
     parser.destroy();
 }

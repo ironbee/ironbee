@@ -24,6 +24,7 @@
 
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/configuration_directives.hpp>
+#include <ironbeepp/configuration_parser.hpp>
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/server.hpp>
@@ -137,6 +138,20 @@ MemoryPool Engine::temporary_memory_pool() const
 VarConfig Engine::var_config() const
 {
     return VarConfig(ib_engine_var_config_get(ib()));
+}
+
+void Engine::configuration_started(
+    ConfigurationParser configuration_parser
+) const
+{
+    throw_if_error(
+        ib_engine_config_started(ib(), configuration_parser.ib())
+    );
+}
+
+void Engine::configuration_finished() const
+{
+    throw_if_error(ib_engine_config_finished(ib()));
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstEngine& engine)

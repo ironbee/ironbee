@@ -57,9 +57,6 @@ ConfigurationParser ConfigurationParser::create(Engine engine)
     throw_if_error(
         ib_cfgparser_create(&ib_cp, engine.ib())
     );
-    throw_if_error(
-        ib_engine_config_started(engine.ib(), ib_cp)
-    );
     return ConfigurationParser(ib_cp);
 }
 
@@ -114,7 +111,6 @@ void ConfigurationParser::parse_buffer(const std::string& s,
 
 void ConfigurationParser::destroy() const
 {
-    ib_engine_config_finished(engine().ib());
     ib_cfgparser_destroy(ib());
 }
 
