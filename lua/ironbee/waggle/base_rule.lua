@@ -1,40 +1,38 @@
 #!/usr/bin/lua
 
--- Lua module file for building valid IronBee rule reprentations which 
--- can later be used to generate rule configurations for various IronBee
--- versions.
+--[[--------------------------------------------------------------------------
+-- Licensed to Qualys, Inc. (QUALYS) under one or more
+-- contributor license agreements.  See the NOTICE file distributed with
+-- this work for additional information regarding copyright ownership.
+-- QUALYS licenses this file to You under the Apache License, Version 2.0
+-- (the "License"); you may not use this file except in compliance with
+-- the License.  You may obtain a copy of the License at
 --
--- Rule DSL
--- ====================
+--     http://www.apache.org/licenses/LICENSE-2.0
 --
--- Rule(id, ver) - create a new signature object.
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+--]]--------------------------------------------------------------------------
+
 --
--- Miscellaneous Functions
--- =======================
+-- IronBee Waggle --- Base Rule
 --
+-- The base functionality used by all rule classes (Rule, Action, ExtRule, 
+-- StreamInspect, etc).
+--
+-- @author Sam Baskinger <sbaskinger@qualys.com>
 --
 
--- ###########################################################################
--- Rule
--- ###########################################################################
---
--- Class that the fluent internal DSL is built around.
---
-local Util = require('ironbee/waggle/util')
-local Rule = {}
-Rule.__index = Rule
-Rule.type = "rule"
+local BaseRule = { type = 'base_rule' }
+function BaseRule:new(rule_id, rule_version, db)
+    -- Allow child classes to use us as a meta table.
+    self.__index = self
 
--- Construct a new signature object.
---
--- @param[in] self The module table use to construct a new sig.
--- @param[in] rule_id Rule ID.
--- @param[in] rule_version Rule version.
--- @param[in] db Rule database.
---
--- @returns nil on previously defined rule id.
-Rule.new = function(self, rule_id, rule_version, db)
-    local sig = setmetatable({
+    -- Inherit from ourselves for the base calss.
+    return setmetatable({
         -- The signature database. We need this to update tag information.
         db = db,
         -- The signature data. We hide the data in a data table
@@ -42,31 +40,47 @@ Rule.new = function(self, rule_id, rule_version, db)
         data = {
             -- The rule ID.
             id = rule_id,
+
             -- The rule version.
             version = rule_version,
+
             -- What phase does this run in.
             phase = nil, 
+
+            -- Operator.
             op = '',
+
+            -- Operator argument.
             op_arg = '',
+
+            -- Message for when events are generated.
             message = nil,
+
             -- List of fields to operate on.
             fields = {},
+
             -- Hash of tags where the key is the tag name.
             tags = { },
+
             -- True if a predicate expression has been added to the actions.
             has_predicate = false,
+
             -- True if this Rule will be owned by the Waggle execution
             -- engine. If false, then this rule will be be subject to
             -- Waggle rule injection and should be claimed by another
             -- module (such as predicate or fast).
             waggle_owned = true,
+
             -- List of actions.
             actions = {},
+
             -- After list. List of rules / tags this must occur after.
             after = {},
             before = {},
+
             -- Rule are of type Rule.
-            rule_type = 'Rule',
+            rule_type = 'BaseRule',
+
             -- List of predicates rules which represent a list of disjuctions
             -- which, if all true, allow this signature to fire. 
             --
@@ -78,9 +92,25 @@ Rule.new = function(self, rule_id, rule_version, db)
             follows = {}
         }
     }, self)
-
-    return sig
 end
+
+-- Report if this rule type is a stream rule or not.
+function BaseRule:is_streaming()
+    return false
+end
+
+-- Set if this Rule should be claimed by Waggle for rule injection.
+--
+-- Rule injection is a method by which a rule owner (such as Predicate,
+-- Fast, or Waggle) can select a list of rules to execute at IronBee
+-- runtime. A rule may not be owned by two rule injection modules.
+-- If you specify a rule that you know will be claimed by another
+-- injection module, you should set this to false so that Waggle
+-- will not try and claim the produced rule.
+function BaseRule:waggle_owned(true_false)
+    self.data.waggle_owned = true_false
+end
+
 -- Append a list of fields to this rule.
 --
 -- If the field list is empty, the rule's field list is cleared.
@@ -89,7 +119,7 @@ end
 -- @param[in] ... The list of fields.
 --
 -- @returns The signature/rule object.
-Rule.fields = function(self, ...)
+function BaseRule:fields(...)
     local fields = {...}
 
     if #fields == 0 then
@@ -139,7 +169,7 @@ Rule.fields = function(self, ...)
 
     return self
 end
-Rule.field = Rule.fields
+BaseRule.field = BaseRule.fields
 
 -- Append a list of tags to this rule.
 --
@@ -149,7 +179,7 @@ Rule.field = Rule.fields
 -- @param[in] ... The list of tags.
 --
 -- @returns The signature/rule object.
-Rule.tags = function(self, ...)
+function BaseRule:tags(...)
     local tags = {...}
 
     if #tags == 0 then
@@ -166,7 +196,7 @@ Rule.tags = function(self, ...)
 
     return self
 end
-Rule.tag = Rule.tags
+BaseRule.tag = BaseRule.tags
 
 -- Add predicate expression to this rule.
 --
@@ -176,8 +206,8 @@ Rule.tag = Rule.tags
 -- @param[in] expression String (sexpr) or front end expression object.
 --
 -- @returns The signature/rule object.
-Rule.predicate = function(self, expression)
-  local sexpr;
+function BaseRule:predicate(expression)
+  local sexpr
 
   if self.data.has_predicate then
     error("Rule can have at most one predicate expression.")
@@ -220,7 +250,7 @@ end
 -- @param[in] ... The list of actions.
 --
 -- @returns The signature/rule object.
-Rule.actions = function(self, ...)
+function BaseRule:actions(...)
     local actions = {...}
 
     if #actions == 0 then
@@ -237,7 +267,7 @@ Rule.actions = function(self, ...)
 
     return self
 end
-Rule.action = Rule.actions
+BaseRule.action = BaseRule.actions
 
 -- Append a list of rule ids or tags that this rule must execute after.
 --
@@ -247,7 +277,7 @@ Rule.action = Rule.actions
 -- @param[in] ... The list of strings representing rule IDs or tags.
 --
 -- @returns The signature/rule object.
-Rule.after = function(self, ...)
+function BaseRule:after(...)
     local after = {...}
 
     if #after == 0 then
@@ -261,7 +291,7 @@ Rule.after = function(self, ...)
     return self
 end
 
-Rule.before = function(self, ...)
+function BaseRule:before(...)
     local before = { ... }
     if #before == 0 then
         self.data.before = {}
@@ -285,7 +315,7 @@ end
 --            (nil) then "" is substituted.
 --
 -- @returns The rule/signature object.
-Rule.op = function(self, operator, operator_argument)
+function BaseRule:op(operator, operator_argument)
     self.data.op = operator
 
     if operator_argument == nil then
@@ -301,7 +331,7 @@ end
 -- @param[in,out] self The Rule object.
 -- @param[in] phase The phase name.
 -- @return Self.
-Rule.phase = function(self, phase)
+function BaseRule:phase(phase)
     self.data.phase = phase
     return self
 end
@@ -312,7 +342,7 @@ end
 -- @param[in] message The message to set.
 --
 -- @returns The rule/signature object.
-Rule.message = function(self, message)
+function BaseRule:message(message)
     self.data.message = message
     return self
 end
@@ -324,7 +354,7 @@ end
 -- @param[in] comment The comment to set.
 --
 -- @returns The rule/signature object.
-Rule.comment = function(self, comment)
+function BaseRule:comment(comment)
     self.data.comment = comment
     return self
 end
@@ -336,7 +366,7 @@ end
 -- @param[in] result The result of the ruleId when evaluated
 --            at runtime (true or false) which is required to 
 --            execute this function.
-Rule.follows = function(self, ruleId, result)
+function BaseRule:follows(ruleId, result)
     if Util.type(ruleId) == 'signature' then
         ruleId = ruleId.data.id
     end
@@ -350,21 +380,27 @@ Rule.follows = function(self, ruleId, result)
     return self
 end
 
--- Report if this rule type is a stream rule or not.
-Rule.is_streaming = function(self)
+-- Check if this base rule has any metatable that equals the given table.
+--
+-- @param[in] clazz The class (object table) that defines self.
+--
+-- @returns true if self has any metatable that equals clazz.
+function BaseRule:is_a(clazz)
+    local mt = getmetatable(self)
+    while mt ~= nil do
+        if (mt == clazz) then
+            return true
+        else
+            local mtmt = getmetatable(mt)
+            -- If mt == mtmt, then there is no progress, and fail (false).
+            if mt == mtmt then
+                return false
+            else
+                mt = mtmt
+            end
+        end
+    end
+
     return false
 end
-
--- Set if this Rule should be claimed by Waggle for rule injection.
---
--- Rule injection is a method by which a rule owner (such as Predicate,
--- Fast, or Waggle) can select a list of rules to execute at IronBee
--- runtime. A rule may not be owned by two rule injection modules.
--- If you specify a rule that you know will be claimed by another
--- injection module, you should set this to false so that Waggle
--- will not try and claim the produced rule.
-Rule.waggle_owned = function(self, true_false)
-    self.data.waggle_owned = true_false
-end
-
-return Rule
+return BaseRule

@@ -36,7 +36,7 @@ end
 
 -- List of signature types so that these constructor functions
 -- can be replaced.
-_M.SIGNATURE_TYPES = { "Rule", "Action", "ExtSig", "StrSig" }
+_M.SIGNATURE_TYPES = { "Rule", "Action", "RuleExt", "StrSig" }
 
 -- Create a new, incomplete, signature (aka rule) representation
 -- and register it with a global database of rules.
@@ -91,13 +91,13 @@ _M.Predicate = function(self, rule_id, rule_version)
 end
 
 -- See Rule.
-_M.ExtSig = function(self, rule_id, rule_version)
+_M.RuleExt = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    local sig = _M.DEFAULT_RULE_DB:ExtSig(rule_id, rule_version)
+    local sig = _M.DEFAULT_RULE_DB:RuleExt(rule_id, rule_version)
 
     set_sig_meta(sig)
 

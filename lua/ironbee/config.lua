@@ -1,8 +1,33 @@
---[[-------------------------------------------------------------------------
+#!/usr/bin/lua
+
+--[[--------------------------------------------------------------------------
+-- Licensed to Qualys, Inc. (QUALYS) under one or more
+-- contributor license agreements.  See the NOTICE file distributed with
+-- this work for additional information regarding copyright ownership.
+-- QUALYS licenses this file to You under the Apache License, Version 2.0
+-- (the "License"); you may not use this file except in compliance with
+-- the License.  You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+--]]--------------------------------------------------------------------------
+
+--
+-- IronBee Waggle --- Generator
+--
 -- IronBee configuration code.
---]]-------------------------------------------------------------------------
+--
+-- @author Sam Baskinger <sbaskinger@qualys.com>
+--
 
 local ffi = require('ffi')
+
+local Action = require('ironbee/waggle/actionrule')
 
 local _M = {}
 _M.__index = _M
@@ -423,7 +448,7 @@ local build_rule = function(ib, ctx, chain, db)
         end
 
         -- For actions, set the magic actionflag.
-        if rule.type == "actionsignature" then
+        if rule:is_a(Action) then
             prule[0].flags = ffi.C.ib_set_flag(
                 prule[0].flags,
                 IB_RULE_FLAG_ACTION)

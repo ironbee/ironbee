@@ -1,4 +1,32 @@
+#!/usr/bin/lua
+
+--[[--------------------------------------------------------------------------
+-- Licensed to Qualys, Inc. (QUALYS) under one or more
+-- contributor license agreements.  See the NOTICE file distributed with
+-- this work for additional information regarding copyright ownership.
+-- QUALYS licenses this file to You under the Apache License, Version 2.0
+-- (the "License"); you may not use this file except in compliance with
+-- the License.  You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+--]]--------------------------------------------------------------------------
+
+--
+-- IronBee Waggle --- Generator
+--
+-- Generates rules.
+--
+-- @author Sam Baskinger <sbaskinger@qualys.com>
 local Util = require('ironbee/waggle/util')
+local Action = require('ironbee/waggle/actionrule')
+local RuleExt = require('ironbee/waggle/ruleext')
+local StreamInspect = require('ironbee/waggle/streaminspect')
 
 -- ###########################################################################
 -- Generator - generate a rules.conf or similar
@@ -12,7 +40,7 @@ Generator.new = function(self)
 end
 
 Generator.gen_op = function(self, rule)
-    if rule.type == 'externalsignature' then
+    if rule.is_a(RuleExt) then
         return rule.data.op
     else
         if string.sub(rule.data.op, 1, 1) == '!' then
@@ -97,7 +125,7 @@ Generator.generate = function(self, plan, db)
             local result = link.result
             local rule = db.db[rule_id]
 
-            if Util.type(rule) == 'signature' then
+            if rule:is_a(Rule) then
                 if rule.data.comment then
                     s = s .. "# ".. string.gsub(rule.data.comment, "\n", "\n# ") .."\n"
                 end
@@ -122,7 +150,7 @@ Generator.generate = function(self, plan, db)
                 if i ~= #chain then
                     s = s .. ' chain'
                 end
-            elseif Util.type(rule) == 'externalsignature' then
+            elseif rule:is_a(RuleExt) then
                 if rule.data.comment then
                     s = s .. "# ".. string.gsub(rule.data.comment, "\n", "\n# ") .."\n"
                 end
@@ -136,7 +164,7 @@ Generator.generate = function(self, plan, db)
                     rule.data.id,
                     rule.data.version)
 
-            elseif Util.type(rule) == 'actionsignature' then
+            elseif rule:is_a(Action) then
                 if rule.data.comment then
                     s = s .. "# ".. string.gsub(rule.data.comment, "\n", "\n# ") .."\n"
                 end
@@ -146,7 +174,7 @@ Generator.generate = function(self, plan, db)
                     self:gen_actions(rule),
                     rule.data.id,
                     rule.data.version)
-            elseif Util.type(rule) == 'streaminspect' then
+            elseif rule.is_a(StreamInspect) then
                 if rule.data.comment then
                     s = s .. "# ".. string.gsub(rule.data.comment, "\n", "\n# ") .."\n"
                 end

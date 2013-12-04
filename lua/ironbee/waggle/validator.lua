@@ -1,12 +1,37 @@
+#!/usr/bin/lua
+
+--[[--------------------------------------------------------------------------
+-- Licensed to Qualys, Inc. (QUALYS) under one or more
+-- contributor license agreements.  See the NOTICE file distributed with
+-- this work for additional information regarding copyright ownership.
+-- QUALYS licenses this file to You under the Apache License, Version 2.0
+-- (the "License"); you may not use this file except in compliance with
+-- the License.  You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+--]]--------------------------------------------------------------------------
+
+--
+-- IronBee Waggle --- Validator
+--
+-- Validates a collection of Waggle rules.
+--
+-- @author Sam Baskinger <sbaskinger@qualys.com>
+--
 --[[-------------------------------------------------------------------------
 -- Validates a Signature Database and Plan for possible errors.
 --]]-------------------------------------------------------------------------
 local Util = require('ironbee/waggle/util')
-local Rule = require('ironbee/waggle/signature')
+local Rule = require('ironbee/waggle/rule')
+local Action = require('ironbee/waggle/actionrule')
 local SignatureDatabase = require('ironbee/waggle/signaturedatabase')
-local ActionSignature = require('ironbee/waggle/actionsignature')
 local StreamInspect = require('ironbee/waggle/streaminspect')
-local ExternalSignature = require('ironbee/waggle/externalsignature')
 
 Validator = {}
 Validator.__index = Validator
@@ -146,20 +171,20 @@ Validator.validate = function(self, db,  plan)
             local rule = db.db[rule_id]
             local rule_type = Util.type(rule)
 
-            if rule_type == 'signature' and #rule.data.fields == 0 and not rule.data.has_predicate then
+            if rule:is_a(Rule) and #rule.data.fields == 0 and not rule.data.has_predicate then
                 self:warning(rule, "Missing fields")
             end
 
-            if rule_type == 'signature' and (rule.data.op == nil or rule.data.op == '') and not rule.data.has_predicate then
+            if rule:is_a(Rule) and (rule.data.op == nil or rule.data.op == '') and not rule.data.has_predicate then
                 self:warning(rule, "Missing operator. Eg :op(\"rx\", \".*\").")
             end
 
-            if rule_type == 'signature' then
+            if rule:is_a(Rule) then
                 -- Check that we do not use a field before it is defined.
                 check_defined_fields(self, rule, defined_fields)
             end
 
-            if rule_type == 'signature' or rule_type == 'action' then
+            if rule:is_a(Rule) or rule:is_a(Action) then
                 -- Record fields we define.
                 define_fields(self, rule, defined_fields)
             end
@@ -170,7 +195,7 @@ Validator.validate = function(self, db,  plan)
                 self:error(rule, string.format("Invalid phase %s", rule.data.phase))
             end
 
-            if rule_type == 'streaminspect' then
+            if rule:is_a(StreamInspect) then
                 if #rule.data.fields ~= 1 then
                     self:error(rule, "Stream Inspect rules may only have 1 field defined. "..
                                      "REQUEST_BODY_STREAM or RESPONSE_BODY_STREAM")
