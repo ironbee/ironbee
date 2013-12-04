@@ -322,12 +322,12 @@ static ib_status_t txlog_logger_format_fn(
            << "]";
 
     /* Insert IP information. */
-    logstr << "[" << conn.remote_ip_string()
-           << " " << conn.remote_port()
-           << " " << conn.local_ip_string()
-           << " " << conn.local_port()
-           << " " << "-" // FIXME - origin ip - ts provided?
-           << " " << "-" // FIXME - origin port - ts provided?
+    logstr << "[" << tx.effective_remote_ip_string()
+           << ":" << conn.remote_port()
+           << " " << conn.remote_ip_string() << ":" << conn.remote_port()
+           << " " << conn.local_ip_string() << ":" << conn.local_port()
+           // FIXME - origin ip:port ts provided?
+           << " -"
            << "]";
 
     /* Insert encryption info. */
