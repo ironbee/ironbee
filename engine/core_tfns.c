@@ -1434,12 +1434,89 @@ static ib_status_t tfn_normalize_path_win(ib_mpool_t *mp,
     return rc;
 }
 
+static ib_status_t tfn_first(
+    ib_mpool_t        *mp,
+    const ib_field_t  *fin,
+    const ib_field_t **fout,
+    void              *cbdata
+)
+{
+    assert(fin != NULL);
+    assert(fout != NULL);
+    assert(fin->type == IB_FTYPE_LIST);
+
+    const ib_list_t      *list;
+    const ib_list_node_t *node;
+    ib_status_t           rc;
+
+    rc = ib_field_value_type(fin, ib_ftype_list_out(&list), IB_FTYPE_LIST);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    node = ib_list_first_const(list);
+    *fout = (node == NULL)?
+        NULL : (const ib_field_t *)ib_list_node_data_const(node);
+
+    return IB_OK;
+}
+
+static ib_status_t tfn_last(
+    ib_mpool_t        *mp,
+    const ib_field_t  *fin,
+    const ib_field_t **fout,
+    void              *cbdata
+)
+{
+    assert(fin != NULL);
+    assert(fout != NULL);
+    assert(fin->type == IB_FTYPE_LIST);
+
+    const ib_list_t      *list;
+    const ib_list_node_t *node;
+    ib_status_t           rc;
+
+    rc = ib_field_value_type(fin, ib_ftype_list_out(&list), IB_FTYPE_LIST);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    node = ib_list_last_const(list);
+    *fout = (node == NULL)?
+        NULL : (const ib_field_t *)ib_list_node_data_const(node);
+
+    return IB_OK;
+}
+
 /**
  * Initialize the core transformations
  **/
 ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
 {
     ib_status_t rc;
+
+    /* First and Last list transformations. */
+    rc = ib_tfn_create_and_register(
+        NULL,
+        ib,
+        "first",
+        true,
+        tfn_first,
+        NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_tfn_create_and_register(
+        NULL,
+        ib,
+        "last",
+        true,
+        tfn_last,
+        NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Define transformations. */
     rc = ib_tfn_create_and_register(NULL, ib, "lowercase", false,

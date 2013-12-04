@@ -86,3 +86,127 @@ TEST_F(CoreTest, BlockingMode2) {
     ASSERT_EQ(403, corecfg->block_status);
     ASSERT_EQ(IB_BLOCK_METHOD_STATUS, corecfg->block_method);
 }
+
+TEST_F(CoreTest, TfnFirst) {
+    std::string config =
+        std::string(
+            "LogLevel INFO\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "LoadModule ibmod_rules.so\n"
+            "Action id:1 rev:1 phase:REQUEST_HEADER "
+            "    setvar:list:element1=1\n"
+            "Action id:2 rev:1 phase:REQUEST_HEADER "
+            "    setvar:list:element2=2\n"
+            "Rule list.first() @eq 1 id:3 rev:1 phase:REQUEST_HEADER "
+            "    setvar:results:result1=1\n"
+            "Rule list.last() @eq 2 id:4 rev:1 phase:REQUEST_HEADER "
+            "    setvar:results:result2=2\n"
+            "<Site default>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname *\n"
+            "   Service *:*\n"
+            "   RuleEnable all\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+
+    /* Validation code */
+    ib_var_target_t      *target;
+    const ib_list_t      *list;
+    const ib_list_node_t *node;
+    const ib_field_t     *field;
+    ib_num_t              num;
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_var_target_acquire_from_string(
+            &target, 
+            ib_tx->mp,
+            ib_engine_var_config_get(ib_engine),
+            IB_S2SL("results:result1"),
+            NULL,
+            NULL));
+    ASSERT_EQ(
+        IB_OK,
+        ib_var_target_get_const(
+            target,
+            &list,
+            ib_tx->mp,
+            ib_tx->var_store));
+    ASSERT_EQ(1UL, ib_list_elements(list));
+
+    node = ib_list_first_const(list);
+    ASSERT_TRUE(node);
+    field = (const ib_field_t *)ib_list_node_data_const(node);
+    ASSERT_TRUE(field);
+    ASSERT_EQ(
+        IB_OK,
+        ib_field_value_type(field, ib_ftype_num_out(&num), IB_FTYPE_NUM));
+    ASSERT_EQ(1L, num);
+}
+
+TEST_F(CoreTest, TfnLast) {
+    std::string config =
+        std::string(
+            "LogLevel INFO\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "LoadModule ibmod_rules.so\n"
+            "Action id:1 rev:1 phase:REQUEST_HEADER "
+            "    setvar:list:element1=1\n"
+            "Action id:2 rev:1 phase:REQUEST_HEADER "
+            "    setvar:list:element2=2\n"
+            "Rule list.first() @eq 1 id:3 rev:1 phase:REQUEST_HEADER "
+            "    setvar:results:result1=1\n"
+            "Rule list.last() @eq 2 id:4 rev:1 phase:REQUEST_HEADER "
+            "    setvar:results:result2=2\n"
+            "<Site default>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname *\n"
+            "   Service *:*\n"
+            "   RuleEnable all\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+    performTx();
+
+    /* Validation code */
+    ib_var_target_t      *target;
+    const ib_list_t      *list;
+    const ib_list_node_t *node;
+    const ib_field_t     *field;
+    ib_num_t              num;
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_var_target_acquire_from_string(
+            &target, 
+            ib_tx->mp,
+            ib_engine_var_config_get(ib_engine),
+            IB_S2SL("results:result2"),
+            NULL,
+            NULL));
+    ASSERT_EQ(
+        IB_OK,
+        ib_var_target_get_const(
+            target,
+            &list,
+            ib_tx->mp,
+            ib_tx->var_store));
+    ASSERT_EQ(1UL, ib_list_elements(list));
+
+    node = ib_list_first_const(list);
+    ASSERT_TRUE(node);
+    field = (const ib_field_t *)ib_list_node_data_const(node);
+    ASSERT_TRUE(field);
+    ASSERT_EQ(
+        IB_OK,
+        ib_field_value_type(field, ib_ftype_num_out(&num), IB_FTYPE_NUM));
+    ASSERT_EQ(2L, num);
+}
