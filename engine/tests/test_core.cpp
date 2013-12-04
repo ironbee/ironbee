@@ -124,7 +124,7 @@ TEST_F(CoreTest, TfnFirst) {
     ASSERT_EQ(
         IB_OK,
         ib_var_target_acquire_from_string(
-            &target, 
+            &target,
             ib_tx->mp,
             ib_engine_var_config_get(ib_engine),
             IB_S2SL("results:result1"),
@@ -186,7 +186,7 @@ TEST_F(CoreTest, TfnLast) {
     ASSERT_EQ(
         IB_OK,
         ib_var_target_acquire_from_string(
-            &target, 
+            &target,
             ib_tx->mp,
             ib_engine_var_config_get(ib_engine),
             IB_S2SL("results:result2"),
