@@ -151,7 +151,7 @@ LoaderJSON.load = function(self, json, db)
 
             -- Pick what functions to use per rule.
             if jsonsig.rule_type == 'Rule' then
-                mksig_fn = db.Sig
+                mksig_fn = db.Rule
                 load_fn = self.loadRule
             elseif jsonsig.rule_type == 'RuleExt' then
                 mksig_fn = db.ExtSig

@@ -7,7 +7,7 @@
 -- Rule DSL
 -- ====================
 --
--- Sig(id, ver) - create a new signature object.
+-- Rule(id, ver) - create a new signature object.
 --
 -- Miscellaneous Functions
 -- =======================

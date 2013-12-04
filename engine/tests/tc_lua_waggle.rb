@@ -17,7 +17,7 @@ class TestLuaWaggle < Test::Unit::TestCase
 
   def test_sig
     lua = <<-EOS
-      Sig("basic1", "1"):
+      Rule("basic1", "1"):
         fields([[REQUEST_METHOD]]):
         op('imatch', [[GET]]):
         phase([[REQUEST_HEADER]]):
@@ -35,7 +35,7 @@ class TestLuaWaggle < Test::Unit::TestCase
 
   def test_transformations
     lua = <<-EOS
-      Sig("basic1", "1"):
+      Rule("basic1", "1"):
         fields([[REQUEST_METHOD.removeWhitespace()]]):
         op('imatch', [[GET]]):
         phase([[REQUEST_HEADER]]):

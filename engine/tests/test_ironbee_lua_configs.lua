@@ -1,4 +1,4 @@
-Sig("mySig", 10):
+Rule("mySig", 10):
     fields("ARGS.trim()"):
     phase("REQUEST"):
     action("severity:1"):
@@ -7,7 +7,7 @@ Sig("mySig", 10):
     op("streq", "hi"):
     message("OK!")
 
-Sig("mySig2", 11):
+Rule("mySig2", 11):
     fields("ARGS.trim()"):
     phase("REQUEST"):
     action("severity:1"):
@@ -16,7 +16,7 @@ Sig("mySig2", 11):
     op("streq", "hi"):
     message("OK %{FIELD}")
 
-Sig("mySig3", 1):
+Rule("mySig3", 1):
    fields("args.trim()"):
    phase("request"):
    action("severity:1"):
@@ -26,7 +26,7 @@ Sig("mySig3", 1):
    op("streq", "hi"):
    message("ok!")
 
-Sig("mySig4", 1):
+Rule("mySig4", 1):
    fields("args.trim()"):
    phase("request"):
    action("severity:1"):
@@ -36,7 +36,7 @@ Sig("mySig4", 1):
    op("!rx", "hi"):
    message("ok!")
 
-Sig("mySig5", 10):
+Rule("mySig5", 10):
    fields("ARGS.trim()"):
    phase("REQUEST"):
    action("severity:1"):

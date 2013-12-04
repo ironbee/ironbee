@@ -36,33 +36,33 @@ end
 
 -- List of signature types so that these constructor functions
 -- can be replaced.
-_M.SIGNATURE_TYPES = { "Sig", "Action", "ExtSig", "StrSig" }
+_M.SIGNATURE_TYPES = { "Rule", "Action", "ExtSig", "StrSig" }
 
 -- Create a new, incomplete, signature (aka rule) representation
 -- and register it with a global database of rules.
 --
--- This also captures the line number and file that Sig is called on.
+-- This also captures the line number and file that Rule is called on.
 --
 -- @param[in] self The module table use to construct a new sig.
 -- @param[in] rule_id Rule ID.
 -- @param[in] rule_version Rule version.
 --
 -- @returns nil on previously defined rule id.
-_M.Sig = function(self, rule_id, rule_version)
+_M.Rule = function(self, rule_id, rule_version)
 
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    local sig = _M.DEFAULT_RULE_DB:Sig(rule_id, rule_version)
+    local sig = _M.DEFAULT_RULE_DB:Rule(rule_id, rule_version)
 
     set_sig_meta(sig)
 
     return sig
 end
 
--- See Sig.
+-- See Rule.
 _M.Action = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
@@ -76,7 +76,7 @@ _M.Action = function(self, rule_id, rule_version)
     return sig
 end
 
--- See Sig.
+-- See Rule.
 _M.Predicate = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
@@ -90,7 +90,7 @@ _M.Predicate = function(self, rule_id, rule_version)
     return sig
 end
 
--- See Sig.
+-- See Rule.
 _M.ExtSig = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
@@ -104,7 +104,7 @@ _M.ExtSig = function(self, rule_id, rule_version)
     return sig
 end
 
--- See Sig.
+-- See Rule.
 _M.StrSig = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
@@ -175,7 +175,7 @@ end
 --
 --     Recipe '5' {
 --       [[A signature.]],
---       Sig(...)...
+--       Rule(...)...
 --     }
 -- 
 -- Elements in the list that are stings are queued up as comments.

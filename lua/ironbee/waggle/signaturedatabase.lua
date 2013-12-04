@@ -16,7 +16,7 @@ SignatureDatabase.clear = function(self)
     self.db = {}
     self.tag_db = {}
 end
-SignatureDatabase.Sig = function(self, rule_id, rule_version)
+SignatureDatabase.Rule = function(self, rule_id, rule_version)
 
     if self.db[rule_id] ~= nil then
         error(

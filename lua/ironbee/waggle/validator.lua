@@ -27,6 +27,7 @@ local phases = {
 }
 
 -- These are fields that the validator should assume exist.
+-- Note that they are all all-upper-case.
 local predefined_fields = {
         ARGS                   = 1,
         AUTH_PASSWORD          = 1,
@@ -97,7 +98,7 @@ end
 -- Not part of the validator API.
 local check_defined_fields = function(validator, rule, defined_fields)
     for i, field in ipairs(rule.data.fields) do
-        if defined_fields[field.collection] == nil then
+        if defined_fields[string.upper(field.collection)] == nil then
             validator:warning(rule, string.format("Field %s read before defined.", field.collection))
         end
     end
@@ -105,12 +106,13 @@ end
 
 local define_fields = function(self, rule, defined_fields)
     for i, action in ipairs(rule.data.actions) do
-        if ( action.name == "setvar" or
-             action.name == "setflag" or
-             action.name == "setRequestHeader" or
-             action.name == "setResponseHeader") and
+        local action_name = string.upper(action.name)
+        if ( action_name == "setvar" or
+             action_name == "setflag" or
+             action_name == "setRequestHeader" or
+             action_name == "setResponseHeader") and
            action.argument then
-            defined_fields[action.argument] = 1
+            defined_fields[string.upper(action.argument)] = 1
         end
     end
 end
@@ -133,7 +135,7 @@ end
 
 Validator.validate = function(self, db,  plan)
 
-    -- Fields that we've seen already.
+    -- Fields that we've seen already stored as all upper-case.
     local defined_fields = setmetatable({}, { __index = predefined_fields })
 
     for rule_list_idx, rule_list in ipairs(plan) do
