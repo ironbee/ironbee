@@ -471,20 +471,20 @@ void DLL_PUBLIC ib_list_clear(ib_list_t *list);
 size_t DLL_PUBLIC ib_list_elements(const ib_list_t *list);
 
 /**
- * Return first node in the list.
+ * Return first node in the list or NULL if there are no elements.
  *
  * @param list List
  *
- * @returns First node in the list.
+ * @returns First node in the list or NULL if there are no elements.
  */
 ib_list_node_t DLL_PUBLIC *ib_list_first(ib_list_t *list);
 
 /**
- * Return last node in the list.
+ * Return last node in the list or NULL if there are no elements.
  *
  * @param list List
  *
- * @returns Last node in the list.
+ * @returns Last node in the list or NULL if there are no elements.
  */
 ib_list_node_t DLL_PUBLIC *ib_list_last(ib_list_t *list);
 
@@ -507,20 +507,20 @@ ib_list_node_t DLL_PUBLIC *ib_list_node_next(ib_list_node_t *node);
 ib_list_node_t DLL_PUBLIC *ib_list_node_prev(ib_list_node_t *node);
 
 /**
- * Return first node in the const list.
+ * Return first node in the const list or NULL if there are no elements.
  *
  * @param list List
  *
- * @returns First node in the list.
+ * @returns First node in the list or NULL if there are no elements.
  */
 const ib_list_node_t DLL_PUBLIC *ib_list_first_const(const ib_list_t *list);
 
 /**
- * Return last node in the const list.
+ * Return last node in the const list or NULL if there are no elements.
  *
  * @param list List
  *
- * @returns Last node in the list.
+ * @returns Last node in the list or NULL if there are no elements.
  */
 const ib_list_node_t DLL_PUBLIC *ib_list_last_const(const ib_list_t *list);
 
