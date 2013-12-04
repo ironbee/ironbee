@@ -2,17 +2,17 @@
 -- ###########################################################################
 -- Predicate
 -- ###########################################################################
-local Signature = require('ironbee/waggle/signature')
+local Rule = require('ironbee/waggle/signature')
 
 local Predicate = {}
 Predicate.__index = Predicate
 Predicate.type = "predicate"
-setmetatable(Predicate, Signature)
+setmetatable(Predicate, Rule)
 
 -- Create a new external rule. The operator of this should be
 -- similar to "lua:/path/to/script". Notice no @.
 Predicate.new = function(self, id, rev, db)
-    local si = Signature:new(id, rev, db)
+    local si = Rule:new(id, rev, db)
     si.data.rule_type = 'Predicate'
 
     -- Tailor functionality to predicate

@@ -1,5 +1,5 @@
 local Util = require('ironbee/waggle/util')
-local Signature = require('ironbee/waggle/signature')
+local Rule = require('ironbee/waggle/signature')
 local ActionSignature = require('ironbee/waggle/actionsignature')
 local StreamInspect = require('ironbee/waggle/streaminspect')
 local Predicate = require('ironbee/waggle/predicaterule')
@@ -27,7 +27,7 @@ SignatureDatabase.Sig = function(self, rule_id, rule_version)
         }, 1)
     end
 
-    local sig = Signature:new(rule_id, rule_version, self)
+    local sig = Rule:new(rule_id, rule_version, self)
 
     self.db[rule_id] = sig
 

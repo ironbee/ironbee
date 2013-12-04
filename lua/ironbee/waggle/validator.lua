@@ -2,7 +2,7 @@
 -- Validates a Signature Database and Plan for possible errors.
 --]]-------------------------------------------------------------------------
 local Util = require('ironbee/waggle/util')
-local Signature = require('ironbee/waggle/signature')
+local Rule = require('ironbee/waggle/signature')
 local SignatureDatabase = require('ironbee/waggle/signaturedatabase')
 local ActionSignature = require('ironbee/waggle/actionsignature')
 local StreamInspect = require('ironbee/waggle/streaminspect')

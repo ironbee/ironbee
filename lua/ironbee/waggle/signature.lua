@@ -4,7 +4,7 @@
 -- can later be used to generate rule configurations for various IronBee
 -- versions.
 --
--- Signature / Rule DSL
+-- Rule DSL
 -- ====================
 --
 -- Sig(id, ver) - create a new signature object.
@@ -15,25 +15,25 @@
 --
 
 -- ###########################################################################
--- Signature
+-- Rule
 -- ###########################################################################
 --
 -- Class that the fluent internal DSL is built around.
 --
 local Util = require('ironbee/waggle/util')
-local Signature = {}
-Signature.__index = Signature
-Signature.type = "signature"
+local Rule = {}
+Rule.__index = Rule
+Rule.type = "rule"
 
 -- Construct a new signature object.
 --
 -- @param[in] self The module table use to construct a new sig.
 -- @param[in] rule_id Rule ID.
 -- @param[in] rule_version Rule version.
--- @param[in] db Signature database.
+-- @param[in] db Rule database.
 --
 -- @returns nil on previously defined rule id.
-Signature.new = function(self, rule_id, rule_version, db)
+Rule.new = function(self, rule_id, rule_version, db)
     local sig = setmetatable({
         -- The signature database. We need this to update tag information.
         db = db,
@@ -55,7 +55,7 @@ Signature.new = function(self, rule_id, rule_version, db)
             tags = { },
             -- True if a predicate expression has been added to the actions.
             has_predicate = false,
-            -- True if this Signature will be owned by the Waggle execution
+            -- True if this Rule will be owned by the Waggle execution
             -- engine. If false, then this rule will be be subject to
             -- Waggle rule injection and should be claimed by another
             -- module (such as predicate or fast).
@@ -65,13 +65,13 @@ Signature.new = function(self, rule_id, rule_version, db)
             -- After list. List of rules / tags this must occur after.
             after = {},
             before = {},
-            -- Signatures are of type Rule.
+            -- Rule are of type Rule.
             rule_type = 'Rule',
             -- List of predicates rules which represent a list of disjuctions
             -- which, if all true, allow this signature to fire. 
             --
             -- Predicate Rules are tables that contain a 'rule_id' field that
-            -- points to a Signature object and a 'result' field which is
+            -- points to a Rule object and a 'result' field which is
             -- true if the Predicate Rule must be true to continue
             -- or false if the Predicate Rule must be false for this
             -- rule to fire.
@@ -89,7 +89,7 @@ end
 -- @param[in] ... The list of fields.
 --
 -- @returns The signature/rule object.
-Signature.fields = function(self, ...)
+Rule.fields = function(self, ...)
     local fields = {...}
 
     if #fields == 0 then
@@ -139,7 +139,7 @@ Signature.fields = function(self, ...)
 
     return self
 end
-Signature.field = Signature.fields
+Rule.field = Rule.fields
 
 -- Append a list of tags to this rule.
 --
@@ -149,7 +149,7 @@ Signature.field = Signature.fields
 -- @param[in] ... The list of tags.
 --
 -- @returns The signature/rule object.
-Signature.tags = function(self, ...)
+Rule.tags = function(self, ...)
     local tags = {...}
 
     if #tags == 0 then
@@ -166,7 +166,7 @@ Signature.tags = function(self, ...)
 
     return self
 end
-Signature.tag = Signature.tags
+Rule.tag = Rule.tags
 
 -- Add predicate expression to this rule.
 --
@@ -176,19 +176,19 @@ Signature.tag = Signature.tags
 -- @param[in] expression String (sexpr) or front end expression object.
 --
 -- @returns The signature/rule object.
-Signature.predicate = function(self, expression)
+Rule.predicate = function(self, expression)
   local sexpr;
 
   if self.data.has_predicate then
-    error("Signatures can have at most one predicate expression.")
+    error("Rule can have at most one predicate expression.")
   end
 
   if #self.data.fields ~= 0 then
-    error("Signatures can have fields OR predicates, but not both.")
+    error("Rule can have fields OR predicates, but not both.")
   end
 
   if self.data.op and self.data.op ~= "" then
-    error("Signatures can have an operator OR predicates, but not both: op=" .. tostring(self.data.op))
+    error("Rule can have an operator OR predicates, but not both: op=" .. tostring(self.data.op))
   end
 
   if type(expression) == 'string' then
@@ -220,7 +220,7 @@ end
 -- @param[in] ... The list of actions.
 --
 -- @returns The signature/rule object.
-Signature.actions = function(self, ...)
+Rule.actions = function(self, ...)
     local actions = {...}
 
     if #actions == 0 then
@@ -237,7 +237,7 @@ Signature.actions = function(self, ...)
 
     return self
 end
-Signature.action = Signature.actions
+Rule.action = Rule.actions
 
 -- Append a list of rule ids or tags that this rule must execute after.
 --
@@ -247,7 +247,7 @@ Signature.action = Signature.actions
 -- @param[in] ... The list of strings representing rule IDs or tags.
 --
 -- @returns The signature/rule object.
-Signature.after = function(self, ...)
+Rule.after = function(self, ...)
     local after = {...}
 
     if #after == 0 then
@@ -261,7 +261,7 @@ Signature.after = function(self, ...)
     return self
 end
 
-Signature.before = function(self, ...)
+Rule.before = function(self, ...)
     local before = { ... }
     if #before == 0 then
         self.data.before = {}
@@ -285,7 +285,7 @@ end
 --            (nil) then "" is substituted.
 --
 -- @returns The rule/signature object.
-Signature.op = function(self, operator, operator_argument)
+Rule.op = function(self, operator, operator_argument)
     self.data.op = operator
 
     if operator_argument == nil then
@@ -298,10 +298,10 @@ Signature.op = function(self, operator, operator_argument)
 end
 
 -- Set the phase that this should run in.
--- @param[in,out] self The Signature object.
+-- @param[in,out] self The Rule object.
 -- @param[in] phase The phase name.
 -- @return Self.
-Signature.phase = function(self, phase)
+Rule.phase = function(self, phase)
     self.data.phase = phase
     return self
 end
@@ -312,7 +312,7 @@ end
 -- @param[in] message The message to set.
 --
 -- @returns The rule/signature object.
-Signature.message = function(self, message)
+Rule.message = function(self, message)
     self.data.message = message
     return self
 end
@@ -324,7 +324,7 @@ end
 -- @param[in] comment The comment to set.
 --
 -- @returns The rule/signature object.
-Signature.comment = function(self, comment)
+Rule.comment = function(self, comment)
     self.data.comment = comment
     return self
 end
@@ -336,7 +336,7 @@ end
 -- @param[in] result The result of the ruleId when evaluated
 --            at runtime (true or false) which is required to 
 --            execute this function.
-Signature.follows = function(self, ruleId, result)
+Rule.follows = function(self, ruleId, result)
     if Util.type(ruleId) == 'signature' then
         ruleId = ruleId.data.id
     end
@@ -351,11 +351,11 @@ Signature.follows = function(self, ruleId, result)
 end
 
 -- Report if this rule type is a stream rule or not.
-Signature.is_streaming = function(self)
+Rule.is_streaming = function(self)
     return false
 end
 
--- Set if this Signature should be claimed by Waggle for rule injection.
+-- Set if this Rule should be claimed by Waggle for rule injection.
 --
 -- Rule injection is a method by which a rule owner (such as Predicate,
 -- Fast, or Waggle) can select a list of rules to execute at IronBee
@@ -363,8 +363,8 @@ end
 -- If you specify a rule that you know will be claimed by another
 -- injection module, you should set this to false so that Waggle
 -- will not try and claim the produced rule.
-Signature.waggle_owned = function(self, true_false)
+Rule.waggle_owned = function(self, true_false)
     self.data.waggle_owned = true_false
 end
 
-return Signature
+return Rule

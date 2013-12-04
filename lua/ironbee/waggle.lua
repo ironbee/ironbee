@@ -20,7 +20,7 @@ local Validator = require('ironbee/waggle/validator')
 -- Put a default rule database in place.
 _M.DEFAULT_RULE_DB = SignatureDatabase:new()
 
--- Given a signature (Signature, Action, ExternalSignature, StreamSignature...)
+-- Given a signature (Rule, Action, ExternalSignature, StreamSignature...)
 -- and add a table named "meta" (not a Lua Meta Table) populated with
 -- the source code name and line number.
 local set_sig_meta = function(sig)

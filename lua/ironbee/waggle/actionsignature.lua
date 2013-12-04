@@ -1,6 +1,6 @@
 
 
-local Signature = require('ironbee/waggle/signature')
+local Rule = require('ironbee/waggle/signature')
 
 -- ###########################################################################
 -- ExternalSignature - A signature (rule) that is an outside script.
@@ -8,12 +8,12 @@ local Signature = require('ironbee/waggle/signature')
 local ActionSignature = {}
 ActionSignature.__index = ActionSignature
 ActionSignature.type = "actionsignature"
-setmetatable(ActionSignature, Signature)
+setmetatable(ActionSignature, Rule)
 
 -- Create a new external rule. The operator of this should be
 -- similar to "lua:/path/to/script". Notice no @.
 ActionSignature.new = function(self, id, rev, db)
-    local es = Signature:new(id, rev, db)
+    local es = Rule:new(id, rev, db)
     es.data.rule_type = 'Action'
     return setmetatable(es, self)
 end
