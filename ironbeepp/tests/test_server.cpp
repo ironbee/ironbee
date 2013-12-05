@@ -151,4 +151,6 @@ TEST(TestServer, callbacks)
 
     s.ib()->close_fn(NULL, NULL, s.ib()->close_data);
     ASSERT_EQ(5, callback_called);
+
+    s.destroy_callbacks();
 }
