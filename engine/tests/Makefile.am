@@ -11,7 +11,6 @@ endif
 
 check_PROGRAMS = \
 	test_action \
-	test_core \
 	test_config \
 	test_engine \
 	test_engine_manager \
@@ -74,8 +73,6 @@ test_config_SOURCES = test_config.cpp \
 test_operator_SOURCES = test_operator.cpp
 
 test_action_SOURCES = test_action.cpp test_core_actions.cpp
-
-test_core_SOURCES = test_core.cpp
 
 test_var_SOURCES = test_var.cpp
 
