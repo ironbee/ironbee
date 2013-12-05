@@ -84,11 +84,6 @@ static ib_status_t cpbuf_append(ib_cfgparser_t *cp, char c)
             cp,
             "Token size limit exceeded. Will not grow past %zu characters.",
             cp->buffer->len);
-        ib_cfg_log_trace(
-            cp,
-            "Current buffer is [[[[%.*s]]]]",
-            (int) cp->buffer->len,
-            (char *)cp->buffer->data);
         return IB_EALLOC;
     }
 
@@ -109,7 +104,7 @@ static void cpbuf_clear(ib_cfgparser_t *cp) {
     if (rc != IB_OK) {
         ib_cfg_log_error(
             cp,
-            "Failed to truncate token buffer: %s",
+            "Error truncating token buffer: %s",
             ib_status_to_string(rc));
     }
 }
@@ -238,10 +233,6 @@ static ib_status_t include_parse_directive_impl_log_realpath(
 
     real = ib_mpool_alloc(local_mp, PATH_MAX);
     if (real == NULL) {
-        ib_cfg_log_error(
-            cp,
-            "Failed to allocate path buffer of size %d",
-            PATH_MAX);
         return IB_EALLOC;
     }
 
@@ -298,7 +289,7 @@ static ib_status_t include_parse_directive_impl_chk_access(
         else {
             ib_cfg_log_error(
                 cp,
-                "Cannot access included file \"%s\": %s",
+                "Error accessing included file \"%s\": %s",
                 incfile,
                 strerror(errno));
         }
@@ -319,7 +310,7 @@ static ib_status_t include_parse_directive_impl_chk_access(
         else {
             ib_cfg_log_error(
                 cp,
-                "Failed to stat include file \"%s\": %s",
+                "Error stating include file \"%s\": %s",
                 incfile,
                 strerror(errno));
         }
@@ -378,7 +369,7 @@ static ib_status_t include_parse_directive_impl_parse(
     /* Initialize new fsm in cp. */
     rc = ib_cfgparser_ragel_init(cp);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not initialize new parser.");
+        ib_cfg_log_error(cp, "Failed to initialize new parser.");
         return rc;
     }
 
@@ -455,7 +446,7 @@ static ib_status_t include_parse_directive_impl(
      * this will generate the incfile value "path/other.conf". */
     incfile = ib_util_relative_file(local_mp, node->file, pval);
     if (incfile == NULL) {
-        ib_cfg_log_error(cp, "Failed to resolve included file \"%s\": %s",
+        ib_cfg_log_error(cp, "Error resolving included file \"%s\": %s",
                          node->file, strerror(errno));
         ib_mpool_release(local_mp);
         rc = IB_ENOENT;
@@ -496,7 +487,7 @@ static ib_status_t include_parse_directive_impl(
         goto cleanup;
     }
 
-    ib_cfg_log_debug(cp, "Done processing include file \"%s\"", incfile);
+    ib_cfg_log_debug(cp, "Finished processing include file \"%s\"", incfile);
 
 cleanup:
     if (local_mp != NULL) {
@@ -535,8 +526,6 @@ static ib_status_t loglevel_parse_directive(
     assert(node->directive != NULL);
     assert(node->params != NULL);
 
-    ib_cfg_log_debug(cp, "Applying new log level.");
-
     return ib_config_directive_process(cp, node->directive, node->params);
 }
 
@@ -555,7 +544,7 @@ static parse_directive_entry_t parse_directive_table[] = {
 
     prepush {
         if (cp->fsm.top >= 1023) {
-            ib_cfg_log_debug(cp, "Recursion too deep during parse.");
+            ib_cfg_log_error(cp, "Recursion too deep during parse.");
             return IB_EOTHER;
         }
     }
@@ -654,12 +643,6 @@ static parse_directive_entry_t parse_directive_table[] = {
                         "Parse directive %s failed.",
                         node->directive);
                 }
-                else {
-                    ib_cfg_log_debug(
-                        cp,
-                        "Parse directive %s succeeded.",
-                        node->directive);
-                }
             }
         }
     }
@@ -701,12 +684,6 @@ static parse_directive_entry_t parse_directive_table[] = {
         node->type = IB_CFGPARSER_NODE_BLOCK;
         ib_list_node_t *lst_node;
         IB_LIST_LOOP(cp->fsm.plist, lst_node) {
-            ib_cfg_log_debug(
-                cp,
-                "Adding param \"%s\" to SBLK1 %s (node = %p)",
-                (const char *)ib_list_node_data(lst_node),
-                node->directive,
-                node);
             rc = ib_list_push(node->params, ib_list_node_data(lst_node));
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp, "Cannot push directive.");
@@ -831,14 +808,10 @@ ib_status_t ib_cfgparser_ragel_init(ib_cfgparser_t *cp) {
 
     ib_status_t rc;
 
-    ib_cfg_log_debug(cp, "Initializing Ragel state machine.");
-
     /* Access all ragel state variables via structure. */
     %% access cp->fsm.;
 
     %% write init;
-
-    ib_cfg_log_debug(cp, "Initializing IronBee parse values.");
 
     rc = ib_list_create(&(cp->fsm.plist), cp->mp);
     if (rc != IB_OK) {

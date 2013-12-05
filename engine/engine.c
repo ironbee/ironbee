@@ -160,13 +160,9 @@ static ib_status_t ib_hook_register(
 
     ib_status_t           rc;
     ib_list_t            *list;
-    const ib_list_node_t *node;
 
     list = ib->hooks[event];
     assert(list != NULL);
-
-    /* Get the current last node in the list */
-    node = ib_list_last_const(list);
 
     /* Insert the hook at the end of the list */
     rc = ib_list_push(list, hook);
@@ -1571,8 +1567,6 @@ ib_status_t ib_context_create(ib_engine_t *ib,
                 ib_log_notice(ib, "Not registering NULL module idx=%zd", i);
                 continue;
             }
-            ib_log_debug3(ib, "Registering module=\"%s\" idx=%zd",
-                          m->name, m->idx);
             rc = ib_module_register_context(m, ctx);
             if (rc != IB_OK) {
                 goto failed;

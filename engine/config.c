@@ -506,19 +506,19 @@ static ib_status_t cfgparser_apply_node_helper(
             break;
 
         case IB_CFGPARSER_NODE_FILE:
-            ib_log_debug(ib, "Applying file block \"%s\"", node->file);
+            ib_log_debug3(ib, "Applying file block \"%s\"", node->file);
             for (ib_cfgparser_node_t *tmp_node = node->parent;
                  tmp_node != NULL;
                  tmp_node = tmp_node->parent)
             {
                 if (tmp_node->type == IB_CFGPARSER_NODE_ROOT) {
-                    ib_log_debug(
+                    ib_log_debug3(
                         ib,
                         "    included from [root]:%zd",
                         tmp_node->line);
                 }
                 if (tmp_node->type == IB_CFGPARSER_NODE_FILE) {
-                    ib_log_debug(
+                    ib_log_debug3(
                         ib,
                         "    included from %s:%zd",
                         tmp_node->file,
