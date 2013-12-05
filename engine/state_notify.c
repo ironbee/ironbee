@@ -193,8 +193,8 @@ static ib_status_t ib_state_notify_req_line(
         }
         else if (rc != IB_OK) {
             ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
-                              ib_state_event_name(event),
-                              ib_status_to_string(rc));
+                             ib_state_event_name(event),
+                             ib_status_to_string(rc));
         }
     }
 
@@ -250,8 +250,8 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
         }
         else if (rc != IB_OK) {
             ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
-                              ib_state_event_name(event),
-                              ib_status_to_string(rc));
+                             ib_state_event_name(event),
+                             ib_status_to_string(rc));
         }
     }
 
@@ -290,8 +290,8 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
         }
         else if (rc != IB_OK) {
             ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
-                              ib_state_event_name(event),
-                              ib_status_to_string(rc));
+                             ib_state_event_name(event),
+                             ib_status_to_string(rc));
         }
     }
 
@@ -505,8 +505,8 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
         }
         else if (rc != IB_OK) {
             ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
-                              ib_state_event_name(event),
-                              ib_status_to_string(rc));
+                             ib_state_event_name(event),
+                             ib_status_to_string(rc));
         }
     }
 
@@ -553,8 +553,8 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
         }
         else if (rc != IB_OK) {
             ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
-                              ib_state_event_name(event),
-                              ib_status_to_string(rc));
+                             ib_state_event_name(event),
+                             ib_status_to_string(rc));
         }
     }
 

@@ -257,7 +257,7 @@ static void core_gen_tx_numeric(ib_tx_t *tx,
     );
     if (rc != IB_OK) {
         ib_log_notice_tx(tx, "Error acquiring \"%s\" var: %s",
-                          name, ib_status_to_string(rc));
+                         name, ib_status_to_string(rc));
         return;
     }
 

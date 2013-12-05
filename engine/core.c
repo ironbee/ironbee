@@ -3094,7 +3094,8 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
     if (strcasecmp("InspectionEngine", name) == 0) {
         ib_log_notice(ib,
-                     "TODO: Handle Directive: %s \"%s\"", name, p1_unescaped);
+                      "TODO: Handle Directive: %s \"%s\"",
+                      name, p1_unescaped);
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
         if (strcasecmp("RelevantOnly", p1_unescaped) == 0) {
