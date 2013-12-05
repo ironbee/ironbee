@@ -32,7 +32,10 @@
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
+#include <ironbeepp/connection.hpp>
+#include <ironbeepp/transaction.hpp>
 
+#include <ironbee/regex.h>
 #include <ironbee/server.h>
 
 #include <boost/noncopyable.hpp>
@@ -87,6 +90,22 @@ public:
     ConstServer(ib_type ib_server);
 
     ///@}
+
+    // XXX
+    enum direction_e {
+        REQUEST  = IB_SERVER_REQUEST,
+        RESPONSE = IB_SERVER_RESPONSE
+    };
+
+    // XXX
+    enum header_action_e {
+        SET    = IB_HDR_SET,
+        APPEND = IB_HDR_APPEND,
+        MERGE  = IB_HDR_MERGE,
+        ADD    = IB_HDR_ADD,
+        UNSET  = IB_HDR_UNSET,
+        EDIT   = IB_HDR_EDIT
+    };
 
     //! IronBee version number server was compiled with.
     uint32_t version_number() const;
@@ -145,6 +164,81 @@ public:
      **/
     Server();
 
+    /** @name Callbacks
+     * Methods to set callbacks.
+     *
+     * These methods allocate data to handle the C to C++ mapping.  To free
+     * this memory, call destroy_callbacks().
+     **/
+    ///@{
+
+    /**
+     * Destroy memory associated with callbacks.
+     *
+     * Call this to free up the memory allocated by the set callback methods
+     * below.
+     **/
+    void destroy_callbacks() const;
+
+    //! See @ref ib_server_error_fn_t
+    typedef boost::function<
+        void (Transaction, int)
+    > error_callback_t;
+    //! See @ref ib_server_error_hdr_fn_t
+    typedef boost::function<
+        void (Transaction, const char*, size_t, const char*, size_t)
+    > error_header_callback_t;
+    //! See @ref ib_server_error_data_fn_t
+    typedef boost::function<
+        void (Transaction, const char*, size_t)
+    > error_data_callback_t;
+    //! See @ref ib_server_header_fn_t
+    typedef boost::function<
+        void (
+            Transaction,
+            direction_e,
+            header_action_e,
+            const char*, size_t,
+            const char*, size_t,
+            ib_rx_t*
+        )
+    > header_callback_t;
+    //! See @ref ib_server_close_fn_t
+    typedef boost::function<
+        void (Connection, Transaction)
+    > close_callback_t;
+
+#ifdef HAVE_FILTER_DATA_API
+    //! See ib_server_filter_init_fn_t
+    typedef boost::function<
+        void (Transaction, direction_e)
+    > filter_init_callback_t;
+    //! See @ref ib_server_filter_data_fn_t
+    typedef boost::function<
+        void (Transaction, direction_e, const char*, size_t)
+    > filter_data_callback_t;
+#endif
+
+    //! See error callback.
+    void set_error_callback(error_callback_t callback) const;
+    //! See error header callback.
+    void set_error_header_callback(error_header_callback_t callback) const;
+    //! See error data callback.
+    void set_error_data_callback(error_data_callback_t callback) const;
+    //! See header callback.
+    void set_header_callback(header_callback_t callback) const;
+    //! See close callback.
+    void set_close_callback(close_callback_t callback) const;
+
+#ifdef HAVE_FILTER_DATA_API
+    //! See filter init callback.
+    void set_filter_init_callback(filter_init_callback_t callback) const;
+    //! See filter data callback.
+    void set_filter_data_callback(filter_data_callback_t callback) const;
+#endif
+
+    ///@}
+
     /**
      * @name C Interoperability
      * Methods to access underlying C types.
@@ -166,6 +260,17 @@ public:
 private:
     ib_type m_ib;
 };
+
+/**
+ * Output operator for Server.
+ *
+ * Output IronBee::Server[@e value] where @e value is name().
+ *
+ * @param[in] o Ostream to output to.
+ * @param[in] server Server to output.
+ * @return @a o
+ **/
+std::ostream& operator<<(std::ostream& o, const ConstServer& server);
 
 /**
  * Server Value; equivalent to ib_server_t.
@@ -202,17 +307,6 @@ public:
 private:
     ib_server_t m_value;
 };
-
-/**
- * Output operator for Server.
- *
- * Output IronBee::Server[@e value] where @e value is name().
- *
- * @param[in] o Ostream to output to.
- * @param[in] server Server to output.
- * @return @a o
- **/
-std::ostream& operator<<(std::ostream& o, const ConstServer& server);
 
 } // IronBee
 
