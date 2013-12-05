@@ -3,7 +3,7 @@ class TestCore < Test::Unit::TestCase
   include CLIPPTest
 
   def test_blocking_method_status_403
-      clipp(
+    clipp(
       :consumer => 'ironbee:IRONBEE_CONFIG @view',
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
@@ -17,7 +17,7 @@ class TestCore < Test::Unit::TestCase
   end
 
   def test_blocking_method_status_200
-      clipp(
+    clipp(
       :consumer => 'ironbee:IRONBEE_CONFIG @view',
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
