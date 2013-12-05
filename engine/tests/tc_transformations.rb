@@ -2,7 +2,7 @@ class TestTransformations < Test::Unit::TestCase
   include CLIPPTest
 
   def test_tfn_first
-      clipp(
+    clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :default_site_config => <<-EOS
         Action id:1 rev:1 phase:REQUEST_HEADER setvar:list:element1=1
@@ -16,7 +16,7 @@ class TestTransformations < Test::Unit::TestCase
   end
 
   def test_tfn_last
-      clipp(
+    clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :default_site_config => <<-EOS
         Action id:1 rev:1 phase:REQUEST_HEADER setvar:list:element1=1
@@ -30,7 +30,7 @@ class TestTransformations < Test::Unit::TestCase
   end
 
   def test_tfn_first_noexist
-      clipp(
+    clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :default_site_config => <<-EOS
         Rule list.first() @eq 1 id:1 rev:1 phase:REQUEST_HEADER clipp_announce:result
@@ -41,7 +41,7 @@ class TestTransformations < Test::Unit::TestCase
   end
 
   def test_tfn_last_noexist
-      clipp(
+    clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :default_site_config => <<-EOS
         Rule list.last() @eq 1 id:1 rev:1 phase:REQUEST_HEADER clipp_announce:result
@@ -52,7 +52,7 @@ class TestTransformations < Test::Unit::TestCase
   end
 
   def test_tfn_first_notlist
-      clipp(
+    clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :default_site_config => <<-EOS
         Action id:1 rev:1 phase:REQUEST_HEADER setvar:list=1
@@ -64,7 +64,7 @@ class TestTransformations < Test::Unit::TestCase
   end
 
   def test_tfn_last_notlist
-      clipp(
+    clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n")],
       :default_site_config => <<-EOS
         Action id:1 rev:1 phase:REQUEST_HEADER setvar:list=1
