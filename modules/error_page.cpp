@@ -223,19 +223,12 @@ ib_status_t ErrorPageModule::error_page_fn(
         module().configuration_data<ErrorPageCtxConfig>(
             ib_tx.context());
 
-    ib_log_debug_tx(
-        ib_tx.ib(),
-        "Returning custom error page with status %" PRId64 " for context %s.",
-        ib_tx.ib()->block_status,
-        ib_tx.context().name());
-
-
     status_to_file_map_t::iterator itr =
         cfg.status_to_file.find(ib_tx.ib()->block_status);
 
     /* If we can't find a mapping, decline. The default will take over. */
     if (itr == cfg.status_to_file.end()) {
-        ib_log_debug_tx(
+        ib_log_debug2_tx(
             ib_tx.ib(),
             "No custom page mapped for status %" PRId64 " and context %s. "
             "Declining.",
@@ -248,7 +241,7 @@ ib_status_t ErrorPageModule::error_page_fn(
     const boost::iostreams::mapped_file_source &source =
         cfg.status_to_mapped_file_source[tx->block_status];
 
-    ib_log_debug_tx(
+    ib_log_debug2_tx(
         ib_tx.ib(),
         "Using custom error page file %.*s.",
         static_cast<int>(file.length()),

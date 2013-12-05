@@ -371,16 +371,13 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     }
 
     ib_log_trace(ib,
-                 "Compiled pcre pattern \"%s\": "
-                 "cpatt=%p edata=%p limit=%ld rlimit=%ld study=%p "
+                 "Compiled PCRE pattern \"%s\": "
+                 "limit=%ld rlimit=%ld "
                  "dfa=%s dfa-ws-sz=%d "
                  "jit=%s jit-stack: start=%d max=%d",
                  patt,
-                 (void *)cpdata->cpatt,
-                 (void *)cpdata->edata,
                  cpdata->edata->match_limit,
                  cpdata->edata->match_limit_recursion,
-                 cpdata->edata->study_data,
                  cpdata->is_dfa ? "yes" : "no",
                  cpdata->dfa_ws_size,
                  cpdata->is_jit ? "yes" : "no",
@@ -886,8 +883,8 @@ ib_status_t dfa_operator_create(
                      ib_status_to_string(rc));
         return rc;
     }
-    ib_log_debug3(ib, "Compiled DFA id=\"%s\" operator pattern \"%s\" @ %p",
-                  operator_data->id, parameters, (void *)cpdata->cpatt);
+    ib_log_debug3(ib, "Compiled DFA id=\"%s\" operator pattern \"%s\"",
+                  operator_data->id, parameters);
 
     *(modpcre_operator_data_t **)instance_data = operator_data;
     return IB_OK;

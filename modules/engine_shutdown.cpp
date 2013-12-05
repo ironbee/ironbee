@@ -249,8 +249,6 @@ private:
      */
     void on_engine_shutdown_initiated(IronBee::Engine ib)
     {
-        ib_log_info(ib.ib(), "EngineShutdown module entering shutdown mode.");
-
         set_mode(STOPPING);
     }
 
