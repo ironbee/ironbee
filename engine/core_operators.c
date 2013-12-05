@@ -268,7 +268,6 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
     size_t tmp_unesc_len;
 
     if ( tmp_unesc == NULL ) {
-        ib_log_debug(ib, "Failed to allocate unescape string buffer.");
         return IB_EALLOC;
     }
 
@@ -279,7 +278,7 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
                                  IB_UTIL_UNESCAPE_NULTERMINATE);
 
     if ( rc != IB_OK ) {
-        ib_log_debug(ib, "Failed to unescape string: %s", str);
+        ib_log_notice(ib, "Failed to unescape string: %s", str);
         return rc;
     }
 
@@ -628,9 +627,6 @@ ib_status_t op_match_create(
     /* Make a copy of the parameters to operate on. */
     rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
     if (rc != IB_OK) {
-        ib_log_error(ib,
-            "Error unescaping rule parameters '%s'", parameters
-        );
         return IB_EALLOC;
     }
 
@@ -919,7 +915,7 @@ ib_status_t op_ipmatch_execute(
         }
 
         if (ipstr == NULL) {
-            ib_log_error_tx(tx, "Failed to get NULSTR from field");
+            ib_log_error_tx(tx, "Failed to get NULSTR from field.");
             return IB_EUNKNOWN;
         }
     }
@@ -1027,7 +1023,7 @@ ib_status_t op_ipmatch6_create(
     rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
     if (rc != IB_OK) {
         ib_log_error(ib,
-            "Error unescaping rule parameters '%s'", parameters
+            "Error unescaping rule parameters \"%s\"", parameters
         );
         return IB_EALLOC;
     }
@@ -1136,7 +1132,7 @@ ib_status_t op_ipmatch6_execute(
         }
 
         if (ipstr == NULL) {
-            ib_log_error_tx(tx, "Failed to get NULSTR from field");
+            ib_log_error_tx(tx, "Failed to get NULSTR from field.");
             return IB_EUNKNOWN;
         }
     }

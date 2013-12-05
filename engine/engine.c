@@ -174,20 +174,6 @@ static ib_status_t ib_hook_register(
         return rc;
     }
 
-    /* If there was no previous node, this is the first */
-    if (node == NULL) {
-        ib_log_debug3(ib, "Registering %s hook: %p",
-                      ib_state_event_name(event),
-                      hook->callback.as_void);
-    }
-    else {
-        const ib_hook_t *prev = (const ib_hook_t *)node->data;
-        ib_log_debug3(ib, "Registering %s hook after %p: %p",
-                      ib_state_event_name(event),
-                      prev->callback.as_void,
-                      hook->callback.as_void);
-    }
-
     return IB_OK;
 }
 
@@ -371,7 +357,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
 
     /* Check server for ABI compatibility with this engine */
     if (server == NULL) {
-        ib_log_error(ib,  "Error in ib_create: server info required");
+        ib_log_error(ib,  "Error creating engine: server info required");
         rc = IB_EINVAL;
         goto failed;
     }
@@ -466,7 +452,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     /* Initialize the data configuration. */
     rc = ib_var_config_acquire(&ib->var_config, ib->mp);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create var configuration: %s",
+        ib_log_alert(ib, "Error creating var configuration: %s",
                      ib_status_to_string(rc));
         goto failed;
     }
@@ -475,14 +461,15 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     /// @todo Probably want to do this in a less hard-coded manner.
     rc = ib_module_register(ib_core_module_sym(), ib);
     if (rc != IB_OK) {
-        ib_log_alert(ib,  "Error in ib_module_register");
+        ib_log_alert(ib, "Error registering core module: %s",
+                     ib_status_to_string(rc));
         goto failed;
     }
 
     /* Initialize the rule engine */
     rc = ib_rule_engine_init(ib);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize rule engine: %s",
+        ib_log_alert(ib, "Error initializing rule engine: %s",
                      ib_status_to_string(rc));
         goto failed;
     }
@@ -587,7 +574,7 @@ ib_status_t ib_engine_config_finished(ib_engine_t *ib)
     /* Apply the configuration. */
     rc = ib_cfgparser_apply(ib->cfgparser, ib);
     if (rc != IB_OK) {
-        ib_log_error(ib, "There were errors configuring the IronBee engine.");
+        ib_log_error(ib, "Failed to configure the IronBee engine.");
     }
 
     /* Initialize (and close) the main configuration context.
@@ -751,7 +738,6 @@ void ib_engine_destroy(ib_engine_t *ib)
 
     /// @todo Destroy filters
 
-    ib_log_debug3(ib, "Destroying configuration contexts...");
     IB_LIST_LOOP_REVERSE(ib->contexts, node) {
         ib_context_t *ctx = (ib_context_t *)node->data;
         if ( (ctx != ib->ctx) && (ctx != ib->ectx) ) {
@@ -759,7 +745,6 @@ void ib_engine_destroy(ib_engine_t *ib)
         }
     }
 
-    ib_log_debug3(ib, "Destroying engine context...");
     if (ib->ctx != ib->ectx) {
         ib_context_destroy(ib->ctx);
         ib->ctx = NULL;
@@ -823,16 +808,11 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     /// @todo Need to tune the pool size
     rc = ib_mpool_create(&pool, "conn", ib->mp);
     if (rc != IB_OK) {
-        ib_log_alert(ib,
-            "Failed to create connection memory pool: %s",
-            ib_status_to_string(rc)
-        );
         rc = IB_EALLOC;
         goto failed;
     }
     conn = (ib_conn_t *)ib_mpool_calloc(pool, 1, sizeof(*conn));
     if (conn == NULL) {
-        ib_log_alert(ib, "Failed to allocate memory for connection");
         rc = IB_EALLOC;
         goto failed;
     }
@@ -958,16 +938,11 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
      */
     rc = ib_mpool_create(&pool, "tx", conn->mp);
     if (rc != IB_OK) {
-        ib_log_alert(ib,
-            "Failed to create transaction memory pool: %s",
-            ib_status_to_string(rc)
-        );
         rc = IB_EALLOC;
         goto failed;
     }
     tx = (ib_tx_t *)ib_mpool_calloc(pool, 1, sizeof(*tx));
     if (tx == NULL) {
-        ib_log_alert(ib, "Failed to allocate memory for transaction");
         rc = IB_EALLOC;
         goto failed;
     }
@@ -999,7 +974,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     rc = ib_var_store_acquire(&tx->var_store, tx->mp, tx->ib->var_config);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
-                        "Failed to create tx var store: %s",
+                        "Error creating tx var store: %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -1043,7 +1018,6 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
         conn->tx_first = tx;
         conn->tx = tx;
         conn->tx_last = tx;
-        ib_log_debug3_tx(tx, "First transaction: %p", tx);
     }
     else {
         conn->tx = tx;
@@ -1057,13 +1031,10 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
             ib_tx_flags_set(conn->tx_first, IB_TX_FPIPELINED);
         }
         ib_tx_flags_set(tx, IB_TX_FPIPELINED);
-
-        ib_log_debug3_tx(tx, "Found a pipelined transaction: %p", tx);
     }
 
     /* Only when we are successful, commit changes to output variable. */
     *ptx = tx;
-    ib_log_debug3_tx(tx, "TX CREATE p=%p id=%s", tx, tx->id);
 
     return IB_OK;
 
@@ -1177,8 +1148,6 @@ void ib_tx_destroy(ib_tx_t *tx)
     ib_tx_t *prev = NULL;
     bool found = false;
 
-    ib_log_debug3_tx(tx, "TX DESTROY p=%p id=%s", tx, tx->id);
-
     if (   ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)
         || ib_tx_flags_isset(tx, IB_TX_FRES_HAS_DATA) )
     {
@@ -1186,14 +1155,14 @@ void ib_tx_destroy(ib_tx_t *tx)
         // TODO: Remove the need for this
         if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
             ib_log_warning_tx(tx,
-                              "Post processing not run on transaction!");
+                              "Failed to run post processing on transaction.");
         }
 
         /* Make sure that the post processing state was notified. */
         // TODO: Remove the need for this
         if (! ib_tx_flags_isset(tx, IB_TX_FLOGGING)) {
             ib_log_warning_tx(tx,
-                              "Logging not run on transaction!");
+                              "Failed to run logging on transaction.");
         }
     }
 
@@ -1262,7 +1231,6 @@ ib_status_t ib_hook_null_register(
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
-        ib_log_emergency(ib, "Error in ib_mpool_calloc");
         return IB_EALLOC;
     }
 
@@ -1290,7 +1258,6 @@ ib_status_t ib_hook_conn_register(
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
-        ib_log_emergency(ib, "Error in ib_mpool_calloc");
         return IB_EALLOC;
     }
 
@@ -1317,7 +1284,6 @@ ib_status_t ib_hook_tx_register(
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
-        ib_log_emergency(ib, "Error in ib_mpool_calloc");
         return IB_EALLOC;
     }
 
@@ -1344,7 +1310,6 @@ ib_status_t ib_hook_txdata_register(
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
-        ib_log_emergency(ib, "Error in ib_mpool_calloc");
         return IB_EALLOC;
     }
 
@@ -1371,7 +1336,6 @@ ib_status_t ib_hook_parsed_header_data_register(
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
-        ib_log_emergency(ib, "Error in ib_mpool_calloc");
         return IB_EALLOC;
     }
 
@@ -1398,7 +1362,6 @@ ib_status_t ib_hook_parsed_req_line_register(
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
-        ib_log_emergency(ib, "Error in ib_mpool_calloc");
         return IB_EALLOC;
     }
 
@@ -1425,7 +1388,6 @@ ib_status_t ib_hook_parsed_resp_line_register(
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
-        ib_log_emergency(ib, "Error in ib_mpool_calloc");
         return IB_EALLOC;
     }
 
@@ -1453,7 +1415,6 @@ ib_status_t ib_hook_context_register(
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
-        ib_log_emergency(ib, "Error in ib_mpool_calloc");
         return IB_EALLOC;
     }
 
@@ -1607,7 +1568,7 @@ ib_status_t ib_context_create(ib_engine_t *ib,
         size_t i;
         IB_ARRAY_LOOP(ib->modules, n, i, m) {
             if (m == NULL) {
-                ib_log_debug(ib, "Not registering NULL module idx=%zd", i);
+                ib_log_notice(ib, "Not registering NULL module idx=%zd", i);
                 continue;
             }
             ib_log_debug3(ib, "Registering module=\"%s\" idx=%zd",
@@ -1642,7 +1603,6 @@ ib_status_t ib_context_open(ib_context_t *ctx)
     if (ctx->state != CTX_CREATED) {
         return IB_EINVAL;
     }
-    ib_log_debug3(ib, "Opening context ctx=%p '%s'", ctx, ctx->ctx_full);
 
     if (ctx->ctype != IB_CTYPE_ENGINE) {
         rc = ib_cfgparser_context_push(ib->cfgparser, ctx);
@@ -1657,8 +1617,6 @@ ib_status_t ib_context_open(ib_context_t *ctx)
 
     rc = ib_state_notify_context_open(ib, ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to call context opened: %s",
-                     ib_status_to_string(rc));
         return rc;
     }
 
@@ -1674,12 +1632,9 @@ ib_status_t ib_context_close(ib_context_t *ctx)
     if (ctx->state != CTX_OPEN) {
         return IB_EINVAL;
     }
-    ib_log_debug3(ib, "Closing context ctx=%p '%s'", ctx, ctx->ctx_full);
 
     rc = ib_state_notify_context_close(ib, ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to call context close: %s",
-                     ib_status_to_string(rc));
         return rc;
     }
 
@@ -1763,7 +1718,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
         if (enable == true) {
             rc = ib_lock_init(&ctx->auditlog->index_fp_lock);
             if (rc != IB_OK) {
-                ib_log_debug2(ctx->ib,
+                ib_log_notice(ctx->ib,
                               "Failed to initialize lock "
                               "for audit index %s: %s",
                               idx, ib_status_to_string(rc));
@@ -1797,7 +1752,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
 
             rc = ib_lock_lock(&ctx->auditlog->index_fp_lock);
             if (rc != IB_OK) {
-                ib_log_debug2(ctx->ib, "Failed lock to audit index %s",
+                ib_log_notice(ctx->ib, "Failed lock to audit index %s",
                               ctx->auditlog->index);
                 return rc;
             }
@@ -1812,9 +1767,6 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
                 if (unlock) {
                     ib_lock_unlock(&ctx->auditlog->index_fp_lock);
                 }
-                ib_log_debug2(ctx->ib,
-                              "Re-setting log same value. No action: %s",
-                              idx);
 
                 return IB_OK;
             }
@@ -1977,27 +1929,14 @@ const char *ib_context_full_get(const ib_context_t *ctx)
 
 void ib_context_destroy(ib_context_t *ctx)
 {
-    ib_engine_t *ib;
-    ib_status_t rc;
-
     if (ctx == NULL) {
         return;
     }
 
-    ib = ctx->ib;
-
-    ib_log_debug3(ib, "Destroying context ctx=%p '%s'", ctx, ctx->ctx_full);
-
     /* Run through the context modules to call any ctx_fini functions. */
-    rc = ib_state_notify_context_destroy(ib, ctx);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Error notifying context destroy for ctx=%p '%s'",
-                     ctx, ctx->ctx_full);
-    }
+    ib_state_notify_context_destroy(ctx->ib, ctx);
 
-    ib_engine_pool_destroy(ib, ctx->mp);
-
-    return;
+    ib_engine_pool_destroy(ctx->ib, ctx->mp);
 }
 
 ib_context_t *ib_context_engine(const ib_engine_t *ib)
@@ -2025,9 +1964,6 @@ ib_status_t ib_context_init_cfg(ib_context_t *ctx,
                                 const ib_cfgmap_init_t *init)
 {
     ib_status_t rc;
-
-    ib_log_debug3(ctx->ib, "Initializing context %s base=%p",
-                  ib_context_full_get(ctx), base);
 
     if (init == NULL) {
         return IB_OK;

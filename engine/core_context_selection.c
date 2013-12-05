@@ -343,11 +343,9 @@ static ib_status_t core_ctxsel_finalize(
 
     /* If there are no sites, do nothing */
     if (core_data->site_list == NULL) {
-        ib_log_alert(ib, "No site list");
         return IB_OK;
     }
     else if (ib_list_elements(core_data->site_list) == 0) {
-        ib_log_alert(ib, "No sites in core site list");
         return IB_OK;
     }
 
@@ -355,7 +353,7 @@ static ib_status_t core_ctxsel_finalize(
     if (core_data->selector_list == NULL) {
         rc = ib_list_create(&(core_data->selector_list), ib->mp);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Failed to create core site selector list: %s",
+            ib_log_error(ib, "Error creating core site selector list: %s",
                          ib_status_to_string(rc));
             return rc;
         }
@@ -432,7 +430,7 @@ static ib_status_t core_ctxsel_select(
     }
 
     if (core_data->selector_list == NULL) {
-        ib_log_alert(ib, "No site selection list: Using main context");
+        ib_log_notice(ib, "No site selection list: Using main context");
         goto select_main_context;
     }
 
@@ -507,8 +505,8 @@ static ib_status_t core_ctxsel_select(
         ctx_type = "location";
 
   found:
-        ib_log_debug2(ib, "Selected %s context %p \"%s\" site=%s(%s)",
-                      ctx_type, ctx, ib_context_full_get(ctx),
+        ib_log_debug2(ib, "Selected %s context \"%s\" site=%s(%s)",
+                      ctx_type, ib_context_full_get(ctx),
                       (site ? site->site.id_str : "none"),
                       (site ? site->site.name : "none"));
         *pctx = ctx;
@@ -519,12 +517,7 @@ static ib_status_t core_ctxsel_select(
      * If we get here, we've exhausted the list of selectors, with no matching
      * selector found
      */
-    if (tx == NULL) {
-        ib_log_debug(ib, "No matching site found for connection:"
-                     " IP=%s port=%u",
-                     conn->local_ipstr, conn->local_port);
-    }
-    else {
+    if (tx != NULL) {
         ib_log_notice(ib, "No matching site found for transaction:"
                       " IP=%s port=%u host=\"%s\"",
                       conn->local_ipstr, conn->local_port, tx->hostname);
@@ -1077,7 +1070,7 @@ ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
 
 cleanup:
     if (rc != IB_OK) {
-        ib_log_error(ib, "Context selection registration failed @ %s: %s",
+        ib_log_error(ib, "Error registering context selection @ %s: %s",
                      failed, ib_status_to_string(rc));
     }
     if (registration != NULL) {

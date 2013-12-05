@@ -744,7 +744,7 @@ static ib_status_t act_setvar_create(
         int error_offset;
 
         if (mod != NULL) {
-            ib_log_error(ib, "setvar: '%c' not supported for strings", *mod);
+            ib_log_error(ib, "setvar: Numeric '%c' not supported for strings", *mod);
             return IB_EINVAL;
         }
 
@@ -1425,7 +1425,7 @@ static ib_status_t act_status_create(
     if ( (block_status < 200) || (block_status >= 600) ) {
         ib_log_error(ib,
                      "Action status must be given a parameter "
-                     "x where 200 <= x < 600. It was given %s.",
+                     "x where 200 <= x < 600: %s",
                      params);
         return IB_EINVAL;
     }
@@ -1489,7 +1489,7 @@ static ib_status_t act_del_header_create(
     }
 
     if ( (params == NULL) || (strlen(params) == 0) ) {
-        ib_log_error(ib, "Operation requires a parameter.");
+        ib_log_error(ib, "Delete header action requires a parameter.");
         return IB_EINVAL;
     }
 
@@ -1559,7 +1559,7 @@ static ib_status_t act_set_header_create(
 
 
     if ( (params == NULL) || (strlen(params) == 0) ) {
-        ib_log_error(ib, "Operation requires a parameter");
+        ib_log_error(ib, "Set header requires a parameter.");
         return IB_EINVAL;
     }
 
@@ -1567,7 +1567,7 @@ static ib_status_t act_set_header_create(
 
     /* If the returned value was NULL it is an error. */
     if (equals_idx == NULL) {
-        ib_log_error(ib, "Format for parameter is name=value: %s", params);
+        ib_log_error(ib, "Set header parameter format is name=value: %s", params);
         return IB_EINVAL;
     }
     else if (equals_idx[1] == '~') {
@@ -2294,7 +2294,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         IB_PHASE_NONE, IB_PHASE_NONE
     );
     if (rc != IB_OK) {
-        ib_log_warning(ib,
+        ib_log_notice(ib,
             "Core actions failed to register var \"param\": %s",
             ib_status_to_string(rc)
         );

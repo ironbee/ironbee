@@ -45,6 +45,9 @@ static ib_status_t ib_state_notify_null(
     const ib_list_node_t *node;
     ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_NULL);
     if (rc != IB_OK) {
+        ib_log_error(ib, "Error checking hook for \"%s\": %s",
+                     ib_state_event_name(event),
+                     ib_status_to_string(rc));
         return rc;
     }
 
@@ -57,9 +60,9 @@ static ib_status_t ib_state_notify_null(
             ib_log_debug(ib, "Hook declined: %s", ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_warning(ib, "Hook returned error: %s=%s",
-                           ib_state_event_name(event),
-                           ib_status_to_string(rc));
+            ib_log_notice(ib, "Hook returned error for \"%s\": %s",
+                          ib_state_event_name(event),
+                          ib_status_to_string(rc));
         }
     }
 
@@ -78,6 +81,9 @@ static ib_status_t ib_state_notify_context(
     const ib_list_node_t *node;
     ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_CTX);
     if (rc != IB_OK) {
+        ib_log_error(ib, "Error checking hook for \"%s\": %s",
+                     ib_state_event_name(event),
+                     ib_status_to_string(rc));
         return rc;
     }
 
@@ -90,8 +96,8 @@ static ib_status_t ib_state_notify_context(
             ib_log_debug(ib, "Hook declined: %s", ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_warning(ib, "Hook returned error: %s=%s",
-                           ib_state_event_name(event),
+            ib_log_notice(ib, "Hook returned error for \"%s\": %s",
+                          ib_state_event_name(event),
                            ib_status_to_string(rc));
         }
     }
@@ -112,13 +118,16 @@ static ib_status_t ib_state_notify_conn(
     const ib_list_node_t *node;
     ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
+        ib_log_error(ib, "Error checking hook for \"%s\": %s",
+                     ib_state_event_name(event),
+                     ib_status_to_string(rc));
         return rc;
     }
 
     ib_log_debug3(ib, "CONN EVENT: %s", ib_state_event_name(event));
 
     if (conn->ctx == NULL) {
-        ib_log_warning(ib, "Connection context is null.");
+        ib_log_notice(ib, "Connection context is null.");
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[event], node) {
@@ -128,9 +137,9 @@ static ib_status_t ib_state_notify_conn(
             ib_log_debug(ib, "Hook declined: %s", ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_warning(ib, "Hook returned error: %s=%s",
-                           ib_state_event_name(event),
-                           ib_status_to_string(rc));
+            ib_log_notice(ib, "Hook returned error for \"%s\": %s",
+                          ib_state_event_name(event),
+                          ib_status_to_string(rc));
         }
     }
 
@@ -158,7 +167,8 @@ static ib_status_t ib_state_notify_req_line(
 
     rc = ib_hook_check(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "ib_hook_check() failed: %s",
+        ib_log_error_tx(tx, "Error checking hook for \"%s\": %s",
+                        ib_state_event_name(event),
                         ib_status_to_string(rc));
         return rc;
     }
@@ -171,7 +181,7 @@ static ib_status_t ib_state_notify_req_line(
     tx->request_line = line;
 
     if (tx->ctx == NULL) {
-        ib_log_warning_tx(tx, "Connection context is null.");
+        ib_log_notice_tx(tx, "Connection context is null.");
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[event], node) {
@@ -182,7 +192,7 @@ static ib_status_t ib_state_notify_req_line(
                             ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_warning_tx(tx, "Hook returned error: %s=%s",
+            ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
                               ib_state_event_name(event),
                               ib_status_to_string(rc));
         }
@@ -209,7 +219,8 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 
     rc = ib_hook_check(ib, event, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "ib_hook_check() failed: %s",
+        ib_log_error_tx(tx, "Error checking hook for \"%s\": %s",
+                        ib_state_event_name(event),
                         ib_status_to_string(rc));
         return rc;
     }
@@ -220,14 +231,14 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
      * which contain neither a line nor headers.
      */
     if ((line == NULL) && !ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
-        ib_log_notice_tx(tx, "Invalid response line");
+        ib_log_notice_tx(tx, "Invalid response line.");
         return IB_OK;
     }
 
     tx->response_line = line;
 
     if (tx->ctx == NULL) {
-        ib_log_warning_tx(tx, "Connection context is null.");
+        ib_log_notice_tx(tx, "Connection context is null.");
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[event], node) {
@@ -238,7 +249,7 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
                             ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_warning_tx(tx, "Hook returned error: %s=%s",
+            ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
                               ib_state_event_name(event),
                               ib_status_to_string(rc));
         }
@@ -267,7 +278,7 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     tx->conn->tx = tx;
 
     if (tx->ctx == NULL) {
-        ib_log_warning_tx(tx, "Connection context is null.");
+        ib_log_notice_tx(tx, "Connection context is null.");
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[event], node) {
@@ -278,7 +289,7 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
                             ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_warning_tx(tx, "Hook returned error: %s=%s",
+            ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
                               ib_state_event_name(event),
                               ib_status_to_string(rc));
         }
@@ -318,7 +329,7 @@ ib_status_t ib_state_notify_request_started(
 
     /* Notify the request line if it's present */
     if (line == NULL) {
-        ib_log_info_tx(tx, "Request started with no line");
+        ib_log_info_tx(tx, "Request started with no line.");
     }
     else if (
         (line->raw == NULL) ||
@@ -326,7 +337,7 @@ ib_status_t ib_state_notify_request_started(
         (line->uri == NULL) ||
         (line->protocol == NULL)
     ) {
-        ib_log_error_tx(tx, "Request started with malformed line");
+        ib_log_error_tx(tx, "Request started with malformed line.");
         return IB_EINVAL;
     }
     else {
@@ -472,7 +483,8 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
     const ib_list_node_t *node;
     ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "ib_hook_check() failed: %s",
+        ib_log_error_tx(tx, "Error checking hook for \"%s\": %s",
+                        ib_state_event_name(event),
                         ib_status_to_string(rc));
         return rc;
     }
@@ -480,7 +492,7 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
     ib_log_debug3_tx(tx, "HEADER EVENT: %s", ib_state_event_name(event));
 
     if (tx->ctx == NULL) {
-        ib_log_warning_tx(tx, "Connection context is null.");
+        ib_log_notice_tx(tx, "Connection context is null.");
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[event], node) {
@@ -492,7 +504,7 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
                             ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_warning_tx(tx, "Hook returned error: %s=%s",
+            ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
                               ib_state_event_name(event),
                               ib_status_to_string(rc));
         }
@@ -515,6 +527,9 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     const ib_list_node_t *node;
     ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Error checking hook for \"%s\": %s",
+                        ib_state_event_name(event),
+                        ib_status_to_string(rc));
         return rc;
     }
 
@@ -526,7 +541,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     tx->conn->tx = tx;
 
     if (tx->ctx == NULL) {
-        ib_log_warning_tx(tx, "Connection context is null.");
+        ib_log_notice_tx(tx, "Connection context is null.");
     }
 
     IB_LIST_LOOP_CONST(ib->hooks[event], node) {
@@ -537,7 +552,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
                             ib_state_event_name(event));
         }
         else if (rc != IB_OK) {
-            ib_log_warning_tx(tx, "Hook returned error: %s=%s",
+            ib_log_notice_tx(tx, "Hook returned error for \"%s\": %s",
                               ib_state_event_name(event),
                               ib_status_to_string(rc));
         }
@@ -1218,7 +1233,7 @@ ib_status_t ib_state_notify_engine_shutdown_initiated(ib_engine_t *ib)
 
     ib_status_t rc;
 
-    ib_log_info(ib, "IronBee Engine Shutdown Requested.");
+    ib_log_info(ib, "IronBee engine shutdown requested.");
 
     rc = ib_state_notify_null(ib, engine_shutdown_initiated_event);
     if (rc != IB_OK) {

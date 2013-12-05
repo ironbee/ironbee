@@ -173,8 +173,8 @@ static void core_gen_tx_bytestr_alias(ib_tx_t *tx,
             val
     );
     if (rc != IB_OK) {
-        ib_log_warning_tx(tx, "Failed to create \"%s\" var: %s",
-                          name, ib_status_to_string(rc));
+        ib_log_notice_tx(tx, "Error creating \"%s\" var: %s",
+                         name, ib_status_to_string(rc));
         return;
     }
 
@@ -185,15 +185,15 @@ static void core_gen_tx_bytestr_alias(ib_tx_t *tx,
         name, strlen(name)
     );
     if (rc != IB_OK) {
-        ib_log_warning_tx(tx, "Failed to acquire \"%s\" var: %s",
-                          name, ib_status_to_string(rc));
+        ib_log_notice_tx(tx, "Error acquiring \"%s\" var: %s",
+                         name, ib_status_to_string(rc));
         return;
     }
 
     rc = ib_var_source_set(source, tx->var_store, f);
     if (rc != IB_OK) {
-        ib_log_warning_tx(tx,
-            "Failed add \"%s\" var to transaction: %s",
+        ib_log_notice_tx(tx,
+            "Error adding \"%s\" var to transaction: %s",
             name, ib_status_to_string(rc)
         );
     }
@@ -219,8 +219,8 @@ static void core_gen_tx_bytestr_alias2(
         val_length
     );
     if (rc != IB_OK) {
-        ib_log_warning_tx(tx, "Failed to create alias for \"%s\" var: %s",
-                          name, ib_status_to_string(rc));
+        ib_log_notice_tx(tx, "Error creating alias for \"%s\" var: %s",
+                         name, ib_status_to_string(rc));
         return;
     }
 
@@ -244,8 +244,8 @@ static void core_gen_tx_numeric(ib_tx_t *tx,
                          IB_FTYPE_NUM,
                          &num);
     if (rc != IB_OK) {
-        ib_log_warning_tx(tx, "Failed to create \"%s\" field: %s",
-                          name, ib_status_to_string(rc));
+        ib_log_notice_tx(tx, "Error creating \"%s\" field: %s",
+                         name, ib_status_to_string(rc));
         return;
     }
 
@@ -256,15 +256,15 @@ static void core_gen_tx_numeric(ib_tx_t *tx,
         name, strlen(name)
     );
     if (rc != IB_OK) {
-        ib_log_warning_tx(tx, "Failed to acquire \"%s\" var: %s",
+        ib_log_notice_tx(tx, "Error acquiring \"%s\" var: %s",
                           name, ib_status_to_string(rc));
         return;
     }
 
     rc = ib_var_source_set(source, tx->var_store, f);
     if (rc != IB_OK) {
-        ib_log_warning_tx(tx,
-            "Failed add \"%s\" var to transaction: %s",
+        ib_log_notice_tx(tx,
+            "Error adding \"%s\" var to transaction: %s",
             name, ib_status_to_string(rc)
         );
     }
@@ -531,7 +531,7 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                 rc = ib_field_list_add(f, param);
                 if (rc != IB_OK) {
                     ib_log_notice_tx(tx,
-                                     "Failed to add parameter to "
+                                     "Error adding parameter to "
                                      "ARGS collection: %s",
                                      ib_status_to_string(rc));
                 }
@@ -593,7 +593,7 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
                 rc = ib_field_list_add(f, param);
                 if (rc != IB_OK) {
                     ib_log_notice_tx(tx,
-                                     "Failed to add parameter to "
+                                     "Error adding parameter to "
                                      "ARGS collection: %s",
                                      ib_status_to_string(rc));
                 }
@@ -681,7 +681,7 @@ ib_status_t ib_core_vars_ctx_init(ib_engine_t *ib,
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
     if (rc != IB_OK) {
         ib_log_alert(ib,
-            "Failed to fetch core module context config: %s",
+            "Error fetching core module context config: %s",
             ib_status_to_string(rc)
         );
         return rc;
@@ -726,8 +726,8 @@ ib_status_t ib_core_vars_init(ib_engine_t *ib,
             key_info.initial, key_info.final
         );
         if (rc != IB_OK) {
-            ib_log_warning(ib,
-                "Core vars failed to register \"%s\": %s",
+            ib_log_notice(ib,
+                "Error registering core var \"%s\": %s",
                 key_info.name,
                 ib_status_to_string(rc)
             );

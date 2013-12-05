@@ -301,15 +301,8 @@ ib_status_t ib_logevent_write_all(
         return IB_EINVAL;
     }
 
-    ib_logevent_t *e;
-
     if (tx->logevents == NULL) {
         return IB_OK;
-    }
-
-    while (ib_list_pop(tx->logevents, (void *)&e) == IB_OK) {
-        ib_log_debug(tx->ib, "Wrote log event [id %016" PRIx32 "][type %d]: %s",
-                     e->event_id, e->type, e->msg);
     }
 
     return IB_OK;

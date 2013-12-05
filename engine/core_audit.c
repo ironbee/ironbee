@@ -81,7 +81,6 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     const ib_site_t *site;
 
     if (dtmp == NULL || dn == NULL) {
-        ib_log_error(log->ib,  "Failed to allocate internal buffers.");
         if (dtmp != NULL) {
             free(dtmp);
         }
@@ -100,9 +99,9 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
         if (ret == 0) {
             /// @todo Better error - probably should validate at cfg time
             ib_log_error(log->ib,
-                         "Could not create audit log filename template, "
+                         "Failed to create audit log filename template, "
                          "using default:"
-                         " too long");
+                         " name too long");
             *dtmp = 0;
         }
     }
@@ -116,7 +115,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     if (sys_rc >= dn_sz) {
         /// @todo Better error.
         ib_log_error(log->ib,
-                     "Could not create audit log directory: too long");
+                     "Failed to create audit log directory: name too long");
         free(dtmp);
         free(dn);
         return IB_EINVAL;
@@ -149,7 +148,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     if (sys_rc >= (int)audit_filename_sz) {
         /// @todo Better error.
         ib_log_error(log->ib,
-                     "Could not create audit log filename: too long");
+                     "Failed to create audit log filename: name too long");
         ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename, true);
         free(dtmp);
         free(dn);
@@ -159,7 +158,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     ib_rc = ib_util_mkpath(dn, corecfg->auditlog_dmode);
     if (ib_rc != IB_OK) {
         ib_log_error(log->ib,
-                     "Could not create audit log dir: %s", dn);
+                     "Failed to create audit log dir: %s", dn);
         ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename, true);
         free(dtmp);
         free(dn);
@@ -175,7 +174,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     if (sys_rc >= (int)temp_filename_sz) {
         /// @todo Better error.
         ib_log_error(log->ib,
-                     "Could not create temporary audit log filename: too long");
+                     "Failed to create temporary audit log filename: name too long");
         ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename, true);
         free(dtmp);
         free(dn);
@@ -195,7 +194,7 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     if ( (fd < 0) || (cfg->fp == NULL) ) {
         sys_rc = errno;
         ib_log_error(log->ib,
-                     "Failed to open audit log \"%s\": %s (%d)",
+                     "Error opening audit log \"%s\": %s (%d)",
                      temp_filename, strerror(sys_rc), sys_rc);
         ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename, true);
         free(dtmp);
@@ -264,7 +263,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
         ib_rc = ib_util_mkpath(corecfg->auditlog_dir, corecfg->auditlog_dmode);
         if (ib_rc != IB_OK) {
             ib_log_error(log->ib,
-                         "Could not create audit log dir: %s",
+                         "Failed to create audit log dir: %s",
                          corecfg->auditlog_dir);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
             return ib_rc;
@@ -284,8 +283,8 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
                           log->ctx->auditlog->index);
         if ((size_t)sys_rc >= index_file_sz) {
             ib_log_error(log->ib,
-                         "Could not create audit log index \"%s/%s\":"
-                         " too long",
+                         "Failed to create audit log index \"%s/%s\":"
+                         " name too long",
                          corecfg->auditlog_dir,
                          log->ctx->auditlog->index);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
@@ -302,7 +301,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
         sys_rc = pipe(p);
         if (sys_rc != 0) {
             ib_log_error(log->ib,
-                         "Could not create piped audit log index: %s (%d)",
+                         "Error creating piped audit log index: %s (%d)",
                          strerror(errno), errno);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
             return IB_EINVAL;
@@ -326,13 +325,10 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
             parg[1] = (char *)"-c";
             parg[2] = index_file;
             parg[3] = NULL;
-            ib_log_debug(log->ib,
-                         "Executing piped audit log index: %s %s \"%s\"",
-                         parg[0], parg[1], parg[2]);
             execvp(ib_pipe_shell, (char * const *)parg); /// @todo define shell
             sys_rc = errno;
             ib_log_error(log->ib,
-                         "Could not execute piped audit log index "
+                         "Error executing piped audit log index "
                          "\"%s\": %s (%d)",
                          index_file, strerror(sys_rc), sys_rc);
             exit(1);
@@ -341,7 +337,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
             /* Error - no process created */
             sys_rc = errno;
             ib_log_error(log->ib,
-                         "Could not create piped audit log index process: "
+                         "Error creating piped audit log index process: "
                          "%s (%d)",
                          strerror(sys_rc), sys_rc);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
@@ -356,7 +352,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
         if (cfg->index_fp == NULL) {
             sys_rc = errno;
             ib_log_error(log->ib,
-                         "Could not open piped audit log index: %s (%d)",
+                         "Error opening piped audit log index: %s (%d)",
                          strerror(sys_rc), sys_rc);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
             return IB_EINVAL;
@@ -368,7 +364,7 @@ ib_status_t core_audit_open_auditindexfile(ib_engine_t *ib,
         if (cfg->index_fp == NULL) {
             sys_rc = errno;
             ib_log_error(log->ib,
-                         "Could not open audit log index \"%s\": %s (%d)",
+                         "Error opening audit log index \"%s\": %s (%d)",
                          index_file, strerror(sys_rc), sys_rc);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
             return IB_EINVAL;
@@ -398,7 +394,7 @@ ib_status_t core_audit_open(ib_engine_t *ib,
 
     rc = ib_core_context_config(log->ctx, &corecfg);
     if (rc != IB_OK) {
-        ib_log_error(log->ib, "Could not fetch core configuration: %s",
+        ib_log_error(log->ib, "Error fetching core configuration: %s",
                      ib_status_to_string(rc) );
         return rc;
     }
@@ -420,7 +416,7 @@ ib_status_t core_audit_open(ib_engine_t *ib,
         rc = core_audit_open_auditindexfile(ib, log, cfg, corecfg);
 
         if (rc != IB_OK) {
-            ib_log_error(log->ib,  "Could not open auditlog index.");
+            ib_log_error(log->ib,  "Failed to open auditlog index.");
             return rc;
         }
     }
@@ -494,7 +490,7 @@ ib_status_t core_audit_write_header(ib_engine_t *ib,
 
     hlen = strlen(header);
     if (fwrite(header, hlen, 1, cfg->fp) != 1) {
-        ib_log_error(ib,  "Failed to write audit log header");
+        ib_log_error(ib,  "Failed to write audit log header.");
         return IB_EUNKNOWN;
     }
     fflush(cfg->fp);
@@ -524,7 +520,7 @@ ib_status_t core_audit_write_part(ib_engine_t *ib,
     /* Write the part data. */
     while((chunk_size = part->fn_gen(part, &chunk)) != 0) {
         if (fwrite(chunk, chunk_size, 1, cfg->fp) != 1) {
-            ib_log_error(ib,  "Failed to write audit log part");
+            ib_log_error(ib,  "Failed to write audit log part.");
             fflush(cfg->fp);
             return IB_EUNKNOWN;
         }
@@ -672,7 +668,7 @@ ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
     ib_rc = ib_core_context_config(log->ctx, &corecfg);
     if (ib_rc != IB_OK) {
         ib_log_alert(log->ib,
-                     "Failure accessing core module: %s",
+                     "Error accessing core module: %s",
                      ib_status_to_string(ib_rc));
         goto cleanup;
     }
@@ -726,7 +722,7 @@ ib_status_t core_audit_close(ib_engine_t *ib, ib_auditlog_t *log)
         if (written == 0) {
             sys_rc = errno;
             ib_log_error(log->ib,
-                         "Could not write to audit log index: %s (%d)",
+                         "Error writing to audit log index: %s (%d)",
                          strerror(sys_rc), sys_rc);
 
             /// @todo Should retry (a piped logger may have died)

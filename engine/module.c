@@ -76,16 +76,16 @@ ib_status_t ib_module_register(const ib_module_t *mod, ib_engine_t *ib)
 
     /* Validate module */
     if (mod->vernum != IB_VERNUM) {
-        ib_log_warning(ib,
+        ib_log_notice(ib,
             "Module was written for IronBee version %d but this is IronBee"
-            " version %d.  Please ask module writer to update.",
+            " version %d.  Please ask module author to update.",
             mod->vernum, IB_VERNUM
         );
     }
     if (mod->abinum != IB_ABINUM) {
         ib_log_error(ib,
             "Module was written for IronBee ABI %d but this is IronBee"
-            " ABI %d.  Cannot load incompatible module.  Ask module writer "
+            " ABI %d.  Cannot load incompatible module.  Ask module author "
             " to update.",
             mod->abinum, IB_ABINUM
         );
@@ -104,9 +104,6 @@ ib_status_t ib_module_register(const ib_module_t *mod, ib_engine_t *ib)
     m->idx = ib_array_elements(ib->modules);
     m->ib = ib;
 
-    ib_log_debug2(ib, "Initializing module %s (%zd): %s",
-                  m->name, m->idx, m->filename);
-
     /* Register our own context open callback */
     rc = ib_hook_context_register(ib, context_open_event,
                                   module_context_open, m);
@@ -122,27 +119,26 @@ ib_status_t ib_module_register(const ib_module_t *mod, ib_engine_t *ib)
     rc = ib_array_setn(ib->modules, m->idx, m);
     if (rc != IB_OK) {
         ib_log_error(ib,
-            "Failed to register module %s: %s",
+            "Error registering module %s: %s",
             m->name, ib_status_to_string(rc)
         );
         return rc;
     }
 
     if (ib->ctx != NULL) {
-        ib_log_debug2(ib, "Registering module \"%s\" with main context %p",
-                      m->name, ib->ctx);
         ib_module_register_context(m, ib->ctx);
     }
     else {
-        ib_log_error(ib, "No main context to registering module \"%s\"",
+        ib_log_error(ib, "Error registering module \"%s\": No main context",
                      m->name);
+        return IB_EINVAL;
     }
 
     /* Init and register the module */
     if (m->fn_init != NULL) {
         rc = m->fn_init(ib, m, m->cbdata_init);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Failed to initialize module %s: %s",
+            ib_log_error(ib, "Error initializing module %s: %s",
                          m->name, ib_status_to_string(rc));
             /// @todo Need to be able to delete the entry???
             ib_array_setn(ib->modules, m->idx, NULL);
@@ -196,19 +192,18 @@ ib_status_t ib_module_file_to_sym(
     }
 
     /* Load module and fetch the module symbol. */
-    ib_log_debug2(ib, "Loading module symbol: %s", file);
 
     rc = ib_dso_open(&dso, file, ib->config_mp);
     if (rc != IB_OK) {
         ib_log_error(ib,
-            "Failed to load module %s: %s", file, ib_status_to_string(rc)
+            "Error loading module %s: %s", file, ib_status_to_string(rc)
         );
         return rc;
     }
 
     rc = ib_dso_sym_find(&sym.dso, dso, IB_MODULE_SYM_NAME);
     if (rc != IB_OK || &IB_MODULE_SYM == sym.fn_sym) {
-        ib_log_error(ib, "Failed to load module %s: no symbol named %s",
+        ib_log_error(ib, "Error loading module %s: no symbol named %s",
                      file, IB_MODULE_SYM_NAME);
         return IB_EINVAL;
     }
@@ -233,12 +228,11 @@ ib_status_t DLL_PUBLIC ib_module_load_from_sym(
     }
 
     /* Load module and fetch the module symbol. */
-    ib_log_debug2(ib, "Loading module.");
 
     /* Fetch and copy the module structure. */
     m = sym(ib);
     if (m == NULL) {
-        ib_log_error(ib, "Failed to load module: no module structure");
+        ib_log_error(ib, "Error loading module: no module structure");
         return IB_EUNKNOWN;
     }
 

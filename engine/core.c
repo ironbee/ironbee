@@ -233,7 +233,6 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
     ib_status_t rc;
 
     if ( dst_tmp == NULL ) {
-        ib_log_debug(ib, "Failed to allocate memory for unescaping.");
         return IB_EALLOC;
     }
 
@@ -245,11 +244,15 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
                                    IB_UTIL_UNESCAPE_NONULL) );
 
     if (rc != IB_OK) {
-        const char *msg = (rc == IB_EBADVAL) ?
-            "Failed to unescape string \"%s\" because resultant unescaped "
-                "string contains a NULL character." :
-            "Failed to unescape string \"%s\"";
-        ib_log_debug(ib, msg, src);
+        if (rc == IB_EBADVAL) {
+            ib_log_debug(ib,
+                         "Failed to unescape string \"%s\" because resultant unescaped "
+                         "string contains a NULL character.",
+                         src);
+        }
+        else {
+            ib_log_debug(ib, "Failed to unescape string \"%s\"", src);
+        }
         return rc;
     }
 
@@ -407,7 +410,7 @@ static ib_status_t audit_write_log(ib_engine_t *ib, ib_auditlog_t *log)
     ib_status_t rc;
 
     if (ib_list_elements(log->parts) == 0) {
-        ib_log_error(ib, "No parts to write to audit log");
+        ib_log_error(ib, "No parts to write to audit log.");
         return IB_EINVAL;
     }
 
@@ -424,7 +427,7 @@ static ib_status_t audit_write_log(ib_engine_t *ib, ib_auditlog_t *log)
     if (log->ctx->auditlog->index != NULL) {
         rc = ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Cannot lock %s for write.",
+            ib_log_error(ib, "Failed to lock \"%s\" for write.",
                          log->ctx->auditlog->index);
             return rc;
         }
@@ -443,7 +446,7 @@ static ib_status_t audit_write_log(ib_engine_t *ib, ib_auditlog_t *log)
             (ib_auditlog_part_t *)ib_list_node_data(node);
         rc = core_audit_write_part(ib, part);
         if (rc != IB_OK) {
-            ib_log_error(log->ib, "Failed to write audit log part: %s",
+            ib_log_error(log->ib, "Error writing audit log part: %s",
                          part->name);
         }
     }
@@ -540,7 +543,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 
         /* No data. */
         if (ib_list_elements(list) == 0) {
-            ib_log_info(ib, "No data in audit log part: %s", part->name);
+            ib_log_notice(ib, "No data in audit log part: %s", part->name);
             *chunk = (const uint8_t *)"{}";
             part->gen_data = (void *)-1;
             return strlen(*(const char **)chunk);
@@ -697,7 +700,7 @@ listerror:
         *chunk = rec;
     }
     else {
-        ib_log_error(ib, "NULL field in part: %s", part->name);
+        ib_log_notice(ib, "NULL field in part: %s", part->name);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
         return strlen(*(const char **)chunk);
@@ -735,7 +738,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
         /* No data. */
         if (ib_list_elements(list) == 0) {
-            ib_log_info(ib, "No data in audit log part: %s", part->name);
+            ib_log_notice(ib, "No data in audit log part: %s", part->name);
             part->gen_data = NULL;
             return 0;
         }
@@ -786,7 +789,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
     /* Header Lines */
     f = (ib_field_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
     if (f == NULL) {
-        ib_log_error(ib, "NULL field in part: %s", part->name);
+        ib_log_notice(ib, "NULL field in part: %s", part->name);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
         return strlen(*(const char **)chunk);
@@ -838,8 +841,8 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
     /* Verify size. */
     if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-        ib_log_error(ib, "Item too large to log in part %s: %d",
-                     part->name, rlen);
+        ib_log_notice(ib, "Item too large to log in part %s: %d",
+                      part->name, rlen);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
         return strlen(*(const char **)chunk);
@@ -876,7 +879,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
     if (part->gen_data == NULL) {
         /* No events. */
         if (ib_list_elements(list) == 0) {
-            ib_log_error(ib, "No events in audit log");
             *chunk = (const uint8_t *)"{}";
             part->gen_data = (void *)-1;
             return strlen(*(const char **)chunk);
@@ -910,7 +912,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                                         NULL, NULL);
         if (rc != IB_OK) {
             ib_log_error_tx(part->log->tx,
-                            "Failed to escape tags for audit log: %s",
+                            "Error escaping tags for audit log: %s",
                             ib_status_to_string(rc));
         }
 
@@ -934,7 +936,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                                                &rslt);
                 if (rc != IB_OK) {
                     ib_log_error_tx(part->log->tx,
-                                    "Failed to escape field name \"%s\": %s",
+                                    "Error escaping field name \"%s\": %s",
                                     field_name, ib_status_to_string(rc));
                     *fields = '\0';
                 }
@@ -953,7 +955,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                                           &rslt);
             if (rc != IB_OK) {
                 ib_log_error_tx(part->log->tx,
-                                "Failed to escape log data \"%.*s\": %s",
+                                "Error escaping log data \"%.*s\": %s",
                                 (int)e->data_len, (const char *)e->data,
                                 ib_status_to_string(rc));
                 escaped = (char *)"";
@@ -969,7 +971,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                                            &rslt);
             if (rc != IB_OK) {
                 ib_log_error_tx(part->log->tx,
-                                "Failed to escape rule ID \"%s\": %s",
+                                "Error escaping rule ID \"%s\": %s",
                                 e->rule_id, ib_status_to_string(rc));
                 *ruleid = '\0';
             }
@@ -1005,7 +1007,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         /* Verify size. */
         if (rlen >= CORE_JSON_MAX_REC_LEN) {
-            ib_log_error(ib, "Event too large to log: %d", rlen);
+            ib_log_notice(ib, "Event too large to log: %d", rlen);
             *chunk = (const uint8_t *)"    {}";
             part->gen_data = (void *)-1;
             return strlen(*(const char **)chunk);
@@ -1014,7 +1016,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         *chunk = rec;
     }
     else {
-        ib_log_error(ib, "NULL event");
         *chunk = (const uint8_t *)"    {}";
         part->gen_data = (void *)-1;
         return strlen(*(const char **)chunk);
@@ -1029,7 +1030,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         if (clen+8 > CORE_JSON_MAX_REC_LEN) {
             if (clen+2 > CORE_JSON_MAX_REC_LEN) {
-                ib_log_error(ib, "Event too large to fit in buffer");
+                ib_log_notice(ib, "Event too large to fit in buffer.");
                 *chunk = (const uint8_t *)"    {}\r\n  ]\r\n}";
             }
             memcpy(*(uint8_t **)chunk + clen, "]}", 2);
@@ -1191,15 +1192,15 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                     ib_ftype_num_out(&threat_level)
             );
             if (rc == IB_OK) {
-                ib_log_debug_tx(tx, "Using THREAT_LEVEL as threat level value.");
+                ib_log_debug_tx(tx, "Using THREAT_LEVEL field as threat level value.");
                 do_threat_calc = false;
             }
             else {
-                ib_log_debug_tx(tx, "No numeric THREAT_LEVEL to use as threat level value.");
+                ib_log_debug_tx(tx, "No numeric THREAT_LEVEL field to use as threat level value.");
             }
         }
         else {
-            ib_log_debug_tx(tx, "No THREAT_LEVEL to use as threat level value.");
+            ib_log_debug_tx(tx, "No THREAT_LEVEL field to use as threat level value.");
         }
 
         /* It is more important to write out what is possible
@@ -1435,8 +1436,8 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
             ib_list_push(list, f);
         }
         else {
-            ib_log_error_tx(tx, "Failed to get request_protocol: %s",
-                            ib_status_to_string(rc));
+            ib_log_notice_tx(tx, "Failed to get request_protocol: %s",
+                             ib_status_to_string(rc));
         }
 
         rc = ib_var_source_get(
@@ -1448,8 +1449,8 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
             ib_list_push(list, f);
         }
         else {
-            ib_log_error_tx(tx, "Failed to get request_method: %s",
-                            ib_status_to_string(rc));
+            ib_log_notice_tx(tx, "Failed to get request_method: %s",
+                             ib_status_to_string(rc));
         }
 
         /// @todo If this is NULL, parser failed - what to do???
@@ -1511,8 +1512,8 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
         ib_list_push(list, f);
     }
     else {
-        ib_log_error_tx(tx, "Failed to get response_status: %s",
-                        ib_status_to_string(rc));
+        ib_log_notice_tx(tx, "Failed to get response_status: %s",
+                         ib_status_to_string(rc));
     }
 
     rc = ib_var_source_get(
@@ -1524,8 +1525,8 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
         ib_list_push(list, f);
     }
     else {
-        ib_log_error_tx(tx, "Failed to get response_protocol: %s",
-                        ib_status_to_string(rc));
+        ib_log_notice_tx(tx, "Failed to get response_protocol: %s",
+                         ib_status_to_string(rc));
     }
 
     /* Add the part to the auditlog. */
@@ -1573,20 +1574,12 @@ static ib_status_t ib_auditlog_add_part_http_head_fields(
                              IB_FTYPE_BYTESTR,
                              ib_ftype_bytestr_mutable_in(nvpair->value));
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to create %s header field: %s",
-                            label, ib_status_to_string(rc));
             return rc;
         }
 
         /* Add the new field to the list */
         rc = ib_list_push(list, f);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "Failed to add %s field '%.*s': %s",
-                            label,
-                            (int) ib_bytestr_length(nvpair->name),
-                            ib_bytestr_ptr(nvpair->name),
-                            ib_status_to_string(rc));
             return rc;
         }
     }
@@ -1622,15 +1615,11 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
                              IB_FTYPE_BYTESTR,
                              tx->request_line->raw);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to create request line field: %s",
-                            ib_status_to_string(rc));
             return rc;
         }
 
         rc = ib_list_push(list, f);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to add request line field: %s",
-                            ib_status_to_string(rc));
             return rc;
         }
     }
@@ -1702,14 +1691,10 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
                              IB_FTYPE_BYTESTR,
                              tx->response_line->raw);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to create response line field: %s",
-                            ib_status_to_string(rc));
             return rc;
         }
         rc = ib_list_push(list, f);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to add response line field: %s",
-                            ib_status_to_string(rc));
             return rc;
         }
     }
@@ -2034,8 +2019,6 @@ static ib_status_t core_initvar(ib_engine_t *ib,
     ib_status_t rc = IB_OK;
 
     if (initvar_list == NULL) {
-        ib_log_debug_tx(tx, "No InitVars defined for context \"%s\"",
-                        ib_context_full_get(tx->ctx));
         return IB_OK;
     }
 
@@ -2052,8 +2035,8 @@ static ib_status_t core_initvar(ib_engine_t *ib,
             initvar->initial_value
         );
         if (trc != IB_OK) {
-            ib_log_debug_tx(tx, "Failed to copy field: %s",
-                            ib_status_to_string(trc));
+            ib_log_notice_tx(tx, "Failed to copy field: %s",
+                             ib_status_to_string(trc));
             if (rc == IB_OK) {
                 rc = trc;
             }
@@ -2066,24 +2049,11 @@ static ib_status_t core_initvar(ib_engine_t *ib,
             newf
         );
         if (trc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX vars: %s",
-                            (int)initvar->initial_value->nlen,
-                            initvar->initial_value->name,
-                            ib_status_to_string(trc));
             if (rc == IB_OK) {
                 rc = trc;
             }
         }
-        else {
-            ib_log_trace_tx(tx, "InitVar: Created field \"%.*s\" (type %s)",
-                            (int)initvar->initial_value->nlen,
-                            initvar->initial_value->name,
-                            ib_field_type_name(initvar->initial_value->type));
-        }
     }
-    ib_log_debug_tx(tx, "Created %zd InitVar fields for context \"%s\"",
-                    ib_list_elements(initvar_list),
-                    ib_context_full_get(tx->ctx));
 
     return rc;
 }
@@ -2111,7 +2081,7 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
     rc = ib_core_context_config(tx->ctx, &corecfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
-                        "Failure accessing core module: %s",
+                        "Error accessing core module: %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -2119,7 +2089,7 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
     /* Handle InitVar list */
     rc = core_initvar(ib, tx, corecfg->initvar_list);
     if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Failure executing InitVar(s): %s",
+        ib_log_alert_tx(tx, "Error executing InitVar(s): %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -2158,7 +2128,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = ib_core_context_config(tx->ctx, &corecfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
-                        "Failure accessing core module: %s",
+                        "Error accessing core module: %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -2362,24 +2332,22 @@ static ib_status_t core_site_create(
     if (core_data->site_list == NULL) {
         rc = ib_list_create(&(core_data->site_list), cp->cur_ctx->mp);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Failed to create core site list: %s",
+            ib_log_error(ib, "Error creating core site list: %s",
                          ib_status_to_string(rc));
             return rc;
         }
     }
 
     /* Create the context */
-    ib_cfg_log_debug2(cp, "Creating site context for \"%s\"", site_name);
     rc = ib_context_create(ib, cp->cur_ctx, IB_CTYPE_SITE,
                            "site", site_name, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to create context for \"%s\": %s",
+        ib_cfg_log_error(cp, "Error creating context for \"%s\": %s",
                          site_name, ib_status_to_string(rc));
         return IB_EINVAL;
     }
     core_data->cur_ctx = ctx;
 
-    ib_cfg_log_debug2(cp, "Opening site context %p for \"%s\"", ctx, site_name);
     rc = ib_context_open(ctx);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error opening context for \"%s\": %s",
@@ -2398,7 +2366,7 @@ static ib_status_t core_site_create(
     /* Store the site in the context */
     rc = ib_context_site_set(ctx, *psite);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to set site for site context \"%s\": %s",
+        ib_cfg_log_error(cp, "Failed to set site for context \"%s\": %s",
                          site_name, ib_status_to_string(rc));
         return rc;
     }
@@ -2488,11 +2456,9 @@ static ib_status_t core_site_close(
     }
 
     /* Close the context */
-    ib_cfg_log_debug2(cp, "Closing context %p for site \"%s\"",
-                      ctx, site->name);
     rc = ib_context_close(ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error closing context for site \"%s\" end: %s",
+        ib_cfg_log_error(cp, "Error closing context for site \"%s\": %s",
                          site->name, ib_status_to_string(rc));
         goto done;
     }
@@ -2536,16 +2502,16 @@ static ib_status_t core_location_create(
     rc = ib_context_create(cp->ib, site->context, IB_CTYPE_LOCATION,
                            "location", path, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_debug2(cp,
-                          "Failed to create location context for \"%s:%s\": %s",
-                          site->name, path, ib_status_to_string(rc));
+        ib_cfg_log_error(cp,
+                         "Error creating location context for \"%s:%s\": %s",
+                         site->name, path, ib_status_to_string(rc));
         return rc;
     }
 
     /* Store the site in the context */
     rc = ib_context_site_set(ctx, site);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to set site for context \"%s\": %s",
+        ib_cfg_log_error(cp, "Error setting site for context \"%s\": %s",
                          ib_context_full_get(ctx), ib_status_to_string(rc));
         return rc;
     }
@@ -2564,7 +2530,7 @@ static ib_status_t core_location_create(
     rc = ib_ctxsel_location_create(site, ctx, path, plocation);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Failed to create location \"%s:%s\": %s",
+                         "Error creating location \"%s:%s\": %s",
                          site->name, path, ib_status_to_string(rc));
         return rc;
     }
@@ -2573,13 +2539,10 @@ static ib_status_t core_location_create(
     rc = ib_context_location_set(ctx, *plocation);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Failed to set location for context \"%s\": %s",
+                         "Error setting location for context \"%s\": %s",
                          ib_context_full_get(ctx), ib_status_to_string(rc));
         return rc;
     }
-
-    ib_cfg_log_debug2(cp, "Created location context for \"%s:%s\"",
-                      site->name, path);
 
     return IB_OK;
 }
@@ -2685,8 +2648,6 @@ static ib_status_t core_location_close(ib_cfgparser_t *cp,
     }
 
     /* Close the context */
-    ib_cfg_log_debug2(cp, "Closing location context \"%s\"",
-                      ib_context_full_get(ctx));
     rc = ib_context_close(ctx);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error closing context \"%s\": %s",
@@ -2747,7 +2708,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
 
     /* Checks */
     if (core_data->cur_site != NULL) {
-        ib_cfg_log_error(cp, "Site start within site \"%s\"",
+        ib_cfg_log_error(cp, "Nested site block in site \"%s\"",
                          core_data->cur_site->name);
         return IB_EINVAL;
     }
@@ -2755,8 +2716,6 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     /* Unescape the parameter */
     rc = core_unescape(ib, &site_name, p1);
     if (rc != IB_OK) {
-        ib_cfg_log_debug2(cp, "Could not unescape configuration %s=%s",
-                          dir_name, p1);
         return rc;
     }
 
@@ -2773,7 +2732,6 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
         return rc;
     }
 
-    ib_cfg_log_debug2(cp, "Created site \"%s\"", site_name);
     return rc;
 }
 
@@ -2806,10 +2764,8 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
         return rc;
     }
 
-    ib_cfg_log_debug2(cp, "Processing end of site block \"%s\"", dir_name);
-
     if (core_data->cur_site == NULL) {
-        ib_cfg_log_error(cp, "Site end with no open site");
+        ib_cfg_log_error(cp, "Site end with no open site block.");
         return IB_EINVAL;
     }
     site_name = core_data->cur_site->name;
@@ -2863,21 +2819,18 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     /* Check that we're in a site, and not in a location */
     site = core_data->cur_site;
     if (site == NULL) {
-        ib_cfg_log_debug2(cp, "%s directive with no site", dir_name);
+        ib_cfg_log_error(cp, "%s directive must be within a site block.", dir_name);
         return IB_EINVAL;
     }
     if (core_data->cur_location != NULL) {
-        ib_cfg_log_debug2(cp, "%s directive with location \"%s:%s\" open",
-                          dir_name,
-                          site->name,
-                          core_data->cur_location->path);
+        ib_cfg_log_error(cp, "Nested location block in location \"%s:%s\"",
+                         site->name,
+                         core_data->cur_location->path);
         return IB_EINVAL;
     }
 
     rc = core_unescape(ib, &path, p1);
     if (rc != IB_OK) {
-        ib_cfg_log_debug2(cp, "Failed to unescape parameter %s=%s.",
-                          dir_name, p1);
         return rc;
     }
 
@@ -2919,11 +2872,10 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
     }
 
     if (core_data->cur_location == NULL) {
-        ib_cfg_log_error(cp, "End of location block with no open!");
+        ib_cfg_log_error(cp, "Location end with no open location block.");
         return IB_EINVAL;
     }
 
-    ib_cfg_log_debug2(cp, "Processing location block \"%s\"", name);
     rc = core_location_close(cp, core_data, core_data->cur_location);
     if (rc != IB_OK) {
         return IB_EINVAL;
@@ -2970,7 +2922,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
     /* Get the first parameter */
     node = ib_list_first_const(vars);
     if (node == NULL) {
-        ib_cfg_log_error(cp, "No %s specified for \"%s\" directive",
+        ib_cfg_log_error(cp, "No %s specified for \"%s\" directive.",
                          directive, directive);
         return IB_EINVAL;
     }
@@ -2978,7 +2930,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
 
     /* Verify that we are in a site */
     if (core_data->cur_site == NULL) {
-        ib_cfg_log_error(cp, "No site for %s directive", directive);
+        ib_cfg_log_error(cp, "No site for %s directive.", directive);
         return IB_EINVAL;
     }
     site = core_data->cur_site;
@@ -2986,8 +2938,6 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
     /* We remove constness to populate this buffer. */
     rc = core_unescape(ib, (char**)&param1u, param1);
     if (rc != IB_OK) {
-        ib_cfg_log_debug2(cp, "Failed to unescape %s parameter \"%s\"",
-                          directive, param1);
         return rc;
     }
 
@@ -3014,7 +2964,6 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
             return rc;
         }
 
-        ib_cfg_log_debug2(cp, "%s: %s", directive, site->id_str);
         return IB_OK;
     }
     else if (strcasecmp("Hostname", directive) == 0) {
@@ -3024,12 +2973,10 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
 
         rc = ib_ctxsel_host_create(site, param1u, NULL);
         if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "%s: Invalid hostname \"%s\" for site \"%s\"",
+            ib_cfg_log_error(cp, "%s: Invalid hostname \"%s\" for site \"%s\".",
                              directive, param1u, site->id_str);
             return rc;
         }
-        ib_cfg_log_debug2(cp, "%s: added hostname %s to site %s",
-                          directive, param1u, site->id_str);
 
         /* Handle ip= and port= for backward compatibility */
         while( (node = ib_list_node_next_const(node)) != NULL) {
@@ -3038,8 +2985,6 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
 
             rc = core_unescape(ib, (char**)&unescaped, param);
             if ( rc != IB_OK ) {
-                ib_cfg_log_debug2(cp, "Failed to unescape %s parameter \"%s\"",
-                                  directive, param);
                 return rc;
             }
 
@@ -3079,8 +3024,6 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
             size_t len = strlen(ip) + 1 + strlen(port) + 1;
             char *service = (char *)ib_mpool_alloc(cp->mp, len);
             if (service == NULL) {
-                ib_cfg_log_error(cp, "%s: Failed to allocate service buffer",
-                                 directive);
                 return IB_EALLOC;
             }
 
@@ -3094,8 +3037,6 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
                                  directive, service, site->id_str);
                 return rc;
             }
-            ib_cfg_log_debug2(cp, "%s: added service %s to site %s",
-                              directive, service, site->id_str);
         }
 
         return IB_OK;
@@ -3107,12 +3048,12 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
                              directive, param1u, site->id_str);
             return rc;
         }
-        ib_cfg_log_debug2(cp, "%s: added service %s to site %s",
-                          directive, param1u, site->id_str);
+
         return IB_OK;
     }
 
     ib_cfg_log_error(cp, "Unhandled directive: %s \"%s\"", directive, param1u);
+
     return IB_EINVAL;
 }
 
@@ -3148,16 +3089,14 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     /* We remove constness to populate this buffer. */
     rc = core_unescape(ib, (char**)&p1_unescaped, p1);
     if ( rc != IB_OK ) {
-        ib_log_debug2(ib, "Failed to unescape %s=%s", name, p1);
         return rc;
     }
 
     if (strcasecmp("InspectionEngine", name) == 0) {
-        ib_log_debug(ib,
+        ib_log_notice(ib,
                      "TODO: Handle Directive: %s \"%s\"", name, p1_unescaped);
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
-        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         if (strcasecmp("RelevantOnly", p1_unescaped) == 0) {
             rc = ib_context_set_num(
                 ctx,
@@ -3187,8 +3126,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         return IB_EINVAL;
     }
     else if (strcasecmp("AuditLogIndex", name) == 0) {
-        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
-
         /* "None" means do not use the index file at all. */
         if (strcasecmp("None", p1_unescaped) == 0) {
             rc = ib_context_set_auditlog_index(ctx, false, NULL);
@@ -3199,7 +3136,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         return rc;
     }
     else if (strcasecmp("AuditLogIndexFormat", name) == 0) {
-        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "auditlog_index_fmt", p1_unescaped);
         return rc;
     }
@@ -3210,7 +3146,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             ib_log_error(ib, "Invalid mode: %s \"%s\"", name, p1_unescaped);
             return IB_EINVAL;
         }
-        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_num(ctx, "auditlog_dmode", lmode);
         return rc;
     }
@@ -3221,17 +3156,14 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             ib_log_error(ib, "Invalid mode: %s \"%s\"", name, p1_unescaped);
             return IB_EINVAL;
         }
-        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_num(ctx, "auditlog_fmode", mode);
         return rc;
     }
     else if (strcasecmp("AuditLogBaseDir", name) == 0) {
-        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "auditlog_dir", p1_unescaped);
         return rc;
     }
     else if (strcasecmp("AuditLogSubDirFormat", name) == 0) {
-        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "auditlog_sdir_fmt", p1_unescaped);
         return rc;
     }
@@ -3252,14 +3184,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         if (!(status <= 200 && status < 600))
         {
-            ib_log_debug2(ib,
-                          "DefaultBlockStatus must be 200 <= status < 600.");
-            ib_log_debug2(ib, "DefaultBlockStatus may not be %d", status);
+            ib_log_error(ib,
+                         "DefaultBlockStatus must be 200 <= status < 600: %d",
+                         status);
             return IB_EINVAL;
         }
 
         corecfg->block_status = status;
-        ib_log_debug2(ib, "DefaultBlockStatus: %d", status);
         return IB_OK;
     }
     else if (strcasecmp("BlockingMethod", name) == 0) {
@@ -3287,19 +3218,14 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
             if (status < 200 || status >= 600)
             {
-                ib_log_debug2(
-                    ib,
-                    "BlockingMethod status must be 200 <= status < 600.");
-                ib_log_debug2(
-                    ib,
-                    "BlockingMethod status may not be %d",
-                    status);
+                ib_log_error(ib,
+                             "BlockingMethod status must be 200 <= status < 600: %d",
+                             status);
                 return IB_EINVAL;
             }
 
             corecfg->block_status = status;
             corecfg->block_method = IB_BLOCK_METHOD_STATUS;
-            ib_log_debug2(ib, "BlockingMethod: %d", status);
         }
         else {
             ib_log_error(
@@ -3315,8 +3241,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     {
         ib_mpool_t   *mp  = ib_engine_pool_main_get(ib);
         const char   *uri = NULL;
-
-        ib_log_debug2(ib, "%s: \"%s\"", name, p1_unescaped);
 
         /* Create a file URI from the file path, using memory
          * from the context's mem pool. */
@@ -3335,7 +3259,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         else {
             uri = p1_unescaped;
         }
-        ib_log_debug2(ib, "%s: URI=\"%s\"", name, uri);
         rc = ib_context_set_string(ctx, "logger.log_uri", uri);
         return rc;
     }
@@ -3366,7 +3289,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         return rc;
     }
     else if (strcasecmp("RequestBuffering", name) == 0) {
-        ib_log_debug2(ib, "%s: %s", name, p1_unescaped);
         if (strcasecmp("On", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "buffer_req", 1);
             return rc;
@@ -3376,7 +3298,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         return rc;
     }
     else if (strcasecmp("ResponseBuffering", name) == 0) {
-        ib_log_debug2(ib, "%s: %s", name, p1_unescaped);
         if (strcasecmp("On", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "buffer_res", 1);
             return rc;
@@ -3411,8 +3332,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             return rc;
         }
 
-        ib_log_debug2(ib, "%s: %s", name, ib->sensor_id_str);
-
         /* Generate a 4byte hash id to use it for transaction id generations */
         reduce.uint64 = ib->sensor_id.uint64[0] ^
                         ib->sensor_id.uint64[1];
@@ -3425,13 +3344,11 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("SensorName", name) == 0) {
         ib->sensor_name = ib_mpool_strdup(ib_engine_pool_config_get(ib),
                                           p1_unescaped);
-        ib_log_debug2(ib, "%s: %s", name, ib->sensor_name);
         return IB_OK;
     }
     else if (strcasecmp("SensorHostname", name) == 0) {
         ib->sensor_hostname =
             ib_mpool_strdup(ib_engine_pool_config_get(ib), p1_unescaped);
-        ib_log_debug2(ib, "%s: %s", name, ib->sensor_hostname);
         return IB_OK;
     }
     else if (strcasecmp("ModuleBasePath", name) == 0) {
@@ -3444,7 +3361,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         }
 
         corecfg->module_base_path = p1_unescaped;
-        ib_log_debug2(ib, "ModuleBasePath: %s", p1_unescaped);
         return IB_OK;
     }
     else if (strcasecmp("RuleBasePath", name) == 0) {
@@ -3456,7 +3372,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         }
 
         corecfg->rule_base_path = p1_unescaped;
-        ib_log_debug2(ib, "RuleBasePath: %s", p1_unescaped);
         return IB_OK;
 
     }
@@ -3584,12 +3499,10 @@ static ib_status_t core_dir_loglevel(ib_cfgparser_t *cp,
 
     if (strcasecmp("LogLevel", name) == 0)
     {
-        ib_log_debug2(ib, "%s: %u", name, (unsigned int)level);
         ib_logger_level_set(ib_engine_logger_get(ib), level);
         return IB_OK;
     }
     else if (strcasecmp("RuleEngineLogLevel", name) == 0) {
-        ib_log_debug2(ib, "%s: %u", name, (unsigned int)level);
         rc = ib_context_set_num(ctx, "rule_log_level", level);
         return rc;
     }
@@ -3628,8 +3541,6 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
     /* Merge the set flags with the previous value. */
     parts = ib_flags_merge(parts, flags, fmask);
 
-    ib_log_debug2(ib, "AUDITLOG PARTS: 0x%08lx", (unsigned long)parts);
-
     rc = ib_context_set_num(ctx, "auditlog_parts", parts);
     return rc;
 }
@@ -3666,9 +3577,6 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
     /* Merge the set flags with the previous value. */
     log_flags = ib_flags_merge(log_flags, flags, fmask);
 
-    ib_log_debug2(ib, "RULE ENGINE LOG FLAGS: 0x%08lx",
-                  (unsigned long)log_flags);
-
     rc = ib_context_set_num(ctx, "rule_log_flags", log_flags);
     return rc;
 }
@@ -3704,9 +3612,6 @@ static ib_status_t core_dir_inspection_engine_options(ib_cfgparser_t *cp,
     /* Merge the set flags with the previous value. */
     options = ib_flags_merge(options, flags, fmask);
 
-    ib_log_debug2(ib, "INSPECTION_ENGINE_OPTIONS: 0x%08lx",
-                  (unsigned long)options);
-
     rc = ib_context_set_num(ctx, "inspection_engine_options", options);
     return rc;
 }
@@ -3741,9 +3646,6 @@ static ib_status_t core_dir_protection_engine_options(ib_cfgparser_t *cp,
 
     /* Merge the set flags with the previous value. */
     options = ib_flags_merge(options, flags, fmask);
-
-    ib_log_debug2(ib, "PROTECTION_ENGINE_OPTIONS: 0x%08lx",
-                  (unsigned long)options);
 
     rc = ib_context_set_num(ctx, "protection_engine_options", options);
     return rc;
@@ -3892,7 +3794,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     if (corecfg->initvar_list == NULL) {
         rc = ib_list_create(&(corecfg->initvar_list), mp);
         if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Failed to create InitVar directive list: %s",
+            ib_cfg_log_error(cp, "Error creating InitVar directive list: %s",
                              ib_status_to_string(rc));
             return rc;
         }
@@ -3939,7 +3841,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(
             cp,
-            "Error sourcing initvar %s: %s",
+            "Error sourcing InitVar %s: %s",
             name,
             ib_status_to_string(rc)
         );
@@ -3957,29 +3859,9 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     /* Add to the list */
     rc = ib_list_push(corecfg->initvar_list, initvar);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "InitVar: Error pushing initvar on list: %s",
+        ib_cfg_log_error(cp, "Error pushing InitVar on list: %s",
                          ib_status_to_string(rc));
         return rc;
-    }
-    if (field->type == IB_FTYPE_NUM) {
-        ib_cfg_log_debug(cp,
-                         "InitVar: Created numeric field \"%s\" "
-                         "for context \"%s\"",
-                         name,
-                         ib_context_full_get(cp->cur_ctx));
-    }
-    else if (field->type == IB_FTYPE_FLOAT) {
-        ib_cfg_log_debug(cp,
-                         "InitVar: Created float field \"%s\" "
-                         "for context \"%s\"",
-                         name,
-                         ib_context_full_get(cp->cur_ctx));
-    }
-    else {
-        ib_cfg_log_debug(cp,
-                         "InitVar:Created string field \"%s\" "
-                         "for context \"%s\"",
-                         name, ib_context_full_get(cp->cur_ctx));
     }
 
     /* Done */
@@ -4390,7 +4272,7 @@ static ib_status_t core_ctx_open(ib_engine_t *ib,
     /* Initialize the core fields context. */
     rc = ib_core_vars_ctx_init(ib, mod, ctx, cbdata);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to initialize core fields: %s",
+        ib_log_error(ib, "Error initializing core fields: %s",
                      ib_status_to_string(rc));
         return rc;
     }
@@ -4427,7 +4309,7 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
     rc = ib_core_context_config(ctx, &corecfg);
     if (rc != IB_OK) {
         ib_log_alert(ib,
-                     "Failed to fetch core module context config: %s",
+                     "Error fetching core module context config: %s",
                      ib_status_to_string(rc));
         return rc;
     }
@@ -4449,7 +4331,7 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
         ); \
         if (rc != IB_OK) { \
             ib_log_error(ib, \
-                "Failed to acquire var source: %s: %s", \
+                "Error acquiring var source: %s: %s", \
                 (name), ib_status_to_string(rc) \
             ); \
             return rc; \
@@ -4476,7 +4358,7 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
         );
         if (rc != IB_OK) {
             ib_log_error(ib,
-                "Failed to acquire var target: FLAG:BLOCK: %s",
+                "Error acquiring var target: FLAG:BLOCK: %s",
                 ib_status_to_string(rc)
             );
             return rc;
@@ -4552,7 +4434,7 @@ ib_status_t ib_core_dispatch_auditlog(
             (const core_auditlog_fn_t *)ib_list_node_data_const(node);
         rc = handler->handler(ib, tx, event, auditlog, handler->cbdata);
         if (rc != IB_OK) {
-            ib_log_warning_tx(
+            ib_log_notice_tx(
                 tx,
                 "Audit log handler returned status: %s",
                 ib_status_to_string(rc));
@@ -4623,7 +4505,6 @@ static ib_status_t core_init(ib_engine_t *ib,
 
     corecfg = ib_mpool_calloc(mp, sizeof(*corecfg), 1);
     if (corecfg == NULL) {
-        ib_log_error(ib, "Failed to create configuration memory segment.");
         return IB_EALLOC;
     }
 
@@ -4731,7 +4612,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     /* Create core data structure */
     core_data = ib_mpool_calloc(ib->mp, sizeof(*core_data), 1);
     if (core_data == NULL) {
-        ib_log_error(ib, "Failed to allocate memory for core module");
         return IB_EALLOC;
     }
     m->data = (void *)core_data;
@@ -4745,28 +4625,28 @@ static ib_status_t core_init(ib_engine_t *ib,
     /* Initialize the core fields */
     rc = ib_core_vars_init(ib, m);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to initialize core vars: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Error initializing core vars: %s", ib_status_to_string(rc));
         return rc;
     }
 
     /* Initialize the core transformations */
     rc = ib_core_transformations_init(ib, m);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize core operators: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Error initializing core operators: %s", ib_status_to_string(rc));
         return rc;
     }
 
     /* Initialize the core operators */
     rc = ib_core_operators_init(ib, m);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize core operators: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Error initializing core operators: %s", ib_status_to_string(rc));
         return rc;
     }
 
     /* Initialize the core actions */
     rc = ib_core_actions_init(ib, m);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize core actions: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Error initializing core actions: %s", ib_status_to_string(rc));
         return rc;
     }
 
@@ -4778,7 +4658,7 @@ static ib_status_t core_init(ib_engine_t *ib,
         IB_PHASE_NONE, IB_PHASE_NONE
     );
     if (rc != IB_OK) {
-        ib_log_warning(ib,
+        ib_log_notice(ib,
             "Failed to register %s: %s",
             IB_TX_CAPTURE, ib_status_to_string(rc)
         );
@@ -4958,7 +4838,7 @@ ib_status_t DLL_PUBLIC ib_core_limits_get(
 
     rc = ib_core_context_config(ctx, &corecfg);
     if (rc != IB_OK) {
-        ib_log_error(ctx->ib, "Cannot retrieve core configuration.");
+        ib_log_error(ctx->ib, "Failed to retrieve core configuration.");
         return rc;
     }
 

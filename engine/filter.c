@@ -238,7 +238,7 @@ ib_status_t ib_filter_register(ib_filter_t **pf,
     rc = ib_array_setn(ib->filters, (*pf)->idx, *pf);
     if (rc != IB_OK) {
         ib_log_error(ib,
-            "Failed to register filter %s %s",
+            "Error registering filter %s: %s",
             (*pf)->name, ib_status_to_string(rc)
         );
         *pf = NULL;

@@ -236,7 +236,6 @@ ib_status_t ib_cfgparser_parse_private(
      * This is destroyed at the end of this function. */
     rc = ib_mpool_create(&local_mp, "local_mp", temp_mp);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not make local memory pool.");
         return rc;
     }
 
@@ -244,7 +243,7 @@ ib_status_t ib_cfgparser_parse_private(
     fd = open(file, O_RDONLY);
     if (fd == -1) {
         ec = errno;
-        ib_cfg_log_error(cp, "Could not open config file \"%s\": (%d) %s",
+        ib_cfg_log_error(cp, "Error opening config file \"%s\": (%d) %s",
                          file, ec, strerror(ec));
         rc = IB_EINVAL;
         goto cleanup_fd;
@@ -252,8 +251,7 @@ ib_status_t ib_cfgparser_parse_private(
 
     /* Build a buffer to read the file into. */
     buf = (char *)ib_mpool_alloc(local_mp, sizeof(*buf)*bufsz);
-    if (buf==NULL) {
-        ib_cfg_log_error(cp, "Unable to allocate buffer for config file.");
+    if (buf == NULL) {
         rc = IB_EALLOC;
         goto cleanup_buf;
     }
@@ -285,7 +283,6 @@ ib_status_t ib_cfgparser_parse_private(
     /* Fill the buffer, parse each line. Conditionally read another line. */
     do {
         buflen = read(fd, buf, bufsz);
-        ib_cfg_log_debug3(cp, "Read a %zd byte chunk", buflen);
 
         if ( buflen == 0 ) { /* EOF */
             rc = ib_cfgparser_ragel_parse_chunk(
@@ -307,7 +304,7 @@ ib_status_t ib_cfgparser_parse_private(
             /* buflen < 0. This is an error. */
             ib_cfg_log_error(
                 cp,
-                "Error reading log file %s - %s.",
+                "Error reading config file \"%s\": %s",
                 file,
                 strerror(errno));
             rc = IB_ETRUNC;
@@ -328,13 +325,6 @@ cleanup_buf:
 cleanup_fd:
 
     cp->cur_cwd = save_cwd;
-
-    ib_cfg_log_debug3(
-        cp,
-        "Done reading config \"%s\" via fd=%d errno=%d",
-        file,
-        fd,
-        errno);
 
     if ( (error_count == 0) && (rc == IB_OK) ) {
         return IB_OK;
@@ -379,8 +369,6 @@ ib_status_t ib_cfgparser_parse_buffer(
     if (length == 0) {
         return IB_OK;
     }
-
-    ib_cfg_log_debug(cp, "Passing \"%.*s\" to Ragel", (int)length, buffer);
 
     rc = ib_cfgparser_ragel_parse_chunk(cp, buffer, length, (more ? 0 : 1) );
 
@@ -443,28 +431,14 @@ static ib_status_t cfgparser_apply_node_helper(
     ib_status_t tmp_rc;
     ib_cfgparser_node_t *prev_curr;
 
-    ib_cfg_log_debug(
-        cp,
-        "Applying %s (type=%d) from %s:%zd with %zu params.",
-        node->directive,
-        node->type,
-        node->file,
-        node->line,
-        ib_list_elements(node->params));
-
     switch(node->type) {
         case IB_CFGPARSER_NODE_ROOT:
-            ib_log_debug(ib, "At root configuration node.");
             tmp_rc = cfgparser_apply_node_children_helper(cp, ib, node);
             if (rc == IB_OK) {
                 rc = tmp_rc;
             }
             break;
         case IB_CFGPARSER_NODE_PARSE_DIRECTIVE:
-            ib_log_debug(
-                ib,
-                "Parse directive %s. Not passed to engine.",
-                node->directive);
             tmp_rc = cfgparser_apply_node_children_helper(cp, ib, node);
             if (rc == IB_OK) {
                 rc = tmp_rc;
@@ -475,8 +449,6 @@ static ib_status_t cfgparser_apply_node_helper(
             assert(
                 (ib_list_elements(node->children) == 0) &&
                 "Directives may not have children.");
-
-            ib_log_debug(ib, "Applying directive \"%s\"", node->directive);
 
             /* Store previous current node. */
             prev_curr = cp->curr;
@@ -498,8 +470,6 @@ static ib_status_t cfgparser_apply_node_helper(
 
             break;
         case IB_CFGPARSER_NODE_BLOCK:
-            ib_log_debug(ib, "Applying block %s", node->directive);
-
             /* Set the current node before callbacks. */
             cp->curr = node;
 
@@ -507,7 +477,7 @@ static ib_status_t cfgparser_apply_node_helper(
             tmp_rc = ib_config_block_start(cp, node->directive, node->params);
             if (tmp_rc != IB_OK) {
                 ib_cfg_log_error(cp,
-                                 "Failed to start block \"%s\": %s",
+                                 "Error starting block \"%s\": %s",
                                  node->directive, ib_status_to_string(tmp_rc));
                 if (rc == IB_OK) {
                     rc = tmp_rc;
@@ -526,7 +496,7 @@ static ib_status_t cfgparser_apply_node_helper(
             tmp_rc = ib_config_block_process(cp, node->directive);
             if (tmp_rc != IB_OK) {
                 ib_cfg_log_error(cp,
-                                 "Failed to process block \"%s\": %s",
+                                 "Error processing block \"%s\": %s",
                                  node->directive,
                                  ib_status_to_string(tmp_rc));
                 if (rc == IB_OK) {
@@ -536,7 +506,7 @@ static ib_status_t cfgparser_apply_node_helper(
             break;
 
         case IB_CFGPARSER_NODE_FILE:
-            ib_log_debug(ib, "Applying file block %s", node->file);
+            ib_log_debug(ib, "Applying file block \"%s\"", node->file);
             for (ib_cfgparser_node_t *tmp_node = node->parent;
                  tmp_node != NULL;
                  tmp_node = tmp_node->parent)
@@ -608,16 +578,9 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
 
     rc = ib_list_push(cp->stack, ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to push context %p(%s): %s",
-                         ctx, ib_context_full_get(ctx),
-                         ib_status_to_string(rc));
         return rc;
     }
     cfgp_set_current(cp, ctx);
-
-    ib_cfg_log_debug3(cp, "Stack: ctx=%p(%s)",
-                      cp->cur_ctx,
-                      ib_context_full_get(cp->cur_ctx));
 
     return IB_OK;
 }
@@ -637,9 +600,6 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     /* Remove the last item. */
     rc = ib_list_pop(cp->stack, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Failed to pop context: %s",
-                         ib_status_to_string(rc));
         return rc;
     }
 
@@ -655,14 +615,6 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
         *pcctx = ctx;
     }
 
-    if (ctx == NULL) {
-        ib_cfg_log_debug3(cp, "Stack: [empty]");
-    }
-    else {
-        ib_cfg_log_debug3(cp,
-                          "Stack: ctx=%p(%s)",
-                          cp->cur_ctx, ib_context_full_get(cp->cur_ctx));
-    }
     return IB_OK;
 }
 
@@ -768,15 +720,10 @@ ib_status_t ib_config_register_directive(
 
     rc = ib_hash_get(ib->dirmap, NULL, rec->name);
     if (rc == IB_OK) {
-        ib_log_warning(ib, "Redefining directive %s.", rec->name);
+        ib_log_error(ib, "Redefining directive %s.", rec->name);
         return IB_EOTHER;
     }
     else if (rc != IB_ENOENT) {
-        ib_log_error(
-            ib,
-            "Error checking for redefinition of directive %s: %s",
-            rec->name,
-            ib_status_to_string(rc));
         return rc;
     }
 
@@ -877,7 +824,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
         case IB_DIRTYPE_ONOFF:
             if (nargs != 1) {
                 ib_cfg_log_error(cp,
-                                 "OnOff directive \"%s\" "
+                                 "Directive \"%s\" "
                                  "takes one parameter, not %zd",
                                  name, nargs);
                 rc = IB_EINVAL;
@@ -898,7 +845,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
         case IB_DIRTYPE_PARAM1:
             if (nargs != 1) {
                 ib_cfg_log_error(cp,
-                                 "Param1 directive \"%s\" "
+                                 "Directive \"%s\" "
                                  "takes one parameter, not %zd",
                                  name, nargs);
                 rc = IB_EINVAL;
@@ -911,7 +858,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
         case IB_DIRTYPE_PARAM2:
             if (nargs != 2) {
                 ib_cfg_log_error(cp,
-                                 "Param2 directive \"%s\" "
+                                 "Directive \"%s\" "
                                  "takes two parameters, not %zd",
                                  name, nargs);
                 rc = IB_EINVAL;
@@ -943,7 +890,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
         case IB_DIRTYPE_SBLK1:
             if (nargs != 1) {
                 ib_cfg_log_error(cp,
-                                 "SBlk1 directive \"%s\" "
+                                 "Block Directive \"%s\" "
                                  "takes one parameter, not %zd",
                                  name, nargs);
                 rc = IB_EINVAL;
@@ -958,7 +905,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(
             cp,
-            "Error reported processing directive \"%s\": %s",
+            "Error processing directive \"%s\": %s",
             name,
             ib_status_to_string(rc));
     }
