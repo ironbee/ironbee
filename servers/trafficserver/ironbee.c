@@ -574,7 +574,7 @@ static ib_status_t ib_errclose_callback(
     ib_tx_t *tx,
     void *cbdata)
 {
-    ib_log_error(conn->ib, "BLOCK BY CLOSE NOT IMPLEMENTED.");
+    ib_log_error(conn->ib, "Block by close not implemented.");
     return IB_ENOTIMPL;
 }
 

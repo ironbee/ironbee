@@ -177,7 +177,7 @@ static ib_status_t list_edit(ngx_list_t *list, const char *entry,
     /* Check we were passed something valid */
     if (rx == NULL) {
         if (rx = ib_rx_compile(tx->mp, val), rx == NULL) {
-            ib_log_error_tx(ctx->tx, "Failed to compile %s as regexp", val);
+            ib_log_error_tx(ctx->tx, "Failed to compile %s as regexp.", val);
             cleanup_return IB_EINVAL;
         }
     }
@@ -341,7 +341,7 @@ static ib_status_t ib_errclose_callback(
     ib_tx_t *tx,
     void *cbdata)
 {
-    ib_log_error(conn->ib, "BLOCK BY CLOSE NOT IMPLEMENTED.");
+    ib_log_error(conn->ib, "Block by close not implemented.");
     return IB_ENOTIMPL;
 }
 

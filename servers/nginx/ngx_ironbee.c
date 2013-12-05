@@ -215,7 +215,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
             ib_log_debug_tx(ctx->tx, "ironbee_body_out: buffer_res is %d", (int)num);
             if (rc != IB_OK)
                 ib_log_error_tx(ctx->tx,
-                                "Can't determine output buffer configuration!");
+                                "Failed to determine output buffer configuration.");
             if (num == 0) {
                 ib_log_debug_tx(ctx->tx, "ironbee_body_out: NOBUF");
                 ctx->output_buffering = IOBUF_NOBUF;
@@ -375,7 +375,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
         reason_len = 0;
     }
     else {
-        ib_log_error_tx(ctx->tx, "IronBee: bogus response status %d",
+        ib_log_error_tx(ctx->tx, "IronBee: Bogus response status %d",
                         (int)r->headers_out.status);
         cleanup_return NGX_ERROR;
     }
