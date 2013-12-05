@@ -1443,22 +1443,22 @@ static ib_status_t tfn_first(
 {
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(fin->type == IB_FTYPE_LIST);
 
     const ib_list_t      *list;
-    const ib_list_node_t *node;
     ib_status_t           rc;
 
     rc = ib_field_value_type(fin, ib_ftype_list_out(&list), IB_FTYPE_LIST);
-    if (rc != IB_OK) {
-        return rc;
+    if (rc == IB_EINVAL) {
+        *fout = fin;
+        return IB_OK;
+    }
+    if (rc == IB_OK) {
+        const ib_list_node_t *node = ib_list_first_const(list);
+        *fout = (const ib_field_t *)ib_list_node_data_const(node);
+        return IB_OK;
     }
 
-    node = ib_list_first_const(list);
-    *fout = (node == NULL)?
-        NULL : (const ib_field_t *)ib_list_node_data_const(node);
-
-    return IB_OK;
+    return rc;
 }
 
 static ib_status_t tfn_last(
@@ -1470,22 +1470,22 @@ static ib_status_t tfn_last(
 {
     assert(fin != NULL);
     assert(fout != NULL);
-    assert(fin->type == IB_FTYPE_LIST);
 
     const ib_list_t      *list;
-    const ib_list_node_t *node;
     ib_status_t           rc;
 
     rc = ib_field_value_type(fin, ib_ftype_list_out(&list), IB_FTYPE_LIST);
-    if (rc != IB_OK) {
-        return rc;
+    if (rc == IB_EINVAL) {
+        *fout = fin;
+        return IB_OK;
+    }
+    if (rc == IB_OK) {
+        const ib_list_node_t *node = ib_list_last_const(list);
+        *fout = ib_list_node_data_const(node);
+        return IB_OK;
     }
 
-    node = ib_list_last_const(list);
-    *fout = (node == NULL)?
-        NULL : (const ib_field_t *)ib_list_node_data_const(node);
-
-    return IB_OK;
+    return rc;
 }
 
 /**
