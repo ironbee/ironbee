@@ -78,7 +78,7 @@ static ib_status_t geoip_lookup(
     ib_mpool_t          *mp = tx->mp;
 
     if (ip == NULL) {
-        ib_log_alert_tx(tx, "Trying to lookup NULL IP in GEOIP");
+        ib_log_notice_tx(tx, "GeoIP: Trying to lookup NULL IP");
         return IB_EINVAL;
     }
 
@@ -105,7 +105,7 @@ static ib_status_t geoip_lookup(
     /* Id of geo ip record to read. */
     int geoip_id;
 
-    ib_log_debug_tx(tx, "GeoIP Lookup '%s'", ip);
+    ib_log_debug_tx(tx, "GeoIP: Lookup \"%s\"", ip);
 
     /* Build a new list. */
     rc = ib_var_source_initialize(
@@ -118,13 +118,13 @@ static ib_status_t geoip_lookup(
     /* NOTICE: Called before GeoIP_record_by_addr allocates a
      * GeoIPRecord. */
     if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Unable to add GEOIP var.");
+        ib_log_error_tx(tx, "GeoIP: Failed to add GEOIP var.");
         return IB_EINVAL;
     }
 
     if (mod_data->geoip_db == NULL) {
-        ib_log_alert_tx(tx,
-                        "GeoIP database was never opened. Perhaps the "
+        ib_log_error_tx(tx,
+                        "GeoIP: Database was never opened. Perhaps the "
                         "configuration file needs a GeoIPDatabaseFile "
                         "\"/usr/share/geoip/GeoLite.dat\" line?");
         return IB_EINVAL;
@@ -136,7 +136,7 @@ static ib_status_t geoip_lookup(
         const char *tmp_str;
         ib_bytestr_t *tmp_bs;
 
-        ib_log_debug_tx(tx, "GeoIP record found.");
+        ib_log_debug_tx(tx, "GeoIP: Record found.");
 
         /* Add integers. */
         tmp_field = NULL;
@@ -146,7 +146,7 @@ static ib_status_t geoip_lookup(
         {
             rc = ib_bytestr_dup_nulstr(&tmp_bs, mp, tmp_str);
             if (rc != IB_OK) {
-                ib_log_error_tx(tx, "Failed to dup string %s", tmp_str);
+                ib_log_error_tx(tx, "GeoIP: Failed to dup country_code %s", tmp_str);
                 return rc;
             }
             ib_field_create(&tmp_field,
@@ -162,7 +162,7 @@ static ib_status_t geoip_lookup(
         {
             rc = ib_bytestr_dup_nulstr(&tmp_bs, mp, tmp_str);
             if (rc != IB_OK) {
-                ib_log_error_tx(tx, "Failed to dup string %s", tmp_str);
+                ib_log_error_tx(tx, "GeoIP: Failed to dup country_code3 %s", tmp_str);
                 return rc;
             }
             ib_field_create(&tmp_field,
@@ -178,7 +178,7 @@ static ib_status_t geoip_lookup(
         {
             rc = ib_bytestr_dup_nulstr(&tmp_bs, mp, tmp_str);
             if (rc != IB_OK) {
-                ib_log_error_tx(tx, "Failed to dup string %s", tmp_str);
+                ib_log_error_tx(tx, "GeoIP: Failed to dup country_name %s", tmp_str);
                 return rc;
             }
             ib_field_create(&tmp_field,
@@ -194,7 +194,7 @@ static ib_status_t geoip_lookup(
         {
             rc = ib_bytestr_dup_nulstr(&tmp_bs, mp, tmp_str);
             if (rc != IB_OK) {
-                ib_log_error_tx(tx, "Failed to dup string %s", tmp_str);
+                ib_log_error_tx(tx, "GeoIP: Failed to dup continent_code %s", tmp_str);
                 return rc;
             }
             ib_field_create(&tmp_field,
@@ -208,11 +208,11 @@ static ib_status_t geoip_lookup(
     else
     {
         ib_bytestr_t *tmp_bs;
-        ib_log_debug_tx(tx, "No GeoIP record found.");
+        ib_log_debug_tx(tx, "GeoIP: No record found.");
 
         rc = ib_bytestr_alias_nulstr(&tmp_bs, mp, "01");
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to dup string 01");
+            ib_log_error_tx(tx, "GeoIP: Failed to dup string 01");
             return rc;
         }
         ib_field_create(&tmp_field,
@@ -224,7 +224,7 @@ static ib_status_t geoip_lookup(
 
         rc = ib_bytestr_alias_nulstr(&tmp_bs, mp, "001");
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to dup string 001");
+            ib_log_error_tx(tx, "GeoIP: Failed to dup string 001");
             return rc;
         }
         ib_field_create(&tmp_field,
@@ -236,7 +236,7 @@ static ib_status_t geoip_lookup(
 
         rc = ib_bytestr_alias_nulstr(&tmp_bs, mp, "01");
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to dup string Other Country");
+            ib_log_error_tx(tx, "GeoIP: Failed to dup string Other Country");
             return rc;
         }
         ib_field_create(&tmp_field,
@@ -248,7 +248,7 @@ static ib_status_t geoip_lookup(
 
         rc = ib_bytestr_alias_nulstr(&tmp_bs, mp, "01");
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to dup string 01");
+            ib_log_error_tx(tx, "GeoIP: Failed to dup string 01");
             return rc;
         }
         ib_field_create(&tmp_field,
@@ -299,11 +299,12 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
                                  IB_UTIL_UNESCAPE_NONULL);
 
     if (rc != IB_OK ) {
-        const char *msg = ( rc == IB_EBADVAL )?
-                        "GeoIP Database File \"%s\" contains nulls." :
-                        "GeoIP Database File \"%s\" is an invalid string.";
-
-        ib_cfg_log_debug(cp, msg, p1);
+        if (rc == IB_EBADVAL) {
+            ib_cfg_log_debug(cp, "GeoIP: Database File \"%s\" contains nulls.", p1);
+        }
+        else {
+            ib_cfg_log_debug(cp, "GeoIP: Database File \"%s\" is an invalid string.", p1);
+        }
         free(p1_unescaped);
         return rc;
     }
@@ -318,13 +319,13 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
     if (mod_data->geoip_db == NULL) {
         int status = access(p1_unescaped, R_OK);
         if (status != 0) {
-            ib_cfg_log_error(cp, "Unable to read GeoIP database file \"%s\"",
+            ib_cfg_log_error(cp, "GeoIP: Unable to read database file \"%s\"",
                              p1_unescaped);
             rc = IB_ENOENT;
         }
         else {
             ib_cfg_log_error(cp,
-                             "Unknown error opening GeoIP database file \"%s\"",
+                             "GeoIP: Unknown error opening database file \"%s\"",
                              p1_unescaped);
             rc = IB_EUNKNOWN;
         }
@@ -360,15 +361,12 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         return IB_EALLOC;
     }
 
-    ib_log_debug(ib, "Initializing default GeoIP database...");
+    ib_log_debug(ib, "GeoIP: Initializing default database...");
     geoip_db = GeoIP_new(GEOIP_MMAP_CACHE);
     if (geoip_db == NULL) {
-        ib_log_debug(ib, "Failed to initialize GeoIP database.");
+        ib_log_error(ib, "GeoIP: Failed to initialize database.");
         return IB_EUNKNOWN;
     }
-
-    ib_log_debug(ib, "Initializing GeoIP database complete.");
-    ib_log_debug(ib, "Registering handler...");
 
     /* Store off pointer to our module data structure */
     mod_data->geoip_db = geoip_db;
@@ -383,12 +381,10 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     if (rc != IB_OK) {
         ib_log_debug(
             ib,
-            "Failed to register tx hook: %s",
+            "GeoIP: Error registering tx hook: %s",
             ib_status_to_string(rc));
         return rc;
     }
-
-    ib_log_debug(ib, "Done registering handler.");
 
     rc = ib_var_source_register(
         &(mod_data->geoip_source),
@@ -398,20 +394,19 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     );
     if (rc != IB_OK) {
         ib_log_warning(ib,
-            "GeoIP failed to register \"GEOIP\" var: %s",
+            "GeoIP: Error registering \"GEOIP\" var: %s",
             ib_status_to_string(rc)
         );
         /* Continue */
     }
 
     if (rc != IB_OK) {
-        ib_log_debug(ib, "Failed to load GeoIP module.");
+        ib_log_error(ib, "GeoIP: Failed to load module.");
         return rc;
     }
 
     geoip_directive_map[0].cbdata_cb = mod_data;
 
-    ib_log_debug(ib, "GeoIP module loaded.");
     return IB_OK;
 }
 
@@ -428,7 +423,6 @@ static ib_status_t geoip_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         GeoIP_delete(mod_data->geoip_db);
         mod_data->geoip_db = NULL;
     }
-    ib_log_debug(ib, "GeoIP module unloaded.");
     return IB_OK;
 }
 

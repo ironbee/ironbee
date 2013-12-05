@@ -150,7 +150,7 @@ static ib_status_t modlua_push_lua_handler(
         case LUA_ERRERR:
             ib_log_error(
                 ib,
-                "Error fetching error message during module load of %s",
+                "Failed to fetch error message during module load of %s",
                 module->name);
             lua_pop(L, 1); /* Pop modlua global off stack. */
             return IB_EINVAL;
@@ -304,8 +304,6 @@ static ib_status_t modlua_callback_dispatch_base(
     int lua_rc;
     ib_module_t *module = ibmod_modules->module; /* Lua-defined module. */
 
-    ib_log_debug(ib, "Calling handler for lua module: %s", module->name);
-
     /* Run dispatcher. */
     lua_rc = lua_pcall(L, 8, 1, 0);
     switch(lua_rc) {
@@ -331,7 +329,7 @@ static ib_status_t modlua_callback_dispatch_base(
         case LUA_ERRERR:
             ib_log_error(
                 ib,
-                "Error fetching error message during callback of %s",
+                "Failed to fetch error message during callback of %s",
                 module->name);
             lua_pop(L, 1); /* Pop modlua global off stack. */
             return IB_EINVAL;
@@ -361,13 +359,6 @@ static ib_status_t modlua_callback_dispatch_base(
     if (lua_isnumber(L, -1)) {
         rc = lua_tonumber(L, -1);
         lua_pop(L, 1);
-        ib_log_debug(
-            ib,
-            "Exited with status %s(%d) for lua module with status: %s",
-            ib_status_to_string(rc),
-            rc,
-            module->name);
-
     }
     else {
         ib_log_error(
@@ -459,13 +450,13 @@ static ib_status_t modlua_null(
 
     rc = ib_context_module_config(ctx, modlua_modules->modlua, &cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not retrieve module configuration.");
+        ib_log_error(ib, "Failed to retrieve module configuration.");
         return rc;
     }
 
     rc = modlua_acquirestate(ib, cfg, &runtime);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not get a Lua runtime resource.");
+        ib_log_error(ib, "Failed to get a Lua runtime resource.");
         return rc;
     }
 
@@ -474,7 +465,7 @@ static ib_status_t modlua_null(
     rc = modlua_reload_ctx_except_main(ib, modlua_modules->modlua, ctx, L);
     if (rc != IB_OK) {
         modlua_releasestate(ib, cfg, runtime);
-        ib_log_error(ib, "Could not configure Lua stack.");
+        ib_log_error(ib, "Failed to configure Lua stack.");
         return rc;
     }
 
@@ -917,7 +908,7 @@ static ib_status_t modlua_ctx(
 
     rc = ib_context_module_config(ctx, modlua_modules->modlua, &cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not retrieve module configuration.");
+        ib_log_error(ib, "Failed to retrieve module configuration.");
         return rc;
     }
 
@@ -930,7 +921,7 @@ static ib_status_t modlua_ctx(
 
     rc = modlua_reload_ctx_except_main(ib, modlua_modules->modlua, ctx, L);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not configure Lua stack.");
+        ib_log_error(ib, "Failed to configure Lua stack.");
         return rc;
     }
 
@@ -1201,12 +1192,10 @@ ib_status_t modlua_module_load(
         ib_mpool_alloc(mp, sizeof(*modlua_luamod_init_cbdata));
 
     if (modlua_luamod_init_cbdata == NULL) {
-        ib_log_error(ib, "Could not allocate module init structure.");
         return IB_EALLOC;
     }
 
     /* Create the Lua module as if it was a normal module. */
-    ib_log_debug3(ib, "Creating lua module structure");
     rc = ib_module_create(&module, ib);
     if (rc != IB_OK) {
         ib_log_error(ib, "Cannot allocate module structure.");
@@ -1218,7 +1207,6 @@ ib_status_t modlua_module_load(
     modlua_luamod_init_cbdata->modlua_cfg = cfg;
 
     /* Initialize the loaded module. */
-    ib_log_debug3(ib, "Init lua module structure");
     IB_MODULE_INIT_DYNAMIC(
         module,                         /* Module */
         file,                           /* Module code filename */
@@ -1238,14 +1226,11 @@ ib_status_t modlua_module_load(
     );
 
     /* Initialize and register the new lua module with the engine. */
-    ib_log_debug3(ib, "Init lua module");
     rc = ib_module_register(module, ib);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to initialize / register a lua module.");
         return rc;
     }
-
-    ib_log_debug3(ib, "Lua module created.");
 
     return rc;
 }

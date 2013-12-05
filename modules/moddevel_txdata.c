@@ -116,16 +116,16 @@ static ib_status_t parse_type(
             ib_status_t rc;
             rc = parse_type(cp, mp, str+5, element_type, NULL);
             if (rc != IB_OK) {
-                ib_cfg_log_error(cp, "Invalid type '%s'", str);
+                ib_cfg_log_error(cp, "Invalid type \"%s\".", str);
             }
         }
     }
     else {
-        ib_cfg_log_error(cp, "Invalid type '%s'", str);
+        ib_cfg_log_error(cp, "Invalid type \"%s\".", str);
         return IB_EINVAL;
     }
 
-    ib_cfg_log_debug2(cp, "Parsed type '%s' -> %d", str, (int)(*type) );
+    ib_cfg_log_debug2(cp, "Parsed type \"%s\" -> %d.", str, (int)(*type) );
 
     /* Done */
     return IB_OK;
@@ -199,7 +199,7 @@ static ib_status_t parse_value(
         rc = ib_bytestr_dup_nulstr(&bs, mp, str);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
-                             "Failed to create bytestr for '%s': %d", str, rc);
+                             "Error creating bytestr for \"%s\": %d", str, rc);
             return rc;
         }
         rc = ib_field_create(pfield,
@@ -256,18 +256,14 @@ static ib_status_t tx_header_finished(
             const ib_bytestr_t *bs;
             rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
             if (rc != IB_OK) {
-                ib_log_error_tx(tx, "Failed to retrieve field value: %d", rc);
+                ib_log_error_tx(tx, "Error retrieving field value: %d", rc);
                 continue;
             }
-            ib_log_debug_tx(tx, "Adding bytestr %p (f=%p) = '%.*s'",
-                            (void *)bs, (void *)field,
-                            (int)ib_bytestr_size(bs),
-                            (const char *)ib_bytestr_const_ptr(bs));
         }
 
         rc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
         if (rc != IB_OK) {
-            ib_log_debug_tx(tx, "Failed to copy field: %d", rc);
+            ib_log_error_tx(tx, "Error copying field: %d", rc);
             continue;
         }
         rc = ib_var_source_acquire(
@@ -277,17 +273,14 @@ static ib_status_t tx_header_finished(
             field->name, field->nlen
         );
         if (rc != IB_OK) {
-            ib_log_debug_tx(tx, "Failed to acquire source: %d", rc);
+            ib_log_debug_tx(tx, "Error acquiring source: %d", rc);
             continue;
         }
         rc = ib_var_source_set(source, tx->var_store, newf);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
+            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX var store.",
                             (int)field->nlen, field->name);
         }
-        ib_log_debug_tx(tx, "Added field \"%.*s\" (type %s)",
-                        (int)field->nlen, field->name,
-                        ib_field_type_name(field->type));
     }
 
     return rc;
@@ -331,7 +324,7 @@ static ib_status_t moddevel_txdata_handler(
     /* Get the field name string */
     name_node = ib_list_first_const(vars);
     if ( (name_node == NULL) || (name_node->data == NULL) ) {
-        ib_cfg_log_error(cp, "No name specified for field");
+        ib_cfg_log_error(cp, "No name specified for field.");
         return IB_EINVAL;
     }
     name_str = (const char *)(name_node->data);
@@ -339,7 +332,7 @@ static ib_status_t moddevel_txdata_handler(
     /* Get type name string */
     type_node = ib_list_node_next_const(name_node);
     if ( (type_node == NULL) || (type_node->data == NULL) ) {
-        ib_cfg_log_error(cp, "No type specified for field");
+        ib_cfg_log_error(cp, "No type specified for field.");
         return IB_EINVAL;
     }
     type_str = (const char *)(type_node->data);
@@ -348,7 +341,7 @@ static ib_status_t moddevel_txdata_handler(
     rc = parse_type(cp, mp, type_str, &type_num, &element_type);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Error parsing type string '%s': %d", type_str, rc);
+                         "Error parsing type string \"%s\": %d", type_str, rc);
         return rc;
     }
 
@@ -361,19 +354,19 @@ static ib_status_t moddevel_txdata_handler(
         /* Check for errors */
         if (element_type == IB_FTYPE_LIST) {
             if (value_node != NULL) {
-                ib_cfg_log_error(cp, "Value(s) not for LIST:LIST field");
+                ib_cfg_log_error(cp, "Value(s) not for LIST:LIST field.");
                 return IB_EINVAL;
             }
         }
         else if (element_type == IB_FTYPE_GENERIC) {
             if (value_node != NULL) {
-                ib_cfg_log_error(cp, "Values but no type for LIST field");
+                ib_cfg_log_error(cp, "Values but no type for LIST field.");
                 return IB_EINVAL;
             }
         }
         else {
             if (value_node == NULL) {
-                ib_cfg_log_error(cp, "LIST type specified, but not values");
+                ib_cfg_log_error(cp, "LIST type specified, but not values.");
                 return IB_EINVAL;
             }
         }
@@ -388,12 +381,6 @@ static ib_status_t moddevel_txdata_handler(
             ib_cfg_log_error(cp, "Error creating field: %d", rc);
             return rc;
         }
-
-        ib_cfg_log_debug(cp,
-                         "Field %s: type %s / %s",
-                         name_str,
-                         ib_field_type_name(type_num),
-                         ib_field_type_name(element_type));
 
         /* Parse the values */
         element_num = 1;
@@ -437,7 +424,7 @@ static ib_status_t moddevel_txdata_handler(
         }
     }
     else {
-        ib_cfg_log_error(cp, "No value specified for field \"%s\"", name_str);
+        ib_cfg_log_error(cp, "No value specified for field \"%s\".", name_str);
         return rc;
     }
 
@@ -447,9 +434,6 @@ static ib_status_t moddevel_txdata_handler(
         ib_cfg_log_error(cp, "Error pushing value on list: %d", rc);
         return rc;
     }
-    ib_cfg_log_debug(cp,
-                     "Created field %p \"%s\" of type %d \"%s\"",
-                     (void *)field, name_str, (int)type_num, type_str);
 
     /* Done */
     return IB_OK;
@@ -480,8 +464,6 @@ ib_status_t ib_moddevel_txdata_init(
     ib_status_t rc;
     ib_moddevel_txdata_config_t *config;
 
-    ib_log_debug(ib, "Initializing txdata module.");
-
     /* Create our configuration structure */
     config = ib_mpool_calloc(mp, sizeof(*config), 1);
     if (config == NULL) {
@@ -509,7 +491,7 @@ ib_status_t ib_moddevel_txdata_init(
                              tx_header_finished,
                              config);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Hook register returned %d", rc);
+        ib_log_error(ib, "Error registering hook: %d", rc);
     }
 
     *pconfig = config;

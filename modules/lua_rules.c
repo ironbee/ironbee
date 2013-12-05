@@ -68,8 +68,6 @@ static ib_status_t lua_operator_execute(
 
     assert(modlua_rules_cbdata->module != NULL);
 
-    ib_log_trace_tx(tx, "Calling lua function %s.", func_name);
-
     /* Get the lua module configuration for this context. */
     rc = modlua_cfg_get(ib, ctx, &cfg);
     if (rc != IB_OK) {
@@ -94,19 +92,12 @@ static ib_status_t lua_operator_execute(
     /* Call the rule. */
     rc = ib_lua_func_eval_int(ib, tx, luart->L, func_name, &result_int);
     if (rc != IB_OK) {
-        ib_log_debug_tx(
-            tx,
-            "Lua operator %s failed with %s.",
-            func_name,
-            ib_status_to_string(rc));
         *result = 0;
         return rc;
     }
 
     /* Convert the passed in integer type to an ib_num_t. */
     *result = result_int;
-
-    ib_log_trace_tx(tx, "Lua function %s=%"PRIu64".", func_name, *result);
 
     return IB_OK;
 }
@@ -203,12 +194,11 @@ static ib_status_t modlua_rule_driver(
     if (rc != IB_OK) {
         ib_cfg_log_error(
             cp,
-            "Failed to record  lua file \"%s\" to reload",
+            "Failed to record lua file \"%s\" to reload",
             location);
         return rc;
     }
 
-    ib_cfg_log_debug3(cp, "Loaded lua file \"%s\"", location);
     slash = strrchr(location, '/');
     if (slash == NULL) {
         name = location;
@@ -230,7 +220,7 @@ static ib_status_t modlua_rule_driver(
         modlua_rules_cbdata
     );
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to register lua operator \"%s\": %s",
+        ib_cfg_log_error(cp, "Error registering lua operator \"%s\": %s",
                          name, ib_status_to_string(rc));
         return rc;
     }
@@ -243,7 +233,7 @@ static ib_status_t modlua_rule_driver(
 
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Failed to instantiate lua operator "
+                         "Error instantiating lua operator "
                          "for rule \"%s\": %s",
                          name, ib_status_to_string(rc));
         return rc;
@@ -253,15 +243,11 @@ static ib_status_t modlua_rule_driver(
 
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Failed to associate lua operator \"%s\" "
+                         "Error associating lua operator \"%s\" "
                          "with rule \"%s\": %s",
                          name, ib_rule_id(rule), ib_status_to_string(rc));
         return rc;
     }
-
-    ib_cfg_log_debug3(cp, "Set operator \"%s\" for rule \"%s\"",
-                      name,
-                      ib_rule_id(rule));
 
     return IB_OK;
 }

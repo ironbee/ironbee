@@ -40,7 +40,7 @@ ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
     lua_rc = luaL_loadfile(L, file);
 
     if (lua_rc != 0) {
-        ib_log_error(ib, "Failed to load %s - %s (%d)",
+        ib_log_error(ib, "Error loading \"%s\": %s (%d)",
                      file,
                      lua_tostring(L, -1),
                      lua_rc);
@@ -56,7 +56,7 @@ ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
         case 0:
             return IB_OK;
         case LUA_ERRRUN:
-            ib_log_error(ib, "Error evaluating file %s - %s",
+            ib_log_error(ib, "Error evaluating file \"%s\": %s",
                          file,
                          lua_tostring(L, -1));
             /* Get error string off of the stack. */
@@ -68,7 +68,7 @@ ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
             return IB_EINVAL;
         case LUA_ERRERR:
             ib_log_error(ib,
-                "Error fetching error message during FFI evaluation.");
+                "Failed to fetch error message during FFI evaluation.");
             return IB_EINVAL;
 #if LUA_VERSION_NUM > 501
         /* If LUA_ERRGCMM is defined, include a custom error for it as well.
@@ -101,7 +101,7 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
     ib_rc = luaL_loadfile(L, file);
 
     if (ib_rc != 0) {
-        ib_log_error(ib, "Failed to load file module \"%s\" - %s (%d)",
+        ib_log_error(ib, "Error loading file module \"%s\": %s (%d)",
                      file, lua_tostring(L, -1), ib_rc);
 
         /* Get error string off the stack. */
@@ -177,7 +177,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
 
     if (lua_rc != 0) {
         ib_log_error_tx(tx,
-            "Error running Lua Rule %s - %s", func_name, lua_tostring(L, -1));
+            "Error running Lua Rule \"%s\": %s", func_name, lua_tostring(L, -1));
         /* Pop (1) error string, (2) string "ib", and (3) new table, (4) func */
         lua_pop(L, 5);
         return IB_EINVAL;
@@ -198,8 +198,6 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
      * user rule function and the anonymous table we are building. */
     lua_pop(L, 2);
 
-    ib_log_debug_tx(tx, "Executing user rule %s", func_name);
-
     /* Call the function on the stack with 1 input, 0 outputs, and errmsg=0. */
     lua_rc = lua_pcall(L, 1, 1, 0);
 
@@ -208,7 +206,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
         switch(lua_rc) {
             case LUA_ERRRUN:
                 ib_log_error_tx(tx,
-                    "Error running Lua Rule %s - %s",
+                    "Error running Lua Rule \"%s\": %s",
                     func_name,
                     lua_tostring(L, -1));
 
@@ -221,7 +219,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
                 return IB_EINVAL;
             case LUA_ERRERR:
                 ib_log_error_tx(tx,
-                    "Error fetching error message during Lua rule.");
+                    "Failed to fetch error message during Lua rule.");
                 return IB_EINVAL;
 #if LUA_VERSION_NUM > 501
             /* If LUA_ERRGCMM is defined, include a custom error for it as
@@ -270,19 +268,14 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
 
     char *thread_name = (char *)malloc(THREAD_NAME_BUFFER_SZ);
 
-    ib_log_debug(ib, "Setting up new Lua thread.");
-
     *thread = lua_newthread(L);
 
     if (*thread == NULL) {
-        ib_log_error(ib, "Failed to allocate new Lua execution stack.");
         free(thread_name);
         return IB_EALLOC;
     }
 
     sprint_threadname(thread_name, *thread);
-
-    ib_log_debug(ib, "Created Lua thread %s.", thread_name);
 
     /* Store the thread at the global variable referenced. */
     lua_setglobal(L, thread_name);
@@ -301,8 +294,6 @@ ib_status_t ib_lua_join_thread(ib_engine_t *ib,
 
     char *thread_name = (char *)malloc(THREAD_NAME_BUFFER_SZ);
     sprint_threadname(thread_name, *thread);
-
-    ib_log_debug(ib, "Tearing down Lua thread %s.", thread_name);
 
     /* Put nil on the stack. */
     lua_pushnil(L);
@@ -333,7 +324,7 @@ ib_status_t ib_lua_require(ib_engine_t *ib,
     lua_rc = lua_pcall(L, 1, 1, 0);
 
     if (lua_rc != 0) {
-        ib_log_error(ib, "Require failed %s - %s (%d)",
+        ib_log_error(ib, "Error in require \"%s\": %s (%d)",
                      required_name,
                      lua_tostring(L, -1),
                      lua_rc);

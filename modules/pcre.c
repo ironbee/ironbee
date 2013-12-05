@@ -196,7 +196,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     cpatt = pcre_compile(patt, compile_flags, errptr, erroffset, NULL);
 
     if (*errptr != NULL) {
-        ib_log_error(ib, "PCRE compile error for \"%s\": %s at offset %d",
+        ib_log_error(ib, "Error compiling PCRE pattern \"%s\": %s at offset %d",
                      patt, *errptr, *erroffset);
         return IB_EINVAL;
     }
@@ -296,8 +296,6 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         ib_log_error(ib, "Failed to duplicate pattern of size: %zd", cpatt_sz);
         return IB_EALLOC;
     }
-    ib_log_debug(ib, "PCRE copied cpatt @ %p -> %p (%zd bytes)",
-                 (void *)cpatt, (void *)cpdata->cpatt, cpatt_sz);
 
     /* Copy extra data (study data). */
     if (edata != NULL) {
@@ -328,7 +326,6 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         cpdata->edata = ib_mpool_calloc(pool, 1, sizeof(*edata));
         if (cpdata->edata == NULL) {
             pcre_free(edata);
-            ib_log_error(ib, "Failed to allocate edata.");
             return IB_EALLOC;
         }
     }
@@ -431,14 +428,14 @@ ib_status_t pcre_operator_create(
     int erroffset;
 
     if (parameters == NULL) {
-        ib_log_error(ib, "No pattern for operator");
+        ib_log_error(ib, "No pattern for operator.");
         return IB_EINVAL;
     }
 
     /* Get my module object */
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get pcre module object: %s",
+        ib_log_error(ib, "Error getting pcre module object: %s",
                      ib_status_to_string(rc));
         return rc;
     }
@@ -446,7 +443,7 @@ ib_status_t pcre_operator_create(
     /* Get the context configuration */
     rc = ib_context_module_config(ctx, module, &config);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get pcre module configuration: %s",
+        ib_log_error(ib, "Error getting pcre module configuration: %s",
                      ib_status_to_string(rc));
         return rc;
     }
@@ -514,7 +511,6 @@ ib_status_t pcre_set_matches(
     }
 
     /* We have a match! Now populate TX:0-9 in tx->data. */
-    ib_log_debug2_tx(tx, "REGEX populating %d matches", matches);
     for (i = 0; i < matches; ++i)
     {
         /* The length of the match. */
@@ -592,7 +588,6 @@ ib_status_t pcre_dfa_set_match(
     int i;
 
     /* We have a match! Now populate TX:0-9 in tx->data. */
-    ib_log_debug2_tx(tx, "DFA populating %d matches", matches);
     for (i = 0; i < matches; ++i)
     {
         size_t match_len;
@@ -715,7 +710,7 @@ ib_status_t pcre_operator_execute(
         jit_stack = pcre_jit_stack_alloc(operator_data->cpdata->jit_stack_start,
                                          operator_data->cpdata->jit_stack_max);
         if (jit_stack == NULL) {
-            ib_log_warn(ib,
+            ib_log_warning(ib,
                 "Failed to allocate a jit stack for a jit-compiled rule.  "
                 "Not using jit for this call."
             );
@@ -851,7 +846,7 @@ ib_status_t dfa_operator_create(
     /* Get my module object */
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get pcre module object: %s",
+        ib_log_error(ib, "Error getting pcre module object: %s",
                      ib_status_to_string(rc));
         return rc;
     }
@@ -859,7 +854,7 @@ ib_status_t dfa_operator_create(
     /* Get the context configuration */
     rc = ib_context_module_config(ctx, module, &config);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get pcre module configuration: %s",
+        ib_log_error(ib, "Error getting pcre module configuration: %s",
                      ib_status_to_string(rc));
         return rc;
     }
@@ -874,7 +869,7 @@ ib_status_t dfa_operator_create(
                                &erroffset);
 
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to parse DFA operator pattern \"%s\":%s",
+        ib_log_error(ib, "Error parsing DFA operator pattern \"%s\":%s",
                      parameters, ib_status_to_string(rc));
         return rc;
     }
@@ -891,8 +886,8 @@ ib_status_t dfa_operator_create(
                      ib_status_to_string(rc));
         return rc;
     }
-    ib_log_debug(ib, "Compiled DFA id=\"%s\" operator pattern \"%s\" @ %p",
-                 operator_data->id, parameters, (void *)cpdata->cpatt);
+    ib_log_debug3(ib, "Compiled DFA id=\"%s\" operator pattern \"%s\" @ %p",
+                  operator_data->id, parameters, (void *)cpdata->cpatt);
 
     *(modpcre_operator_data_t **)instance_data = operator_data;
     return IB_OK;
@@ -928,27 +923,18 @@ ib_status_t get_or_create_operator_data_hash(
     /* Get or create the hash that contains the rule data. */
     rc = ib_tx_get_module_data(tx, m, hash);
     if ( (rc == IB_OK) && (*hash != NULL) ) {
-        ib_log_debug2_tx(tx, "Found rule data hash in tx.");
         return IB_OK;
     }
 
-    ib_log_debug2_tx(tx, "Rule data hash did not exist in tx.");
-
     rc = ib_hash_create(hash, tx->mp);
     if (rc != IB_OK) {
-        ib_log_debug2_tx(tx, "Failed to create hash: %s",
-                         ib_status_to_string(rc));
         return rc;
     }
 
     rc = ib_tx_set_module_data(tx, m, *hash);
     if (rc != IB_OK) {
-        ib_log_debug2_tx(tx, "Failed to store hash: %s",
-                         ib_status_to_string(rc));
         *hash = NULL;
     }
-
-    ib_log_debug2_tx(tx, "Returning rule hash at %p.", *hash);
 
     return rc;
 
@@ -1292,7 +1278,7 @@ static ib_status_t handle_directive_onoff(ib_cfgparser_t *cp,
     /* Get my module object */
     rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to get %s module object: %s",
+        ib_cfg_log_error(cp, "Error getting %s module object: %s",
                          MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
@@ -1300,7 +1286,7 @@ static ib_status_t handle_directive_onoff(ib_cfgparser_t *cp,
     /* Get my module configuration */
     rc = ib_context_module_config(ctx, module, (void *)&config);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to get %s module configuration: %s",
+        ib_cfg_log_error(cp, "Error getting %s module configuration: %s",
                          MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
@@ -1317,7 +1303,7 @@ static ib_status_t handle_directive_onoff(ib_cfgparser_t *cp,
     }
     rc = ib_context_set_num(ctx, pname, onoff);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to set \"%s\" to %s for \"%s\": %s",
+        ib_cfg_log_error(cp, "Error setting \"%s\" to %s for \"%s\": %s",
                          pname, onoff ? "true" : "false", name,
                          ib_status_to_string(rc));
     }
@@ -1355,7 +1341,7 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     /* Get my module object */
     rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to get %s module object: %s",
+        ib_cfg_log_error(cp, "Error getting %s module object: %s",
                          MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
@@ -1363,7 +1349,7 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     /* Get my module configuration */
     rc = ib_context_module_config(ctx, module, (void *)&config);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to get %s module configuration: %s",
+        ib_cfg_log_error(cp, "Error getting %s module configuration: %s",
                          MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
@@ -1372,7 +1358,7 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     rc = ib_string_to_num(p1, 0, &value);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Failed to convert \"%s\" to a number for \"%s\": %s",
+                         "Error converting \"%s\" to a number for \"%s\": %s",
                          p1, name, ib_status_to_string(rc));
         return rc;
     }
@@ -1398,7 +1384,7 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     }
     rc = ib_context_set_num(ctx, pname, value);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to set \"%s\" to %ld for \"%s\": %s",
+        ib_cfg_log_error(cp, "Error setting \"%s\" to %ld for \"%s\": %s",
                          pname, (long int)value, name, ib_status_to_string(rc));
     }
     return IB_OK;

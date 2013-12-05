@@ -1113,7 +1113,7 @@ static ib_status_t moddevel_txdump_parse_event(
 
     rc = IB_STRVAL_DATA_LOOKUP(event_map, txdump_strval_event_t, param, &value);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Invalid event parameter \"%s\" for %s", param, label);
+        ib_log_error(ib, "Invalid event parameter \"%s\" for %s.", param, label);
         return rc;
     }
 
@@ -1173,7 +1173,7 @@ static ib_status_t moddevel_txdump_parse_dest(
         }
         len = strlen(fname);
         if (len <= 1) {
-            ib_log_error(ib, "Missing file name for %s", label);
+            ib_log_error(ib, "Missing file name for %s.", label);
             return IB_EINVAL;
         }
 
@@ -1197,7 +1197,7 @@ static ib_status_t moddevel_txdump_parse_dest(
         txdump->level = IB_LOG_DEBUG;
     }
     else {
-        ib_log_error(ib, "Invalid destination \"%s\" for %s", param, label);
+        ib_log_error(ib, "Invalid destination \"%s\" for %s.", param, label);
         return IB_EINVAL;
     }
     return IB_OK;
@@ -1299,26 +1299,26 @@ static ib_status_t moddevel_txdump_handler(
     node = ib_list_first_const(params);
     if ( (node == NULL) || (node->data == NULL) ) {
         ib_cfg_log_error(cp,
-                         "Missing event type for %s", label);
+                         "Missing event type for %s.", label);
         return IB_EINVAL;
     }
     param = (const char *)node->data;
     rc = moddevel_txdump_parse_event(cp->ib, label, param, &txdump);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error parsing event for %s", label);
+        ib_cfg_log_error(cp, "Error parsing event for %s.", label);
         return rc;
     }
 
     /* Second parameter is the destination */
     node = ib_list_node_next_const(node);
     if ( (node == NULL) || (node->data == NULL) ) {
-        ib_cfg_log_error(cp, "Missing destination for %s", label);
+        ib_cfg_log_error(cp, "Missing destination for %s.", label);
         return IB_EINVAL;
     }
     param = (const char *)node->data;
     rc = moddevel_txdump_parse_dest(cp->ib, label, param, &txdump);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error parsing destination for %s", label);
+        ib_cfg_log_error(cp, "Error parsing destination for %s.", label);
         return rc;
     }
 
@@ -1328,7 +1328,7 @@ static ib_status_t moddevel_txdump_handler(
         param = (const char *)node->data;
         rc = ib_flags_string(flags_map, param, flagno++, &flags, &mask);
         if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Error parsing enable for %s", label);
+            ib_cfg_log_error(cp, "Error parsing enable for %s.", label);
             return rc;
         }
     }
@@ -1340,14 +1340,13 @@ static ib_status_t moddevel_txdump_handler(
     /* Create the txdump entry */
     ptxdump = ib_mpool_memdup(config->mp, &txdump, sizeof(txdump));
     if (ptxdump == NULL) {
-        ib_cfg_log_error(cp, "Error allocating TxDump object for %s", label);
         return IB_EALLOC;
     }
 
     /* Add it to the list */
     rc = ib_list_push(config->txdump_list, ptxdump);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error adding TxDump object to list for %s",
+        ib_cfg_log_error(cp, "Error adding TxDump object to list for %s.",
                          label);
         return rc;
     }
@@ -1376,11 +1375,11 @@ static ib_status_t moddevel_txdump_handler(
             ptxdump);
         break;
     default:
-        ib_cfg_log_error(cp, "No handler for hook type %d", txdump.hook_type);
+        ib_cfg_log_error(cp, "No handler for hook type %d.", txdump.hook_type);
         return IB_EINVAL;
     }
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to register handler for hook type %d",
+        ib_cfg_log_error(cp, "Failed to register handler for hook type %d.",
                          txdump.hook_type);
     }
 
@@ -1460,12 +1459,12 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     /* First parameter is the destination */
     param = strtok(pcopy, ",");
     if (param == NULL) {
-        ib_log_error(ib, "Missing destination for %s", label);
+        ib_log_error(ib, "Missing destination for %s.", label);
         return IB_EINVAL;
     }
     rc = moddevel_txdump_parse_dest(ib, label, param, &txdump);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error parsing destination for %s", label);
+        ib_log_error(ib, "Error parsing destination for %s.", label);
         return rc;
     }
 
@@ -1473,7 +1472,7 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     while ((param = strtok(NULL, ",")) != NULL) {
         rc = ib_flags_string(flags_map, param, flagno++, &flags, &mask);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Error parsing enable for %s", label);
+            ib_log_error(ib, "Error parsing enable for %s.", label);
             return rc;
         }
     }
@@ -1485,7 +1484,7 @@ static ib_status_t moddevel_txdump_act_create(ib_engine_t *ib,
     /* Create the txdump entry */
     ptxdump = ib_mpool_memdup(mp, &txdump, sizeof(txdump));
     if (ptxdump == NULL) {
-        ib_log_error(ib, "Error allocating TxDump object for %s", label);
+        ib_log_error(ib, "Error allocating TxDump object for %s.", label);
         return IB_EALLOC;
     }
 

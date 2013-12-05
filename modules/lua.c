@@ -134,7 +134,7 @@ static ib_status_t modlua_config_cb_eval(
         case LUA_ERRERR:
             ib_log_error(
                 ib,
-                "Error fetching error message during call for %s",
+                "Failed to fetch error message during call for %s",
                 module->name);
             return IB_EINVAL;
 #if LUA_VERSION_NUM > 501
@@ -232,19 +232,19 @@ static ib_status_t modlua_config_cb_blkend(
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        ib_log_error(ib, "Failed to find module \"" MODULE_NAME_STR ".\"");
         return rc;
     }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        ib_cfg_log_error(cp, "Failed to retrieve current context.");
         return rc;
     }
 
     rc = ib_context_module_config(ctx, module, &cfg);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        ib_cfg_log_error(cp, "Failed to retrieve module configuration.");
         return rc;
     }
     assert(cfg->L);
@@ -294,19 +294,19 @@ static ib_status_t modlua_config_cb_onoff(
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        ib_log_error(ib, "Failed to find module \"" MODULE_NAME_STR ".\"");
         return rc;
     }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        ib_cfg_log_error(cp, "Failed to retrieve current context.");
         return rc;
     }
 
     rc = ib_context_module_config(ctx, module, &cfg);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        ib_cfg_log_error(cp, "Failed to retrieve module configuration.");
         return rc;
     }
     assert(cfg->L);
@@ -357,19 +357,19 @@ static ib_status_t modlua_config_cb_param1(
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        ib_log_error(ib, "Failed to find module \"" MODULE_NAME_STR ".\"");
         return rc;
     }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        ib_cfg_log_error(cp, "Failed to retrieve current context.");
         return rc;
     }
 
     rc = ib_context_module_config(ctx, module, &cfg);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        ib_cfg_log_error(cp, "Failed to retrieve module configuration.");
         return rc;
     }
     assert(cfg->L);
@@ -424,19 +424,19 @@ static ib_status_t modlua_config_cb_param2(
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        ib_log_error(ib, "Failed to find module \"" MODULE_NAME_STR ".\"");
         return rc;
     }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        ib_cfg_log_error(cp, "Failed to retrieve current context.");
         return rc;
     }
 
     rc = ib_context_module_config(ctx, module, &cfg);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        ib_cfg_log_error(cp, "Failed to retrieve module configuration.");
         return rc;
     }
     assert(cfg->L);
@@ -488,19 +488,19 @@ static ib_status_t modlua_config_cb_list(
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        ib_log_error(ib, "Failed to find module \"" MODULE_NAME_STR ".\"");
         return rc;
     }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        ib_cfg_log_error(cp, "Failed to retrieve current context.");
         return rc;
     }
 
     rc = ib_context_module_config(ctx, module, &cfg);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        ib_cfg_log_error(cp, "Failed to retrieve module configuration.");
         return rc;
     }
     assert(cfg->L);
@@ -552,19 +552,19 @@ static ib_status_t modlua_config_cb_opflags(
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        ib_log_error(ib, "Failed to find module \"" MODULE_NAME_STR ".\"");
         return rc;
     }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        ib_cfg_log_error(cp, "Failed to retrieve current context.");
         return rc;
     }
 
     rc = ib_context_module_config(ctx, module, &cfg);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        ib_cfg_log_error(cp, "Failed to retrieve module configuration.");
         return rc;
     }
     assert(cfg->L);
@@ -616,19 +616,19 @@ static ib_status_t modlua_config_cb_sblk1(
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        ib_log_error(ib, "Failed to find module \"" MODULE_NAME_STR ".\"");
         return rc;
     }
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        ib_cfg_log_error(cp, "Failed to retrieve current context.");
         return rc;
     }
 
     rc = ib_context_module_config(ctx, module, &cfg);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Could not retrieve module configuration.");
+        ib_cfg_log_error(cp, "Failed to retrieve module configuration.");
         return rc;
     }
     assert(cfg->L);
@@ -1110,7 +1110,7 @@ static ib_status_t modlua_conn_init_lua_runtime(
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        ib_log_error(ib, "Failed to find module \"" MODULE_NAME_STR ".\"");
         return rc;
     }
 
@@ -1128,7 +1128,7 @@ static ib_status_t modlua_conn_init_lua_runtime(
 
     rc = modlua_reload_ctx_except_main(ib, module, ctx, runtime->L);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not configure Lua stack.");
+        ib_log_error(ib, "Failed to configure Lua stack.");
         return rc;
     }
 
@@ -1136,7 +1136,7 @@ static ib_status_t modlua_conn_init_lua_runtime(
     if (rc != IB_OK) {
         ib_log_alert(
             ib,
-            "Could not store connection Lua stack in connection.");
+            "Failed to store connection Lua stack in connection.");
         return rc;
     }
 
@@ -1167,7 +1167,7 @@ ib_status_t modlua_cfg_get(
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        ib_log_error(ib, "Failed to find module \"" MODULE_NAME_STR ".\"");
         return rc;
     }
 
@@ -1234,7 +1234,7 @@ static ib_status_t modlua_conn_fini_lua_runtime(ib_engine_t *ib,
 
     rc = modlua_runtime_get(conn, module, &modlua_rt);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Could not fetch per-connection Lua execution stack.");
+        ib_log_alert(ib, "Failed to fetch per-connection Lua execution stack.");
         return rc;
     }
     if (modlua_rt == NULL) {
@@ -1369,7 +1369,6 @@ static ib_status_t modlua_context_close(
             return rc;
         }
 
-        ib_log_debug(ib, "Releasing configuration Lua stack.");
         ib_resource_release(cfg->lua_resource);
         cfg->lua_resource = NULL;
         cfg->L = NULL;
@@ -1475,7 +1474,7 @@ static ib_status_t modlua_ownership_fn(
         NULL
     );
     if (rc != IB_OK) {
-        ib_log_debug(ib, "Cannot find action %s.", modlua_waggle_action_name);
+        ib_log_notice(ib, "Cannot find action %s.", modlua_waggle_action_name);
         goto cleanup;
     }
 
@@ -1626,7 +1625,6 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         ib_log_error(ib, "Failed to allocate lua module configuration.");
         return IB_EALLOC;
     }
-    ib_log_debug(ib, "Allocated main configuration at %p.", cfg);
 
     rc = ib_list_create(&(cfg->reloads), mp);
     if (rc != IB_OK) {
@@ -1666,16 +1664,14 @@ static ib_status_t modlua_init(ib_engine_t *ib,
 
     rc = modlua_runtime_resource_pool_create(&(cfg->lua_pool), ib, module, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not create Lua resource pool.");
+        ib_log_error(ib, "Failed to create Lua resource pool.");
         return rc;
     }
 
     /* Set up defaults */
-    ib_log_debug(ib, "Making shared Lua state.");
-
     rc = ib_resource_acquire(cfg->lua_pool, &(cfg->lua_resource));
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not create Lua stack.");
+        ib_log_error(ib, "Failed to create Lua stack.");
         return rc;
     }
     cfg->L = ((modlua_runtime_t *)ib_resource_get(cfg->lua_resource))->L;
@@ -1871,7 +1867,7 @@ static ib_status_t modlua_dir_lua_include(ib_cfgparser_t *cp,
     lua_pushstring(L, p1);
     lua_rc = lua_pcall(L, 2, 1, 0);
     if (lua_rc == LUA_ERRFILE) {
-        ib_log_error(ib, "Could not access file %s.", p1);
+        ib_log_error(ib, "Failed to access file %s.", p1);
         ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
         lua_pop(L, lua_gettop(L));
         return IB_EOTHER;
@@ -1898,7 +1894,7 @@ static ib_status_t modlua_dir_lua_include(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "Could not commit LuaInclude configurations from file %s.",
+            "Failed to commit LuaInclude configurations from file %s.",
             p1);
         return rc;
     }
@@ -1952,7 +1948,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
 
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
+        ib_log_error(ib, "Failed to find module \"" MODULE_NAME_STR ".\"");
         return rc;
     }
 
@@ -1969,10 +1965,12 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
         IB_UTIL_UNESCAPE_NULTERMINATE |
         IB_UTIL_UNESCAPE_NONULL);
     if (rc != IB_OK) {
-        const char *msg = (rc == IB_EBADVAL)?
-            "Value for parameter \"%s\" may not contain NULL bytes: %s":
-            "Value for parameter \"%s\" could not be unescaped: %s";
-        ib_cfg_log_debug(cp, msg, name, p1);
+        if (rc == IB_EBADVAL) {
+            ib_cfg_log_error(cp, "Value for parameter \"%s\" may not contain NULL bytes: %s", name, p1);
+        }
+        else {
+            ib_cfg_log_error(cp, "Value for parameter \"%s\" could not be unescaped: %s", name, p1);
+        }
         free(p1_unescaped);
         return rc;
     }
@@ -2028,13 +2026,11 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
         }
     }
     else if (strcasecmp("LuaPackagePath", name) == 0) {
-        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_path", p1_unescaped);
         free(p1_unescaped);
         return rc;
     }
     else if (strcasecmp("LuaPackageCPath", name) == 0) {
-        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_cpath", p1_unescaped);
         free(p1_unescaped);
         return rc;

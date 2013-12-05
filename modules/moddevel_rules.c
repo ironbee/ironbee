@@ -711,7 +711,6 @@ ib_status_t ib_moddevel_rules_init(
     ib_status_t rc;
     ib_rule_phase_num_t         phase;
     ib_moddevel_rules_config_t *config;
-    ib_log_debug(ib, "Initializing rule development module");
 
     /* Allocate a configuration object */
     config = ib_mpool_calloc(mp, sizeof(*config), 1);

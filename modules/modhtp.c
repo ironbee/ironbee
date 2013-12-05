@@ -299,7 +299,7 @@ static ib_status_t modhtp_field_list_callback(
                                        (uint8_t *)bstr_ptr(value),
                                        bstr_len(value));
     if (rc != IB_OK) {
-        ib_log_debug3_tx(tx, "Failed to create field: %s",
+        ib_log_notice_tx(tx, "Error creating field: %s",
                          ib_status_to_string(rc));
         return IB_OK;
     }
@@ -307,7 +307,7 @@ static ib_status_t modhtp_field_list_callback(
     /* Add the field to the field list. */
     rc = ib_field_list_add(flist, field);
     if (rc != IB_OK) {
-        ib_log_debug3_tx(tx, "Failed to add field: %s",
+        ib_log_notice_tx(tx, "Error adding field: %s",
                          ib_status_to_string(rc));
         return IB_OK;
     }
@@ -356,7 +356,7 @@ static ib_status_t modhtp_param_iter_callback(
                                        (uint8_t *)bstr_ptr(param->value),
                                        bstr_len(param->value));
     if (rc != IB_OK) {
-        ib_log_debug3_tx(tx, "Failed to create field: %s",
+        ib_log_notice_tx(tx, "Error creating field: %s",
                          ib_status_to_string(rc));
         return IB_OK;
     }
@@ -364,7 +364,7 @@ static ib_status_t modhtp_param_iter_callback(
     /* Add the field to the field list. */
     rc = ib_field_list_add(idata->field_list, field);
     if (rc != IB_OK) {
-        ib_log_debug3_tx(tx, "Failed to add field: %s",
+        ib_log_notice_tx(tx, "Error adding field: %s",
                          ib_status_to_string(rc));
         return IB_OK;
     }
@@ -518,7 +518,7 @@ static ib_status_t modhtp_set_header(
             return irc;
         }
         ib_log_debug2_tx(txdata->itx,
-                         "Handed %s header \"%.*s\" \"%.*s\" to libhtp %s",
+                         "Sent %s header \"%.*s\" \"%.*s\" to libhtp %s",
                          label,
                          (int)ib_bytestr_length(node->name),
                          (const char *)ib_bytestr_const_ptr(node->name),
@@ -567,11 +567,8 @@ static inline ib_status_t modhtp_set_bytestr(
     /* If it's not set in the htp bytestring, try the fallback. */
     if ( (htp_bstr == NULL) || (bstr_len(htp_bstr) == 0) ) {
         if (fallback == NULL) {
-            ib_log_debug_tx(itx, "%s unknown: no fallback", label);
             return IB_ENOENT;
         }
-        ib_log_debug_tx(itx,
-                        "%s unknown: using fallback \"%s\"", label, fallback);
         ptr = (const uint8_t *)fallback;
         len = strlen(fallback);
     }
@@ -601,7 +598,7 @@ static inline ib_status_t modhtp_set_bytestr(
 
 done:
     if (rc != IB_OK) {
-        ib_log_error_tx(itx, "Failed to set %s: %s",
+        ib_log_error_tx(itx, "Error setting %s: %s",
                         label, ib_status_to_string(rc));
     }
     return rc;
@@ -644,11 +641,8 @@ static inline ib_status_t modhtp_set_nulstr(
     /* If it's not set in the htp bytestring, try the fallback. */
     if ( (htp_bstr == NULL) || (bstr_len(htp_bstr) == 0) ) {
         if (fallback == NULL) {
-            ib_log_debug_tx(itx, "%s unknown: no fallback", label);
             return IB_ENOENT;
         }
-        ib_log_debug_tx(itx,
-                        "%s unknown: using fallback \"%s\"", label, fallback);
         ptr = fallback;
         len = strlen(fallback);
     }
@@ -697,7 +691,7 @@ static inline ib_status_t modhtp_set_hostname(
                                &(itx->hostname));
         if (rc == IB_OK) {
             ib_log_debug_tx(itx,
-                            "Set hostname to \"%s\" from libhtp request host",
+                            "Set hostname to \"%s\" from libhtp request host.",
                             itx->hostname);
             return IB_OK;
         }
@@ -715,7 +709,7 @@ static inline ib_status_t modhtp_set_hostname(
                                &(itx->hostname));
         if (rc == IB_OK) {
             ib_log_debug_tx(itx,
-                            "Set hostname to \"%s\" from libhtp header",
+                            "Set hostname to \"%s\" from libhtp header.",
                             itx->hostname);
             return IB_OK;
         }
@@ -745,7 +739,7 @@ static inline ib_status_t modhtp_set_hostname(
                 else {
                     ib_log_debug_tx(itx,
                                     "Set hostname to \"%s\" "
-                                    "from IronBee parsed header",
+                                    "from IronBee parsed header.",
                                     itx->hostname);
                     return IB_OK;
                 }
@@ -758,7 +752,7 @@ static inline ib_status_t modhtp_set_hostname(
     if (itx->conn->local_ipstr != NULL) {
         itx->hostname = itx->conn->local_ipstr;
         ib_log_notice_tx(itx,
-                         "Set hostname to local IP \"%s\"", itx->hostname);
+                         "Set hostname to local IP \"%s\".", itx->hostname);
         return IB_OK;
     }
 
@@ -879,7 +873,7 @@ static inline ib_status_t modhtp_check_tx(
         txdata->error_msg = ib_mpool_strdup(txdata->itx->mp, log->msg);
         if (txdata->error_msg == NULL) {
             ib_log_error_tx(txdata->itx,
-                            "modhtp/%s: Error strdup()ing error message \"%s\"",
+                            "modhtp/%s: Error copying error message \"%s\"",
                             label, log->msg);
             txdata->error_msg = "ib_mpool_strdup() failed!";
             return IB_EALLOC;
@@ -926,7 +920,6 @@ static ib_status_t modhtp_field_gen_bytestr(
 
     /* If bs is NULL, do return ENOENT */
     if (bs == NULL) {
-        ib_log_debug2_tx(tx, "HTP bytestr for for \"%s\" is NULL", name);
         return IB_ENOENT;
     }
 
@@ -973,14 +966,14 @@ static ib_status_t modhtp_field_gen_bytestr(
 
     rc = ib_field_mutable_value(f, ib_ftype_bytestr_mutable_out(&ibs));
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to get field value for \"%s\": %s",
+        ib_log_error_tx(tx, "Error getting field value for \"%s\": %s",
                         name, ib_status_to_string(rc));
         return rc;
     }
 
     rc = ib_bytestr_setv_const(ibs, dptr, bstr_len(bs));
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to set field value for \"%s\": %s",
+        ib_log_error_tx(tx, "Error setting field value for \"%s\": %s",
                         name, ib_status_to_string(rc));
         return rc;
     }
@@ -1053,7 +1046,7 @@ static void modhtp_parser_flag(
     );
     if (rc != IB_OK) {
         ib_log_warning_tx(itx,
-                          "Failed to initialize collection source \"%s\": %s",
+                          "Error initializing collection source \"%s\": %s",
                           collection, ib_status_to_string(rc));
         return;
     }
@@ -1068,14 +1061,14 @@ static void modhtp_parser_flag(
         );
         if (rc != IB_OK) {
             ib_log_warning_tx(itx,
-                              "Failed to add collection \"%s\": %s",
+                              "Error adding collection \"%s\": %s",
                               collection, ib_status_to_string(rc));
             return;
         }
     }
     else if (rc != IB_OK) {
         ib_log_warning_tx(itx,
-                          "Failed to initialize collection \"%s\": %s",
+                          "Error initializing collection \"%s\": %s",
                           collection, ib_status_to_string(rc));
         return;
     }
@@ -1085,14 +1078,14 @@ static void modhtp_parser_flag(
                          IB_FTYPE_NUM,
                          ib_ftype_num_in(&value));
     if (rc != IB_OK) {
-        ib_log_warning_tx(itx, "Failed to create \"%s\" flag field: %s",
+        ib_log_warning_tx(itx, "Error creating \"%s\" flag field: %s",
                           flagname, ib_status_to_string(rc));
         return;
     }
     rc = ib_field_list_add(field, listfield);
     if (rc != IB_OK) {
         ib_log_warning_tx(itx,
-                          "Failed to add \"%s\" flag to collection \"%s\": %s",
+                          "Error adding \"%s\" flag to collection \"%s\": %s",
                           flagname, collection, ib_status_to_string(rc));
         return;
     }
@@ -1379,7 +1372,7 @@ static int modhtp_process_req_headers(
     /* Set the IronBee transaction hostname if possible */
     irc = modhtp_set_hostname(txdata->htx, false, txdata->itx);
     if (irc != IB_OK) {
-        ib_log_error_tx(txdata->itx, "No hostname available!");
+        ib_log_error_tx(txdata->itx, "No hostname available.");
         return HTP_ERROR;
     }
 
@@ -1727,7 +1720,7 @@ static ib_status_t modhtp_get_or_create_list(
     );
     if (rc != IB_OK) {
         ib_log_error_tx(itx,
-                        "Failed to create %s source: %s",
+                        "Error creating %s source: %s",
                         name,
                         ib_status_to_string(rc));
     }
@@ -1742,14 +1735,14 @@ static ib_status_t modhtp_get_or_create_list(
         );
         if (rc != IB_OK) {
             ib_log_error_tx(itx,
-                            "Failed to create %s list: %s",
+                            "Error creating %s list: %s",
                             name,
                             ib_status_to_string(rc));
         }
     }
     else if (rc != IB_OK) {
         ib_log_error_tx(itx,
-                        "Failed to get %s list: %s",
+                        "Error getting %s list: %s",
                         name,
                         ib_status_to_string(rc));
     }
@@ -1781,7 +1774,7 @@ static ib_status_t modhtp_gen_request_uri_fields(
     /* @todo: htp_unparse_uri_noencode() is private */
     uri = htp_unparse_uri_noencode(htx->parsed_uri);
     if (uri == NULL) {
-        ib_log_error_tx(itx, "Failed to generate normalized URI");
+        ib_log_error_tx(itx, "Failed to generate normalized URI.");
     }
     else {
         modhtp_field_gen_bytestr(itx, "request_uri", uri, true, NULL);
@@ -1831,18 +1824,18 @@ static ib_status_t modhtp_gen_request_uri_fields(
         rc = modhtp_table_iterator(itx, htx->request_params,
                                    modhtp_param_iter_callback, &idata);
         if (rc != IB_OK) {
-            ib_log_warning_tx(itx, "Failed to populate URI params: %s",
+            ib_log_warning_tx(itx, "Error populating URI params: %s",
                               ib_status_to_string(rc));
         }
         param_count = idata.count;
     }
 
     if (rc != IB_OK) {
-        ib_log_error_tx(itx, "Failed to create request URI parameters: %s",
+        ib_log_error_tx(itx, "Error creating request URI parameters: %s",
                         ib_status_to_string(rc));
     }
     else {
-        ib_log_debug3_tx(itx, "%zd request URI parameters", param_count);
+        ib_log_debug2_tx(itx, "Parsed %zd request URI parameters", param_count);
     }
 
     return IB_OK;
@@ -1878,11 +1871,11 @@ static ib_status_t modhtp_gen_request_header_fields(
         rc = modhtp_table_iterator(itx, htx->request_cookies,
                                    modhtp_field_list_callback, f);
         if (rc != IB_OK) {
-            ib_log_warning_tx(itx, "Error adding request cookies");
+            ib_log_warning_tx(itx, "Error adding request cookies.");
         }
     }
     else if (rc == IB_OK) {
-        ib_log_debug3_tx(itx, "No request cookies");
+        ib_log_debug2_tx(itx, "No request cookies.");
     }
 
     return IB_OK;
@@ -1906,7 +1899,6 @@ static ib_status_t modhtp_gen_request_fields(
     ib_field_t  *f;
     ib_status_t  rc;
 
-    ib_log_debug3_tx(itx, "LibHTP: modhtp_gen_request_fields");
     if (htx == NULL) {
         return IB_OK;
     }
@@ -1922,18 +1914,18 @@ static ib_status_t modhtp_gen_request_fields(
         rc = modhtp_table_iterator(itx, htx->request_params,
                                    modhtp_param_iter_callback, &idata);
         if (rc != IB_OK) {
-            ib_log_warning_tx(itx, "Failed to populate body params: %s",
+            ib_log_warning_tx(itx, "Error populating body params: %s",
                               ib_status_to_string(rc));
         }
         param_count = idata.count;
     }
 
     if (rc != IB_OK) {
-        ib_log_error_tx(itx, "Failed to create request body parameters: %s",
+        ib_log_error_tx(itx, "Error creating request body parameters: %s",
                         ib_status_to_string(rc));
     }
     else {
-        ib_log_debug3_tx(itx, "%zd request body parameters", param_count);
+        ib_log_debug2_tx(itx, "Parsed %zd request body parameters", param_count);
     }
 
     return IB_OK;
@@ -2086,7 +2078,7 @@ ib_status_t modhtp_conn_init(
     /* Get the module config. */
     rc = ib_context_module_config(ctx, m, (void *)&config);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Error fetching module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
@@ -2094,7 +2086,6 @@ ib_status_t modhtp_conn_init(
     context = config->context;
 
     /* Create the connection parser */
-    ib_log_debug3(ib, "Creating LibHTP parser");
     parser = htp_connp_create((htp_cfg_t *)context->htp_config);
     if (parser == NULL) {
         return IB_EALLOC;
@@ -2113,7 +2104,7 @@ ib_status_t modhtp_conn_init(
     /* Store the parser data for access from callbacks. */
     rc = ib_conn_set_module_data(iconn, m, parser_data);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to set connection data for %s: %s",
+        ib_log_alert(ib, "Error setting connection data for %s: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         return IB_EUNKNOWN;
     }
@@ -2148,12 +2139,11 @@ ib_status_t modhtp_conn_finish(
     irc = ib_conn_get_module_data(iconn, m, &parser_data);
     if (irc != IB_OK) {
         ib_log_error(ib,
-                     "Failed to get connection parser data from IB connection");
+                     "Failed to get connection parser data from IB connection.");
         return IB_EUNKNOWN;
     }
 
     /* Destroy the parser on disconnect. */
-    ib_log_debug3(ib, "Destroying LibHTP parser");
     htp_connp_destroy_all(parser_data->parser);
 
     return IB_OK;
@@ -2185,7 +2175,7 @@ ib_status_t modhtp_connect(
     irc = ib_conn_get_module_data(iconn, m, &parser_data);
     if (irc != IB_OK) {
         ib_log_error(iconn->ib,
-                     "Failed to get connection parser data from IB connection");
+                     "Failed to get connection parser data from IB connection.");
         return IB_EUNKNOWN;
     }
 
@@ -2224,7 +2214,7 @@ ib_status_t modhtp_disconnect(
     irc = ib_conn_get_module_data(iconn, m, &parser_data);
     if (irc != IB_OK) {
         ib_log_error(iconn->ib,
-                     "Failed to get connection parser data from IB connection");
+                     "Failed to get connection parser data from IB connection.");
         return IB_EUNKNOWN;
     }
 
@@ -2268,14 +2258,14 @@ ib_status_t modhtp_tx_started(
     /* Get the parser data from the transaction */
     irc = ib_conn_get_module_data(itx->conn, m, &parser_data);
     if (irc != IB_OK) {
-        ib_log_error_tx(itx, "Failed to get parser data for connection");
+        ib_log_error_tx(itx, "Failed to get parser data for connection.");
         return IB_EOTHER;
     }
 
     /* Get the module's configuration for the context */
     irc = ib_context_module_config(itx->ctx, m, &config);
     if (irc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Error fetching module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(irc));
         return irc;
     }
@@ -2283,7 +2273,7 @@ ib_status_t modhtp_tx_started(
     /* Create the transaction data */
     txdata = ib_mpool_calloc(itx->mp, sizeof(*txdata), 1);
     if (txdata == NULL) {
-        ib_log_error_tx(itx, "Failed to allocate transaction data");
+        ib_log_error_tx(itx, "Failed to allocate transaction data.");
         return IB_EALLOC;
     }
     txdata->ib = ib;
@@ -2294,7 +2284,7 @@ ib_status_t modhtp_tx_started(
     /* Create the transaction */
     htx = htp_connp_tx_create(parser_data->parser);
     if (htx == NULL) {
-        ib_log_error_tx(itx, "Failed to create HTP transaction");
+        ib_log_error_tx(itx, "Failed to create HTP transaction.");
         return IB_EALLOC;
     }
     txdata->htx = htx;
@@ -2391,7 +2381,7 @@ ib_status_t modhtp_request_started(
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(m, itx);
 
-    ib_log_debug_tx(itx, "SEND REQUEST LINE TO LIBHTP: \"%.*s\"",
+    ib_log_debug_tx(itx, "Sending request line to LibHTP: \"%.*s\"",
                     (int)ib_bytestr_length(line->raw),
                     (const char *)ib_bytestr_const_ptr(line->raw));
 
@@ -2451,7 +2441,7 @@ ib_status_t modhtp_request_header_data(
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(m, itx);
 
-    ib_log_debug_tx(itx, "SEND REQUEST HEADER DATA TO LIBHTP");
+    ib_log_debug_tx(itx, "Sending request header data to LibHTP.");
 
     /* Hand the headers off to libhtp */
     irc = modhtp_set_header(txdata, "request", header,
@@ -2493,9 +2483,6 @@ ib_status_t modhtp_request_header_process(
     /* Process request header prior to context selection. */
     modhtp_process_req_headers(txdata);
 
-    ib_log_debug_tx(itx,
-                    "PROCESS REQUEST HEADER: "
-                    "modhtp_request_header_process");
     return IB_OK;
 }
 
@@ -2555,8 +2542,7 @@ ib_status_t modhtp_handle_context_tx(
     }
 
     ib_log_debug_tx(itx,
-                    "SEND REQUEST HEADER FINISHED TO LIBHTP: "
-                    "modhtp_handle_context_tx");
+                    "Sending request header finished to LibHTP.");
     return IB_OK;
 }
 
@@ -2601,8 +2587,7 @@ ib_status_t modhtp_request_body_data(
     txdata = modhtp_get_txdata_ibtx(m, itx);
 
     ib_log_debug_tx(itx,
-                    "SEND REQUEST BODY DATA TO LIBHTP: size=%zd "
-                    "modhtp_iface_request_body_data",
+                    "Sending request body data to LibHTP: size=%zd",
                     itxdata_length);
 
     /* Hand the request body data to libhtp. */
@@ -2710,9 +2695,7 @@ static ib_status_t modhtp_response_started(
         return IB_OK;
     }
 
-    ib_log_debug_tx(itx,
-                    "SEND RESPONSE LINE TO LIBHTP: "
-                    "modhtp_iface_response_line");
+    ib_log_debug_tx(itx, "Sending response line to LibHTP.");
 
     htx = txdata->htx;
 
@@ -2772,9 +2755,7 @@ ib_status_t modhtp_response_header_data(
         return IB_OK;
     }
 
-    ib_log_debug_tx(itx,
-                    "SEND RESPONSE HEADER DATA TO LIBHTP: "
-                    "modhtp_iface_response_header_data");
+    ib_log_debug_tx(itx, "Sending response header data to LibHTP.");
 
     /* Hand the response headers off to libhtp */
     return modhtp_set_header(txdata, "response", header,
@@ -2835,9 +2816,7 @@ ib_status_t modhtp_response_header_finished(
         return IB_OK;
     }
 
-    ib_log_debug_tx(itx,
-                    "SEND RESPONSE HEADER FINISHED TO LIBHTP: "
-                    "modhtp_iface_response_header_finished");
+    ib_log_debug_tx(itx, "Sending response header finished to LibHTP.");
 
     return IB_OK;
 }
@@ -2881,9 +2860,7 @@ ib_status_t modhtp_response_body_data(
     /* Fetch the transaction data */
     txdata = modhtp_get_txdata_ibtx(m, itx);
 
-    ib_log_debug_tx(itx,
-                    "SEND RESPONSE BODY DATA TO LIBHTP: "
-                    "modhtp_iface_response_body_data");
+    ib_log_debug_tx(itx, "Sending response body data to LibHTP.");
 
     hrc = htp_tx_res_process_body_data(txdata->htx,
                                        itxdata, itxdata_length);
@@ -2963,7 +2940,7 @@ static ib_status_t modhtp_context_close(
     /* Get the module config. */
     rc = ib_context_module_config(ctx, module, (void *)&config);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to fetch module %s config: %s",
+        ib_log_error(ib, "Error fetching module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
@@ -2971,7 +2948,7 @@ static ib_status_t modhtp_context_close(
     /* Build a context */
     rc = modhtp_build_context(ib, ib_context_get_mpool(ctx), config, &modctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to create a module context for %s: %s",
+        ib_log_error(ib, "Error creating a module context for %s: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }
@@ -3013,7 +2990,7 @@ static ib_status_t modhtp_context_destroy(
     /* Get the module config. */
     rc = ib_context_module_config(ctx, module, (void *)&config);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to fetch module %s config: %s",
+        ib_log_error(ib, "Error fetching module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         return rc;
     }

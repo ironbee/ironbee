@@ -357,14 +357,14 @@ static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
     assert(cfg != NULL);
 
     if (cfg->cmdline == NULL) {
-        ib_log_debug(ib, "Piped log not configured");
+        ib_log_notice(ib, "Piped log not configured");
         return IB_OK;
     }
     mp = ib_engine_pool_main_get(ib);
 
     cfg->pipe = popen(cfg->cmdline, "w");
     if (cfg->pipe == NULL) {
-        /* This'll get to the default logger - hopefully! */
+        /* This will get to the default logger - hopefully! */
         ib_log_critical(ib, "Failed to open pipe to %s!", cfg->cmdline);
         return IB_EOTHER;
     }

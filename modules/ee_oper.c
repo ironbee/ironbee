@@ -139,25 +139,18 @@ ib_status_t get_or_create_operator_data_hash(
     /* Get or create the hash that contains the rule data. */
     rc = ib_tx_get_module_data(tx, m, hash);
     if ( (rc == IB_OK) && (*hash != NULL) ) {
-        ib_log_debug2_tx(tx, "Found rule data hash in tx.");
         return IB_OK;
     }
 
     rc = ib_hash_create(hash, tx->mp);
     if (rc != IB_OK) {
-        ib_log_debug2_tx(tx, "Failed to create hash: %s",
-                         ib_status_to_string(rc));
         return rc;
     }
 
     rc = ib_tx_set_module_data(tx, m, *hash);
     if (rc != IB_OK) {
-        ib_log_debug2_tx(tx, "Failed to store hash: %s",
-                         ib_status_to_string(rc));
         *hash = NULL;
     }
-
-    ib_log_debug2_tx(tx, "Returning rule hash at %p.", *hash);
 
     return rc;
 }
@@ -303,10 +296,7 @@ ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
         return IB_EEXIST;
     }
 
-    ib_log_debug(cp->ib, "pattern %s: checking for file %s relative to %s", pattern_name,filename, cp->curr->file);
-
     automata_file = ib_util_relative_file(mp_tmp, cp->curr->file, filename);
-    ib_log_debug(cp->ib, "pattern %s: path=%s", pattern_name, automata_file);
 
     if (access(automata_file, R_OK) != 0) {
         ib_log_error(cp->ib,
@@ -442,7 +432,7 @@ ib_status_t ee_match_any_operator_create(
     /* Get my module object */
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get eudoxus operator module object: %s",
+        ib_log_error(ib, "Error getting eudoxus operator module object: %s",
                      ib_status_to_string(rc));
         return rc;
     }
@@ -463,13 +453,12 @@ ib_status_t ee_match_any_operator_create(
     }
     else if (rc != IB_OK) {
         ib_log_error(ib,
-                     MODULE_NAME_STR ": Error setting up eudoxus automata operator.");
+                     MODULE_NAME_STR ": Failed to setup eudoxus automata operator.");
         return rc;
     }
 
     operator_data->eudoxus = eudoxus;
     *(ee_operator_data_t **)instance_data = operator_data;
-    ib_log_debug(ib, "Found compiled eudoxus pattern \"%s\"", parameters);
 
     return IB_OK;
 }
@@ -664,13 +653,11 @@ ib_status_t ee_module_init(ib_engine_t *ib,
 
     rc = ib_mpool_create(&mod_mp, "ee_module", main_mp);
     if (rc != IB_OK ) {
-        ib_log_error(ib, MODULE_NAME_STR ": Error allocating module mpool.");
         return rc;
     }
     if (config->eudoxus_pattern_hash == NULL) {
         rc = ib_hash_create_nocase(&(config->eudoxus_pattern_hash), mod_mp);
         if (rc != IB_OK ) {
-            ib_log_error(ib, MODULE_NAME_STR ": Error initializing module.");
             return rc;
         }
     }
@@ -690,7 +677,7 @@ ib_status_t ee_module_init(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "Failed to register ee_match_any operator: %s",
+            "Error registering ee_match_any operator: %s",
             ib_status_to_string(rc));
         return rc;
     }
@@ -703,7 +690,7 @@ ib_status_t ee_module_init(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "Failed to register transaction finished event for ee_match_any operator: %s",
+            "Error registering transaction finished event for ee_match_any operator: %s",
             ib_status_to_string(rc));
         return rc;
     }

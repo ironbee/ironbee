@@ -341,7 +341,6 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
 
     /* No value?  Do nothing */
     if (value == NULL) {
-        ib_log_debug3(ib, "No %s field in user agent", name);
         return IB_OK;
     }
 
@@ -366,8 +365,6 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
                      "Error adding user agent %s field: %s", name, ib_status_to_string(rc));
         return rc;
     }
-
-    ib_log_debug3(ib, "Stored user agent %s '%s'", name, value);
 
     return IB_OK;
 }
@@ -405,38 +402,34 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     /* Allocate memory for a copy of the string to split up below. */
     buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
     if (buf == NULL) {
-        ib_log_error_tx(tx,
-                        "Failed to allocate %zd bytes for agent string",
-                        len+1);
         return IB_EALLOC;
     }
 
     /* Copy the string out */
     memcpy(buf, ib_bytestr_const_ptr(bs), len);
     buf[len] = '\0';
-    ib_log_debug_tx(tx, "Found user agent: '%s'", buf);
 
     /* Copy the agent string */
     agent = (char *)ib_mpool_strdup(tx->mp, buf);
     if (agent == NULL) {
-        ib_log_error_tx(tx, "Failed to allocate copy of agent string");
+        ib_log_error_tx(tx, "Failed to allocate copy of agent string.");
         return IB_EALLOC;
     }
 
     /* Parse the user agent string */
     rc = modua_parse_uastring(buf, &product, &platform, &extra);
     if (rc != IB_OK) {
-        ib_log_debug_tx(tx, "Failed to parse User Agent string '%s'", agent);
+        ib_log_debug_tx(tx, "Failed to parse User Agent string \"%s\".", agent);
         return IB_OK;
     }
 
     /* Categorize the parsed string */
     rule = modua_match_cat_rules(product, platform, extra);
     if (rule == NULL) {
-        ib_log_debug_tx(tx, "No rule matched" );
+        ib_log_debug_tx(tx, "No rule matched." );
     }
     else {
-        ib_log_debug_tx(tx, "Matched to rule #%d / category '%s'",
+        ib_log_debug_tx(tx, "Matched to rule #%d / category \"%s\".",
                         rule->rule_num, rule->category );
     }
 
@@ -445,7 +438,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
         &source, tx->mp, ib_engine_var_config_get(ib), IB_S2SL("UA")
     );
     if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Unable to acquire source for UserAgent list.");
+        ib_log_alert_tx(tx, "Failed to acquire source for UserAgent list.");
         return rc;
     }
     rc = ib_var_source_initialize(
@@ -453,7 +446,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     );
     if (rc != IB_OK)
     {
-        ib_log_alert_tx(tx, "Unable to add UserAgent list to DPI.");
+        ib_log_alert_tx(tx, "Failed to add UserAgent list to TX var source.");
         return rc;
     }
 
@@ -532,7 +525,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
 
     rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Can't fetch configuration: %s",
+        ib_log_error_tx(tx, "Error fetching configuration: %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -545,12 +538,11 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
         tx->var_store
     );
     if (rc == IB_ENOENT || ib_list_elements(bs_list) == 0) {
-        ib_log_debug_tx(tx, "request_header_finished_event: No user agent");
         return IB_OK;
     }
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-                        "Cannot retrieve request_headers:User-Agent: %d",
+                        "Failed to retrieve request_headers:User-Agent: %d",
                         rc);
         return rc;
     }
@@ -621,7 +613,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
 
     rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Can't fetch configuration: %s",
+        ib_log_error_tx(tx, "Failed to fetch configuration: %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -636,19 +628,19 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
         tx->var_store
     );
     if (rc == IB_ENOENT || ib_list_elements(list) == 0) {
-        ib_log_debug_tx(tx, "No X-Forwarded-For");
+        ib_log_debug_tx(tx, "No X-Forwarded-For.");
         return IB_OK;
     }
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-                        "Cannot retrieve request_headers:User-Agent: %d",
+                        "Failed to retrieve request_headers:User-Agent: %d",
                         rc);
         return rc;
     }
 
     num = ib_list_elements(list);
     if (num == 0) {
-        ib_log_debug_tx(tx, "No X-Forwarded-For header found");
+        ib_log_debug_tx(tx, "No X-Forwarded-For header found.");
         return rc;
     }
     else if (num != 1) {
@@ -657,7 +649,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     }
     node = ib_list_last_const(list);
     if ( (node == NULL) || (node->data == NULL) ) {
-        ib_log_notice_tx(tx, "Invalid X-Forwarded-For header found");
+        ib_log_notice_tx(tx, "Invalid X-Forwarded-For header found.");
         return rc;
     }
     forwarded = (const ib_field_t *)node->data;
@@ -667,12 +659,12 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
                              ib_ftype_bytestr_out(&bs),
                              IB_FTYPE_BYTESTR);
     if (rc != IB_OK) {
-        ib_log_notice_tx(tx, "Invalid X-Forwarded-For header value");
+        ib_log_notice_tx(tx, "Invalid X-Forwarded-For header value.");
         return rc;
     }
 
     if (bs == NULL) {
-        ib_log_notice_tx(tx, "X-Forwarded-For header not a bytestr");
+        ib_log_notice_tx(tx, "X-Forwarded-For header not a bytestr.");
         return IB_EINVAL;
     }
     len = ib_bytestr_length(bs);
@@ -697,7 +689,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     rc = ib_ip_validate_ex((const char *)stripped, len);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-            "X-Forwarded-For \"%.*s\" is not a valid IP address",
+            "X-Forwarded-For \"%.*s\" is not a valid IP address.",
             (int)len, stripped
         );
         return IB_OK;
@@ -707,7 +699,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     buf = (char *)ib_mpool_alloc(tx->mp, len+1);
     if (buf == NULL) {
         ib_log_error_tx(tx,
-                        "Failed to allocate %zd bytes for remote address",
+                        "Failed to allocate %zd bytes for remote address.",
                         len+1);
         return IB_EALLOC;
     }
@@ -716,7 +708,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     memcpy(buf, stripped, len);
     buf[len] = '\0';
 
-    ib_log_debug_tx(tx, "Remote address changed to \"%s\"", buf);
+    ib_log_debug_tx(tx, "Remote address changed to \"%s\".", buf);
 
     /* This will lose the pointer to the original address
      * buffer, but it should be cleaned up with the rest
@@ -731,14 +723,14 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
         (uint8_t *)buf, len
     );
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to create field for remote_addr: %s",
+        ib_log_error_tx(tx, "Error creating field for remote_addr: %s",
                         ib_status_to_string(rc));
         return rc;
     }
     rc = ib_var_source_set(cfg->remote_addr, tx->var_store, field);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-                        "Failed to set remote address var: %s",
+                        "Error setting remote address var: %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -772,7 +764,7 @@ ib_status_t modua_ctx_close(
 
         rc = ib_context_module_config(ctx, m, &cfg);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Can't fetch configuration: %s",
+            ib_log_error(ib, "Error fetching configuration: %s",
                          ib_status_to_string(rc));
             return rc;
         }
@@ -847,7 +839,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                              modua_user_agent,
                              m);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Hook register returned %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Error registering hook: %s", ib_status_to_string(rc));
     }
 
     /* Register the remote address callback */
@@ -855,7 +847,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                              modua_remoteip,
                              m);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Hook register returned %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Error registering hook: %s", ib_status_to_string(rc));
     }
 
     /* Initializations */
@@ -870,7 +862,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Get the rules */
     modua_match_ruleset = modua_ruleset_get( );
     if (modua_match_ruleset == NULL) {
-        ib_log_error(ib, "Failed to get user agent rule list: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Error get user agent rule list: %s", ib_status_to_string(rc));
         return rc;
     }
     ib_log_debug(ib,
@@ -885,7 +877,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     );
     if (rc != IB_OK && rc != IB_EEXIST) {
         ib_log_warning(ib,
-            "User agent failed to register \"remote_addr\": %s",
+            "Error registering \"remote_addr\": %s",
             ib_status_to_string(rc)
         );
         /* Continue. */
@@ -899,7 +891,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     );
     if (rc != IB_OK) {
         ib_log_warning(ib,
-            "User agent failed to register \"UA\": %s",
+            "Failed to register user agent \"UA\": %s",
             ib_status_to_string(rc)
         );
         /* Continue. */
@@ -909,7 +901,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                                   modua_ctx_close, m);
     if (rc != IB_OK) {
         ib_log_error(ib,
-                     "Could not register context close hook: %s",
+                     "Error registering context close hook: %s",
                      ib_status_to_string(rc));
         return rc;
     }

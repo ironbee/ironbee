@@ -176,8 +176,6 @@ ib_status_t ib_moddevel_txresp_init(
     ib_status_t rc;
     ib_moddevel_txresp_config_t *config;
 
-    ib_log_debug(ib, "Initializing txresp module.");
-
     /* Create our configuration structure */
     config = ib_mpool_calloc(mp, sizeof(*config), 1);
     if (config == NULL) {
@@ -199,7 +197,7 @@ ib_status_t ib_moddevel_txresp_init(
                              tx_header_finished,
                              config);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Hook register returned %d", rc);
+        ib_log_error(ib, "Error registering hook: %d", rc);
     }
 
     *pconfig = config;

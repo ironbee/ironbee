@@ -283,7 +283,7 @@ static ib_status_t populate_data_in_context(
             }
         }
         else {
-            ib_log_debug(
+            ib_log_notice(
                 ib,
                 "Mapping for collection %s has no load handler. Skipping.",
                 name);
@@ -388,7 +388,7 @@ static ib_status_t persist_data_in_context(
             }
         }
         else {
-            ib_log_debug(
+            ib_log_notice(
                 ib,
                 "Mapping for collection %s has no store handler. Skipping.",
                 name);

@@ -71,12 +71,10 @@ static ib_status_t modlua_append_searchprefix(
     const char *lua_file_pattern = "?.lua";
 
     char *path = NULL; /* Tmp string to build a search path. */
-    ib_log_debug(ib, "Adding \"%s\" to lua search path.", prefix);
 
     /* Strlen + 2. One for \0 and 1 for the path separator. */
     path = malloc(strlen(prefix) + strlen(lua_file_pattern) + 2);
     if (path == NULL) {
-        ib_log_error(ib, "Could allocate buffer for string append.");
         free(path);
         return IB_EALLOC;
     }
@@ -112,7 +110,7 @@ static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
 
     rc = ib_core_context_config(ib_context_main(ib), &corecfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not retrieve core module configuration.");
+        ib_log_error(ib, "Failed to retrieve core module configuration.");
         return rc;
     }
 
@@ -197,7 +195,6 @@ static ib_status_t modlua_newstate(
         return IB_EUNKNOWN;
     }
 
-    ib_log_debug(ib, "Opening shared Lua state common libs.");
     luaL_openlibs(L);
 
     /* Inject some constants so we know we are in the IronBee Lua Module. */
@@ -213,7 +210,6 @@ static ib_status_t modlua_newstate(
     }
 
     /* Load ffi, api, etc. */
-    ib_log_debug(ib, "Preloading libraries into shared Lua state.");
     rc = modlua_preload(ib, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to pre-load Lua files.");
@@ -289,8 +285,6 @@ static ib_status_t modlua_reload_ctx(
         const modlua_reload_t *reload =
             (const modlua_reload_t *)ib_list_node_data_const(node);
 
-        ib_log_debug(ib, "Reloading %s", reload->file);
-
         switch(reload->type) {
             case MODLUA_RELOAD_MODULE:
                 tmp_rc = modlua_module_load_lua(
@@ -312,7 +306,7 @@ static ib_status_t modlua_reload_ctx(
         if (rc == IB_OK && tmp_rc != IB_OK) {
             ib_log_error(
                 ib,
-                "Failed to reload Lua rule or module %s.",
+                "Failed to reload Lua rule or module \"%s\".",
                 reload->file);
             rc = tmp_rc;
         }
@@ -341,8 +335,6 @@ ib_status_t modlua_record_reload(
 
     mp = ib_engine_pool_config_get(ib);
 
-    ib_log_debug(ib, "Recording reloadable lua: %s", file);
-
     data = ib_mpool_alloc(mp, sizeof(*data));
     if (data == NULL) {
         return IB_EALLOC;
@@ -357,7 +349,7 @@ ib_status_t modlua_record_reload(
     /* Copy file name. */
     data->file = ib_mpool_strdup(mp, file);
     if (data->file == NULL) {
-        ib_log_error(ib, "Failed to copy file name %s", file);
+        ib_log_error(ib, "Failed to copy file name \"%s\".", file);
         return IB_EALLOC;
     }
 
@@ -365,7 +357,7 @@ ib_status_t modlua_record_reload(
     if (rule_id != NULL) {
         data->rule_id = ib_mpool_strdup(mp, rule_id);
         if (data->rule_id == NULL) {
-            ib_log_error(ib, "Failed to copy rule_id %s", rule_id);
+            ib_log_error(ib, "Failed to copy rule_id \"%s\".", rule_id);
             return IB_EALLOC;
         }
     }
@@ -437,7 +429,7 @@ ib_status_t modlua_reload_ctx_except_main(
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "Failed to load context %s into Lua stack.",
+            "Failed to load context \"%s\" into Lua stack.",
             ib_context_name_get(ctx));
         return rc;
     }
@@ -485,14 +477,14 @@ ib_status_t lua_pool_create_fn(void *resource, void *cbdata)
     /* Create a new Lua State. */
     rc = modlua_newstate(ib, cfg, &(modlua_rt->L));
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not create Lua stack.");
+        ib_log_error(ib, "Failed to create Lua stack.");
         return rc;
     }
 
     /* Preload the user's main context. */
     rc = modlua_reload_ctx_main(ib, module, modlua_rt->L);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Could not configure Lua stack.");
+        ib_log_error(ib, "Failed to configure Lua stack.");
         return rc;
     }
 

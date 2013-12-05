@@ -233,7 +233,7 @@ static ib_status_t persistence_framework_init(
     /* Set the main context module configuration. */
     rc = ib_module_config_initialize(module, cfg, sizeof(*cfg));
     if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot set module configuration.");
+        ib_log_error(ib, "Failed to set module configuration.");
         return rc;
     }
 

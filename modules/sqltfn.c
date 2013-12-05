@@ -157,21 +157,11 @@ static ib_status_t sqltfn_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     ib_status_t rc;
 
-    ib_log_debug(ib, "Initializing %s module.", MODULE_NAME_STR);
-
     rc = ib_tfn_create_and_register(NULL, ib, "normalizeSqlPg", false,
                                     sqltfn_normalize_pg_tfn, NULL);
     if (rc != IB_OK) {
         return rc;
     }
-
-    return IB_OK;
-}
-
-/* Called to finish a module (on unload). */
-static ib_status_t sqltfn_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
-{
-    ib_log_debug(ib, "Finish %s module.", MODULE_NAME_STR);
 
     return IB_OK;
 }
@@ -185,6 +175,6 @@ IB_MODULE_INIT(
     NULL,                                /* Config directive map */
     sqltfn_init,                         /* Initialize function */
     NULL,                                /* Callback data */
-    sqltfn_fini,                         /* Finish function */
+    NULL,                                /* Finish function */
     NULL,                                /* Callback data */
 );

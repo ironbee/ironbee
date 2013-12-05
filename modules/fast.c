@@ -342,7 +342,7 @@ ib_status_t fast_feed(
     if (irc != IA_EUDOXUS_OK) {
         ib_log_error(
             ib,
-            "fast: Eudoxus Execution Failure: %s",
+            "fast: Error executing eudoxus: %s",
             fast_eudoxus_error(eudoxus)
         );
         return IB_EINVAL;
@@ -1047,10 +1047,10 @@ ib_status_t fast_ownership(
 
     /* This memory pool will exist only as long as this stack frame. */
     rc = ib_mpool_create(&tmp_mp, "fast temporary pool", NULL);
-    FAST_CHECK_RC("Could not create temporary memory pool");
+    FAST_CHECK_RC("Error creating temporary memory pool");
 
     rc = ib_list_create(&actions, tmp_mp);
-    FAST_CHECK_RC("Could not create list to hold results");
+    FAST_CHECK_RC("Error creating list to hold results");
 
     rc = ib_rule_search_action(
         ib,
@@ -1060,7 +1060,7 @@ ib_status_t fast_ownership(
         actions,
         NULL
     );
-    FAST_CHECK_RC("Could not access actions of rule");
+    FAST_CHECK_RC("Error accessing actions of rule");
 
     if (ib_list_elements(actions) == 0) {
         /* Decline rule. */
@@ -1068,7 +1068,7 @@ ib_status_t fast_ownership(
     }
 
     if (rule->meta.id == NULL) {
-        ib_log_error(ib, "fast: fast rule lacks id.");
+        ib_log_error(ib, "fast: Fast rule lacks id.");
         FAST_RETURN(IB_EINVAL);
     }
 
@@ -1080,12 +1080,12 @@ ib_status_t fast_ownership(
     if (rc == IB_ENOENT) {
         ib_log_error(
             ib,
-            "fast: fast rule %s not in automata.",
+            "fast: Fast rule %s not in automata.",
             rule->meta.id
         );
         FAST_RETURN(IB_EINVAL);
     }
-    FAST_CHECK_RC("Could not access by_id hash.");
+    FAST_CHECK_RC("Error accessing by_id hash.");
 
     /* Claim rule. */
     runtime->index[*index] = rule;
@@ -1509,7 +1509,7 @@ ib_status_t fast_dir_fast_automata(
     }
     else if (irc != IA_EUDOXUS_OK) {
         FAST_METADATA_ERROR(
-            "Could not process %s; likely corrupt.",
+            "Error processing %s; likely corrupt.",
             c_index_size_key
         );
     }
@@ -1535,7 +1535,7 @@ ib_status_t fast_dir_fast_automata(
 
     /* Create by_id */
     rc = ib_hash_create(&runtime->by_id, cfg_mp);
-    FAST_CHECK_RC("Could not create hash");
+    FAST_CHECK_RC("Error creating hash");
 
     /* Load index */
     irc = ia_eudoxus_metadata_with_key(
@@ -1553,7 +1553,7 @@ ib_status_t fast_dir_fast_automata(
     }
     else if (irc != IA_EUDOXUS_OK) {
         FAST_METADATA_ERROR(
-            "Could not process %s; likely corrupt.",
+            "Error processing %s; likely corrupt.",
             c_index_key
         );
     }

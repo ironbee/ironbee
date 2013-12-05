@@ -127,20 +127,18 @@ static ib_status_t json_load_fn(
     const uint8_t *buf = NULL;
     size_t         sz;
 
-    ib_log_debug_tx(tx, "Loading JSON file %s.", json_cfg->file);
-
     /* Load the file into a buffer. */
     rc = ib_file_readall(tx->mp, json_cfg->file, &buf, &sz);
     if (rc != IB_OK) {
         if (rc == IB_EOTHER || rc == IB_EINVAL) {
             ib_log_error_tx(
                 tx,
-                "Failed to read file %s: %s",
+                "Error reading file \"%s\": %s",
                 json_cfg->file,
                 strerror(errno));
         }
         else {
-            ib_log_error_tx(tx, "Failed to read JSON file %s", json_cfg->file);
+            ib_log_error_tx(tx, "Failed to read JSON file \"%s\"", json_cfg->file);
         }
         return rc;
     }
@@ -150,7 +148,7 @@ static ib_status_t json_load_fn(
     if (rc != IB_OK) {
         ib_log_error_tx(
             tx,
-            "Failed to decode JSON file %s: %s",
+            "Error decoding JSON file \"%s\": %s",
             json_cfg->file,
             err_msg);
         return rc;
@@ -194,7 +192,6 @@ static ib_status_t json_create_fn(
 
     json_cfg = ib_mpool_alloc(mp, sizeof(*json_cfg));
     if (json_cfg == NULL) {
-        ib_log_error(ib, "Failed to allocate JSON configuration.");
         return IB_EALLOC;
     }
 
@@ -222,7 +219,6 @@ static ib_status_t json_create_fn(
 
     json_cfg->file = ib_util_relative_file(mp, cfg->config_file, json_file);
     if (json_cfg->file == NULL) {
-        ib_log_error(ib, "Failed to allocate file.");
         return IB_EALLOC;
     }
 
@@ -270,11 +266,8 @@ static ib_status_t var_create_fn(
     const ib_list_node_t  *node;
     ib_status_t            rc;
 
-    ib_log_debug(ib, "Creating vars-backed collection.");
-
     var = ib_mpool_alloc(mp, sizeof(*var));
     if (var == NULL) {
-        ib_log_error(ib, "Failed to allocate VAR configuration.");
         return IB_EALLOC;
     }
 
@@ -317,7 +310,6 @@ static ib_status_t var_create_fn(
                 return rc;
             }
 
-            ib_log_debug(ib, "Creating empty var: %s", assignment);
             /* The whole assignment is just a variable name. */
             rc = ib_field_create(
                 &field,
@@ -335,7 +327,6 @@ static ib_status_t var_create_fn(
                 return rc;
             }
 
-            ib_log_debug(ib, "Creating empty var: %s", assignment);
             /* The assignment is a var name + '='. */
             rc = ib_field_create(
                 &field,
@@ -359,12 +350,6 @@ static ib_status_t var_create_fn(
                 return rc;
             }
 
-            ib_log_debug(
-                ib,
-                "Creating empty var: %.*s=%s",
-                (int)(eqsign - assignment),
-                assignment,
-                eqsign+1);
             /* Normal assignment. eqsign is the end of the name.
              * eqsign + 1 is the start of the assigned value. */
             rc = ib_field_create(
@@ -570,7 +555,7 @@ static ib_status_t init_collection_common(
     /* Get the collection name string */
     node = ib_list_first_const(vars);
     if (node == NULL) {
-        ib_cfg_log_error(cp, " %s: No collection name specified", directive);
+        ib_cfg_log_error(cp, "%s: No collection name specified", directive);
         goto exit_EINVAL;
     }
     name = (const char *)ib_list_node_data_const(node);
@@ -582,7 +567,7 @@ static ib_status_t init_collection_common(
     /* Get the collection uri. */
     node = ib_list_node_next_const(node);
     if (node == NULL) {
-        ib_cfg_log_error(cp, " %s: No collection URI specified", directive);
+        ib_cfg_log_error(cp, "%s: No collection URI specified", directive);
         goto exit_EINVAL;
     }
     uri = (const char *)ib_list_node_data_const(node);
@@ -592,7 +577,6 @@ static ib_status_t init_collection_common(
     }
 
 
-    ib_cfg_log_debug(cp, "Initializing collection %s.", uri);
     if (strncmp(uri, "vars:", sizeof("vars:")) == 0) {
         rc = domap(cp, ctx, VAR_TYPE, cfg, name, vars);
         if (rc != IB_OK) {
@@ -608,7 +592,7 @@ static ib_status_t init_collection_common(
     }
 #endif
     else {
-        ib_cfg_log_error(cp, "URI %s not supported for persistence.", uri);
+        ib_cfg_log_error(cp, "URI \"%s\" not supported for persistence.", uri);
         goto exit_EINVAL;
     }
 
@@ -723,7 +707,6 @@ static ib_status_t init_collection_init(
 
     cfg = ib_mpool_alloc(mp, sizeof(*cfg));
     if (cfg == NULL) {
-        ib_log_error(ib, "Failed to allocate module configuration struct.");
         return IB_EALLOC;
     }
 
@@ -739,14 +722,12 @@ static ib_status_t init_collection_init(
         return rc;
     }
 
-    ib_log_debug(ib, "Registering directives.");
     rc = register_directives(ib, cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register directives.");
         return rc;
     }
 
-    ib_log_debug(ib, "Registering vars: handlers.");
     rc = ib_persist_fw_register_type(
         cfg->persist_fw,
         ib_context_main(ib),
@@ -765,7 +746,6 @@ static ib_status_t init_collection_init(
     }
 
 #if ENABLE_JSON
-    ib_log_debug(ib, "Registering json-file: handlers.");
     rc = ib_persist_fw_register_type(
         cfg->persist_fw,
         ib_context_main(ib),

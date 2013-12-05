@@ -582,8 +582,6 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     ib_status_t rc;
 
-    ib_log_debug(ib, "Initializing %s module.", MODULE_NAME_STR);
-
     /* Register normalizeSqli transformation. */
     rc = ib_tfn_create_and_register(NULL, ib, "normalizeSqli", false,
                                     sqli_normalize_tfn, NULL);
@@ -608,14 +606,6 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     return IB_OK;
 }
 
-/* Called to finish a module (on unload). */
-static ib_status_t sqli_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
-{
-    ib_log_debug(ib, "Finish %s module.", MODULE_NAME_STR);
-
-    return IB_OK;
-}
-
 static IB_DIRMAP_INIT_STRUCTURE(sqli_directive_map) = {
     IB_DIRMAP_INIT_PARAM2(
         "SQLiPatternSet",
@@ -633,6 +623,6 @@ IB_MODULE_INIT(
     sqli_directive_map,                  /* Config directive map */
     sqli_init,                           /* Initialize function */
     NULL,                                /* Callback data */
-    sqli_fini,                           /* Finish function */
+    NULL,                                /* Finish function */
     NULL,                                /* Callback data */
 );

@@ -138,7 +138,6 @@ ib_status_t file_rw_create_fn(
 
     file_rw = ib_mpool_alloc(mp, sizeof(*file_rw));
     if (file_rw == NULL) {
-        ib_log_error(ib, "Failed to allocate module storage.");
         return IB_EALLOC;
     }
 
@@ -166,8 +165,6 @@ ib_status_t file_rw_create_fn(
     for ( ; node != NULL; node = ib_list_node_next_const(node)) {
         const char *opt = (const char *)ib_list_node_data_const(node);
         const char *val;
-
-        ib_log_debug(ib, "Handling option %s", opt);
 
         val = get_val("key=", opt);
         if (val != NULL) {
@@ -261,7 +258,7 @@ static ib_status_t file_rw_load_fn(
         &kv_key,
         &kv_val);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to retrieve key-value. for key %s.", key);
+        ib_log_error(ib, "Failed to retrieve key-value for key \"%s\".", key);
         return rc;
     }
 
@@ -281,7 +278,7 @@ static ib_status_t file_rw_load_fn(
             list,
             &err_msg);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Failed to decode stored JSON: %s", err_msg);
+            ib_log_error(ib, "Error decoding stored JSON: %s", err_msg);
             ib_kvstore_free_value(file_rw->kvstore, kv_val);
             return rc;
         }
@@ -406,12 +403,6 @@ static ib_status_t persistence_create_store_fn(
         return IB_EINVAL;
     }
 
-    ib_log_debug(
-        ib,
-        "Attempting to make store %s with URI %s",
-        store_name,
-        store_uri);
-
     rc = ib_persist_fw_create_store(
         cfg->persist_fw,
         ctx,
@@ -486,7 +477,7 @@ static ib_status_t create_anonymous_store(
     if (rc != IB_OK) {
         ib_cfg_log_error(
             cp,
-            "Cannot create anonymous store from %s.",
+            "Failed to create anonymous store from %s.",
             store_name);
         return rc;
     }
@@ -596,7 +587,7 @@ static ib_status_t persistence_map_fn(
     ib_cfg_log_debug(
         cp,
         "Store %s does not exist. "
-        "Attempting create an anonymous store using the name as a URI.",
+        "Attempting to create an anonymous store using the name as a URI.",
         store_name);
 
     /* Try to make an anonymous store (use a UUID as the name). */
@@ -604,16 +595,10 @@ static ib_status_t persistence_map_fn(
     if (rc != IB_OK) {
         ib_cfg_log_error(
             cp,
-            "Cannot create anonymous store for %s.",
+            "Failed to create anonymous store for %s.",
             store_name);
         return rc;
     }
-
-    ib_cfg_log_debug(
-        cp,
-        "Constructed anonymous store named %s. Attempting to map %s to it.",
-        store_name,
-        collection_name);
 
     /* Try to map the against the store. */
     rc = ib_persist_fw_map_collection(
@@ -707,8 +692,6 @@ static ib_status_t mod_persist_init(
     ib_mpool_t    *mp         = ib_engine_pool_main_get(ib);
     ib_status_t    rc;
 
-    ib_log_debug(ib, "Default expiration time: %" PRId64, DEFAULT_EXPIRATION);
-
     cfg = ib_mpool_alloc(mp, sizeof(*cfg));
     if (cfg == NULL) {
         return IB_EALLOC;
@@ -718,7 +701,7 @@ static ib_status_t mod_persist_init(
     cfg->persist_fw = NULL;
     rc = ib_persist_fw_create(ib, module, &(cfg->persist_fw));
     if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot create persistence handle.");
+        ib_log_error(ib, "Failed to create persistence handle.");
         return rc;
     }
 
@@ -736,13 +719,13 @@ static ib_status_t mod_persist_init(
         NULL
     );
     if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot register file type.");
+        ib_log_error(ib, "Failed to register file type.");
         return rc;
     }
 
     rc = register_directives(ib, cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot register directive.");
+        ib_log_error(ib, "Failed to register directive.");
         return rc;
     }
 
