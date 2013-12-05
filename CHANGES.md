@@ -71,6 +71,7 @@ IronBee v0.9.0
 **IronBee++**
 
 - The `IBPPTestFixture` class used in IronBee++ test fixtures has been promoted to part of the public API as `IronBee::TestFixture`.  This makes it easier for other IronBee++ based code to write unit tests.
+
 - IronBee::Server now has methods for setting callbacks to C++ functionals.
 
 IronBee v0.8.1
