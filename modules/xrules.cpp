@@ -452,13 +452,13 @@ namespace {
     {
         if (m_block) {
             ib_log_debug_tx(tx.ib(), "Blocking Transaction");
-            tx.ib()->flags |= IB_TX_BLOCK_IMMEDIATE;
-            tx.ib()->flags &= ~(IB_TX_ALLOW_ALL);
+            tx.ib()->flags |= IB_TX_FBLOCK_IMMEDIATE;
+            tx.ib()->flags &= ~(IB_TX_FALLOW_ALL);
         }
         else {
             ib_log_debug_tx(tx.ib(), "Allowing Transaction");
-            tx.ib()->flags &= ~(IB_TX_BLOCK_IMMEDIATE | IB_TX_BLOCK_PHASE | IB_TX_BLOCK_ADVISORY);
-            tx.ib()->flags |= IB_TX_ALLOW_ALL;
+            tx.ib()->flags &= ~(IB_TX_FBLOCK_IMMEDIATE | IB_TX_FBLOCK_PHASE | IB_TX_FBLOCK_ADVISORY);
+            tx.ib()->flags |= IB_TX_FALLOW_ALL;
         }
     }
     /* End BlockAllow Impl */

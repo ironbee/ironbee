@@ -110,9 +110,9 @@ static const size_t max_path_element = 64;  /**< Max size of a path element */
 /** Transaction block flags */
 #define TX_BLOCKED                                   \
     (                                                \
-        IB_TX_BLOCK_ADVISORY |                       \
-        IB_TX_BLOCK_PHASE |                          \
-        IB_TX_BLOCK_IMMEDIATE                        \
+        IB_TX_FBLOCK_ADVISORY |                       \
+        IB_TX_FBLOCK_PHASE |                          \
+        IB_TX_FBLOCK_IMMEDIATE                        \
     )
 
 /**
@@ -156,13 +156,13 @@ static IB_STRVAL_MAP(tx_flags_map) = {
     IB_STRVAL_PAIR("Seen Response Trailer", IB_TX_FRES_SEENTRAILER),
     IB_STRVAL_PAIR("Response Finished", IB_TX_FRES_FINISHED),
     IB_STRVAL_PAIR("Suspicious", IB_TX_FSUSPICIOUS),
-    IB_STRVAL_PAIR("Block: Advisory", IB_TX_BLOCK_ADVISORY),
-    IB_STRVAL_PAIR("Block: Phase", IB_TX_BLOCK_PHASE),
-    IB_STRVAL_PAIR("Block: Immediate", IB_TX_BLOCK_IMMEDIATE),
+    IB_STRVAL_PAIR("Block: Advisory", IB_TX_FBLOCK_ADVISORY),
+    IB_STRVAL_PAIR("Block: Phase", IB_TX_FBLOCK_PHASE),
+    IB_STRVAL_PAIR("Block: Immediate", IB_TX_FBLOCK_IMMEDIATE),
     IB_STRVAL_PAIR("Blocking Mode", IB_TX_FBLOCKING_MODE),
-    IB_STRVAL_PAIR("Allow: Phase", IB_TX_ALLOW_PHASE),
-    IB_STRVAL_PAIR("Allow: Request", IB_TX_ALLOW_REQUEST),
-    IB_STRVAL_PAIR("Allow: All", IB_TX_ALLOW_ALL),
+    IB_STRVAL_PAIR("Allow: Phase", IB_TX_FALLOW_PHASE),
+    IB_STRVAL_PAIR("Allow: Request", IB_TX_FALLOW_REQUEST),
+    IB_STRVAL_PAIR("Allow: All", IB_TX_FALLOW_ALL),
     IB_STRVAL_PAIR("Post-Process", IB_TX_FPOSTPROCESS),
     IB_STRVAL_PAIR("Inspect Request Header", IB_TX_FINSPECT_REQHDR),
     IB_STRVAL_PAIR("Inspect Request URI", IB_TX_FINSPECT_REQURI),
@@ -772,13 +772,13 @@ static ib_status_t moddevel_txdump_tx(
         moddevel_txdump(tx, txdump, 2, "Path = %s", tx->path);
         if (ib_tx_flags_isset(tx, TX_BLOCKED)) {
             moddevel_txdump(tx, txdump, 2, "Block Code = %" PRId64, tx->block_status);
-            if (ib_tx_flags_isset(tx, IB_TX_BLOCK_ADVISORY) ) {
+            if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_ADVISORY) ) {
                 moddevel_txdump(tx, txdump, 2, "Block: Advisory");
             }
-            if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE) ) {
+            if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_PHASE) ) {
                 moddevel_txdump(tx, txdump, 2, " Block: Phase");
             }
-            if (ib_tx_flags_isset(tx, IB_TX_BLOCK_IMMEDIATE) ) {
+            if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_IMMEDIATE) ) {
                 moddevel_txdump(tx, txdump, 2, "Block: Immediate");
             }
         }

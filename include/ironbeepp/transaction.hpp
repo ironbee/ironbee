@@ -229,8 +229,8 @@ public:
         flag_response_finished     = IB_TX_FRES_FINISHED,
         flag_suspicious            = IB_TX_FSUSPICIOUS,
         flag_fblocked              = IB_TX_FBLOCKED,
-        flag_allow_request         = IB_TX_ALLOW_REQUEST,
-        flag_allow_all             = IB_TX_ALLOW_ALL
+        flag_allow_request         = IB_TX_FALLOW_REQUEST,
+        flag_allow_all             = IB_TX_FALLOW_ALL
     };
 
     //! All flags.

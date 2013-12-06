@@ -607,9 +607,9 @@ static ib_status_t act_event_execute(
 
     /* Set the actions if appropriate */
     if (ib_tx_flags_isset(tx,
-                          (IB_TX_BLOCK_ADVISORY |
-                           IB_TX_BLOCK_PHASE |
-                           IB_TX_BLOCK_IMMEDIATE)) )
+                          (IB_TX_FBLOCK_ADVISORY |
+                           IB_TX_FBLOCK_PHASE |
+                           IB_TX_FBLOCK_IMMEDIATE)) )
     {
         event->rec_action = IB_LEVENT_ACTION_BLOCK;
     }
@@ -1084,7 +1084,7 @@ static ib_status_t get_event(const ib_rule_exec_t *rule_exec,
 }
 
 /**
- * Set the IB_TX_BLOCK_ADVISORY flag and set the DPI value @c FLAGS:BLOCK=1.
+ * Set the IB_TX_FBLOCK_ADVISORY flag and set the DPI value @c FLAGS:BLOCK=1.
  *
  * @param[in] rule_exec The rule execution object
  *
@@ -1112,12 +1112,12 @@ static ib_status_t act_block_advisory_execute(
 
     /* Don't re-set the flag because it bloats the DPI value FLAGS
      * with lots of BLOCK entries. */
-    if (!ib_tx_flags_isset(tx, IB_TX_BLOCK_ADVISORY)) {
+    if (!ib_tx_flags_isset(tx, IB_TX_FBLOCK_ADVISORY)) {
         ib_field_t *f;
         static const ib_num_t c_num_one = 1;
 
         /* Set the flag in the transaction. */
-        ib_tx_flags_set(tx, IB_TX_BLOCK_ADVISORY);
+        ib_tx_flags_set(tx, IB_TX_FBLOCK_ADVISORY);
 
         /* Create field. */
         rc = ib_field_create(
@@ -1168,7 +1168,7 @@ static ib_status_t act_block_advisory_execute(
 }
 
 /**
- * Set the IB_TX_BLOCK_PHASE flag in the tx.
+ * Set the IB_TX_FBLOCK_PHASE flag in the tx.
  *
  * @param[in] rule_exec The rule execution object
  *
@@ -1183,7 +1183,7 @@ static ib_status_t act_block_phase_execute(
     ib_logevent_t *event;
     ib_tx_t *tx = rule_exec->tx;
 
-    ib_tx_flags_set(tx, IB_TX_BLOCK_PHASE);
+    ib_tx_flags_set(tx, IB_TX_FBLOCK_PHASE);
 
     /* Update the event (if required) */
     rc = get_event(rule_exec, &event);
@@ -1202,7 +1202,7 @@ static ib_status_t act_block_phase_execute(
 }
 
 /**
- * Set the IB_TX_BLOCK_IMMEDIATE flag in the tx.
+ * Set the IB_TX_FBLOCK_IMMEDIATE flag in the tx.
  *
  * @param[in] rule_exec The rule execution object
  *
@@ -1218,7 +1218,7 @@ static ib_status_t act_block_immediate_execute(
     ib_status_t rc;
     ib_logevent_t *event;
 
-    ib_tx_flags_set(rule_exec->tx, IB_TX_BLOCK_IMMEDIATE);
+    ib_tx_flags_set(rule_exec->tx, IB_TX_FBLOCK_IMMEDIATE);
 
     /* Update the event (if required) */
     rc = get_event(rule_exec, &event);
@@ -2002,13 +2002,13 @@ static ib_status_t act_allow_create(
     assert(mp != NULL);
 
     if (parameters == NULL) {
-        flags |= IB_TX_ALLOW_ALL;
+        flags |= IB_TX_FALLOW_ALL;
     }
     else if (strcasecmp(parameters, "phase") == 0) {
-        flags |= IB_TX_ALLOW_PHASE;
+        flags |= IB_TX_FALLOW_PHASE;
     }
     else if (strcasecmp(parameters, "request") == 0) {
-        flags |= IB_TX_ALLOW_REQUEST;
+        flags |= IB_TX_FALLOW_REQUEST;
     }
     else {
         return IB_EINVAL;
@@ -2046,9 +2046,9 @@ static ib_status_t act_allow_execute(
 
     /* For post process, treat ALLOW_ALL like ALLOW_PHASE */
     if ( (rule_exec->rule->meta.phase == IB_PHASE_POSTPROCESS) &&
-         (ib_flags_all(set_flags, IB_TX_ALLOW_ALL)) )
+         (ib_flags_all(set_flags, IB_TX_FALLOW_ALL)) )
     {
-        set_flags |= IB_TX_ALLOW_PHASE;
+        set_flags |= IB_TX_FALLOW_PHASE;
     }
 
     /* Set the flags in the TX */

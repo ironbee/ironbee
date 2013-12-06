@@ -2074,11 +2074,11 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
     /* Add internal header if we blocked the transaction */
     setact.hdr = "@IB-BLOCK-FLAG";
-    if ((data->tx->flags & (IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) != 0) {
+    if ((data->tx->flags & (IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_IMMEDIATE)) != 0) {
         setact.value = "blocked";
         header_action(bufp, hdr_loc, &setact, data->tx->mp);
     }
-    else if (data->tx->flags & IB_TX_BLOCK_ADVISORY) {
+    else if (data->tx->flags & IB_TX_FBLOCK_ADVISORY) {
         setact.value = "advisory";
         header_action(bufp, hdr_loc, &setact, data->tx->mp);
     }

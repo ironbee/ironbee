@@ -128,12 +128,12 @@ typedef enum {
 #define IB_TX_FRES_FINISHED      (1ULL << 16) /**< Response finished  */
 #define IB_TX_FRES_HAS_DATA      (1ULL << 17) /**< Non-empty response */
 #define IB_TX_FSUSPICIOUS        (1ULL << 18) /**< Transaction is suspicious */
-#define IB_TX_BLOCK_ADVISORY     (1ULL << 19) /**< Blocking is advised */
-#define IB_TX_BLOCK_PHASE        (1ULL << 20) /**< Block tx after this phase */
-#define IB_TX_BLOCK_IMMEDIATE    (1ULL << 21) /**< Block tx ASAP */
-#define IB_TX_ALLOW_PHASE        (1ULL << 22) /**< Allow current phase */
-#define IB_TX_ALLOW_REQUEST      (1ULL << 23) /**< Allow all request phases */
-#define IB_TX_ALLOW_ALL          (1ULL << 24) /**< Allow transaction */
+#define IB_TX_FBLOCK_ADVISORY    (1ULL << 19) /**< Blocking is advised */
+#define IB_TX_FBLOCK_PHASE       (1ULL << 20) /**< Block tx after this phase */
+#define IB_TX_FBLOCK_IMMEDIATE   (1ULL << 21) /**< Block tx ASAP */
+#define IB_TX_FALLOW_PHASE       (1ULL << 22) /**< Allow current phase */
+#define IB_TX_FALLOW_REQUEST     (1ULL << 23) /**< Allow all request phases */
+#define IB_TX_FALLOW_ALL         (1ULL << 24) /**< Allow transaction */
 #define IB_TX_FPOSTPROCESS       (1ULL << 25) /**< Post-processing occurred */
 #define IB_TX_FLOGGING           (1ULL << 26) /**< Logging occurred */
 #define IB_TX_FINSPECT_REQHDR    (1ULL << 27) /**< Inspect request header */

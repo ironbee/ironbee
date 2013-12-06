@@ -80,7 +80,7 @@ TEST_F(XRulesTest, IPv4) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, IPv6) {
@@ -101,7 +101,7 @@ TEST_F(XRulesTest, IPv6) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_FALSE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_FALSE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, Path) {
@@ -123,7 +123,7 @@ TEST_F(XRulesTest, Path) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, PathPrefix) {
@@ -145,7 +145,7 @@ TEST_F(XRulesTest, PathPrefix) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, Time1) {
@@ -166,7 +166,7 @@ TEST_F(XRulesTest, Time1) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, Time2) {
@@ -187,7 +187,7 @@ TEST_F(XRulesTest, Time2) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_FALSE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_FALSE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, Time3) {
@@ -208,7 +208,7 @@ TEST_F(XRulesTest, Time3) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, Time4) {
@@ -229,7 +229,7 @@ TEST_F(XRulesTest, Time4) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_FALSE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_FALSE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, Time5) {
@@ -288,7 +288,7 @@ TEST_F(XRulesTest, ReqContentType1) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, ReqContentType2) {
@@ -309,7 +309,7 @@ TEST_F(XRulesTest, ReqContentType2) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, ReqContentType3) {
@@ -330,7 +330,7 @@ TEST_F(XRulesTest, ReqContentType3) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_FALSE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_FALSE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, RespContentType) {
@@ -351,7 +351,7 @@ TEST_F(XRulesTest, RespContentType) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, ScaleThreat) {
@@ -395,7 +395,7 @@ TEST_F(XRulesTest, RunGeoIP) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 TEST_F(XRulesTest, RunGeoIPNoMatch) {
@@ -419,7 +419,7 @@ TEST_F(XRulesTest, RunGeoIPNoMatch) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_FALSE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_FALSE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 
@@ -500,7 +500,7 @@ TEST_F(XRulesTest, RespBlockAny) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }
 
 class XRulesTest2 :
@@ -533,5 +533,5 @@ TEST_F(XRulesTest2, RespBlockNone) {
     configureIronBeeByString(config.c_str());
     performTx();
     ASSERT_TRUE(ib_tx);
-    ASSERT_TRUE(ib_tx->flags & IB_TX_BLOCK_IMMEDIATE);
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FBLOCK_IMMEDIATE);
 }

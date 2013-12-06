@@ -2145,7 +2145,7 @@ static bool rule_allow(const ib_tx_t *tx,
     /* Check the ALLOW_ALL flag */
     if ( (meta->phase_num != IB_PHASE_POSTPROCESS) &&
          (meta->phase_num != IB_PHASE_LOGGING) &&
-         (ib_tx_flags_isset(tx, IB_TX_ALLOW_ALL) == 1) )
+         (ib_tx_flags_isset(tx, IB_TX_FALLOW_ALL) == 1) )
     {
         ib_log_debug_tx(tx,
                         "Skipping phase %d/\"%s\" in context \"%s\": "
@@ -2157,7 +2157,7 @@ static bool rule_allow(const ib_tx_t *tx,
 
     /* If this is a request phase rule, Check the ALLOW_REQUEST flag */
     if ( (ib_flags_all(meta->flags, PHASE_FLAG_REQUEST)) &&
-         (ib_tx_flags_isset(tx, IB_TX_ALLOW_REQUEST) == 1) )
+         (ib_tx_flags_isset(tx, IB_TX_FALLOW_REQUEST) == 1) )
     {
         ib_log_debug_tx(tx,
                         "Skipping phase %d/\"%s\" in context \"%s\": "
@@ -2168,7 +2168,7 @@ static bool rule_allow(const ib_tx_t *tx,
     }
 
     /* If check_phase is true, check the ALLOW_PHASE flag */
-    if ( check_phase && (ib_tx_flags_isset(tx, IB_TX_ALLOW_PHASE) == 1) )
+    if ( check_phase && (ib_tx_flags_isset(tx, IB_TX_FALLOW_PHASE) == 1) )
     {
         ib_log_debug_tx(tx,
                         "Skipping remaining rules phase %d/\"%s\" "
@@ -2361,7 +2361,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     }
 
     /* If we're blocking, skip processing */
-    if (ib_flags_any(tx->flags, IB_TX_BLOCK_PHASE | IB_TX_BLOCK_IMMEDIATE) &&
+    if (ib_flags_any(tx->flags, IB_TX_FBLOCK_PHASE | IB_TX_FBLOCK_IMMEDIATE) &&
         (ib_flags_any(meta->flags, PHASE_FLAG_FORCE) == false) )
     {
         /* Report blocking to server. */
@@ -2382,7 +2382,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     }
 
     /* Clear the phase allow flag since we are processing a new phase. */
-    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+    ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
 
     /* Sanity check */
     if (ruleset_phase->phase_num != meta->phase_num) {
@@ -2452,7 +2452,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         rule_rc = execute_phase_rule(rule_exec, rule, MAX_CHAIN_RECURSION);
 
         /* Handle declined return code. Did this block? */
-        if (ib_tx_flags_isset(tx, IB_TX_BLOCK_IMMEDIATE) ) {
+        if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_IMMEDIATE) ) {
             bool block_rc;
             ib_rule_log_debug(rule_exec,
                               "Rule resulted in immediate block "
@@ -2475,7 +2475,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         }
     }
 
-    if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE) ) {
+    if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_PHASE) ) {
         ib_rule_log_tx_debug(tx, "Rule(s) resulted in phase block");
         rc = report_block_to_server(rule_exec);
         if (rc != IB_OK) {
@@ -2490,7 +2490,7 @@ finish:
     ib_rule_log_tx_event_end(rule_exec, event);
 
     /* Clear the phase allow flag. */
-    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+    ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
 
     /*
      * @todo Eat errors for now.  Unless something Really Bad(TM) has
@@ -2562,7 +2562,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     execute_rule_actions(rule_exec);
 
     /* Block if required */
-    if (ib_tx_flags_isset(rule_exec->tx, IB_TX_BLOCK_IMMEDIATE) ) {
+    if (ib_tx_flags_isset(rule_exec->tx, IB_TX_FBLOCK_IMMEDIATE) ) {
         ib_rule_log_debug(rule_exec,
                           "Rule resulted in immediate block "
                           "(aborting rule processing): %s",
@@ -2821,7 +2821,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         }
     }
 
-    if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE) ) {
+    if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_PHASE) ) {
         report_block_to_server(rule_exec);
     }
 
@@ -2858,9 +2858,9 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
     ib_status_t rc = IB_OK;
 
     if (header != NULL) {
-        ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+        ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
         rc = run_stream_rules(ib, tx, event, NULL, 0, header, meta);
-        ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+        ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
     }
     return rc;
 }
@@ -2893,9 +2893,9 @@ static ib_status_t run_stream_txdata_rules(ib_engine_t *ib,
     const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *)cbdata;
     ib_status_t rc;
 
-    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+    ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
     rc = run_stream_rules(ib, tx, event, data, data_length, NULL, meta);
-    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+    ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
     return rc;
 }
 
@@ -2923,7 +2923,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
 
     const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
 
-    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+    ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
 
     /* Wrap up the request line */
     rc = ib_parsed_headers_create(&hdrs, tx->mp);
@@ -3010,7 +3010,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
         }
     }
 
-    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+    ib_flags_clear(tx->flags, IB_TX_FALLOW_PHASE);
 
     return IB_OK;
 }

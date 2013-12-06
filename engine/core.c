@@ -1168,7 +1168,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                         NULL);
 
         /* Determine transaction action (block/log) via flags. */
-        if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) {
+        if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_IMMEDIATE)) {
             ib_field_setv(tx_action, ib_ftype_nulstr_in(
                 ib_logevent_action_name(IB_LEVENT_ACTION_BLOCK))
             );
