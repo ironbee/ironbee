@@ -1066,3 +1066,107 @@ void ib_cfg_vlog(ib_cfgparser_t *cp, ib_logger_level_t level,
 
     return;
 }
+
+ib_status_t ib_cfg_parse_target_string(
+    ib_mpool_t  *mp,
+    const char  *str,
+    const char **target,
+    ib_list_t  **tfns
+)
+{
+    ib_status_t  rc;
+    char        *cur;                /* Current position */
+    char        *dup_str;            /* Duplicate string */
+
+    assert(mp != NULL);
+    assert(str != NULL);
+    assert(target != NULL);
+
+    /* Start with a known state */
+    *target = NULL;
+    *tfns = NULL;
+
+    /* No parens?  Just store the target string as the field name & return. */
+    if (strstr(str, "()") == NULL) {
+        *target = str;
+        return IB_OK;
+    }
+
+    /* Make a duplicate of the target string to work on */
+    dup_str = ib_mpool_strdup(mp, str);
+    if (dup_str == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Walk through the string */
+    cur = dup_str;
+    while (cur != NULL) {
+        char  *separator;       /* Current separator */
+        char  *parens = NULL;   /* Paren pair '()' */
+        char  *pdot = NULL;     /* Paren pair + dot '().' */
+        char  *tfn = NULL;      /* Transformation name */
+
+        /* First time through the loop? */
+        if (cur == dup_str) {
+            separator = strchr(cur, '.');
+            if (separator == NULL) {
+                break;
+            }
+            *separator = '\0';
+            tfn = separator + 1;
+        }
+        else {
+            separator = cur;
+            tfn = separator;
+        }
+
+        /* Find the next separator and paren set */
+        parens = strstr(separator+1, "()");
+        pdot = strstr(separator+1, "().");
+
+        /* Parens + dot: intermediate transformation */
+        if (pdot != NULL) {
+            *pdot = '\0';
+            *(pdot+2) = '\0';
+            cur = pdot + 3;
+        }
+        /* Parens but no dot: last transformation */
+        else if (parens != NULL) {
+            *parens = '\0';
+            cur = NULL;
+        }
+        /* Finally, no parens: done */
+        else {
+            cur = NULL;
+            tfn = NULL;
+        }
+
+        /* Skip to top of loop if there's no operator */
+        if (tfn == NULL) {
+            continue;
+        }
+
+        /* Create the transformation list if required. */
+        if (*tfns == NULL) {
+            rc = ib_list_create(tfns, mp);
+            if (rc != IB_OK) {
+                return rc;
+            }
+        }
+
+        /* Add the name to the list */
+        rc = ib_list_push(*tfns, tfn);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    /**
+     * The field name is the start of the duplicate string, even after
+     * it's been chopped up into pieces.
+     */
+    *target = dup_str;
+
+    return IB_OK;
+}
+

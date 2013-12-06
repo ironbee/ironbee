@@ -729,7 +729,27 @@ void DLL_PUBLIC ib_cfg_vlog_ex(const ib_engine_t *ib,
                                const char *file, int line,
                                const char *fmt, va_list ap)
                                VPRINTF_ATTRIBUTE(7);
-
+/**
+ * Parse a string into a @a target and list of transformations (@a tfns).
+ *
+ * This syntax is shared by @c Rule fields, @c InitVar, @c InitCollection, and
+ * the @c setvar action.
+ *
+ * @param[in] mp Memory pool used to build @a tfns and @a target.
+ * @param[in] str Target field string to parse.
+ * @param[out] target Target name.
+ * @param[out] tfns List of transformation names.
+ *
+ * @returns 
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
+ */
+ib_status_t DLL_PUBLIC ib_cfg_parse_target_string(
+    ib_mpool_t  *mp,
+    const char  *str,
+    const char **target,
+    ib_list_t  **tfns
+);
 
 /** Log (Configuration form) */
 #define ib_cfg_log(cp, level, ...) ib_cfg_log_f((cp), (level), __FILE__, __LINE__, __VA_ARGS__)

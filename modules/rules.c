@@ -253,124 +253,6 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
 }
 
 /**
- * Parse the transformations from a target string
- *
- * @param[in] cp Configuration parser
- * @param[in] str Target field string to parse
- * @param[out] target Target name
- * @param[out] tfns List of transformation names
- *
- * @returns Status code
- */
-static ib_status_t parse_target_string(ib_cfgparser_t *cp,
-                                       const char *str,
-                                       const char **target,
-                                       ib_list_t **tfns)
-{
-    ib_status_t  rc;
-    char        *cur;                /* Current position */
-    char        *dup_str;            /* Duplicate string */
-
-    assert(cp != NULL);
-    assert(str != NULL);
-    assert(target != NULL);
-
-    /* Start with a known state */
-    *target = NULL;
-    *tfns = NULL;
-
-    /* No parens?  Just store the target string as the field name & return. */
-    if (strstr(str, "()") == NULL) {
-        *target = str;
-        return IB_OK;
-    }
-
-    /* Make a duplicate of the target string to work on */
-    dup_str = ib_mpool_strdup(ib_rule_mpool(cp->ib), str);
-    if (dup_str == NULL) {
-        ib_cfg_log_error(cp, "Error duplicating target string \"%s\"", str);
-        return IB_EALLOC;
-    }
-
-    /* Walk through the string */
-    cur = dup_str;
-    while (cur != NULL) {
-        char  *separator;       /* Current separator */
-        char  *parens = NULL;   /* Paren pair '()' */
-        char  *pdot = NULL;     /* Paren pair + dot '().' */
-        char  *tfn = NULL;      /* Transformation name */
-
-        /* First time through the loop? */
-        if (cur == dup_str) {
-            separator = strchr(cur, '.');
-            if (separator == NULL) {
-                break;
-            }
-            *separator = '\0';
-            tfn = separator + 1;
-        }
-        else {
-            separator = cur;
-            tfn = separator;
-        }
-
-        /* Find the next separator and paren set */
-        parens = strstr(separator+1, "()");
-        pdot = strstr(separator+1, "().");
-
-        /* Parens + dot: intermediate transformation */
-        if (pdot != NULL) {
-            *pdot = '\0';
-            *(pdot+2) = '\0';
-            cur = pdot + 3;
-        }
-        /* Parens but no dot: last transformation */
-        else if (parens != NULL) {
-            *parens = '\0';
-            cur = NULL;
-        }
-        /* Finally, no parens: done */
-        else {
-            cur = NULL;
-            tfn = NULL;
-        }
-
-        /* Skip to top of loop if there's no operator */
-        if (tfn == NULL) {
-            continue;
-        }
-
-        /* Create the transformation list if required. */
-        if (*tfns == NULL) {
-            rc = ib_list_create(tfns, ib_rule_mpool(cp->ib));
-            if (rc != IB_OK) {
-                ib_cfg_log_error(cp,
-                                 "Error creating transformation list: %s",
-                                 ib_status_to_string(rc));
-                return rc;
-            }
-        }
-
-        /* Add the name to the list */
-        rc = ib_list_push(*tfns, tfn);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp,
-                             "Error adding transformation \"%s\" to list: %s",
-                             tfn, ib_status_to_string(rc));
-            return rc;
-        }
-    }
-
-    /**
-     * The field name is the start of the duplicate string, even after
-     * it's been chopped up into pieces.
-     */
-    *target = dup_str;
-
-    return IB_OK;
-}
-
-/**
  * Parse a rule's target string.
  *
  * Parses the rule's target field list string @a target_str, and stores the
@@ -406,10 +288,11 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
     }
 
     /* Parse the rewritten string into the final_target_str. */
-    rc = parse_target_string(cp,
-                             rewritten_target_str,
-                             &final_target_str,
-                             &tfns);
+    rc = ib_cfg_parse_target_string(
+        ib_engine_pool_main_get(cp->ib),
+        rewritten_target_str,
+        &final_target_str,
+        &tfns);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error parsing target string \"%s\": %s",
                          target_str, ib_status_to_string(rc));
