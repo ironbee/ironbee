@@ -94,13 +94,13 @@ TEST_F(TestConnection, basic)
 
     ib_conn.flags = 0;
     EXPECT_EQ(ib_conn.flags, conn.flags());
-    ib_conn.flags = IB_CONN_FSEENTX | IB_CONN_FCLOSED;
+    ib_conn.flags = IB_CONN_FTX | IB_CONN_FCLOSED;
     EXPECT_EQ(ib_conn.flags, conn.flags());
     EXPECT_FALSE(conn.is_none());
     EXPECT_FALSE(conn.is_error());
-    EXPECT_TRUE(conn.is_seen_transaction());
-    EXPECT_FALSE(conn.is_seen_data_in());
-    EXPECT_FALSE(conn.is_seen_data_out());
+    EXPECT_TRUE(conn.is_transaction());
+    EXPECT_FALSE(conn.is_data_in());
+    EXPECT_FALSE(conn.is_data_out());
     EXPECT_FALSE(conn.is_opened());
     EXPECT_TRUE(conn.is_closed());
 }

@@ -525,13 +525,6 @@ ib_status_t DLL_PUBLIC ib_tx_server_header(
 #define ib_tx_flags_isset(tx, flag) ((tx)->flags & (flag) ? 1 : 0)
 
 /**
- * Mark transaction as not having a body.
- *
- * @param tx Transaction structure
- */
-#define ib_tx_mark_nobody(tx) ib_tx_flags_set(tx, IB_TX_FREQ_NOBODY)
-
-/**
  * Destroy a transaction structure.
  *
  * The transaction @a tx MUST be the first transaction in the parent

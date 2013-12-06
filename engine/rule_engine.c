@@ -1215,7 +1215,7 @@ static ib_status_t report_status_block_to_server(
     ib_log_debug_tx(
         tx,
         "Disabling further inspection of response due to blocking.");
-    ib_tx_flags_unset(tx, IB_TX_FINSPECT_RSPHDR|IB_TX_FINSPECT_RSPBODY);
+    ib_tx_flags_unset(tx, IB_TX_FINSPECT_RESHDR|IB_TX_FINSPECT_RESBODY);
 
     return IB_OK;
 }

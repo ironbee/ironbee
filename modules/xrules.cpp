@@ -795,7 +795,7 @@ namespace {
             return action_ptr(
                 new SetFlag(
                     "FLAGS:inspectResponseHeader",
-                    IB_TX_FINSPECT_RSPHDR,
+                    IB_TX_FINSPECT_RESHDR,
                     false,
                     priority));
         }
@@ -803,7 +803,7 @@ namespace {
             return action_ptr(
                 new SetFlag(
                     "FLAGS:inspectResponseHeader",
-                    IB_TX_FINSPECT_RSPHDR,
+                    IB_TX_FINSPECT_RESHDR,
                     true,
                     priority));
         }
@@ -811,7 +811,7 @@ namespace {
             return action_ptr(
                 new SetFlag(
                     "FLAGS:inspectResponseBody",
-                    IB_TX_FINSPECT_RSPBODY,
+                    IB_TX_FINSPECT_RESBODY,
                     false,
                     priority));
         }
@@ -819,7 +819,7 @@ namespace {
             return action_ptr(
                 new SetFlag(
                     "FLAGS:inspectResponseBody",
-                    IB_TX_FINSPECT_RSPBODY,
+                    IB_TX_FINSPECT_RESBODY,
                     true,
                     priority));
         }

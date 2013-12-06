@@ -160,9 +160,9 @@ public:
     enum flags_e {
         flag_none             = IB_CONN_FNONE,
         flag_error            = IB_CONN_FERROR,
-        flag_seen_transaction = IB_CONN_FSEENTX,
-        flag_seen_data_in     = IB_CONN_FSEENDATAIN,
-        flag_seen_data_out    = IB_CONN_FSEENDATAOUT,
+        flag_transaction      = IB_CONN_FTX,
+        flag_data_in          = IB_CONN_FDATAIN,
+        flag_data_out         = IB_CONN_FDATAOUT,
         flag_opened           = IB_CONN_FOPENED,
         flag_closed           = IB_CONN_FCLOSED
     };
@@ -182,22 +182,22 @@ public:
         return flags() & flag_error;
     }
 
-    //! flags() & flag_seen_transaction
-    bool is_seen_transaction() const
+    //! flags() & flag_transaction
+    bool is_transaction() const
     {
-        return flags() & flag_seen_transaction;
+        return flags() & flag_transaction;
     }
 
-    //! flags() & flag_seen_data_in
-    bool is_seen_data_in() const
+    //! flags() & flag_data_in
+    bool is_data_in() const
     {
-        return flags() & flag_seen_data_in;
+        return flags() & flag_data_in;
     }
 
-    //! flags() & flag_seen_data_out
-    bool is_seen_data_out() const
+    //! flags() & flag_data_out
+    bool is_data_out() const
     {
-        return flags() & flag_seen_data_out;
+        return flags() & flag_data_out;
     }
 
     //! flags() & flag_opened

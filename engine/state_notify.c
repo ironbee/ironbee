@@ -346,7 +346,7 @@ ib_status_t ib_state_notify_request_started(
         if (rc != IB_OK) {
             return rc;
         }
-        ib_tx_flags_set(tx, IB_TX_FREQ_SEENLINE);
+        ib_tx_flags_set(tx, IB_TX_FREQ_LINE);
     }
 
     return IB_OK;
@@ -620,7 +620,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     }
 
     /* Validate. */
-    if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
+    if (ib_tx_flags_isset(tx, IB_TX_FREQ_HEADER)) {
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(request_header_finished_event));
@@ -645,7 +645,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
         return rc;
     }
 
-    ib_tx_flags_set(tx, IB_TX_FREQ_SEENHEADER);
+    ib_tx_flags_set(tx, IB_TX_FREQ_HEADER);
 
     rc = ib_state_notify_tx(ib, request_header_process_event, tx);
     if (rc != IB_OK) {
@@ -702,7 +702,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
         return IB_OK;
     }
 
-    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_SEENLINE)) {
+    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_LINE)) {
         if (tx->request_line == NULL) {
             ib_log_error_tx(tx, "Request has no request line.");
             return IB_EINVAL;
@@ -723,7 +723,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     ib_tx_flags_set(tx, IB_TX_FREQ_HAS_DATA);
 
     /* Validate. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HEADER)) {
         ib_log_debug_tx(tx, "Automatically triggering %s",
                         ib_state_event_name(request_header_finished_event));
         ib_state_notify_request_header_finished(ib, tx);
@@ -732,7 +732,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     /* On the first call, record the time and mark that there is a body. */
     if (tx->t.request_body == 0) {
         tx->t.request_body = ib_clock_get_time();
-        ib_tx_flags_set(tx, IB_TX_FREQ_SEENBODY);
+        ib_tx_flags_set(tx, IB_TX_FREQ_BODY);
     }
 
     /* Notify the engine and any callbacks of the data. */
@@ -768,7 +768,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         return IB_EINVAL;
     }
 
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HEADER)) {
         ib_log_debug_tx(tx, "Automatically triggering %s",
                         ib_state_event_name(request_header_finished_event));
         ib_state_notify_request_header_finished(ib, tx);
@@ -778,7 +778,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     tx->t.request_finished = ib_clock_get_time();
 
     /* Notify filters of the end-of-body (EOB) if there was a body. */
-    if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENBODY) != 0) {
+    if (ib_tx_flags_isset(tx, IB_TX_FREQ_BODY) != 0) {
         rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOB);
         if (rc != IB_OK) {
             return rc;
@@ -864,7 +864,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
          (ib_bytestr_const_ptr(line->raw) != NULL) )
     {
         ib_tx_flags_set(tx, IB_TX_FRES_HAS_DATA);
-        ib_tx_flags_set(tx, IB_TX_FRES_SEENLINE);
+        ib_tx_flags_set(tx, IB_TX_FRES_LINE);
     }
 
     return IB_OK;
@@ -945,7 +945,7 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     }
 
     /* Validate. */
-    if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
+    if (ib_tx_flags_isset(tx, IB_TX_FRES_HEADER)) {
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(response_header_finished_event));
@@ -967,7 +967,7 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     /* Mark the time. */
     tx->t.response_header = ib_clock_get_time();
 
-    ib_tx_flags_set(tx, IB_TX_FRES_SEENHEADER);
+    ib_tx_flags_set(tx, IB_TX_FRES_HEADER);
 
     rc = ib_state_notify_tx(ib, response_header_finished_event, tx);
     if (rc != IB_OK) {
@@ -1009,7 +1009,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     }
 
     /* Validate the header has already been seen. */
-    if (! ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
+    if (! ib_tx_flags_isset(tx, IB_TX_FRES_HEADER)) {
         /* For HTTP/0.9 there are no headers, so this is normal, but
          * for others this is not normal and should be logged.
          */
@@ -1033,7 +1033,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     if (tx->t.response_body == 0) {
         tx->t.response_body = ib_clock_get_time();
         ib_tx_flags_set(tx, IB_TX_FRES_HAS_DATA);
-        ib_tx_flags_set(tx, IB_TX_FRES_SEENBODY);
+        ib_tx_flags_set(tx, IB_TX_FRES_BODY);
     }
 
     /* Notify the engine and any callbacks of the data. */
@@ -1061,7 +1061,7 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
         return IB_EINVAL;
     }
 
-    if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
+    if (!ib_tx_flags_isset(tx, IB_TX_FRES_HEADER)) {
         ib_log_debug_tx(tx, "Automatically triggering %s",
                         ib_state_event_name(response_header_finished_event));
         ib_state_notify_response_header_finished(ib, tx);

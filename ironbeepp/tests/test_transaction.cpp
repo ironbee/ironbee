@@ -131,14 +131,17 @@ TEST_F(TestTransaction, basic)
     EXPECT_FALSE(tx.is_error());
     EXPECT_TRUE(tx.is_pipelined());
     EXPECT_FALSE(tx.is_request_started());
-    EXPECT_FALSE(tx.is_request_seen_header());
-    EXPECT_FALSE(tx.is_request_no_body());
-    EXPECT_FALSE(tx.is_request_seen_body());
+    EXPECT_FALSE(tx.is_request_line());
+    EXPECT_FALSE(tx.is_request_header());
+    EXPECT_FALSE(tx.is_request_body());
     EXPECT_FALSE(tx.is_request_finished());
+    EXPECT_FALSE(tx.is_request_has_data());
     EXPECT_FALSE(tx.is_response_started());
-    EXPECT_FALSE(tx.is_response_seen_header());
-    EXPECT_FALSE(tx.is_response_seen_body());
+    EXPECT_FALSE(tx.is_response_line());
+    EXPECT_FALSE(tx.is_response_header());
+    EXPECT_FALSE(tx.is_response_body());
     EXPECT_FALSE(tx.is_response_finished());
+    EXPECT_FALSE(tx.is_response_has_data());
     EXPECT_TRUE(tx.is_suspicious());
 }
 

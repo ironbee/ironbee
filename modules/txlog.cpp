@@ -198,7 +198,7 @@ void TxLogData::recordBlockData(
         action = "Allow";
         method = "-";
     }
-    else if(tx.is_fblocked())
+    else if(tx.is_blocked())
     {
         action = "Block";
 

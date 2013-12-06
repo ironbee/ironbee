@@ -130,8 +130,8 @@ INSTANTIATE_TEST_CASE_P(AllTxFlags, CoreActionFlagTxTest, testing::Values(
     IB_TX_FSUSPICIOUS,
     IB_TX_FINSPECT_REQHDR,
     IB_TX_FINSPECT_REQBODY,
-    IB_TX_FINSPECT_RSPHDR,
-    IB_TX_FINSPECT_RSPBODY,
+    IB_TX_FINSPECT_RESHDR,
+    IB_TX_FINSPECT_RESBODY,
     IB_TX_FINSPECT_REQPARAMS,
     IB_TX_FINSPECT_REQURI,
     IB_TX_FBLOCKING_MODE));
@@ -208,13 +208,13 @@ TEST_F(CoreActionTest, integration) {
 }
 
 TEST_F(CoreActionTest, DoubleSetFlag) {
-    ASSERT_EQ(IB_OK, ib_tx_flags_set(ib_tx, IB_TX_FINSPECT_RSPBODY));
-    ASSERT_EQ(IB_OK, ib_tx_flags_set(ib_tx, IB_TX_FINSPECT_RSPBODY));
-    ASSERT_TRUE(ib_tx->flags & IB_TX_FINSPECT_RSPBODY);
+    ASSERT_EQ(IB_OK, ib_tx_flags_set(ib_tx, IB_TX_FINSPECT_RESBODY));
+    ASSERT_EQ(IB_OK, ib_tx_flags_set(ib_tx, IB_TX_FINSPECT_RESBODY));
+    ASSERT_TRUE(ib_tx->flags & IB_TX_FINSPECT_RESBODY);
 }
 
 TEST_F(CoreActionTest, DoubleUnSetFlag) {
-    ASSERT_EQ(IB_OK, ib_tx_flags_unset(ib_tx, IB_TX_FINSPECT_RSPBODY));
-    ASSERT_EQ(IB_OK, ib_tx_flags_unset(ib_tx, IB_TX_FINSPECT_RSPBODY));
-    ASSERT_FALSE(ib_tx->flags & IB_TX_FINSPECT_RSPBODY);
+    ASSERT_EQ(IB_OK, ib_tx_flags_unset(ib_tx, IB_TX_FINSPECT_RESBODY));
+    ASSERT_EQ(IB_OK, ib_tx_flags_unset(ib_tx, IB_TX_FINSPECT_RESBODY));
+    ASSERT_FALSE(ib_tx->flags & IB_TX_FINSPECT_RESBODY);
 }

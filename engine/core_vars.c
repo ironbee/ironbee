@@ -115,14 +115,14 @@ static const ib_tx_flag_map_t core_tx_flag_map[] = {
     {
         .name          = "inspectResponseHeader",
         .tx_name       = "FLAGS:inspectResponseHeader",
-        .tx_flag       = IB_TX_FINSPECT_RSPHDR,
+        .tx_flag       = IB_TX_FINSPECT_RESHDR,
         .read_only     = false,
         .default_value = false
     },
     {
         .name          = "inspectResponseBody",
         .tx_name       = "FLAGS:inspectResponseBody",
-        .tx_flag       = IB_TX_FINSPECT_RSPBODY,
+        .tx_flag       = IB_TX_FINSPECT_RESBODY,
         .read_only     = false,
         .default_value = false
     },

@@ -794,8 +794,8 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
                         TSDebug("ironbee", "\tDisable request buffering");
                     }
                 } else if (ibd->ibd->dir == IBD_RESP) {
-                    if (!ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_RSPBODY) &&
-                        !ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_RSPHDR)) {
+                    if (!ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_RESBODY) &&
+                        !ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_RESHDR)) {
                         ibd->data->buffering = IOBUF_NOBUF;
                         TSDebug("ironbee", "\tDisable response buffering");
                     }
@@ -2312,7 +2312,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                  * isn't responding or we're responding from cache. we
                  * never reach here in the first place.
                  */
-                if (ib_tx_flags_isset(txndata->tx, IB_TX_FRES_SEENHEADER)) {
+                if (ib_tx_flags_isset(txndata->tx, IB_TX_FRES_HEADER)) {
                     txndata->state |= HDRS_OUT;
                 }
             }

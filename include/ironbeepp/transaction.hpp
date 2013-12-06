@@ -212,25 +212,47 @@ public:
 
     //! Possible flags.  Treat as bit masks.
     enum flags_e {
-        flag_none                  = IB_TX_FNONE,
-        flag_error                 = IB_TX_FERROR,
-        flag_http09                = IB_TX_FHTTP09,
-        flag_pipelined             = IB_TX_FPIPELINED,
-        flag_request_started       = IB_TX_FREQ_STARTED,
-        flag_request_seen_header   = IB_TX_FREQ_SEENHEADER,
-        flag_request_no_body       = IB_TX_FREQ_NOBODY,
-        flag_request_seen_body     = IB_TX_FREQ_SEENBODY,
-        flag_request_seen_trailer  = IB_TX_FREQ_SEENTRAILER,
-        flag_request_finished      = IB_TX_FREQ_FINISHED,
-        flag_response_started      = IB_TX_FRES_STARTED,
-        flag_response_seen_header  = IB_TX_FRES_SEENHEADER,
-        flag_response_seen_body    = IB_TX_FRES_SEENBODY,
-        flag_response_seen_trailer = IB_TX_FRES_SEENTRAILER,
-        flag_response_finished     = IB_TX_FRES_FINISHED,
-        flag_suspicious            = IB_TX_FSUSPICIOUS,
-        flag_fblocked              = IB_TX_FBLOCKED,
-        flag_allow_request         = IB_TX_FALLOW_REQUEST,
-        flag_allow_all             = IB_TX_FALLOW_ALL
+        flag_none                    = IB_TX_FNONE,
+        flag_http09                  = IB_TX_FHTTP09,
+        flag_pipelined               = IB_TX_FPIPELINED,
+
+        flag_request_started         = IB_TX_FREQ_STARTED,
+        flag_request_line            = IB_TX_FREQ_LINE,
+        flag_request_header          = IB_TX_FREQ_HEADER,
+        flag_request_body            = IB_TX_FREQ_BODY,
+        flag_request_trailer         = IB_TX_FREQ_TRAILER,
+        flag_request_finished        = IB_TX_FREQ_FINISHED,
+        flag_request_has_data        = IB_TX_FREQ_HAS_DATA,
+
+        flag_response_started        = IB_TX_FRES_STARTED,
+        flag_response_line           = IB_TX_FRES_LINE,
+        flag_response_header         = IB_TX_FRES_HEADER,
+        flag_response_body           = IB_TX_FRES_BODY,
+        flag_response_trailer        = IB_TX_FRES_TRAILER,
+        flag_response_finished       = IB_TX_FRES_FINISHED,
+        flag_response_has_data       = IB_TX_FRES_HAS_DATA,
+
+        flag_logging                 = IB_TX_FLOGGING,
+        flag_postprocess             = IB_TX_FPOSTPROCESS,
+
+        flag_error                   = IB_TX_FERROR,
+        flag_suspicious              = IB_TX_FSUSPICIOUS,
+        flag_blocked                 = IB_TX_FBLOCKED,
+
+        flag_inspect_request_uri     = IB_TX_FINSPECT_REQURI,
+        flag_inspect_request_params  = IB_TX_FINSPECT_REQPARAMS,
+        flag_inspect_request_header  = IB_TX_FINSPECT_REQHDR,
+        flag_inspect_request_body    = IB_TX_FINSPECT_REQBODY,
+        flag_inspect_response_header = IB_TX_FINSPECT_RESHDR,
+        flag_inspect_response_body   = IB_TX_FINSPECT_RESBODY,
+
+        flag_blocking_mode           = IB_TX_FBLOCKING_MODE,
+        flag_block_advisory          = IB_TX_FBLOCK_ADVISORY,
+        flag_block_phase             = IB_TX_FBLOCK_PHASE,
+        flag_block_immediate         = IB_TX_FBLOCK_IMMEDIATE,
+        flag_allow_phase             = IB_TX_FALLOW_PHASE,
+        flag_allow_request           = IB_TX_FALLOW_REQUEST,
+        flag_allow_all               = IB_TX_FALLOW_ALL
     };
 
     //! All flags.
@@ -242,10 +264,10 @@ public:
         return flags() & flag_none;
     }
 
-    //! flags() & flag_error
-    bool is_error() const
+    //! flags() & flag_http09
+    bool is_http09() const
     {
-        return flags() & flag_error;
+        return flags() & flag_http09;
     }
 
     //! flags() & flag_pipelined
@@ -260,22 +282,22 @@ public:
         return flags() & flag_request_started;
     }
 
-    //! flags() & flag_request_seen_header
-    bool is_request_seen_header() const
+    //! flags() & flag_request_line
+    bool is_request_line() const
     {
-        return flags() & flag_request_seen_header;
+        return flags() & flag_request_line;
     }
 
-    //! flags() & flag_request_no_body
-    bool is_request_no_body() const
+    //! flags() & flag_request_header
+    bool is_request_header() const
     {
-        return flags() & flag_request_no_body;
+        return flags() & flag_request_header;
     }
 
-    //! flags() & flag_request_seen_body
-    bool is_request_seen_body() const
+    //! flags() & flag_request_body
+    bool is_request_body() const
     {
-        return flags() & flag_request_seen_body;
+        return flags() & flag_request_body;
     }
 
     //! flags() & flag_request_finished
@@ -284,22 +306,34 @@ public:
         return flags() & flag_request_finished;
     }
 
+    //! flags() & flag_request_has_data
+    bool is_request_has_data() const
+    {
+        return flags() & flag_request_has_data;
+    }
+
     //! flags() & flag_response_started
     bool is_response_started() const
     {
         return flags() & flag_response_started;
     }
 
-    //! flags() & flag_response_seen_header
-    bool is_response_seen_header() const
+    //! flags() & flag_response_line
+    bool is_response_line() const
     {
-        return flags() & flag_response_seen_header;
+        return flags() & flag_response_line;
     }
 
-    //! flags() & flag_response_seen_body
-    bool is_response_seen_body() const
+    //! flags() & flag_response_header
+    bool is_response_header() const
     {
-        return flags() & flag_response_seen_body;
+        return flags() & flag_response_header;
+    }
+
+    //! flags() & flag_response_body
+    bool is_response_body() const
+    {
+        return flags() & flag_response_body;
     }
 
     //! flags() & flag_response_finished
@@ -308,10 +342,106 @@ public:
         return flags() & flag_response_finished;
     }
 
+    //! flags() & flag_response_has_data
+    bool is_response_has_data() const
+    {
+        return flags() & flag_response_has_data;
+    }
+
+    //! flags() & flag_logging
+    bool is_logging() const
+    {
+        return flags() & flag_logging;
+    }
+
+    //! flags() & flag_postprocess
+    bool is_postprocess() const
+    {
+        return flags() & flag_postprocess;
+    }
+
+    //! flags() & flag_error
+    bool is_error() const
+    {
+        return flags() & flag_error;
+    }
+
     //! flags() & flag_suspicious
     bool is_suspicious() const
     {
         return flags() & flag_suspicious;
+    }
+
+    //! flags() & flag_blocked
+    bool is_blocked() const
+    {
+        return flags() & flag_blocked;
+    }
+
+    //! flags() & flag_inspect_request_uri
+    bool is_inspect_request_uri() const
+    {
+        return flags() & flag_inspect_request_uri;
+    }
+
+    //! flags() & flag_inspect_request_params
+    bool is_inspect_request_params() const
+    {
+        return flags() & flag_inspect_request_params;
+    }
+
+    //! flags() & flag_inspect_request_header
+    bool is_inspect_request_header() const
+    {
+        return flags() & flag_inspect_request_header;
+    }
+
+    //! flags() & flag_inspect_request_body
+    bool is_inspect_request_body() const
+    {
+        return flags() & flag_inspect_request_body;
+    }
+
+    //! flags() & flag_inspect_response_header
+    bool is_inspect_response_header() const
+    {
+        return flags() & flag_inspect_response_header;
+    }
+
+    //! flags() & flag_inspect_response_body
+    bool is_inspect_response_body() const
+    {
+        return flags() & flag_inspect_response_body;
+    }
+
+    //! flags() & flag_blocking_mode
+    bool is_blocking_mode() const
+    {
+        return flags() & flag_blocking_mode;
+    }
+
+    //! flags() & flag_block_advisory
+    bool is_block_advisory() const
+    {
+        return flags() & flag_block_advisory;
+    }
+
+    //! flags() & flag_block_phase
+    bool is_block_phase() const
+    {
+        return flags() & flag_block_phase;
+    }
+
+    //! flags() & flag_block_immediate
+    bool is_block_immediate() const
+    {
+        return flags() & flag_block_immediate;
+    }
+
+    //! flags() & flag_allow_phase
+    bool is_allow_phase() const
+    {
+        return flags() & flag_allow_phase;
     }
 
     //! flags() & flag_allow_request
@@ -324,12 +454,6 @@ public:
     bool is_allow_all() const
     {
         return flags() & flag_allow_all;
-    }
-
-    //! flags() & flag_fblocked
-    bool is_fblocked() const
-    {
-        return flags() & flag_fblocked;
     }
 
     ib_block_method_t block_method() const

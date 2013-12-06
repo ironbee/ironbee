@@ -178,9 +178,9 @@ static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-0000000
     ( IB_TX_FINSPECT_REQHDR | \
       IB_TX_FINSPECT_REQURI )
 #define IB_IEOPT_REQUEST_BODY             IB_TX_FINSPECT_REQBODY
-#define IB_IEOPT_RESPONSE_HEADER          IB_TX_FINSPECT_RSPHDR
-#define IB_IEOPT_RESPONSE_BODY            IB_TX_FINSPECT_RSPBODY
-#define IB_IEOPT_RESPONSE_BODY            IB_TX_FINSPECT_RSPBODY
+#define IB_IEOPT_RESPONSE_HEADER          IB_TX_FINSPECT_RESHDR
+#define IB_IEOPT_RESPONSE_BODY            IB_TX_FINSPECT_RESBODY
+#define IB_IEOPT_RESPONSE_BODY            IB_TX_FINSPECT_RESBODY
 
 /* NOTE: Make sure to add new options from above to any groups below. */
 #define IB_IEOPT_DEFAULT \

@@ -2628,7 +2628,7 @@ ib_status_t modhtp_request_finished(
     txdata = modhtp_get_txdata_ibtx(m, itx);
 
     /* Signal libhtp that the body is finished. */
-    if (ib_conn_flags_isset(itx->conn, IB_TX_FREQ_SEENBODY)) {
+    if (ib_conn_flags_isset(itx->conn, IB_TX_FREQ_BODY)) {
         htp_tx_req_process_body_data_ex(txdata->htx, NULL, 0);
     }
 
@@ -2751,7 +2751,7 @@ ib_status_t modhtp_response_header_data(
     txdata = modhtp_get_txdata_ibtx(m, itx);
 
     /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
+    if (ib_conn_flags_isset(itx->conn, IB_CONN_FDATAIN)) {
         return IB_OK;
     }
 
@@ -2812,7 +2812,7 @@ ib_status_t modhtp_response_header_finished(
     }
 
     /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
+    if (ib_conn_flags_isset(itx->conn, IB_CONN_FDATAIN)) {
         return IB_OK;
     }
 
