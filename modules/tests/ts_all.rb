@@ -2,6 +2,8 @@
 
 require '../../clipp/clipp_test'
 
+require 'tc_persistence'
+
 require 'tc_libinjection'
 require 'tc_fast'
 
