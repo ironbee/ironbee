@@ -38,6 +38,7 @@
 #include <ironbee/module.h>
 #include <ironbee/path.h>
 #include <ironbee/string.h>
+#include <ironbee/transformation.h>
 #include <ironbee/uuid.h>
 
 #include <assert.h>
@@ -265,6 +266,9 @@ static ib_status_t var_create_fn(
     ib_list_t             *fields;
     const ib_list_node_t  *node;
     ib_status_t            rc;
+    ib_list_t             *transformations = NULL;
+    const char            *collection_name; /* Used in logging. */
+
 
     var = ib_mpool_alloc(mp, sizeof(*var));
     if (var == NULL) {
@@ -283,6 +287,7 @@ static ib_status_t var_create_fn(
         ib_log_error(ib, "VAR requires at least 2 arguments: name and uri.");
         return IB_EINVAL;
     }
+    collection_name = (const char *)ib_list_node_data_const(node);
 
     /* The URI. We will skip this. */
     node = ib_list_node_next_const(node);
@@ -299,7 +304,7 @@ static ib_status_t var_create_fn(
         const char *assignment =
             (const char *)ib_list_node_data_const(node);
         const char *eqsign = index(assignment, '=');
-        ib_field_t *field = NULL;
+        const ib_field_t *field = NULL;
 
         /* Assume an empty assignment if no equal sign is included. */
         if (eqsign == NULL) {
@@ -312,7 +317,7 @@ static ib_status_t var_create_fn(
 
             /* The whole assignment is just a variable name. */
             rc = ib_field_create(
-                &field,
+                (ib_field_t **)&field,
                 mp,
                 assignment,
                 strlen(assignment),
@@ -329,7 +334,7 @@ static ib_status_t var_create_fn(
 
             /* The assignment is a var name + '='. */
             rc = ib_field_create(
-                &field,
+                (ib_field_t **)&field,
                 mp,
                 assignment,
                 strlen(assignment) - 1, /* -1 drops the '=' from the name. */
@@ -337,28 +342,28 @@ static ib_status_t var_create_fn(
                 ib_ftype_bytestr_in(bs));
         }
         else {
-            ib_bytestr_t *bs = NULL;
-            size_t value_sz = strlen(eqsign+1);
-            rc = ib_bytestr_create(&bs, mp, value_sz);
+            const char *value;
+
+            rc = ib_cfg_parse_target_string(mp, eqsign+1, &value, &transformations);
             if (rc != IB_OK) {
-                ib_log_error(ib, "Failed to create byte string.");
-                return rc;
+                ib_log_error(ib, "Failed to parse target value.");
             }
-            rc = ib_bytestr_append_mem(bs, (uint8_t *)(eqsign+1), value_sz);
-            if (rc != IB_OK) {
-                ib_log_error(ib, "Failed to append to byte string.");
-                return rc;
+
+            /* Make sure value is a copy, not the original string. */
+            if (value == eqsign+1) {
+                value = ib_mpool_strdup(mp, value);
+                if (value == NULL) {
+                    return IB_EALLOC;
+                }
             }
 
             /* Normal assignment. eqsign is the end of the name.
              * eqsign + 1 is the start of the assigned value. */
-            rc = ib_field_create(
-                &field,
+            ib_field_create_bytestr_alias(
+                (ib_field_t **)&field,
                 mp,
-                assignment,
-                eqsign - assignment,
-                IB_FTYPE_BYTESTR,
-                ib_ftype_bytestr_in(bs));
+                assignment, eqsign - assignment,
+                (const uint8_t *)IB_S2SL(value));
         }
 
         /* Check the field creation in the above if-then-else. */
@@ -373,7 +378,48 @@ static ib_status_t var_create_fn(
         /* Make sure we didn't somehow forget to set the field. */
         assert(field != NULL);
 
-        rc = ib_list_push(fields, field);
+        /* Apply transformations to the field. */
+        if (transformations != NULL) {
+            const ib_list_node_t *tfn_node;
+            IB_LIST_LOOP_CONST(transformations, tfn_node) {
+                const ib_field_t *tmp_field;
+                const ib_tfn_t   *tfn;
+                const char       *tfn_name =
+                    (const char *)ib_list_node_data_const(tfn_node);
+      
+                rc = ib_tfn_lookup(ib, tfn_name, &tfn);
+                if (rc != IB_OK) {
+                    ib_log_error(
+                        ib,
+                        "Could not fetch transformation %s. "
+                        "Not initializing %s in %s.",
+                        tfn_name,
+                        field->name,
+                        collection_name);
+                    /* Don't signal a fatal error. Just don't work. */
+                    return IB_OK;
+                }
+        
+                rc = ib_tfn_execute(mp, tfn, field, &tmp_field);
+                if (rc != IB_OK) {
+                    ib_log_error(
+                        ib,
+                        "Failed to run transformation %s for InitCollection. "
+                        "Not initializing %s in %s: %s",
+                        tfn_name,
+                        field->name,
+                        collection_name,
+                        ib_status_to_string(rc));
+                    /* As above, failure should not kill the whole config. */
+                    return IB_OK;
+                }
+      
+                /* Promote the teporary field to the new current field. */
+                field = tmp_field;
+            }
+        }
+
+        rc = ib_list_push(fields, (void *)field);
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to push field onto field list.");
             return rc;
