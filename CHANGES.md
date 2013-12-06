@@ -73,7 +73,9 @@ IronBee v0.9.0
 - The `IBPPTestFixture` class used in IronBee++ test fixtures has been promoted to part of the public API as `IronBee::TestFixture`.  This makes it easier for other IronBee++ based code to write unit tests.
 - `ConfigurationParser::create()` no longer informs the engine that configuration has started; `ConfigurationParser::destroy()` no longer informs the engine that configuration has finished.  Instead, use the new methods `Engine::configuration_started()` and `Engine::configuration_finished()`.  This change brings IronBee++ in line with C API semantics and will be useful for future support of other configuration modes.
 
-- IronBee::Server now has methods for setting callbacks to C++ functionals.
+- `IronBee::Server` now has methods for setting callbacks to C++ functionals.
+
+- Added initial ParserSuite support: a function to translate a sequence of ParserSuite headers to a sequence of `IronBee::ParserHeader`s.
 
 IronBee v0.8.1
 --------------

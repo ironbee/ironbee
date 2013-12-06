@@ -51,6 +51,9 @@ CANONICAL_INCLUDE_ORDER = [
   '<predicate/validate.hpp>',
   '<predicate/validate_graph.hpp>',
 
+  # ParserSuite
+  '<modules/parser_suite.hpp>',
+
   '<ironbeepp/abi_compatibility.hpp>',
   '<ironbeepp/all.hpp>',
   '<ironbeepp/byte_string.hpp>',
@@ -81,6 +84,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/parsed_header.hpp>',
   '<ironbeepp/parsed_request_line.hpp>',
   '<ironbeepp/parsed_response_line.hpp>',
+  '<ironbeepp/parser_suite_adaptors.hpp>',
   '<ironbeepp/server.hpp>',
   '<ironbeepp/site.hpp>',
   '<ironbeepp/test_fixture.hpp>',

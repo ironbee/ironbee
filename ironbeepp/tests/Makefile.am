@@ -32,6 +32,7 @@ check_PROGRAMS = \
 	test_parsed_header \
 	test_parsed_request_line \
 	test_parsed_response_line \
+  test_parser_suite_adaptors \
 	test_server \
 	test_site \
 	test_throw \
@@ -62,9 +63,10 @@ test_module_bootstrap_b_SOURCES       = test_module_bootstrap_b.cpp
 test_module_delegate_SOURCES          = test_module_delegate.cpp
 test_module_SOURCES                   = test_module.cpp
 test_operator_SOURCES                 = test_operator.cpp
-test_parsed_header_SOURCES        = test_parsed_header.cpp
+test_parsed_header_SOURCES            = test_parsed_header.cpp
 test_parsed_request_line_SOURCES      = test_parsed_request_line.cpp
 test_parsed_response_line_SOURCES     = test_parsed_response_line.cpp
+test_parser_suite_adaptors_SOURCES    = test_parser_suite_adaptors.cpp
 test_server_SOURCES                   = test_server.cpp
 test_site_SOURCES                     = test_site.cpp
 test_throw_SOURCES                    = test_throw.cpp

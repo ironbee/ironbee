@@ -52,6 +52,7 @@
 #include <ironbeepp/parsed_header.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
+#include <ironbeepp/parser_suite_adaptors.hpp>
 #include <ironbeepp/server.hpp>
 #include <ironbeepp/site.hpp>
 #include <ironbeepp/test_fixture.hpp>
