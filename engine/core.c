@@ -51,6 +51,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
+#include <ironbee/transformation.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -3773,16 +3774,23 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
                                     void *cbdata)
 {
     assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(cp->cur_ctx != NULL);
+    assert(cp->cur_ctx->mp != NULL);
     assert(directive != NULL);
     assert(name != NULL);
     assert(value != NULL);
 
-    ib_status_t rc;
-    ib_mpool_t *mp = cp->cur_ctx->mp;
-    ib_core_cfg_t *corecfg;
-    ib_field_t *field;
-    ib_var_source_t *source;
-    ib_core_initvar_t *initvar;
+    ib_status_t           rc;
+    ib_engine_t          *ib = cp->ib;
+    ib_mpool_t           *mp = cp->cur_ctx->mp;
+    ib_core_cfg_t        *corecfg;
+    const ib_field_t     *field;
+    ib_var_source_t      *source;
+    ib_core_initvar_t    *initvar;
+    const char           *target;
+    ib_list_t            *transformations = NULL;
+    const ib_list_node_t *node;
 
     /* Get the core module config. */
     rc = ib_core_context_config(cp->cur_ctx, &corecfg);
@@ -3801,8 +3809,32 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
         }
     }
 
-    /* Create the field based on whether the value looks like a number or not */
-    rc = ib_field_from_string(mp, IB_FIELD_NAME(name), value, &field);
+    rc = ib_cfg_parse_target_string(
+        mp,
+        value,
+        &target,
+        &transformations
+    );
+    if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "Failed to parse target string for InitVar: %s",
+            value);
+        return rc;
+    }
+
+    /* Check if target was allocated out of mp by ib_cfg_parse_target_string()
+     * or just forwarded. If forwarded, a copy must be made because
+     * we do not know who owns the memory used in "value" and it may go away. */
+    if (target == value) {
+        target = ib_mpool_strdup(mp, value);
+        if (target == NULL) {
+            return IB_EALLOC;
+        }
+    }
+
+    /* Create the field. Note: We remove the constness to create the field. */
+    rc = ib_field_from_string(mp, IB_S2SL(name), target, (ib_field_t **)&field);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error creating field for InitVar: %s",
                          ib_status_to_string(rc));
@@ -3819,7 +3851,45 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
                 "Error converting nulstr to bytestr field: %s",
                 ib_status_to_string(rc));
         }
-        field = new_field;
+        field = (const ib_field_t *)new_field;
+    }
+
+    /* Apply all tranformations. */
+    if (transformations != NULL) {
+        IB_LIST_LOOP_CONST(transformations, node) {
+            const ib_field_t *tmp_field;
+            const ib_tfn_t   *tfn;
+            const char       *tfn_name =
+                (const char *)ib_list_node_data_const(node);
+    
+            rc = ib_tfn_lookup(ib, tfn_name, &tfn);
+            if (rc != IB_OK) {
+                ib_cfg_log_error(
+                    cp,
+                    "Could not fetch transformation %s. "
+                    "Not initializing %s.",
+                    tfn_name,
+                    name);
+                /* Don't signal a fatal error. Just don't work. */
+                return IB_OK;
+            }
+    
+            rc = ib_tfn_execute(mp, tfn, field, &tmp_field);
+            if (rc != IB_OK) {
+                ib_cfg_log_error(
+                    cp,
+                    "Failed to run transformation %s for InitVar. "
+                    "Not initializing %s: %s",
+                    tfn_name,
+                    name,
+                    ib_status_to_string(rc));
+                /* As above, failure should not kill the whole config. */
+                return IB_OK;
+            }
+    
+            /* Promote the teporary field to the new current field. */
+            field = tmp_field;
+        }
     }
 
     /* Register. */
