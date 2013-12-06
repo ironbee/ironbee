@@ -154,10 +154,13 @@ ib_status_t DLL_PUBLIC ib_tfn_create_and_register(
 const char DLL_PUBLIC *ib_tfn_name(const ib_tfn_t *tfn);
 
 /**
- * Handle list accessor.
+ * True if @a tfn gets the whole list, false if it gets each list element.
  *
- * @param[in] tfn Transformation to access.
- * @return Handle list setting of transformation.
+ * @param[in] tfn Transformation.
+ *
+ * @return
+ * - Return true if @a tfn should receive the entire list of elements.
+ * - Return false if @a tfn should recieve each list element, one at a time.
  **/
 bool DLL_PUBLIC ib_tfn_handle_list(const ib_tfn_t *tfn);
 
