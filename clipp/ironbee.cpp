@@ -464,6 +464,58 @@ ib_status_t clipp_header(
 
 } // extern "C"
 
+int clipp_print_type_op_executor(
+    const char* args,
+    ConstField field
+)
+{
+    std::string type_name;
+
+    switch(field.type()) {
+        case ConstField::GENERIC:
+            type_name = "GENERIC";
+            break;
+        case ConstField::NUMBER:
+            type_name = "NUMBER";
+            break;
+        case ConstField::TIME:
+            type_name = "TIME";
+            break;
+        case ConstField::FLOAT:
+            type_name = "FLOAT";
+            break;
+        case ConstField::NULL_STRING:
+            type_name = "STRING";
+            break;
+        case ConstField::BYTE_STRING:
+            type_name = "BYTE_STRING";
+            break;
+        case ConstField::LIST:
+            type_name = "LIST";
+            break;
+        case ConstField::STREAM_BUFFER:
+            type_name = "STREAM_BUFFER";
+            break;
+        default:
+            type_name = "UNSUPPORTED TYPE";
+    }
+
+    cout << "clipp_print_type [" << args << "]: " << type_name << endl;
+    return 1;
+}
+
+Operator::operator_instance_t clipp_print_type_op_generator(
+    Context ctx,
+    const char* args
+)
+{
+    return boost::bind(
+        clipp_print_type_op_executor,
+        args,
+        _2
+    );
+};
+
 int clipp_print_op_executor(
     const char* args,
     ConstField field
@@ -680,6 +732,15 @@ IronBeeModifier::IronBeeModifier(
             IB_OP_CAPABILITY_NON_STREAM |
             IB_OP_CAPABILITY_STREAM,
         clipp_print_op_generator
+    ).register_with(m_state->engine);
+
+    Operator::create(
+        m_state->engine.main_memory_pool(),
+        "clipp_print_type",
+        IB_OP_CAPABILITY_ALLOW_NULL |
+            IB_OP_CAPABILITY_NON_STREAM |
+            IB_OP_CAPABILITY_STREAM,
+        clipp_print_type_op_generator
     ).register_with(m_state->engine);
 
     load_configuration(m_state->engine, config_path);
