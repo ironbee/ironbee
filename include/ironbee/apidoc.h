@@ -40,8 +40,10 @@
  * - @ref CODESTYLE
  *
  * Of particular interest:
- * - Module writers: module.h, module_sym.h
- * - Server writers: server.h, state_notify.h
+ * - Module writers: module.h, module_sym.h, example_modules/ibmod_set_c.c,
+ *   example_modules/ibmod_set_cpp.cpp.
+ * - Server writers: server.h, state_notify.h, example_servers/parsed_c.c,
+ *   example_modules/unparsed_cpp.cpp.
  * - Lua Rule and Module writers: @ref LuaAPI
  * - Everyone: types.h, mpool.h
  *
