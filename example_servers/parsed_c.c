@@ -20,9 +20,7 @@
  * @brief IronBee --- Example Server: Parsed C Edition
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
- */
-
-/*
+ *
  * This example demonstrates a minimalistic server.  It creates an Engine,
  * loads a configuration file of the users choice, and then feeds some basic
  * traffic to it.  To keep the code simple, the traffic is hardcoded.  This
@@ -42,7 +40,7 @@
  *
  * For an example server in C++, see parsed_cpp.cpp.  The C++ edition makes
  * use of ParserSuite to parse raw HTTP and feed it to IronBee.
- */
+ **/
 
 #include <ironbee/config.h>       /* For ib_cfgparser_* */
 #include <ironbee/engine.h>       /* For many things */
@@ -281,8 +279,8 @@ ib_status_t server_close(
  * IronBee requests that server respond with an error status.
  *
  * This call may be followed by one or more calls to server_error_header() to
- * set headers for the error response and a server_error_data() call to set the
- * body.
+ * set headers for the error response and a server_error_data() call to set
+ * the body.
  *
  * @param[in] tx     Transaction to respond to.
  * @param[in] status Status code to use.
@@ -352,7 +350,6 @@ ib_status_t server_error_data(
  * @param[in] name_length  Length of @a name.
  * @param[in] value        Value of header.
  * @param[in] value_length Length of @a value.
- * @param[in] rex          Regexp for edit actions.
  * @param[in] cbdata       Callback data.
  * @return
  * - IB_OK on success.
