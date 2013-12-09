@@ -28,7 +28,6 @@
  */
 
 #include <ironbee/engine_types.h>
-#include <ironbee/regex.h>
 #include <ironbee/release.h>
 #include <ironbee/types.h>
 
@@ -79,7 +78,6 @@ typedef enum {
     IB_HDR_MERGE,  /**< Append unless the header value already exists. */
     IB_HDR_ADD,    /**< Add the header. */
     IB_HDR_UNSET,  /**< Unset the header. */
-    IB_HDR_EDIT    /**< Use the @ref ib_rx_t to edit the header. */
 } ib_server_header_action_t;
 
 /**
@@ -139,7 +137,6 @@ typedef ib_status_t (*ib_server_error_data_fn_t)(
  * @param[in] name_length Length of @a name.
  * @param[in] value value of header.
  * @param[in] value_length Length of @a value.
- * @param[in] rx The regular expression if the action is @ref IB_HDR_EDIT.
  * @param[in] cbdata Callback data.
  */
 typedef ib_status_t (*ib_server_header_fn_t)(
@@ -150,7 +147,6 @@ typedef ib_status_t (*ib_server_header_fn_t)(
     size_t                     name_length,
     const char                *value,
     size_t                     value_length,
-    ib_rx_t                   *rx,
     void                      *cbdata
 );
 
@@ -329,7 +325,6 @@ ib_status_t DLL_PUBLIC ib_server_error_body(
  * @param[in] name_length Length of @a name.
  * @param[in] value value of header.
  * @param[in] value_length Length of @a value.
- * @param[in] rx The regular expression if the action is @ref IB_HDR_EDIT.
  * @return Success or error.
  */
 ib_status_t DLL_PUBLIC ib_server_header(
@@ -340,8 +335,7 @@ ib_status_t DLL_PUBLIC ib_server_header(
     const char                *name,
     size_t                     name_length,
     const char                *value,
-    size_t                     value_length,
-    ib_rx_t                   *rx
+    size_t                     value_length
 );
 
 /**

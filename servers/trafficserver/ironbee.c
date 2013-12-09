@@ -132,7 +132,6 @@
 #include <ironbee/site.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>
-#include <ironbee/regex.h>
 #include <ironbee/string.h>
 
 static void addr2str(const struct sockaddr *addr, char *str, int *port);
@@ -217,7 +216,6 @@ typedef struct hdr_action_t {
     ib_server_direction_t dir;
     const char *hdr;
     const char *value;
-    ib_rx_t *rx;
     struct hdr_action_t *next;
 } hdr_action_t;
 
@@ -363,7 +361,6 @@ ib_status_t ib_header_callback(
     size_t                     name_length,
     const char                *value,
     size_t                     value_length,
-    ib_rx_t                   *rx,
     void                      *cbdata
 )
 {
@@ -377,16 +374,6 @@ ib_status_t ib_header_callback(
         (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
         return IB_ENOTIMPL;  /* too late for requested op */
 
-    if (action == IB_HDR_EDIT) {
-        if (rx == NULL) {
-            rx = ib_rx_compile(tx->mp, value);
-            if (rx == NULL) {
-                TSError("Failed to parse '%s' as a regexp", value);
-                return IB_EINVAL;
-            }
-        }
-    }
-
     header = TSmalloc(sizeof(*header));
     header->next = ctx->hdr_actions;
     ctx->hdr_actions = header;
@@ -395,7 +382,6 @@ ib_status_t ib_header_callback(
     header->action = action = action == IB_HDR_MERGE ? IB_HDR_APPEND : action;
     header->hdr = TSstrndup(name, name_length);
     header->value = TSstrndup(value, value_length);
-    header->rx = rx;
 
     return IB_OK;
 }
@@ -1300,10 +1286,6 @@ static void header_action(TSMBuffer bufp, TSMLoc hdr_loc,
 {
     TSMLoc field_loc;
     int rv;
-    char *oldval;
-    char *newval;
-    int len;
-    int nmatch;
 
     switch (act->action) {
 
@@ -1371,37 +1353,6 @@ add_hdr:
         }
         TSHandleMLocRelease(bufp, hdr_loc, field_loc);
         break;
-
-    case IB_HDR_EDIT: /* apply regexp */
-        TSDebug("ironbee", "Apply regexp %s to %s",
-                act->hdr, act->value);
-        field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, act->hdr,
-                                       strlen(act->hdr));
-        if (field_loc == TS_NULL_MLOC) {
-            TSDebug("ironbee", "No %s header found", act->hdr);
-            break;
-        }
-        /* Get the current value of the header */
-        oldval = (char*) TSMimeHdrFieldValueStringGet(bufp, hdr_loc, field_loc,
-                                                      0, &len);
-        /* We need a string for rx */
-        oldval = TSstrndup(oldval, len);
-        nmatch = ib_rx_exec(pool, act->rx, oldval, &newval, NULL);
-        TSfree(oldval);
-
-        /* nmatch is positive iff the regex substitution changed anything */
-        if (nmatch > 0) {
-            TSDebug("ironbee", "Transformed to '%s'", newval);
-            if (TSMimeHdrFieldValuesClear(bufp, hdr_loc, field_loc)
-                    != TS_SUCCESS) {
-                TSError("Failed to clear header\n");
-            }
-            if (TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, 0,
-                                                newval, strlen(newval))
-                    != TS_SUCCESS) {
-                TSError("Failed to update header\n");
-            }
-        }
 
     default:  /* bug !! */
         TSDebug("ironbee", "Bogus header action %d", act->action);

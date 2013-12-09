@@ -347,7 +347,7 @@ ib_status_t server_error_data(
  * @param[in] dir          Which of request and response to modify headers of.
  * @param[in] action       Type of modification to do.  Options are set
  *                         (replace), append (add), merge (add if missing),
- *                         unset (remove), and edit (via regexp).
+ *                         and unset (remove).
  * @param[in] name         Name of header.
  * @param[in] name_length  Length of @a name.
  * @param[in] value        Value of header.
@@ -367,7 +367,6 @@ ib_status_t server_header(
     size_t                     name_length,
     const char                *value,
     size_t                     value_length,
-    ib_rx_t                   *rx,
     void                      *cbdata
 );
 
@@ -801,7 +800,6 @@ ib_status_t server_header(
     size_t                     name_length,
     const char                *value,
     size_t                     value_length,
-    ib_rx_t                   *rx,
     void                      *cbdata
 )
 {
@@ -821,9 +819,6 @@ ib_status_t server_header(
             break;
         case IB_HDR_UNSET:
             action_string = "UNSET";
-            break;
-        case IB_HDR_EDIT:
-            action_string = "EDIT";
             break;
         default:
             action_string = "unknown";

@@ -48,7 +48,6 @@
 #include <ironbee/server.h>
 #include <ironbee/core.h>
 #include <ironbee/state_notify.h>
-#include <ironbee/regex.h>
 #include <ironbee/util.h>
 #include <ironbee/flags.h>
 
@@ -143,33 +142,7 @@ static module_data_t module_data =
 typedef struct {
     ib_mpool_t *mp;
     apr_table_t *t;
-    ib_rx_t *rx;
 } edit_do;
-
-/**
- * APR callback function to process one header according to a regexp
- *
- * @param[in] v - Application Data Pointer
- * @param[in] key - Header
- * @param[in] val - Header Value
- * @return 1 (continue iterating over APR table)
- */
-static int edit_header(void *v, const char *key, const char *val)
-{
-    edit_do *ed = (edit_do *)v;
-    char *repl;
-
-    /* Note - Since we were passed an Ironbee regexp, we pass it an
-     * ironbee tx pool from which repl gets allocated.  Everything else
-     * uses apache's request pool.  That's OK, both have the same lifetime.
-     */
-    ib_rx_exec(ed->mp, ed->rx, val, &repl, NULL);
-    if (repl == NULL) /* FIXME: do something? */
-        return 1;
-
-    apr_table_addn(ed->t, key, repl);
-    return 1;
-}
 
 /**
  * Ironbee callback function to manipulate an HTTP header
@@ -181,7 +154,6 @@ static int edit_header(void *v, const char *key, const char *val)
  * @param[in] name_length Length of @a name.
  * @param[in] value value of header.
  * @param[in] value_length Length of @a value.
- * @param[in] rx - Compiled regexp of value (if applicable)
  * @return status (OK, Declined if called too late, Error if called with
  *                 invalid data).  NOTIMPL should never happen.
  */
@@ -194,7 +166,6 @@ ib_status_t ib_header_callback(
     size_t                     name_length,
     const char                *value,
     size_t                     value_length,
-    ib_rx_t                   *rx,
     void                      *cbdata
 )
 {
@@ -235,38 +206,6 @@ ib_status_t ib_header_callback(
       case IB_HDR_MERGE:
       case IB_HDR_APPEND:
         apr_table_merge(headers, nul_name, nul_value);
-        rc = IB_OK;
-        goto cleanup;
-      case IB_HDR_EDIT:
-        if (apr_table_get(headers, nul_name)) {
-            edit_do ed;
-
-            /* Check we were passed something valid */
-            if (rx == NULL) {
-                if (rx = ib_rx_compile(tx->mp, nul_value), rx == NULL) {
-                    ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, ctx->r,
-                                  "Failed to compile %s as regexp", nul_value);
-                    rc = IB_EINVAL;
-                    goto cleanup;
-                }
-            }
-
-            ed.mp = tx->mp;
-            ed.rx = rx;
-            ed.t = apr_table_make(ctx->r->pool, 5);
-            if (!apr_table_do(edit_header, (void *) &ed, headers, nul_name, NULL))
-            {
-                rc = IB_EINVAL;
-                goto cleanup;
-            }
-            apr_table_unset(headers, nul_name);
-            if (dir == IB_SERVER_REQUEST)
-                ctx->r->headers_in = apr_table_overlay(ctx->r->pool,
-                                                       headers, ed.t);
-            else
-                ctx->r->headers_out = apr_table_overlay(ctx->r->pool,
-                                                        headers, ed.t);
-        }
         rc = IB_OK;
         goto cleanup;
     }

@@ -76,8 +76,7 @@ ib_status_t ib_server_header(
     const char                *name,
     size_t                     name_length,
     const char                *value,
-    size_t                     value_length,
-    ib_rx_t                   *rx
+    size_t                     value_length
 )
 {
     return (svr && svr->hdr_fn) ?
@@ -87,7 +86,6 @@ ib_status_t ib_server_header(
                action,
                name, name_length,
                value, value_length,
-               rx,
                svr->hdr_data
            ) :
            IB_ENOTIMPL;

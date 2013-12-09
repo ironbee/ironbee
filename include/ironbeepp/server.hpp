@@ -35,7 +35,6 @@
 #include <ironbeepp/connection.hpp>
 #include <ironbeepp/transaction.hpp>
 
-#include <ironbee/regex.h>
 #include <ironbee/server.h>
 
 #include <boost/noncopyable.hpp>
@@ -103,8 +102,7 @@ public:
         APPEND = IB_HDR_APPEND,
         MERGE  = IB_HDR_MERGE,
         ADD    = IB_HDR_ADD,
-        UNSET  = IB_HDR_UNSET,
-        EDIT   = IB_HDR_EDIT
+        UNSET  = IB_HDR_UNSET
     };
 
     //! IronBee version number server was compiled with.
@@ -199,8 +197,7 @@ public:
             direction_e,
             header_action_e,
             const char*, size_t,
-            const char*, size_t,
-            ib_rx_t*
+            const char*, size_t
         )
     > header_callback_t;
     //! See @ref ib_server_close_fn_t

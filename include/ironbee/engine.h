@@ -472,7 +472,6 @@ ib_status_t DLL_PUBLIC ib_tx_server_error_data(
  * @param[in] name_length Length of @a name.
  * @param[in] value value of header.
  * @param[in] value_length Length of @a value.
- * @param[in] rx The regular expression if the action is @ref IB_HDR_EDIT.
  *
  * @returns
  *   - IB_OK On success.
@@ -485,8 +484,7 @@ ib_status_t DLL_PUBLIC ib_tx_server_header(
     const char                *name,
     size_t                     name_length,
     const char                *value,
-    size_t                     value_length,
-    ib_rx_t                   *rx
+    size_t                     value_length
 );
 
 /**

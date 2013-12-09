@@ -439,7 +439,6 @@ ib_status_t clipp_header(
     size_t                    name_length,
     const char*               value,
     size_t                    value_length,
-    ib_rx_t*                  rx,
     void*
 )
 {

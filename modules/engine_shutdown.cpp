@@ -213,8 +213,7 @@ private:
                 IB_SERVER_RESPONSE,
                 IB_HDR_SET,
                 IB_S2SL("Connection"),
-                IB_S2SL("close"),
-                NULL);
+                IB_S2SL("close"));
             if (rc != IB_OK) {
             }
         }

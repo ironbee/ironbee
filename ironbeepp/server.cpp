@@ -174,7 +174,6 @@ static ib_status_t server_header_translator(
     ib_server_header_action_t action,
     const char* name, size_t name_length,
     const char* value, size_t value_length,
-    ib_rx_t* rx,
     void* cbdata
 )
 {
@@ -184,8 +183,7 @@ static ib_status_t server_header_translator(
             Server::direction_e(dir),
             Server::header_action_e(action),
             name, name_length,
-            value, value_length,
-            rx
+            value, value_length
         );
     }
     catch (...) {

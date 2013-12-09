@@ -1120,8 +1120,7 @@ ib_status_t ib_tx_server_header(
     const char                *name,
     size_t                     name_length,
     const char                *value,
-    size_t                     value_length,
-    ib_rx_t                   *rx
+    size_t                     value_length
 )
 {
     assert(tx != NULL);
@@ -1130,7 +1129,7 @@ ib_status_t ib_tx_server_header(
     assert(name != NULL);
     assert(value != NULL);
 
-    return ib_server_header(ib_engine_server_get(tx->ib), tx, dir, action, name, name_length, value, value_length, rx);
+    return ib_server_header(ib_engine_server_get(tx->ib), tx, dir, action, name, name_length, value, value_length);
 }
 
 

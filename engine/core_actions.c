@@ -1444,13 +1444,11 @@ static ib_status_t act_status_create(
 }
 
 /**
- * Holds the name of the header and the value to set/append/merge
- * and regexp with which to edit as applicable.
+ * Holds the name of the header and the value to set/append/merge.
  */
 struct act_header_data_t {
     const ib_var_expand_t *name;  /**< Name. */
     const ib_var_expand_t *value; /**< Value */
-    ib_rx_t *rx; /**< Regexp substitution to apply to header */
 };
 typedef struct act_header_data_t act_header_data_t;
 
@@ -1570,9 +1568,6 @@ static ib_status_t act_set_header_create(
         ib_log_error(ib, "Set header parameter format is name=value: %s", params);
         return IB_EINVAL;
     }
-    else if (equals_idx[1] == '~') {
-        value_offs = 2;    /* =~ for a regexp substitution arg */
-    }
 
     /* Compute string lengths needed for parsing out name and value. */
     params_len = strlen(params);
@@ -1624,10 +1619,6 @@ static ib_status_t act_set_header_create(
         return rc;
     }
     act_data->value = expand;
-
-    if (! ib_var_expand_test(value, value_len) && value_offs == 2) {
-        act_data->rx = ib_rx_compile(mp, value);
-    }
 
     inst->data = act_data;
     return IB_OK;
@@ -1688,72 +1679,7 @@ static ib_status_t act_set_request_header_execute(
 
     rc = ib_server_header(ib_engine_server_get(rule_exec->ib), tx,
                           IB_SERVER_REQUEST, IB_HDR_SET,
-                          name, name_len, value, value_len, NULL);
-
-    return rc;
-}
-
-/**
- * @param[in] rule_exec The rule execution object
- * @param[in] data Instance data needed for execution.
- * @param[in] cbdata Unused.
- *
- * @returns IB_OK if successful.
- */
-static ib_status_t act_edit_request_header_execute(
-    const ib_rule_exec_t *rule_exec,
-    void *data,
-    void *cbdata)
-{
-    assert(rule_exec);
-    assert(rule_exec->tx);
-    assert(rule_exec->ib);
-    assert(ib_engine_server_get(rule_exec->ib));
-    assert(data);
-
-    ib_status_t rc;
-    act_header_data_t *act_data = (act_header_data_t *)data;
-    const char *value;
-    size_t value_len;
-    const char *name;
-    size_t name_len;
-    ib_tx_t *tx = rule_exec->tx;
-
-    rc = ib_var_expand_execute(
-        act_data->name,
-        &name,
-        &name_len,
-        tx->mp,
-        tx->var_store
-    );
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_var_expand_execute(
-        act_data->value,
-        &value,
-        &value_len,
-        tx->mp,
-        tx->var_store
-    );
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    ib_rule_log_debug(rule_exec,
-                      "Applying regexp to request header \"%.*s\"=~\"%.*s\"",
-                      (int)name_len, name, (int)value_len, value);
-
-    rc = ib_server_header(
-        ib_engine_server_get(tx->ib),
-        tx,
-        IB_SERVER_REQUEST,
-        IB_HDR_EDIT,
-        name, name_len,
-        value, value_len,
-        act_data->rx
-    );
+                          name, name_len, value, value_len);
 
     return rc;
 }
@@ -1801,8 +1727,7 @@ static ib_status_t act_del_request_header_execute(
                           IB_SERVER_REQUEST,
                           IB_HDR_UNSET,
                           name, name_len,
-                          "", 0,
-                          NULL);
+                          "", 0);
 
     return rc;
 }
@@ -1861,68 +1786,7 @@ static ib_status_t act_set_response_header_execute(
 
     rc = ib_server_header(ib_engine_server_get(tx->ib), tx,
                           IB_SERVER_RESPONSE, IB_HDR_SET,
-                          name, name_len, value, value_len, NULL);
-
-    return rc;
-}
-
-/**
- *
- * @param[in] rule_exec The rule execution object
- * @param[in] data Instance data needed for execution.
- * @param[in] cbdata Unused.
- *
- * @returns IB_OK if successful.
- *
- */
-static ib_status_t act_edit_response_header_execute(
-    const ib_rule_exec_t *rule_exec,
-    void *data,
-    void *cbdata)
-{
-    assert(rule_exec);
-    assert(rule_exec->tx);
-    assert(rule_exec->ib);
-    assert(ib_engine_server_get(rule_exec->ib));
-    assert(data);
-
-    ib_status_t rc;
-    act_header_data_t *act_data = (act_header_data_t *)data;
-    const char *value;
-    size_t value_len;
-    const char *name;
-    size_t name_len;
-    ib_tx_t *tx = rule_exec->tx;
-
-    /* Expand the name (if required) */
-    rc = ib_var_expand_execute(
-        act_data->name,
-        &name,
-        &name_len,
-        tx->mp,
-        tx->var_store
-    );
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_var_expand_execute(
-        act_data->value,
-        &value,
-        &value_len,
-        tx->mp,
-        tx->var_store
-    );
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    ib_log_debug_tx(tx, "Applying regexp to response header \"%.*s\"=~\"%.*s\"",
-                    (int)name_len, name, (int)value_len, value);
-
-    rc = ib_server_header(ib_engine_server_get(tx->ib), tx,
-                          IB_SERVER_RESPONSE, IB_HDR_EDIT,
-                          name, name_len, value, value_len, act_data->rx);
+                          name, name_len, value, value_len);
 
     return rc;
 }
@@ -1972,8 +1836,7 @@ static ib_status_t act_del_response_header_execute(
                           IB_SERVER_RESPONSE,
                           IB_HDR_UNSET,
                           name, name_len,
-                          "", 0,
-                          NULL);
+                          "", 0);
 
     return rc;
 }
@@ -2243,15 +2106,6 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     rc = ib_action_register(ib,
-                            "editRequestHeader",
-                            act_set_header_create, NULL,
-                            NULL, NULL,
-                            act_edit_request_header_execute, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_action_register(ib,
                             "delRequestHeader",
                             act_del_header_create, NULL,
                             NULL, NULL,
@@ -2265,15 +2119,6 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             act_set_header_create, NULL,
                             NULL, NULL,
                             act_set_response_header_execute, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_action_register(ib,
-                            "editResponseHeader",
-                            act_set_header_create, NULL,
-                            NULL, NULL,
-                            act_edit_response_header_execute, NULL);
     if (rc != IB_OK) {
         return rc;
     }

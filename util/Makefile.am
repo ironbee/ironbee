@@ -32,7 +32,6 @@ libibutil_la_SOURCES = array.c \
                        mpool.c \
                        path.c \
 				       queue.c \
-                       regex.c \
                        resource_pool.c \
                        stream.c \
                        string.c \
