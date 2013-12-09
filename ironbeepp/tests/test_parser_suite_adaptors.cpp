@@ -38,7 +38,7 @@ ParserSuite::span_t span(const char* literal)
     return ParserSuite::span_t(literal, literal + strlen(literal));
 }
 
-};
+}
 
 TEST(TestParserSuiteAdpators, basic)
 {
