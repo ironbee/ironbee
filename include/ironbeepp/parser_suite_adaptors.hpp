@@ -78,13 +78,14 @@ typedef boost::transform_iterator<
     ParserSuite::parse_headers_result_t::headers_t::const_iterator
 > psheader_to_parsed_header_const_iterator;
 
-//! Range of @ref parsed_headers_const_iterator.
+//! Range of @ref psheader_to_parsed_header_const_iterator.
 typedef boost::iterator_range<
     psheader_to_parsed_header_const_iterator
 > psheader_to_parsed_header_const_range_t;
 
 /**
- * Adapt @ref parse_header_result_t::headers_t to a sequence of ParsedHeader.
+ * Adapt ParserSuite::parse_headers_result_t::headers_t to a sequence of
+ * ParsedHeader.
  *
  * @param[in] memory_pool Memory pool to use.
  * @param[in] headers    Headers to adapt.
