@@ -37,8 +37,8 @@
  * @section unparsed_cpp_ironbeepp IronBee++
  *
  * IronBee++ is the C++ API for IronBee.  It wraps the C API and provides a
- * variety of C++ capabilities such as functions instead of function pointers.
- * All IronBee++ objects that corresponds to C API types, e.g.,
+ * variety of C++ capabilities such as functionals instead of function
+ * pointers.  All IronBee++ objects that corresponds to C API types, e.g.,
  * IronBee::Server for @ref ib_server_t, behave like pointers or references.
  * In particular, they are cheap to copy and all copies refer to the
  * underlying C object.  They come in non-const and const versions, e.g.,
@@ -53,7 +53,7 @@
  * and returning a value.  They are copy-less in that they make no copies of
  * input, but inside provide results by aliasing segments of the input.
  * ParserSuite revolves around the IronBee::ParserSuite::span_t type which is
- * a non-mutable range of bytes.  All parsers take an input spanwhich, on
+ * a non-mutable range of bytes.  All parsers take an input span which, on
  * completion, is set to be the remaining input (i.e., will become empty if
  * all data is parsed), and return a result structure.
  *
@@ -147,7 +147,7 @@ private:
     /** @name Callbacks
      * Server callbacks.
      *
-     * This methods are bound into functionals and then stored in the
+     * These methods are bound into functionals and then stored in the
      * IronBee::Server.  The IronBee::Engine will use them to communicate back
      * to the server.  They have little purpose for passive use of IronBee but
      * are vital for inline use.
