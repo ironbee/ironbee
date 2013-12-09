@@ -1168,7 +1168,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                         NULL);
 
         /* Determine transaction action (block/log) via flags. */
-        if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_IMMEDIATE)) {
+        if (ib_flags_any(tx->flags, IB_TX_FBLOCK_PHASE|IB_TX_FBLOCK_IMMEDIATE)) {
             ib_field_setv(tx_action, ib_ftype_nulstr_in(
                 ib_logevent_action_name(IB_LEVENT_ACTION_BLOCK))
             );
@@ -1772,7 +1772,7 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
     }
 
     /* If the transaction never started, do nothing */
-    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED) ) {
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED) ) {
         return IB_OK;
     }
 

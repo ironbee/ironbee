@@ -606,7 +606,7 @@ static ib_status_t act_event_execute(
     }
 
     /* Set the actions if appropriate */
-    if (ib_tx_flags_isset(tx,
+    if (ib_flags_all(tx->flags,
                           (IB_TX_FBLOCK_ADVISORY |
                            IB_TX_FBLOCK_PHASE |
                            IB_TX_FBLOCK_IMMEDIATE)) )
@@ -1112,7 +1112,7 @@ static ib_status_t act_block_advisory_execute(
 
     /* Don't re-set the flag because it bloats the DPI value FLAGS
      * with lots of BLOCK entries. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FBLOCK_ADVISORY)) {
+    if (!ib_flags_all(tx->flags, IB_TX_FBLOCK_ADVISORY)) {
         ib_field_t *f;
         static const ib_num_t c_num_one = 1;
 

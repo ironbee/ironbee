@@ -24,6 +24,8 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/flags.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -321,16 +323,16 @@ static void cleanup_ib_connection(void *data)
 
 static void tx_finish(ib_tx_t *tx)
 {
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED) ) {
+    if (!ib_flags_all(tx->flags, IB_TX_FREQ_FINISHED) ) {
         ib_state_notify_request_finished(tx->ib, tx);
     }
-    if (!ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED) ) {
+    if (!ib_flags_all(tx->flags, IB_TX_FRES_FINISHED) ) {
         ib_state_notify_response_finished(tx->ib, tx);
     }
-    if (!ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+    if (!ib_flags_all(tx->flags, IB_TX_FPOSTPROCESS)) {
         ib_state_notify_postprocess(tx->ib, tx);
     }
-    if (!ib_tx_flags_isset(tx, IB_TX_FLOGGING)) {
+    if (!ib_flags_all(tx->flags, IB_TX_FLOGGING)) {
         ib_state_notify_logging(tx->ib, tx);
     }
 }
@@ -788,14 +790,14 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
             /* Override buffering based on flags */
             if (ibd->data->buffering == IOBUF_BUFFER) {
                 if (ibd->ibd->dir == IBD_REQ) {
-                    if (!ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_REQBODY) &&
-                        !ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_REQHDR)) {
+                    if (!ib_flags_all(data->tx->flags, IB_TX_FINSPECT_REQBODY) &&
+                        !ib_flags_all(data->tx->flags, IB_TX_FINSPECT_REQHDR)) {
                         ibd->data->buffering = IOBUF_NOBUF;
                         TSDebug("ironbee", "\tDisable request buffering");
                     }
                 } else if (ibd->ibd->dir == IBD_RESP) {
-                    if (!ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_RESBODY) &&
-                        !ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_RESHDR)) {
+                    if (!ib_flags_all(data->tx->flags, IB_TX_FINSPECT_RESBODY) &&
+                        !ib_flags_all(data->tx->flags, IB_TX_FINSPECT_RESHDR)) {
                         ibd->data->buffering = IOBUF_NOBUF;
                         TSDebug("ironbee", "\tDisable response buffering");
                     }
@@ -1039,12 +1041,12 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
             TSDebug("ironbee", "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
             (*ibd->ibd->ib_notify_end)(data->tx->ib, data->tx);
             if ( (ibd->ibd->ib_notify_post != NULL) &&
-                 (!ib_tx_flags_isset(data->tx, IB_TX_FPOSTPROCESS)) )
+                 (!ib_flags_all(data->tx->flags, IB_TX_FPOSTPROCESS)) )
             {
                 (*ibd->ibd->ib_notify_post)(data->tx->ib, data->tx);
             }
             if ( (ibd->ibd->ib_notify_log != NULL) &&
-                 (!ib_tx_flags_isset(data->tx, IB_TX_FLOGGING)) )
+                 (!ib_flags_all(data->tx->flags, IB_TX_FLOGGING)) )
             {
                 (*ibd->ibd->ib_notify_log)(data->tx->ib, data->tx);
             }
@@ -2293,7 +2295,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             }
 
             /* Feed ironbee the headers if not done alread. */
-            if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
+            if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
                 status = process_hdr(txndata, txnp, &ib_direction_server_resp);
 
                 /* OK, if this was an HTTP 100 response, it's not the
@@ -2312,7 +2314,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                  * isn't responding or we're responding from cache. we
                  * never reach here in the first place.
                  */
-                if (ib_tx_flags_isset(txndata->tx, IB_TX_FRES_HEADER)) {
+                if (ib_flags_all(txndata->tx->flags, IB_TX_FRES_HEADER)) {
                     txndata->state |= HDRS_OUT;
                 }
             }
@@ -2352,7 +2354,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             txndata->state |= START_RESPONSE;
 
             /* Feed ironbee the headers if not done already. */
-            if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
+            if (!ib_flags_all(txndata->tx->flags, IB_TX_FRES_STARTED)) {
                 process_hdr(txndata, txnp, &ib_direction_client_resp);
             }
 
@@ -2409,10 +2411,10 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                  else {
                     TSDebug("ironbee", "Internal error %d contp=%p", txndata->status, contp);
                     /* Ugly hack: notifications to stop modhtp bombing out */
-                    if (!ib_tx_flags_isset(txndata->tx, IB_TX_FREQ_STARTED) ) {
+                    if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_STARTED) ) {
                         ib_state_notify_request_started(txndata->tx->ib, txndata->tx, NULL);
                     }
-                    if (!ib_tx_flags_isset(txndata->tx, IB_TX_FREQ_FINISHED) ) {
+                    if (!ib_flags_all(txndata->tx->flags, IB_TX_FREQ_FINISHED) ) {
                         ib_state_notify_request_finished(txndata->tx->ib, txndata->tx);
                     }
                  }

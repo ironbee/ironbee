@@ -782,15 +782,15 @@ static ib_status_t moddevel_txdump_tx(
         moddevel_txdump(tx, txdump, 2, "Hostname = %s", tx->hostname);
         moddevel_txdump(tx, txdump, 2, "Effective IP = %s", tx->er_ipstr);
         moddevel_txdump(tx, txdump, 2, "Path = %s", tx->path);
-        if (ib_tx_flags_isset(tx, TX_BLOCKED)) {
+        if (ib_flags_all(tx->flags, TX_BLOCKED)) {
             moddevel_txdump(tx, txdump, 2, "Block Code = %" PRId64, tx->block_status);
-            if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_ADVISORY) ) {
+            if (ib_flags_all(tx->flags, IB_TX_FBLOCK_ADVISORY) ) {
                 moddevel_txdump(tx, txdump, 2, "Block: Advisory");
             }
-            if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_PHASE) ) {
+            if (ib_flags_all(tx->flags, IB_TX_FBLOCK_PHASE) ) {
                 moddevel_txdump(tx, txdump, 2, " Block: Phase");
             }
-            if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_IMMEDIATE) ) {
+            if (ib_flags_all(tx->flags, IB_TX_FBLOCK_IMMEDIATE) ) {
                 moddevel_txdump(tx, txdump, 2, "Block: Immediate");
             }
         }
@@ -845,7 +845,7 @@ static ib_status_t moddevel_txdump_tx(
         moddevel_txdump(tx, txdump, 2,
                         "Flags = %010lx", (unsigned long)tx->flags);
         for (rec = tx_flags_map; rec->str != NULL; ++rec) {
-            bool on = ib_tx_flags_isset(tx, rec->val);
+            bool on = ib_flags_all(tx->flags, rec->val);
             moddevel_txdump(tx, txdump, 4, "%010lx \"%s\" = %s",
                             (unsigned long)rec->val, rec->str,
                             on ? "On" : "Off");
@@ -853,7 +853,7 @@ static ib_status_t moddevel_txdump_tx(
     }
 
     /* If the transaction never started, do nothing */
-    if (! ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED) ) {
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED) ) {
         return IB_OK;
     }
 

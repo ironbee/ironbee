@@ -1243,7 +1243,7 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
     ib_tx_t     *tx = rule_exec->tx;
 
     /* Check if the transaction was already blocked. */
-    if (ib_tx_flags_isset(tx, IB_TX_FBLOCKED)) {
+    if (ib_flags_all(tx->flags, IB_TX_FBLOCKED)) {
         return IB_OK;
     }
 
@@ -2138,14 +2138,14 @@ static bool rule_allow(const ib_tx_t *tx,
                        bool check_phase)
 {
     /* Check if the transaction was already blocked. */
-    if (ib_tx_flags_isset(tx, IB_TX_FBLOCKED)) {
+    if (ib_flags_all(tx->flags, IB_TX_FBLOCKED)) {
         return false;
     }
 
     /* Check the ALLOW_ALL flag */
     if ( (meta->phase_num != IB_PHASE_POSTPROCESS) &&
          (meta->phase_num != IB_PHASE_LOGGING) &&
-         (ib_tx_flags_isset(tx, IB_TX_FALLOW_ALL) == 1) )
+         (ib_flags_all(tx->flags, IB_TX_FALLOW_ALL) == 1) )
     {
         ib_log_debug_tx(tx,
                         "Skipping phase %d/\"%s\" in context \"%s\": "
@@ -2157,7 +2157,7 @@ static bool rule_allow(const ib_tx_t *tx,
 
     /* If this is a request phase rule, Check the ALLOW_REQUEST flag */
     if ( (ib_flags_all(meta->flags, PHASE_FLAG_REQUEST)) &&
-         (ib_tx_flags_isset(tx, IB_TX_FALLOW_REQUEST) == 1) )
+         (ib_flags_all(tx->flags, IB_TX_FALLOW_REQUEST) == 1) )
     {
         ib_log_debug_tx(tx,
                         "Skipping phase %d/\"%s\" in context \"%s\": "
@@ -2168,7 +2168,7 @@ static bool rule_allow(const ib_tx_t *tx,
     }
 
     /* If check_phase is true, check the ALLOW_PHASE flag */
-    if ( check_phase && (ib_tx_flags_isset(tx, IB_TX_FALLOW_PHASE) == 1) )
+    if ( check_phase && (ib_flags_all(tx->flags, IB_TX_FALLOW_PHASE) == 1) )
     {
         ib_log_debug_tx(tx,
                         "Skipping remaining rules phase %d/\"%s\" "
@@ -2327,7 +2327,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
      * This can happen if a connection is created to ATS, but no data
      * is actually pushed through the connection. */
     if (tx->rule_exec == NULL) {
-        if (! ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED) ) {
+        if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED) ) {
             return IB_OK;
         }
         ib_log_alert_tx(tx, "Rule execution object not created @ %s",
@@ -2452,7 +2452,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         rule_rc = execute_phase_rule(rule_exec, rule, MAX_CHAIN_RECURSION);
 
         /* Handle declined return code. Did this block? */
-        if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_IMMEDIATE) ) {
+        if (ib_flags_all(tx->flags, IB_TX_FBLOCK_IMMEDIATE) ) {
             bool block_rc;
             ib_rule_log_debug(rule_exec,
                               "Rule resulted in immediate block "
@@ -2475,7 +2475,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         }
     }
 
-    if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_PHASE) ) {
+    if (ib_flags_all(tx->flags, IB_TX_FBLOCK_PHASE) ) {
         ib_rule_log_tx_debug(tx, "Rule(s) resulted in phase block");
         rc = report_block_to_server(rule_exec);
         if (rc != IB_OK) {
@@ -2562,7 +2562,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     execute_rule_actions(rule_exec);
 
     /* Block if required */
-    if (ib_tx_flags_isset(rule_exec->tx, IB_TX_FBLOCK_IMMEDIATE) ) {
+    if (ib_flags_all(rule_exec->tx->flags, IB_TX_FBLOCK_IMMEDIATE) ) {
         ib_rule_log_debug(rule_exec,
                           "Rule resulted in immediate block "
                           "(aborting rule processing): %s",
@@ -2821,7 +2821,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         }
     }
 
-    if (ib_tx_flags_isset(tx, IB_TX_FBLOCK_PHASE) ) {
+    if (ib_flags_all(tx->flags, IB_TX_FBLOCK_PHASE) ) {
         report_block_to_server(rule_exec);
     }
 

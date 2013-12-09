@@ -50,6 +50,7 @@
 #include <ironbee/state_notify.h>
 #include <ironbee/regex.h>
 #include <ironbee/util.h>
+#include <ironbee/flags.h>
 
 /* Hack to detect 2.2 vs 2.4 server versions.
  * This is a 2.3.x version shortly after the module declaration syntax changed
@@ -433,13 +434,13 @@ static apr_status_t ib_req_cleanup(void *data)
     ironbee_req_ctx *ctx = ap_get_module_config(r->request_config,
                                                 &ironbee_module);
 
-    if (!ib_tx_flags_isset(ctx->tx, IB_TX_FPOSTPROCESS)) {
+    if (!ib_flags_all(ctx->tx->flags, IB_TX_FPOSTPROCESS)) {
         rc = ib_state_notify_postprocess(ctx->tx->ib, ctx->tx);
         if (rc != IB_OK) {
             return IB2APR(rc);
         }
     }
-    if (!ib_tx_flags_isset(ctx->tx, IB_TX_FLOGGING)) {
+    if (!ib_flags_all(ctx->tx->flags, IB_TX_FLOGGING)) {
         rc = ib_state_notify_logging(ctx->tx->ib, ctx->tx);
         if (rc != IB_OK) {
             return IB2APR(rc);

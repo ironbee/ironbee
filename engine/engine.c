@@ -40,6 +40,7 @@
 #include <ironbee/context_selection.h>
 #include <ironbee/core.h>
 #include <ironbee/engine_state.h>
+#include <ironbee/flags.h>
 #include <ironbee/hash.h>
 #include <ironbee/ip.h>
 #include <ironbee/module.h>
@@ -1144,19 +1145,19 @@ void ib_tx_destroy(ib_tx_t *tx)
     ib_tx_t *prev = NULL;
     bool found = false;
 
-    if (   ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)
-        || ib_tx_flags_isset(tx, IB_TX_FRES_HAS_DATA) )
+    if (   ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)
+        || ib_flags_all(tx->flags, IB_TX_FRES_HAS_DATA) )
     {
         /* Make sure that the post processing state was notified. */
         // TODO: Remove the need for this
-        if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+        if (! ib_flags_all(tx->flags, IB_TX_FPOSTPROCESS)) {
             ib_log_warning_tx(tx,
                               "Failed to run post processing on transaction.");
         }
 
         /* Make sure that the post processing state was notified. */
         // TODO: Remove the need for this
-        if (! ib_tx_flags_isset(tx, IB_TX_FLOGGING)) {
+        if (! ib_flags_all(tx->flags, IB_TX_FLOGGING)) {
             ib_log_warning_tx(tx,
                               "Failed to run logging on transaction.");
         }

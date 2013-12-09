@@ -77,23 +77,7 @@ typedef struct ib_flags_operation_t ib_flags_operation_t;
  */
 bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_any(flags, check) \
-    ( ((flags) & (check)) != 0)
-
-/**
- * Test if any of a set of flags is set
- *
- * @param[in] flags Flags to test
- * @param[in] check Flag bits to test check in @a flags
- *
- * @returns boolean value
- *
- * @internal
- * Implemented in: (self)
- * Tested in: tests/test_util_flags.cpp
- */
-bool ib_flags_isset(ib_flags_t flags, ib_flags_t check);
-#define ib_flags_isset(flags, check) \
-    ( ((flags) & (check)) != 0)
+    (((flags) & (check)) != 0)
 
 /**
  * Test if all of a set of flags is set
@@ -109,7 +93,7 @@ bool ib_flags_isset(ib_flags_t flags, ib_flags_t check);
  */
 bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_all(flags, check) \
-    ( ((flags) & (check)) == (check))
+    (((flags) & (check)) == (check))
 
 /**
  * Set flag bits

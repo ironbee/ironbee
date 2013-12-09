@@ -318,31 +318,6 @@ ib_status_t DLL_PUBLIC ib_conn_set_module_data(
     void              *data
 );
 
-/**
- * Set connection flags.
- *
- * @param conn Connection structure
- * @param flag Flags
- */
-#define ib_conn_flags_set(conn, flag) do { (conn)->flags |= (flag); } while(0)
-
-/**
- * Unset connection flags.
- *
- * @param conn Connection structure
- * @param flag Flags
- */
-#define ib_conn_flags_unset(conn, flag) do { (conn)->flags &= ~(flag); } while(0)
-
-/**
- * Check if connection flags are all set.
- *
- * @param conn Connection structure
- * @param flag Flags
- *
- * @returns All current flags
- */
-#define ib_conn_flags_isset(conn, flag) ((conn)->flags & (flag) ? 1 : 0)
 
 /**
  * Set @a flags in the @a tx and the corresponding var value.
@@ -515,14 +490,24 @@ ib_status_t DLL_PUBLIC ib_tx_server_header(
 );
 
 /**
- * Check if transaction flags are all set.
+ * Check if ALL transaction flags are set.
  *
  * @param tx Transaction structure
  * @param flag Flags
  *
- * @returns All current flags
+ * @returns True if ALL flags are set
  */
-#define ib_tx_flags_isset(tx, flag) ((tx)->flags & (flag) ? 1 : 0)
+#define ib_tx_flags_isset(tx, flag) ((tx)->flags & (flag) == (flag) ? 1 : 0)
+
+/**
+ * Check if ANY transaction flags are set.
+ *
+ * @param tx Transaction structure
+ * @param flag Flags
+ *
+ * @returns True if ANY flags are set
+ */
+#define ib_tx_flags_any(tx, flag) ((tx)->flags & (flag) ? 1 : 0)
 
 /**
  * Destroy a transaction structure.

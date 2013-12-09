@@ -28,6 +28,7 @@
 #include <ironbee/release.h>
 #include <ironbee/context.h>
 #include <ironbee/core.h>
+#include <ironbee/flags.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
@@ -554,7 +555,7 @@ public:
     {
         ib_status_t rc;
 
-        if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+        if (! ib_flags_all(tx->flags, IB_TX_FPOSTPROCESS)) {
             rc = ib_state_notify_postprocess(ib_engine, tx);
             if (rc != IB_OK) {
                 notifyError("post process.");

@@ -113,7 +113,7 @@ TEST_P(CoreActionFlagVarTest, FlagSet) {
 }
 
 TEST_P(CoreActionFlagTxTest, FlagSet) {
-    ASSERT_TRUE(ib_tx_flags_isset(ib_tx, GetParam()));
+    ASSERT_TRUE(ib_flags_all(ib_tx->flags, GetParam()));
 }
 
 INSTANTIATE_TEST_CASE_P(AllFlags, CoreActionFlagVarTest, testing::Values(
