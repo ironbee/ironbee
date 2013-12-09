@@ -13,5 +13,13 @@ AM_LDFLAGS += -module -avoid-version
 endif
 
 noinst_PROGRAMS = parsed_c
+if CPP
+noinst_PROGRAMS += unparsed_cpp
+endif
 
 parsed_c_SOURCES = parsed_c.c
+
+unparsed_cpp_SOURCES = unparsed_cpp.cpp
+unparsed_cpp_LDADD = $(LDADD) \
+	$(top_builddir)/modules/libparser_suite.la \
+	$(top_builddir)/ironbeepp/libibpp.la
