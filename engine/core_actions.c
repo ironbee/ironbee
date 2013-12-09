@@ -37,6 +37,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/rule_logger.h>
+#include <ironbee/transformation.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
@@ -142,23 +143,26 @@ static ib_status_t setvar_float_add_op(
 }
 
 typedef struct {
-    ib_ftype_t type;
-    union {
-        ib_num_t         num; /**< Numeric value */
-        ib_float_t       flt; /**< Float value. */
-        ib_var_expand_t *str; /**< String value; bytestr type. */
-    } value;
+    ib_field_t *value;           /**< The value to transform. */
+    ib_list_t  *transformations; /**< List of transformation names. */
 } setvar_value_t;
 
 /**
  * Structure storing setvar instance data.
  */
 typedef struct {
-    setvar_op_t      op;            /**< Setvar operation */
-    ib_var_target_t *target;        /**< Target to set. */
-    setvar_value_t   value;         /**< Value; may be NULL. */
-    const char      *target_string; /**< Used in error logging. */
-    size_t           target_string_length; /**< Used in error logging. */
+    setvar_op_t      op;              /**< Setvar operation */
+    ib_var_target_t *target;          /**< Target to set. */
+
+    /**
+     * Holds a ib_num_t, ib_float_t, or a @ref ib_var_expand_t *.
+     *
+     * The @ref ib_var_expand_t is stored as a generic pointer type.
+     */
+    ib_field_t      *argument;        /**< The setvar argument. */
+    ib_list_t       *transformations; /**< Names of tfns to apply to value. */
+    const char      *target_str;      /**< Used in error logging. */
+    size_t           target_str_len;  /**< Used in error logging. */
 } setvar_data_t;
 
 /**
@@ -186,13 +190,13 @@ typedef struct {
  *
  * @param[in] tx Current transaction.
  * @param[in] rule_exec Rule execution environment.
- * @param[in] setvar_data SetVar data.
- * @param[in] cur_field The current field being used for the left hand side
- *            and to store the result in.
+ * @param[in] argument The value to pass to setvar.
  * @param[in] op The operator to perform on the two fields.
  *            The value in cur_field is passed as the first argument
  *            to @a op. The second argument to @a op is the
  *            parameter presented at configuration time.
+ * @param[out] cur_field The current field being used for the left hand side
+ *             and to store the result in.
  *
  * @returns
  *   - IB_OK
@@ -201,20 +205,18 @@ static
 ib_status_t setvar_float_op(
     ib_tx_t               *tx,
     const ib_rule_exec_t  *rule_exec,
-    const setvar_data_t   *setvar_data,
-    ib_field_t           **cur_field,
-    setvar_float_op_fn_t   op
+    const ib_field_t      *argument,
+    setvar_float_op_fn_t   op,
+    ib_field_t           **cur_field
 )
 {
-    assert(tx                      != NULL);
-    assert(rule_exec               != NULL);
-    assert(setvar_data             != NULL);
-    assert(cur_field               != NULL);
-    assert(setvar_data->value.type == IB_FTYPE_FLOAT);
+    assert(tx                 != NULL);
+    assert(rule_exec          != NULL);
+    assert(cur_field          != NULL);
 
-    const char *ts = setvar_data->target_string;
-    int tslen = (int)setvar_data->target_string_length;
     ib_status_t rc;
+    ib_float_t  flt1;
+    ib_float_t  flt2;
 
     /* If it doesn't exist, create the variable with a value of zero */
     if (*cur_field == NULL) {
@@ -222,39 +224,35 @@ ib_status_t setvar_float_op(
         rc = ib_field_create(cur_field,
                              tx->mp,
                              "", 0,
-                             setvar_data->value.type,
+                             IB_FTYPE_FLOAT,
                              ib_ftype_float_in(&initial));
         if (rc != IB_OK) {
-            ib_rule_log_error(
-                rule_exec,
-                "setvar %.*s: Failed to create field: %s",
-                tslen, ts,
-                ib_status_to_string(rc)
-            );
             return rc;
         }
     }
     else if ((*cur_field)->type != IB_FTYPE_FLOAT) {
-        ib_rule_log_error(
-            rule_exec,
-            "setvar %.*s: Type %d invalid for operation.",
-            tslen, ts,
-            (*cur_field)->type
-        );
         return IB_EINVAL;
     }
 
-    {
-        ib_float_t flt;
-        rc = ib_field_value(*cur_field, ib_ftype_float_out(&flt));
-        if (rc != IB_OK) {
-            return rc;
-        }
-
-        op(flt, setvar_data->value.value.flt, &flt);
-
-        ib_field_setv(*cur_field, ib_ftype_float_in(&flt));
+    /* Get arg 1. */
+    rc = ib_field_value(*cur_field, ib_ftype_float_out(&flt1));
+    if (rc != IB_OK) {
+        return rc;
     }
+
+    /* Get arg 2. */
+    rc = ib_field_value_type(
+        argument,
+        ib_ftype_float_out(&flt2),
+        IB_FTYPE_FLOAT);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Finally do the work. */
+    op(flt1, flt2, &flt1);
+
+    ib_field_setv(*cur_field, ib_ftype_float_in(&flt1));
 
     return IB_OK;
 }
@@ -264,7 +262,7 @@ ib_status_t setvar_float_op(
  *
  * @param[in] tx Current transaction.
  * @param[in] rule_exec Rule execution environment.
- * @param[in] setvar_data SetVar data.
+ * @param[in] argument The value to pass to setvar.
  * @param[in] cur_field The current field being used for the left hand side
  *            and to store the result in.
  * @param[in] op The operator to perform on the two fields.
@@ -279,20 +277,18 @@ static
 ib_status_t setvar_num_op(
     ib_tx_t               *tx,
     const ib_rule_exec_t  *rule_exec,
-    const setvar_data_t   *setvar_data,
-    ib_field_t           **cur_field,
-    setvar_num_op_fn_t     op
+    const ib_field_t      *argument,
+    setvar_num_op_fn_t     op,
+    ib_field_t           **cur_field
 )
 {
-    assert(tx                      != NULL);
-    assert(rule_exec               != NULL);
-    assert(setvar_data             != NULL);
-    assert(cur_field               != NULL);
-    assert(setvar_data->value.type == IB_FTYPE_NUM);
+    assert(tx                 != NULL);
+    assert(rule_exec          != NULL);
+    assert(cur_field          != NULL);
 
-    const char *ts = setvar_data->target_string;
-    int tslen = (int)setvar_data->target_string_length;
     ib_status_t rc;
+    ib_num_t    num1;
+    ib_num_t    num2;
 
     /* If it doesn't exist, create the variable with a value of zero */
     if (*cur_field == NULL) {
@@ -300,39 +296,34 @@ ib_status_t setvar_num_op(
         rc = ib_field_create(cur_field,
                              tx->mp,
                              "", 0,
-                             setvar_data->value.type,
+                             IB_FTYPE_NUM,
                              ib_ftype_num_in(&initial));
         if (rc != IB_OK) {
-            ib_rule_log_error(
-                rule_exec,
-                "setvar %.*s: Failed to create field: %s",
-                tslen, ts,
-                ib_status_to_string(rc)
-            );
             return rc;
         }
     }
     else if ((*cur_field)->type != IB_FTYPE_NUM) {
-        ib_rule_log_error(
-            rule_exec,
-            "setvar %.*s: Type %d invalid for operation.",
-            tslen, ts,
-            (*cur_field)->type
-        );
         return IB_EINVAL;
     }
 
-    {
-        ib_num_t num;
-        rc = ib_field_value(*cur_field, ib_ftype_num_out(&num));
-        if (rc != IB_OK) {
-            return rc;
-        }
-
-        op(num, setvar_data->value.value.num, &num);
-
-        ib_field_setv(*cur_field, ib_ftype_num_in(&num));
+    /* Get arg 1. */
+    rc = ib_field_value(*cur_field, ib_ftype_num_out(&num1));
+    if (rc != IB_OK) {
+        return rc;
     }
+
+    /* Get arg 2. */
+    rc = ib_field_value_type(
+        argument,
+        ib_ftype_num_out(&num2),
+        IB_FTYPE_NUM);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    op(num1, num2, &num1);
+
+    ib_field_setv(*cur_field, ib_ftype_num_in(&num1));
 
     return IB_OK;
 }
@@ -649,10 +640,16 @@ static ib_status_t act_setvar_create(
     const char *eq;              /* '=' character in @a params */
     const char *mod;             /* '+'/'-'/'*' character in params */
     const char *value;           /* Value in params */
-    size_t vlen;                 /* Length of value */
-    setvar_data_t *data;         /* Data for the execute function */
+    setvar_data_t *setvar_data;  /* Data for the execute function */
     ib_status_t rc;              /* Status code */
     ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+
+    /* Argument variable. */
+    union {
+        ib_num_t         num;
+        ib_float_t       flt;
+        ib_var_expand_t *var_expand; /**< Stored as an IB_FTYPE_GENERIC. */
+    } arg_u;
 
     assert(mp != NULL);
 
@@ -676,22 +673,28 @@ static ib_status_t act_setvar_create(
         nlen = (eq - params);
     }
 
-    /* Determine the type of the value */
-    value = (eq + 1);
-    vlen = strlen(value);
-
-    /* Create the data structure for the execute function */
-    data = ib_mpool_alloc(mp, sizeof(*data) );
-    if (data == NULL) {
+    /* Create the setvar_data structure for the execute function */
+    setvar_data = ib_mpool_alloc(mp, sizeof(*setvar_data));
+    if (setvar_data == NULL) {
         return IB_EALLOC;
     }
-    data->target_string = ib_mpool_memdup(mp, params, nlen);
-    data->target_string_length = nlen;
+    setvar_data->target_str = ib_mpool_memdup(mp, params, nlen);
+    setvar_data->target_str_len = nlen;
+    setvar_data->transformations = NULL;
+
+    rc = ib_cfg_parse_target_string(
+        mp,
+        (eq + 1),
+        &value,
+        &(setvar_data->transformations));
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Construct target. */
     // @todo Record error_message and error_offset and do something with them.
     rc = ib_var_target_acquire_from_string(
-        &(data->target),
+        &(setvar_data->target),
         mp,
         ib_engine_var_config_get(ib),
         params, nlen,
@@ -702,39 +705,57 @@ static ib_status_t act_setvar_create(
     }
 
     /* Create the value */
-    rc = ib_string_to_num_ex(value, vlen, 0, &(data->value.value.num));
+    rc = ib_string_to_num_ex(IB_S2SL(value), 0, &(arg_u.num));
     if (rc == IB_OK) {
-        data->value.type = IB_FTYPE_NUM;
+        rc = ib_field_create(
+            &(setvar_data->argument),
+            mp,
+            "", 0,
+            IB_FTYPE_NUM, 
+            ib_ftype_num_in(&arg_u.num));
+        if (rc != IB_OK) {
+            return rc;
+        }
+
         if (mod == NULL) {
-            data->op = SETVAR_NUMSET;
+            setvar_data->op = SETVAR_NUMSET;
         }
         else if (*mod == '+') {
-            data->op = SETVAR_NUMADD;
+            setvar_data->op = SETVAR_NUMADD;
         }
         else if (*mod == '-') {
-            data->op = SETVAR_NUMSUB;
+            setvar_data->op = SETVAR_NUMSUB;
         }
         else if (*mod == '*') {
-            data->op = SETVAR_NUMMULT;
+            setvar_data->op = SETVAR_NUMMULT;
         }
 
         goto success;
     }
 
-    rc = ib_string_to_float(value, &(data->value.value.flt));
+    rc = ib_string_to_float(value, &(arg_u.flt));
     if (rc == IB_OK) {
-        data->value.type = IB_FTYPE_FLOAT;
+        rc = ib_field_create(
+            &(setvar_data->argument),
+            mp,
+            "", 0,
+            IB_FTYPE_FLOAT,
+            ib_ftype_float_in(&arg_u.flt));
+        if (rc != IB_OK) {
+            return rc;
+        }
+
         if (mod == NULL) {
-            data->op = SETVAR_FLOATSET;
+            setvar_data->op = SETVAR_FLOATSET;
         }
         else if (*mod == '+') {
-            data->op = SETVAR_FLOATADD;
+            setvar_data->op = SETVAR_FLOATADD;
         }
         else if (*mod == '-') {
-            data->op = SETVAR_FLOATSUB;
+            setvar_data->op = SETVAR_FLOATSUB;
         }
         else if (*mod == '*') {
-            data->op = SETVAR_FLOATMULT;
+            setvar_data->op = SETVAR_FLOATMULT;
         }
 
         goto success;
@@ -744,30 +765,42 @@ static ib_status_t act_setvar_create(
         int error_offset;
 
         if (mod != NULL) {
-            ib_log_error(ib, "setvar: Numeric '%c' not supported for strings", *mod);
+            ib_log_error(
+                ib,
+                "setvar: Numeric '%c' not supported for strings",
+                *mod);
             return IB_EINVAL;
         }
 
         rc = ib_var_expand_acquire(
-            &(data->value.value.str),
+            &(arg_u.var_expand),
             mp,
-            value, vlen,
+            IB_S2SL(value),
             ib_engine_var_config_get(ib),
             &error_message, &error_offset
         );
-        if (rc == IB_EINVAL) {
-            ib_log_error(ib, "setvar: Error pre-constructing value: %s",
-                         error_message);
-        }
+
         if (rc != IB_OK) {
+            if (rc == IB_EINVAL) {
+                ib_log_error(
+                    ib,
+                    "setvar: Error pre-constructing value: %s",
+                    error_message);
+            }
             return rc;
         }
-        data->value.type = IB_FTYPE_BYTESTR;
-        data->op = SETVAR_STRSET;
+
+        rc = ib_field_create(
+            &(setvar_data->argument),
+            mp,
+            "", 0,
+            IB_FTYPE_GENERIC,
+            ib_ftype_generic_in(&arg_u.var_expand));
+        setvar_data->op = SETVAR_STRSET;
     }
 
 success:
-    inst->data = data;
+    inst->data = setvar_data;
     return IB_OK;
 }
 
@@ -791,23 +824,28 @@ static ib_status_t act_setvar_execute(
     assert(data != NULL);
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
+    assert(rule_exec->tx->ib != NULL);
+    assert(rule_exec->tx->mp != NULL);
 
-    ib_status_t rc;
-    ib_field_t *cur_field = NULL;
-    ib_tx_t *tx = rule_exec->tx;
-    ib_list_t *result = NULL; /* List of target fields: ib_field_t* */
+    ib_status_t      rc;
+    ib_field_t      *cur_field = NULL;
+    ib_tx_t         *tx = rule_exec->tx;
+    ib_engine_t     *ib = tx->ib;
+    ib_mpool_t      *mp = tx->mp;
+    ib_list_t       *result = NULL; /* List of target fields: ib_field_t* */
     ib_var_target_t *expanded_target;
+    const ib_field_t      *argument;
 
     /* Data should be a setvar_data_t created in our create function */
     const setvar_data_t *setvar_data = (const setvar_data_t *)data;
-    const char *ts = setvar_data->target_string;
-    int tslen = (int)setvar_data->target_string_length;
+    const char *ts = setvar_data->target_str;
+    int tslen = (int)setvar_data->target_str_len;
 
     /* Expand target. */
     rc = ib_var_target_expand(
         setvar_data->target,
         &expanded_target,
-        tx->mp,
+        mp,
         tx->var_store
     );
     if (rc != IB_OK) {
@@ -824,7 +862,7 @@ static ib_status_t act_setvar_execute(
     rc = ib_var_target_remove(
         expanded_target,
         &result,
-        tx->mp,
+        mp,
         tx->var_store
     );
     if (rc != IB_ENOENT && rc != IB_OK) {
@@ -840,6 +878,35 @@ static ib_status_t act_setvar_execute(
         cur_field = (ib_field_t *)ib_list_node_data(ib_list_first(result));
     }
 
+    /* Pull out the argument to setvar. */
+    argument = setvar_data->argument;
+
+    if (setvar_data->transformations != NULL &&
+        ib_list_elements(setvar_data->transformations) > 0)
+    {
+        const ib_list_node_t *tfn_node;
+
+        IB_LIST_LOOP_CONST(setvar_data->transformations, tfn_node) {
+            const ib_field_t *tmp_field;
+            const ib_tfn_t   *tfn;
+            const char       *tfn_name =
+                (const char *)ib_list_node_data_const(tfn_node);
+
+            rc = ib_tfn_lookup(ib, tfn_name, &tfn);
+            if (rc != IB_OK) {
+                return rc;
+            }
+    
+            rc = ib_tfn_execute(mp, tfn, argument, &tmp_field);
+            if (rc != IB_OK) {
+                return rc;
+            }
+    
+            /* Promote the teporary field to the new current field. */
+            argument = tmp_field;
+        }
+    }
+
     /* At this point cur_field represents the old value (possibly) NULL.
      * Depending on the operation and value, we now need to modify it to
      * represent the new value and then we'll set it back. */
@@ -848,14 +915,22 @@ static ib_status_t act_setvar_execute(
 
     case SETVAR_STRSET:
     {
-        assert(setvar_data->value.type == IB_FTYPE_BYTESTR);
+        ib_var_expand_t *expand;
         ib_bytestr_t *bs = NULL;
         const char *value;
         size_t vlen;
 
+        rc = ib_field_value_type(
+            argument,
+            ib_ftype_generic_mutable_out(&expand),
+            IB_FTYPE_GENERIC);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
         /* Expand value. */
         rc = ib_var_expand_execute(
-            setvar_data->value.value.str,
+            expand,
             &value, &vlen,
             tx->mp,
             tx->var_store
@@ -890,7 +965,7 @@ static ib_status_t act_setvar_execute(
             rc = ib_field_create(&cur_field,
                                  tx->mp,
                                  "", 0,
-                                 setvar_data->value.type,
+                                 IB_FTYPE_BYTESTR,
                                  ib_ftype_bytestr_in(bs));
             if (rc != IB_OK) {
                 ib_rule_log_error(
@@ -906,21 +981,28 @@ static ib_status_t act_setvar_execute(
     }
 
     case SETVAR_FLOATSET:
-        assert(setvar_data->value.type == IB_FTYPE_FLOAT);
+    {
+        ib_float_t flt;
+
+        rc = ib_field_value_type(
+            argument,
+            ib_ftype_float_out(&flt),
+            IB_FTYPE_FLOAT);
+        if (rc != IB_OK) {
+            return rc;
+        }
 
         /* Try to re-use the existing field */
         if (cur_field != NULL && cur_field->type == IB_FTYPE_FLOAT) {
-            ib_field_setv(cur_field,
-                          ib_ftype_float_in(&setvar_data->value.value.flt));
+            ib_field_setv(cur_field, ib_ftype_float_in(&flt));
         }
         else {
             rc = ib_field_create(
                 &cur_field,
                 tx->mp,
                 "", 0,
-                setvar_data->value.type,
-                ib_ftype_float_in(&setvar_data->value.value.flt)
-            );
+                IB_FTYPE_FLOAT,
+                ib_ftype_float_in(&flt));
             if (rc != IB_OK) {
                 ib_rule_log_error(
                     rule_exec,
@@ -932,14 +1014,23 @@ static ib_status_t act_setvar_execute(
             }
         }
         break;
+    }
 
     case SETVAR_NUMSET:
-        assert(setvar_data->value.type == IB_FTYPE_NUM);
+    {
+        ib_num_t num;
+
+        rc = ib_field_value_type(
+            argument,
+            ib_ftype_num_out(&num),
+            IB_FTYPE_NUM);
+        if (rc != IB_OK) {
+            return rc;
+        }
 
         /* Try to re-use the existing field */
         if (cur_field != NULL && cur_field->type == IB_FTYPE_NUM) {
-            ib_field_setv(cur_field,
-                          ib_ftype_num_in(&setvar_data->value.value.num));
+            ib_field_setv(cur_field, ib_ftype_num_in(&num));
             return IB_OK;
         }
         else {
@@ -947,9 +1038,8 @@ static ib_status_t act_setvar_execute(
                 &cur_field,
                 tx->mp,
                 "", 0,
-                setvar_data->value.type,
-                ib_ftype_num_in(&setvar_data->value.value.num)
-            );
+                IB_FTYPE_NUM,
+                ib_ftype_num_in(&num));
             if (rc != IB_OK) {
                 ib_rule_log_error(
                     rule_exec,
@@ -962,15 +1052,15 @@ static ib_status_t act_setvar_execute(
         }
 
         break;
-
+    }
     /* Numerical operation : Add */
     case SETVAR_FLOATADD:
         rc = setvar_float_op(
             tx,
             rule_exec,
-            setvar_data,
-            &cur_field,
-            &setvar_float_add_op);
+            argument,
+            &setvar_float_add_op,
+            &cur_field);
         break;
 
     /* Numerical operation : Sub */
@@ -978,9 +1068,9 @@ static ib_status_t act_setvar_execute(
         rc = setvar_float_op(
             tx,
             rule_exec,
-            setvar_data,
-            &cur_field,
-            &setvar_float_sub_op);
+            argument,
+            &setvar_float_sub_op,
+            &cur_field);
         break;
 
     /* Numerical operation : Mult */
@@ -988,9 +1078,9 @@ static ib_status_t act_setvar_execute(
         rc = setvar_float_op(
             tx,
             rule_exec,
-            setvar_data,
-            &cur_field,
-            &setvar_float_mult_op);
+            argument,
+            &setvar_float_mult_op,
+            &cur_field);
         break;
 
     /* Numerical operation : Add */
@@ -998,9 +1088,9 @@ static ib_status_t act_setvar_execute(
         rc = setvar_num_op(
             tx,
             rule_exec,
-            setvar_data,
-            &cur_field,
-            &setvar_num_add_op);
+            argument,
+            &setvar_num_add_op,
+            &cur_field);
         break;
 
     /* Numerical operation : Sub */
@@ -1008,9 +1098,9 @@ static ib_status_t act_setvar_execute(
         rc = setvar_num_op(
             tx,
             rule_exec,
-            setvar_data,
-            &cur_field,
-            &setvar_num_sub_op);
+            argument,
+            &setvar_num_sub_op,
+            &cur_field);
         break;
 
     /* Numerical operation : Mult */
@@ -1018,14 +1108,19 @@ static ib_status_t act_setvar_execute(
         rc = setvar_num_op(
             tx,
             rule_exec,
-            setvar_data,
-            &cur_field,
-            &setvar_num_mult_op);
+            argument,
+            &setvar_num_mult_op,
+            &cur_field);
         break;
     }
 
-    /* Handle any errors from num/float ops.  Error logged by setvar_*_op */
     if (rc != IB_OK) {
+        ib_rule_log_error(
+            rule_exec,
+            "setvar %.*s: Failed operate on field: %s",
+            tslen, ts,
+            ib_status_to_string(rc)
+        );
         return rc;
     }
 
