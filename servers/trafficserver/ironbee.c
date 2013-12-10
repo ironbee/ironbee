@@ -634,8 +634,8 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
      * Trust TS not to create more TXNs after signalling SSN close!
      */
     if (ssn->closing) {
-        tx_list_destroy(ssn->iconn);
         if (ssn->iconn) {
+            tx_list_destroy(ssn->iconn);
             ib_conn_t *conn = ssn->iconn;
             ib_engine_t *ib = conn->ib;
 
