@@ -2063,7 +2063,7 @@ static ib_status_t tx_var_flags_set(
             rc = ib_field_create(
                 &field,
                 tx->mp,
-                IB_S2SL(flagmap->tx_name),
+                "", 0,
                 IB_FTYPE_NUM,
                 ib_ftype_num_in(&flag_value));
             if (rc != IB_OK) {
