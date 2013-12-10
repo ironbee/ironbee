@@ -476,37 +476,57 @@ namespace {
         /**
          * Constructor.
          *
-         * @param[in] field_name The name of the var to set to 1 or 0
-         *            depending on if the flag is turned on or off.
-         * @param[in] flag A field of bits to be set or cleared.
-         *            Typical usage should be to set a single
-         *            bit in the bit field (a single flag),
-         *            but treating multiple bits being set or cleared
-         *            is not prevented from working.
-         * @param[in] clear If true, then the flag is cleared. If false, the
-         *            flag is set.
+         * @param[in] The flag name. This is used to identify this action.
+         * @param[in] flag A field of bits to be set.
          * @param[in] priority Sets the priority of this action to control
          *            if it may be overridden.
          */
         SetFlag(
             const std::string& field_name,
-            ib_flags_t flag,
-            bool clear,
-            int priority
+            ib_flags_t         flag,
+            int                priority
         );
 
-    private:
+    protected:
         //! The name of the field to set.
         std::string m_field_name;
 
         //! The flag to set in ib_tx_t::flags.
         ib_flags_t m_flag;
 
-        //! Should the flag be cleared, rather than set.
-        bool m_clear;
+        /**
+         * Set the field to 1 and set the flag in @ref ib_tx_t.
+         *
+         * @param[in] mdata The module.
+         * @param[in] tx The transaction to be modified.
+         */
+        virtual void apply_impl(
+            xrules_module_tx_data_ptr mdata,
+            IronBee::Transaction tx
+        ) const;
+    };
+
+    /**
+     * Almost identical to SetFlag except the apply_impl method.
+     */
+    class UnsetFlag : public SetFlag {
+    public:
 
         /**
-         * Set the field to 0 or 1 and set or clear the flag in @ref ib_tx_t.
+         * Constructor.
+         *
+         * @param[in] The flag name. This is used to identify this action.
+         * @param[in] flag A field of bits to be cleared.
+         * @param[in] priority Sets the priority of this action to control
+         *            if it may be overridden.
+         */
+        UnsetFlag(
+            const std::string& field_name,
+            ib_flags_t         flag,
+            int                priority);
+    protected:
+        /**
+         * Set the field to 0 and clear the flag in @ref ib_tx_t.
          *
          * @param[in] mdata The module.
          * @param[in] tx The transaction to be modified.
@@ -521,27 +541,36 @@ namespace {
     SetFlag::SetFlag(
         const std::string& field_name,
         ib_flags_t flag,
-        bool clear,
         int priority
     )
     :
         Action("SetFlag_" + field_name, priority),
         m_field_name(field_name),
-        m_flag(flag),
-        m_clear(clear)
+        m_flag(flag)
     {}
+
+    UnsetFlag::UnsetFlag(
+            const std::string& field_name,
+            ib_flags_t         flag,
+            int                priority)
+    :
+        SetFlag(field_name, flag, priority)
+    {}
+
+    void UnsetFlag::apply_impl(
+        xrules_module_tx_data_ptr mdata,
+        IronBee::Transaction tx
+    ) const
+    {
+        IronBee::throw_if_error(ib_tx_flags_unset(tx.ib(), m_flag));
+    }
 
     void SetFlag::apply_impl(
         xrules_module_tx_data_ptr mdata,
         IronBee::Transaction tx
     ) const
     {
-        if (m_clear) {
-            IronBee::throw_if_error(ib_tx_flags_unset(tx.ib(), m_flag));
-        }
-        else {
-            IronBee::throw_if_error(ib_tx_flags_set(tx.ib(), m_flag));
-        }
+        IronBee::throw_if_error(ib_tx_flags_set(tx.ib(), m_flag));
     }
     /* End SetFlag Impl */
 
@@ -604,9 +633,7 @@ namespace {
     }
     /* End ScaleThreat Impl */
 
-    /**
-     * Sets XRULE:BLOCKING_MODE = ENABLED | DISABLED.
-     */
+    //! Set the blocking mode flag.
     class SetBlockingMode : public SetFlag {
 
     public:
@@ -628,7 +655,30 @@ namespace {
         SetFlag(
             "FLAGS:blockingMode",
             IB_TX_FBLOCKING_MODE,
-            enabled,
+            priority)
+    {}
+
+    class UnsetBlockingMode : public UnsetFlag {
+
+    public:
+
+        /**
+         * Constructor.
+         *
+         * @param[in] enabled If true, set the XRULES:BLOCKING_MODE to
+         *            ENABLED. Set it it to DISABLED otherwise.
+         * @param[in] priority Sets the priority of this action to control
+         *            if it may be overridden.
+         */
+        UnsetBlockingMode(bool enabled, int priority);
+    };
+
+    /* UnsetBlockingMode Impl */
+    UnsetBlockingMode::UnsetBlockingMode(bool enabled, int priority)
+    :
+        UnsetFlag(
+            "FLAGS:blockingMode",
+            IB_TX_FBLOCKING_MODE,
             priority)
     {}
 
@@ -697,10 +747,14 @@ namespace {
             return action_ptr(new BlockAllow(false, priority));
         }
         else if (has_action(ACTION_ENABLEBLOCKINGMODE, mr)) {
-            return action_ptr(new SetBlockingMode(true, priority));
+            return action_ptr(
+                new SetFlag(
+                    "FLAGS:blockingMode", IB_TX_FBLOCKING_MODE, priority));
         }
         else if (has_action(ACTION_DISABLEBLOCKINGMODE, mr)) {
-            return action_ptr(new SetBlockingMode(false, priority));
+            return action_ptr(
+                new UnsetFlag(
+                    "FLAGS:blockingMode", IB_TX_FBLOCKING_MODE, priority));
         }
         else if (has_action(ACTION_SCALETHREAT, mr)) {
             ib_uuid_t uuid;
@@ -728,15 +782,13 @@ namespace {
                 new SetFlag(
                     "FLAGS:inspectRequestHeader",
                     IB_TX_FINSPECT_REQHDR,
-                    false,
                     priority));
         }
         else if (has_action(ACTION_DISABLEREQUESTHEADERINSPECTION, mr)) {
             return action_ptr(
-                new SetFlag(
+                new UnsetFlag(
                     "FLAGS:inspectRequestHeader",
                     IB_TX_FINSPECT_REQHDR,
-                    true,
                     priority));
         }
         else if (has_action(ACTION_ENABLEREQUESTURIINSPECTION, mr)) {
@@ -744,15 +796,13 @@ namespace {
                 new SetFlag(
                     "FLAGS:inspectRequestUri",
                     IB_TX_FINSPECT_REQURI,
-                    false,
                     priority));
         }
         else if (has_action(ACTION_DISABLEREQUESTURIINSPECTION, mr)) {
             return action_ptr(
-                new SetFlag(
+                new UnsetFlag(
                     "FLAGS:inspectRequestUri",
                     IB_TX_FINSPECT_REQURI,
-                    true,
                     priority));
         }
         else if (has_action(ACTION_ENABLEREQUESTPARAMINSPECTION, mr)) {
@@ -760,15 +810,13 @@ namespace {
                 new SetFlag(
                     "FLAGS:inspectRequestParams",
                     IB_TX_FINSPECT_REQPARAMS,
-                    false,
                     priority));
         }
         else if (has_action(ACTION_DISABLEREQUESTPARAMINSPECTION, mr)) {
             return action_ptr(
-                new SetFlag(
+                new UnsetFlag(
                     "FLAGS:inspectRequestParams",
                     IB_TX_FINSPECT_REQPARAMS,
-                    true,
                     priority));
         }
         else if (has_action(ACTION_ENABLEREQUESTBODYINSPECTION, mr)) {
@@ -776,15 +824,13 @@ namespace {
                 new SetFlag(
                     "FLAGS:inspectRequestBody",
                     IB_TX_FINSPECT_REQBODY,
-                    false,
                     priority));
         }
         else if (has_action(ACTION_DISABLEREQUESTBODYINSPECTION, mr)) {
             return action_ptr(
-                new SetFlag(
+                new UnsetFlag(
                     "FLAGS:inspectRequestBody",
                     IB_TX_FINSPECT_REQBODY,
-                    true,
                     priority));
         }
         else if (has_action(ACTION_ENABLERESPONSEHEADERINSPECTION, mr)) {
@@ -792,15 +838,13 @@ namespace {
                 new SetFlag(
                     "FLAGS:inspectResponseHeader",
                     IB_TX_FINSPECT_RESHDR,
-                    false,
                     priority));
         }
         else if (has_action(ACTION_DISABLERESPONSEHEADERINSPECTION, mr)) {
             return action_ptr(
-                new SetFlag(
+                new UnsetFlag(
                     "FLAGS:inspectResponseHeader",
                     IB_TX_FINSPECT_RESHDR,
-                    true,
                     priority));
         }
         else if (has_action(ACTION_ENABLERESPONSEBODYINSPECTION, mr)) {
@@ -808,15 +852,13 @@ namespace {
                 new SetFlag(
                     "FLAGS:inspectResponseBody",
                     IB_TX_FINSPECT_RESBODY,
-                    false,
                     priority));
         }
         else if (has_action(ACTION_DISABLERESPONSEBODYINSPECTION, mr)) {
             return action_ptr(
-                new SetFlag(
+                new UnsetFlag(
                     "FLAGS:inspectResponseBody",
                     IB_TX_FINSPECT_RESBODY,
-                    true,
                     priority));
         }
 
