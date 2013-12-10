@@ -601,6 +601,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
     ib_ssn_ctx *ssn = ctx->ssn;
 
     assert(tx != NULL);
+    assert(ssn != NULL);
 
     TSMutexLock(ssn->mutex);
 
@@ -627,34 +628,33 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
     }
 
     /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
-    if (ctx->ssn != NULL) {
-        ctx->ssn = NULL;
+    ctx->ssn = NULL;
 
-        /* If it's closing, the contp and with it the mutex are already gone.
-         * Trust TS not to create more TXNs after signalling SSN close!
-         */
-        if (ssn->closing) {
-            tx_list_destroy(ssn->iconn);
-            if (ssn->iconn) {
-                ib_conn_t *conn = ssn->iconn;
-                ib_engine_t *ib = conn->ib;
+    /* If it's closing, the contp and with it the mutex are already gone.
+     * Trust TS not to create more TXNs after signalling SSN close!
+     */
+    if (ssn->closing) {
+        tx_list_destroy(ssn->iconn);
+        if (ssn->iconn) {
+            ib_conn_t *conn = ssn->iconn;
+            ib_engine_t *ib = conn->ib;
 
-                ssn->iconn = NULL;
-                TSDebug("ironbee",
-                        "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
-                ib_state_notify_conn_closed(ib, conn);
-                TSDebug("ironbee", "CONN DESTROY: conn=%p", conn);
-                ib_conn_destroy(conn);
-            }
-            TSContDataSet(ssn->contp, NULL);
-            TSContDestroy(ssn->contp);
-            TSMutexUnlock(ssn->mutex);
-            TSfree(ssn);
+            ssn->iconn = NULL;
+            TSDebug("ironbee",
+                    "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
+            ib_state_notify_conn_closed(ib, conn);
+            TSDebug("ironbee", "CONN DESTROY: conn=%p", conn);
+            ib_conn_destroy(conn);
         }
-        else {
-            --(ssn->txn_count);
-        }
+        TSContDataSet(ssn->contp, NULL);
+        TSContDestroy(ssn->contp);
+        TSMutexUnlock(ssn->mutex);
+        TSfree(ssn);
     }
+    else {
+        --(ssn->txn_count);
+    }
+
     TSfree(ctx);
     TSMutexUnlock(ssn->mutex);
 }
