@@ -295,7 +295,7 @@ ib_status_t DLL_PUBLIC ib_server_error_header(
  * code is also set using ib_server_error_response.
  *
  * @param[in] svr The @ref ib_server_t
- * @param[in] ctx Application pointer from the server
+ * @param[in] tx Transaction object.
  * @param[in] data Response to set
  * @param[in] dlen Length of @a data
  * @return indication of whether the requested error action is supported

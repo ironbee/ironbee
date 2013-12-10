@@ -251,6 +251,7 @@ extern "C" {
  *
  * @param[in] logger The logger.
  * @param[in] rec The record to produce @a writer_record from.
+ * @param[in] log_msg Unused.
  * @param[in] log_msg_sz The length of @a log_msg.
  * @param[out] writer_record A @ref ib_logger_standard_msg_t if this returns
  *             IB_OK. Unset otherwise. This must be a `ib_logger_std_msg_t **`.

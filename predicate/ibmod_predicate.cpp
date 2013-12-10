@@ -161,18 +161,18 @@ public:
     PerContext(Delegate& delegate);
 
     /**
-     * Convert rules stored in @ref rules_by_index into @ref rules.
+     * Convert rules stored in index to a form used at runtime.
      *
-     * Calling this method will result in an empty @ref rules_by_index and
-     * will destroy any preexisting content in rules.
+     * Calling this method will result in an empty rule index and will
+     * destroy any preexisting content in rules.
      **/
     void convert_rules();
 
     /**
-     * Add a rule to @ref rules_by_index.
+     * Add a rule to index.
      *
-     * Adds the root to the global MergeGraph and records the rule in
-     * @ref rules_by_index accordingly.
+     * Adds the root to the global MergeGraph and records the rule in the
+     * index.
      *
      * @param[in] root Root of expression tree.
      * @param[in] rule Rule to fire when @a root evaluates to true.
@@ -182,9 +182,9 @@ public:
     /**
      * Inject rules.
      *
-     * @param[in] ib_context_t Context this PerContext belongs to.
-     * @param[in] rule_exec    Rule execution environment.
-     * @param[in] rule_list    List to write injected rules to.
+     * @param[in] context   Context this PerContext belongs to.
+     * @param[in] rule_exec Rule execution environment.
+     * @param[in] rule_list List to write injected rules to.
      **/
     void inject(
         IB::ConstContext           context,

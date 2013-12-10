@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ -- Top level doxygen page.
+ * @brief IronBee++ --- Top level doxygen page.
  *
  * This file contains only doxygen directives; no code is present.
  *
@@ -25,7 +25,7 @@
  */
 
 /**
- * \page ironbeepp IronBee++ -- A C++ API for IronBee
+ * \page ironbeepp IronBee++ &mdash; A C++ API for IronBee
  *
  * IronBee++ is a (currently partial) C++ API for IronBee.  It largely mimics
  * the C API, but with many adaptations to C++ including:

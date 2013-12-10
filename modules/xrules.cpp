@@ -418,7 +418,7 @@ namespace {
          *
          * @param[in] block If true, BlockAllow will block a transaction.
          *            If false, BlockAllow will allow a transaction.
-         * @param[in] Priority of this action.
+         * @param[in] priority Priority of this action.
          */
         BlockAllow(bool block, int priority);
 
@@ -559,9 +559,6 @@ namespace {
          *            action is always executed, they
          *            need unique ids.
          * @param[in] fnum The floating point number to be store in tx.
-         * @param[in] results The calling application
-         *            must provide a pointer to a float that
-         *            this action may manipulate when it is executed.
          * @param[in] priority The priority of this action.
          */
         ScaleThreat(
@@ -653,7 +650,6 @@ namespace {
          *
          * @param[in] arg Argument to parse.
          * @param[in] priority The priority the resultant @a action should have.
-         * @param[out] action A concrete action derived from Action.
          */
         action_ptr build(const char *arg, int priority);
 
@@ -960,6 +956,7 @@ namespace {
         /**
          * Constructor.
          *
+         * @param[in] country The country to match.
          * @param[in] action The action to perform if this rule matches.
          */
         XRuleGeo(const char *country, action_ptr action);
@@ -1078,7 +1075,14 @@ namespace {
     public:
 
         /**
-         * @param[in] field REQUEST_CONTENT_TYPE or RESPONSE_CONTENT_TYPE.
+         * Constructor.
+         *
+         * @param[in] content_type Content type to match.
+         * @param[in] action Action to take on match.
+         * @param[in] content_type_field Target holding content type.
+         * @param[in] content_length_field Target holding content length.
+         * @param[in] transport_encoding_field Target holding
+         *            transport encoding.
          */
         XRuleContentType(
             const char* content_type,
@@ -1271,6 +1275,7 @@ namespace {
          * Constructor.
          *
          * @param[in] path The path prefix to match.
+         * @param[in] action Action to take on match.
          */
         XRulePath(const char *path, action_ptr action);
 
@@ -1327,6 +1332,7 @@ namespace {
 
         /**
          * Constructor.
+         * @param[in] cp Configuration parser.
          * @param[in] time Time window string. This string has a
          *            specific format.
          *            - 08:00-17:00-600 This is the most simple format,
@@ -1596,7 +1602,7 @@ namespace {
      * Unlike a normal XRule that maps a single check to a single action,
      * for efficient evaluation, this XRule is constructed
      * after the IronBee configuration phase and wraps all IPs into
-     * a @ref ib_ipset4_t or @ref ib_set6_t and does a single check
+     * a @ref ib_ipset4_t or @ref ib_ipset6_t and does a single check
      * for the most precise match. That match results in a pointer
      * to an Action wrapped by IronBee::value_to_data().
      */

@@ -105,8 +105,7 @@ public:
     /**
      * Constructor.
      *
-     * Set @ref last_unfinished to be the first child and
-     * @ref last_value_added to be singular.
+     * Set last unfinished child to be first child.
      **/
     explicit
     cat_impl_t(const Cat& me)
@@ -117,8 +116,7 @@ public:
     /**
      * Calculate.
      *
-     * After this, @ref last_unfinished and @ref last_value_added will be
-     * updated.
+     * After this, last unfinished child and last value added will be updated.
      **/
     void eval_calculate(
         const Cat&      me,
@@ -150,9 +148,9 @@ public:
 
 private:
     /**
-     * Add all children from @ref last_unfinished after @ref last_value_added.
+     * Add all children from last unfinished node after last value added.
      *
-     * Updates @ref last_value_added.
+     * Updates last value added.
      **/
     void add_from_current(
         const Cat&      me,
@@ -189,10 +187,10 @@ private:
     }
 
     /**
-     * Advanced @ref last_unfinished to new leftmost unfinished child.
+     * Advanced last unfinished to new leftmost unfinished child.
      *
      * Adds values of finished children along the way.
-     * If no unfinished children, @ref last_unfinished will end up as
+     * If no unfinished children, last unfinished will end up as
      * `me.children().end()`.
      **/
     void add_until_next_unfinished(

@@ -102,7 +102,7 @@ ib_status_t mock_error_body_fn(
  * this function is used.
  *
  * @param[in] tx Transaction.
- * @param[in] state The HTTP error status.
+ * @param[in] status The HTTP error status.
  * @param[in] cbdata Unused callback data.
  *
  * @returns IB_OK.
