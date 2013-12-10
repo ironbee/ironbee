@@ -94,6 +94,15 @@ ib_status_t DLL_PUBLIC ib_strval_lookup(
     uint64_t           *pval);
 
 /**
+ * Loop through all elements in a strval map
+ *
+ * @param[in] map strval map
+ * @param[in] rec strval record
+ */
+#define IB_STRVAL_LOOP(map, rec)                        \
+    for ((rec) = (map); (rec)->str != NULL; ++(rec))
+
+/**
  * Lookup a name/pointer pair mapping
  *
  * @param[in] map String / pointer mapping

@@ -30,6 +30,7 @@
 
 #include <ironbee/list.h>
 #include <ironbee/mpool.h>
+#include <ironbee/string.h>
 #include <ironbee/types.h>
 
 #include <stdexcept>
@@ -54,7 +55,9 @@ typedef enum {
     VALUE_17,
     VALUE_18,
     VALUE_19,
+    VALUE_MAX=VALUE_19
 } test_values_t;
+#define NUM_VALUES (VALUE_MAX + 1)
 
 static IB_STRVAL_MAP(value_map) = {
     IB_STRVAL_PAIR("value-01", VALUE_01),
@@ -102,6 +105,25 @@ TEST(TestStrVal, test_lookup)
     ASSERT_EQ(IB_EINVAL, ib_strval_lookup(value_map, "value-19", NULL));
 }
 
+TEST(TestStrVal, test_loop)
+{
+    size_t             count = 0;
+    bool               found[NUM_VALUES];
+    const ib_strval_t *rec;
+
+    memset(found, 0, sizeof(found));
+    IB_STRVAL_LOOP(value_map, rec) {
+        ++count;
+        ASSERT_TRUE(rec->val <= VALUE_MAX);
+        found[rec->val] = true;
+    }
+
+    ASSERT_EQ((size_t)NUM_VALUES, count);
+    for(size_t i = 0;  i < NUM_VALUES;  ++i) {
+        ASSERT_TRUE(found[i]);
+    }
+}
+
 static IB_STRVAL_PTR_MAP(ptr_map) = {
     IB_STRVAL_PAIR("value-01", "01"),
     IB_STRVAL_PAIR("value-02", "02"),
@@ -146,6 +168,29 @@ TEST(TestStrVal, test_ptr_lookup)
     ASSERT_EQ(IB_EINVAL, ib_strval_ptr_lookup(NULL, "value-00", &value));
     ASSERT_EQ(IB_EINVAL, ib_strval_ptr_lookup(ptr_map, NULL, &value));
     ASSERT_EQ(IB_EINVAL, ib_strval_ptr_lookup(ptr_map, "value-19", NULL));
+}
+
+TEST(TestStrVal, test_ptr_loop)
+{
+    size_t                 count = 0;
+    const ib_strval_ptr_t *rec;
+    bool                   found[NUM_VALUES];
+
+    memset(found, 0, sizeof(found));
+    IB_STRVAL_LOOP(ptr_map, rec) {
+        ib_status_t rc;
+        ib_num_t    num;
+
+        ++count;
+        rc = ib_string_to_num( (const char *)(rec->val), 10, &num);
+        found[num-1] = true;
+        ASSERT_EQ(IB_OK, rc);
+    }
+
+    ASSERT_EQ((size_t)NUM_VALUES, count);
+    for(size_t i = 0;  i < NUM_VALUES;  ++i) {
+        ASSERT_TRUE(found[i]);
+    }
 }
 
 typedef struct {
@@ -211,4 +256,24 @@ TEST(TestStrVal, test_data_lookup)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(VALUE_19, value->value);
     ASSERT_STREQ("19", value->str);
+}
+
+TEST(TestStrVal, test_data_loop)
+{
+    size_t                    count = 0;
+    const test_strval_data_t *rec;
+    bool                      found[NUM_VALUES];
+
+    memset(found, 0, sizeof(found));
+
+    IB_STRVAL_LOOP(data_map, rec) {
+
+        ++count;
+        found[rec->data.value] = true;
+    }
+
+    ASSERT_EQ((size_t)NUM_VALUES, count);
+    for(size_t i = 0;  i < NUM_VALUES;  ++i) {
+        ASSERT_TRUE(found[i]);
+    }
 }
