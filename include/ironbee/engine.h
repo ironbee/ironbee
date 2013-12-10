@@ -37,6 +37,7 @@
 #include <ironbee/parsed_content.h>
 #include <ironbee/server.h>
 #include <ironbee/stream.h>
+#include <ironbee/strval.h>
 #include <ironbee/uuid.h>
 
 #include <stdarg.h>
@@ -355,6 +356,27 @@ ib_status_t DLL_PUBLIC ib_tx_flags_set(ib_tx_t *tx, ib_flags_t flags);
  * - Other on var errors.
  */
 ib_status_t DLL_PUBLIC ib_tx_flags_unset(ib_tx_t *tx, ib_flags_t flags);
+
+/**
+ * Get the string value for a specific TX flag
+ *
+ * @note If more than one flag is set, the string matching the first
+ * one will be returned.
+ *
+ * @param[in] flags The flags to lookup
+ *
+ * @returns
+ * "None" if no flags are set
+ * String representation of first set flag
+ */
+const char DLL_PUBLIC *ib_tx_flags_name(ib_flags_t flags);
+
+/**
+ * Get the first TX flag strval
+ *
+ * @returns Pointer to the first flag strval
+ */
+const ib_strval_t DLL_PUBLIC *ib_tx_flags_strval_first();
 
 /**
  * Destroy a connection structure.

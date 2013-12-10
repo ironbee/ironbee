@@ -138,56 +138,6 @@ struct ib_moddevel_txdump_config_t {
 };
 
 /**
- * Mapping of valid rule logging names to flag values.
- */
-static IB_STRVAL_MAP(tx_flags_map) = {
-    IB_STRVAL_PAIR("None", IB_TX_FNONE),
-    IB_STRVAL_PAIR("HTTP/0.9", IB_TX_FHTTP09),
-    IB_STRVAL_PAIR("Pipelined", IB_TX_FPIPELINED),
-
-    IB_STRVAL_PAIR("Request Started", IB_TX_FREQ_STARTED),
-    IB_STRVAL_PAIR("Request Line", IB_TX_FREQ_LINE),
-    IB_STRVAL_PAIR("Request Header", IB_TX_FREQ_HEADER),
-    IB_STRVAL_PAIR("Request Body", IB_TX_FREQ_BODY),
-    IB_STRVAL_PAIR("Request Trailer", IB_TX_FREQ_TRAILER),
-    IB_STRVAL_PAIR("Request Finished", IB_TX_FREQ_FINISHED),
-    IB_STRVAL_PAIR("Request Has Data", IB_TX_FREQ_HAS_DATA),
-
-    IB_STRVAL_PAIR("Response Started", IB_TX_FRES_STARTED),
-    IB_STRVAL_PAIR("Response Line", IB_TX_FRES_LINE),
-    IB_STRVAL_PAIR("Response Header", IB_TX_FRES_HEADER),
-    IB_STRVAL_PAIR("Response Body", IB_TX_FRES_BODY),
-    IB_STRVAL_PAIR("Response Trailer", IB_TX_FRES_TRAILER),
-    IB_STRVAL_PAIR("Response Finished", IB_TX_FRES_FINISHED),
-    IB_STRVAL_PAIR("Response Has Data", IB_TX_FRES_HAS_DATA),
-
-    IB_STRVAL_PAIR("Logging", IB_TX_FLOGGING),
-    IB_STRVAL_PAIR("Post-Process", IB_TX_FPOSTPROCESS),
-
-    IB_STRVAL_PAIR("Error", IB_TX_FERROR),
-    IB_STRVAL_PAIR("Suspicious", IB_TX_FSUSPICIOUS),
-    IB_STRVAL_PAIR("Blocked", IB_TX_FBLOCKED),
-
-    IB_STRVAL_PAIR("Inspect Request URI", IB_TX_FINSPECT_REQURI),
-    IB_STRVAL_PAIR("Inspect Request Parameters", IB_TX_FINSPECT_REQPARAMS),
-    IB_STRVAL_PAIR("Inspect Request Header", IB_TX_FINSPECT_REQHDR),
-    IB_STRVAL_PAIR("Inspect Request Body", IB_TX_FINSPECT_REQBODY),
-    IB_STRVAL_PAIR("Inspect Response Header", IB_TX_FINSPECT_RESHDR),
-    IB_STRVAL_PAIR("Inspect Response Body", IB_TX_FINSPECT_RESBODY),
-
-    IB_STRVAL_PAIR("Blocking Mode", IB_TX_FBLOCKING_MODE),
-    IB_STRVAL_PAIR("Block: Advisory", IB_TX_FBLOCK_ADVISORY),
-    IB_STRVAL_PAIR("Block: Phase", IB_TX_FBLOCK_PHASE),
-    IB_STRVAL_PAIR("Block: Immediate", IB_TX_FBLOCK_IMMEDIATE),
-    IB_STRVAL_PAIR("Allow: Phase", IB_TX_FALLOW_PHASE),
-    IB_STRVAL_PAIR("Allow: Request", IB_TX_FALLOW_REQUEST),
-    IB_STRVAL_PAIR("Allow: All", IB_TX_FALLOW_ALL),
-
-    /* End */
-    IB_STRVAL_PAIR_LAST
-};
-
-/**
  * Dump an item (variable args version)
  *
  * @param[in] tx IronBee Transaction
@@ -844,8 +794,8 @@ static ib_status_t moddevel_txdump_tx(
 
         moddevel_txdump(tx, txdump, 2,
                         "Flags = %010lx", (unsigned long)tx->flags);
-        for (rec = tx_flags_map; rec->str != NULL; ++rec) {
-            bool on = ib_flags_all(tx->flags, rec->val);
+        IB_STRVAL_LOOP(ib_tx_flags_strval_first(), rec) {
+            bool on = ib_flags_any(tx->flags, rec->val);
             moddevel_txdump(tx, txdump, 4, "%010lx \"%s\" = %s",
                             (unsigned long)rec->val, rec->str,
                             on ? "On" : "Off");
