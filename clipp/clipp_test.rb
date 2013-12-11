@@ -35,7 +35,18 @@ module CLIPPTestAssertions
 
   # Assert that nothing higher than notice appears
   def assert_no_issues
+    assert(0 == exit_status, "Clipp exited with non-zero status.")
     assert_log_no_match(/ (EMERGENCY|CRITICAL|ALERT|ERROR|WARNING) /)
+  end
+
+  # Assert that clipp did exit cleanly (status code = 0).
+  def assert_clean_exit
+      assert(0 == exit_status)
+  end
+
+  # Assert that clipp did not exit cleanly (status code != 0).
+  def assert_no_clean_exit
+      assert(0 != exit_status)
   end
 
   # Iterate through every input.
@@ -100,6 +111,8 @@ module CLIPPTest
   include CLIPPTestAssertions
   include CLIPPTestLogHelper
 
+  # The exit status of the clipp command execution.
+  attr_reader :exit_status
   # Access log of most recent clipp run.
   attr_reader :log
   # Alias for above.
@@ -147,9 +160,15 @@ module CLIPPTest
     [output, status]
   end
 
-  # Execute clipp using the clipp config at config_path.  Output is displayed
-  # to standard out and returned.  If exit status is non-zero then nil is
-  # returned.
+  # Execute clipp using the clipp config at config_path.  
+  #
+  # Output is displayed to standard out.
+  #
+  # This returns a 2-element list in which the first element is the
+  # status code from the clipp command and the second element is the log output.
+  #
+  # A status code of 0 indicates success. A status code of non-zero indicates failure.
+  #
   def run_clipp(config_path)
     output, status = run_command(
       CLIPP, '-c', config_path
@@ -163,11 +182,9 @@ module CLIPPTest
       puts output
       puts
       puts "Exit status: #{status.exitstatus}"
-
-      nil
-    else
-      output
     end
+
+    [ status.exitstatus, output ]
   end
 
   # Replace CLIPPDIR and BUILDDIR in path with the appropriate values (see
@@ -365,7 +382,8 @@ public
       "#{config[:input]} #{consumer_chain}\n"
     )
 
-    @log = @clipp_log = run_clipp(clipp_config)
+    @exit_status, @log = run_clipp(clipp_config)
+    @clipp_log = @log
 
     assert_not_nil(@log, "No output.")
   end
