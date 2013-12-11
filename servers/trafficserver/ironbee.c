@@ -1073,6 +1073,7 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
         TSDebug("ironbee", "\tout_data_event: tx == NULL");
         return 0;
     }
+    /* Protect against https://issues.apache.org/jira/browse/TS-922 */
     else if (data->out.buflen == (unsigned int)-1) {
         TSDebug("ironbee", "\tout_data_event: buflen == -1");
         return 0;
