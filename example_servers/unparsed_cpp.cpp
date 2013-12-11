@@ -378,7 +378,7 @@ void ExampleIronBee::load_configuration(
 ) const
 {
     /* This example shows how to configure from a file.  The configuration
-     * parse includes a variety of ways to configure, including the ability
+     * parser includes a variety of ways to configure, including the ability
      * to build up a parsed configuration and then apply to the m_engine.
      */
     IronBee::ConfigurationParser parser =
@@ -495,7 +495,7 @@ void ExampleIronBee::send_to_ironbee(
      *
      * - Request Started which provides the request line.
      * - Request Header which provides headers.  May be repeated.
-     * - Request Header Finishes indicating no more headers.
+     * - Request Header Finished indicating no more headers.
      * - Request Body which provides body data.  May be repeated.
      * - Request Finished indicating the end of the request.
      * - A similar sequence of events for the response.
