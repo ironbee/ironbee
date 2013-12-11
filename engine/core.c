@@ -3184,11 +3184,12 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         status  = atoi(p1);
 
-        if (!(status <= 200 && status < 600))
+        if (status < 200 || status >= 600)
         {
-            ib_log_error(ib,
-                         "DefaultBlockStatus must be 200 <= status < 600: %d",
-                         status);
+            ib_log_error(
+                ib,
+                "DefaultBlockStatus status must be 200 <= status < 600: %d",
+                status);
             return IB_EINVAL;
         }
 
@@ -3220,9 +3221,10 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
             if (status < 200 || status >= 600)
             {
-                ib_log_error(ib,
-                             "BlockingMethod status must be 200 <= status < 600: %d",
-                             status);
+                ib_log_error(
+                    ib,
+                    "BlockingMethod status must be 200 <= status < 600: %d",
+                    status);
                 return IB_EINVAL;
             }
 
