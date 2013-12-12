@@ -101,9 +101,9 @@ TEST_P(CoreActionFlagVarTest, FlagSet) {
             ib_tx->var_store)
     );
 
-    ASSERT_EQ(1U, ib_list_elements(l));
+    ASSERT_TRUE(ib_list_elements(l) > 0);
 
-    f = (ib_field_t *)ib_list_node_data_const(ib_list_first_const(l));
+    f = (ib_field_t *)ib_list_node_data_const(ib_list_last_const(l));
 
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
 
