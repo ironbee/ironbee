@@ -285,11 +285,12 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
     const ib_tx_flag_map_t *flag;
 
     for (flag = ib_core_vars_tx_flags();  flag->name != NULL;  ++flag) {
-        core_gen_tx_numeric(
-            tx,
-            flag->tx_name,
-            (tx->flags & flag->tx_flag ? 1 : 0)
-        );
+        if (tx->flags & flag->tx_flag) {
+            ib_tx_flags_set(tx, flag->tx_flag);
+        }
+        else {
+            ib_tx_flags_unset(tx, flag->tx_flag);
+        }
     }
 
     return IB_OK;
