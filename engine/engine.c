@@ -2051,7 +2051,7 @@ static ib_status_t tx_var_flags_set(
             rc = ib_var_target_acquire_from_string(
                 &target,
                 tx->mp,
-                ib_var_store_config(tx->var_store),
+                ib_engine_var_config_get_const(tx->ib),
                 IB_S2SL(flagmap->tx_name),
                 NULL,
                 NULL);
@@ -2063,7 +2063,7 @@ static ib_status_t tx_var_flags_set(
             rc = ib_field_create(
                 &field,
                 tx->mp,
-                "", 0,
+                IB_S2SL(flagmap->tx_name),
                 IB_FTYPE_NUM,
                 ib_ftype_num_in(&flag_value));
             if (rc != IB_OK) {
