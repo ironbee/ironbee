@@ -326,6 +326,7 @@ int main(int argc, char** argv)
         cerr << "Error occurred: "
              << diagnostic_information(e)
              << endl;
+        return 1;
     }
 
     /* Shutdown IronBee */
