@@ -796,6 +796,9 @@ static ib_status_t act_setvar_create(
             "", 0,
             IB_FTYPE_GENERIC,
             ib_ftype_generic_in(&arg_u.var_expand));
+        if (rc != IB_OK) {
+            return rc;
+        }
         setvar_data->op = SETVAR_STRSET;
     }
 
