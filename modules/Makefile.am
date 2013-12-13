@@ -218,7 +218,7 @@ endif
 
 if CPP
 module_LTLIBRARIES += ibmod_txlog.la
-ibmod_txlog_la_SOURCES = txlog.cpp
+ibmod_txlog_la_SOURCES = txlog.cpp txlog_json.cpp
 ibmod_txlog_la_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
 ibmod_txlog_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
 			 $(BOOST_LDFLAGS)

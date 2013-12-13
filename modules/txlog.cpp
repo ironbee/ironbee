@@ -28,6 +28,7 @@
 
 /* Include our own public header file. */
 #include "txlog_private.h"
+#include "txlog_json.hpp"
 #include "txlog.h"
 
 #include <ironbeepp/configuration_directives.hpp>
@@ -43,6 +44,7 @@
 #include <ironbeepp/parsed_response_line.hpp>
 #include <ironbeepp/site.hpp>
 #include <ironbeepp/transaction.hpp>
+#include <ironbeepp/var.hpp>
 
 #include <ironbee/core.h>
 #include <ironbee/logevent.h>
@@ -54,7 +56,7 @@
 #include <boost/date_time/time_facet.hpp>
 #include <boost/function.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
 
 /* Enable PRId64 printf. */
 extern "C" {
@@ -71,25 +73,23 @@ namespace {
  */
 class TxLogData {
 public:
-    //! The response blocking method or "-".
+    //! The response blocking method or "".
     const std::string& responseBlockMethod() const;
 
-    //! The response blocking action or "-".
+    //! The response blocking action or "".
     const std::string& responseBlockAction() const;
 
-    //! The request blocking method or "-".
+    //! The request blocking method or "".
     const std::string& requestBlockMethod() const;
 
-    //! The request blocking action or "-".
+    //! The request blocking action or "".
     const std::string& requestBlockAction() const;
 
-    //! The name of the auditlog file or "-".
+    //! The name of the auditlog file or "".
     const std::string& auditlogFile() const;
 
-    /**
-     * Constructor.
-     */
-    TxLogData();
+    //! The audit log boundary. Consider this the auditlog ID.
+    const std::string &auditlogId() const;
 
     /**
      * Sets response block and action data.
@@ -123,20 +123,23 @@ public:
 
 private:
 
-    //! The response blocking method or "-".
+    //! The response blocking method or "".
     std::string m_responseBlockMethod;
 
-    //! The response blocking action or "-".
+    //! The response blocking action or "".
     std::string m_responseBlockAction;
 
-    //! The request blocking method or "-".
+    //! The request blocking method or "".
     std::string m_requestBlockMethod;
 
-    //! The request blocking action or "-".
+    //! The request blocking action or "".
     std::string m_requestBlockAction;
 
-    //! The name of the auditlog file or "-".
+    //! The name of the auditlog file or "".
     std::string m_auditlogFile;
+
+    //! The audit log boundary. Consider this the audit log ID.
+    std::string m_auditlogId;
 
     /**
      * Record data about blocking status into @a action and @a method.
@@ -171,19 +174,14 @@ const std::string& TxLogData::requestBlockAction() const
 {
     return m_requestBlockAction;
 }
+const std::string& TxLogData::auditlogId() const
+{
+    return m_auditlogId;
+}
 
 const std::string& TxLogData::auditlogFile() const
 {
     return m_auditlogFile;
-}
-
-TxLogData::TxLogData() :
-    m_responseBlockMethod("-"),
-    m_responseBlockAction("-"),
-    m_requestBlockMethod("-"),
-    m_requestBlockAction("-"),
-    m_auditlogFile("-")
-{
 }
 
 void TxLogData::recordBlockData(
@@ -196,7 +194,7 @@ void TxLogData::recordBlockData(
     /* Insert Request Action */
     if (tx.is_allow_request() || tx.is_allow_all()) {
         action = "Allow";
-        method = "-";
+        method = "";
     }
     else if(tx.is_blocked())
     {
@@ -210,12 +208,12 @@ void TxLogData::recordBlockData(
             method = "ErrorPage";
             break;
         default:
-            method = "-";
+            method = "";
         }
     }
     else {
         action = "Pass";
-        method = "-";
+        method = "";
     }
 }
 
@@ -235,8 +233,179 @@ void TxLogData::recordAuditLogData(
 )
 {
     m_auditlogFile = auditlog->cfg_data->full_path;
+    m_auditlogId = tx.auditlog_id();
 }
 
+void eventsToJson(
+    IronBee::ConstTransaction tx,
+    TxLogJson& txLogJson
+)
+{
+    IronBee::ConstList<ib_logevent_t *> ib_eventList(tx.ib()->logevents);
+
+    txLogJson.withString("events");
+    TxLogJsonArray<TxLogJson> events = txLogJson.withArray();
+
+    BOOST_FOREACH(const ib_logevent_t *e, ib_eventList) {
+
+        /* Skip suppressed events. */
+        if (e->suppress != IB_LEVENT_SUPPRESS_NONE) {
+            continue;
+        }
+
+        /* Open a map to the rendering of JSON. */
+        TxLogJsonMap<TxLogJson> eventMap = txLogJson.withMap();
+
+        /* Conditionally add the tags list. */
+        if (e->tags && ib_list_elements(e->tags) > 0) {
+            TxLogJsonArray<TxLogJsonMap<TxLogJson> > tags =
+                eventMap.withArray("tags");
+            IronBee::ConstList<const char *> ib_tagList(e->tags);
+            BOOST_FOREACH(const char *tag, ib_tagList) {
+                tags.withString(tag);
+            }
+            tags.close();
+        }
+
+        if (e->fields && ib_list_elements(e->fields) > 0) {
+            TxLogJsonArray<TxLogJsonMap<TxLogJson> > locationList
+                = eventMap.withArray("locations");
+            IronBee::ConstList<const ib_field_t *> ib_fieldList(e->fields);
+            BOOST_FOREACH(const ib_field_t *field, ib_fieldList) {
+                locationList.withString(field->name, field->nlen);
+            }
+            locationList.close();
+        }
+
+        eventMap
+            .withString("rule", e->rule_id)
+            .withString("message", e->msg)
+            .withInt("confidence", e->confidence)
+            .withInt("severity", e->severity)
+            .withString("id", boost::lexical_cast<std::string>(e->event_id))
+            .close();
+    }
+
+    events.close();
+}
+
+void requestHeadersToJson(
+    IronBee::ConstTransaction tx,
+    TxLogJson& txLogJson
+)
+{
+    txLogJson.withString("headers");
+    TxLogJsonArray<TxLogJson> headers = txLogJson.withArray();
+
+    if (tx.request_header()) {
+        for (
+            IronBee::ConstParsedHeader headerNvp = tx.request_header();
+            headerNvp;
+            headerNvp = headerNvp.next()
+        )
+        {
+            headers.withMap()
+                    .withString("name", headerNvp.name().to_s())
+                    .withString("value", headerNvp.value().to_s())
+                .close();
+        }
+    }
+
+    headers.close();
+}
+
+void responseHeadersToJson(
+    IronBee::ConstTransaction tx,
+    TxLogJson& txLogJson
+)
+{
+    txLogJson.withString("headers");
+    TxLogJsonArray<TxLogJson> headers = txLogJson.withArray();
+
+    if (tx.response_header()) {
+        for (
+            IronBee::ConstParsedHeader headerNvp = tx.response_header();
+            headerNvp;
+            headerNvp = headerNvp.next()
+        )
+        {
+            headers.withMap()
+                    .withString("name", headerNvp.name().to_s())
+                    .withString("value", headerNvp.value().to_s())
+                .close();
+        }
+    }
+
+    headers.close();
+}
+
+/**
+ * Renders @a name and then @a val if val is non-empty.
+ *
+ * If the length of @a val is 0, then nothing is done.
+ *
+ * This function is intended for use with calls to
+ * TxLogJsonMap::withFunction() to render optional fields.
+ *
+ * @param[in] name The name of the value to render.
+ * @param[in] val The value to render if val.length() > 0.
+ * @param[in] tLogJson Used to render the values.
+ */
+void renderNonemptyString(
+    const char*        name,
+    const std::string& val,
+    TxLogJson&         txLogJson
+)
+{
+    if (val.length() > 0) {
+        txLogJson.withString(name);
+        txLogJson.withString(val);
+    }
+}
+
+void addThreatLevel(
+    IronBee::ConstContext     ctx,
+    IronBee::ConstTransaction tx,
+    TxLogJson&                txLogJson
+)
+{
+    try
+    {
+        ib_core_cfg_t *ib_core_cfg;
+        IronBee::throw_if_error(
+            ib_core_context_config(ctx.ib(), &ib_core_cfg),
+            "Failed to fetch core config.");
+
+        IronBee::ConstField threat_level =
+            IronBee::ConstVarSource(ib_core_cfg->vars->threat_level)
+                .get(tx.var_store());
+
+        // Add the threat level.
+        txLogJson.withString("threatLevel");
+
+        switch(threat_level.type()) {
+        case IronBee::ConstField::NUMBER:
+            txLogJson.withInt(threat_level.value_as_number());
+            break;
+        case IronBee::ConstField::FLOAT:
+            txLogJson.withDouble(threat_level.value_as_float());
+            break;
+        case IronBee::ConstField::BYTE_STRING:
+        case IronBee::ConstField::NULL_STRING:
+            txLogJson.withString(threat_level.to_s());
+            break;
+        default:
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval()
+                    << IronBee::errinfo_what(
+                        "Unsupported type for THREAT_LEVEL. "
+                        "It must be a number or a string."));
+        }
+    }
+    catch (const IronBee::enoent&) {
+        /* Nop. */
+    }
+}
 } /* Anonymous namespace. */
 
 extern "C" {
@@ -272,160 +441,35 @@ static ib_status_t txlog_logger_format_fn(
     void                  *data
 )
 {
-    assert(logger != NULL);
-    assert(rec != NULL);
+    assert(rec);
 
     /* Do not handle non-tx recs. */
     if (rec->tx == NULL || rec->type != IB_LOGGER_TXLOG_TYPE) {
         return IB_DECLINED;
     }
 
-    ib_logger_standard_msg_t *stdmsg;
-    std::ostringstream logstr;
+    assert(rec->tx->ib);
+    assert(rec->tx);
+    assert(rec->tx->mp);
+    assert(rec->tx->ctx);
+    assert(logger != NULL);
+    assert(rec != NULL);
 
     /* Wrap some types into IronBee++. */
     IronBee::ConstTransaction tx(rec->tx);
+    IronBee::ConstContext     ctx(rec->tx->ctx);
     IronBee::ConstConnection  conn(rec->conn);
     IronBee::ConstModule      module(rec->module);
+
+    const std::string siteId =
+        (! conn || ! conn.context() || ! conn.context().site())?
+            "" : conn.context().site().id_as_s();
 
     /* Fetch some telemetry from our tx. */
     TxLogData &txlogdata = IronBee::Transaction::remove_const(tx)
         .get_module_data<TxLogData&>(module);
 
-    /* Setup posix time formatting. The timezone %q is replaced with -00:00.*/
-    logstr.imbue(
-        std::locale(
-            logstr.getloc(),
-            new boost::date_time::time_facet
-            <
-                boost::posix_time::ptime,
-                char
-            > (
-                "%Y-%m-%dT%H:%M:%S-00:00"
-            )
-        )
-    );
-
-    /* Append start time. */
-    logstr << "["
-           << tx.started_time()
-           << "]" ;
-
-    /* Insert UUIDs. */
-    logstr << "[" << tx.engine().sensor_id();
-    if (! conn || ! conn.context() || ! conn.context().site()) {
-        logstr << " -";
-    }
-    else {
-        logstr << " " << conn.context().site().id_as_s();
-    }
-    logstr << " " << tx.id()
-           << "]";
-
-    /* Insert IP information. */
-    logstr << "[" << tx.effective_remote_ip_string()
-           << ":" << conn.remote_port()
-           << " " << conn.remote_ip_string() << ":" << conn.remote_port()
-           << " " << conn.local_ip_string() << ":" << conn.local_port()
-           // FIXME - origin ip:port ts provided?
-           << " -"
-           << "]";
-
-    /* Insert encryption info. */
-    logstr << "[-]"; /* TODO: when encryption info is available, replace. */
-
-    /* Insert HTTP Status info. */
-    logstr << "[" << tx.request_line().method().to_s()
-           << " " << tx.request_line().uri().to_s()
-           << " " << tx.request_line().protocol().to_s()
-           << "]";
-
-    /* Insert HTTP Request Normalized Data */
-    logstr << "[" << tx.hostname()
-           << " " << "-" /* TODO: Order=header order. Replace when available. */
-           << "]";
-
-    /* Insert request headers. */
-    logstr << "[";
-    if (tx.request_header()) {
-        for (
-            IronBee::ConstParsedHeader headerNvp = tx.request_header();
-            headerNvp;
-            headerNvp = headerNvp.next()
-        )
-        {
-            logstr << '"' << headerNvp.name().to_s()
-                   << '=' << headerNvp.value().to_s()
-                   << "\" ";
-        }
-    }
-    else {
-        logstr << "- ";
-    }
-    /* Erase the extra trailing space. */
-    logstr.seekp(-1, std::ios_base::cur);
-    logstr << "]";
-
-    logstr << "[" << txlogdata.requestBlockAction()
-           << " " << txlogdata.requestBlockMethod()
-           << "]";
-    /* Insert Response */
-    logstr << "[" << tx.response_line().protocol().to_s()
-           << " " << tx.response_line().status().to_s()
-           << " " << tx.response_line().message().to_s()
-           << "]";
-
-    /* Insert Response Normalized Data */
-    logstr << "[-]";  /* TODO: Order=header order. Replace when available. */
-
-    logstr << "[";
-    /* Insert response headers. */
-    if (tx.response_header()) {
-        for (
-            IronBee::ConstParsedHeader headerNvp = tx.response_header();
-            headerNvp;
-            headerNvp = headerNvp.next()
-        )
-        {
-            logstr << '"' << headerNvp.name().to_s()
-                << '=' << headerNvp.value().to_s()
-                << "\" ";
-        }
-    }
-    else {
-        logstr << "- ";
-    }
-    /* Erase the extra trailing space. */
-    logstr.seekp(-1, std::ios_base::cur);
-    logstr << "]";
-
-    /* Insert the response actions. */
-    logstr << "[" << txlogdata.responseBlockAction()
-           << " " << txlogdata.responseBlockMethod()
-           << "]";
-
-    /* Insert Session. */
-    logstr << "[-]";
-
-    /* Insert content stats. */
-    logstr << "[" << "-" // FIXME - remote client waf req size - ts provided?
-           << " " << "-" // FIXME - waf to origin req size - ts provided?
-           << " " << "-" // FIXME - origin to waf response size - ts provided?
-           << " " << "-" // FIXME - waf to remote response size - ts provided?
-           << "]";
-
-    /* Insert generated audit log. */
-    logstr << "[AuditLog " << txlogdata.auditlogFile() << "]";
-
-    /* Insert events. */
-    IronBee::ConstList<ib_logevent_t *> eventList(tx.ib()->logevents);
-    BOOST_FOREACH(const ib_logevent_t *e, eventList) {
-        logstr << "[Event "
-               << " " << "-" // FIXME - category
-               << " " << "-" // FIXME - matched location
-               << " " << e->rule_id
-               << " " << e->event_id << "]";
-    }
+    ib_logger_standard_msg_t *stdmsg;
 
     /* Build stdmsg and return it. */
     stdmsg =
@@ -435,15 +479,76 @@ static ib_status_t txlog_logger_format_fn(
         return IB_EALLOC;
     }
 
-    stdmsg->prefix = NULL;
-    stdmsg->msg_sz = size_t(logstr.tellp())+1;
-    stdmsg->msg    =
-        reinterpret_cast<uint8_t *>(
-            strndup(
-                reinterpret_cast<const char *>(
-                    logstr.str().data()), size_t(logstr.tellp())+1));
+    try {
+        TxLogJson()
+            .withMap()
+                .withTime("timestamp", tx.started_time())
+                .withString("sensorId", tx.engine().sensor_id())
+                .withString("siteId", siteId)
+                .withMap("connection")
+                    .withString("clientIp", conn.remote_ip_string())
+                    .withInt("clientPort", conn.remote_port())
+                    .withString("serverIp", conn.local_ip_string())
+                    .withInt("serverPort", conn.local_port())
+                .close()
+                .withMap("tx")
+                    .withString("id", tx.id())
+                    .withString("clientIp", tx.effective_remote_ip_string())
+                    .withInt("clientPort", conn.remote_port())
+                .close()
+                .withMap("request")
+                    .withString("method", tx.request_line().method().to_s())
+                    .withString("uri", tx.request_line().uri().to_s())
+                    .withString("protocol", tx.request_line().protocol().to_s())
+                    .withString("host", tx.hostname())
+                    .withFunction(boost::bind(requestHeadersToJson, tx, _1))
+                    .withFunction(
+                        boost::bind(
+                            renderNonemptyString,
+                            "action",
+                            boost::ref(txlogdata.requestBlockAction()),
+                            _1))
+                    .withFunction(
+                        boost::bind(
+                            renderNonemptyString,
+                            "actionMethod",
+                            boost::ref(txlogdata.requestBlockMethod()),
+                            _1))
+                .close()
+                .withMap("response")
+                    .withString("statusMessage", tx.response_line().message().to_s())
+                    .withFunction(boost::bind(responseHeadersToJson, tx, _1))
+                    .withFunction(
+                        boost::bind(
+                            renderNonemptyString,
+                            "action",
+                            boost::ref(txlogdata.responseBlockAction()),
+                            _1))
+                    .withFunction(
+                        boost::bind(
+                            renderNonemptyString,
+                            "actionMethod",
+                            boost::ref(txlogdata.responseBlockMethod()),
+                            _1))
+                .close()
+                .withMap("security")
+                    .withString("auditLogRef", txlogdata.auditlogId())
+                    .withFunction(boost::bind(addThreatLevel, ctx, tx, _1))
+                    .withFunction(boost::bind(eventsToJson, tx, _1))
+                .close()
+            .close()
+            .render(
+                reinterpret_cast<char*&>(stdmsg->msg),
+                stdmsg->msg_sz
+            );
+    }
+    catch (...) {
+        return IronBee::convert_exception(IronBee::ConstEngine(rec->tx->ib));
+    }
 
+    stdmsg->prefix = NULL;
     *reinterpret_cast<void **>(writer_record) = stdmsg;
+
     return IB_OK;
 }
 
@@ -464,61 +569,61 @@ public:
 
 private:
 
-    ///! Container for C callback and callback data.
+    //! Container for C callback and callback data.
     std::pair<ib_core_auditlog_fn_t, void *> m_recordAuditLogInfoTrampoline;
 
-    ///! Object that destroys m_recordAuditLogInfoTrampoline.second, void *.
+    //! Object that destroys m_recordAuditLogInfoTrampoline.second, void *.
     boost::shared_ptr<void> m_recordAuditLogInfoTrampolinePtr;
 
-    ///! Enable/Disable directive callback.
+    //! Enable/Disable directive callback.
     void onOffDirective(
         IronBee::ConfigurationParser  cp,
         bool                          enabled
     ) const;
 
-    ///! TxLogBaseFileName config directive callback.
+    //! TxLogBaseFileName config directive callback.
     void logBaseNameDirective(
         IronBee::ConfigurationParser  cp,
         const char                   *param1
     ) const;
 
-    ///! TxLogBaseDirectory config directive callback.
+    //! TxLogBaseDirectory config directive callback.
     void logBaseDirDirective(
         IronBee::ConfigurationParser  cp,
         const char                   *param1
     ) const;
 
-    ///! TxLogFlushSizeLimit config directive callback.
+    //! TxLogFlushSizeLimit config directive callback.
     void logSizeLimitDirective(
         IronBee::ConfigurationParser  cp,
         const char                   *param1
     ) const;
 
-    ///! TxLogFlushAgeLimit config directive callback.
+    //! TxLogFlushAgeLimit config directive callback.
     void logAgeLimitDirective(
         IronBee::ConfigurationParser  cp,
         const char                   *param1
     ) const;
 
-    ///! Callback to log @a tx through the Logger of @a ib.
+    //! Callback to log @a tx through the Logger of @a ib.
     void transactionFinishedHandler(
         IronBee::Engine      ib,
         IronBee::Transaction tx
     ) const;
 
-    ///! Callback to log @a tx through the Logger of @a ib.
+    //! Callback to log @a tx through the Logger of @a ib.
     void transactionStartedHandler(
         IronBee::Engine      ib,
         IronBee::Transaction tx
     ) const;
 
-    ///! Callback that collects information about a request so as to log it.
+    //! Callback that collects information about a request so as to log it.
     void handleRequest(
         IronBee::Engine      ib,
         IronBee::Transaction tx
     ) const;
 
-    ///! Callback that collects information about a response so as to log it.
+    //! Callback that collects information about a response so as to log it.
     void handleResponse(
         IronBee::Engine      ib,
         IronBee::Transaction tx
@@ -547,7 +652,7 @@ private:
 IBPP_BOOTSTRAP_MODULE_DELEGATE(TXLOG_MODULE_NAME, TxLogModule);
 
 //! C++ify the C configuraton struct.
-struct TxLogConfig : public txlog_config_t 
+struct TxLogConfig : public txlog_config_t
 {
     //! Constructor.
     TxLogConfig();

@@ -119,3 +119,97 @@ TEST_F(TxLogTest, Load) {
     ASSERT_TRUE(ib_tx);
     std::cout << "Log string is: " << test_log.str();
 }
+
+TEST_F(TxLogTest, BlockReqeust) {
+
+    const ib_txlog_module_cfg_t *cfg;
+
+    std::string config =
+        std::string(
+            "LogLevel INFO\n"
+            "LoadModule \"ibmod_htp.so\"\n"
+            "LoadModule \"ibmod_rules.so\"\n"
+            "LoadModule \"ibmod_txlog.so\"\n"
+            "AuditLogBaseDir .\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname UnitTest\n"
+            "   Action id:1 rev:1  phase:request block:immediate event\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_txlog_get_config(ib_engine, ib_context_main(ib_engine), &cfg));
+
+    ASSERT_FALSE(cfg->logger_format_fn == NULL);
+    ASSERT_EQ(
+        IB_OK,
+        ib_logger_writer_add(
+            ib_engine_logger_get(ib_engine),
+            NULL,                  NULL, /* Open. */
+            NULL,                  NULL, /* Close. */
+            NULL,                  NULL, /* Reopen. */
+            cfg->logger_format_fn, NULL, /* Format. */
+            test_record_handler,   NULL  /* Record. */
+        )
+    );
+
+
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    std::cout << "Log string is: " << test_log.str();
+}
+
+TEST_F(TxLogTest, BlockResponse) {
+
+    const ib_txlog_module_cfg_t *cfg;
+
+    std::string config =
+        std::string(
+            "LogLevel INFO\n"
+            "LoadModule \"ibmod_htp.so\"\n"
+            "LoadModule \"ibmod_rules.so\"\n"
+            "LoadModule \"ibmod_txlog.so\"\n"
+            "AuditLogBaseDir .\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname UnitTest\n"
+            "   Action id:1 rev:1  phase:response block:immediate event\n"
+            "</Site>\n"
+        );
+
+    configureIronBeeByString(config.c_str());
+
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_txlog_get_config(ib_engine, ib_context_main(ib_engine), &cfg));
+
+    ASSERT_FALSE(cfg->logger_format_fn == NULL);
+    ASSERT_EQ(
+        IB_OK,
+        ib_logger_writer_add(
+            ib_engine_logger_get(ib_engine),
+            NULL,                  NULL, /* Open. */
+            NULL,                  NULL, /* Close. */
+            NULL,                  NULL, /* Reopen. */
+            cfg->logger_format_fn, NULL, /* Format. */
+            test_record_handler,   NULL  /* Record. */
+        )
+    );
+
+
+    performTx();
+    ASSERT_TRUE(ib_tx);
+    std::cout << "Log string is: " << test_log.str();
+}
