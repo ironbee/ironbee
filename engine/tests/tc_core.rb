@@ -4,7 +4,6 @@ class TestCore < Test::Unit::TestCase
 
   def test_blocking_method_status_403
     clipp(
-      :consumer => 'ironbee:IRONBEE_CONFIG @view',
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
         BlockingMethod status=403
@@ -18,7 +17,6 @@ class TestCore < Test::Unit::TestCase
 
   def test_blocking_method_status_200
     clipp(
-      :consumer => 'ironbee:IRONBEE_CONFIG @view',
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
         BlockingMethod status=200
@@ -32,7 +30,6 @@ class TestCore < Test::Unit::TestCase
 
   def test_blocking_method_status_100
     clipp(
-      :consumer => 'ironbee:IRONBEE_CONFIG @view',
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
         BlockingMethod status=100
@@ -46,7 +43,6 @@ class TestCore < Test::Unit::TestCase
 
   def test_blocking_method_status_600
     clipp(
-      :consumer => 'ironbee:IRONBEE_CONFIG @view',
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
         BlockingMethod status=600
@@ -60,7 +56,6 @@ class TestCore < Test::Unit::TestCase
 
   def test_default_block_status_403
     clipp(
-      :consumer => 'ironbee:IRONBEE_CONFIG @view',
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
         DefaultBlockStatus 403
@@ -74,7 +69,6 @@ class TestCore < Test::Unit::TestCase
 
   def test_default_block_status_200
     clipp(
-      :consumer => 'ironbee:IRONBEE_CONFIG @view',
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
         DefaultBlockStatus 200
@@ -88,7 +82,6 @@ class TestCore < Test::Unit::TestCase
 
   def test_default_block_status_100
     clipp(
-      :consumer => 'ironbee:IRONBEE_CONFIG @view',
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
         DefaultBlockStatus 100
@@ -102,7 +95,6 @@ class TestCore < Test::Unit::TestCase
 
   def test_default_block_status_600
     clipp(
-      :consumer => 'ironbee:IRONBEE_CONFIG @view',
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
         DefaultBlockStatus 600
