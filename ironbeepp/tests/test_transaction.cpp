@@ -108,8 +108,8 @@ TEST_F(TestTransaction, basic)
     ib_tx.hostname = "foo";
     EXPECT_EQ(ib_tx.hostname, tx.hostname());
 
-    ib_tx.er_ipstr = "bar";
-    EXPECT_EQ(ib_tx.er_ipstr, tx.effective_remote_ip_string());
+    ib_tx.remote_ipstr = "bar";
+    EXPECT_EQ(ib_tx.remote_ipstr, tx.effective_remote_ip_string());
 
     ib_tx.path = "baz";
     EXPECT_EQ(ib_tx.path, tx.path());

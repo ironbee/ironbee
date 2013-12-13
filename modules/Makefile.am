@@ -223,6 +223,15 @@ ibmod_txlog_la_LIBADD  = $(AM_LIBADD) \
                          $(top_builddir)/ironbeepp/libibpp.la
 endif
 
+if CPP
+module_LTLIBRARIES += ibmod_trusted_proxy.la
+ibmod_trusted_proxy_la_SOURCES = \
+    trusted_proxy.cpp
+ibmod_trusted_proxy_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version
+ibmod_trusted_proxy_la_LIBADD = $(AM_LIBADD) \
+    $(top_builddir)/ironbeepp/libibpp.la
+endif
+
 install-exec-hook: $(module_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
 	for m in $(module_LTLIBRARIES); do \

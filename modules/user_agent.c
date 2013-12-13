@@ -713,7 +713,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     /* This will lose the pointer to the original address
      * buffer, but it should be cleaned up with the rest
      * of the memory pool. */
-    tx->er_ipstr = buf;
+    tx->remote_ipstr = buf;
 
     /* Update the remote address field in the tx collection */
     rc = ib_field_create_bytestr_alias(

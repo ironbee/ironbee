@@ -1395,8 +1395,8 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 
         ib_field_create_bytestr_alias(&f, pool,
                                       IB_FIELD_NAME("remote-addr"),
-                                      (uint8_t *)tx->er_ipstr,
-                                      strlen(tx->er_ipstr));
+                                      (uint8_t *)tx->remote_ipstr,
+                                      strlen(tx->remote_ipstr));
         ib_list_push(list, f);
 
         num = tx->conn->remote_port;

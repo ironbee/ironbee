@@ -556,7 +556,7 @@ static ib_status_t audit_add_line_item(const ib_logformat_t *lf,
     switch (field->fchar) {
 
     case IB_LOG_FIELD_REMOTE_ADDR:
-        *str = logdata->tx->er_ipstr;
+        *str = logdata->tx->remote_ipstr;
         break;
     case IB_LOG_FIELD_LOCAL_ADDR:
         *str = logdata->conn->local_ipstr;

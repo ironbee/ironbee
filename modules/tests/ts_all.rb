@@ -10,3 +10,5 @@ require 'tc_fast'
 require 'tc_parser_suite'
 require 'tc_modps'
 require 'tc_xrules'
+
+require 'tc_trusted_proxy'

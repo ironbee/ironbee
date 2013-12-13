@@ -780,7 +780,7 @@ static ib_status_t moddevel_txdump_tx(
                         ib_engine_instance_uuid_str(ib));
         moddevel_txdump(tx, txdump, 2, "Started = %s", buf);
         moddevel_txdump(tx, txdump, 2, "Hostname = %s", tx->hostname);
-        moddevel_txdump(tx, txdump, 2, "Effective IP = %s", tx->er_ipstr);
+        moddevel_txdump(tx, txdump, 2, "Effective IP = %s", tx->remote_ipstr);
         moddevel_txdump(tx, txdump, 2, "Path = %s", tx->path);
         if (ib_flags_all(tx->flags, TX_BLOCKED)) {
             moddevel_txdump(tx, txdump, 2, "Block Code = %" PRId64, tx->block_status);

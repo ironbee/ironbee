@@ -2014,7 +2014,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
     /* Add internal header for effective IP address */
     setact.hdr = "@IB-EFFECTIVE-IP";
-    setact.value = data->tx->er_ipstr;
+    setact.value = data->tx->remote_ipstr;
     header_action(bufp, hdr_loc, &setact, data->tx->mp);
 
     /* Now manipulate header as requested by ironbee */

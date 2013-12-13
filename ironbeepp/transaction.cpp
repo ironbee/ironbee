@@ -134,7 +134,7 @@ const char* ConstTransaction::hostname() const
 
 const char* ConstTransaction::effective_remote_ip_string() const
 {
-    return ib()->er_ipstr;
+    return ib()->remote_ipstr;
 }
 
 const char* ConstTransaction::path() const

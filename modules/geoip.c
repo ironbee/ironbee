@@ -73,7 +73,7 @@ static ib_status_t geoip_lookup(
     assert(event == handle_context_tx_event);
     assert(data != NULL);
 
-    const char          *ip = tx->er_ipstr;
+    const char          *ip = tx->remote_ipstr;
     const module_data_t *mod_data = (const module_data_t *)data;
     ib_mpool_t          *mp = tx->mp;
 

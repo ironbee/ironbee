@@ -283,7 +283,7 @@ struct ib_tx_t {
     } t;                                 /**< Monotonic clock times */
     ib_tx_t            *next;            /**< Next transaction */
     const char         *hostname;        /**< Hostname used in the request */
-    const char         *er_ipstr;        /**< Effective remote IP as string */
+    const char         *remote_ipstr;    /**< Transaction remote IP as string */
     const char         *path;            /**< Path used in the request */
     ib_flags_t          flags;           /**< Transaction flags */
     ib_num_t            auditlog_parts;  /**< Audit log parts */

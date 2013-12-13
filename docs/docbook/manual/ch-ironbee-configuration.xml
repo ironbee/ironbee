@@ -1355,6 +1355,48 @@ Service 192.168.32.5:*</programlisting>
             </itemizedlist>
         </section>
     <section>
+        <title>TrustedProxyUseXFFHeader</title>
+        <para><emphasis role="bold">Description:</emphasis> Enable the use of X-Forwarded-For header.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>TrustedProxyUseXFFHeader <replaceable>on/off</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>On</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> trusted_proxy</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.9</para>
+        <para>If enabled the last address listed in the X-Forwarded-For header
+        as the remote address. See <emphasis>TrustedProxyIPs</emphasis> to
+        configure the list of trusted proxies. The default behaviour is to
+        trust no proxies.</para>
+    </section>
+    <section>
+        <title>TrustedProxyIPs</title>
+        <para><emphasis role="bold">Description:</emphasis> Specify a list of
+        networks or IP address to trust for X-Forwarded-For handlingEnable the
+        use of X-Forwarded-For header.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>TrustedProxyIPs <replaceable>ipv4 | ipv4_cidr</replaceable> ...</literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>Trust no networks/IP addresses</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> trusted_proxy</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.9</para>
+        <para>This is a list of IP addresses or CIDR blocks that should be
+        trusted or not trusted when handling the X-Forwarded-For header.</para>
+	<para>Networks/IPs may be prefixed with "+" indicate it is trusted or "-" indicate in are untrusted.  If the first entry in the list does not have a "+" or "-" the trusted/untrusted list is cleared and the entry is treated as trusted.</para>
+        <para>Examples:</para>
+        <para>Trust only 192.168.1.0/24:
+        <programlisting>
+          TrustedProxyIPs 192.168.1.0/24
+        </programlisting></para>
+        <para>Trust all but 10.10.10.10:
+        <programlisting>
+          TrustedProxyIPs -10.10.10.10
+        </programlisting></para>
+    </section>
+    <section>
         <title>TxDump</title>
         <para><emphasis role="bold">Description:</emphasis> Diagnostics directive to dump (log)
             transaction data for debugging purposes.</para>
