@@ -672,9 +672,6 @@ void ExampleIronBee::on_header(
         case IronBee::Server::UNSET:
             header_action_string = "UNSET";
             break;
-        case IronBee::Server::EDIT:
-            header_action_string = "EDIT";
-            break;
         default:
             header_action_string = "unknown";
     };
