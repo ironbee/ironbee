@@ -1657,7 +1657,7 @@ ib_status_t ib_var_expand_acquire(
     const char *suffix;
     const char *local_str;
 
-    local_str = ib_mpool_memdup(mp, str, str_length);
+    local_str = ib_mpool_memdup(mp, str, str_length + 1);
     if (local_str == NULL) {
         return IB_EALLOC;
     }
