@@ -107,7 +107,7 @@ private:
      * Handle the TrustedProxyUseXFFHeader directive.
      *
      * @param[in] cp Configuration parser.
-     * @param[in] enabled Should XFF hanlding be enabled?
+     * @param[in] enabled Should XFF handling be enabled?
      */
     void enable_xff_directive(
         IronBee::ConfigurationParser cp,

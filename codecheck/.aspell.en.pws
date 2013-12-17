@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2354 
+personal_ws-1.1 en 2362 
 malloc'ed
 malloced
 libnet
@@ -54,6 +54,7 @@ sizeof
 uHHHH
 buf
 dir
+ipstr
 cnt
 mutex
 vargs
@@ -670,6 +671,7 @@ fg
 gb
 fh
 gc
+TrustedProxyUseXFFHeader
 gd
 dT
 ge
@@ -719,6 +721,7 @@ onEventHandleConnect
 mb
 nused
 lh
+TrustedProxyModule
 md
 iX
 SCLASS
@@ -1236,6 +1239,7 @@ xdata
 dereferenced
 fputs
 lineno
+psheader
 stdmsg
 AdsBot
 somebits
@@ -1382,6 +1386,7 @@ Rincon
 IronBeeUtilPath
 nelem
 PredicateAssertValid
+untrusted
 ptime
 ttoWrite
 onEventConnFinished
@@ -1503,6 +1508,7 @@ GraphViz
 CFLAGS
 IronBeeEngineVarStore
 patt
+UnsetBlockingMode
 tmptmp
 CODESTYLE
 msie
@@ -2147,6 +2153,7 @@ ValueLists
 ruleName
 phaseless
 util
+FBLOCK
 txnp
 responseHeader
 responseheader
@@ -2267,6 +2274,7 @@ ModuleDelegate
 CSCOPE
 parseResponseLine
 noref
+TrustedProxyIPs
 EEXIST
 HooksRegistrar
 onEventConnStarted

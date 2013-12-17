@@ -414,7 +414,7 @@ static ib_status_t var_create_fn(
                     return IB_OK;
                 }
 
-                /* Promote the teporary field to the new current field. */
+                /* Promote the temporary field to the new current field. */
                 field = tmp_field;
             }
         }

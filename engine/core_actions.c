@@ -906,7 +906,7 @@ static ib_status_t act_setvar_execute(
                 return rc;
             }
 
-            /* Promote the teporary field to the new current field. */
+            /* Promote the temporary field to the new current field. */
             argument = tmp_field;
         }
     }

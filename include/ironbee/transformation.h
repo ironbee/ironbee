@@ -160,7 +160,7 @@ const char DLL_PUBLIC *ib_tfn_name(const ib_tfn_t *tfn);
  *
  * @return
  * - Return true if @a tfn should receive the entire list of elements.
- * - Return false if @a tfn should recieve each list element, one at a time.
+ * - Return false if @a tfn should receive each list element, one at a time.
  **/
 bool DLL_PUBLIC ib_tfn_handle_list(const ib_tfn_t *tfn);
 

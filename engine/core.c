@@ -3856,7 +3856,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
         field = (const ib_field_t *)new_field;
     }
 
-    /* Apply all tranformations. */
+    /* Apply all transformations. */
     if (transformations != NULL) {
         IB_LIST_LOOP_CONST(transformations, node) {
             const ib_field_t *tmp_field;
@@ -3889,7 +3889,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
                 return IB_OK;
             }
 
-            /* Promote the teporary field to the new current field. */
+            /* Promote the temporary field to the new current field. */
             field = tmp_field;
         }
     }
