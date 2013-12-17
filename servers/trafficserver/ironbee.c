@@ -350,7 +350,7 @@ static bool is_error_status(int status)
 }
 
 /**
- * Callback functions for Ironbee to signal to us
+ * Callback functions for IronBee to signal to us
  */
 static
 ib_status_t ib_header_callback(
@@ -399,51 +399,51 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     TSReturnCode rv;
 
     if (TSHttpTxnClientRespGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
-        TSError("Errordoc: couldn't retrieve client response header");
+        TSError("[ironbee] ErrorDoc: couldn't retrieve client response header.");
         TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
         return;
     }
     rv = TSHttpHdrStatusSet(bufp, hdr_loc, txndata->status);
     if (rv != TS_SUCCESS) {
-        TSError("ErrorDoc - TSHttpHdrStatusSet");
+        TSError("[ironbee] ErrorDoc: TSHttpHdrStatusSet");
     }
     if (reason == NULL) {
         reason = "Other";
     }
     rv = TSHttpHdrReasonSet(bufp, hdr_loc, reason, strlen(reason));
     if (rv != TS_SUCCESS) {
-        TSError("ErrorDoc - TSHttpHdrReasonSet");
+        TSError("[ironbee] ErrorDoc: TSHttpHdrReasonSet");
     }
 
     while (hdrs = txndata->err_hdrs, hdrs != 0) {
         txndata->err_hdrs = hdrs->next;
         rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
         if (rv != TS_SUCCESS) {
-            TSError("ErrorDoc - TSMimeHdrFieldCreate");
+            TSError("[ironbee] ErrorDoc: TSMimeHdrFieldCreate");
             goto errordoc_free;
         }
         rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
                                    hdrs->hdr, strlen(hdrs->hdr));
         if (rv != TS_SUCCESS) {
-            TSError("ErrorDoc - TSMimeHdrFieldNameSet");
+            TSError("[ironbee] ErrorDoc: TSMimeHdrFieldNameSet");
             goto errordoc_free1;
         }
         rv = TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
                                         hdrs->value, strlen(hdrs->value));
         if (rv != TS_SUCCESS) {
-            TSError("ErrorDoc - TSMimeHdrFieldValueStringInsert");
+            TSError("[ironbee] ErrorDoc: TSMimeHdrFieldValueStringInsert");
             goto errordoc_free1;
         }
         rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
         if (rv != TS_SUCCESS) {
-            TSError("ErrorDoc - TSMimeHdrFieldAppend");
+            TSError("[ironbee] ErrorDoc: TSMimeHdrFieldAppend");
             goto errordoc_free1;
         }
 
 errordoc_free1:
         rv = TSHandleMLocRelease(bufp, hdr_loc, field_loc);
         if (rv != TS_SUCCESS) {
-            TSError("ErrorDoc - TSHandleMLocRelease 1");
+            TSError("[ironbee] ErrorDoc: TSHandleMLocRelease 1");
             goto errordoc_free;
         }
 errordoc_free:
@@ -459,10 +459,10 @@ errordoc_free:
     }
     rv = TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     if (rv != TS_SUCCESS) {
-        TSError("ErrorDoc - TSHandleMLocRelease 2");
+        TSError("[ironbee] ErrorDoc: TSHandleMLocRelease 2");
     }
 
-    TSDebug("ironbee", "Sent error %d \"%s\"", txndata->status, reason);
+    TSDebug("ironbee", "Sent error page %d \"%s\".", txndata->status, reason);
 }
 
 static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
@@ -763,7 +763,7 @@ static void process_data(TSCont contp, ibd_ctx *ibd)
                 rc = ib_core_context_config(ib_context_main(data->tx->ib),
                                             &corecfg);
                 if (rc != IB_OK) {
-                    TSError ("Error determining buffering configuration");
+                    TSError ("Error determining buffering configuration.");
                 }
                 else {
                     ibd->data->buffering =
@@ -988,7 +988,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
      * TSVConnClose.
      */
     ib_txn_ctx *data;
-    TSDebug("ironbee", "Entering out_data for %s\n", ibd->ibd->dir_label);
+    TSDebug("ironbee", "Entering out_data for %s", ibd->ibd->dir_label);
 
     if (TSVConnClosedGet(contp)) {
         TSDebug("ironbee", "\tVConn is closed");
@@ -1310,23 +1310,23 @@ add_hdr:
                 act->hdr, act->value);
         rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
         if (rv != TS_SUCCESS) {
-            TSError("Failed to add MIME header field \"%s\"", act->hdr);
+            TSError("[ironbee] Failed to add MIME header field \"%s\".", act->hdr);
         }
         rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
                                    act->hdr, strlen(act->hdr));
         if (rv != TS_SUCCESS) {
-            TSError("Failed to set name of MIME header field \"%s\"",
+            TSError("[ironbee] Failed to set name of MIME header field \"%s\".",
                     act->hdr);
         }
         rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
                                           act->value, strlen(act->value));
         if (rv != TS_SUCCESS) {
-            TSError("Failed to set value of MIME header field \"%s\"",
+            TSError("[ironbee] Failed to set value of MIME header field \"%s\".",
                     act->hdr);
         }
         rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
         if (rv != TS_SUCCESS) {
-            TSError("Failed to append MIME header field \"%s\"", act->hdr);
+            TSError("[ironbee] Failed to append MIME header field \"%s\".", act->hdr);
         }
         TSHandleMLocRelease(bufp, hdr_loc, field_loc);
         break;
@@ -1350,7 +1350,7 @@ add_hdr:
         rv = TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
                                              act->value, strlen(act->value));
         if (rv != TS_SUCCESS) {
-            TSError("Failed to insert MIME header field \"%s\"", act->hdr);
+            TSError("[ironbee] Failed to insert MIME header field \"%s\".", act->hdr);
         }
         TSHandleMLocRelease(bufp, hdr_loc, field_loc);
         break;
@@ -1446,7 +1446,7 @@ static ib_status_t get_http_header(
         }
         else {
             /* There are no NULLs, and we still don't have termination */
-            TSError("Invalid HTTP request line");
+            TSError("[ironbee] Invalid HTTP request line.");
             rc = IB_EINVAL;
             goto cleanup;
         }
@@ -1505,7 +1505,7 @@ static ib_status_t get_request_url(
     TSIOBufferBlockReadAvail(block, reader);
     url_buf = TSIOBufferBlockReadStart(block, reader, &url_len);
     if (url_buf == NULL) {
-        TSError("TSIOBufferBlockReadStart() returned NULL");
+        TSError("[ironbee] TSIOBufferBlockReadStart() returned NULL.");
         rc = IB_EUNKNOWN;
         goto cleanup;
     }
@@ -1529,7 +1529,7 @@ static ib_status_t get_request_url(
         }
         else {
             /* There are no NULLs, and we still don't have termination */
-            TSError("Invalid HTTP request line");
+            TSError("[ironbee] Invalid HTTP request line.");
             rc = IB_EINVAL;
             goto cleanup;
         }
@@ -1560,7 +1560,7 @@ cleanup:
  * @param[out] pline_buf Pointer to line buffer
  * @param[out] pline_len Pointer to line length
  *
- * @returns Ironbee Status Code
+ * @returns IronBee Status Code
  */
 static ib_status_t fixup_request_line(
     TSMBuffer         hdr_bufp,
@@ -1620,7 +1620,7 @@ static ib_status_t fixup_request_line(
     /* Next, check for the pattern in the URL.  We need the URL to do that. */
     rc = get_request_url(hdr_bufp, hdr_loc, tx->mp, &url_buf, &url_len);
     if (rc != IB_OK) {
-        TSError("Failed to get request URL: %s", ib_status_to_string(rc));
+        TSError("[ironbee] Error getting request URL: %s", ib_status_to_string(rc));
         return rc;
     }
     /* If the URL doesn't start with the above pattern, we're done. */
@@ -1642,7 +1642,7 @@ static ib_status_t fixup_request_line(
          * url_len and hence line_proto_off was computed by TS, which is
          * less forgiving.  Hence a malformed line may trigger this.
          */
-        TSError("Malformed request line!");
+        TSError("[ironbee] Malformed request line.");
         return IB_EOTHER;
     }
     line_proto_len = line_len - line_proto_off;
@@ -1655,7 +1655,7 @@ static ib_status_t fixup_request_line(
     new_line_len = line_method_len + url_len + line_proto_len;
     new_line_buf = ib_mpool_alloc(tx->mp, new_line_len+1);
     if (new_line_buf == NULL) {
-        TSError("Failed to allocate buffer for fixed request line!!");
+        TSError("[ironbee] Failed to allocate buffer for fixed request line.");
         *pline_buf = line_buf;
         *pline_len = line_len;
         return IB_EINVAL;
@@ -1714,7 +1714,7 @@ static ib_status_t start_ib_request(
                                    NULL, 0);
 
     if (rc != IB_OK) {
-        TSError("Error creating IronBee request line: %s",
+        TSError("[ironbee] Error creating IronBee request line: %s",
                 ib_status_to_string(rc));
         ib_log_error_tx(tx, "Error creating IronBee request line: %s",
                 ib_status_to_string(rc));
@@ -1724,7 +1724,7 @@ static ib_status_t start_ib_request(
     TSDebug("ironbee", "calling ib_state_notify_request_started()");
     rc = ib_state_notify_request_started(tx->ib, tx, rline);
     if (rc != IB_OK) {
-        TSError("Error notifying ironbee request start: %s",
+        TSError("[ironbee] Error notifying ironbee request start: %s",
                 ib_status_to_string(rc));
         ib_log_error_tx(tx, "Error notifying IronBee request start: %s",
                         ib_status_to_string(rc));
@@ -1757,7 +1757,7 @@ static ib_status_t start_ib_response(
                                     NULL, 0);
 
     if (rc != IB_OK) {
-        TSError("Error creating IronBee response line: %s",
+        TSError("[ironbee] Error creating IronBee response line: %s",
                 ib_status_to_string(rc));
         ib_log_error_tx(tx, "Error creating IronBee response line: %s",
                 ib_status_to_string(rc));
@@ -1767,7 +1767,7 @@ static ib_status_t start_ib_response(
     TSDebug("ironbee", "calling ib_state_notify_response_started()");
     rc = ib_state_notify_response_started(tx->ib, tx, rline);
     if (rc != IB_OK) {
-        TSError("Error notifying IronBee response start: %s",
+        TSError("[ironbee] Error notifying IronBee response start: %s",
                 ib_status_to_string(rc));
         ib_log_error_tx(tx, "Error notifying IronBee response start: %s",
                         ib_status_to_string(rc));
@@ -1808,7 +1808,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     if (data->tx == NULL) {
         return HDR_OK;
     }
-    TSDebug("ironbee", "process %s headers\n", ibd->type_label);
+    TSDebug("ironbee", "process %s headers", ibd->type_label);
 
     /* Use alternative simpler path to get the un-doctored request
      * if we have the fix for TS-998
@@ -1820,7 +1820,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv != 0) {
-        TSError ("couldn't retrieve %s header: %d\n", ibd->type_label, rv);
+        TSError ("Failed to get %s header: %d", ibd->type_label, rv);
         ib_rc = ib_error_callback(data->tx, 500, NULL);
         return HDR_ERROR;
     }
@@ -1834,7 +1834,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                             &hdr_buf, &hdr_len,
                             &rline_buf, &rline_len);
     if (ib_rc != IB_OK) {
-        TSError("couldn't get %s header: %s\n", ibd->type_label,
+        TSError("[ironbee] Failed to get %s header: %s", ibd->type_label,
                 ib_status_to_string(ib_rc));
         ib_rc = ib_error_callback(data->tx, 500, NULL);
         ret = HDR_ERROR;
@@ -1848,7 +1848,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                                    rline_buf, rline_len,
                                    &rline_buf, &rline_len);
         if (ib_rc != 0) {
-            TSError("Failed to fixup request line");
+            TSError("[ironbee] Failed to fixup request line.");
             ib_rc = ib_error_callback(data->tx, 400, NULL);
             ret = HDR_ERROR;
             goto process_hdr_cleanup;
@@ -1856,7 +1856,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
         ib_rc = start_ib_request(data->tx, rline_buf, rline_len);
         if (ib_rc != IB_OK) {
-            TSError("Failed to start IronBee request: %s",
+            TSError("[ironbee] Error starting IronBee request: %s",
                     ib_status_to_string(ib_rc));
             ib_rc = ib_error_callback(data->tx, 500, NULL);
             ret = HDR_ERROR;
@@ -1870,7 +1870,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
         ib_rc = start_ib_response(data->tx, rline_buf, rline_len);
         if (ib_rc != IB_OK) {
-            TSError("Failed to start IronBee request: %s",
+            TSError("[ironbee] Error starting IronBee response: %s",
                     ib_status_to_string(ib_rc));
         }
 
@@ -1887,7 +1887,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     }
 
     default:
-        TSError("Invalid direction %d!", ibd->dir);
+        TSError("[ironbee] Invalid direction: %d", ibd->dir);
     }
 
 
@@ -1902,7 +1902,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     rv = ib_parsed_headers_create(&ibhdrs, data->tx->mp);
     if (rv != IB_OK) {
         ib_rc = ib_error_callback(data->tx, 500, NULL);
-        TSError("Error creating ironbee header wrapper.  Disabling checks!");
+        TSError("[ironbee] Failed to create ironbee header wrapper.  Disabling.");
         ret = HDR_ERROR;
         goto process_hdr_cleanup;
     }
@@ -1924,7 +1924,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
             ++lptr;
         v_len = line_len - (lptr - line);
 
-        /* Ironbee presumably wants to know of anything zero-length
+        /* IronBee presumably wants to know of anything zero-length
          * so don't reject on those grounds!
          */
         rv = ib_parsed_headers_add(ibhdrs,
@@ -1947,7 +1947,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                         body_len = 10*body_len + lptr[i] - '0';
                     }
                     else if (!isspace(lptr[i])) {
-                        TSError("Malformed Content-Length: %.*s",
+                        TSError("[ironbee] Malformed Content-Length: %.*s",
                                 (int)v_len, lptr);
                         break;
                     }
@@ -1960,7 +1960,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
             }
         }
         if (rv != IB_OK)
-            TSError("Error adding header '%.*s: %.*s' to Ironbee list",
+            TSError("[ironbee] Failed to add header '%.*s: %.*s' to IronBee list",
                     (int)n_len, line, (int)v_len, lptr);
         ++nhdrs;
     }
@@ -1970,11 +1970,11 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         TSDebug("ironbee", "process_hdr: notifying header data");
         rv = (*ibd->ib_notify_header)(data->tx->ib, data->tx, ibhdrs);
         if (rv != IB_OK)
-            TSError("Error notifying Ironbee header data event");
+            TSError("[ironbee] Failed to notify IronBee header data event.");
         TSDebug("ironbee", "process_hdr: notifying header finished");
         rv = (*ibd->ib_notify_header_finished)(data->tx->ib, data->tx);
         if (rv != IB_OK)
-            TSError("Error notifying Ironbee header finished event");
+            TSError("[ironbee] Failed to notify IronBee header finished event.");
     }
 
     /* If there are no headers, treat as a transitional response */
@@ -1989,7 +1989,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     if ((ibd->dir == IBD_REQ) && !body_len) {
         rv = (*ibd->ib_notify_end)(data->tx->ib, data->tx);
         if (rv != IB_OK)
-            TSError("Error notifying Ironbee end of request");
+            TSError("[ironbee] Failed to notify IronBee end of request.");
     }
 
     /* Initialize the header action */
@@ -2041,7 +2041,7 @@ process_hdr_cleanup:
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
 
     /* If an error sent us to cleanup then it's in ret.  Else just
-     * return whether or not Ironbee has signalled an HTTP status.
+     * return whether or not IronBee has signalled an HTTP status.
      */
     return ( (ret != HDR_OK) ?
              ret :
@@ -2150,10 +2150,10 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 if (module_data.manager != NULL) {
                     rc = ib_manager_engine_acquire(module_data.manager, &ib);
                     if (rc == IB_DECLINED) {
-                        TSError("ironbee: Decline from engine manager\n");
+                        TSError("[ironbee] Decline from engine manager");
                     }
                     else if (rc != IB_OK) {
-                        TSError("ironbee: Failed to acquire engine: %s\n",
+                        TSError("[ironbee] Failed to acquire engine: %s",
                                 ib_status_to_string(rc));
                     }
                 }
@@ -2162,7 +2162,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             if ( (ssndata->iconn == NULL) && (ib != NULL) ) {
                 rc = ib_conn_create(ib, &ssndata->iconn, contp);
                 if (rc != IB_OK) {
-                    TSError("ironbee: ib_conn_create: %s\n",
+                    TSError("[ironbee] ib_conn_create: %s",
                             ib_status_to_string(rc));
                     ib_manager_engine_release(module_data.manager, ib);
                     return rc; // FIXME - figure out what to do
@@ -2174,7 +2174,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                                                cleanup_ib_connection,
                                                ib);
                 if (rc != IB_OK) {
-                    TSError("ironbee: ib_mpool_cleanup_register: %s\n",
+                    TSError("[ironbee] ib_mpool_cleanup_register: %s",
                             ib_status_to_string(rc));
                     ib_manager_engine_release(module_data.manager, ib);
                     return rc; // FIXME - figure out what to do
@@ -2186,7 +2186,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
                 rc = ironbee_conn_init(ssndata);
                 if (rc != IB_OK) {
-                    TSError("ironbee: ironbee_conn_init: %s\n",
+                    TSError("[ironbee] ironbee_conn_init: %s",
                             ib_status_to_string(rc));
                     return rc; // FIXME - figure out what to do
                 }
@@ -2196,7 +2196,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                         "ironbee_plugin: ib_state_notify_conn_opened()");
                 rc = ib_state_notify_conn_opened(ib, ssndata->iconn);
                 if (rc != IB_OK) {
-                    TSError("ironbee: Failed to notify connection opened: %s\n",
+                    TSError("[ironbee] Failed to notify connection opened: %s",
                             ib_status_to_string(rc));
                 }
             }
@@ -2380,17 +2380,17 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                     break;	/* All's well */
                   case HDR_HTTP_STATUS:
                     // FIXME: should we take the initiative here and return 500?
-                    TSError("Internal error: ts-ironbee requested error but no error response set");
+                    TSError("[ironbee] Internal error: ts-ironbee requested error but no error response set.");
                     break;
                   case HDR_HTTP_100:
                     /* This can't actually happen with current Trafficserver
                      * versions, as TS will generate a 400 error without
                      * reference to us.  But in case that changes in future ...
                      */
-                    TSError("No request headers found!");
+                    TSError("[ironbee] No request headers found.");
                     break;
                   default:
-                    TSError("Unhandled state arose in handling request headers");
+                    TSError("[ironbee] Unhandled state arose in handling request headers.");
                     break;
                 }
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
@@ -2406,7 +2406,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
             if ( (ctx != NULL) && (ctx->tx != NULL) ) {
-                TSDebug("ironbee", "TXN Close: %p\n", (void *)contp);
+                TSDebug("ironbee", "TXN Close: %p", (void *)contp);
                 ib_txn_ctx_destroy(ctx);
             }
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
@@ -2414,7 +2414,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         }
 
         case TS_EVENT_HTTP_SSN_CLOSE:
-            TSDebug("ironbee", "SSN Close: %p\n", (void *)contp);
+            TSDebug("ironbee", "SSN Close: %p", (void *)contp);
             ib_ssn_ctx_destroy(TSContDataGet(contp));
             if (module_data.manager != NULL) {
                 ib_manager_engine_cleanup(module_data.manager);
@@ -2425,13 +2425,13 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
         case TS_EVENT_MGMT_UPDATE:
         {
-            TSDebug("ironbee", "Management update\n");
+            TSDebug("ironbee", "Management update");
             if (module_data.manager != NULL) {
                 ib_status_t  rc;
                 rc = ib_manager_engine_create(module_data.manager,
                                               module_data.config_file);
                 if (rc != IB_OK) {
-                    TSError("Failed to create new engine: %s\n",
+                    TSError("[ironbee] Error creating new engine: %s",
                             ib_status_to_string(rc));
                 }
             }
@@ -2440,7 +2440,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* if we get here we've got a bug */
         default:
-            TSError("BUG: unhandled event %d in ironbee_plugin\n", event);
+            TSError("[ironbee] BUG: unhandled event %d in ironbee_plugin.", event);
             break;
     }
 
@@ -2676,7 +2676,7 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port)
     int rv = getnameinfo(addr, sizeof(*addr), str, ADDRSIZE, serv, 8,
                          NI_NUMERICHOST|NI_NUMERICSERV);
     if (rv != 0) {
-        TSError("[ts-ironbee] getnameinfo: %d\n", rv);
+        TSError("[ts-ironbee] getnameinfo: %d", rv);
     }
     *port = atoi(serv);
 }
@@ -2758,7 +2758,7 @@ static ib_status_t read_ibconf(
             mod_data->max_engines = atoi(optarg);
             break;
         default:
-            TSError("[ironbee] Unrecognised option -%c ignored.\n", optopt);
+            TSError("[ironbee] Unrecognised option -%c ignored.", optopt);
             break;
         }
     }
@@ -2770,7 +2770,7 @@ static ib_status_t read_ibconf(
         return IB_OK;
     }
     else {
-        TSError("[ironbee] exactly one configuration file name required\n");
+        TSError("[ironbee] Exactly one configuration file name required.");
         return IB_EINVAL;
     }
 }
@@ -2814,7 +2814,7 @@ static int ironbee_init(module_data_t *mod_data)
                            &ibplugin,              /* Server object */
                            mod_data->max_engines); /* Default max */
     if (rc != IB_OK) {
-        TSError("Failed to create IronBee engine manager: %s",
+        TSError("[ironbee] Error creating IronBee engine manager: %s",
                 ib_status_to_string(rc));
         return rc;
     }
@@ -2823,7 +2823,7 @@ static int ironbee_init(module_data_t *mod_data)
                                        create_module,
                                        mod_data);
     if (rc != IB_OK) {
-        TSError("Failed to register server plugin as module: %s",
+        TSError("[ironbee] Error registering server plugin as module: %s",
                 ib_status_to_string(rc));
         return rc;
     }
@@ -2832,7 +2832,7 @@ static int ironbee_init(module_data_t *mod_data)
     TSDebug("ironbee", "Creating initial IronBee engine");
     rc = ib_manager_engine_create(mod_data->manager, mod_data->config_file);
     if (rc != IB_OK) {
-        TSError("Failed to create initial IronBee engine: %s",
+        TSError("[ironbee] Error creating initial IronBee engine: %s",
                 ib_status_to_string(rc));
         return rc;
     }
@@ -2840,7 +2840,7 @@ static int ironbee_init(module_data_t *mod_data)
     /* Register our at exit function */
     rv = atexit(ibexit);
     if (rv != 0) {
-        TSError("Failed to register IronBee exit handler: %s", strerror(rv));
+        TSError("[ironbee] Error registering IronBee exit handler: %s", strerror(rv));
         return IB_EOTHER;
     }
 
@@ -2868,12 +2868,12 @@ void TSPluginInit(int argc, const char *argv[])
     info.support_email = (char *)"ironbee-users@lists.sourceforge.com";
 
     if (TSPluginRegister(TS_SDK_VERSION_3_0, &info) != TS_SUCCESS) {
-        TSError("[ironbee] Plugin registration failed.\n");
+        TSError("[ironbee] Plugin registration failed.");
         goto Lerror;
     }
 
     if (!check_ts_version()) {
-        TSError("[ironbee] Plugin requires Traffic Server 3.0 or later\n");
+        TSError("[ironbee] Plugin requires Traffic Server 3.0 or later");
         goto Lerror;
     }
 
@@ -2885,14 +2885,14 @@ void TSPluginInit(int argc, const char *argv[])
 
     rc = ironbee_init(&module_data);
     if (rc != IB_OK) {
-        TSError("[ironbee] initialization failed: %s\n",
+        TSError("[ironbee] initialization failed: %s",
                 ib_status_to_string(rc));
         goto Lerror;
     }
 
     cont = TSContCreate(ironbee_plugin, TSMutexCreate());
     if (cont == NULL) {
-        TSError("[ironbee] failed to create initial continuation!\n");
+        TSError("[ironbee] failed to create initial continuation!");
         goto Lerror;
     }
     else {
@@ -2911,6 +2911,6 @@ void TSPluginInit(int argc, const char *argv[])
     return;
 
 Lerror:
-    TSError("[ironbee] Unable to initialize plugin (disabled).\n");
+    TSError("[ironbee] Unable to initialize plugin (disabled).");
 }
 
