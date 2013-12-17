@@ -599,9 +599,9 @@ static ib_status_t act_event_execute(
 
     /* Set the actions if appropriate */
     if (ib_flags_all(tx->flags,
-                          (IB_TX_FBLOCK_ADVISORY |
-                           IB_TX_FBLOCK_PHASE |
-                           IB_TX_FBLOCK_IMMEDIATE)) )
+                     (IB_TX_FBLOCK_ADVISORY |
+                      IB_TX_FBLOCK_PHASE |
+                      IB_TX_FBLOCK_IMMEDIATE)) )
     {
         event->rec_action = IB_LEVENT_ACTION_BLOCK;
     }
