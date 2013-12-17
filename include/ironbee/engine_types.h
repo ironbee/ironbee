@@ -176,6 +176,7 @@ typedef enum ib_block_method_t {
 struct ib_conn_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Connection memory pool */
+    const char         *id;              /**< ID: @sa ib_conn_generate_id() */
     ib_context_t       *ctx;             /**< Config context */
     void               *server_ctx;      /**< Server context */
     ib_array_t         *module_data;     /**< Per module data. */

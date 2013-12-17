@@ -32,6 +32,11 @@ MemoryPool ConstConnection::memory_pool() const
     return MemoryPool(ib()->mp);
 }
 
+const char* ConstConnection::id() const
+{
+    return ib()->id;
+}
+
 Context ConstConnection::context() const
 {
     return Context(ib()->ctx);
@@ -154,6 +159,7 @@ std::ostream& operator<<(std::ostream& o, const ConstConnection& connection)
         o << "IronBee::Connection[!singular!]";
     } else {
         o << "IronBee::Connection["
+          << connection.id() << " "
           << connection.remote_ip_string() << ":" << connection.remote_port()
           << connection.local_ip_string() << ":" << connection.local_port()
           << "]";

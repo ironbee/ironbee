@@ -109,6 +109,9 @@ public:
     //! Associated MemoryPool.
     MemoryPool memory_pool() const;
 
+    //! Identifier.
+    const char* id() const;
+
     //! Associated Context.
     Context context() const;
 

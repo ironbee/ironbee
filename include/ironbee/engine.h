@@ -275,6 +275,19 @@ const ib_var_config_t DLL_PUBLIC *ib_engine_var_config_get_const(
 void DLL_PUBLIC ib_engine_destroy(ib_engine_t *ib);
 
 /**
+ * Merge the base_uuid with conn data and generate the conn id string.
+ *
+ * This function is normally executed by ib_conn_create(), but if the conn is
+ * being created in other ways (e.g. in the tests), use this to generate the
+ * CONN's ID.
+ *
+ * @param[in,out] conn Connection to populate
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conn_generate_id(ib_conn_t *conn);
+
+/**
  * Create a connection structure.
  *
  * @param ib Engine handle
@@ -358,12 +371,10 @@ void DLL_PUBLIC ib_conn_destroy(ib_conn_t *conn);
  * TX's ID.
  *
  * @param[in,out] tx Transaction to populate
- * @param[in] mp Memory pool to use.
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_tx_generate_id(ib_tx_t *tx,
-                                         ib_mpool_t *mp);
+ib_status_t DLL_PUBLIC ib_tx_generate_id(ib_tx_t *tx);
 
 /**
  * Create a transaction structure.

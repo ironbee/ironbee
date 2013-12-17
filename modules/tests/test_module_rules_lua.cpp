@@ -121,6 +121,7 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
     int res = 0;
     ib_tx_t tx;
     tx.ib = ib_engine;
+    tx.mp = ib_engine->mp;
 
     ib_rule_exec_t rule_exec;
     memset(&rule_exec, 0, sizeof(rule_exec));
@@ -128,7 +129,7 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
     rule_exec.tx = &tx;
     rule_exec.rule = rule;
 
-    ib_tx_generate_id(&tx, ib_engine->mp);
+    ib_tx_generate_id(&tx);
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
     setSearchPath(L);

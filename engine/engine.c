@@ -792,6 +792,32 @@ const char *ib_engine_instance_uuid_str(
     return ib->instance_id_str;
 }
 
+ib_status_t ib_conn_generate_id(ib_conn_t *conn)
+{
+    ib_uuid_t uuid;
+    ib_status_t rc;
+    char *str;
+
+    rc = ib_uuid_create_v4(&uuid);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Convert to a hex-string representation */
+    str = (char *)ib_mpool_alloc(conn->mp, IB_UUID_HEX_SIZE);
+    if (str == NULL) {
+        return IB_EALLOC;
+    }
+    conn->id = str;
+
+    rc = ib_uuid_bin_to_ascii(str, &uuid);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
 ib_status_t ib_conn_create(ib_engine_t *ib,
                            ib_conn_t **pconn,
                            void *server_ctx)
@@ -826,6 +852,8 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     conn->mp = pool;
     conn->ctx = ib->ctx;
     conn->server_ctx = server_ctx;
+
+    ib_conn_generate_id(conn);
 
     /* Create the per-module data data store. */
     rc = ib_array_create(&(conn->module_data), pool, 16, 8);
@@ -884,8 +912,7 @@ void ib_conn_destroy(ib_conn_t *conn)
     }
 }
 
-ib_status_t ib_tx_generate_id(ib_tx_t *tx,
-                              ib_mpool_t *mp)
+ib_status_t ib_tx_generate_id(ib_tx_t *tx)
 {
     ib_uuid_t uuid;
     ib_status_t rc;
@@ -897,7 +924,7 @@ ib_status_t ib_tx_generate_id(ib_tx_t *tx,
     }
 
     /* Convert to a hex-string representation */
-    str = (char *)ib_mpool_alloc(mp, IB_UUID_HEX_SIZE);
+    str = (char *)ib_mpool_alloc(tx->mp, IB_UUID_HEX_SIZE);
     if (str == NULL) {
         return IB_EALLOC;
     }
@@ -965,7 +992,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     tx->block_method = corecfg->block_method;
 
     ++conn->tx_count;
-    ib_tx_generate_id(tx, tx->mp);
+    ib_tx_generate_id(tx);
 
     /* Create data */
     rc = ib_var_store_acquire(&tx->var_store, tx->mp, tx->ib->var_config);
