@@ -448,7 +448,7 @@ AM_CONDITIONAL(HAVE_MODP, test "${HAVE_MODP}" != "no")
 
 if test "${cpp_code}" = 1 ; then
     if test "${have_boost}" != "yes"; then
-        AC_MSG_ERROR([Boost is required for C++ code])
+        AC_MSG_ERROR([Boost >= 1.49 is required for C++ code])
     fi
     if test "${HAVE_PROTOBUF}" != "yes" ; then
         AC_MSG_ERROR([protobuf is required for C++ code])
