@@ -536,7 +536,8 @@ static ib_status_t act_event_execute(
         IB_LEVENT_ACTION_UNKNOWN,
         rule->meta.confidence,
         rule->meta.severity,
-        expanded, expanded_size
+        "%.*s",
+        (int)expanded_size, expanded
     );
     if (rc != IB_OK) {
         return rc;
