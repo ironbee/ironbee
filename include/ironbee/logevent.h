@@ -192,7 +192,8 @@ ib_status_t DLL_PUBLIC ib_logevent_create(
     uint8_t                 confidence,
     uint8_t                 severity,
     const char             *fmt,
-    ...);
+    ...
+) PRINTF_ATTRIBUTE(8, 9);
 
 /**
  * Add a tag to the event.
