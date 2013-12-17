@@ -207,6 +207,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/algorithm/string/join.hpp>',
   '<boost/algorithm/string/predicate.hpp>',
   '<boost/algorithm/string/split.hpp>',
+  '<boost/algorithm/string/trim.hpp>',
   '<boost/any.hpp>',
   '<boost/assign.hpp>',
   '<boost/bind.hpp>',

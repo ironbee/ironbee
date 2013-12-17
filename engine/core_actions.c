@@ -37,8 +37,8 @@
 #include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/rule_logger.h>
-#include <ironbee/transformation.h>
 #include <ironbee/string.h>
+#include <ironbee/transformation.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
 

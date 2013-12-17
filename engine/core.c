@@ -50,8 +50,8 @@
 #include <ironbee/rule_defs.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
-#include <ironbee/util.h>
 #include <ironbee/transformation.h>
+#include <ironbee/util.h>
 
 #include <assert.h>
 #include <ctype.h>

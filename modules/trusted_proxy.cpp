@@ -25,9 +25,9 @@
 #include <ironbee/ipset.h>
 #include <ironbee/string.h>
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/bind.hpp>
 
 #include <vector>
 

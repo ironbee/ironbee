@@ -30,8 +30,8 @@
 #include <ironbee/context.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
-#include <ironbee/flags.h>
 #include <ironbee/field.h>
+#include <ironbee/flags.h>
 #include <ironbee/log.h>
 
 #include <assert.h>
