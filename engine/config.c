@@ -1169,4 +1169,3 @@ ib_status_t ib_cfg_parse_target_string(
 
     return IB_OK;
 }
-

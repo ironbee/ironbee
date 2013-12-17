@@ -712,7 +712,7 @@ static ib_status_t act_setvar_create(
             &(setvar_data->argument),
             mp,
             "", 0,
-            IB_FTYPE_NUM, 
+            IB_FTYPE_NUM,
             ib_ftype_num_in(&arg_u.num));
         if (rc != IB_OK) {
             return rc;
@@ -900,12 +900,12 @@ static ib_status_t act_setvar_execute(
             if (rc != IB_OK) {
                 return rc;
             }
-    
+
             rc = ib_tfn_execute(mp, tfn, argument, &tmp_field);
             if (rc != IB_OK) {
                 return rc;
             }
-    
+
             /* Promote the teporary field to the new current field. */
             argument = tmp_field;
         }

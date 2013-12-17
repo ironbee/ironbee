@@ -274,7 +274,7 @@ void TrustedProxyModule::trusted_ips_directive(
     if (*first_arg != '+' and *first_arg != '-') {
         config.clear_networks();
     }
-    
+
     BOOST_FOREACH(const char* arg, ip_list) {
         if (*arg == '+') {
             config.add_trusted_network(arg+1);
@@ -363,4 +363,3 @@ void TrustedProxyModule::set_effective_ip(
 }
 
 } // Anonymous namespace
-

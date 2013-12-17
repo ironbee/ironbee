@@ -3863,7 +3863,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
             const ib_tfn_t   *tfn;
             const char       *tfn_name =
                 (const char *)ib_list_node_data_const(node);
-    
+
             rc = ib_tfn_lookup(ib, tfn_name, &tfn);
             if (rc != IB_OK) {
                 ib_cfg_log_error(
@@ -3875,7 +3875,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
                 /* Don't signal a fatal error. Just don't work. */
                 return IB_OK;
             }
-    
+
             rc = ib_tfn_execute(mp, tfn, field, &tmp_field);
             if (rc != IB_OK) {
                 ib_cfg_log_error(
@@ -3888,7 +3888,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
                 /* As above, failure should not kill the whole config. */
                 return IB_OK;
             }
-    
+
             /* Promote the teporary field to the new current field. */
             field = tmp_field;
         }

@@ -740,7 +740,7 @@ void DLL_PUBLIC ib_cfg_vlog_ex(const ib_engine_t *ib,
  * @param[out] target Target name.
  * @param[out] tfns List of transformation names.
  *
- * @returns 
+ * @returns
  * - IB_OK On success.
  * - IB_EALLOC On allocation errors.
  */
