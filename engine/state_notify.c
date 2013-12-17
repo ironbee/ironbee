@@ -31,6 +31,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
 #include <ironbee/field.h>
+#include <ironbee/flags.h>
 
 #include <assert.h>
 
@@ -282,7 +283,7 @@ ib_status_t ib_state_notify_request_started(
     ib_status_t rc;
 
     /* Validate. */
-    if (ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
+    if (ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(request_started_event));
@@ -371,7 +372,12 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Validate. */
-    if (ib_conn_flags_isset(conn, IB_CONN_FCLOSED)) {
+    if (! ib_flags_all(conn->flags, IB_CONN_FOPENED)) {
+        ib_log_error(ib, "No connection opened: Ignoring %s",
+                     ib_state_event_name(conn_closed_event));
+        return IB_EINVAL;
+    }
+    if (ib_flags_all(conn->flags, IB_CONN_FCLOSED)) {
         ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(conn_closed_event));
         return IB_EINVAL;
@@ -523,8 +529,13 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    /* Check for data first. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+    /* Validate. */
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
+        ib_log_debug_tx(tx, "No request started: Ignoring %s",
+                        ib_state_event_name(request_header_data_event));
+        return IB_OK;
+    }
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
                         ib_state_event_name(request_header_data_event));
         return IB_OK;
@@ -561,15 +572,18 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    /* Check for data first. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+    /* Validate. */
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
+        ib_log_debug_tx(tx, "No request started: Ignoring %s",
+                        ib_state_event_name(request_header_finished_event));
+        return IB_OK;
+    }
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
                         ib_state_event_name(request_header_finished_event));
         return IB_OK;
     }
-
-    /* Validate. */
-    if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
+    if (ib_flags_all(tx->flags, IB_TX_FREQ_SEENHEADER)) {
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(request_header_finished_event));
@@ -628,8 +642,13 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    /* Check for data first. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+    /* Validate. */
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
+        ib_log_debug_tx(tx, "No request started: Ignoring %s",
+                        ib_state_event_name(request_body_data_event));
+        return IB_OK;
+    }
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
                         ib_state_event_name(request_body_data_event));
         return IB_OK;
@@ -672,15 +691,18 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    /* Check for data first. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
-        ib_log_debug_tx(tx, "No request data: Ignoring %s",
+    /* Validate. */
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
+        ib_log_debug_tx(tx, "No request started: Ignoring %s",
                         ib_state_event_name(request_finished_event));
         return IB_OK;
     }
-
-    /* Validate. */
-    if (ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED)) {
+    if (! ib_flags_any(tx->flags, IB_TX_FREQ_STARTED)) {
+        ib_log_debug_tx(tx, "No request started: Ignoring %s",
+                        ib_state_event_name(request_finished_event));
+        return IB_OK;
+    }
+    if (ib_flags_all(tx->flags, IB_TX_FREQ_FINISHED)) {
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(request_finished_event));
@@ -736,8 +758,13 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    /* Check for data first. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+    /* Validate. */
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)) {
+        ib_log_debug_tx(tx, "No request started: Ignoring %s",
+                        ib_state_event_name(response_started_event));
+        return IB_OK;
+    }
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
                         ib_state_event_name(response_started_event));
         return IB_OK;
@@ -796,8 +823,8 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    /* Check for data first. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+    /* Validate. */
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
                         ib_state_event_name(response_header_data_event));
         return IB_OK;
@@ -835,7 +862,7 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Check for data first. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+    if (!ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
                         ib_state_event_name(response_header_finished_event));
         return IB_OK;
@@ -902,7 +929,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Check for data first. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_HAS_DATA)) {
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
         ib_log_debug_tx(tx, "No request data: Ignoring %s",
                         ib_state_event_name(response_body_data_event));
         return IB_OK;
@@ -957,14 +984,26 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
 
     ib_status_t rc;
 
-    if (ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED)) {
+    /* Check for response started first. */
+    if (! ib_flags_all(tx->flags, IB_TX_FREQ_HAS_DATA)) {
+        ib_log_debug_tx(tx, "No request data: Ignoring %s",
+                        ib_state_event_name(response_finished_event));
+        return IB_OK;
+    }
+    if (!ib_flags_any(tx->flags, IB_TX_FRES_STARTED)) {
+        ib_log_debug_tx(tx, "No response started: Ignoring %s",
+                        ib_state_event_name(response_finished_event));
+        return IB_OK;
+    }
+
+    if (ib_flags_all(tx->flags, IB_TX_FRES_FINISHED)) {
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(response_finished_event));
         return IB_EINVAL;
     }
 
-    if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
+    if (!ib_flags_all(tx->flags, IB_TX_FRES_SEENHEADER)) {
         ib_log_debug_tx(tx, "Automatically triggering %s",
                         ib_state_event_name(response_header_finished_event));
         ib_state_notify_response_header_finished(ib, tx);
