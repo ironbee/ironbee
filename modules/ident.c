@@ -89,12 +89,6 @@ static ib_ident_provider_t ident_dummy_provider = {
 };
 
 /**
- * A hash of registered ident providers, indexed by name (case-insensitive).
- * NOTE: in the unlikely event of a name clash, this will fail.
- */
-//static ib_hash_t *ident_providers;
-
-/**
  * Function exported to enable a module to register an ident provider
  *
  * @param engine Engine to register with
