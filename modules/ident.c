@@ -49,6 +49,7 @@ typedef struct ident_cfg_t {
     ident_mode_t mode;
     const char *type;
     bool accept_any;
+    ib_hash_t *providers;
 } ident_cfg_t;
 
 /**
@@ -91,19 +92,35 @@ static ib_ident_provider_t ident_dummy_provider = {
  * A hash of registered ident providers, indexed by name (case-insensitive).
  * NOTE: in the unlikely event of a name clash, this will fail.
  */
-static ib_hash_t *ident_providers;
+//static ib_hash_t *ident_providers;
 
 /**
  * Function exported to enable a module to register an ident provider
  *
+ * @param engine Engine to register with
  * @param name Provider name (referenced in IdentType directive)
  * @param provider The identity provider
  * @return status
  */
-ib_status_t ib_ident_provider_register(const char *name,
+ib_status_t ib_ident_provider_register(ib_engine_t *engine,
+                                       const char *name,
                                        ib_ident_provider_t *provider)
 {
-    return ib_hash_set(ident_providers, name, provider);
+    ident_cfg_t *cfg;
+    ib_status_t rc;
+    ib_module_t *m;
+
+    rc = ib_engine_module_get(engine, MODULE_NAME_STR, &m);
+    assert((rc == IB_OK) && (m != NULL));
+    rc = ib_context_module_config(ib_context_main(engine), m, &cfg);
+    assert((rc == IB_OK) && (cfg != NULL));
+
+    if (cfg->providers == NULL) {
+        rc = ib_hash_create(&cfg->providers, ib_engine_pool_main_get(engine));
+        assert((rc == IB_OK) && (cfg->providers != NULL));
+    }
+
+    return ib_hash_set(cfg->providers, name, provider);
 }
 
 /**
@@ -195,7 +212,7 @@ static ib_status_t ident_type(ib_cfgparser_t *cp, const char *name,
  * check_id function to check and log user ID. Optionally cycles through
  * other providers.  Finally, if client is not identified and mode is
  * "Require", calls provider's challenge function to ask client to
- * authenticate (e.g. HTTP 401).
+ * identify (e.g. HTTP 401).
  *
  * @param ib The engine
  * @param tx The transaction
@@ -222,8 +239,8 @@ static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
     if (cfg->mode == ident_off) {
         return IB_OK;
     }
-    if (cfg->type != NULL) {
-        rc = ib_hash_get(ident_providers, &provider, cfg->type);
+    if (cfg->type != NULL && cfg->providers != NULL) {
+        rc = ib_hash_get(cfg->providers, &provider, cfg->type);
         if (rc != IB_OK || provider == NULL) {
             ib_log_error_tx(tx, "Identifier '%s' configured but not available", cfg->type);
             provider = &ident_dummy_provider;
@@ -242,10 +259,10 @@ static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
     /* OK, ident is on.  Verify if there is a user ID */
     userid = provider->check_id(tx);
 
-    if (userid == NULL && cfg->accept_any) {
+    if (userid == NULL && cfg->accept_any && cfg->providers != NULL) {
         ib_hash_iterator_t *iterator = ib_hash_iterator_create(tx->mp);
         ib_ident_provider_t *p;
-        for (ib_hash_iterator_first(iterator, ident_providers);
+        for (ib_hash_iterator_first(iterator, cfg->providers);
              !userid && !ib_hash_iterator_at_end(iterator);
              ib_hash_iterator_next(iterator)) {
             ib_hash_iterator_fetch(NULL, NULL, &p, iterator);
@@ -282,12 +299,7 @@ static ib_status_t ident_handler(ib_engine_t *ib, ib_tx_t *tx,
 static ib_status_t ident_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     ib_status_t rc;
-    ib_mpool_t *pool = ib_engine_pool_main_get(ib);
 
-    rc = ib_hash_create(&ident_providers, pool);
-    if (rc != IB_OK) {
-        return rc;
-    }
     /* register a per-request authentication action
      *
      * Register it for both header_finished and request_finished.
@@ -329,7 +341,8 @@ static IB_DIRMAP_INIT_STRUCTURE(ident_config) = {
 static ident_cfg_t ident_cfg_ini = {
     ident_off,
     NULL,
-    1
+    1,
+    NULL
 };
 
 IB_MODULE_INIT(

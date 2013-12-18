@@ -45,7 +45,8 @@ typedef struct ib_ident_provider_t {
  * @param provider The provider
  * @return success or error
  */
-ib_status_t ib_ident_provider_register(const char *name,
+ib_status_t ib_ident_provider_register(ib_engine_t *engine,
+                                       const char *name,
                                        ib_ident_provider_t *provider);
 
 #ifdef __cplusplus

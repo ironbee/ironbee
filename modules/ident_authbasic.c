@@ -260,7 +260,7 @@ static ib_status_t ident_authbasic_init(ib_engine_t *ib, ib_module_t *m, void *c
         basic_get_user,
         basic_challenge
     };
-    return ib_ident_provider_register("authbasic", &ident_authbasic_provider);
+    return ib_ident_provider_register(ib, "authbasic", &ident_authbasic_provider);
 }
 
 /**
