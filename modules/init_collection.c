@@ -498,7 +498,7 @@ ib_status_t var_load_fn(
  *                   The rest are options.
  * @returns
  * - IB_OK On success.
- * - Other on failure of ib_uuid_create_v4() or @c ib_persist_fw_* calls.
+ * - Other on failure of ib_uuid_create_v4_from_mp() or @c ib_persist_fw_* calls.
  */
 static ib_status_t domap(
     ib_cfgparser_t        *cp,
@@ -509,19 +509,12 @@ static ib_status_t domap(
     const ib_list_t       *params
 )
 {
-    ib_uuid_t uuid;
     char store_name[37];
     ib_status_t rc;
 
-    rc = ib_uuid_create_v4(&uuid);
+    rc = ib_uuid_create_v4(store_name);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to create UUIDv4 store.");
-        return rc;
-    }
-
-    rc = ib_uuid_bin_to_ascii(store_name, &uuid);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to convert UUIDv4 to string.");
         return rc;
     }
 

@@ -759,23 +759,19 @@ namespace {
                     "FLAGS:blockingMode", IB_TX_FBLOCKING_MODE, priority));
         }
         else if (has_action(ACTION_SCALETHREAT, mr)) {
-            ib_uuid_t uuid;
-            std::vector<char> uuid_str(37);
+            std::vector<char> uuid(IB_UUID_LENGTH);
             ib_float_t fnum;
 
             IronBee::throw_if_error(
-                ib_uuid_create_v4(&uuid),
+                ib_uuid_create_v4(uuid.data()),
                 "Cannot initialize v4 UUID.");
-            IronBee::throw_if_error(
-                ib_uuid_bin_to_ascii(&(uuid_str[0]), &uuid),
-                "Cannot generate v4 UUID.");
             IronBee::throw_if_error(
                 ib_string_to_float(std::string(mr[2]).c_str(), &fnum),
                 "Cannot convert string to float.");
 
             return action_ptr(
                 new ScaleThreat(
-                    std::string(&(uuid_str[0]), 37),
+                    std::string(uuid.data(), IB_UUID_LENGTH - 1),
                     fnum,
                     priority));
         }

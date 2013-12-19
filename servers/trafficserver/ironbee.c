@@ -2005,7 +2005,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     }
     if (site != NULL) {
         setact.hdr = "@IB-SITE-ID";
-        setact.value = site->id_str;
+        setact.value = site->id;
         header_action(bufp, hdr_loc, &setact, data->tx->mp);
     }
     else {

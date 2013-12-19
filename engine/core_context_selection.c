@@ -509,7 +509,7 @@ static ib_status_t core_ctxsel_select(
   found:
         ib_log_debug2(ib, "Selected %s context \"%s\" site=%s(%s)",
                       ctx_type, ib_context_full_get(ctx),
-                      (site ? site->site.id_str : "none"),
+                      (site ? site->site.id : "none"),
                       (site ? site->site.name : "none"));
         *pctx = ctx;
         return IB_OK;

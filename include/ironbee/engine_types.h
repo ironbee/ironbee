@@ -176,7 +176,7 @@ typedef enum ib_block_method_t {
 struct ib_conn_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Connection memory pool */
-    const char         *id;              /**< ID: @sa ib_conn_generate_id() */
+    char                id[IB_UUID_LENGTH]; /**< ID: @sa ib_conn_generate_id() */
     ib_context_t       *ctx;             /**< Config context */
     void               *server_ctx;      /**< Server context */
     ib_array_t         *module_data;     /**< Per module data. */
@@ -259,12 +259,12 @@ typedef struct ib_tx_limits_t ib_tx_limits_t;
 struct ib_tx_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Transaction memory pool */
-    const char         *id;              /**< ID: @sa ib_tx_generate_id() */
+    char                id[IB_UUID_LENGTH]; /**< ID: @sa ib_tx_generate_id() */
     ib_conn_t          *conn;            /**< Connection */
     ib_context_t       *ctx;             /**< Config context */
     void               *sctx;            /**< Server context */
     ib_var_store_t     *var_store;       /**< Var Store */
-    const char         *auditlog_id;     /**< Auditlog UUID, if available */
+    char                audit_log_id[IB_UUID_LENGTH]; /**< Auditlog UUID, if available */
     ib_list_t          *logevents;       /**< Log events */
     ib_array_t         *module_data;     /**< Per-module data */
     ib_fctl_t          *fctl;            /**< Transaction filter controller */

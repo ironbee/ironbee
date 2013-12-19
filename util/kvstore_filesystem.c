@@ -22,6 +22,9 @@
 
 #include "ironbee_config_auto.h"
 
+/* Must be before other system headers. */
+#include <uuid.h>
+
 #include <ironbee/kvstore_filesystem.h>
 
 #include "kvstore_private.h"
@@ -43,7 +46,6 @@
 #include <strings.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 
 /**
  * Define the width for printing an expiration time.
@@ -52,11 +54,6 @@
  * for extreme future-time use.
  */
 static const size_t EXPIRE_FMT_WIDTH = 13;
-
-/**
- * The length of a string representation of a UUID.
- */
-static const size_t UUID_LEN_STR = 36;
 
 /**
  * The default fmode for created flies.
@@ -85,6 +82,77 @@ static const size_t CREATE_FMT_WIDTH = 17;
  */
 #define CREATE_FMT "%016"PRIx64
 
+
+/**
+ * Creates a new, sha1, v5 uuid.
+ *
+ * @param[out] uuid_str The 37 byte UUID is written to this buffer.
+ *             If this is NULL then it will be malloced by ossp-uuid.
+ * @param[in,out] uuid_str_len This should be 37. If, for some reason,
+ *                that is not long enough (36 bytes and one \0 character)
+ *                then an out-of-memory error is reported by ossp-uuid
+ *                and IB_EOTHER is returned.
+ *                If @a uuid_str is NULL, then this is ignored
+ *                and is used as an output variable for the
+ *                length of @a uuid_str allocated by malloc.
+ * @param[in] key The null-terminated string of the key we want to hash.
+ *
+ * @returns
+ *   - IB_OK
+ *   - IB_EOTHER if exporting the UUID or some other unexpected error occurs.
+ *   - IB_EALLOC if a uuid object cannot be made.
+ */
+static ib_status_t uuid_create_v5_str(
+    char       **uuid_str,
+    size_t      *uuid_str_len,
+    const char  *key
+)
+{
+    uuid_rc_t uuid_rc;
+    ib_status_t rc = IB_OK;
+    uuid_t *uuid_generator;
+
+    /* This is expensive relative to the rest of this function.  If
+     * profiling reveals this is a performance bottleneck, it could be moved
+     * to static, lock-guarded, state similar to how util/uuid.c works.
+     *
+     * Alternately, this whole routine is just a way to hash a key to a
+     * filesystem safe string.  A faster hash implementation could be used
+     * instead, e.g., one of the functions from hash.h.
+     */
+    if (uuid_create(&uuid_generator) != UUID_RC_OK) {
+        return IB_EOTHER;
+    }
+
+    /* Load the nil UUID. */
+    uuid_rc = uuid_load(uuid_generator, "nil");
+    if (uuid_rc != UUID_RC_OK) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+    uuid_rc = uuid_make(uuid_generator, UUID_MAKE_V5, uuid_generator, key);
+
+    if (uuid_rc == UUID_RC_MEM) {
+        rc = IB_EALLOC;
+        goto finish;
+    }
+    else if (uuid_rc != UUID_RC_OK) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+    uuid_rc = uuid_export(uuid_generator, UUID_FMT_STR, uuid_str, uuid_str_len);
+    if (uuid_rc != UUID_RC_OK) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+finish:
+    uuid_destroy(uuid_generator);
+
+    return rc;
+}
 
 /**
  * Malloc and populate a filesystem path for a key/value pair.
@@ -180,7 +248,7 @@ static ib_status_t build_key_path(
         goto cleanup;
     }
 
-    rc = ib_uuid_create_v5_str(&key_uuid_str, &key_uuid_sz, key_str);
+    rc = uuid_create_v5_str(&key_uuid_str, &key_uuid_sz, key_str);
     if (rc != IB_OK) {
         goto cleanup;
     }

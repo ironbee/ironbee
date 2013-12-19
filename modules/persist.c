@@ -446,8 +446,7 @@ static ib_status_t create_anonymous_store(
     assert(name != NULL);
 
     ib_mpool_t *mp         = cp->mp;
-    ib_uuid_t   uuid;
-    char       *store_name = ib_mpool_alloc(mp, 37);
+    char       *store_name = ib_mpool_alloc(mp, IB_UUID_LENGTH);
     ib_status_t rc;
 
     if (store_name == NULL) {
@@ -455,16 +454,9 @@ static ib_status_t create_anonymous_store(
     }
 
     /* Build random store name. */
-    rc = ib_uuid_create_v4(&uuid);
+    rc = ib_uuid_create_v4(store_name);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to create UUIDv4 store.");
-        return rc;
-    }
-
-    /* Convert to a string. */
-    rc = ib_uuid_bin_to_ascii(store_name, &uuid);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to convert UUIDv4 to string.");
         return rc;
     }
 

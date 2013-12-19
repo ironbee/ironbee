@@ -196,15 +196,9 @@ ConstSite::ConstSite(ib_type ib_site) :
     // nop
 }
 
-const boost::uuids::uuid& ConstSite::id() const
+const char* ConstSite::id() const
 {
-    // boost::uuid::uuid is POD compatible with binary forms.
-    return *reinterpret_cast<const boost::uuids::uuid*>(&(ib()->id));
-}
-
-const char* ConstSite::id_as_s() const
-{
-    return ib()->id_str;
+    return ib()->id;
 }
 
 MemoryPool ConstSite::memory_pool() const

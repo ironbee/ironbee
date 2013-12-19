@@ -41,9 +41,9 @@ const char* ConstTransaction::id() const
     return ib()->id;
 }
 
-const char* ConstTransaction::auditlog_id() const
+const char* ConstTransaction::audit_log_id() const
 {
-    return ib()->auditlog_id;
+    return ib()->audit_log_id;
 }
 
 Connection ConstTransaction::connection() const

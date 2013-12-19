@@ -28,6 +28,7 @@
 #include <ironbee/build.h>
 #include <ironbee/engine_types.h>
 #include <ironbee/list.h>
+#include <ironbee/uuid.h>
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -48,12 +49,11 @@ extern "C" {
 
 /** Site Structure */
 struct ib_site_t {
-    ib_uuid_t           id;              /**< Site UUID */
-    const char         *id_str;          /**< ascii format, for logging */
-    ib_mpool_t         *mp;              /**< Memory pool */
-    const char         *name;            /**< Site name */
-    ib_context_t       *context;         /**< Site's configuration context */
-    void               *ctxsel_site;     /**< Context selection site info */
+    char                id[IB_UUID_LENGTH]; /**< Site UUID */
+    ib_mpool_t         *mp;                 /**< Memory pool */
+    const char         *name;               /**< Site name */
+    ib_context_t       *context;            /**< Site's configuration context */
+    void               *ctxsel_site;        /**< Context selection site info */
 };
 
 /** Site host name entity */

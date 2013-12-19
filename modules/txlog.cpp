@@ -232,7 +232,7 @@ void TxLogData::recordAuditLogData(
 )
 {
     m_auditlogFile = auditlog->cfg_data->full_path;
-    m_auditlogId = tx.auditlog_id();
+    m_auditlogId = tx.audit_log_id();
 }
 
 void eventsToJson(
@@ -462,7 +462,7 @@ static ib_status_t txlog_logger_format_fn(
 
     const std::string siteId =
         (! conn || ! conn.context() || ! conn.context().site())?
-            "" : conn.context().site().id_as_s();
+            "" : conn.context().site().id();
 
     /* Fetch some telemetry from our tx. */
     TxLogData &txlogdata = IronBee::Transaction::remove_const(tx)

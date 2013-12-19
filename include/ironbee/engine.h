@@ -118,16 +118,7 @@ ib_logger_t DLL_PUBLIC *ib_engine_logger_get(const ib_engine_t *ib);
  *
  * @returns Pointer to engine's instance UUID
  */
-const ib_uuid_t DLL_PUBLIC *ib_engine_instance_uuid(const ib_engine_t *ib);
-
-/**
- * Get the string form of the engine's instance UUID
- *
- * @param ib Engine handle
- *
- * @returns The engine's instance UUID string
- */
-const char DLL_PUBLIC *ib_engine_instance_uuid_str(const ib_engine_t *ib);
+const char DLL_PUBLIC *ib_engine_instance_uuid(const ib_engine_t *ib);
 
 /**
  * Inform the engine that the configuration phase is starting

@@ -106,7 +106,7 @@ static ib_status_t tx_header_finished(
     /* Note: ib_server_header() ignores lengths for now */
     rc = ib_tx_server_header(tx, IB_SERVER_RESPONSE, IB_HDR_SET,
                              IB_S2SL("ENGINE-UUID"),
-                             IB_S2SL(ib_engine_instance_uuid_str(ib)));
+                             IB_S2SL(ib_engine_instance_uuid(ib)));
     if (rc != IB_OK) {
         return rc;
     }

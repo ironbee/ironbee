@@ -118,14 +118,11 @@ struct ib_engine_t {
     ib_context_t          *ectx;            /**< Engine configuration context */
     ib_context_t          *ctx;             /**< Main configuration context */
     ib_engine_cfg_state_t  cfg_state;       /**< Engine configuration state */
-    ib_uuid_t              sensor_id;       /**< Sensor UUID */
-    uint32_t               sensor_id_hash;  /**< Sensor UUID hash (4 bytes) */
-    const char            *sensor_id_str;   /**< ascii format, for logging */
+    char                   sensor_id[IB_UUID_LENGTH]; /**< Sensor UUID */
     const char            *sensor_name;     /**< Sensor name */
     const char            *sensor_version;  /**< Sensor version string */
     const char            *sensor_hostname; /**< Sensor hostname */
-    const ib_uuid_t       *instance_uuid;   /**< Engine instance UUID */
-    const char            *instance_id_str; /**< String version of instance_uuid */
+    char                   instance_uuid[IB_UUID_LENGTH]; /**< Engine instance UUID */
     ib_cfgparser_t        *cfgparser;       /**< Our configuration parser */
 
     /// @todo Only these should be private

@@ -4400,14 +4400,14 @@ static ib_status_t gen_full_id(ib_engine_t *ib,
             if (rc != IB_OK) {
                 return rc;
             }
-            else if ( (site == NULL) || (site->id_str == NULL) ) {
+            else if ( (site == NULL) || (site->id == NULL) ) {
                 ib_log_error(ib,
                              "Error creating rule ID for context rule: "
                              "no site ID");
                 return IB_EINVAL;
             }
             else {
-                part2 = site->id_str;
+                part2 = site->id;
             }
             break;
         default:

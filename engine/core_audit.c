@@ -132,11 +132,11 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     /* Generate the full audit log filename. */
     if (site != NULL) {
         audit_filename_sz = strlen(dn) + strlen(cfg->tx->id) +
-            strlen(site->id_str) + 7;
+            strlen(site->id) + 7;
         audit_filename = (char *)ib_mpool_alloc(cfg->tx->mp, audit_filename_sz);
         sys_rc = snprintf(audit_filename,
                           audit_filename_sz,
-                          "%s/%s_%s.log", dn, cfg->tx->id,site->id_str);
+                          "%s/%s_%s.log", dn, cfg->tx->id,site->id);
     }
     else {
         audit_filename_sz = strlen(dn) + strlen(cfg->tx->id) + 6;
@@ -569,11 +569,11 @@ static ib_status_t audit_add_line_item(const ib_logformat_t *lf,
             *str = (char *)"-";
         }
         else {
-            *str = logdata->site->id_str;
+            *str = logdata->site->id;
         }
         break;
     case IB_LOG_FIELD_SENSOR_ID:
-        *str = logdata->log->ib->sensor_id_str;
+        *str = logdata->log->ib->sensor_id;
         break;
     case IB_LOG_FIELD_TRANSACTION_ID:
         *str = logdata->tx->id;

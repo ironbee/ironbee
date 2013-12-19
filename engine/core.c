@@ -1292,8 +1292,8 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 
     ib_field_create_bytestr_alias(&f, pool,
                                   IB_FIELD_NAME("sensor-id"),
-                                  (uint8_t *)ib->sensor_id_str,
-                                  strlen(ib->sensor_id_str));
+                                  (uint8_t *)ib->sensor_id,
+                                  strlen(ib->sensor_id));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
@@ -1321,8 +1321,8 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     if (site != NULL) {
         ib_field_create_bytestr_alias(&f, pool,
                                       IB_FIELD_NAME("site-id"),
-                                      (uint8_t *)site->id_str,
-                                      strlen(site->id_str));
+                                      (uint8_t *)site->id,
+                                      strlen(site->id));
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,
@@ -1770,7 +1770,6 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
     ib_core_module_tx_data_t *core_txdata;
     ib_core_audit_cfg_t *cfg;
     ib_list_t *events;
-    char *boundary;
     ib_status_t rc;
 
     /* If there's not events, do nothing */
@@ -1833,18 +1832,11 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
         return rc;
     }
 
-    /* Create a unique MIME tx->auditlog_id. */
-    boundary = (char *)ib_mpool_alloc(tx->mp, IB_UUID_HEX_SIZE);
-    if (boundary == NULL) {
-        return IB_EALLOC;
-    }
-
-    rc = ib_uuid_create_v4_str(boundary);
+    /* Create a unique MIME tx->audit_log_id. */
+    rc = ib_uuid_create_v4(tx->audit_log_id);
     if (rc != IB_OK) {
         return rc;
     }
-
-    tx->auditlog_id = boundary;
 
     /* Create the core config. */
     cfg = (ib_core_audit_cfg_t *)ib_mpool_calloc(log->mp, 1, sizeof(*cfg));
@@ -1853,7 +1845,7 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
     }
 
     cfg->tx = tx;
-    cfg->boundary = tx->auditlog_id;
+    cfg->boundary = tx->audit_log_id;
     cfg->core_cfg = corecfg;
     log->cfg_data = cfg;
 
@@ -2961,13 +2953,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
     /* Now, look at the parameter name */
     if (strcasecmp("SiteId", directive) == 0) {
 
-        /* Store the ASCII version for logging */
-        site->id_str =
-            ib_mpool_strdup(ib_engine_pool_config_get(ib), param1u);
-
-        /* Calculate the binary version. */
-        rc = ib_uuid_ascii_to_bin(&site->id, (const char *)param1u);
-        if (rc != IB_OK) {
+        if (strlen(param1u) != IB_UUID_LENGTH - 1) {
             ib_cfg_log_error(cp,
                              "Invalid UUID at %s: %s should have UUID format "
                              "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx "
@@ -2975,11 +2961,12 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
                              directive, param1u);
 
             /* Use the default id. */
-            site->id_str = (const char *)ib_uuid_default_str;
-            rc = ib_uuid_ascii_to_bin(&site->id, ib_uuid_default_str);
+            memcpy(site->id, ib_uuid_default_str, IB_UUID_LENGTH);
 
             return rc;
         }
+
+        memcpy(site->id, param1u, IB_UUID_LENGTH);
 
         return IB_OK;
     }
@@ -2991,7 +2978,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
         rc = ib_ctxsel_host_create(site, param1u, NULL);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "%s: Invalid hostname \"%s\" for site \"%s\".",
-                             directive, param1u, site->id_str);
+                             directive, param1u, site->id);
             return rc;
         }
 
@@ -3033,7 +3020,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
             rc = ib_ctxsel_service_create(site, ip, NULL);
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp, "%s: Invalid port=\"%s\" for site \"%s\"",
-                                 directive, param1u, site->id_str);
+                                 directive, param1u, site->id);
                 return rc;
             }
         }
@@ -3051,7 +3038,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp,
                                  "%s: Invalid service \"%s\" for site \"%s\"",
-                                 directive, service, site->id_str);
+                                 directive, service, site->id);
                 return rc;
             }
         }
@@ -3062,7 +3049,7 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
         rc = ib_ctxsel_service_create(site, param1u, NULL);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "%s: Invalid service \"%s\" for site \"%s\"",
-                             directive, param1u, site->id_str);
+                             directive, param1u, site->id);
             return rc;
         }
 
@@ -3327,18 +3314,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         return rc;
     }
     else if (strcasecmp("SensorId", name) == 0) {
-        union {
-            uint64_t uint64;
-            uint32_t uint32[2];
-        } reduce;
-
-        /* Store the ASCII version for logging */
-        ib->sensor_id_str = ib_mpool_strdup(ib_engine_pool_config_get(ib),
-                                            p1_unescaped);
-
-        /* Calculate the binary version. */
-        rc = ib_uuid_ascii_to_bin(&ib->sensor_id, (const char *)p1_unescaped);
-        if (rc != IB_OK) {
+        if (strlen(p1_unescaped) != IB_UUID_LENGTH - 1) {
             ib_log_error(ib, "Invalid UUID at %s: %s should have "
                          "UUID format "
                          "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
@@ -3346,18 +3322,12 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                          name, p1_unescaped);
 
             /* Use the default id. */
-            ib->sensor_id_str = (const char *)ib_uuid_default_str;
-            rc = ib_uuid_ascii_to_bin(&ib->sensor_id, ib_uuid_default_str);
+            memcpy(ib->sensor_id, ib_uuid_default_str, IB_UUID_LENGTH);
 
             return rc;
         }
 
-        /* Generate a 4byte hash id to use it for transaction id generations */
-        reduce.uint64 = ib->sensor_id.uint64[0] ^
-                        ib->sensor_id.uint64[1];
-
-        ib->sensor_id_hash = reduce.uint32[0] ^
-                             reduce.uint32[1];
+        memcpy(ib->sensor_id, p1_unescaped, IB_UUID_LENGTH);
 
         return IB_OK;
     }

@@ -493,11 +493,8 @@ public:
 
     ///@}
 
-    //! ID as UUID.
-    const boost::uuids::uuid& id() const;
-
-    //! ID as string.
-    const char* id_as_s() const;
+    //! ID.
+    const char* id() const;
 
     //! Associated memory pool.
     MemoryPool memory_pool() const;
