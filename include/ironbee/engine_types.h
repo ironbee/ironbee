@@ -264,6 +264,7 @@ struct ib_tx_t {
     ib_context_t       *ctx;             /**< Config context */
     void               *sctx;            /**< Server context */
     ib_var_store_t     *var_store;       /**< Var Store */
+    const char         *auditlog_id;     /**< Auditlog UUID, if available */
     ib_list_t          *logevents;       /**< Log events */
     ib_array_t         *module_data;     /**< Per-module data */
     ib_fctl_t          *fctl;            /**< Transaction filter controller */

@@ -794,26 +794,20 @@ const char *ib_engine_instance_uuid_str(
 
 ib_status_t ib_conn_generate_id(ib_conn_t *conn)
 {
-    ib_uuid_t uuid;
     ib_status_t rc;
     char *str;
 
-    rc = ib_uuid_create_v4(&uuid);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Convert to a hex-string representation */
     str = (char *)ib_mpool_alloc(conn->mp, IB_UUID_HEX_SIZE);
     if (str == NULL) {
         return IB_EALLOC;
     }
-    conn->id = str;
 
-    rc = ib_uuid_bin_to_ascii(str, &uuid);
+    rc = ib_uuid_create_v4_str(str);
     if (rc != IB_OK) {
         return rc;
     }
+
+    conn->id = str;
 
     return IB_OK;
 }
@@ -914,26 +908,20 @@ void ib_conn_destroy(ib_conn_t *conn)
 
 ib_status_t ib_tx_generate_id(ib_tx_t *tx)
 {
-    ib_uuid_t uuid;
     ib_status_t rc;
     char *str;
 
-    rc = ib_uuid_create_v4(&uuid);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Convert to a hex-string representation */
     str = (char *)ib_mpool_alloc(tx->mp, IB_UUID_HEX_SIZE);
     if (str == NULL) {
         return IB_EALLOC;
     }
-    tx->id = str;
 
-    rc = ib_uuid_bin_to_ascii(str, &uuid);
+    rc = ib_uuid_create_v4_str(str);
     if (rc != IB_OK) {
         return rc;
     }
+
+    tx->id = str;
 
     return IB_OK;
 }

@@ -107,6 +107,15 @@ ib_status_t DLL_PUBLIC ib_uuid_bin_to_ascii(
 ib_status_t DLL_PUBLIC ib_uuid_create_v4(ib_uuid_t *uuid);
 
 /**
+ * Creates a new, random, v4 uuid string.
+ *
+ * @param str Pre-allocated buffer to hold string (37 bytes)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_uuid_create_v4_str(char *str);
+
+/**
  * Creates a new, sha1, v5 uuid.
  *
  * @warning This routine does not use the caching that the other routines

@@ -100,7 +100,7 @@ extern "C" {
  *
  * @note: Update ironbeepp/abi_compatibility to match
  */
-#define IB_ABINUM 201312170
+#define IB_ABINUM 201312180
 
 /**
  * @} IronBeeRelease

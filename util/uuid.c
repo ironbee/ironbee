@@ -229,6 +229,50 @@ finish:
     return rc;
 }
 
+ib_status_t ib_uuid_create_v4_str(char *str)
+{
+    uuid_rc_t uuid_rc;
+    size_t uuid_len = UUID_LEN_STR+1;
+    ib_status_t rc = IB_OK;
+
+    if (str == NULL) {
+        return IB_EINVAL;
+    }
+
+    rc = ib_lock_lock(&g_uuid_lock);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    uuid_rc = uuid_make(g_ossp_uuid, UUID_MAKE_V4);
+    if (uuid_rc == UUID_RC_MEM) {
+        rc = IB_EALLOC;
+        goto finish;
+    }
+    else if (uuid_rc != UUID_RC_OK) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+    uuid_rc = uuid_export(g_ossp_uuid, UUID_FMT_STR, (void *)&str, &uuid_len);
+    if (uuid_rc == UUID_RC_MEM) {
+        rc = IB_EALLOC;
+        goto finish;
+    }
+    else if (uuid_rc != UUID_RC_OK || uuid_len != UUID_LEN_STR+1) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+finish:
+    if (ib_lock_unlock(&g_uuid_lock) != IB_OK) {
+        return IB_EOTHER;
+    }
+
+    return rc;
+}
+
+
 ib_status_t ib_uuid_create_v5_str(
     char       **uuid_str,
     size_t      *uuid_str_len,

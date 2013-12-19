@@ -1762,8 +1762,7 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
     ib_core_module_tx_data_t *core_txdata;
     ib_core_audit_cfg_t *cfg;
     ib_list_t *events;
-    int boundary_rand = rand(); /// @todo better random num
-    char boundary[46];
+    char *boundary;
     ib_status_t rc;
 
     /* If there's not events, do nothing */
@@ -1826,9 +1825,18 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
         return rc;
     }
 
-    /* Create a unique MIME boundary. */
-    snprintf(boundary, sizeof(boundary), "%08x-%s",
-             boundary_rand, log->tx->id ? log->tx->id : "FixMe-No-Tx-on-Audit");
+    /* Create a unique MIME tx->auditlog_id. */
+    boundary = (char *)ib_mpool_alloc(tx->mp, IB_UUID_HEX_SIZE);
+    if (boundary == NULL) {
+        return IB_EALLOC;
+    }
+
+    rc = ib_uuid_create_v4_str(boundary);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    tx->auditlog_id = boundary;
 
     /* Create the core config. */
     cfg = (ib_core_audit_cfg_t *)ib_mpool_calloc(log->mp, 1, sizeof(*cfg));
@@ -1837,7 +1845,7 @@ static ib_status_t auditing_hook(ib_engine_t *ib,
     }
 
     cfg->tx = tx;
-    cfg->boundary = boundary;
+    cfg->boundary = tx->auditlog_id;
     cfg->core_cfg = corecfg;
     log->cfg_data = cfg;
 

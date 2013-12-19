@@ -117,6 +117,9 @@ public:
     //! Identifier.
     const char* id() const;
 
+    //! Auditlog Identifier.
+    const char* auditlog_id() const;
+
     //! Associated connection.
     Connection connection() const;
 
