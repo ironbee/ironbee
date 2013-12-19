@@ -22,29 +22,17 @@ module ClippScript
   RESPONSE_BODY            = 13
   RESPONSE_FINISHED        = 14
 
+  def proxy(options = {})
+    InputProxy.new(options)
+  end
+
   def input(options = {})
     raise "Requires block." if ! block_given?
-    options = symhash(options)
 
-    result = {
-      id: options[:id] || "ClippScript",
-      connection: {
-        pre_transaction_event:  [],
-        transaction:            [],
-        post_transaction_event: []
-      }
-    }
+    p = proxy(options)
+    yield p
 
-    yield InputProxy.new(result)
-
-    if result[:connection][:pre_transaction_event].empty?
-      result[:connection][:pre_transaction_event] = nil
-    end
-    if result[:connection][:post_transaction_event].empty?
-      result[:connection][:post_transaction_event] = nil
-    end
-
-    result
+    p.result
   end
 
   def connection(options = {})
@@ -174,20 +162,31 @@ private
   class InputProxy
     include ClippScript
 
-    def initialize(result)
-      @result = result
+    attr_reader :result
+
+    def initialize(options)
+      options = symhash(options)
+
+      @result = {
+        id: options[:id] || "ClippScript",
+        connection: {
+          transaction: []
+        }
+      }
     end
 
     def pre_event(which, options = {})
+      @result[:connection][:pre_transaction_event] ||= []
       @result[:connection][:pre_transaction_event] << make_event(which, options)
     end
 
     def post_event(which, options = {})
+      @result[:connection][:post_transaction_event] ||= []
       @result[:connection][:post_transaction_event] << make_event(which, options)
     end
 
     def connection_opened(options = {})
-      if ! @result[:connection][:pre_transaction_event].empty?
+      if @result[:connection][:pre_transaction_event]
         raise "Multiple connection opened events."
       end
 
@@ -195,7 +194,7 @@ private
     end
 
     def connection_closed(options = {})
-      if ! @result[:connection][:post_transaction_event].empty?
+      if @result[:connection][:post_transaction_event]
         raise "Multiple connection closed events."
       end
 
