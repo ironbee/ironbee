@@ -76,16 +76,25 @@ class ClippEmitter
 
   def initialize(to)
     @to = to
+    @conn_id = nil
+    @proxy = nil
   end
 
-  def emit(id, parsed_message)
-    input = ClippScript::transaction(
-      id:          id,
-      local_ip:    parsed_message["http-request-metadata"]["local-addr"],
-      local_port:  parsed_message["http-request-metadata"]["local-port"],
-      remote_ip:   parsed_message["http-request-metadata"]["remote-addr"],
-      remote_port: parsed_message["http-request-metadata"]["remote-port"],
-    ) do |t|
+  def transaction(id, parsed_message)
+    incoming_conn_id = parsed_message["header"]["conn-id"]
+    if incoming_conn_id != @conn_id
+      flush
+      @conn_id = incoming_conn_id
+      @proxy = ClippScript::proxy(id: id)
+
+      @proxy.connection_opened(
+        local_ip:    parsed_message["http-request-metadata"]["local-addr"],
+        local_port:  parsed_message["http-request-metadata"]["local-port"],
+        remote_ip:   parsed_message["http-request-metadata"]["remote-addr"],
+        remote_port: parsed_message["http-request-metadata"]["remote-port"],
+      )
+    end
+    @proxy.transaction do |t|
       if (parsed_message["http-request-header"])
         t.connection_data_in(data:
           parsed_message["http-request-header"] +
@@ -99,8 +108,14 @@ class ClippEmitter
         )
       end
     end
+  end
 
-    IronBee::CLIPP::HashToPB::write_hash_to_pb(@to, input)
+  def flush
+    if @proxy
+      @proxy.connection_closed
+      IronBee::CLIPP::HashToPB::write_hash_to_pb(@to, @proxy.result)
+      @proxy = nil
+    end
   end
 end
 
@@ -131,7 +146,7 @@ def process_message(message, emitter)
     return
   end
 
-  emitter.emit(id, parsed)
+  emitter.transaction(id, parsed)
 end
 
 if ! ARGV.empty?
@@ -153,3 +168,4 @@ while ! input.eof?
   end
 end
 process_message(message, emitter) if message
+emitter.flush
