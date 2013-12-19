@@ -74,7 +74,7 @@ TEST_F(TestIBUtilArray, test_array_set_and_get)
 
     /* Get invalid. */
     rc = ib_array_get(arr, 10, &val);
-    ASSERT_EQ(IB_EINVAL, rc);
+    ASSERT_EQ(IB_ENOENT, rc);
     ASSERT_FALSE(val);
     ASSERT_EQ(10UL, ib_array_size(arr));
     ASSERT_EQ(0UL, ib_array_elements(arr));

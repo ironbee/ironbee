@@ -131,7 +131,7 @@ ib_status_t ib_array_get(ib_array_t *arr, size_t idx, void *pval)
 
     if (idx >= arr->nelts) {
         *(void **)pval = NULL;
-        return IB_EINVAL;
+        return IB_ENOENT;
     }
 
     /* Calculate the row/column where the data resides. */

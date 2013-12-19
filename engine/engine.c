@@ -880,8 +880,16 @@ ib_status_t ib_conn_get_module_data(
   assert(m != NULL);
   assert(data != NULL);
 
-  ib_status_t rc = ib_array_get(conn->module_data, m->idx, data);
-  return rc;
+  void *local_data;
+
+  ib_status_t rc = ib_array_get(conn->module_data, m->idx, &local_data);
+  if (rc != IB_OK || local_data == NULL) {
+      return IB_ENOENT;
+  }
+
+  *(void **)data = local_data;
+
+  return IB_OK;
 }
 
 ib_status_t ib_conn_set_module_data(
@@ -1070,8 +1078,16 @@ ib_status_t ib_tx_get_module_data(
   assert(m != NULL);
   assert(pdata != NULL);
 
-  ib_status_t rc = ib_array_get(tx->module_data, m->idx, pdata);
-  return rc;
+  void *local_data;
+
+  ib_status_t rc = ib_array_get(tx->module_data, m->idx, &local_data);
+  if (rc != IB_OK || local_data == NULL) {
+      return IB_ENOENT;
+  }
+
+  *(void **)pdata = local_data;
+
+  return IB_OK;
 }
 
 ib_status_t ib_tx_set_module_data(
