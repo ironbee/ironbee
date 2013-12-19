@@ -1114,6 +1114,12 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
         return rc;
     }
 
+    ib_field_create_bytestr_alias(&f, pool,
+                                  IB_FIELD_NAME("conn-id"),
+                                  (uint8_t *)tx->conn->id,
+                                  strlen(tx->conn->id));
+    ib_list_push(list, f);
+
     ib_field_create(&f, pool,
                     IB_FIELD_NAME("tx-num"),
                     IB_FTYPE_NUM,
