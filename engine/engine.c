@@ -1463,6 +1463,25 @@ const ib_list_t *ib_context_get_all(const ib_engine_t *ib)
     return ib->contexts;
 }
 
+ib_context_t DLL_PUBLIC *ib_context_get_context(
+  ib_engine_t *ib,
+  ib_conn_t   *conn,
+  ib_tx_t     *tx
+)
+{
+    assert(ib != NULL);
+
+    if (tx != NULL && tx->ctx != NULL) {
+        return tx->ctx;
+    }
+
+    if (conn != NULL && conn->ctx != NULL) {
+        return conn->ctx;
+    }
+
+    return ib_context_main(ib);
+}
+
 ib_status_t ib_context_create(ib_engine_t *ib,
                               ib_context_t *parent,
                               ib_ctype_t ctype,
