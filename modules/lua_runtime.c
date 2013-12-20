@@ -523,51 +523,6 @@ ib_status_t lua_pool_postuse_fn(void *resource, void *cbdata)
     return (rt->uses > MAX_LUA_STACK_USES)? IB_EINVAL : IB_OK;
 }
 
-ib_status_t modlua_runtime_get(
-    ib_conn_t         *conn,
-    ib_module_t       *module,
-    modlua_runtime_t **lua
-)
-{
-    assert(conn != NULL);
-    assert(conn->ib != NULL);
-    assert(module != NULL);
-    assert(lua != NULL);
-    assert(*lua == NULL);
-
-    return ib_conn_get_module_data(conn, module, lua);
-}
-
-ib_status_t modlua_runtime_set(
-    ib_conn_t        *conn,
-    ib_module_t      *module,
-    modlua_runtime_t *lua
-)
-{
-    assert(conn != NULL);
-    assert(conn->ib != NULL);
-    assert(module != NULL);
-    assert(lua != NULL);
-    assert(lua->L != NULL);
-
-    ib_conn_set_module_data(conn, module, lua);
-
-    return IB_OK;
-}
-
-ib_status_t modlua_runtime_clear(
-    ib_conn_t   *conn,
-    ib_module_t *module
-)
-{
-    assert(conn != NULL);
-    assert(conn->ib != NULL);
-
-    ib_conn_set_module_data(conn, module, NULL);
-
-    return IB_OK;
-}
-
 ib_status_t modlua_runtime_resource_pool_create(
     ib_resource_pool_t **resource_pool,
     ib_engine_t         *ib,

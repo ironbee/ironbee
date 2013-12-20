@@ -54,8 +54,8 @@ static ib_status_t lua_operator_execute(
     assert(instance_data != NULL);
     assert(cbdata != NULL);
 
-
     ib_status_t rc;
+    ib_status_t rc2;
     ib_engine_t *ib = tx->ib;
     ib_context_t *ctx = tx->ctx;
     ib_module_t *module;
@@ -74,32 +74,40 @@ static ib_status_t lua_operator_execute(
         return rc;
     }
 
-    module = modlua_rules_cbdata->module;
-
-    /* conn_opened has given us a runtime to use. Go get it. */
-    rc = modlua_runtime_get(tx->conn, module, &luart);
+    /* Get the lua module configuration for this context. */
+    rc = modlua_acquirestate(ib, cfg, &luart);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to retrieve Lua stack.");
         return rc;
     }
+
+    module = modlua_rules_cbdata->module;
 
     rc = modlua_reload_ctx_except_main(ib, module, ctx, luart->L);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Failed to reload Lua stack.");
-        return rc;
+        goto exit;
     }
 
     /* Call the rule. */
     rc = ib_lua_func_eval_int(ib, tx, luart->L, func_name, &result_int);
     if (rc != IB_OK) {
         *result = 0;
-        return rc;
+        goto exit;
     }
 
     /* Convert the passed in integer type to an ib_num_t. */
     *result = result_int;
 
-    return IB_OK;
+exit:
+    rc2 = modlua_releasestate(ib, cfg, luart);
+    if (rc2 != IB_OK) {
+        ib_log_error_tx(tx, "Failed to return Lua stack.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
+    }
+
+    return rc;
 }
 
 static ib_status_t lua_operator_create(
