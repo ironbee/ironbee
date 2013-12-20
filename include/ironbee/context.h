@@ -89,6 +89,27 @@ ib_status_t ib_context_site_get(
     const ib_site_t **psite);
 
 /**
+ * Return the most specific context available given an engine, tx, and conn.
+ *
+ * - If @a tx has a @ref ib_context_t value set, then that is returned.
+ * - If not, then @a conn is checked for a @ref ib_context_t. 
+ * - Finally, the main context is fetched from @a ib, and returned.
+ *
+ * @param[in] ib The IronBee engine. This must be given.
+ * @param[in] conn The connection. This may be NULL, in which case it is not
+ *            considered in finding a @a ib_context_t.
+ * @param[in] tx Transaction to check for the context. This may be NULL, in
+ *            which case it will not be used to find an @a ib_context_t.
+ *
+ * @returns The most precise @ref ib_context_t available, give the arguments.
+ */
+ib_context_t *ib_context_get_context(
+  ib_engine_t *ib,
+  ib_conn_t   *conn,
+  ib_tx_t     *tx
+) NONNULL_ATTRIBUTE(1);
+
+/**
  * Set the location associated with the current context
  *
  * @param[in,out] ctx Context to set the location for
