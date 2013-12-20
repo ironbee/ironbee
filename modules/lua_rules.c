@@ -56,6 +56,7 @@ static ib_status_t lua_operator_execute(
 
 
     ib_status_t rc;
+    ib_status_t rc2;
     ib_engine_t *ib = tx->ib;
     ib_context_t *ctx = tx->ctx;
     ib_module_t *module;
@@ -79,7 +80,7 @@ static ib_status_t lua_operator_execute(
     module = modlua_rules_cbdata->module;
 
     /* conn_opened has given us a runtime to use. Go get it. */
-    rc = modlua_runtime_get(tx->conn, module, &luart);
+    rc = modlua_acquirestate(ib, cfg, &luart);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Failed to retrieve Lua stack.");
         return rc;
@@ -88,7 +89,7 @@ static ib_status_t lua_operator_execute(
     rc = modlua_reload_ctx_except_main(ib, module, ctx, luart->L);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Failed to reload Lua stack.");
-        return rc;
+        goto exit;
     }
 
     /* Call the rule. */
@@ -100,7 +101,7 @@ static ib_status_t lua_operator_execute(
             func_name,
             ib_status_to_string(rc));
         *result = 0;
-        return rc;
+        goto exit;
     }
 
     /* Convert the passed in integer type to an ib_num_t. */
@@ -108,7 +109,16 @@ static ib_status_t lua_operator_execute(
 
     ib_log_trace_tx(tx, "Lua function %s=%"PRIu64".", func_name, *result);
 
-    return IB_OK;
+exit:
+    rc2 = modlua_releasestate(ib, cfg, luart);
+    if (rc2 != IB_OK) {
+        ib_log_error_tx(tx, "Failed to return Lua stack.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
+    }
+
+    return rc;
 }
 
 static ib_status_t lua_operator_create(

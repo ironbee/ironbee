@@ -430,32 +430,22 @@ static ib_status_t modlua_callback_dispatch_base(
  *     error is to blame.
  */
 static ib_status_t modlua_callback_dispatch(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_tx_t *tx,
-    ib_conn_t *conn,
-    void *cbdata)
+    ib_engine_t             *ib,
+    ib_state_event_type_t    event,
+    ib_tx_t                 *tx,
+    ib_conn_t               *conn,
+    modlua_runtime_t        *lua,
+    modlua_modules_cbdata_t *modlua_modules_cbdata)
 {
-    assert(ib != NULL);
-    assert(conn != NULL);
-
-    ib_status_t rc;
-    ib_module_t *module = NULL;
-    lua_State *L;
-    modlua_runtime_t *lua = NULL;
-    modlua_modules_cbdata_t *modlua_modules_cbdata =
-        (modlua_modules_cbdata_t *)cbdata;
-
-    assert(modlua_modules_cbdata != NULL);
+    assert(ib                                != NULL);
+    assert(conn                              != NULL);
+    assert(lua                               != NULL);
+    assert(lua->L                            != NULL);
+    assert(modlua_modules_cbdata             != NULL);
     assert(modlua_modules_cbdata->lua_module != NULL);
-    module = modlua_modules_cbdata->lua_module;
 
-    rc = modlua_runtime_get(conn, module, &lua);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    L = lua->L;
+    ib_module_t *module = modlua_modules_cbdata->lua_module;
+    lua_State   *L      = lua->L;
 
     return modlua_callback_dispatch_base(ib, module, L);
 }
@@ -471,6 +461,7 @@ static ib_status_t modlua_null(
     assert(ib);
 
     ib_status_t rc;
+    ib_status_t rc2;
     lua_State *L = NULL;
     ib_module_t *module = NULL;
     ib_context_t *ctx;
@@ -541,9 +532,12 @@ static ib_status_t modlua_null(
         /* Do not return. We must join the Lua thread. */
     }
 
-    rc = modlua_releasestate(ib, cfg, runtime);
-    if (rc != IB_OK) {
-        return rc;
+    rc2 = modlua_releasestate(ib, cfg, runtime);
+    if (rc2 != IB_OK) {
+        ib_log_error(ib, "Failure while returning Lua runtime.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
     }
 
     return rc;
@@ -574,44 +568,25 @@ static ib_status_t modlua_null(
  *   - IB_EOTHER on a Lua runtime error.
  */
 static ib_status_t modlua_callback_setup(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_tx_t *tx,
-    ib_conn_t *conn,
-    void *cbdata)
+    ib_engine_t             *ib,
+    ib_state_event_type_t    event,
+    ib_tx_t                 *tx,
+    ib_conn_t               *conn,
+    modlua_runtime_t        *lua,
+    modlua_modules_cbdata_t *modlua_modules_cbdata)
 {
-    assert(ib != NULL);
-    assert(conn != NULL);
-
-    ib_status_t rc;
-    ib_module_t *module;
-    lua_State *L = NULL;
-    modlua_runtime_t *lua = NULL;
-    modlua_modules_cbdata_t *modlua_modules_cbdata =
-        (modlua_modules_cbdata_t *)cbdata;
-
-    assert(modlua_modules_cbdata != NULL);
+    assert(ib                                != NULL);
+    assert(conn                              != NULL);
+    assert(lua                               != NULL);
+    assert(lua->L                            != NULL);
+    assert(modlua_modules_cbdata             != NULL);
     assert(modlua_modules_cbdata->lua_module != NULL);
-    module = modlua_modules_cbdata->lua_module;
 
-    rc = modlua_runtime_get(conn, module, &lua);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    if (lua == NULL) {
-        ib_log_error(
-            ib,
-            "No module configuration data found. Cannot retrieve Lua stack.");
-        return IB_EOTHER;
-    }
-    if (lua->L == NULL) {
-        ib_log_error(
-            ib,
-            "No Lua stack found in module data. Cannot retrieve Lua stack.");
-        return IB_EOTHER;
-    }
-    L = lua->L;
+    /* Pick the best context to use. */
+    ib_context_t            *ctx    = ib_context_get_context(ib, conn, tx);
+    ib_status_t              rc;
+    ib_module_t             *module = modlua_modules_cbdata->lua_module;
+    lua_State               *L      = lua->L;
 
     /* Push Lua dispatch method to stack. */
     rc = modlua_push_dispatcher(ib, module, event, L);
@@ -630,11 +605,12 @@ static ib_status_t modlua_callback_setup(
     lua_pushlightuserdata(L, ib);
     lua_pushinteger(L, module->idx);
     lua_pushinteger(L, event);
-    rc = modlua_push_config_path(ib, conn->ctx, L);
+    rc = modlua_push_config_path(ib, ctx, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to push configuration path onto Lua stack.");
         return rc;
     }
+
     /* Push connection. */
     lua_pushlightuserdata(L, conn);
     /* Push transaction. */
@@ -645,7 +621,7 @@ static ib_status_t modlua_callback_setup(
         lua_pushnil(L);
     }
     /* Push configuration context used in conn. */
-    lua_pushlightuserdata(L, conn->ctx);
+    lua_pushlightuserdata(L, ctx);
 
     return IB_OK;
 }
@@ -660,21 +636,46 @@ static ib_status_t modlua_conn(
     ib_state_event_type_t event,
     void *cbdata)
 {
-    assert(ib);
-    assert(conn);
+    assert(ib != NULL);
+    assert(conn != NULL);
+    assert(cbdata != NULL);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    ib_status_t       rc2;
+    modlua_runtime_t *rt;
+    modlua_cfg_t     *cfg;
 
-    rc = modlua_callback_setup(ib, event, NULL, conn, cbdata);
+    modlua_modules_cbdata_t *mod_cbdata = (modlua_modules_cbdata_t *)cbdata;
+
+    rc = ib_context_module_config(conn->ctx, mod_cbdata->lua_module,
+ &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_acquirestate(ib, cfg, &rt);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_callback_setup(ib, event, NULL, conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, NULL, conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, NULL, conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
+    }
+
+    rc2 = modlua_releasestate(ib, cfg, rt);
+    if (rc2 != IB_OK) {
+        ib_log_error(ib, "Failed to return Lua stack.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
     }
 
     return rc;
@@ -693,18 +694,42 @@ static ib_status_t modlua_tx(
     assert(tx->conn);
     assert(ib);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    ib_status_t       rc2;
+    modlua_runtime_t *rt;
+    modlua_cfg_t     *cfg;
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, cbdata);
+    modlua_modules_cbdata_t *mod_cbdata = (modlua_modules_cbdata_t *)cbdata;
+
+    rc = ib_context_module_config(tx->ctx, mod_cbdata->lua_module,
+ &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_acquirestate(ib, cfg, &rt);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_callback_setup(ib, event, tx, tx->conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
+    }
+
+    rc2 = modlua_releasestate(ib, cfg, rt);
+    if (rc2 != IB_OK) {
+        ib_log_error(ib, "Failed to return Lua stack.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
     }
 
     return rc;
@@ -724,18 +749,42 @@ static ib_status_t modlua_txdata(
     assert(tx);
     assert(tx->conn);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    ib_status_t       rc2;
+    modlua_runtime_t *rt;
+    modlua_cfg_t     *cfg;
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, cbdata);
+    modlua_modules_cbdata_t *mod_cbdata = (modlua_modules_cbdata_t *)cbdata;
+
+    rc = ib_context_module_config(tx->ctx, mod_cbdata->lua_module,
+ &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_acquirestate(ib, cfg, &rt);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_callback_setup(ib, event, tx, tx->conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
+    }
+
+    rc2 = modlua_releasestate(ib, cfg, rt);
+    if (rc2 != IB_OK) {
+        ib_log_error(ib, "Failed to return Lua stack.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
     }
 
     return rc;
@@ -755,18 +804,41 @@ static ib_status_t modlua_header(
     assert(tx);
     assert(tx->conn);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    ib_status_t       rc2;
+    modlua_runtime_t *rt;
+    modlua_cfg_t     *cfg;
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, cbdata);
+    modlua_modules_cbdata_t *mod_cbdata = (modlua_modules_cbdata_t *)cbdata;
+
+    rc = ib_context_module_config(tx->ctx, mod_cbdata->lua_module, &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_acquirestate(ib, cfg, &rt);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_callback_setup(ib, event, tx, tx->conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, rt, cbdata);
     if (rc != IB_OK) {
         return rc;
+    }
+
+    rc2 = modlua_releasestate(ib, cfg, rt);
+    if (rc2 != IB_OK) {
+        ib_log_error(ib, "Failed to return Lua stack.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
     }
 
     return rc;
@@ -786,18 +858,41 @@ static ib_status_t modlua_reqline(
     assert(tx);
     assert(tx->conn);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    ib_status_t       rc2;
+    modlua_runtime_t *rt;
+    modlua_cfg_t     *cfg;
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, cbdata);
+    modlua_modules_cbdata_t *mod_cbdata = (modlua_modules_cbdata_t *)cbdata;
+
+    rc = ib_context_module_config(tx->ctx, mod_cbdata->lua_module, &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_acquirestate(ib, cfg, &rt);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_callback_setup(ib, event, tx, tx->conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
+    }
+
+    rc2 = modlua_releasestate(ib, cfg, rt);
+    if (rc2 != IB_OK) {
+        ib_log_error(ib, "Failed to return Lua stack.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
     }
 
     return rc;
@@ -817,18 +912,41 @@ static ib_status_t modlua_respline(
     assert(tx);
     assert(tx->conn);
 
-    ib_status_t rc;
+    ib_status_t       rc;
+    ib_status_t       rc2;
+    modlua_runtime_t *rt;
+    modlua_cfg_t     *cfg;
 
-    rc = modlua_callback_setup(ib, event, tx, tx->conn, cbdata);
+    modlua_modules_cbdata_t *mod_cbdata = (modlua_modules_cbdata_t *)cbdata;
+
+    rc = ib_context_module_config(tx->ctx, mod_cbdata->lua_module, &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_acquirestate(ib, cfg, &rt);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_callback_setup(ib, event, tx, tx->conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, cbdata);
+    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, rt, mod_cbdata);
     if (rc != IB_OK) {
         return rc;
+    }
+
+    rc2 = modlua_releasestate(ib, cfg, rt);
+    if (rc2 != IB_OK) {
+        ib_log_error(ib, "Failed to return Lua stack.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
     }
 
     return rc;
@@ -846,10 +964,11 @@ static ib_status_t modlua_ctx(
     assert(ctx);
     assert(ib);
 
-    ib_status_t rc;
-    lua_State *L;
-    modlua_cfg_t *cfg = NULL;
-    ib_module_t *module = NULL;
+    ib_status_t       rc;
+    ib_status_t       rc2;
+    lua_State        *L;
+    modlua_cfg_t     *cfg     = NULL;
+    ib_module_t      *module  = NULL;
     modlua_runtime_t *runtime;
 
     modlua_modules_cbdata_t *modlua_modules_cbdata =
@@ -912,7 +1031,13 @@ static ib_status_t modlua_ctx(
         /* Do not return. We must join the Lua thread. */
     }
 
-    rc = modlua_releasestate(ib, cfg, runtime);
+    rc2 = modlua_releasestate(ib, cfg, runtime);
+    if (rc2 != IB_OK) {
+        ib_log_error(ib, "Failed to return Lua stack.");
+        if (rc == IB_OK) {
+            return rc2;
+        }
+    }
 
     return rc;
 }

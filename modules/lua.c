@@ -1082,75 +1082,6 @@ static ib_status_t modlua_commit_configuration(
 /* -- Event Handlers -- */
 
 /**
- * Callback to initialize the per-connection Lua stack.
- *
- * Every Lua Module shares the same Lua stack for execution. This stack is
- * "owned" not by the module written in Lua by the user, but by this
- * module, the Lua Module.
- *
- * @param ib Engine.
- * @param conn Connection.
- * @param event Event type.
- * @param cbdata Unused.
- *
- * @return
- *   - IB_OK
- *   - IB_EALLOC on memory allocation failure.
- *   - Other upon failure of callback registration.
- */
-static ib_status_t modlua_conn_init_lua_runtime(
-    ib_engine_t *ib,
-    ib_conn_t *conn,
-    ib_state_event_type_t event,
-    void *cbdata)
-{
-    assert(event == conn_started_event);
-    assert(ib != NULL);
-    assert(conn != NULL);
-    assert(conn->ctx != NULL);
-
-    ib_status_t rc;
-    modlua_runtime_t *runtime;
-    modlua_cfg_t *cfg = NULL;
-    ib_context_t *ctx = conn->ctx;
-    ib_module_t *module = NULL;
-
-    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Could not find module \"" MODULE_NAME_STR ".\"");
-        return rc;
-    }
-
-    rc = ib_context_module_config(ctx, module, &cfg);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to retrieve modlua configuration.");
-        return rc;
-    }
-
-    rc = modlua_acquirestate(ib, cfg, &runtime);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to acquire Lua runtime resource.");
-        return rc;
-    }
-
-    rc = modlua_reload_ctx_except_main(ib, module, ctx, runtime->L);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Could not configure Lua stack.");
-        return rc;
-    }
-
-    rc = modlua_runtime_set(conn, module, runtime);
-    if (rc != IB_OK) {
-        ib_log_alert(
-            ib,
-            "Could not store connection Lua stack in connection.");
-        return rc;
-    }
-
-    return IB_OK;
-}
-
-/**
  * Using only the context, fetch the module configuration.
  *
  * @param[in] ib IronBee engine.
@@ -1185,79 +1116,6 @@ ib_status_t modlua_cfg_get(
     }
 
     return IB_OK;
-}
-
-/**
- * Callback to destroy the per-connection Lua stack.
- *
- * Every Lua Module shares the same Lua stack for execution. This stack is
- * "owned" not by the module written in Lua by the user, but by this
- * module, the Lua Module.
- *
- * This is registered when the main context is closed to ensure that it
- * executes after all the Lua modules call backs (callbacks are executed
- * in the order of their registration).
- *
- * @param ib Engine.
- * @param conn Connection.
- * @param event Event type.
- * @param cbdata Unused.
- *
- * @return
- *   - IB_OK
- *   - IB_EALLOC on memory allocation failure.
- *   - IB_EOTHER if the stored Lua stack in the module's connection data
- *               is NULL.
- *   - Other upon failure of callback registration.
- */
-static ib_status_t modlua_conn_fini_lua_runtime(ib_engine_t *ib,
-                                                ib_conn_t *conn,
-                                                ib_state_event_type_t event,
-                                                void *cbdata)
-{
-    assert(event == conn_finished_event);
-    assert(ib != NULL);
-    assert(conn != NULL);
-
-    ib_status_t rc;
-    ib_module_t *module = NULL;
-    modlua_runtime_t *modlua_rt = NULL;
-    modlua_cfg_t *cfg = NULL;
-
-    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to retrieve module.");
-        return rc;
-    }
-
-    rc = modlua_cfg_get(ib, conn->ctx, &cfg);
-    if (rc != IB_OK) {
-        ib_log_alert(
-            ib,
-            "Failed to get configuration for context %s.",
-            ib_context_name_get(conn->ctx));
-        return rc;
-    }
-
-    rc = modlua_runtime_get(conn, module, &modlua_rt);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Could not fetch per-connection Lua execution stack.");
-        return rc;
-    }
-    if (modlua_rt == NULL) {
-        ib_log_alert(ib, "Stored Lua execution stack was unexpectedly NULL.");
-        return IB_EOTHER;
-    }
-
-    rc = modlua_releasestate(ib, cfg, modlua_rt);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to release Lua runtime back to pool.");
-        return rc;
-    }
-
-    rc = modlua_runtime_clear(conn, module);
-
-    return rc;
 }
 
 /* -- External Rule Driver -- */
@@ -1347,22 +1205,6 @@ static ib_status_t modlua_context_close(
         rc = modlua_cfg_get(ib, ctx, &cfg);
         if (rc != IB_OK) {
             return rc;
-        }
-
-        /* Register this callback after the main context is closed.
-         * This allows it to be executed LAST allowing all the Lua
-         * modules created during configuration to be executed
-         * in FILO ordering. */
-        rc = ib_hook_conn_register(
-            ib,
-            conn_finished_event,
-            modlua_conn_fini_lua_runtime,
-            NULL);
-        if (rc != IB_OK) {
-            ib_log_error(
-                ib,
-                "Failed to register conn_finished_event hook: %s",
-                ib_status_to_string(rc));
         }
 
         /* Commit any pending configuration items. */
@@ -1483,24 +1325,6 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         return rc;
     }
     cfg->L = ((modlua_runtime_t *)ib_resource_get(cfg->lua_resource))->L;
-
-    /* Hook to initialize the lua runtime with the connection.
-     * There is a modlua_conn_fini_lua_runtime which is only registered
-     * when the main configuration context is being closed. This ensures
-     * that it is the last hook to fire relative to the various
-     * Lua-implemented modules this module may created and register. */
-    rc = ib_hook_conn_register(
-        ib,
-        conn_started_event,
-        modlua_conn_init_lua_runtime,
-        NULL);
-    if (rc != IB_OK) {
-        ib_log_error(
-            ib,
-            "Failed to register conn_started_event hook: %s",
-            ib_status_to_string(rc));
-        return rc;
-    }
 
     /* Hook the context close event.
      * New contexts must copy their parent context's reload list. */
