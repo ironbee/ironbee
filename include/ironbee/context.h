@@ -92,7 +92,7 @@ ib_status_t ib_context_site_get(
  * Return the most specific context available given an engine, tx, and conn.
  *
  * - If @a tx has a @ref ib_context_t value set, then that is returned.
- * - If not, then @a conn is checked for a @ref ib_context_t. 
+ * - If not, then @a conn is checked for a @ref ib_context_t.
  * - Finally, the main context is fetched from @a ib, and returned.
  *
  * @param[in] ib The IronBee engine. This must be given.
