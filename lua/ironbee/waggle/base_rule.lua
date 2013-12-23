@@ -367,7 +367,7 @@ end
 --            at runtime (true or false) which is required to 
 --            execute this function.
 function BaseRule:follows(ruleId, result)
-    if Util.type(ruleId) == 'signature' then
+    if type(ruleId) == 'table' then
         ruleId = ruleId.data.id
     end
 

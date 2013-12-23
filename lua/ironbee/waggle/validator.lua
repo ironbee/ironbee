@@ -169,7 +169,6 @@ Validator.validate = function(self, db,  plan)
             local rule_id = rule_exec.rule
             local rule_result = rule_exec.result
             local rule = db.db[rule_id]
-            local rule_type = Util.type(rule)
 
             if rule:is_a(Rule) and #rule.data.fields == 0 and not rule.data.has_predicate then
                 self:warning(rule, "Missing fields")
