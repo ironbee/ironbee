@@ -129,11 +129,8 @@ insert_follows = function(list, rule, db, seen)
 
     -- Check if the given rule is in it.
     if seen[rule.data.id] ~= nil then
-        error( {
-            sig_id = rule.data.id,
-            sig_rev = rule.data.version,
-            msg = string.format("Rule %s attempted to follow itself.", rule.data.id)
-        }, 1)
+        error(
+            string.format("Rule %s attempted to follow itself.", rule.data.id))
     end
 
     -- Mark this rule as already followed.
@@ -142,11 +139,8 @@ insert_follows = function(list, rule, db, seen)
     for _, rule_link in ipairs(rule.data.follows) do
         local next_rule = db.db[rule_link.rule]
         if next_rule == nil then
-            error({
-                sig_id = rule.data.id,
-                sig_rev = rule.data.version,
-                msg = string.format("Attempting to follow non-existant rule %s.", rule_link.rule)
-            })
+            error(
+                string.format("Attempting to follow non-existant rule %s.", rule_link.rule))
         end
         insert_follows(list, next_rule, db, seen)
         table.insert(list, rule_link)
@@ -157,7 +151,7 @@ insert_follows = function(list, rule, db, seen)
 end
 
 -- Plan a single rule and all its dependencies.
--- Returns true on success and exits with error({sig_id, sig_rev, msg}, 1) on error.
+-- Returns true on success and exits with error(msg, 1) on error.
 Planner.plan_rule = function(self, rule, db)
     -- Block before rules.
     for _, before_rule_id in ipairs(self:to_rule_ids(rule.data.before, db)) do
@@ -168,22 +162,17 @@ Planner.plan_rule = function(self, rule, db)
     --                 we recurse the rule.data.after list and encounter
     --                 rule X again. 
     if self.m_inplanning[rule.data.id] ~= nil then
-        error( {
-            sig_id = rule.data.id,
-            sig_rev = rule.data.version,
-            msg = string.format("Rule %s was attempted to be scheduled after itself.", rule.data.id)
-        }, 1)
+        error(
+            string.format(
+                "Rule %s was attempted to be scheduled after itself.", rule.data.id))
     end
 
     -- Loop detection: If a rule is reachable through its own before list,
     --                 then error is detected here as the rule is still
     --                 blocked from being scheduled.
     if self.m_notyet[rule.data.id] ~= nil then
-        error( {
-            sig_id = rule.data.id,
-            sig_rev = rule.data.version,
-            msg = string.format("Rule %s was attempted to be scheduled before itself.", rule.data.id)
-        }, 1)
+        error(
+            string.format("Rule %s was attempted to be scheduled before itself.", rule.data.id))
     end
 
     -- After the inplanning check, mark this rule as in planning.

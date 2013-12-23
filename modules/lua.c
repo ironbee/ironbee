@@ -1049,7 +1049,7 @@ static ib_status_t modlua_commit_configuration(
         lua_pop(L, lua_gettop(L));
         return IB_EOTHER;
     }
-    else if (lua_rc) {
+    else if (lua_rc != 0) {
         ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
         lua_pop(L, lua_gettop(L));
         return IB_EOTHER;
