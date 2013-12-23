@@ -539,7 +539,12 @@ local build_rule = function(ib, ctx, chain, db)
             local last_rule = db.db[chain[#chain].rule]
 
             -- Set id.
-            ffi.C.ib_rule_set_id(ib.ib_engine, prule[0], last_rule.data.id)
+            ffi.C.ib_rule_set_id(
+                ib.ib_engine,
+                prule[0],
+                ffi.C.ib_mpool_strdup(
+                    ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+                    last_rule.data.id))
 
             -- Set rev.
             prule[0].meta.revision = tonumber(last_rule.data.version) or 1
