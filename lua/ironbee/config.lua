@@ -275,10 +275,9 @@ local add_operator = function(
     end
 
     -- C operator parameter copy. This is passed to the operater inst constructor and set in the rule.
-    local cop_params = ffi.C.ib_mpool_memdup(
+    local cop_params = ffi.C.ib_mpool_strdup(
         ffi.C.ib_engine_pool_main_get(ib.ib_engine),
-        tostring(rule.data.op_arg),
-        #(tostring(rule.data.op_arg)) + 1)
+        tostring(rule.data.op_arg))
 
     -- Create the operator.
     rc = ffi.C.ib_operator_inst_create(
@@ -470,10 +469,9 @@ local build_rule = function(ib, ctx, chain, db)
         -- Set tags
         for tag, _ in pairs(rule.data.tags) do
             local tagcpy =
-                ffi.C.ib_mpool_memdup(
+                ffi.C.ib_mpool_strdup(
                     ffi.C.ib_engine_pool_main_get(ib.ib_engine),
-                    tag,
-                    #tag + 1)
+                    tostring(tag))
             ib:logDebug("Setting tag %s on rule.", tag)
             rc = ffi.C.ib_list_push(prule[0].meta.tags, tagcpy)
             if rc ~= ffi.C.IB_OK then
@@ -544,7 +542,7 @@ local build_rule = function(ib, ctx, chain, db)
                 prule[0],
                 ffi.C.ib_mpool_strdup(
                     ffi.C.ib_engine_pool_main_get(ib.ib_engine),
-                    last_rule.data.id))
+                    tostring(last_rule.data.id)))
 
             -- Set rev.
             prule[0].meta.revision = tonumber(last_rule.data.version) or 1
