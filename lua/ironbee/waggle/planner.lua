@@ -140,7 +140,15 @@ insert_follows = function(list, rule, db, seen)
     seen[rule.data.id] = 1
 
     for _, rule_link in ipairs(rule.data.follows) do
-        insert_follows(list, db.db[rule_link.rule], db, seen)
+        local next_rule = db.db[rule_link.rule]
+        if next_rule == nil then
+            error({
+                sig_id = rule.data.id,
+                sig_rev = rule.data.version,
+                msg = string.format("Attempting to follow non-existant rule %s.", rule_link.rule)
+            })
+        end
+        insert_follows(list, next_rule, db, seen)
         table.insert(list, rule_link)
     end
 
