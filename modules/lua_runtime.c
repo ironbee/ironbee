@@ -19,7 +19,7 @@
  * @file
  * @brief IronBee --- LUA Runtime
  *
- * A structure that represents ibmod_lua's concept of a Lua runtime.
+ * Lua runtime management code used throughout `ibmod_lua`.
  *
  * A runtime includes a little meta information and a lua_State pointer.
  *
@@ -46,29 +46,39 @@
 
 #define LUA_BASE_PATH_STR IB_XSTRINGIFY(LUA_BASE_PATH)
 
-
 //! Maximum number of times a resource pool Lua stack should be used.
 static size_t MAX_LUA_STACK_USES = 1000;
+
+/**
+ * Data provided to the resource pool to use in creating Lua stacks.
+ */
+struct modlua_runtime_cbdata_t {
+    ib_engine_t *ib;     /**< The engine. */
+    ib_module_t *module; /**< `ibmod_lua` structure. */
+};
+typedef struct modlua_runtime_cbdata_t modlua_runtime_cbdata_t;
 
 /**
  * Given a search prefix this will build a search path and add it to Lua.
  *
  * @param[in] ib IronBee engine.
  * @param[in,out] L Lua State that the search path will be set in.
- * @param[in] prefix The prefix. ?.lua will be appended.
+ * @param[in] prefix The prefix. `?.lua` will be appended.
+ *
  * @returns
  *   - IB_OK on success
  *   - IB_EALLOC on malloc failure.
  */
 static ib_status_t modlua_append_searchprefix(
     ib_engine_t *ib,
-    lua_State *L,
-    const char *prefix)
+    lua_State   *L,
+    const char  *prefix
+)
 {
     /* This is the search pattern that is appended to each element of
      * lua_search_paths and then added to the Lua runtime package.path
      * global variable. */
-    const char *lua_file_pattern = "?.lua";
+    static const char *lua_file_pattern = "?.lua";
 
     char *path = NULL; /* Tmp string to build a search path. */
 
@@ -85,8 +95,6 @@ static ib_status_t modlua_append_searchprefix(
 
     ib_lua_add_require_path(ib, L, path);
 
-    ib_log_debug(ib, "Added \"%s\" to lua search path.", path);
-
     /* We are done with path. To be safe, we NULL it as there is more work
      * to be done in this function, and we do not want to touch path again. */
     free(path);
@@ -99,14 +107,17 @@ static ib_status_t modlua_append_searchprefix(
  *
  * @param[in] ib IronBee engine.
  * @param[in] L The Lua State to setup.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on failiure to retrieve configuration context or Lua eval error.
  */
 static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
 {
-    ib_status_t rc;
-
-    ib_core_cfg_t *corecfg = NULL;
     /* Null terminated list of search paths. */
-    const char *lua_search_paths[4];
+    const char    *lua_search_paths[4];
+    ib_status_t    rc;
+    ib_core_cfg_t *corecfg = NULL;
 
     rc = ib_core_context_config(ib_context_main(ib), &corecfg);
     if (rc != IB_OK) {
@@ -120,9 +131,9 @@ static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
     lua_search_paths[2] = corecfg->rule_base_path;
     lua_search_paths[3] = NULL;
 
-    for (int i = 0; lua_search_paths[i] != NULL; ++i)
+    for (const char **path = lua_search_paths; *path != NULL; ++path)
     {
-        rc = modlua_append_searchprefix(ib, L, lua_search_paths[i]);
+        rc = modlua_append_searchprefix(ib, L, *path);
         if (rc != IB_OK) {
             return rc;
         }
@@ -135,14 +146,19 @@ static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
  * Pre-load files into the given lua stack.
  *
  * This will attempt to run...
- *   - waggle  = require("ironbee/waggle")
- *   - ffi     = require("ffi")
- *   - ibapi   = require("ironbee/api")
- *   - modlua  = require("ironbee/module")
+ *   - waggle   = require("ironbee/waggle")
+ *   - ibconfig = require("ironbee/config")
+ *   - ffi      = require("ffi")
+ *   - ibapi    = require("ironbee/api")
+ *   - modlua   = require("ironbee/module")
  *
  * @param[in] ib IronBee engine. Used to find load paths from the
  *            core module.
  * @param[out] L The Lua state that the modules will be "required" into.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on Lua evaluation error.
  */
 static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L)
 {
@@ -168,6 +184,7 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L)
             return rc;
         }
     }
+
     return IB_OK;
 }
 
@@ -183,12 +200,14 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L)
  * - IB_EUNKNOWN If luaL_newstate() fails.
  */
 static ib_status_t modlua_newstate(
-    ib_engine_t *ib,
-    modlua_cfg_t *cfg,
-    lua_State **Lout)
+    ib_engine_t   *ib,
+    modlua_cfg_t  *cfg,
+    lua_State    **Lout
+)
 {
-    lua_State *L;
-    ib_status_t rc;
+    lua_State   *L;
+    ib_status_t  rc;
+
     L = luaL_newstate();
     if (L == NULL) {
         ib_log_error(ib, "Failed to initialize lua module.");
@@ -241,19 +260,13 @@ static ib_status_t modlua_newstate(
     return IB_OK;
 }
 
-struct modlua_runtime_cbdata_t {
-    ib_engine_t *ib;
-    ib_module_t *module;
-};
-typedef struct modlua_runtime_cbdata_t modlua_runtime_cbdata_t;
-
 /**
  * A helper function that reloads Lua rules and modules in a context.
  *
  * @param[in] ib IronBee engine.
  * @param[in] module Used to retrieve the configuration.
  * @param[in] ctx The context whose configuration for @a module to retrieve.
- * @param[out] L The stack the configuration will be loaded into.
+ * @param[in] L The stack the configuration will be loaded into.
  *
  * @returns
  * - IB_OK On success.
@@ -263,16 +276,17 @@ static ib_status_t modlua_reload_ctx(
     ib_engine_t  *ib,
     ib_module_t  *module,
     ib_context_t *ctx,
-    lua_State    *L)
+    lua_State    *L
+)
 {
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(L != NULL);
     assert(module != NULL);
 
-    ib_status_t rc = IB_OK;
-    ib_status_t tmp_rc = IB_OK;
-    modlua_cfg_t *cfg;
+    ib_status_t           rc;
+    ib_status_t           tmp_rc = IB_OK;
+    modlua_cfg_t         *cfg;
     const ib_list_node_t *node;
 
     rc = ib_context_module_config(ctx, module, &cfg);
@@ -324,13 +338,13 @@ ib_status_t modlua_record_reload(
     const char           *file
 )
 {
-    assert(ib != NULL);
-    assert(cfg != NULL);
+    assert(ib           != NULL);
+    assert(cfg          != NULL);
     assert(cfg->reloads != NULL);
-    assert(file != NULL);
+    assert(file         != NULL);
 
-    ib_mpool_t *mp;
-    ib_status_t rc;
+    ib_mpool_t      *mp;
+    ib_status_t      rc;
     modlua_reload_t *data;
 
     mp = ib_engine_pool_config_get(ib);
@@ -362,7 +376,7 @@ ib_status_t modlua_record_reload(
         }
     }
 
-    rc = ib_list_push(cfg->reloads, (void *)data);
+    rc = ib_list_push(cfg->reloads, data);
     if (rc != IB_OK) {
         return rc;
     }
@@ -376,11 +390,11 @@ ib_status_t modlua_reload_ctx_main(
     lua_State   *L
 )
 {
-    assert(ib != NULL);
+    assert(ib     != NULL);
     assert(module != NULL);
-    assert(L != NULL);
+    assert(L      != NULL);
 
-    ib_status_t rc = IB_OK;
+    ib_status_t   rc;
     ib_context_t *ctx = ib_context_main(ib);
 
     /* Reload this context. */
@@ -400,14 +414,15 @@ ib_status_t modlua_reload_ctx_except_main(
     ib_engine_t *ib,
     ib_module_t  *module,
     ib_context_t *ctx,
-    lua_State    *L)
+    lua_State    *L
+)
 {
-    assert(ib != NULL);
+    assert(ib     != NULL);
     assert(module != NULL);
-    assert(ctx != NULL);
-    assert(L != NULL);
+    assert(ctx    != NULL);
+    assert(L      != NULL);
 
-    ib_status_t rc = IB_OK;
+    ib_status_t rc;
 
     /* Do not reload the main context. */
     if (ctx == ib_context_main(ib)) {
@@ -437,30 +452,45 @@ ib_status_t modlua_reload_ctx_except_main(
     return IB_OK;
 }
 
-ib_status_t lua_pool_create_fn(void *resource, void *cbdata)
+/**
+ * Resource pool callback to create a new Lua runtime.
+ *
+ * @param[out] resource The created @ref modlua_runtime_t.
+ * @param[in] cbdata Callback data. @ref modlua_runtime_cbdata_t.
+ *
+ * @returns
+ * - IB_OK On Success.
+ * - Other on failure.
+ */
+static ib_status_t lua_pool_create_fn(void *resource, void *cbdata)
 {
     assert(resource != NULL);
     assert(cbdata != NULL);
 
-    modlua_runtime_cbdata_t *modlua_runtime_cbdata =
-        (modlua_runtime_cbdata_t *)cbdata;
-    ib_engine_t      *ib = modlua_runtime_cbdata->ib;
-    ib_module_t      *module = modlua_runtime_cbdata->module;
-    modlua_runtime_t *modlua_rt;
+    modlua_runtime_t *modlua_runtime;
     ib_mpool_t       *mp;
     ib_status_t       rc;
     modlua_cfg_t     *cfg;
     ib_context_t     *ctx;
+    ib_engine_t      *ib;
+    ib_module_t      *module;
+    modlua_runtime_cbdata_t *modlua_runtime_cbdata =
+        (modlua_runtime_cbdata_t *)cbdata;
 
-    assert(ib != NULL);
+    assert(modlua_runtime_cbdata->ib     != NULL);
+    assert(modlua_runtime_cbdata->module != NULL);
+
+    /* Alias some callback values. */
+    ib     = modlua_runtime_cbdata->ib;
+    module = modlua_runtime_cbdata->module;
 
     rc = ib_mpool_create(&mp, "ModLua Runtime", ib_engine_pool_main_get(ib));
     if (rc != IB_OK) {
         return rc;
     }
 
-    modlua_rt = ib_mpool_calloc(mp, 1, sizeof(*modlua_rt));
-    if (modlua_rt == NULL) {
+    modlua_runtime = ib_mpool_calloc(mp, 1, sizeof(*modlua_runtime));
+    if (modlua_runtime == NULL) {
         return IB_EALLOC;
     }
 
@@ -471,57 +501,83 @@ ib_status_t lua_pool_create_fn(void *resource, void *cbdata)
         return rc;
     }
 
-    modlua_rt->uses = 0;
-    modlua_rt->mp = mp;
+    modlua_runtime->use_count = 0;
+    modlua_runtime->mp        = mp;
 
     /* Create a new Lua State. */
-    rc = modlua_newstate(ib, cfg, &(modlua_rt->L));
+    rc = modlua_newstate(ib, cfg, &(modlua_runtime->L));
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to create Lua stack.");
         return rc;
     }
 
     /* Preload the user's main context. */
-    rc = modlua_reload_ctx_main(ib, module, modlua_rt->L);
+    rc = modlua_reload_ctx_main(ib, module, modlua_runtime->L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to configure Lua stack.");
         return rc;
     }
 
-    *(void **)resource = modlua_rt;
+    *(void **)resource = modlua_runtime;
 
     return IB_OK;
 }
 
-void lua_pool_destroy_fn(void *resource, void *cbdata)
+/**
+ * A resource pool callback to destroy a @ref modlua_runtime_t.
+ *
+ * @param[out] resource The @ref modlua_runtime_t to destroy.
+ * @param[in] cbdata Unused.
+ */
+static void lua_pool_destroy_fn(void *resource, void *cbdata)
 {
     assert(resource != NULL);
 
-    modlua_runtime_t *rt = (modlua_runtime_t *)resource;
+    modlua_runtime_t *modlua_runtime = (modlua_runtime_t *)resource;
 
-    lua_close(rt->L);
+    lua_close(modlua_runtime->L);
 
-    ib_mpool_release(rt->mp);
+    ib_mpool_release(modlua_runtime->mp);
 }
 
-void lua_pool_preuse_fn(void *resource, void *cbdata)
+/**
+ * Increment modlua_runtime_t::uses when fetched from a resource pool.
+ *
+ * @param[out] resource The @ref modlua_runtime_t being fetched.
+ * @param[in] cbdata Unused.
+ */
+static void lua_pool_preuse_fn(void *resource, void *cbdata)
 {
     assert(resource != NULL);
 
-    modlua_runtime_t *rt = (modlua_runtime_t *)resource;
+    modlua_runtime_t *modlua_runtime = (modlua_runtime_t *)resource;
 
-    ++(rt->uses);
+    ++(modlua_runtime->use_count);
 }
 
-ib_status_t lua_pool_postuse_fn(void *resource, void *cbdata)
+/**
+ * Returns @ref IB_EINVAL when modlua_runtime_t should be destroyed.
+ *
+ * Currently the only condition that triggers destruction is
+ * modlua_runtime_t::uses exceeding @ref MAX_LUA_STACK_USES.
+ *
+ * @param[in] resource The @ref modlua_runtime_t to check.
+ * @param[in] cbdata Unused.
+ *
+ * @returns
+ * - IB_OK When no action is required. The @a resource is still valid.
+ * - IB_EINVAL When @a resource should be destroyed.
+ */
+static ib_status_t lua_pool_postuse_fn(void *resource, void *cbdata)
 {
     assert(resource != NULL);
 
-    modlua_runtime_t *rt = (modlua_runtime_t *)resource;
+    modlua_runtime_t *modlua_runtime = (modlua_runtime_t *)resource;
 
     /* Signal stack destruction if it was used some number of times. */
-    return (rt->uses > MAX_LUA_STACK_USES)? IB_EINVAL : IB_OK;
+    return (modlua_runtime->use_count > MAX_LUA_STACK_USES)? IB_EINVAL : IB_OK;
 }
+
 
 ib_status_t modlua_runtime_resource_pool_create(
     ib_resource_pool_t **resource_pool,
@@ -536,37 +592,39 @@ ib_status_t modlua_runtime_resource_pool_create(
     assert(module != NULL);
     assert(mp != NULL);
 
-    modlua_runtime_cbdata_t *cbdata;
+    modlua_runtime_cbdata_t *modlua_runtime_cbdata;
 
-    cbdata = ib_mpool_calloc(mp, 1, sizeof(*cbdata));
+    modlua_runtime_cbdata =
+        ib_mpool_calloc(mp, 1, sizeof(*modlua_runtime_cbdata));
 
-    if (cbdata == NULL) {
+    if (modlua_runtime_cbdata == NULL) {
         return IB_EALLOC;
     }
 
-    cbdata->ib = ib;
-    cbdata->module = module;
+    modlua_runtime_cbdata->ib = ib;
+    modlua_runtime_cbdata->module = module;
 
     return ib_resource_pool_create(
-        resource_pool,       /* Out variable. */
-        mp,                  /* Memory pool. */
-        10,                  /* Minimum 10 Lua stacks in reserve. */
-        0,                   /* No maximum limit. */
-        lua_pool_create_fn,  /* Create function. */
-        cbdata,              /* Callback data is just the active engine. */
-        lua_pool_destroy_fn, /* Destroy function. Calls lua_close(). */
-        cbdata,              /* Callback data is just the active engine. */
-        lua_pool_preuse_fn,  /* Pre use function. Increments use count. */
-        cbdata,              /* Callback data is just the active engine. */
-        lua_pool_postuse_fn, /* Post use function. Signals delete. */
-        cbdata               /* Callback data is just the active engine. */
+        resource_pool,         /* Out variable. */
+        mp,                    /* Memory pool. */
+        10,                    /* Minimum 10 Lua stacks in reserve. */
+        0,                     /* No maximum limit. */
+        lua_pool_create_fn,    /* Create function. */
+        modlua_runtime_cbdata, /* Callback data is just the active engine. */
+        lua_pool_destroy_fn,   /* Destroy function. Calls lua_close(). */
+        modlua_runtime_cbdata, /* Callback data is just the active engine. */
+        lua_pool_preuse_fn,    /* Pre use function. Increments use count. */
+        modlua_runtime_cbdata, /* Callback data is just the active engine. */
+        lua_pool_postuse_fn,   /* Post use function. Signals delete. */
+        modlua_runtime_cbdata  /* Callback data is just the active engine. */
     );
 }
 
 ib_status_t modlua_releasestate(
-    ib_engine_t *ib,
-    modlua_cfg_t *cfg,
-    modlua_runtime_t *runtime)
+    ib_engine_t      *ib,
+    modlua_cfg_t     *cfg,
+    modlua_runtime_t *modlua_runtime
+)
 {
     assert(ib != NULL);
     assert(cfg != NULL);
@@ -578,7 +636,7 @@ ib_status_t modlua_releasestate(
         return rc;
     }
 
-    rc = ib_resource_release(runtime->resource);
+    rc = ib_resource_release(modlua_runtime->resource);
     if (rc != IB_OK) {
         ib_lock_unlock(&(cfg->lua_pool_lock));
         return rc;
@@ -593,14 +651,15 @@ ib_status_t modlua_releasestate(
 }
 
 ib_status_t modlua_acquirestate(
-    ib_engine_t *ib,
-    modlua_cfg_t *cfg,
-    modlua_runtime_t **rt)
+    ib_engine_t       *ib,
+    modlua_cfg_t      *cfg,
+    modlua_runtime_t **modlua_runtime
+)
 {
     assert(ib != NULL);
     assert(cfg != NULL);
 
-    ib_status_t rc;
+    ib_status_t    rc;
     ib_resource_t *resource;
 
     rc = ib_lock_lock(&(cfg->lua_pool_lock));
@@ -619,9 +678,9 @@ ib_status_t modlua_acquirestate(
         return rc;
     }
 
-    *rt = (modlua_runtime_t *)ib_resource_get(resource);
+    *modlua_runtime = (modlua_runtime_t *)ib_resource_get(resource);
 
-    (*rt)->resource = resource;
+    (*modlua_runtime)->resource = resource;
 
     return IB_OK;
 }

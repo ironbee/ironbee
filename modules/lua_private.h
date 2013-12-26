@@ -19,9 +19,10 @@
  * @file
  * @brief IronBee --- LUA Module
  *
- * This module integrates with luajit, allowing lua modules to be loaded.
+ * Things that must be shared between `ibmod_lua` code.
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
 #ifndef __MODULES__LUA_H
@@ -35,10 +36,7 @@
 #include <ironbee/release.h>
 #include <ironbee/resource_pool.h>
 
-
-/**
- * Module configuration.
- */
+//! Module configuration.
 struct modlua_cfg_t {
     char               *pkg_path;      /**< Package path Lua Configuration. */
     char               *pkg_cpath;     /**< Cpath Lua Configuration. */
@@ -65,7 +63,8 @@ typedef struct modlua_cfg_t modlua_cfg_t;
 ib_status_t modlua_cfg_get(
     ib_engine_t *ib,
     ib_context_t *ctx,
-    modlua_cfg_t **cfg);
+    modlua_cfg_t **cfg
+);
 
 /**
  * Called by modlua_module_load to load the lua script into the Lua runtime.
@@ -97,7 +96,7 @@ ib_status_t modlua_module_load_lua(
  *
  * IronBee supports nested configuration contexts. Configuration B may
  * occur in configuration A. This function will push
- * the Lua table { "A", "B" } such that t[1] = "A" and t[2] = "B".
+ * the Lua table `{ "A", "B" }` such that `t[1] = "A" and t[2] = "B"`.
  *
  * This allows the module to fetch or build the configuration table
  * required to store any user configurations to be done.

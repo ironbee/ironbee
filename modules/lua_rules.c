@@ -54,15 +54,15 @@ static ib_status_t lua_operator_execute(
     assert(instance_data != NULL);
     assert(cbdata != NULL);
 
-    ib_status_t rc;
-    ib_status_t rc2;
-    ib_engine_t *ib = tx->ib;
-    ib_context_t *ctx = tx->ctx;
-    ib_module_t *module;
-    int result_int;
-    modlua_cfg_t *cfg = NULL;
-    modlua_runtime_t *luart = NULL;
-    const char *func_name = (const char *)instance_data;
+    ib_status_t            rc;
+    ib_status_t            rc2;
+    ib_module_t           *module;
+    int                    result_int;
+    ib_engine_t           *ib                  = tx->ib;
+    ib_context_t          *ctx                 = tx->ctx;
+    modlua_cfg_t          *cfg                 = NULL;
+    modlua_runtime_t      *luart               = NULL;
+    const char            *func_name           = (const char *)instance_data;
     modlua_rules_cbdata_t *modlua_rules_cbdata =
         (modlua_rules_cbdata_t *)cbdata;
 
@@ -150,14 +150,14 @@ static ib_status_t modlua_rule_driver(
     assert(tag != NULL);
     assert(location != NULL);
 
-    ib_status_t rc;
-    const char *slash;
-    const char *name;
-    ib_operator_t *op;
-    void *instance_data;
-    ib_engine_t *ib = cp->ib;
-    modlua_cfg_t *cfg = NULL;
-    ib_context_t *ctx = NULL;
+    ib_status_t            rc;
+    const char            *slash;
+    const char            *name;
+    ib_operator_t         *op;
+    void                  *instance_data;
+    ib_engine_t           *ib                 = cp->ib;
+    modlua_cfg_t          *cfg                = NULL;
+    ib_context_t          *ctx                = NULL;
     modlua_rules_cbdata_t *modlua_rules_cbdata =
         (modlua_rules_cbdata_t *)cbdata;
 
@@ -265,9 +265,9 @@ ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *module)
     assert(ib != NULL);
     assert(module != NULL);
 
-    ib_status_t rc;
+    ib_status_t            rc;
     modlua_rules_cbdata_t *modlua_rules_cbdata = NULL;
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    ib_mpool_t            *mp                  = ib_engine_pool_main_get(ib);
 
     /* Build an initialize callback struct for Lua Rules. */
     modlua_rules_cbdata = ib_mpool_calloc(mp, 1, sizeof(*modlua_rules_cbdata));

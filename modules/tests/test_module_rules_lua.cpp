@@ -117,37 +117,6 @@ TEST_F(TestIronBeeModuleRulesLua, load_func_eval)
     ASSERT_EQ(5, res);
 }
 
-TEST_F(TestIronBeeModuleRulesLua, new_state)
-{
-    int res = 0;
-    ib_tx_t tx;
-    tx.ib = ib_engine;
-    tx.mp = ib_engine->mp;
-
-    ib_rule_exec_t rule_exec;
-    memset(&rule_exec, 0, sizeof(rule_exec));
-    rule_exec.ib = ib_engine;
-    rule_exec.tx = &tx;
-    rule_exec.rule = rule;
-
-    ib_tx_generate_id(&tx);
-    lua_State *L = luaL_newstate();
-    luaL_openlibs(L);
-    setSearchPath(L);
-    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ffi", "ffi"));
-    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ibapi", "ironbee/api"));
-    ASSERT_NE(static_cast<lua_State*>(NULL), L);
-
-    lua_State *L2;
-
-    ASSERT_EQ(IB_OK, ib_lua_new_thread(ib_engine, L, &L2));
-    ASSERT_NE(static_cast<lua_State*>(NULL), L2);
-    ASSERT_EQ(IB_OK, ib_lua_load_func(ib_engine, L2, luafile, "f1"));
-    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(ib_engine, &tx, L2, "f1", &res));
-    ASSERT_EQ(IB_OK, ib_lua_join_thread(ib_engine, L, &L2));
-    ASSERT_EQ(5, res);
-}
-
 TEST_F(TestIronBeeModuleRulesLua, operator_test)
 {
     const ib_operator_t *op;

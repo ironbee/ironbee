@@ -18,6 +18,8 @@
 /**
  * @file
  * @brief IronBee --- Lua modules common code.
+ *
+ * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
 #include "lua_common_private.h"
@@ -27,17 +29,13 @@
 #include <lua.h>
 #include <assert.h>
 
-#define THREAD_NAME_BUFFER_SZ 20
-
 ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
 {
-    assert(ib);
-    assert(L);
-    assert(file);
+    assert(ib   != NULL);
+    assert(L    != NULL);
+    assert(file != NULL);
 
-    int lua_rc;
-
-    lua_rc = luaL_loadfile(L, file);
+    int lua_rc = luaL_loadfile(L, file);
 
     if (lua_rc != 0) {
         ib_log_error(ib, "Error loading \"%s\": %s (%d)",
@@ -85,24 +83,28 @@ ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
     }
 }
 
-ib_status_t ib_lua_load_func(ib_engine_t *ib,
-                             lua_State *L,
-                             const char *file,
-                             const char *func_name)
+ib_status_t ib_lua_load_func(
+    ib_engine_t *ib,
+    lua_State   *L,
+    const char  *file,
+    const char  *func_name
+)
 {
-    assert(ib);
-    assert(L);
-    assert(file);
-    assert(func_name);
-
-    ib_status_t ib_rc;
+    assert(ib        != NULL);
+    assert(L         != NULL);
+    assert(file      != NULL);
+    assert(func_name != NULL);
 
     /* Load (compile) the lua module. */
-    ib_rc = luaL_loadfile(L, file);
+    ib_status_t ib_rc = luaL_loadfile(L, file);
 
     if (ib_rc != 0) {
-        ib_log_error(ib, "Error loading file module \"%s\": %s (%d)",
-                     file, lua_tostring(L, -1), ib_rc);
+        ib_log_error(
+            ib,
+            "Error loading file module \"%s\": %s (%d)",
+            file,
+            lua_tostring(L, -1),
+            ib_rc);
 
         /* Get error string off the stack. */
         lua_pop(L, 1);
@@ -114,17 +116,19 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
     return IB_OK;
 }
 
-ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
-                                 ib_tx_t *tx,
-                                 lua_State *L,
-                                 const char *func_name,
-                                 int *return_value)
+ib_status_t ib_lua_func_eval_int(
+    ib_engine_t *ib,
+    ib_tx_t     *tx,
+    lua_State   *L,
+    const char  *func_name,
+    int         *return_value
+)
 {
-    assert(ib);
-    assert(tx);
-    assert(L);
-    assert(func_name);
-    assert(return_value);
+    assert(ib           != NULL);
+    assert(tx           != NULL);
+    assert(L            != NULL);
+    assert(func_name    != NULL);
+    assert(return_value != NULL);
 
     int lua_rc;
 
@@ -243,77 +247,15 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
     return IB_OK;
 }
 
-/**
- * Print a thread name of @a L into the character buffer @a thread_name.
- *
- * @a thread_name should be about 20 characters long
- * to store a %p formatted pointer of @a L prefixed with @c t_.
- *
- * @param[out] thread_name The buffer the thread name is printed into.
- * @param[in] L The lua_State* whose pointer we will use as the thread name.
- */
-static inline void sprint_threadname(char *thread_name, lua_State *L)
-{
-    /* No asserts to allow for inlining. */
-    snprintf(thread_name, THREAD_NAME_BUFFER_SZ, "t_%p", (void *)L);
-}
-
-ib_status_t ib_lua_new_thread(ib_engine_t *ib,
-                              lua_State *L,
-                              lua_State **thread)
-{
-    assert(ib);
-    assert(L);
-    assert(thread);
-
-    char *thread_name = (char *)malloc(THREAD_NAME_BUFFER_SZ);
-
-    *thread = lua_newthread(L);
-
-    if (*thread == NULL) {
-        free(thread_name);
-        return IB_EALLOC;
-    }
-
-    sprint_threadname(thread_name, *thread);
-
-    /* Store the thread at the global variable referenced. */
-    lua_setglobal(L, thread_name);
-
-    free(thread_name);
-    return IB_OK;
-}
-
-ib_status_t ib_lua_join_thread(ib_engine_t *ib,
-                               lua_State* L,
-                               lua_State **thread)
-{
-    assert(ib);
-    assert(L);
-    assert(thread);
-
-    char *thread_name = (char *)malloc(THREAD_NAME_BUFFER_SZ);
-    sprint_threadname(thread_name, *thread);
-
-    /* Put nil on the stack. */
-    lua_pushnil(L);
-
-    /* Erase the reference to the stack to allow GC. */
-    lua_setglobal(L, thread_name);
-
-    free(thread_name);
-    return IB_OK;
-}
-
 ib_status_t ib_lua_require(ib_engine_t *ib,
                            lua_State *L,
                            const char* module_name,
                            const char* required_name)
 {
-    assert(ib);
-    assert(L);
-    assert(module_name);
-    assert(required_name);
+    assert(ib            != NULL);
+    assert(L             != NULL);
+    assert(module_name   != NULL);
+    assert(required_name != NULL);
 
     int lua_rc;
 
@@ -338,13 +280,15 @@ ib_status_t ib_lua_require(ib_engine_t *ib,
     return IB_OK;
 }
 
-void ib_lua_add_require_path(ib_engine_t *ib_engine,
-                             lua_State *L,
-                             const char *path)
+void ib_lua_add_require_path(
+    ib_engine_t *ib_engine,
+    lua_State   *L,
+    const char  *path
+)
 {
-    assert(ib_engine);
-    assert(L);
-    assert(path);
+    assert(ib_engine != NULL);
+    assert(L         != NULL);
+    assert(path      != NULL);
 
     lua_getglobal(L, "package");
     lua_pushstring(L, "path");

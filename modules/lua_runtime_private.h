@@ -19,10 +19,9 @@
  * @file
  * @brief IronBee --- Lua Runtime
  *
- * A structure that represents ibmod_lua's concept of a Lua runtime.
+ * Things used to manage Lua runtime stacks used throughout `ibmod_lua`.
  *
  * A runtime includes a little meta information and a lua_State pointer.
- *
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
@@ -41,16 +40,24 @@
  * Created for each connection and stored as the module's connection data.
  */
 struct modlua_runtime_t {
-    lua_State     *L;        /**< Lua stack */
-    size_t         uses;     /**< Number of times this stack is used. */
-    ib_mpool_t    *mp;       /**< Memory pool for this runtime. */
-    ib_resource_t *resource; /**< Bookkeeping for modlua_releasestate(). */
+    lua_State     *L;         /**< Lua stack */
+    size_t         use_count; /**< Number of times this stack is used. */
+    ib_mpool_t    *mp;        /**< Memory pool for this runtime. */
+    ib_resource_t *resource;  /**< Bookkeeping for modlua_releasestate(). */
 };
 typedef struct modlua_runtime_t modlua_runtime_t;
 
+/**
+ * The type of reloading that must be done to initialize a new Lua stack.
+ *
+ * Lua requires many stacks to be created and initialized. Each
+ * stack must have rules and modules reloaded into it in a specific way.
+ * This enumeration labels each type of reloading record as a
+ * Lua module reload or a Lua rule reload.
+ */
 enum modlua_reload_type_t {
-    MODLUA_RELOAD_RULE,
-    MODLUA_RELOAD_MODULE
+    MODLUA_RELOAD_RULE,   /**< Reload a Lua rule. */
+    MODLUA_RELOAD_MODULE  /**< Reload a Lua module. */
 };
 typedef enum modlua_reload_type_t modlua_reload_type_t;
 
@@ -113,7 +120,7 @@ ib_status_t modlua_runtime_resource_pool_create(
  * - IB_EINVAL If the Lua script fails to load.
  */
 ib_status_t modlua_reload_ctx_except_main(
-    ib_engine_t *ib,
+    ib_engine_t  *ib,
     ib_module_t  *module,
     ib_context_t *ctx,
     lua_State    *L
@@ -159,16 +166,40 @@ ib_status_t modlua_record_reload(
     const char           *file
 );
 
+/**
+ * Return a @ref modlua_runtime_t to the resource pool.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] cfg The modlue configuration.
+ * @param[out] modlua_runtime The runtime that should be returned to the
+ *             resource pool.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure.
+ */
 ib_status_t modlua_releasestate(
-    ib_engine_t *ib,
-    modlua_cfg_t *cfg,
-    modlua_runtime_t *runtime
+    ib_engine_t      *ib,
+    modlua_cfg_t     *cfg,
+    modlua_runtime_t *modlua_runtime
 );
 
+/**
+ * Acquire a @ref modlua_runtime_t from the resource pool.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] cfg The modlue configuration.
+ * @param[out] modlua_runtime The fetched runtime is placed here.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_DECLINED If no resources are available.
+ * - Other on failure.
+ */
 ib_status_t modlua_acquirestate(
-    ib_engine_t *ib,
-    modlua_cfg_t *cfg,
-    modlua_runtime_t **rt
+    ib_engine_t       *ib,
+    modlua_cfg_t      *cfg,
+    modlua_runtime_t **modlua_runtime
 );
 
 #endif /* __MODULES__LUA_RUNTIME_H */
