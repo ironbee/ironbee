@@ -28,12 +28,20 @@
 
 #include "txlog.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Context configuration value for the TxLogModule.
  */
-struct TxLogConfig {
+struct txlog_config_t {
     ib_txlog_module_cfg_t pub_cfg; /**< Public configuration information. */
-    TxLogConfig();
 };
+typedef struct txlog_config_t txlog_config_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODULES__TXLOG_PRIVATE_H__ */

@@ -1,6 +1,6 @@
 include $(top_srcdir)/build/tests.mk
 
-# Test_txlog uses ../txlog_api.cpp.
+# Test_txlog uses ../txlog_api.c.
 AUTOMAKE_OPTIONS = subdir-objects
 
 LDADD = \
@@ -51,7 +51,7 @@ test_error_page_LDADD     = \
     $(top_builddir)/ironbeepp/libibpp.la
 
 check_PROGRAMS += test_txlog
-test_txlog_SOURCES = test_txlog.cpp ../txlog_api.cpp
+test_txlog_SOURCES = test_txlog.cpp ../txlog_api.c
 test_txlog_LDADD = \
     $(LDADD) \
     $(top_builddir)/modules/ibmod_txlog.la \

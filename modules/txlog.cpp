@@ -27,7 +27,7 @@
 #include "ironbee_config_auto.h"
 
 /* Include our own public header file. */
-#include "txlog_private.hpp"
+#include "txlog_private.h"
 #include "txlog.h"
 
 #include <ironbeepp/configuration_directives.hpp>
@@ -546,6 +546,13 @@ private:
 
 IBPP_BOOTSTRAP_MODULE_DELEGATE(TXLOG_MODULE_NAME, TxLogModule);
 
+//! C++ify the C configuraton struct.
+struct TxLogConfig : public txlog_config_t 
+{
+    //! Constructor.
+    TxLogConfig();
+};
+
 /**
  * Setup some good defaults.
  */
@@ -592,7 +599,7 @@ TxLogModule::TxLogModule(IronBee::Module module):
     )
 {
     /* Set the default configuration. */
-    module.set_configuration_data(TxLogConfig());
+    module.set_configuration_data_pod(TxLogConfig());
 
     /* Register configuration directives. */
     module.engine().register_configuration_directives()

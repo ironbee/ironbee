@@ -26,13 +26,14 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbeepp/context.hpp>
-#include <ironbeepp/engine.hpp>
-#include <ironbeepp/module.hpp>
+#include "txlog_private.h"
 
-#include "txlog_private.hpp"
 /* Include our own public header file. */
 #include "txlog.h"
+
+#include <assert.h>
+#include <ironbee/module.h>
+#include <ironbee/context.h>
 
 ib_status_t ib_txlog_get_config(
     const ib_engine_t            *ib,
@@ -44,14 +45,23 @@ ib_status_t ib_txlog_get_config(
     assert(ctx != NULL);
     assert(cfg != NULL);
 
-    IronBee::Engine engine(const_cast<ib_engine_t *>(ib));
-    IronBee::Context context(const_cast<ib_context_t *>(ctx));
-    IronBee::Module module =
-        IronBee::Module::with_name(engine, TXLOG_MODULE_NAME);
+    ib_status_t     rc;
+    txlog_config_t *module_cfg = NULL;
+    ib_module_t    *module     = NULL;
 
-    TxLogConfig& mod_cfg = module.configuration_data<TxLogConfig>(context);
+    rc = ib_engine_module_get(ib, TXLOG_MODULE_NAME, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve module "TXLOG_MODULE_NAME);
+        return rc;
+    }
 
-    *cfg = &mod_cfg.pub_cfg;
+    rc = ib_context_module_config(ctx, module, &module_cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve " TXLOG_MODULE_NAME " config.");
+        return rc;
+    }
+
+    *cfg = (const ib_txlog_module_cfg_t *)&(module_cfg->pub_cfg);
 
     return IB_OK;
 }
