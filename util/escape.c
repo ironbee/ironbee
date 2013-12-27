@@ -403,11 +403,12 @@ static inline char hex_to_int(char high, char low)
     return hexchar_to_byte(high) << 4 | hexchar_to_byte(low);
 }
 
-ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
-                                               size_t* dst_len,
-                                               const char* src,
-                                               size_t src_len,
-                                               uint32_t flags)
+ib_status_t DLL_PUBLIC ib_util_unescape_string(
+    char       *dst,
+    size_t     *dst_len,
+    const char *src,
+    size_t      src_len
+)
 {
     size_t dst_i = 0;
     size_t src_i = 0;
@@ -467,14 +468,6 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                 src_i+=2;
                 dst[dst_i] = hex_to_int(src[src_i-1], src[src_i]);
 
-                /* UNESCAPE_NONULL flags prohibits nulls appearing
-                 * mid-string. */
-                if (flags & IB_UTIL_UNESCAPE_NONULL &&
-                    dst[dst_i] == 0)
-                {
-                    return IB_EBADVAL;
-                }
-
                 ++dst_i;
                 break;
             case 'u':
@@ -501,14 +494,6 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                 src_i+=2;
                 dst[dst_i] = hex_to_int(src[src_i-1], src[src_i]);
 
-                /* UNESCAPE_NONULL flags prohibits nulls appearing
-                 * mid-string. */
-                if ( flags & IB_UTIL_UNESCAPE_NONULL &&
-                     ( dst[dst_i-1] == 0 || dst[dst_i] == 0 ) )
-                {
-                    return IB_EBADVAL;
-                }
-
                 ++dst_i;
                 break;
             default:
@@ -518,11 +503,6 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
         default:
             dst[dst_i++] = src[src_i];
         }
-    }
-
-    /* Terminate the string. */
-    if ( flags & IB_UTIL_UNESCAPE_NULTERMINATE ) {
-        dst[dst_i] = '\0';
     }
 
     *dst_len = dst_i;

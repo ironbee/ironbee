@@ -223,8 +223,10 @@ static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-0000000
  *                will also be done through this.
  * @param[out] dst The resultant unescaped string will be stored at @a *dst.
  * @param[in] src The source string to be escaped
- * @return IB_OK, IB_EALLOC on malloc failures, or IB_EINVAL or IB_ETRUNC on
- *         unescaping failures.
+ * @return
+ * - IB_OK On success.
+ * - IB_EALLOC on malloc failures.
+ * - Other on escaping failures.
  */
 static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
 {
@@ -237,25 +239,25 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
         return IB_EALLOC;
     }
 
-    rc = ib_util_unescape_string(dst_tmp,
-                                 &dst_len,
-                                 src,
-                                 src_len,
-                                 ( IB_UTIL_UNESCAPE_NULTERMINATE |
-                                   IB_UTIL_UNESCAPE_NONULL) );
-
+    rc = ib_util_unescape_string(dst_tmp, &dst_len, src, src_len);
     if (rc != IB_OK) {
-        if (rc == IB_EBADVAL) {
-            ib_log_debug(ib,
-                         "Failed to unescape string \"%s\" because resultant unescaped "
-                         "string contains a NULL character.",
-                         src);
-        }
-        else {
-            ib_log_debug(ib, "Failed to unescape string \"%s\"", src);
-        }
+        ib_log_debug(ib, "Failed to unescape string \"%s\"", src);
         return rc;
     }
+
+    /* There may be no null characters in the escaped string. */
+    if (memchr(dst_tmp, '\0', dst_len) != NULL) {
+        ib_log_debug(ib,
+                     "Failed to unescape string \"%s\" because resultant unescaped "
+                     "string contains a NULL character.",
+                     src);
+        return IB_EBADVAL;
+    }
+
+    assert(dst_len <= src_len);
+
+    /* Null-terminate the string. */
+    dst_tmp[dst_len] = '\0';
 
     /* Success! */
     *dst = dst_tmp;

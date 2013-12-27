@@ -294,9 +294,7 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
     rc = ib_util_unescape_string(p1_unescaped,
                                  &p1_unescaped_len,
                                  p1,
-                                 p1_len,
-                                 IB_UTIL_UNESCAPE_NULTERMINATE |
-                                 IB_UTIL_UNESCAPE_NONULL);
+                                 p1_len);
 
     if (rc != IB_OK ) {
         if (rc == IB_EBADVAL) {
@@ -308,6 +306,11 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
         free(p1_unescaped);
         return rc;
     }
+
+    assert(p1_unescaped_len <= p1_len);
+
+    /* Null-terminate the result. */
+    p1_unescaped[p1_unescaped_len] = '\0';
 
     if (mod_data->geoip_db != NULL) {
         GeoIP_delete(mod_data->geoip_db);

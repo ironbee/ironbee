@@ -34,13 +34,11 @@ TEST(TestIBUtilUnescapeString, singleCharacter) {
   ASSERT_EQ(IB_OK, ib_util_unescape_string(str2,
                                            &len,
                                            str,
-                                           strlen(str),
-                                           IB_UTIL_UNESCAPE_NULTERMINATE));
+                                           strlen(str)));
 
   EXPECT_EQ('\r', str2[0]);
   EXPECT_EQ('\n', str2[1]);
   EXPECT_EQ('\t', str2[2]);
-  EXPECT_EQ('\0', str2[3]);
   ASSERT_EQ(3UL, len);
 }
 
@@ -52,12 +50,10 @@ TEST(TestIBUtilUnescapeString, singleBytes) {
   ASSERT_EQ(IB_OK, ib_util_unescape_string(str2,
                                            &len,
                                            str,
-                                           strlen(str),
-                                           IB_UTIL_UNESCAPE_NULTERMINATE));
+                                           strlen(str)));
 
   EXPECT_EQ(chk[0], str2[0]);
   EXPECT_EQ(chk[1], str2[1]);
-  EXPECT_EQ('\0', str2[2]);
   EXPECT_EQ(2UL, len);
 }
 
@@ -69,14 +65,11 @@ TEST(TestIBUtilUnescapeString, longBytes) {
   ASSERT_EQ(IB_OK, ib_util_unescape_string(str2,
                                            &len,
                                            str,
-                                           strlen(str),
-                                           IB_UTIL_UNESCAPE_NULTERMINATE));
-
+                                           strlen(str)));
   EXPECT_EQ(chk[0], str2[0]);
   EXPECT_EQ(chk[1], str2[1]);
   EXPECT_EQ(chk[2], str2[2]);
   EXPECT_EQ(chk[3], str2[3]);
-  EXPECT_EQ('\0', str2[4]);
   EXPECT_EQ(4UL, len);
 }
 
@@ -87,8 +80,7 @@ TEST(TestIBUtilUnescapeString, shortSingleBytesEndOfLine) {
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(str2,
                                                &len,
                                                str,
-                                               strlen(str),
-                                               IB_UTIL_UNESCAPE_NULTERMINATE));
+                                               strlen(str)));
 }
 
 TEST(TestIBUtilUnescapeString, shortSingleBytes) {
@@ -98,8 +90,7 @@ TEST(TestIBUtilUnescapeString, shortSingleBytes) {
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(str2,
                                                &len,
                                                str,
-                                               strlen(str),
-                                               IB_UTIL_UNESCAPE_NULTERMINATE));
+                                               strlen(str)));
 }
 
 TEST(TestIBUtilUnescapeString, shortLongBytes) {
@@ -109,8 +100,7 @@ TEST(TestIBUtilUnescapeString, shortLongBytes) {
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(str2,
                                                &len,
                                                str,
-                                               strlen(str),
-                                               IB_UTIL_UNESCAPE_NULTERMINATE));
+                                               strlen(str)));
 }
 
 TEST(TestIBUtilUnescapeString, shortLongBytesEndOfLine) {
@@ -120,8 +110,7 @@ TEST(TestIBUtilUnescapeString, shortLongBytesEndOfLine) {
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(str2,
                                                &len,
                                                str,
-                                               strlen(str),
-                                               IB_UTIL_UNESCAPE_NULTERMINATE));
+                                               strlen(str)));
 }
 
 TEST(TestIBUtilUnescapeString, nochange01) {
@@ -131,64 +120,13 @@ TEST(TestIBUtilUnescapeString, nochange01) {
   ASSERT_EQ(IB_OK, ib_util_unescape_string(str2,
                                            &len,
                                            str,
-                                           strlen(str),
-                                           IB_UTIL_UNESCAPE_NULTERMINATE));
+                                           strlen(str)));
 
-  ASSERT_EQ(0, strcmp(str, str2));
+  str2[len] = '\0';
+
+  ASSERT_STREQ(str, str2);
 }
 
-TEST(TestIBUtilUnescapeString, nullsInString) {
-  const char *src1 = "hi\\x00hello";
-  const char *src2 = "hi\\u0000hello";
-  const char *src3 = "hi\\u0100hello";
-  const char *src4 = "hi\\u0001hello";
-  char dst[10];
-  size_t len;
-
-  /* \u0000 test. */
-  ASSERT_EQ(IB_OK, ib_util_unescape_string(dst,
-                                           &len,
-                                           src1,
-                                           strlen(src1),
-                                           IB_UTIL_UNESCAPE_NULTERMINATE));
-  ASSERT_STREQ("hi", dst);
-  ASSERT_STREQ("hello", dst+3);
-  ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
-                                               &len,
-                                               src1,
-                                               strlen(src1),
-                                               IB_UTIL_UNESCAPE_NONULL |
-                                               IB_UTIL_UNESCAPE_NULTERMINATE));
-
-  /* \x00 test. */
-  ASSERT_EQ(IB_OK, ib_util_unescape_string(dst,
-                                           &len,
-                                           src2,
-                                           strlen(src2),
-                                           IB_UTIL_UNESCAPE_NULTERMINATE));
-  ASSERT_STREQ("hi", dst);
-  ASSERT_STREQ("hello", dst+4);
-  ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
-                                               &len,
-                                               src2,
-                                               strlen(src2),
-                                               IB_UTIL_UNESCAPE_NONULL |
-                                               IB_UTIL_UNESCAPE_NULTERMINATE));
-
-  ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
-                                               &len,
-                                               src3,
-                                               strlen(src3),
-                                               IB_UTIL_UNESCAPE_NONULL |
-                                               IB_UTIL_UNESCAPE_NULTERMINATE));
-
-  ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
-                                               &len,
-                                               src4,
-                                               strlen(src4),
-                                               IB_UTIL_UNESCAPE_NONULL |
-                                               IB_UTIL_UNESCAPE_NULTERMINATE));
-}
 
 TEST(TestIBUtilUnescapeString, removesQuotes) {
     const char *src = "\\\"hi\\\'";
@@ -197,7 +135,7 @@ TEST(TestIBUtilUnescapeString, removesQuotes) {
     ASSERT_EQ(IB_OK, ib_util_unescape_string(dst,
                                              &len,
                                              src,
-                                             strlen(src),
-                                             IB_UTIL_UNESCAPE_NULTERMINATE));
+                                             strlen(src)));
+    dst[len] = '\0';
     ASSERT_STREQ("\"hi\'", dst);
 }

@@ -271,16 +271,21 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
         return IB_EALLOC;
     }
 
-    rc = ib_util_unescape_string(tmp_unesc,
-                                 &tmp_unesc_len,
-                                 str,
-                                 str_len,
-                                 IB_UTIL_UNESCAPE_NULTERMINATE);
+    rc = ib_util_unescape_string(
+        tmp_unesc,
+        &tmp_unesc_len,
+        str,
+        str_len);
 
     if ( rc != IB_OK ) {
         ib_log_notice(ib, "Failed to unescape string: %s", str);
         return rc;
     }
+
+    assert(tmp_unesc_len <= str_len);
+
+    /* Null terminate the result. */
+    tmp_unesc[tmp_unesc_len] = '\0';
 
     /* Commit changes on success. */
     *str_unesc = tmp_unesc;

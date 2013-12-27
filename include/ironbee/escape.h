@@ -256,59 +256,39 @@ char DLL_PUBLIC *ib_util_hex_escape(
     size_t           src_len);
 
 /**
- * When passed to @ref ib_util_unescape_string an escaped null character will
- * results in the string not being parsed and IB_EINVAL being returned.
- */
-#define IB_UTIL_UNESCAPE_NONULL    (1U << 0)
-#define IB_UTIL_UNESCAPE_NULTERMINATE (1U << 1)
-
-/**
  * Unescape a Javascript-escaped string into the @a dst string buffer.
  *
- * Decode the contents of @a str into @a dst. Then terminate @a dst with \0
- * if @a flags includes IB_UTIL_UNESCAPE_NULTERMINATE. In this case,
- * @a dst must be @a src_len+1 in size.
- *
- * Because @a src may be a segment in a larger character buffer,
- * @a src is not treated as a \0 terminated string, but is
- * processed using the given @a src_len.
- *
  * The resultant buffer @a dst should also not be treated as a typical string
- * because a \0 character could appear in the middle of the buffer unless
- * IB_UTIL_UNESCAPE_NONULL is set in @a flags.
+ * because a \0 character could appear in the middle of the buffer.
  *
  * If IB_OK is not returned then @a dst and @a dst_len are left in an
  * inconsistent state.
  *
  * @param[out] dst string buffer that should be at least as long as
- *             @a src_len or @a src_len+1 if IB_UTIL_UNESCAPE_NULTERMINATE
- *             is set.
+ *             @a src_len.
  * @param[out] dst_len the length of the decoded byte array. This will be
  *             equal to or shorter than @a src_len. Note that srclen(dst)
  *             could result in a smaller value than @a dst_len because of
  *             a \0 character showing up in the middle of the array.
  * @param[in] src source string that is encoded.
  * @param[in] src_len the length of @a src.
- * @param[in] flags Flags that affect how the string is processed.
  *
- * @returns IB_OK if successful. IB_EINVAL if the string cannot be unescaped
- *          because of short escape codes or non-hex values being passed
- *          to escape codes.
- *
- *          IB_EBADVAL is returned if a flag is set and the string cannot
- *          be decoded because of the flag settings.
- *
- *          On a failure @a dst_len are left in an inconsistent state.
+ * @returns
+ * - IB_OK if successful
+ * - IB_EINVAL if the string cannot be unescaped because of short escape codes
+ *             or non-hex values being passed to escape codes.
+ *             On a failure @a dst_len are left in an inconsistent state.
  *
  * @internal
  * Implemented in: util/util.c
  * Tested in: tests/test_util_unescape_string.cpp
  */
-ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
-                                               size_t *dst_len,
-                                               const char *src,
-                                               size_t src_len,
-                                               uint32_t flags);
+ib_status_t DLL_PUBLIC ib_util_unescape_string(
+    char       *dst,
+    size_t     *dst_len,
+    const char *src,
+    size_t      src_len
+);
 
 /**
  * @} IronBeeUtilString

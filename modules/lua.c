@@ -1961,9 +1961,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
         p1_unescaped,
         &p1_unescaped_len,
         p1,
-        p1_len,
-        IB_UTIL_UNESCAPE_NULTERMINATE |
-        IB_UTIL_UNESCAPE_NONULL);
+        p1_len);
     if (rc != IB_OK) {
         if (rc == IB_EBADVAL) {
             ib_cfg_log_error(cp, "Value for parameter \"%s\" may not contain NULL bytes: %s", name, p1);
@@ -1974,6 +1972,11 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
         free(p1_unescaped);
         return rc;
     }
+
+    assert(p1_unescaped_len <= p1_len);
+
+    /* Null-terminate the result. */
+    p1_unescaped[p1_unescaped_len] = '\0';
 
     if (strcasecmp("LuaLoadModule", name) == 0) {
         /* Absolute path. */
