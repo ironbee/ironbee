@@ -1,4 +1,4 @@
-AC_DEFUN([AX_BOOST_THRAD_SUFFIX],
+AC_DEFUN([AX_BOOST_THREAD_SUFFIX],
 [
 AC_ARG_WITH([boost-thread-suffix],
             [AC_HELP_STRING([--with-boost-thread-suffix=suffix suffix name for boost thread libraries])],

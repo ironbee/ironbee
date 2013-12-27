@@ -393,6 +393,7 @@ if test "$have_boost" = "no"; then
   BOOST_CPPFLAGS=$saved_BOOST_CPPFLAGS
 fi
 AX_BOOST_SUFFIX()
+AX_BOOST_THREAD_SUFFIX()
 
 # Clang does not support -pthread or variants.
 if test "$cc_is_clang" = "yes"; then
