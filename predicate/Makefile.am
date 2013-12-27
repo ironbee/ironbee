@@ -5,7 +5,7 @@ SUBDIRS = tests
 AM_LDFLAGS += \
   $(BOOST_LDFLAGS)              \
   -lboost_system$(BOOST_SUFFIX) \
-  -lboost_thread$(BOOST_SUFFIX) \
+  -lboost_thread$(BOOST_THREAD_SUFFIX) \
   -lboost_regex$(BOOST_SUFFIX)
 
 module_LTLIBRARIES = ibmod_predicate.la

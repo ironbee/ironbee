@@ -101,7 +101,7 @@ clipp_LDFLAGS = \
     -lboost_filesystem$(BOOST_SUFFIX) \
     -lboost_program_options$(BOOST_SUFFIX) \
     -lboost_regex$(BOOST_SUFFIX) \
-    -lboost_thread$(BOOST_SUFFIX) \
+    -lboost_thread$(BOOST_THREAD_SUFFIX) \
     -lprotobuf \
     -lstdc++ \
     -lm \
