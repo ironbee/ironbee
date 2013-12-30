@@ -476,7 +476,8 @@ namespace {
         /**
          * Constructor.
          *
-         * @param[in] The flag name. This is used to identify this action.
+         * @param[in] field_name The flag name. This is used to identify this
+         *            action.
          * @param[in] flag A field of bits to be set.
          * @param[in] priority Sets the priority of this action to control
          *            if it may be overridden.
@@ -515,7 +516,8 @@ namespace {
         /**
          * Constructor.
          *
-         * @param[in] The flag name. This is used to identify this action.
+         * @param[in] field_name The flag name. This is used to identify
+         *            this action.
          * @param[in] flag A field of bits to be cleared.
          * @param[in] priority Sets the priority of this action to control
          *            if it may be overridden.
