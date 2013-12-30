@@ -84,7 +84,7 @@ TEST_F(TestIBUtilMkPath, mkpath)
     rc = ib_util_mkpath(path, 0700);
     ASSERT_EQ(IB_OK, rc);
 
-    ASSERT_EQ(0, stat(path, &sbuf));
+    ASSERT_EQ(0, stat(path, &sbuf)) << path << ": " << strerror(errno);
     ASSERT_TRUE(S_ISDIR(sbuf.st_mode));
     ASSERT_EQ((mode_t)0700, (sbuf.st_mode & 0777));
 

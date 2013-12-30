@@ -49,12 +49,16 @@ extern "C" {
  */
 
 /**
- * Create a directory path recursively.
+ * Create a directory path.
  *
- * @param path Path to create
- * @param mode Mode to create directories with
+ * @param path Path to create.
+ * @param mode If a directory must be created, its mode will be @a mode.
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC If allocating an internal work buffer fails.
+ * - IB_EINVAL If @path is zero length.
+ * - Other on API failures. Check @c errno.
  *
  * @internal
  * Implemented in: util/path.c

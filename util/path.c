@@ -39,98 +39,87 @@
 
 ib_status_t ib_util_mkpath(const char *path, mode_t mode)
 {
-    /* Mutable copy of path. */
-    char *path_work = NULL;
+    assert(path != NULL);
 
-    /* End of path_work; points to the terminating NULL. */
-    char *path_end;
+    ib_status_t  rc = IB_OK;
+    char        *work_path; /* Mutable copy of path. */
+    size_t       path_i;    /* Iterator into path. */
 
-    /* path_work to exists_end is the part of path that exists. */
-    char *exists_end;
-
-    /* final result code. */
-    ib_status_t rc = IB_OK;
-
-    if (strcmp(path, ".") == 0 || strcmp(path, "/") == 0) {
-        return IB_OK;
+    /* Skip leading slashes. */
+    for (path_i = 0; path[path_i] == '/'; ++path_i){
+        /* Nop. */
     }
 
-    /* Could save one pass by using malloc and memcpy instead of strdup.
-     * But this is simpler.
-     */
-    path_work = strdup(path);
-    if (path_work == NULL) {
+    /* Corner case of a zero-length string. */
+    if (path[path_i] == '\0') {
+        /* Zero-length path is an error. Othewise, success. */
+        return (path_i == 0)? IB_EINVAL : IB_OK;
+    }
+
+    work_path = strdup(path);
+    if (work_path == NULL) {
         return IB_EALLOC;
     }
-    path_end = path_work + strlen(path_work);
 
-    /* Find portion of path that already exists. */
-    exists_end = path_work;
-    if (*path_work == '/') {
-        ++exists_end;
-    }
-    while (exists_end < path_end) {
-        char *old_exists_end = exists_end;
-        struct stat stat_result;
-        int stat_rc;
+    /* path_i points at the first non-slash character.
+     * path_i does not point to the end-of-string (yet).
+     * Iterate over the reamining path, creating directories as we go.
+     * work_path is mutated as required to build arguments to mkdir(). */
+    for (; path[path_i] != '\0'; ++path_i) {
+        if (path[path_i] == '/') {
+            /* Skip over the observed '/'. */
+            ++path_i;
 
-        /* Find next / */
-        for (;exists_end < path_end && *exists_end !='/'; ++exists_end);
+            /* Skip over any subsequent '/'s. */
+            while (path[path_i] == '/') {
+                ++path_i;
+            }
 
-        /* Check if path so far exists. */
-        *exists_end = '\0';
-        stat_rc = stat(path_work, &stat_result);
-        if (exists_end != path_end) {
-            *exists_end = '/';
+            /* If a sequence of '/'s ends the string, success. */
+            if (path[path_i] == '\0') {
+                rc = IB_OK;
+                goto exit;
+            }
+            /* We've encountered the start of a directory name. */
+            else {
+                /* Temporary character used to edit work_path with. */
+                char   work_char;
+                size_t path_j = path_i + 1 + strcspn(path + path_i + 1, "/");
+                int    sys_rc;
+
+                /* path[path_j] now points at a / or \0. */
+                work_char = work_path[path_j];
+                work_path[path_j] = '\0';
+
+                sys_rc = mkdir(work_path, mode);
+                if (errno == EEXIST) {
+                    struct stat work_path_stat; /* Stat of path. */
+
+                    sys_rc = stat(work_path, &work_path_stat);
+                    if (sys_rc == -1) {
+                        rc = IB_EOTHER;
+                        goto exit;
+                    }
+
+                    /* Make sure the tpath is a directory. */
+                    if( !S_ISDIR(work_path_stat.st_mode)) {
+                        rc = IB_EOTHER;
+                        goto exit;
+                    }
+                }
+                else if (sys_rc == -1) {
+                    rc = IB_EOTHER;
+                    goto exit;
+                }
+
+                /* Put back the previous character. */
+                work_path[path_j] = work_char;
+            }
         }
-        if (stat_rc != 0) {
-            exists_end = old_exists_end;
-            break;
-        }
-
-        /* If done, exit. */
-        if (exists_end == path_end) {
-            break;
-        }
-
-        ++exists_end;
-    }
-
-    /* If entire path exists, we're done. */
-    if (exists_end == path_end) {
-        rc = IB_OK;
-        goto finish;
-    }
-
-    /* Otherwise, keep going, creating as we go. */
-    while (exists_end < path_end) {
-        int mkdir_rc;
-
-        /* Find next / */
-        for (;exists_end < path_end && *exists_end !='/'; ++exists_end);
-        *exists_end = '\0';
-
-        mkdir_rc = mkdir(path_work, mode);
-        if (mkdir_rc != 0) {
-            ib_util_log_error("Failed to create path \"%s\": %s (%d)",
-                              path_work, strerror(errno), errno);
-        }
-        if (exists_end != path_end) {
-            *exists_end = '/';
-        }
-        if (mkdir_rc != 0) {
-            rc = IB_EINVAL;
-            goto finish;
-        }
-
-        ++exists_end;
     }
 
-finish:
-    if (path_work != NULL) {
-        free(path_work);
-    }
-
+exit:
+    free(work_path);
     return rc;
 }
 
