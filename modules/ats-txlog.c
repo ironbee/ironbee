@@ -27,7 +27,7 @@
 /* txlog pretends to be a module, and has an API which is private
  * but exposed here.
  */
-#include "ironbee_config_auto.h"`
+#include "ironbee_config_auto.h"
 #include "txlog.h"
 #include <assert.h>
 #include <ironbee/module.h>
