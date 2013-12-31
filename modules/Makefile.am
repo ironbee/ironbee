@@ -1,6 +1,8 @@
 ACLOCAL_AMFLAGS = -I ../acinclude
 
 include $(top_srcdir)/build/common.mk
+# for ats-txlog
+include $(top_srcdir)/build/servers.mk
 
 SUBDIRS = . tests
 
