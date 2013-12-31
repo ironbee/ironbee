@@ -31,6 +31,7 @@ module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_log_pipe.la \
                      ibmod_ident.la \
                      ibmod_ident_authbasic.la \
+                     ibmod_ats_txlog.la \
                      ibmod_sqltfn.la
 noinst_LTLIBRARIES =
 
@@ -222,6 +223,11 @@ ibmod_txlog_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
 ibmod_txlog_la_LIBADD  = $(AM_LIBADD) \
                          $(top_builddir)/ironbeepp/libibpp.la
 endif
+
+ibmod_ats_txlog_la_SOURCES = ats-txlog.c txlog_api.c
+ibmod_ats_txlog_la_CFLAGS = $(AM_CFLAGS) @TS_CFLAGS@
+ibmod_ats_txlog_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
+ibmod_ats_txlog_la_LDFLAGS = $(AM_LDFLAGS)
 
 if CPP
 module_LTLIBRARIES += ibmod_trusted_proxy.la
