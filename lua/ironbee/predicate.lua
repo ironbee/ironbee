@@ -17,7 +17,7 @@
 ----
 
 local _M = {}
-_M._COPYRIGHT = "Copyright (C) 2013 Qualys, Inc."
+_M._COPYRIGHT = "Copyright (C) 2014 Qualys, Inc."
 _M._DESCRIPTION = "IronBee Lua Predicate Frontend"
 _M._VERSION = "1.0"
 

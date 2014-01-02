@@ -31,7 +31,7 @@ local Action = require('ironbee/waggle/actionrule')
 
 local _M = {}
 _M.__index = _M
-_M._COPYRIGHT = "Copyright (C) 2010-2013 Qualys, Inc."
+_M._COPYRIGHT = "Copyright (C) 2010-2014 Qualys, Inc."
 _M._DESCRIPTION = "IronBee Configuration"
 _M._VERSION = "1.0"
 

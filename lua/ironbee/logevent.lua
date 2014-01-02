@@ -28,7 +28,7 @@ require('ironbee-ffi-h')
 
 local _M = {}
 _M.__index = _M
-_M._COPYRIGHT = "Copyright (C) 2010-2013 Qualys, Inc."
+_M._COPYRIGHT = "Copyright (C) 2010-2014 Qualys, Inc."
 _M._DESCRIPTION = "IronBee Lua Log Event"
 _M._VERSION = "1.0"
 

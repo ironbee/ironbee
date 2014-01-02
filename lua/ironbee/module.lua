@@ -36,7 +36,7 @@ local _M = {}
 -- ===============================================
 -- Setup some module metadata.
 -- ===============================================
-_M._COPYRIGHT = "Copyright (C) 2010-2013 Qualys, Inc."
+_M._COPYRIGHT = "Copyright (C) 2010-2014 Qualys, Inc."
 _M._DESCRIPTION = "IronBee Lua Module Framework."
 _M._VERSION = "1.0"
 
