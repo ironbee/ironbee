@@ -499,26 +499,6 @@ ib_status_t DLL_PUBLIC ib_tx_server_header(
 );
 
 /**
- * Check if ALL transaction flags are set.
- *
- * @param tx Transaction structure
- * @param flag Flags
- *
- * @returns True if ALL flags are set
- */
-#define ib_tx_flags_isset(tx, flag) ((tx)->flags & (flag) == (flag) ? 1 : 0)
-
-/**
- * Check if ANY transaction flags are set.
- *
- * @param tx Transaction structure
- * @param flag Flags
- *
- * @returns True if ANY flags are set
- */
-#define ib_tx_flags_any(tx, flag) ((tx)->flags & (flag) ? 1 : 0)
-
-/**
  * Destroy a transaction structure.
  *
  * The transaction @a tx MUST be the first transaction in the parent
