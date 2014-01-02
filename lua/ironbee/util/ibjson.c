@@ -63,7 +63,7 @@ static const char LUA_IBJSONLIB_VERSION[] = "1.0";
 
 //! Module Copyright
 static const char LUA_IBJSON_COPYRIGHT[] =
-    "Copyright (C) 2010-2013 Qualys, Inc.";
+    "Copyright (C) 2010-2014 Qualys, Inc.";
 
 //! Module Description
 static const char LUA_IBJSON_DESCRIPTION[] = "IronBee JSON Interface.";
