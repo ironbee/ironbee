@@ -176,32 +176,34 @@ static ib_status_t core_ctxsel_match_host(
     }
 
     /* Now, loop through the list of hostnames */
-    len = strlen(tx->hostname);
-    IB_LIST_LOOP_CONST(hosts, node) {
-        const core_host_t *core_host = (const core_host_t *)node->data;
-        const ib_site_host_t *host = &(core_host->host);
+    if (tx->hostname != NULL) {
+        len = strlen(tx->hostname);
+        IB_LIST_LOOP_CONST(hosts, node) {
+            const core_host_t *core_host = (const core_host_t *)node->data;
+            const ib_site_host_t *host = &(core_host->host);
 
-        /* If this is a "match any" host entry? */
-        if (core_host->match_any) {
-            *match = true;
-            return IB_OK;
-        }
-
-        /* Check the suffix */
-        if ( (host->suffix != NULL) && (len >= core_host->suffix_len) ) {
-            const char *suffix = tx->hostname + len - core_host->suffix_len;
-            if (strcasecmp(host->suffix, suffix) == 0) {
+            /* If this is a "match any" host entry? */
+            if (core_host->match_any) {
                 *match = true;
                 return IB_OK;
             }
-        }
 
-        /* Finally, do a full hostname match */
-        if ( (core_host->hostname_len == len) &&
-             (strcasecmp(host->hostname, tx->hostname) == 0) )
-        {
-            *match = true;
-            return IB_OK;
+            /* Check the suffix */
+            if ( (host->suffix != NULL) && (len >= core_host->suffix_len) ) {
+                const char *suffix = tx->hostname + len - core_host->suffix_len;
+                if (strcasecmp(host->suffix, suffix) == 0) {
+                    *match = true;
+                    return IB_OK;
+                }
+            }
+
+            /* Finally, do a full hostname match */
+            if ( (core_host->hostname_len == len) &&
+                 (strcasecmp(host->hostname, tx->hostname) == 0) )
+            {
+                *match = true;
+                return IB_OK;
+            }
         }
     }
 
