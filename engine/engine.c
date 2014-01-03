@@ -697,7 +697,7 @@ void ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp)
     }
 #endif
 
-    ib_mpool_release(mp);
+    ib_mpool_destroy(mp);
 
     return;
 }
