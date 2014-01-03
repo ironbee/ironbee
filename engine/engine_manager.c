@@ -36,6 +36,8 @@
 #include <ironbee/mpool.h>
 #include <ironbee/release.h>
 #include <ironbee/server.h>
+#include <ironbee/state_notify.h>
+
 
 #include <assert.h>
 #include <inttypes.h>
@@ -330,9 +332,20 @@ static void register_engine(
 
     /* If there was a previous engine, clean it up. */
     if (previous_engine != NULL) {
+        ib_status_t rc;
 
         /* Remove the engine manager's reference to the engine. */
         --(previous_engine->ref_count);
+
+        /* Tell the engine that we would like to shut down. */
+        rc = ib_state_notify_engine_shutdown_initiated(
+            previous_engine->engine);
+
+        if (rc != IB_OK) {
+            ib_log_error(
+                previous_engine->engine,
+                "Failed to signal previous engine to shutdown.");
+        }
     }
 }
 
