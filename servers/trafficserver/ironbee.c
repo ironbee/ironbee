@@ -1006,6 +1006,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 
     if (TSVConnClosedGet(contp)) {
         TSDebug("ironbee", "\tVConn is closed");
+        TSContDataSet(contp, NULL);
         TSContDestroy(contp);    /* from null-transform, ???? */
 
         return 0;
