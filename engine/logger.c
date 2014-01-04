@@ -1041,7 +1041,7 @@ static ib_status_t logger_register_fn(
     const char                   *name,
     ib_void_fn_t                  fn,
     void                         *cbdata
-) NONNULL_ATTRIBUTE(1, 2);
+) NONNULL_ATTRIBUTE(1, 3);
 
 static ib_status_t logger_register_fn(
     ib_logger_t                  *logger,
