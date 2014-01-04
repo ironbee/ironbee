@@ -642,6 +642,10 @@ const char DLL_PUBLIC *ib_logger_level_to_string(ib_logger_level_t level);
  * @param[in] fn_name The name to register @a fn under.
  * @param[in] fn The function pointer to register under @a fn_name.
  * @param[in] cbdata The callback data to pass to @a fn when called.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
  */
 ib_status_t DLL_PUBLIC ib_logger_register_open_fn(
     ib_logger_t       *logger,
@@ -661,6 +665,10 @@ ib_status_t DLL_PUBLIC ib_logger_register_open_fn(
  * @param[in] fn_name The name to register @a fn under.
  * @param[in] fn The function pointer to register under @a fn_name.
  * @param[in] cbdata The callback data to pass to @a fn when called.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
  */
 ib_status_t DLL_PUBLIC ib_logger_register_close_fn(
     ib_logger_t        *logger,
@@ -680,6 +688,10 @@ ib_status_t DLL_PUBLIC ib_logger_register_close_fn(
  * @param[in] fn_name The name to register @a fn under.
  * @param[in] fn The function pointer to register under @a fn_name.
  * @param[in] cbdata The callback data to pass to @a fn when called.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
  */
 ib_status_t DLL_PUBLIC ib_logger_register_reopen_fn(
     ib_logger_t         *logger,
@@ -699,6 +711,10 @@ ib_status_t DLL_PUBLIC ib_logger_register_reopen_fn(
  * @param[in] fn_name The name to register @a fn under.
  * @param[in] fn The function pointer to register under @a fn_name.
  * @param[in] cbdata The callback data to pass to @a fn when called.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
  */
 ib_status_t DLL_PUBLIC ib_logger_register_format_fn(
     ib_logger_t           *logger,
@@ -718,6 +734,10 @@ ib_status_t DLL_PUBLIC ib_logger_register_format_fn(
  * @param[in] fn_name The name to register @a fn under.
  * @param[in] fn The function pointer to register under @a fn_name.
  * @param[in] cbdata The callback data to pass to @a fn when called.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
  */
 ib_status_t DLL_PUBLIC ib_logger_register_record_fn(
     ib_logger_t           *logger,
