@@ -18,7 +18,8 @@ EXTRA_DIST = moddevel_private.h \
              parser_suite.hpp \
              persistence_framework.h \
              persistence_framework_private.h \
-             txlog.h
+             txlog.h \
+             txlog_json.hpp
 
 
 module_LTLIBRARIES = ibmod_htp.la \
