@@ -42,7 +42,7 @@ typedef struct ats_txlog_cfg_t {
     const char *logfile;
     TSTextLogObject logger;
 } ats_txlog_cfg_t;
- 
+
 #if 0
 
 /* FIXME: is this something we should have?
@@ -93,7 +93,7 @@ static ib_status_t txlog_reopen(ib_logger_t *logger, void *data)
 #endif
 
 /**
- * Write log record to disk. 
+ * Write log record to disk.
  */
 static void txlog_writer(void *element, void *data) {
     ib_logger_standard_msg_t *msg = (ib_logger_standard_msg_t *)element;
@@ -133,28 +133,32 @@ static ib_status_t txlog_record(ib_logger_t *logger,
 
 static ib_status_t ats_txlog_init(ib_engine_t *ib, ib_module_t *m, void *x)
 {
-    const ib_txlog_module_cfg_t *txlog_cfg;
     ats_txlog_cfg_t *cfg;
     ib_status_t rc;
     int rv;
+    ib_logger_format_fn_t  format_fn;
+    void                  *cbdata;
 
     assert(ib != NULL);
     rc = ib_context_module_config(ib_context_main(ib), m, &cfg);
     assert((rc == IB_OK) && (cfg != NULL));
- 
+
     /* txlog relies on a "module".
      * This code relies on module being loaded before we initialise.
      */
-    rc = ib_txlog_get_config(ib, ib_context_main(ib), &txlog_cfg);
-
+    rc = ib_logger_fetch_format_fn(
+        ib_engine_logger_get(ib),
+        TXLOG_FORMAT_FN_NAME,
+        &format_fn,
+        &cbdata);
     if (rc == IB_OK) {
         ib_logger_writer_add(
             ib_engine_logger_get(ib),
-            txlog_open, cfg,                      /* Open. */
-            txlog_close, cfg,                     /* Close. */
-            txlog_reopen, cfg,                    /* Reopen. */
-            txlog_cfg->logger_format_fn, cfg,     /* Format. */
-            txlog_record, cfg                     /* Record. */
+            txlog_open,   cfg,    /* Open. */
+            txlog_close,  cfg,    /* Close. */
+            txlog_reopen, cfg,    /* Reopen. */
+            format_fn,    cbdata, /* Format. */
+            txlog_record, cfg     /* Record. */
         );
     }
     else {

@@ -75,7 +75,8 @@ extern "C" {
 
 TEST_F(TxLogTest, Load) {
 
-    const ib_txlog_module_cfg_t *cfg;
+    ib_logger_format_fn_t        format_fn;
+    void                        *cbdata;
 
     std::string config =
         std::string(
@@ -96,24 +97,26 @@ TEST_F(TxLogTest, Load) {
 
     configureIronBeeByString(config.c_str());
 
-
     ASSERT_EQ(
         IB_OK,
-        ib_txlog_get_config(ib_engine, ib_context_main(ib_engine), &cfg));
+        ib_logger_fetch_format_fn(
+            ib_engine_logger_get(ib_engine),
+            TXLOG_FORMAT_FN_NAME,
+            &format_fn,
+            &cbdata)
+    );
 
-    ASSERT_FALSE(cfg->logger_format_fn == NULL);
     ASSERT_EQ(
         IB_OK,
         ib_logger_writer_add(
             ib_engine_logger_get(ib_engine),
-            NULL,                  NULL, /* Open. */
-            NULL,                  NULL, /* Close. */
-            NULL,                  NULL, /* Reopen. */
-            cfg->logger_format_fn, NULL, /* Format. */
-            test_record_handler,   NULL  /* Record. */
+            NULL,                  NULL,   /* Open. */
+            NULL,                  NULL,   /* Close. */
+            NULL,                  NULL,   /* Reopen. */
+            format_fn,             cbdata, /* Format. */
+            test_record_handler,   NULL    /* Record. */
         )
     );
-
 
     performTx();
     ASSERT_TRUE(ib_tx);
@@ -122,7 +125,8 @@ TEST_F(TxLogTest, Load) {
 
 TEST_F(TxLogTest, BlockReqeust) {
 
-    const ib_txlog_module_cfg_t *cfg;
+    ib_logger_format_fn_t        format_fn;
+    void                        *cbdata;
 
     std::string config =
         std::string(
@@ -143,24 +147,26 @@ TEST_F(TxLogTest, BlockReqeust) {
 
     configureIronBeeByString(config.c_str());
 
-
     ASSERT_EQ(
         IB_OK,
-        ib_txlog_get_config(ib_engine, ib_context_main(ib_engine), &cfg));
+        ib_logger_fetch_format_fn(
+            ib_engine_logger_get(ib_engine),
+            TXLOG_FORMAT_FN_NAME,
+            &format_fn,
+            &cbdata)
+    );
 
-    ASSERT_FALSE(cfg->logger_format_fn == NULL);
     ASSERT_EQ(
         IB_OK,
         ib_logger_writer_add(
             ib_engine_logger_get(ib_engine),
-            NULL,                  NULL, /* Open. */
-            NULL,                  NULL, /* Close. */
-            NULL,                  NULL, /* Reopen. */
-            cfg->logger_format_fn, NULL, /* Format. */
-            test_record_handler,   NULL  /* Record. */
+            NULL,                  NULL,   /* Open. */
+            NULL,                  NULL,   /* Close. */
+            NULL,                  NULL,   /* Reopen. */
+            format_fn,             cbdata, /* Format. */
+            test_record_handler,   NULL    /* Record. */
         )
     );
-
 
     performTx();
     ASSERT_TRUE(ib_tx);
@@ -169,7 +175,8 @@ TEST_F(TxLogTest, BlockReqeust) {
 
 TEST_F(TxLogTest, BlockResponse) {
 
-    const ib_txlog_module_cfg_t *cfg;
+    ib_logger_format_fn_t        format_fn;
+    void                        *cbdata;
 
     std::string config =
         std::string(
@@ -190,21 +197,24 @@ TEST_F(TxLogTest, BlockResponse) {
 
     configureIronBeeByString(config.c_str());
 
-
     ASSERT_EQ(
         IB_OK,
-        ib_txlog_get_config(ib_engine, ib_context_main(ib_engine), &cfg));
+        ib_logger_fetch_format_fn(
+            ib_engine_logger_get(ib_engine),
+            TXLOG_FORMAT_FN_NAME,
+            &format_fn,
+            &cbdata)
+    );
 
-    ASSERT_FALSE(cfg->logger_format_fn == NULL);
     ASSERT_EQ(
         IB_OK,
         ib_logger_writer_add(
             ib_engine_logger_get(ib_engine),
-            NULL,                  NULL, /* Open. */
-            NULL,                  NULL, /* Close. */
-            NULL,                  NULL, /* Reopen. */
-            cfg->logger_format_fn, NULL, /* Format. */
-            test_record_handler,   NULL  /* Record. */
+            NULL,                  NULL,   /* Open. */
+            NULL,                  NULL,   /* Close. */
+            NULL,                  NULL,   /* Reopen. */
+            format_fn,             cbdata, /* Format. */
+            test_record_handler,   NULL    /* Record. */
         )
     );
 

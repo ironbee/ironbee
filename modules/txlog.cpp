@@ -27,7 +27,6 @@
 #include "ironbee_config_auto.h"
 
 /* Include our own public header file. */
-#include "txlog_private.h"
 #include "txlog_json.hpp"
 #include "txlog.h"
 
@@ -424,7 +423,7 @@ extern "C" {
  * @param[in] log_msg_sz The length of @a log_msg.
  * @param[out] writer_record A @ref ib_logger_standard_msg_t if this returns
  *             IB_OK. Unset otherwise. This must be a `ib_logger_std_msg_t **`.
- * @param[in] data Callback data.
+ * @param[in] data Callback data. Unused.
  *
  * @returns
  * - IB_OK On success.
@@ -581,30 +580,6 @@ private:
         bool                          enabled
     ) const;
 
-    //! TxLogBaseFileName config directive callback.
-    void logBaseNameDirective(
-        IronBee::ConfigurationParser  cp,
-        const char                   *param1
-    ) const;
-
-    //! TxLogBaseDirectory config directive callback.
-    void logBaseDirDirective(
-        IronBee::ConfigurationParser  cp,
-        const char                   *param1
-    ) const;
-
-    //! TxLogFlushSizeLimit config directive callback.
-    void logSizeLimitDirective(
-        IronBee::ConfigurationParser  cp,
-        const char                   *param1
-    ) const;
-
-    //! TxLogFlushAgeLimit config directive callback.
-    void logAgeLimitDirective(
-        IronBee::ConfigurationParser  cp,
-        const char                   *param1
-    ) const;
-
     //! Callback to log @a tx through the Logger of @a ib.
     void transactionFinishedHandler(
         IronBee::Engine      ib,
@@ -652,8 +627,12 @@ private:
 IBPP_BOOTSTRAP_MODULE_DELEGATE(TXLOG_MODULE_NAME, TxLogModule);
 
 //! C++ify the C configuraton struct.
-struct TxLogConfig : public txlog_config_t
+struct TxLogConfig
 {
+    //! Logging enabled for this context?
+    bool is_enabled;
+
+
     //! Constructor.
     TxLogConfig();
 };
@@ -661,20 +640,9 @@ struct TxLogConfig : public txlog_config_t
 /**
  * Setup some good defaults.
  */
-TxLogConfig::TxLogConfig()
-{
-
-    /* First, zero-out the C-struct. */
-    memset(&pub_cfg, 0, sizeof(pub_cfg));
-
-    /* Now set all the values we care about. */
-    pub_cfg.is_enabled       = true;
-    pub_cfg.log_basename     = "txlog";
-    pub_cfg.log_basedir      = IB_PREFIX "/txlogs";
-    pub_cfg.max_size         = 5 * 1024;
-    pub_cfg.max_age          = 60 * 10;
-    pub_cfg.logger_format_fn = &txlog_logger_format_fn;
-}
+TxLogConfig::TxLogConfig():
+    is_enabled(true)
+{}
 
 /* Implementation */
 
@@ -703,6 +671,14 @@ TxLogModule::TxLogModule(IronBee::Module module):
         IronBee::delete_c_trampoline
     )
 {
+    /* Register the TxLog logger format function. */
+    IronBee::throw_if_error(
+        ib_logger_register_format_fn(
+            ib_engine_logger_get(module.engine().ib()),
+            TXLOG_FORMAT_FN_NAME,
+            txlog_logger_format_fn,
+            NULL));
+
     /* Set the default configuration. */
     module.set_configuration_data_pod(TxLogConfig());
 
@@ -711,18 +687,6 @@ TxLogModule::TxLogModule(IronBee::Module module):
         .on_off(
             "TxLogEnabled",
             boost::bind(&TxLogModule::onOffDirective, this, _1, _3))
-        .param1(
-            "TxLogBaseDirectory",
-            boost::bind(&TxLogModule::logBaseDirDirective, this, _1, _3))
-        .param1(
-            "TxLogBaseFileName",
-            boost::bind(&TxLogModule::logBaseNameDirective, this, _1, _3))
-        .param1(
-            "TxLogFlushSizeLimit",
-            boost::bind(&TxLogModule::logSizeLimitDirective, this, _1, _3))
-        .param1(
-            "TxLogFlushAgeLimit",
-            boost::bind(&TxLogModule::logAgeLimitDirective, this, _1, _3))
         ;
 
     /* Register engine callbacks. */
@@ -761,55 +725,7 @@ void TxLogModule::onOffDirective(
         module().configuration_data<TxLogConfig>(cp.current_context());
 
     /* Set the mapping in the context configuration. */
-    cfg.pub_cfg.is_enabled = enabled;
-}
-
-void TxLogModule::logBaseNameDirective(
-        IronBee::ConfigurationParser  cp,
-        const char                   *param1
-) const
-{
-    TxLogConfig &cfg =
-        module().configuration_data<TxLogConfig>(cp.current_context());
-
-    /* Set the mapping in the context configuration. */
-    cfg.pub_cfg.log_basedir = ib_mpool_strdup(cp.ib()->mp, param1);
-}
-
-void TxLogModule::logBaseDirDirective(
-        IronBee::ConfigurationParser  cp,
-        const char                   *param1
-) const
-{
-    TxLogConfig &cfg =
-        module().configuration_data<TxLogConfig>(cp.current_context());
-
-    /* Set the mapping in the context configuration. */
-    cfg.pub_cfg.log_basename = ib_mpool_strdup(cp.ib()->mp, param1);
-}
-
-void TxLogModule::logSizeLimitDirective(
-        IronBee::ConfigurationParser  cp,
-        const char                   *param1
-) const
-{
-    TxLogConfig &cfg =
-        module().configuration_data<TxLogConfig>(cp.current_context());
-
-    IronBee::throw_if_error(
-        ib_string_to_num(param1, 10, &cfg.pub_cfg.max_size));
-}
-
-void TxLogModule::logAgeLimitDirective(
-        IronBee::ConfigurationParser  cp,
-        const char                   *param1
-) const
-{
-    TxLogConfig &cfg =
-        module().configuration_data<TxLogConfig>(cp.current_context());
-
-    IronBee::throw_if_error(
-        ib_string_to_num(param1, 10, &cfg.pub_cfg.max_age));
+    cfg.is_enabled = enabled;
 }
 
 ib_status_t TxLogModule::recordAuditLogInfo(

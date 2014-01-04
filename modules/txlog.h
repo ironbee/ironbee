@@ -34,36 +34,7 @@ extern "C" {
 #endif
 
 #define TXLOG_MODULE_NAME "TxLogModule"
-
-/**
- * The public configuration data for the txlog module.
- */
-struct ib_txlog_module_cfg_t {
-    bool        is_enabled;   /**< Logging enabled for this context? */
-    const char *log_basename; /**< Base name to log files as. */
-    const char *log_basedir;  /**< Base directory to log files in. */
-    ib_num_t    max_size;     /**< Maximum size of a log file, in bytes. */
-    ib_num_t    max_age;      /**< Maximum age of a log file, in seconds. */
-
-    /**
-     * A function pointer managed to format TxLog output for the logger API.
-     */
-    ib_logger_format_fn_t logger_format_fn;
-};
-typedef struct ib_txlog_module_cfg_t ib_txlog_module_cfg_t;
-
-/**
- * Fetch the configuration stored for the given context.
- *
- * @param[in] ib IronBee engine.
- * @param[in] ctx The context.
- * @param[out] cfg The user configuration.
- */
-ib_status_t DLL_PUBLIC ib_txlog_get_config(
-    const ib_engine_t            *ib,
-    const ib_context_t           *ctx,
-    const ib_txlog_module_cfg_t **cfg
-) NONNULL_ATTRIBUTE(1, 2, 3);
+#define TXLOG_FORMAT_FN_NAME "TxLogModuleFormatFn"
 
 #ifdef __cplusplus
 } /* extern C */

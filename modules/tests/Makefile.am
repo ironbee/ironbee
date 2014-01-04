@@ -1,8 +1,5 @@
 include $(top_srcdir)/build/tests.mk
 
-# Test_txlog uses ../txlog_api.c.
-AUTOMAKE_OPTIONS = subdir-objects
-
 LDADD = \
     $(top_builddir)/util/libibutil.la \
     $(top_builddir)/engine/libironbee.la \
@@ -51,10 +48,9 @@ test_error_page_LDADD     = \
     $(top_builddir)/ironbeepp/libibpp.la
 
 check_PROGRAMS += test_txlog
-test_txlog_SOURCES = test_txlog.cpp ../txlog_api.c
+test_txlog_SOURCES = test_txlog.cpp
 test_txlog_LDADD = \
     $(LDADD) \
-    $(top_builddir)/modules/ibmod_txlog.la \
     $(top_builddir)/ironbeepp/libibpp.la
 
 noinst_PROGRAMS = psparse
