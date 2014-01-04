@@ -34,11 +34,11 @@
  * A collection of callbacks and function pointer that implement a logger.
  */
 struct ib_logger_writer_t {
-    ib_logger_open_fn      open_fn;     /**< Open the logger. */
+    ib_logger_open_fn_t    open_fn;     /**< Open the logger. */
     void                  *open_data;   /**< Callback data. */
-    ib_logger_close_fn     close_fn;    /**< Close logs files. */
+    ib_logger_close_fn_t   close_fn;    /**< Close logs files. */
     void                  *close_data;  /**< Callback data. */
-    ib_logger_reopen_fn    reopen_fn;   /**< Close and reopen log files. */
+    ib_logger_reopen_fn_t  reopen_fn;   /**< Close and reopen log files. */
     void                  *reopen_data; /**< Callback data. */
     ib_logger_format_fn_t  format_fn;   /**< Signal that the queue has data. */
     void                  *format_data; /**< Callback data. */
@@ -47,6 +47,34 @@ struct ib_logger_writer_t {
     ib_queue_t            *records;     /**< Records for the log writer. */
     ib_lock_t              records_lck; /**< Guard the queue. */
 };
+
+//! Identify the type of a logger callback function.
+enum logger_callback_fn_type_enum {
+    LOGGER_OPEN_FN,   /**< @ref ib_logger_open_fn_t type. */
+    LOGGER_CLOSE_FN,  /**< @ref ib_logger_close_fn_t type. */
+    LOGGER_REOPEN_FN, /**< @ref ib_logger_reopen_fn_t type. */
+    LOGGER_FORMAT_FN, /**< @ref ib_logger_format_fn_t type. */
+    LOGGER_RECORD_FN  /**< @ref ib_logger_record_fn_t type. */
+};
+typedef enum logger_callback_fn_type_enum logger_callback_fn_type_enum;
+
+struct logger_callback_fn_t {
+    //! The type of function stored in this structure.
+    logger_callback_fn_type_enum type;
+
+    //! A union of the different function pointer types.
+    union {
+        ib_logger_open_fn_t open_fn;
+        ib_logger_close_fn_t close_fn;
+        ib_logger_reopen_fn_t reopen_fn;
+        ib_logger_format_fn_t format_fn;
+        ib_logger_record_fn_t record_fn;
+    } fn;
+
+    //! The callback data the user would like associated with the callback.
+    void *cbdata;
+};
+typedef struct logger_callback_fn_t logger_callback_fn_t;
 
 /**
  * A logger is what @ref ib_logger_rec_t are submitted to to produce a log.
@@ -57,7 +85,7 @@ struct ib_logger_t {
     /**
      * Memory pool with a lifetime of the logger.
      */
-    ib_mpool_t          *mp;
+    ib_mpool_t *mp;
 
     /**
      * List of @ref ib_logger_writer_t.
@@ -68,7 +96,20 @@ struct ib_logger_t {
      *
      * Writers also get notified of flush, open, close, and reopen events.
      */
-    ib_list_t           *writers;
+    ib_list_t *writers;
+
+    /**
+     * A map of logger_callback_fn_t structs that name a function.
+     *
+     * Often the privder of a @ref ib_logger_format_fn_t is not
+     * aware of the @ref ib_logger_record_fn_t that will use it. In such
+     * cases it is often very useful to be able to store
+     * a function by name to be retrieved later.
+     *
+     * This hash allows different logger functions to be stored and
+     * retrieved to assit clients to this API to better share functions.
+     */
+     ib_hash_t *functions;
 };
 
 /**
@@ -472,17 +513,22 @@ ib_status_t ib_logger_create(
         return rc;
     }
 
+    rc = ib_hash_create(&(l->functions), mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     *logger = l;
     return IB_OK;
 }
 
 ib_status_t ib_logger_writer_add(
     ib_logger_t           *logger,
-    ib_logger_open_fn      open_fn,
+    ib_logger_open_fn_t    open_fn,
     void                  *open_data,
-    ib_logger_close_fn     close_fn,
+    ib_logger_close_fn_t   close_fn,
     void                  *close_data,
-    ib_logger_reopen_fn    reopen_fn,
+    ib_logger_reopen_fn_t  reopen_fn,
     void                  *reopen_data,
     ib_logger_format_fn_t  format_fn,
     void                  *format_data,
@@ -987,4 +1033,300 @@ const char *ib_logger_level_to_string(ib_logger_level_t level)
     else {
         return "UNKNOWN";
     }
+}
+
+static ib_status_t logger_register_fn(
+    ib_logger_t                  *logger,
+    logger_callback_fn_type_enum  type,
+    const char                   *name,
+    ib_void_fn_t                  fn,
+    void                         *cbdata
+) NONNULL_ATTRIBUTE(1, 2, 3);
+
+static ib_status_t logger_register_fn(
+    ib_logger_t                  *logger,
+    logger_callback_fn_type_enum  type,
+    const char                   *name,
+    ib_void_fn_t                  fn,
+    void                         *cbdata
+)
+{
+    ib_status_t           rc;
+    logger_callback_fn_t *logger_callback_fn;
+
+    logger_callback_fn =
+        ib_mpool_alloc(logger->mp, sizeof(*logger_callback_fn));
+
+    if (logger_callback_fn == NULL) {
+        return IB_EALLOC;
+    }
+
+
+    logger_callback_fn->cbdata = cbdata;
+    logger_callback_fn->type = type;
+
+    switch (type) {
+        case LOGGER_OPEN_FN:
+            logger_callback_fn->fn.open_fn = (ib_logger_open_fn_t)fn;
+            break;
+        case LOGGER_CLOSE_FN:
+            logger_callback_fn->fn.close_fn = (ib_logger_close_fn_t)fn;
+            break;
+        case LOGGER_REOPEN_FN:
+            logger_callback_fn->fn.reopen_fn = (ib_logger_reopen_fn_t)fn;
+            break;
+        case LOGGER_FORMAT_FN:
+            logger_callback_fn->fn.format_fn = (ib_logger_format_fn_t)fn;
+            break;
+        case LOGGER_RECORD_FN:
+            logger_callback_fn->fn.record_fn = (ib_logger_record_fn_t)fn;
+            break;
+        default:
+            return IB_EINVAL;
+    }
+
+    /* Set the value. */
+    rc = ib_hash_set(logger->functions, name, logger_callback_fn);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+};
+
+ib_status_t ib_logger_register_open_fn(
+    ib_logger_t         *logger,
+    const char          *fn_name,
+    ib_logger_open_fn_t  fn,
+    void                *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(fn_name != NULL);
+
+    return logger_register_fn(
+        logger,
+        LOGGER_OPEN_FN,
+        fn_name,
+        (ib_void_fn_t)(fn),
+        cbdata);
+}
+
+ib_status_t ib_logger_register_close_fn(
+    ib_logger_t          *logger,
+    const char           *fn_name,
+    ib_logger_close_fn_t  fn,
+    void                 *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(fn_name != NULL);
+
+    return logger_register_fn(
+        logger,
+        LOGGER_CLOSE_FN,
+        fn_name,
+        (ib_void_fn_t)(fn),
+        cbdata);
+}
+
+ib_status_t ib_logger_register_reopen_fn(
+    ib_logger_t           *logger,
+    const char            *fn_name,
+    ib_logger_reopen_fn_t  fn,
+    void                  *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(fn_name != NULL);
+
+    return logger_register_fn(
+        logger,
+        LOGGER_REOPEN_FN,
+        fn_name,
+        (ib_void_fn_t)(fn),
+        cbdata);
+}
+
+ib_status_t ib_logger_register_format_fn(
+    ib_logger_t           *logger,
+    const char            *fn_name,
+    ib_logger_format_fn_t  fn,
+    void                  *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(fn_name != NULL);
+
+    return logger_register_fn(
+        logger,
+        LOGGER_FORMAT_FN,
+        fn_name,
+        (ib_void_fn_t)(fn),
+        cbdata);
+}
+
+ib_status_t ib_logger_register_record_fn(
+    ib_logger_t           *logger,
+    const char            *fn_name,
+    ib_logger_record_fn_t  fn,
+    void                  *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(fn_name != NULL);
+
+    return logger_register_fn(
+        logger,
+        LOGGER_RECORD_FN,
+        fn_name,
+        (ib_void_fn_t)(fn),
+        cbdata);
+}
+
+static ib_status_t logger_fetch_fn(
+    ib_logger_t                  *logger,
+    logger_callback_fn_type_enum  type,
+    const char                   *name,
+    ib_void_fn_t                 *fn,
+    void                         *cbdata
+) NONNULL_ATTRIBUTE(1, 3);
+
+static ib_status_t logger_fetch_fn(
+    ib_logger_t                  *logger,
+    logger_callback_fn_type_enum  type,
+    const char                   *name,
+    ib_void_fn_t                 *fn,
+    void                         *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(name != NULL);
+
+    logger_callback_fn_t *logger_callback_fn;
+    ib_status_t           rc;
+
+    rc = ib_hash_get(logger->functions, &logger_callback_fn, name);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Validate that the expected type matches. */
+    if (logger_callback_fn->type != type) {
+        return IB_EINVAL;
+    }
+
+    switch (type) {
+        case LOGGER_OPEN_FN:
+            *fn = (ib_void_fn_t)logger_callback_fn->fn.open_fn;
+            break;
+        case LOGGER_CLOSE_FN:
+            *fn = (ib_void_fn_t)logger_callback_fn->fn.close_fn;
+            break;
+        case LOGGER_REOPEN_FN:
+            *fn = (ib_void_fn_t)logger_callback_fn->fn.reopen_fn;
+            break;
+        case LOGGER_FORMAT_FN:
+            *fn = (ib_void_fn_t)logger_callback_fn->fn.format_fn;
+            break;
+        case LOGGER_RECORD_FN:
+            *fn = (ib_void_fn_t)logger_callback_fn->fn.record_fn;
+            break;
+        default:
+            return IB_EINVAL;
+    }
+
+    *(void **)cbdata = logger_callback_fn->cbdata;
+
+    return IB_OK;
+}
+
+ib_status_t ib_logger_fetch_open_fn(
+    ib_logger_t         *logger,
+    const char          *name,
+    ib_logger_open_fn_t *fn,
+    void                *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(name != NULL);
+
+    return logger_fetch_fn(
+        logger,
+        LOGGER_OPEN_FN,
+        name,
+        (ib_void_fn_t *)fn,
+        cbdata);
+}
+
+ib_status_t ib_logger_fetch_close_fn(
+    ib_logger_t          *logger,
+    const char           *name,
+    ib_logger_close_fn_t *fn,
+    void                 *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(name != NULL);
+
+    return logger_fetch_fn(
+        logger,
+        LOGGER_CLOSE_FN,
+        name,
+        (ib_void_fn_t *)fn,
+        cbdata);
+}
+
+ib_status_t ib_logger_fetch_reopen_fn(
+    ib_logger_t           *logger,
+    const char            *name,
+    ib_logger_reopen_fn_t *fn,
+    void                  *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(name != NULL);
+
+    return logger_fetch_fn(
+        logger,
+        LOGGER_REOPEN_FN,
+        name,
+        (ib_void_fn_t *)fn,
+        cbdata);
+}
+
+ib_status_t ib_logger_fetch_format_fn(
+    ib_logger_t           *logger,
+    const char            *name,
+    ib_logger_format_fn_t *fn,
+    void                  *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(name != NULL);
+
+    return logger_fetch_fn(
+        logger,
+        LOGGER_FORMAT_FN,
+        name,
+        (ib_void_fn_t *)fn,
+        cbdata);
+}
+
+ib_status_t ib_logger_fetch_record_fn(
+    ib_logger_t           *logger,
+    const char            *name,
+    ib_logger_record_fn_t *fn,
+    void                  *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(name != NULL);
+
+    return logger_fetch_fn(
+        logger,
+        LOGGER_RECORD_FN,
+        name,
+        (ib_void_fn_t *)fn,
+        cbdata);
 }

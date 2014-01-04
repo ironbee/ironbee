@@ -126,7 +126,7 @@ typedef ib_status_t (ib_logger_msg_fn_t)(
  * - IB_OK On success.
  * - Other on error. Defined by the implementation.
  */
-typedef ib_status_t (*ib_logger_open_fn)(ib_logger_t *logger, void *data);
+typedef ib_status_t (*ib_logger_open_fn_t)(ib_logger_t *logger, void *data);
 
 /**
  * Called to close and release logging resources.
@@ -138,7 +138,7 @@ typedef ib_status_t (*ib_logger_open_fn)(ib_logger_t *logger, void *data);
  * - IB_OK On success.
  * - Other on error. Defined by the implementation.
  */
-typedef ib_status_t (*ib_logger_close_fn)(ib_logger_t *logger, void *data);
+typedef ib_status_t (*ib_logger_close_fn_t)(ib_logger_t *logger, void *data);
 
 /**
  * Signal a writer that its empty queue now has at least one element in it.
@@ -206,7 +206,7 @@ typedef ib_status_t (*ib_logger_format_fn_t)(
  * - IB_OK On success.
  * - Other on error. Defined by the implementation.
  */
-typedef ib_status_t (*ib_logger_reopen_fn)(ib_logger_t *logger, void *data);
+typedef ib_status_t (*ib_logger_reopen_fn_t)(ib_logger_t *logger, void *data);
 
 /**
  * A log record.
@@ -419,11 +419,11 @@ NONNULL_ATTRIBUTE(1, 3);
  */
 ib_status_t ib_logger_writer_add(
     ib_logger_t           *logger,
-    ib_logger_open_fn      open_fn,
+    ib_logger_open_fn_t      open_fn,
     void                  *open_data,
-    ib_logger_close_fn     close_fn,
+    ib_logger_close_fn_t     close_fn,
     void                  *close_data,
-    ib_logger_reopen_fn    reopen_fn,
+    ib_logger_reopen_fn_t    reopen_fn,
     void                  *reopen_data,
     ib_logger_format_fn_t  format_fn,
     void                  *format_data,
@@ -630,6 +630,213 @@ void DLL_PUBLIC ib_logger_level_set(
  * @returns String form of @a level.
  */
 const char DLL_PUBLIC *ib_logger_level_to_string(ib_logger_level_t level);
+
+/**
+ * Register a function by name.
+ *
+ * The registered function is stored in a database of named
+ * functions and is available to clients of the logger API to
+ * retrieve and use when creating log writers.
+ *
+ * @param[in] logger The logger to add this function too.
+ * @param[in] fn_name The name to register @a fn under.
+ * @param[in] fn The function pointer to register under @a fn_name.
+ * @param[in] cbdata The callback data to pass to @a fn when called.
+ */
+ib_status_t DLL_PUBLIC ib_logger_register_open_fn(
+    ib_logger_t       *logger,
+    const char        *fn_name,
+    ib_logger_open_fn_t  fn,
+    void              *cbdata
+);
+
+/**
+ * Register a function by name.
+ *
+ * The registered function is stored in a database of named
+ * functions and is available to clients of the logger API to
+ * retrieve and use when creating log writers.
+ *
+ * @param[in] logger The logger to add this function too.
+ * @param[in] fn_name The name to register @a fn under.
+ * @param[in] fn The function pointer to register under @a fn_name.
+ * @param[in] cbdata The callback data to pass to @a fn when called.
+ */
+ib_status_t DLL_PUBLIC ib_logger_register_close_fn(
+    ib_logger_t        *logger,
+    const char         *fn_name,
+    ib_logger_close_fn_t  fn,
+    void               *cbdata
+);
+
+/**
+ * Register a function by name.
+ *
+ * The registered function is stored in a database of named
+ * functions and is available to clients of the logger API to
+ * retrieve and use when creating log writers.
+ *
+ * @param[in] logger The logger to add this function too.
+ * @param[in] fn_name The name to register @a fn under.
+ * @param[in] fn The function pointer to register under @a fn_name.
+ * @param[in] cbdata The callback data to pass to @a fn when called.
+ */
+ib_status_t DLL_PUBLIC ib_logger_register_reopen_fn(
+    ib_logger_t         *logger,
+    const char          *fn_name,
+    ib_logger_reopen_fn_t  fn,
+    void                *cbdata
+);
+
+/**
+ * Register a function by name.
+ *
+ * The registered function is stored in a database of named
+ * functions and is available to clients of the logger API to
+ * retrieve and use when creating log writers.
+ *
+ * @param[in] logger The logger to add this function too.
+ * @param[in] fn_name The name to register @a fn under.
+ * @param[in] fn The function pointer to register under @a fn_name.
+ * @param[in] cbdata The callback data to pass to @a fn when called.
+ */
+ib_status_t DLL_PUBLIC ib_logger_register_format_fn(
+    ib_logger_t           *logger,
+    const char            *fn_name,
+    ib_logger_format_fn_t  fn,
+    void                  *cbdata
+);
+
+/**
+ * Register a function by name.
+ *
+ * The registered function is stored in a database of named
+ * functions and is available to clients of the logger API to
+ * retrieve and use when creating log writers.
+ *
+ * @param[in] logger The logger to add this function too.
+ * @param[in] fn_name The name to register @a fn under.
+ * @param[in] fn The function pointer to register under @a fn_name.
+ * @param[in] cbdata The callback data to pass to @a fn when called.
+ */
+ib_status_t DLL_PUBLIC ib_logger_register_record_fn(
+    ib_logger_t           *logger,
+    const char            *fn_name,
+    ib_logger_record_fn_t  fn,
+    void                  *cbdata
+);
+
+/**
+ * Fetch a function stored with ib_logger_register_open_fn().
+ *
+ * @param[in] logger The logger to use.
+ * @param[in] name The name of the function.
+ * @param[out] fn A pointer to return the function pointer in.
+ * @param[out] cbdata Callback data that must be passed to @a fn when it is
+ *             called.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If a function by the given name was found, but is the wrong
+ *   type.
+ * - IB_ENOENT If no function by @a name is found.
+ */
+ib_status_t DLL_PUBLIC ib_logger_fetch_open_fn(
+    ib_logger_t       *logger,
+    const char        *name,
+    ib_logger_open_fn_t *fn,
+    void              *cbdata
+);
+
+/**
+ * Fetch a function stored with ib_logger_register_close_fn().
+ *
+ * @param[in] logger The logger to use.
+ * @param[in] name The name of the function.
+ * @param[out] fn A pointer to return the function pointer in.
+ * @param[out] cbdata Callback data that must be passed to @a fn when it is
+ *             called.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If a function by the given name was found, but is the wrong
+ *   type.
+ * - IB_ENOENT If no function by @a name is found.
+ */
+ib_status_t DLL_PUBLIC ib_logger_fetch_close_fn(
+    ib_logger_t        *logger,
+    const char         *name,
+    ib_logger_close_fn_t *fn,
+    void               *cbdata
+);
+
+/**
+ * Fetch a function stored with ib_logger_register_reopen_fn().
+ *
+ * @param[in] logger The logger to use.
+ * @param[in] name The name of the function.
+ * @param[out] fn A pointer to return the function pointer in.
+ * @param[out] cbdata Callback data that must be passed to @a fn when it is
+ *             called.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If a function by the given name was found, but is the wrong
+ *   type.
+ * - IB_ENOENT If no function by @a name is found.
+ */
+ib_status_t DLL_PUBLIC ib_logger_fetch_reopen_fn(
+    ib_logger_t         *logger,
+    const char          *name,
+    ib_logger_reopen_fn_t *fn,
+    void                *cbdata
+);
+
+/**
+ * Fetch a function stored with ib_logger_register_format_fn().
+ *
+ * @param[in] logger The logger to use.
+ * @param[in] name The name of the function.
+ * @param[out] fn A pointer to return the function pointer in.
+ * @param[out] cbdata Callback data that must be passed to @a fn when it is
+ *             called.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If a function by the given name was found, but is the wrong
+ *   type.
+ * - IB_ENOENT If no function by @a name is found.
+ */
+ib_status_t DLL_PUBLIC ib_logger_fetch_format_fn(
+    ib_logger_t           *logger,
+    const char            *name,
+    ib_logger_format_fn_t *fn,
+    void                  *cbdata
+);
+
+/**
+ * Fetch a function stored with ib_logger_register_record_fn().
+ *
+ * @param[in] logger The logger to use.
+ * @param[in] name The name of the function.
+ * @param[out] fn A pointer to return the function pointer in.
+ * @param[out] cbdata Callback data that must be passed to @a fn when it is
+ *             called.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If a function by the given name was found, but is the wrong
+ *   type.
+ * - IB_ENOENT If no function by @a name is found.
+ */
+ib_status_t DLL_PUBLIC ib_logger_fetch_record_fn(
+    ib_logger_t           *logger,
+    const char            *name,
+    ib_logger_record_fn_t *fn,
+    void                  *cbdata
+);
+
+
 
 /**
  * @} IronBeeEngineLogging
