@@ -142,6 +142,81 @@ ib_status_t ib_manager_register_module_fn(
 );
 
 /**
+ * A function called before @a ib is configured.
+ *
+ * @param[in] manager The engine manager.
+ * @param[in] ib The ironbee engine.
+ * @param[in] cbdata The callback data provided when this function was
+ *            registered.
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure. Returning non-IB_OK will cause engine creation
+ *   to fail. This function should not return non-IB_OK values
+ *   unless the error is serious enough to prevent engine creation.
+ */
+typedef ib_status_t (* ib_manager_engine_preconfig_fn_t)(
+    ib_manager_t *manager,
+    ib_engine_t  *ib,
+    void         *cbdata
+);
+
+/**
+ * A function called after @a ib has been configured.
+ *
+ * @param[in] manager The engine manager.
+ * @param[in] ib The ironbee engine.
+ * @param[in] cbdata The callback data provided when this function was
+ *            registered.
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure. Returning non-IB_OK will cause engine creation
+ *   to fail. This function should not return non-IB_OK values
+ *   unless the error is serious enough to prevent engine creation.
+ */
+typedef ib_status_t (* ib_manager_engine_postconfig_fn_t)(
+    ib_manager_t *manager,
+    ib_engine_t  *ib,
+    void         *cbdata
+);
+
+
+/**
+ * Add a callback to run on an engine before it is to be configured.
+ *
+ * @param[in] manager The engine manager.
+ * @param[in] preconfig_fn The callback function.
+ * @param[in] cbdata The callback data for @a preconfig_fn.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On memory allocation error.
+ * - Other on failure.
+ */
+ib_status_t DLL_PUBLIC ib_manager_engine_preconfig_fn_add(
+    ib_manager_t                     *manager,
+    ib_manager_engine_preconfig_fn_t  preconfig_fn,
+    void                             *cbdata
+) NONNULL_ATTRIBUTE(1);
+
+/**
+ * Add a callback to run on an engine after it has been configured.
+ *
+ * @param[in] manager The engine manager.
+ * @param[in] postconfig_fn The callback function.
+ * @param[in] cbdata The callback data for @a postconfig_fn.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On memory allocation error.
+ * - Other on failure.
+ */
+ib_status_t DLL_PUBLIC ib_manager_engine_postconfig_fn_add(
+    ib_manager_t                      *manager,
+    ib_manager_engine_postconfig_fn_t  postconfig_fn,
+    void                              *cbdata
+) NONNULL_ATTRIBUTE(1);
+
+/**
  * Destroy an engine manager.
  *
  * Destroys IronBee engines managed by @a manager, and the engine manager

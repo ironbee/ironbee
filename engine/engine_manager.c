@@ -49,6 +49,25 @@
 /* The manager's engine wrapper type */
 typedef struct ib_manager_engine_t ib_manager_engine_t;
 
+
+/**
+ * Struct to hold post config callback functions.
+ */
+struct manager_engine_postconfig_t {
+    ib_manager_engine_postconfig_fn_t  fn;     /**< Function. */
+    void                              *cbdata; /**< Callback data. */
+};
+typedef struct manager_engine_postconfig_t manager_engine_postconfig_t;
+
+/**
+ * Struct to hold post config callback functions.
+ */
+struct manager_engine_preconfig_t {
+    ib_manager_engine_preconfig_fn_t  fn;     /**< Function. */
+    void                             *cbdata; /**< Callback data. */
+};
+typedef struct manager_engine_preconfig_t manager_engine_preconfig_t;
+
 /**
  * The Engine Manager.
  */
@@ -76,6 +95,12 @@ struct ib_manager_t {
      */
     ib_manager_module_create_fn_t  module_fn;
     void                          *module_data; /**< Callback data. */
+
+    //! A list of @ref manager_engine_preconfig_t.
+    ib_list_t *preconfig_functions;
+
+    //! A list of @ref manager_engine_postconfig_t.
+    ib_list_t *postconfig_functions;
 };
 
 /**
@@ -183,6 +208,82 @@ static void destroy_inactive_engines(
     }
 }
 
+/**
+ * Run the config functions on the given engine.
+ *
+ * @param[in] manager The manager to retrieve the functions from.
+ * @param[in] ib The engine to apply the functions to.
+ *
+ * @returns
+ * - IB_OK On success of all functions.
+ * - Other on the failure of any function. Processing is aborted on
+ *   a function failure.
+ */
+static ib_status_t manager_run_preconfig_fn(
+    ib_manager_t *manager,
+    ib_engine_t  *ib
+)
+{
+    assert(manager != NULL);
+    assert(manager->preconfig_functions != NULL);
+    assert(ib != NULL);
+
+    ib_status_t rc;
+    const ib_list_node_t *node;
+
+    IB_LIST_LOOP_CONST(manager->preconfig_functions, node) {
+        manager_engine_preconfig_t *manager_engine_preconfig =
+            (manager_engine_preconfig_t *)ib_list_node_data_const(node);
+
+        rc = manager_engine_preconfig->fn(
+            manager,
+            ib,
+            manager_engine_preconfig->cbdata);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+    return IB_OK;
+}
+
+/**
+ * Run the config functions on the given engine.
+ *
+ * @param[in] manager The manager to retrieve the functions from.
+ * @param[in] ib The engine to apply the functions to.
+ *
+ * @returns
+ * - IB_OK On success of all functions.
+ * - Other on the failure of any function. Processing is aborted on
+ *   a function failure.
+ */
+static ib_status_t manager_run_postconfig_fn(
+    ib_manager_t *manager,
+    ib_engine_t  *ib
+)
+{
+    assert(manager != NULL);
+    assert(manager->postconfig_functions != NULL);
+    assert(ib != NULL);
+
+    ib_status_t rc;
+    const ib_list_node_t *node;
+
+    IB_LIST_LOOP_CONST(manager->postconfig_functions, node) {
+        manager_engine_postconfig_t *manager_engine_postconfig =
+            (manager_engine_postconfig_t *)ib_list_node_data_const(node);
+
+        rc = manager_engine_postconfig->fn(
+            manager,
+            ib,
+            manager_engine_postconfig->cbdata);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+    return IB_OK;
+}
+
 ib_status_t ib_manager_create(
     ib_manager_t                 **pmanager,
     const ib_server_t             *server,
@@ -232,6 +333,16 @@ ib_status_t ib_manager_create(
 
     /* Cleanup locks when our memory pool is destroyed */
     rc = ib_mpool_cleanup_register(mpool, cleanup_locks, manager);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+
+    rc = ib_list_create(&(manager->preconfig_functions), mpool);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+
+    rc = ib_list_create(&(manager->postconfig_functions), mpool);
     if (rc != IB_OK) {
         goto cleanup;
     }
@@ -340,7 +451,6 @@ static void register_engine(
         /* Tell the engine that we would like to shut down. */
         rc = ib_state_notify_engine_shutdown_initiated(
             previous_engine->engine);
-
         if (rc != IB_OK) {
             ib_log_error(
                 previous_engine->engine,
@@ -462,6 +572,12 @@ static ib_status_t create_engine(
         goto error;
     }
 
+    /* Run the pre-config functions. */
+    rc = manager_run_preconfig_fn(manager, engine);
+    if (rc != IB_OK) {
+        goto error;
+    }
+
     /* Tell the engine about the new parser.  Note that this creates the main
      * configuration context. */
     rc = ib_engine_config_started(engine, parser);
@@ -483,6 +599,12 @@ static ib_status_t create_engine(
     rc = ib_engine_config_finished(engine);
     if (rc != IB_OK) {
         return rc;
+    }
+
+    /* Run the pre-config functions. */
+    rc = manager_run_postconfig_fn(manager, engine);
+    if (rc != IB_OK) {
+        goto error;
     }
 
     /* Fill in the wrapper */
@@ -668,4 +790,74 @@ size_t ib_manager_engine_count(
 {
     assert(manager != NULL);
     return manager->engine_count;
+}
+
+ib_status_t ib_manager_engine_postconfig_fn_add(
+    ib_manager_t                      *manager,
+    ib_manager_engine_postconfig_fn_t  postconfig_fn,
+    void                              *cbdata
+)
+{
+    assert(manager != NULL);
+    assert(manager->mpool != NULL);
+    assert(manager->postconfig_functions != NULL);
+
+    manager_engine_postconfig_t *manager_engine_postconfig;
+    ib_mpool_t                  *mp;
+    ib_status_t                  rc;
+
+    mp = manager->mpool;
+
+    manager_engine_postconfig =
+        (manager_engine_postconfig_t *)
+            ib_mpool_alloc(mp, sizeof(*manager_engine_postconfig));
+
+    if (manager_engine_postconfig == NULL) {
+        return IB_EALLOC;
+    }
+
+    manager_engine_postconfig->fn = postconfig_fn;
+    manager_engine_postconfig->cbdata = cbdata;
+
+    rc = ib_list_push(manager->postconfig_functions, manager_engine_postconfig);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_manager_engine_preconfig_fn_add(
+    ib_manager_t                     *manager,
+    ib_manager_engine_preconfig_fn_t  preconfig_fn,
+    void                             *cbdata
+)
+{
+    assert(manager != NULL);
+    assert(manager->mpool != NULL);
+    assert(manager->preconfig_functions != NULL);
+
+    manager_engine_preconfig_t *manager_engine_preconfig;
+    ib_mpool_t                 *mp;
+    ib_status_t                 rc;
+
+    mp = manager->mpool;
+
+    manager_engine_preconfig =
+        (manager_engine_preconfig_t *)
+            ib_mpool_alloc(mp, sizeof(*manager_engine_preconfig));
+
+    if (manager_engine_preconfig == NULL) {
+        return IB_EALLOC;
+    }
+
+    manager_engine_preconfig->fn = preconfig_fn;
+    manager_engine_preconfig->cbdata = cbdata;
+
+    rc = ib_list_push(manager->preconfig_functions, manager_engine_preconfig);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
 }
