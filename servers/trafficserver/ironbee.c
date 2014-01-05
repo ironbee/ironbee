@@ -2624,20 +2624,14 @@ static ib_status_t txlog_record(
 }
 
 /**
- * Create a new module to be registered with @a ib.
+ * Register loggers to the IronBee engine.
  *
- * This is pre-configuration time so directives may be registered.
- *
- * @param[out] module Module created using ib_module_create() and
- *             properly initialized. This should not be
- *             passed to ib_module_init(), the manager will do that.
- * @param[in] ib The unconfigured engine this module will be
- *            initialized in.
- * @param[in] cbdata The server plugin data.
+ * @param[out] manager The manager.
+ * @param[in] ib The unconfigured engine.
+ * @param[in] cbdata @ref module_data_t.
  *
  * @returns
  * - IB_OK On success.
- * - IB_DECLINED Is never returned.
  * - Other on fatal errors.
  */
 static ib_status_t engine_preconfig_fn(
@@ -2650,10 +2644,7 @@ static ib_status_t engine_preconfig_fn(
     assert(ib != NULL);
     assert(cbdata != NULL);
 
-    ib_status_t            rc;
-    module_data_t         *mod_data = (module_data_t *)cbdata;
-    ib_logger_format_fn_t  txlog_format_fn;
-    void                  *txlog_format_cbdata;
+    module_data_t *mod_data = (module_data_t *)cbdata;
 
     /* Register the IronBee logger. */
     ib_logger_writer_add(
@@ -2669,6 +2660,35 @@ static ib_status_t engine_preconfig_fn(
         NULL,                      /* Record. */
         NULL                       /* Callback data. */
     );
+
+    return IB_OK;
+}
+
+/**
+ * Register loggers to the IronBee engine.
+ *
+ * @param[out] manager The manager.
+ * @param[in] ib The configured engine.
+ * @param[in] cbdata @ref module_data_t.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on fatal errors.
+ */
+static ib_status_t engine_postconfig_fn(
+    ib_manager_t *manager,
+    ib_engine_t  *ib,
+    void         *cbdata
+)
+{
+    assert(manager != NULL);
+    assert(ib != NULL);
+    assert(cbdata != NULL);
+
+    ib_status_t            rc;
+    module_data_t         *mod_data = (module_data_t *)cbdata;
+    ib_logger_format_fn_t  txlog_format_fn;
+    void                  *txlog_format_cbdata;
 
     rc = ib_logger_fetch_format_fn(
         ib_engine_logger_get(ib),
@@ -2857,6 +2877,16 @@ static int ironbee_init(module_data_t *mod_data)
         mod_data);
     if (rc != IB_OK) {
         TSError("[ironbee] Error registering server preconfig function: %s",
+                ib_status_to_string(rc));
+        return rc;
+    }
+
+    rc = ib_manager_engine_postconfig_fn_add(
+        mod_data->manager,
+        engine_postconfig_fn,
+        mod_data);
+    if (rc != IB_OK) {
+        TSError("[ironbee] Error registering server postconfig function: %s",
                 ib_status_to_string(rc));
         return rc;
     }
