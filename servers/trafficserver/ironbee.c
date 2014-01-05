@@ -2568,41 +2568,57 @@ static ib_status_t logger_close(
 }
 
 /**
- * Initialize a new server plugin module instance.
+ * Handle a single log record. This is a @ref ib_logger_standard_msg_t.
  *
- * @param[in] ib Engine this module is operating on.
- * @param[in] module This module structure.
- * @param[in] cbdata The server plugin module data.
+ * @param[in] element A @ref ib_logger_standard_msg_t holding
+ *            a serialized transaction log to be written to the
+ *            Traffic Server transaction log.
+ * @param[in] cbdata A @ref module_data_t.
+ */
+static void txlog_record_element(
+    void *element,
+    void *cbdata
+)
+{
+    assert(element != NULL);
+    assert(cbdata != NULL);
+
+    ib_logger_standard_msg_t *msg      = (ib_logger_standard_msg_t *)element;
+    // module_data_t            *mod_data = (module_data_t *)cbdata;
+
+    /* FIXME - expand msg->msg with Traffic Server variables. */
+    /* FIXME - write log file. */
+
+    ib_logger_standard_msg_free(msg);
+}
+
+/**
+ * Transaction Log record handler.
+ *
+ * @param[in] logger The logger.
+ * @param[in] writer The log writer.
+ * @param[in] cbdata Callback data. @ref module_data_t.
  *
  * @returns
  * - IB_OK On success.
- * - Other on error.
+ * - Other on failure.
  */
-static ib_status_t init_module(
-    ib_engine_t *ib,
-    ib_module_t *module,
-    void        *cbdata
+static ib_status_t txlog_record(
+    ib_logger_t        *logger,
+    ib_logger_writer_t *writer,
+    void               *cbdata
 )
 {
-    assert(ib != NULL);
-    assert(module != NULL);
+    assert(logger != NULL);
+    assert(writer != NULL);
     assert(cbdata != NULL);
 
-    module_data_t *mod_data = (module_data_t *)cbdata;
+    ib_status_t    rc;
 
-    ib_logger_writer_add(
-        ib_engine_logger_get(ib),
-        NULL,                      /* Open. */
-        NULL,                      /* Callback data. */
-        logger_close,              /* Close. */
-        mod_data,                  /* Callback data. */
-        NULL,                      /* Reopen. */
-        NULL,                      /* Callback data. */
-        logger_format,             /* Format - This does all the work. */
-        mod_data,                  /* Callback data. */
-        NULL,                      /* Record. */
-        NULL                       /* Callback data. */
-    );
+    rc = ib_logger_dequeue(logger, writer, txlog_record_element, cbdata);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     return IB_OK;
 }
@@ -2624,41 +2640,57 @@ static ib_status_t init_module(
  * - IB_DECLINED Is never returned.
  * - Other on fatal errors.
  */
-static ib_status_t create_module(
-    ib_module_t **module,
-    ib_engine_t *ib,
-    void *cbdata
+static ib_status_t engine_preconfig_fn(
+    ib_manager_t *manager,
+    ib_engine_t  *ib,
+    void         *cbdata
 )
 {
-    assert(module != NULL);
+    assert(manager != NULL);
     assert(ib != NULL);
     assert(cbdata != NULL);
 
-    ib_status_t    rc;
-    module_data_t *mod_data = (module_data_t *)cbdata;
+    ib_status_t            rc;
+    module_data_t         *mod_data = (module_data_t *)cbdata;
+    ib_logger_format_fn_t  txlog_format_fn;
+    void                  *txlog_format_cbdata;
 
-    rc = ib_module_create(module, ib);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    IB_MODULE_INIT_DYNAMIC(
-      *module,
-      __FILE__,
-      NULL,                  /* Module data */
-      ib,                    /* Engine. */
-      "TrafficserverModule", /* Module name. */
-      NULL,                  /* Config struct. */
-      0,                     /* Config size. */
-      NULL,                  /* Config copy function. */
-      NULL,                  /* Config copy function callback data. */
-      NULL,                  /* Configuration field map. */
-      NULL,                  /* Configuration directive map. */
-      init_module,           /* Init function. */
-      mod_data,              /* Init function callback data. */
-      NULL,                  /* Finish function. */
-      NULL                   /* Finish function callback data. */
+    /* Register the IronBee logger. */
+    ib_logger_writer_add(
+        ib_engine_logger_get(ib),
+        NULL,                      /* Open. */
+        NULL,                      /* Callback data. */
+        logger_close,              /* Close. */
+        mod_data,                  /* Callback data. */
+        NULL,                      /* Reopen. */
+        NULL,                      /* Callback data. */
+        logger_format,             /* Format - This does all the work. */
+        mod_data,                  /* Callback data. */
+        NULL,                      /* Record. */
+        NULL                       /* Callback data. */
     );
+
+    rc = ib_logger_fetch_format_fn(
+        ib_engine_logger_get(ib),
+        "TxLogModuleFormatFn", /* FIXME: use TXLOG_FORMAT_FN_NAME in txlog.h */
+        &txlog_format_fn,
+        &txlog_format_cbdata);
+    if (rc == IB_OK) {
+        /* Register the IronBee Transaction Log logger. */
+        ib_logger_writer_add(
+            ib_engine_logger_get(ib),
+            NULL,                      /* Open. */
+            NULL,                      /* Callback data. */
+            NULL,                      /* Close. */
+            NULL,                      /* Callback data. */
+            NULL,                      /* Reopen. */
+            NULL,                      /* Callback data. */
+            txlog_format_fn,           /* Format - This does all the work. */
+            txlog_format_cbdata,       /* Callback data. */
+            txlog_record,              /* Record. */
+            mod_data                   /* Callback data. */
+        );
+    }
 
     return IB_OK;
 }
@@ -2819,11 +2851,12 @@ static int ironbee_init(module_data_t *mod_data)
         return rc;
     }
 
-    rc = ib_manager_register_module_fn(mod_data->manager,
-                                       create_module,
-                                       mod_data);
+    rc = ib_manager_engine_preconfig_fn_add(
+        mod_data->manager,
+        engine_preconfig_fn,
+        mod_data);
     if (rc != IB_OK) {
-        TSError("[ironbee] Error registering server plugin as module: %s",
+        TSError("[ironbee] Error registering server preconfig function: %s",
                 ib_status_to_string(rc));
         return rc;
     }
