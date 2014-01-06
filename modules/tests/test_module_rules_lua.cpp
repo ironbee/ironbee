@@ -33,6 +33,7 @@ extern "C" {
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>
+#include <ironbee/uuid.h>
 #include <string>
 
 namespace {
@@ -96,7 +97,7 @@ TEST_F(TestIronBeeModuleRulesLua, load_func_eval)
     int res = 0;
     ib_tx_t tx;
     tx.ib = ib_engine;
-    tx.id = "tx_id.TestIronBeeModuleRulesLua.load_func_eval";
+    ASSERT_EQ(IB_OK, ib_uuid_create_v4(tx.id));
     ASSERT_EQ(IB_OK, ib_conn_create(ib_engine, &tx.conn, NULL));
 
     ib_rule_exec_t rule_exec;
