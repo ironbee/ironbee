@@ -31,7 +31,6 @@ module_LTLIBRARIES = ibmod_htp.la \
                      ibmod_log_pipe.la \
                      ibmod_ident.la \
                      ibmod_ident_authbasic.la \
-                     ibmod_ats_txlog.la \
                      ibmod_sqltfn.la
 noinst_LTLIBRARIES =
 
