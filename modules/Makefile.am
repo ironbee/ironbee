@@ -1,8 +1,6 @@
 ACLOCAL_AMFLAGS = -I ../acinclude
 
 include $(top_srcdir)/build/common.mk
-# for ats-txlog
-include $(top_srcdir)/build/servers.mk
 
 SUBDIRS = . tests
 
@@ -225,11 +223,6 @@ ibmod_txlog_la_LDFLAGS = $(AM_LDFLAGS) -module -avoid-version \
 ibmod_txlog_la_LIBADD  = $(AM_LIBADD) \
                          $(top_builddir)/ironbeepp/libibpp.la
 endif
-
-ibmod_ats_txlog_la_SOURCES = ats-txlog.c
-ibmod_ats_txlog_la_CFLAGS = $(AM_CFLAGS) @TS_CFLAGS@
-ibmod_ats_txlog_la_CPPFLAGS = $(AM_CPPFLAGS) @TS_CPPFLAGS@
-ibmod_ats_txlog_la_LDFLAGS = $(AM_LDFLAGS)
 
 if CPP
 module_LTLIBRARIES += ibmod_trusted_proxy.la
