@@ -303,7 +303,6 @@ static ib_status_t modlua_reload_ctx(
             case MODLUA_RELOAD_MODULE:
                 tmp_rc = modlua_module_load_lua(
                     ib,
-                    false,
                     reload->file,
                     reload->module,
                     L);

@@ -1266,7 +1266,7 @@ static ib_status_t modlua_luamod_init(
     ib_status_t           rc;
 
     /* Load the modules into the main Lua stack. Also register directives. */
-    rc = modlua_module_load_lua(ib, true, file, module, L);
+    rc = modlua_module_config_lua(ib, file, module, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to load lua modules: %s", file);
         return rc;

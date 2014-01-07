@@ -720,8 +720,12 @@ static int modlua_config_register_directive(lua_State *L)
             }
 
             if (varmapsz > 0) {
+                ib_mpool_t *mp = ib_engine_pool_config_get(ib);
+
                 /* Allocate space for strvalmap. */
-                strvalmap = malloc(sizeof(*strvalmap) * (varmapsz + 1));
+                strvalmap = ib_mpool_alloc(
+                    mp,
+                    sizeof(*strvalmap) * (varmapsz + 1));
                 if (strvalmap == NULL) {
                     rc = IB_EALLOC;
                     rcmsg = "Cannot allocate strval map.";
@@ -730,8 +734,10 @@ static int modlua_config_register_directive(lua_State *L)
 
                 /* Build map. */
                 for (int i = 0; lua_next(L, 3-args); ++i) {
-                    strvalmap[i].str = lua_tostring(L, -2);
-                    strvalmap[i].val = lua_tointeger(L, -1);
+                    strvalmap[i].str =
+                        ib_mpool_strdup(mp, lua_tostring(L, -2));
+                    strvalmap[i].val =
+                        lua_tointeger(L, -1);
                     lua_pop(L, 1); /* Pop off value. Leave key. */
                 }
 
@@ -814,9 +820,43 @@ exit:
     return lua_gettop(L);
 }
 
-ib_status_t modlua_module_load_lua(
+
+/**
+ * Setup the callstack for the Lua function modlua.load_module().
+ *
+ * This function will push onto the @a L stack:
+ *
+ * @code
+ * +-------------------------------------------+
+ * | load_module                               |
+ * | ib                                        |
+ * | ib_module                                 |
+ * | module name (file name)                   |
+ * | module index                              |
+ * | modlua_config_register_directive (or nil) |
+ * | module script                             |
+ * +-------------------------------------------+
+ * @endcode
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] register_directives If true, modlua_config_register_directive
+ *            will be pushed onto the stack, causing
+ *            Lua directives to be added to the engine.
+ *            If this function is called at config time, this should be true.
+ *            If this function is called at module re-load time, this
+ *            should be false, meaning @a ib already has all the
+ *            directives defined.
+ * @param[in] file The Lua file to load.
+ * @param[in] module The module structure being loaded.
+ * @param[in] L The Lua stack and environment being loaded into.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error. Errors are logged in this function.
+ */
+static ib_status_t modlua_load_module_push_stack(
     ib_engine_t *ib,
-    bool         is_config_time,
+    bool         register_directives,
     const char  *file,
     ib_module_t *module,
     lua_State   *L
@@ -857,7 +897,7 @@ ib_status_t modlua_module_load_lua(
     lua_pushstring(L, file);
     lua_pushinteger(L, module->idx);
 
-    if (is_config_time) {
+    if (register_directives) {
         lua_pushcfunction(L, &modlua_config_register_directive);
     }
     else {
@@ -869,10 +909,10 @@ ib_status_t modlua_module_load_lua(
         case 0:
             /* NOP */
             break;
-        case LUA_ERRRUN:
+        case LUA_ERRSYNTAX:
             ib_log_error(
                 ib,
-                "Error evaluating %s: %s",
+                "Syntax error evaluating %s: %s",
                 file,
                 lua_tostring(L, -1));
             lua_pop(L, 1); /* Get error string off of the stack. */
@@ -881,28 +921,17 @@ ib_status_t modlua_module_load_lua(
         case LUA_ERRMEM:
             ib_log_error(
                 ib,
-                "Failed to allocate memory during evaluation of %s",
+                "Failed to allocate memory during load of %s",
                 file);
             lua_pop(L, 1); /* Pop modlua global off stack. */
             return IB_EINVAL;
-        case LUA_ERRERR:
+        case LUA_ERRFILE:
             ib_log_error(
                 ib,
-                "Error fetching error message during evaluation of %s",
+                "Faled to load %s",
                 file);
             lua_pop(L, 1); /* Pop modlua global off stack. */
             return IB_EINVAL;
-#if LUA_VERSION_NUM > 501
-        /* If LUA_ERRGCMM is defined, include a custom error for it as well.
-          This was introduced in Lua 5.2. */
-        case LUA_ERRGCMM:
-            ib_log_error(
-                ib,
-                "Garbage collection error during evaluation of %s.",
-                file);
-            lua_pop(L, 1); /* Pop modlua global off stack. */
-            return IB_EINVAL;
-#endif
         default:
             ib_log_error(
                 ib,
@@ -915,22 +944,31 @@ ib_status_t modlua_module_load_lua(
             return IB_EINVAL;
     }
 
-    /**
-     * The stack now is...
-     * +-------------------------------------------+
-     * | load_module                               |
-     * | ib                                        |
-     * | ib_module                                 |
-     * | module name (file name)                   |
-     * | module index                              |
-     * | modlua_config_register_directive (or nil) |
-     * | module script                             |
-     * +-------------------------------------------+
-     *
-     * Next step is to call load_module which will, in turn, execute
-     * the module script.
-     */
-    lua_rc = lua_pcall(L, 6, 1, 0);
+    return IB_OK;
+}
+
+/**
+ * After calling modlua_load_module_push_stack() call this to evaluate it.
+ *
+ * The function modlua_load_module_push_stack() sets up the call stack
+ * to load a Lua module. This call evaluates the prepared stack
+ * and reports any errors.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - Other on error. Errors are logged in this function.
+ */
+static ib_status_t modlua_load_module_eval(
+    ib_engine_t *ib,
+    const char  *file,
+    lua_State    *L
+)
+{
+    assert(ib != NULL);
+    assert(file != NULL);
+    assert(L != NULL);
+
+    int lua_rc = lua_pcall(L, 6, 1, 0);
     switch(lua_rc) {
         case 0:
             /* NOP */
@@ -982,6 +1020,62 @@ ib_status_t modlua_module_load_lua(
     }
 
     lua_pop(L, 1); /* Pop modlua global off stack. */
+
+    return IB_OK;
+}
+
+ib_status_t modlua_module_config_lua(
+    ib_engine_t *ib,
+    const char  *file,
+    ib_module_t *module,
+    lua_State   *L
+)
+{
+    assert(ib     != NULL);
+    assert(file   != NULL);
+    assert(module != NULL);
+    assert(L      != NULL);
+
+    ib_status_t rc;
+
+    /* Load the stack with the register directives function. */
+    rc = modlua_load_module_push_stack(ib, true, file, module, L);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_load_module_eval(ib, file, L);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t modlua_module_load_lua(
+    ib_engine_t *ib,
+    const char  *file,
+    ib_module_t *module,
+    lua_State   *L
+)
+{
+    assert(ib     != NULL);
+    assert(file   != NULL);
+    assert(module != NULL);
+    assert(L      != NULL);
+
+    ib_status_t rc;
+
+    /* Load the stack without the register directives function. */
+    rc = modlua_load_module_push_stack(ib, false, file, module, L);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = modlua_load_module_eval(ib, file, L);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     return IB_OK;
 }
