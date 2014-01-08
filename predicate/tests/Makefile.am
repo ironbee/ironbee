@@ -1,4 +1,5 @@
 include $(top_srcdir)/build/tests.mk
+AUTOMAKE_OPTIONS = subdir-objects
 
 LDADD = \
     $(builddir)/../libpredicate.la \
