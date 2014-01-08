@@ -1156,10 +1156,6 @@ static int next_line(const char **linep, size_t *lenp, http_lineend_t letype)
          * tests for a continuation line
          */
         do {
-            if (len > 0) {
-                /* we have a continuation line.  Add the lineend. */
-                len += lelen;
-            }
             end = strstr(line, "\r\n");
             if (!end) {
                 return -1;
@@ -1253,10 +1249,6 @@ static int next_line(const char **linep, size_t *lenp, http_lineend_t letype)
          * tests for a continuation line
          */
         do {
-            if (len > 0) {
-                /* we have a continuation line.  Add the lineend. */
-                len += lelen;
-            }
             end = strchr(line, '\n');
             if (end == NULL) {
                 return -1; /* there's no lineend */
