@@ -315,7 +315,7 @@ int main(int argc, char** argv)
             example.send_to_ironbee(request_data, response_data);
         }
     }
-    catch (const IronBee::error& e)
+    catch (const boost::exception& e)
     {
         /* All IronBee++ exceptions are based on boost::exception and thus
          * can be used with boost::diagnostic_information which produces a
@@ -325,6 +325,13 @@ int main(int argc, char** argv)
          */
         cerr << "Error occurred: "
              << diagnostic_information(e)
+             << endl;
+        return 1;
+    }
+    catch (const std::exception& e)
+    {
+        cerr << "Error occurred: "
+             << e.what()
              << endl;
         return 1;
     }
