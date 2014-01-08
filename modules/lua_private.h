@@ -69,7 +69,7 @@ ib_status_t modlua_cfg_get(
 /**
  * Called by modlua_module_load to load the lua script into the Lua runtime.
  *
- * This function will register configuration directives causing 
+ * This function will register configuration directives causing
  * Lua module configuration directives to be registered with @a ib.
  *
  * @param[in] ib IronBee engine.
