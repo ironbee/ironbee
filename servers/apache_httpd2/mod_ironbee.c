@@ -1224,7 +1224,7 @@ static ib_status_t logger_format(
             ap_level,
             0,
             conn,
-            "ironbee: %s %*.s",
+            "ironbee: %s %.*s",
             std_msg->prefix,
             (int)std_msg->msg_sz,
             (const char *)std_msg->msg);
@@ -1235,7 +1235,7 @@ static ib_status_t logger_format(
             ap_level,
             0,
             mod_data->pool,
-            "ironbee: %s %*.s",
+            "ironbee: %s %.*s",
             std_msg->prefix,
             (int)std_msg->msg_sz,
             (const char *)std_msg->msg);

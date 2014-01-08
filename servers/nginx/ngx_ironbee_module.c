@@ -118,12 +118,12 @@ static ib_status_t logger_format(
 
     if (rec->conn != NULL) {
         ngx_connection_t *conn = (ngx_connection_t *)(rec->conn->server_ctx);
-        ngx_log_error(ngx_level, conn->log, 0, "ironbee: %s %*.s",
+        ngx_log_error(ngx_level, conn->log, 0, "ironbee: %s %.*s",
                       std_msg->prefix, (int)std_msg->msg_sz,
                       (const char *)std_msg->msg);
     }
     else {
-        ngx_log_error(ngx_level, mod_data->log, 0, "ironbee: %s %*.s",
+        ngx_log_error(ngx_level, mod_data->log, 0, "ironbee: %s %.*s",
                       std_msg->prefix, (int)std_msg->msg_sz,
                       (const char *)std_msg->msg);
     }
