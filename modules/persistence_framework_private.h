@@ -110,9 +110,9 @@ typedef struct ib_persist_fw_mapping_t ib_persist_fw_mapping_t;
  * persistence module API to fetch the configuration information.
  */
 struct ib_persist_fw_t {
-    ib_engine_t *ib;             /**< The engine registered to. */
+    ib_engine_t *ib;                /**< The engine registered to. */
     ib_module_t *persist_fw_module; /**< The persistence framework's module. */
-    ib_module_t *user_module;    /**< User's module structure. */
+    ib_module_t *user_module;       /**< User's module structure. */
 };
 
 /**
@@ -148,7 +148,7 @@ struct ib_persist_fw_cfg_t {
 typedef struct ib_persist_fw_cfg_t ib_persist_fw_cfg_t;
 
 /**
- * This is the module configuration date for this module.
+ * This is the module configuration date the persistence module.
  *
  * It is a wrapper for an array of @ref ib_persist_fw_cfg_t
  * indexed by the client module's index in the IronBee engine. Configurations

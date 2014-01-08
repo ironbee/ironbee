@@ -259,7 +259,6 @@ static ib_status_t persistence_framework_fini(
     return IB_OK;
 }
 
-
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,    /* Header defaults. */
     MODULE_NAME_STR,              /* Module name. */

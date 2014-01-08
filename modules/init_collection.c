@@ -641,12 +641,13 @@ static ib_status_t init_collection_common(
         IB_S2SL(name),
         IB_PHASE_NONE, IB_PHASE_NONE
     );
-    if (rc != IB_OK) {
+    if (rc != IB_EEXIST && rc != IB_OK) {
         ib_cfg_log_error(
             cp,
             "Failed to register collection %s: %s",
             name,
             ib_status_to_string(rc));
+        goto exit_rc;
     }
 
     /* Clear the configuration file to expose errors. */
@@ -771,13 +772,13 @@ static ib_status_t init_collection_init(
         cfg->persist_fw,
         ib_context_main(ib),
         VAR_TYPE,
-        var_create_fn,
+        var_create_fn,        /* Create. */
         NULL,
+        NULL,                 /* Destroy. */
         NULL,
+        var_load_fn,          /* Load. */
         NULL,
-        var_load_fn,
-        NULL,
-        NULL,
+        NULL,                 /* Store. */
         NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register var type.");
@@ -789,13 +790,13 @@ static ib_status_t init_collection_init(
         cfg->persist_fw,
         ib_context_main(ib),
         JSON_TYPE,
-        json_create_fn,
+        json_create_fn,      /* Create. */
         cfg,
+        NULL,                /* Destroy. */
         NULL,
+        json_load_fn,        /* Load. */
         NULL,
-        json_load_fn,
-        NULL,
-        NULL,
+        NULL,                /* Store. */
         NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register json type.");

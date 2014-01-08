@@ -12,3 +12,5 @@ require 'tc_modps'
 require 'tc_xrules'
 
 require 'tc_trusted_proxy'
+
+require 'tc_init_collection'

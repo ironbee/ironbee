@@ -181,14 +181,14 @@ finish:
  *   - IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t build_key_path(
-    ib_kvstore_t *kvstore,
-    const ib_kvstore_key_t *key,
-    const ib_time_t expiration,
-    const char *type,
-    size_t type_len,
-    const char *prefix,
-    const char *suffix,
-    char **path)
+    ib_kvstore_t            *kvstore,
+    const ib_kvstore_key_t  *key,
+    const ib_time_t          expiration,
+    const char              *type,
+    size_t                   type_len,
+    const char              *prefix,
+    const char              *suffix,
+    char                   **path)
 {
     assert(kvstore != NULL);
     assert(key != NULL);
@@ -204,14 +204,14 @@ static ib_status_t build_key_path(
     struct stat sb;
 
     /* Constant size specified by ib_uuid_bin_to_ascii (minus the \0).*/
-    size_t key_uuid_sz = UUID_LEN_STR+1;
-    char *key_uuid_str = NULL;
-    char *key_str = NULL; /* Null-terminated copy of the key. */
-    char *path_base = NULL; /* Used to free path_tmp on failure. */
-    size_t prefix_len = 0;
-    size_t suffix_len = 0;
-    size_t path_size;
-    char *path_tmp; /* Used to manipulate the path we are building. */
+    size_t  key_uuid_sz  = UUID_LEN_STR+1;
+    char   *key_uuid_str = NULL;
+    char   *key_str      = NULL; /* Null-terminated copy of the key. */
+    char   *path_base    = NULL; /* Used to free path_tmp on failure. */
+    size_t  prefix_len   = 0;
+    size_t  suffix_len   = 0;
+    size_t  path_size;
+    char   *path_tmp; /* Used to manipulate the path we are building. */
 
     ib_kvstore_filesystem_server_t *server =
         (ib_kvstore_filesystem_server_t *)(kvstore->server);

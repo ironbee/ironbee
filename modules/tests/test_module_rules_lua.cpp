@@ -150,20 +150,26 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
         ib_operator_lookup(ib_engine, op_name, &op)
     );
 
-    ASSERT_EQ(IB_OK, ib_operator_inst_create(op,
-                                             ib_context_main(ib_engine),
-                                             IB_OP_CAPABILITY_NON_STREAM,
-                                             rule_name,
-                                             &instance_data));
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_inst_create(
+            op,
+            ib_context_main(ib_engine),
+            IB_OP_CAPABILITY_NON_STREAM,
+            rule_name,
+            &instance_data));
     performTx();
 
     // Attempt to match.
-    ASSERT_EQ(IB_OK, ib_operator_inst_execute(op,
-                                          instance_data,
-                                          ib_tx,
-                                          field1,
-                                          NULL,
-                                          &result));
+    ASSERT_EQ(
+        IB_OK,
+        ib_operator_inst_execute(
+            op,
+            instance_data,
+            ib_tx,
+            field1,
+            NULL,
+            &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);

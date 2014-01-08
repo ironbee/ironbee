@@ -105,19 +105,19 @@ static ib_status_t get_ctx_persist_fw(
     assert(ctx != NULL);
 
     ib_persist_fw_cfg_t     *persist_fw_tmp = NULL;
-    ib_status_t           rc;
-    ib_persist_fw_modlist_t *configs;
+    ib_status_t              rc;
+    ib_persist_fw_modlist_t *cfg;
 
     rc = ib_context_module_config(
         ctx,
         persist_fw_main->persist_fw_module,
-        &configs);
+        &cfg);
     if (rc != IB_OK) {
         return rc;
     }
 
     rc = ib_array_get(
-        configs->configs,
+        cfg->configs,
         persist_fw_main->user_module->idx,
         &persist_fw_tmp);
     if (rc != IB_OK) {
@@ -154,11 +154,11 @@ static ib_status_t add_module_config(
     assert(persist_fw->user_module != NULL);
     assert(persist_fw->persist_fw_module != NULL);
 
-    ib_engine_t          *ib          = persist_fw->ib;
+    ib_engine_t             *ib             = persist_fw->ib;
     ib_persist_fw_cfg_t     *persist_fw_cfg = NULL;
-    ib_persist_fw_modlist_t *cfg         = NULL;
-    ib_context_t         *ctx         = ib_context_main(ib);
-    ib_status_t           rc;
+    ib_persist_fw_modlist_t *cfg            = NULL;
+    ib_context_t            *ctx            = ib_context_main(ib);
+    ib_status_t              rc;
 
     rc = ib_persist_fw_cfg_create(mp, &persist_fw_cfg);
     if (rc != IB_OK) {
@@ -175,7 +175,10 @@ static ib_status_t add_module_config(
 
     /* At the user's module's index in the persistence framework's
      * configuration, insert the empty persistence configuration. */
-    rc = ib_array_setn(cfg->configs, persist_fw->user_module->idx, persist_fw_cfg);
+    rc = ib_array_setn(
+        cfg->configs,
+        persist_fw->user_module->idx,
+        persist_fw_cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to add config to persistence config.");
         return rc;
@@ -231,10 +234,10 @@ static ib_status_t populate_data_in_context(
             (const ib_persist_fw_mapping_t *)ib_list_node_data_const(list_node);
 
         /* Alias some values. */
-        const char         *name   = mapping->name;
-        ib_persist_fw_store_t *store  = mapping->store;
-        const char         *key = NULL;
-        size_t              key_length = 0;
+        const char             *name      = mapping->name;
+        ib_persist_fw_store_t *store      = mapping->store;
+        const char            *key        = NULL;
+        size_t                 key_length = 0;
 
         rc = ib_var_expand_execute(
             mapping->key,
@@ -281,12 +284,6 @@ static ib_status_t populate_data_in_context(
             if (rc != IB_OK) {
                 ib_log_error(ib, "Failed to load collection %s", name);
             }
-        }
-        else {
-            ib_log_notice(
-                ib,
-                "Mapping for collection %s has no load handler. Skipping.",
-                name);
         }
     }
 
@@ -336,10 +333,10 @@ static ib_status_t persist_data_in_context(
             (const ib_persist_fw_mapping_t *)ib_list_node_data_const(list_node);
 
         /* Alias some values. */
-        const char         *name   = mapping->name;
+        const char            *name   = mapping->name;
         ib_persist_fw_store_t *store  = mapping->store;
-        const char         *key;
-        size_t              key_length;
+        const char            *key;
+        size_t                 key_length;
 
         rc = ib_var_expand_execute(
             mapping->key,
@@ -386,12 +383,6 @@ static ib_status_t persist_data_in_context(
             if (rc != IB_OK) {
                 ib_log_error(ib, "Failed to store collection %s", name);
             }
-        }
-        else {
-            ib_log_notice(
-                ib,
-                "Mapping for collection %s has no store handler. Skipping.",
-                name);
         }
     }
 
@@ -559,6 +550,14 @@ ib_status_t ib_persist_fw_map_collection(
     ib_persist_fw_store_t   *store          = NULL;
     ib_persist_fw_mapping_t *mapping        = NULL;
     ib_var_expand_t         *expand         = NULL;
+    ib_persist_fw_modlist_t *cfg;
+
+    /* Get main configuration context for the persistence framework module. */
+    rc = ib_context_module_config(ctx, persist_fw->persist_fw_module, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to fetch per-context persistence mappings.");
+        return rc;
+    }
 
     rc = get_ctx_persist_fw(persist_fw, ctx, &persist_fw_cfg);
     if (rc != IB_OK) {
@@ -584,7 +583,11 @@ ib_status_t ib_persist_fw_map_collection(
         IB_S2SL(name),
         IB_PHASE_NONE, IB_PHASE_NONE
     );
-    if (rc != IB_OK && rc != IB_EEXIST) {
+    if (rc == IB_EEXIST) {
+        ib_log_error(ib, "Source %s already exists.", name);
+        return rc;
+    }
+    else if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register source for %s: %s",
                      name, ib_status_to_string(rc));
         return rc;
@@ -625,8 +628,8 @@ ib_status_t ib_persist_fw_map_collection(
 }
 
 ib_status_t ib_persist_fw_create(
-    ib_engine_t   *ib,
-    ib_module_t   *user_module,
+    ib_engine_t      *ib,
+    ib_module_t      *user_module,
     ib_persist_fw_t **persist_fw
 )
 {
@@ -635,8 +638,8 @@ ib_status_t ib_persist_fw_create(
     assert(persist_fw != NULL);
 
     ib_persist_fw_t *persist_fw_out;
-    ib_mpool_t   *mp = ib_engine_pool_main_get(ib);
-    ib_status_t   rc;
+    ib_mpool_t      *mp = ib_engine_pool_main_get(ib);
+    ib_status_t      rc;
 
     persist_fw_out = ib_mpool_alloc(mp, sizeof(*persist_fw_out));
     if (persist_fw_out == NULL) {

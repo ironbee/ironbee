@@ -188,7 +188,7 @@ ib_status_t file_rw_create_fn(
     file_rw->kvstore = ib_mpool_alloc(mp, ib_kvstore_size());
 
     if (strncmp(uri, FILE_URI_PREFIX, sizeof(FILE_URI_PREFIX)-1) == 0) {
-        const char *dir = uri + sizeof(FILE_URI_PREFIX);
+        const char *dir = uri + sizeof(FILE_URI_PREFIX)-1;
         ib_log_debug(ib, "Creating key-value store in directory: %s", dir);
 
         rc = ib_kvstore_filesystem_init(file_rw->kvstore, dir);
@@ -336,13 +336,13 @@ static ib_status_t file_rw_store_fn(
     kv_val.creation = ib_clock_get_time();
     kv_val.expiration = file_rw->expiration + kv_val.creation;
 
-    rc = ib_kvstore_set(
-        file_rw->kvstore,
-        NULL,
-        &kv_key,
-        &kv_val);
+    rc = ib_kvstore_set(file_rw->kvstore, NULL, &kv_key, &kv_val);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to store key-value.");
+        ib_log_error(
+            ib,
+            "Failed to store key-value \"%.*s\".",
+            (int)kv_key.length,
+            kv_key.key);
         return rc;
     }
 
