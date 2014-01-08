@@ -24,11 +24,11 @@
 
 #include "ironbee_config_auto.h"
 
+#include <uuid.h>
+
 #include <ironbee/uuid.h>
 
 #include <ironbee/lock.h>
-
-#include <uuid.h>
 
 #include <assert.h>
 #include <string.h>

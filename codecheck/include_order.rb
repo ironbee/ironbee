@@ -13,6 +13,8 @@ EXCEPTION_INCLUDES = Set.new [
 CANONICAL_INCLUDE_ORDER = [
   '"ironbee_config_auto.h"',
 
+  '<uuid.h>', # uuid.h is a mess.
+
   :self,
   :private,
 
@@ -20,6 +22,7 @@ CANONICAL_INCLUDE_ORDER = [
 
   # Dirty hack section
   '"user_agent_private.h"',
+  '"txlog_json.hpp"',
   '<ironbee/module_sym.h>',
 
   # predicate
@@ -191,8 +194,8 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/state_notify.h>',
   '<ironbee/string.h>',
   '<ironbee/string_assembly.h>',
-  '<ironbee/strval.h>',
   '<ironbee/stream.h>',
+  '<ironbee/strval.h>',
   '<ironbee/transformation.h>',
   '<ironbee/types.h>',
   '<ironbee/util.h>',
@@ -213,6 +216,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/date_time/gregorian/gregorian_types.hpp>',
   '<boost/date_time/local_time/local_time.hpp>',
   '<boost/date_time/posix_time/posix_time.hpp>',
+  '<boost/date_time/posix_time/posix_time_types.hpp>',
   '<boost/date_time/posix_time/ptime.hpp>',
   '<boost/date_time/time_facet.hpp>',
   '<boost/date_time/time_zone_base.hpp>',
@@ -290,6 +294,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<sqltfn.h>',
   '<uuid.h>',
   '<valgrind/memcheck.h>',
+  '<yajl/yajl_common.h>',
   '<yajl/yajl_gen.h>',
   '<yajl/yajl_parse.h>',
   '<yajl/yajl_tree.h>',
@@ -308,6 +313,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<vector>',
 
   '<cassert>',
+  '<cstdlib>',
 
   '<assert.h>',
   '<ctype.h>',

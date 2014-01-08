@@ -26,17 +26,18 @@
  */
 
 #include "txlog_json.hpp"
-#include <boost/foreach.hpp>
+
+#include <boost/any.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/time_facet.hpp>
-#include <boost/any.hpp>
-
-#include <cstdlib>
+#include <boost/foreach.hpp>
 
 extern "C" {
 #include <yajl/yajl_common.h>
 #include <yajl/yajl_gen.h>
 }
+
+#include <cstdlib>
 
 TxLogJsonBuffer::TxLogJsonBuffer():
     m_json_buffer_len(0),
