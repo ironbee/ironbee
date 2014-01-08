@@ -1614,7 +1614,7 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
                           escaped);
     }
     else if (value->type == IB_FTYPE_BYTESTR) {
-        const char         *escaped;
+        char *escaped;
         const ib_bytestr_t *bytestr;
 
         rc = ib_field_value(value, ib_ftype_bytestr_out(&bytestr));
@@ -1633,6 +1633,7 @@ static void exe_op_trace_values(ib_rule_exec_t *rule_exec,
                           ib_operator_get_name(opinst->op),
                           target->target_str,
                           escaped);
+        free(escaped);
     }
     else {
         ib_rule_log_trace(rule_exec,
