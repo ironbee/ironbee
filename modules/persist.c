@@ -340,7 +340,7 @@ static ib_status_t file_rw_store_fn(
     if (rc != IB_OK) {
         ib_log_error(
             ib,
-            "Failed to store key-value \"%.*s\".",
+            "Failed to store key-value \"%*.s\".",
             (int)kv_key.length,
             kv_key.key);
         return rc;
