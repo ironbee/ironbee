@@ -96,15 +96,21 @@ void add_word(Automata& a, const string& s)
         current_node = edge.target();
     }
 
-    assert(! current_node->first_output());
-    output_p output = boost::make_shared<Output>();
-    current_node->first_output() = output;
+    if (! current_node->first_output()) {
+        output_p output = boost::make_shared<Output>();
+        current_node->first_output() = output;
 
-    IronAutomata::buffer_t content_buffer;
-    IronAutomata::BufferAssembler assembler(content_buffer);
-    assembler.append_object(uint32_t(1));
+        IronAutomata::buffer_t content_buffer;
+        IronAutomata::BufferAssembler assembler(content_buffer);
+        assembler.append_object(uint32_t(1));
 
-    output->content().assign(content_buffer.begin(), content_buffer.end());
+        output->content().assign(
+            content_buffer.begin(), content_buffer.end()
+        );
+    }
+    else {
+        cerr << "Warning: Duplicate word: " << s << endl;
+    }
 }
 
 //! Main
@@ -112,13 +118,21 @@ int main(int argc, char** argv)
 {
     if (argc < 1 || argc > 2) {
         cout << "Usage: trie_generator [<chunk_size>]" << endl;
+        cout << "Word list on standard in; one word per line." << endl;
+        cout << "Automata on standard out; intermediate format." << endl;
         return 1;
     }
 
     try {
         size_t chunk_size = 0;
         if (argc == 2) {
-            chunk_size = boost::lexical_cast<size_t>(argv[1]);
+            try {
+                chunk_size = boost::lexical_cast<size_t>(argv[1]);
+            }
+            catch (boost::bad_lexical_cast) {
+                cerr << "Invalid chunk size: " << argv[1] << endl;
+                return 1;
+            }
         }
 
         Automata a;
@@ -132,7 +146,10 @@ int main(int argc, char** argv)
             }
         }
 
-        assert(a.start_node());
+        if (! a.start_node()) {
+            cerr << "No automata generator.  Empty input?" << endl;
+            return 1;
+        }
 
         breadth_first(a, optimize_edges);
         deduplicate_outputs(a);
