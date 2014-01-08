@@ -122,7 +122,7 @@ struct ib_engine_t {
     const char            *sensor_name;     /**< Sensor name */
     const char            *sensor_version;  /**< Sensor version string */
     const char            *sensor_hostname; /**< Sensor hostname */
-    char                   instance_uuid[IB_UUID_LENGTH]; /**< Engine instance UUID */
+    char                   instance_id[IB_UUID_LENGTH]; /**< Engine instance UUID */
     ib_cfgparser_t        *cfgparser;       /**< Our configuration parser */
 
     /// @todo Only these should be private

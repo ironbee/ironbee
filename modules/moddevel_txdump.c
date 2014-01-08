@@ -727,7 +727,7 @@ static ib_status_t moddevel_txdump_tx(
         ib_clock_timestamp(buf, &tx->tv_created);
         moddevel_txdump(tx, txdump, 2, "IronBee Version = %s", IB_VERSION);
         moddevel_txdump(tx, txdump, 2, "IronBee Instance UUID = %s",
-                        ib_engine_instance_uuid(ib));
+                        ib_engine_instance_id(ib));
         moddevel_txdump(tx, txdump, 2, "Started = %s", buf);
         moddevel_txdump(tx, txdump, 2, "Hostname = %s", tx->hostname);
         moddevel_txdump(tx, txdump, 2, "Effective IP = %s", tx->remote_ipstr);

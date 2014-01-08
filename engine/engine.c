@@ -423,7 +423,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
     ib->sensor_hostname = IB_DSTR_UNKNOWN;
 
     /* Create the instance UUID */
-    rc = ib_uuid_create_v4(ib->instance_uuid);
+    rc = ib_uuid_create_v4(ib->instance_id);
     if (rc != IB_OK) {
         return rc;
     }
@@ -808,10 +808,10 @@ void ib_engine_destroy(ib_engine_t *ib)
     return;
 }
 
-const char *ib_engine_instance_uuid(
+const char *ib_engine_instance_id(
     const ib_engine_t *ib)
 {
-    return ib->instance_uuid;
+    return ib->instance_id;
 }
 
 ib_status_t ib_conn_generate_id(ib_conn_t *conn)
