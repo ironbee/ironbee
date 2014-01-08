@@ -348,7 +348,7 @@ void responseHeadersToJson(
  *
  * @param[in] name The name of the value to render.
  * @param[in] val The value to render if val.length() > 0.
- * @param[in] tLogJson Used to render the values.
+ * @param[in] txLogJson Used to render the values.
  */
 void renderNonemptyString(
     const char*        name,
@@ -626,7 +626,7 @@ private:
 
 IBPP_BOOTSTRAP_MODULE_DELEGATE(TXLOG_MODULE_NAME, TxLogModule);
 
-//! C++ify the C configuraton struct.
+//! C++ify the C configuration struct.
 struct TxLogConfig
 {
     //! Logging enabled for this context?

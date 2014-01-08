@@ -110,7 +110,7 @@ static ib_status_t modlua_append_searchprefix(
  *
  * @returns
  * - IB_OK On success.
- * - Other on failiure to retrieve configuration context or Lua eval error.
+ * - Other on failure to retrieve configuration context or Lua eval error.
  */
 static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
 {

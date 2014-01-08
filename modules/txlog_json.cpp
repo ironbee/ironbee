@@ -74,7 +74,7 @@ void TxLogJsonBuffer::append(const char *str, size_t str_len)
     size_t new_len = m_json_buffer_len + str_len;
 
     /* Grow the buffer by 1k as that should satisfy most conditions.
-     * Should we be in an unexpected sitation, loop until we get it right.
+     * Should we be in an unexpected situation, loop until we get it right.
      */
     if (new_len > m_json_buffer_sz)
     {

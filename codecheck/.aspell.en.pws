@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2363 
+personal_ws-1.1 en 2387 
 malloced
 malloc'ed
 libnet
@@ -171,12 +171,14 @@ APIs
 apis
 requestheader
 requestHeader
+ify
 bitv
 STRREQBODY
 ConstParsedRequestLine
 PcreUseJit
 iis
 IronBeeEngineVarSource
+TxLogJsonArray
 cerr
 NDEBUG
 unshifts
@@ -338,6 +340,7 @@ ACNode
 pfc
 setString
 msn
+withArray
 flagbit
 submatches
 setName
@@ -367,7 +370,7 @@ CallA
 CallB
 nul
 num
-SensorId
+sensorId
 pmf
 onEventTxProcess
 XRuleResponseContentType
@@ -416,6 +419,7 @@ qnx
 AuditLogIndexFormat
 ptv
 dlen
+serverPort
 ptx
 sig
 bstr
@@ -443,6 +447,7 @@ DisableRequestBodyInspection
 tgt
 EnableRequestHeaderInspection
 cout
+actionMethod
 TestEscapeJSONCStrings
 rsp
 txlogdata
@@ -736,6 +741,7 @@ nd
 DSOs
 Deprecations
 functionals
+postconfig
 xffffffff
 mj
 ne
@@ -806,6 +812,7 @@ rx
 ss
 s's
 MyFirstIronBee
+auditLogRef
 IronBeeUtilDso
 ve
 ry
@@ -970,6 +977,7 @@ luarule
 renderer
 expr
 newpattern
+withString
 ConstHashs
 ibapi
 corecfg
@@ -992,6 +1000,8 @@ ConstVarExpand
 strtrim
 readbytes
 ibcli
+withMap
+statusMessage
 IronBeeEngineVarFilter
 goto
 conndata
@@ -1155,6 +1165,7 @@ paramValue
 IronBeeBuild
 posix
 Acyclic
+serverIp
 RequestBodyBufferLimit
 RequestHeaderData
 http
@@ -1356,6 +1367,8 @@ IronBeeTests
 dolist
 pparsed
 proto
+TxLogJsonBuffer
+mkdir
 ActionSet
 abcdefxxx
 frule
@@ -1391,6 +1404,7 @@ ptime
 ttoWrite
 onEventConnFinished
 config
+TxLOG
 txlog
 TxLog
 FlushPartial
@@ -1454,6 +1468,7 @@ dataout
 decrement
 RUNABLE
 ConnDataOut
+txLogJson
 ParsedNameValues
 ironbee
 IronBee
@@ -1531,6 +1546,7 @@ pcre
 edata
 subprocess
 netmasks
+YAJL's
 RuleEngineLogLevel
 ACNodes
 ACNode's
@@ -1570,6 +1586,7 @@ perl
 inplace
 mult
 threatlevel
+threatLevel
 EINCOMPAT
 RSPBDY
 UNPARSEABLE
@@ -1828,6 +1845,7 @@ adaptors
 ipmatch
 libcurl
 MergeGraph
+clientPort
 const
 contp
 Ironbee's
@@ -1845,6 +1863,7 @@ DisableBlockingMode
 Implementors
 pmanager
 getValues
+clientIp
 IronAutomataEudoxus
 substrings
 fullinfo
@@ -1911,7 +1930,7 @@ inlined
 TxResp
 txresp
 rset
-SiteId
+siteId
 IronBeeEngineManagerPrivate
 onModuleLoad
 stringification
@@ -1946,6 +1965,7 @@ ConnStarted
 fieldrently
 IronBeeModule
 sprintf
+withFunction
 mkdtemp
 nmemb
 pcctx
@@ -1961,6 +1981,7 @@ unescape
 usedefaults
 nList
 partName
+preconfig
 param
 valu
 sref
@@ -2145,6 +2166,7 @@ IOBuffer
 teashark
 getter
 SiteService
+TxLogJsonError
 PcreDfaWorkspaceSize
 SubPool
 subpool
@@ -2219,6 +2241,7 @@ abca
 abcb
 abCd
 UnitTestBucket
+TxLogModuleFormatFn
 multipart
 KVStore
 kvstore
@@ -2323,6 +2346,7 @@ endif
 ScopedMemoryPool
 unescaped
 mpools
+TxLogJsonMap
 flagname
 IronBeeUtilMemPool
 BaiDuSpider

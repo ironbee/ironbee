@@ -64,7 +64,7 @@ public:
      * Extend the internal buffer by @a len and append @a str.
      *
      * This allows C-implemented clients to this class to
-     * append witout building a new std::string instance.
+     * append without building a new std::string instance.
      *
      * @param[in] str The string to append.
      * @param[in] str_len The length of the string to append.
@@ -129,7 +129,7 @@ struct TxLogJsonError : public IronBee::eother {};
  *         .close()
  *         .withString("String1", "Value 3")
  *     .close()
- *     .reander(&str, &str_len);
+ *     .render(&str, &str_len);
  * @endcode
  *
  * Is equivalent to this

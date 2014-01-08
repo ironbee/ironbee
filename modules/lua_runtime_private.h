@@ -170,7 +170,7 @@ ib_status_t modlua_record_reload(
  * Return a @ref modlua_runtime_t to the resource pool.
  *
  * @param[in] ib IronBee engine.
- * @param[in] cfg The modlue configuration.
+ * @param[in] cfg The module configuration.
  * @param[out] modlua_runtime The runtime that should be returned to the
  *             resource pool.
  *
@@ -188,7 +188,7 @@ ib_status_t modlua_releasestate(
  * Acquire a @ref modlua_runtime_t from the resource pool.
  *
  * @param[in] ib IronBee engine.
- * @param[in] cfg The modlue configuration.
+ * @param[in] cfg The module configuration.
  * @param[out] modlua_runtime The fetched runtime is placed here.
  *
  * @returns

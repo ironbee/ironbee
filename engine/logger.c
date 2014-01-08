@@ -101,13 +101,13 @@ struct ib_logger_t {
     /**
      * A map of logger_callback_fn_t structs that name a function.
      *
-     * Often the privder of a @ref ib_logger_format_fn_t is not
+     * Often the provider of a @ref ib_logger_format_fn_t is not
      * aware of the @ref ib_logger_record_fn_t that will use it. In such
      * cases it is often very useful to be able to store
      * a function by name to be retrieved later.
      *
      * This hash allows different logger functions to be stored and
-     * retrieved to assit clients to this API to better share functions.
+     * retrieved to assist clients to this API to better share functions.
      */
      ib_hash_t *functions;
 };

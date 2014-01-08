@@ -822,7 +822,7 @@ exit:
 
 
 /**
- * Setup the callstack for the Lua function modlua.load_module().
+ * Setup the call stack for the Lua function modlua.load_module().
  *
  * This function will push onto the @a L stack:
  *
@@ -928,7 +928,7 @@ static ib_status_t modlua_load_module_push_stack(
         case LUA_ERRFILE:
             ib_log_error(
                 ib,
-                "Faled to load %s",
+                "Failed to load %s",
                 file);
             lua_pop(L, 1); /* Pop modlua global off stack. */
             return IB_EINVAL;

@@ -790,7 +790,7 @@ static ib_status_t modlua_txdata(
 exit:
     rc2 = modlua_releasestate(ib, cfg, runtime);
     if (rc2 != IB_OK) {
-        ib_log_error(ib, "Failed to releaes Lua stack back to resource pool.");
+        ib_log_error(ib, "Failed to releases Lua stack back to resource pool.");
         if (rc == IB_OK) {
             return rc2;
         }
@@ -858,7 +858,7 @@ static ib_status_t modlua_header(
 exit:
     rc2 = modlua_releasestate(ib, cfg, runtime);
     if (rc2 != IB_OK) {
-        ib_log_error(ib, "Failed to releaes Lua stack back to resource pool.");
+        ib_log_error(ib, "Failed to release Lua stack back to resource pool.");
         if (rc == IB_OK) {
             return rc2;
         }
@@ -926,7 +926,7 @@ static ib_status_t modlua_reqline(
 exit:
     rc2 = modlua_releasestate(ib, cfg, runtime);
     if (rc2 != IB_OK) {
-        ib_log_error(ib, "Failed to releaes Lua stack back to resource pool.");
+        ib_log_error(ib, "Failed to release Lua stack back to resource pool.");
         if (rc == IB_OK) {
             return rc2;
         }
@@ -993,7 +993,7 @@ static ib_status_t modlua_respline(
 exit:
     rc2 = modlua_releasestate(ib, cfg, runtime);
     if (rc2 != IB_OK) {
-        ib_log_error(ib, "Failed to releaes Lua stack back to resource pool.");
+        ib_log_error(ib, "Failed to release Lua stack back to resource pool.");
         if (rc == IB_OK) {
             return rc2;
         }
@@ -1092,7 +1092,7 @@ static ib_status_t modlua_ctx(
 exit:
     rc2 = modlua_releasestate(ib, cfg, runtime);
     if (rc2 != IB_OK) {
-        ib_log_error(ib, "Failed to releaes Lua stack back to resource pool.");
+        ib_log_error(ib, "Failed to release Lua stack back to resource pool.");
         if (rc == IB_OK) {
             return rc2;
         }

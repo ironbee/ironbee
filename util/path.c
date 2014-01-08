@@ -52,7 +52,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
 
     /* Corner case of a zero-length string. */
     if (path[path_i] == '\0') {
-        /* Zero-length path is an error. Othewise, success. */
+        /* Zero-length path is an error. Otherwise, success. */
         return (path_i == 0)? IB_EINVAL : IB_OK;
     }
 
@@ -63,7 +63,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
 
     /* path_i points at the first non-slash character.
      * path_i does not point to the end-of-string (yet).
-     * Iterate over the reamining path, creating directories as we go.
+     * Iterate over the remaining path, creating directories as we go.
      * work_path is mutated as required to build arguments to mkdir(). */
     for (; path[path_i] != '\0'; ++path_i) {
         if (path[path_i] == '/') {
@@ -101,7 +101,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
                         goto exit;
                     }
 
-                    /* Make sure the tpath is a directory. */
+                    /* Make sure the path is a directory. */
                     if( !S_ISDIR(work_path_stat.st_mode)) {
                         rc = IB_EOTHER;
                         goto exit;
