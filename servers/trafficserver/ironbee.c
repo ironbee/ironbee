@@ -1813,7 +1813,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv != 0) {
         TSError ("Failed to get %s header: %d", ibd->type_label, rv);
-        ib_rc = ib_error_callback(data->tx, 500, NULL);
+        ib_error_callback(data->tx, 500, NULL);
         return HDR_ERROR;
     }
 
@@ -1828,7 +1828,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     if (ib_rc != IB_OK) {
         TSError("[ironbee] Failed to get %s header: %s", ibd->type_label,
                 ib_status_to_string(ib_rc));
-        ib_rc = ib_error_callback(data->tx, 500, NULL);
+        ib_error_callback(data->tx, 500, NULL);
         ret = HDR_ERROR;
         goto process_hdr_cleanup;
     }
@@ -1841,7 +1841,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                                    &rline_buf, &rline_len);
         if (ib_rc != 0) {
             TSError("[ironbee] Failed to fixup request line.");
-            ib_rc = ib_error_callback(data->tx, 400, NULL);
+            ib_error_callback(data->tx, 400, NULL);
             ret = HDR_ERROR;
             goto process_hdr_cleanup;
         }
@@ -1850,7 +1850,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         if (ib_rc != IB_OK) {
             TSError("[ironbee] Error starting IronBee request: %s",
                     ib_status_to_string(ib_rc));
-            ib_rc = ib_error_callback(data->tx, 500, NULL);
+            ib_error_callback(data->tx, 500, NULL);
             ret = HDR_ERROR;
             goto process_hdr_cleanup;
         }
@@ -1893,7 +1893,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
      */
     rv = ib_parsed_headers_create(&ibhdrs, data->tx->mp);
     if (rv != IB_OK) {
-        ib_rc = ib_error_callback(data->tx, 500, NULL);
+        ib_error_callback(data->tx, 500, NULL);
         TSError("[ironbee] Failed to create ironbee header wrapper.  Disabling.");
         ret = HDR_ERROR;
         goto process_hdr_cleanup;
