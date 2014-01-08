@@ -91,7 +91,7 @@ TEST(TestData, NoPool)
 
     void* data;
 
-    data = value_to_data(it, NULL);
+    data = value_to_data(it);
     ASSERT_TRUE(data);
 
     destruction_registerer_p other;

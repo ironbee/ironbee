@@ -270,31 +270,31 @@ void Server::destroy_callbacks() const
 void Server::set_error_callback(error_callback_t callback) const
 {
     ib()->err_fn = server_error_translator;
-    ib()->err_data = value_to_data(callback, NULL);
+    ib()->err_data = value_to_data(callback);
 }
 
 void Server::set_error_header_callback(error_header_callback_t callback) const
 {
     ib()->err_hdr_fn = server_error_header_translator;
-    ib()->err_hdr_data = value_to_data(callback, NULL);
+    ib()->err_hdr_data = value_to_data(callback);
 }
 
 void Server::set_error_data_callback(error_data_callback_t callback) const
 {
     ib()->err_body_fn = server_error_data_translator;
-    ib()->err_body_data = value_to_data(callback, NULL);
+    ib()->err_body_data = value_to_data(callback);
 }
 
 void Server::set_header_callback(header_callback_t callback) const
 {
     ib()->hdr_fn = server_header_translator;
-    ib()->hdr_data = value_to_data(callback, NULL);
+    ib()->hdr_data = value_to_data(callback);
 }
 
 void Server::set_close_callback(close_callback_t callback) const
 {
     ib()->close_fn = server_close_translator;
-    ib()->close_data = value_to_data(callback, NULL);
+    ib()->close_data = value_to_data(callback);
 }
 
 #ifdef HAVE_FILTER_DATA_API
@@ -302,13 +302,13 @@ void Server::set_close_callback(close_callback_t callback) const
 void Server::set_filter_init_callback(filter_init_callback_t callback) const
 {
     ib()->init_fn = server_filter_init_translator;
-    ib()->init_data = value_to_data(callback, NULL);
+    ib()->init_data = value_to_data(callback);
 }
 
 void Server::set_filter_data_callback(filter_data_callback_t callback) const
 {
     ib()->data_fn = server_filter_data_translator;
-    ib()->data_data = value_to_data(callback, NULL);
+    ib()->data_data = value_to_data(callback);
 }
 
 #endif

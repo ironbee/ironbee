@@ -150,7 +150,7 @@ public:
 
     void* operator()(Context context, const char* name) const
     {
-        return value_to_data(m_generator(context, name), NULL);
+        return value_to_data(m_generator(context, name));
     }
 
 private:

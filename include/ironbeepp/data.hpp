@@ -100,9 +100,7 @@ ValueType data_to_value(void* data)
  *
  * @tparam ValueType Type of @a value.
  * @param[in] value Value to store copy of.
- * @param[in] mpool Memory pool to register clean up function with.  If NULL,
- *                  then user is responsible for casting return to @c any* and
- *                  freeing when appropriate.
+ * @param[in] mpool Memory pool to register clean up function with.
  * @returns Generic pointer suitable for use with data_to_value().
  **/
 template <typename ValueType>
@@ -111,6 +109,8 @@ void* value_to_data(
     ib_mpool_t* mpool
 )
 {
+    assert(mpool != NULL);
+
     boost::any* value_any = new boost::any(value);
 
     if (mpool) {
@@ -120,6 +120,27 @@ void* value_to_data(
             reinterpret_cast<void*>(value_any)
         );
     }
+
+    return reinterpret_cast<void*>(value_any);
+}
+
+/**
+ * Store a copy of @a value and provide a @c void* for data_to_value().
+ *
+ * This _copies_ @a value and returns a @c void* containing information to
+ * recover the value.  The user is responsible for casting return to @c any*
+ * and deleting when appropriate.
+ *
+ * @tparam ValueType Type of @a value.
+ * @param[in] value Value to store copy of.
+ * @returns Generic pointer suitable for use with data_to_value().
+ **/
+template <typename ValueType>
+void* value_to_data(
+    const ValueType& value
+)
+{
+    boost::any* value_any = new boost::any(value);
 
     return reinterpret_cast<void*>(value_any);
 }
