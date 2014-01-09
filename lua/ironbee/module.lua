@@ -23,12 +23,12 @@
 -- Author: Sam Baskinger <sbaskinger@qualys.com>
 -- =========================================================================
 
-local ffi = require("ffi")
-local debug = require("debug")
-local string = require("string")
-local ibutil = require('ironbee/util')
+local ffi      = require("ffi")
+local debug    = require("debug")
+local string   = require("string")
+local ibutil   = require('ironbee/util')
 local ibengine = require("ironbee/engine")
-local ibtx = require("ironbee/tx")
+local ibtx     = require("ironbee/tx")
 
 -- The module to define.
 local _M = {}
@@ -278,7 +278,7 @@ end
 
 -- Declear the module configuration by taking a list of named types.
 --
--- Named types are created by calling 
+-- Named types are created by calling
 --   - moduleapi.num("name"),
 --   - moduleapi.string("name"),
 --   - moduleapi.void("name"),
@@ -306,7 +306,7 @@ moduleapi.declare_config = function(self, config_table)
     -- After the configuration is declared, set it up in the module.
     local mp = ffi.C.ib_engine_pool_main_get(self.ib_engine)
     local sz = ffi.sizeof(self.config_name, 1)
-    local default_config = 
+    local default_config =
         ffi.cast(self.config_name .. "*", ffi.C.ib_mpool_alloc(mp, sz))
     local rc = ffi.C.ib_module_config_initialize(
         self.ib_module,
@@ -420,6 +420,65 @@ _M.load_module = function(
     return tonumber(rc)
 end
 
+--
+-- Using the passed in c pointer, retrieve the Lua module configuration.
+--
+-- @param[in] ib_ctx IronBee context. An ib_context_t.
+-- @param[in] ib_module IronBee module to fetch. An ib_module_t.
+--
+-- @returns
+-- The module configuration, nil if none, and calls error(msg) on an error.
+local module_config_get = function(ib_ctx, ib_module)
+    -- Get the moduleapi object.
+    local lua_module = lua_modules[tonumber(ib_module.idx)]
+    if lua_module == nil then
+        error(string.format("Cannot find module %s.", tonumber(ib_module.idx)))
+    end
+
+    -- If a configuration name is specified, fetch the config for this contex.
+    if lua_module.config_name then
+        local cfg = ffi.new(lua_module.config_name .. " *[1]")
+        ffi.C.ib_context_module_config(ib_ctx, ib_module, cfg)
+        return cfg[0]
+    end
+
+    return nil
+end
+
+
+
+-- Set a Lua module's configuration.
+--
+-- @param[in] cp Configuration parser. An ib_cfgparser_t.
+-- @param[in] ctx Current configuration context. An ib_context_t.
+-- @param[in] mod Module structure to check. An ib_module_t.
+-- @param[in] name Configuration name.
+-- @param[in] val Value.
+--
+-- @returns
+-- - IB_OK On success.
+-- - Other on error and logs to @a cp.
+--
+_M.set = function(cp, ctx, mod, name, val)
+    cp  = ffi.cast("ib_cfgparser_t *", cp)
+    ctx = ffi.cast("ib_context_t *", ctx)
+    mod = ffi.cast("ib_module_t *", mod)
+
+    local cfg = module_config_get(ctx, mod);
+
+    if ffi.typeof('ib_num_t') == ffi.typeof(cfg[name]) then
+        cfg[name] = tonumber(val)
+    elseif ffi.typeof('ib_float_t') == ffi.typeof(cfg[name]) then
+        cfg[name] = tonumber(val)
+    else
+        cfg[name] = ffi.C.ib_mpool_strdup(
+            ffi.C.ib_engine_pool_main_get(cp.ib),
+            val)
+    end
+
+    return ffi.C.IB_OK
+end
+
 -- Return the callback for a module.
 --
 -- @param[in] ib Currently unused.
@@ -452,7 +511,7 @@ end
 -- @param[in] ctxlst List of contexts.
 -- @param[in] ib_conn The connection pointer. May be nil for null callbacks.
 -- @param[in] ib_tx The transaction pointer. May be nil.
--- @param[in] ib_ctx The configuration context in the case of 
+-- @param[in] ib_ctx The configuration context in the case of
 --            context events. If this is nil, then the main context
 --            is fetched out of ib_engine.
 --
@@ -481,18 +540,7 @@ _M.dispatch_module = function(
     end
 
     -- Get the moduleapi object.
-    local lua_module = lua_modules[tonumber(ib_module.idx)]
-    if lua_module == nil then
-        args:logError("Cannot find module %s.", tonumber(ib_module.idx))
-        return 1
-    end
-
-    -- If a configuration name is specified, fetch the config for this contex.
-    if lua_module.config_name then
-        local cfg = ffi.new(lua_module.config_name .. " *[1]")
-        ffi.C.ib_context_module_config(ib_ctx, ib_module, cfg)
-        args.config = cfg[0]
-    end
+    args.config = module_config_get(ib_ctx, ib_module);
 
     -- Event type.
     args.event = event

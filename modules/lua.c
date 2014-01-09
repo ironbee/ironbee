@@ -1815,6 +1815,108 @@ static ib_status_t modlua_dir_lua_include(
 }
 
 /**
+ * Implement the LuaSet directive.
+ * This will set a value in a loaded lua module's context configuration.
+ */
+static ib_status_t modlua_dir_lua_set(
+    ib_cfgparser_t  *cp,
+    const char      *name,
+    const ib_list_t *params,
+    void            *cbdata
+)
+{
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(params != NULL);
+
+    ib_status_t           rc;
+    int                   lua_rc;
+    lua_State            *L;
+    ib_engine_t          *ib = cp->ib;
+    const ib_list_node_t *node;
+    ib_context_t         *ctx;                /* Current context. */
+    modlua_cfg_t         *cfg;                /* Ibmod_lua config. Holds L. */
+    ib_module_t          *lua_module;         /* Lua module (not ibmod_lua). */
+    const char           *lua_module_name;
+    const char           *lua_module_setting;
+    const char           *lua_module_value;
+
+    if (ib_list_elements(params) != 3) {
+        ib_cfg_log_error(
+            cp,
+            "Expected 3 arguments to directive %s but %d given.",
+            name,
+            (int)ib_list_elements(params));
+        return IB_EINVAL;
+    }
+
+    node = ib_list_first_const(params);
+    lua_module_name = (const char *)ib_list_node_data_const(node);
+
+    node = ib_list_node_next_const(node);
+    lua_module_setting = (const char *)ib_list_node_data_const(node);
+
+    node = ib_list_node_next_const(node);
+    lua_module_value = (const char *)ib_list_node_data_const(node);
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to retrieve current context.");
+        return rc;
+    }
+
+    rc = ib_engine_module_get(ib, lua_module_name, &lua_module);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to find module \"%s.\"", lua_module_name);
+        return rc;
+    }
+
+    rc = modlua_cfg_get(ib, ctx, &cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    L = cfg->L;
+
+    lua_getglobal(L, "modlua");
+    if ( ! lua_istable(L, -1) ) {
+        ib_log_error(ib, "ibconfig is not a module table.");
+        lua_pop(L, lua_gettop(L));
+        return IB_EOTHER;
+    }
+
+    lua_getfield(L, -1, "set");
+    if ( ! lua_isfunction(L, -1) ) {
+        ib_log_error(ib, "modlua.set is not a function.");
+        lua_pop(L, lua_gettop(L));
+        return IB_EOTHER;
+    }
+
+    lua_pushlightuserdata(L, cp);
+    lua_pushlightuserdata(L, ctx);
+    lua_pushlightuserdata(L, lua_module);
+    lua_pushstring(L, lua_module_setting);
+    lua_pushstring(L, lua_module_value);
+
+    lua_rc = lua_pcall(L, 5, 1, 0);
+    if (lua_rc != 0) {
+        ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
+        rc = IB_EOTHER;
+        goto cleanup;
+    }
+    else if (lua_tonumber(L, -1) != IB_OK) {
+        rc = lua_tonumber(L, -1);
+        goto cleanup;
+    }
+
+    rc = IB_OK;
+cleanup:
+    /* Clear the stack. */
+    lua_pop(L, lua_gettop(L));
+    return rc;
+}
+
+/**
  * @param[in] cp Configuration parser.
  * @param[in] name The name of the directive.
  * @param[in] p1 The argument to the directive parameter.
@@ -1985,6 +2087,11 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "LuaInclude",
         modlua_dir_lua_include,
+        NULL
+    ),
+    IB_DIRMAP_INIT_LIST(
+        "LuaSet",
+        modlua_dir_lua_set,
         NULL
     ),
 

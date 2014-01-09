@@ -25,18 +25,17 @@
 -- @author Sam Baskinger <sbaskinger@qualys.com>
 --
 
-local ffi = require('ffi')
+local ffi       = require('ffi')
 
-local Action = require('ironbee/waggle/actionrule')
-
-local _M = {}
-_M.__index = _M
-_M._COPYRIGHT = "Copyright (C) 2010-2014 Qualys, Inc."
-_M._DESCRIPTION = "IronBee Configuration"
-_M._VERSION = "1.0"
-
-local Waggle = require('ironbee/waggle')
+local Action    = require('ironbee/waggle/actionrule')
+local Waggle    = require('ironbee/waggle')
 local Predicate = require('ironbee/predicate')
+
+local _M        = {}
+_M.__index      = _M
+_M._COPYRIGHT   = "Copyright (C) 2010-2014 Qualys, Inc."
+_M._DESCRIPTION = "IronBee Configuration"
+_M._VERSION     = "1.0"
 
 -- Pair of #defines from C code imported here.
 local IB_RULEMD_FLAG_EXPAND_MSG = 1
@@ -177,7 +176,7 @@ end
 
 -- Called by build_rule to add actions to rules.
 local add_action_to_rule = function(
-    ib, 
+    ib,
     name,
     arg,
     rule

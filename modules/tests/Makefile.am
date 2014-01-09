@@ -74,6 +74,7 @@ TEST_EXTRAS = \
        PcreModuleTest.test_match_capture_named.config \
        test_module_rules_lua.lua \
        test_lua_modules.lua \
+       test_lua_set.lua \
        TestIronBeeModuleRulesLua.operator_test.config
 
 if ENABLE_LUA
