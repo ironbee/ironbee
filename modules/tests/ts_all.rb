@@ -10,7 +10,7 @@ require 'tc_fast'
 require 'tc_parser_suite'
 require 'tc_modps'
 require 'tc_xrules'
+require 'tc_init_collection'
+require 'tc_txvars'
 
 require 'tc_trusted_proxy'
-
-require 'tc_init_collection'

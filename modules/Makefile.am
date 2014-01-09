@@ -6,6 +6,8 @@ SUBDIRS = . tests
 
 AM_LIBADD = $(top_builddir)/engine/libironbee.la
 
+module_DATA =
+
 if FREEBSD
 AM_LDFLAGS += -L/usr/local/lib -module -avoid-version -lssp_nonshared
 else
@@ -115,6 +117,10 @@ ibmod_lua_la_LIBADD = $(AM_LIBADD) \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
                       $(LIBM_LDFLAGS)
+
+lua_modules  = ibmod_txvars.lua
+EXTRA_DIST  += $(lua_modules)
+module_DATA += $(lua_modules)
 endif
 
 ibmod_rules_la_SOURCES = rules.c
@@ -252,5 +258,6 @@ all-local: $(abs_top_builddir)/lua/ironbee-ffi-h.lua
 	for f in $(+); do \
 		cp "$$f" $(abs_top_builddir)/modules/.libs/`basename "$$f"` ; \
 	done
+	cp "$(top_srcdir)"/modules/*.lua "$(top_builddir)"/modules/.libs/
 	cp -R $(abs_top_srcdir)/lua/ironbee $(abs_top_builddir)/modules/.libs
 endif
