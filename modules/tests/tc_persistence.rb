@@ -2,7 +2,7 @@ require 'tmpdir'
 require 'fileutils'
 
 # Test features of the core module which may include directives, actions, etc.
-class TestAction < Test::Unit::TestCase
+class TestPersistence < Test::Unit::TestCase
   include CLIPPTest
 
   def test_init_collection_1

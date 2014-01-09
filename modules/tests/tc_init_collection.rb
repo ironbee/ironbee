@@ -1,4 +1,4 @@
-class TestLibInjection < Test::Unit::TestCase
+class TestInitCollection < Test::Unit::TestCase
   include CLIPPTest
 
   def test_init_collection_load
