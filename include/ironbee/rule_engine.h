@@ -273,6 +273,232 @@ typedef ib_status_t (* ib_rule_injection_fn_t)(
 );
 
 /**
+ * @defgroup IronBeeRuleHooks Rule Engine Hooks
+ * @ingroup IronBeeRule
+ *
+ * Rule engine hooks.
+ *
+ * These hooks provide for fine grained introspection into rule engine
+ * activities.
+ *
+ * @{
+ */
+
+/**
+ * Called before each rule.
+ *
+ * @param[in] rule_exec Rule execution environment.
+ * @param[in] cbdata Callback data.
+ */
+typedef void (* ib_rule_pre_rule_fn_t)(
+    const ib_rule_exec_t *rule_exec,
+    void                 *cbdata
+);
+
+/**
+ * Called after each rule.
+ *
+ * @param[in] rule_exec Rule execution environment.
+ * @param[in] cbdata Callback data.
+ */
+typedef void (* ib_rule_post_rule_fn_t)(
+    const ib_rule_exec_t *rule_exec,
+    void                 *cbdata
+);
+
+/**
+ * Called before each operator.
+ *
+ * @param[in] rule_exec Rule execution environment.
+ * @param[in] op Operator to be executed.
+ * @param[in] instance_data Instance data of @a op.
+ * @param[in] invert True iff this operator is inverted.
+ * @param[in] value Input to operator.
+ * @param[in] cbdata Callback data.
+ */
+typedef void (* ib_rule_pre_operator_fn_t)(
+    const ib_rule_exec_t *rule_exec,
+    const ib_operator_t  *op,
+    void                 *instance_data,
+    bool                  invert,
+    const ib_field_t     *value,
+    void                 *cbdata
+);
+
+/**
+ * Called after each operator.
+ *
+ * @param[in] rule_exec Rule execution environment.
+ * @param[in] op Operator just executed.
+ * @param[in] instance_data Instance data of @a op.
+ * @param[in] invert True iff this operator is inverted.
+ * @param[in] value Input to operator.
+ * @param[in] op_rc Result code of operator execution.
+ * @param[in] result Result of operator.
+ * @param[in] capture Capture collection of operator.
+ * @param[in] cbdata Callback data.
+ */
+typedef void (* ib_rule_post_operator_fn_t)(
+    const ib_rule_exec_t *rule_exec,
+    const ib_operator_t  *op,
+    void                 *instance_data,
+    bool                  invert,
+    const ib_field_t     *value,
+    ib_status_t           op_rc,
+    ib_num_t              result,
+    ib_field_t           *capture,
+    void                 *cbdata
+);
+
+/**
+ * Called before each action.
+ *
+ * @param[in] rule_exec Rule execution environment.
+ * @param[in] action Action to be executed.
+ * @param[in] result Result of operator.
+ * @param[in] cbdata Callback data.
+ */
+typedef void (* ib_rule_pre_action_fn_t)(
+    const ib_rule_exec_t   *rule_exec,
+    const ib_action_inst_t *action,
+    ib_num_t                result,
+    void                   *cbdata
+);
+
+/**
+ * Called after each action.
+ *
+ * @param[in] rule_exec Rule execution environment.
+ * @param[in] action Action just executed.
+ * @param[in] result Result of operator.
+ * @Param[in] act_rc Result code of action.
+ * @param[in] cbdata Callback data.
+ */
+typedef void (* ib_rule_post_action_fn_t)(
+    const ib_rule_exec_t   *rule_exec,
+    const ib_action_inst_t *action,
+    ib_num_t                result,
+    ib_status_t             act_rc,
+    void                   *cbdata
+);
+
+/**
+ * Register a pre rule function.
+ *
+ * @sa ib_rule_pre_rule_fn_t
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] fn Function to register.
+ * @param[in] cbdata Callback data for @a fn.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_rule_register_pre_rule_fn(
+    ib_engine_t           *ib,
+    ib_rule_pre_rule_fn_t  fn,
+    void                  *cbdata
+)
+NONNULL_ATTRIBUTE(1, 2);
+
+/**
+ * Register a post rule function.
+ *
+ * @sa ib_rule_post_rule_fn_t
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] fn Function to register.
+ * @param[in] cbdata Callback data for @a fn.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_rule_register_post_rule_fn(
+    ib_engine_t            *ib,
+    ib_rule_post_rule_fn_t  fn,
+    void                   *cbdata
+)
+NONNULL_ATTRIBUTE(1, 2);
+
+/**
+ * Register a pre operator function.
+ *
+ * @sa ib_rule_pre_operator_fn_t
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] fn Function to register.
+ * @param[in] cbdata Callback data for @a fn.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_rule_register_pre_operator_fn(
+    ib_engine_t               *ib,
+    ib_rule_pre_operator_fn_t  fn,
+    void                      *cbdata
+)
+NONNULL_ATTRIBUTE(1, 2);
+
+/**
+ * Register a post operator function.
+ *
+ * @sa ib_rule_post_operator_fn_t
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] fn Function to register.
+ * @param[in] cbdata Callback data for @a fn.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_rule_register_post_operator_fn(
+    ib_engine_t                *ib,
+    ib_rule_post_operator_fn_t  fn,
+    void                       *cbdata
+)
+NONNULL_ATTRIBUTE(1, 2);
+
+/**
+ * Register a pre action function.
+ *
+ * @sa ib_rule_pre_action_fn_t
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] fn Function to register.
+ * @param[in] cbdata Callback data for @a fn.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_rule_register_pre_action_fn(
+    ib_engine_t             *ib,
+    ib_rule_pre_action_fn_t  fn,
+    void                    *cbdata
+)
+NONNULL_ATTRIBUTE(1, 2);
+
+/**
+ * Register a post action function.
+ *
+ * @sa ib_rule_post_action_fn_t
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] fn Function to register.
+ * @param[in] cbdata Callback data for @a fn.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_rule_register_post_action_fn(
+    ib_engine_t              *ib,
+    ib_rule_post_action_fn_t  fn,
+    void                     *cbdata
+)
+NONNULL_ATTRIBUTE(1, 2);
+
+/** @} */
+
+/**
  * Set a rule engine value (for configuration)
  *
  * @param[in] cp Configuration parser

@@ -16,7 +16,8 @@ check_PROGRAMS = \
 	test_engine_manager \
 	test_kvstore \
 	test_operator \
-	test_rule_inject
+	test_rule_inject \
+  test_rule_hooks
 
 if CPP
 check_PROGRAMS += \
@@ -42,6 +43,7 @@ TEST_EXTRAS = \
        ParseTreeTest.config \
        Huge.config \
        RuleInjectTest.test_inject.config \
+       RuleHooksTest.test_basic.config \
        test_ironbee_lua_modules.lua \
        test_ironbee_lua_configs.lua
 
@@ -66,6 +68,9 @@ test_engine_manager_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
 
 test_rule_inject_SOURCES = test_rule_inject.cpp
 test_rule_inject_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
+
+test_rule_hooks_SOURCES = test_rule_hooks.cpp
+#test_rule_hooks_LDADD = $(LDADD) $(top_builddir)/tests/ibtest_util.o
 
 test_config_SOURCES = test_config.cpp \
                       mock_module.c

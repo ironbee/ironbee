@@ -89,6 +89,7 @@ struct ib_rule_target_t {
     ib_list_t       *tfn_list;   /**< List of transformations */
 };
 
+
 /**
  * Rule engine.
  */
@@ -122,6 +123,16 @@ struct ib_rule_engine_t {
         ib_var_source_t *field_name;
         ib_var_source_t *field_name_full;
     } source;
+
+    /* Hooks */
+    struct {
+        ib_list_t *pre_rule;
+        ib_list_t *post_rule;
+        ib_list_t *pre_action;
+        ib_list_t *post_action;
+        ib_list_t *pre_operator;
+        ib_list_t *post_operator;
+    } hooks;
 };
 
 /**
@@ -154,6 +165,43 @@ struct ib_rule_operator_inst_t {
     const char                 *params;  /**< Parameters passed to create */
     ib_field_t                 *fparam;  /**< Parameters as a field */
 };
+
+/*! Pre rule hook. */
+struct ib_rule_pre_rule_hook_t {
+    ib_rule_pre_rule_fn_t fn; /**< Function. */
+    void *data;               /**< Callback data. */
+};
+typedef struct ib_rule_pre_rule_hook_t ib_rule_pre_rule_hook_t;
+/*! Post rule hook. */
+struct ib_rule_post_rule_hook_t {
+    ib_rule_post_rule_fn_t fn; /**< Function. */
+    void *data;                /**< Callback data. */
+};
+typedef struct ib_rule_post_rule_hook_t ib_rule_post_rule_hook_t;
+/*! Pre operator hook. */
+struct ib_rule_pre_operator_hook_t {
+    ib_rule_pre_operator_fn_t fn; /**< Function. */
+    void *data;                   /**< Callback data. */
+};
+typedef struct ib_rule_pre_operator_hook_t ib_rule_pre_operator_hook_t;
+/*! Post operator hook. */
+struct ib_rule_post_operator_hook_t {
+    ib_rule_post_operator_fn_t fn; /**< Function. */
+    void *data;                    /**< Callback data. */
+};
+typedef struct ib_rule_post_operator_hook_t ib_rule_post_operator_hook_t;
+/*! Pre action hook. */
+struct ib_rule_pre_action_hook_t {
+    ib_rule_pre_action_fn_t fn; /**< Function. */
+    void *data;                 /**< Callback data. */
+};
+typedef struct ib_rule_pre_action_hook_t ib_rule_pre_action_hook_t;
+/*! Post action hook. */
+struct ib_rule_post_action_hook_t {
+    ib_rule_post_action_fn_t fn; /**< Function. */
+    void *data;                  /**< Callback data. */
+};
+typedef struct ib_rule_post_action_hook_t ib_rule_post_action_hook_t;
 
 /**
  * Initialize the rule engine.

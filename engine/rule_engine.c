@@ -915,12 +915,33 @@ static ib_status_t execute_action(const ib_rule_exec_t *rule_exec,
                       "Executing %s rule action %s",
                       name, action->action->name);
 
+    {
+        ib_list_node_t *node;
+        IB_LIST_LOOP(rule_exec->ib->rule_engine->hooks.pre_action, node) {
+            const ib_rule_pre_action_hook_t *hook =
+                (const ib_rule_pre_action_hook_t *)
+                    ib_list_node_data_const(node);
+            hook->fn(rule_exec, action, result, hook->data);
+        }
+    }
+
     /* Run it, check the results */
     rc = ib_action_execute(rule_exec, action);
     if ( rc != IB_OK ) {
         ib_rule_log_error(rule_exec,
                           "Action \"%s\" returned an error: %s",
                           action->action->name, ib_status_to_string(rc));
+    }
+
+
+    {
+        ib_list_node_t *node;
+        IB_LIST_LOOP(rule_exec->ib->rule_engine->hooks.post_action, node) {
+            const ib_rule_post_action_hook_t *hook =
+                (const ib_rule_post_action_hook_t *)
+                    ib_list_node_data_const(node);
+            hook->fn(rule_exec, action, result, rc, hook->data);
+        }
     }
 
     return IB_OK;
@@ -1726,6 +1747,23 @@ static ib_status_t execute_phase_operator(ib_rule_exec_t *rule_exec,
                               ib_status_to_string(rc));
         }
 
+        {
+            ib_list_node_t *node;
+            IB_LIST_LOOP(rule_exec->ib->rule_engine->hooks.pre_operator, node) {
+                const ib_rule_pre_operator_hook_t *hook =
+                    (const ib_rule_pre_operator_hook_t *)
+                        ib_list_node_data_const(node);
+                hook->fn(
+                    rule_exec,
+                    opinst->op,
+                    opinst->instance_data,
+                    opinst->invert,
+                    value,
+                    hook->data
+                );
+            }
+        }
+
         /* @todo remove the cast-away of the constness of value */
         op_rc = ib_operator_inst_execute(
             opinst->op,
@@ -1739,6 +1777,27 @@ static ib_status_t execute_phase_operator(ib_rule_exec_t *rule_exec,
             ib_rule_log_warn(rule_exec, "Operator returned an error: %s",
                              ib_status_to_string(op_rc));
         }
+
+        {
+            ib_list_node_t *node;
+            IB_LIST_LOOP(rule_exec->ib->rule_engine->hooks.post_operator, node) {
+                const ib_rule_post_operator_hook_t *hook =
+                    (const ib_rule_post_operator_hook_t *)
+                        ib_list_node_data_const(node);
+                hook->fn(
+                    rule_exec,
+                    opinst->op,
+                    opinst->instance_data,
+                    opinst->invert,
+                    value,
+                    op_rc,
+                    result,
+                    get_capture(rule_exec),
+                    hook->data
+                );
+            }
+        }
+
         rc = ib_rule_log_exec_op(rule_exec->exec_log, opinst, op_rc);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec, "Failed to log operator execution: %s",
@@ -2033,6 +2092,16 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
         return IB_EOTHER;
     }
 
+    {
+        ib_list_node_t *node;
+        IB_LIST_LOOP(rule_exec->ib->rule_engine->hooks.pre_rule, node) {
+            const ib_rule_pre_rule_hook_t *hook =
+                (const ib_rule_pre_rule_hook_t *)
+                    ib_list_node_data_const(node);
+            hook->fn(rule_exec, hook->data);
+        }
+    }
+
     /* Set the rule in the execution object */
     rc = rule_exec_push_rule(rule_exec, rule);
     if (rc != IB_OK) {
@@ -2099,6 +2168,16 @@ cleanup:
     trc = rule_exec_pop_rule(rule_exec);
     if (trc != IB_OK) {
         /* Do nothing */
+    }
+
+    {
+        ib_list_node_t *node;
+        IB_LIST_LOOP(rule_exec->ib->rule_engine->hooks.post_rule, node) {
+            const ib_rule_post_rule_hook_t *hook =
+                (const ib_rule_post_rule_hook_t *)
+                    ib_list_node_data_const(node);
+            hook->fn(rule_exec, hook->data);
+        }
     }
 
     return rc;
@@ -3235,6 +3314,56 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
     /* Setup the error page. */
     rule_engine->error_page_fn = default_error_page_fn;
     rule_engine->error_page_cbdata = NULL;
+
+    /* Setup hook lists */
+    rc = ib_list_create(&(rule_engine->hooks.pre_rule), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+            "Error creating rule engine pre rule hook callback list: %s",
+            ib_status_to_string(rc)
+        );
+        return rc;
+    }
+    rc = ib_list_create(&(rule_engine->hooks.post_rule), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+            "Error creating rule engine post rule hook callback list: %s",
+            ib_status_to_string(rc)
+        );
+        return rc;
+    }
+    rc = ib_list_create(&(rule_engine->hooks.pre_operator), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+            "Error creating rule engine pre operator hook callback list: %s",
+            ib_status_to_string(rc)
+        );
+        return rc;
+    }
+    rc = ib_list_create(&(rule_engine->hooks.post_operator), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+            "Error creating rule engine post operator hook callback list: %s",
+            ib_status_to_string(rc)
+        );
+        return rc;
+    }
+    rc = ib_list_create(&(rule_engine->hooks.pre_action), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+            "Error creating rule engine pre action hook callback list: %s",
+            ib_status_to_string(rc)
+        );
+        return rc;
+    }
+    rc = ib_list_create(&(rule_engine->hooks.post_action), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+            "Error creating rule engine post action hook callback list: %s",
+            ib_status_to_string(rc)
+        );
+        return rc;
+    }
 
     *p_rule_engine = rule_engine;
     return IB_OK;
@@ -5580,3 +5709,136 @@ ib_status_t ib_rule_register_injection_fn(
 
     return rc;
 }
+
+ib_status_t ib_rule_register_pre_rule_fn(
+    ib_engine_t *ib,
+    ib_rule_pre_rule_fn_t fn,
+    void *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(fn != NULL);
+
+    ib_rule_pre_rule_hook_t *hook;
+    ib_list_t *hook_list = ib->rule_engine->hooks.pre_rule;
+
+    hook = (ib_rule_pre_rule_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    if (hook == NULL) {
+        return IB_EALLOC;
+    }
+    hook->fn = fn;
+    hook->data = cbdata;
+
+    return ib_list_push(hook_list, hook);
+}
+
+ib_status_t ib_rule_register_post_rule_fn(
+    ib_engine_t *ib,
+    ib_rule_post_rule_fn_t fn,
+    void *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(fn != NULL);
+
+    ib_rule_post_rule_hook_t *hook;
+    ib_list_t *hook_list = ib->rule_engine->hooks.post_rule;
+
+    hook = (ib_rule_post_rule_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    if (hook == NULL) {
+        return IB_EALLOC;
+    }
+    hook->fn = fn;
+    hook->data = cbdata;
+
+    return ib_list_push(hook_list, hook);
+}
+
+ib_status_t ib_rule_register_pre_operator_fn(
+    ib_engine_t *ib,
+    ib_rule_pre_operator_fn_t fn,
+    void *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(fn != NULL);
+
+    ib_rule_pre_operator_hook_t *hook;
+    ib_list_t *hook_list = ib->rule_engine->hooks.pre_operator;
+
+    hook = (ib_rule_pre_operator_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    if (hook == NULL) {
+        return IB_EALLOC;
+    }
+    hook->fn = fn;
+    hook->data = cbdata;
+
+    return ib_list_push(hook_list, hook);
+}
+
+ib_status_t ib_rule_register_post_operator_fn(
+    ib_engine_t *ib,
+    ib_rule_post_operator_fn_t fn,
+    void *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(fn != NULL);
+
+    ib_rule_post_operator_hook_t *hook;
+    ib_list_t *hook_list = ib->rule_engine->hooks.post_operator;
+
+    hook = (ib_rule_post_operator_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    if (hook == NULL) {
+        return IB_EALLOC;
+    }
+    hook->fn = fn;
+    hook->data = cbdata;
+
+    return ib_list_push(hook_list, hook);
+}
+
+ib_status_t ib_rule_register_pre_action_fn(
+    ib_engine_t *ib,
+    ib_rule_pre_action_fn_t fn,
+    void *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(fn != NULL);
+
+    ib_rule_pre_action_hook_t *hook;
+    ib_list_t *hook_list = ib->rule_engine->hooks.pre_action;
+
+    hook = (ib_rule_pre_action_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    if (hook == NULL) {
+        return IB_EALLOC;
+    }
+    hook->fn = fn;
+    hook->data = cbdata;
+
+    return ib_list_push(hook_list, hook);
+}
+
+ib_status_t ib_rule_register_post_action_fn(
+    ib_engine_t *ib,
+    ib_rule_post_action_fn_t fn,
+    void *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(fn != NULL);
+
+    ib_rule_post_action_hook_t *hook;
+    ib_list_t *hook_list = ib->rule_engine->hooks.post_action;
+
+    hook = (ib_rule_post_action_hook_t *)ib_mpool_alloc(hook_list->mp, sizeof(*hook));
+    if (hook == NULL) {
+        return IB_EALLOC;
+    }
+    hook->fn = fn;
+    hook->data = cbdata;
+
+    return ib_list_push(hook_list, hook);
+}
+
