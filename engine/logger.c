@@ -931,6 +931,7 @@ static void default_log_writer(void *record, void *cbdata) {
         msg->prefix,
         (int)msg->msg_sz,
         (char *)msg->msg);
+    fflush(cfg->file);
 
     ib_logger_standard_msg_free(msg);
 }
