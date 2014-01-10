@@ -831,19 +831,19 @@ static ib_status_t act_setvar_execute(
     assert(rule_exec->tx->ib != NULL);
     assert(rule_exec->tx->mp != NULL);
 
-    ib_status_t      rc;
-    ib_field_t      *cur_field = NULL;
-    ib_tx_t         *tx = rule_exec->tx;
-    ib_engine_t     *ib = tx->ib;
-    ib_mpool_t      *mp = tx->mp;
-    ib_list_t       *result = NULL; /* List of target fields: ib_field_t* */
-    ib_var_target_t *expanded_target;
-    const ib_field_t      *argument;
+    ib_status_t       rc;
+    ib_field_t       *cur_field = NULL;
+    ib_tx_t          *tx        = rule_exec->tx;
+    ib_engine_t      *ib        = tx->ib;
+    ib_mpool_t       *mp        = tx->mp;
+    const ib_list_t  *result    = NULL; /* List of target fields: ib_field_t* */
+    const ib_field_t *argument;
+    ib_var_target_t  *expanded_target;
 
     /* Data should be a setvar_data_t created in our create function */
     const setvar_data_t *setvar_data = (const setvar_data_t *)data;
-    const char *ts = setvar_data->target_str;
-    int tslen = (int)setvar_data->target_str_len;
+    const char          *ts          = setvar_data->target_str;
+    int                  tslen       = (int)setvar_data->target_str_len;
 
     /* Expand target. */
     rc = ib_var_target_expand(
@@ -863,24 +863,31 @@ static ib_status_t act_setvar_execute(
     }
 
     /* Remove target, recording results. */
-    rc = ib_var_target_remove(
+    rc = ib_var_target_get(
         expanded_target,
         &result,
         mp,
         tx->var_store
     );
-    if (rc != IB_ENOENT && rc != IB_OK) {
+    if (rc == IB_OK) {
+        if (result != NULL && ib_list_elements(result) > 0) {
+            cur_field = (ib_field_t *)ib_list_node_data_const(
+                ib_list_first_const(result));
+        }
+    }
+    else if (rc == IB_ENOENT) {
+        cur_field = NULL;
+    }
+    else {
         ib_rule_log_error(
             rule_exec,
-            "setvar %.*s: Failed to remove value: %s",
+            "setvar %.*s: Failed to get value: %s",
             tslen, ts,
             ib_status_to_string(rc)
         );
         return rc;
     }
-    if (result != NULL && ib_list_elements(result) > 0) {
-        cur_field = (ib_field_t *)ib_list_node_data(ib_list_first(result));
-    }
+
 
     /* Pull out the argument to setvar. */
     argument = setvar_data->argument;

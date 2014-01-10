@@ -45,4 +45,24 @@ class TestAction < Test::Unit::TestCase
     assert_log_match /\[value of s\]: abc/
 
   end
+
+  def test_setvar_4element_array
+    clipp(
+      :input_hashes => [simple_hash("GET /foo\n")],
+      :default_site_config => <<-EOS
+        Rule foo @nop x id:1 rev:1 phase:REQUEST_HEADER "setvar:TestCollection:a=1"
+        Rule foo @nop x id:3 rev:1 phase:REQUEST_HEADER "setvar:TestCollection:b=2"
+        Rule foo @nop x id:4 rev:1 phase:REQUEST_HEADER "setvar:TestCollection:b=3"
+        Rule foo @nop x id:5 rev:1 phase:REQUEST_HEADER "setvar:TestCollection:c=4"
+
+        Rule TestCollection @clipp_print "TestCollection" id:8 rev:1 phase:REQUEST_HEADER
+      EOS
+    )
+
+    assert_no_issues
+    assert_log_match /clipp_print \[TestCollection\]: 1/
+    assert_log_match /clipp_print \[TestCollection\]: 3/
+    assert_log_match /clipp_print \[TestCollection\]: 4/
+
+  end
 end
