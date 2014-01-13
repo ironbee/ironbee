@@ -234,4 +234,10 @@ _M.Validate = function(self)
     end
 end
 
+
+-- Aliases for backwards compatibility with 0.8.x. Remove.
+_M.Sig    = Rule
+_M.SigExt = RuleExt
+_M.StrSig = StrRule
+
 return _M
