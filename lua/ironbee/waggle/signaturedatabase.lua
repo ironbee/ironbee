@@ -59,7 +59,7 @@ SignatureDatabase.Rule = function(self, rule_id, rule_version)
     return sig
 end
 
-SignatureDatabase.StrSig = function(self, rule_id, rule_version)
+SignatureDatabase.StrRule = function(self, rule_id, rule_version)
 
     if self.db[rule_id] ~= nil then
         error(

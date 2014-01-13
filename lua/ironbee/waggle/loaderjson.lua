@@ -45,7 +45,7 @@ end
 
 -- Rule loading that is common to all rule types.
 --
--- @returns Table of values used to build the rule and a sig object. 
+-- @returns Table of values used to build the rule and a sig object.
 --          data, sig = self:loadCommonRule(jsonsig)
 LoaderJSON.loadCommonRule = function(self, jsonsig)
     local data = {
@@ -68,7 +68,7 @@ LoaderJSON.loadCommonRule = function(self, jsonsig)
     for _, action in ipairs(jsonsig.actions) do
         local name, arg = action.name, action.argument
         if name == 'id'  then
-            data.id = arg 
+            data.id = arg
         elseif name == 'rev' then
             data.version = arg
         elseif name == 'msg' then
@@ -112,7 +112,7 @@ LoaderJSON.applyCommonRule = function(self, jsonsig, sig, data)
         sig:op(data.op, data.op_arg)
     end
 
-    for _, field in ipairs(jsonsig.fields) do 
+    for _, field in ipairs(jsonsig.fields) do
         local f = field.collection
         if field.selector then
             f = f .. ':' .. field.selector
@@ -169,7 +169,7 @@ LoaderJSON.load = function(self, json, db)
     local sigs = ibjson.to_value(json)
 
     if #sigs > 0 then
-        for _, jsonsig in ipairs(sigs) do 
+        for _, jsonsig in ipairs(sigs) do
 
             local mksig_fn
             local load_fn
@@ -182,7 +182,7 @@ LoaderJSON.load = function(self, json, db)
                 mksig_fn = db.RuleExt
                 load_fn = self.loadExtRule
             elseif jsonsig.rule_type == 'StreamInspect' then
-                mksig_fn = db.StrSig
+                mksig_fn = db.StrRule
                 load_fn = self.loadStrRule
             end
 

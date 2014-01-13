@@ -1,7 +1,7 @@
 --[[-------------------------------------------------------------------------
   Waggle is a Domain Specific Language in Lua to describe IronBee rules.
 
-  The name, Waggle, refers to the dance that a bee will perform to 
+  The name, Waggle, refers to the dance that a bee will perform to
   tell other bees that there is pollen to be had.
 --]]-------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ end
 
 -- List of signature types so that these constructor functions
 -- can be replaced.
-_M.SIGNATURE_TYPES = { "Rule", "Action", "RuleExt", "StrSig" }
+_M.SIGNATURE_TYPES = { "Rule", "Action", "RuleExt", "StrRule" }
 
 -- Create a new, incomplete, signature (aka rule) representation
 -- and register it with a global database of rules.
@@ -105,13 +105,13 @@ _M.RuleExt = function(self, rule_id, rule_version)
 end
 
 -- See Rule.
-_M.StrSig = function(self, rule_id, rule_version)
+_M.StrRule = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    local sig = _M.DEFAULT_RULE_DB:StrSig(rule_id, rule_version)
+    local sig = _M.DEFAULT_RULE_DB:StrRule(rule_id, rule_version)
 
     set_sig_meta(sig)
 
@@ -177,9 +177,9 @@ end
 --       [[A signature.]],
 --       Rule(...)...
 --     }
--- 
+--
 -- Elements in the list that are stings are queued up as comments.
--- Elements that are table are treated as singature types and have 
+-- Elements that are table are treated as singature types and have
 --   :tag(recipe_tag), :after(previous_id) and :comment(comment_text)
 --   added to them.
 _M.Recipe = function(self, recipe_tag)
