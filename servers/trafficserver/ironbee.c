@@ -134,6 +134,9 @@
 #include <ironbee/util.h>
 #include <ironbee/string.h>
 
+/* TxLog private "API" */
+#include "../../modules/txlog.h"
+
 static void addr2str(const struct sockaddr *addr, char *str, int *port);
 
 #define ADDRSIZE 48 /* what's the longest IPV6 addr ? */
@@ -152,6 +155,9 @@ typedef struct {
     const char      *log_file;       /**< IronBee log file */
     int              log_level;      /**< IronBee log level */
     bool             log_disable;    /**< Disable logging? */
+
+    const char      *txlogfile;
+    TSTextLogObject  txlogger;
 } module_data_t;
 
 /* Global module data */
@@ -164,6 +170,8 @@ static module_data_t module_data =
     NULL,                            /* .log_file */
     IB_LOG_WARNING,                  /* .log_level */
     false,                           /* .log_disable */
+    "IronbeeTxLog",
+    NULL
 };
 
 typedef enum {
@@ -2577,10 +2585,31 @@ static void txlog_record_element(
     assert(cbdata != NULL);
 
     ib_logger_standard_msg_t *msg      = (ib_logger_standard_msg_t *)element;
-    // module_data_t            *mod_data = (module_data_t *)cbdata;
+    module_data_t            *mod_data = (module_data_t *)cbdata;
 
     /* FIXME - expand msg->msg with Traffic Server variables. */
-    /* FIXME - write log file. */
+    /* I don't understand what is TBD here! */
+
+    if (!mod_data->txlogger) {
+        /* txlogging off  */
+        return;
+    }
+
+    /* write log file. */
+    if (msg->msg != NULL) {
+        /* In practice, this is always NULL for txlogs. */
+        if (msg->prefix != NULL) {
+            TSTextLogObjectWrite(mod_data->txlogger, "%s %.*s", msg->prefix,
+                                 (int)msg->msg_sz, (const char *)msg->msg);
+        }
+        else {
+            TSTextLogObjectWrite(mod_data->txlogger, "%.*s",
+                                 (int)msg->msg_sz, (const char *)msg->msg);
+        }
+        /* FIXME: once debugged, take this out for speed */
+        TSTextLogObjectFlush(mod_data->txlogger);
+    }
+
 
     ib_logger_standard_msg_free(msg);
 }
@@ -2602,11 +2631,17 @@ static ib_status_t txlog_record(
     void               *cbdata
 )
 {
+    module_data_t *mod_data = (module_data_t *)cbdata;
     assert(logger != NULL);
     assert(writer != NULL);
     assert(cbdata != NULL);
 
     ib_status_t    rc;
+
+    if (!mod_data->txlogger) {
+        /* txlogging off  */
+        return IB_OK;
+    }
 
     rc = ib_logger_dequeue(logger, writer, txlog_record_element, cbdata);
     if (rc != IB_OK) {
@@ -2678,6 +2713,7 @@ static ib_status_t engine_postconfig_fn(
     assert(ib != NULL);
     assert(cbdata != NULL);
 
+    int rv;
     ib_status_t            rc;
     module_data_t         *mod_data = (module_data_t *)cbdata;
     ib_logger_format_fn_t  txlog_format_fn;
@@ -2685,7 +2721,7 @@ static ib_status_t engine_postconfig_fn(
 
     rc = ib_logger_fetch_format_fn(
         ib_engine_logger_get(ib),
-        "TxLogModuleFormatFn", /* FIXME: use TXLOG_FORMAT_FN_NAME in txlog.h */
+        TXLOG_FORMAT_FN_NAME,
         &txlog_format_fn,
         &txlog_format_cbdata);
     if (rc == IB_OK) {
@@ -2703,9 +2739,17 @@ static ib_status_t engine_postconfig_fn(
             txlog_record,              /* Record. */
             mod_data                   /* Callback data. */
         );
+        /* Open logfile for txlog */
+        rv = TSTextLogObjectCreate(mod_data->txlogfile,
+                                   TS_LOG_MODE_ADD_TIMESTAMP,
+                                   &mod_data->txlogger);
+        if (rv != TS_SUCCESS) {
+            mod_data->txlogger = NULL;
+            return IB_EUNKNOWN;
+        }
     }
 
-    return IB_OK;
+    return rc;
 }
 
 /**
@@ -2787,7 +2831,7 @@ static ib_status_t read_ibconf(
     mod_data->log_file = DEFAULT_LOG;
 
     /* const-ness mismatch looks like an oversight, so casting should be fine */
-    while (c = getopt(argc, (char**)argv, "l:Lv:d:m:"), c != -1) {
+    while (c = getopt(argc, (char**)argv, "l:Lv:d:m:x:"), c != -1) {
         switch(c) {
         case 'L':
             mod_data->log_disable = true;
@@ -2801,6 +2845,9 @@ static ib_status_t read_ibconf(
             break;
         case 'm':
             mod_data->max_engines = atoi(optarg);
+            break;
+        case 'x':
+            mod_data->txlogfile = strdup(optarg);
             break;
         default:
             TSError("[ironbee] Unrecognised option -%c ignored.", optopt);
