@@ -198,6 +198,21 @@ typedef struct log_pipe_writer_data_t {
 } log_pipe_writer_data_t;
 
 /**
+ * Free messages created by log_pipe_format.
+ * @param[in] logger The logger.
+ * @param[in] msg The message to free.
+ * @param[in] cbdata Callback data. Unused.
+ */
+static void log_pipe_free(ib_logger_t *logger, void *msg, void *cbdata) {
+    assert(logger != NULL);
+    assert(msg != NULL);
+
+    log_pipe_log_rec_t *rec = (log_pipe_log_rec_t *)msg;
+
+    free(rec->file);
+    free(rec);
+}
+/**
  * Do the writing of a single record.
  *
  * @param[in] record The log record.
@@ -262,8 +277,6 @@ static void log_pipe_writer(void *record, void *cbdata) {
         }
     }
     MUTEX_UNLOCK;
-    free(rec->file);
-    free(rec);
 }
 
 ib_status_t log_pipe_record(
@@ -352,15 +365,20 @@ static void log_pipe_close(void *data)
  */
 static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
 {
-    ib_mpool_t *mp;
+    ib_mpool_t         *mp;
+    ib_logger_format_t *format;
+    ib_logger_t        *logger;
+    ib_status_t         rc;
 
+    assert(ib != NULL);
     assert(cfg != NULL);
 
     if (cfg->cmdline == NULL) {
         ib_log_notice(ib, "Piped log not configured");
         return IB_OK;
     }
-    mp = ib_engine_pool_main_get(ib);
+    mp     = ib_engine_pool_main_get(ib);
+    logger = ib_engine_logger_get(ib);
 
     cfg->pipe = popen(cfg->cmdline, "w");
     if (cfg->pipe == NULL) {
@@ -370,7 +388,13 @@ static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
     }
     ib_mpool_cleanup_register(mp, log_pipe_close, cfg);
 
-    ib_logger_t *logger = ib_engine_logger_get(ib);
+    rc = ib_logger_format_create(
+        logger,
+        &format,
+        log_pipe_format,
+        ib,
+        log_pipe_free,
+        NULL);
 
     /* Now our pipe is up-and-running, register our own logger */
     ib_logger_writer_clear(logger);
@@ -382,8 +406,7 @@ static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
         NULL,
         NULL, /* Reopen */
         NULL,
-        log_pipe_format,
-        ib,
+        format,
         log_pipe_record,
         ib
     );

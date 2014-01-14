@@ -58,9 +58,6 @@ extern "C" {
         }
 
         test_log << "\n";
-
-        ib_logger_standard_msg_free(stdmsg);
-
     }
     ib_status_t test_record_handler(
         ib_logger_t        *logger,
@@ -75,8 +72,7 @@ extern "C" {
 
 TEST_F(TxLogTest, Load) {
 
-    ib_logger_format_fn_t        format_fn;
-    void                        *cbdata;
+    ib_logger_format_t *format;
 
     std::string config =
         std::string(
@@ -99,11 +95,10 @@ TEST_F(TxLogTest, Load) {
 
     ASSERT_EQ(
         IB_OK,
-        ib_logger_fetch_format_fn(
+        ib_logger_fetch_format(
             ib_engine_logger_get(ib_engine),
             TXLOG_FORMAT_FN_NAME,
-            &format_fn,
-            &cbdata)
+            &format)
     );
 
     ASSERT_EQ(
@@ -113,7 +108,7 @@ TEST_F(TxLogTest, Load) {
             NULL,                  NULL,   /* Open. */
             NULL,                  NULL,   /* Close. */
             NULL,                  NULL,   /* Reopen. */
-            format_fn,             cbdata, /* Format. */
+            format,                        /* Format. */
             test_record_handler,   NULL    /* Record. */
         )
     );
@@ -125,8 +120,7 @@ TEST_F(TxLogTest, Load) {
 
 TEST_F(TxLogTest, BlockReqeust) {
 
-    ib_logger_format_fn_t        format_fn;
-    void                        *cbdata;
+    ib_logger_format_t *format;
 
     std::string config =
         std::string(
@@ -149,11 +143,10 @@ TEST_F(TxLogTest, BlockReqeust) {
 
     ASSERT_EQ(
         IB_OK,
-        ib_logger_fetch_format_fn(
+        ib_logger_fetch_format(
             ib_engine_logger_get(ib_engine),
             TXLOG_FORMAT_FN_NAME,
-            &format_fn,
-            &cbdata)
+            &format)
     );
 
     ASSERT_EQ(
@@ -163,7 +156,7 @@ TEST_F(TxLogTest, BlockReqeust) {
             NULL,                  NULL,   /* Open. */
             NULL,                  NULL,   /* Close. */
             NULL,                  NULL,   /* Reopen. */
-            format_fn,             cbdata, /* Format. */
+            format,                        /* Format. */
             test_record_handler,   NULL    /* Record. */
         )
     );
@@ -175,8 +168,7 @@ TEST_F(TxLogTest, BlockReqeust) {
 
 TEST_F(TxLogTest, BlockResponse) {
 
-    ib_logger_format_fn_t        format_fn;
-    void                        *cbdata;
+    ib_logger_format_t *format;
 
     std::string config =
         std::string(
@@ -199,11 +191,10 @@ TEST_F(TxLogTest, BlockResponse) {
 
     ASSERT_EQ(
         IB_OK,
-        ib_logger_fetch_format_fn(
+        ib_logger_fetch_format(
             ib_engine_logger_get(ib_engine),
             TXLOG_FORMAT_FN_NAME,
-            &format_fn,
-            &cbdata)
+            &format)
     );
 
     ASSERT_EQ(
@@ -213,7 +204,7 @@ TEST_F(TxLogTest, BlockResponse) {
             NULL,                  NULL,   /* Open. */
             NULL,                  NULL,   /* Close. */
             NULL,                  NULL,   /* Reopen. */
-            format_fn,             cbdata, /* Format. */
+            format,                        /* Format. */
             test_record_handler,   NULL    /* Record. */
         )
     );

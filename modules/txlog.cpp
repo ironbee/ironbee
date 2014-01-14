@@ -671,13 +671,23 @@ TxLogModule::TxLogModule(IronBee::Module module):
         IronBee::delete_c_trampoline
     )
 {
+    ib_logger_format_t *format;
+
+    IronBee::throw_if_error(
+        ib_logger_format_create(
+            ib_engine_logger_get(module.engine().ib()),
+            &format,
+            txlog_logger_format_fn,
+            NULL,
+            ib_logger_standard_msg_free,
+            NULL));
+
     /* Register the TxLog logger format function. */
     IronBee::throw_if_error(
-        ib_logger_register_format_fn(
+        ib_logger_register_format(
             ib_engine_logger_get(module.engine().ib()),
             TXLOG_FORMAT_FN_NAME,
-            txlog_logger_format_fn,
-            NULL));
+            format));
 
     /* Set the default configuration. */
     module.set_configuration_data_pod(TxLogConfig());
