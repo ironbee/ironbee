@@ -395,6 +395,9 @@ static ib_status_t log_pipe_open(ib_engine_t *ib, log_pipe_cfg *cfg)
         ib,
         log_pipe_free,
         NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Now our pipe is up-and-running, register our own logger */
     ib_logger_writer_clear(logger);
