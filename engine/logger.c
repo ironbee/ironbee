@@ -40,8 +40,7 @@ struct ib_logger_writer_t {
     void                  *close_data;  /**< Callback data. */
     ib_logger_reopen_fn_t  reopen_fn;   /**< Close and reopen log files. */
     void                  *reopen_data; /**< Callback data. */
-    ib_logger_format_fn_t  format_fn;   /**< Signal that the queue has data. */
-    void                  *format_data; /**< Callback data. */
+    ib_logger_format_t    *format;      /**< Format a message.  */
     ib_logger_record_fn_t  record_fn;   /**< Signal a record is ready. */
     void                  *record_data; /**< Callback data. */
     ib_queue_t            *records;     /**< Records for the log writer. */
@@ -64,11 +63,11 @@ struct logger_callback_fn_t {
 
     //! A union of the different function pointer types.
     union {
-        ib_logger_open_fn_t open_fn;
-        ib_logger_close_fn_t close_fn;
-        ib_logger_reopen_fn_t reopen_fn;
-        ib_logger_format_fn_t format_fn;
-        ib_logger_record_fn_t record_fn;
+        ib_logger_open_fn_t    open_fn;   /**< Open function. */
+        ib_logger_close_fn_t   close_fn;  /**< Close function. */
+        ib_logger_reopen_fn_t  reopen_fn; /**< Reopen function. */
+        ib_logger_record_fn_t  record_fn; /**< Record function. */
+        ib_logger_format_t    *format;    /**< Format funcs and cbdata. */
     } fn;
 
     //! The callback data the user would like associated with the callback.
@@ -208,13 +207,21 @@ static ib_status_t logger_write(
     void *rec = NULL;
     logger_write_cbdata_t *logger_write_data = (logger_write_cbdata_t *)cbdata;
 
-    rc = writer->format_fn(
+    if (writer->format == NULL) {
+        return IB_DECLINED;
+    }
+
+    if (writer->format->format_fn == NULL) {
+        return IB_DECLINED;
+    }
+
+    rc = writer->format->format_fn(
         logger,
         logger_write_data->rec,
         logger_write_data->msg,
         logger_write_data->msg_sz,
         &rec,
-        writer->format_data);
+        writer->format->format_cbdata);
     if (rc == IB_DECLINED || rec == NULL) {
         return IB_OK;
     }
@@ -530,8 +537,7 @@ ib_status_t ib_logger_writer_add(
     void                  *close_data,
     ib_logger_reopen_fn_t  reopen_fn,
     void                  *reopen_data,
-    ib_logger_format_fn_t  format_fn,
-    void                  *format_data,
+    ib_logger_format_t    *format,
     ib_logger_record_fn_t  record_fn,
     void                  *record_data
 )
@@ -554,8 +560,7 @@ ib_status_t ib_logger_writer_add(
     writer->close_data  = close_data;
     writer->reopen_fn   = reopen_fn;
     writer->reopen_data = reopen_data;
-    writer->format_fn   = format_fn;
-    writer->format_data = format_data;
+    writer->format      = format;
     writer->record_fn   = record_fn;
     writer->record_data = record_data;
     rc = ib_queue_create(&(writer->records), logger->mp, IB_QUEUE_NEVER_SHRINK);
@@ -698,6 +703,34 @@ ib_status_t ib_logger_reopen(
     return for_each_writer(logger, logger_reopen, NULL);
 }
 
+/**
+ * Custom callback data for logger_handler().
+ */
+struct logger_handler_cbdata_t {
+    ib_logger_t                *logger;    /**< The logger. */
+    ib_queue_element_fn_t       user_fn;   /**< User's callback function. */
+    void                       *user_data; /**< User's callback data. */
+    ib_logger_format_free_fn_t  free_fn;   /**< Free the queue element. */
+    void                       *free_data; /**< Free callback data. */
+};
+typedef struct logger_handler_cbdata_t logger_handler_cbdata_t;
+
+/**
+ * Dispatches log message to hander, then frees them.
+ */
+static void logger_handler(void *element, void *cbdata)
+{
+    assert(cbdata != NULL);
+
+    logger_handler_cbdata_t *data = (logger_handler_cbdata_t *)cbdata;
+
+    /* Let the user write the record. */
+    data->user_fn(element, data->user_data);
+
+    /* Free the data. */
+    data->free_fn(data->logger, element, data->free_data);
+}
+
 ib_status_t ib_logger_dequeue(
     ib_logger_t           *logger,
     ib_logger_writer_t    *writer,
@@ -710,13 +743,23 @@ ib_status_t ib_logger_dequeue(
     assert(writer->records != NULL);
 
     ib_status_t rc;
+    logger_handler_cbdata_t logger_handler_cbdata = {
+        .logger    = logger,
+        .user_fn   = handler,
+        .user_data = cbdata,
+        .free_fn   = writer->format->format_free_fn,
+        .free_data = writer->format->format_free_cbdata
+    };
 
     rc = ib_lock_lock(&(writer->records_lck));
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_queue_dequeue_all_to_function(writer->records, handler, cbdata);
+    rc = ib_queue_dequeue_all_to_function(
+        writer->records,
+        logger_handler,
+        &logger_handler_cbdata);
 
     ib_lock_unlock(&(writer->records_lck));
 
@@ -742,7 +785,17 @@ void ib_logger_level_set(ib_logger_t *logger, ib_logger_level_t level) {
     logger->level = level;
 }
 
-void ib_logger_standard_msg_free(ib_logger_standard_msg_t *msg) {
+void ib_logger_standard_msg_free(
+    ib_logger_t *logger,
+    void        *writer_record,
+    void        *cbdata
+)
+{
+    assert(logger != NULL);
+    assert(writer_record != NULL);
+
+    ib_logger_standard_msg_t *msg = (ib_logger_standard_msg_t *)writer_record;
+
     if (msg != NULL) {
         if (msg->prefix != NULL) {
             free(msg->prefix);
@@ -857,7 +910,9 @@ ib_status_t ib_logger_standard_formatter(
     return IB_OK;
 
 out_of_mem:
-    ib_logger_standard_msg_free(msg);
+    if (msg != NULL) {
+        ib_logger_standard_msg_free(logger, msg, data);
+    }
     return IB_EALLOC;
 }
 
@@ -889,7 +944,6 @@ static ib_status_t default_logger_format(
     assert(rec != NULL);
     assert(log_msg != NULL);
     assert(writer_record != NULL);
-    assert(data != NULL);
 
     ib_status_t rc;
     default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
@@ -904,13 +958,17 @@ static ib_status_t default_logger_format(
 
     if (rc == IB_EALLOC) {
         ib_logger_standard_msg_free(
-            *(ib_logger_standard_msg_t **)writer_record);
+            logger,
+            *(void **)writer_record,
+            data);
         fprintf(cfg->file, "Out of memory.  Unable to log.");
         fflush(cfg->file);
     }
     else if (rc != IB_OK && rc != IB_DECLINED) {
         ib_logger_standard_msg_free(
-            *(ib_logger_standard_msg_t **)writer_record);
+            logger,
+            *(void **)writer_record,
+            data);
         fprintf(cfg->file, "Unexpected error.");
         fflush(cfg->file);
     }
@@ -932,8 +990,6 @@ static void default_log_writer(void *record, void *cbdata) {
         (int)msg->msg_sz,
         (char *)msg->msg);
     fflush(cfg->file);
-
-    ib_logger_standard_msg_free(msg);
 }
 
 /**
@@ -951,6 +1007,14 @@ static ib_status_t default_logger_record(
 
     return ib_logger_dequeue(logger, writer, default_log_writer, data);
 }
+
+/* Default logger format struct. */
+static ib_logger_format_t default_format = {
+    .format_fn          = default_logger_format,
+    .format_cbdata      = NULL,
+    .format_free_fn     = ib_logger_standard_msg_free,
+    .format_free_cbdata = NULL
+};
 
 ib_status_t ib_logger_writer_add_default(
     ib_logger_t *logger,
@@ -977,8 +1041,7 @@ ib_status_t ib_logger_writer_add_default(
         NULL,
         NULL, /* Reopen. */
         NULL,
-        default_logger_format,
-        cfg,
+        &default_format,
         default_logger_record,
         cfg
     );
@@ -1076,9 +1139,6 @@ static ib_status_t logger_register_fn(
         case LOGGER_REOPEN_FN:
             logger_callback_fn->fn.reopen_fn = (ib_logger_reopen_fn_t)fn;
             break;
-        case LOGGER_FORMAT_FN:
-            logger_callback_fn->fn.format_fn = (ib_logger_format_fn_t)fn;
-            break;
         case LOGGER_RECORD_FN:
             logger_callback_fn->fn.record_fn = (ib_logger_record_fn_t)fn;
             break;
@@ -1149,22 +1209,36 @@ ib_status_t ib_logger_register_reopen_fn(
         cbdata);
 }
 
-ib_status_t ib_logger_register_format_fn(
-    ib_logger_t           *logger,
-    const char            *fn_name,
-    ib_logger_format_fn_t  fn,
-    void                  *cbdata
+ib_status_t ib_logger_register_format(
+    ib_logger_t        *logger,
+    const char         *format_name,
+    ib_logger_format_t *format
 )
 {
     assert(logger != NULL);
-    assert(fn_name != NULL);
+    assert(format_name != NULL);
 
-    return logger_register_fn(
-        logger,
-        LOGGER_FORMAT_FN,
-        fn_name,
-        (ib_void_fn_t)(fn),
-        cbdata);
+    ib_status_t           rc;
+    logger_callback_fn_t *logger_callback_fn;
+
+    logger_callback_fn =
+        ib_mpool_alloc(logger->mp, sizeof(*logger_callback_fn));
+
+    if (logger_callback_fn == NULL) {
+        return IB_EALLOC;
+    }
+
+    logger_callback_fn->cbdata = NULL;
+    logger_callback_fn->type = LOGGER_FORMAT_FN;
+    logger_callback_fn->fn.format = format;
+
+    /* Set the value. */
+    rc = ib_hash_set(logger->functions, format_name, logger_callback_fn);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
 }
 
 ib_status_t ib_logger_register_record_fn(
@@ -1226,9 +1300,6 @@ static ib_status_t logger_fetch_fn(
             break;
         case LOGGER_REOPEN_FN:
             *fn = (ib_void_fn_t)logger_callback_fn->fn.reopen_fn;
-            break;
-        case LOGGER_FORMAT_FN:
-            *fn = (ib_void_fn_t)logger_callback_fn->fn.format_fn;
             break;
         case LOGGER_RECORD_FN:
             *fn = (ib_void_fn_t)logger_callback_fn->fn.record_fn;
@@ -1296,22 +1367,31 @@ ib_status_t ib_logger_fetch_reopen_fn(
         cbdata);
 }
 
-ib_status_t ib_logger_fetch_format_fn(
-    ib_logger_t           *logger,
-    const char            *name,
-    ib_logger_format_fn_t *fn,
-    void                  *cbdata
+ib_status_t ib_logger_fetch_format(
+    ib_logger_t         *logger,
+    const char          *name,
+    ib_logger_format_t **format
 )
 {
     assert(logger != NULL);
     assert(name != NULL);
 
-    return logger_fetch_fn(
-        logger,
-        LOGGER_FORMAT_FN,
-        name,
-        (ib_void_fn_t *)fn,
-        cbdata);
+    logger_callback_fn_t *logger_callback_fn;
+    ib_status_t           rc;
+
+    rc = ib_hash_get(logger->functions, &logger_callback_fn, name);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Validate that the expected type matches. */
+    if (logger_callback_fn->type != LOGGER_FORMAT_FN) {
+        return IB_EINVAL;
+    }
+
+    *format = logger_callback_fn->fn.format;
+
+    return IB_OK;
 }
 
 ib_status_t ib_logger_fetch_record_fn(
@@ -1330,4 +1410,35 @@ ib_status_t ib_logger_fetch_record_fn(
         name,
         (ib_void_fn_t *)fn,
         cbdata);
+}
+
+ib_status_t ib_logger_format_create(
+    ib_logger_t                *logger,
+    ib_logger_format_t        **format,
+    ib_logger_format_fn_t       format_fn,
+    void                       *format_cbdata,
+    ib_logger_format_free_fn_t  format_free_fn,
+    void                       *format_free_cbdata
+)
+{
+    assert(logger != NULL);
+    assert(logger->mp != NULL);
+    assert(format != NULL);
+    assert(format_fn != NULL);
+
+    ib_logger_format_t *format_out =
+        (ib_logger_format_t *)ib_mpool_alloc(logger->mp, sizeof(*format_out));
+    if (format_out == NULL) {
+        return IB_EALLOC;
+    }
+
+    format_out->format_fn = format_fn;
+    format_out->format_cbdata = format_cbdata;
+    format_out->format_free_fn = format_free_fn;
+    format_out->format_free_cbdata = format_free_cbdata;
+
+    /* Return the created struct. */
+    *format = format_out;
+
+    return IB_OK;
 }
