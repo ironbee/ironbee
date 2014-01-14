@@ -2537,7 +2537,7 @@ static ib_status_t logger_format(
             (int)std_msg->msg_sz,
             (const char *)std_msg->msg);
 
-        ib_logger_standard_msg_free(std_msg);
+        ib_logger_standard_msg_free(ib_logger, std_msg, cbdata);
     }
 
     return IB_DECLINED;
@@ -2609,9 +2609,6 @@ static void txlog_record_element(
         /* FIXME: once debugged, take this out for speed */
         TSTextLogObjectFlush(mod_data->txlogger);
     }
-
-
-    ib_logger_standard_msg_free(msg);
 }
 
 /**
@@ -2672,7 +2669,20 @@ static ib_status_t engine_preconfig_fn(
     assert(ib != NULL);
     assert(cbdata != NULL);
 
-    module_data_t *mod_data = (module_data_t *)cbdata;
+    ib_status_t         rc;
+    ib_logger_format_t *txlog_format;
+    module_data_t      *mod_data = (module_data_t *)cbdata;
+
+    rc = ib_logger_format_create(
+        ib_engine_logger_get(ib),
+        &txlog_format,
+        logger_format,
+        mod_data,
+        NULL,
+        NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Register the IronBee logger. */
     ib_logger_writer_add(
@@ -2683,8 +2693,7 @@ static ib_status_t engine_preconfig_fn(
         mod_data,                  /* Callback data. */
         NULL,                      /* Reopen. */
         NULL,                      /* Callback data. */
-        logger_format,             /* Format - This does all the work. */
-        mod_data,                  /* Callback data. */
+        txlog_format,              /* Format - This does all the work. */
         NULL,                      /* Record. */
         NULL                       /* Callback data. */
     );
@@ -2714,16 +2723,14 @@ static ib_status_t engine_postconfig_fn(
     assert(cbdata != NULL);
 
     int rv;
-    ib_status_t            rc;
-    module_data_t         *mod_data = (module_data_t *)cbdata;
-    ib_logger_format_fn_t  txlog_format_fn;
-    void                  *txlog_format_cbdata;
+    ib_status_t         rc;
+    module_data_t      *mod_data = (module_data_t *)cbdata;
+    ib_logger_format_t *txlog_format;
 
-    rc = ib_logger_fetch_format_fn(
+    rc = ib_logger_fetch_format(
         ib_engine_logger_get(ib),
         TXLOG_FORMAT_FN_NAME,
-        &txlog_format_fn,
-        &txlog_format_cbdata);
+        &txlog_format);
     if (rc == IB_OK) {
         /* Register the IronBee Transaction Log logger. */
         ib_logger_writer_add(
@@ -2734,8 +2741,7 @@ static ib_status_t engine_postconfig_fn(
             NULL,                      /* Callback data. */
             NULL,                      /* Reopen. */
             NULL,                      /* Callback data. */
-            txlog_format_fn,           /* Format - This does all the work. */
-            txlog_format_cbdata,       /* Callback data. */
+            txlog_format,              /* Format - This does all the work. */
             txlog_record,              /* Record. */
             mod_data                   /* Callback data. */
         );

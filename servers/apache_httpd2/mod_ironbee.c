@@ -1150,7 +1150,7 @@ static apr_status_t ironbee_manager_cleanup(void *data)
  * - IB_OK is not returned.
  * - Other on error.
  */
-static ib_status_t logger_format(
+static ib_status_t logger_format_fn(
     ib_logger_t           *logger,
     const ib_logger_rec_t *rec,
     const uint8_t         *log_msg,
@@ -1241,7 +1241,7 @@ static ib_status_t logger_format(
             (const char *)std_msg->msg);
     }
 
-    ib_logger_standard_msg_free(std_msg);
+    ib_logger_standard_msg_free(logger, std_msg, cbdata);
 
     /* since we do all the work here, signal the logger to not
      * use the record function. */
@@ -1271,6 +1271,21 @@ static ib_status_t init_module(
 
     module_data_t *mod_data = (module_data_t *)cbdata;
 
+    ib_logger_format_t *logger_format;
+    ib_status_t rc;
+
+    rc = ib_logger_format_create(
+        ib_engine_logger_get(ib),
+        &logger_format,
+        logger_format_fn,
+        mod_data,
+        NULL,
+        NULL
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     ib_logger_writer_add(
         ib_engine_logger_get(ib),
         NULL,                      /* Open. */
@@ -1280,7 +1295,6 @@ static ib_status_t init_module(
         NULL,                      /* Ueopen. */
         NULL,                      /* Callback data. */
         logger_format,             /* Format - this does all the work. */
-        mod_data,                  /* Callback data. */
         NULL,                      /* Record. */
         NULL                       /* Callback data. */
     );
