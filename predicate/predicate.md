@@ -85,4 +85,6 @@ The Predicate system may be used in rules in two ways: the `predicate` action or
 
 The preferred way is via the `predicate` action.  The `predicate` action indicates that the rule should be claimed by Predicate and injected if appropriate.  The parameter to the action is the S-Expression that determines whether to inject the rule.
 
+**Warning: `@predicate` is a future feature that is not yet implemented.**
+
 The `@predicate` operator allows predicate expressions to be mixed with traditional rules.  The operator takes a single argument, an S-Expression, and is true if and only if that S-Expression is true.  Thus, the operator allows combining an predicate expression with normal rule logic.  However, because the rule is part of the normal rule system, much of the performance benefit of Predicate is lost.  It will still merge subexpressions with those of other Predicate expressions (whether from operator or action), but the rule will always be evaluated.
