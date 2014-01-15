@@ -482,7 +482,7 @@ void nh_value(
         styles.push_back("diagonals");
     }
 
-    if (! values.empty()) {
+    if (values && ! values.empty()) {
         styles.push_back("filled");
         extra += ", fillcolor=\"#BDECB6\"";
         render_values(out, graph_eval_state, node);

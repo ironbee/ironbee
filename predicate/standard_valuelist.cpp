@@ -316,7 +316,7 @@ void First::eval_calculate(
     NodeEvalState& my_state = graph_eval_state[index()];
     const node_p& child = children().front();
     ValueList values = graph_eval_state.eval(child, context);
-    if (! values.empty()) {
+    if (values && ! values.empty()) {
         my_state.setup_local_values(context);
         my_state.add_value(values.front());
         my_state.finish();

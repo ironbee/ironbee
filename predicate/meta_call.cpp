@@ -137,7 +137,7 @@ void MapCall::map_calculate(
 
     // Check empty check is necessary as an empty list is allowed to change
     // to a different list to support values forwarding.
-    if (! inputs.empty()) {
+    if (inputs && ! inputs.empty()) {
         input_locations_t::iterator i = input_locations.lower_bound(input);
         if (i == input_locations.end() || i->first != input) {
             i = input_locations.insert(
