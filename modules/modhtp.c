@@ -136,7 +136,6 @@ typedef struct modhtp_txdata_t modhtp_txdata_t;
 /**
  * Flags for modhtp_txdata_t.flags
  */
-static const ib_flags_t txdata_none      = 0;         /**< No flags */
 static const ib_flags_t txdata_req_start = (1 <<  0);  /**< req_start() */
 static const ib_flags_t txdata_req_line  = (1 <<  1);  /**< req_line() */
 static const ib_flags_t txdata_req_hdrs  = (1 <<  2);  /**< req_headers() */
