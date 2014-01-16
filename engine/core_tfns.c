@@ -1623,6 +1623,26 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
         return rc;
     }
 
+    /* TODO - Backwards compatibility. This should be removed in IronBee 1. */
+    rc = ib_tfn_create_and_register(NULL, ib, "round", false,
+                                    tfn_iround, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* TODO - Backwards compatibility. This should be removed in IronBee 1. */
+    rc = ib_tfn_create_and_register(NULL, ib, "ceil", false, tfn_iceil, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* TODO - Backwards compatibility. This should be removed in IronBee 1. */
+    rc = ib_tfn_create_and_register(NULL, ib, "floor", false,
+                                    tfn_ifloor, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     /* Type conversion transformations. */
     rc = ib_tfn_create_and_register(NULL, ib, "toString", false,
                                     tfn_to_string, NULL);
