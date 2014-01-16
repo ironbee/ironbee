@@ -88,3 +88,15 @@ The preferred way is via the `predicate` action.  The `predicate` action indicat
 **Warning: `@predicate` is a future feature that is not yet implemented.**
 
 The `@predicate` operator allows predicate expressions to be mixed with traditional rules.  The operator takes a single argument, an S-Expression, and is true if and only if that S-Expression is true.  Thus, the operator allows combining an predicate expression with normal rule logic.  However, because the rule is part of the normal rule system, much of the performance benefit of Predicate is lost.  It will still merge subexpressions with those of other Predicate expressions (whether from operator or action), but the rule will always be evaluated.
+
+The `predicate_vars` Action
+---------------------------
+
+Rules using the `predicate` action can gain access to the name and value of each value in the top node by:
+
+1. Add the `predicate_vars` action to the **beginning** of the actions.
+2. Use the `VALUE` and `VALUE_NAME` vars.
+
+The actions will be fired for every value on the valuelist of the top node.  The `predicate_vars` action will cause the `VALUE` and `VALUE_NAME` vars to be set for each value.
+
+Warning: `predicate_vars` has mild performance cost and should only be used when needed.

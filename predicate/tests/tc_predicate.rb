@@ -231,4 +231,76 @@ class TestPredicate < Test::Unit::TestCase
 
     assert(log.scan(/CLIPP ANNOUNCE: X/).size == 2)
   end
+
+  def test_predicate_vars_phaseless
+    clipp(CONFIG.merge(
+      default_site_config: <<-EOS
+        Action id:1 predicate_vars "predicate:(var 'ARGS')" "clipp_announce:VALUE=%{VALUE} VALUE_NAME=%{VALUE_NAME}"
+      EOS
+    )) do
+      transaction do |t|
+        t.request(
+          raw: 'POST /a/b/c?x=bar&y=foo HTTP/1.1',
+          headers: {
+            "Content-Type" => "application/x-www-form-urlencoded",
+            "Content-Length" => 5
+          },
+          body: "y=bar"
+        )
+      end
+    end
+
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=x/
+    assert_log_match /CLIPP ANNOUNCE: VALUE=foo VALUE_NAME=y/
+    assert_log_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=y/
+  end
+
+  def test_predicate_vars_phased
+    clipp(CONFIG.merge(
+      default_site_config: <<-EOS
+        Action id:1 phase:REQUEST_HEADER predicate_vars "predicate:(var 'ARGS')" "clipp_announce:VALUE=%{VALUE} VALUE_NAME=%{VALUE_NAME}"
+      EOS
+    )) do
+      transaction do |t|
+        t.request(
+          raw: 'POST /a/b/c?x=bar&y=foo HTTP/1.1',
+          headers: {
+            "Content-Type" => "application/x-www-form-urlencoded",
+            "Content-Length" => 5
+          },
+          body: "y=bar"
+        )
+      end
+    end
+
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=x/
+    assert_log_match /CLIPP ANNOUNCE: VALUE=foo VALUE_NAME=y/
+    assert_log_no_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=y/
+  end
+
+  def test_predicate_vars_phased2
+    clipp(CONFIG.merge(
+      default_site_config: <<-EOS
+        Action id:1 phase:REQUEST predicate_vars "predicate:(var 'ARGS')" "clipp_announce:VALUE=%{VALUE} VALUE_NAME=%{VALUE_NAME}"
+      EOS
+    )) do
+      transaction do |t|
+        t.request(
+          raw: 'POST /a/b/c?x=bar&y=foo HTTP/1.1',
+          headers: {
+            "Content-Type" => "application/x-www-form-urlencoded",
+            "Content-Length" => 5
+          },
+          body: "y=bar"
+        )
+      end
+    end
+
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=x/
+    assert_log_match /CLIPP ANNOUNCE: VALUE=foo VALUE_NAME=y/
+    assert_log_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=y/
+  end
 end

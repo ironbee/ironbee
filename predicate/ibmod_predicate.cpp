@@ -111,6 +111,15 @@ const char* c_module_name = "predicate";
 //! Action to mark a rule as a predicate rule.
 const char* c_predicate_action = "predicate";
 
+//! Action to set predicate related vars.
+const char* c_predicate_vars_action = "predicate_vars";
+
+//! Var holding the current value.
+const char* c_var_value_name = "VALUE_NAME";
+
+//! Var holding the current value name
+const char* c_var_value = "VALUE";
+
 //! Directive to assert internal validity.
 const char* c_assert_valid_directive = "PredicateAssertValid";
 
@@ -207,10 +216,10 @@ private:
 
     //! List of rules.
     typedef list<const ib_rule_t*> rule_list_t;
-    //! Map of root index to rule list.
-    typedef map<size_t, rule_list_t> rules_by_index_t;
     //! Map of node to rule list.
     typedef map<P::node_p, rule_list_t> rules_by_node_t;
+    //! Map of root index to rule list.
+    typedef map<size_t, rule_list_t> rules_by_index_t;
     //! Map of phase to map of node to rule list.
     typedef vector<rules_by_node_t> rules_by_phase_t;
 
@@ -290,6 +299,25 @@ public:
      * used by the trace code.
      **/
     void keep_data();
+
+    /**
+     * Index for rule.
+     *
+     * @param[in] rule Rule to find index of.
+     * @return Index of @a rule.
+     * @throw enoent on failure.
+     **/
+    size_t index_for_rule(const ib_rule_t* rule) const;
+
+    /**
+     * Set index for rule.
+     *
+     * Called by PerContext::convert_rules().
+     *
+     * @param[in] rule Rule to set index for.
+     * @param[in] index Index of @a rule.
+     **/
+    void set_index_for_rule(const ib_rule_t* rule, size_t index);
 
 private:
     /**
@@ -440,6 +468,25 @@ private:
     void register_trampoline_data(void* cdata);
 
     /**
+     * Vars action creation.
+     *
+     * @param[in] ib    IronBee engine.
+     * @param[in] param Parameter.
+     * @return IB_EINVAL if param is not NULL.
+     **/
+    ib_status_t vars_action_create(ib_engine_t* ib, const char* param) const;
+
+    /**
+     * Vars action execution.
+     *
+     * @param[in] rule_exec Rule execution environment.
+     * @return
+     * - IB_OK on success.
+     * - Other on failure.
+     **/
+    ib_status_t vars_action_execute(const ib_rule_exec_t* rule_exec) const;
+
+    /**
      * All trampolines used.  See make_c_trampoline()
      *
      * This vector is only written to.  Trampolines are added to it with
@@ -503,6 +550,23 @@ private:
     string m_debug_report_to;
     //! Keep extra data past configuration?
     bool m_keep_data;
+
+    //! Var source for value name.
+    IB::VarSource m_value_name_source;
+    //! Var source for value value.
+    IB::VarSource m_value_source;
+
+    //! Map of rule to root index.
+    typedef map<const ib_rule_t*, size_t> index_by_rule_t;
+
+    /**
+     * Index for each rule.
+     *
+     * Generates from each contexts rules by PerContext::convert_rules() at
+     * the end of configuration.  Used by the vars action to turn a rule into
+     * an index to access the graph evaluation state with.
+     **/
+    index_by_rule_t m_index_by_rule;
 };
 
 /**
@@ -556,7 +620,21 @@ public:
         m_root_fire_counts[i] = count;
     }
 
+    //! Access valuelist iterator for a rule.
+    P::ValueList::const_iterator& valuelist_iterator_for_rule(
+        const ib_rule_t* rule
+    )
+    {
+        return m_rule_to_valuelist_iterator[rule];
+    }
+
 private:
+    //! Map of rule to iterator into values for rule.
+    typedef map<const ib_rule_t*, P::ValueList::const_iterator>
+        rule_to_valuelist_iterator_t;
+    //! Rule to iterator into values for rule.
+    rule_to_valuelist_iterator_t m_rule_to_valuelist_iterator;
+
     //! Graph evaluation state.
     P::GraphEvalState m_graph_eval_state;
 
@@ -609,6 +687,7 @@ void PerContext::convert_rules()
                 );
             }
             m_rules[phase][delegate()->graph().root(v.first)].push_back(rule);
+            m_delegate->set_index_for_rule(rule, v.first);
         }
     }
 
@@ -866,6 +945,37 @@ Delegate::Delegate(IB::Module module) :
         )
     );
 
+    // 'predicate_vars' action
+    pair<ib_action_create_fn_t, void*> vars_action_create =
+        IB::make_c_trampoline<
+            ib_status_t(
+                ib_engine_t*,
+                const char*,
+                ib_action_inst_t*
+            )
+        >(bind(&Delegate::vars_action_create, this, _1, _2));
+
+    register_trampoline_data(vars_action_create.second);
+    pair<ib_action_execute_fn_t, void*> vars_action_execute =
+        IB::make_c_trampoline<
+            ib_status_t(
+                const ib_rule_exec_t*,
+                void*
+            )
+        >(bind(&Delegate::vars_action_execute, this, _1));
+
+    register_trampoline_data(vars_action_execute.second);
+
+    IB::throw_if_error(
+        ib_action_register(
+            module.engine().ib(),
+            c_predicate_vars_action,
+            vars_action_create.first,  vars_action_create.second,
+            NULL, NULL,
+            vars_action_execute.first, vars_action_execute.second
+        )
+    );
+
     // Hooks
     module.engine().register_hooks()
         .request_started(
@@ -895,6 +1005,16 @@ Delegate::Delegate(IB::Module module) :
             bind(&Delegate::trace, this, _1, _3)
         )
         ;
+
+    // Vars
+    m_value_name_source = IB::VarSource::register_(
+        module.engine().var_config(),
+        c_var_value_name
+    );
+    m_value_source = IB::VarSource::register_(
+        module.engine().var_config(),
+        c_var_value
+    );
 }
 
 void Delegate::keep_data()
@@ -1367,6 +1487,98 @@ void Delegate::register_trampoline_data(void* cdata)
     m_trampolines.push_back(
         boost::shared_ptr<void>(cdata, IB::delete_c_trampoline)
     );
+}
+
+ib_status_t Delegate::vars_action_create(
+    ib_engine_t* ib,
+    const char*  param
+) const
+{
+    try {
+        if (param && param[0]) {
+            BOOST_THROW_EXCEPTION(
+                IB::einval() << IB::errinfo_what(
+                    string(c_predicate_vars_action) +
+                    " must have empty parameter."
+                )
+            );
+        }
+    }
+    catch (...) {
+        return IB::convert_exception(ib);
+    }
+    return IB_OK;
+}
+
+ib_status_t Delegate::vars_action_execute(
+    const ib_rule_exec_t* rule_exec
+) const
+{
+    try {
+        IB::Transaction tx(rule_exec->tx);
+        ib_rule_t* rule = rule_exec->rule;
+
+        per_transaction_p per_tx =
+            tx.get_module_data<per_transaction_p>(module());
+
+        size_t index = index_for_rule(rule);
+        P::ValueList values = per_tx->graph_eval_state().values(index);
+        assert(values && ! values.empty());
+
+        P::ValueList::const_iterator& i =
+             per_tx->valuelist_iterator_for_rule(rule);
+
+        if (i == P::ValueList::const_iterator()) {
+            i = values.begin();
+        }
+        else {
+            ++i;
+            assert(i != values.end());
+        }
+        P::Value value = *i;
+
+        m_value_name_source.set(
+            tx.var_store(),
+            IB::Field::create_byte_string(
+                tx.memory_pool(),
+                value.name(), value.name_length(),
+                IB::ByteString::create_alias(
+                    tx.memory_pool(),
+                    value.name(), value.name_length()
+                )
+            )
+        );
+        m_value_source.set(
+            tx.var_store(),
+            // Must provide non-const Field.  As we are (hopefully) the only
+            // setters, should be okay.  In a better world, Vars could support
+            // ConstField, aka Value.
+            IB::Field::remove_const(value)
+        );
+    }
+    catch (...) {
+        return IB::convert_exception(rule_exec->ib);
+    }
+    return IB_OK;
+}
+
+size_t Delegate::index_for_rule(const ib_rule_t* rule) const
+{
+    index_by_rule_t::const_iterator i = m_index_by_rule.find(rule);
+    if (i == m_index_by_rule.end()) {
+        BOOST_THROW_EXCEPTION(
+            IB::enoent() << IB::errinfo_what(
+                "Could not find index for rule."
+            )
+        );
+    }
+
+    return i->second;
+}
+
+void Delegate::set_index_for_rule(const ib_rule_t* rule, size_t index)
+{
+    m_index_by_rule.insert(make_pair(rule, index));
 }
 
 }

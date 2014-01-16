@@ -9,7 +9,7 @@
 
 <h1 id="predicatesrulesusermanual">Predicates Rules User Manual</h1>
 
-<p>Christopher Alfeld <a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#58;&#99;&#x61;&#x6c;&#102;&#x65;&#108;&#100;&#x40;&#x71;&#x75;&#x61;&#108;&#121;&#x73;&#x2e;&#x63;&#x6f;&#109;">&#x63;&#x61;&#108;&#102;&#x65;&#x6c;&#100;&#64;&#x71;&#117;&#x61;&#x6c;&#x79;&#x73;&#x2e;&#x63;&#111;&#x6d;</a><br></p>
+<p>Christopher Alfeld <a href="&#109;&#97;&#105;&#108;&#x74;&#111;&#x3a;&#x63;&#x61;&#108;&#x66;&#x65;&#x6c;&#x64;&#64;&#113;&#117;&#97;&#108;&#121;&#115;&#46;&#x63;&#111;&#109;">&#x63;&#x61;&#x6c;&#x66;&#101;&#x6c;&#x64;&#64;&#113;&#117;&#x61;&#108;&#x79;&#x73;&#x2e;&#99;&#x6f;&#109;</a><br></p>
 
 <p><strong>Warning:</strong> This document describes a feature that is under ongoing development. Only portions of what is described are currently available and all of it is subject to change. This document is intended for IronBee developers, those wanting to play on the bleeding edge, and those interested in upcoming major features.</p>
 
@@ -91,7 +91,22 @@ float := /^-?[0-9]+(\.[0-9]+)?$/
 
 <p>The preferred way is via the <code>predicate</code> action. The <code>predicate</code> action indicates that the rule should be claimed by Predicate and injected if appropriate. The parameter to the action is the S-Expression that determines whether to inject the rule.</p>
 
+<p><strong>Warning: <code>@predicate</code> is a future feature that is not yet implemented.</strong></p>
+
 <p>The <code>@predicate</code> operator allows predicate expressions to be mixed with traditional rules. The operator takes a single argument, an S-Expression, and is true if and only if that S-Expression is true. Thus, the operator allows combining an predicate expression with normal rule logic. However, because the rule is part of the normal rule system, much of the performance benefit of Predicate is lost. It will still merge subexpressions with those of other Predicate expressions (whether from operator or action), but the rule will always be evaluated.</p>
+
+<h2 id="thepredicate_varsaction">The <code>predicate_vars</code> Action</h2>
+
+<p>Rules using the <code>predicate</code> action can gain access to the name and value of each value in the top node by:</p>
+
+<ol>
+<li>Add the <code>predicate_vars</code> action to the <strong>beginning</strong> of the actions.</li>
+<li>Use the <code>VALUE</code> and <code>VALUE_NAME</code> vars.</li>
+</ol>
+
+<p>The actions will be fired for every value on the valuelist of the top node. The <code>predicate_vars</code> action will cause the <code>VALUE</code> and <code>VALUE_NAME</code> vars to be set for each value.</p>
+
+<p>Warning: <code>predicate_vars</code> has mild performance cost and should only be used when needed.</p>
 
 </body>
 </html>

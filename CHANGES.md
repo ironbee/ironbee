@@ -54,6 +54,10 @@ IronBee v0.9.0
 
 - Utility functions like P.define(...) are moving to a new namespace (PUtil) and will all start with uppercase letters (e.g., PUtil.Define(...)).  Deprecation warnings are enabled and old naming conventions should be changed to the new format.
 
+- Predicate now fires a Predicate rule for each value in the valuelist of the top node for that rule instead of only once.
+
+- There is now a `predicate_vars` action.  This action can be placed as the **first** action.  It will set the `VALUE` and `VALUE_NAME` for each value in the valuelist.  These vars may then be used by other actions for that rule.
+
 **Fast**
 
 - Added `extract_waggle.rb` to extract fast patterns from waggle rules and updated `build.rb` to use appropriately for `.lua` and `.waggle` files.
