@@ -5841,4 +5841,3 @@ ib_status_t ib_rule_register_post_action_fn(
 
     return ib_list_push(hook_list, hook);
 }
-
