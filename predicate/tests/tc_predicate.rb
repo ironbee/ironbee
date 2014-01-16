@@ -232,10 +232,10 @@ class TestPredicate < Test::Unit::TestCase
     assert(log.scan(/CLIPP ANNOUNCE: X/).size == 2)
   end
 
-  def test_predicate_vars_phaseless
+  def test_set_predicate_vars_phaseless
     clipp(CONFIG.merge(
       default_site_config: <<-EOS
-        Action id:1 predicate_vars "predicate:(var 'ARGS')" "clipp_announce:PREDICATE_VALUE=%{PREDICATE_VALUE} PREDICATE_VALUE_NAME=%{PREDICATE_VALUE_NAME}"
+        Action id:1 set_predicate_vars "predicate:(var 'ARGS')" "clipp_announce:PREDICATE_VALUE=%{PREDICATE_VALUE} PREDICATE_VALUE_NAME=%{PREDICATE_VALUE_NAME}"
       EOS
     )) do
       transaction do |t|
@@ -256,10 +256,10 @@ class TestPredicate < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=bar PREDICATE_VALUE_NAME=y/
   end
 
-  def test_predicate_vars_phased
+  def test_set_predicate_vars_phased
     clipp(CONFIG.merge(
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST_HEADER predicate_vars "predicate:(var 'ARGS')" "clipp_announce:PREDICATE_VALUE=%{PREDICATE_VALUE} PREDICATE_VALUE_NAME=%{PREDICATE_VALUE_NAME}"
+        Action id:1 phase:REQUEST_HEADER set_predicate_vars "predicate:(var 'ARGS')" "clipp_announce:PREDICATE_VALUE=%{PREDICATE_VALUE} PREDICATE_VALUE_NAME=%{PREDICATE_VALUE_NAME}"
       EOS
     )) do
       transaction do |t|
@@ -280,10 +280,10 @@ class TestPredicate < Test::Unit::TestCase
     assert_log_no_match /CLIPP ANNOUNCE: PREDICATE_VALUE=bar PREDICATE_VALUE_NAME=y/
   end
 
-  def test_predicate_vars_phased2
+  def test_set_predicate_vars_phased2
     clipp(CONFIG.merge(
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST predicate_vars "predicate:(var 'ARGS')" "clipp_announce:PREDICATE_VALUE=%{PREDICATE_VALUE} PREDICATE_VALUE_NAME=%{PREDICATE_VALUE_NAME}"
+        Action id:1 phase:REQUEST set_predicate_vars "predicate:(var 'ARGS')" "clipp_announce:PREDICATE_VALUE=%{PREDICATE_VALUE} PREDICATE_VALUE_NAME=%{PREDICATE_VALUE_NAME}"
       EOS
     )) do
       transaction do |t|

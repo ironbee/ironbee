@@ -95,18 +95,18 @@ float := /^-?[0-9]+(\.[0-9]+)?$/
 
 <p>The <code>@predicate</code> operator allows predicate expressions to be mixed with traditional rules. The operator takes a single argument, an S-Expression, and is true if and only if that S-Expression is true. Thus, the operator allows combining an predicate expression with normal rule logic. However, because the rule is part of the normal rule system, much of the performance benefit of Predicate is lost. It will still merge subexpressions with those of other Predicate expressions (whether from operator or action), but the rule will always be evaluated.</p>
 
-<h2 id="thepredicate_varsaction">The <code>predicate_vars</code> Action</h2>
+<h2 id="theset_predicate_varsaction">The <code>set_predicate_vars</code> Action</h2>
 
 <p>Rules using the <code>predicate</code> action can gain access to the name and value of each value in the top node by:</p>
 
 <ol>
-<li>Add the <code>predicate_vars</code> action to the <strong>beginning</strong> of the actions.</li>
+<li>Add the <code>set_predicate_vars</code> action to the <strong>beginning</strong> of the actions.</li>
 <li>Use the <code>VALUE</code> and <code>VALUE_NAME</code> vars.</li>
 </ol>
 
-<p>The actions will be fired for every value on the valuelist of the top node. The <code>predicate_vars</code> action will cause the <code>PREDICATE_VALUE</code> and <code>PREDICATE_VALUE_NAME</code> vars to be set for each value.</p>
+<p>The actions will be fired for every value on the valuelist of the top node. The <code>set_predicate_vars</code> action will cause the <code>PREDICATE_VALUE</code> and <code>PREDICATE_VALUE_NAME</code> vars to be set for each value.</p>
 
-<p>Warning: <code>predicate_vars</code> has mild performance cost and should only be used when needed.</p>
+<p>Warning: <code>set_predicate_vars</code> has mild performance cost and should only be used when needed.</p>
 
 </body>
 </html>

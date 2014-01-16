@@ -112,7 +112,7 @@ const char* c_module_name = "predicate";
 const char* c_predicate_action = "predicate";
 
 //! Action to set predicate related vars.
-const char* c_predicate_vars_action = "predicate_vars";
+const char* c_set_predicate_vars_action = "set_predicate_vars";
 
 //! Var holding the current value.
 const char* c_var_value_name = "PREDICATE_VALUE_NAME";
@@ -945,7 +945,7 @@ Delegate::Delegate(IB::Module module) :
         )
     );
 
-    // 'predicate_vars' action
+    // 'set_predicate_vars' action
     pair<ib_action_create_fn_t, void*> vars_action_create =
         IB::make_c_trampoline<
             ib_status_t(
@@ -969,7 +969,7 @@ Delegate::Delegate(IB::Module module) :
     IB::throw_if_error(
         ib_action_register(
             module.engine().ib(),
-            c_predicate_vars_action,
+            c_set_predicate_vars_action,
             vars_action_create.first,  vars_action_create.second,
             NULL, NULL,
             vars_action_execute.first, vars_action_execute.second
@@ -1498,7 +1498,7 @@ ib_status_t Delegate::vars_action_create(
         if (param && param[0]) {
             BOOST_THROW_EXCEPTION(
                 IB::einval() << IB::errinfo_what(
-                    string(c_predicate_vars_action) +
+                    string(c_set_predicate_vars_action) +
                     " must have empty parameter."
                 )
             );
