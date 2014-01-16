@@ -1069,11 +1069,11 @@ static ib_status_t tfn_to_string(
 typedef ib_float_t (*ib_float_op_t) (ib_float_t);
 
 /**
- * Convert a floating point field to another floating point field.
+ * Convert a floating point field to an int field.
  *
  * This code wraps field logic around math.h defined calls to
- * functions like ceill(), floorl(), and roundl(). The math.h calls are
- * passed in as the @a op parameter.
+ * functions like ceill(), floorl(), and roundl() and casts the results
+ * to integers. The math.h calls are passed in as the @a op parameter.
  *
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] op Operation to perform. It should take a long double and
@@ -1086,7 +1086,7 @@ typedef ib_float_t (*ib_float_op_t) (ib_float_t);
  *   - IB_EALLOC On allocation errors.
  *   - IB_EOTHER If any unexpected error is encountered.
  */
-static ib_status_t tfn_float_op(
+static ib_status_t tfn_float_to_num_op(
     ib_mpool_t *mp,
     ib_float_op_t op,
     const ib_field_t *fin,
@@ -1156,13 +1156,15 @@ static ib_status_t tfn_float_op(
 
     flt = op(flt);
 
+    num = (ib_num_t)flt;
+
     rc = ib_field_create(
         &fnew,
         mp,
         fin->name,
         fin->nlen,
-        IB_FTYPE_FLOAT,
-        ib_ftype_float_in(&flt));
+        IB_FTYPE_NUM,
+        ib_ftype_num_in(&num));
     if (rc == IB_OK) {
         *fout = fnew;
     }
@@ -1182,13 +1184,13 @@ static ib_status_t tfn_float_op(
  *   - IB_OK If successful.
  *   - IB_EALLOC On allocation errors.
  */
-static ib_status_t tfn_floor(
+static ib_status_t tfn_ifloor(
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_float_op(mp, floorl, fin, fout);
+    return tfn_float_to_num_op(mp, floorl, fin, fout);
 }
 
 /**
@@ -1203,13 +1205,13 @@ static ib_status_t tfn_floor(
  *   - IB_OK If successful.
  *   - IB_EALLOC On allocation errors.
  */
-static ib_status_t tfn_ceil(
+static ib_status_t tfn_iceil(
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_float_op(mp, ceill, fin, fout);
+    return tfn_float_to_num_op(mp, ceill, fin, fout);
 }
 
 /**
@@ -1224,13 +1226,13 @@ static ib_status_t tfn_ceil(
  *   - IB_OK If successful.
  *   - IB_EALLOC On allocation errors.
  */
-static ib_status_t tfn_round(
+static ib_status_t tfn_iround(
     ib_mpool_t *mp,
     const ib_field_t *fin,
     const ib_field_t **fout,
     void *fndata)
 {
-    return tfn_float_op(mp, roundl, fin, fout);
+    return tfn_float_to_num_op(mp, roundl, fin, fout);
 }
 
 /**
@@ -1604,19 +1606,19 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     /* Math transformations. */
-    rc = ib_tfn_create_and_register(NULL, ib, "round", false,
-                                    tfn_round, NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "iround", false,
+                                    tfn_iround, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(NULL, ib, "ceil", false, tfn_ceil, NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "iceil", false, tfn_iceil, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_tfn_create_and_register(NULL, ib, "floor", false,
-                                    tfn_floor, NULL);
+    rc = ib_tfn_create_and_register(NULL, ib, "ifloor", false,
+                                    tfn_ifloor, NULL);
     if (rc != IB_OK) {
         return rc;
     }
