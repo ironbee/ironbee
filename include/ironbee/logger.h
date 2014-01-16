@@ -261,11 +261,11 @@ struct ib_logger_rec_t {
 };
 
 /**
- * The pair of formatting fucntion and output message free function.
+ * The pair of formatting function and output message free function.
  *
  * The format function outputs a message that the @ref ib_logger_record_fn_t
  * function must finally log. Because the record function
- * may occure much later than the format function, even after the lifetime
+ * may occur much later than the format function, even after the lifetime
  * of a transaction that has generated a log message,
  * it is the record function's responsibility to free the outputted message.
  */
@@ -454,7 +454,7 @@ NONNULL_ATTRIBUTE(1, 3);
  * @param[in] close_data Callback data.
  * @param[in] reopen_fn Signal the writer to reopen logging resources.
  * @param[in] reopen_data Callback data.
- * @param[in] format Contas the format function and the format
+ * @param[in] format Contains the format function and the format
  *            free function. The format function,
  *            ib_logger_format_t::format_fn, formats a log message for the
  *            writer to write.

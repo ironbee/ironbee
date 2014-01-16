@@ -716,7 +716,7 @@ struct logger_handler_cbdata_t {
 typedef struct logger_handler_cbdata_t logger_handler_cbdata_t;
 
 /**
- * Dispatches log message to hander, then frees them.
+ * Dispatches log message to handler, then frees them.
  */
 static void logger_handler(void *element, void *cbdata)
 {

@@ -64,6 +64,7 @@ suppor support
 retuned returned
 valuelists ValueList
 privte PRIVATE
+hander handler
 inits initializes
 tranformation transformation
 seach Search
@@ -84,6 +85,7 @@ importat important
 publically publicly
 ur uri
 inval EINVAL
+occure occur
 didgit digit
 grammer grammar
 chian chain
@@ -117,6 +119,7 @@ mutale mutable
 registerring Registering
 ib_core_cfg_t cfg
 convertable convertible
+contas Contains
 curr cur
 otheres others
 referece reference
