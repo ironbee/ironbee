@@ -362,6 +362,15 @@ public:
     ValueList values(size_t index) const;
 
     /**
+     * Number of values of a node.
+     *
+     * @param[in] index Index of node to count values of.
+     * @return 0 if node is singular and number of values in valuelist
+     *         otherwise.
+     **/
+    size_t size(size_t index) const;
+
+    /**
      * True if node has no values.
      *
      * @param[in] index Index of node to check emptyness of.

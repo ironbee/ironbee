@@ -235,6 +235,12 @@ bool GraphEvalState::empty(size_t index) const
     return ! v || v.empty();
 }
 
+size_t GraphEvalState::size(size_t index) const
+{
+    ValueList v= final(index).values();
+    return v ? v.size() : 0;
+}
+
 ib_rule_phase_num_t GraphEvalState::phase(size_t index) const
 {
     return final(index).phase();
