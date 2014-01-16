@@ -470,6 +470,8 @@ will cause clipp to output:
 
     CLIPP ANNOUNCE: Hello World
 
+Note: `clipp_announce` supports var expansions.
+
 Note: At present, there is no support for a multithreaded IronBee modifier.
 
 **@time**

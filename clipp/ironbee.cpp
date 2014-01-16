@@ -27,6 +27,7 @@
 
 #include <ironbeepp/all.hpp>
 #include <ironbee/action.h>
+#include <ironbee/rule_engine.h>
 #include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 
@@ -400,11 +401,13 @@ ib_status_t clipp_announce_action_create(
     void*             cbdata
 )
 {
-    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    Engine engine(ib);
 
-    assert(mp != NULL);
-
-    inst->data = ib_mpool_strdup(mp, params);
+    inst->data = VarExpand::acquire(
+        engine.main_memory_pool(),
+        params, strlen(params),
+        engine.var_config()
+    ).ib();
 
     return IB_OK;
 }
@@ -415,7 +418,14 @@ ib_status_t clipp_announce_action_execute(
     void*                 cbdata
 )
 {
-    cout << "CLIPP ANNOUNCE: " << reinterpret_cast<const char*>(data) << endl;
+    Transaction tx(rule_exec->tx);
+    ConstVarExpand var_expand(reinterpret_cast<const ib_var_expand_t*>(data));
+    cout << "CLIPP ANNOUNCE: "
+         << var_expand.execute_s(
+               tx.memory_pool(),
+               tx.var_store()
+            )
+         << endl;
 
     return IB_OK;
 }

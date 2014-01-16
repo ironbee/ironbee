@@ -72,6 +72,8 @@ IronBee v0.9.0
 
 - ClippTest is now more usable outside of `make check`.  Previously, ClippTest required `top_builddir` and `abs_top_builddir` to be defined in the environment and used the former for output and the latter for finding `clipp` and modules.  Now, if the former is missing, the current directory is used instead; if the latter is missing, ClippTest will try to use an installed IronBee's `clipp` and modules.
 
+- The `clipp_announce` action now supports variable expansions.
+
 **IronBee++**
 
 - The `IBPPTestFixture` class used in IronBee++ test fixtures has been promoted to part of the public API as `IronBee::TestFixture`.  This makes it easier for other IronBee++ based code to write unit tests.
