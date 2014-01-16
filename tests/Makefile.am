@@ -7,7 +7,7 @@ noinst_LIBRARIES = libibtest.a
 
 # Turn off Werror for gtest.
 if HAVE_NO_UNUSED_PRIVATE_FIELD
-libibtest_a_CPPFLAGS = $(AM_CPPFLAGS) -Wno-unused-private-field -Wno-unused-const-variable -Wno-unknown-pragmas
+libibtest_a_CPPFLAGS = $(AM_CPPFLAGS) -Wno-unused-private-field -Wno-unused-const-variable -Wno-unknown-warning-option
 else
 libibtest_a_CPPFLAGS = $(AM_CPPFLAGS)
 endif
