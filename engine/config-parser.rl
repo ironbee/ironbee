@@ -50,6 +50,8 @@
 /* Caused by Ragel */
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wunreachable-code"
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wunused-const-variable"
 #endif
 
 /**
