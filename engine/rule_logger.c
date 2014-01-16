@@ -50,8 +50,6 @@
  * Length of buffer used for formatting fields
  */
 static const size_t MAX_FIELD_BUF = 64;
-static const size_t PREFIX_BUFSIZE = 32;
-static const size_t REV_BUFSIZE = 16;
 
 /**
  * If any of these flags are set, enable rule logging
