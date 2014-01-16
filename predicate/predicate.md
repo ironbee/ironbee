@@ -97,6 +97,6 @@ Rules using the `predicate` action can gain access to the name and value of each
 1. Add the `predicate_vars` action to the **beginning** of the actions.
 2. Use the `VALUE` and `VALUE_NAME` vars.
 
-The actions will be fired for every value on the valuelist of the top node.  The `predicate_vars` action will cause the `VALUE` and `VALUE_NAME` vars to be set for each value.
+The actions will be fired for every value on the valuelist of the top node.  The `predicate_vars` action will cause the `PREDICATE_VALUE` and `PREDICATE_VALUE_NAME` vars to be set for each value.
 
 Warning: `predicate_vars` has mild performance cost and should only be used when needed.

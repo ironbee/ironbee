@@ -56,7 +56,7 @@ IronBee v0.9.0
 
 - Predicate now fires a Predicate rule for each value in the valuelist of the top node for that rule instead of only once.
 
-- There is now a `predicate_vars` action.  This action can be placed as the **first** action.  It will set the `VALUE` and `VALUE_NAME` for each value in the valuelist.  These vars may then be used by other actions for that rule.
+- There is now a `predicate_vars` action.  This action can be placed as the **first** action.  It will set the `PREDICATE_VALUE` and `PREDICATE_VALUE_NAME` for each value in the valuelist.  These vars may then be used by other actions for that rule.
 
 **Fast**
 

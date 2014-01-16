@@ -115,10 +115,10 @@ const char* c_predicate_action = "predicate";
 const char* c_predicate_vars_action = "predicate_vars";
 
 //! Var holding the current value.
-const char* c_var_value_name = "VALUE_NAME";
+const char* c_var_value_name = "PREDICATE_VALUE_NAME";
 
 //! Var holding the current value name
-const char* c_var_value = "VALUE";
+const char* c_var_value = "PREDICATE_VALUE";
 
 //! Directive to assert internal validity.
 const char* c_assert_valid_directive = "PredicateAssertValid";

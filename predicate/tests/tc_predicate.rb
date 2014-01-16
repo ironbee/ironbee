@@ -235,7 +235,7 @@ class TestPredicate < Test::Unit::TestCase
   def test_predicate_vars_phaseless
     clipp(CONFIG.merge(
       default_site_config: <<-EOS
-        Action id:1 predicate_vars "predicate:(var 'ARGS')" "clipp_announce:VALUE=%{VALUE} VALUE_NAME=%{VALUE_NAME}"
+        Action id:1 predicate_vars "predicate:(var 'ARGS')" "clipp_announce:PREDICATE_VALUE=%{PREDICATE_VALUE} PREDICATE_VALUE_NAME=%{PREDICATE_VALUE_NAME}"
       EOS
     )) do
       transaction do |t|
@@ -251,15 +251,15 @@ class TestPredicate < Test::Unit::TestCase
     end
 
     assert_no_issues
-    assert_log_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=x/
-    assert_log_match /CLIPP ANNOUNCE: VALUE=foo VALUE_NAME=y/
-    assert_log_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=y/
+    assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=bar PREDICATE_VALUE_NAME=x/
+    assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=foo PREDICATE_VALUE_NAME=y/
+    assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=bar PREDICATE_VALUE_NAME=y/
   end
 
   def test_predicate_vars_phased
     clipp(CONFIG.merge(
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST_HEADER predicate_vars "predicate:(var 'ARGS')" "clipp_announce:VALUE=%{VALUE} VALUE_NAME=%{VALUE_NAME}"
+        Action id:1 phase:REQUEST_HEADER predicate_vars "predicate:(var 'ARGS')" "clipp_announce:PREDICATE_VALUE=%{PREDICATE_VALUE} PREDICATE_VALUE_NAME=%{PREDICATE_VALUE_NAME}"
       EOS
     )) do
       transaction do |t|
@@ -275,15 +275,15 @@ class TestPredicate < Test::Unit::TestCase
     end
 
     assert_no_issues
-    assert_log_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=x/
-    assert_log_match /CLIPP ANNOUNCE: VALUE=foo VALUE_NAME=y/
-    assert_log_no_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=y/
+    assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=bar PREDICATE_VALUE_NAME=x/
+    assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=foo PREDICATE_VALUE_NAME=y/
+    assert_log_no_match /CLIPP ANNOUNCE: PREDICATE_VALUE=bar PREDICATE_VALUE_NAME=y/
   end
 
   def test_predicate_vars_phased2
     clipp(CONFIG.merge(
       default_site_config: <<-EOS
-        Action id:1 phase:REQUEST predicate_vars "predicate:(var 'ARGS')" "clipp_announce:VALUE=%{VALUE} VALUE_NAME=%{VALUE_NAME}"
+        Action id:1 phase:REQUEST predicate_vars "predicate:(var 'ARGS')" "clipp_announce:PREDICATE_VALUE=%{PREDICATE_VALUE} PREDICATE_VALUE_NAME=%{PREDICATE_VALUE_NAME}"
       EOS
     )) do
       transaction do |t|
@@ -299,8 +299,8 @@ class TestPredicate < Test::Unit::TestCase
     end
 
     assert_no_issues
-    assert_log_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=x/
-    assert_log_match /CLIPP ANNOUNCE: VALUE=foo VALUE_NAME=y/
-    assert_log_match /CLIPP ANNOUNCE: VALUE=bar VALUE_NAME=y/
+    assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=bar PREDICATE_VALUE_NAME=x/
+    assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=foo PREDICATE_VALUE_NAME=y/
+    assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=bar PREDICATE_VALUE_NAME=y/
   end
 end
