@@ -189,4 +189,46 @@ class TestPredicate < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: yes/
     assert_log_no_match /CLIPP ANNOUNCE: no/
   end
+
+  def test_multiple_fires_phaseless
+    clipp(CONFIG.merge(
+      default_site_config: <<-EOS
+        Action id:1 clipp_announce:X "predicate:(var 'ARGS')"
+      EOS
+    )) do
+      transaction do |t|
+        t.request(
+          raw: 'POST /a/b/c?x=bar&y=foo HTTP/1.1',
+          headers: {
+            "Content-Type" => "application/x-www-form-urlencoded",
+            "Content-Length" => 5
+          },
+          body: "y=bar"
+        )
+      end
+    end
+
+    assert(log.scan(/CLIPP ANNOUNCE: X/).size == 3)
+  end
+
+  def test_multiple_fires_phased
+    clipp(CONFIG.merge(
+      default_site_config: <<-EOS
+        Action id:1 phase:REQUEST_HEADER clipp_announce:X "predicate:(var 'ARGS')"
+      EOS
+    )) do
+      transaction do |t|
+        t.request(
+          raw: 'POST /a/b/c?x=bar&y=foo HTTP/1.1',
+          headers: {
+            "Content-Type" => "application/x-www-form-urlencoded",
+            "Content-Length" => 5
+          },
+          body: "y=bar"
+        )
+      end
+    end
+
+    assert(log.scan(/CLIPP ANNOUNCE: X/).size == 2)
+  end
 end

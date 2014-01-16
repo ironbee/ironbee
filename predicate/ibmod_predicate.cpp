@@ -544,24 +544,30 @@ public:
         return m_graph_eval_state;
     }
 
-    //! Has root with index @a i fired?
-    bool root_fired(size_t i) const
+    //! How many times has root @a i fired.
+    size_t root_fire_count(size_t i) const
     {
-        return m_roots_fired[i];
+        return m_root_fire_counts[i];
     }
 
-    //! Mark root with index @a i as fired.
-    void set_root_fired(size_t i)
+    //! Set ho wmany times root @a i has fired.
+    void set_root_fire_count(size_t i, size_t count)
     {
-        assert(! root_fired(i));
-        m_roots_fired[i] = 1;
+        m_root_fire_counts[i] = count;
     }
 
 private:
     //! Graph evaluation state.
     P::GraphEvalState m_graph_eval_state;
-    //! Which roots have fired.
-    boost::dynamic_bitset<> m_roots_fired;
+
+    /**
+     * How many times each root has fired.
+     *
+     * A root needs to fire once for each value in its ValueList.  As that
+     * ValueList may grow, we need to keep track of how many times we've fired
+     * it.
+     **/
+    std::vector<size_t> m_root_fire_counts;
 };
 
 //! Shared pointer to PerTransaction.
@@ -652,21 +658,34 @@ void PerContext::inject(
             size_t n = (m_write_trace ? v.second.size() : 0);
             num_considered += n;
 
-            // Check if fired.
-            if (phase == IB_PHASE_NONE && per_tx->root_fired(index)) {
-                continue;
+            per_tx->graph_eval_state().eval(v.first, tx);
+
+            size_t copies;
+            size_t result_count = per_tx->graph_eval_state().size(index);
+
+            // Check if fired enough already.
+            if (phase == IB_PHASE_NONE)
+            {
+                size_t fire_count = per_tx->root_fire_count(index);
+
+                assert(fire_count <= result_count);
+                copies = result_count - fire_count;
+            }
+            else {
+                copies = result_count;
             }
 
-            per_tx->graph_eval_state().eval(v.first, tx);
-            if (! per_tx->graph_eval_state().empty(index)) {
-                copy(
-                    v.second.begin(), v.second.end(),
-                    back_inserter(rule_list)
-                );
-                if (phase == IB_PHASE_NONE) {
-                    per_tx->set_root_fired(index);
+            if (copies > 0) {
+                BOOST_FOREACH(const ib_rule_t* rule, v.second) {
+                    for (size_t i = 0; i < copies; ++i) {
+                        rule_list.push_back(rule);
+                    }
                 }
                 num_injected += n;
+            }
+
+            if (phase == IB_PHASE_NONE) {
+                per_tx->set_root_fire_count(index, result_count);
             }
         }
     }
@@ -761,7 +780,7 @@ string PerContext::root_namer(ib_rule_phase_num_t phase, size_t index) const
 
 PerTransaction::PerTransaction(size_t index_limit, size_t root_limit) :
     m_graph_eval_state(index_limit),
-    m_roots_fired(root_limit)
+    m_root_fire_counts(root_limit, 0)
 {
     // nop
 }
