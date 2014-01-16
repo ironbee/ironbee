@@ -72,7 +72,49 @@ local DoInDSL = function(f, cp)
             table.insert(to_nil, k)
         end
     end
-    _G['P'] = Predicate
+    -- Currently the Predicate naming convention is to ucfirst() and camel
+    -- case functions that are sexpr based and to lowercase utility
+    -- functions.  This is a bit unclear and it is planned to split Predicate
+    -- namespaces into P and PUtil.  For now, create a wrapper to alias
+    -- the functions and generate deprecation warnings to allow for this
+    -- transition to occur before the namespace split.
+    --
+    -- TODO Remove this when P/PUtil is split.
+    --
+    _G['PUtil'] = { }
+    _G['P'] = { }
+    local p_mt = {
+        __index = Predicate
+    }
+    setmetatable(_G['PUtil'], p_mt)
+    setmetatable(_G['P'], p_mt)
+    for n,v in pairs(Predicate) do
+        if (type(v) == "function") then
+            local first_char = string.sub(n, 1, 1)
+            -- Lowercase functions are utility, ucfirst() is sexpr.
+            if first_char == string.lower(first_char) then
+                -- Deprecate lowercase function in P (should use PUtil).
+                _G['P'][n] = function(...)
+                    ib:logWarn("P." .. n .. "(...) is deprecated - use PUtil." .. n:sub(1,1):upper()..n:sub(2) .. "(...) instead.")
+                    return v(...)
+                end
+                -- Deprecate lowercase version in PUtil.
+                _G['PUtil'][n] = function(...)
+                    ib:logWarn("PUtil." .. n .. "(...) is deprecated - use PUtil." .. n:sub(1,1):upper()..n:sub(2) .. "(...) instead.")
+                    return v(...)
+                end
+                -- Add a ucfirst() version to PUtil (what should be used going forward).
+                _G['PUtil'][n:sub(1,1):upper()..n:sub(2)] = v
+            else
+                -- Deprecate ucfirst() function in PUtil (should use P)
+                _G['PUtil'][n] = function(...)
+                    ib:logWarn("PUtil." .. n .. "(...) is deprecated - use P." .. n .. "(...) instead.")
+                    return v(...)
+                end
+            end
+        end
+    end
+
     _G['IB'] = ib
     _G['CP'] = cp
 
@@ -80,6 +122,7 @@ local DoInDSL = function(f, cp)
 
     -- Teardown.
     _G['P'] = nil
+    _G['PUtil'] = nil
     _G['IB'] = nil
     _G['CP'] = nil
     for _, k in ipairs(to_nil) do

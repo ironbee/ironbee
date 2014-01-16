@@ -33,7 +33,7 @@ class TestLuaPredicate < Test::Unit::TestCase
 
   def test_template
     lua = <<-EOS
-      local getField = P.define('tc_lua_predicate_getField', {'name'},
+      local getField = PUtil.Define('tc_lua_predicate_getField', {'name'},
         P.Field(P.Ref('name'))
       )
       Action("basic1", "1"):
