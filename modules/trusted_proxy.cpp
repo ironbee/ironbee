@@ -160,7 +160,7 @@ void make_ipset_entry(const char* cidr_or_ip, ib_ipset4_entry_t& entry)
 TrustedProxyConfig::TrustedProxyConfig()
     : m_xff_enabled(true)
 {
-    // nop
+    ib_ipset4_init(&m_trusted_networks, NULL, 0, NULL, 0);
 }
 
 bool TrustedProxyConfig::is_xff_enabled() const
