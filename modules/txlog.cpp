@@ -50,6 +50,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/time_facet.hpp>
@@ -303,10 +304,17 @@ void requestHeadersToJson(
             headerNvp = headerNvp.next()
         )
         {
-            headers.withMap()
-                    .withString("name", headerNvp.name().to_s())
-                    .withString("value", headerNvp.value().to_s())
-                .close();
+            std::string headerName = headerNvp.name().to_s();
+            std::string headerValue = headerNvp.value().to_s();
+
+            if (boost::algorithm::iequals(headerName, "User-Agent") ||
+                boost::algorithm::iequals(headerName, "Referer"))
+            {
+                headers.withMap()
+                        .withString("name", headerNvp.name().to_s())
+                        .withString("value", headerNvp.value().to_s())
+                    .close();
+            }
         }
     }
 
@@ -328,10 +336,17 @@ void responseHeadersToJson(
             headerNvp = headerNvp.next()
         )
         {
-            headers.withMap()
-                    .withString("name", headerNvp.name().to_s())
-                    .withString("value", headerNvp.value().to_s())
-                .close();
+            std::string headerName = headerNvp.name().to_s();
+            std::string headerValue = headerNvp.value().to_s();
+
+            if (boost::algorithm::iequals(headerName, "Content-Type") ||
+                boost::algorithm::iequals(headerName, "Server"))
+            {
+                headers.withMap()
+                        .withString("name", headerNvp.name().to_s())
+                        .withString("value", headerNvp.value().to_s())
+                    .close();
+            }
         }
     }
 
