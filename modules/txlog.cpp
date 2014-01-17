@@ -193,12 +193,12 @@ void TxLogData::recordBlockData(
 
     /* Insert Request Action */
     if (tx.is_allow_request() || tx.is_allow_all()) {
-        action = "Allow";
+        action = "Allowed";
         method = "";
     }
     else if(tx.is_blocked())
     {
-        action = "Block";
+        action = "Blocked";
 
         switch(tx.block_method()) {
         case IB_BLOCK_METHOD_STATUS:
@@ -212,7 +212,7 @@ void TxLogData::recordBlockData(
         }
     }
     else {
-        action = "Pass";
+        action = "Passed";
         method = "";
     }
 }
