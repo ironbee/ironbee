@@ -141,6 +141,7 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port);
 
 #define ADDRSIZE 48 /* what's the longest IPV6 addr ? */
 #define DEFAULT_LOG "ts-ironbee"
+#define DEFAULT_TXLOG "tx-ironbee"
 
 typedef enum {LE_N, LE_RN, LE_ANY} http_lineend_t;
 
@@ -170,7 +171,7 @@ static module_data_t module_data =
     NULL,                            /* .log_file */
     IB_LOG_WARNING,                  /* .log_level */
     false,                           /* .log_disable */
-    "IronbeeTxLog",
+    DEFAULT_TXLOG,
     NULL
 };
 
@@ -2751,6 +2752,9 @@ static ib_status_t engine_postconfig_fn(
                                    &mod_data->txlogger);
         if (rv != TS_SUCCESS) {
             mod_data->txlogger = NULL;
+            TSError("[ironbee] Failed to create transaction log \"%s\": %d",
+                    mod_data->txlogfile,
+                    rv);
             return IB_EUNKNOWN;
         }
     }
