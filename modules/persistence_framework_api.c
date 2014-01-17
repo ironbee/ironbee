@@ -583,11 +583,8 @@ ib_status_t ib_persist_fw_map_collection(
         IB_S2SL(name),
         IB_PHASE_NONE, IB_PHASE_NONE
     );
-    if (rc == IB_EEXIST) {
-        ib_log_error(ib, "Source %s already exists.", name);
-        return rc;
-    }
-    else if (rc != IB_OK) {
+    /* Many sites may all be registering a var. EEXIST is OK. */
+    if (rc != IB_EEXIST && rc != IB_OK) {
         ib_log_error(ib, "Failed to register source for %s: %s",
                      name, ib_status_to_string(rc));
         return rc;
