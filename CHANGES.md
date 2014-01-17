@@ -57,6 +57,18 @@ IronBee v0.9.0
 - Predicate now fires a Predicate rule for each value in the valuelist of the top node for that rule instead of only once.
 
 - There is now a `set_predicate_vars` action.  This action can be placed as the **first** action.  It will set the `PREDICATE_VALUE` and `PREDICATE_VALUE_NAME` for each value in the valuelist.  These vars may then be used by other actions for that rule.
+**Lua**
+
+- LuaCommitRules is deprecated and should not be used. Lua rules are committed to the engine automatically at the end of every Lua file parse.
+
+**Core**
+
+- The trasnformation ifloor is now an available action that returns an number instead of a float.
+- The trasnformation iceil is now an available action that returns an number instead of a float.
+- The trasnformation iround is now an available action that returns an number instead of a float.
+- The trasnformation floor is now aliased to ifloor and should be considered deprecated.
+- The trasnformation ceil is now aliased to iceil and should be considered deprecated.
+- The trasnformation round is now aliased to iround and should be considered deprecated.
 
 **Fast**
 
