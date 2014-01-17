@@ -2748,7 +2748,7 @@ static ib_status_t engine_postconfig_fn(
         );
         /* Open logfile for txlog */
         rv = TSTextLogObjectCreate(mod_data->txlogfile,
-                                   TS_LOG_MODE_ADD_TIMESTAMP,
+                                   0,
                                    &mod_data->txlogger);
         if (rv != TS_SUCCESS) {
             mod_data->txlogger = NULL;
