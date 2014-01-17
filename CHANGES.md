@@ -70,6 +70,11 @@ IronBee v0.9.0
 - The trasnformation ceil is now aliased to iceil and should be considered deprecated.
 - The trasnformation round is now aliased to iround and should be considered deprecated.
 
+**Servers**
+
+- TrafficServer: Compatible with 4.1.x.
+- TrafficServer: Added support for writting ironbee transaction logs.
+
 **Fast**
 
 - Added `extract_waggle.rb` to extract fast patterns from waggle rules and updated `build.rb` to use appropriately for `.lua` and `.waggle` files.
