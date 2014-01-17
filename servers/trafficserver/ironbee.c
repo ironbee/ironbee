@@ -2775,7 +2775,7 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port)
     int rv = getnameinfo(addr, sizeof(*addr), str, ADDRSIZE, serv, 8,
                          NI_NUMERICHOST|NI_NUMERICSERV);
     if (rv != 0) {
-        TSError("[ts-ironbee] getnameinfo: %d", rv);
+        TSError("[ironbee] getnameinfo: %d", rv);
     }
     *port = atoi(serv);
 }
