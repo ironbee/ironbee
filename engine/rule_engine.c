@@ -4312,11 +4312,26 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     }
     rule->true_actions = lst;
 
-    /* The False Action list is created as required */
-    rule->false_actions = NULL;
+    /* Create the False Action list */
+    lst = NULL;
+    rc = ib_list_create(&lst, mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Error creating rule false action list: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+    rule->false_actions = lst;
 
-    /* The Auxiliary Action list is created as required. */
-    rule->aux_actions = NULL;
+    /* Create the Auxiliary Action list. */
+    lst = NULL;
+    rc = ib_list_create(&lst, mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Error creating rule aux action list: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+    rule->aux_actions = lst;
+
 
     /* Get the rule engine and previous rule */
     context_rules = ctx->rules;
@@ -5343,11 +5358,11 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
                                ib_action_inst_t *action,
                                ib_rule_action_t which)
 {
+    assert(ib != NULL);
+
     ib_status_t rc;
     const char *params;
     ib_list_t  *actions;
-    ib_list_t **pactions;
-    assert(ib != NULL);
 
     if ( (rule == NULL) || (action == NULL) ) {
         ib_log_error(ib,
@@ -5359,30 +5374,17 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     /* Selection the appropriate action list */
     switch (which) {
     case IB_RULE_ACTION_TRUE :
-        pactions = &(rule->true_actions);
+        actions = rule->true_actions;
         break;
     case IB_RULE_ACTION_FALSE :
-        pactions = &(rule->false_actions);
+        actions = rule->false_actions;
         break;
     case IB_RULE_ACTION_AUX :
-        pactions = &(rule->aux_actions);
+        actions = rule->aux_actions;
         break;
     default:
         return IB_EINVAL;
     }
-
-    /* Create the list if required (for false and aux lists) */
-    if (*pactions == NULL) {
-        ib_list_t *lst;
-        rc = ib_list_create(&lst, ib_engine_pool_main_get(ib));
-        if (rc != IB_OK) {
-            ib_log_error(ib, "Error creating rule action list: %s",
-                         ib_status_to_string(rc));
-            return rc;
-        }
-        *pactions = lst;
-    }
-    actions = *pactions;
 
     /* Some actions require IB_RULE_FLAG_FIELDS to be set.
      * FIXME: This is fragile code. Event should be able to construct
