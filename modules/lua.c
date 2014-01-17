@@ -2068,6 +2068,22 @@ static ib_status_t modlua_dir_param1(
     return IB_OK;
 }
 
+static ib_status_t modlua_dir_commit_rules(
+    ib_cfgparser_t *cp,
+    const char *name,
+    const ib_list_t *list,
+    void *cbdata)
+{
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+
+    ib_cfg_log_warning(
+        cp,
+        "LuaCommitRules is deprecated and should not be used.");
+
+    return IB_OK;
+}
+
 static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "LuaLoadModule",
@@ -2087,6 +2103,11 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "LuaInclude",
         modlua_dir_lua_include,
+        NULL
+    ),
+    IB_DIRMAP_INIT_LIST(
+        "LuaCommitRules",
+        modlua_dir_commit_rules,
         NULL
     ),
     IB_DIRMAP_INIT_LIST(
