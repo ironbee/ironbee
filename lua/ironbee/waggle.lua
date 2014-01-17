@@ -236,8 +236,8 @@ end
 
 
 -- Aliases for backwards compatibility with 0.8.x. Remove.
-_M.Sig    = Rule
-_M.SigExt = RuleExt
-_M.StrSig = StrRule
+_M.Sig    = _M.Rule
+_M.SigExt = _M.RuleExt
+_M.StrSig = _M.StrRule
 
 return _M
