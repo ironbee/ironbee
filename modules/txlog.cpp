@@ -515,6 +515,7 @@ static ib_status_t txlog_logger_format_fn(
                     .withString("uri", tx.request_line().uri().to_s())
                     .withString("protocol", tx.request_line().protocol().to_s())
                     .withString("host", tx.hostname())
+                    .withInt("bandwidth", 0)
                     .withFunction(boost::bind(requestHeadersToJson, tx, _1))
                     .withFunction(
                         boost::bind(
@@ -530,7 +531,10 @@ static ib_status_t txlog_logger_format_fn(
                             _1))
                 .close()
                 .withMap("response")
-                    .withString("statusMessage", tx.response_line().message().to_s())
+                    .withString("protocol", tx.response_line().protocol().to_s())
+                    .withString("status", tx.response_line().status().to_s())
+                    .withString("message", tx.response_line().message().to_s())
+                    .withInt("bandwidth", 0)
                     .withFunction(boost::bind(responseHeadersToJson, tx, _1))
                     .withFunction(
                         boost::bind(
