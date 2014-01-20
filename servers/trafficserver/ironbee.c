@@ -40,7 +40,8 @@
  *
  * This module takes advantage of Traffic Server's ability to passing command
  * line arguments to modules.  To do this, add arguments to the ts_ironbee
- * module load in 'plugin.config'.
+ * module load in 'plugin.config'.  These arguments are parsed with getopt(3)
+ * according to Unix/shell command line rules.
  *
  * The recognized arguments are:
  * - <tt>-L</tt>
@@ -58,7 +59,7 @@
  *
  * Example plugin.config
  *   /local/ib/lib64/libloader.so /local/ib/lib64/libironbee.so
- *   /local/ib/libexec/ts_ironbee.so /local/ib/ts.conf -v trace -l ts-ironbee.log -m 10
+ *   /local/ib/libexec/ts_ironbee.so -v trace -l ts-ironbee.log -m 10 /local/ib/ts.conf
  */
 
 /**
