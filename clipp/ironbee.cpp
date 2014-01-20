@@ -480,7 +480,7 @@ int clipp_print_type_op_executor(
 {
     std::string type_name;
 
-    if (field.ib()) {
+    if (field) {
         switch(field.type()) {
             case ConstField::GENERIC:
                 type_name = "GENERIC";
@@ -536,7 +536,7 @@ int clipp_print_op_executor(
 )
 {
     cout << "clipp_print [" << args << "]: "
-         << ((field.ib())? field.to_s() : "NULL")
+         << (field ? field.to_s() : "NULL")
          << endl;
 
     return 1;
