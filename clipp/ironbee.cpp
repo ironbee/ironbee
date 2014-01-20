@@ -480,10 +480,7 @@ int clipp_print_type_op_executor(
 {
     std::string type_name;
 
-    if (field.ib() == NULL) {
-        type_name = "NULL";
-    }
-    else {
+    if (field.ib()) {
         switch(field.type()) {
             case ConstField::GENERIC:
                 type_name = "GENERIC";
@@ -513,6 +510,9 @@ int clipp_print_type_op_executor(
                 type_name = "UNSUPPORTED TYPE";
         }
     }
+    else {
+        type_name = "NULL";
+    }
 
     cout << "clipp_print_type [" << args << "]: " << type_name << endl;
     return 1;
@@ -536,7 +536,7 @@ int clipp_print_op_executor(
 )
 {
     cout << "clipp_print [" << args << "]: "
-         << ((field.ib() == NULL)? "NULL" : field.to_s())
+         << ((field.ib())? field.to_s() : "NULL")
          << endl;
 
     return 1;
