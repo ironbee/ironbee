@@ -234,7 +234,7 @@ static ib_status_t populate_data_in_context(
             (const ib_persist_fw_mapping_t *)ib_list_node_data_const(list_node);
 
         /* Alias some values. */
-        const char             *name      = mapping->name;
+        const char            *name       = mapping->name;
         ib_persist_fw_store_t *store      = mapping->store;
         const char            *key        = NULL;
         size_t                 key_length = 0;
@@ -583,8 +583,22 @@ ib_status_t ib_persist_fw_map_collection(
         IB_S2SL(name),
         IB_PHASE_NONE, IB_PHASE_NONE
     );
+    if (rc == IB_EEXIST) {
+        rc = ib_var_source_acquire(
+            &(mapping->source),
+            mp,
+            ib_engine_var_config_get(ib),
+            IB_S2SL(name));
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "Failed to acquire previously registered source \"%s\"",
+                name);
+            return rc;
+        }
+    }
     /* Many sites may all be registering a var. EEXIST is OK. */
-    if (rc != IB_EEXIST && rc != IB_OK) {
+    else if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register source for %s: %s",
                      name, ib_status_to_string(rc));
         return rc;

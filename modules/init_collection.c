@@ -468,6 +468,7 @@ ib_status_t var_load_fn(
         ib_status_t rc;
         const ib_field_t *field =
             (const ib_field_t *)ib_list_node_data_const(node);
+        assert(field != NULL);
         rc = ib_list_push(fields, (void *)field);
         if (rc !=  IB_OK) {
             ib_log_error_tx(tx, "Failed to populate fields.");
