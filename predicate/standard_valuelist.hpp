@@ -210,6 +210,43 @@ public:
 };
 
 /**
+ * Flatten list values into a valuelist.
+ **/
+class Flatten :
+    public Call
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    /**
+     * See Node::transform().
+     *
+     * Will replace self with child if child is non-list literal.
+     **/
+    virtual bool transform(
+        MergeGraph&        merge_graph,
+        const CallFactory& call_factory,
+        NodeReporter       reporter
+    );
+
+    //! See Node::eval_initialize()
+    virtual void eval_initialize(
+        NodeEvalState& node_eval_state,
+        EvalContext    context
+    ) const;
+
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+/**
  * Load all standard ValueList calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.

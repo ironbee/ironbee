@@ -516,6 +516,103 @@ bool Gather::validate(NodeReporter reporter) const
     return Validate::n_children(reporter, 1);
 }
 
+string Flatten::name() const
+{
+    return "flatten";
+}
+
+bool Flatten::validate(NodeReporter reporter) const
+{
+    return
+        Validate::n_children(reporter, 1)
+        ;
+}
+
+bool Flatten::transform(
+    MergeGraph&        merge_graph,
+    const CallFactory& call_factory,
+    NodeReporter       reporter
+)
+{
+    node_p me = shared_from_this();
+    node_p child = children().front();
+
+    if (child->is_literal()) {
+        merge_graph.replace(me, child);
+        return true;
+    }
+
+    return false;
+}
+
+void Flatten::eval_initialize(
+    NodeEvalState& node_eval_state,
+    EvalContext    context
+) const
+{
+    node_eval_state.state() = ValueList::const_iterator();
+    node_eval_state.setup_local_values(context);
+}
+
+namespace {
+
+void flatten_append(Value v, NodeEvalState& my_state)
+{
+    if (v.type() == Value::LIST) {
+        BOOST_FOREACH(Value subv, v.value_as_list<Value>()) {
+            my_state.add_value(subv);
+        }
+    }
+    else {
+        my_state.add_value(v);
+    }
+}
+
+}
+
+void Flatten::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    NodeEvalState& my_state = graph_eval_state[index()];
+
+    const node_p& child = children().front();
+    ValueList values = graph_eval_state.eval(child, context);
+    ValueList::const_iterator location =
+        boost::any_cast<ValueList::const_iterator>(my_state.state());
+
+    // Special case if no values yet.
+    if (values.empty()) {
+        if (graph_eval_state.is_finished(child->index())) {
+            my_state.finish();
+        }
+        return;
+    }
+
+    if (location == ValueList::const_iterator()) {
+        location = values.begin();
+        flatten_append(*location, my_state);
+    }
+
+    // At this point, location refers to the last value already handled.
+    ValueList::const_iterator next_location = location;
+    ++next_location;
+    const ValueList::const_iterator end = values.end();
+    while (next_location != end) {
+        flatten_append(*next_location, my_state);
+        location = next_location;
+        ++next_location;
+    }
+
+    if (graph_eval_state.is_finished(child->index())) {
+        my_state.finish();
+    }
+    else {
+        my_state.state() = location;
+    }
+}
+
 void load_valuelist(CallFactory& to)
 {
     to
@@ -526,6 +623,7 @@ void load_valuelist(CallFactory& to)
         .add<Nth>()
         .add<Scatter>()
         .add<Gather>()
+        .add<Flatten>()
         ;
 }
 

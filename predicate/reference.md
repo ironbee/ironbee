@@ -367,6 +367,14 @@ Transformations
 Front End
 : **Call Method**
 
+**`(flatten v)`**
+
+Result
+: The concatenation of all values of values of `v` where non-list values of `v` are treated as lists of size 1.
+
+Transformations
+: If `v` is a (non-list) literal, will replace itself with `v`.
+
 Predicate Predicates
 --------------------
 
