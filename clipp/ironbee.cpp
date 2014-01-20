@@ -480,33 +480,38 @@ int clipp_print_type_op_executor(
 {
     std::string type_name;
 
-    switch(field.type()) {
-        case ConstField::GENERIC:
-            type_name = "GENERIC";
-            break;
-        case ConstField::NUMBER:
-            type_name = "NUMBER";
-            break;
-        case ConstField::TIME:
-            type_name = "TIME";
-            break;
-        case ConstField::FLOAT:
-            type_name = "FLOAT";
-            break;
-        case ConstField::NULL_STRING:
-            type_name = "STRING";
-            break;
-        case ConstField::BYTE_STRING:
-            type_name = "BYTE_STRING";
-            break;
-        case ConstField::LIST:
-            type_name = "LIST";
-            break;
-        case ConstField::STREAM_BUFFER:
-            type_name = "STREAM_BUFFER";
-            break;
-        default:
-            type_name = "UNSUPPORTED TYPE";
+    if (field.ib() == NULL) {
+        type_name = "NULL";
+    }
+    else {
+        switch(field.type()) {
+            case ConstField::GENERIC:
+                type_name = "GENERIC";
+                break;
+            case ConstField::NUMBER:
+                type_name = "NUMBER";
+                break;
+            case ConstField::TIME:
+                type_name = "TIME";
+                break;
+            case ConstField::FLOAT:
+                type_name = "FLOAT";
+                break;
+            case ConstField::NULL_STRING:
+                type_name = "STRING";
+                break;
+            case ConstField::BYTE_STRING:
+                type_name = "BYTE_STRING";
+                break;
+            case ConstField::LIST:
+                type_name = "LIST";
+                break;
+            case ConstField::STREAM_BUFFER:
+                type_name = "STREAM_BUFFER";
+                break;
+            default:
+                type_name = "UNSUPPORTED TYPE";
+        }
     }
 
     cout << "clipp_print_type [" << args << "]: " << type_name << endl;
@@ -530,7 +535,10 @@ int clipp_print_op_executor(
     ConstField field
 )
 {
-    cout << "clipp_print [" << args << "]: " << field.to_s() << endl;
+    cout << "clipp_print [" << args << "]: "
+         << ((field.ib() == NULL)? "NULL" : field.to_s())
+         << endl;
+
     return 1;
 }
 
