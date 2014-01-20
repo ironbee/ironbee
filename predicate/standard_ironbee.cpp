@@ -297,7 +297,7 @@ Value Operator::value_calculate(
     EvalContext     context
 ) const
 {
-    static const char* c_capture_name = "predicate_operator_capture";
+    static string c_capture_name("capture");
 
     if (! m_data) {
         BOOST_THROW_EXCEPTION(
@@ -309,8 +309,7 @@ Value Operator::value_calculate(
 
     IronBee::Field capture = IronBee::Field::create_no_copy_list<void *>(
         context.memory_pool(),
-        c_capture_name,
-        sizeof(c_capture_name) - 1,
+        c_capture_name.data(), c_capture_name.length(),
         List<void *>::create(context.memory_pool())
     );
 
