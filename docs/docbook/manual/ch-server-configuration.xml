@@ -22,12 +22,13 @@
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
             <para><emphasis role="bold">Version:</emphasis> 0.5.0</para>
+            <para>If TxLogging is enabled, it may also be necessary to load <emphasis>libyajl version 2.x</emphasis> with libloader.</para>
         </section>
         <section>
             <title>TrafficServer IronBee Plugin</title>
             <para><emphasis role="bold">Description:</emphasis> Bootstrap the trafficserver ironbee plugin.</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal><replaceable>/path/to/</replaceable>ts_ironbee.so <replaceable>[-v loglevel] [-l log-file-name] [-L] /path/to/ironbee.conf</replaceable></literal></para>
+                <literal><replaceable>/path/to/</replaceable>ts_ironbee.so <replaceable>[-v loglevel] [-l log-file-name] [-L] [-x TxLog-file-name] [-m max-engines] /path/to/ironbee.conf</replaceable></literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
             <para><emphasis role="bold">Version:</emphasis> 0.8.0</para>
