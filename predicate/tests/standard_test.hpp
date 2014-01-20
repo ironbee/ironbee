@@ -58,6 +58,10 @@ protected:
         IronBee::Predicate::node_p n
     );
 
+    std::string eval_l(
+        IronBee::Predicate::node_p n
+    );
+
     int64_t eval_n(
         IronBee::Predicate::node_p n
     );
