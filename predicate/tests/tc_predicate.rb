@@ -303,4 +303,19 @@ class TestPredicate < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=foo PREDICATE_VALUE_NAME=y/
     assert_log_match /CLIPP ANNOUNCE: PREDICATE_VALUE=bar PREDICATE_VALUE_NAME=y/
   end
+
+  def test_rx_capture
+    clipp(CONFIG.merge(
+      default_site_config: <<-EOS
+        Action id:1 phase:REQUEST "predicate:(p (operator 'rx' 'a' (var 'ARGS')))"
+      EOS
+    )) do
+      transaction do |t|
+        t.request(raw: 'GET /?x=aa&y=ab')
+      end
+    end
+
+    assert_no_issues
+    assert_log_match '[x:[0:a] y:[0:a]]'
+  end
 end

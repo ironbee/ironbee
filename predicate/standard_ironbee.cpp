@@ -297,8 +297,6 @@ Value Operator::value_calculate(
     EvalContext     context
 ) const
 {
-    static string c_capture_name("capture");
-
     if (! m_data) {
         BOOST_THROW_EXCEPTION(
             einval() << errinfo_what(
@@ -309,7 +307,7 @@ Value Operator::value_calculate(
 
     IronBee::Field capture = IronBee::Field::create_no_copy_list<void *>(
         context.memory_pool(),
-        c_capture_name.data(), c_capture_name.length(),
+        v.name(), v.name_length(),
         List<void *>::create(context.memory_pool())
     );
 
