@@ -27,6 +27,7 @@
 #include <predicate/call_helpers.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/validate.hpp>
+#include <predicate/value.hpp>
 
 #include <ironbee/log.h>
 
@@ -42,31 +43,6 @@ namespace IronBee {
 namespace Predicate {
 namespace Standard {
 
-namespace {
-
-string p_construct_value_string(ConstList<Value> values)
-{
-    list<string> string_values;
-    BOOST_FOREACH(const Value& v, values) {
-        string string_value;
-        if (v.name_length() > 0) {
-            string_value += string(v.name(), v.name_length());
-            string_value += ":";
-        }
-        if (v.type() == Value::LIST) {
-            string_value +=
-                p_construct_value_string(v.value_as_list<Value>());
-        }
-        else {
-            string_value += v.to_s();
-        }
-        string_values.push_back(string_value);
-    }
-    return "[" + boost::algorithm::join(string_values, ", ") + "]";
-}
-
-}
-
 string P::name() const
 {
     return "p";
@@ -80,7 +56,7 @@ void P::eval_calculate(
     list<string> value_strings;
     BOOST_FOREACH(const node_p& n, children()) {
         value_strings.push_back(
-            p_construct_value_string(
+            valuelist_to_string(
                 graph_eval_state.eval(n, context)
             )
         );

@@ -34,7 +34,8 @@ libpredicate_la_SOURCES = \
     transform_graph.cpp      \
     validate_graph.cpp       \
     pre_eval_graph.cpp       \
-    tree_copy.cpp
+    tree_copy.cpp            \
+    value.cpp
 noinst_PROGRAMS = pp_dot
 
 EXTRA_DIST = \
@@ -65,7 +66,8 @@ EXTRA_DIST = \
 		tree_copy.hpp             \
 		transform_graph.hpp       \
 		validate.hpp              \
-		validate_graph.hpp
+		validate_graph.hpp        \
+    value.hpp
 
 ibmod_predicate_la_SOURCES = ibmod_predicate.cpp
 ibmod_predicate_la_LIBADD = libpredicate.la

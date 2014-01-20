@@ -27,6 +27,7 @@
 #include "predicate/merge_graph.hpp"
 #include "predicate/pre_eval_graph.hpp"
 #include "predicate/validate_graph.hpp"
+#include "predicate/value.hpp"
 
 #include "standard_test.hpp"
 
@@ -102,56 +103,10 @@ string StandardTest::eval_s(node_p n)
     return bs.to_s();
 }
 
-namespace {
-
-void render_value(
-    ostream&     out,
-    const Value& value
-);
-
-void render_valuelist(
-    ostream&         out,
-    const ValueList& values
-)
-{
-    out << "[";
-    bool first = true;
-    BOOST_FOREACH(const Value& value, values) {
-        if (first) {
-            first = false;
-        }
-        else {
-            out << " ";
-        }
-        render_value(out, value);
-    }
-    out << "]";
-}
-
-void render_value(
-    ostream&     out,
-    const Value& value
-)
-{
-    out << value.name_as_s() << ":";
-    if (value.type() != Value::LIST) {
-        out << value.to_s();
-    }
-    else {
-        render_valuelist(out, value.value_as_list<Value>());
-    }
-}
-
-}
-
 string StandardTest::eval_l(node_p n)
 {
-    stringstream out;
-
     ValueList vals = eval(n);
-    render_valuelist(out, vals);
-
-    return out.str();
+    return valuelist_to_string(vals);
 }
 
 int64_t StandardTest::eval_n(node_p n)

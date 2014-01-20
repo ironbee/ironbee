@@ -123,10 +123,10 @@ TEST_F(TestStandardValueList, ScatterGather)
 
 TEST_F(TestStandardValueList, Flatten)
 {
-    EXPECT_EQ("[:a :b]", eval_l(parse("(flatten (cat 'a' 'b'))")));
-    EXPECT_EQ("[:a :b :c :d]", eval_l(parse("(flatten (cat (cat 'a' 'b') (cat 'c' 'd')))")));
-    EXPECT_EQ("[:a :b :c]", eval_l(parse("(flatten (cat (cat 'a' 'b') 'c'))")));
-    EXPECT_EQ("[:a]", eval_l(parse("(flatten 'a')")));
+    EXPECT_EQ("[a b]", eval_l(parse("(flatten (cat 'a' 'b'))")));
+    EXPECT_EQ("[a b c d]", eval_l(parse("(flatten (cat (cat 'a' 'b') (cat 'c' 'd')))")));
+    EXPECT_EQ("[a b c]", eval_l(parse("(flatten (cat (cat 'a' 'b') 'c'))")));
+    EXPECT_EQ("[a]", eval_l(parse("(flatten 'a')")));
     EXPECT_EQ("[]", eval_l(parse("(flatten null)")));
 
     EXPECT_THROW(eval_l(parse("(flatten)")), IronBee::einval);
