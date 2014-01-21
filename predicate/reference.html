@@ -451,6 +451,43 @@
 <dd><strong>Call Method</strong></dd>
 </dl>
 
+<p><strong><code>(flatten v)</code></strong></p>
+
+<dl>
+<dt>Result</dt>
+<dd>The concatenation of all values of values of <code>v</code> where non-list values of <code>v</code> are treated as lists of size 1.</dd>
+
+<dt>Finished</dt>
+<dd>When <code>v</code> is finished.</dd>
+
+<dt>Transformations</dt>
+<dd>If <code>v</code> is a (non-list) literal, will replace itself with <code>v</code>.</dd>
+</dl>
+
+<p><strong><code>(focus N v)</code></strong></p>
+
+<dl>
+<dt>Result</dt>
+<dd>For each list value of <code>v</code> that contains a subvalue named <code>N</code>, that subvalue with its named changed to <code>N</code>.</dd>
+
+<dt>Finished</dt>
+<dd>When <code>v</code> is finished.</dd>
+</dl>
+
+<h2 id="string">String</h2>
+
+<p>These functions manipulate strings. All of them operate on every string value of their dynamic input and discard any non-string values.</p>
+
+<p><strong><code>(stringReplaceRx E R v)</code></strong></p>
+
+<dl>
+<dt>Result</dt>
+<dd>Every string value of <code>v</code> with any substrings matching <code>E</code> replaced with <code>R</code>. See <code>boost::regex</code> for details on expression and replacement string syntax.</dd>
+
+<dt>Finished</dt>
+<dd>When <code>v</code> is finished.</dd>
+</dl>
+
 <h2 id="predicatepredicates">Predicate Predicates</h2>
 
 <p>These functions have <code>(true)</code> or <code>(false)</code> (aka <code>[]</code>) as their result.</p>
