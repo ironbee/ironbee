@@ -247,6 +247,34 @@ public:
 };
 
 /**
+ * Focus on one value from each child.
+ **/
+class Focus :
+    public MapCall
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+        
+protected:
+    //! See MapCall::value_calculate().
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+/**
  * Load all standard ValueList calls into a CallFactory.
  *
  * @param [in] to CallFactory to load into.

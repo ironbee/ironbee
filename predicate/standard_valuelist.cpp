@@ -613,6 +613,55 @@ void Flatten::eval_calculate(
     }
 }
 
+string Focus::name() const
+{
+    return "focus";
+}
+
+Value Focus::value_calculate(
+    Value           v,
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    Value name = literal_value(children().front());
+    ConstByteString name_bs = name.value_as_byte_string();
+
+    if (v.type() == Value::LIST) {
+        BOOST_FOREACH(const Value& subv, v.value_as_list<Value>()) {
+            if (
+                name_bs.length() == subv.name_length() &&
+                equal(
+                    subv.name(), subv.name() + subv.name_length(),
+                    name_bs.const_data()
+                )
+            ) {
+                return subv.dup(
+                    subv.memory_pool(), v.name(), v.name_length()
+                );
+            }
+        }
+    }
+    return Value();
+}
+
+void Focus::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    map_calculate(children().back(), graph_eval_state, context);
+}
+
+bool Focus::validate(NodeReporter reporter) const
+{
+    return
+        Validate::n_children(reporter, 2) &&
+        Validate::nth_child_is_string(reporter, 0) &&
+        Validate::nth_child_is_not_null(reporter, 1)
+        ;
+}
+
 void load_valuelist(CallFactory& to)
 {
     to
@@ -624,6 +673,7 @@ void load_valuelist(CallFactory& to)
         .add<Scatter>()
         .add<Gather>()
         .add<Flatten>()
+        .add<Focus>()
         ;
 }
 

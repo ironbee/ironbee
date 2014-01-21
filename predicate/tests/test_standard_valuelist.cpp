@@ -134,3 +134,13 @@ TEST_F(TestStandardValueList, Flatten)
 
     EXPECT_EQ("[1:a 1:b]", eval_l(parse("(namedi '1' (flatten (cat (cat (setName '1' 'a') (setName '2' 'foo')) (cat (setName '1' 'b') (setName '2' 'bar')))))")));
 }
+
+TEST_F(TestStandardValueList, Focus)
+{
+    EXPECT_EQ("[foo:1 bar:4]", eval_l(parse("(focus 'x' (cat (setName 'foo' (gather (cat (setName 'x' 1) (setName 'y' 2)))) (setName 'bar' (gather (cat (setName 'y' 3) (setName 'x' 4))))))")));
+
+    EXPECT_THROW(eval_bool(parse("(setName)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(setName null 'a')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(setName 'a')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(setName 'a' 'b' 'c')")), IronBee::einval);
+}

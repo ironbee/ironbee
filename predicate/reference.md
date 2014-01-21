@@ -378,6 +378,14 @@ Finished
 Transformations
 : If `v` is a (non-list) literal, will replace itself with `v`.
 
+**`(focus N v)`**
+
+Result
+: For each list value of `v` that contains a subvalue named `N`, that subvalue with its named changed to `N`.
+
+Finished
+: When `v` is finished.
+
 Predicate Predicates
 --------------------
 
