@@ -386,6 +386,19 @@ Result
 Finished
 : When `v` is finished.
 
+String
+------
+
+These functions manipulate strings.  All of them operate on every string value of their dynamic input and discard any non-string values.
+
+**`(stringReplaceRx E R v)`**
+
+Result
+: Every string value of `v` with any substrings matching `E` replaced with `R`.  See `boost::regex` for details on expression and replacement string syntax.
+
+Finished
+: When `v` is finished.
+
 Predicate Predicates
 --------------------
 

@@ -24,6 +24,7 @@ libpredicate_la_SOURCES = \
     standard_template.cpp    \
     standard_valuelist.cpp   \
     standard_predicate.cpp   \
+    standard_string.cpp      \
     dot.cpp                  \
     dot2.cpp                 \
     bfs.cpp                  \
@@ -63,6 +64,7 @@ EXTRA_DIST = \
 		standard_template.hpp     \
 		standard_valuelist.hpp    \
 		standard_predicate.hpp    \
+		standard_string.hpp       \
 		tree_copy.hpp             \
 		transform_graph.hpp       \
 		validate.hpp              \

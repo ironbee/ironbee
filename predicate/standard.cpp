@@ -31,6 +31,7 @@
 #include <predicate/standard_predicate.hpp>
 #include <predicate/standard_template.hpp>
 #include <predicate/standard_valuelist.hpp>
+#include <predicate/standard_string.hpp>
 
 namespace IronBee {
 namespace Predicate {
@@ -45,6 +46,7 @@ void load(CallFactory& to)
     load_template(to);
     load_valuelist(to);
     load_predicate(to);
+    load_string(to);
 }
 
 } // Standard
