@@ -20,7 +20,7 @@
 --
 -- IronBee Waggle --- Base Rule
 --
--- The base functionality used by all rule classes (Rule, Action, ExtRule, 
+-- The base functionality used by all rule classes (Rule, Action, ExtRule,
 -- StreamInspect, etc).
 --
 -- @author Sam Baskinger <sbaskinger@qualys.com>
@@ -45,7 +45,7 @@ function BaseRule:new(rule_id, rule_version, db)
             version = rule_version,
 
             -- What phase does this run in.
-            phase = nil, 
+            phase = nil,
 
             -- Operator.
             op = '',
@@ -82,7 +82,7 @@ function BaseRule:new(rule_id, rule_version, db)
             rule_type = 'BaseRule',
 
             -- List of predicates rules which represent a list of disjuctions
-            -- which, if all true, allow this signature to fire. 
+            -- which, if all true, allow this signature to fire.
             --
             -- Predicate Rules are tables that contain a 'rule_id' field that
             -- points to a Rule object and a 'result' field which is
@@ -126,7 +126,7 @@ function BaseRule:fields(...)
         self.data.fields = {}
     else
         -- Special case of stream fields. This sets the phase as a side effect.
-        if #fields == 1 and 
+        if #fields == 1 and
             (
                fields[1] == 'RESPONSE_HEADER_STREAM' or
                fields[1] == 'RESPONSE_BODY_STREAM'   or
@@ -268,6 +268,8 @@ function BaseRule:actions(...)
     return self
 end
 BaseRule.action = BaseRule.actions
+BaseRule.transform = function(self, arg) self:action('t', arg) end
+BaseRule.transformAll = function(self, arg) self:action('t', arg) end
 
 -- Append a list of rule ids or tags that this rule must execute after.
 --
@@ -308,7 +310,7 @@ end
 -- Set the rule operator and operator argument.
 --
 -- @param[in,out] self Rule/signature object.
--- @param[in] operator The operator. This should be the raw operator name, 
+-- @param[in] operator The operator. This should be the raw operator name,
 --            such as "rx." This should *not* be "@rx" as the "@" prefix
 --            is specific to the IronBee rule language.
 -- @param[in] operator_argument The operator argument. If this is undefined
@@ -364,7 +366,7 @@ end
 -- @param[in,out] self
 -- @param[in] ruleId The rule ID to use.
 -- @param[in] result The result of the ruleId when evaluated
---            at runtime (true or false) which is required to 
+--            at runtime (true or false) which is required to
 --            execute this function.
 function BaseRule:follows(ruleId, result)
     if type(ruleId) == 'table' then
