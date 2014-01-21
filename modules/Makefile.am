@@ -163,6 +163,11 @@ ibmod_testops_la_SOURCES  = testops.c
 ibmod_testops_la_CFLAGS   = ${AM_CFLAGS}
 ibmod_testops_la_LDFLAGS  = $(AM_LDFLAGS)
 
+module_LTLIBRARIES       += ibmod_txdump.la
+ibmod_txdump_la_SOURCES   = txdump.c
+ibmod_txdump_la_CFLAGS    = ${AM_CFLAGS}
+ibmod_txdump_la_LDFLAGS   = $(AM_LDFLAGS)
+
 endif
 # End of development modules
 
