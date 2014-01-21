@@ -372,6 +372,9 @@ Front End
 Result
 : The concatenation of all values of values of `v` where non-list values of `v` are treated as lists of size 1.
 
+Finished
+: When `v` is finished.
+
 Transformations
 : If `v` is a (non-list) literal, will replace itself with `v`.
 
