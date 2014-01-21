@@ -14,7 +14,7 @@ else
 AM_LDFLAGS += -module -avoid-version
 endif
 
-EXTRA_DIST = moddevel_private.h \
+EXTRA_DIST = \
              parser_suite.hpp \
              persistence_framework.h \
              persistence_framework_private.h \
@@ -150,17 +150,10 @@ ibmod_persist_la_SOURCES = persist.c \
                            persistence_framework_api.c
 endif
 
+# Development-only modules defined here
 if BUILD_DEV_MODULES
-module_LTLIBRARIES += ibmod_devel.la
-ibmod_devel_la_SOURCES =  \
-    moddevel.c        \
-    moddevel_rules.c  \
-    moddevel_txdata.c \
-    moddevel_txdump.c \
-    moddevel_txresp.c
-ibmod_devel_la_CFLAGS = ${AM_CFLAGS}
-ibmod_devel_la_LDFLAGS = $(AM_LDFLAGS)
 endif
+# End of development modules
 
 ibmod_user_agent_la_SOURCES = user_agent.c \
                               user_agent_rules.c \
