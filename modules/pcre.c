@@ -115,10 +115,11 @@ typedef struct modpcre_cpat_data_t {
 /**
  * PCRE and DFA rule data types are an alias for the compiled pattern structure.
  */
-typedef struct modpcre_operator_data_t {
+struct modpcre_operator_data_t {
     modpcre_cpat_data_t *cpdata;          /**< Compiled pattern data */
     const char          *id;              /**< ID for DFA rules */
-} modpcre_operator_data_t;
+};
+typedef struct modpcre_operator_data_t modpcre_operator_data_t;
 
 /* Instantiate a module global configuration. */
 static modpcre_cfg_t modpcre_global_cfg = {
@@ -556,6 +557,83 @@ ib_status_t pcre_set_matches(
     return IB_OK;
 }
 
+
+/* State information for a DFA's work. */
+struct dfa_workspace_t {
+    int    *workspace;  /**< An array of integers that DFA is using. */
+    int     wscount;    /**< The count in dfa_workspace_t::workspace. */
+    int     options;    /**< Options used in previous calls. */
+
+    //! The size of the string stored at dfa_workspace_t::partial.
+    size_t  partial_sz;
+
+    /**
+     * A partial match data for DFA capturing operator.
+     *
+     * This is NULL initially, otherwise equal to the contents of the
+     * previous partial match.
+     *
+     * This is cleared when the partial match is completed and reported.
+     */
+    const char *partial;
+};
+typedef struct dfa_workspace_t dfa_workspace_t;
+
+/**
+ * Append the range @a ovector[0] to @a ovector[1] into @a operator_data.
+ *
+ * This is used when a partial match is found. The resulting
+ * data is recorded into @a operator_data and emitted
+ * when the partial match is matched in later
+ * calls to the dfa stream operator.
+ *
+ * @param[in] tx The transaction.
+ * @param[in] ovector The vector in which the first two elements
+ *            are the partial match values.
+ * @param[in] subject The text for which @a ovector[0] and @a ovector[1] are
+ *            offsets into, per the pcre API documentation.
+ * @param[in] dfa_workspace Contains previous partial match data, if any.
+ *
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On memory errors.
+ */
+ib_status_t pcre_dfa_record_partial(
+    ib_tx_t         *tx,
+    int             *ovector,
+    const char      *subject,
+    dfa_workspace_t *dfa_workspace
+)
+{
+    assert(tx != NULL);
+    assert(ovector != NULL);
+    assert(subject != NULL);
+    assert(dfa_workspace != NULL);
+
+    const size_t subject_len = ovector[1] - ovector[0];
+    char *partial =
+        ib_mpool_alloc(
+            tx->mp,
+            sizeof(*partial) *
+            (subject_len + dfa_workspace->partial_sz));
+
+    if (partial == NULL) {
+        return IB_EALLOC;
+    }
+
+    memcpy(partial, dfa_workspace->partial, dfa_workspace->partial_sz);
+    memcpy(
+        partial + dfa_workspace->partial_sz,
+        subject + ovector[0],
+        subject_len);
+
+    /* Commit results back. */
+    dfa_workspace->partial = partial;
+    dfa_workspace->partial_sz += subject_len;
+
+    return IB_OK;
+}
+
 /**
  * Set the matches from a multi-match dfa as a list in the CAPTURE
  * collection (all with "0" key).
@@ -565,44 +643,110 @@ ib_status_t pcre_set_matches(
  * @param[in] ovector The vector of integer pairs of matches from PCRE.
  * @param[in] matches The number of matches.
  * @param[in] subject The matched-against string data.
+ * @param[in] operator_data Operator context data. Contains previous match.
+ * @param[in] dfa_workspace Contains previous partial match data, if any.
  *
  * @returns IB_OK or IB_EALLOC.
  */
 static
 ib_status_t pcre_dfa_set_match(
-    ib_tx_t    *tx,
-    ib_field_t *capture,
-    int        *ovector,
-    int         matches,
-    const char *subject
+    ib_tx_t                 *tx,
+    ib_field_t              *capture,
+    int                     *ovector,
+    int                      matches,
+    const char              *subject,
+    modpcre_operator_data_t *operator_data,
+    dfa_workspace_t         *dfa_workspace
 )
 {
     assert(tx != NULL);
     assert(tx->ib != NULL);
     assert(capture != NULL);
     assert(ovector != NULL);
+    assert(dfa_workspace != NULL);
 
-    int i;
+    /* NOTE: When you read this code, realize that
+     *       the largest DFA match is in ovector[0] to ovector[1].
+     *       Thus, copying ``subject[ovector[0]]`` to ``subject[ovector[1]]``
+     *       encompasses the entire referenced match.
+     */
 
-    /* We have a match! Now populate TX:0-9 in tx->data. */
-    for (i = 0; i < matches; ++i)
+    /* If there is a partial match, it is the prefix of all these matches.
+     *
+     * This then-block constructs a single subject beginning with the
+     * patial match and ending with the text of the longest current
+     * match.
+     */
+    if (dfa_workspace->partial != NULL && dfa_workspace->partial_sz > 0) {
+        char *new_subject;
+        int  *new_ovector;
+
+        /* Allocate new_subject. */
+        new_subject = ib_mpool_alloc(
+            tx->mp,
+            sizeof(*new_subject) *
+            (ovector[1] - ovector[0] + dfa_workspace->partial_sz));
+        if (new_subject == NULL) {
+            return IB_EALLOC;
+        }
+
+        /* Allocate new_ovector. */
+        new_ovector = ib_mpool_alloc(tx->mp, sizeof(*ovector) * matches * 2);
+        if (new_ovector == NULL) {
+            return IB_EALLOC;
+        }
+
+        /* Populate new_subject. */
+        memcpy(new_subject, dfa_workspace->partial, dfa_workspace->partial_sz);
+        memcpy(
+            new_subject + dfa_workspace->partial_sz,
+            subject,
+            ovector[1]);
+
+        /* Populate new_ovector.  */
+        for (int i = 0; i < matches; ++i) {
+            new_ovector[i] = 0;
+            ++i;
+            new_ovector[i] = ovector[i] + dfa_workspace->partial_sz;
+        }
+
+        /* Re-point our inputs to the new, larger values. */
+        subject                   = new_subject;
+        ovector                   = new_ovector;
+        dfa_workspace->partial_sz = 0;
+        dfa_workspace->partial    = NULL;
+    }
+    /* A small optomization:
+     * Instead of copying all byte strings from the subject,
+     * we create a copy of subject that we own and alias into it.
+     */
+     else {
+        subject = ib_mpool_memdup(
+            tx->mp,
+            subject,
+            sizeof(*subject) * ovector[1]);
+    }
+
+    /* If there are matches... */
+    for (int i = 0; i < matches; ++i)
     {
-        size_t match_len;
-        const char *match_start;
-        const char *name;
+        size_t        match_len;
+        const char   *match_start;
+        const char   *name;
         ib_bytestr_t *bs;
-        ib_field_t *field;
-        ib_status_t rc;
+        ib_field_t   *field;
+        ib_status_t   rc;
 
         /* Readability. Mark the start and length of the string. */
-        match_start = subject+ovector[i * 2];
-        match_len = ovector[i * 2 + 1] - ovector[i * 2];
+        match_start = subject + ovector[i * 2];
+        match_len   = ovector[i * 2 + 1] - ovector[i * 2];
 
-        /* Create a byte-string representation */
-        rc = ib_bytestr_dup_mem(&bs,
-                                tx->mp,
-                                (const uint8_t*)match_start,
-                                match_len);
+        /* Create a byte string copy representation */
+        rc = ib_bytestr_alias_mem(
+            &bs,
+            tx->mp,
+            (const uint8_t*)match_start,
+            match_len);
         if (rc != IB_OK) {
             return rc;
         }
@@ -652,8 +796,8 @@ ib_status_t pcre_operator_execute(
 
     int matches;
     ib_status_t ib_rc;
-    const int ovecsize = 3 * MATCH_MAX;
-    int *ovector = (int *)malloc(ovecsize*sizeof(*ovector));
+    const int ovector_sz = 3 * MATCH_MAX;
+    int *ovector = (int *)malloc(ovector_sz*sizeof(*ovector));
     const char *subject = NULL;
     size_t subject_len = 0;
     const ib_bytestr_t *bytestr;
@@ -737,7 +881,7 @@ ib_status_t pcre_operator_execute(
                         0, /* Starting offset. */
                         0, /* Options. */
                         ovector,
-                        ovecsize);
+                        ovector_sz);
 
 #ifdef PCRE_JIT_STACK
     if (jit_stack != NULL) {
@@ -827,18 +971,18 @@ ib_status_t dfa_operator_create(
     assert(parameters    != NULL);
     assert(instance_data != NULL);
 
-    ib_engine_t *ib = ib_context_get_engine(ctx);
-    ib_mpool_t *pool = ib_context_get_mpool(ctx);
+    ib_engine_t *ib   = ib_context_get_engine(ctx);
+    ib_mpool_t  *pool = ib_context_get_mpool(ctx);
     assert(ib != NULL);
     assert(pool != NULL);
 
-    modpcre_cpat_data_t *cpdata;
+    modpcre_cpat_data_t     *cpdata;
     modpcre_operator_data_t *operator_data;
-    ib_module_t *module;
-    modpcre_cfg_t *config;
-    ib_status_t rc;
-    const char *errptr;
-    int erroffset;
+    ib_module_t             *module;
+    modpcre_cfg_t           *config;
+    ib_status_t              rc;
+    const char              *errptr;
+    int                      erroffset;
 
     /* Get my module object */
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
@@ -937,12 +1081,6 @@ ib_status_t get_or_create_operator_data_hash(
 
 }
 
-struct dfa_workspace_t {
-    int *workspace;
-    int wscount;
-};
-typedef struct dfa_workspace_t dfa_workspace_t;
-
 /**
  * Create the per-transaction data for use with the dfa operator.
  *
@@ -965,15 +1103,15 @@ ib_status_t alloc_dfa_tx_data(
     dfa_workspace_t           **workspace
 )
 {
-    assert(tx);
-    assert(tx->mp);
-    assert(id);
-    assert(workspace);
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
+    assert(id != NULL);
+    assert(workspace != NULL);
 
-    ib_hash_t *hash;
-    ib_status_t rc;
+    ib_hash_t       *hash;
+    ib_status_t      rc;
     dfa_workspace_t *ws;
-    size_t size;
+    size_t           size;
 
     *workspace = NULL;
     rc = get_or_create_operator_data_hash(m, tx, &hash);
@@ -986,6 +1124,9 @@ ib_status_t alloc_dfa_tx_data(
         return IB_EALLOC;
     }
 
+    ws->partial = NULL;
+    ws->partial = 0;
+    ws->options = 0;
     ws->wscount = cpatt_data->dfa_ws_size;
     size = sizeof(*(ws->workspace)) * (ws->wscount);
     ws->workspace = (int *)ib_mpool_alloc(tx->mp, size);
@@ -1005,7 +1146,7 @@ ib_status_t alloc_dfa_tx_data(
  * Return the per-transaction data for use with the dfa operator.
  *
  * @param[in] m PCRE module.
- * @param[in,out] tx Transaction to store the value in.
+ * @param[in] tx Transaction to store the value in.
  * @param[in] id The operator identifier used to get it's workspace.
  * @param[out] workspace Retrieved.
  *
@@ -1022,13 +1163,13 @@ ib_status_t get_dfa_tx_data(
     dfa_workspace_t   **workspace
 )
 {
-    assert(tx);
-    assert(tx->mp);
-    assert(id);
-    assert(workspace);
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
+    assert(id != NULL);
+    assert(workspace != NULL);
 
-    ib_hash_t *hash;
-    ib_status_t rc;
+    ib_hash_t   *hash;
+    ib_status_t  rc;
 
     rc = get_or_create_operator_data_hash(m, tx, &hash);
     if (rc != IB_OK) {
@@ -1051,52 +1192,58 @@ ib_status_t get_dfa_tx_data(
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
- * @param[in] cbdata Callback data.
+ * @param[in] cbdata Callback data. An @ref ib_module_t.
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
-static
-ib_status_t dfa_operator_execute(
-    ib_tx_t *tx,
-    void *instance_data,
+static ib_status_t dfa_operator_execute(
+    ib_tx_t          *tx,
+    void             *instance_data,
     const ib_field_t *field,
-    ib_field_t *capture,
-    ib_num_t *result,
-    void *cbdata
+    ib_field_t       *capture,
+    ib_num_t         *result,
+    void             *cbdata
 )
 {
-    assert(instance_data != NULL);
     assert(tx            != NULL);
+    assert(instance_data != NULL);
+    assert(cbdata        != NULL);
 
-    int matches;
-    ib_status_t ib_rc;
-    const int ovecsize = 3 * MATCH_MAX;
+    static const int ovector_sz = 3 * MATCH_MAX;
+
+    /* The return code for pcre_dfa_exec().
+     * If this is negative, it is a status code.
+     * If this is > 0 it is the number of matches found + 1.
+     * If this is == 0, there are not matches captured, but
+     * the pattern matched.
+     */
+    int                      matches;
+    ib_status_t              ib_rc;
+    int                     *ovector;
+    const char              *subject;
+    size_t                   subject_len;
+    size_t                   start_offset;
+    int                      match_count;
+    const ib_module_t       *module = (const ib_module_t *)cbdata;
+    const ib_bytestr_t      *bytestr;
+    dfa_workspace_t         *dfa_workspace;
     modpcre_operator_data_t *operator_data =
         (modpcre_operator_data_t *)instance_data;
-    int *ovector;
-    const char *subject;
-    size_t subject_len;
-    const ib_bytestr_t *bytestr;
-    dfa_workspace_t *dfa_workspace;
-    const char *id = operator_data->id;
-    int options; /* dfa exec options. */
-    int start_offset;
-    int match_count;
-    const ib_module_t *m = (const ib_module_t *)cbdata;
+    const char              *id = operator_data->id;
 
-    assert(m != NULL);
+    assert(module != NULL);
     assert(operator_data->cpdata->is_dfa == true);
 
-    ovector = (int *)malloc(ovecsize*sizeof(*ovector));
+    ovector = (int *)malloc(ovector_sz*sizeof(*ovector));
     if (ovector==NULL) {
         return IB_EALLOC;
     }
 
+    /* Extract the subject from the field. */
     if (field->type == IB_FTYPE_NULSTR) {
         ib_rc = ib_field_value(field, ib_ftype_nulstr_out(&subject));
         if (ib_rc != IB_OK) {
-            free(ovector);
-            return ib_rc;
+            goto return_rc;
         }
 
         subject_len = strlen(subject);
@@ -1104,82 +1251,150 @@ ib_status_t dfa_operator_execute(
     else if (field->type == IB_FTYPE_BYTESTR) {
         ib_rc = ib_field_value(field, ib_ftype_bytestr_out(&bytestr));
         if (ib_rc != IB_OK) {
-            free(ovector);
-            return ib_rc;
+            goto return_rc;
         }
 
         subject_len = ib_bytestr_length(bytestr);
-        subject = (const char *) ib_bytestr_const_ptr(bytestr);
+        subject     = (const char *) ib_bytestr_const_ptr(bytestr);
     }
     else {
-        free(ovector);
-        return IB_EINVAL;
+        ib_rc = IB_EINVAL;
+        goto return_rc;
     }
 
-    /* Get the per-tx workspace data for this rule data id. */
-    ib_rc = get_dfa_tx_data(m, tx, id, &dfa_workspace);
+    /* Get the per-tx-per-operator workspace data for this rule data id. */
+    ib_rc = get_dfa_tx_data(module, tx, id, &dfa_workspace);
     if (ib_rc == IB_ENOENT) {
+
         /* First time we are called, clear the captures. */
-        if (capture) {
+        if (capture != NULL) {
             ib_rc = ib_capture_clear(capture);
             if (ib_rc != IB_OK) {
-                ib_log_error_tx(tx, "Error clearing captures: %s",
-                                ib_status_to_string(ib_rc));
+                ib_log_error_tx(
+                    tx,
+                    "Failed to clear captures: %s",
+                    ib_status_to_string(ib_rc));
             }
         }
 
-        options = PCRE_PARTIAL_SOFT;
-
-        ib_rc = alloc_dfa_tx_data(m, tx, operator_data->cpdata, id, &dfa_workspace);
+        ib_rc = alloc_dfa_tx_data(
+            module,
+            tx,
+            operator_data->cpdata,
+            id,
+            &dfa_workspace);
         if (ib_rc != IB_OK) {
-            free(ovector);
-            return ib_rc;
+            goto return_rc;
         }
+
+        dfa_workspace->options = PCRE_PARTIAL_SOFT;
+
     }
-    else if (ib_rc == IB_OK) {
-        options = PCRE_PARTIAL_SOFT | PCRE_DFA_RESTART;
+    else if (ib_rc != IB_OK) {
+        goto return_rc;
     }
-    else {
-        free(ovector);
-        return ib_rc;
-    }
+
+    /* Used in situations of multiple matches.
+     * Specifies where in the subject pcre_dfa_exec() should start matching. */
+    start_offset = 0;
+
+    /* The total count of matches found. */
+    match_count = 0;
 
     /* Perform the match.
-     * If capturing is specified, then find all matches.
-     */
-    start_offset = 0;
-    match_count = 0;
+     * If capturing is not requested, then there is no need to find
+     * multiple matches, and this do-while will not iterate more than once.
+     * If capturing is requested, and a match was found, this loop will
+     * iterate more than once until no more matches are found. */
     do {
-        matches = pcre_dfa_exec(operator_data->cpdata->cpatt,
-                                operator_data->cpdata->edata,
-                                subject,
-                                subject_len,
-                                start_offset, /* Starting offset. */
-                                options,
-                                ovector,
-                                ovecsize,
-                                dfa_workspace->workspace,
-                                dfa_workspace->wscount);
+        matches = pcre_dfa_exec(
+            operator_data->cpdata->cpatt,
+            operator_data->cpdata->edata,
+            subject,
+            subject_len,
+            start_offset, /* Starting offset. */
+            dfa_workspace->options,
+            ovector,
+            ovector_sz,
+            dfa_workspace->workspace,
+            dfa_workspace->wscount);
 
-        if (matches > 0) {
-            ++match_count;
+        /* Assume we want to restart. */
+        dfa_workspace->options |= PCRE_DFA_RESTART;
 
-            /* Use the longest match - the first in ovector -
-             * to set the offset in the subject for the next
-             * match.
-             */
-            start_offset = ovector[1] + 1;
-            if (capture) {
-                pcre_dfa_set_match(tx, capture, ovector, 1, subject);
+        /* Check that we have matches. */
+        if (matches >= 0) {
+
+            /* If the match is zero in length, turn off restart and
+             * do not capture. */
+            if (ovector[0] == ovector[1]) {
+                    dfa_workspace->options &= (~PCRE_DFA_RESTART);
+            }
+            /* If the match is non-zero in length, process the match. */
+            else {
+
+                /* If matches == 0, there were too many matches to report
+                 * all of them. Handle what we can match and continue.
+                 */
+                if (matches == 0) {
+                    ib_log_debug_tx(
+                        tx,
+                        "DFA Match over flow. "
+                        "Only handling the longest %d matches.",
+                        MATCH_MAX);
+                    matches = MATCH_MAX;
+                }
+
+                match_count += matches;
+
+                /* If we are to capture the values, it means 2 things:
+                 *
+                 * 1. We will iterate at the end of this do-while loop,
+                 *    and so must update start_offset using the longest
+                 *    matching substring.
+                 * 2. We must record the captured values. */
+                if (capture) {
+
+                    start_offset = ovector[1];
+
+                    ib_rc = pcre_dfa_set_match(
+                        tx,
+                        capture,
+                        ovector,
+                        matches,
+                        subject,
+                        operator_data,
+                        dfa_workspace);
+                    if (ib_rc != IB_OK) {
+                        goto return_rc;
+                    }
+
+                    /* Handle corner case where a match completes on a buffer
+                     * boundary. This can stall this loop unless handled. */
+                    if (ovector[1] == 0) {
+                        dfa_workspace->options &= (~PCRE_DFA_RESTART);
+                    }
+                }
             }
         }
-    } while (capture && (matches > 0));
+        else if (matches == PCRE_ERROR_PARTIAL) {
+            /* Start recording into operator_data the buffer. */
+            ib_rc = pcre_dfa_record_partial(
+                tx,
+                ovector,
+                subject,
+                dfa_workspace);
+            if (ib_rc != IB_OK) {
+                goto return_rc;
+            }
+        }
+    } while (capture && (matches >= 0) && start_offset < subject_len);
 
     if (match_count > 0) {
         ib_rc = IB_OK;
         *result = 1;
     }
-    else if ((matches == 0) || (matches == PCRE_ERROR_NOMATCH)) {
+    else if (matches == PCRE_ERROR_NOMATCH) {
         ib_rc = IB_OK;
         *result = 0;
     }
@@ -1188,12 +1403,17 @@ ib_status_t dfa_operator_execute(
         *result = 0;
     }
     else {
+        ib_log_error_tx(
+            tx,
+            "Unexpected return code from DFA mach: %d",
+            matches);
         /* Some other error occurred. Set the status to false and
          * return the error. */
         ib_rc = IB_EUNKNOWN;
         *result = 0;
     }
 
+return_rc:
     free(ovector);
     return ib_rc;
 }

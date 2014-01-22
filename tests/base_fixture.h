@@ -325,19 +325,6 @@ public:
     }
 
     /**
-     * Throw generic notify error
-     *
-     * @param[in] msg Notify error message
-     */
-    void notifyError(const char *msg)
-    {
-        std::string err;
-        err += "failed to notify ";
-        err += msg;
-        throw std::runtime_error(err);
-    }
-
-    /**
      * Add a name/value to request/response header
      *
      * @param[in] parsed Parsed name/value pair list
@@ -393,7 +380,7 @@ public:
 
         rc = ib_state_notify_request_started(ib_engine, tx, parsed);
         if (rc != IB_OK) {
-            notifyError("request start");
+            throw std::runtime_error("failed to notify request start");
         }
     }
 
@@ -411,7 +398,7 @@ public:
         ib_status_t rc;
         rc = ib_parsed_headers_create(pparsed, tx->mp);
         if (rc != IB_OK) {
-            notifyError("request header");
+            throw std::runtime_error("failed to notify request header");
         }
     }
 
@@ -429,12 +416,12 @@ public:
         rc = ib_state_notify_request_header_data(ib_engine, tx, parsed);
 
         if (rc != IB_OK) {
-            notifyError("request header data.");
+            throw std::runtime_error("failed to notify request header data");
         }
 
         rc = ib_state_notify_request_header_finished(ib_engine, tx);
         if (rc != IB_OK) {
-            notifyError("request header finished");
+            throw std::runtime_error("failed to notify requst header finished");
         }
     }
 
@@ -449,7 +436,7 @@ public:
 
         rc = ib_state_notify_request_finished(ib_engine, tx);
         if (rc != IB_OK) {
-            notifyError("request finished");
+            throw std::runtime_error("failed to notify request finished");
         }
     }
 
@@ -485,12 +472,12 @@ public:
                                         status, strlen(status),
                                         message, strlen(message));
         if (rc != IB_OK) {
-            notifyError("response header");
+            throw std::runtime_error("failed to notify response header");
         }
 
         rc = ib_state_notify_response_started(ib_engine, tx, parsed);
         if (rc != IB_OK) {
-            notifyError("response started");
+            throw std::runtime_error("failed to notify response started");
         }
     }
 
@@ -506,7 +493,7 @@ public:
         ib_status_t rc;
         rc = ib_parsed_headers_create(pparsed, tx->mp);
         if (rc != IB_OK) {
-            notifyError("response header");
+            throw std::runtime_error("failed to notify response header");
         }
     }
 
@@ -522,12 +509,12 @@ public:
         ib_status_t rc;
         rc = ib_state_notify_response_header_data(ib_engine, tx, parsed);
         if (rc != IB_OK) {
-            notifyError("response header data");
+            throw std::runtime_error("failed to notify response header data");
         }
 
         rc = ib_state_notify_response_header_finished(ib_engine, tx);
         if (rc != IB_OK) {
-            notifyError("response header finished");
+            throw std::runtime_error("failed to notify response header finished");
         }
     }
 
@@ -542,24 +529,7 @@ public:
 
         rc = ib_state_notify_response_finished(ib_engine, tx);
         if (rc != IB_OK) {
-            notifyError("response finished.");
-        }
-    }
-
-    /**
-     * Perform post-processing
-     *
-     * @param[in] tx IronBee transaction
-     */
-    void postProcess(ib_tx_t *tx)
-    {
-        ib_status_t rc;
-
-        if (! ib_flags_all(tx->flags, IB_TX_FPOSTPROCESS)) {
-            rc = ib_state_notify_postprocess(ib_engine, tx);
-            if (rc != IB_OK) {
-                notifyError("post process.");
-            }
+            throw std::runtime_error("failed to notify response finished");
         }
     }
 
@@ -625,7 +595,14 @@ public:
 
         sendRequest();
         sendResponse();
-        postProcess(ib_tx);
+
+        if (! ib_flags_all(ib_tx->flags, IB_TX_FPOSTPROCESS)) {
+            ib_status_t rc;
+            rc = ib_state_notify_postprocess(ib_engine, ib_tx);
+            if (rc != IB_OK) {
+                throw std::runtime_error("failed to notify response started post process");
+            }
+        }
     }
 
     /* Request related function */
