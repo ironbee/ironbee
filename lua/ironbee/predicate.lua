@@ -177,26 +177,6 @@ for i,n in ipairs(call_members1) do
 end
 
 local call_members2 = {
-  "sub",
-  "setName",
-  "streq",
-  "istreq",
-  "eq",
-  "ne",
-  "lt",
-  "gt",
-  "le",
-  "ge",
-  "nth",
-  "isLonger",
-  "isComplete",
-  "named",
-  "namedI",
-  "namedRx",
-  "waitPhase",
-  "finishPhase",
-  "ask",
-  "focus",
   "stringReplaceRx"
 }
 for i,n in ipairs(call_members2) do
