@@ -104,3 +104,23 @@ TEST_F(TestOperator, advanced)
 
     ASSERT_NO_THROW(op.destroy_instance(instance_data));
 }
+
+TEST_F(TestOperator, existing)
+{
+    ScopedMemoryPool smp;
+    ConstOperator op = ConstOperator::lookup(m_engine, "match");
+
+    // 0 means no required capabilities.
+    void* instance_data =
+        op.create_instance(m_engine.main_context(), 0, "foo");
+    ASSERT_EQ(1,
+        op.execute_instance(instance_data, m_transaction,
+            Field::create_byte_string(
+                smp, "", 0,
+                ByteString::create(smp, "foo")
+            )
+        )
+    );
+
+    ASSERT_NO_THROW(op.destroy_instance(instance_data));
+}
