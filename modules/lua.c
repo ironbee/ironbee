@@ -42,6 +42,7 @@
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
+#include <ironbee/path.h>
 #include <ironbee/queue.h>
 
 #include <lauxlib.h>
@@ -1761,6 +1762,14 @@ static ib_status_t modlua_dir_lua_include(
         return rc;
     }
 
+    /* If the path is relative, get the absolute path, but relative to the
+     * current configuration file. */
+    p1 = ib_util_relative_file(
+        ib_engine_pool_config_get(ib),
+        ib_cfgparser_curr_file(cp),
+        p1);
+
+
     lua_getglobal(L, "ibconfig");
     if ( ! lua_istable(L, -1) ) {
         ib_log_error(ib, "ibconfig is not a module table.");
@@ -1938,9 +1947,9 @@ static ib_status_t modlua_dir_param1(
     assert(cp->ib != NULL);
     assert(p1     != NULL);
 
-
     ib_status_t    rc;
     ib_module_t   *module;
+    ib_mpool_t    *mp;
     size_t         p1_unescaped_len;
     char          *p1_unescaped;
     ib_engine_t   *ib      = cp->ib;
@@ -1948,6 +1957,9 @@ static ib_status_t modlua_dir_param1(
     size_t         p1_len  = strlen(p1);
     ib_context_t  *ctx     = NULL;
     modlua_cfg_t  *cfg     = NULL;
+
+    mp = ib_engine_pool_config_get(ib);
+    assert(mp != NULL);
 
     rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
@@ -1972,7 +1984,7 @@ static ib_status_t modlua_dir_param1(
         return rc;
     }
 
-    p1_unescaped = malloc(p1_len+1);
+    p1_unescaped = ib_mpool_alloc(mp, p1_len+1);
     if ( p1_unescaped == NULL ) {
         return IB_EALLOC;
     }
@@ -2050,21 +2062,17 @@ static ib_status_t modlua_dir_param1(
     }
     else if (strcasecmp("LuaPackagePath", name) == 0) {
         rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_path", p1_unescaped);
-        free(p1_unescaped);
         return rc;
     }
     else if (strcasecmp("LuaPackageCPath", name) == 0) {
         rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_cpath", p1_unescaped);
-        free(p1_unescaped);
         return rc;
     }
     else {
         ib_log_error(ib, "Unhandled directive: %s %s", name, p1_unescaped);
-        free(p1_unescaped);
         return IB_EINVAL;
     }
 
-    free(p1_unescaped);
     return IB_OK;
 }
 
