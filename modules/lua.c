@@ -2025,21 +2025,16 @@ static ib_status_t modlua_dir_param1(
         }
         else {
             char *path;
-
-            /* Length of prefix, file name, and +1 for the joining '/'. */
             size_t path_len =
                 strlen(corecfg->module_base_path) +
                 strlen(p1_unescaped) +
                 1;
 
-            path = malloc(path_len+1);
-            if (!path) {
-                ib_cfg_log_error(cp, "Cannot allocate memory for module path.");
-                free(p1_unescaped);
+            path = ib_mpool_alloc(ib_engine_pool_config_get(ib), path_len);
+            if (path == NULL) {
                 return IB_EALLOC;
             }
 
-            /* Build the full path. */
             snprintf(
                 path,
                 path_len+1,
@@ -2047,17 +2042,28 @@ static ib_status_t modlua_dir_param1(
                 corecfg->module_base_path,
                 p1_unescaped);
 
+            /* Try a path relative to the modules directory. */
             rc = modlua_module_load(ib, module, path, cfg);
-            if (rc != IB_OK) {
-                ib_log_error(
-                    ib,
-                    "Failed to load Lua module with error %s: %s",
-                    ib_status_to_string(rc),
-                    path);
-                free(path);
-                return rc;
+            if (rc == IB_OK) {
+                return IB_OK;
             }
-            free(path);
+
+            /* If the above fails, try relative to the current config file. */
+            path = ib_util_relative_file(
+                ib_engine_pool_config_get(ib),
+                ib_cfgparser_curr_file(cp),
+                p1_unescaped);
+            rc = modlua_module_load(ib, module, path, cfg);
+            if (rc == IB_OK) {
+                return IB_OK;
+            }
+
+            ib_log_error(
+                ib,
+                "Failed to load Lua module with error %s: %s",
+                ib_status_to_string(rc),
+                path);
+            return rc;
         }
     }
     else if (strcasecmp("LuaPackagePath", name) == 0) {
