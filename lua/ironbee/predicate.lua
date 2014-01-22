@@ -42,6 +42,10 @@ local function merge(name, a, b)
   return _M.C(name, unpack(r))
 end
 
+local function decapitalize(s)
+    return s:gsub("^%u", string.lower)
+end
+
 -- Lua doesn't lookup operators via __index.
 local common_operators = {
   __add = function (a, b) return merge('and', a, b)  end,
@@ -291,16 +295,16 @@ local paramn = {
   'Sequence',
 }
 for i,n in ipairs(param1) do
-  _M[n] = function (a) return _M.C(n:lower(), a) end
+  _M[n] = function (a) return _M.C(decapitalize(n), a) end
 end
 for i,n in ipairs(param2) do
-  _M[n] = function (a, b) return _M.C(n:lower(), a, b) end
+  _M[n] = function (a, b) return _M.C(decapitalize(n), a, b) end
 end
 for i,n in ipairs(param3) do
-  _M[n] = function (a, b, c) return _M.C(n:lower(), a, b, c) end
+  _M[n] = function (a, b, c) return _M.C(decapitalize(n), a, b, c) end
 end
 for i,n in ipairs(paramn) do
-  _M[n] = function (...) return _M.C(n:lower(), ...) end
+  _M[n] = function (...) return _M.C(decapitalize(n), ...) end
 end
 
 local operators = {
@@ -385,9 +389,9 @@ for n,s in pairs(sym) do
     end
     if a.type ~= 'string' then
       n = sym_swap[n] or n
-      return _M.C(n:lower(), b, a)
+      return _M.C(decapitalize(n), b, a)
     else
-      return _M.C(n:lower(), a, b)
+      return _M.C(decapitalize(n), a, b)
     end
   end
 end

@@ -50,4 +50,24 @@ class TestLuaPredicate < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: basic1/
   end
+
+  def test_string_replace_rx
+    lua = <<-EOS
+      Action("basic1", "1"):
+        phase([[REQUEST_HEADER]]):
+        action([[clipp_announce:srr1]]):
+        predicate(
+          P.P(P.StringReplaceRx('a', 'b', 'bar'))
+        )
+    EOS
+    lua_file = lua_path()
+    File.open(lua_file, 'w') {|fp| fp.print lua}
+
+    clipp(make_config(lua_file,
+      :input => "echo:\"GET /foo\""
+    ))
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: srr1/
+    assert_log_match "['bbr']"
+  end
 end
