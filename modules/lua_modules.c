@@ -32,6 +32,9 @@
 #include <ironbee/engine_state.h>
 
 #include <assert.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 /**
  * A container to hold both ibmod_lua and a user-defined Lua module.
@@ -1306,6 +1309,7 @@ static ib_status_t modlua_luamod_init(
  *
  * @returns
  * - IB_OK On success.
+ * - IB_ENOENT If the file cannot be stat'ed.
  * - Other on error.
  */
 ib_status_t modlua_module_load(
@@ -1327,6 +1331,14 @@ ib_status_t modlua_module_load(
     const char  *module_name = ib_mpool_strdup(mp, file);
     modlua_luamod_init_t *modlua_luamod_init_cbdata =
         ib_mpool_alloc(mp, sizeof(*modlua_luamod_init_cbdata));
+    int          sys_rc;
+    struct stat  file_stat;
+
+    /* Stat the file to avoid touching files that don't even exist. */
+    sys_rc = stat(file, &file_stat);
+    if (sys_rc == -1) {
+        return IB_ENOENT;
+    }
 
     if (modlua_luamod_init_cbdata == NULL) {
         return IB_EALLOC;

@@ -61,21 +61,22 @@ endif
 TESTS=$(check_PROGRAMS)
 
 TEST_EXTRAS = \
-       DfaModuleTest.matches.config \
-       EeOperModuleTest.config \
-       error_page.html \
-       eudoxus_pattern1.e \
-       init_collection_1.json \
-       init_collection_2.json \
-       PcreModuleTest.test_load_module.config \
-       PcreModuleTest.test_pcre_operator.config \
-       PcreModuleTest.test_match_basic.config \
-       PcreModuleTest.test_match_capture.config \
-       PcreModuleTest.test_match_capture_named.config \
-       test_module_rules_lua.lua \
-       test_lua_modules.lua \
-       test_lua_set.lua \
-       TestIronBeeModuleRulesLua.operator_test.config
+      DfaModuleTest.matches.config \
+      EeOperModuleTest.config \
+      error_page.html \
+      eudoxus_pattern1.e \
+      init_collection_1.json \
+      init_collection_2.json \
+      PcreModuleTest.test_load_module.config \
+      PcreModuleTest.test_pcre_operator.config \
+      PcreModuleTest.test_match_basic.config \
+      PcreModuleTest.test_match_capture.config \
+      PcreModuleTest.test_match_capture_named.config \
+      test_module_rules_lua.lua \
+      test_load_relative_to_config_file.lua \
+      test_lua_modules.lua \
+      test_lua_set.lua \
+      TestIronBeeModuleRulesLua.operator_test.config
 
 if ENABLE_LUA
 test_module_rules_lua_SOURCES = \
