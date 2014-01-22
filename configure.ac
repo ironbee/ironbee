@@ -191,17 +191,17 @@ AC_ARG_ENABLE(thread-sanitizer-workaround,
 AM_CONDITIONAL([THREAD_SANITIZER_WORKAROUND], [test "$thread_sanitizer_workaround" == "no"])
 
 
-### Development-only features
-AC_ARG_ENABLE(devel,
-              AS_HELP_STRING([--enable-devel],
-                             [Enable development features (development use only).]),
+### Experimental features
+AC_ARG_ENABLE(experimental,
+              AS_HELP_STRING([--enable-experimental],
+                             [Enable experimental features.]),
 [
-  devel=$enableval
+  experimental=$enableval
 ],
 [
-  devel="yes"
+  experimental="yes"
 ])
-AM_CONDITIONAL([BUILD_DEV_MODULES], [test "$devel" != "no"])
+AM_CONDITIONAL([BUILD_EXPERIMENTAL_MODULES], [test "$experimental" != "no"])
 
 ### Disable Ruby.
 AC_ARG_ENABLE(ruby-code,

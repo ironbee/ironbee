@@ -58,11 +58,6 @@ psparse_LDADD = ../libparser_suite.la
 psparse_SOURCES = psparse.cpp
 endif
 
-if BUILD_DEV_MODULES
-check_PROGRAMS += test_abort
-test_abort_SOURCES = test_abort.cpp
-endif
-
 TESTS=$(check_PROGRAMS)
 
 TEST_EXTRAS = \

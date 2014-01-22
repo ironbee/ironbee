@@ -150,9 +150,13 @@ ibmod_persist_la_SOURCES = persist.c \
                            persistence_framework_api.c
 endif
 
-# Development-only modules defined here
-if BUILD_DEV_MODULES
+# Experimental-only modules defined here
+if BUILD_EXPERIMENTAL_MODULES
 
+endif
+# End of experimental modules
+
+# Formerly "development" modules
 module_LTLIBRARIES       += ibmod_abort.la
 ibmod_abort_la_SOURCES    = abort.c
 ibmod_abort_la_CFLAGS     = ${AM_CFLAGS}
@@ -177,9 +181,7 @@ module_LTLIBRARIES       += ibmod_txvars.la
 ibmod_txvars_la_SOURCES   = txvars.c
 ibmod_txvars_la_CFLAGS    = ${AM_CFLAGS}
 ibmod_txvars_la_LDFLAGS   = $(AM_LDFLAGS)
-
-endif
-# End of development modules
+# End of formerly "development" modules
 
 ibmod_user_agent_la_SOURCES = user_agent.c \
                               user_agent_rules.c \
