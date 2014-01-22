@@ -152,6 +152,11 @@ endif
 
 # Development-only modules defined here
 if BUILD_DEV_MODULES
+module_LTLIBRARIES       += ibmod_testops.la
+ibmod_testops_la_SOURCES  = testops.c
+ibmod_testops_la_CFLAGS   = ${AM_CFLAGS}
+ibmod_testops_la_LDFLAGS  = $(AM_LDFLAGS)
+
 endif
 # End of development modules
 
