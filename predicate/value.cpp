@@ -52,6 +52,9 @@ string value_to_string(Value value)
         string_value +=
             valuelist_to_string(value.value_as_list<Value>());
     }
+    else if (value.type() == Value::BYTE_STRING) {
+        string_value += "'" + value.to_s() + "'";
+    }
     else {
         string_value += value.to_s();
     }
