@@ -70,6 +70,34 @@ protected:
 };
 
 /**
+ * Push the name of a list value to its children.
+ **/
+class PushName :
+    public MapCall
+{
+public:
+    //! See Call:name()
+    virtual std::string name() const;
+
+    //! See Node::validate()
+    virtual bool validate(NodeReporter reporter) const;
+
+    //! See Node::eval_calculate()
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+
+protected:
+    //! See MapCall::value_calculate().
+    virtual Value value_calculate(
+        Value           v,
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+};
+
+/**
  * Concatenate values of children.
  **/
 class Cat :
@@ -264,7 +292,7 @@ public:
         GraphEvalState& graph_eval_state,
         EvalContext     context
     ) const;
-        
+
 protected:
     //! See MapCall::value_calculate().
     virtual Value value_calculate(

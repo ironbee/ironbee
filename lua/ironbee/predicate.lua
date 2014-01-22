@@ -146,7 +146,8 @@ local call_members0 = {
   "isSimple",
   "isFinished",
   "isHomogeneous",
-  "flatten"
+  "flatten",
+  "pushName"
 }
 for i,n in ipairs(call_members0) do
   local capitalized = n:gsub("^%l", string.upper)
@@ -255,7 +256,8 @@ local param1 = {
   'StreamResponseBody',
   'Fast',
   'Ref',
-  'Flatten'
+  'Flatten',
+  'PushName'
 }
 local param2 = {
   'SetName',

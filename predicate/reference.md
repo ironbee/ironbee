@@ -277,6 +277,17 @@ Finished
 Front End
 : **Call Method**
 
+**`(pushName v)`**
+
+Result
+: `v` except that for each list value of `v`, the subvalues of that list will now have the same name as the list.  I.e., it pushes the name of a parent list to its children.
+
+Finished
+: `v` is finished.
+
+Notes
+: Useful with `flatten` to flatten a valuelist but preserve the names of the lists, e.g., `(flatten (pushName v))`.
+
 **`(cat ...)`**
 
 Result

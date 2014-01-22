@@ -74,6 +74,53 @@ bool SetName::validate(NodeReporter reporter) const
         ;
 }
 
+string PushName::name() const
+{
+    return "pushName";
+}
+
+Value PushName::value_calculate(
+    Value           v,
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    if (v.type() == Value::LIST) {
+        IronBee::List<Value> new_list =
+            IronBee::List<Value>::create(v.memory_pool());
+        BOOST_FOREACH(const Value& subv, v.value_as_list<Value>()) {
+            new_list.push_back(
+                subv.dup(v.memory_pool(), v.name(), v.name_length())
+            );
+        }
+        Value new_value = Field::create_no_copy_list(
+            v.memory_pool(),
+            v.name(), v.name_length(),
+            new_list
+        );
+        return new_value;
+    }
+    else {
+        return v;
+    }
+}
+
+void PushName::eval_calculate(
+    GraphEvalState& graph_eval_state,
+    EvalContext     context
+) const
+{
+    map_calculate(children().front(), graph_eval_state, context);
+}
+
+bool PushName::validate(NodeReporter reporter) const
+{
+    return
+        Validate::n_children(reporter, 1) &&
+        Validate::nth_child_is_not_null(reporter, 0)
+        ;
+}
+
 namespace {
 
 /**
@@ -666,6 +713,7 @@ void load_valuelist(CallFactory& to)
 {
     to
         .add<SetName>()
+        .add<PushName>()
         .add<Cat>()
         .add<First>()
         .add<Rest>()

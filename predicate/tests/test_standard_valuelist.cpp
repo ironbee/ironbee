@@ -144,3 +144,13 @@ TEST_F(TestStandardValueList, Focus)
     EXPECT_THROW(eval_bool(parse("(setName 'a')")), IronBee::einval);
     EXPECT_THROW(eval_bool(parse("(setName 'a' 'b' 'c')")), IronBee::einval);
 }
+
+TEST_F(TestStandardValueList, PushName)
+{
+    EXPECT_EQ("[1 2 3]", eval_l(parse("(pushName (cat 1 2 3))")));
+    EXPECT_EQ("[a:[a:1 a:2] b:[b:3 b:4] c:5]", eval_l(parse("(pushName (cat (setName 'a' (gather (cat (setName 'x' 1) (setName 'y' 2)))) (setName 'b' (gather (cat (setName 'z' 3) (setName 'w' 4)))) (setName 'c' 5)))")));
+
+    EXPECT_THROW(eval_bool(parse("(pushName)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(pushName 'a' 'a')")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(pushName null)")), IronBee::einval);
+}
