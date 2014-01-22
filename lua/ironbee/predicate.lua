@@ -141,7 +141,8 @@ local call_members0 = {
   "rest",
   "isSimple",
   "isFinished",
-  "isHomogeneous"
+  "isHomogeneous",
+  "flatten"
 }
 for i,n in ipairs(call_members0) do
   local capitalized = n:gsub("^%l", string.upper)
@@ -167,11 +168,40 @@ local call_members1 = {
   "namedRx",
   "waitPhase",
   "finishPhase",
-  "ask"
+  "ask",
+  "focus"
 }
 for i,n in ipairs(call_members1) do
   local capitalized = n:gsub("^%l", string.upper)
   call_mt[n] = function (self, value) return _M[capitalized](value, self) end
+end
+
+local call_members2 = {
+  "sub",
+  "setName",
+  "streq",
+  "istreq",
+  "eq",
+  "ne",
+  "lt",
+  "gt",
+  "le",
+  "ge",
+  "nth",
+  "isLonger",
+  "isComplete",
+  "named",
+  "namedI",
+  "namedRx",
+  "waitPhase",
+  "finishPhase",
+  "ask",
+  "focus",
+  "stringReplaceRx"
+}
+for i,n in ipairs(call_members2) do
+  local capitalized = n:gsub("^%l", string.upper)
+  call_mt[n] = function (self, a, b) return _M[capitalized](a, b, self) end
 end
 
 local call_membersn = {
@@ -240,10 +270,12 @@ local param1 = {
   'StreamRequestBody',
   'StreamResponseBody',
   'Fast',
-  'Ref'
+  'Ref',
+  'Flatten'
 }
 local param2 = {
   'SetName',
+  'Focus',
   'Transformation',
   'Nth',
   'Sub',
@@ -263,7 +295,8 @@ local param2 = {
 }
 local param3 = {
   'Operator',
-  'FOperator'
+  'FOperator',
+  'StringReplaceRx'
 }
 local paramn = {
   'Or',
