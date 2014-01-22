@@ -132,7 +132,8 @@ struct ib_engine_t {
     ib_list_t             *contexts;        /**< Configuration contexts */
     ib_hash_t             *dirmap;          /**< Hash tracking directive map */
     ib_hash_t             *tfns;            /**< Hash tracking transforms */
-    ib_hash_t             *operators;       /**< Hash tracking operators */
+    ib_hash_t             *operators;       /**< Operators by name */
+    ib_hash_t             *stream_operators;/**< Stream operators by name*/
     ib_hash_t             *actions;         /**< Hash tracking rules */
     ib_rule_engine_t      *rule_engine;     /**< Rule engine data */
     ib_logger_t           *logger;          /**< The engine log object. */

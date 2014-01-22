@@ -1440,7 +1440,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         NULL,
         ib,
         "pcre",
-        (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE),
+        IB_OP_CAPABILITY_CAPTURE,
         pcre_operator_create, NULL,
         NULL, NULL,
         pcre_operator_execute, m
@@ -1454,7 +1454,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         NULL,
         ib,
         "rx",
-        (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE),
+        IB_OP_CAPABILITY_CAPTURE,
         pcre_operator_create, NULL,
         NULL, NULL,
         pcre_operator_execute, m
@@ -1468,7 +1468,19 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         NULL,
         ib,
         "dfa",
-        (IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_STREAM | IB_OP_CAPABILITY_CAPTURE),
+        IB_OP_CAPABILITY_CAPTURE,
+        dfa_operator_create, NULL,
+        NULL, NULL,
+        dfa_operator_execute, m
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_operator_stream_create_and_register(
+        NULL,
+        ib,
+        "dfa",
+        IB_OP_CAPABILITY_CAPTURE,
         dfa_operator_create, NULL,
         NULL, NULL,
         dfa_operator_execute, m

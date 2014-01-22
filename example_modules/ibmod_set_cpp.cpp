@@ -588,9 +588,7 @@ Delegate::Delegate(IronBee::Module module) :
     IronBee::Operator::create(
         module.engine().main_memory_pool(),
         "set_member",
-        IB_OP_CAPABILITY_ALLOW_NULL |
-            IB_OP_CAPABILITY_NON_STREAM |
-            IB_OP_CAPABILITY_STREAM,
+        IB_OP_CAPABILITY_ALLOW_NULL,
         // _1 = Configuration context.
         // _2 = Parameter.
         bind(&Delegate::make_operator_instance, this, _1, _2)

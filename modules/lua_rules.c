@@ -219,7 +219,7 @@ static ib_status_t modlua_rule_driver(
         &op,
         cp->ib,
         name,
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
         &lua_operator_create,
         modlua_rules_cbdata,
         NULL,

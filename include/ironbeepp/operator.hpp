@@ -117,6 +117,13 @@ public:
     void register_with(Engine engine);
 
     /**
+     * Register stream operator with an engine.
+     *
+     * @param[in] engine Engine to register with.
+     **/
+    void register_stream_with(Engine engine);
+
+    /**
      * Create an operator instance.
      *
      * @param[in] context Context of creation.

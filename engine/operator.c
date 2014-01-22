@@ -116,6 +116,28 @@ ib_status_t ib_operator_register(
     return rc;
 }
 
+ib_status_t ib_operator_stream_register(
+    ib_engine_t         *ib,
+    const ib_operator_t *op
+)
+{
+    assert(ib != NULL);
+    assert(op != NULL);
+
+    ib_status_t rc;
+    ib_operator_t *existing_op;
+
+    rc = ib_hash_get(ib->stream_operators, &existing_op, op->name);
+    if (rc == IB_OK) {
+        /* name already is registered */
+        return IB_EINVAL;
+    }
+
+    rc = ib_hash_set(ib->stream_operators, op->name, (void *)op);
+
+    return rc;
+}
+
 ib_status_t ib_operator_create_and_register(
     ib_operator_t            **op,
     ib_engine_t               *ib,
@@ -160,6 +182,50 @@ ib_status_t ib_operator_create_and_register(
     return IB_OK;
 }
 
+ib_status_t ib_operator_stream_create_and_register(
+    ib_operator_t            **op,
+    ib_engine_t               *ib,
+    const char                *name,
+    ib_flags_t                 capabilities,
+    ib_operator_create_fn_t    fn_create,
+    void                      *cbdata_create,
+    ib_operator_destroy_fn_t   fn_destroy,
+    void                      *cbdata_destroy,
+    ib_operator_execute_fn_t   fn_execute,
+    void                      *cbdata_execute
+)
+{
+    assert(ib   != NULL);
+    assert(name != NULL);
+
+    ib_mpool_t *mp = ib_engine_pool_main_get(ib);
+    assert(mp != NULL);
+
+    ib_status_t rc;
+
+    ib_operator_t *local_op;
+    if (op == NULL) {
+        op = &local_op;
+    }
+
+    rc = ib_operator_create(
+        op, mp, name, capabilities,
+        fn_create,  cbdata_create,
+        fn_destroy, cbdata_destroy,
+        fn_execute, cbdata_execute
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_operator_stream_register(ib, *op);
+    if (rc  != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
 const char *ib_operator_get_name(
     const ib_operator_t *op
 )
@@ -188,6 +254,18 @@ ib_status_t ib_operator_lookup(
     assert(op != NULL);
 
     return ib_hash_get(ib->operators, op, name);
+}
+
+ib_status_t ib_operator_stream_lookup(
+    ib_engine_t          *ib,
+    const char           *name,
+    const ib_operator_t **op
+)
+{
+    assert(ib != NULL);
+    assert(op != NULL);
+
+    return ib_hash_get(ib->stream_operators, op, name);
 }
 
 ib_status_t ib_operator_inst_create(

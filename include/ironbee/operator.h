@@ -113,10 +113,6 @@ typedef struct ib_operator_t ib_operator_t;
 #define IB_OP_CAPABILITY_NONE        (0x0)
 /*! Accepts NULL fields */
 #define IB_OP_CAPABILITY_ALLOW_NULL  (1 << 0)
-/*! Works with non-stream phases */
-#define IB_OP_CAPABILITY_NON_STREAM  (1 << 1)
-/*! Works with stream phases */
-#define IB_OP_CAPABILITY_STREAM      (1 << 2)
 /*! Supports capture */
 #define IB_OP_CAPABILITY_CAPTURE     (1 << 3)
 
@@ -156,7 +152,7 @@ ib_status_t DLL_PUBLIC ib_operator_create(
 );
 
 /**
- * Register operator with engine.
+ * Register non-stream operator with engine.
  *
  * @param[in] ib IronBee engine.
  * @param[in] op Operator to register.
@@ -171,7 +167,22 @@ ib_status_t DLL_PUBLIC ib_operator_register(
 );
 
 /**
- * Register and create an operator.
+ * Register stream operator with engine.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] op Operator to register.
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL if an operator with same name already exists.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_operator_stream_register(
+    ib_engine_t         *ib,
+    const ib_operator_t *op
+);
+
+/**
+ * Register and create a non-stream operator.
  *
  * @param[out] op             Where to store new operator, may be NULL.
  * @param[in]  ib             Memory pool to use.
@@ -205,7 +216,41 @@ ib_status_t DLL_PUBLIC ib_operator_create_and_register(
 );
 
 /**
- * Lookup operator by name.
+ * Register and create a stream operator.
+ *
+ * @param[out] op             Where to store new operator, may be NULL.
+ * @param[in]  ib             Memory pool to use.
+ * @param[in]  name           Name of operator.
+ * @param[in]  capabilities   Operator capabilities.
+ * @param[in]  fn_create      A pointer to the instance creation function.
+ *                            NULL means nop.
+ * @param[in]  cbdata_create  Callback data passed to @a fn_create.
+ * @param[in]  fn_destroy     A pointer to the instance destruction function.
+ *                            NULL means nop.
+ * @param[in]  cbdata_destroy Callback data passed to @a fn_destroy.
+ * @param[in]  fn_execute     A pointer to the operator function.
+ *                            NULL means always true.
+ * @param[in]  cbdata_execute Callback data passed to @a fn_execute.
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL if an operator with same name already exists.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_operator_stream_create_and_register(
+    ib_operator_t            **op,
+    ib_engine_t               *ib,
+    const char                *name,
+    ib_flags_t                 capabilities,
+    ib_operator_create_fn_t    fn_create,
+    void                      *cbdata_create,
+    ib_operator_destroy_fn_t   fn_destroy,
+    void                      *cbdata_destroy,
+    ib_operator_execute_fn_t   fn_execute,
+    void                      *cbdata_execute
+);
+
+/**
+ * Lookup non-stream operator by name.
  *
  * @param[in] ib Ironbee engine.
  * @param[in] name Name of operator.
@@ -215,6 +260,22 @@ ib_status_t DLL_PUBLIC ib_operator_create_and_register(
  * - IB_ENOENT if no such operator.
  */
 ib_status_t DLL_PUBLIC ib_operator_lookup(
+    ib_engine_t          *ib,
+    const char           *name,
+    const ib_operator_t **op
+);
+
+/**
+ * Lookup stream operator by name.
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] name Name of operator.
+ * @param[out] op Operator.
+ * @return
+ * - IB_OK on success.
+ * - IB_ENOENT if no such operator.
+ */
+ib_status_t DLL_PUBLIC ib_operator_stream_lookup(
     ib_engine_t          *ib,
     const char           *name,
     const ib_operator_t **op

@@ -155,7 +155,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
         ib_operator_inst_create(
             op,
             ib_context_main(ib_engine),
-            IB_OP_CAPABILITY_NON_STREAM,
+            IB_OP_CAPABILITY_NONE,
             rule_name,
             &instance_data));
     performTx();

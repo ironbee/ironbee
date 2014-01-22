@@ -650,9 +650,7 @@ ib_status_t init(
         NULL,
         ib,
         "set_member",
-        IB_OP_CAPABILITY_ALLOW_NULL |
-            IB_OP_CAPABILITY_NON_STREAM |
-            IB_OP_CAPABILITY_STREAM,
+        IB_OP_CAPABILITY_ALLOW_NULL,
         operator_create,  NULL,
         NULL,             NULL,
         operator_execute, NULL

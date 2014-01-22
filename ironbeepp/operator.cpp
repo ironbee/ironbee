@@ -63,10 +63,14 @@ ib_flags_t ConstOperator::capabilities() const
     return ib_operator_get_capabilities(ib());
 }
 
-
 void ConstOperator::register_with(Engine engine)
 {
     throw_if_error(ib_operator_register(engine.ib(), ib()));
+}
+
+void ConstOperator::register_stream_with(Engine engine)
+{
+    throw_if_error(ib_operator_stream_register(engine.ib(), ib()));
 }
 
 void* ConstOperator::create_instance(

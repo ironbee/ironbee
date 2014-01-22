@@ -691,18 +691,31 @@ ib_status_t ee_module_init(ib_engine_t *ib,
         NULL,
         ib,
         "ee_match_any",
-        ( IB_OP_CAPABILITY_NON_STREAM |
-          IB_OP_CAPABILITY_STREAM |
-          IB_OP_CAPABILITY_CAPTURE ),
+        IB_OP_CAPABILITY_CAPTURE,
         &ee_match_any_operator_create, NULL,
         NULL, NULL,
         &ee_match_any_operator_execute, m
     );
-
     if (rc != IB_OK) {
         ib_log_error(
             ib,
             "Error registering ee_match_any operator: %s",
+            ib_status_to_string(rc));
+        return rc;
+    }
+    rc = ib_operator_stream_create_and_register(
+        NULL,
+        ib,
+        "ee_match_any",
+        IB_OP_CAPABILITY_CAPTURE,
+        &ee_match_any_operator_create, NULL,
+        NULL, NULL,
+        &ee_match_any_operator_execute, m
+    );
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Error registering ee_match_any stream operator: %s",
             ib_status_to_string(rc));
         return rc;
     }

@@ -158,7 +158,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
         ib_operator_inst_create(
               op,
               ib_context_main(ib_engine),
-              IB_OP_CAPABILITY_NON_STREAM,
+              IB_OP_CAPABILITY_NONE
               "string\\s2",
               &instance_data
         )
@@ -204,7 +204,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
         ib_operator_inst_create(
             op,
             ib_context_main(ib_engine),
-            IB_OP_CAPABILITY_NON_STREAM,
+            IB_OP_CAPABILITY_NONE
             "(string 2)",
             &instance_data
         )
@@ -250,7 +250,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
         ib_operator_inst_create(
             op,
             ib_context_main(ib_engine),
-            IB_OP_CAPABILITY_NON_STREAM,
+            IB_OP_CAPABILITY_NONE,
             "(string 2)",
             &instance_data
         )

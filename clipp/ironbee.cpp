@@ -745,20 +745,28 @@ IronBeeModifier::IronBeeModifier(
     Operator::create(
         m_state->engine.main_memory_pool(),
         "clipp_print",
-        IB_OP_CAPABILITY_ALLOW_NULL |
-            IB_OP_CAPABILITY_NON_STREAM |
-            IB_OP_CAPABILITY_STREAM,
+        IB_OP_CAPABILITY_ALLOW_NULL,
         clipp_print_op_generator
     ).register_with(m_state->engine);
+    Operator::create(
+        m_state->engine.main_memory_pool(),
+        "clipp_print",
+        IB_OP_CAPABILITY_ALLOW_NULL,
+        clipp_print_op_generator
+    ).register_stream_with(m_state->engine);
 
     Operator::create(
         m_state->engine.main_memory_pool(),
         "clipp_print_type",
-        IB_OP_CAPABILITY_ALLOW_NULL |
-            IB_OP_CAPABILITY_NON_STREAM |
-            IB_OP_CAPABILITY_STREAM,
+        IB_OP_CAPABILITY_ALLOW_NULL,
         clipp_print_type_op_generator
     ).register_with(m_state->engine);
+    Operator::create(
+        m_state->engine.main_memory_pool(),
+        "clipp_print_type",
+        IB_OP_CAPABILITY_ALLOW_NULL,
+        clipp_print_type_op_generator
+    ).register_stream_with(m_state->engine);
 
     load_configuration(m_state->engine, config_path);
 }

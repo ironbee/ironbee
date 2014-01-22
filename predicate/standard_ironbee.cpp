@@ -279,14 +279,9 @@ void Operator::pre_eval(Environment environment, NodeReporter reporter)
         return;
     }
 
-    if (! (m_data->op.capabilities() & IB_OP_CAPABILITY_NON_STREAM)) {
-        reporter.error("Only non-stream operator currently supported.");
-        return;
-    }
-
     m_data->instance_data = m_data->op.create_instance(
         environment.main_context(),
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
         params.to_s().c_str()
     );
 }

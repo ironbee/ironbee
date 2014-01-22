@@ -85,13 +85,15 @@ static per_context_t c_per_context_initial = {
  * @param rule Rule object to update
  * @param operator_string Operator string
  * @param operand Operand string
+ * @param stream Look for stream operator.
  *
  * @returns Status code
  */
 static ib_status_t parse_operator(ib_cfgparser_t *cp,
                                   ib_rule_t *rule,
                                   const char *operator_string,
-                                  const char *operand)
+                                  const char *operand,
+                                  bool is_stream)
 {
     assert(cp != NULL);
     assert(rule != NULL);
@@ -120,7 +122,12 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     opname = cptr + 1;
 
     /* Acquire operator */
-    rc = ib_operator_lookup(cp->ib, opname, &operator);
+    if (is_stream) {
+        rc = ib_operator_stream_lookup(cp->ib, opname, &operator);
+    }
+    else {
+        rc = ib_operator_lookup(cp->ib, opname, &operator);
+    }
     if (rc == IB_ENOENT) {
         ib_cfg_log_error(cp, "Unknown operator: %s %s", opname, operand);
         return IB_EINVAL;
@@ -871,7 +878,7 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
     operand = (const char *)node->data;
 
     /* Parse the operator */
-    rc = parse_operator(cp, rule, operator, operand);
+    rc = parse_operator(cp, rule, operator, operand, false);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error parsing rule operator \"%s\": %s",
                          operator, ib_status_to_string(rc));
@@ -1009,7 +1016,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     operand = (const char *)node->data;
 
     /* Parse the operator */
-    rc = parse_operator(cp, rule, operator, operand);
+    rc = parse_operator(cp, rule, operator, operand, true);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error parsing rule operator \"%s\": %s",
@@ -1186,7 +1193,7 @@ static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
     ib_flags_set(rule->flags, IB_RULE_FLAG_ACTION);
 
     /* Force the operator to one that will not execute (negated nop). */
-    rc = parse_operator(cp, rule, "!@nop", NULL);
+    rc = parse_operator(cp, rule, "!@nop", NULL, false);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error parsing rule operator \"nop\": %s",
@@ -1282,7 +1289,7 @@ static ib_status_t parse_action_params(ib_cfgparser_t *cp,
     ib_flags_set(rule->flags, IB_RULE_FLAG_ACTION);
 
     /* Parse the operator */
-    rc = parse_operator(cp, rule, "@nop", NULL);
+    rc = parse_operator(cp, rule, "@nop", NULL, false);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error parsing rule operator \"nop\": %s",

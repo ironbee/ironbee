@@ -108,7 +108,7 @@ TEST_F(OperatorTest, OperatorCallTest)
         &op,
         ib_engine,
         "test_op",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
         test_create_fn, NULL,
         NULL, NULL,
         test_execute_fn, NULL
@@ -121,14 +121,14 @@ TEST_F(OperatorTest, OperatorCallTest)
 
     status = ib_operator_inst_create(op,
                                      ib_context_main(ib_engine),
-                                     IB_OP_CAPABILITY_NON_STREAM,
+                                     IB_OP_CAPABILITY_NONE,
                                      "INVALID",
                                      &instance_data);
     ASSERT_EQ(IB_EINVAL, status);
 
     status = ib_operator_inst_create(op,
                                      ib_context_main(ib_engine),
-                                     IB_OP_CAPABILITY_NON_STREAM,
+                                     IB_OP_CAPABILITY_NONE,
                                      "data",
                                      &instance_data);
     ASSERT_EQ(IB_OK, status);
@@ -184,7 +184,7 @@ TEST_F(CoreOperatorsTest, ContainsTest)
 
     status = ib_operator_inst_create(op,
                                      ib_context_main(ib_engine),
-                                     IB_OP_CAPABILITY_NON_STREAM,
+                                     IB_OP_CAPABILITY_NONE,
                                      "needle",
                                      &instance_data);
     ASSERT_EQ(IB_OK, status);
@@ -225,7 +225,7 @@ TEST_F(CoreOperatorsTest, EqTest)
 
     status = ib_operator_inst_create(op,
                                      ib_context_main(ib_engine),
-                                     IB_OP_CAPABILITY_NON_STREAM,
+                                     IB_OP_CAPABILITY_NONE,
                                      "1",
                                      &instance_data);
     ASSERT_EQ(IB_OK, status);
@@ -266,7 +266,7 @@ TEST_F(CoreOperatorsTest, NeTest)
 
     status = ib_operator_inst_create(op,
                                      ib_context_main(ib_engine),
-                                     IB_OP_CAPABILITY_NON_STREAM,
+                                     IB_OP_CAPABILITY_NONE,
                                      "1",
                                      &instance_data);
     ASSERT_EQ(IB_OK, status);
@@ -326,7 +326,7 @@ TEST_F(CoreOperatorsTest, IpMatchSegfault) {
         ib_operator_inst_create(
             op,
             ib_context_main(ib_engine),
-            IB_OP_CAPABILITY_NON_STREAM,
+            IB_OP_CAPABILITY_NONE,
             "192.168.0.0/16",
             &instance_data)
     );

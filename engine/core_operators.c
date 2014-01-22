@@ -2032,7 +2032,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "streq",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         strop_create, NULL,
         NULL, NULL,
         op_streq_execute, NULL
@@ -2046,7 +2046,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "istreq",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         strop_create, NULL,
         NULL, NULL,
         op_streq_execute, (void *)1
@@ -2060,7 +2060,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "contains",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         strop_create, NULL,
         NULL, NULL,
         op_contains_execute, NULL
@@ -2074,7 +2074,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "match",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
         op_match_create, NULL,
         NULL, NULL,
         op_match_execute, NULL
@@ -2088,7 +2088,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "imatch",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
         op_match_create, (void *)1,
         NULL, NULL,
         op_match_execute, /* Note: same as above. */ NULL
@@ -2102,7 +2102,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "ipmatch",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         op_ipmatch_create, NULL,
         NULL, NULL,
         op_ipmatch_execute, NULL
@@ -2116,7 +2116,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "ipmatch6",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         op_ipmatch6_create, NULL,
         NULL, NULL,
         op_ipmatch6_execute, NULL
@@ -2134,7 +2134,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "eq",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         op_numcmp_create, op_eq_execute,
         NULL, NULL,
         op_eq_execute, NULL
@@ -2148,7 +2148,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "ne",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         op_numcmp_create, op_ne_execute,
         NULL, NULL,
         op_ne_execute, NULL
@@ -2162,7 +2162,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "gt",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         op_numcmp_create, op_gt_execute,
         NULL, NULL,
         op_gt_execute, NULL
@@ -2176,7 +2176,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "lt",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         op_numcmp_create, op_lt_execute,
         NULL, NULL,
         op_lt_execute, NULL
@@ -2190,7 +2190,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "ge",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         op_numcmp_create, op_ge_execute,
         NULL, NULL,
         op_ge_execute, NULL
@@ -2204,7 +2204,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         NULL,
         ib,
         "le",
-        IB_OP_CAPABILITY_NON_STREAM | IB_OP_CAPABILITY_CAPTURE,
+        IB_OP_CAPABILITY_CAPTURE,
         op_numcmp_create, op_le_execute,
         NULL, NULL,
         op_le_execute, NULL
@@ -2219,8 +2219,19 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         ib,
         "nop",
         ( IB_OP_CAPABILITY_ALLOW_NULL |
-          IB_OP_CAPABILITY_NON_STREAM |
-          IB_OP_CAPABILITY_STREAM |
+          IB_OP_CAPABILITY_CAPTURE ),
+        NULL, NULL, /* No create function */
+        NULL, NULL, /* no destroy function */
+        op_nop_execute, NULL
+    );
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_operator_stream_create_and_register(
+        NULL,
+        ib,
+        "nop",
+        ( IB_OP_CAPABILITY_ALLOW_NULL |
           IB_OP_CAPABILITY_CAPTURE ),
         NULL, NULL, /* No create function */
         NULL, NULL, /* no destroy function */

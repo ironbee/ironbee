@@ -215,11 +215,7 @@ Delegate::Delegate(IronBee::Module module) :
 
     IronBee::MemoryPool pool = module.engine().main_memory_pool();
 
-    ib_flags_t capabilities =
-        IB_OP_CAPABILITY_NON_STREAM |
-        IB_OP_CAPABILITY_STREAM |
-        IB_OP_CAPABILITY_CAPTURE
-        ;
+    ib_flags_t capabilities = IB_OP_CAPABILITY_CAPTURE;
 
     {
         static const result_list_type<parse_uri_result_t>::type

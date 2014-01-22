@@ -98,6 +98,7 @@ struct ib_rule_phase_meta_t {
     const char            *name;
     const char            *description;
     ib_flags_t             required_op_flags;
+    bool                   stream_operator;
     ib_state_event_type_t  event;
 };
 
@@ -138,7 +139,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_ALLOW_TFNS ),
         NULL,
         "Generic 'Phase' Rule",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        false,
         (ib_state_event_type_t) -1
     },
     {
@@ -151,7 +153,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_REQUEST ),
         "REQUEST_HEADER",
         "Request Header",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        false,
         handle_request_header_event
     },
     {
@@ -164,7 +167,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_REQUEST ),
         "REQUEST",
         "Request",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        false,
         handle_request_event
     },
     {
@@ -177,7 +181,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_RESPONSE ),
         "RESPONSE_HEADER",
         "Response Header",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        false,
         handle_response_header_event
     },
     {
@@ -190,7 +195,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_RESPONSE ),
         "RESPONSE",
         "Response",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        false,
         handle_response_event
     },
     {
@@ -204,7 +210,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_POSTPROCESS ),
         "POST_PROCESS",
         "Post Process",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        false,
         handle_postprocess_event
     },
     {
@@ -218,7 +225,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_LOGGING ),
         "LOGGING",
         "Logging",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        false,
         handle_logging_event
     },
 
@@ -230,7 +238,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_STREAM),
         NULL,
         "Generic 'Stream Inspection' Rule",
-        IB_OP_CAPABILITY_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        true,
         (ib_state_event_type_t) -1
     },
     {
@@ -242,7 +251,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_REQUEST ),
         "REQUEST_HEADER_STREAM",
         "Request Header Stream",
-        IB_OP_CAPABILITY_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        true,
         handle_context_tx_event
     },
     {
@@ -254,7 +264,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_REQUEST ),
         "REQUEST_BODY_STREAM",
         "Request Body Stream",
-        IB_OP_CAPABILITY_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        true,
         request_body_data_event
     },
     {
@@ -266,7 +277,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_RESPONSE ),
         "RESPONSE_HEADER_STREAM",
         "Response Header Stream",
-        IB_OP_CAPABILITY_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        true,
         response_header_data_event
     },
     {
@@ -278,7 +290,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_RESPONSE ),
         "RESPONSE_BODY_STREAM",
         "Response Body Stream",
-        IB_OP_CAPABILITY_STREAM,
+        IB_OP_CAPABILITY_NONE,
+        true,
         response_body_data_event
     },
     {
@@ -288,6 +301,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         PHASE_FLAG_NONE,
         NULL,
         "Invalid",
+        false,
         IB_OP_CAPABILITY_NONE,
         (ib_state_event_type_t) -1
     }

@@ -594,7 +594,7 @@ static ib_status_t sqli_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         NULL,
         ib,
         "is_sqli",
-        IB_OP_CAPABILITY_NON_STREAM,
+        IB_OP_CAPABILITY_NONE,
         sqli_op_create, m,
         NULL, NULL,
         sqli_op_execute, NULL

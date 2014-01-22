@@ -732,8 +732,6 @@ ib_status_t ib_moddevel_rules_init(
         ib,
         "true",
         ( IB_OP_CAPABILITY_ALLOW_NULL |
-          IB_OP_CAPABILITY_NON_STREAM |
-              IB_OP_CAPABILITY_STREAM |
         IB_OP_CAPABILITY_CAPTURE ),
         NULL, NULL, /* No create function */
         NULL, NULL, /* no destroy function */
@@ -747,9 +745,7 @@ ib_status_t ib_moddevel_rules_init(
         NULL,
         ib,
         "false",
-        ( IB_OP_CAPABILITY_ALLOW_NULL |
-          IB_OP_CAPABILITY_NON_STREAM |
-              IB_OP_CAPABILITY_STREAM ),
+        IB_OP_CAPABILITY_ALLOW_NULL,
         NULL, NULL, /* No create function */
         NULL, NULL, /* no destroy function */
         op_false_execute, NULL);
@@ -763,8 +759,6 @@ ib_status_t ib_moddevel_rules_init(
         ib,
         "break",
         ( IB_OP_CAPABILITY_ALLOW_NULL |
-          IB_OP_CAPABILITY_NON_STREAM |
-              IB_OP_CAPABILITY_STREAM |
         IB_OP_CAPABILITY_CAPTURE ),
         NULL, NULL, /* No create function */
         NULL, NULL, /* no destroy function */
@@ -779,7 +773,6 @@ ib_status_t ib_moddevel_rules_init(
         ib,
         "exists",
         ( IB_OP_CAPABILITY_ALLOW_NULL |
-          IB_OP_CAPABILITY_NON_STREAM |
           IB_OP_CAPABILITY_CAPTURE ),
         NULL, NULL, /* No create function */
         NULL, NULL, /* no destroy function */
@@ -798,8 +791,7 @@ ib_status_t ib_moddevel_rules_init(
         NULL,
         ib,
         "IsStr",
-        ( IB_OP_CAPABILITY_NON_STREAM |
-          IB_OP_CAPABILITY_STREAM ),
+        IB_OP_CAPABILITY_NONE,
         NULL, NULL, /* no create function */
         NULL, NULL, /* no destroy function */
         op_istype_execute, &istype_params[IsTypeStr]
@@ -813,8 +805,7 @@ ib_status_t ib_moddevel_rules_init(
         NULL,
         ib,
         "IsNulStr",
-        ( IB_OP_CAPABILITY_NON_STREAM |
-          IB_OP_CAPABILITY_STREAM ),
+        IB_OP_CAPABILITY_NONE,
         NULL, NULL, /* no create function */
         NULL, NULL, /* no destroy function */
         op_istype_execute, &istype_params[IsTypeNulStr]
@@ -828,8 +819,7 @@ ib_status_t ib_moddevel_rules_init(
         NULL,
         ib,
         "IsByteStr",
-        ( IB_OP_CAPABILITY_NON_STREAM |
-          IB_OP_CAPABILITY_STREAM ),
+        IB_OP_CAPABILITY_NONE,
         NULL, NULL, /* no create function */
         NULL, NULL, /* no destroy function */
         op_istype_execute, &istype_params[IsTypeByteStr]
@@ -843,8 +833,7 @@ ib_status_t ib_moddevel_rules_init(
         NULL,
         ib,
         "IsNum",
-        ( IB_OP_CAPABILITY_NON_STREAM |
-          IB_OP_CAPABILITY_STREAM ),
+        IB_OP_CAPABILITY_NONE,
         NULL, NULL, /* no create function */
         NULL, NULL, /* no destroy function */
         op_istype_execute, &istype_params[IsTypeNum]
@@ -858,8 +847,7 @@ ib_status_t ib_moddevel_rules_init(
         NULL,
         ib,
         "IsInt",
-        ( IB_OP_CAPABILITY_NON_STREAM |
-          IB_OP_CAPABILITY_STREAM ),
+        IB_OP_CAPABILITY_NONE,
         NULL, NULL, /* no create function */
         NULL, NULL, /* no destroy function */
         op_istype_execute, &istype_params[IsTypeInt]
@@ -873,8 +861,7 @@ ib_status_t ib_moddevel_rules_init(
         NULL,
         ib,
         "IsFloat",
-        ( IB_OP_CAPABILITY_NON_STREAM |
-          IB_OP_CAPABILITY_STREAM ),
+        IB_OP_CAPABILITY_NONE,
         NULL, NULL, /* no create function */
         NULL, NULL, /* no destroy function */
         op_istype_execute, &istype_params[IsTypeFloat]

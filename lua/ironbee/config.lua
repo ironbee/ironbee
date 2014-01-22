@@ -41,10 +41,6 @@ _M._VERSION     = "1.0"
 local IB_RULEMD_FLAG_EXPAND_MSG = 1
 local IB_RULEMD_FLAG_EXPAND_DATA = 2
 
--- Pair of #defines from C code imported here.
-local IB_OP_CAPABILITY_NON_STREAM = 2
-local IB_OP_CAPABILITY_STREAM = 4
-
 -- (IB_RULE_FLAG_FORCE_EN|IB_RULE_FLAG_NO_TGT) or (256 + 512)
 local IB_RULE_FLAG_ACTION = 768
 

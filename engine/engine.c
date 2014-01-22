@@ -460,6 +460,12 @@ ib_status_t ib_engine_create(ib_engine_t **pib,
         goto failed;
     }
 
+    /* Create a hash to hold stream operators by name */
+    rc = ib_hash_create_nocase(&(ib->stream_operators), ib->mp);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     /* Create a hash to hold actions by name */
     rc = ib_hash_create_nocase(&(ib->actions), ib->mp);
     if (rc != IB_OK) {
