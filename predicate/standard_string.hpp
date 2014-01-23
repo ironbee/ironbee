@@ -38,7 +38,7 @@ namespace Standard {
 /**
  * Regexp based replacement.
  *
- * First child is expression, second child is replacement, third child is 
+ * First child is expression, second child is replacement, third child is
  * text.  Result is substitution applied to each string value of text child.
  **/
 class StringReplaceRx :
@@ -62,7 +62,7 @@ public:
         GraphEvalState& graph_eval_state,
         EvalContext     context
     ) const;
-        
+
 protected:
     //! See MapCall::value_calculate()
     virtual Value value_calculate(

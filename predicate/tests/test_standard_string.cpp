@@ -41,7 +41,7 @@ TEST_F(TestStandardString, stringReplaceRx)
 {
     EXPECT_EQ("hellobarworld", eval_s(parse("(stringReplaceRx 'foo' 'bar' 'hellofooworld')")));
     EXPECT_EQ("b=a&d=c&f=e", eval_s(parse("(stringReplaceRx '([a-z]+)=([a-z]+)' '$2=$1' 'a=b&c=d&e=f')")));
-    
+
     EXPECT_THROW(eval_s(parse("(stringReplaceRx)")), IronBee::einval);
     EXPECT_THROW(eval_s(parse("(stringReplaceRx 'a')")), IronBee::einval);
     EXPECT_THROW(eval_s(parse("(stringReplaceRx 'a' 'b')")), IronBee::einval);

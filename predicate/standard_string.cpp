@@ -87,7 +87,7 @@ void StringReplaceRx::pre_eval(Environment environment, NodeReporter reporter)
 
     try {
         m_data->expression.assign(
-            expression.const_data(), expression.length(), 
+            expression.const_data(), expression.length(),
             boost::regex_constants::normal
         );
     }
@@ -116,21 +116,21 @@ Value StringReplaceRx::value_calculate(
     if (v.type() != Value::BYTE_STRING) {
         return Value();
     }
-    
+
     ConstByteString text = v.value_as_byte_string();
     boost::shared_ptr<vector<char> > result(new vector<char>());
     // value_to_data() ensures that a copy is associated with the memory
     // pool and will be deleted when the memory pool goes away.
     assert(context.memory_pool());
     value_to_data(result, context.memory_pool().ib());
-    
+
     boost::regex_replace(
         back_inserter(*result),
         text.const_data(), text.const_data() + text.length(),
         m_data->expression,
         m_data->replacement
     );
-        
+
     return Field::create_byte_string(
         context.memory_pool(),
         v.name(), v.name_length(),
