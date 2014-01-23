@@ -338,6 +338,7 @@ public
   # +config_trailer+::      Inserted at end of configuration file.
   # +log_level+::           What log level to run at; default 'notice'.
   # +modhtp+::              Load modhtp module if true; default false.
+  # +predicate+::           Load predicate module if true; default false.
   #
   # More options coming in the future.
   def clipp(config)
