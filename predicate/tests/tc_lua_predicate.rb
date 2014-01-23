@@ -70,4 +70,22 @@ class TestLuaPredicate < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: srr1/
     assert_log_match "['bbr']"
   end
+
+  def test_foperator
+    lua = <<-EOS
+      Action("basic1", "1"):
+        phase([[REQUEST_HEADER]]):
+        action([[clipp_announce:foperator]]):
+        predicate(P.P(P.FOperator('rx', 'a', P.Cat('a', 'ab', 'cb'))))
+    EOS
+    lua_file = lua_path()
+    File.open(lua_file, 'w') {|fp| fp.print lua}
+
+    clipp(make_config(lua_file,
+      :input => "echo:\"GET /foo\""
+    ))
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: foperator/
+    assert_log_match "['a' 'ab']"
+  end
 end

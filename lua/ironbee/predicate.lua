@@ -281,7 +281,6 @@ local param2 = {
 }
 local param3 = {
   'Operator',
-  'FOperator',
   'StringReplaceRx'
 }
 local paramn = {
@@ -304,6 +303,10 @@ for i,n in ipairs(param2) do
 end
 for i,n in ipairs(param3) do
   _M[n] = function (a, b, c) return _M.C(decapitalize(n), a, b, c) end
+end
+-- Special case
+_M.FOperator = function (a, b, c)
+    return _M.C('foperator', a, b, c)
 end
 for i,n in ipairs(paramn) do
   _M[n] = function (...) return _M.C(decapitalize(n), ...) end
