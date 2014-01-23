@@ -614,7 +614,7 @@ public:
         return m_root_fire_counts[i];
     }
 
-    //! Set ho wmany times root @a i has fired.
+    //! Set how many times root @a i has fired.
     void set_root_fire_count(size_t i, size_t count)
     {
         m_root_fire_counts[i] = count;

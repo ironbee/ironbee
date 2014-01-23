@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2392 
+personal_ws-1.1 en 2398 
 malloc'ed
 malloced
 libnet
@@ -437,6 +437,7 @@ linelen
 XRuleGeo
 tfn
 nsubs
+stringReplaceRx
 deleter
 xrule
 XRule
@@ -560,6 +561,7 @@ xfb
 xfc
 xdm
 fEnd
+hellobarworld
 xfd
 txn
 xfe
@@ -1069,6 +1071,7 @@ durations
 abcabc
 VClock
 vclock
+stat'ed
 proxying
 NeedDeconst
 facebookexternalhit
@@ -1750,6 +1753,7 @@ automata
 seekable
 parsers
 parser's
+hellofooworld
 modpcre
 delResponseHeader
 pfield
@@ -2120,6 +2124,7 @@ ruleid
 getpid
 hostname
 IronBeeEngineLogEvent
+pushName
 RuleMarker
 bytestring
 ByteString
@@ -2296,6 +2301,7 @@ IronBeeError
 srclen
 aggregators
 ScaleThreat
+Referer
 resize
 IronBeeConfigParser
 babc
