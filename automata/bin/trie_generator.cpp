@@ -102,7 +102,7 @@ void add_word(Automata& a, const string& s)
 
         IronAutomata::buffer_t content_buffer;
         IronAutomata::BufferAssembler assembler(content_buffer);
-        assembler.append_object(uint32_t(1));
+        assembler.append_object(uint32_t(s.length()));
 
         output->content().assign(
             content_buffer.begin(), content_buffer.end()
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
         breadth_first(a, optimize_edges);
         deduplicate_outputs(a);
 
-        a.metadata()["Output-Type"] = "string";
+        a.metadata()["Output-Type"] = "length";
 
         write_automata(a, cout, chunk_size);
     }
