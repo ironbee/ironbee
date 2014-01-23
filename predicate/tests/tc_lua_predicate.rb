@@ -3,9 +3,9 @@ class TestLuaPredicate < Test::Unit::TestCase
 
   def make_config(file, extras = {})
     return {
-      :config => "LoadModule \"ibmod_lua.so\"\n" +
-        "LoadModule \"../../predicate/.libs/ibmod_predicate.so\"\n" +
-        "LuaInclude \"#{file}\"\n",
+      :modules => ['lua', 'pcre', 'htp'],
+      :predicate => true,
+      :config => "LuaInclude \"#{file}\"\n",
       :default_site_config => "RuleEnable all",
     }.merge(extras)
   end

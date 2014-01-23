@@ -3,6 +3,7 @@ class TestFast < Test::Unit::TestCase
 
   CONFIG = [
     'LoadModule "ibmod_fast.so"',
+    'LoadModule "ibmod_pcre.so"',
     "FastAutomata \"#{Dir.pwd}/fast_rules.txt.e\""
   ].join("\n")
 
@@ -13,6 +14,7 @@ class TestFast < Test::Unit::TestCase
   def test_without_fast
     clipp(
       :input_hashes => [make_request('foobar')],
+      :modules => ['pcre'],
       :default_site_config => <<-EOS
         Rule REQUEST_URI_RAW @rx foobar id:1 phase:REQUEST_HEADER clipp_announce:basic_rule
       EOS
@@ -24,7 +26,7 @@ class TestFast < Test::Unit::TestCase
   def test_load
     clipp(
       :input_hashes => [make_request('foobar')],
-      :config => 'LoadModule "ibmod_fast.so"',
+      :modules => ['fast', 'pcre'],
       :default_site_config => <<-EOS
         Rule REQUEST_LINE @rx foobar id:1 phase:REQUEST_HEADER clipp_announce:basic_rule
       EOS

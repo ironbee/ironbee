@@ -14,7 +14,7 @@ else
     def test_load
       clipp(
         :input_hashes => [make_request('foobar')],
-        :config => 'LoadModule "ibmod_ps.so"',
+        :modules => ['ps', 'pcre'],
         :default_site_config => <<-EOS
           Rule REQUEST_URI_RAW @rx foobar id:1 phase:REQUEST_HEADER clipp_announce:basic_rule
         EOS
@@ -26,7 +26,7 @@ else
     def test_parse_uri
       clipp(
         :input_hashes => [make_request('http://a.b.c/foo/bar?query#fragment')],
-        :config => 'LoadModule "ibmod_ps.so"',
+        :modules => ['ps'],
         :default_site_config => <<-EOS
           Rule REQUEST_URI_RAW @parseURI "" id:1 phase:REQUEST_HEADER CAPTURE:parsed_uri
           Rule parsed_uri:scheme @streq "http" id:2 phase:REQUEST_HEADER clipp_announce:scheme
@@ -47,7 +47,7 @@ else
     def test_parse_request_line
       clipp(
         :input_hashes => [make_request('uri')],
-        :config => 'LoadModule "ibmod_ps.so"',
+        :modules => ['ps'],
         :default_site_config => <<-EOS
           Rule REQUEST_LINE @parseRequestLine "" id:1 phase:REQUEST_HEADER CAPTURE:parsed_request_line
           Rule parsed_request_line:method @streq "GET" id:2 phase:REQUEST_HEADER clipp_announce:method
@@ -64,7 +64,7 @@ else
     def test_parse_response_line
       clipp(
         :input_hashes => [simple_hash("HTTP/1.1 404 FooBar")],
-        :config => 'LoadModule "ibmod_ps.so"',
+        :modules => ['ps'],
         :default_site_config => <<-EOS
           Rule REQUEST_LINE @parseResponseLine "" id:1 phase:REQUEST_HEADER CAPTURE:parsed_response_line
           Rule parsed_response_line:version @streq "HTTP/1.1" id:3 phase:REQUEST_HEADER clipp_announce:version
@@ -81,7 +81,7 @@ else
     def test_parse_authority
       clipp(
         :input_hashes => [make_request('user:password@host:port')],
-        :config => 'LoadModule "ibmod_ps.so"',
+        :modules => ['ps'],
         :default_site_config => <<-EOS
           Rule REQUEST_URI_RAW @parseAuthority "" id:1 phase:REQUEST_HEADER CAPTURE:parsed_authority
           Rule parsed_authority:username @streq "user" id:2 phase:REQUEST_HEADER clipp_announce:username
@@ -100,7 +100,7 @@ else
     def test_parse_path
       clipp(
         :input_hashes => [make_request('/a/b/c/d.txt')],
-        :config => 'LoadModule "ibmod_ps.so"',
+        :modules => ['ps'],
         :default_site_config => <<-EOS
           Rule REQUEST_URI_RAW @parsePath "" id:1 phase:REQUEST_HEADER CAPTURE:parsed_path
           Rule parsed_path:directory @streq "/a/b/c" id:2 phase:REQUEST_HEADER clipp_announce:directory
@@ -119,7 +119,7 @@ else
     def test_parse_custom
       clipp(
         :input_hashes => [make_request(':a:b:c:d,txt')],
-        :config => 'LoadModule "ibmod_ps.so"',
+        :modules => ['ps'],
         :default_site_config => <<-EOS
           Rule REQUEST_URI_RAW @parsePath ":," id:1 phase:REQUEST_HEADER CAPTURE:parsed_path
           Rule parsed_path:directory @streq ":a:b:c" id:2 phase:REQUEST_HEADER clipp_announce:directory

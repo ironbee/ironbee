@@ -17,6 +17,7 @@ class TestSet < Test::Unit::TestCase
       clipp(
         :config => config,
         :input_hashes => [make_request('GET')],
+        :modules => ['pcre'],
         :default_site_config => <<-EOS
           Rule REQUEST_METHOD @rx GET id:1 phase:REQUEST_HEADER clipp_announce:YES
         EOS

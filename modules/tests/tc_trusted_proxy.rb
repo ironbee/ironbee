@@ -19,6 +19,7 @@ class TestTrustedProxy < Test::Unit::TestCase
 
   def test_load
     clipp(config: CONFIG,
+          modules: ['pcre'],
           default_site_config: <<-EOS
             Rule REQUEST_LINE @rx test id:1 phase:REQUEST_HEADER clipp_announce:basic_rule
           EOS

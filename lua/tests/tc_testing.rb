@@ -23,6 +23,7 @@ class TestTesting < Test::Unit::TestCase
         'RuleEngineLogLevel INFO',
         'RuleEngineLogData all',
       ].join("\n"),
+      :modules => ['pcre'],
       :default_site_config => <<-EOS
         Rule request_uri @rx "f\\x00?oo" id:1 rev:1 phase:REQUEST_HEADER "setRequestHeader:X-Foo=bar"
       EOS
@@ -50,6 +51,7 @@ class TestTesting < Test::Unit::TestCase
         'LoadModule "ibmod_lua.so"',
         'LuaInclude %s' % [File.join(TEST_DIR, "waggle01.lua")],
       ].join("\n"),
+      :modules => ['pcre'],
       :default_site_config => <<-EOS
         RuleEnable all
       EOS
