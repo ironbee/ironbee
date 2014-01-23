@@ -339,6 +339,7 @@ public
   # +log_level+::           What log level to run at; default 'notice'.
   # +modhtp+::              Load modhtp module if true; default false.
   # +predicate+::           Load predicate module if true; default false.
+  # +modules+::             Modules to load, e.g., ['ee']
   #
   # More options coming in the future.
   def clipp(config)

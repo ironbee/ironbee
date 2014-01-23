@@ -7,7 +7,7 @@ SensorHostname clipp.tests
 <%= TOP_BUILDDIR ? "ModuleBasePath \"#{TOP_BUILDDIR}/modules/.libs\"" : "" %>
 <%= config[:modhtp] ? "LoadModule \"ibmod_htp.so\"" : "" %>
 <%= config[:predicate] ? "LoadModule \"#{TOP_BUILDDIR}/predicate/.libs/ibmod_predicate.so\"" : "" %>
-LoadModule "ibmod_pcre.so"
+<%= (config[:modules] || []).collect {|m| "LoadModule \"ibmod_#{m}.so\""}.join("\n") %>
 LoadModule "ibmod_rules.so"
 
 RuleEngineLogData action
