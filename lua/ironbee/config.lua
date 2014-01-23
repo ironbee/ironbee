@@ -282,15 +282,8 @@ local add_operator = function(
 
     -- Create operator instance.
     local opinst = ffi.new("void*[1]")
-    local op_inst_create_stream_flags
+    local op_inst_create_flags = 0
     local op = ffi.new("ib_operator_t*[1]")
-
-    -- Set the flag values.
-    if rule.is_streaming() then
-        op_inst_create_stream_flags = IB_OP_CAPABILITY_STREAM
-    else
-        op_inst_create_stream_flags = IB_OP_CAPABILITY_NON_STREAM
-    end
 
     local opname
 
@@ -303,10 +296,17 @@ local add_operator = function(
         opname = rule.data.op
     end
 
-    rc = ffi.C.ib_operator_lookup(
-        ib.ib_engine,
-        opname,
-        ffi.cast("const ib_operator_t**", op))
+    if rule.is_streaming() then
+        rc = ffi.C.ib_operator_stream_lookup(
+            ib.ib_engine,
+            opname,
+            ffi.cast("const ib_operator_t**", op))
+    else
+        rc = ffi.C.ib_operator_lookup(
+            ib.ib_engine,
+            opname,
+            ffi.cast("const ib_operator_t**", op))
+    end
     if rc ~= ffi.C.IB_OK then
         ib:logError("Could not locate operator %s", opname)
         return rc
@@ -321,7 +321,7 @@ local add_operator = function(
     rc = ffi.C.ib_operator_inst_create(
         op[0],
         ctx,
-        op_inst_create_stream_flags,
+        op_inst_create_flags,
         cop_params,
         opinst)
     if rc ~= ffi.C.IB_OK then
