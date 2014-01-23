@@ -160,7 +160,7 @@ module CLIPPTest
     [output, status]
   end
 
-  # Execute clipp using the clipp config at config_path.  
+  # Execute clipp using the clipp config at config_path.
   #
   # Output is displayed to standard out.
   #
@@ -386,5 +386,19 @@ public
     @clipp_log = @log
 
     assert_not_nil(@log, "No output.")
+  end
+end
+
+if $0 == __FILE__
+  $code = if ARGV.empty?
+    STDIN.read
+  else
+    IO.read(ARGV[0])
+  end
+
+  class ClippTestEnvironment < Test::Unit::TestCase
+    include CLIPPTest
+
+    class_eval($code)
   end
 end
