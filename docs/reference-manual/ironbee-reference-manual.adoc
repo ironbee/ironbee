@@ -1,6 +1,6 @@
 IronBee Reference Manual
 ========================
-Brian Rectanus, Ivan Ristic
+Brian Rectanus
 v0.9.0, 2010-2014
 :doctype: book
 :encoding: utf-8
