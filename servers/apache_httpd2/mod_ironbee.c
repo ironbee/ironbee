@@ -723,6 +723,9 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
                 ib_core_cfg_t *corecfg = NULL;
                 rc = ib_core_context_config(ib_context_main(rctx->tx->ib),
                                             &corecfg);
+                if (rc != IB_OK)
+                    ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                                  "Can't fetch configuration.");
                 ctx->buf_limit = corecfg->limits.response_body_buffer_limit;
                 rctx->output_buffering = (corecfg->limits.response_body_buffer_limit < 0)
                       ? IOBUF_BUFFER_ALL
@@ -954,6 +957,10 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
             ib_core_cfg_t *corecfg = NULL;
             rc = ib_core_context_config(ib_context_main(rctx->tx->ib),
                                         &corecfg);
+            if (rc != IB_OK)
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                              "Can't fetch configuration.");
+
             ctx->buf_limit = corecfg->limits.request_body_buffer_limit;
             rctx->input_buffering = (corecfg->limits.request_body_buffer_limit < 0)
                   ? IOBUF_BUFFER_ALL
