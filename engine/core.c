@@ -3441,9 +3441,11 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         corecfg->limits.request_body_log_limit = atoll(p1_unescaped);
     }
-
-    ib_log_error(ib, "Unhandled directive: %s %s", name, p1_unescaped);
-    return IB_EINVAL;
+    else {
+        ib_log_error(ib, "Unhandled directive: %s %s", name, p1_unescaped);
+        rc = IB_EINVAL;
+    }
+    return rc;
 }
 
 /**
