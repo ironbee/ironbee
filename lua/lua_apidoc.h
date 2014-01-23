@@ -278,6 +278,8 @@
  * - @c ib:logWarn(msg, ...)
  * - @c ib:logInfo(msg, ...)
  * - @c ib:logDebug(msg, ...)
+ * - @c ib:stream_operator(name, param, flags) - Same as ib:operator() but
+ *      for stream operators.
  * - @c ib:operator(name, param, flags) - Return a Lua function
  *      that executes an operator instance.
  *

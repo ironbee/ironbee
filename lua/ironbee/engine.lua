@@ -206,6 +206,55 @@ _M.operator = function(self, name, param, flags)
     end
 end
 
+-- Return a function that executes a stream operator instance.
+-- @param[in] name The name of the stream operator.
+-- @param[in] param The parameter to pass the stream operator.
+-- @param[in] flags The flags to pass the stream operator.
+-- @returns A function that takes an ib_rule_exec_t * and an ib_field_t *.
+--   If the ib_rule_exec_t is nil, then the ib_operator_t this
+--   wraps is destroyed cleanly. Otherwise, that stream operator is executed.
+--   The returned function, when executed, returns 2 values.
+--   First, an ib_status_t value, normally IB_OK. The second
+--   value is the result of the stream operator execution or 0 when the
+--   stream operator is destroyed (tx was equal to nil).
+_M.stream_operator = function(self, name, param, flags)
+    local op = ffi.new('ib_rule_operator_t*[1]')
+    local inst = ffi.new('void*[1]')
+    local rc = ffi.C.ib_operator_stream_lookup(self.ib_engine, name, op)
+    if rc ~= ffi.C.IB_OK then
+        self:logError("Failed to lookup operator %s(%d).", name, tonumber(rc))
+        return nil
+    end
+    local rc = ffi.C.ib_operator_inst_create(
+        op[0],
+        ffi.C.ib_context_main(self.ib_engine),
+        flags,
+        param,
+        inst)
+    if rc ~= ffi.C.IB_OK then
+        rc = tonumber(rc)
+        self:logError("Failed to create operator %s(%d):%s.", name, rc, param);
+        return nil
+    end
+
+    return function(tx, field)
+        if tx == nil then
+            ffi.C.ib_operator_inst_destroy(op[0], inst[0])
+            return ffi.C.IB_OK, 0
+        else
+            local res = ffi.new('ib_num_t[1]')
+            local rc = ffi.C.ib_operator_inst_execute(
+                op[0],
+                inst[0],
+                tx,
+                field, -- input field
+                nil,   -- capture field
+                res)
+            return tonumber(rc), tonumber(res[0])
+        end
+    end
+end
+
 -- Return a function that executes an action instance.
 -- @param[in] name Name of the action.
 -- @param[in] param Parameter to pass to the action.
