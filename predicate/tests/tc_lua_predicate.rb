@@ -19,7 +19,7 @@ class TestLuaPredicate < Test::Unit::TestCase
       Action("basic1", "1"):
         phase([[REQUEST_HEADER]]):
         action([[clipp_announce:basic1]]):
-        predicate(P.Rx('GET', P.Field('REQUEST_METHOD')))
+        predicate(P.Operator('rx', 'GET', P.Field('REQUEST_METHOD')))
     EOS
     lua_file = lua_path()
     File.open(lua_file, 'w') {|fp| fp.print lua}
@@ -39,7 +39,7 @@ class TestLuaPredicate < Test::Unit::TestCase
       Action("basic1", "1"):
         phase([[REQUEST_HEADER]]):
         action([[clipp_announce:basic1]]):
-        predicate(P.Rx('GET', getField('REQUEST_METHOD')))
+        predicate(P.Operator('rx', 'GET', getField('REQUEST_METHOD')))
     EOS
     lua_file = lua_path()
     File.open(lua_file, 'w') {|fp| fp.print lua}
@@ -87,5 +87,21 @@ class TestLuaPredicate < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: foperator/
     assert_log_match "['a' 'ab']"
+  end
+
+  def test_operator_transformation_deprecations
+    lua = <<-EOS
+      Action("basic1", "1"):
+        phase([[REQUEST_HEADER]]):
+        predicate(P.Length(P.Rx('rx', 'a', 'a')))
+    EOS
+    lua_file = lua_path()
+    File.open(lua_file, 'w') {|fp| fp.print lua}
+
+    clipp(make_config(lua_file,
+      :input => "echo:\"GET /foo\""
+    ))
+    assert_log_match /Rx is deprecated/
+    assert_log_match /Length is deprecated/
   end
 end

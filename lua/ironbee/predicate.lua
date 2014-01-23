@@ -43,7 +43,15 @@ local function merge(name, a, b)
 end
 
 local function decapitalize(s)
-    return s:gsub("^%u", string.lower)
+  return s:gsub("^%u", string.lower)
+end
+
+local function deprecated(msg)
+  if IB == nil then
+    print("WARNING " .. msg)
+  else
+    IB:logWarn(msg)
+  end
 end
 
 -- Lua doesn't lookup operators via __index.
@@ -317,8 +325,14 @@ local operators = {
 }
 for i,n in ipairs(operators) do
   local capitalized = n:gsub("^%l", string.upper)
-  _M[capitalized] = function (a, b) return _M.Operator(n, a, b) end
-  _M["F" .. capitalized] = function (a, b) return _M.FOperator(n, a, b) end
+  _M[capitalized] = function (a, b)
+    deprecated(capitalized .. ' is deprecated; use Operator instead.')
+    return _M.Operator(n, a, b)
+  end
+  _M["F" .. capitalized] = function (a, b)
+    deprecated('F' .. capitalized .. ' is deprecated; use FOperator instead.')
+    return _M.FOperator(n, a, b)
+  end
   call_mt[n] = function (self) return _M[capitalized](self) end
   call_mt["f" .. n] = function (self) return _M["F" .. capitalized](self) end
 end
@@ -350,7 +364,10 @@ local tfns = {
 }
 for i,n in ipairs(tfns) do
   local capitalized = n:gsub("^%l", string.upper)
-  _M[capitalized] = function (a) return _M.Transformation(n, a) end
+  _M[capitalized] = function (a)
+    deprecated(capitalized .. ' is deprecated; use Transformation instead.')
+    return _M.Transformation(n, a)
+  end
   call_mt[n] = function (self) return _M[capitalized](self) end
 end
 
