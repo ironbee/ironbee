@@ -1,0 +1,40 @@
+#include <ironbee/cfgmap.h>
+#include <ironbee/engine.h>
+#include <ironbee/module.h>
+
+
+/* Declare the public module symbol. */
+IB_MODULE_DECLARE();
+
+/* Called when module is loaded. */
+static ib_status_t exmin_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
+{
+    ib_log_debug(ib, 4, "Example minimal module loaded.");
+    return IB_OK;
+}
+
+/* Called when module is unloaded. */
+static ib_status_t exmin_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
+{
+    ib_log_debug(ib, 4, "Example minimal module unloaded.");
+    return IB_OK;
+}
+
+/* Initialize the module structure. */
+IB_MODULE_INIT(
+    IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
+    "exmin",                        /* Module name */
+    IB_MODULE_CONFIG_NULL,          /* Global config data */
+    NULL,                           /* Configuration field map */
+    NULL,                           /* Config directive map */
+    exmin_init,                          /**< Initialize function */
+    NULL,                                /**< Callback data */
+    exmin_fini,                          /**< Finish function */
+    NULL,                                /**< Callback data */
+    NULL,                                /**< Context open function */
+    NULL,                                /**< Callback data */
+    NULL,                                /**< Context close function */
+    NULL,                                /**< Callback data */
+    NULL,                                /**< Context destroy function */
+    NULL                                 /**< Callback data */
+);

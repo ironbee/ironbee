@@ -684,6 +684,7 @@ AC_CONFIG_FILES([etc/Makefile])
 
 # TODO: Conditional
 AC_CONFIG_FILES([docs/Makefile])
+AC_CONFIG_FILES([docs/reference-manual/Makefile])
 AC_CONFIG_FILES([docs/docbook/Makefile])
 AC_CONFIG_FILES([docs/docbook/manual/Makefile])
 AC_CONFIG_FILES([docs/docbook/manual/fop.xconf])

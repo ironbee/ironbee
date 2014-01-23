@@ -1,0 +1,1711 @@
+Rule Reference
+--------------
+
+Data Fields
+~~~~~~~~~~~
+
+==== ARGS
+[cols=">s,<9"]
+|===============================================================================
+|Description|All request parameters combined and normalized.
+|       Type|Collection
+|      Scope|Transaction (`REQUEST_HEADERS`, `REQUEST_BODY`)
+|     Module|core
+|    Version| 0.2
+|===============================================================================
+
+_________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+The `ARGS` collection is currently the same as specifying
+`REQUEST_URL_PARAMS REQUEST_BODY_PARAMS`, but this will change in later
+releases to include normalization based on parser personalities. If you
+do not want normalization, then use `REQUEST_URL_PARAMS
+                            REQUEST_BODY_PARAMS`.
+_________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+==== AUTH_PASSWORD
+[cols=">s,<9"]
+|===============================================================================
+|Description|Basic authentication password.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+==== AUTH_TYPE
+[cols=">s,<9"]
+|===============================================================================
+|Description|Indicator of the authentication method used.
+|       Type|Collection
+|      Scope|Transaction
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+This field contains the first token extracted from the `Authorization`
+request header. Typical values are: `Basic`, `Digest`, and `NTLM`.
+
+==== AUTH_USERNAME
+[cols=">s,<9"]
+|===============================================================================
+|Description|Basic or Digest authentication username.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+==== CAPTURE
+[cols=">s,<9"]
+|===============================================================================
+|Description|Transaction collection.
+|       Type|Collection
+|      Scope|Transaction
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+This collection contains information for the transaction. Currently
+captured data from operators is stored here in keys "0"-"9".
+
+==== FIELD
+[cols=">s,<9"]
+|===============================================================================
+|Description|An alias to the current field being inspected.
+|       Type|Variable (same type as the aliased field)
+|      Scope|Rule
+|     Module|core
+|    Version|0.5
+|===============================================================================
+
+This field is useful only in field expansions within actions when you
+must have the original value of the field being inspected. For example:
+
+---------------------------------------------------------------------------------------------------
+# Log the field value with an event
+Rule ARGS @contains attack_string id:123 phase:REQUEST logdata:%{FIELD} event
+
+# Create a collection matching a pattern for later use
+Rule REQUEST_HEADERS @rx pattern1 id:124 phase:REQUEST_HEADER setvar:NEW_COL:%{FIELD_NAME}=%{FIELD}
+Rule ARGS @rx pattern2 id:125 phase:REQUEST setvar:NEW_COL:%{FIELD_NAME}=%{FIELD}
+...
+# Then perform further matches on the new collection in another phase, which
+# is not possible via chaining.
+Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
+---------------------------------------------------------------------------------------------------
+
+==== FIELD_NAME
+[cols=">s,<9"]
+|===============================================================================
+|Description|An alias to the current field name being inspected, notincluding the collection name if it is a sub-field in a collection.
+|       Type|Variable (same type as the aliased field)
+|      Scope|Rule
+|     Module|core
+|    Version|0.5
+|===============================================================================
+
+This field is useful only in field expansions within actions when you
+must have the name of the field being inspected. The collection name is
+not prepended, so if `ARGS:foo` is being inspected, the value will be
+`foo`, not `ARGS:foo`. If you want the full name with the collection
+prepended, then use `FIELD_NAME_FULL`.
+
+==== FIELD_NAME_FULL
+[cols=">s,<9"]
+|===============================================================================
+|Description|An alias to the current field name being inspected,including the collection name if it is a sub-field in a collection.
+|       Type|Variable (same type as the aliased field)
+|      Scope|Rule
+|     Module|core
+|    Version|0.5
+|===============================================================================
+
+This field is useful only in field expansions within actions when you
+must have the full name of the field being inspected. See `FIELD_NAME`.
+
+==== GEOIP
+[cols=">s,<9"]
+|===============================================================================
+|Description|If the _geoip_ module is loaded, then a lookup will beperformed on the remote (client) address and the results placed in this collection.
+|       Type|Collection
+|      Scope|Transaction
+|     Module|geoip
+|    Version|0.3
+|===============================================================================
+
+______________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+The address used during lookup is the same as that stored in the
+`REMOTE_ADDR` field, which may be modified from the actual connection
+(TCP) level address by the `user_agent` module.
+______________________________________________________________________________________________________________________________________________________________________________________
+
+Sub-Fields (not all are available prior to GeoIP v1.4.6):
+
+* *latitude:* Numeric latitude rounded to nearest integral value (no
+floats yet).
+* *longitude:* Numeric longitude rounded to nearest integral value (no
+floats yet).
+* *area_code:* Numeric area code (US only).
+* *charset:* Numeric character set code.
+* *country_code:* Two character country code.
+* *country_code3:* Three character country code.
+* *country_name:* String country name.
+* *region:* String region name.
+* *city:* String city name.
+* *postal_code:* String postal code.
+* *continent_code:* String continent code.
+* *accuracy_radius:* Numeric accuracy radius (v1.4.6+).
+* *metro_code:* Numeric metro code (v1.4.6+).
+* *country_conf:* String country confidence (v1.4.6+).
+* *region_conf:* String region confidence (v1.4.6+).
+* *city_conf:* String city confidence (v1.4.6+).
+* *postal_conf:* String postal code confidence (v1.4.6+).
+
+==== HTP_REQUEST_FLAGS
+[cols=">s,<9"]
+|===============================================================================
+|Description|Collection of LibHTP request parsing flags.
+|       Type|Collection
+|      Scope|Transaction
+|     Module|htp
+|    Version|0.3
+|===============================================================================
+
+The LibHTP parser will set various flags while parsing. This is a
+collection of those flags for request parsing. The following flags may
+be set:
+
+* *FIELD_UNPARSEABLE* An unparseable field was given.
+* *FIELD_INVALID* An invalid field was sent.
+* *FIELD_FOLDED* Folding detected in a field.
+* *FIELD_REPEATED* A field was repeated.
+* *FIELD_LONG* A field length was longer than allowed.
+* *FIELD_RAW_NUL* A field contained an unencoded NUL (zero) byte.
+* *HOST_AMBIGUOUS* The host was specified in both the URI and in the
+Host header, but they do not match.
+* *HOST_MISSING* The host was missing from a request in which it is
+normally sent.
+* *HOSTH_INVALID* Invalid host detected in header.
+* *HOSTU_INVALID* Invalid host detected in URL.
+* *INVALID_FOLDING* Invalid header folding detected.
+* *INVALID_CHUNKING* Invalid chunking detected.
+* *MULTI_PACKET_HEAD* The header was sent in more than one packet
+(buffer).
+* *PATH_ENCODED_NUL* A NUL (zero) byte was sent, encoded, in the path.
+* *PATH_ENCODED_SEPARATOR* An encoded path separator was sent in the
+path.
+* *PATH_HALF_FULL_RANGE* An invalid full width character was used in the
+path.
+* *PATH_INVALID* An invalid path detected.
+* *PATH_INVALID_ENCODING* Invalid encoding was used in the path.
+* *PATH_OVERLONG_U* An overlong Unicode encoding was used in the path.
+* *PATH_UTF8_VALID* A UTF-8 character was used in the path.
+* *PATH_UTF8_INVALID* An invalid UTF-8 encoding was used in the path.
+* *PATH_UTF8_OVERLONG* An overlong UTF-8 encoding was used in the path.
+* *REQUEST_SMUGGLING* A HTTP smuggling attack was detected.
+* *URLEN_ENCODED_NUL* An encoded NUL (zero) byte detected in URL.
+* *URLEN_HALF_FULL_RANGE* An invalid full width character detected in
+URL.
+* *URLEN_INVALID_ENCODING* An invalid encoding detected in URL.
+* *URLEN_OVERLONG_U* An overlong unicode character detected in URL.
+
+==== HTP_RESPONSE_FLAGS
+[cols=">s,<9"]
+|===============================================================================
+|Description|Collection of LibHTP response parsing flags.
+|       Type|Collection
+|      Scope|Transaction
+|     Module|htp
+|    Version|0.3
+|===============================================================================
+
+The LibHTP parser will set various flags while parsing. This is a
+collection of those flags for response parsing. The following flags may
+be set:
+
+* *FIELD_UNPARSEABLE* An unparseable field was given.
+* *FIELD_INVALID* An invalid field was sent.
+* *FIELD_FOLDED* Folding detected in a field.
+* *FIELD_REPEATED* A field was repeated.
+* *FIELD_LONG* A field length was longer than allowed.
+* *FIELD_RAW_NUL* A field contained an unencoded NUL (zero) byte.
+* *INVALID_CHUNKING:* Invalid chunking was used.
+* *INVALID_FOLDING:* Invalid header folding was used.
+* *MULTI_PACKET_HEAD:* The header was sent in more than one packet
+(buffer).
+* *STATUS_LINE_INVALID:* An invalid HTTP status code was sent.
+
+==== REMOTE_ADDR
+[cols=">s,<9"]
+|===============================================================================
+|Description|Remote (client) IP address, extracted from the TCPconnection. Can be in IPv4 or IPv6 format.
+|       Type|String
+|      Scope|Connection
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+_____________________________________________________________________________________________________________________________________________________
+*Note*
+
+If the `user_agent` module is also loaded, then the client address will
+be corrected using any available proxy headers (currently
+`X-Forwarded-For`).
+_____________________________________________________________________________________________________________________________________________________
+
+==== REMOTE_PORT
+[cols=">s,<9"]
+|===============================================================================
+|Description|Remote (client) port, extracted from the TCP connection.
+|       Type|Numeric
+|      Scope|Connection
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== REQUEST_BODY_PARAMS
+[cols=">s,<9"]
+|===============================================================================
+|Description|Request parameters transported in request body.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== REQUEST_CONTENT_TYPE
+[cols=">s,<9"]
+|===============================================================================
+|Description|Contains the normalized request content type.
+|       Type|String
+|      Scope|Transaction (`REQUEST_HEADERS`)
+|     Module|core
+|    Version|Not implemented yet
+|===============================================================================
+
+Request content type is constructed from the request `Content-Type`
+header. The value is first converted to contain only the content type
+(and exclude any character encoding information), then converted to
+lowercase.
+
+==== REQUEST_COOKIES
+[cols=">s,<9"]
+|===============================================================================
+|Description|Collection of request cookies (name/value pairs).
+|       Type|Collection
+|      Scope|Transaction (`REQUEST_HEADERS`)
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== REQUEST_FILENAME
+[cols=">s,<9"]
+|===============================================================================
+|Description|Request filename, extracted from request URI andnormalized according to the current personality.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|Not implemented yet
+|===============================================================================
+
+Normalization algorithm, with all "features" enabled, is as follows:
+
+.  Decode URL-encoded characters (both `%HH` and `%uHHHH` formats),
+convert to lowercase, compress separators, convert backslashes, and
+terminate NUL.
+.  Convert UTF-8 to single-byte stream using best-fit mapping
+.  Perform RFC 3986 normalization
+
+==== REQUEST_HEADERS
+[cols=">s,<9"]
+|===============================================================================
+|Description|Collection of request headers (name/value pairs).
+|       Type|Collection
+|      Scope|Transaction (`REQUEST_HEADERS`)
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== REQUEST_HOST
+[cols=">s,<9"]
+|===============================================================================
+|Description|Request hostname information, extracted from the requestand normalized.
+|       Type|String
+|      Scope|Transaction (`REQUEST_HEADERS`)
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+The following rules apply:
+
+.  Use the hostname information if provided on the request line
+.  Alternatively, look up the HTTP `Host` request header
+.  If the hostname information is provided in both locations, the
+information in the HTTP `Host` request header is ignored
+
+Normalization [TODO What RFC should we refer to?]:
+
+.  Lowercase
+.  Remove trailing dot [TODO What dot?]
+.  [TODO Remove port?]
+
+==== REQUEST_LINE
+[cols=">s,<9"]
+|===============================================================================
+|Description|Full, raw, request line.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+Example:
+
+------------------------------------------------
+GET /path/to/page?a=5&q=This+is+a+test. HTTP/1.1
+------------------------------------------------
+
+==== REQUEST_METHOD
+[cols=">s,<9"]
+|===============================================================================
+|Description|Request method.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This field contains the HTTP method used for the request.
+
+Example: `GET`
+
+==== REQUEST_PROTOCOL
+[cols=">s,<9"]
+|===============================================================================
+|Description|Request protocol name and version.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|o.3
+|===============================================================================
+
+This field contains the HTTP protocol name and version, as specified on
+the request line. Transactions that do not specify the protocol (e.g.,
+HTTP prior to 1.0) will have an empty string value.
+
+==== REQUEST_URI
+[cols=">s,<9"]
+|===============================================================================
+|Description|Request URI, extracted from request and normalizedaccording to the current personality (see `REQUEST_FILENAME` for more details).
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+Default normalization:
+
+.  RFC normalization
+.  Convert to lowercase
+.  Reduce consecutive forward slashes to a single character
+
+All normalization options:
+
+* RFC normalization
+* Convert to lowercase
+* Convert \ characters to /
+* Reduce consecutive forward slashes to a single character
+
+==== REQUEST_URI_FRAGMENT
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parsed fragment portion of the URI within the requestline.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== REQUEST_URI_HOST
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parsed host portion of the URI within the request line.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This is the hostname specified in the URI. Note that this may be
+different from the normalized host, which is in `REQUEST_HOST`.
+
+==== REQUEST_URI_PARAMS
+[cols=">s,<9"]
+|===============================================================================
+|Description|Request parameters transported in query string.
+|       Type|Collection
+|      Scope|Transaction (`REQUEST_HEADERS`)
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== REQUEST_URI_PASSWORD
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parsed password portion of the URI within the requestline.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== REQUEST_URI_PATH
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parsed and normalized path portion of the URI within therequest line.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== REQUEST_URI_PATH_RAW
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parsed (raw) path portion of the URI within the requestline.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+__________________________________________________________________________________________________________________________
+*Note*
+
+As no URL decoding is performed (this is a raw value), you probably want
+`REQUEST_URI_PATH_RAW.urlDecode()` in most cases.
+__________________________________________________________________________________________________________________________
+
+==== REQUEST_URI_PORT
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parsed port portion of the URI within the request line.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== REQUEST_URI_RAW
+[cols=">s,<9"]
+|===============================================================================
+|Description|Raw, unnormalized, request URI from the request line.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== REQUEST_URI_SCHEME
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parsed scheme portion of the URI within the request line.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== REQUEST_URI_QUERY
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parsed query portion of the URI within the request line.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== REQUEST_URI_USERNAME
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parsed username portion of the URI within the requestline.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== RESPONSE_CONTENT_TYPE
+[cols=">s,<9"]
+|===============================================================================
+|Description|Contains the normalized response content type.
+|       Type|Scalar
+|      Scope|Transaction (`RESPONSE_HEADERS`)
+|     Module|core
+|    Version|Not implemented yet
+|===============================================================================
+
+Response content type is constructed from the response `Content-Type`
+header. The value is first converted to keep only the content type part
+(and exclude character encoding information, if any), then converted to
+lowercase.
+
+==== RESPONSE_COOKIES
+[cols=">s,<9"]
+|===============================================================================
+|Description|Collection of response cookies (name/value pairs).
+|       Type|Collection
+|      Scope|Transaction
+|     Module|core
+|    Version|Not implemented yet
+|===============================================================================
+
+==== RESPONSE_HEADERS
+[cols=">s,<9"]
+|===============================================================================
+|Description|Collection of response headers (name/value pairs).
+|       Type|Collection
+|      Scope|Transaction
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== RESPONSE_LINE
+[cols=">s,<9"]
+|===============================================================================
+|Description|Full response line.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+Transactions that do not specify a response line (e.g., HTTP prior to
+1.0) will have an empty string value.
+
+Example:
+
+---------------
+HTTP/1.1 200 OK
+---------------
+
+==== RESPONSE_MESSAGE
+[cols=">s,<9"]
+|===============================================================================
+|Description|Response status message.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This field contains the status message (text following the status code),
+as specified on the response line. Transactions that do not specify a
+response line (e.g., HTTP prior to 1.0) will have an empty string value.
+
+==== RESPONSE_PROTOCOL
+[cols=">s,<9"]
+|===============================================================================
+|Description|Response protocol name and version.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This field contains the protocol name and version, as specified on the
+response line. Transactions that do not specify a response line (e.g.,
+HTTP prior to 1.0) will have an empty string value.
+
+==== RESPONSE_STATUS
+[cols=">s,<9"]
+|===============================================================================
+|Description|Response status code.
+|       Type|String
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This field contains the status code, as specified on the response line.
+Transactions that do not specify a response line (e.g., HTTP prior to
+1.0) will have an empty string value.
+
+==== SERVER_ADDR
+[cols=">s,<9"]
+|===============================================================================
+|Description|Server IP address, extracted from the TCP connection. Canbe in IPv4 or IPv6 format.
+|       Type|String
+|      Scope|Connection
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== SERVER_PORT
+[cols=">s,<9"]
+|===============================================================================
+|Description|Server port, extracted from the TCP connection.
+|       Type|Numeric
+|      Scope|Connection
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== TX
+[cols=">s,<9"]
+|===============================================================================
+|Description|Transaction collection.
+|       Type|Collection
+|      Scope|Transaction
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+This collection contains arbitrary information for the transaction. It
+is a generic place for rules to store transaction data in which other
+rules can monitor.
+
+==== UA
+[cols=">s,<9"]
+|===============================================================================
+|Description|User agent information extracted if the `user_agent`module is loaded.
+|       Type|Collection
+|      Scope|Transaction
+|     Module|user_agent
+|    Version|0.3
+|===============================================================================
+
+______________________________________________________________________________________________________________________________________________
+*Note*
+
+While the `User-Agent` HTTP request header may be used in generating
+these fields, the term "user agent" here refers to the client as a
+whole.
+______________________________________________________________________________________________________________________________________________
+
+Sub-Fields:
+
+* *agent:* String name of the user agent.
+* *product:* String product deduced from the user agent data.
+* *os:* String operating system deduced from user agent data.
+* *extra:* Any extra string available after parsing the `User-Agent`
+HTTP request header.
+* *category:* String category deduced from user agent data.
+
+Operators
+~~~~~~~~~
+
+==== contains
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if the target contains the given sub-string.
+|     Syntax|`@contains`
+|      Types|String
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== dfa
+[cols=">s,<9"]
+|===============================================================================
+|Description|Deterministic finite atomation matching algorithm (PCRE'salternative matching algorithm).
+|     Syntax|`@dfa`
+|      Types|String
+|     Module|pcre
+|    Version|0.4
+|===============================================================================
+
+The `dfa` operator implements the alternative matching algorithm in the
+http://www.pcre.org/[PCRE] regular expressions library. The parameter of
+the operator is a regular expression pattern that is passed to the PCRE
+library without modification. This alternative matching algorithm uses a
+similar syntax to PCRE regular expressions, except that backtracking is
+not available. The primary use of `dfa` is to allow a subset of regular
+expression matching in a streaming manner (see `StreamInspect`). In
+addition to streaming support, dfa will also find all matches to the
+pattern when the capture modifier is used. TODO: Describe limits on
+regex syntax.
+
+Example of capturing multiple matches:
+
+-------------------------------------------------------------------------------------------------
+# Capture each item in a '&' separated list
+Rule REQUEST_URI_QUERY @dfa "[^&]*" id:1 rev:1 phase:REQUEST_HEADER capture
+# Inspect each element in the CAPTURE, blocking if the format does not match
+Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value required" event block
+-------------------------------------------------------------------------------------------------
+
+==== ee_match_any
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if the target matches any value in the namedeudoxus automata.
+|     Syntax|`@ee_match_any`
+|      Types|String
+|     Module|ee
+|    Version|0.7
+|===============================================================================
+
+The named eudoxus automata must first be loaded with the `LoadEudoxus`
+directive
+
+==== eq
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if the target is numerically equal to thegiven value.
+|     Syntax|`@eq`
+|      Types|Numeric
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== ge
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if the target is numerically greater than orequal to the given value.
+|     Syntax|`@ge`
+|      Types|Numeric
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== gt
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if the target is numerically greater thanthe given value.
+|     Syntax|`@gt`
+|      Types|Numeric
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== imatch
+[cols=">s,<9"]
+|===============================================================================
+|Description|As `match`, but case insensitive.
+|     Syntax|`@imatch `
+|      Types|String
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+==== ipmatch
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if a target IPv4 address matches any givenwhitespace separated address in CIDR format.
+|     Syntax|`@ipmatch `
+|      Types|String
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== ipmatch6
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if a target IPv6 address matches any givenwhitespace separated address in CIDR format.
+|     Syntax|`@ipmatch6 `
+|      Types|String
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== is_sqli
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if the data is determined to be SQLinjection via the libinjection library.
+|     Syntax|`@is_sqli `
+|      Types|String
+|     Module|libinjection
+|    Version|0.7
+|===============================================================================
+
+The libinjection ironbee module utilizes Nick Galbreath's libinjection
+to implement SQLi detection. This operator is similar to libinjection's
+is_sqli() function. The libinjection library is available via:
+http://www.client9.com/projects/libinjection/
+
+Currently the data-source must be set to "default" as loading external
+databases is not yet implemented.
+
+Example:
+
+--------------------------------------------------------------------------------------------------------------
+Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logdata:%{FIELD} event block:phase
+--------------------------------------------------------------------------------------------------------------
+
+==== le
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if the target is numerically less than orequal to the given value.
+|     Syntax|`@le`
+|      Types|Numeric
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== lt
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if the target is numerically less than thegiven value.
+|     Syntax|`@lt`
+|      Types|Numeric
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== match
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if the target is any of the given whitespaceseparated words.
+|     Syntax|`@match `
+|      Types|String
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+==== ne
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if the target is not numerically equal tothe given value.
+|     Syntax|`@ne`
+|      Types|Numeric
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== pm
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parallel matching using the `Aho-Corasick` algorithm.
+|     Syntax|`@pm `
+|      Types|String
+|     Module|ac
+|    Version|0.2
+|===============================================================================
+
+Implements a set-based (or parallel) matching function using the
+Aho-Corasick algorithm. The parameter of the operator contains one or
+more matching patterns, separated with whitespace. Set-based matching is
+capable of matching many patterns at the same time, making it efficient
+for cases when the number of patterns is very large (in hundreds and
+thousands).
+
+---------------------------------------------------
+Rule REQUEST_HEADERS:User-Agent @pm "one two three"
+---------------------------------------------------
+
+If the `capture` modifier is specified on a `@pm` rule, the `CAPTURE:0`
+variable will contain the matched data fragment. Do note that, because
+the `pm` operator can easily match many times per rule, the `CAPTURE:0`
+value is valid only when used in the same rule. In the following rules,
+`CAPTURE:0` will contain the data fragment of the last `@pm` match.
+
+________________________________________________________________________________________________________
+*Note*
+
+DEPRECATED: The "ac" module is deprecated. Use `rx`, `dfa`, `match`,
+`imatch` or `ee_match_any` instead.
+________________________________________________________________________________________________________
+
+==== pmf
+[cols=">s,<9"]
+|===============================================================================
+|Description|Parallel matching with patterns from file.
+|     Syntax|`@pmf`
+|      Types|String
+|     Module|ac
+|    Version|0.2
+|===============================================================================
+
+Same as `pm`, but instead of accepting parameters directly, it loads
+them from the file whose filename was supplied. The file is expected to
+contain one pattern per line. To convert a line into a pattern,
+whitespace from the beginning and the end is removed. Empty lines are
+ignored, as are comments, which are lines that begin with `#`. Relative
+filenames are resolved from same directory as the configuration file.
+
+--------------------------------------------------------
+Rule REQUEST_HEADERS:User-Agent @pmf bad_user_agents.dat
+--------------------------------------------------------
+
+________________________________________________________________________________________________________
+*Note*
+
+DEPRECATED: The "ac" module is deprecated. Use `rx`, `dfa`, `match`,
+`imatch` or `ee_match_any` instead.
+________________________________________________________________________________________________________
+
+==== rx
+[cols=">s,<9"]
+|===============================================================================
+|Description|Regular expression (perl compatible regular expression)matching.
+|     Syntax|`@rx`
+|      Types|String
+|     Module|pcre
+|    Version|0.2
+|===============================================================================
+
+The `rx` operator implements http://www.pcre.org/[PCRE] regular
+expressions. The parameter of the operator is a regular expression
+pattern that is passed to the PCRE library without modification.
+
+--------------------------------
+Rule ARGS:userId !@rx "^[0-9]+$"
+--------------------------------
+
+Patterns are compiled with the following settings:
+
+* Entire input is treated as a single buffer against which matching is
+done.
+* Patterns are case-sensitive by default.
+* Patterns are compiled with `PCRE_DOTALL` and `PCRE_DOLLAR_ENDONLY`
+set.
+
+Using captured substrings to create variables
+
+Regular expressions can be used to capture substrings. In IronBee, the
+captured substrings can be used to create new variables in the `CAPTURE`
+collection. To use this feature, specify the `capture` modifier in the
+rule.
+
+---------------------------------------
+Rule ARGS @rx "test(\d{13,16})" capture
+---------------------------------------
+
+When capture is enabled, IronBee will always create a variable
+`CAPTURE:0`, which will contain the entire matching area of the pattern.
+Anonymous capture groups will create up to 9 variables, from `CAPTURE:1`
+to `CAPTURE:9`. These special `CAPTURE` variables will remain available
+until the next capture rule is run, when they will all be deleted.
+
+==== streq
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns true if target exactly matches the given string.
+|     Syntax|`@streq`
+|      Types|String
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== istreq
+[cols=">s,<9"]
+|===============================================================================
+|Description|As `streq`, but case insensitive.
+|     Syntax|`@istreq`
+|      Types|String
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+Modifiers
+~~~~~~~~~
+
+==== allow
+[cols=">s,<9"]
+|===============================================================================
+|Description|Mark a transaction as allowed to proceed to a giveninspection point.
+|       Type|Action
+|     Syntax|`allow[":phase" \| ":request"]`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+By default this allows the transaction to proceed without inspection
+until the post-processing phase. This can be changed depending on the
+modifier used:
+
+* *phase* - Proceed to the end of the current phase without further rule
+execution.
+* *request* - Proceed to the end of the request processing phases
+without further rule execution.
+
+==== event
+[cols=">s,<9"]
+|===============================================================================
+|Description|Cause the rule to generate a log event.
+|       Type|Action
+|     Syntax|`event[":observation" \| ":alert"]`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+By default this generates a log event of type "observation", but this
+can be changed to type "alert". Having at least one active alert type
+event will cause an audit log to be generated.
+
+* *observation* - Default event type denoting a rule made an
+observation, which could contribute to further inspection.
+* *alert* - Alert event type denoting a transaction should be logged.
+
+==== logdata
+[cols=">s,<9"]
+|===============================================================================
+|Description|Add data to be logged with the event.
+|       Type|Metadata
+|     Syntax|`logdata:`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+Log a data fragment as part of the error message.
+
+-------------------------------------------------
+Rule ARGS @rx pattern \
+        "msg:Test matched" logdata:%{MATCHED_VAR}
+-------------------------------------------------
+
+Note: Up to 128 bytes of data will be recorded.
+
+==== block
+[cols=">s,<9"]
+|===============================================================================
+|Description|Mark a transaction to be blocked.
+|       Type|Action
+|     Syntax|`block[:advisory \| :phase \| :immediate]`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+By default this marks the transaction with an advisory blocking flag.
+This can be changed depending on the modifier used:
+
+* *advisory* - Mark the transaction with an advisory blocking flag which
+further rules may take into account.
+* *phase* - Block the transaction at the end of the current phase.
+* *immediate* - Block the transaction immediately after rule execution.
+
+==== capture
+[cols=">s,<9"]
+|===============================================================================
+|Description|Enable capturing the matching data.
+|       Type|Modifier
+|     Syntax|`capture`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Enabling capturing will populate the `CAPTURE` collection with data from
+the most recent matching operator. For most operators the `CAPTURE:0`
+field will be set to the last matching value. Operators that support
+capturing multiple values may set other items in the `CAPTURE`
+collection. For example, the `rx` operator supports setting the
+additional `CAPTURE:1` - `CAPTURE:9` via capturing parens in the regular
+expression and the `dfa` operator supports capturing _all matches_, each
+being available as `CAPTURE:0`.
+
+==== chain
+[cols=">s,<9"]
+|===============================================================================
+|Description|Chains the next rule, so that the next rule will executeonly if the current operator evaluates true.
+|       Type|Modifier
+|     Syntax|`chain`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Rule chains are essentially rules that are bound together by a logical
+AND with short circuiting. In a rule chain, each rule in the chain is
+executed in turn as long as the operators are evaluating true. If an
+operator evaluates to false, then no further rules in the chain will
+execute. This allows a rule to execute multiple operators.
+
+All rules in the chain will still execute their actions before the next
+rule in the chain executes. If you want a rule that only executes an
+action if all operators evaluate true, then the action should be given
+on the final rule in the chain.
+
+Requirements for chained rules:
+
+* Only the first rule in the chain may have an id or phase, which will
+be used for all rule chains.
+* A numeric chain ID will be assigned and appended to the rule ID,
+prefixed with a dash, to uniquely identify the rule.
+* Different metadata attributes (except id/phase) may be given for each
+chain, but the first rule's metasta will be the default.
+* Specifying one or more tag modifiers is allowed in any chain, but the
+tags will be bound to the entire rule chain so that RuleEnable and
+similar will act on the entire rule chain, not just an individual rule
+in the chain.
+
+Example:
+
+---------------------------------------------------------------------------------------------------------
+# Start a rule chain, which matches only POST requests. The implicit ID here
+# will be set to "id:1-1".
+Rule REQUEST_METHOD "@rx ^(?i:post)$" id:1 phase:REQUEST chain
+
+# Only if the above rule's operator evaluates true, will the next rule in the
+# chain execute. This rule checks to see if there are any URI based parameters
+# which typically should not be there for POST requests. If the operator evaluates
+# true, then the setvar action will execute, marking the transaction and an
+# event will be generated with the given msg text. This rule will have the
+# implicit ID set to "id:1-2".
+Rule &REQUEST_URI_PARAMS @gt 0 "msg:POST with URI parameters." setvar:TX:uri_params_in_post=1 event chain
+
+# Only if the above two rules' operators return true will the next rule in the
+# chain execute.  This rule checks that certain parameters are not used in
+# on the URI and if so, generates an event and blocks the transaction with the
+# default status code at the end of the phase. This rule will have the implicit
+# ID set to "id:1-3".
+Rule &REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." event block:phase
+---------------------------------------------------------------------------------------------------------
+
+==== confidence
+[cols=">s,<9"]
+|===============================================================================
+|Description|Numeric value indicating the confidence of the rule.
+|       Type|Metadata
+|     Syntax|`confidence:`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Higher confidence rules should have a lower False Positive rate.
+
+==== delRequestHeader
+[cols=">s,<9"]
+|===============================================================================
+|Description|Delete an HTTP header from the request.
+|       Type|Action
+|     Syntax|`delRequestHeader:`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== delResponseHeader
+[cols=">s,<9"]
+|===============================================================================
+|Description|Delete an HTTP header from the response.
+|       Type|Action
+|     Syntax|`delResponseHeader:`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== id
+[cols=">s,<9"]
+|===============================================================================
+|Description|Unique identifier for a rule.
+|       Type|Metadata
+|     Syntax|`id:`
+|Cardinality|1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Specifies a unique identifier for a rule. If a later rule re-uses the
+same identifier, then it will overwrite the previous rule.
+
+TODO: Explain what the full unique id is (taking context and chains into
+account)
+
+==== msg
+[cols=">s,<9"]
+|===============================================================================
+|Description|Message associated with the rule.
+|       Type|Metadata
+|     Syntax|`msg:`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+This message is used by the `event` action when logging the event.
+
+==== phase
+[cols=">s,<9"]
+|===============================================================================
+|Description|The runtime phase at which the rule should execute.
+|       Type|Metadata
+|     Syntax|`phase:REQUEST_HEADER \| REQUEST \| RESPONSE_HEADER \| RESPONSE \| POSTPROCESS`
+|Cardinality|1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Rule phase determines when a rule runs. IronBee understands the
+following phases:
+
+`REQUEST_HEADER`::
+  Invoked after the entire HTTP request headers has been read, but
+  before reading the HTTP request body (if any). Most rules should not
+  use this phase, opting for the `REQUEST` phase instead.
+`REQUEST`::
+  Invoked after receiving the entire HTTP request, which may involve
+  request body and request trailers, but it will run even when neither
+  is present.
+`RESPONSE_HEADER`::
+  Invoked after receiving the HTTP entire response header.
+`RESPONSE`::
+  Invoked after receiving the HTTP response body (if any) and response
+  trailers (if any).
+`POSTPROCESS`::
+  Invoked after the entire transaction has been processed. This phase is
+  for logging and tracking data between transactions, such as storing
+  state. Actions cannot affect the transaction in this phase.
+
+==== rev
+[cols=">s,<9"]
+|===============================================================================
+|Description|An integer rule revision.
+|       Type|Metadata
+|     Syntax|`rev:n`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Explain how this is used in RuleEnable and when overriding Rules
+in sub contexts.
+
+==== setflag
+[cols=">s,<9"]
+|===============================================================================
+|Description|Set, or unset, boolean transaction attributes (flags).
+|       Type|Action
+|     Syntax|`setflag:[!]`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+Allow setting or unsetting transaction flags. Prefixing with a `!`
+unsets the flag.
+
+______________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+Currently the `inspectRequestHeader` flag is always set as this is
+required for the site selection process. Additionally, the
+`RequestBuffering` and `ResponseBuffering` directives must be enabled to
+buffer the request or response.
+______________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+* *block* - Set if transaction was marked for block.
+* *suspicious* - Set if transaction was marked as suspicious and care
+should be taken in processing.
+* *inspectRequestHeader* - Set if the engine should inspect the HTTP
+request header (default: set).
+* *inspectRequestBody* - Set if the engine should inspect the HTTP
+request body (default: unset).
+* *inspectResponseHeader* - Set if the engine should inspect the HTTP
+response header (default: unset).
+* *inspectResponseBody* - Set if the engine should inspect the HTTP
+response body (default: unset).
+
+==== setRequestHeader
+[cols=">s,<9"]
+|===============================================================================
+|Description|Set the value of a HTTP request header.
+|       Type|Action
+|     Syntax|`setRequestHeader:=`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== setResponseHeader
+[cols=">s,<9"]
+|===============================================================================
+|Description|Set the value of an HTTP response header.
+|       Type|Action
+|     Syntax|`setResponseHeader:=`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== setvar
+[cols=">s,<9"]
+|===============================================================================
+|Description|Set a variable data field.
+|       Type|Action
+|     Syntax|`setvar:[!][+\|-]=`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+The `setvar` modifier is used for data field manipulation. To create a
+variable data field or change its value:
+
+-----------------
+setvar:tx:score=1
+-----------------
+
+To remove all instances of a named variable data field:
+
+----------------
+setvar:!tx:score
+----------------
+
+To increment or decrement a variable data field value:
+
+----------------------
+setvar:tx:score+=5
+    setvar:tx:score-=5
+----------------------
+
+An attempt to modify a value of a non-numerical variable will assume the
+old value was zero (NOTE: Probably should just fail, logging an attempt
+was made to modify a non-numerical value).
+
+==== severity
+[cols=">s,<9"]
+|===============================================================================
+|Description|Numeric value indicating the severity of the issue thisrule is trying to protect against.
+|       Type|Metadata
+|     Syntax|`severity:`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+The severity indicates how much impact a successful attack may be, but
+does not indicate the quality of protection this rule may provide. The
+severity is meant to be used as part of a "threat level" indicator. The
+"threat level" is essentially severity x confidence, which balances how
+severe the threat may be with how well this rule might be protecting
+against it.
+
+==== status
+[cols=">s,<9"]
+|===============================================================================
+|Description|The HTTP status code to use for a blocking action.
+|       Type|Modifier
+|     Syntax|`status:`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== t
+[cols=">s,<9"]
+|===============================================================================
+|Description|Apply one or more named transformations to each of thetargets in a rule.
+|       Type|Modifier
+|     Syntax|`t:`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== tag
+[cols=">s,<9"]
+|===============================================================================
+|Description|Apply an arbitrary tag name to a rule.
+|       Type|Metadata
+|     Syntax|`tag:`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Describe where this is used, notably `RuleEnable`/`RuleDisable`
+and logged with events.
+
+Transformation Functions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+==== base64Decode
+[cols=">s,<9"]
+|===============================================================================
+|Description|
+|     Module|core
+|    Version|Not implemented yet.
+|===============================================================================
+
+==== ceil
+[cols=">s,<9"]
+|===============================================================================
+|Description|Return the integral value greater than or equal to thenumeric value of the input.
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+==== compressWhitespace
+[cols=">s,<9"]
+|===============================================================================
+|Description|Replaces one or more consecutive whitespace characterswith a single space.
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+Replaces various whitespace characters with spaces. In addition,
+consecutive whitespace characters will be reduced down to a single
+space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
+`0xa0` (non-breaking whitespace).
+
+==== count
+[cols=">s,<9"]
+|===============================================================================
+|Description|Given a collection, it returns the number if items in thecollection. Given a scalar, returns 1.
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== floor
+[cols=">s,<9"]
+|===============================================================================
+|Description|Return the integral value less than or equal to thenumeric value of the input.
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+==== htmlEntityDecode
+[cols=">s,<9"]
+|===============================================================================
+|Description|Decodes HTML entities in the data.
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+The following forms are supported:
+
+* *&#DDDD;* - Numeric code point, where DDDD represents a decimal number
+with any number of digits.
+* *&#xHHHH;* - Numeric code point, where HHHH represents a hexadecimal
+number with any number of digits.
+* *&name;* - Predefined XML named entities (currently: quot, amp, apos,
+lt, gt).
+
+See
+https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
+
+==== length
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns the byte length of the value.
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== lowercase
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns the input as all lower case characters.
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== max
+[cols=">s,<9"]
+|===============================================================================
+|Description|Given a collection of numeric data, returns the maximumvalue.
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== min
+[cols=">s,<9"]
+|===============================================================================
+|Description|Given a collection of numeric data, returns the minimumvalue.
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== name
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns the name of the field as the value.
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+==== names
+[cols=">s,<9"]
+|===============================================================================
+|Description|Returns a collection of names from a collection ofname/value pairs.
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+==== normalizePath
+[cols=">s,<9"]
+|===============================================================================
+|Description|Normalize a filesystem path, removing back and selfreferences.
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+==== normalizePathWin
+[cols=">s,<9"]
+|===============================================================================
+|Description|Normalize a Windows filesystem path, removing back andself references.
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+==== normalizeSqli
+[cols=">s,<9"]
+|===============================================================================
+|Description|Normalize potential SQL injection via libinjection.
+|     Module|libinjection
+|    Version|0.7
+|===============================================================================
+
+The libinjection ironbee module utilizes Nick Galbreath's libinjection
+to implement SQLi detection. This transformation is based on an example
+in libinjection. The libinjection library is available via:
+http://www.client9.com/projects/libinjection/
+
+Example Input/Output:
+
+----------------------------------------------------------------------------------
+Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
+----------------------------------------------------------------------------------
+
+--------------------------------------------------------
+Output: foo' or 1=1 union select id,passwd from users --
+--------------------------------------------------------
+
+==== normalizeSqlPg
+[cols=">s,<9"]
+|===============================================================================
+|Description|Normalize postgres SQL.
+|     Module|sqltfn
+|    Version|0.7
+|===============================================================================
+
+Normalize Postgres SQL.
+
+Example Input/Output:
+
+----------------------------------------------------------------------------------
+Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
+----------------------------------------------------------------------------------
+
+--------------------------------------------------------
+Output: foo' or 1 = 1 union select id,passwd from users 
+--------------------------------------------------------
+
+==== removeWhitespace
+[cols=">s,<9"]
+|===============================================================================
+|Description|Removes one or more consecutive whitespace characters.
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+Similar to `compressWhitespace`, except removes the characters instead
+of replacing them with a single space.
+
+==== removeComments
+[cols=">s,<9"]
+|===============================================================================
+|Description|Remove various types of code comments.
+|     Module|core
+|    Version|Not implemented yet.
+|===============================================================================
+
+The following style comments are replaced:
+
+* */* ... */* - C style comments.
+* *// ...* - C++ style comments.
+* *# ...* - Shell style comments.
+* *-- ...* - SQL style comments.
+
+==== replaceComments
+[cols=">s,<9"]
+|===============================================================================
+|Description|Replace various types of code comments with a singlespace character.
+|     Module|core
+|    Version|Not implemented yet.
+|===============================================================================
+
+This is similar to `removeComments`, but instead of removing, replaces
+with a single space character.
+
+==== round
+[cols=">s,<9"]
+|===============================================================================
+|Description|Return the integral value closest to the numeric value ofthe input.
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+==== trim
+[cols=">s,<9"]
+|===============================================================================
+|Description|Removes consecutive whitespace from the beginning and endof the input.
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== trimLeft
+[cols=">s,<9"]
+|===============================================================================
+|Description|Removes consecutive whitespace from the beginning of theinput.
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== trimRight
+[cols=">s,<9"]
+|===============================================================================
+|Description|Removes consecutive whitespace from the end of the input.
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== toFloat
+[cols=">s,<9"]
+|===============================================================================
+|Description|Convert input to a numeric floating point type.
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+==== toInteger
+[cols=">s,<9"]
+|===============================================================================
+|Description|Convert input to a numeric integral type.
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+==== toString
+[cols=">s,<9"]
+|===============================================================================
+|Description|Convert input to a string type.
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+==== urlDecode
+[cols=">s,<9"]
+|===============================================================================
+|Description|Decodes URL encoded values in the input.
+|     Module|core
+|    Version|Not implemented yet.
+|===============================================================================
+
+Implements decoding the encoding used in
+application/x-www-form-urlencoded values (percent encoding with
+additions).
+
+* *%HH;* - Numeric code point, where HH represents a two digit
+hexadecimal number.
+* *+* - Represents an ASCII space character (equiv to `%20`).
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________
+*Warning*
+
+Fields which are parsed from the URI and form parameters are already URL
+Decoded and you should not apply this transformation to these fields
+unless you are trying to inspect multiple levels of encoding.
+___________________________________________________________________________________________________________________________________________________________________________________________________________

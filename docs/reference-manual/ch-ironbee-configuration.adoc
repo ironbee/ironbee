@@ -1,0 +1,2034 @@
+IronBee Configuration
+---------------------
+
+The IronBee configuration is loaded from the server container. The
+syntax is similar to the Apache httpd server configuration. The
+following rules apply:
+
+* Escape sequences are as in JavaScript (section 7.8.4 in ECMA-262),
+except within PCRE regular expression patterns, where PCRE escaping is
+used
+* Lines that begin with `#` are comments
+* Lines are continued on the next line when `\` is the last character on
+a line
+
+The IronBee configuration defines general configuration as well as site
+and location mappings, which can each have their own configuration.
+
+-----------------------------------------------
+# Main Configuration
+SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
+...
+
+# Site1
+<Site site1>
+    SiteId 0B781B90-CE3B-470C-952C-5F2878EFFC05
+    Hostname site1.example.com
+    Service 10.0.1.100:80
+
+    ...
+
+    <Location /directory1>
+        ...
+    </Location>
+</Site>
+
+# Site2
+<Site site2>
+    SiteId 8B3BA3DE-2727-4737-9230-4A1D110E6C87
+    Hostname site2.example.com
+    Service 10.0.5.100:80
+
+    ...
+</Site>
+
+# Default Site
+<Site default>
+    SiteId F89E43B3-EB96-44F0-BE1C-B4673B96DF9C
+    Hostname *
+    Service *:*
+
+    ...
+</Site>
+-----------------------------------------------
+
+The following is a reference for all IronBee directives where the
+context refers to the possible locations within the configuration file.
+
+AuditEngine
+~~~~~~~~~~~
+
+*Description:* Configures the audit log engine.
+
+*Syntax:* `AuditEngine On|Off|RelevantOnly`
+
+*Default:* `RelevantOnly`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.3
+
+Setting `AuditEngine` to `RelevantOnly`, the default, does not log any
+transactions in itself. Instead, further activity (e.g., a rule match)
+is required for a transaction to be recorded. Setting `AuditEngine` to
+`On` activates audit logging for *all transactions*, which may cause a
+large amount of data to be logged.
+
+AuditLogBaseDir
+~~~~~~~~~~~~~~~
+
+*Description:* Configures the directory where individual audit log
+entries will be stored. This also serves as the base directory for
+`AuditLogIndex` if it uses a relative path.
+
+*Syntax:* `AuditLogBaseDir `
+
+*Default:* `"/var/log/ironbee"`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.3
+
+AuditLogDirMode
+~~~~~~~~~~~~~~~
+
+*Description:* Configures the directory mode that will be used for new
+directories created during audit logging.
+
+*Syntax:* `AuditLogDirMode `
+
+*Default:* `0700`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+AuditLogFileMode
+~~~~~~~~~~~~~~~~
+
+*Description:* Configures the file mode that will be used when creating
+individual audit log files.
+
+*Syntax:* `AuditLogFileMode `
+
+*Default:* `0600`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.6
+
+AuditLogIndex
+~~~~~~~~~~~~~
+
+*Description:* Configures the location of the audit log index file.
+
+*Syntax:* `AuditLogIndex None|`
+
+*Default:* `ironbee-index.log`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+Relative filenames are based off the `AuditLogBaseDir` directory and
+specifying `None` disables the index file entirely.
+
+AuditLogIndexFormat
+~~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures the format of the entries logged in the audit
+log index file.
+
+*Syntax:* `AuditLogIndexFormat
+                `
+
+*Default:* `"%T %h %a %S %s %t %f"`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+* *%%* The percent sign
+* *%a* Remote IP-address
+* *%A* Local IP-address
+* *%h* HTTP Hostname
+* *%s* Site ID
+* *%S* Sensor ID
+* *%t* Transaction ID
+* *%T* Transaction timestamp (YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ)
+* *%f* Audit log filename (relative to `AuditLogBaseDir`)
+
+AuditLogParts
+~~~~~~~~~~~~~
+
+*Description:* Configures which parts will be logged to the audit log.
+
+*Syntax:* `AuditLogPart  ...`
+
+*Default:* `default`
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.4
+
+An audit log consist of many parts; `AuditLogParts` determines which
+parts are recorded by default. The parts are inherited into child
+contexts (Site, Location, etc). Specifying a part with +/- operator will
+add or remove the given part from the current set of parts. Specifying
+the first option without +/- operators will cause all options to be
+overridden and the list of options will be the only options set. Here is
+what your configuration might look like:
+
+-------------------------------------------------------------------
+AuditLogParts minimal +request -requestBody +response -responseBody
+-------------------------------------------------------------------
+
+The above first resets the list of parts to *minimal*, adds all the
+*request* parts except the *requestBody*, then adds all the *response*
+parts except the *responseBody*.
+
+Later, in a sub-context, you may wish to enable response body logging
+and thus can just specify this part with the + operator:
+
+----------------------
+<Location /some/path>
+        AuditLogParts 
+    </Location>
+----------------------
+
+If you already had response body logging enabled, but didn't want it any
+more, you would write:
+
+----------------------
+<Location /some/path>
+        AuditLogParts 
+    </Location>
+----------------------
+
+Audit Log Part Names:
+
+* *header:* Audit Log header (required)
+* *events:* List of events that triggered
+* *requestMetadata:* Information about the request
+* *requestHeaders:* Raw request headers
+* *requestBody:* Raw request body
+* *requestTrailers:* Raw request trailers
+* *responseMetadata:* Information about the response
+* *responseHeaders:* Raw response headers
+* *responseBody:* Raw response body
+* *responseTrailers:* Raw response trailers
+* *debugFields:* Currently not implemented
+
+Audit Log Part Group Names:
+
+These are just aliases for multiple parts.
+
+* *none:* Removes all parts
+* *minimal:* Minimal parts (currently *header* and *events* parts)
+* *default:* Default parts (currently *minimal* and request/response
+parts without bodies)
+* *request:* All request related parts
+* *response:* All response related parts
+* *debug:* All debug related parts
+* *all:* All parts
+
+AuditLogSubDirFormat
+~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures the directory structure created under the
+_AuditLogBaseDir_ directory. This is a _strftime(3)_ format string
+allowing the directory structure to be created based on date/time.
+
+*Syntax:* `AuditLogSubDirFormat
+                `
+
+*Default:* `403`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+DefaultBlockStatus
+~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures the default HTTP status code used for
+blocking.
+
+*Syntax:* `DefaultBlockStatus
+                `
+
+*Default:* `403`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+GeoIPDatabaseFile
+~~~~~~~~~~~~~~~~~
+
+*Description:* Configures the location of the geoip database file.
+
+*Syntax:* `GeoIPDatabaseFile `
+
+*Default:* `/usr/share/geoip/GeoLiteCity.dat`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* geoip
+
+*Version:* 0.4
+
+Hostname
+~~~~~~~~
+
+*Description:* Maps hostnames to a Site.
+
+*Syntax:* `Hostname `
+
+*Default:* `*` (any)
+
+*Context:* Site
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.4
+
+The `Hostname` directive establishes a mapping between a Site and one or
+more hostnames. To map IP/Port pairs to a Site, see the `Service`
+directive.
+
+In the simplest case, a site will occupy a single hostname:
+
+------------------------
+Hostname www.ironbee.com
+------------------------
+
+More often than not, however, several names will be used:
+
+------------------------
+Hostname www.ironbee.com
+Hostname ironbee.com
+------------------------
+
+Wildcards are permitted when there are multiple names under a common
+domain. Only one wildcard character per hostname is allowed and it must
+currently be on the left-hand side:
+
+----------------------
+Hostname ironbee.com
+Hostname *.ironbee.com
+----------------------
+
+Finally, to match any hostname (which you will need to do in default
+sites), use a single asterisk, which is the default if no `Hostname`
+directive is specified for a site:
+
+----------
+Hostname *
+----------
+
+Include
+~~~~~~~
+
+*Description:* Includes external file into configuration.
+
+*Syntax:* `Include `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.5
+
+Allows inclusion of another file into the current configuration file.
+The following line will include the contents of the file `sites.conf`
+into configuration:
+
+-----------------------
+Include conf/sites.conf
+-----------------------
+
+The file must exist and be accessible or an error is generated (use
+`IncludeIfExists` if this is not the case). If you specify a relative
+path, the location of the configuration file containing this directive
+will be used to resolve it.
+
+IncludeIfExists
+~~~~~~~~~~~~~~~
+
+*Description:* Includes external file into configuration if it exists
+and is accessible.
+
+*Syntax:* `IncludeIfExists `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.7
+
+As `Include`, but allows for optional inclusion without causing a
+configuration error if the file does not exist (as would the `Include`
+directive).
+
+InitCollection
+~~~~~~~~~~~~~~
+
+*Description:* Initializes a locally scoped collection data field for
+later use and optional persistence.
+
+*Syntax:* `InitCollection 
+                
+                `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core, persist
+
+*Version:* 0.7
+
+Initializes a collection from the initializer. The initializer format
+depends on the implementation. There are multiple URI formats supported,
+which are described below.
+
+Core Functionality
+^^^^^^^^^^^^^^^^^^
+
+`vars: key1=val1 key2=val2 ... keyN=valN`
+
+The `vars` URI allows initializing a collection of simple key/value
+pairs.
+
+----------------------------------------------------
+InitCollection MY_VARS vars: key1=value1 key2=value2
+----------------------------------------------------
+
+`json-file:///path/file.json [persist]`
+
+The json-file URI allows loading a more complex collection from a JSON
+formatted file. If the optional persist parameter is specified, then
+anything changed is persisted back to the file at the end of the
+transaction. Next time the collection is initialized, it will be from
+the persisted data.
+
+-----------------------------------------------------------------------------------------------
+InitCollection MY_JSON_COLLECTION json-file:///tmp/ironbee/persist/test1.json
+InitCollection MY_PERSISTED_JSON_COLLECTION json-file:///tmp/ironbee/persist/test2.json persist
+-----------------------------------------------------------------------------------------------
+
+Persist Module
+^^^^^^^^^^^^^^
+
+The persist module allows for some more advanced persistence, such as
+providing multiple instances of persisted collection as well as
+expiration. To load this functionality you must load the persist module
+separately.
+
+`persist-fs:///path/to/persisted/data key=VALUE
+                [expire=SECONDS]`
+
+The `persist-fs` URI allows specifying a path to store persisted data.
+The `key` parameter specifies a value to identify an instance of the
+collection. The `key` value can be any text or a field expansion (e.g.,
+`%{MY_VAR_NAME}`). The `expire` parameter allows setting the expiration
+of the data stored in the collection in seconds. On initialization, the
+collection is populated from the persisted data. If the data is expired
+when the collection is initialized, it is discarded and an empty
+collection will be created.
+
+-----------------------------------------------------------------------------------
+LoadModule ibmod_persist.so
+
+...
+
+# Initialize a collection from the persistence store keyed off of REMOTE_ADDR.
+# The IP collection is now associated with the REMOTE_ADDR and any updates
+# will be persisted back to the persistence store with the REMOTE_ADDR key.
+# Different instances of the IP collection are stored based on the key. The
+# data stored in this collection will expire 300 seconds after persisted.
+InitCollection IP persist-fs:///tmp/ironbee/persist key=%{REMOTE_ADDR} expire=300
+
+# Check a value from the persisted collection to determine if a block should
+# occur.
+Rule IP:block @gt 0 id:persist/isblocked phase:REQUEST_HEADER event block:immediate
+
+# Perform some checks, setting block flag.
+Rule ... block
+
+# Update the persistent IP collection. This will store a block=1 parameter
+# for the IP collection associated with the REMOTE_ADDR key. If the IP collection
+# is pulled from the store again (within the expiration), then the rule above
+# will immediatly block the transaction.
+Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block=1
+
+# After the transaction completes, the modified values are persisted and the
+# persisted IP:block=1 will be used to block all transactions from the same IP
+# address for the next 300 seconds.
+-----------------------------------------------------------------------------------
+
+InitVar
+~~~~~~~
+
+*Description:* Initializes a locally scoped variable data field for
+later use.
+
+*Syntax:* `InitVar 
+                `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.6
+
+InspectionEngineOptions
+~~~~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures options for the inspection engine.
+
+*Syntax:* `InspectionEngineOptions 
+                    ...`
+
+*Default:* `default`
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.7
+
+The inspection engine allows setting options; `InspectionEngineOptions`
+controls these options. The options are inherited into child contexts
+(Site, Location, etc). Specifying an option with +/- operator will add
+or remove the given option from the current set. Specifying the first
+option without +/- operators will cause all options to be overridden and
+the list of options will be the only options set. Here is what your
+configuration might look like:
+
+-------------------------------------
+InspectionEngineOptions all -response
+-------------------------------------
+
+The above first resets the inspection to *all*, then removes the
+*response* from being inspected.
+
+Later, in a sub-context, you may wish to enable response response
+inspection and thus can just specify this part with the + operator:
+
+----------------------------
+<Location /some/path>
+    InspectionEngineOptions 
+</Location>
+----------------------------
+
+If you already had response enabled, but didn't want it any more, you
+would write:
+
+----------------------------
+<Location /some/other/path>
+    InspectionEngineOptions 
+</Location>
+----------------------------
+
+Inspection Engine Options:
+
+* *requestHeader:* Inspect the HTTP request header (default)
+* *requestBody:* Inspect the HTTP request body
+* *responseHeader:* Inspect the HTTP response header
+* *responseBody:* Inspect the HTTP response body
+
+Inspection Engine Option Group Names:
+
+These are just aliases for multiple options.
+
+* *none:* Removes all options
+* *default:* Default options (currently request header only)
+* *request:* All request related options
+* *response:* All response related options
+* *all:* All options
+
+LoadEudoxus
+~~~~~~~~~~~
+
+*Description:* Loads an external Eudoxus Automata into IronBee.
+
+*Syntax:* `LoadEudoxus  `
+
+*Default:* None
+
+*Context:* Main
+
+*Cardinality:* 0..n
+
+*Module:* ee
+
+*Version:* 0.7
+
+This directive will load an external eudoxus automata from `file` into
+the engine with the given `name`. Once loaded, the automata can then be
+used with the associated eudoxus rule operators such as the
+`ee_match_any` operator.
+
+The eudoxus automata is a precompiled and optimized automata generated
+by the ac_generator and ec commands in the `automata/bin` directory.
+Currently, as of IronBee 0.7, a modified Aho-Corasick algorithm is
+implemented which can handle very large external dictionaries. Refer to
+the
+https://www.ironbee.com/docs/devexternal/ironautomata.html[IronAutomata
+Documentation] for more information.
+
+LoadModule
+~~~~~~~~~~
+
+*Description:* Loads an external module into configuration.
+
+*Syntax:* `LoadModule `
+
+*Default:* None
+
+*Context:* Main
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.4
+
+This directive will add an external module to the engine, potentially
+making new directives available to the configuration.
+
+Location
+~~~~~~~~
+
+*Description:* Creates a subcontext that can have a different
+configuration.
+
+*Syntax:* `<Location
+                >...</Location>`
+
+*Default:* None
+
+*Context:* Site
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.4
+
+A sub-context created by this directive initially has identical
+configuration to that of the site it belongs to. Further directives are
+required to introduce changes. Locations are evaluated in the order in
+which they appear in the configuration file. The first location that
+matches request path will be used. This means that you should put the
+most-specific location first, followed by the less specific ones.
+
+---------------------------------------
+Include rules.conf
+
+    <Site site1>
+        Service *:80
+        Service 10.0.1.2:443
+        Hostname site1.example.com
+
+        <Location /prefix/app1>
+            RuleEnable all
+        </Location>
+
+        <Location /prefix>
+            RuleEnable tag:GenericRules
+        </Location>
+    </Site>
+---------------------------------------
+
+Log
+~~~
+
+*Description:* Configures the location of the log file.
+
+*Syntax:* `Log default|`
+
+*Default:* `default`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+LogHandler
+~~~~~~~~~~
+
+*Description:* Configures the log handler.
+
+*Syntax:* `LogHandler `
+
+*Default:* `None`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.3
+
+DEPRECATED - Do not use. The log handler is now automatically set by the
+servers.
+
+_______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+The log handler allows the log to be handled by another facility
+(currently the server). For Apache Traffic Server, this should be set to
+`"ironbee-ts"` and for Apache Web Server, this should be set to
+`"mod_ironbee"`. Using the log handler overrides the `Log` directive.
+_______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+LogLevel
+~~~~~~~~
+
+*Description:* Configures the detail level of the entries recorded to
+the log.
+
+*Syntax:* `LogLevel `
+
+*Default:* `4`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+The following log levels are supported (either numeric or text):
+
+* ` 0 - emergency` - system unusable
+* ` 1 - alert` - crisis happened
+* ` 2 - critical` - crisis coming
+* ` 3 - error` - error occurred
+* ` 4 - warning` - error likely to occur
+* ` 5 - notice` - something unusual happened
+* ` 6 - info` - informational messages
+* ` 7 - debug` - debugging: transaction state changes
+* ` 8 - debug2` - debugging: log of activities carried out
+* ` 9 - debug3` - debugging: activities, with more detail
+* `10 - trace` - debugging: developer log messages
+
+LuaLoadModule
+~~~~~~~~~~~~~
+
+*Description:* Load a Lua module (similar to LoadModule).
+
+*Syntax:* `LuaLoadModule `
+
+*Default:* None
+
+*Context:* Main
+
+*Cardinality:* 0..1
+
+*Module:* lua
+
+*Version:* 0.7
+
+Example:
+
+--------------------------------
+LuaLoadModule "threat_level.lua"
+--------------------------------
+
+LuaInclude
+~~~~~~~~~~
+
+*Description:* Execute a Lua script as a configuration file.
+
+*Syntax:* `LuaInclude `
+
+*Default:* None
+
+*Context:* Main
+
+*Cardinality:* 0..1
+
+*Module:* lua
+
+*Version:* 0.7
+
+Example:
+
+----------------------
+LuaInclude "rules.lua"
+----------------------
+
+ModuleBasePath
+~~~~~~~~~~~~~~
+
+*Description:* Configures the base path where IronBee modules are
+loaded.
+
+*Syntax:* `ModuleBasePath `
+
+*Default:* The `lib` directory under the IronBee install prefix.
+
+*Context:* Main
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+PcreMatchLimit
+~~~~~~~~~~~~~~
+
+*Description:* Configures the PCRE library match limit.
+
+*Syntax:* `PcreMatchLimit `
+
+*Default:* 5000
+
+*Context:* Main
+
+*Cardinality:* 0..1
+
+*Module:* pcre
+
+*Version:* 0.4
+
+From the `pcreapi` manual: ``The match_limit field provides a means of
+preventing PCRE from using up a vast amount of resources when running
+patterns that are not going to match, but which have a very large number
+of possibilities in their search trees. The classic example is a pattern
+that uses nested unlimited repeats.''
+
+PcreMatchLimitRecursion
+~~~~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures the PCRE library match limit recursion.
+
+*Syntax:* `PcreMatchLimitRecursion `
+
+*Default:* 5000
+
+*Context:* Main
+
+*Cardinality:* 0..1
+
+*Module:* pcre
+
+*Version:* 0.4
+
+From the `pcreapi` manual: ``The match_limit_recursion field is similar
+to match_limit, but instead of limiting the total number of times that
+match() is called, it limits the depth of recursion. The recursion depth
+is a smaller number than the total number of calls, because not all
+calls to match() are recursive. This limit is of use only if it is set
+smaller than match_limit.''
+
+ProtectionEngineOptions
+~~~~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures options for the protection engine.
+
+*Syntax:* `ProtectionEngineOptions 
+                    ...`
+
+*Default:* `default`
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.8
+
+The protection engine allows setting options; `ProtectionEngineOptions`
+controls these options. The options are inherited into child contexts
+(Site, Location, etc). Specifying an option with +/- operator will add
+or remove the given option from the current set. Specifying the first
+option without +/- operators will cause all options to be overridden and
+the list of options will be the only options set. Here is what your
+configuration might look like:
+
+----------------------------
+ProtectionEngineOptions none
+----------------------------
+
+The above resets the inspection to *none*.
+
+Later, in a sub-context, you may wish to enable blocking and thus can
+just specify this with the + operator:
+
+----------------------------
+<Location /some/path>
+    ProtectionEngineOptions 
+</Location>
+----------------------------
+
+If you already had blocking mode enabled, but didn't want it any more,
+you would write:
+
+----------------------------
+<Location /some/other/path>
+    ProtectionEngineOptions 
+</Location>
+----------------------------
+
+Protection Engine Options:
+
+* *blockingMode:* Control blocking actions.
+
+Protection Engine Option Group Names:
+
+These are just aliases for multiple options.
+
+* *none:* Removes all options
+* *default:* Default options (currently none)
+* *all:* All options
+
+RequestBuffering
+~~~~~~~~~~~~~~~~
+
+*Description:* Enable/disable request buffering.
+
+*Syntax:* `RequestBuffering On|Off`
+
+*Default:* `Off`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.6
+
+Control request buffering - holding the request during inspection.
+Currently the HTTP header is always buffered, but this must be enabled
+for the request body to be buffered.
+
+__________________________________________________________________
+*Note*
+
+This may be renamed to `RequestBodyBuffering` in a future release.
+__________________________________________________________________
+
+RequestBodyBufferLimit
+~~~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures the size of the request body buffer.
+
+*Syntax:* `RequestBodyBufferLimit
+                `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.9.0
+
+RequestBodyBufferLimitAction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures what happens when the buffer is smaller than
+the request body.
+
+*Syntax:* `RequestBodyBufferLimitAction FlushAll|FlushPartial`
+
+*Default:* FlushPartial
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.9.0
+
+When `FlushAll` is configured, the transaction with a body larger than
+the buffer will flush the existing buffer, sending it to the backend,
+then continue to fill the buffer with the remaining data. With
+`FlushPartial` selected, the buffer will be used to keep as much data as
+possible, but any overflowing data will be flushed and sent to the
+backend. Request headers will be sent before the first overflow batch.
+
+ResponseBuffering
+~~~~~~~~~~~~~~~~~
+
+*Description:* Enable/disable response buffering.
+
+*Syntax:* `ResponseBuffering On|Off`
+
+*Default:* `Off`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.6
+
+Control response buffering - holding the response during inspection.
+Currently the HTTP header is always buffered, but this must be enabled
+for the response body to be buffered.
+
+___________________________________________________________________
+*Note*
+
+This may be renamed to `ResponseBodyBuffering` in a future release.
+___________________________________________________________________
+
+ResponseBodyBufferLimit
+~~~~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures the size of the response body buffer.
+
+*Syntax:* `ResponseBodyBufferLimit
+                `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.9.0
+
+ResponseBodyBufferLimitAction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures what happens when the buffer is smaller than
+the response body.
+
+*Syntax:* `ResponseBodyBufferLimitAction FlushAll|FlushPartial`
+
+*Default:* FlushPartial
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.9.0
+
+When `FlushAll` is configured, the transaction with a body larger than
+the buffer will flush the existing buffer, sending it to the client,
+then continue to fill the buffer with the remaining data. With
+`FlushPartial` selected, the buffer will be used to keep as much data as
+possible, but any overflowing data will be flushed and sent to the
+client. Request headers will be sent before the first overflow batch.
+
+Rule
+~~~~
+
+*Description:* Loads a rule and, in most contexts, enable the rule for
+execution in that context.
+
+*Syntax:* `Rule 
+                 @
+                
+                `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* rules
+
+*Version:* 0.4
+
+_________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+Loading a rule will, in most contexts, also enable the rule to be
+executed in that context. However, the main configuration context is
+special. Loading a rule in the main configuration context will _NOT_
+enable the rule, but just load it into memory so that it can be shared
+by other contexts. You must explicitly use `RuleEnable` in another
+context to enable the rule.
+_________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+RuleBasePath
+~~~~~~~~~~~~
+
+*Description:* Configures the base path where external IronBee rules are
+loaded.
+
+*Syntax:* `RuleBasePath `
+
+*Default:* The `lib` directory under the IronBee install prefix.
+
+*Context:* Main
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+RuleDisable
+~~~~~~~~~~~
+
+*Description:* Disables a rule from executing in the current
+configuration context.
+
+*Syntax:* `RuleDisable "all" | "id:" |
+                    "tag": ...`
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* rules
+
+*Version:* 0.4
+
+Rules can be disabled by id or tag. Any number of id or tag modifiers
+can be specified per directive. All disables are processed after
+enables. See the `RuleEnable` directive for an example.
+
+RuleEnable
+~~~~~~~~~~
+
+*Description:* Enables a rule for execution in the current configuration
+context.
+
+*Syntax:* `RuleEnable "all" | "id:" |
+                    "tag": ...`
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* rules
+
+*Version:* 0.4
+
+Rules can be disabled by id or tag. Any number of id or tag modifiers
+can be specified per directive. All enables are processed before
+disables. For example:
+
+------------------------------------------------------------
+Include "rules/big_ruleset.conf"
+
+    <Site foo>
+        Hostname foo.example.com
+        RuleEnable id:1234
+        RuleEnable id:3456 tag:SQLi
+        RuleDisable id:5678 tag:experimental tag:heavyweight
+    </Site>
+------------------------------------------------------------
+
+RuleEngineLogData
+~~~~~~~~~~~~~~~~~
+
+*Description:* Configures the data logged by the rule engine.
+
+*Syntax:* `RuleEngineLogData 
+                ...`
+
+*Default:* `ruleExec`
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.6
+
+The following data type options are supported:
+
+* `tx` - Log the transaction:
++
+------------------------------------
+TX_START clientip:port site-hostname
+    ...
+TX_END
+------------------------------------
+* `requestLine` - Log the HTTP request line:
++
+-------------------------------------
+REQ_LINE method uri version-if-given 
+-------------------------------------
+* `requestHeader` - Log the HTTP request header:
++
+----------------------
+REQ_HEADER name: value
+----------------------
+* `requestBody` - Log the HTTP request body, possibly in multiple
+chunks:
++
+------------------
+REQ_BODY size data
+------------------
+* `responseLine` - Log the HTTP response line:
++
+--------------------------------
+RES_LINE version status message 
+--------------------------------
+* `responseHeader` - Log the HTTP response header:
++
+----------------------
+RES_HEADER name: value
+----------------------
+* `responseBody` - Log the HTTP response body, possibly in multiple
+chunks:
++
+------------------
+RES_BODY size data
+------------------
+* `phase` - Log the phase about to execute:
++
+----------
+PHASE name
+----------
+* `rule` - Log the rule executing:
++
+--------------------
+RULE_START rule-type
+    ...
+RULE_END
+--------------------
+* `target` - Log the target being inspected:
++
+---------------------------------------------------------------------
+TARGET full-target-name {NOT_FOUND|field-type field-name field-value}
+---------------------------------------------------------------------
+* `transformation` - Log the transformation being executed:
++
+---------------------------------
+TFN tfn-name(param) {ERROR error}
+---------------------------------
+* `operator` - Log the operator being executed:
++
+------------------------------------------
+OP op-name(param) TRUE|FALSE {ERROR error}
+------------------------------------------
+* `action` - Log the action being executed:
++
+---------------------------------------
+ACTION action-name(param) {ERROR error}
+---------------------------------------
+* `event` - Log the event being logged:
++
+--------------------------------------------------------------
+EVENT rule-id type action [confidence/severity] [csv-tags] msg
+--------------------------------------------------------------
+* `audit` - Log the audit log filename being written:
++
+------------------------
+AUDIT audit-log-filename
+------------------------
+
+The following alias options are supported:
+
+* `request` - Alias for: `requestLine`, `requestHeader`, `requestBody`
+* `response` - Alias for: `responseLine`, `responseHeader`,
+`responseBody`
+* `ruleExec` - Alias for: `phase`, `rule`, `target`, `transformation`,
+`operator`, `action`, `actionableRulesOnly`
+* `default` - Alias for: `ruleExec`
+* `all` - Alias for all data options
+
+The following filter options are supported:
+
+* `actionableRulesOnly` - Filter option indicating that only rules that
+were actionable (actions executed) are logged - any rule specific
+logging are delayed/suppressed until at least one action is executed.
+
+RuleEngineLogLevel
+~~~~~~~~~~~~~~~~~~
+
+*Description:* Configures the logging level which the rule engine will
+write logs.
+
+*Syntax:* `RuleEngineLogLevel `
+
+*Default:* `info`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.6
+
+RuleExt
+~~~~~~~
+
+*Description:* Creates a rule implemented externally, either by loading
+the rule directly from a file, or referencing a rule that was previously
+declared by a module.
+
+*Syntax:* `RuleExt 
+                    `
+
+*Default:* None
+
+*Context:* Site, Location
+
+*Cardinality:* 0..n
+
+*Module:* rules
+
+*Version:* 0.4
+
+To load a Lua rule:
+
+-------------------------------------------
+RuleExt lua:/path/to/rule.lua phase:REQUEST
+-------------------------------------------
+
+RuleMarker
+~~~~~~~~~~
+
+*Description:* Creates a rule marker (placeholder) which will not be
+executed, but instead should be overridden. The idea is that rule sets
+can include placeholders for optional custom rules which can be
+overridden, but still allow the rule set writer to maintain execution
+order.
+
+*Syntax:* `RuleMarker id:
+                        phase:`
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* rules
+
+*Version:* 0.5
+
+To mark and later replace a rule:
+
+-------------------------------------------------------------------------------
+Rule ARGS @rx foo id:1 rev:1 phase:REQUEST
+
+# Allow the administrator to set MY_VALUE in another context
+RuleMarker id:2 phase:REQUEST
+
+Rule MY_VALUE @gt 0 id:3 rev:1 phase:REQUEST setRequestHeader:X-Foo:%{MY_VALUE}
+
+<Site test>
+    Hostname *
+
+    Rule &ARGS @gt 5 id:2 phase:REQUEST setvar:MY_VALUE=5
+    RuleEnable all
+</Site>
+-------------------------------------------------------------------------------
+
+In the above example, rule id:2 in the main context would be replaced by
+the rule id:2 in the site context, then the rules would execute id:1,
+id:2 and id:3. If Rule id:2 was not replaced in the site context, then
+rules would execute id:1 then id:3 as id:2 is only a marker
+(placeholder).
+
+SensorId
+~~~~~~~~
+
+*Description:* Unique sensor identifier.
+
+*Syntax:* `SensorId `
+
+*Default:* None
+
+*Context:* Main
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+TODO: Can we make this directive so that, if not defined, we attempt to
+detect server hostname and use that as ID?
+
+Service
+~~~~~~~
+
+*Description:* Maps IP and Port to a site.
+
+*Syntax:* `Service
+                    :`
+
+*Default:* `*:*` (any)
+
+*Context:* Site
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.6
+
+The `Service` directive establishes a mapping between a Site and one or
+IP/Port pairs. To map hostnames to a Site, see the `Hostname` directive.
+
+In the simplest case, a site will occupy a single IP/Port pair:
+
+-----------------------
+Service 192.168.32.5:80
+-----------------------
+
+More often than not, however, several mappings will be used:
+
+------------------------
+Service 192.168.32.5:80
+Service 192.168.32.6:443
+------------------------
+
+Wildcards are permitted for both IP and Port:
+
+----------------------
+Service *:80
+Service 192.168.32.5:*
+----------------------
+
+To match any IP address on any Port (which you will need to do in
+default sites), use wildcards for both IP and Port, which is the default
+if no `Service` directive is specified for a site:
+
+-----------
+Service *:*
+-----------
+
+Site
+~~~~
+
+*Description:* A site is one of the main concepts in the configuration
+in IronBee. The idea is to have an element to correspond to real-life
+web sites. With most web sites there is an one-to-one mapping to domain
+names, but our mapping mechanism is quite flexible: you can have one
+site per domain name, many domain names for a single site, or even have
+one domain name shared among several sites.
+
+*Syntax:* `<Site
+                >...</Site>`
+
+*Default:* None
+
+*Context:* Main
+
+*Cardinality:* 0..n
+
+*Module:* core
+
+*Version:* 0.1
+
+At the highest level, a configuration will contain one or more sites.
+For example:
+
+----------------------------------------
+<Site site1>
+    Service *:80
+    Hostname site1.example.com
+    Hostname site1-alternate.example.com
+</Site>
+
+<Site site2>
+    Service *:80
+    Service 10.0.1.2:443
+    Hostname site2.example.com
+</Site>
+
+<Site default>
+    Service *:*
+    Hostname *
+</Site>
+----------------------------------------
+
+Before it can process a transaction, IronBee will examine the current
+configuration looking for a site to assign the transaction. Sites are
+processed in the configured order where the first matching site is
+chosen. A default site can be specified as the last site using wildcards
+when all previous sites fail to match. The `Site` directive only
+establishes configuration boundaries and assigns a unique handle to each
+site; the `Service` and `Hostname` directives are responsible for the
+mapping.
+
+SiteId
+~~~~~~
+
+*Description:* Unique site identifier.
+
+*Syntax:* `SiteId `
+
+*Default:* None
+
+*Context:* Site
+
+*Cardinality:* 0..1
+
+*Module:* core
+
+*Version:* 0.4
+
+TODO: Can we make this directive so that, if not defined, we attempt to
+detect site hostname and use that as ID?
+
+StreamInspect
+~~~~~~~~~~~~~
+
+*Description:* Creates a streaming inspection rule, which inspects data
+as it becomes available, outside rule phases.
+
+*Syntax:* `StreamInspect 
+                    "@"
+                `
+
+*Context:* Site, Location
+
+*Cardinality:* 0..n
+
+*Module:* rules
+
+*Version:* 0.4
+
+Normally, rules run in one of the available phases, which happen at
+strategic points in transaction lifecycle. Phase rules are convenient to
+write, because all the relevant data is available for inspection.
+However, there are situations when it is not possible to have access to
+all of the data in a phase. This is the case, for example, when a
+request body is very large, or when buffering is not allowed.
+
+Streaming rules are designed to operate in these circumstances. They are
+able to inspect data as it becomes available, be it a dozen of bytes, or
+a single byte.
+
+The syntax of the `Inspect` directive is similar to that of `Rule`, but
+there are several restrictions:
+
+* Only one input can be used. This is because streaming rules attach to
+a single data source.
+* The `phase` modifier cannot be used, as streaming rules operate
+outside of phases.
+* Only `REQUEST_BODY_STREAM` and `RESPONSE_BODY_STREAM` can be used as
+inputs.
+* Only the `pm`, and `dfa` operators can be used.
+* Transformation functions are not yet supported.
+
+TrustedProxyUseXFFHeader
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Enable the use of X-Forwarded-For header.
+
+*Syntax:* `TrustedProxyUseXFFHeader `
+
+*Default:* `On`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* trusted_proxy
+
+*Version:* 0.9
+
+If enabled the last address listed in the X-Forwarded-For header as the
+remote address. See _TrustedProxyIPs_ to configure the list of trusted
+proxies. The default behaviour is to trust no proxies.
+
+TrustedProxyIPs
+~~~~~~~~~~~~~~~
+
+*Description:* Specify a list of networks or IP address to trust for
+X-Forwarded-For handlingEnable the use of X-Forwarded-For header.
+
+*Syntax:* `TrustedProxyIPs  ...`
+
+*Default:* `Trust no networks/IP addresses`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* trusted_proxy
+
+*Version:* 0.9
+
+This is a list of IP addresses or CIDR blocks that should be trusted or
+not trusted when handling the X-Forwarded-For header.
+
+Networks/IPs may be prefixed with "+" indicate it is trusted or "-"
+indicate in are untrusted. If the first entry in the list does not have
+a "+" or "-" the trusted/untrusted list is cleared and the entry is
+treated as trusted.
+
+Examples:
+
+Trust only 192.168.1.0/24:
+
+----------------------------------------
+          TrustedProxyIPs 192.168.1.0/24
+        
+----------------------------------------
+
+Trust all but 10.10.10.10:
+
+--------------------------------------
+          TrustedProxyIPs -10.10.10.10
+        
+--------------------------------------
+
+TxDump
+~~~~~~
+
+*Description:* Diagnostics directive to dump (log) transaction data for
+debugging purposes.
+
+*Syntax:* `TxDump 
+                
+                `
+
+*Default:* `None`
+
+*Context:* Any
+
+*Cardinality:* 0..1
+
+*Module:* devel
+
+*Version:* 0.7
+
+The event field allows indicating _when_ you want the data to be written
+and is one of:
+
+* `TxStarted` - Transaction started.
+* `TxProcess` - Transaction processing (between request and response).
+* `TxContext` - Transaction configuration context chosen.
+* `RequestStart` - Request started.
+* `RequestHeader` - Request headers have been processed.
+* `Request` - Full request has been processed.
+* `ResponseStart` - Response started.
+* `ResponseHeader` - Response headers have been processed.
+* `Response` - Full response has been processed.
+* `TxFinished` - Transaction is finished.
+* `Logging` - Logging phase.
+* `PostProcess` - Post-processing phase.
+
+The destination field allows specifying _where_ you want to write the
+data and is one of the following:
+
+* `stderr` - Write to standard error.
+* `stdout` - Write to standard output.
+* `ib` - Write to the IronBee log file.
+* `file://` - Write to an arbitrary file, optionally appending to the
+file if the last character is a `+` character.
+
+The data field is optional and allows specifying _what_ is to be
+written. This can be prefixed with a `+` or a `-` character to enable or
+disable the data.
+
+* `Basic` - Basic TX data.
+* `Context` - Configuration context data.
+* `Connection` - Connection data.
+* `ReqLine` - HTTP request line.
+* `ReqHdr` - HTTP request header.
+* `RspLine` - HTTP response line.
+* `RspHdr` - HTTP response header.
+* `Flags` - Transaction flags.
+* `Args` - Request arguments.
+* `Data` - Transaction data.
+* `Default` - Default is "Basic ReqLine RspLine".
+* `Headers` - All HTTP headers.
+* `All` - All data.
+
+Examples:
+
+----------------------------------------------
+TxDump TxContext ib Basic +Context
+TxDump PostProcess file:///tmp/tx.txt All
+TxDump Logging file:///var/log/ib/all.txt+ All
+TxDump PostProcess StdOut All
+----------------------------------------------
+
+XRuleGeo
+~~~~~~~~
+
+*Description:* Add an extended geo rule.
+
+*Syntax:* `XRuleGeo   `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* xrules
+
+*Version:* 0.8
+
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+XRules, or extended rules, are rules that implement common operations,
+such as Access Control Lists (ACLs). These extended rules hide much of
+the complexities of normal rules so that these common operations are
+easier to use. The priority allows conflicts to be resolved - higher
+priority (lower numerical value) rules will override lower priority
+rules.
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+An XRuleGeo is used to setup Geo (country) based rules.
+
+Example:
+
+--------------------------------------
+XRuleGeo US scaleThreat=0.8 priority=1
+--------------------------------------
+
+For available actions, see `XRuleIpv4`
+
+XRuleIpv4
+~~~~~~~~~
+
+*Description:* Add an extended IPv4 rule.
+
+*Syntax:* `XRuleIpv4   `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* xrules
+
+*Version:* 0.8
+
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+XRules, or extended rules, are rules that implement common operations,
+such as Access Control Lists (ACLs). These extended rules hide much of
+the complexities of normal rules so that these common operations are
+easier to use. The priority allows conflicts to be resolved - higher
+priority (lower numerical value) rules will override lower priority
+rules.
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+An XRuleIpv4 is used to setup IPv4 based rules.
+
+Example:
+
+-----------------------------------------
+XRuleIpv4 192.168.0.0/16 block priority=1
+-----------------------------------------
+
+Available Actions:
+
+* `priority=N` - Set rule priority.
+* `block` - Block the transaction.
+* `allow` - Allow the transaction.
+* `enableBlockingMode` - Enable blocking mode for this transaction.
+* `disableBlockingMode` - Disable blocking mode for this transaction
+* `scaleThreat=X` - Scale threat calculation (update
+`XRULES:SCALE_THREAT`) by floating point multiplier, X, for this
+transaction.
+* `enableRequestHeaderInspection` - Enable request header inspection for
+this transaction.
+* `disableRequestHeaderInspection` - Disable request header inspection
+for this transaction.
+* `enableRequestURIInspection` - Enable request URI inspection for this
+transaction.
+* `disableRequestURIInspection` - Disable request URI inspection for
+this transaction.
+* `enableRequestParamInspection` - Enable request parameter inspection
+for this transaction.
+* `disableRequestParamInspection` - Disable request parameter inspection
+for this transaction.
+* `enableRequestBodyInspection` - Enable request body inspection for
+this transaction.
+* `disableRequestBodyInspection` - Disable request body inspection for
+this transaction.
+* `enableResponseHeaderInspection` - Enable response header inspection
+for this transaction.
+* `disableResponseHeaderInspection` - Disable response header inspection
+for this transaction.
+* `enableResponseBodyInspection` - Enable response body inspection for
+this transaction.
+* `disableResponseBodyInspection` - Disable response body inspection for
+this transaction.
+
+XRuleIpv6
+~~~~~~~~~
+
+*Description:* Add an extended IPv6 rule.
+
+*Syntax:* `XRuleIpv6   `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* xrules
+
+*Version:* 0.8
+
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+XRules, or extended rules, are rules that implement common operations,
+such as Access Control Lists (ACLs). These extended rules hide much of
+the complexities of normal rules so that these common operations are
+easier to use. The priority allows conflicts to be resolved - higher
+priority (lower numerical value) rules will override lower priority
+rules.
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+An XRuleIpv6 is used to setup IPv6 based rules.
+
+Example:
+
+----------------------------------
+XRuleIpv6 ::1/128 block priority=1
+----------------------------------
+
+For available actions, see `XRuleIpv4`
+
+XRulePath
+~~~~~~~~~
+
+*Description:* Add an extended path rule.
+
+*Syntax:* `XRulePath   `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* xrules
+
+*Version:* 0.8
+
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+XRules, or extended rules, are rules that implement common operations,
+such as Access Control Lists (ACLs). These extended rules hide much of
+the complexities of normal rules so that these common operations are
+easier to use. The priority allows conflicts to be resolved - higher
+priority (lower numerical value) rules will override lower priority
+rules.
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+An XRulePath is used to setup URI path based rules.
+
+Example:
+
+--------------------------------------------------------------
+XRulePath /admin scaleThreat=1.5 enableBlockingMode priority=1
+--------------------------------------------------------------
+
+For available actions, see `XRuleIpv4`
+
+XRuleRequestContentType
+~~~~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Add an extended request content type rule.
+
+*Syntax:* `XRuleRequestContentType   `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* xrules
+
+*Version:* 0.8
+
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+XRules, or extended rules, are rules that implement common operations,
+such as Access Control Lists (ACLs). These extended rules hide much of
+the complexities of normal rules so that these common operations are
+easier to use. The priority allows conflicts to be resolved - higher
+priority (lower numerical value) rules will override lower priority
+rules.
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+An XRuleRequestContentType is used to setup request contetnt type based
+rules.
+
+Example:
+
+-------------------------------------------------------------------------------------
+XRuleRequestContentType application/x-www-form-urlencoded enableRequestBodyInspection
+-------------------------------------------------------------------------------------
+
+For available actions, see `XRuleIpv4`
+
+XRuleResponseContentType
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Description:* Add an extended IPv6 rule.
+
+*Syntax:* `XRuleResponseContentType   `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* xrules
+
+*Version:* 0.8
+
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+XRules, or extended rules, are rules that implement common operations,
+such as Access Control Lists (ACLs). These extended rules hide much of
+the complexities of normal rules so that these common operations are
+easier to use. The priority allows conflicts to be resolved - higher
+priority (lower numerical value) rules will override lower priority
+rules.
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+An XRuleResponseContentType is used to setup response content type based
+rules.
+
+Example:
+
+----------------------------------------------------------------
+XRuleResponseContentType image/png disableResponseBodyInspection
+----------------------------------------------------------------
+
+For available actions, see `XRuleIpv4`
+
+XRuleTime
+~~~~~~~~~
+
+*Description:* Add an extended time rule.
+
+*Syntax:* `XRuleTime   `
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* xrules
+
+*Version:* 0.8
+
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+*Note*
+
+XRules, or extended rules, are rules that implement common operations,
+such as Access Control Lists (ACLs). These extended rules hide much of
+the complexities of normal rules so that these common operations are
+easier to use. The priority allows conflicts to be resolved - higher
+priority (lower numerical value) rules will override lower priority
+rules.
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+An XRuleTime is used to setup date/time based rules.
+
+The time-spec is in the format: `[!]DOW(,DOW)*@HH:MM-HH:MM[-|+]ZZZZ`:
+
+* `!` - Invert rule.
+* `DOW` - Day of Week (0=Sunday - 6=Saturday).
+* `HH` - Two digit hour (24-hr format).
+* `MM` - Two digit minute.
+* `[-|+]ZZZZ` - Timezone offset from GMT
+
+Example:
+
+------------------------------------------------------------------------
+XRuleTime !1,2,3,4,5@08:00-17:00-0500 scaleThreat=1.5 enableBlockingMode
+------------------------------------------------------------------------
+
+For available actions, see `XRuleIpv4`

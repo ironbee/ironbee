@@ -1,0 +1,34 @@
+struct ib_module_t {
+    /* Header */
+    uint32_t                   vernum;            /* Engine version number */
+    uint32_t                   abinum;            /* Engine ABI Number */
+    const char                *version;           /* Engine version string */
+    const char                *filename;          /* Module code filename */
+    void                      *data;              /* Module data */
+    ib_engine_t               *ib;                /* Engine */
+    ib_rule_t                 *rule;              /* Module Rule. */
+    size_t                     idx;               /* Module index */
+
+    /* Module Config */
+    const char                *name;              /* Module name */
+    const void                *gcdata;            /* Global config data */
+    size_t                     gclen;             /* Global config data length */
+    ib_module_fn_cfg_copy_t    fn_cfg_copy;       /* Config copy handler */
+    void                      *cbdata_cfg_copy;   /* Config copy data */
+    const ib_cfgmap_init_t    *cm_init;           /* Module config mapping */
+    const ib_dirmap_init_t    *dm_init;           /* Module directive mapping */
+
+    /* Functions */
+    ib_module_fn_init_t        fn_init;           /* Module init */
+    void                      *cbdata_init;       /*  fn_init callback data */
+    ib_module_fn_fini_t        fn_fini;           /* Module finish */
+    void                      *cbdata_fini;       /*  fn_fini callback data */
+
+    /* DEPRECATED: Will move to hooks */
+    ib_module_fn_ctx_open_t    fn_ctx_open;       /* Context open */
+    void                      *cbdata_ctx_open;   /*  fn_ctx_open callback data */
+    ib_module_fn_ctx_close_t   fn_ctx_close;      /* Context close */
+    void                      *cbdata_ctx_close;  /*  fn_ctx_close callback data */
+    ib_module_fn_ctx_destroy_t fn_ctx_destroy;    /* Context destroy */
+    void                      *cbdata_ctx_destroy;/*  fn_ctx_destroy callback data */
+};

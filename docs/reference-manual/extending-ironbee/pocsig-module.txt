@@ -1,0 +1,32 @@
+static ib_status_t pocsig_init(ib_engine_t *ib,
+                               ib_module_t *m)
+{
+
+    /* Register hooks to handle the phases. */
+    ib_hook_tx_register(ib, handle_context_tx_event,
+                        pocsig_handle_sigs, (void *)POCSIG_PRE);
+    ib_hook_tx_register(ib, handle_request_headers_event,
+                        pocsig_handle_sigs, (void *)POCSIG_REQHEAD);
+    ib_hook_tx_register(ib, handle_request_event,
+                        pocsig_handle_sigs, (void *)POCSIG_REQ);
+    ib_hook_tx_register(ib, handle_response_headers_event,
+                        pocsig_handle_sigs, (void *)POCSIG_RESHEAD);
+    ib_hook_tx_register(ib, handle_response_event,
+                        pocsig_handle_sigs, (void *)POCSIG_RES);
+    ib_hook_tx_register(ib, handle_postprocess_event,
+                        pocsig_handle_sigs, (void *)POCSIG_POST);
+
+    return IB_OK;
+}
+
+IB_MODULE_INIT(
+    IB_MODULE_HEADER_DEFAULTS,           /* Default metadata */
+    MODULE_NAME_STR,                     /* Module name */
+    IB_MODULE_CONFIG(&pocsig_global_cfg),/* Global config data */
+    pocsig_config_map,                   /* Configuration field map */
+    pocsig_directive_map,                /* Config directive map */
+    pocsig_init,                         /* Initialize function */
+    NULL,                                /* Finish function */
+    NULL,                                /* Context init function */
+    NULL                                 /* Context fini function */
+);

@@ -1,0 +1,14 @@
+# Insert this into trafficserver's plugin.config.
+# Adjust paths as appropriate for your installation.
+
+# First we need to load libraries the Ironbee plugin relies on.
+/usr/local/ironbee/lib/libloader.so /usr/local/ironbee/lib/libironbee.so
+
+# Now we can load the ironbee plugin.  The argument to this is ironbee's
+# configuration file: see ironbee-config.txt
+/usr/local/ironbee/lib/ts_ironbee.so /usr/local/trafficserver/etc/ironbee-ts.conf
+
+#We could also use options to the ts_ironbee load line:
+#  -l name   to specify a different filename for ironbee log messages.
+#  -v n      to set the initial log level for Ironbee messages.
+#  -L        to disable the trafficserver logging altogether

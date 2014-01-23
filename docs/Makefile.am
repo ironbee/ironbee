@@ -29,8 +29,12 @@ doxygen: doxygen_internal doxygen_external
 manual:
 	@(cd docbook && $(MAKE) manual)
 
+ref-manual:
+	@(cd reference-manual && $(MAKE) ironbee-reference-manual.html)
+
 .PHONY: \
     doxygen \
     doxygen_internal \
     doxygen_external \
-    manual
+    manual \
+    ref-manual

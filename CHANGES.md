@@ -104,6 +104,10 @@ IronBee v0.9.0
 
 - Added initial ParserSuite support: a function to translate a sequence of ParserSuite headers to a sequence of `IronBee::ParserHeader`s.
 
+**Docs**
+
+- Converted docbook manual to asciidoc.  This is built with `make ref-manual`.
+
 IronBee v0.8.1
 --------------
 

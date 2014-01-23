@@ -1,0 +1,357 @@
+Extending IronBee
+-----------------
+
+...
+
+Overview
+~~~~~~~~
+
+...
+
+____________________________________________
+*Warning*
+
+This documentation is currently out of date.
+____________________________________________
+
+Execution Flow
+~~~~~~~~~~~~~~
+
+Definitions
+^^^^^^^^^^^
+
+Engine::
+  The framework that controls data flow, state and code execution.
+Server Plugin::
+  Server native code for embedding the engine into another software base
+  (e.g. the Apache httpd server). The plugin is responsible for
+  instantiating the engine, initiating the initial configuration
+  process, feeding the engine with data and optionally implementing
+  methods of blocking.
+Hook::
+  A hook is an execution point within the engine that allows external
+  code to be registered and executed as if it were part of the engine.
+  There are many builtin hooks in the IronBee engine and custom hooks
+  can also be added. Hooks are typically leveraged by modules.
+Module::
+  Engine code that is not essential to the core engine, but rather
+  extends what the engine can accomplish by hooking into it. Modules in
+  IronBee are dynamically loadable files which can extend and alter how
+  the engine executes. There are a number of different types of modules
+  which will be explained in detail. Some examples of modules are HTTP
+  parsers, matching algorithms, logging methods, rule
+  languages/executors and specialized detection techniques. All IronBee
+  features are essentially modules, which allows nearly every aspect of
+  the engine to be extended.
+
+Flow
+^^^^
+
+There are four main stages of execution detailed below.
+
+Startup Stage
++++++++++++++
+
+During startup, the plugin is instantiated by whatever server has loaded
+it, for example when the Apache httpd server loads/configures the
+plugin. During this stage, the plugin instantiates the engine and
+initiates the configuration stage.
+
+.  Server starts and instantiates/starts the plugin.
+.  Server Plugin is configured with native plugin configuration, which
+includes the location of the engine configuration.
+.  Engine is instantiated.
+.  An engine configuration context is created.
+.  Static core module is loaded.
+.  Server Plugin registers a native logging provider.
+.  Engine configuration stage is initiated based on initial plugin
+configuration.
+
+Configuration Stage
++++++++++++++++++++
+
+During configuration, the configuration files/scripts are read/executed,
+engine modules are loaded/initialized and contexts are
+created/configured in preparation for the runtime stage. The following
+is an outline of what will happen during this stage.
+
+.  Configuration is read/executed.
+.  The main configuration context is created.
+.  Modules are loaded.
+.  Module global configuration data is copied to the global context as
+a base configuration.
+.  Module "init" function is called just after it is loaded to
+initialize any module configuration.
+.  Modules may hook into the engine by registering to be called when
+certain events occur.
+.  If successfully initialized, a module is registered with the engine.
+.  Configuration contexts are created and registered.
+.  Modules register themselves with a configuration context if they are
+to be used in that context.
+.  Module "context init" function is called to initialize any context
+configuration.
+.  Modules may hook into the engine for the given context by
+registering to be called when certain events occur.
+.  The runtime stage is initiated.
+
+Runtime Stage
+
+During runtime all of the configuration has been finalized and the
+engine will now handle data passed to it by the plugin. Data is handled
+by the state machine which essentially follows a five step process.
+First, a configuration context is chosen. Second, the request is
+handled. Third the response is handled. Forth, any post processing is
+performed. And finally, logging is performed. Below is an outline of the
+flow.
+
+TODO: Below is no longer true. Rewrite based on removal of unparsed data
+interface.
+
+.  Raw connection HTTP data is received by the server plugin and passed
+to the engine.
+.  [Need to add connection context here. Events could be: conn open,
+conn data (inbound/outbound), conn close. Configuration options include
+which protocol parser to use, default parser configuration, whether to
+decrypt SSL, private keys for decryption, etc.]
+.  If the connection is encrypted, SSL decryption takes place. This
+step is optional and will largely depend on how the plugin is designed.
+For example, the Apache plugin will always send decrypted data.
+.  The engine parses the data as a stream, buffering if configured to
+do so.
+.  The parser notifies the engine of various events (request headers
+available, request body, etc.)
+.  Any hooks associated with events are executed.
+.  Once enough data is available, the configuration context selection
+process is started configuration context function until one returns that
+it wants to be enabled.
+.  At this point all modules registered in the chosen context will have
+their "context activated" functions executed, allowing them to be
+prepared for executing in the context.
+.  Further events occur and associated hooks are executed, but now with
+the chosen configuration context instead of the global context.
+
+Hooks
+~~~~~
+
+TODO: Add description of each hook
+
+Modules
+~~~~~~~
+
+Modules make up the majority of executed code in IronBee. Most features
+are built using modules. There are three primary reasons for this.
+First, it makes the code more readable and each feature more self
+contained. Second, it allows only features in use to be loaded into the
+executable. And last, since modules are shared libraries, it makes for
+easier upgrades as the engine only needs to unload the old code and
+reload the new.
+
+Modules have three essential duties. A module must export a known symbol
+so that it can be loaded. A set of configuration parameters may be set.
+And common module functions must be registered which will be called at
+various initialization and cleanup points. With Lua, however, this is
+much more simplified than in C.
+
+Exporting a symbol is quite language specific and will not be discussed
+here.
+
+Any number of configuration parameters are registered with the engine
+and their storage locations are then mapped by the engine both globally
+to the module as well as into each configuration context. As of this
+writing, there are two types of configuration parameters, numeric and
+string. Along with configuration parameter definitions can be defined
+default values.
+
+The eventual goal of a module is to register functions to be called by
+the engine. This is done by registering callback functions to be called
+with hooks. Hooks allow executing at defined points in the
+connection/transaction lifecycle, which is documented with the state
+machine in the API documentation.
+
+TODO: Need more on what a basic module will look like without going into
+language details.
+
+Writing Modules in C
+~~~~~~~~~~~~~~~~~~~~
+
+TODO: Some general description on why one would want to do this.
+
+Anatomy of a C Module
+^^^^^^^^^^^^^^^^^^^^^
+
+A C module is built into a shared library. The shared library exposes a
+known structure (see ?) that IronBee uses to load the module.
+
+---------------------------------------------------------
+include::extending-ironbee/module-struct-definition.txt[]
+---------------------------------------------------------
+
+A module must define and initialize this structure to be loadable in
+IronBee. This is done by defining a few functions and making a few macro
+calls. A minimal module example is given in ?.
+
+-----------------------------------------------
+include::extending-ironbee/minimal-module.txt[]
+-----------------------------------------------
+
+? shows a very minimalistic module that does nothing but log when the
+module loads and unloads. The module includes some standard IronBee
+headers, declares itself a module and defines two functions. The module
+structure is then initialized with these functions assigned to the
+`fn_init` and `fn_fini` fields. This results in the `exmin_init` and
+`exmin_fini` functions being called when the module is loaded and
+unloaded, respectfully. Of course much more can be done with a module.
+
+TODO: Describe what other things a module can do.
+
+A Simple C Module Example
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+TODO: This example is outdated and needs to be updated/replaced.
+
+To better illustrate writing a C module we need a simple task to
+accomplish. Here we will define a minimalistic signature language. To
+keep things simple, the module will stick to IronBee built-in features
+and ignore any performance concerns. The module will simply allow a user
+to add signature to IronBee. In this case a signature is defined as
+performing a PCRE based regular expression on a given data field and
+triggering an event if there is a match.
+
+To accomplish this task, we need to write a module that does the
+following:
+
+* Allow writing a signature within the configuration file that allows
+specifying when it should execute, what field it should match against, a
+regular expression and an event message that should be triggered on
+match.
+* Parse the signature into its various components.
+* Compile the PCRE and store the signature for later execution.
+* At runtime, execute the signatures at the specified time.
+* If a signature matches, generate an event.
+
+The module begins the same as in ?, but with some additional type
+definitions which we will use to store our signatures.
+
+---------------------------------------------
+include::extending-ironbee/pocsig-setup.txt[]
+---------------------------------------------
+
+Configuration
++++++++++++++
+
+Modules control their own configuration structure. Normally a module
+will use a simple C structure which it can reference directly. However,
+a module may also expose some or all of its configuration. Any exposed
+parameters can then be accessed by other modules and/or through the
+configuration language. In addition to exposing configuration parameters
+a module can register and expose new configuration directives for use in
+the configuration language.
+
+In this example we will need to track multiple lists of signatures (one
+for each point of execution) and a handle to the PCRE pattern matcher.
+While these will not be exposed, we will expose a numeric parameter to
+toggle tracing signature execution. The configuration is defined and
+instantiated in a C structure shown in ?.
+
+----------------------------------------------
+include::extending-ironbee/pocsig-config.txt[]
+----------------------------------------------
+
+We will then define a configuration directive to control tracing as well
+as signature directives for each phase of execution. Note that multiple
+signature directives are only used to simplify the example so that we do
+not have to write rule parsing code. The functions defined in ? are used
+to handle the configuration directives, which we will define later on.
+
+The `pocsig_dir_trace` function is a simple single parameter directive
+handler which parses the parameter for a "On" or "Off" value and sets a
+numeric parameter value in the configuration context. We will see how
+this parameter is exposed later on. The `pocsig_dir_signature` function
+is a directive handler that can handle an arbitrary number of
+parameters. Note that much of this function is described later on with
+pattern matchers.
+
+---------------------------------------------------
+include::extending-ironbee/pocsig-dirhandlers.txt[]
+---------------------------------------------------
+
+Any configuration parameters and directives must be registered with the
+engine. This is accomplished through two mapping structures as shown in
+?. The exposed configuration parameter is named, typically
+modulename.name, and the engine told it type, offset, length and default
+value. This is wrapped into a macro to make this much easier. The
+configuration directives are registered in a similar fashion and mapped
+to handler functions.
+
+-------------------------------------------------
+include::extending-ironbee/pocsig-regconfig.txt[]
+-------------------------------------------------
+
+Pattern Matchers
+++++++++++++++++
+
+Pattern matchers are defined through the matcher provider interface.
+These matchers are typically loaded via modules. In case of the PCRE
+matcher, it is loaded through the pcre module, which must be loaded for
+our example module to work. A matcher provider exposes a common
+interface for calling any pattern matchers registered with the engine.
+
+In ? `ib_matcher_create` is used to fetch the PCRE pattern matcher. This
+matcher is used here to compile the patterns with ib_matcher_compile.
+The matcher is stored in the configuration context for later use in
+executing the signatures. The compiled pattern is stored in the
+signature structure which is added to a list for later execution.
+
+Hooks
++++++
+
+Up until now, we have been dealing with configuration time processing.
+In order to handle processing at runtime, we have to define a handler
+and register this handler to be executed at defined points. Since all
+signatures are executed in the same fashion, we can define a single
+handler and register it to be executed multiple times.
+
+---------------------------------------------
+include::extending-ironbee/pocsig-hooks.txt[]
+---------------------------------------------
+
+? defines a handler for executing our signatures at runtime. In order to
+use this handler with each phase, we will pass the phase number to the
+handler. Other than some casting trickery to pass the phase number, the
+function is fairly straight forward. It loops through a phase list,
+fetches the data field it will match against, matches the pre-compiled
+pattern against the field and then logs an event if there is a match.
+
+All that is left in the module is to register the signature handler to
+be executed in the various phases. ? shows the finial module functions
+and registration required for this. Normally configuration data is
+exposed publicly where it is given a default value. Since some of our
+configuration is not exposed, we need to initialize the data ourselves.
+This is done though the module initialization function, `pocsig_init`.
+The context initialization function, `pocsig_context_init`, is called
+for each configuration context that this module is configured. This is
+where we register our handler with the engine hooks and define the phase
+numbers that are passed to the handler. Finally, the module structure is
+initialized to point to the various configuration mapping structures and
+module initialization functions.
+
+----------------------------------------------
+include::extending-ironbee/pocsig-module.txt[]
+----------------------------------------------
+
+Events
+++++++
+
+TODO
+
+Writing Modules in Lua
+~~~~~~~~~~~~~~~~~~~~~~
+
+Lua modules are designed to be much easier to develop than a C
+equivalent. A Lua IronBee module is built like any other Lua module.
+Really all you need to do is to implement handlers which are registered
+to execute when an event is triggered.
+
+--------------------------------------------
+include::extending-ironbee/lua-example.txt[]
+--------------------------------------------

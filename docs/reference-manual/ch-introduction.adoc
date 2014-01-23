@@ -1,0 +1,474 @@
+Introduction
+------------
+
+IronBee is a framework and library for web application security
+inspection - for building a Web Application Firewall (WAF). The
+following components make up the IronBee framework:
+
+* IronBee Library: The primary component containing the inspection
+engine.
+
+* IronBee Modules: Extensions to the inspection engine in the form of
+loadable shared libraries defined by the IronBee configuration.
+
+* Server Components: The server is the executable driving the inspection
+engine. This can be a standard executable, such as the command line
+tool, or in the form of a plugin such as the Apache trafficserver plugin
+and Apache httpd module.
+
+* Configuration: There are two sets of configuration. The IronBee
+library must be loaded and bootstrapped via the native server
+configuration (for example, a commandline option, trafficserver plugin
+configuration or httpd module configuration). In addition, the IronBee
+Library must be configured via its own configuration file(s).
+
+Software Installation
+~~~~~~~~~~~~~~~~~~~~~
+
+IronBee source is available from github.
+
+https://github.com/ironbee/ironbee
+
+The source follows standard build conventions, typically:
+
+---------------------------------------
+./configure --prefix=/usr/local/ironbee
+make
+make check
+sudo make install
+---------------------------------------
+
+Various options are available for customization through the configure
+script. A full list of these options are available with:
+
+------------------
+./configure --help
+------------------
+
+See ? for more detailed instructions on building and installing IronBee.
+
+Configuration
+~~~~~~~~~~~~~
+
+First, the server component must be configured to load the IronBee
+library and its configuration. This is done through the server's native
+configuration and differs for each server. See the ? for more specific
+details in configuring the server component. Once the server component
+is loaded, IronBee configuration consists of one or more configuration
+files which IronBee will read.
+
+IronBee configuration file examples are listed in the ? section.
+
+Inspection
+~~~~~~~~~~
+
+The IronBee library is fed data by the server. This server could be a
+command line tool (see clipp), or through an HTTP web server or proxy.
+IronBee will expose data via fields. A data field specifies a name, type
+and value which can then be used for inspection via rules. Rules can be
+simple signatures against fields, a chained set of operations, stream
+based matchers or even lua scripts. Each rule can inspect fields and
+perform actions.
+
+Data Fields
+^^^^^^^^^^^
+
+IronBee supports two primary types of data fields:
+
+Scalars::
+ Fields which can contain data of various types (strings, numbers
+or streams)
+
+Collections::
+ Fields which contain zero or more scalars
+
+As fields are built from external data (parsed HTTP traffic), field
+names and values can contain any binary data. While the names of fields
+are not restricted, by convention the names of built-in fields are
+written using all uppercase letters.
+
+Addressing Fields
++++++++++++++++++
+
+How you use fields depends on the context. The rules, for example,
+typically accept one or more data fields, which means that you can give
+a rule a scalar field (e.g., _REQUEST_URI_) or a collection field (e.g.,
+_ARGS_). When you give a rule a collection, it will extract all scalar
+fields and utilize them as if they were each specified separately.
+
+Collections can be used as a whole, or with a selector applied. A
+selector is applied with the colon operator. For example, you may want
+to extract all `username` arguments as follows:
+
+-------------
+ARGS:username
+-------------
+
+It is important to note that selectors are filters and what is returned
+is a list of values which may have zero or more fields. In addition to
+using names as selectors, you also use regular expression patterns as
+selectors by bracketing a regular expression with backslashes. IronBee
+uses the Perl Compatible Regular Expression (PCRE) syntax. For example,
+the following selects all fields whose names begin with "`user`".
+
+------------
+ARGS:/^user/
+------------
+
+If a field name contains unusual characters (e.g., colon, whitespace,
+etc.), you can quote the entire name using double quotes and then use
+most characters without fear of breaking anything. The first colon is
+used as the delimiter.
+
+----------------------
+"ARGS:my strange:name"
+----------------------
+
+Field Transformations
++++++++++++++++++++++
+
+Field data often may need to be transformed or normalized before it can
+be used. This is accomplished via transformations. These transformations
+can be applied to individual fields or to all fields within a rule. For
+appying transformations to all fields in a rule, see the `t` rule
+modifier, which is essentially a shorthand notation for applying the
+same transformation to each individual field. For individual fields,
+this is done via the dot syntax with parens.
+
+---------------------
+ARGS.lowercase()
+ARGS:name.lowercase()
+---------------------
+
+In addition to manipulating the field value, a transformation may also
+change the field type. For example, from a collection or string to a
+number.
+
+----------------------------------------
+# Collection count: Collection to number
+ARGS.count()
+
+# Field data length: String to number
+REQUEST_HEADERS:User-Agent.length()
+----------------------------------------
+
+Field Expansion
++++++++++++++++
+
+In addition to using fields as input to rules, sometimes there's a need
+to use a field in text strings, such as adding raw values for logging
+via the `logdata` rule modifier. This can be achieved using field
+expansion. For example:
+
+------------------------------
+logdata:%{NAME}
+setvar:MY_COLLECTION:%{NAME}=1
+------------------------------
+
+If the expression resolves to only one variable, the entire `%{NAME}`
+expression will be replaced with the field value.
+
+_____________________________________________________________________________________
+*Caution*
+
+What if the field is not a scalar? Perhaps the value could be JSON or
+similar format?
+_____________________________________________________________________________________
+
+Rules
+^^^^^
+
+IronBee currently defines three types of rules. There is a basic pattern
+matching rule language, a more limited streaming version of the pattern
+matching rule language, as well as the ability to specify more complex
+rules which syntax is processed external to the configuration file.
+Currently the only external rule type is via the Lua scripting language,
+but more may be handled in the future. In addition to external rules,
+the rule processing engine and configuration syntax are decoupled,
+allowing modules to be developed to provide alternate custom rules which
+interact with the same rule execution engine.
+
+Basic Matching Rules
+++++++++++++++++++++
+
+Basic matching rules are configured via the `Rule` directive. These
+rules include a list of fields containing the data to be inspected, an
+operator with parameter to perform the inspection, and modifiers which
+specify metadata attributes as well as any actions to be taken.
+
+----------------------------------------------------------------------------------------
+Rule REQUEST_HEADERS ARGS @rx "Some.*Pattern" id:1 rev:1 phase:REQUEST event block:phase
+----------------------------------------------------------------------------------------
+
+Basic matching rules will iterate through the list of fields (and
+sub-fields within collections), executing the specified operator and
+performing any required actions. Currently, the order in which the rule
+executes depends on both the specified phase as well as the order in
+which the rule is specified in the configuration.
+
+The phase information, assigned to the rule via the phase modifier,
+determines when a rule will run within transaction lifecycle. Within a
+phase, configuration determines how rules are ordered. When a rule is
+read from the configuration files, it is appended to the list of rules
+in the desired phase. At run-time, the engine will process all of the
+rules one by one until interrupted.
+
+Stream Matching Rules
++++++++++++++++++++++
+
+While the basic matching rules are quite flexible, they are limited to
+executing only once in the given phase. With this limitation, you can
+only inspect data that is available at the time of execution. To do this
+effectively, the data must be buffered so that it can all be inspected
+in a single pass. Streaming inspection allows you to avoid buffering
+potentially large amounts of data by inspecting the data in smaller
+chunks. With this, however, comes restrictions.
+
+The StreamInspect directive allows inspecting a limited set of fields
+(currently only the raw request and response bodies as of version 0.7)
+in smaller chunks as the data arrives. Instead of the rule executing
+only a single time, it may instead execute many times - once for each
+chunk of data. Because of this, stream based rules do not have a phase
+associated with them. In addition to this difference from the basic
+matching rules, stream based rules cannot (currently) be transformed and
+allow only a limited set of operators (currently `dfa`, `pm` and `pmf`
+as of version 0.7).
+
+-----------------------------------------------------------------------------------------------------------
+StreamInspect REQUEST_BODY_STREAM @dfa "(?i)Content-Disposition(?:[^\r\n]*)attachment|form-data|filename" \
+    id:1 rev:1 "msg:Possible file upload" event
+-----------------------------------------------------------------------------------------------------------
+
+External Rules
+++++++++++++++
+
+Due to the simple rule syntax and confines of the configuration
+language, both basic and stream matching rules only allow for simple
+matching logic. Some more advanced logic can be obtained through
+features such as rule chaining, however when more control is required,
+external rules are available. External rules refer to a rule defined
+externally to the configuration and can thus be much more expressive.
+Currently the Lua scripting language is available through external rules
+via the `RuleExt` directive, which refers to an external lua script.
+
+-------------------------------------------------------
+RuleExt lua:example.lua id:1 rev:1 phase:REQUEST_HEADER
+-------------------------------------------------------
+
+--------------------------------------------------------
+-- example.lua
+local ib = ...
+
+-- This must be defined before assignment
+-- so that the self-recursive call uses
+-- the local variable instead of a global.
+local printValues
+local k
+local v
+
+-- Create a local function for printing values
+printValues = function(name,value)
+  if value then
+    if type(value) == 'table' then
+      -- Print the table.
+      for k,v in pairs(value) do
+        printValues(name.."."..k, v)
+      end
+    else
+      ib:logInfo(name.."="..value)
+    end
+  end
+end
+
+-- Create a local function to fetch/print fields
+local fieldPrint = function(name)
+  printValues(name, ib:get(name))
+end
+
+-- Print out all the available fields
+for k,v in pairs(ib:getFieldList()) do
+  fieldPrint(v)
+end
+
+-- Return the result (0:FALSE 1:TRUE) to the rule engine
+return 0
+--------------------------------------------------------
+
+Common Rule Components
+++++++++++++++++++++++
+
+Most rules share a common set of metadata attributes as well as actions.
+
+Metadata::
+  Rule metadata is specified using the following modifiers.
+
+  id;;
+    Globally unique identifier, in the form
+  `vendorPrefix/vendorRuleId`. It is recommended that all rule IDs within
+  a set have at least a common prefix. Additionally, you are encouraged to
+  further delimit by category or type. For example: `qualys/sqli/5`.
+  
+  rev;;
+    Revision, which is used to differentiate between two versions
+  of the same rule; it defaults to 1 if not specified.
+  
+  msg;;
+    Message that will be used when the rule triggers. Rules that
+  generate events must define a message.
+  
+  tag;;
+    Assigns one or more tags to the rule; tags are used to
+  classify rules and events (as events inherit all tags from the rule that
+  generates them).
+  
+  phase;;
+    Determines when the rule will run (Not available in
+  streaming rules as these are triggered on new data)
+  
+  severity;;
+    Determines the seriousness of the finding (0-100)
+  
+  confidence;;
+    Determines the confidence the rule has in its logic
+  (0-100)
+  
+Events
+^^^^^^
+
+During a transaction, one or more events may be generated (see the
+`event` action). Each event has the following attributes - many of which
+is controlled by the rule metadata.
+
+Event ID::
+  Uniquely generated (for the transaction) event identifier
+
+Event Type::
+  Type of event. Currently this is one of:
+
+  Observation;;
+    An event which may contribute to a further decision.
+
+  Alert;;
+    An event which denotes the transaction should be logged.
+
+Rule ID::
+  The rule which created the event, if it was generated by a rule.
+
+Field(s)::
+  A optional list of inspected fields which contributed to the event.
+
+Tag(s)::
+  An optional list of tags used to classify the event.
+
+Data::
+  Arbitrary data associated with the event. This is to be treated as
+  opaque and will be accompanied with a length in bytes.
+
+Message::
+  A text message associated with the event.
+
+Confidence::
+  A positive integer value ranging from 0-100 denoting the percent of
+  confidence that the event is accurate.
+
+Severity::
+  A positive integer value ranging from 0-100 denoting the severity
+  (weight) that this event may pose if accurate.
+
+Recommended Action::
+  The event creator is recommending an action to be taken. This is
+  currently one of:
+
+  Log;;
+    Log the transaction.
+
+  Block;;
+    Block the transaction.
+
+  Ignore;;
+    Allow the transaction without further inspection.
+
+  Allow;;
+    Allow the transaction, but continue inspecting.
+
+Suppression::
+  Denotes the event should be suppressed and for what reason. Currently
+  this is one of:
+
+  None;;
+    The event is not to be suppressed.
+
+  False Positive;;
+    The event was determined to be a false positive.
+
+  Replaced;;
+    The event was replace with a later event.
+
+  Incomplete;;
+    The event may contain incomplete information or be based off of
+    incomplete information.
+
+  Other;;
+    The event was supressed for an unspecified reason.
+
+Request and Response Body Handling
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Request and response headers are generally limited in size and thus easy
+to handle. This is especially true in a proxy deployment, where
+buffering is possible. Proxies will typically cache request and response
+headers, making it easy to perform inspection and reliably block when
+necessary.
+
+The situation is different with request and response bodies, which can
+be quite big. For example, request bodies may carry one or more files;
+response bodies too often deliver files, and some HTML responses can get
+quite big too. Even when sites do not normally have large request
+bodies, they are under the control of attackers, and they may
+intentionally submit large amounts of data in an effort to bypass
+inspection.
+
+Let's look at what might be of interest here:
+
+Inspection::
+  Do we want to inspect a particular request or response body? Whereas
+  it would be rare not to want inspect a request body, it's quite common
+  with response bodies, because many carry static files and images. We
+  can decide by looking at the `Content-Type` header.
+
+Processing::
+  After we decide to inspect a body, we need to determine how to process
+  it, after which inspection can take place. It's only in the simplest
+  case, when the body is treated as a continuous stream of bytes, is
+  that no processing is needed. Content types such as
+  `application/x-www-form-urlencoded` and `multipart/form-data` must be
+  parsed before fine-grained analysis can be undertaken. In many cases
+  we may need to process a body in more than one way to support all the
+  desired approaches to analysis.
+
+Buffering::
+  Reliable blocking is possible only when all of the data is buffered:
+  accumulate the entire request (or response) until the inspection is
+  complete, and then you release it all once. Blocking without buffering
+  can be effective, but such approach is susceptible to evasion in edge
+  cases. The comfort of reliable blocking comes at a price. End user
+  performance may degrade, because rather than receiving data as it
+  becomes available, the proxy must wait to receive the last byte of the
+  data to let it through. In some cases (e.g., WebSockets) there is an
+  expectation that chunks of data travel across the wire without delay.
+  And, of course, buffering increases memory consumption required for
+  inspection.
+
+Logging::
+  Finally, we wish to be able to log entire transaction for
+  post-processing or evidence. This is easy to do when all of data is
+  buffered, but it should also be possible even when buffering is not
+  enabled.
+
+Request body processing
++++++++++++++++++++++++
+
+IronBee comes with built-in logic that controls the default handling of
+request body data. It will correctly handle
+`application/x-www-form-urlencoded` and `multipart/form-data` requests.
+Other formats will be added as needed.

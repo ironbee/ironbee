@@ -1,0 +1,79 @@
+### Logging
+# Log level (standard syslog levels with additional debug2 and debug3)
+LogLevel info
+# The log is really only valid for clipp as the servers
+# will utilize their own native logging facilities.
+Log debug.log
+
+### Sensor Info
+SensorId 80ECD8CF-318C-4915-A8C2-B3AAE315FB0C
+
+### Load Modules
+# Standard support modules
+LoadModule "ibmod_htp.so"
+LoadModule "ibmod_pcre.so"
+
+# ### Lua Modules
+# # Lua Support
+# LoadModule "ibmod_lua.so"
+# 
+# # Event Processor
+# LuaLoadModule "event_processor.lua"
+# EventProcessorCategoryFilter FOO 60
+# EventProcessorCategoryFilter BAR 50
+# EventProcessorCategoryFilter BOO 75
+# EventProcessorCategoryFilter EEK 75
+# 
+# # Threat Level
+# LuaLoadModule "threat_level.lua"
+# ThreatLevelMinConfidence 25
+
+# IronBee Rule Language
+LoadModule "ibmod_rules.so"
+
+### Auditing
+AuditEngine RelevantOnly
+AuditLogIndex None
+AuditLogBaseDir /tmp/ironbee
+AuditLogSubDirFormat "%Y%m%d-%H%M"
+AuditLogDirMode 0755
+AuditLogFileMode 0644
+AuditLogParts all
+
+### Buffering
+RequestBuffering On
+ResponseBuffering On
+
+### Rule Diagnostics Logging
+RuleEngineLogData all
+RuleEngineLogLevel info
+
+
+# ===============================================================================
+# Rules
+# ===============================================================================
+# ===============================================================================
+### Test Rules
+# This rule will block if a "blockme" parameter (with any value) is in the request
+Rule ARGS:blockme.count() @ne 0 id:test/blockme rev:1 phase:REQUEST "msg:Test blocking" tag:TestRules event block
+
+### Default Blocking Rules
+# These rule detect any advisory blocks and perform the
+# actual block.
+Rule FLAGS:block @ne 0 id:block/request_header rev:1 phase:REQUEST_HEADER "msg:Blocking request header" tag:BlockingMode block:phase
+Rule FLAGS:block @ne 0 id:block/request rev:1 phase:REQUEST "msg:Blocking request" tag:BlockingMode block:phase
+Rule FLAGS:block @ne 0 id:block/response_header rev:1 phase:RESPONSE_HEADER "msg:Blocking response header" tag:BlockingMode block:phase
+# ===============================================================================
+# ===============================================================================
+
+### Sites
+# Default
+<Site default>
+    SiteId 0CA1665C-F27F-4763-A3E0-A31A00477497
+    Service *:*
+    Hostname *
+
+    # Enable rules from the main context
+    RuleEnable tag:TestRules
+    RuleEnable tag:BlockingMode
+</Site>

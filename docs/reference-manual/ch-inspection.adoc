@@ -1,0 +1,626 @@
+Inspection
+----------
+
+The whole point of IronBee is to allow for inspecting data. This chapter
+covers the basics of doing just that. Inspecting data is performed
+through rules and modules. Rules are encapsulated logic executed at well
+define points in the transaction lifecycle. Modules, in general, extend
+IronBee functionality and can provide extensive logic, however modules
+can also be used for inspection when you need more control and
+flexibility.
+
+Data
+~~~~
+
+IronBee exposes data in two forms. Data can be in defined as a field or
+as a stream. In addition to inspection, fields are the primary means of
+exposing and exchanging data between rules and modules. A full list of
+the defined data fields are discussed in ?, however IronBee allows for
+the creation and modification of arbitrary fields. New variable fields
+can be defined, initialized in various ways within the IronBee
+configuration as well as in rules and modules. This section discusses
+defining and initializing rules via the configuration, leaving further
+discussion for the Rules section.
+
+Variable fields, or just variables for short, are defined and
+initialized in the the configuration through two primary directives. The
+scope of these variables is defined through the context. Variables can
+be defined in the main (global) scope, within a site scope or within a
+location scope based on where the directives are used in the
+configuration.
+
+Defining and Initializing Scalar Variables with `InitVar`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A simple scalar variable is both defined and initialized with the
+`InitVar` directive.
+
+-------------------------
+InitVar MY_VAR "my value"
+-------------------------
+
+In addition to simple scalar variables, you can also use `InitVar` to
+define scalar variables within a collection. If the collection does not
+previously exist, then it is created.
+
+---------------------------------------
+InitVar MY_COLLECTION:MY_VAR "my value"
+---------------------------------------
+
+The variable will then be available as a normal field to all rules and
+modules active in the same configuration context (scope). See the full
+documentation for the `InitVar` directive for more details.
+
+Defining and Initializing Collections with `InitCollection`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Similar to the `InitVar` directive, you can also define and initialize
+collections with the `InitCollection` directive.
+
+----------------------------
+InitCollection MY_COLLECTION
+----------------------------
+
+The above will define the `MY_COLLECTION` collection, however, it will
+be empty. To both define and initialize a collection, you can utilize a
+number of additional `InitCollection` features. The most basic form
+allows specifying key/value pairs with the collection.
+
+------------------------------------
+InitCollection MY_COLLECTION vars: \
+    key1=value1 \
+    key2=value2 \
+    key3=value3
+------------------------------------
+
+In addition to initializing the key values within the configuration
+file, you may also initialize the collection via an external JSON
+formatted file, allowing for controlling the data withing the collection
+outside of IronBee.
+
+----------------------------------------------------------------------------------
+InitCollection MY_COLLECTION json-file:///path/to/persisted/data/mycollection.json
+----------------------------------------------------------------------------------
+
+The JSON is formatted as simple name/value pairs.
+
+---------------------
+{
+    "key1": "value1",
+    "key2": "value2",
+    "key3": "value3"
+}
+---------------------
+
+Persisting Data with `InitCollection`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In addition to defining and initializing collections with static data,
+IronBee also allows for persisting collections which have been
+manipulated in IronBee. This is accomplished in a few different ways,
+depending on your needs. If you need to persist a single instance of a
+collection, then you can just add the persist option to the
+InitCollection directive.
+
+------------------------------------------------------------------------------------------
+InitCollection MY_COLLECTION json-file:///path/to/persisted/data/mycollection.json persist
+------------------------------------------------------------------------------------------
+
+With the addition of the persist option, any data within the collection
+will be written out to the JSON file at the end of the transaction. The
+next transaction will then be initialized with the manipulated data.
+Often, though, you do not want to share the same collection for all
+transactions. Instead you need to be able to save different instances of
+the collection based on some other field or set of fields as a key. To
+do this, you need to load the persist module to gain some additional
+functionality.
+
+---------------------------
+LoadModule ibmod_persist.so
+---------------------------
+
+The persist module allows you to store different instances of a
+collection based on a key. For example, you may want to store an
+instance of the collection based on the IP address or session ID. This
+is not any more difficult, just a slightly different syntax. The key can
+be specified using any string, which may include field expansion, such
+as the IP address or session ID.
+
+-----------------------------------------------------------------------------------------------
+InitCollection IP_DATA persist-fs:///path/to/persisted/data key=%{REMOTE_ADDR}
+InitCollection SESS_DATA persist-fs:///path/to/persisted/data key=%{REQUEST_COOKIES:jsessionid}
+-----------------------------------------------------------------------------------------------
+
+Any data contained in these collections will be read from a file based
+on the key and stored in the named collection. At the end of the
+transaction, the data is written out to the same file. Since this data
+may accumulated, you will probably want to specify an expiration time.
+This is done by using the expire option, which takes an expiration time
+in seconds. If more than the number of seconds elapses between the
+collection being written out and read back in, the data is purged and
+the collection will be empty.
+
+-----------------------------------------------------------------------------------------
+InitCollection IP_DATA persist-fs:///path/to/persisted/data key=%{REMOTE_ADDR} expire=300
+-----------------------------------------------------------------------------------------
+
+Since the data is only purged when it is attempted to be read back in
+after expiring, the data may still accumulate on the filesystem. It may
+be required to run a periodic cleanup process to purge any expired
+files. In the future IronBee will provide a utility for this, but for
+now the expiration date is encoded in the filename.
+
+------------------------------------------------------------------------------
+# Format: uuid/expiration-tempname
+0de114da-8ada-55ad-a6de-e68a1263412a/001364624257-0004d91e578bc99f.json.dXFR9d
+------------------------------------------------------------------------------
+
+Periodic purging could be accomplished with a cron job to check that the
+current epoch based date is greater than that encoded in the file.
+
+-------------------------------------------------------------------
+#!/bin/sh
+
+# Specify the persist-fs: base directory
+PERSIST_FS_BASEDIR="/tmp/ironbee/persist/fs"
+
+# Current epoch based date
+DSTAMP=`date "+%s"`
+
+# Iterate through files
+for file in `find $PERSIST_FS_BASEDIR -type f -name '*.json.*'`; do
+    # Extract the epoch based expiration from the filename
+    expires=`echo $file | sed 's%.*/0*\([0-9]*\)-.*%\1%'`
+
+    # Check if the expires was extracted and the current date
+    # is greater than the expiration, removing the file.
+    if [ -n "$expires" -a "$DSTAMP" -gt "$expires" ]; then
+        echo "PURGE: $file expired=`date -j -r $expires`"
+        rm $file
+    fi
+done
+-------------------------------------------------------------------
+
+Rules
+~~~~~
+
+Rules are the primary form of inspection in IronBee. IronBee rule
+execution is decoupled from any rule language. Because of this, IronBee
+can provide multiple rule languages. Each language has a different use
+case. Currently the following rule languages are defined:
+
+* IronBee Rule Language, which is part of the IronBee Configuration
+Language.
+* Lua rule definitions, available in Lua modules and Lua configuration
+files.
+* Extended Rules (XRules), which is part of the IronBee Configuration
+Language and implements common logic such as Access Control Lists
+(ACLs).
+* External Lua rule scripts.
+* Alternative rule execution via rule injection modules.
+
+IronBee Rule Language
+^^^^^^^^^^^^^^^^^^^^^
+
+The IronBee rule language is relatively simplistic. The language is
+designed to create signature based rules with minimal logic. If you need
+more logic, then you should consider other options.
+
+The rule language allows for inspecting fields and performing actions.
+There are three forms of rules:
+
+* Field based inspection rules which execute actions based on inspecting
+a set of fields.
+* Stream based inspection rules which execute actions based on
+inspecting a stream of data.
+* Actions based rules, which just execute actions and allow for some
+basic logic and setup.
+
+Inspecting Fields with the `Rule`
++++++++++++++++++++++++++++++++++
+
+The Rule directive allows inspecting a set of fields and optionally
+executing an action. For example, you can specify a list of request
+methods that you wish to block.
+
+---------------------------------------------
+Rule REQUEST_METHOD @imatch "TRACE TRACK" \
+    id:test/methods/1 \
+    phase:REQUEST_HEADER \
+    "msg:Invalid method: %{REQUEST_METHOD}" \
+    event:alert \
+    block:phase
+---------------------------------------------
+
+The example above inspects the `REQUEST_METHOD` field using the
+`@imatch` operator. The `@imatch` operator matches case insensitively
+against a list of values. In this case the match is a success if the
+`REQUEST_METHOD` completely matches any of the specified methods. If the
+match is a success, then the event and block actions will be executed,
+logging an alert with the given message and blocking the request at the
+end of the phase. There are a few additional modifiers. The id and phase
+modifiers are required. The id modifier must be a unique string and the
+phase modifier specifies when the rule will execute. In this case the
+rule will execute just after the HTTP request headers are available.
+
+As an alternate to the above, you could instead whitelist what methods
+you wish to allow with a similar rule. In this case you would just
+negate the operator and specify a list of methods that are allowed. If
+the method is not on the list, then the actions will execute.
+
+---------------------------------------------
+Rule REQUEST_METHOD  \
+    id:test/methods/1 \
+    phase:REQUEST_HEADER \
+    "msg:Invalid method: %{REQUEST_METHOD}" \
+    event:alert \
+    block:phase
+---------------------------------------------
+
+More than one field can be specified. If so, then each value will be run
+through the operator, triggering actions for each match. In addition,
+the field values can be transformed, such as trimming off any
+whitespace.
+
+----------------------------------------------
+Rule REQUEST_METHOD !@imatch "GET HEAD POST" \
+    id:test/methods/1 \
+    phase:REQUEST_HEADER \
+    "msg:Invalid method: %{REQUEST_METHOD}" \
+    event:alert \
+    block:phase
+----------------------------------------------
+
+Transformations can be specified per-field, or to all fields, using, for
+example, the `t:trim` rule modifier. Multiple transformations can be
+chained together.
+
+See the `Rule` directive documentation for more details.
+
+Inspecting Streams with `StreamInspect`
++++++++++++++++++++++++++++++++++++++++
+
+Potentially large fields, such as the request and response body, pose
+problems when they need to be inspected as a whole. To alleviate
+problems with requiring large amounts of memory for inspection, the
+request and response bodies are only available as streams. The
+`StreamInspect` directive is used to write stream based data. This
+directive differs slightly from the Rule directive.
+
+* `StreamInspect` rules run as data is received, which is before phase
+rules execute on the request/response bodies. Any setup with phase based
+rules should be done in the associated header phase to ensure they are
+executed before stream based rules. Depending on the size of the data
+and the server's buffer size, the data may come in chunks. Because of
+this, a `StreamInspect` rule may execute multiple times - once per chunk
+of data received.
+* `StreamInspect` rules have a limited set of operators that support
+streaming inspection. Currently this is limited to the `dfa` operator,
+but may expand in the future. The `dfa` operator uses the PCRE syntax
+similar to `rx`, but does not allow backtracking. Additionally, the
+`dfa` operator can capture ALL matches, instead of just the first as
+`rx` does. This allows capturing all matching patterns from the stream.
+Note that the `dfa` operator is fully streaming aware and will match
+across chunk boundaries.
+* `StreamInspect` rules allow only a single stream as input, however you
+can use multiple rules.
+* `StreamInspect` rules currently do not support transformations.
+
+See the `StreamInspect` documentation for more details.
+
+Executing actions with `Action`
++++++++++++++++++++++++++++++++
+
+Rule actions may need to be triggered unconditionally. While not often
+required, this is possible with the `Action` directive. Typically this
+is used to execute `setvar`, `setflag` or similar actions.
+
+--------------------------------------------------------
+Action id:init/1 phase:REQUEST_HEADER setvar:MY_VAR=1234
+--------------------------------------------------------
+
+See the `Action` documentation for more details.
+
+Lua Signature Definitions
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Often you may need more functionality in configuring rules than is
+offered by the configuration language. This is possible by using Lua to
+provide signature definitions. Using the `LuaInclude` directive, you can
+include a lua script into the configuration. The Lua script can define
+rules as an alternate signature definition language. Note that Lua is
+only being used as the configuration language. This means that Lua is
+only executed at configuration time and not required to execute the
+rules. The rules defined in the lua script are identical to those added
+via the Rule directive, but just use an alternative configuration
+language. This really shows off IronBee's separation of the rules from
+the language in which they are defined.
+
+------------------------------------------------------------
+# Load the Lua module to add Lua functionality into IronBee.
+LoadModule ibmod_lua.so
+
+# Include rules via a lua script and commit.
+LuaInclude rules.lua
+------------------------------------------------------------
+
+Including a lua script at configuration using `LuaInclude` allows the
+full power of Lua to configure the rules. The included Lua script is
+executed at config time, providing a vast amount of power over rule
+configuration. Within Lua, you can use the `Sig(id,rev)` function to
+define signature rules. The `Sig()` function returns a signature object,
+which allows you to then specify attributes, such as fields, an
+operator, actions, etc. The following is a simple rule using the `Rule`
+directive, which will serve as an example to be converted using the Lua
+configuration.
+
+--------------------------------
+Rule ARGS REQUEST_HEADERS \
+     @rx "some-attack-regex" \
+     id:test/lua/1 rev:1 \
+     severity:50 confidence:75 \
+     event:alert block:phase \
+     "msg:Some message text." 
+--------------------------------
+
+This is converted into Lua's `Sig()` function below. Note that this is
+an extremely verbose version for clarity. Later, this will be shortened
+to a much more manageable form.
+
+-------------------------------------------------
+-- Create a signature with: id="test/lua/1" rev=1
+local sig = Sig("test/lua/1", 1)
+
+-- Specify what fields to inspect.
+sig:fields("ARGS", "REQUEST_HEADERS")
+
+-- Specify the phase.
+sig:phase("REQUEST")
+
+-- Specify the operator
+sig:op("rx", [[some-attack-regex]])
+
+-- Specify other meta-data.
+sig:action("severity:50")
+sig:action("confidence:75")
+
+-- Specify the actions.
+sig:action("event:alert")
+sig:action("block:phase")
+sig:message("Some message text.")
+-------------------------------------------------
+
+The `Sig()` function returns a signature object as do all the attribute
+functions. This allows us to chain attributes via the colon operator
+resulting in something much more compact and "rule-like".
+
+------------------------------------
+Sig("test/lua/1", 1):
+  fields("ARGS", "REQUEST_HEADERS"):
+  phase("REQUEST"):
+  op("rx", [[some-attack-regex]]):
+  action("severity:50"):
+  action("confidence:75"):
+  action("event:alert"):
+  action("block:phase"):
+  message("Some message text.")
+------------------------------------
+
+Even this, however, is a bit more verbose than desired. In practice many
+rules will follow the same form and it will quickly become tedious to
+write signatures in such a verbose format. To reduce this verbosity, the
+power of Lua is utilized, which allows customizing how rules are written
+by defining wrapper functions around the default `Sig()` function.
+
+-----------------------------------------------------------
+--[[ ----------------------------------------------------
+---- Define a function to reduce verbosity:
+---- RequestRegex(id, regex [,severity [,confidence]])
+--]] ----------------------------------------------------
+local RequestRegex = function(id,regex,severity,confidence)
+  if severity == nil then
+    severity = 50
+  end
+  if confidence == nil then
+    confidence = 75
+  end
+  return Sig("test/lua/" .. id,1):
+           op("rx", regex):
+           phase("REQUEST"):
+           action("severity:" .. severity):
+           action("confidence:" .. confidence):
+           action("event:alert"):
+           action("block:phase")
+end
+
+--[[ ----------------------------------------------------
+---- Define a list of common attack fields
+--]] ----------------------------------------------------
+local ATTACK_FIELDS = { "ARGS", "REQUEST_HEADERS" }
+
+-- Rules using the above wrappers
+RequestRegex(1,[[some-attack-regex]]):
+  fields(ATTACK_FIELDS):
+  message("Some message text.")
+-----------------------------------------------------------
+
+As you can see, this can substantially reduce the verbosity of the
+rules, however, it does require writing some wrapper functions. As
+IronBee matures, it will expose some builtin wrappers in a separate
+library. Separating the wrappers into a library would then reduce this
+into a file that load the library alongside the rules themselves.
+
+--------------------------------------------
+-- Load the Wrappers
+require rule-wrappers
+
+-- Rules
+RequestRegex(1,[[some-attack-regex]]):
+  fields(ATTACK_FIELDS):
+  message("Some message text.")
+RequestRegex(2,[[some-other-attack-regex]]):
+  fields(ATTACK_FIELDS):
+  message("Some other message text.")
+--------------------------------------------
+
+Rule execution order is different when specified in Lua. In Lua, no
+order is guaranteed unless specified. Order is specified in a number of
+ways. The first method is via the `before()` or `after()` attributes,
+which control rule execution order. Note that `before()` and `after()`
+are not rule chaining and do not require the previous rule to match.
+
+-----------------
+Sig("lua/1",1):
+  before("lua/2")
+Sig("lua/2",1):
+Sig("lua/3",1):
+  after("lua/2")
+-----------------
+
+While this is powerful, it is tedious to maintain. As most cases where
+you need rule order are in grouping rules to form a sort of recipe,
+there is a `Recipe(tag)` function defined which does the following:
+
+* Adds the supplied recipe tag to all rules within the recipe.
+* Forces rule execution order within the recipe.
+
+-------------------
+Recipe "recipe/1" {
+  Sig("lua/1",1),
+  Sig("lua/2",1),
+  Sig("lua/3",1)
+}
+-------------------
+
+Each rule in the recipe will contain the recipe tag and therefore the
+entire recipe can be enabled via the `RuleEnable` directive.
+
+-----------------------
+RuleEnable tag:recipe/1
+-----------------------
+
+The `Rule` directive supports chaining rules via the `chain` rule
+modifier. Chaining allows rules to be logically ANDed together so that
+later rules only execute if previous rules match. Chained rules are
+slightly different when specified in Lua. Lua uses the `follows()`
+attribute to specify a rule ID to follow in execution IF that rule
+matches. This is essentially reversed from the `Rule` directive which
+specifies the `chain` modifier on the previous rule verses specifying
+the `follows()` attribute on the later rule.
+
+-------------------------------------------------------------
+# Define a "lua/1" rule
+Sig("lua/1",1)
+
+# Define a "lua/2" rule that will run only if "lua/1" matches
+Sig("lua/2",1):follows("lua/1")
+
+# Define a "lua/3" rule that will run only if "lua/2" matches
+Sig("lua/3",1):follows("lua/2")
+-------------------------------------------------------------
+
+The following is defined for use in defining rules within Lua.
+
+* Sig(id,rev): Create a new signature based rule.
+** field(name): Specify a single field name added to the list of fields
+to inspect.
+** fields(list): Specify a list of field names to be added to the list
+of fields to inspect.
+** op(name,value): Specify an operator to use for the rule.
+** phase(name): Specify the phase name to execute within.
+** message(text): Specify a message for the rule.
+** tag(name): Specify a tag name to add to the list of tags.
+** tags(list): Specify a list of tag names to be added to the list of
+tags.
+** comment(text): Arbitrary comment text to associate with the rule.
+** action(text): Specify any additional rule action or modifier in
+"name:parameter" format.
+** before(rule-id): Specify the rule ID which this should execute
+before.
+** after(rule-id): Specify the rule ID which this should execute after.
+** follows(rule-id): Specify the rule ID that this should follow IF that
+rule matched.
+* Action(id,rev): Similar to the Action directive, this is the same as
+Sig(), but disallows field()/fields()/op() attributes.
+* ExtSig(id,rev): Similar to the RuleExt directive, this is the same as
+Sig(), but allows specifying a script to execute as the rule logic.
+** script(name): Name of script to execute.
+* Recipe(tag, rule-list): Group a list of rules, adding tag to all rules
+and maintaining rule execution order.
+
+Extended Rules (XRules)
+^^^^^^^^^^^^^^^^^^^^^^^
+
+XRules are useful for Access Control Lists and exceptions. XRules
+compliment other rule forms. See the XRule directives for
+moreinformation.
+
+External Lua Rule Scripts
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+While Lua signature definitions are very powerful, they are still
+limited to signature like operations. To allow for complex logic you can
+use Lua at rule execution time yielding the full power of Lua as an
+inspection language. This is accomplished by using either the `RuleExt`
+directive within a configuration file or `ExtSig()` within a Lua
+configuration file.
+
+See the documentation for the `RuleExt` directive for more details.
+
+Alternative Rule Execution via Rule Injection Modules
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Modules may define additional rule execution systems via the rule
+injection mechanism. Rule injection works in two stages:
+
+* At the end of configuration, every rule injection system is given a
+chance to claim each rule. Rule injection systems usually claim a rule
+if it contains a certain action. Only one rule injection system may
+claim each rule; it is an error for more than one to claim it. If no
+rule injection system claims a rule, it is added to the default rule
+engine.
+* At each phase during inspection, every rule injection system is given
+a chance to inject one or more rules. The rule injection system may use
+whatever method it desires to choose which rules to inject. Injected
+rules are then executed as usual.
+
+The rule injection mechanism is designed to allow for specialized rule
+systems that, for a certain class of rules, are more expressive, more
+performant or both. For example, the Fast rule injection systems
+associates a substring pattern with a rule and uses an Aho-Corasick
+variant to determine which rules to inject. The benefit over the
+traditional rule system is that rules that do not fire have minimal
+performance cost. However, Fast is only suitable for a subset of rules:
+those that require certain fixed width patterns to appear in the input.
+
+The default rule engine claims all rules not otherwise claimed. It
+evaluates each rule for the appropriate phase and context in order. This
+approach is slow but also simple and predictable.
+
+Modules
+~~~~~~~
+
+When full control is required, then an IronBee module may be required.
+Modules provide the ability to hook directly into the IronBee state
+machine for fine grained control over execution, Currently modules can
+be written in three languages. Each has a different use case which is
+described below.
+
+* Lua is the simplest language to develop modules as it hides many of
+the details. While Lua allows for rapid development, it does not perform
+as well as other languages for many tasks. Lua is the recommended
+language for prototyping and most higher level module needs - where Lua
+rules are not adequate. Lua modules also have the added benefit of being
+able to be distributed as rules, since they are not in a binary form.
+* C++ allows near full control over IronBee via the C++ wrappers. C++
+provides much higher level access to IronBee in a fairly strict
+environment. However, the C++ wrappers do not cover all functionality of
+IronBee and you may need to fall back to the C API. Because of the added
+strictness in C++ and near equal performance to the native C API, it is
+the recommended language if Lua will not satisfy performance or
+functionality requirements.
+* C is the lowest level language for writing modules. While C provides
+full functionality, it does not provide as much protection as C++ or
+Lua.
+
+See ? for more information on writing IronBee modules.

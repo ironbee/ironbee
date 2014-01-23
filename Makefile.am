@@ -21,6 +21,9 @@ doxygen doxygen-pdf:
 manual:
 	@(cd docs && $(MAKE) manual)
 
+ref-manual:
+	@(cd docs && $(MAKE) ref-manual)
+
 luajit:
 	@(cd libs && $(MAKE) )
 
