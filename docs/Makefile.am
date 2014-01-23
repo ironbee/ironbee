@@ -1,4 +1,4 @@
-SUBDIRS = docbook
+SUBDIRS = reference-manual docbook
 CLEANFILES = *.pdf
 
 clean-local:
