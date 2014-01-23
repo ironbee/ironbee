@@ -83,7 +83,10 @@ module AP_MODULE_DECLARE_DATA ironbee_module;
 #define NOTIFY_RESP_END    0x800
 #define INTERNAL_ERRORDOC  0x10000
 
-typedef enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } iobuf_t;
+typedef enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER_ALL,
+               IOBUF_BUFFER_FLUSHALL, IOBUF_BUFFER_FLUSHPART } iobuf_t;
+#define IOBUF_BUFFERED(x) (((x) == IOBUF_BUFFER_ALL) || ((x) == IOBUF_BUFFER_FLUSHALL) || ((x) == IOBUF_BUFFER_FLUSHPART))
+
 typedef struct ironbee_req_ctx {
     ib_tx_t *tx;
     int status;
@@ -97,6 +100,7 @@ typedef struct ironbee_req_ctx {
 } ironbee_req_ctx;
 typedef struct ironbee_filter_ctx {
     apr_bucket_brigade *buffer;
+    apr_off_t buf_limit;
     bool eos_sent;
 } ironbee_filter_ctx;
 
@@ -631,7 +635,7 @@ header_filter_cleanup:
     /* Our business is done.  Remove ourself from filter chain. */
     ap_remove_output_filter(f);
 
-    if (ctx->output_buffering == IOBUF_BUFFER) {
+    if (IOBUF_BUFFERED(ctx->output_buffering)) {
         /* We expect to get called when ironbee_filter_out sends us
          * a lone flush bucket.  If that happens, we can skip passing
          * it any further, so ironbee output buffering works before
@@ -688,6 +692,8 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
     apr_bucket *bnext;
     const char *buf;
     size_t buf_len;
+    apr_off_t buffered;
+    apr_bucket_brigade *bbtemp;
     ironbee_req_ctx *rctx = ap_get_module_config(f->r->request_config,
                                                  &ironbee_module);
 
@@ -714,7 +720,14 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
             }
             else {
                 /* If we're buffering, initialise the buffer */
-                rctx->output_buffering = IOBUF_BUFFER;
+                ib_core_cfg_t *corecfg = NULL;
+                rc = ib_core_context_config(ib_context_main(rctx->tx->ib),
+                                            &corecfg);
+                ctx->buf_limit = corecfg->limits.response_body_buffer_limit;
+                rctx->output_buffering = (corecfg->limits.response_body_buffer_limit < 0)
+                      ? IOBUF_BUFFER_ALL
+                      : (corecfg->limits.response_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
+                            ? IOBUF_BUFFER_FLUSHALL : IOBUF_BUFFER_FLUSHPART;
             }
         }
 
@@ -763,7 +776,7 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
         if ( (STATUS_IS_ERROR(rctx->status)) &&
              !(rctx->state & INTERNAL_ERRORDOC) &&
              (rctx->output_buffering != IOBUF_DISCARD) ) {
-            if (rctx->output_buffering == IOBUF_BUFFER) {
+            if (rctx->output_buffering != IOBUF_NOBUF) {
                 apr_brigade_cleanup(ctx->buffer);
             }
             rctx->output_buffering = IOBUF_DISCARD;
@@ -776,13 +789,94 @@ setaside_output:
         /* If we're buffering this, move it to our buffer and ensure
          * its lifetime is sufficient.  If we're discarding it then do.
          */
-        if (rctx->output_buffering == IOBUF_BUFFER) {
+        switch (rctx->output_buffering) {
+          case IOBUF_NOBUF:
+            break;
+          case IOBUF_DISCARD:
+            apr_bucket_destroy(b);
+            break;
+          case IOBUF_BUFFER_ALL:
             apr_bucket_setaside(b, f->r->pool);
             APR_BUCKET_REMOVE(b);
             APR_BRIGADE_INSERT_TAIL(ctx->buffer, b);
-        }
-        else if (rctx->output_buffering == IOBUF_DISCARD) {
-            apr_bucket_destroy(b);
+            break;
+          case IOBUF_BUFFER_FLUSHPART:
+            /* buffer the new data */
+            apr_bucket_setaside(b, f->r->pool);
+            APR_BUCKET_REMOVE(b);
+            APR_BRIGADE_INSERT_TAIL(ctx->buffer, b);
+            /* get the length */
+            rc = apr_brigade_length(ctx->buffer, 1, &buffered);
+            /* failure here should be a can't-happen, because these buckets
+             * have already been read and any read errors handled
+             */
+            ap_assert(rc == APR_SUCCESS);
+            bbtemp = NULL;
+            while (buffered > ctx->buf_limit) {
+                /* pass first bucket down chain until buffer size below limit */
+                b = APR_BRIGADE_FIRST(ctx->buffer);
+                APR_BUCKET_REMOVE(b);
+                if (bbtemp == NULL) {
+                    bbtemp = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
+                }
+                APR_BRIGADE_INSERT_TAIL(bbtemp, b);
+                rc = apr_brigade_length(ctx->buffer, 1, &buffered);
+                ap_assert(rc == APR_SUCCESS);
+            }
+            if (bbtemp != NULL) {
+                APR_BRIGADE_INSERT_TAIL(bbtemp,
+                           apr_bucket_flush_create(ctx->buffer->bucket_alloc));
+                rc = ap_pass_brigade(f->next, bbtemp);
+                if (rc != APR_SUCCESS) {
+                    ap_log_rerror(APLOG_MARK, APLOG_ERR, rc, f->r,
+                      "Ironbee: downstream returned %d", rc);
+                    return rc;
+                }
+                apr_brigade_destroy(bbtemp);
+            }
+            break;
+          case IOBUF_BUFFER_FLUSHALL:
+            rc = apr_brigade_length(ctx->buffer, 1, &buffered);
+            /* failure here should be a can't-happen, because these buckets
+             * have already been read and any read errors handled
+             */
+            ap_assert(rc == APR_SUCCESS);
+            /* Flush what we have if this would take us over the limit
+             * EXCEPT if this alone would also take us over the limit,
+             * then we add it before flushing.
+             */
+            if (b->length + buffered > (apr_size_t)ctx->buf_limit
+                && b->length <= (apr_size_t)ctx->buf_limit) {
+                /* Flush what we've got */
+                APR_BRIGADE_INSERT_TAIL(ctx->buffer,
+                           apr_bucket_flush_create(ctx->buffer->bucket_alloc));
+                rc = ap_pass_brigade(f->next, ctx->buffer);
+                if (rc != APR_SUCCESS) {
+                    ap_log_rerror(APLOG_MARK, APLOG_ERR, rc, f->r,
+                      "Ironbee: downstream returned %d", rc);
+                }
+                apr_brigade_cleanup(ctx->buffer);
+            }
+            /* buffer the new data */
+            apr_bucket_setaside(b, f->r->pool);
+            APR_BUCKET_REMOVE(b);
+            APR_BRIGADE_INSERT_TAIL(ctx->buffer, b);
+
+            /* ... and flush again in the unlikely event we're over
+             *     the limit in this bucket alone ... */
+            if (b->length + buffered > (apr_size_t)ctx->buf_limit) {
+                APR_BRIGADE_INSERT_TAIL(ctx->buffer,
+                        apr_bucket_flush_create(ctx->buffer->bucket_alloc));
+                rc = ap_pass_brigade(f->next, ctx->buffer);
+                if (rc != APR_SUCCESS) {
+                    ap_log_rerror(APLOG_MARK, APLOG_ERR, rc, f->r,
+                          "Ironbee: downstream returned %d", rc);
+                }
+                apr_brigade_cleanup(ctx->buffer);
+            }
+            break;
+          default: // bug
+            ap_assert(0==1);
         }
     }
 
@@ -790,7 +884,7 @@ setaside_output:
         /* Normal operation - pass it down the chain */
         rv = ap_pass_brigade(f->next, bb);
     }
-    else if (rctx->output_buffering == IOBUF_BUFFER && eos_seen) {
+    else if (IOBUF_BUFFERED(rctx->output_buffering) && eos_seen) {
         /* We can pass on the buffered data all at once */
         rv = ap_pass_brigade(f->next, ctx->buffer);
     }
@@ -832,6 +926,7 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
     const char *buf;
     size_t buf_len;
     apr_status_t bytecount = 0;
+    int buffering;
 
     /* If this is a dummy call, bail out */
     if (rctx->state & NOTIFY_REQ_END) {
@@ -852,22 +947,39 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
         if (rc != IB_OK)
             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
                           "Can't determine output buffer configuration!");
-        rctx->input_buffering = (num == 0) ? IOBUF_NOBUF : IOBUF_BUFFER;
+        if (num == 0) {
+            rctx->input_buffering = IOBUF_NOBUF;
+        }
+        else {
+            ib_core_cfg_t *corecfg = NULL;
+            rc = ib_core_context_config(ib_context_main(rctx->tx->ib),
+                                        &corecfg);
+            ctx->buf_limit = corecfg->limits.request_body_buffer_limit;
+            rctx->input_buffering = (corecfg->limits.request_body_buffer_limit < 0)
+                  ? IOBUF_BUFFER_ALL
+                  : (corecfg->limits.request_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
+                        ? IOBUF_BUFFER_FLUSHALL : IOBUF_BUFFER_FLUSHPART;
+        }
         /* If we're buffering, initialise the buffer */
         ctx->buffer = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
         ctx->eos_sent = false;
     }
+    else {
+        /* Clear any data previously buffered and returned */
+        apr_brigade_cleanup(ctx->buffer);
+    }
 
-    /* If we're buffering, loop over all data before returning.
+    /* While we're buffering, loop over all data before returning.
      * Else just take whatever one get_brigade gives us and return it
      */
+    buffering = IOBUF_BUFFERED(rctx->input_buffering);
     do {
         rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
 
         for (b = APR_BRIGADE_FIRST(bb);
              b != APR_BRIGADE_SENTINEL(bb);
              b = bnext) {
-            /* save pointer to next buxket, in case we clobber b */
+            /* save pointer to next bucket, in case we clobber b */
             bnext = APR_BUCKET_NEXT(b);
 
             /* If we're not feeding the data to Ironbee,
@@ -910,15 +1022,27 @@ setaside_input:
             /* If we're buffering this, move it to our buffer
              * If we're discarding it then do.
              */
-            if (rctx->input_buffering == IOBUF_BUFFER) {
+            if (IOBUF_BUFFERED(rctx->input_buffering)) {
                 APR_BUCKET_REMOVE(b);
                 APR_BRIGADE_INSERT_TAIL(ctx->buffer, b);
+                /* if we're over the buffer limit, break out of
+                 * buffering loop so we can return what we have
+                 */
+                if (rctx->input_buffering != IOBUF_BUFFER_ALL) {
+                    apr_off_t sz;
+                    rc = apr_brigade_length(ctx->buffer, 1, &sz);
+                    /* failure here should be a can't-happen, because these buckets
+                     * have already been read and any read errors handled
+                     */
+                    ap_assert(rc == APR_SUCCESS);
+                    buffering = (sz < ctx->buf_limit);
+                }
             }
             else if (rctx->input_buffering == IOBUF_DISCARD) {
                 apr_bucket_destroy(b);
             }
         }
-    } while (!eos_seen && rctx->input_buffering == IOBUF_BUFFER);
+    } while (!eos_seen && buffering);
 
     if (eos_seen && !ctx->eos_sent) {
         ib_state_notify_request_finished(rctx->tx->ib, rctx->tx);
@@ -944,9 +1068,10 @@ setaside_input:
         /* Normal operation - return status from get_data */
         return rv;
     }
-    else if (rctx->input_buffering == IOBUF_BUFFER) {
+    else if (IOBUF_BUFFERED(rctx->input_buffering)) {
         /* Return the data from our buffer to caller's brigade before return */
         APR_BRIGADE_CONCAT(bb, ctx->buffer);
+        apr_brigade_cleanup(ctx->buffer);
         return rv;
     }
     else {
