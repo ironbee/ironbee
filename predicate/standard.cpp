@@ -29,9 +29,9 @@
 #include <predicate/standard_filter.hpp>
 #include <predicate/standard_ironbee.hpp>
 #include <predicate/standard_predicate.hpp>
+#include <predicate/standard_string.hpp>
 #include <predicate/standard_template.hpp>
 #include <predicate/standard_valuelist.hpp>
-#include <predicate/standard_string.hpp>
 
 namespace IronBee {
 namespace Predicate {

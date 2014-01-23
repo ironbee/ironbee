@@ -47,12 +47,14 @@ CANONICAL_INCLUDE_ORDER = [
   '<predicate/standard_filter.hpp>',
   '<predicate/standard_ironbee.hpp>',
   '<predicate/standard_predicate.hpp>',
+  '<predicate/standard_string.hpp>',
   '<predicate/standard_template.hpp>',
   '<predicate/standard_valuelist.hpp>',
   '<predicate/transform_graph.hpp>',
   '<predicate/tree_copy.hpp>',
   '<predicate/validate.hpp>',
   '<predicate/validate_graph.hpp>',
+  '<predicate/value.hpp>',
 
   # ParserSuite
   '<modules/parser_suite.hpp>',

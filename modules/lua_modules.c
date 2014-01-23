@@ -32,9 +32,9 @@
 #include <ironbee/engine_state.h>
 
 #include <assert.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 /**
  * A container to hold both ibmod_lua and a user-defined Lua module.
