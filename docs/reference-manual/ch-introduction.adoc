@@ -5,22 +5,30 @@ IronBee is a framework and library for web application security
 inspection - for building a Web Application Firewall (WAF). The
 following components make up the IronBee framework:
 
-* IronBee Library: The primary component containing the inspection
-engine.
+IronBee Library::
 
-* IronBee Modules: Extensions to the inspection engine in the form of
-loadable shared libraries defined by the IronBee configuration.
+  The primary component containing the inspection engine.
 
-* Server Components: The server is the executable driving the inspection
-engine. This can be a standard executable, such as the command line
-tool, or in the form of a plugin such as the Apache trafficserver plugin
-and Apache httpd module.
+IronBee Modules::
 
-* Configuration: There are two sets of configuration. The IronBee
-library must be loaded and bootstrapped via the native server
-configuration (for example, a commandline option, trafficserver plugin
-configuration or httpd module configuration). In addition, the IronBee
-Library must be configured via its own configuration file(s).
+  Extensions to the inspection engine in the form of loadable
+  shared libraries defined by the IronBee configuration.
+
+Server Components::
+
+  The server is the executable driving the inspection engine. This
+  can be a standard executable, such as the command line tool, or
+  in the form of a plugin such as the Apache trafficserver plugin
+  and Apache httpd module.
+
+Configuration::
+
+  There are two sets of configuration. The IronBee
+  library must be loaded and bootstrapped via the native server
+  configuration (for example, a commandline option, trafficserver
+  plugin configuration or httpd module configuration). In addition,
+  the IronBee Library must be configured via its own configuration
+  file(s).
 
 Software Installation
 ~~~~~~~~~~~~~~~~~~~~~
@@ -67,8 +75,8 @@ command line tool (see clipp), or through an HTTP web server or proxy.
 IronBee will expose data via fields. A data field specifies a name, type
 and value which can then be used for inspection via rules. Rules can be
 simple signatures against fields, a chained set of operations, stream
-based matchers or even lua scripts. Each rule can inspect fields and
-perform actions.
+based matchers, modules or lua scripts. Each rule can inspect
+fields and perform actions.
 
 Data Fields
 ^^^^^^^^^^^
@@ -76,11 +84,13 @@ Data Fields
 IronBee supports two primary types of data fields:
 
 Scalars::
- Fields which can contain data of various types (strings, numbers
+
+  Fields which can contain data of various types (strings, numbers
 or streams)
 
 Collections::
- Fields which contain zero or more scalars
+
+  Fields which contain zero or more scalars
 
 As fields are built from external data (parsed HTTP traffic), field
 names and values can contain any binary data. While the names of fields
@@ -92,8 +102,8 @@ Addressing Fields
 
 How you use fields depends on the context. The rules, for example,
 typically accept one or more data fields, which means that you can give
-a rule a scalar field (e.g., _REQUEST_URI_) or a collection field (e.g.,
-_ARGS_). When you give a rule a collection, it will extract all scalar
+a rule a scalar field (e.g., `REQUEST_URI`) or a collection field (e.g.,
+`ARGS`). When you give a rule a collection, it will extract all scalar
 fields and utilize them as if they were each specified separately.
 
 Collections can be used as a whole, or with a selector applied. A
@@ -109,7 +119,7 @@ is a list of values which may have zero or more fields. In addition to
 using names as selectors, you also use regular expression patterns as
 selectors by bracketing a regular expression with backslashes. IronBee
 uses the Perl Compatible Regular Expression (PCRE) syntax. For example,
-the following selects all fields whose names begin with "`user`".
+the following selects all fields whose names begin with "+user+".
 
 ------------
 ARGS:/^user/
@@ -144,13 +154,16 @@ In addition to manipulating the field value, a transformation may also
 change the field type. For example, from a collection or string to a
 number.
 
-----------------------------------------
+------------------------------------------
 # Collection count: Collection to number
 ARGS.count()
 
 # Field data length: String to number
 REQUEST_HEADERS:User-Agent.length()
-----------------------------------------
+
+# Explicit conversion
+REQUEST_HEADERS:Content-Length.toInteger()
+------------------------------------------
 
 Field Expansion
 +++++++++++++++
@@ -168,15 +181,13 @@ setvar:MY_COLLECTION:%{NAME}=1
 If the expression resolves to only one variable, the entire `%{NAME}`
 expression will be replaced with the field value.
 
-_____________________________________________________________________________________
-*Caution*
-
-What if the field is not a scalar? Perhaps the value could be JSON or
+CAUTION: What if the field is not a scalar? Perhaps the value could be JSON or
 similar format?
-_____________________________________________________________________________________
 
 Rules
 ^^^^^
+
+TODO: Update with waggle/Predicate information.
 
 IronBee currently defines three types of rules. There is a basic pattern
 matching rule language, a more limited streaming version of the pattern
@@ -231,8 +242,8 @@ only a single time, it may instead execute many times - once for each
 chunk of data. Because of this, stream based rules do not have a phase
 associated with them. In addition to this difference from the basic
 matching rules, stream based rules cannot (currently) be transformed and
-allow only a limited set of operators (currently `dfa`, `pm` and `pmf`
-as of version 0.7).
+allow only a limited set of operators (currently `dfa`, `ee_match_any`
+as of version 0.8).
 
 -----------------------------------------------------------------------------------------------------------
 StreamInspect REQUEST_BODY_STREAM @dfa "(?i)Content-Disposition(?:[^\r\n]*)attachment|form-data|filename" \
@@ -241,6 +252,8 @@ StreamInspect REQUEST_BODY_STREAM @dfa "(?i)Content-Disposition(?:[^\r\n]*)attac
 
 External Rules
 ++++++++++++++
+
+TODO: Deprecate this in favor of Lua modules?
 
 Due to the simple rule syntax and confines of the configuration
 language, both basic and stream matching rules only allow for simple
@@ -297,7 +310,7 @@ return 0
 Common Rule Components
 ++++++++++++++++++++++
 
-Most rules share a common set of metadata attributes as well as actions.
+Most rules share a common set of metadata attributes and modifiers.
 
 Metadata::
   Rule metadata is specified using the following modifiers.
@@ -337,7 +350,7 @@ Events
 
 During a transaction, one or more events may be generated (see the
 `event` action). Each event has the following attributes - many of which
-is controlled by the rule metadata.
+are modified by the rule metadata.
 
 Event ID::
   Uniquely generated (for the transaction) event identifier
@@ -427,6 +440,8 @@ quite big too. Even when sites do not normally have large request
 bodies, they are under the control of attackers, and they may
 intentionally submit large amounts of data in an effort to bypass
 inspection.
+
+TODO: Go more into inspection and buffering options.
 
 Let's look at what might be of interest here:
 
