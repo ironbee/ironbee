@@ -262,7 +262,9 @@ void eventsToJson(
                 eventMap.withArray("tags");
             IronBee::ConstList<const char *> ib_tagList(e->tags);
             BOOST_FOREACH(const char *tag, ib_tagList) {
-                tags.withString(tag);
+                if (tag) {
+                    tags.withString(tag);
+                }
             }
             tags.close();
         }
@@ -272,14 +274,16 @@ void eventsToJson(
                 = eventMap.withArray("locations");
             IronBee::ConstList<const ib_field_t *> ib_fieldList(e->fields);
             BOOST_FOREACH(const ib_field_t *field, ib_fieldList) {
-                locationList.withString(field->name, field->nlen);
+                if (field && field->name) {
+                    locationList.withString(field->name, field->nlen);
+                }
             }
             locationList.close();
         }
 
         eventMap
-            .withString("rule", e->rule_id)
-            .withString("message", e->msg)
+            .withString("rule", e->rule_id ? e->rule_id : "")
+            .withString("message", e->msg ? e->msg : "")
             .withInt("confidence", e->confidence)
             .withInt("severity", e->severity)
             .withString("id", boost::lexical_cast<std::string>(e->event_id))
