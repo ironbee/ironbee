@@ -154,31 +154,55 @@ TxLogJsonArray<TxLogJson> TxLogJson::withArray()
 
 void TxLogJson::withTime(const boost::posix_time::ptime& val)
 {
-    std::ostringstream str;
     int yajl_rc;
 
+    /* The output stream the does the formatting for the date using facets. */
+    std::ostringstream osstream;
+
+    /* The formatted date is stored here. */
+    std::string str;
+
+    /* Location of the last '.' character in the formatted date.
+     * This is used to trim fractional second precision. */
+    size_t dot_loc;
+
+    /* Location of the last '-' character in the formatted date.
+     * This is used to trim fractional second precision. */
+    size_t dash_loc;
+
     /* Setup posix time formatting. The timezone %q is replaced with -00:00.*/
-    str.imbue(
+    osstream.imbue(
         std::locale(
-            str.getloc(),
+            osstream.getloc(),
             /* NOTE: Facet object is destroyed with str. */
             new boost::date_time::time_facet
             <
                 boost::posix_time::ptime,
                 char
             > (
-                "%Y-%m-%dT%H:%M:%S-00:00"
+                "%Y-%m-%dT%H:%M:%S.%f-00:00"
             )
         )
     );
 
-    str << val;
+    /* Format the raw date string. */
+    osstream << val;
 
+    /* Caputre the formatted date string. */
+    str = osstream.str();
+
+    /* Find '.' & '-' surrounding the frac. seconds; Trim to 3 places. */
+    dot_loc = str.rfind(".");
+    dash_loc = str.rfind("-");
+    str = str.replace(dot_loc + 4, dash_loc - dot_loc - 4, "");
+
+    /* Finally, convert the string to JSON. */
     yajl_rc = yajl_gen_string(
         m_json_generator,
-        reinterpret_cast<const unsigned char *>(str.str().data()),
-        size_t(str.tellp()));
+        reinterpret_cast<const unsigned char *>(str.data()),
+        str.length());
 
+    /* Check and throw if there was a problem. */
     if (yajl_rc != yajl_gen_status_ok)
     {
         BOOST_THROW_EXCEPTION(TxLogJsonError() <<
