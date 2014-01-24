@@ -51,6 +51,7 @@ IB_MODULE_DECLARE();
 /* See definition below for documentation. */
 typedef struct ee_config_t ee_config_t;
 typedef struct ee_operator_data_t ee_operator_data_t;
+typedef struct ee_tx_data_t ee_tx_data_t;
 
 struct ee_config_t {
     /** Hash of eudoxus patterns defined via the LoadEudoxus directive. */
@@ -70,6 +71,15 @@ struct ee_callback_data_t
     ib_field_t *capture;
 };
 typedef struct ee_callback_data_t ee_callback_data_t;
+
+/* Per-tx inter-call data */
+struct ee_tx_data_t
+{
+    /** Eudoxus state */
+    ia_eudoxus_state_t *eudoxus_state; 
+    /** Have we reached the end of the automata? */
+    bool end_of_automata;              
+};
 
 /**
  * Access configuration data.
@@ -163,7 +173,7 @@ ib_status_t get_or_create_operator_data_hash(
  * @param[in] instance_data Pointer to the operator instance data.
  *                          The pointer value is used key to lookup the instance
  *                          state.
- * @param[out] eudoxus_state Returns the state if found.
+ * @param[out] tx_data Returns the tx data if found.
  *
  * @returns
  *   - IB_OK on success.
@@ -175,13 +185,13 @@ ib_status_t get_ee_tx_data(
     const ib_module_t   *m,
     ib_tx_t             *tx,
     ee_operator_data_t  *instance_data,
-    ia_eudoxus_state_t **eudoxus_state
+    ee_tx_data_t       **tx_data
 )
 {
     assert(tx != NULL);
     assert(tx->mp != NULL);
     assert(instance_data != NULL);
-    assert(eudoxus_state != NULL);
+    assert(tx_data != NULL);
 
     ib_hash_t *hash;
     ib_status_t rc;
@@ -191,9 +201,9 @@ ib_status_t get_ee_tx_data(
         return rc;
     }
 
-    rc = ib_hash_get_ex(hash, eudoxus_state, (const char *)&instance_data, sizeof(ee_operator_data_t *));
+    rc = ib_hash_get_ex(hash, tx_data, (const char *)&instance_data, sizeof(ee_operator_data_t *));
     if (rc != IB_OK) {
-        *eudoxus_state = NULL;
+        *tx_data = NULL;
     }
 
     return rc;
@@ -205,7 +215,7 @@ ib_status_t get_ee_tx_data(
  * @param[in] m This module.
  * @param[in,out] tx Transaction to store the data in.
  * @param[in] instance_data Pointer to the operator instance data.
- * @param[in] eudoxus_state State to be stored.
+ * @param[in] tx_data Data to be stored.
  *
  * @returns
  *   - IB_OK on success.
@@ -216,13 +226,13 @@ ib_status_t set_ee_tx_data(
     const ib_module_t  *m,
     ib_tx_t            *tx,
     ee_operator_data_t *instance_data,
-    ia_eudoxus_state_t *eudoxus_state
+    ee_tx_data_t       *tx_data
 )
 {
     assert(tx != NULL);
     assert(tx->mp != NULL);
     assert(instance_data != NULL);
-    assert(eudoxus_state != NULL);
+    assert(tx_data != NULL);
 
     ib_hash_t *hash;
     ib_status_t rc;
@@ -235,7 +245,7 @@ ib_status_t set_ee_tx_data(
     rc = ib_hash_set_ex(hash,
                         (const char *)&instance_data,
                         sizeof(ee_operator_data_t *),
-                        eudoxus_state);
+                        tx_data);
 
     return rc;
 }
@@ -492,6 +502,7 @@ ib_status_t ee_match_any_operator_execute(
     ia_eudoxus_result_t ia_rc;
     ee_operator_data_t *operator_data = instance_data;
     ia_eudoxus_t* eudoxus = operator_data->eudoxus;
+    ee_tx_data_t* data = NULL;
     ia_eudoxus_state_t* state = NULL;
     const char *input;
     size_t input_len;
@@ -527,9 +538,10 @@ ib_status_t ee_match_any_operator_execute(
         return IB_EINVAL;
     }
 
-    rc = get_ee_tx_data(m, tx, operator_data, &state);
+    rc = get_ee_tx_data(m, tx, operator_data, &data);
     if (rc == IB_ENOENT) {
-        /* State not found create it */
+        /* Data not found create it */
+        data = ib_mpool_alloc(tx->mp, sizeof(*data));
         ee_cbdata = ib_mpool_alloc(tx->mp, sizeof(*ee_cbdata));
         if (ee_cbdata == NULL) {
             return IB_EALLOC;
@@ -547,13 +559,22 @@ ib_status_t ee_match_any_operator_execute(
             }
             return IB_EINVAL;
         }
-        set_ee_tx_data(m, tx, operator_data, state);
+        data->eudoxus_state = state;
+        data->end_of_automata = false;
+        set_ee_tx_data(m, tx, operator_data, data);
     }
     else if (rc != IB_OK) {
         /* Error getting the state -- abort */
         return rc;
     }
+    
+    if (data->end_of_automata) {
+        /* Nothing to do. */
+        return IB_OK;
+    }
 
+    /* Run eudoxus */
+    state = data->eudoxus_state;
     rc = IB_OK;
 
     ia_rc = ia_eudoxus_execute(state, (const uint8_t *)input, input_len);
@@ -561,7 +582,11 @@ ib_status_t ee_match_any_operator_execute(
         *result = 1;
         rc = IB_OK;
     }
-    else if (ia_rc == IA_EUDOXUS_ERROR) {
+    else if (ia_rc == IA_EUDOXUS_END) {
+        data->end_of_automata = true;
+        rc = IB_OK;
+    }
+    else if (ia_rc != IA_EUDOXUS_OK) {
         rc = IB_EUNKNOWN;
     }
 
@@ -591,7 +616,7 @@ ib_status_t ee_tx_finished_handler(ib_engine_t *ib,
     ib_hash_t *hash;
     ib_mpool_t *pool;
     const ib_module_t *m = (const ib_module_t *)cbdata;
-    ia_eudoxus_state_t *state;
+    ee_tx_data_t *data;
     ib_hash_iterator_t *iterator;
 
     rc = ib_tx_get_module_data(tx, m, &hash);
@@ -614,10 +639,10 @@ ib_status_t ee_tx_finished_handler(ib_engine_t *ib,
         ! ib_hash_iterator_at_end(iterator);
         ib_hash_iterator_next(iterator)
     ) {
-        ib_hash_iterator_fetch(NULL, NULL, &state, iterator);
-        if (state != NULL) {
-            ia_eudoxus_destroy_state(state);
-            state = NULL;
+        ib_hash_iterator_fetch(NULL, NULL, &data, iterator);
+        if (data->eudoxus_state != NULL) {
+            ia_eudoxus_destroy_state(data->eudoxus_state);
+            data->eudoxus_state = NULL;
         }
     }
 
