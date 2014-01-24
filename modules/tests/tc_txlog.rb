@@ -18,7 +18,7 @@ class TestTxLog < Test::Unit::TestCase
         LoadModule "ibmod_xrules.so"
 
         AuditEngine RelevantOnly
-        AuditLogBaseDir /tmp/ironbee
+        AuditLogBaseDir .
         AuditLogIndex None
         AuditLogSubDirFormat "events"
         AuditLogDirMode 0775
