@@ -141,7 +141,7 @@ if [ "$1" -ge 1 ]; then
 
    if ! grep -q "### START IRONBEE PLUGIN" "$configfile" ; then
       echo "### START IRONBEE PLUGIN" >>$configfile
-      echo %{_libexecdir}/libloader.so %{_libdir}/libhtp.so %{_libdir}/libironbee.so >>$configfile
+      echo libloader.so %{_libdir}/libironbee.so >>$configfile
       echo %{_libexecdir}/ts_ironbee.so %{_sysconfdir}/ironbee/ironbee.conf >>$configfile
       echo "### END IRONBEE PLUGIN" >>$configfile
    fi
@@ -150,7 +150,7 @@ fi
 
 %postun trafficserver
 if [ "$1" = 0 ]; then
-   configfile=/etc/trafficserver/plugin.config
+   configfile=%{_sysconfdir}/trafficserver/plugin.config
    if egrep -q "^### START IRONBEE PLUGIN" "$configfile" && egrep -q "^### END IRONBEE PLUGIN" "$configfile"; then
       sed -i.save -e '/^### START IRONBEE PLUGIN/,/^### END IRONBEE PLUGIN/d' $configfile
    fi
