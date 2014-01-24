@@ -202,10 +202,10 @@ void TxLogData::recordBlockData(
 
         switch(tx.block_method()) {
         case IB_BLOCK_METHOD_STATUS:
-            method = "Close";
+            method = "ErrorPage";
             break;
         case IB_BLOCK_METHOD_CLOSE:
-            method = "ErrorPage";
+            method = "Close";
             break;
         default:
             method = "";
