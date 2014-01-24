@@ -13,3 +13,4 @@ require 'tc_xrules'
 require 'tc_init_collection'
 
 require 'tc_trusted_proxy'
+require 'tc_txlog'
