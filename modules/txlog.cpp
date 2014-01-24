@@ -574,6 +574,31 @@ static ib_status_t txlog_logger_format_fn(
     return IB_OK;
 }
 
+static void log_to_engine(void *element, void *cbdata) {
+    assert(element != NULL);
+    assert(cbdata != NULL);
+
+    ib_logger_standard_msg_t *msg =
+        reinterpret_cast<ib_logger_standard_msg_t *>(element);
+    ib_engine_t *ib =
+        reinterpret_cast<ib_engine_t *>(cbdata);
+
+    ib_log_info(
+        ib,
+        "%.*s",
+        static_cast<int>(msg->msg_sz),
+        reinterpret_cast<char *>(msg->msg));
+}
+
+static ib_status_t txlog_log_to_engine(
+    ib_logger_t        *logger,
+    ib_logger_writer_t *writer,
+    void               *cbdata
+)
+{
+    return ib_logger_dequeue(logger, writer, &log_to_engine, cbdata);
+}
+
 } /* extern "C" */
 
 /**
@@ -602,6 +627,8 @@ private:
         IronBee::ConfigurationParser  cp,
         bool                          enabled
     ) const;
+
+    void logToStdLogDirective(IronBee::ConfigurationParser cp) const;
 
     //! Callback to log @a tx through the Logger of @a ib.
     void transactionFinishedHandler(
@@ -717,6 +744,9 @@ TxLogModule::TxLogModule(IronBee::Module module):
 
     /* Register configuration directives. */
     module.engine().register_configuration_directives()
+        .list(
+            "TxLogIronBeeLog",
+            boost::bind(&TxLogModule::logToStdLogDirective, this, _1))
         .on_off(
             "TxLogEnabled",
             boost::bind(&TxLogModule::onOffDirective, this, _1, _3))
@@ -760,6 +790,29 @@ void TxLogModule::onOffDirective(
     /* Set the mapping in the context configuration. */
     cfg.is_enabled = enabled;
 }
+
+void TxLogModule::logToStdLogDirective(IronBee::ConfigurationParser cp) const {
+
+    ib_logger_format_t *format;
+
+    IronBee::throw_if_error(
+        ib_logger_fetch_format(
+            ib_engine_logger_get(cp.engine().ib()),
+            TXLOG_FORMAT_FN_NAME,
+            &format)
+    );
+
+    IronBee::throw_if_error(
+        ib_logger_writer_add(
+            ib_engine_logger_get(cp.engine().ib()),
+            NULL, NULL,
+            NULL, NULL,
+            NULL, NULL,
+            format,
+            txlog_log_to_engine, cp.engine().ib())
+    );
+}
+
 
 ib_status_t TxLogModule::recordAuditLogInfo(
     ib_engine_t               *ib,
