@@ -2756,11 +2756,13 @@ static ib_status_t engine_postconfig_fn(
             TSError("[ironbee] Failed to create transaction log \"%s\": %d",
                     mod_data->txlogfile,
                     rv);
-            return IB_EUNKNOWN;
         }
     }
+    else {
+        ib_log_notice(ib, "No transaction logger available.");
+    }
 
-    return rc;
+    return IB_OK;
 }
 
 /**
