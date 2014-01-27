@@ -107,6 +107,10 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
                                const char *fmt,
                                ...)
 {
+    assert(ple     != NULL);
+    assert(mp      != NULL);
+    assert(rule_id != NULL);
+    assert(fmt     != NULL);
     /*
      * Defined so that size_t to int cast is avoided
      * checking the result of vsnprintf below.
@@ -116,33 +120,51 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
      */
 #define IB_LEVENT_MSG_BUF_SIZE 1024
 
-    char buf[IB_LEVENT_MSG_BUF_SIZE];
+    ib_mpool_t *mptmp;
+    char *buf;
     va_list ap;
     int len = 0;
     ib_status_t rc;
 
-    *ple = (ib_logevent_t *)ib_mpool_calloc(mp, 1, sizeof(**ple));
-    if (*ple == NULL) {
-        return IB_EALLOC;
+    rc = ib_mpool_create(&mptmp, "Temporary Memory Pool", mp);
+    if (rc != IB_OK) {
+        return rc;
     }
 
-    (*ple)->event_id = (uint32_t)ib_clock_get_time(); /* truncated */
-    (*ple)->mp = mp;
-    (*ple)->rule_id = ib_mpool_strdup(mp, rule_id);
-    (*ple)->type = type;
+    buf = ib_mpool_alloc(mptmp, IB_LEVENT_MSG_BUF_SIZE);
+    if (buf == NULL) {
+        rc = IB_EALLOC;
+        goto return_rc;
+    }
+
+    *ple = (ib_logevent_t *)ib_mpool_calloc(mp, 1, sizeof(**ple));
+    if (*ple == NULL) {
+        rc = IB_EALLOC;
+        goto return_rc;
+    }
+
+    (*ple)->event_id   = (uint32_t)ib_clock_get_time(); /* truncated */
+    (*ple)->mp         = mp;
+    (*ple)->rule_id    = ib_mpool_strdup(mp, rule_id);
+    (*ple)->type       = type;
     (*ple)->rec_action = rec_action;
     (*ple)->confidence = confidence;
-    (*ple)->severity = severity;
-    (*ple)->suppress = IB_LEVENT_SUPPRESS_NONE;
+    (*ple)->severity   = severity;
+    (*ple)->suppress   = IB_LEVENT_SUPPRESS_NONE;
+
+    if ((*ple)->rule_id == NULL) {
+        rc = IB_EALLOC;
+        goto return_rc;
+    }
 
     rc = ib_list_create(&((*ple)->tags), mp);
     if (rc != IB_OK) {
-        return rc;
+        goto return_rc;
     }
 
     rc = ib_list_create(&((*ple)->fields), mp);
     if (rc != IB_OK) {
-        return rc;
+        goto return_rc;
     }
 
     /*
@@ -159,71 +181,76 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
     /* Copy the formatted message. */
     (*ple)->msg = ib_mpool_strdup(mp, buf);
 
-    return IB_OK;
+return_rc:
+    ib_mpool_release(mptmp);
+    return rc;
 }
 
 ib_status_t ib_logevent_tag_add(ib_logevent_t *le,
                                 const char *tag)
 {
+    assert(le != NULL);
+    assert(le->tags != NULL);
+
     char *tag_copy;
     ib_status_t rc;
 
-    assert(le != NULL);
-
-    if (le->tags == NULL) {
-        rc = ib_list_create(&le->tags, le->mp);
-        if (rc != IB_OK) {
-            return rc;
-        }
+    tag_copy = ib_mpool_memdup(le->mp, tag, strlen(tag) + 1);
+    if (tag == NULL) {
+        return IB_EALLOC;
     }
 
-    tag_copy = ib_mpool_memdup(le->mp, tag, strlen(tag) + 1);
     rc = ib_list_push(le->tags, tag_copy);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
-    return rc;
+    return IB_OK;
 }
 
 ib_status_t ib_logevent_field_add(ib_logevent_t *le,
                                   const char *name)
 {
+    assert(le != NULL);
+    assert(le->fields != NULL);
+
     char *name_copy;
     ib_status_t rc;
 
-    assert(le != NULL);
-
-    if (le->fields == NULL) {
-        rc = ib_list_create(&le->fields, le->mp);
-        if (rc != IB_OK) {
-            return rc;
-        }
+    name_copy = ib_mpool_strdup(le->mp, name);
+    if (name_copy == NULL) {
+        return IB_EALLOC;
     }
 
-    name_copy = ib_mpool_memdup(le->mp, name, strlen(name) + 1);
     rc = ib_list_push(le->fields, name_copy);
+    if (rc != IB_OK){
+        return rc;
+    }
 
-    return rc;
+    return IB_OK;
 }
 
 ib_status_t ib_logevent_field_add_ex(ib_logevent_t *le,
                                      const char *name,
                                      size_t nlen)
 {
+    assert(le != NULL);
+    assert(le->fields != NULL);
+
     char *name_copy;
     ib_status_t rc;
 
-    assert(le != NULL);
-
-    if (le->fields == NULL) {
-        rc = ib_list_create(&le->fields, le->mp);
-        if (rc != IB_OK) {
-            return rc;
-        }
+    name_copy = ib_mpool_memdup_to_str(le->mp, name, nlen);
+    if (name_copy == NULL){
+        return IB_EALLOC;
     }
 
-    name_copy = ib_mpool_memdup_to_str(le->mp, name, nlen);
     rc = ib_list_push(le->fields, name_copy);
+    if (rc != IB_OK){
+        return rc;
+    }
 
-    return rc;
+    return IB_OK;
 }
 
 ib_status_t ib_logevent_data_set(ib_logevent_t *le,
