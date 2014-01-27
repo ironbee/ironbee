@@ -100,7 +100,9 @@ EXTRA_DIST = $(TEST_EXTRAS)
 
 if OUT_OF_TREE
 BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
-CLEANFILES += $(TEST_EXTRAS)
+CLEANFILES += $(TEST_EXTRAS) \
+    ironbee_gtest.conf_* \
+    *.log
 endif
 
 check-programs: $(check_PROGRAMS)

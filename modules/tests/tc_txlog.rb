@@ -3,24 +3,11 @@ class TestTxLog < Test::Unit::TestCase
   include CLIPPTest
 
   def test_txlog_01
-    clipp(
-      :input_hashes => [
-        simple_hash("GET /?d=eek HTTP/1.1\nHost: any\n\n", "HTTP/1.1 200 OK\nContent-Type: text/html\n\n")
-      ],
-      :config => '''
-        LoadModule "ibmod_htp.so"
-        LoadModule "ibmod_txlog.so"
-        LoadModule "ibmod_pcre.so"
-        LoadModule "ibmod_persistence_framework.so"
-        LoadModule "ibmod_init_collection.so"
-        LoadModule "ibmod_libinjection.so"
-        LoadModule "ibmod_trusted_proxy.so"
-        LoadModule "ibmod_xrules.so"
-
+    config_text = <<-EOS
         AuditEngine RelevantOnly
-        AuditLogBaseDir .
+        AuditLogBaseDir #{BUILDDIR}
         AuditLogIndex None
-        AuditLogSubDirFormat "events"
+        AuditLogSubDirFormat ""
         AuditLogDirMode 0775
         AuditLogFileMode 0664
         AuditLogParts all
@@ -41,11 +28,30 @@ class TestTxLog < Test::Unit::TestCase
         Rule ARGS @rx boo id:test/3 phase:REQUEST "msg:Matched boo" event
         Rule ARGS @rx eek id:test/4 phase:REQUEST "msg:Matched eek" event block setvar:FLAGS:block=1
         Rule FLAGS:block.count() @gt 0 id:test/5 phase:REQUEST "msg:Blocking" event:alert block:phase
-      ''',
-      :default_site_config => '''
-        RuleEnable all
-      '''
-    )
+    EOS
+    clipp(
+      modules: [
+        'htp', 'txlog', 'pcre', 'persistence_framework', 'init_collection',
+        'libinjection', 'trusted_proxy', 'xrules'
+      ],
+      config: config_text,
+      default_site_config: 'RuleEnable all'
+    ) do
+      transaction do |t|
+        t.request(
+          raw: "GET /?d=eek HTTP/1.1",
+          headers: {
+            "Host" => "any"
+          }
+        )
+        t.response(
+          raw: "HTTP/1.1 200 OK",
+          headers: {
+            "Content-Type" => "text/html"
+          }
+        )
+      end
+    end
 
     assert_clean_exit
   end
