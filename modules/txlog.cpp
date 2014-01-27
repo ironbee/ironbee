@@ -499,6 +499,9 @@ static ib_status_t txlog_logger_format_fn(
         TxLogJson()
             .withMap()
                 .withTime("timestamp", tx.started_time())
+                .withInt("duration",
+                    (tx.finished_time() - tx.started_time())
+                        .total_milliseconds())
                 .withString("sensorId", tx.engine().sensor_id())
                 .withString("siteId", siteId)
                 .withMap("connection")
