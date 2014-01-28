@@ -508,6 +508,7 @@ static ib_status_t txlog_logger_format_fn(
                 .withString("sensorId", tx.engine().sensor_id())
                 .withString("siteId", siteId)
                 .withMap("connection")
+                    .withString("id", conn.id())
                     .withString("clientIp", conn.remote_ip_string())
                     .withInt("clientPort", conn.remote_port())
                     .withString("serverIp", conn.local_ip_string())
