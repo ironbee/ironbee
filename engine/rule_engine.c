@@ -1525,8 +1525,8 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     namelen = 0;
     names = 0;
     IB_LIST_LOOP_CONST(rule_exec->value_stack, node) {
-        if (node->data != NULL) {
-            ib_field_t *fld_tmp = (ib_field_t *)ib_list_node_data_const(node);
+        ib_field_t *fld_tmp = (ib_field_t *)ib_list_node_data_const(node);
+        if (fld_tmp != NULL) {
             ++names;
             if (fld_tmp->nlen > 0) {
                 namelen += (fld_tmp->nlen + 1);
@@ -1546,8 +1546,8 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     nameoff = 0;
     n = 0;
     IB_LIST_LOOP_CONST(rule_exec->value_stack, node) {
-        if (node->data != NULL) {
-            ib_field_t *fld_tmp = (ib_field_t *)ib_list_node_data_const(node);
+        ib_field_t *fld_tmp = (ib_field_t *)ib_list_node_data_const(node);
+        if (fld_tmp != NULL) {
             if (fld_tmp->nlen > 0) {
                 memcpy(name+nameoff, fld_tmp->name, fld_tmp->nlen);
                 nameoff += fld_tmp->nlen;
