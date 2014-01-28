@@ -710,27 +710,6 @@ static ib_status_t rule_exec_pop_rule(ib_rule_exec_t *rule_exec)
 }
 
 /**
- * Set the target for a rule execution object
- *
- * @param[in,out] rule_exec Rule execution object
- * @param[in] target The current rule target (or NULL to reset)
- *
- * @returns
- *   - IB_OK on success.
- */
-static ib_status_t rule_exec_set_target(ib_rule_exec_t *rule_exec,
-                                        ib_rule_target_t *target)
-
-{
-    assert(rule_exec != NULL);
-    assert(rule_exec->rule != NULL);
-
-    rule_exec->target = target;
-
-    return IB_OK;
-}
-
-/**
  * Push a value onto a rule execution object's value stack
  *
  * @param[in,out] rule_exec The rule execution object
@@ -1818,6 +1797,61 @@ static ib_status_t execute_phase_operator(ib_rule_exec_t *rule_exec,
 }
 
 /**
+ * Execute an external rule.
+ *
+ * @param[in] rule_exec Rule execution environment.
+ * @param[in] rule The rule object to execute.
+ * @param[in] tx The current transaction.
+ * @param[in] opinst The operator instance, that holds the external rule data.
+ *
+ * @return
+ * - IB_OK On success.
+ * - Other on rule failure.
+ */
+static ib_status_t execute_ext_phase_rule_targets(
+    ib_rule_exec_t          *rule_exec,
+    ib_rule_t               *rule,
+    ib_tx_t                 *tx,
+    ib_rule_operator_inst_t *opinst
+)
+{
+    assert(rule_exec != NULL);
+    assert(rule != NULL);
+    assert(tx != NULL);
+    assert(opinst != NULL);
+
+    ib_status_t rc;
+    ib_status_t op_rc;
+    ib_num_t    result;
+
+    /* Execute the operator */
+    ib_rule_log_trace(rule_exec, "Executing external rule");
+    op_rc = ib_operator_inst_execute(
+        opinst->op,
+        opinst->instance_data,
+        rule_exec->tx,
+        NULL,
+        get_capture(rule_exec),
+        &result
+    );
+    rule_exec->rule_result = result;
+    rule_exec->cur_result  = result;
+    if (op_rc != IB_OK) {
+        ib_rule_log_error(rule_exec,
+                          "External operator returned an error: %s",
+                          ib_status_to_string(op_rc));
+    }
+    rc = ib_rule_log_exec_op(rule_exec->exec_log, opinst, op_rc);
+    if (rc != IB_OK) {
+        ib_rule_log_error(rule_exec,
+                          "Failed to log external operator execution: %s",
+                          ib_status_to_string(rc));
+    }
+    ib_rule_log_execution(rule_exec);
+    return rc;
+}
+
+/**
  * Execute a single rule's operator on all target fields.
  *
  * @param[in] rule_exec Rule execution object
@@ -1832,44 +1866,15 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
     assert(rule_exec->rule->opinst->op != NULL);
     assert(rule_exec->tx != NULL);
 
-    ib_tx_t            *tx = rule_exec->tx;
-    ib_rule_t          *rule = rule_exec->rule;
+    ib_tx_t                 *tx     = rule_exec->tx;
+    ib_rule_t               *rule   = rule_exec->rule;
     ib_rule_operator_inst_t *opinst = rule_exec->rule->opinst;
-    ib_status_t         rc = IB_OK;
-    ib_list_node_t     *node = NULL;
+    ib_status_t              rc     = IB_OK;
+    ib_list_node_t          *node   = NULL;
 
     /* Special case: External rules */
     if (ib_flags_all(rule->flags, IB_RULE_FLAG_EXTERNAL)) {
-        ib_status_t op_rc;
-        ib_num_t    result;
-
-        /* Execute the operator */
-        ib_rule_log_trace(rule_exec, "Executing external rule");
-        op_rc = ib_operator_inst_execute(
-            opinst->op,
-            opinst->instance_data,
-            rule_exec->tx,
-            NULL,
-            get_capture(rule_exec),
-            &result
-        );
-        rule_exec->rule_result = result;
-        rule_exec->cur_result = result;
-        rule_exec->rule_result = result;
-        rule_exec->cur_result = result;
-        if (op_rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "External operator returned an error: %s",
-                              ib_status_to_string(op_rc));
-        }
-        rc = ib_rule_log_exec_op(rule_exec->exec_log, opinst, op_rc);
-        if (rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "Failed to log external operator execution: %s",
-                              ib_status_to_string(rc));
-        }
-        ib_rule_log_execution(rule_exec);
-        return rc;
+        return execute_ext_phase_rule_targets(rule_exec, rule, tx, opinst);
     }
 
     /* Log what we're going to do */
@@ -1894,16 +1899,18 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
      * correct behavior should be.
      */
     IB_LIST_LOOP(rule->target_fields, node) {
-        ib_rule_target_t   *target = (ib_rule_target_t *)node->data;
-        assert(target != NULL);
-        ib_list_t          *result = NULL;
-        ib_field_t         *value = NULL;      /* Value from the DPI */
-        const ib_field_t   *tfnvalue = NULL;   /* Value after tfns */
+        ib_list_t          *result   = NULL;
+        ib_field_t         *value    = NULL; /* Value from the DPI */
+        const ib_field_t   *tfnvalue = NULL; /* Value after tfns */
         ib_status_t         getrc;
-        bool                pushed = true;
+        bool                pushed   = true;
+        ib_rule_target_t   *target   =
+            (ib_rule_target_t *)ib_list_node_data(node);
+
+        assert(target != NULL);
 
         /* Set the target in the rule execution object */
-        rule_exec_set_target(rule_exec, target);
+        rule_exec->target = target;
 
         /* Get the field value */
         /* The const cast below is unfortunate, but we currently don't have a
