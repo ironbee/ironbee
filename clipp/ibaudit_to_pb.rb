@@ -71,9 +71,6 @@ def parse_raw(input)
 end
 
 class ClippEmitter
-  # TODO: Make use of connection id to determine connection boundaries.
-  # For now, always do a connection boundary.
-
   def initialize(to)
     @to = to
     @conn_id = nil
