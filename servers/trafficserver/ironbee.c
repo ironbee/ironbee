@@ -2672,12 +2672,12 @@ static ib_status_t engine_preconfig_fn(
     assert(cbdata != NULL);
 
     ib_status_t         rc;
-    ib_logger_format_t *txlog_format;
+    ib_logger_format_t *iblog_format;
     module_data_t      *mod_data = (module_data_t *)cbdata;
 
     rc = ib_logger_format_create(
         ib_engine_logger_get(ib),
-        &txlog_format,
+        &iblog_format,
         logger_format,
         mod_data,
         NULL,
@@ -2695,7 +2695,7 @@ static ib_status_t engine_preconfig_fn(
         mod_data,                  /* Callback data. */
         NULL,                      /* Reopen. */
         NULL,                      /* Callback data. */
-        txlog_format,              /* Format - This does all the work. */
+        iblog_format,              /* Format - This does all the work. */
         NULL,                      /* Record. */
         NULL                       /* Callback data. */
     );
