@@ -1505,7 +1505,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     names = 0;
     IB_LIST_LOOP_CONST(rule_exec->value_stack, node) {
         ib_field_t *fld_tmp = (ib_field_t *)ib_list_node_data_const(node);
-        if (fld_tmp != NULL) {
+        if (fld_tmp != NULL && fld_tmp->name != NULL && fld_tmp->nlen > 0) {
             ++names;
             if (fld_tmp->nlen > 0) {
                 namelen += (fld_tmp->nlen + 1);
@@ -1959,7 +1959,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
         if (result != NULL) {
             /* If list has one element, pull out into value.  Otherwise,
-             * wrap in a list field.
+             * wrap in an unnamed list field.
              */
             if (ib_list_elements(result) == 1) {
                 value = (ib_field_t *)ib_list_node_data(ib_list_first(result));
@@ -1968,7 +1968,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
                 rc = ib_field_create(
                     &value,
                     tx->mp,
-                    IB_S2SL("rule_target_results"),
+                    IB_S2SL(""),
                     IB_FTYPE_LIST,
                     ib_ftype_list_in(result)
                 );
