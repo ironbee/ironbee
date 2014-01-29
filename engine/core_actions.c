@@ -142,15 +142,16 @@ static ib_status_t setvar_float_add_op(
     return IB_OK;
 }
 
-typedef struct {
+struct setvar_value_t {
     ib_field_t *value;           /**< The value to transform. */
     ib_list_t  *transformations; /**< List of transformation names. */
-} setvar_value_t;
+};
+struct setvar_value_t setvar_value_t;
 
 /**
  * Structure storing setvar instance data.
  */
-typedef struct {
+struct setvar_data_t {
     setvar_op_t      op;              /**< Setvar operation */
     ib_var_target_t *target;          /**< Target to set. */
 
@@ -163,27 +164,31 @@ typedef struct {
     ib_list_t       *transformations; /**< Names of tfns to apply to value. */
     const char      *target_str;      /**< Used in error logging. */
     size_t           target_str_len;  /**< Used in error logging. */
-} setvar_data_t;
+};
+typedef struct setvar_data_t setvar_data_t;
 
 /**
  * Data types for the setflag action.
  */
-typedef enum {
-    setflag_op_set,               /**< Set the flag */
-    setflag_op_clear              /**< Clear the flag */
-} setflag_op_t;
+enum setflag_op_t {
+    setflag_op_set,  /**< Set the flag */
+    setflag_op_clear /**< Clear the flag */
+};
+typedef enum setflag_op_t setflag_op_t;
 
-typedef struct {
+struct setflag_data_t {
     const ib_tx_flag_map_t *flag;
     setflag_op_t            op;
-} setflag_data_t;
+};
+typedef struct setflag_data_t setflag_data_t;
 
 /**
  * Data types for the event action.
  */
-typedef struct {
-    ib_logevent_type_t      event_type; /**< Type of the event */
-} event_data_t;
+struct event_data_t {
+    ib_logevent_type_t event_type; /**< Type of the event */
+};
+typedef struct event_data_t event_data_t;
 
 /**
  * Perform float setvar operation.
@@ -761,6 +766,8 @@ static ib_status_t act_setvar_create(
 
         goto success;
     }
+
+    /* Argument is not a number. Generically handle this. */
     else {
         const char *error_message;
         int error_offset;
@@ -889,8 +896,56 @@ static ib_status_t act_setvar_execute(
     }
 
 
+    /* If the argument is a IB_FTYPE_GENERIC type, then it must be expanded. */
+    if (setvar_data->argument->type == IB_FTYPE_GENERIC) {
+        ib_var_expand_t *arg_expand;
+        const char      *arg_name;
+        size_t           arg_name_len;
+        ib_bytestr_t    *arg_bs;
+        ib_field_t      *arg_tmp;
+
+        rc = ib_field_value(
+            setvar_data->argument,
+            ib_ftype_generic_mutable_out(&arg_expand));
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        rc = ib_var_expand_execute(
+            arg_expand,
+            &arg_name,
+            &arg_name_len,
+            mp,
+            tx->var_store);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        rc = ib_bytestr_alias_mem(
+            &arg_bs,
+            mp,
+            (const uint8_t *)arg_name,
+            arg_name_len);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        rc = ib_field_create(
+            &arg_tmp,
+            mp,
+            IB_S2SL(""),
+            IB_FTYPE_BYTESTR,
+            ib_ftype_bytestr_in(arg_bs));
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        argument = arg_tmp;
+    }
     /* Pull out the argument to setvar. */
-    argument = setvar_data->argument;
+    else {
+        argument = setvar_data->argument;
+    }
 
     if (setvar_data->transformations != NULL &&
         ib_list_elements(setvar_data->transformations) > 0)
@@ -926,67 +981,14 @@ static ib_status_t act_setvar_execute(
 
     case SETVAR_STRSET:
     {
-        ib_var_expand_t *expand;
-        ib_bytestr_t *bs = NULL;
-        const char *value;
-        size_t vlen;
-
-        rc = ib_field_value_type(
-            argument,
-            ib_ftype_generic_mutable_out(&expand),
-            IB_FTYPE_GENERIC);
+        rc = ib_field_copy(
+            &cur_field,
+            mp,
+            setvar_data->target_str,
+            setvar_data->target_str_len,
+            argument);
         if (rc != IB_OK) {
             return rc;
-        }
-
-        /* Expand value. */
-        rc = ib_var_expand_execute(
-            expand,
-            &value, &vlen,
-            tx->mp,
-            tx->var_store
-        );
-        if (rc != IB_OK) {
-            ib_rule_log_error(
-                rule_exec,
-                "setvar %.*s: Failed to expand: %s ",
-                tslen, ts,
-                ib_status_to_string(rc)
-            );
-            return rc;
-        }
-
-        /* Create a bytestr to hold it. */
-        rc = ib_bytestr_alias_mem(&bs, tx->mp, (uint8_t *)value, vlen);
-        if (rc != IB_OK) {
-            ib_rule_log_error(
-                rule_exec,
-                "setvar %.*s: Failed to create bytestring: %s ",
-                tslen, ts,
-                ib_status_to_string(rc)
-            );
-            return rc;
-        }
-
-        /* Try to re-use the existing field */
-        if (cur_field != NULL && cur_field->type == IB_FTYPE_BYTESTR) {
-            ib_field_setv(cur_field, ib_ftype_bytestr_in(bs));
-        }
-        else {
-            rc = ib_field_create(&cur_field,
-                                 tx->mp,
-                                 "", 0,
-                                 IB_FTYPE_BYTESTR,
-                                 ib_ftype_bytestr_in(bs));
-            if (rc != IB_OK) {
-                ib_rule_log_error(
-                    rule_exec,
-                    "setvar %.*s: Failed to create field: %s",
-                    tslen, ts,
-                    ib_status_to_string(rc)
-                );
-                return rc;
-            }
         }
         break;
     }

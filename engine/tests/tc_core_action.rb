@@ -84,4 +84,33 @@ class TestAction < Test::Unit::TestCase
 
   end
 
+  def test_setvar_types
+    clipp(
+      :input_hashes => [simple_hash("GET /foo\n")],
+      :default_site_config => <<-EOS
+
+        # RNS-272:
+        InitVar fval 234.567
+        Rule    fval @clipp_print      "fval" id:qa-site/030 phase:REQUEST_HEADER
+        Rule    fval @clipp_print_type "fval" id:qa-site/031 phase:REQUEST_HEADER
+
+        Action id:qa-site/033 phase:REQUEST_HEADER "setvar:ival=%{fval}.toFloat().round()"
+        Rule    ival @clipp_print      "ival" id:qa-site/034 phase:REQUEST_HEADER
+        Rule    ival @clipp_print_type "ival" id:qa-site/035 phase:REQUEST_HEADER
+
+        Action id:qa-site/039 phase:REQUEST_HEADER "setvar:ival2=%{fval}.toFloat().toInteger()"
+        Rule    ival2 @clipp_print      "ival2" id:qa-site/040 phase:REQUEST_HEADER
+        Rule    ival2 @clipp_print_type "ival2" id:qa-site/041 phase:REQUEST_HEADER
+      EOS
+    )
+
+    assert_no_issues
+    assert_log_match /clipp_print \[fval\]: 234.567/
+    assert_log_match /clipp_print_type \[fval\]: FLOAT/
+    assert_log_match /clipp_print \[ival\]: 235/
+    assert_log_match /clipp_print_type \[ival\]: NUMBER/
+    assert_log_match /clipp_print \[ival2\]: 234/
+    assert_log_match /clipp_print_type \[ival2\]: NUMBER/
+
+  end
 end
