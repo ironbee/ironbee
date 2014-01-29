@@ -185,7 +185,7 @@ struct ib_rule_exec_t {
     ib_list_t              *phase_rules; /**< List of ib_rule_t */
 
     /**
-     * Stack of @ref ib_field_t used for createing FIELD* targets
+     * Stack of @ref ib_field_t used for creating FIELD* targets
      */
     ib_list_t              *value_stack;
 

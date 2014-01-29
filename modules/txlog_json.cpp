@@ -188,7 +188,7 @@ void TxLogJson::withTime(const boost::posix_time::ptime& val)
     /* Format the raw date string. */
     osstream << val;
 
-    /* Caputre the formatted date string. */
+    /* Capture the formatted date string. */
     str = osstream.str();
 
     /* Find '.' & '-' surrounding the frac. seconds; Trim to 3 places. */

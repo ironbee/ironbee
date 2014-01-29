@@ -674,7 +674,7 @@ ib_status_t pcre_dfa_set_match(
     /* If there is a partial match, it is the prefix of all these matches.
      *
      * This then-block constructs a single subject beginning with the
-     * patial match and ending with the text of the longest current
+     * partial match and ending with the text of the longest current
      * match.
      */
     if (dfa_workspace->partial != NULL && dfa_workspace->partial_sz > 0) {
@@ -716,7 +716,7 @@ ib_status_t pcre_dfa_set_match(
         dfa_workspace->partial_sz = 0;
         dfa_workspace->partial    = NULL;
     }
-    /* A small optomization:
+    /* A small optimization:
      * Instead of copying all byte strings from the subject,
      * we create a copy of subject that we own and alias into it.
      */

@@ -1987,7 +1987,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         /* If there is a defined target, store it's name (as a field)
          * in the value_stack of the rule_exec object.
          *
-         * This allows FIELD_NAME_FULL to be correctl populated.
+         * This allows FIELD_NAME_FULL to be correctly populated.
          */
         if (target != NULL && target->target != NULL) {
             ib_ftype_t type;

@@ -421,7 +421,7 @@ public:
 
         rc = ib_state_notify_request_header_finished(ib_engine, tx);
         if (rc != IB_OK) {
-            throw std::runtime_error("failed to notify requst header finished");
+            throw std::runtime_error("failed to notify request header finished");
         }
     }
 
