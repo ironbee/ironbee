@@ -43,7 +43,9 @@
 typedef struct ngxib_conn_t ngxib_conn_t;
 
 /* Buffering status for request/response bodies */
-typedef enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } iobuf_t;
+typedef enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER_ALL,
+               IOBUF_BUFFER_FLUSHALL, IOBUF_BUFFER_FLUSHPART } iobuf_t;
+#define IOBUF_BUFFERED(x) (((x) == IOBUF_BUFFER_ALL) || ((x) == IOBUF_BUFFER_FLUSHALL) || ((x) == IOBUF_BUFFER_FLUSHPART))
 
 /* The main per-request record for the plugin */
 typedef struct ngxib_req_ctx {
@@ -54,6 +56,8 @@ typedef struct ngxib_req_ctx {
     iobuf_t output_buffering;     /* Output buffer management */
     ngx_chain_t *response_buf;    /* Output buffer management */
     ngx_chain_t *response_ptr;    /* Output buffer management */
+    size_t output_buffered;       /* Output buffer management */
+    size_t output_limit;          /* Output buffer management */
     int body_done:1;              /* State flags */
     int body_wait:1;              /* State flags */
     int has_request_body:1;       /* State flags */

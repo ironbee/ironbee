@@ -30,6 +30,7 @@
 #include <ironbee/engine_manager.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>
+#include <ironbee/core.h>
 
 #include "ngx_ironbee.h"
 
@@ -223,8 +224,18 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
             }
             else {
                 /* If we're buffering, initialize the buffer */
-                ib_log_debug_tx(ctx->tx, "ironbee_body_out: BUFFER");
-                ctx->output_buffering = IOBUF_BUFFER;
+                ib_core_cfg_t *corecfg = NULL;
+                rc = ib_core_context_config(ib_context_main(ctx->tx->ib),
+                                            &corecfg);
+                if (rc != IB_OK) {
+                    ib_log_error_tx(ctx->tx, "Can't fetch configuration.");
+                }
+                ctx->output_limit = corecfg->limits.response_body_buffer_limit;
+                ctx->output_buffering = (corecfg->limits.response_body_buffer_limit < 0)
+                      ? IOBUF_BUFFER_ALL
+                      : (corecfg->limits.response_body_buffer_limit_action == IB_BUFFER_LIMIT_ACTION_FLUSH_ALL)
+                            ? IOBUF_BUFFER_FLUSHALL : IOBUF_BUFFER_FLUSHPART;
+                //ib_log_debug_tx(ctx->tx, "ironbee_body_out: BUFFER");
             }
         }
     }
@@ -251,11 +262,25 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
             ctx->response_buf = NULL;
             ctx->output_buffering = IOBUF_DISCARD;
         }
-        else if (ctx->output_buffering == IOBUF_BUFFER) {
+        else if IOBUF_BUFFERED(ctx->output_buffering) {
+            /* If we're supposed to be flushing, do that now */
+            if (ctx->output_buffering != IOBUF_BUFFER_ALL) {
+//NRK
+                if (ctx->output_buffered > 0
+                    && ctx->output_buffered + dlen > ctx->output_limit) {
+                    /* flush buffered data */
+                    ib_log_debug_tx(ctx->tx, "ironbee_body_out: passing buffer");
+                    ctx->start_response = 1;
+                    rv = ngx_http_next_body_filter(r, ctx->response_buf);
+                    free_chain(r->pool, ctx->response_buf);
+                    ctx->response_buf = NULL;
+                }
+            }
             /* Copy any data to our buffer */
             if (ctx->response_buf == NULL) {
                 ctx->response_buf = ngx_pcalloc(r->pool, sizeof(ngx_chain_t));
                 ctx->response_ptr = ctx->response_buf;
+                ctx->output_buffered = 0;
             }
             else {
                 ctx->response_ptr->next = ngx_pcalloc(r->pool, sizeof(ngx_chain_t));
@@ -263,6 +288,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
             }
             /* Not sure if any data types need setaside, but let's be safe */
 #if NO_COPY_REQUIRED
+            /* This would be fine if no setaside is ever required */
             ctx->response_ptr->buf = link->buf;
 #else
             if (dlen > 0) {
@@ -275,6 +301,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
                 memcpy(ctx->response_ptr->buf, link->buf, sizeof(ngx_buf_t));
             }
 #endif
+            ctx->output_buffered += dlen;
         }
 
         if (link->buf->last_buf) {
@@ -289,7 +316,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         ctx->start_response = 1;
         rv = ngx_http_next_body_filter(r, in);
     }
-    else if (ctx->output_buffering == IOBUF_BUFFER) {
+    else if IOBUF_BUFFERED(ctx->output_buffering) {
         ib_log_debug_tx(ctx->tx, "ironbee_body_out: buffering");
         if (ctx->output_filter_done) {
             /* We can pass on the buffered data all at once */
