@@ -1219,40 +1219,8 @@ static ib_status_t act_block_advisory_execute(
     /* Don't re-set the flag because it bloats the DPI value FLAGS
      * with lots of BLOCK entries. */
     if (!ib_flags_all(tx->flags, IB_TX_FBLOCK_ADVISORY)) {
-        ib_field_t *f;
-        static const ib_num_t c_num_one = 1;
-
         /* Set the flag in the transaction. */
         ib_tx_flags_set(tx, IB_TX_FBLOCK_ADVISORY);
-
-        /* Create field. */
-        rc = ib_field_create(
-            &f, tx->mp, "", 0, IB_FTYPE_NUM,
-            ib_ftype_num_in(&c_num_one)
-        );
-        if (rc != IB_OK) {
-            ib_rule_log_error(
-                rule_exec,
-                "Could not create field for FLAGS:BLOCK: %s",
-                ib_status_to_string(rc)
-            );
-            return rc;
-        }
-
-        /* When doing an advisory block, mark the DPI with FLAGS:BLOCK=1. */
-        rc = ib_var_target_remove_and_set(
-            corecfg->vars->flag_block,
-            tx->mp,
-            tx->var_store,
-            f
-        );
-        if (rc != IB_OK) {
-            ib_rule_log_error(
-                rule_exec,
-                "Could not set value FLAGS:BLOCK=1: %s",
-                ib_status_to_string(rc));
-            return rc;
-        }
 
         /* Update the event (if required) */
         rc = get_event(rule_exec, &event);
@@ -1289,7 +1257,7 @@ static ib_status_t act_block_phase_execute(
     ib_logevent_t *event;
     ib_tx_t *tx = rule_exec->tx;
 
-    ib_tx_flags_set(tx, IB_TX_FBLOCK_PHASE);
+    ib_tx_flags_set(tx, IB_TX_FBLOCK_ADVISORY|IB_TX_FBLOCK_PHASE);
 
     /* Update the event (if required) */
     rc = get_event(rule_exec, &event);
@@ -1324,7 +1292,7 @@ static ib_status_t act_block_immediate_execute(
     ib_status_t rc;
     ib_logevent_t *event;
 
-    ib_tx_flags_set(rule_exec->tx, IB_TX_FBLOCK_IMMEDIATE);
+    ib_tx_flags_set(rule_exec->tx, IB_TX_FBLOCK_ADVISORY|IB_TX_FBLOCK_IMMEDIATE);
 
     /* Update the event (if required) */
     rc = get_event(rule_exec, &event);

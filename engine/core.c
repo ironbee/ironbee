@@ -4409,21 +4409,6 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
         CCC_SOURCE(IB_TX_CAPTURE,       tx_capture);
         CCC_SOURCE("FIELD_NAME_FULL",   field_name_full);
 #undef CCC_SOURCE
-
-        rc = ib_var_target_acquire_from_string(
-            &(corecfg->vars->flag_block),
-            mp,
-            var_config,
-            IB_S2SL("FLAG:BLOCK"),
-            NULL, NULL
-        );
-        if (rc != IB_OK) {
-            ib_log_error(ib,
-                "Error acquiring var target: FLAG:BLOCK: %s",
-                ib_status_to_string(rc)
-            );
-            return rc;
-        }
     }
 
     return IB_OK;

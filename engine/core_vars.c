@@ -147,6 +147,13 @@ static const ib_tx_flag_map_t core_tx_flag_map[] = {
         .read_only     = false,
         .default_value = false
     },
+    {
+        .name          = "block",
+        .tx_name       = "FLAGS:block",
+        .tx_flag       = IB_TX_FBLOCK_ADVISORY,
+        .read_only     = false,
+        .default_value = false
+    },
 
     /* End */
     { NULL, NULL, IB_TX_FNONE, true, false },

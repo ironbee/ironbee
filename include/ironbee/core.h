@@ -134,7 +134,6 @@ struct ib_core_vars_t {
     ib_var_source_t *response_protocol;
     ib_var_source_t *tx_capture;
     const ib_var_source_t *field_name_full;
-    ib_var_target_t *flag_block;
 };
 
 typedef enum {
