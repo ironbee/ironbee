@@ -154,54 +154,6 @@ static void list_append(ngx_list_t *list, const char *entry, const char *val)
         list_add(list, entry, val);
 }
 /**
- * Function to apply regexp-based edit to a header in a list.
- *
- * @param[in] list   the list to add to
- * @param[in] entry  the name of the entry to edit
- * @param[in] val    string value of the regexp, if rx is null
- * @param[in] tx     The ironbee tx rec
- * @param[in] rx     The compiled regex operation, or NULL to use val
- */
-static ib_status_t list_edit(ngx_list_t *list, const char *entry,
-                             const char *val, ib_tx_t *tx, ib_rx_t *rx)
-{
-    ngx_list_part_t *part;
-    ngx_table_elt_t *elt;
-    unsigned int i;
-    char *repl;
-    char *oldval;
-    ngxib_req_ctx *ctx = tx->sctx;
-
-    ngx_regex_malloc_init(ctx->r->pool);
-
-    /* Check we were passed something valid */
-    if (rx == NULL) {
-        if (rx = ib_rx_compile(tx->mp, val), rx == NULL) {
-            ib_log_error_tx(ctx->tx, "Failed to compile %s as regexp.", val);
-            cleanup_return IB_EINVAL;
-        }
-    }
-    for (part = &list->part; part; part = part->next) {
-        elt = part->elts;
-        for (i = 0; i < part->nelts; ++i) {
-            if (elt[i].key.len == strlen(entry)
-                && !strncasecmp((const char*)elt[i].key.data, entry, elt[i].key.len)) {
-                /* we need a null-terminated string for ib_rx_exec */
-                oldval = strndup((const char*)elt[i].value.data, elt[i].value.len);
-                ib_rx_exec(tx->mp, rx, oldval, &repl, NULL);
-                free(oldval);
-                if (repl != NULL) {
-                    elt[i].value.data = (unsigned char*)repl;
-                    elt[i].value.len = strlen(repl);
-                }
-            }
-        }
-        if (part == list->last)
-            break;
-    }
-    cleanup_return IB_OK;
-}
-/**
  * IronBee callback function to manipulate an HTTP header
  *
  * @param[in] tx - IronBee transaction
@@ -215,8 +167,9 @@ static ib_status_t list_edit(ngx_list_t *list, const char *entry,
  */
 static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
                                       ib_server_header_action_t action,
-                                      const char *hdr, const char *value,
-                                      ib_rx_t *rx, void *cbdata)
+                                      const char *hdr, size_t hdr_len,
+                                      const char *value, size_t value_len,
+                                      void *cbdata)
 {
     /* This is more complex for nginx than for other servers because
      * headers_in and headers_out are different structs, and there
@@ -255,8 +208,6 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
       case IB_HDR_APPEND:
         list_append(headers, hdr, value);
         return IB_OK;
-      case IB_HDR_EDIT:
-        return list_edit(headers, hdr, value, tx, rx);
     }
     return IB_ENOTIMPL;
 }
@@ -294,7 +245,10 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
  * @param[in] val - Value to set
  * @return Not Implemented, or error.
  */
-static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *val, void *cbdata)
+static ib_status_t ib_errhdr_callback(ib_tx_t *tx,
+                                      const char *hdr, size_t hdr_len,
+                                      const char *val,  size_t val_len,
+                                      void *cbdata)
 {
     ngxib_req_ctx *ctx = tx->sctx;
     if (ctx->start_response)
@@ -319,7 +273,7 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *
  */
 static ib_status_t ib_errdata_callback(
     ib_tx_t *tx,
-    const uint8_t *data,
+    const char *data,
     size_t dlen,
     void *cbdata)
 {

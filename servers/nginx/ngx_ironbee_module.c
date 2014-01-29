@@ -128,7 +128,7 @@ static ib_status_t logger_format(
                       (const char *)std_msg->msg);
     }
 
-    ib_logger_standard_msg_free(std_msg);
+    ib_logger_standard_msg_free(logger, std_msg, cbdata);
 
     /* since we do all the work here, signal the logger to not
      * use the record function. */
@@ -152,11 +152,23 @@ static ib_status_t init_module(
     void        *cbdata
 )
 {
+    ib_status_t rc;
     assert(ib != NULL);
     assert(module != NULL);
     assert(cbdata != NULL);
 
     module_data_t *mod_data = (module_data_t *)cbdata;
+    ib_logger_format_t *logger;
+    rc = ib_logger_format_create(
+        ib_engine_logger_get(ib),
+        &logger,
+        logger_format,
+        mod_data,
+        NULL,
+        NULL);
+    if (rc != IB_OK) {
+        return IB2NG(rc);
+    }
 
     ib_logger_writer_add(
         ib_engine_logger_get(ib),
@@ -166,8 +178,7 @@ static ib_status_t init_module(
         mod_data,                  /* Callback data. */
         NULL,                      /* Reopen. */
         NULL,                      /* Callback data. */
-        logger_format,             /* Format - This does all the work. */
-        mod_data,                  /* Callback data. */
+        logger,                    /* Format - This does all the work. */
         NULL,                      /* Record. */
         NULL                       /* Callback data. */
     );
