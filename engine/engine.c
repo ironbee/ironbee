@@ -2118,8 +2118,9 @@ static ib_status_t tx_var_flags_set(
                 return rc;
             }
 
-            /* Set the value. */
-            rc = ib_var_target_set(
+            /* Remove and set the value. */
+            ib_log_info_tx(tx, "target=%p", target);
+            rc = ib_var_target_remove_and_set(
                 target,
                 tx->mp,
                 tx->var_store,

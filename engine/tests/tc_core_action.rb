@@ -65,4 +65,23 @@ class TestAction < Test::Unit::TestCase
     assert_log_match /clipp_print \[TestCollection\]: 4/
 
   end
+
+  def test_block_advisory_sets_flags
+    clipp(
+      :input_hashes => [simple_hash("GET /foobar/a\n")],
+      :default_site_config => <<-EOS
+        LoadModule ibmod_devel.so
+        Action id:test/1 REQUEST_HEADER "block"
+        Rule FLAGS:block @clipp_print "value of block" id:test/3 rev:1 phase:REQUEST_HEADER
+
+        TxDump TxFinished StdErr All
+      EOS
+    )
+
+    assert_no_issues
+    assert_log_no_match /\[value of block\]: 0/
+    assert_log_match /\[value of block\]: 1/
+
+  end
+
 end
