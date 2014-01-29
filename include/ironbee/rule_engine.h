@@ -184,8 +184,10 @@ struct ib_rule_exec_t {
     /* List of all rules to run during the current phase. */
     ib_list_t              *phase_rules; /**< List of ib_rule_t */
 
-    /* Stack of values for the FIELD* targets */
-    ib_list_t              *value_stack; /**< Stack of values */
+    /**
+     * Stack of @ref ib_field_t used for createing FIELD* targets
+     */
+    ib_list_t              *value_stack;
 
 #ifdef IB_RULE_TRACE
     ib_rule_trace_t        *traces; /**< Rule trace information. */

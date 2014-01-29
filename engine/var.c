@@ -1032,6 +1032,18 @@ ib_status_t ib_var_target_acquire(
     return IB_OK;
 }
 
+void ib_var_target_source_name(
+    const ib_var_target_t  *target,
+    const char            **name,
+    size_t                 *len
+)
+{
+    assert(target != NULL);
+    assert(target->source != NULL);
+
+    ib_var_source_name(target->source, name, len);
+}
+
 ib_status_t ib_var_target_acquire_from_string(
     ib_var_target_t       **target,
     ib_mpool_t             *mp,
@@ -1163,6 +1175,42 @@ ib_status_t target_filter_get(
         *result = local_filter;
     }
 
+    return IB_OK;
+}
+
+ib_status_t ib_var_target_type(
+    ib_var_target_t  *target,
+    ib_var_store_t   *store,
+    ib_ftype_t       *type
+)
+{
+    assert(target != NULL);
+    assert(target->source != NULL);
+    assert(store  != NULL);
+    assert(
+        (target->expand == NULL && target->filter == NULL) ||
+        (target->expand == NULL && target->filter != NULL) ||
+        (target->expand != NULL && target->filter == NULL)
+    );
+
+    ib_status_t  rc;
+    ib_field_t  *field;
+
+    /* If there is a filter, we expect the type to be a list, and
+     * will report it as such.
+     */
+    if (target->filter != NULL) {
+        *type = IB_FTYPE_LIST;
+        return IB_OK;
+    }
+
+    rc = ib_var_source_get(target->source, &field, store);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* We got a result! Return the type. */
+    *type = field->type;
     return IB_OK;
 }
 

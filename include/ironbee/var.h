@@ -633,6 +633,19 @@ ib_status_t DLL_PUBLIC ib_var_target_acquire(
 NONNULL_ATTRIBUTE(1, 2, 3);
 
 /**
+ * Return the name of the @ref ib_var_source_t backing this target.
+ *
+ * @param[in] target The target whose source will be queried.
+ * @param[out] name The name of the @ref ib_var_source_t that backs @a target.
+ * @param[out] len The length of @a name.
+ */
+void DLL_PUBLIC ib_var_target_source_name(
+    const ib_var_target_t  *target,
+    const char            **name,
+    size_t                *len)
+NONNULL_ATTRIBUTE(1, 2);
+
+/**
  * Acquire a target from a specification string.
  *
  * A specification string is a source name, optionally followed by a :
@@ -664,6 +677,24 @@ ib_status_t DLL_PUBLIC ib_var_target_acquire_from_string(
     int                    *error_offset
 )
 NONNULL_ATTRIBUTE(1, 2, 3, 4);
+
+/**
+ * Fetch types of target; read-only.
+ *
+ * @param[in] target Target to get values of.
+ * @param[in] store Store holding values.
+ * @param[out] type The type that the requested target is.
+ *
+ * @return
+ * - IB_OK On success.
+ * - IB_ENOENT If the field is not found.
+ */
+ib_status_t ib_var_target_type(
+    ib_var_target_t  *target,
+    ib_var_store_t   *store,
+    ib_ftype_t       *type
+)
+NONNULL_ATTRIBUTE(1, 2, 3);
 
 /**
  * Fetch values of target; read-only.

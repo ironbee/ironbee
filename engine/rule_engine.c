@@ -1891,20 +1891,20 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
     ib_rule_log_debug(rule_exec, "Operating on %zd fields.",
                       ib_list_elements(rule->target_fields));
 
-    /*
-     * Loop through all of the fields.
+    /* Loop through all of the fields.
      *
      * @todo The current behavior is to keep running even after an operator
      * returns an error.  This needs further discussion to determine what the
      * correct behavior should be.
      */
     IB_LIST_LOOP(rule->target_fields, node) {
-        ib_list_t          *result   = NULL;
-        ib_field_t         *value    = NULL; /* Value from the DPI */
-        const ib_field_t   *tfnvalue = NULL; /* Value after tfns */
         ib_status_t         getrc;
-        bool                pushed   = true;
-        ib_rule_target_t   *target   =
+        ib_list_t          *result     = NULL;
+        ib_field_t         *value      = NULL; /* Var. */
+        const ib_field_t   *tfnvalue   = NULL; /* Var value after tfns */
+        bool                pushed     = true;
+        bool                pop_target = false;
+        ib_rule_target_t   *target     =
             (ib_rule_target_t *)ib_list_node_data(node);
 
         assert(target != NULL);
@@ -1915,7 +1915,8 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         /* Get the field value */
         /* The const cast below is unfortunate, but we currently don't have a
          * good way of expressing const-list-fields.  The list will not be
-         * modified below. */
+         * modified below.
+         */
         if (target->target == NULL) {
             getrc = IB_ENOENT;
         }
@@ -1958,7 +1959,8 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
         if (result != NULL) {
             /* If list has one element, pull out into value.  Otherwise,
-             * wrap in a list field. */
+             * wrap in a list field.
+             */
             if (ib_list_elements(result) == 1) {
                 value = (ib_field_t *)ib_list_node_data(ib_list_first(result));
             }
@@ -1981,6 +1983,46 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
         /* Add the target to the log object */
         ib_rule_log_exec_add_target(rule_exec->exec_log, target, value);
+
+        /* If there is a defined target, store it's name (as a field)
+         * in the value_stack of the rule_exec object.
+         *
+         * This allows FIELD_NAME_FULL to be correctl populated.
+         */
+        if (target != NULL && target->target != NULL) {
+            ib_ftype_t type;
+
+            rc = ib_var_target_type(target->target, tx->var_store, &type);
+            if (rc == IB_OK && type == IB_FTYPE_LIST) {
+                ib_field_t *target_field;
+                const char *target_name     = "";   /* Name of target. */
+                size_t      target_name_len = 0;    /* Len of target_name. */
+
+                ib_var_target_source_name(
+                    target->target,
+                    &target_name,
+                    &target_name_len);
+
+                rc = ib_field_create(
+                    &target_field,
+                    tx->mp,
+                    target_name,
+                    target_name_len,
+                    IB_FTYPE_GENERIC,
+                    NULL);
+                if (rc != IB_OK) {
+                    return rc;
+                }
+
+                /* Add the target to the FIELD_NAME_FULL stack. */
+                if (!rule_exec_push_value(rule_exec, target_field)) {
+                    ib_log_error_tx(tx, "Failed to record target name.");
+                    return IB_EOTHER;
+                }
+
+                pop_target = true;
+            }
+        }
 
         /* Execute the target transformations */
         if (value != NULL) {
@@ -2060,6 +2102,9 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
         /* Pop this element off the value stack */
         rule_exec_pop_value(rule_exec, pushed);
+
+        /* Pop the target value if it was pushed. */
+        rule_exec_pop_value(rule_exec, pop_target);
     }
 
     ib_rule_log_execution(rule_exec);
@@ -2090,7 +2135,6 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
     assert(rule_exec != NULL);
     assert(rule != NULL);
     assert(! rule->phase_meta->is_stream);
-
 
     --recursion;
     if (recursion <= 0) {
