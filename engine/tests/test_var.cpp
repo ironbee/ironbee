@@ -785,6 +785,49 @@ TEST(TestVar, TargetSetTrivial)
     ASSERT_EQ(2, results.front().value_as_number());
 }
 
+TEST(TestVar, TargetRemoveAndSet)
+{
+    using namespace IronBee;
+
+    ScopedMemoryPool smp;
+    ib_status_t rc;
+    ib_mpool_t* mp = MemoryPool(smp).ib();
+    ib_var_config_t* config = make_config(mp);
+    ASSERT_TRUE(config);
+
+    ib_var_source_t* a = make_source(config, "a");
+    ASSERT_TRUE(a);
+
+    ib_var_store_t* store = make_store(config);
+    ASSERT_TRUE(store);
+
+    rc = ib_var_source_append(a, store,
+        Field::create_number(smp, "A", 1, 1).ib()
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    ib_var_target_t* target;
+    rc = ib_var_target_acquire_from_string(
+        &target,
+        mp,
+        config,
+        "a:A", sizeof("a:A") - 1,
+        NULL, NULL
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_var_target_remove_and_set(target, mp, store,
+        Field::create_number(smp, "a:A", 3, 2).ib()
+    );
+    ASSERT_EQ(IB_OK, rc);
+
+    const ib_list_t* result;
+    rc = ib_var_target_get(target, &result, mp, store);
+    ASSERT_EQ(IB_OK, rc);
+
+    ASSERT_EQ(1UL, ib_list_elements(result));
+}
+
 TEST(TestVar, TargetSetSimple)
 {
     using namespace IronBee;

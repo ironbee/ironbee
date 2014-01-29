@@ -1381,9 +1381,14 @@ ib_status_t ib_var_target_remove(
         rc = ib_var_source_set(target->source, store, NULL);
         goto finish;
     }
-    else {
+    else if (local_mp != NULL) {
         /* Simple */
-        rc = ib_var_filter_remove(filter, &local_result, mp, field);
+        rc = ib_var_filter_remove(filter, &local_result, local_mp, field);
+        goto finish;
+    }
+    else {
+        /* No memory pool. */
+        rc = ib_var_filter_remove(filter, NULL, NULL, field);
         goto finish;
     }
 
