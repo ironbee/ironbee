@@ -472,7 +472,7 @@ TEST_F(XRulesTest, SetFlag) {
             ib_tx->mp,
             ib_tx->var_store)
     );
-    ASSERT_EQ(2U, ib_list_elements(list));
+    ASSERT_EQ(1U, ib_list_elements(list));
     field = (ib_field_t *)ib_list_node_data_const(ib_list_last_const(list));
     ASSERT_EQ(IB_FTYPE_NUM, field->type);
     ASSERT_EQ(
