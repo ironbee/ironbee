@@ -142,7 +142,7 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port);
 
 #define ADDRSIZE 48 /* what's the longest IPV6 addr ? */
 #define DEFAULT_LOG "ts-ironbee"
-#define DEFAULT_TXLOG "tx-ironbee"
+#define DEFAULT_TXLOG "txlogs/tx-ironbee"
 
 typedef enum {LE_N, LE_RN, LE_ANY} http_lineend_t;
 
@@ -2756,6 +2756,13 @@ static ib_status_t engine_postconfig_fn(
             TSError("[ironbee] Failed to create transaction log \"%s\": %d",
                     mod_data->txlogfile,
                     rv);
+        } else {
+            /* 120 seconds */
+            TSTextLogObjectRollingIntervalSecSet(mod_data->txlogger, 120);
+            /* 3:00 am */
+            TSTextLogObjectRollingOffsetHrSet(mod_data->txlogger, 3);
+            /* 3 = time or size */
+            TSTextLogObjectRollingEnabledSet(mod_data->txlogger, 3);
         }
     }
     else {
