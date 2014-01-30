@@ -332,7 +332,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
     }
 
     if (src_length > 0) {
-        cfgdata->data = ib_mpool_alloc(ctx->mp, src_length);
+        cfgdata->data = ib_mpool_calloc(ctx->mp, 1, src_length);
         if (cfgdata->data == NULL) {
             return IB_EALLOC;
         }
