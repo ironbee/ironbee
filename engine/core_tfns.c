@@ -313,7 +313,7 @@ static ib_status_t tfn_length(ib_mpool_t *mp,
         const ib_num_t len = strlen(fval);
         rc = ib_field_create(
             &fnew, mp,
-            IB_FIELD_NAME("Length"),
+            fin->name, fin->nlen,
             IB_FTYPE_NUM,
             ib_ftype_num_in(&len)
         );
@@ -328,7 +328,7 @@ static ib_status_t tfn_length(ib_mpool_t *mp,
         const ib_num_t len = ib_bytestr_length(value);
         rc = ib_field_create(
             &fnew, mp,
-            IB_FIELD_NAME("Length"),
+            fin->name, fin->nlen,
             IB_FTYPE_NUM,
             ib_ftype_num_in(&len)
         );
@@ -351,7 +351,7 @@ static ib_status_t tfn_length(ib_mpool_t *mp,
         /* Create the outgoing list field */
         rc = ib_field_create(
             &fnew, mp,
-            IB_FIELD_NAME("Length"),
+            fin->name, fin->nlen,
             IB_FTYPE_LIST, NULL
         );
         if (rc != IB_OK) {
