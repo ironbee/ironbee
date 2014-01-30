@@ -5440,7 +5440,7 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     /* Some actions require IB_RULE_FLAG_FIELDS to be set.
      * FIXME: This is fragile code. Event should be able to construct
      *        the current field name from the provided rule_exec. */
-    if (strcasestr(action->action->name, "event") == 0) {
+    if (strcasestr(action->action->name, "event") != NULL) {
         ib_flags_set(rule->flags, IB_RULE_FLAG_FIELDS);
     }
 
