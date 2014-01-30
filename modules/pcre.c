@@ -1124,12 +1124,12 @@ ib_status_t alloc_dfa_tx_data(
         return IB_EALLOC;
     }
 
-    ws->partial = NULL;
-    ws->partial = 0;
-    ws->options = 0;
-    ws->wscount = cpatt_data->dfa_ws_size;
-    size = sizeof(*(ws->workspace)) * (ws->wscount);
-    ws->workspace = (int *)ib_mpool_alloc(tx->mp, size);
+    ws->partial    = NULL;
+    ws->partial_sz = 0;
+    ws->options    = 0;
+    ws->wscount    = cpatt_data->dfa_ws_size;
+    size           = sizeof(*(ws->workspace)) * (ws->wscount);
+    ws->workspace  = (int *)ib_mpool_alloc(tx->mp, size);
     if (ws->workspace == NULL) {
         return IB_EALLOC;
     }
