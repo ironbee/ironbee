@@ -1452,15 +1452,28 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
             rc = trc;
         }
         else {
-            fld_field_target->type = IB_FTYPE_NULSTR;
-            trc = ib_field_setv(
-                fld_field_target,
-                ib_ftype_nulstr_in(rule_exec->target->target_str));
+            ib_bytestr_t *bs;
+            trc = ib_bytestr_dup_mem(
+                &bs,
+                tx->mp,
+                (uint8_t *)(rule_exec->target->target_str),
+                strlen(rule_exec->target->target_str)
+            );
             if (trc != IB_OK) {
                 ib_rule_log_error(rule_exec,
                                   "Failed to set FIELD_TARGET: %s",
                                   ib_status_to_string(trc));
                 rc = trc;
+            }
+            else {
+                fld_field_target->type = IB_FTYPE_BYTESTR;
+                trc = ib_field_setv(fld_field_target, ib_ftype_bytestr_in(bs));
+                if (trc != IB_OK) {
+                    ib_rule_log_error(rule_exec,
+                                      "Failed to set FIELD_TARGET: %s",
+                                      ib_status_to_string(trc));
+                    rc = trc;
+                }
             }
         }
     }
