@@ -1042,8 +1042,10 @@ static bool txdump_check_tx(
     }
 
     /* Loop through the TX's context configuration, see if this TxDump
-     * is in the list.  Do nothing if there is no list. */
-    if (config->txdump_list == NULL) {
+     * is in the list.  Do nothing if there is no list or it's empty. */
+    if ( (config->txdump_list == NULL) ||
+         (IB_LIST_ELEMENTS(config->txdump_list) == 0) )
+    {
         return false;
     }
     IB_LIST_LOOP_CONST(config->txdump_list, node) {
@@ -1444,6 +1446,7 @@ static ib_status_t txdump_handler(
                          module->name, ib_status_to_string(rc));
         return rc;
     }
+    assert(config->txdump_list != NULL);
 
     /* Initialize the txdump object */
     memset(&txdump, 0, sizeof(txdump));
@@ -1498,16 +1501,6 @@ static ib_status_t txdump_handler(
     ptxdump = ib_mpool_memdup(mp, &txdump, sizeof(txdump));
     if (ptxdump == NULL) {
         return IB_EALLOC;
-    }
-
-    /* Create the list if required */
-    if (config->txdump_list == NULL) {
-        rc = ib_list_create(&config->txdump_list, mp);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Error creating TxDump list for %s",
-                             label);
-            return rc;
-        }
     }
 
     /* Add it to the list */
@@ -1669,18 +1662,17 @@ static ib_status_t txdump_config_copy(
     const txdump_config_t *src_config = src;
     ib_mpool_t            *mp = ib_engine_pool_main_get(ib);
 
-    /* If there is no source list, do nothing. */
+    /*
+     * If there is no source list, create an empty list.  Otherwise, copy
+     * nodes from the source list.
+     */
     if (src_config->txdump_list == NULL) {
-        return IB_OK;
+        rc = ib_list_create(&dst_config->txdump_list, mp);
     }
-
-    /* Otherwise, copy nodes from the source list */
-    rc = ib_list_copy(src_config->txdump_list, mp, &dst_config->txdump_list);
-    if (rc != IB_OK) {
-        return rc;
+    else {
+        rc = ib_list_copy(src_config->txdump_list, mp, &dst_config->txdump_list);
     }
-
-    return IB_OK;
+    return rc;
 }
 
 /**
