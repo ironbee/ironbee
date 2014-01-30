@@ -2758,7 +2758,7 @@ static ib_status_t engine_postconfig_fn(
                     rv);
         } else {
             /* 300 seconds */
-            TSTextLogObjectRollingIntervalSecSet(mod_data->txlogger, 300;
+            TSTextLogObjectRollingIntervalSecSet(mod_data->txlogger, 300)
             /* 3:00 am */
             TSTextLogObjectRollingOffsetHrSet(mod_data->txlogger, 3);
             /* 3 = time or size */
