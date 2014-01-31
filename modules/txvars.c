@@ -215,6 +215,11 @@ static void store_var_str_item(
     ib_field_t   *f;
     ib_status_t   rc;
 
+    /* If the string is NULL, do nothing. */
+    if (value == NULL) {
+        return;
+    }
+
     /* Create the byte string */
     rc = ib_bytestr_dup_nulstr(&bs, tx->mp, value);
     if (rc != IB_OK) {
