@@ -785,7 +785,9 @@ void ib_engine_destroy(ib_engine_t *ib)
 
     /* Important: Logging does not work after this point! */
     IB_ARRAY_LOOP_REVERSE(ib->modules, ne, idx, m) {
-        ib_module_unload(m);
+        if (m != NULL) {
+            ib_module_unload(m);
+        }
     }
 
     /* No logging from here on out. */
