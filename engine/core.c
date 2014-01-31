@@ -3983,6 +3983,8 @@ static IB_STRVAL_MAP(core_auditlog_parts_map) = {
  */
 static IB_STRVAL_MAP(core_rulelog_flags_map) = {
     /* Rule log Flag Groups */
+    IB_STRVAL_PAIR("none", 0),
+    IB_STRVAL_PAIR("default", 0),
     IB_STRVAL_PAIR("all", IB_RULE_LOG_FLAGS_ALL),
     IB_STRVAL_PAIR("request", IB_RULE_LOG_FLAGS_REQUEST),
     IB_STRVAL_PAIR("response", IB_RULE_LOG_FLAGS_RESPONSE),
@@ -4575,7 +4577,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->data                 = MODULE_NAME_STR;
     corecfg->module_base_path     = X_MODULE_BASE_PATH;
     corecfg->rule_base_path       = X_RULE_BASE_PATH;
-    corecfg->rule_log_flags       = IB_RULE_LOG_FLAGS_EXEC;
+    corecfg->rule_log_flags       = 0;
     corecfg->rule_log_level       = IB_LOG_INFO;
     corecfg->rule_debug_str       = "error";
     corecfg->rule_debug_level     = IB_RULE_DLOG_ERROR;

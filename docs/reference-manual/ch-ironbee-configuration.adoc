@@ -1205,7 +1205,7 @@ RuleEngineLogData
 *Syntax:* `RuleEngineLogData 
                 ...`
 
-*Default:* `ruleExec`
+*Default:* `none`
 
 *Context:* Any
 
@@ -1306,8 +1306,9 @@ The following alias options are supported:
 `responseBody`
 * `ruleExec` - Alias for: `phase`, `rule`, `target`, `transformation`,
 `operator`, `action`, `actionableRulesOnly`
-* `default` - Alias for: `ruleExec`
+* `none` - Alias for no data options
 * `all` - Alias for all data options
+* `default` - Alias for: `none`
 
 The following filter options are supported:
 
