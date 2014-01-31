@@ -1313,9 +1313,10 @@ static ib_status_t modlua_luamod_init(
  * - Other on error.
  */
 ib_status_t modlua_module_load(
-    ib_engine_t *ib,
-    ib_module_t *modlua,
-    const char *file,
+    ib_engine_t  *ib,
+    ib_module_t  *modlua,
+    const char   *module_name,
+    const char   *file,
     modlua_cfg_t *cfg
 )
 {
@@ -1328,7 +1329,6 @@ ib_status_t modlua_module_load(
     ib_module_t *module;
     ib_status_t  rc;
     ib_mpool_t  *mp          = ib_engine_pool_main_get(ib);
-    const char  *module_name = ib_mpool_strdup(mp, file);
     modlua_luamod_init_t *modlua_luamod_init_cbdata =
         ib_mpool_alloc(mp, sizeof(*modlua_luamod_init_cbdata));
     int          sys_rc;
@@ -1341,6 +1341,11 @@ ib_status_t modlua_module_load(
     }
 
     if (modlua_luamod_init_cbdata == NULL) {
+        return IB_EALLOC;
+    }
+
+    module_name = ib_mpool_strdup(mp, module_name);
+    if (module_name == NULL) {
         return IB_EALLOC;
     }
 

@@ -2011,9 +2011,11 @@ static ib_status_t modlua_dir_param1(
     p1_unescaped[p1_unescaped_len] = '\0';
 
     if (strcasecmp("LuaLoadModule", name) == 0) {
+        const char *mod_name = p1_unescaped;
+
         /* Absolute path. */
         if (p1_unescaped[0] == '/') {
-            rc = modlua_module_load(ib, module, p1_unescaped, cfg);
+            rc = modlua_module_load(ib, module, mod_name, p1_unescaped, cfg);
             if (rc != IB_OK) {
                 ib_cfg_log_error(
                     cp,
@@ -2043,7 +2045,7 @@ static ib_status_t modlua_dir_param1(
                 p1_unescaped);
 
             /* Try a path relative to the modules directory. */
-            rc = modlua_module_load(ib, module, path, cfg);
+            rc = modlua_module_load(ib, module, mod_name, path, cfg);
             if (rc == IB_OK) {
                 return IB_OK;
             }
@@ -2053,7 +2055,7 @@ static ib_status_t modlua_dir_param1(
                 ib_engine_pool_config_get(ib),
                 ib_cfgparser_curr_file(cp),
                 p1_unescaped);
-            rc = modlua_module_load(ib, module, path, cfg);
+            rc = modlua_module_load(ib, module, mod_name, path, cfg);
             if (rc == IB_OK) {
                 return IB_OK;
             }
