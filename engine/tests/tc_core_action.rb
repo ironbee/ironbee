@@ -73,8 +73,6 @@ class TestAction < Test::Unit::TestCase
       :default_site_config => <<-EOS
         Action id:test/1 REQUEST_HEADER "block"
         Rule FLAGS:block @clipp_print "value of block" id:test/3 rev:1 phase:REQUEST_HEADER
-
-        TxDump TxFinished StdErr All
       EOS
     )
 
