@@ -43,7 +43,7 @@
  *  - `site_id = "AAAABBBB-1111-2222-3333-000000006661"`
  *  - `site_name = "Validation"`
  *  - `tx_id = "4074d870-a93e-4f24-a9c2-09210a8230c0"`
- *  - `tx_start = 2014-01-24T11:22:40.0223-0600` 
+ *  - `tx_start = 2014-01-24T11:22:40.0223-0600`
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
@@ -349,9 +349,9 @@ static ib_status_t handle_tx_context(
 
     /* Create the vars sources */
     for(n = 0; n < TXVAR_NONE; ++n) {
-        txvars_item_t *item = mod_data->items[n];
-        const char    *strval = NULL;
-        ib_time_t      timeval;
+        txvars_item_t *item    = mod_data->items[n];
+        const char    *strval  = NULL;
+        ib_time_t      timeval = 0;
 
         switch(item->init->which) {
         case TXVAR_ENGINE_ID:
