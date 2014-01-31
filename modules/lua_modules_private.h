@@ -54,6 +54,30 @@ ib_status_t modlua_module_load(
     const char   *module_name,
     const char   *file,
     modlua_cfg_t *cfg
-);
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4, 5);
+
+/**
+ * Called by modlua_module_load to load the lua script into the Lua runtime.
+ *
+ * This function will not register configuration directives
+ * defined in a Lua module.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] file The file we are loading.
+ * @param[in] module The registered module structure.
+ * @param[in,out] L The lua context that @a file will be loaded into as
+ *                @a module.
+ * @returns
+ *   - IB_OK on success.
+ *   - Other on error. Errors are logged by this function.
+ */
+ib_status_t modlua_module_load_lua(
+    ib_engine_t *ib,
+    const char  *file,
+    ib_module_t *module,
+    lua_State   *L
+)
+NONNULL_ATTRIBUTE(1, 2, 3, 4);
 
 #endif /* __MODULES__LUA_MODULES_PRIVATE_H */

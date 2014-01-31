@@ -29,6 +29,7 @@
 #include "lua_runtime_private.h"
 
 #include "lua_private.h"
+#include "lua_modules_private.h"
 
 #include <ironbee/context.h>
 

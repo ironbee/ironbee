@@ -67,50 +67,6 @@ ib_status_t modlua_cfg_get(
 );
 
 /**
- * Called by modlua_module_load to load the lua script into the Lua runtime.
- *
- * This function will register configuration directives causing
- * Lua module configuration directives to be registered with @a ib.
- *
- * @param[in] ib IronBee engine.
- * @param[in] file The file we are loading.
- * @param[in] module The registered module structure.
- * @param[in,out] L The lua context that @a file will be loaded into as
- *                @a module.
- * @returns
- *   - IB_OK on success.
- *   - Other on error. Errors are logged by this function.
- */
-ib_status_t modlua_module_config_lua(
-    ib_engine_t *ib,
-    const char *file,
-    ib_module_t *module,
-    lua_State *L
-);
-
-/**
- * Called by modlua_module_load to load the lua script into the Lua runtime.
- *
- * This function will not register configuration directives
- * defined in a Lua module.
- *
- * @param[in] ib IronBee engine.
- * @param[in] file The file we are loading.
- * @param[in] module The registered module structure.
- * @param[in,out] L The lua context that @a file will be loaded into as
- *                @a module.
- * @returns
- *   - IB_OK on success.
- *   - Other on error. Errors are logged by this function.
- */
-ib_status_t modlua_module_load_lua(
-    ib_engine_t *ib,
-    const char *file,
-    ib_module_t *module,
-    lua_State *L
-);
-
-/**
  * Push a Lua table onto the stack that contains a path of configurations.
  *
  * IronBee supports nested configuration contexts. Configuration B may
