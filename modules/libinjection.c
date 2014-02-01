@@ -44,6 +44,11 @@
 #include <ironbee/util.h>
 
 #include <libinjection.h>
+#include <libinjection_sqli.h>
+
+#ifndef LIBINJECTION_SQLI_MAX_TOKENS
+#define LIBINJECTION_SQLI_MAX_TOKENS 5
+#endif
 
 #include <assert.h>
 #include <stdio.h>
