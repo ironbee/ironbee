@@ -282,12 +282,15 @@ CHECK_RAGEL(6.8)
 ### Doxygen
 AC_ARG_WITH([doxygen],
             [  --with-doxygen=PROG doxygen executable],
-            [doxygen="$withval"],[doxygen=no])
+            [doxygen="$withval"],[doxygen=yes])
 
-if test "$doxygen" != "no"; then
+if test "$doxygen" = "yes"; then
+    AC_PATH_PROGS([doxygen],[doxygen],[])
+elif test "$doxygen" != "no"; then
     AC_MSG_NOTICE([Using doxygen: $doxygen])
 else
-    AC_PATH_PROGS([doxygen],[doxygen],[])
+    doxygen=
+    AC_MSG_NOTICE([Not using doxygen: not found])
 fi
 
 DOXYGEN=$doxygen
