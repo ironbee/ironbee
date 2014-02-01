@@ -665,6 +665,13 @@ ib_status_t pcre_dfa_set_match(
     assert(ovector != NULL);
     assert(dfa_workspace != NULL);
 
+    size_t        match_len;   /* Length of a match length. */
+    const char   *match_start; /* The start of the match in the subject. */
+    ib_bytestr_t *bs;          /* Copy the match into this byte string. */
+    ib_field_t   *field;       /* Wrap the bytestring into this field. */
+    const char   *name;        /* Name the field this name. */
+    ib_status_t   rc;          /* Status. */
+
     /* NOTE: When you read this code, realize that
      *       the largest DFA match is in ovector[0] to ovector[1].
      *       Thus, copying ``subject[ovector[0]]`` to ``subject[ovector[1]]``
@@ -727,43 +734,36 @@ ib_status_t pcre_dfa_set_match(
             sizeof(*subject) * ovector[1]);
     }
 
-    /* If there are matches... */
-    for (int i = 0; i < matches; ++i)
-    {
-        size_t        match_len;
-        const char   *match_start;
-        const char   *name;
-        ib_bytestr_t *bs;
-        ib_field_t   *field;
-        ib_status_t   rc;
+    /* Readability. Mark the start and length of the string. */
+    match_start = subject + ovector[0];
+    match_len   = ovector[1] - ovector[0];
 
-        /* Readability. Mark the start and length of the string. */
-        match_start = subject + ovector[i * 2];
-        match_len   = ovector[i * 2 + 1] - ovector[i * 2];
+    /* Create a byte string copy representation */
+    rc = ib_bytestr_alias_mem(
+        &bs,
+        tx->mp,
+        (const uint8_t*)match_start,
+        match_len);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
-        /* Create a byte string copy representation */
-        rc = ib_bytestr_alias_mem(
-            &bs,
-            tx->mp,
-            (const uint8_t*)match_start,
-            match_len);
-        if (rc != IB_OK) {
-            return rc;
-        }
+    /* Create a field to hold the byte-string */
+    name = ib_capture_name(0);
+    rc = ib_field_create(
+        &field,
+        tx->mp,
+        IB_S2SL(name),
+        IB_FTYPE_BYTESTR,
+        ib_ftype_bytestr_in(bs));
+    if (rc != IB_OK) {
+        return rc;
+    }
 
-        /* Create a field to hold the byte-string */
-        name = ib_capture_name(0);
-        rc = ib_field_create(&field, tx->mp, name, strlen(name),
-                             IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
-        if (rc != IB_OK) {
-            return rc;
-        }
-
-        /* Add it to the capture collection */
-        rc = ib_capture_add_item(capture, field);
-        if (rc != IB_OK) {
-            return rc;
-        }
+    /* Add it to the capture collection */
+    rc = ib_capture_add_item(capture, field);
+    if (rc != IB_OK) {
+        return rc;
     }
 
     return IB_OK;
