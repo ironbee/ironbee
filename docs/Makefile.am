@@ -1,4 +1,4 @@
-SUBDIRS = reference-manual docbook
+SUBDIRS = reference-manual
 CLEANFILES = *.pdf
 
 clean-local:
@@ -25,9 +25,6 @@ doxygen_external.pdf: doxygen_external
 	(cd doxygen_external/latex && make refman.pdf) && cp doxygen/latex/refman.pdf doxygen_external.pdf
 
 doxygen: doxygen_internal doxygen_external
-
-manual:
-	@(cd docbook && $(MAKE) manual)
 
 ref-manual:
 	@(cd reference-manual && $(MAKE) ironbee-reference-manual.html)

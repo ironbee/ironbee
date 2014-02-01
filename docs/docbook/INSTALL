@@ -1,6 +1,0 @@
-This is intended to be used as a submodule, but you can also use it by itself.
-You will need java and autotools installed.
-
-./autogen.sh
-./configure
-make manual

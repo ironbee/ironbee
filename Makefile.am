@@ -18,9 +18,6 @@ pkginclude_HEADERS = $(sort $(wildcard $(top_srcdir)/include/ironbee/*.h) $(top_
 doxygen doxygen-pdf:
 	@(cd docs && $(MAKE) $@)
 
-manual:
-	@(cd docs && $(MAKE) manual)
-
 ref-manual:
 	@(cd docs && $(MAKE) ref-manual)
 
