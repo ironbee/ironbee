@@ -252,7 +252,10 @@ StreamInspect REQUEST_BODY_STREAM @dfa "(?i)Content-Disposition(?:[^\r\n]*)attac
 External Rules
 ++++++++++++++
 
-TODO: Deprecate this in favor of Lua modules?
+[WARNING]
+External Lua rules are being considered for deprecation in favor of
+Lua modules. Lua modules are far more powerful and efficient and are
+no more difficult to write than Lua rules.
 
 Due to the simple rule syntax and confines of the configuration
 language, both basic and stream matching rules only allow for simple
