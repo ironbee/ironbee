@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
+
 #include "libinjection.h"
+#include "libinjection_sqli.h"
+#include "libinjection_xss.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -12,6 +16,19 @@
 
 static int g_test_ok = 0;
 static int g_test_fail = 0;
+
+typedef enum {
+    MODE_SQLI,
+    MODE_XSS
+} detect_mode_t;
+
+int urlcharmap(char ch);
+size_t modp_url_decode(char* dest, const char* s, size_t len);
+size_t modp_rtrim(char* str, size_t len);
+void modp_toprint(char* str, size_t len);
+void test_positive(FILE * fd, const char *fname, detect_mode_t mode,
+                   int flag_invert, int flag_true, int flag_quiet);
+
 
 int urlcharmap(char ch) {
     switch (ch) {
@@ -70,7 +87,7 @@ size_t modp_url_decode(char* dest, const char* s, size_t len)
         }
     }
     *dest = '\0';
-    return (size_t)(dest - deststart); // compute "strlen" of dest.
+    return (size_t)(dest - deststart); /* compute "strlen" of dest */
 }
 
 void modp_toprint(char* str, size_t len)
@@ -96,17 +113,18 @@ size_t modp_rtrim(char* str, size_t len)
     return len;
 }
 
-void test_positive(FILE * fd, const char *fname,
+void test_positive(FILE * fd, const char *fname, detect_mode_t mode,
                    int flag_invert, int flag_true, int flag_quiet)
 {
     char linebuf[8192];
     int issqli;
     int linenum = 0;
+    size_t len;
     sfilter sf;
 
     while (fgets(linebuf, sizeof(linebuf), fd)) {
         linenum += 1;
-        size_t len = modp_rtrim(linebuf, strlen(linebuf));
+        len = modp_rtrim(linebuf, strlen(linebuf));
         if (len == 0) {
             continue;
         }
@@ -115,8 +133,21 @@ void test_positive(FILE * fd, const char *fname,
         }
 
         len =  modp_url_decode(linebuf, linebuf, len);
-        libinjection_sqli_init(&sf, linebuf, len, 0);
-        issqli = libinjection_is_sqli(&sf);
+        issqli = 0;
+        switch (mode) {
+        case MODE_SQLI: {
+            libinjection_sqli_init(&sf, linebuf, len, 0);
+            issqli = libinjection_is_sqli(&sf);
+            break;
+        }
+        case MODE_XSS: {
+            issqli = libinjection_is_xss(linebuf, len);
+            break;
+        }
+        default:
+            assert(0);
+       }
+
         if (issqli) {
             g_test_ok += 1;
         } else {
@@ -128,15 +159,34 @@ void test_positive(FILE * fd, const char *fname,
                 (!issqli && flag_true && flag_invert) ||
                 !flag_true) {
 
-                // if we didn't find a SQLi and fingerprint from sqlstats is
-                // is 'sns' or 'snsns' then redo using plain context
-                if (!issqli && (strcmp(sf.fingerprint, "sns") == 0 || strcmp(sf.fingerprint, "snsns") == 0)) {
-                    libinjection_sqli_fingerprint(&sf, 0);
-                }
                 modp_toprint(linebuf, len);
-                fprintf(stdout, "%s\t%d\t%s\t%s\t%s\n",
-                        fname, linenum,
-                        (issqli ? "True" : "False"), sf.fingerprint, linebuf);
+
+                switch (mode) {
+                case MODE_SQLI: {
+		    /*
+		     * if we didn't find a SQLi and fingerprint from
+                     * sqlstats is is 'sns' or 'snsns' then redo using
+                     * plain context
+		     */
+                    if (!issqli && (strcmp(sf.fingerprint, "sns") == 0 ||
+				    strcmp(sf.fingerprint, "snsns") == 0)) {
+                        libinjection_sqli_fingerprint(&sf, 0);
+                    }
+
+                    fprintf(stdout, "%s\t%d\t%s\t%s\t%s\n",
+                            fname, linenum,
+                            (issqli ? "True" : "False"), sf.fingerprint, linebuf);
+                    break;
+                }
+                case MODE_XSS: {
+                    fprintf(stdout, "%s\t%d\t%s\t%s\n",
+                            fname, linenum,
+                            (issqli ? "True" : "False"), linebuf);
+                    break;
+                }
+                default:
+                    assert(0);
+                }
             }
         }
     }
@@ -160,6 +210,7 @@ int main(int argc, const char *argv[])
      * with invert, only print negative results
      */
     int flag_true = FALSE;
+    detect_mode_t mode = MODE_SQLI;
 
     int flag_slow = 1;
     int count = 0;
@@ -185,19 +236,22 @@ int main(int argc, const char *argv[])
             offset += 1;
             max = atoi(argv[offset]);
             offset += 1;
+        } else if (strcmp(argv[offset], "-x") == 0) {
+            mode = MODE_XSS;
+            offset += 1;
         } else {
             break;
         }
     }
 
     if (offset == argc) {
-        test_positive(stdin, "stdin", flag_invert, flag_true, flag_quiet);
+        test_positive(stdin, "stdin", mode, flag_invert, flag_true, flag_quiet);
     } else {
         for (j = 0; j < flag_slow; ++j) {
             for (i = offset; i < argc; ++i) {
                 FILE* fd = fopen(argv[i], "r");
                 if (fd) {
-                    test_positive(fd, argv[i], flag_invert, flag_true, flag_quiet);
+                    test_positive(fd, argv[i], mode, flag_invert, flag_true, flag_quiet);
                     fclose(fd);
                 }
             }

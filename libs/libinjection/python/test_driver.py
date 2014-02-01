@@ -48,6 +48,7 @@ def toascii(data):
     https://github.com/nose-devs/nose/issues/649
     https://github.com/nose-devs/nose/issues/692
     """
+    return data
     udata = data.decode('utf-8')
     return udata.encode('ascii', 'xmlcharrefreplace')
 
@@ -91,8 +92,8 @@ def runtest(testname, flag, sqli_flags):
             actual += print_token(sql_state.current) + '\n';
         actual = actual.strip()
     elif flag == 'folding':
-        sqli_fingerprint(sql_state, sqli_flags)
-        for i in range(len(sql_state.fingerprint)):
+        num_tokens = sqli_fold(sql_state)
+        for i in range(num_tokens):
             actual += print_token(sqli_get_token(sql_state, i)) + '\n';
     elif flag == 'fingerprints':
         ok = is_sqli(sql_state)
@@ -112,37 +113,25 @@ def runtest(testname, flag, sqli_flags):
         assert actual == data[2]
 
 def test_tokens():
-    def run_tokens(testname):
-        runtest(testname, 'tokens', libinjection.FLAG_QUOTE_NONE | libinjection.FLAG_SQL_ANSI)
-
     for testname in sorted(glob.glob('../tests/test-tokens-*.txt')):
         testname = os.path.basename(testname)
-        yield run_tokens, testname
+        runtest(testname, 'tokens', libinjection.FLAG_QUOTE_NONE | libinjection.FLAG_SQL_ANSI)
 
 def test_tokens_mysql():
-    def run_tokens(testname):
-        runtest(testname, 'tokens', libinjection.FLAG_QUOTE_NONE | libinjection.FLAG_SQL_MYSQL)
-
     for testname in sorted(glob.glob('../tests/test-tokens_mysql-*.txt')):
         testname = os.path.basename(testname)
-        yield run_tokens, testname
+        runtest(testname, 'tokens', libinjection.FLAG_QUOTE_NONE | libinjection.FLAG_SQL_MYSQL)
 
 def test_folding():
-    def run_folding(testname):
-        runtest(testname, 'folding', libinjection.FLAG_QUOTE_NONE | libinjection.FLAG_SQL_ANSI)
-
     for testname in sorted(glob.glob('../tests/test-folding-*.txt')):
         testname = os.path.basename(testname)
-        yield run_folding, testname
+        runtest(testname, 'folding', libinjection.FLAG_QUOTE_NONE | libinjection.FLAG_SQL_ANSI)
 
 def test_fingerprints():
-    def run_fingerprints(testname):
-        runtest(testname, 'fingerprints', 0)
-
-
     for testname in sorted(glob.glob('../tests/test-sqli-*.txt')):
         testname = os.path.basename(testname)
-        yield run_fingerprints, testname
+        runtest(testname, 'fingerprints', 0)
+
 
 if __name__ == '__main__':
     import sys
