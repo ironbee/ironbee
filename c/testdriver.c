@@ -1,12 +1,24 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <glob.h>
 #include "libinjection.h"
+#include "libinjection_sqli.h"
+#include "libinjection_html5.h"
+#include "libinjection_xss.h"
 
-char g_test[8096];
-char g_input[8096];
-char g_expected[8096];
+static char g_test[8096];
+static char g_input[8096];
+static char g_expected[8096];
+
+size_t modp_rtrim(char* str, size_t len);
+size_t print_string(char* buf, size_t len, stoken_t* t);
+size_t print_var(char* buf, size_t len, stoken_t* t);
+size_t print_token(char* buf, size_t len, stoken_t *t);
+int read_file(const char* fname, int flags, int testtype);
+const char* h5_type_to_string(enum html5_type x);
+size_t print_html5_token(char* buf, size_t len, h5_state_t* hs);
 
 size_t modp_rtrim(char* str, size_t len)
 {
@@ -24,17 +36,25 @@ size_t modp_rtrim(char* str, size_t len)
 
 size_t print_string(char* buf, size_t len, stoken_t* t)
 {
+    int slen = 0;
+
     /* print opening quote */
     if (t->str_open != '\0') {
-        len += sprintf(buf + len, "%c", t->str_open);
+        slen = sprintf(buf + len, "%c", t->str_open);
+        assert(slen >= 0);
+        len += (size_t) slen;
     }
 
     /* print content */
-    len += sprintf(buf + len, "%s", t->val);
+    slen = sprintf(buf + len, "%s", t->val);
+    assert(slen >= 0);
+    len += (size_t) slen;
 
     /* print closing quote */
     if (t->str_close != '\0') {
-        len += sprintf(buf + len, "%c", t->str_close);
+        slen = sprintf(buf + len, "%c", t->str_close);
+        assert(slen >= 0);
+        len += (size_t) slen;
     }
 
     return len;
@@ -42,17 +62,62 @@ size_t print_string(char* buf, size_t len, stoken_t* t)
 
 size_t print_var(char* buf, size_t len, stoken_t* t)
 {
+    int slen = 0;
     if (t->count >= 1) {
-        len += sprintf(buf + len, "%c", '@');
+        slen = sprintf(buf + len, "%c", '@');
+        assert(slen >= 0);
+        len += (size_t) slen;
     }
     if (t->count == 2) {
-        len += sprintf(buf + len, "%c", '@');
+        slen = sprintf(buf + len, "%c", '@');
+        assert(slen >= 0);
+        len += (size_t) slen;
     }
     return print_string(buf, len, t);
 }
 
-size_t print_token(char* buf, size_t len, stoken_t *t) {
-    len += sprintf(buf + len, "%c ", t->type);
+const char* h5_type_to_string(enum html5_type x)
+{
+    switch (x) {
+    case DATA_TEXT: return "DATA_TEXT";
+    case TAG_NAME_OPEN: return "TAG_NAME_OPEN";
+    case TAG_NAME_CLOSE: return "TAG_NAME_CLOSE";
+    case TAG_NAME_SELFCLOSE: return "TAG_NAME_SELFCLOSE";
+    case TAG_DATA: return "TAG_DATA";
+    case TAG_CLOSE: return "TAG_CLOSE";
+    case ATTR_NAME: return "ATTR_NAME";
+    case ATTR_VALUE: return "ATTR_VALUE";
+    case TAG_COMMENT: return "TAG_COMMENT";
+    case DOCTYPE: return "DOCTYPE";
+    default:
+        assert(0);
+    }
+}
+
+size_t print_html5_token(char* buf, size_t len, h5_state_t* hs)
+{
+    int slen;
+    char* tmp = (char*) malloc(hs->token_len + 1);
+    memcpy(tmp, hs->token_start, hs->token_len);
+    /* TODO.. encode to be printable */
+    tmp[hs->token_len] = '\0';
+
+    slen = sprintf(buf + len, "%s,%d,%s\n",
+                   h5_type_to_string(hs->token_type),
+                   (int) hs->token_len,
+                   tmp);
+    len += (size_t) slen;
+    free(tmp);
+    return len;
+}
+
+size_t print_token(char* buf, size_t len, stoken_t *t)
+{
+    int slen;
+
+    slen = sprintf(buf + len, "%c ", t->type);
+    assert(slen >= 0);
+    len += (size_t) slen;
     switch (t->type) {
     case 's':
         len = print_string(buf, len, t);
@@ -61,9 +126,13 @@ size_t print_token(char* buf, size_t len, stoken_t *t) {
         len = print_var(buf, len, t);
         break;
     default:
-        len += sprintf(buf + len, "%s", t->val);
+        slen = sprintf(buf + len, "%s", t->val);
+        assert(slen >= 0);
+        len += (size_t) slen;
     }
-    len += sprintf(buf + len, "%c", '\n');
+    slen = sprintf(buf + len, "%c", '\n');
+    assert(slen >= 0);
+    len += (size_t) slen;
     return len;
 }
 
@@ -74,6 +143,8 @@ int read_file(const char* fname, int flags, int testtype)
     char linebuf[8192];
     char g_actual[8192];
     char* bufptr = NULL;
+    size_t slen;
+    char* copy;
     sfilter sf;
     int ok = 1;
     int num_tokens;
@@ -96,6 +167,7 @@ int read_file(const char* fname, int flags, int testtype)
             bufptr = g_expected;
             count = 3;
         } else {
+            assert(bufptr != NULL);
             strcat(bufptr, linebuf);
         }
     }
@@ -108,30 +180,60 @@ int read_file(const char* fname, int flags, int testtype)
     g_input[modp_rtrim(g_input, strlen(g_input))] = '\0';
 
 
-    size_t slen = strlen(g_input);
-    char* copy = (char* ) malloc(slen);
+    slen = strlen(g_input);
+    copy = (char* ) malloc(slen);
     memcpy(copy, g_input, slen);
-    libinjection_sqli_init(&sf, copy, slen, flags);
 
-    /* just here for code coverage and cppcheck */
-    libinjection_sqli_callback(&sf, NULL, NULL);
-
-    slen = 0;
     g_actual[0] = '\0';
-    if (testtype == 1) {
-        issqli = libinjection_is_sqli(&sf);
-        if (issqli) {
-            sprintf(g_actual, "%s", sf.fingerprint);
+    if (testtype == 0) {
+        /*
+         * print sqli tokenization only
+         */
+        libinjection_sqli_init(&sf, copy, slen, flags);
+        libinjection_sqli_callback(&sf, NULL, NULL);
+        slen =0;
+        while (libinjection_sqli_tokenize(&sf) == 1) {
+            slen = print_token(g_actual, slen, sf.current);
         }
-    } else if (testtype == 2) {
+    } else if (testtype == 1) {
+        /*
+         * testing tokenization + folding
+         */
+        libinjection_sqli_init(&sf, copy, slen, flags);
+        libinjection_sqli_callback(&sf, NULL, NULL);
+        slen =0;
         num_tokens = libinjection_sqli_fold(&sf);
         for (i = 0; i < num_tokens; ++i) {
             slen = print_token(g_actual, slen, libinjection_sqli_get_token(&sf, i));
         }
-    } else {
-        while (libinjection_sqli_tokenize(&sf) == 1) {
-            slen = print_token(g_actual, slen, sf.current);
+    } else if (testtype == 2) {
+        /**
+         * test sqli detection
+         */
+        char buf[100];
+        issqli = libinjection_sqli(copy, slen, buf);
+        if (issqli) {
+            sprintf(g_actual, "%s", buf);
         }
+    } else if (testtype == 3) {
+        /*
+         * test html5 tokenization only
+         */
+
+        h5_state_t hs;
+        libinjection_h5_init(&hs, copy, slen, 0);
+        slen = 0;
+        while (libinjection_h5_next(&hs)) {
+            slen = print_html5_token(g_actual, slen, &hs);
+        }
+    } else if (testtype == 4) {
+        /*
+         * test XSS detection
+         */
+        sprintf(g_actual, "%d", libinjection_is_xss(copy, slen));
+    } else {
+        fprintf(stderr, "Got stange testtype value of %d\n", testtype);
+        assert(0);
     }
 
     g_actual[modp_rtrim(g_actual, strlen(g_actual))] = '\0';
@@ -178,10 +280,16 @@ int main(int argc, char** argv)
             testtype = 0;
         } else if (strstr(fname, "test-folding-")) {
             flags = FLAG_QUOTE_NONE | FLAG_SQL_ANSI;
-            testtype = 2;
+            testtype = 1;
         } else if (strstr(fname, "test-sqli-")) {
             flags = FLAG_NONE;
-            testtype = 1;
+            testtype = 2;
+        } else if (strstr(fname, "test-html5-")) {
+            flags = FLAG_NONE;
+            testtype = 3;
+        } else if (strstr(fname, "test-xss-")) {
+            flags = FLAG_NONE;
+            testtype = 4;
         } else {
             fprintf(stderr, "Unknown test type: %s, failing\n", fname);
             count_fail += 1;

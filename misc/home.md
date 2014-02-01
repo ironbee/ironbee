@@ -3,38 +3,30 @@ LIBINJECTION
 
 Libinjection is a small C library to detect SQLi attacks in user input with the following goals:
 
-* Open.  Source code is open, tests cases are open.
+* Open.  Source code is on [GitHub](https://github.com/client9/libinjection/).
 * Low _false-postives_.   When there are high false positives, people tend to turn off any WAF or protection.
 * Excellent detection of SQLi.
-* High performance, almost free.
+* High performance (currently [over 500,000 TPS](https://libinjection.client9.com/cicada/artifacts/libinjection/libinjection-speed/latest/console.txt))
 * Easy to test and QA
 * Easy to integrate and extend
 
-Curious?  See more details below or:
-
-* Try it now on the [diagnostics page](/diagnostics)
-* Read the [FAQ](/faq-sqli)
-* Download the [code](https://github.com/client9/libinjection/)
-
-### Open Source
-
-* Open source, code is on [GitHub](https://github.com/client9/libinjection/)
-* [BSD License](https://github.com/client9/libinjection/blob/master/COPYING.txt)
+### [Try it now](/diagnostics)
 
 ### Easy to integrate
 
-* Standard C code, and compiles as C99 and C++
-* Small - about [1200 lines of code](/cicada/artifacts/libinjection-loc/console.txt) in three files
+* Standard C code, and compiles as C99 and C++, with bindings to
+ * [Python](https://github.com/client9/libinjection/wiki/doc-sqli-python)
+ * [PHP](https://github.com/client9/libinjection/wiki/doc-sqli-php)
+ * [Lua](https://github.com/client9/libinjection/tree/master/lua)
+* Small - about [1500 lines of code](https://libinjection.client9.com/cicada/artifacts/libinjection/libinjection-loc/latest/console.txt) in three files
 * Compiles on Linux/Unix/BSD, Mac and Windows
 * No threads used and thread safe
 * No recursion
 * No (heap) memory allocation
 * No extenal library dependencies
-
-### Bindings to Scripting Langauges
-
-* [Python](/doc-sqli-python)
-* [Lua](https://github.com/client9/libinjection/tree/master/lua)
+* [400+ unit tests](https://github.com/client9/libinjection/tree/master/tests)
+* [98% code coverage](https://libinjection.client9.com/cicada/artifacts/libinjection/libinjection-coverage-unittest/latest/lcov-html/libinjection/c/index.html)
+* [BSD License](https://github.com/client9/libinjection/blob/master/COPYING.txt)
 
 Third-Party Ports
 ---------------------
@@ -51,4 +43,3 @@ Applications
 * Proprietary Honeypot
 * Proprietary WAF, Russia
 * Proprietary WAF, Japan
-

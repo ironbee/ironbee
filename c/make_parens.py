@@ -59,6 +59,46 @@ class PermuteFingerprints(object):
         if s in self.blacklist:
             return False
 
+        # SQL Types are rarely used
+        if 't' in s and 'f(t' not in s and 'At' not in s:
+            return False
+
+        if 'v,s' in s:
+            return False
+        if 's,v' in s:
+            return False
+        if 'v,v' in s:
+            return False
+        if 'v,1' in s:
+            return False
+        if 'v,n' in s:
+            return False
+        if 'n,v' in s:
+            return False
+        if '1,v' in s:
+            return False
+        if 'Eo(' in s:
+            return False
+        if '(o(' in s:
+            return False
+        if '(o1' in s:
+            return False
+        if '(on' in s:
+            return False
+        if '(os' in s:
+            return False
+        if '(of' in s:
+            return False
+        if '(ov' in s:
+            return False
+
+        if 'oso' in s:
+            return False
+        if 'o1o' in s:
+            return False
+        if 'ono' in s:
+            return False
+
         # only 1 special case for this
         # 1;foo:goto foo
         # 1;n:k
@@ -130,10 +170,6 @@ class PermuteFingerprints(object):
             return False
 
         if 'ff' in s:
-            return False
-        if 'tt' in s:
-            return False
-        if 'tf' in s:
             return False
 
         if '1no' in s:

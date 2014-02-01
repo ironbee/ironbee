@@ -2,6 +2,7 @@
 %module libinjection
 %{
 #include "libinjection.h"
+#include "libinjection_sqli.h"
 
 /* This is the callback function that runs a python function
  *
@@ -76,3 +77,4 @@ for (i = 0; i < $1_dim0; i++) {
     }
 }
 %include "libinjection.h"
+%include "libinjection_sqli.h"

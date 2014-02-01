@@ -5,16 +5,16 @@
 #LUA_FLAGS=-I/usr/include/lua5.1 -llua5.1
 #LUA=/usr/bin/lua5.1
 
-# ubuntu libjit 2
-LUA_FLAGS=-I/usr/include/luajit-2.0 -lluajit5.1
+# ubuntu luajit 2
+LUA_FLAGS=-I/usr/include/luajit-2.0 -lluajit-5.1
 LUA=luajit
 
 # centos and friends
-LUA_FLAGS=-I/usr/include/ -L/usr/lib64 -llua
-LUA=lua
+#LUA_FLAGS=-I/usr/include/ -L/usr/lib64 -llua
+#LUA=lua
 
 SHARED=-shared -Wl,-soname,libinjection.so
-CFLAGS= -O0 -g -Wall -Wextra -fPIC -fno-common
+CFLAGS= -O0 -g -Wall -Wextra -Wformat=2 -fPIC -fno-common
 APPLE=$(shell uname -a | grep -c Darwin)
 
 # MAC OS X - brew install luajit
@@ -55,10 +55,13 @@ libinjection.h: ../c/libinjection.h
 libinjection_sqli.c: ../c/libinjection_sqli.c
 	cp ../c/libinjection_sqli.c libinjection_sqli.c
 
+libinjection_sqli.h: ../c/libinjection_sqli.h
+	cp ../c/libinjection_sqli.h libinjection_sqli.h
+
 libinjection_sqli_data.h: ../c/libinjection_sqli_data.h
 	cp ../c/libinjection_sqli_data.h libinjection_sqli_data.h
 
-copy: libinjection.h libinjection_sqli.c libinjection_sqli_data.h
+copy: libinjection.h libinjection_sqli.h libinjection_sqli.c libinjection_sqli_data.h
 .PHONY: copy
 
 sample: sqlifingerprints.lua
@@ -71,11 +74,11 @@ lua-TestMore:
 speed:
 	${LUA} luatest.lua
 clean:
-	rm -f *~
-	rm -rf *.dSYM *.so *.dylib
-	rm -f libinjection.h libinjection_sqli.c libinjection_sqli_data.h
-	rm -f sqlifingerprints.lua
-	rm -f unit-test.t
-	rm -f libinjection_sqli.c.*
-	rm -f junit*.xml
-	rm -f libinjection_wrap.c
+	@rm -f *~
+	@rm -rf *.dSYM *.so *.dylib
+	@rm -f libinjection.h libinjection_sqli.c libinjection_sqli_data.h
+	@rm -f sqlifingerprints.lua
+	@rm -f unit-test.t
+	@rm -f libinjection_sqli.c.*
+	@rm -f junit*.xml
+	@rm -f libinjection_wrap.c

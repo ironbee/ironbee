@@ -1,9 +1,19 @@
 
-VALGRIND=valgrind --gen-suppressions=no \
+VALGRIND=valgrind
+VALGRIND_FLAGS=--gen-suppressions=no \
 	--read-var-info=yes \
 	--error-exitcode=1 \
 	--track-origins=yes
 
+CPPCHECK=cppcheck
+CPPCHECK_FLAGS=--quiet --enable=all --inconclusive --error-exitcode=2 \
+	--std=c89 --std=posix --std=c++11 \
+	--suppress=variableScope  \
+	--template '{file}:{line} {severity} {id} {message}'
+
+
+# Default GCC-based flags
+#
 # http://stackoverflow.com/questions/1629685/when-and-how-to-use-gccs-stack-protection-feature
 # We will warn about stack-protect just to make sure we don't
 # cause errors in environments that's it used.  However we do not
@@ -12,8 +22,7 @@ VALGRIND=valgrind --gen-suppressions=no \
 #  * does not actually protect against buffer over-reads on fixed array sizes
 #  * breaks valgrinds ability to detect this.
 #
-CFLAGS=-g -O3 -Wall -Wextra -Wcast-align -Wshadow -Wpointer-arith -Wcast-qual -Wstack-protector -D_FORTIFY_SOURCE=2
-
+CFLAGS=-g -O3 -Wall -Wextra -Werror -Wcast-align -Wshadow -Wpointer-arith -Wcast-qual -Wstack-protector -D_FORTIFY_SOURCE=2 -std=c90 -pedantic
 
 help:
 	@echo ""
@@ -37,30 +46,27 @@ help:
 allbin: reader sqli fptool example1 testspeed testdriver
 
 example1: Makefile example1.c libinjection_sqli_data.h libinjection.h libinjection_sqli.c
-	${CC}  ${CFLAGS} -o example1 libinjection_sqli.c example1.c
+	${CC} ${CFLAGS} -o example1 libinjection_sqli.c example1.c
 
-reader: Makefile reader.c libinjection_sqli_data.h libinjection.h libinjection_sqli.c
-	${CC}  ${CFLAGS} -o reader libinjection_sqli.c reader.c
+reader: Makefile reader.c libinjection_sqli_data.h libinjection.h libinjection_sqli.c libinjection_html5.c libinjection_xss.c
+	${CC} ${CFLAGS} -o reader libinjection_sqli.c libinjection_html5.c libinjection_xss.c reader.c
 
-reader-gprof: Makefile reader.c libinjection_sqli_data.h libinjection.h libinjection_sqli.c
-	make clean
-	${CC} -g -O2 -pg -o reader libinjection_sqli.c reader.c
+reader-gprof: Makefile reader.c libinjection_sqli_data.h libinjection.h libinjection_sqli.c libinjection_xss.c
+	${MAKE} clean
+	${CC} -g -O2 -pg -o reader-gprof libinjection_sqli.c libinjection_html5.c libinjection_xss.c reader.c
 
-reader-gcov: Makefile sqlparse_data.h libinjection.h libinjection_sqli.c reader.c
-	g++ -g -O0 -fprofile-arcs -ftest-coverage -Wall -Wextra -o reader-gcov libinjection_sqli.c reader.c
+reader-gcov: Makefile libinjection.h libinjection_sqli.h libinjection_sqli_data.h libinjection_sqli.c libinjection_xss.c reader.c
+	${CC} -g -O0 -fprofile-arcs -ftest-coverage -Wall -Wextra -o reader-gcov libinjection_sqli.c libinjection_html5.c libinjection_xss.c reader.c
 
-testdriver: Makefile testdriver.c libinjection_sqli_data.h libinjection.h libinjection_sqli.c
-	${CC}  ${CFLAGS} -O1 -o testdriver libinjection_sqli.c testdriver.c
+testdriver: Makefile testdriver.c libinjection.h libinjection_sqli_data.h libinjection_sqli.h libinjection_sqli.c libinjection_html5.c libinjection_xss.c
+	${CC}  ${CFLAGS} -O0 -o testdriver libinjection_sqli.c libinjection_html5.c libinjection_xss.c testdriver.c
 
-testdriver-gcov: testdriver.c libinjection.h libinjection_sqli.c libinjection_sqli_data.h
+testdriver-gcov: testdriver.c libinjection.h libinjection_sqli.c libinjection_sqli_data.h libinjection_html5.c
 	rm -f sqli
-	gcc -g -fprofile-arcs -ftest-coverage -O0 -o testdriver-gcov testdriver.c libinjection_sqli.c
-
-is_sqli: Makefile is_sqli_cli.cpp libinjection_sqli.c libinjection.h libinjection_sqli_data.h libinjection_sqli_data.h
-	${CXX}  ${CFLAGS} -O3 -o is_sqli is_sqli_cli.cpp libinjection_sqli.c
+	${CC} -g -fprofile-arcs -ftest-coverage -O0 -o testdriver-gcov libinjection_sqli.c libinjection_html5.c libinjection_xss.c testdriver.c
 
 sqli: Makefile sqli_cli.c libinjection_sqli.c libinjection.h libinjection_sqli_data.h
-	${CC} -g -O1 -o sqli sqli_cli.c libinjection_sqli.c
+	${CC} ${CFLAGS} -o sqli sqli_cli.c libinjection_sqli.c
 
 fptool: Makefile fptool.c libinjection.h libinjection_sqli.c libinjection_sqli_data.h
 	${CC} ${CFLAGS} -o fptool fptool.c libinjection_sqli.c
@@ -76,16 +82,14 @@ testpy: test_driver.py sqli libinjection_sqli_data.h libinjection_sqli.c libinje
 
 test: testdriver libinjection_sqli_data.h libinjection_sqli.c libinjection.h
 	(cd ../tests; ../c/testdriver -q test-*.txt)
-	./reader -q ../data/*.txt
+	./reader -q ../data/sqli-*.txt
 
 valgrind: reader testdriver
-	(cd ../tests; ${VALGRIND} ../c/testdriver -q test-*.txt)
-	${VALGRIND} ./reader -q ../data/*.txt
+	(cd ../tests; find . -name 'test*.txt' | xargs ${VALGRIND} ${VALGRIND_FLAGS} ../c/testdriver -q)
+	${VALGRIND} ${VALGRIND_FLAGS} ./reader -q ../data/sqli-*.txt
 
 cppcheck:
-	cppcheck --enable=all --inconclusive --std=c89 --error-exitcode=2 \
-		--suppress=variableScope  \
-		--template '{file}:{line} {severity} {id} {message}' .
+	${CPPCHECK} ${CPPCHECK_FLAGS} .
 
 unused:
 	-${MAKE} test_positive | grep True | awk '{print $$4}' | sort -u > /tmp/junk
@@ -127,18 +131,20 @@ coverage-testdriver: testdriver-gcov
 	lcov -b . --directory . --capture --output-file libinjection.info
 	lcov -b . --directory . --remove libinjection.info '/usr/include*' -o libinjection.info
 	lcov -b . --directory . --remove libinjection.info 'testdriver' -o libinjection.info
-	genhtml -o lcov-html libinjection.info
+	genhtml --branch-coverage -o lcov-html libinjection.info
 
 coverage-reader: reader-gcov
 	rm -f libinjection.info
 	rm -rf lcov-html
 	mkdir lcov-html
 	lcov -b . --directory . --zerocounters
-	-./reader-gcov -q ../data/*.txt
+	-./reader-gcov -q ../data/sqli-*.txt
+	-./reader-gcov -q -x ../data/xss-*.txt
 	lcov -b . --directory . --capture --output-file libinjection.info
 	lcov -b . --directory . --remove libinjection.info '/usr/include*' -o libinjection.info
 	lcov -b . --directory . --remove libinjection.info 'reader' -o libinjection.info
-	genhtml -o lcov-html libinjection.info
+	genhtml --branch-coverage -o lcov-html libinjection.info
+
 
 .PHONY: coverage-reader coverage-testdriver
 
@@ -156,6 +162,9 @@ clean:
 	@rm -rf core* a.out
 	@rm -f gmon.out nosetests.xml valgrind-*.txt
 	@rm -f reader is_sqli lcov-reader sqli fptool testdriver example1
-	@rm -f reader-gcov testdriver-gcov
+	@rm -f reader-gcov testdriver-gcov reader-gprof
 	@rm -f fingerprints-orig.txt
+	@rm -f *.ll *.ll.out
 
+# *.ll *.ll.out are produced by "stack"
+# https://github.com/xiw/stack

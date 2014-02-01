@@ -6,6 +6,9 @@ fptool
 sqli
 testspeed
 build
+testdriver
+example1
+a.out
 *~
 *.pyc
 *.dSYM

@@ -4,9 +4,9 @@
 <h1>libinjection {{ version }} tokens diagnostics</h1>
 <p>Enter text to be analyzed in form below or directly modify the query string: </p>
 <form method="get">
-<textarea name="id" rows="5">{{ formvalue }}</textarea><br/>
-<input type="submit" name="type" value="fingerprints"></input>
-<input type="submit" name="type" value="tokens"></input>
+<textarea class="form-control" name="id" rows="5">{{ formvalue }}</textarea><br/>
+<input class="btn" type="submit" name="type" value="fingerprints"></input>
+<input class="btn" type="submit" name="type" value="tokens"></input>
 </form>
 {% if len(formvalue) %}
 
@@ -35,7 +35,7 @@
 <div style="float:left; margin:0px; padding: 0px; width:50%; background-color:inherit">
 
 <h4>Raw Tokens</h4>
-<table style="width:100%">
+<table class="table table-condensed">
 <tr><th>type</th><th>value</th></tr>
 {% for i in p['tokens'] %}
 <tr><td>{{ i[0] }}</td><td>{{ i[1] }}</tr>
@@ -44,7 +44,7 @@
 </div>
 <div style="float:left; margin: 0px;padding: 0px;width:50%;background-color:inherit">
 <h4>Folded</h4>
-<table style="float:left; width:100%">
+<table class="table table-condensed">
 <tr><th>type</th><th>value</th></tr>
 {% for i in p['folds'] %}
 <tr><td>{{ i[0] }}</td><td>{{ i[1] }}</tr>
