@@ -6,16 +6,6 @@ IronBee as a framework for developing a system for securing web
 applications - a framework for building a web application firewall (WAF)
 if you will.
 
-IronBee was conceived and implemented by both the original author (Ivan
-Ristić) and maintainer (Brian Rectanus) of the popular open source WAF,
-ModSecurity (https://www.modsecurity.org/[www.modsecurity.org]),
-however, ModSecurity is now run by the TrustWave SpiderLabs team and in
-no way associated with IronBee. Because of the authors' previous work on
-ModSecurity, there are some similarities in IronBee concepts, however
-IronBee was built with an entirely different set of goals. More on the
-similarities and difference between ModSecurity and IronBee can be found
-in ?.
-
 IronBee started in July 2010 through the generous support of Qualys, Inc
 (https://www.qualys.com/[www.qualys.com]). The idea was to build a
 highly portable web application security framework for the community
@@ -25,7 +15,7 @@ WAF. But what does this mean? Essentially IronBee gives you some basic
 WAF functionality, but leaves most of this open to be extended or
 replaced by something more tailored to your environment.
 
-As a framework, IronBee's goals are to:
+As a framework, IronBee's goals are as follows:
 
 * Be minimalistic in what is contained in the core engine.
 +

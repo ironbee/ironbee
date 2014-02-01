@@ -53,19 +53,18 @@ script. A full list of these options are available with:
 ./configure --help
 ------------------
 
-See ? for more detailed instructions on building and installing IronBee.
+See the <<_installation_guide>> for more detailed instructions on
+building and installing IronBee.
 
 Configuration
 ~~~~~~~~~~~~~
 
 First, the server component must be configured to load the IronBee
 library and its configuration. This is done through the server's native
-configuration and differs for each server. See the ? for more specific
-details in configuring the server component. Once the server component
-is loaded, IronBee configuration consists of one or more configuration
-files which IronBee will read.
-
-IronBee configuration file examples are listed in the ? section.
+configuration and differs for each server. See the <<_configuration_examples>>
+for more specific details in configuring the server component. Once the
+server component is loaded, IronBee configuration consists of one or more
+configuration files which IronBee will read.
 
 Inspection
 ~~~~~~~~~~
