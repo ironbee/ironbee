@@ -19,19 +19,18 @@ doxygen_external: external.doxy $(DOXYGEN_DEPS)
 	fi;
 
 doxygen_internal.pdf: doxygen_internal
-	(cd doxygen_internal/latex && make refman.pdf) && cp doxygen/latex/refman.pdf doxygen_internal.pdf
+	@(cd doxygen_internal/latex && make refman.pdf) && cp doxygen/latex/refman.pdf doxygen_internal.pdf
 
 doxygen_external.pdf: doxygen_external
-	(cd doxygen_external/latex && make refman.pdf) && cp doxygen/latex/refman.pdf doxygen_external.pdf
+	@(cd doxygen_external/latex && make refman.pdf) && cp doxygen/latex/refman.pdf doxygen_external.pdf
 
 doxygen: doxygen_internal doxygen_external
 
 ref-manual:
-	@(cd reference-manual && $(MAKE) ironbee-reference-manual.html)
+	@(cd reference-manual && $(MAKE) ref-manual)
 
 .PHONY: \
     doxygen \
     doxygen_internal \
     doxygen_external \
-    manual \
-    ref-manual
+	ref-manual

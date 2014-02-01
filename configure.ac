@@ -316,18 +316,38 @@ for f in $INTERNAL_DOXYGEN_FILES; do
     DOXYGEN_INTERNAL_DEPS="$DOXYGEN_INTERNAL_DEPS \$(abs_top_srcdir)/$f"
 done
 
-### Java
-AC_ARG_WITH([java],
-            [  --with-java=PROG java executable],
-            [java="$withval"],[java=no])
+### Asciidoc executable and options
+AC_ARG_WITH([asciidoc],
+            [  --with-asciidoc=PROG asciidoc engine executable],
+            [asciidoc="$withval"],[asciidoc=yes])
 
-if test "$java" != "no"; then
-    AC_MSG_NOTICE([Using java: $java])
+if test "$asciidoc" = "yes"; then
+    AC_PATH_PROGS([asciidoc],[asciidoctor asciidoc],[])
+elif test "$asciidoc" != "no"; then
+    AC_MSG_NOTICE([Using asciidoc: $asciidoc])
 else
-    AC_PATH_PROGS([java],[java],[])
+    asciidoc=
+    AC_MSG_NOTICE([Not using asciidoc: no engine found])
 fi
 
-JAVA=$java
+ASCIIDOC=$asciidoc
+
+AC_ARG_WITH([asciidoc_options],
+            [  --with-asciidoc-options=OPTIONS asciidoc engine options],
+            [asciidoc_options="$withval"],[asciidoc_options=yes])
+
+if test "$asciidoc_options" = "yes"; then
+    asciidoc_options="-b html5"
+    AC_MSG_NOTICE([Using default asciidoc options: $asciidoc_options])
+elif test "$asciidoc_options" != "no"; then
+    AC_MSG_NOTICE([Using asciidoc options: $asciidoc_options])
+else
+    asciidoc_options=
+fi
+
+ASCIIDOC_OPTIONS=$asciidoc_options
+
+AM_CONDITIONAL([ENABLE_REFMANUAL], test -n "$ASCIIDOC"])
 
 ### Valgrind
 AC_ARG_WITH([valgrind],
@@ -628,8 +648,6 @@ AC_SUBST(CONFIG_MACRO_DIR)
 AC_SUBST(TOPLEVEL_SUBDIRS)
 AC_SUBST(LIBS_SUBDIRS)
 AC_SUBST(SERVERS_SUBDIRS)
-AC_SUBST(JAVA)
-AC_SUBST(VALGRIND)
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_LDFLAGS)
 AC_SUBST(IB_DEBUG)
@@ -638,6 +656,9 @@ AC_SUBST(DOXYGEN_EXTERNAL_DEPS)
 AC_SUBST(DOXYGEN_INTERNAL_DEPS)
 AC_SUBST(DOXYGEN_INPUT)
 AC_SUBST(DOXYGEN_TOP)
+AC_SUBST(ASCIIDOC)
+AC_SUBST(ASCIIDOC_OPTIONS)
+AC_SUBST(VALGRIND)
 AC_SUBST(BOOST_SUFFIX)
 AC_SUBST(MAJOR_VERSION, [$AX_MAJOR_VERSION])
 AC_SUBST(MINOR_VERSION, [$AX_MINOR_VERSION])
