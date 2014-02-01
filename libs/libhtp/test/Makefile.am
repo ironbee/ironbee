@@ -3,8 +3,6 @@ AM_CFLAGS = -g -std=gnu99
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)/htp -Wno-write-strings -DGTEST_USE_OWN_TR1_TUPLE=1
 AUTOMAKE_OPTIONS = subdir-objects
 EXTRA_DIST = files
-AUTOMAKE_OPTIONS = subdir-objects
-
 check_PROGRAMS = test_all
 check_LIBRARIES = libgtest.a
 
