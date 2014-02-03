@@ -283,6 +283,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<htp_private.h>',
   '<lauxlib.h>',
   '<libinjection.h>',
+  '<libinjection_sqli.h>',
   '<lua.h>',
   '<lualib.h>',
   '<modp_ascii.h>',

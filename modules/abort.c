@@ -76,9 +76,9 @@
 
 #include <ironbee/action.h>
 #include <ironbee/context.h>
-#include <ironbee/hash.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_state.h>
+#include <ironbee/hash.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
