@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2401 
+personal_ws-1.1 en 2425 
 malloc'ed
 malloced
 libnet
@@ -43,6 +43,7 @@ TestStringLower
 dev
 alen
 xxxxxxxx
+abortIf
 recurse
 fffffff
 djb
@@ -429,6 +430,7 @@ bstr
 AliasCall
 nvpair
 SIGCHLD
+pitem
 TCP
 fmask
 abcdefghijkl
@@ -895,6 +897,7 @@ TSVConnClose
 Baskinger
 codebase
 stype
+OpTrue
 This'll
 calloc's
 eval
@@ -1021,8 +1024,8 @@ Wdelete
 AhoCorasickModuleTest
 IronBeeUtilTypes
 setflags
+txDump
 txdump
-TxDump
 getnameinfo
 luaevents
 PersistenceMap
@@ -1083,6 +1086,8 @@ AuditLogGenerator
 IronBeeEngineData
 optimizations
 FalsePositive
+testops
+TestOps
 LogLevel
 loglevel
 ResponseBodyBufferLimitAction
@@ -1144,6 +1149,7 @@ valuelist
 ValueList
 tokenizer
 prequalifier
+inrc
 datas
 maincfg
 Simboli
@@ -1211,6 +1217,7 @@ Preparsed
 stdlib
 reloadable
 RULENUM
+ActFail
 iter
 exprwith
 subclasses
@@ -1264,6 +1271,7 @@ stdmsg
 AdsBot
 somebits
 buflen
+logMsg
 logmsg
 TxLogModule
 libs
@@ -1305,6 +1313,7 @@ delims
 TxLogBaseDirectory
 iconn
 multithreaded
+TxEnd
 pengine
 strbase
 exlen
@@ -1327,6 +1336,7 @@ IronBeeEngineManagerLogging
 ifdef
 omgilibot
 exmin
+pabort
 pconndata
 IndexCollection
 ConfigurationDirectivesRegistrar
@@ -1431,7 +1441,7 @@ demux
 interoperability
 MyFormat
 Myformat
-DIRMAP
+dirmap
 setSuppress
 refactor
 SensorHostname
@@ -1461,6 +1471,7 @@ bufsize
 IronBeeRuleLogger
 xffff
 pipelined
+OpFail
 unlink
 luaL
 abcdefABCDEF
@@ -1473,6 +1484,7 @@ errorffset
 nelts
 valgrind
 fulldocs
+tbase
 Deserialize
 dataout
 decrement
@@ -1556,6 +1568,7 @@ pcre
 edata
 subprocess
 netmasks
+TxVar
 YAJL's
 RuleEngineLogLevel
 ACNode's
@@ -1679,6 +1692,8 @@ subkeys
 nums
 superset
 filenames
+OpOK
+OpOk
 editRequestHeader
 teleca
 ironbeepp
@@ -1829,6 +1844,7 @@ logdata
 gcdata
 myprefix
 AuthBasicRealm
+OpFalse
 ruleExec
 LargeAllocations
 nstate
@@ -2033,6 +2049,7 @@ actionableRulesOnly
 rPort
 IronAutomataBits
 IronBeeEngineManagerTestAPI
+AbortMode
 unicode
 NetFront
 netfront
@@ -2044,6 +2061,8 @@ ConstContext
 TestKVStore
 udata
 ValueType
+ResLine
+resline
 sudo
 RuleBasePath
 decrypted
@@ -2123,6 +2142,7 @@ AuditEngine
 runtimes
 EvalContext
 isHomogeneous
+tval
 ruleid
 getpid
 hostname
@@ -2134,6 +2154,7 @@ ByteString
 subengine
 RuleIP
 GetParser
+ActOk
 vlen
 VARNAME
 unum
@@ -2174,6 +2195,7 @@ LogHandler
 SpecificTransformation
 inlining
 punycode
+TxVars
 rsize
 IOBuffer
 teashark
@@ -2226,6 +2248,8 @@ TSIOBufferSizedCreate
 valmap
 inspectResponseHeader
 aabc
+ResHdr
+reshdr
 enqueue
 HTTPD's
 httpd's

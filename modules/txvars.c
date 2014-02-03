@@ -437,7 +437,7 @@ static ib_status_t txvars_handler(
     /* Get my configuration context */
     rc = ib_cfgparser_context_current(cp, &context);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Txvars: Failed to get current context: %s",
+        ib_cfg_log_error(cp, "TxVars: Failed to get current context: %s",
                          ib_status_to_string(rc));
         return rc;
     }
@@ -511,7 +511,7 @@ static ib_status_t create_txvar_item(
 }
 
 /**
- * Initialize the txvars module.
+ * Initialize the TxVars module.
  *
  * @param[in] ib IronBee Engine.
  * @param[in] module Module data.
@@ -565,7 +565,7 @@ static ib_status_t txvars_init(
     /* Save off pointer into the module object's data pointer. */
     module->data = mod_data;
 
-    /* Register the Txvars directive. */
+    /* Register the TxVars directive. */
     rc = ib_config_register_directive(ib,
                                       "TxVars",
                                       IB_DIRTYPE_ONOFF,
@@ -575,7 +575,7 @@ static ib_status_t txvars_init(
                                       NULL,
                                       NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to register Txvars directive: %s",
+        ib_log_error(ib, "Failed to register TxVars directive: %s",
                      ib_status_to_string(rc));
         return rc;
     }

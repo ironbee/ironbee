@@ -41,13 +41,13 @@
  * - `OpFail`: Fires if an operator's status not `IB_OK`.
  * - `OpTrue`: Fires if an operator's result is `True`.
  * - `OpFail`: Fires if an operator's result if `False`.
- * - `ActOk`: Fires if an actions's status is `IB_OK`.
- * - `ActFail`: Fires if an actions's status not `IB_OK`.
+ * - `ActOk`: Fires if an action's status is `IB_OK`.
+ * - `ActFail`: Fires if an action's status not `IB_OK`.
  *
  * Any time an abort / abortIf modifier fires, a "ABORT:" message is logged.
  *
  * At the end of any transaction in which at least one abort / abortIf
- * modifierd fires, summary "ABORT:" messages are logged.
+ * modified fires, summary "ABORT:" messages are logged.
  *
  * The abort mode is configured via the AbortMode directive.  The possible
  * values are:
@@ -150,7 +150,7 @@ typedef struct abort_tx_data_t abort_tx_data_t;
  * Data stored for each abort modifier.
  */
 struct abort_modifier_t {
-    abort_type_t     abort_type;    /**< Type of abort modifer */
+    abort_type_t     abort_type;    /**< Type of abort modifier */
     bool             is_false;      /**< Abort modifier inverted? */
     const char      *abort_str;     /**< String version of abort_type */
     ib_var_expand_t *message;       /**< Message */
@@ -464,7 +464,7 @@ static ib_status_t abort_if_create(
 }
 
 /**
- * Check status for an abort/abortIf modifer
+ * Check status for an abort/abortIf modifier
  *
  * @param[in] ib IronBee engine (for debug)
  * @param[in] rc Operator/action result code
@@ -502,7 +502,7 @@ static ib_status_t check_status(
 }
 
 /**
- * Check result for an abort / abortIf modifer
+ * Check result for an abort / abortIf modifier
  *
  * @param[in] ib IronBee engine (for debug)
  * @param[in] result Operator/action result
@@ -551,7 +551,7 @@ static ib_status_t check_result(
  * abort().
  *
  * Otherwise, the abort is added to the transaction's abort list.  This will
- * cause the handle_tx_finished() to to log the aborts assocated with the
+ * cause the handle_tx_finished() to to log the aborts associated with the
  * transaction.
  *
  * @param[in] module Module object
@@ -701,7 +701,7 @@ void abort_post_operator(
     assert(module->data != NULL);
     module_data = module->data;
 
-    /* Find assocated abort rule item (if there is one) */
+    /* Find associated abort rule item (if there is one) */
     rc = get_abort_rule(module_data->op_rules, rule_exec->rule, &abort_rule);
     if (rc == IB_ENOENT) {
         return;
@@ -809,7 +809,7 @@ void abort_post_action(
         }
     }
 
-    /* Find assocated abort rule item (if there is one) */
+    /* Find associated abort rule item (if there is one) */
     rc = get_abort_rule(module_data->act_rules, rule_exec->rule, &abort_rule);
     if (rc == IB_ENOENT) {
         return;
@@ -992,7 +992,7 @@ static ib_status_t handle_tx_finished(
         ib_log_error_tx(tx, "#%zd: Rule \"%s\"", num, rule->meta.full_id);
     }
 
-    /* We're outa here */
+    /* We're outta here */
     if (config->abort_mode == ABORT_TX_END) {
         abort();
     }
