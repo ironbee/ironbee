@@ -906,9 +906,9 @@ static ib_status_t txdump_tx(
         txdump_v(tx, txdump, 4, "ID = %s", tx->conn->id);
         txdump_v(tx, txdump, 4, "Created = %s", buf);
         txdump_v(tx, txdump, 4, "Remote = %s:%d",
-                        tx->conn->remote_ipstr, tx->conn->remote_port);
+                 tx->conn->remote_ipstr, tx->conn->remote_port);
         txdump_v(tx, txdump, 4, "Local = %s:%d",
-                        tx->conn->local_ipstr, tx->conn->local_port);
+                 tx->conn->local_ipstr, tx->conn->local_port);
         if (ib_flags_all(txdump->flags, TXDUMP_CONTEXT) ) {
             txdump_context(tx, txdump, 4, tx->conn->ctx);
         }
