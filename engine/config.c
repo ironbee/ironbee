@@ -732,6 +732,17 @@ ib_status_t ib_config_register_directive(
     return rc;
 }
 
+ib_status_t ib_config_registered_directives(
+    ib_engine_t *ib,
+    ib_list_t   *list
+)
+{
+    assert(ib != NULL);
+    assert(list != NULL);
+
+    return ib_hash_get_all(ib->dirmap, list);
+}
+
 /**
  * Log a debug message followed by the directive and its parameters.
  *

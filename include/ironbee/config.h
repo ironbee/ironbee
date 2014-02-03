@@ -591,6 +591,19 @@ ib_status_t DLL_PUBLIC ib_config_register_directive(
 );
 
 /**
+ * Get a list of all registered directives.
+ *
+ * @param[in] ib Engine
+ * @param[in,out] list List to add directive records (@ref ib_dirmap_init_t *)
+ *
+ * @returns Status code
+ */
+ib_status_t ib_config_registered_directives(
+    ib_engine_t *ib,
+    ib_list_t   *list
+);
+
+/**
  * Process a directive.
  *
  * @param cp Config parser
