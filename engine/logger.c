@@ -496,6 +496,81 @@ void ib_logger_log_va_list(
     ib_mpool_release(mp);
 }
 
+/**
+ * Default logger configuration.
+ */
+typedef struct default_logger_cfg_t {
+    FILE * file; /**< File to log to. */
+} default_logger_cfg_t;
+
+/**
+ * The default logger format function.
+ *
+ * This wraps ib_logger_standard_formatter() and reports errors to the
+ * log file defined by @a data.
+ *
+ * param[in] logger The logger.
+ * param[in] rec The record.
+ * param[in] log_msg The user's log message.
+ * param[in] log_msg_sz The length of @a log_msg.
+ * param[in] writer_record A @a ib_logger_standard_msg_t will be written here
+ *           on success.
+ * param[in] data A @a default_logger_cfg_t holding default logger
+ *           configuration information.
+ */
+static ib_status_t default_logger_format(
+    ib_logger_t           *logger,
+    const ib_logger_rec_t *rec,
+    const uint8_t         *log_msg,
+    const size_t           log_msg_sz,
+    void                  *writer_record,
+    void                  *data
+)
+{
+    assert(logger != NULL);
+    assert(rec != NULL);
+    assert(log_msg != NULL);
+    assert(writer_record != NULL);
+
+    ib_status_t rc;
+    default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
+
+    rc = ib_logger_standard_formatter(
+        logger,
+        rec,
+        log_msg,
+        log_msg_sz,
+        writer_record,
+        data);
+
+    if (rc == IB_EALLOC) {
+        ib_logger_standard_msg_free(
+            logger,
+            *(void **)writer_record,
+            data);
+        fprintf(cfg->file, "Out of memory.  Unable to log.");
+        fflush(cfg->file);
+    }
+    else if (rc != IB_OK && rc != IB_DECLINED) {
+        ib_logger_standard_msg_free(
+            logger,
+            *(void **)writer_record,
+            data);
+        fprintf(cfg->file, "Unexpected error.");
+        fflush(cfg->file);
+    }
+
+    return rc;
+}
+
+/* Default logger format struct. */
+static ib_logger_format_t default_format = {
+    .format_fn          = default_logger_format,
+    .format_cbdata      = NULL,
+    .format_free_fn     = ib_logger_standard_msg_free,
+    .format_free_cbdata = NULL
+};
+
 ib_status_t ib_logger_create(
     ib_logger_t       **logger,
     ib_logger_level_t   level,
@@ -521,6 +596,14 @@ ib_status_t ib_logger_create(
     }
 
     rc = ib_hash_create(&(l->functions), mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_logger_register_format(
+        l,
+        IB_LOGGER_DEFAULT_FORMATTER_NAME,
+        &default_format);
     if (rc != IB_OK) {
         return rc;
     }
@@ -807,13 +890,6 @@ void ib_logger_standard_msg_free(
     }
 }
 
-/**
- * Default logger configuration.
- */
-typedef struct default_logger_cfg_t {
-    FILE * file; /**< File to log to. */
-} default_logger_cfg_t;
-
 ib_status_t ib_logger_standard_formatter(
     ib_logger_t           *logger,
     const ib_logger_rec_t *rec,
@@ -916,66 +992,6 @@ out_of_mem:
     return IB_EALLOC;
 }
 
-/**
- * The default logger format function.
- *
- * This wraps ib_logger_standard_formatter() and reports errors to the
- * log file defined by @a data.
- *
- * param[in] logger The logger.
- * param[in] rec The record.
- * param[in] log_msg The user's log message.
- * param[in] log_msg_sz The length of @a log_msg.
- * param[in] writer_record A @a ib_logger_standard_msg_t will be written here
- *           on success.
- * param[in] data A @a default_logger_cfg_t holding default logger
- *           configuration information.
- */
-static ib_status_t default_logger_format(
-    ib_logger_t           *logger,
-    const ib_logger_rec_t *rec,
-    const uint8_t         *log_msg,
-    const size_t           log_msg_sz,
-    void                  *writer_record,
-    void                  *data
-)
-{
-    assert(logger != NULL);
-    assert(rec != NULL);
-    assert(log_msg != NULL);
-    assert(writer_record != NULL);
-
-    ib_status_t rc;
-    default_logger_cfg_t *cfg = (default_logger_cfg_t *)data;
-
-    rc = ib_logger_standard_formatter(
-        logger,
-        rec,
-        log_msg,
-        log_msg_sz,
-        writer_record,
-        data);
-
-    if (rc == IB_EALLOC) {
-        ib_logger_standard_msg_free(
-            logger,
-            *(void **)writer_record,
-            data);
-        fprintf(cfg->file, "Out of memory.  Unable to log.");
-        fflush(cfg->file);
-    }
-    else if (rc != IB_OK && rc != IB_DECLINED) {
-        ib_logger_standard_msg_free(
-            logger,
-            *(void **)writer_record,
-            data);
-        fprintf(cfg->file, "Unexpected error.");
-        fflush(cfg->file);
-    }
-
-    return rc;
-}
-
 static void default_log_writer(void *record, void *cbdata) {
     assert(record != NULL);
     assert(cbdata != NULL);
@@ -1007,14 +1023,6 @@ static ib_status_t default_logger_record(
 
     return ib_logger_dequeue(logger, writer, default_log_writer, data);
 }
-
-/* Default logger format struct. */
-static ib_logger_format_t default_format = {
-    .format_fn          = default_logger_format,
-    .format_cbdata      = NULL,
-    .format_free_fn     = ib_logger_standard_msg_free,
-    .format_free_cbdata = NULL
-};
 
 ib_status_t ib_logger_writer_add_default(
     ib_logger_t *logger,

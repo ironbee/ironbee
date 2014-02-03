@@ -296,6 +296,39 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
 
 /* -- Logger API Implementations -- */
 
+static void core_logger_element(void *element, void *cbdata)
+{
+    assert(element != NULL);
+    assert(cbdata  != NULL);
+
+    ib_logger_standard_msg_t *msg = (ib_logger_standard_msg_t *)element;
+    ib_core_cfg_t            *cfg = (ib_core_cfg_t *)cbdata;
+
+    fprintf(
+        cfg->log_fp,
+        "%s %.*s\n",
+        msg->prefix,
+        (int)msg->msg_sz,
+        (char *)msg->msg);
+    fflush(cfg->log_fp);
+}
+
+/**
+ * Logger callback that writes log records to core's file descriptor.
+ *
+ * @param[in] logger The logger.
+ * @param[in] writer The writer with the queued log messages.
+ * @param[in] cbdata Callback data. The @ref ib_core_cfg_t.
+ */
+static ib_status_t core_logger_record(
+    ib_logger_t        *logger,
+    ib_logger_writer_t *writer,
+    void               *cbdata
+)
+{
+    return ib_logger_dequeue(logger, writer, core_logger_element, cbdata);
+}
+
 /**
  * Take the @a cfg FILE pointer for the log file and give it to the logger.
  *
@@ -307,7 +340,7 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
  * - IB_OK On success.
  * - Other on ib_logger_* failures.
  */
-static ib_status_t core_configure_engine_logger(
+static ib_status_t core_add_core_logger(
     ib_engine_t   *ib,
     ib_core_cfg_t *corecfg
 )
@@ -316,64 +349,34 @@ static ib_status_t core_configure_engine_logger(
     assert(corecfg != NULL);
     assert(corecfg->log_fp != NULL);
 
-    ib_status_t  rc;
-    ib_logger_t *logger = ib_engine_logger_get(ib);
+    ib_status_t         rc;
+    ib_logger_format_t *fmt;
 
-    rc = ib_logger_writer_clear(logger);
+    rc = ib_logger_fetch_format(
+        ib_engine_logger_get(ib),
+        IB_LOGGER_DEFAULT_FORMATTER_NAME,
+        &fmt);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_logger_writer_add_default(logger, corecfg->log_fp);
+    rc = ib_logger_writer_add(
+        ib_engine_logger_get(ib),
+        NULL, /* Open. */
+        NULL,
+        NULL, /* Close. */
+        NULL,
+        NULL, /* Reopen. */
+        NULL,
+        fmt,
+        core_logger_record,
+        corecfg
+    );
     if (rc != IB_OK) {
         return rc;
     }
 
     return IB_OK;
-}
-
-/**
- * Open the configured log file
- *
- * @param[in] ib IronBee engine
- * @param[in,out] config Core configuration
- */
-static void core_log_file_open(ib_engine_t *ib,
-                               ib_core_cfg_t *config)
-{
-    assert(ib != NULL);
-    assert(config != NULL);
-
-    /* Do we need to open the file? */
-    if ( (config->log_fp == NULL) &&
-         (config->log_uri != NULL) &&
-         (*config->log_uri != '\0') )
-    {
-        /* If the URI looks like a file, try to open it. */
-        if (strncmp(config->log_uri, "file://", 7) == 0) {
-            const char *path = config->log_uri + 7;
-            config->log_fp = fopen(path, "a");
-            if (config->log_fp == NULL) {
-                fprintf(stderr,
-                        "Failed to open log file '%s' for writing: %s\n",
-                        path, strerror(errno));
-            }
-        }
-        else {
-            fprintf(stderr, "Only file:// log URIs current supported.");
-        }
-    }
-
-    /* Finally, use stderr as a fallback. */
-    if (config->log_fp == NULL) {
-        config->log_fp = ib_util_fdup(stderr, "a");
-        if (config->log_fp == NULL) {
-            config->log_fp = stderr;       /* Last resort */
-        }
-        config->log_uri = "stderr";
-    }
-
-    core_configure_engine_logger(ib, config);
 }
 
 /**
@@ -388,13 +391,13 @@ static void core_log_file_close(ib_engine_t *ib,
     assert(ib != NULL);
     assert(config != NULL);
 
-    if ( (config->log_fp != NULL) && (config->log_fp != stderr) ) {
+    if (config->log_fp == NULL) {
+        config->log_fp = stderr;
+    }
+    else if (config->log_fp != stderr) {
         fclose(config->log_fp);
         config->log_fp = stderr;
-        core_configure_engine_logger(ib, config);
     }
-
-    core_configure_engine_logger(ib, config);
 }
 
 /* -- Audit Implementations -- */
@@ -4512,7 +4515,7 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     assert(event == context_destroy_event);
     assert(cbdata != NULL);
 
-    if (ctx == ib_context_main(ib)) {
+    if (ib_context_type_check(ctx, IB_CTYPE_ENGINE)) {
 
         ib_core_cfg_t *config;
         ib_status_t rc;
@@ -4563,6 +4566,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
 
     /* Set defaults */
+    corecfg->log_fp               = stderr;
     corecfg->log_uri              = "";
     corecfg->buffer_req           = 0;
     corecfg->buffer_res           = 0;
@@ -4608,8 +4612,8 @@ static ib_status_t core_init(ib_engine_t *ib,
     /* Register logger functions. */
     ib_logger_level_set(ib_engine_logger_get(ib), IB_LOG_INFO);
 
-    /* Define corecfg->log_fp. */
-    core_log_file_open(ib, corecfg);
+    /* Add the core logger to the engine. */
+    core_add_core_logger(ib, corecfg);
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger(core_util_logger, ib);

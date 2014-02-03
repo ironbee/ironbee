@@ -729,7 +729,7 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * ctx)
  * available NOW to be consumed on the output buf.  It is up to TS
  * (or to another filter continuation module if present) whether
  * actually to consume the data at this point.
- * 
+ *
  * Note: http://mail-archives.apache.org/mod_mbox/trafficserver-dev/201110.mbox/%3CCAFKFyq5gWqzi=LuxdVMTJzSbJcuZDR8hYV89khUssPxnnxbk_Q@mail.gmail.com%3E
  *
  * @param[in,out] contp Pointer to the continuation
@@ -2747,6 +2747,12 @@ static ib_status_t engine_preconfig_fn(
     ib_status_t         rc;
     ib_logger_format_t *iblog_format;
     module_data_t      *mod_data = (module_data_t *)cbdata;
+
+    /* Clear all existing loggers. */
+    rc = ib_logger_writer_clear(ib_engine_logger_get(ib));
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     rc = ib_logger_format_create(
         ib_engine_logger_get(ib),

@@ -43,6 +43,13 @@ extern "C" {
  */
 
 /**
+ * The name of the default log formatter.
+ *
+ * This should be used as the second argument to ib_logger_fetch_format().
+ */
+#define IB_LOGGER_DEFAULT_FORMATTER_NAME "ib_logger_default_formatter_name"
+
+/**
  * Logger log level.
  **/
 typedef enum {
