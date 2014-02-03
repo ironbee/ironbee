@@ -61,6 +61,24 @@ TEST_F(ErrorPage, file_not_found) {
         std::runtime_error);
 }
 
+/* Test the case where the error file does not exist. */
+TEST_F(ErrorPage, relative_filename) {
+    std::string config =
+        std::string(
+            "LogLevel DEBUG\n"
+            "LoadModule \"ibmod_error_page.so\"\n"
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+            "BlockingMethod status=500\n"
+            "HttpStatusCodeContents 500 ../tests/error_page.html\n\n"
+            "<Site test-site>\n"
+            "   SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "   Hostname somesite.com\n"
+            "</Site>\n"
+        );
+}
+
 /* File-local resources for following tests. */
 namespace {
 
