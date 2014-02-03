@@ -151,7 +151,7 @@ typedef struct abort_tx_data_t abort_tx_data_t;
  */
 struct abort_modifier_t {
     abort_type_t     abort_type;    /**< Type of abort modifer */
-    bool             is_false;      /**< Abort modifier inverted? */ 
+    bool             is_false;      /**< Abort modifier inverted? */
     const char      *abort_str;     /**< String version of abort_type */
     ib_var_expand_t *message;       /**< Message */
 };
