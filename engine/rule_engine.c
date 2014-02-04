@@ -1105,6 +1105,9 @@ static ib_status_t report_close_block_to_server(
 
     ib_log_debug_tx(tx, "Reporting close based block to server.");
 
+    /* Mark the transaction block method: close */
+    tx->block_method = IB_BLOCK_METHOD_CLOSE;
+
     rc = ib_server_close(server, conn, tx);
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_log_debug_tx(
@@ -1144,6 +1147,9 @@ static ib_status_t report_status_block_to_server(
     const uint8_t    *body;
     size_t            body_len;
     ib_log_debug_tx(tx, "Reporting status based block to server.");
+
+    /* Mark the transaction block method: status */
+    tx->block_method = IB_BLOCK_METHOD_STATUS;
 
     ib_log_debug_tx(
         tx,
