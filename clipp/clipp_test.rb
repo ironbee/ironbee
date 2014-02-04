@@ -130,6 +130,10 @@ module CLIPPTest
   BUILDDIR     = ($abs_builddir || ENV['abs_builddir'] || '.')
   # Top build dir; if given, clipp and modules will be loaded from this tree.
   TOP_BUILDDIR = ($abs_top_builddir || ENV['abs_top_builddir'])
+  # Source directory..
+  SRCDIR       = ($abs_sourcedir || ENV['abs_srcdir'] || '.')
+  # Top source dir.
+  TOP_SRCDIR   = ($abs_top_sourcedir || ENV['abs_top_srcdir'])
 
   # CLIPP executable.
   CLIPP = TOP_BUILDDIR ? File.join(TOP_BUILDDIR, 'clipp', 'clipp') : 'clipp'
