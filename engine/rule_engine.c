@@ -1109,10 +1109,17 @@ static ib_status_t report_close_block_to_server(
     tx->block_method = IB_BLOCK_METHOD_CLOSE;
 
     rc = ib_server_close(server, conn, tx);
-    if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
+    if (rc == IB_ENOTIMPL) {
         ib_log_debug_tx(
             tx,
-            "Server not willing close connection.");
+            "Server does not implement closing a connection.");
+        return IB_OK;
+    }
+    else if (rc == IB_DECLINED) {
+        ib_log_debug_tx(
+            tx,
+            "Server is not willing to close a connection.");
+        return rc;
     }
     else if (rc != IB_OK) {
         ib_log_notice_tx(
@@ -1158,11 +1165,17 @@ static ib_status_t report_status_block_to_server(
 
     rc = ib_server_error_response(ib_engine_server_get(ib), tx,
                                   tx->block_status);
-    if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
+    if (rc == IB_ENOTIMPL) {
         ib_log_debug_tx(
             tx,
-            "Server not willing to set HTTP error response.");
+            "Server does not implement setting a HTTP error response.");
         return IB_OK;
+    }
+    else if (rc == IB_DECLINED) {
+        ib_log_debug_tx(
+            tx,
+            "Server is not willing to set a HTTP error response.");
+        return rc;
     }
     else if (rc != IB_OK) {
         ib_log_notice_tx(
