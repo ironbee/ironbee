@@ -1527,12 +1527,9 @@ ib_status_t Delegate::vars_action_execute(
                 )
             )
         );
+        // Dup because setting a var renames the value.
         m_value_source.set(
-            tx.var_store(),
-            // Must provide non-const Field.  As we are (hopefully) the only
-            // setters, should be okay.  In a better world, Vars could support
-            // ConstField, aka Value.
-            IB::Field::remove_const(value)
+            tx.var_store(), value.dup()
         );
     }
     catch (...) {
