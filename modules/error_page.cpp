@@ -208,7 +208,7 @@ void ErrorPageModule::httpStatusCodeContentsDirective(
 
     try {
         cfg.status_to_mapped_file_source[num] =
-            boost::iostreams::mapped_file_source(param2);
+            boost::iostreams::mapped_file_source(cfg.status_to_file[num]);
     }
     catch (const std::exception& e) {
         BOOST_THROW_EXCEPTION(
