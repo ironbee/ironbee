@@ -73,17 +73,14 @@ namespace {
  */
 class TxLogData {
 public:
-    //! The response blocking method or "".
-    const std::string& responseBlockMethod() const;
+    //! The blocking phase or "".
+    const std::string& blockPhase() const;
 
-    //! The response blocking action or "".
-    const std::string& responseBlockAction() const;
+    //! The blocking method or "".
+    const std::string& blockMethod() const;
 
-    //! The request blocking method or "".
-    const std::string& requestBlockMethod() const;
-
-    //! The request blocking action or "".
-    const std::string& requestBlockAction() const;
+    //! The blocking action or "".
+    const std::string& blockAction() const;
 
     //! The name of the auditlog file or "".
     const std::string& auditlogFile() const;
@@ -92,24 +89,26 @@ public:
     const std::string &auditlogId() const;
 
     /**
-     * Sets response block and action data.
+     * Sets block and action data at request time.
      *
-     * - TxLogData::m_responseBlockAction
-     * - TxLogData::m_responseBlockMethod
+     * - TxLogData::m_blockPhase
+     * - TxLogData::m_blockAction
+     * - TxLogData::m_blockMethod
      *
      * @param[in] tx The transaction to examine.
      */
-    void recordResponseData(IronBee::ConstTransaction tx);
+    void recordRequestBlockData(IronBee::ConstTransaction tx);
 
     /**
-     * Sets request block and action data.
+     * Sets block and action data at response time.
      *
-     * - TxLogData::m_requestBlockAction
-     * - TxLogData::m_requestBlockMethod
+     * - TxLogData::m_blockPhase
+     * - TxLogData::m_blockAction
+     * - TxLogData::m_blockMethod
      *
      * @param[in] tx The transaction to examine.
      */
-    void recordRequestData(IronBee::ConstTransaction tx);
+    void recordResponseBlockData(IronBee::ConstTransaction tx);
 
     /**
      * Sets TxLogData::m_auditlogFile.
@@ -123,17 +122,21 @@ public:
 
 private:
 
-    //! The response blocking method or "".
-    std::string m_responseBlockMethod;
+    //! Tracks action across the transaction phases.
+    enum {
+        TX_ACTION_PASSED,
+        TX_ACTION_ALLOWED,
+        TX_ACTION_BLOCKED
+    } m_tx_action;
 
-    //! The response blocking action or "".
-    std::string m_responseBlockAction;
+    //! The blocking phase or "".
+    std::string m_blockPhase;
 
-    //! The request blocking method or "".
-    std::string m_requestBlockMethod;
+    //! The blocking method or "".
+    std::string m_blockMethod;
 
-    //! The request blocking action or "".
-    std::string m_requestBlockAction;
+    //! The blocking action or "".
+    std::string m_blockAction;
 
     //! The name of the auditlog file or "".
     std::string m_auditlogFile;
@@ -142,38 +145,35 @@ private:
     std::string m_auditlogId;
 
     /**
-     * Record data about blocking status into @a action and @a method.
+     * Record data about blocking status.
+     *
+     * Any blocking action and method is recorded as happening during
+     * the given phase.
      *
      * @param[in] tx Transaction.
-     * @param[out] action The blocking action currently in use.
-     * @param[out] method The blocking method currently in use.
+     * @param[in] phase The phase which this is called.
      */
-    static void recordBlockData(
+    void recordBlockData(
         IronBee::ConstTransaction tx,
-        std::string&              action,
-        std::string&              method);
+        const std::string&        phase);
 
 };
 
-const std::string& TxLogData::responseBlockMethod() const
+const std::string& TxLogData::blockPhase() const
 {
-    return m_responseBlockMethod;
+    return m_blockPhase;
 }
 
-const std::string& TxLogData::responseBlockAction() const
+const std::string& TxLogData::blockMethod() const
 {
-    return m_responseBlockAction;
+    return m_blockMethod;
 }
 
-const std::string& TxLogData::requestBlockMethod() const
+const std::string& TxLogData::blockAction() const
 {
-    return m_requestBlockMethod;
+    return m_blockAction;
 }
 
-const std::string& TxLogData::requestBlockAction() const
-{
-    return m_requestBlockAction;
-}
 const std::string& TxLogData::auditlogId() const
 {
     return m_auditlogId;
@@ -186,45 +186,61 @@ const std::string& TxLogData::auditlogFile() const
 
 void TxLogData::recordBlockData(
     IronBee::ConstTransaction tx,
-    std::string&              action,
-    std::string&              method
+    const std::string&        phase
 )
 {
+    /* NOTE: Request that is allowed, but then blocked in response
+     * is still recorded as blocked. That is, blocking overrides
+     * allowing when recording the action.
+     */
 
-    /* Insert Request Action */
-    if (tx.is_allow_request() || tx.is_allow_all()) {
-        action = "Allowed";
-        method = "";
+    /* Already recorded earlier. */
+    if (m_tx_action == TX_ACTION_BLOCKED) {
+        return;
     }
-    else if(tx.is_blocked())
+
+    /* Record the action taken. */
+    if ( (m_tx_action == TX_ACTION_PASSED) &&
+         (tx.is_allow_request() || tx.is_allow_all()) )
     {
-        action = "Blocked";
+        m_tx_action = TX_ACTION_ALLOWED;
+        m_blockPhase = phase;
+        m_blockAction = "Allowed";
+        m_blockMethod = "";
+    }
+    else if (tx.is_blocked())
+    {
+        m_tx_action = TX_ACTION_BLOCKED;
+        m_blockPhase = phase;
+        m_blockAction = "Blocked";
 
         switch(tx.block_method()) {
         case IB_BLOCK_METHOD_STATUS:
-            method = "ErrorPage";
+            m_blockMethod = "ErrorPage";
             break;
         case IB_BLOCK_METHOD_CLOSE:
-            method = "Close";
+            m_blockMethod = "Close";
             break;
         default:
-            method = "";
+            m_blockMethod = "";
         }
     }
-    else {
-        action = "Passed";
-        method = "";
-    }
 }
 
-void TxLogData::recordResponseData(IronBee::ConstTransaction tx)
+void TxLogData::recordRequestBlockData(IronBee::ConstTransaction tx)
 {
-    recordBlockData(tx, m_responseBlockAction, m_responseBlockMethod);
+    /* Start with defaults. */
+    m_tx_action = TX_ACTION_PASSED;
+    m_blockPhase = "";
+    m_blockAction = "";
+    m_blockMethod = "";
+
+    recordBlockData(tx, "Request");
 }
 
-void TxLogData::recordRequestData(IronBee::ConstTransaction tx)
+void TxLogData::recordResponseBlockData(IronBee::ConstTransaction tx)
 {
-    recordBlockData(tx, m_requestBlockAction, m_requestBlockMethod);
+    recordBlockData(tx, "Response");
 }
 
 void TxLogData::recordAuditLogData(
@@ -521,18 +537,6 @@ static ib_status_t txlog_logger_format_fn(
                     .withString("host", tx.hostname())
                     .withInt("bandwidth", 0)
                     .withFunction(boost::bind(requestHeadersToJson, tx, _1))
-                    .withFunction(
-                        boost::bind(
-                            renderNonemptyString,
-                            "action",
-                            boost::ref(txlogdata.requestBlockAction()),
-                            _1))
-                    .withFunction(
-                        boost::bind(
-                            renderNonemptyString,
-                            "actionMethod",
-                            boost::ref(txlogdata.requestBlockMethod()),
-                            _1))
                 .close()
                 .withMap("response")
                     .withString("protocol", tx.response_line().protocol().to_s())
@@ -540,23 +544,34 @@ static ib_status_t txlog_logger_format_fn(
                     .withString("message", tx.response_line().message().to_s())
                     .withInt("bandwidth", 0)
                     .withFunction(boost::bind(responseHeadersToJson, tx, _1))
+                .close()
+                .withMap("security")
+                    .withFunction(
+                        boost::bind(
+                            renderNonemptyString,
+                            "auditLogRef",
+                            boost::ref(txlogdata.auditlogId()),
+                            _1))
+                    .withFunction(boost::bind(addThreatLevel, ctx, tx, _1))
+                    .withFunction(boost::bind(eventsToJson, tx, _1))
                     .withFunction(
                         boost::bind(
                             renderNonemptyString,
                             "action",
-                            boost::ref(txlogdata.responseBlockAction()),
+                            boost::ref(txlogdata.blockAction()),
                             _1))
                     .withFunction(
                         boost::bind(
                             renderNonemptyString,
                             "actionMethod",
-                            boost::ref(txlogdata.responseBlockMethod()),
+                            boost::ref(txlogdata.blockMethod()),
                             _1))
-                .close()
-                .withMap("security")
-                    .withString("auditLogRef", txlogdata.auditlogId())
-                    .withFunction(boost::bind(addThreatLevel, ctx, tx, _1))
-                    .withFunction(boost::bind(eventsToJson, tx, _1))
+                    .withFunction(
+                        boost::bind(
+                            renderNonemptyString,
+                            "actionPhase",
+                            boost::ref(txlogdata.blockPhase()),
+                            _1))
                 .close()
             .close()
             .render(
@@ -848,7 +863,7 @@ void TxLogModule::handleRequest(
 {
     TxLogData &data = tx.get_module_data<TxLogData&>(module());
 
-    data.recordRequestData(tx);
+    data.recordRequestBlockData(tx);
 }
 
 void TxLogModule::handleResponse(
@@ -858,7 +873,7 @@ void TxLogModule::handleResponse(
 {
     TxLogData &data = tx.get_module_data<TxLogData&>(module());
 
-    data.recordResponseData(tx);
+    data.recordResponseBlockData(tx);
 }
 
 void TxLogModule::transactionFinishedHandler(
