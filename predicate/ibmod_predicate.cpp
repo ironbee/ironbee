@@ -690,9 +690,6 @@ void PerContext::convert_rules()
             m_delegate->set_index_for_rule(rule, v.first);
         }
     }
-
-    // Release memory.
-    m_rules_by_index.clear();
 }
 
 void PerContext::add_rule(P::node_p root, const ib_rule_t* rule)
@@ -836,25 +833,7 @@ void PerContext::set_trace(const string& to)
 
 string PerContext::root_namer(ib_rule_phase_num_t phase, size_t index) const
 {
-    const P::node_p& root = delegate()->graph().root(index);
-    rules_by_node_t::const_iterator i = m_rules[phase].find(root);
-    if (i == m_rules[phase].end()) {
-        i = m_rules[IB_PHASE_NONE].find(root);
-        if (i == m_rules[IB_PHASE_NONE].end()) {
-            return "Out of phase";
-        }
-    }
-
-    string result;
-    bool first = true;
-    BOOST_FOREACH(const ib_rule_t* rule, i->second) {
-        if (! first) {
-            result += "\\n";
-        }
-        first = false;
-        result += rule->meta.full_id;
-    }
-    return result;
+    return m_rules_by_index.find(index)->second.front()->meta.full_id;
 }
 
 PerTransaction::PerTransaction(size_t index_limit, size_t root_limit) :
