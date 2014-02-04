@@ -301,7 +301,7 @@ public:
     void keep_data();
 
     /**
-     * Index for rule.
+     * Eval state index for rule.
      *
      * @param[in] rule Rule to find index of.
      * @return Index of @a rule.
@@ -310,7 +310,7 @@ public:
     size_t index_for_rule(const ib_rule_t* rule) const;
 
     /**
-     * Set index for rule.
+     * Set eval state index for rule.
      *
      * Called by PerContext::convert_rules().
      *
@@ -673,6 +673,7 @@ void PerContext::convert_rules()
     BOOST_FOREACH(rules_by_index_t::const_reference v, m_rules_by_index) {
         BOOST_FOREACH(const ib_rule_t* rule, v.second) {
             ib_rule_phase_num_t phase = rule->meta.phase;
+            P::node_p root = delegate()->graph().root(v.first);
             if (
                 find(c_phases, c_phases + c_num_phases, phase) ==
                 c_phases + c_num_phases
@@ -686,8 +687,8 @@ void PerContext::convert_rules()
                     )
                 );
             }
-            m_rules[phase][delegate()->graph().root(v.first)].push_back(rule);
-            m_delegate->set_index_for_rule(rule, v.first);
+            m_rules[phase][root].push_back(rule);
+            m_delegate->set_index_for_rule(rule, root->index());
         }
     }
 }
@@ -1501,8 +1502,7 @@ ib_status_t Delegate::vars_action_execute(
             tx.get_module_data<per_transaction_p>(module());
 
         size_t index = index_for_rule(rule);
-        size_t eval_state_index = m_graph->root(index)->index();
-        P::ValueList values = per_tx->graph_eval_state().values(eval_state_index);
+        P::ValueList values = per_tx->graph_eval_state().values(index);
         assert(values && ! values.empty());
 
         P::ValueList::const_iterator& i =
