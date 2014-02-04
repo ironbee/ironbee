@@ -28,17 +28,17 @@ class TestCore < Test::Unit::TestCase
     assert_log_match /clipp_error: 200/
   end
 
-  def test_blocking_method_status_100
+  def test_blocking_method_status_99
     clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
-        BlockingMethod status=100
+        BlockingMethod status=99
       """,
       :default_site_config => ''
     )
 
     assert_no_clean_exit
-    assert_log_match /BlockingMethod status must be 200 <= status < 600: 100/
+    assert_log_match /BlockingMethod status must be 100 <= status < 600: 99/
   end
 
   def test_blocking_method_status_600
@@ -51,7 +51,7 @@ class TestCore < Test::Unit::TestCase
     )
 
     assert_no_clean_exit
-    assert_log_match /BlockingMethod status must be 200 <= status < 600: 600/
+    assert_log_match /BlockingMethod status must be 100 <= status < 600: 600/
   end
 
   def test_default_block_status_403
@@ -80,17 +80,17 @@ class TestCore < Test::Unit::TestCase
     assert_log_match /clipp_error: 200/
   end
 
-  def test_default_block_status_100
+  def test_default_block_status_99
     clipp(
       :input_hashes => [simple_hash("GET /foobar/a\n", "HTTP/1.1 200 OK\n\n")],
       :config => """
-        DefaultBlockStatus 100
+        DefaultBlockStatus 99
       """,
       :default_site_config => ''
     )
 
     assert_no_clean_exit
-    assert_log_match /DefaultBlockStatus status must be 200 <= status < 600: 100/
+    assert_log_match /DefaultBlockStatus status must be 100 <= status < 600: 99/
   end
 
   def test_default_block_status_600
@@ -103,6 +103,6 @@ class TestCore < Test::Unit::TestCase
     )
 
     assert_no_clean_exit
-    assert_log_match /DefaultBlockStatus status must be 200 <= status < 600: 600/
+    assert_log_match /DefaultBlockStatus status must be 100 <= status < 600: 600/
   end
 end

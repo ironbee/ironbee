@@ -1458,7 +1458,7 @@ static ib_status_t act_status_execute(
  *
  * @param[in] ib The IronBee engine.
  * @param[in] params The parameters. This is a string representing
- *            an integer from 200 to 599, inclusive.
+ *            an integer from 100 to 599, inclusive.
  * @param[out] inst The action instance that will be initialized.
  * @param[in] cbdata Unused.
  *
@@ -1466,7 +1466,7 @@ static ib_status_t act_status_execute(
  *   - IB_OK on success.
  *   - IB_EALLOC on an allocation error from mp.
  *   - IB_EINVAL if @a param is NULL or not convertible with
- *               @c atoi(const @c char*) to an integer in the range 200
+ *               @c atoi(const @c char*) to an integer in the range 100
  *               through 599 inclusive.
  */
 static ib_status_t act_status_create(
@@ -1492,16 +1492,16 @@ static ib_status_t act_status_create(
 
     if (params == NULL) {
         ib_log_error(ib, "Action status must be given a parameter "
-                     "x where 200 <= x < 600.");
+                     "x where 100 <= x < 600.");
         return IB_EINVAL;
     }
 
     block_status = atoi(params);
 
-    if ( (block_status < 200) || (block_status >= 600) ) {
+    if ( (block_status < 100) || (block_status >= 600) ) {
         ib_log_error(ib,
                      "Action status must be given a parameter "
-                     "x where 200 <= x < 600: %s",
+                     "x where 100 <= x < 600: %s",
                      params);
         return IB_EINVAL;
     }
