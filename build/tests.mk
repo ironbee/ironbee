@@ -62,11 +62,11 @@ if RUBY_CODE
 	if [ -z "$$GTEST_FILTER" ]; then \
 	   (cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) abs_srcdir=$(abs_srcdir) abs_top_srcdir=$(abs_top_srcdir) $(RUBY) -I . ./ts_all.rb --verbose $(test_args)) \
 	fi
-endif
 if ENABLE_LUA
 	if [ -z "$$GTEST_FILTER" ] && [ -e $(srcdir)/ts_lua.rb ]; then \
 		(cd $(srcdir); abs_builddir=$(abs_builddir) abs_top_builddir=$(abs_top_builddir) abs_srcdir=$(abs_srcdir) abs_top_srcdir=$(abs_top_srcdir) $(RUBY) -I . ./ts_lua.rb --verbose $(test_args)); \
 	fi
+endif
 endif
 endif
 
