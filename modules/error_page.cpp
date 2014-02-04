@@ -36,6 +36,7 @@
 
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
+#include <ironbee/path.h>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -190,7 +191,7 @@ void ErrorPageModule::httpStatusCodeContentsDirective(
         const char                   *param1,
         const char                   *param2)
 {
-    ib_num_t num;
+    ib_num_t     num;
 
     ErrorPageCtxConfig &cfg =
         module().configuration_data<ErrorPageCtxConfig>(cp.current_context());
@@ -199,7 +200,11 @@ void ErrorPageModule::httpStatusCodeContentsDirective(
     IronBee::throw_if_error(ib_string_to_num(param1, 10, &num));
 
     /* Set the mapping in the context configuration. */
-    cfg.status_to_file[num] = param2;
+    cfg.status_to_file[num] = ib_util_relative_file(
+        ib_engine_pool_config_get(cp.engine().ib()),
+        cp.current_file(),
+        param2
+    );
 
     try {
         cfg.status_to_mapped_file_source[num] =
