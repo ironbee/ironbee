@@ -4,7 +4,7 @@ class TestLuaModule < Test::Unit::TestCase
 
   def test_lua_module_set
 
-    mod = File.join(File.absolute_path('.'), "test_lua_set.lua")
+    mod = File.join(BUILDDIR, "test_lua_set.lua")
 
     clipp(
       :input_hashes => [

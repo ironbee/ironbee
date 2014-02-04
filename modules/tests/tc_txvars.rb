@@ -7,10 +7,10 @@ class TestLua < Test::Unit::TestCase
       :input_hashes => [
         simple_hash("GET / HTTP/1.1\nHost: foo.bar\n\n")
       ],
-      :config => '''
+      :config => """
         LoadModule    ibmod_lua.so
-        LuaLoadModule ibmod_txvars.lua
-      ''',
+        LuaLoadModule #{File.join(TOP_SRCDIR, 'modules', 'ibmod_txvars.lua')}
+      """,
       :default_site_config => '''
         Rule TX_ID @clipp_print TX_ID id:TX_ID rev:i phase:REQUEST
         Rule CONN_ID @clipp_print CONN_ID id:CONN_ID rev:i phase:REQUEST
