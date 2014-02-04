@@ -1501,7 +1501,8 @@ ib_status_t Delegate::vars_action_execute(
             tx.get_module_data<per_transaction_p>(module());
 
         size_t index = index_for_rule(rule);
-        P::ValueList values = per_tx->graph_eval_state().values(index);
+        size_t eval_state_index = m_graph->root(index)->index();
+        P::ValueList values = per_tx->graph_eval_state().values(eval_state_index);
         assert(values && ! values.empty());
 
         P::ValueList::const_iterator& i =

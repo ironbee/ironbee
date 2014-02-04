@@ -347,4 +347,18 @@ class TestPredicate < Test::Unit::TestCase
     assert_no_issues
     assert_log_match "[x:[0:'a'] y:[0:'a']]"
   end
+
+  def test_set_predicate_vars_index_use_rns829
+    clipp(
+      predicate: 'true',
+      modules: ['htp'],
+      default_site_config: <<-EOS
+        Action id:1 phase:REQUEST set_predicate_vars "predicate:(cat 1 2 3)" "clipp_announce:%{PREDICATE_VALUE_NAME} %{PREDICATE_VALUE}"
+        Action id:2 phase:REQUEST set_predicate_vars "predicate:(cat 1 2 3)" "clipp_announce:%{PREDICATE_VALUE_NAME} %{PREDICATE_VALUE}"
+      EOS
+    ) do
+      transaction {|t| t.request(raw:'GET /')}
+    end
+    assert_no_issues
+  end
 end
