@@ -387,7 +387,10 @@ ib_status_t ib_header_callback(
 
     if (ctx->state & HDRS_OUT ||
         (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
-        return IB_ENOTIMPL;  /* too late for requested op */
+    {
+        ib_log_debug_tx(tx, "Too late to change headers.");
+        return IB_DECLINED;  /* too late for requested op */
+    }
 
     header = TSmalloc(sizeof(*header));
     header->next = ctx->hdr_actions;
@@ -486,13 +489,12 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
     TSDebug("ironbee", "ib_error_callback with status=%d", status);
     if ( is_error_status(status) ) {
         if (is_error_status(ctx->status) ) {
-            TSDebug("ironbee",
-                    "  Ignoring: status already set to %d", ctx->status);
+            ib_log_debug_tx(tx, "Ignoring: status already set to %d", ctx->status);
             return IB_OK;
         }
         /* We can't return an error after the response has started */
         if (ctx->state & START_RESPONSE) {
-            TSDebug("ironbee", "Too late to change status=%d", status);
+            ib_log_debug_tx(tx, "Too late to change status=%d", status);
             return IB_DECLINED;
         }
         /* ironbee wants to return an HTTP status.  We'll oblige */
