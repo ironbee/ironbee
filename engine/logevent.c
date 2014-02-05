@@ -196,7 +196,7 @@ ib_status_t ib_logevent_tag_add(ib_logevent_t *le,
     ib_status_t rc;
 
     tag_copy = ib_mpool_memdup(le->mp, tag, strlen(tag) + 1);
-    if (tag == NULL) {
+    if (tag_copy == NULL) {
         return IB_EALLOC;
     }
 
