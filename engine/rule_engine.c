@@ -4923,6 +4923,9 @@ ib_status_t ib_rule_enable(const ib_engine_t *ib,
 
     /* Create the enable object */
     item = ib_mpool_alloc(ctx->mp, sizeof(*item));
+    if (item == NULL) {
+      return IB_EALLOC;
+    }
     item->enable_type = etype;
     item->enable_str = str;
     item->file = file;

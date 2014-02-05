@@ -756,6 +756,9 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
             const ib_bytestr_t *bs;
             rec = (uint8_t *)ib_mpool_alloc(part->log->mp,
                                             CORE_HEADER_MAX_FIELD_LEN);
+            if (rec == NULL) {
+                return 0;
+            }
 
             rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
             if (rc != IB_OK) {
@@ -3256,6 +3259,9 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
          * from the context's mem pool. */
         if ( strstr(p1_unescaped, "://") == NULL )  {
             char *buf = (char *)ib_mpool_alloc( mp, 8+strlen(p1_unescaped) );
+            if (buf == NULL) {
+                return IB_EALLOC;
+            }
             strcpy( buf, "file://" );
             strcat( buf, p1_unescaped );
             uri = buf;

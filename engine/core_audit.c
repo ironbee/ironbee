@@ -168,6 +168,11 @@ ib_status_t core_audit_open_auditfile(ib_engine_t *ib,
     // Create temporary filename to use while writing the audit log
     temp_filename_sz = strlen(audit_filename) + 6;
     temp_filename = (char *)ib_mpool_alloc(cfg->tx->mp, temp_filename_sz);
+    if (temp_filename == NULL) {
+      free(dtmp);
+      free(dn);
+      return IB_EALLOC;
+    }
     sys_rc = snprintf(temp_filename,
                       temp_filename_sz,
                       "%s.part", audit_filename);
