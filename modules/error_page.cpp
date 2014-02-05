@@ -34,9 +34,9 @@
 #include <ironbeepp/module_delegate.hpp>
 #include <ironbeepp/transaction.hpp>
 
+#include <ironbee/path.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
-#include <ironbee/path.h>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
