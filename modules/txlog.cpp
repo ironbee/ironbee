@@ -296,6 +296,7 @@ void eventsToJson(
         }
 
         eventMap
+            .withString("type", ib_logevent_type_name(e->type))
             .withString("rule", e->rule_id ? e->rule_id : "")
             .withString("message", e->msg ? e->msg : "")
             .withInt("confidence", e->confidence)
