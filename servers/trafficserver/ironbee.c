@@ -667,13 +667,16 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
         TSContDestroy(ssn->contp);
         TSMutexUnlock(ssn->mutex);
         TSfree(ssn);
+        goto cleanup;
     }
     else {
         --(ssn->txn_count);
     }
 
-    TSfree(ctx);
     TSMutexUnlock(ssn->mutex);
+
+cleanup:
+    TSfree(ctx);
 }
 
 /**
