@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # This script executes GTest tests in a controlled manner.
 
