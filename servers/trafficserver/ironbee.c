@@ -673,7 +673,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
         --(ssn->txn_count);
         ib_lock_unlock(&ssn->mutex);
     }
-    TSfree(txn);
+    TSfree(ctx);
 }
 
 /**
