@@ -433,6 +433,14 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
             ib_state_notify_request_finished(ib, tx);
         }
 
+        if (    ib_flags_all(tx->flags, IB_TX_FREQ_STARTED)
+            && !ib_flags_all(tx->flags, IB_TX_FRES_STARTED))
+        {
+            ib_log_debug_tx(tx, "Automatically triggering %s",
+                            ib_state_event_name(response_started_event));
+            ib_state_notify_response_started(ib, tx, NULL);
+        }
+
         if (    ib_flags_all(tx->flags, IB_TX_FRES_STARTED)
             && !ib_flags_all(tx->flags, IB_TX_FRES_FINISHED))
         {

@@ -245,4 +245,35 @@ Content-Length: 1234
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: A/
   end
+
+  def test_no_tx_finished_event_okay
+    clipp(
+      log_level: 'debug3'
+    ) do
+      transaction do |t|
+        t.request(
+          raw: "GET /"
+        )
+        t.response(
+          raw: "HTTP/1.1 200 OK"
+        )
+      end
+    end
+    assert_no_issues
+    assert_log_match /TX EVENT: tx_finished_event/
+  end
+
+  def test_no_tx_finished_event_fail
+    clipp(
+      log_level: 'debug3'
+    ) do
+      transaction do |t|
+        t.request(
+          raw: "GET /"
+        )
+      end
+    end
+    assert_no_issues
+    assert_log_match /TX EVENT: tx_finished_event/
+  end
 end
