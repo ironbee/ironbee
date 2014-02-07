@@ -195,7 +195,7 @@ typedef struct {
     /* Keep track of whether this is open and has active transactions */
     int txn_count;
     int closing;
-    TSMutex mutex;
+    ib_lock_t mutex;
     /* include the contp, so we can delay destroying it from the event */
     TSCont contp;
 } ib_ssn_ctx;
@@ -620,7 +620,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
     assert(tx != NULL);
     assert(ssn != NULL);
 
-    TSMutexLock(ssn->mutex);
+    ib_lock_lock(&ssn->mutex);
 
     ctx->tx = NULL;
     TSDebug("ironbee",
@@ -665,18 +665,15 @@ static void ib_txn_ctx_destroy(ib_txn_ctx *ctx)
         }
         TSContDataSet(ssn->contp, NULL);
         TSContDestroy(ssn->contp);
-        TSMutexUnlock(ssn->mutex);
+        ib_lock_unlock(&ssn->mutex);
+        ib_lock_destroy(&ssn->mutex);
         TSfree(ssn);
-        goto cleanup;
     }
     else {
         --(ssn->txn_count);
+        ib_lock_unlock(&ssn->mutex);
     }
-
-    TSMutexUnlock(ssn->mutex);
-
-cleanup:
-    TSfree(ctx);
+    TSfree(txn);
 }
 
 /**
@@ -697,7 +694,7 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * ctx)
      * we just mark the session as closing, but leave actually closing it
      * for the TXN_CLOSE if there's a TXN
      */
-    TSMutexLock(ctx->mutex);
+    ib_lock_lock(&ctx->mutex);
     if (ctx->txn_count == 0) { /* TXN_CLOSE happened already */
         if (ctx->iconn) {
             ib_conn_t *conn = ctx->iconn;
@@ -717,13 +714,14 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * ctx)
         ctx->contp = NULL;
 
         /* Unlock has to come first 'cos ContDestroy destroys the mutex */
-        TSMutexUnlock(ctx->mutex);
         TSContDestroy(contp);
+        ib_lock_unlock(&ctx->mutex);
+        ib_lock_destroy(&ctx->mutex);
         TSfree(ctx);
     }
     else {
         ctx->closing = 1;
-        TSMutexUnlock(ctx->mutex);
+        ib_lock_unlock(&ctx->mutex);
     }
 }
 
@@ -2184,7 +2182,6 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 {
     TSVConn connp;
     TSCont mycont;
-    TSMutex conn_mutex;
     TSHttpTxn txnp = (TSHttpTxn) edata;
     TSHttpSsn ssnp = (TSHttpSsn) edata;
     ib_txn_ctx *txndata;
@@ -2204,12 +2201,14 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
              * what we can and must do: create a new contp whose
              * lifetime is our ssn
              */
-            conn_mutex = TSMutexCreate();
-            mycont = TSContCreate(ironbee_plugin, conn_mutex);
+            mycont = TSContCreate(ironbee_plugin, TSMutexCreate());
             TSHttpSsnHookAdd (ssnp, TS_HTTP_TXN_START_HOOK, mycont);
             ssndata = TSmalloc(sizeof(*ssndata));
             memset(ssndata, 0, sizeof(*ssndata));
-            ssndata->mutex = conn_mutex;
+            /* The only failure here is EALLOC, and if that happens
+             * we're ****ed anyway
+             */
+            assert(ib_lock_init(&ssndata->mutex) == IB_OK);
             ssndata->contp = mycont;
             TSContDataSet(mycont, ssndata);
 
@@ -2225,7 +2224,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             ib_engine_t *ib = NULL;
 
             ssndata = TSContDataGet(contp);
-            TSMutexLock(ssndata->mutex);
+            ib_lock_lock(&ssndata->mutex);
 
             if (ssndata->iconn == NULL) {
                 if (module_data.manager != NULL) {
@@ -2282,7 +2281,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 }
             }
             ++ssndata->txn_count;
-            TSMutexUnlock(ssndata->mutex);
+            ib_lock_unlock(&ssndata->mutex);
 
             /* create a txn cont (request ctx) */
             mycont = TSContCreate(ironbee_plugin, TSMutexCreate());
