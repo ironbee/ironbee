@@ -513,6 +513,10 @@ This consumer writes all connection data in and out events to *path* in the
 HTP test format.  This consumer is really only useful when there is a
 single input in unparsed format.
 
+**writeraw**:*path*
+
+This consumer writes all data out to raw files in a directory at *path*.  Files are named after the input id, whether it is a request or response, and a serial number.
+
 Extending CLIPP
 ---------------
 

@@ -264,6 +264,8 @@ IronBee v0.8.0
 * Added `@clipp_print` operator to IronBee modifier and consumer which outputs
   its argument and input to standard out.
 
+* Added `writeraw` consumer to IronBee which outputs traffic as raw files in a specified directory.
+
 **Other**
 
 * Added `example_modules` directory with example modules.

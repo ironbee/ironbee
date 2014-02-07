@@ -39,6 +39,7 @@ clipp_SOURCES = \
     fill_body_modifier.cpp \
     split_modifier.cpp \
     time_modifier.cpp \
+    raw_consumer.cpp \
     aggregate_modifier.hpp \
     apache_generator.hpp \
     configuration_parser.hpp \

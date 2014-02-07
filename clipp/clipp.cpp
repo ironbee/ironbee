@@ -81,6 +81,7 @@
 #include "pb_consumer.hpp"
 #include "htp_consumer.hpp"
 #include "null_consumer.hpp"
+#include "raw_consumer.hpp"
 
 #include "connection_modifiers.hpp"
 #include "parse_modifier.hpp"
@@ -325,6 +326,7 @@ void help()
     "  view            -- Output to stdout for human consumption.\n"
     "  view:id         -- Output IDs to stdout for human consumption.\n"
     "  view:summary    -- Output summary to stdout for human consumption.\n"
+    "  writeraw:<path> -- Output as raw files in a directory at <path>.\n"
     "  null            -- Discard.\n"
     "\n"
     "Modifiers:\n"
@@ -587,6 +589,7 @@ int main(int argc, char** argv)
         ("writepb",  construct_component<PBConsumer>)
         ("writehtp", construct_component<HTPConsumer>)
         ("view",     construct_component<ViewConsumer>)
+        ("writeraw", construct_component<RawConsumer>)
         ("null",     construct_argless_component<NullConsumer>)
         ;
 
