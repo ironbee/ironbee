@@ -27,6 +27,53 @@ local ffi = require('ffi')
 local ibutil = require('ironbee/util')
 local ib_logevent = require('ironbee/logevent')
 
+ffi.cdef [[
+/* Transaction Flags */
+enum ib_lua_transaction_flags {
+    IB_TX_FNONE               = (0),
+    IB_TX_FHTTP09             = (1 <<  0),
+    IB_TX_FPIPELINED          = (1 <<  1),
+
+    IB_TX_FREQ_STARTED        = (1 <<  3),
+    IB_TX_FREQ_LINE           = (1 <<  4),
+    IB_TX_FREQ_HEADER         = (1 <<  5),
+    IB_TX_FREQ_BODY           = (1 <<  6),
+    IB_TX_FREQ_TRAILER        = (1 <<  7),
+    IB_TX_FREQ_FINISHED       = (1 <<  8),
+    IB_TX_FREQ_HAS_DATA       = (1 <<  9),
+
+    IB_TX_FRES_STARTED        = (1 << 10),
+    IB_TX_FRES_LINE           = (1 << 11),
+    IB_TX_FRES_HEADER         = (1 << 12),
+    IB_TX_FRES_BODY           = (1 << 13),
+    IB_TX_FRES_TRAILER        = (1 << 14),
+    IB_TX_FRES_FINISHED       = (1 << 15),
+    IB_TX_FRES_HAS_DATA       = (1 << 16),
+
+    IB_TX_FLOGGING            = (1 << 17),
+    IB_TX_FPOSTPROCESS        = (1 << 18),
+
+    IB_TX_FERROR              = (1 << 19),
+    IB_TX_FSUSPICIOUS         = (1 << 20),
+    IB_TX_FBLOCKED            = (1 << 21),
+
+    IB_TX_FINSPECT_REQURI     = (1 << 22),
+    IB_TX_FINSPECT_REQPARAMS  = (1 << 23),
+    IB_TX_FINSPECT_REQHDR     = (1 << 24),
+    IB_TX_FINSPECT_REQBODY    = (1 << 25),
+    IB_TX_FINSPECT_RESHDR     = (1 << 26),
+    IB_TX_FINSPECT_RESBODY    = (1 << 27),
+
+    IB_TX_FBLOCKING_MODE      = (1 << 28),
+    IB_TX_FBLOCK_ADVISORY     = (1 << 29),
+    IB_TX_FBLOCK_PHASE        = (1 << 30),
+    IB_TX_FBLOCK_IMMEDIATE    = (1 << 31),
+    IB_TX_FALLOW_PHASE        = (1 << 32),
+    IB_TX_FALLOW_REQUEST      = (1 << 33),
+    IB_TX_FALLOW_ALL          = (1 << 34)
+};
+]]
+
 -- Event Type Map used by addEvent.
 -- Default values is 'unknown'
 local eventTypeMap = {
@@ -63,6 +110,22 @@ _M.new = function(self, ib_engine, ib_tx)
     o.ib_tx = ib_tx
 
     return setmetatable(o, self)
+end
+
+-- Set transaction flags
+_M.setFlags = function(self, flags)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    local tx_flags = ffi.cast("ib_flags_t", flags)
+
+    return ffi.C.ib_tx_flags_set(tx, tx_flags)
+end
+
+-- Unset transaction flags
+_M.unsetFlags = function(self, flags)
+    local tx = ffi.cast("ib_tx_t *", self.ib_tx)
+    local tx_flags = ffi.cast("ib_flags_t", flags)
+
+    return ffi.C.ib_tx_flags_unset(tx, tx_flags)
 end
 
 -- Return a list of all the fields currently defined.

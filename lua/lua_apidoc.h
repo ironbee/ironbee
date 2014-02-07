@@ -319,6 +319,8 @@
  * - @c tx:getValues(field) - Returns a list of values in this field.
  * - @c tx:set(name, value) - Set a string, number or table. This operates
  *      like add(name, value) but will remove existing values first.
+ * - @c tx:setFlags(flags) - Set transaction (bitfield) flags.
+ * - @c tx:unsetFlags(flags) - Unset transaction (bitfield) flags.
  * - @c tx:forEachEvent(function(event)...) - Call the given function on each
  *                                            event.
  *                                            See Event Manipulation.
