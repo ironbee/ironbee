@@ -119,6 +119,10 @@ Value StringReplaceRx::value_calculate(
 
     ConstByteString text = v.value_as_byte_string();
     boost::shared_ptr<vector<char> > result(new vector<char>());
+    // Ensure that result.data() is non-null, even if we never insert
+    // anything.
+    result->reserve(1);
+
     // value_to_data() ensures that a copy is associated with the memory
     // pool and will be deleted when the memory pool goes away.
     assert(context.memory_pool());
