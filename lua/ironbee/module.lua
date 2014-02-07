@@ -388,9 +388,9 @@ end
 --            - response_body_data_event
 --            - response_finished_event
 --            - handle_logevent_event
---            - handle_context_open_event
---            - handle_context_close_event
---            - handle_context_destroy_event
+--            - context_open_event
+--            - context_close_event
+--            - context_destroy_event
 --            - engine_shutdown_initiated_event
 _M.load_module = function(
     ib,
