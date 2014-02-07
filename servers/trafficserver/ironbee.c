@@ -2180,6 +2180,7 @@ static ib_status_t ironbee_conn_init(
  */
 static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 {
+    ib_status_t rc;
     TSVConn connp;
     TSCont mycont;
     TSHttpTxn txnp = (TSHttpTxn) edata;
@@ -2208,7 +2209,8 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* The only failure here is EALLOC, and if that happens
              * we're ****ed anyway
              */
-            assert(ib_lock_init(&ssndata->mutex) == IB_OK);
+            rc = ib_lock_init(&ssndata->mutex);
+            assert(rc == IB_OK);
             ssndata->contp = mycont;
             TSContDataSet(mycont, ssndata);
 
