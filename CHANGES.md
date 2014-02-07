@@ -1,6 +1,14 @@
 IronBee Changes                                                   {#CHANGES}
 ===============
 
+IronBee v0.8.2
+--------------
+
+**Trafficserver Server Plugin**
+
+* Backport fix in master to avoid crash in ib_txn_ctx_destroy().
+
+
 IronBee v0.8.1
 --------------
 
