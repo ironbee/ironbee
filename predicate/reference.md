@@ -550,27 +550,27 @@ Notes
 
 **Warning on `lt`, `le`, `gt`, `ge`**
 
-Filters based on asymmetric operators are tricky.  Should `(lt F v)` be elements of `v` that are less than `F` or greater than `F` (as `F` appears on the left).  After much debate, the latter was chosen to facilitate more natural any-of-the-following expressions.  For example, `(gt 100 (length (sub 'Host' (var 'REQUEST_HEADERS'))))` should express the notion of a long 'Host' header, not a small one, and should be true if any 'Host' header is long in the case of multiples.
+Filters based on asymmetric operators are tricky.  Should `(lt F v)` be elements of `v` that are less than `F` or greater than `F` (as `F` appears on the left).  After much debate, the former was chosen to facilitate more natural any-of-the-following expressions.  For example, `(gt 100 (length (sub 'Host' (var 'REQUEST_HEADERS'))))` should express the notion of a long 'Host' header, not a small one, and should be true if any 'Host' header is long in the case of multiples.
 
 **`(lt F v)`**
 
 Filter
-: Number or float and filter is less than.
+: Number or float and less than filter.
 
 **`(le F v)`**
 
 Filter
-: Number or float and  filter less than or equal.
+: Number or float and less than or equal to filter.
 
 **`(gt F v)`**
 
 Filter
-: Number or float and filter greater than.
+: Number or float and greater than filter.
 
 **`(ge F v)`**
 
 Filter
-: Number or float and filter greater than or equal.
+: Number or float and greater than or equal to filter.
 
 **`(typed F v)`**
 

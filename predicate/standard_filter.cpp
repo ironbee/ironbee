@@ -27,6 +27,7 @@
 #include <predicate/call_helpers.hpp>
 #include <predicate/merge_graph.hpp>
 #include <predicate/validate.hpp>
+#include <predicate/value.hpp>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
@@ -175,7 +176,7 @@ void Lt::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) c
 Value Lt::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     Value f = literal_value(children().front());
-    return value_less(f, v) ? v : Value();
+    return value_less(v, f) ? v : Value();
 }
 
 bool Lt::validate(NodeReporter reporter) const
@@ -207,7 +208,7 @@ void Le::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) c
 Value Le::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     Value f = literal_value(children().front());
-    return (value_less(f, v) || value_equal(f, v)) ? v : Value();
+    return (value_less(v, f) || value_equal(f, v)) ? v : Value();
 }
 
 bool Le::validate(NodeReporter reporter) const
@@ -239,7 +240,7 @@ void Gt::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) c
 Value Gt::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     Value f = literal_value(children().front());
-    return (! value_less(f, v) && ! value_equal(f, v)) ? v : Value();
+    return (! value_less(v, f) && ! value_equal(f, v)) ? v : Value();
 }
 
 bool Gt::validate(NodeReporter reporter) const
@@ -271,7 +272,7 @@ void Ge::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) c
 Value Ge::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
 {
     Value f = literal_value(children().front());
-    return (! value_less(f, v)) ? v : Value();
+    return (! value_less(v, f)) ? v : Value();
 }
 
 bool Ge::validate(NodeReporter reporter) const

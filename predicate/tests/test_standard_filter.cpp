@@ -50,30 +50,10 @@ TEST_F(TestStandardFilter, ne)
     EXPECT_THROW(eval_bool(parse("(ne 'a' 'b' 'c')")), IronBee::einval);
 }
 
-TEST_F(TestStandardFilter, lt)
-{
-    EXPECT_EQ(2, eval_n(parse("(nth 2 (lt 1 (cat 0 2 2)))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (lt 1 (cat 0 2 2)))")));
-
-    EXPECT_THROW(eval_bool(parse("(lt)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(lt 1 2 3)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(lt 'a' 'b')")), IronBee::einval);
-}
-
-TEST_F(TestStandardFilter, le)
-{
-    EXPECT_EQ(2, eval_n(parse("(nth 2 (le 2 (cat 1 2 2)))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (le 2 (cat 1 2 2)))")));
-
-    EXPECT_THROW(eval_bool(parse("(le)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(le 1 2 3)")), IronBee::einval);
-    EXPECT_THROW(eval_bool(parse("(le 'a' 'b')")), IronBee::einval);
-}
-
 TEST_F(TestStandardFilter, gt)
 {
-    EXPECT_EQ(2, eval_n(parse("(nth 2 (gt 3 (cat 5 2 2)))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (gt 3 (cat 5 2 2)))")));
+    EXPECT_EQ(2, eval_n(parse("(nth 2 (gt 1 (cat 0 2 2)))")));
+    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (gt 1 (cat 0 2 2)))")));
 
     EXPECT_THROW(eval_bool(parse("(gt)")), IronBee::einval);
     EXPECT_THROW(eval_bool(parse("(gt 1 2 3)")), IronBee::einval);
@@ -82,12 +62,32 @@ TEST_F(TestStandardFilter, gt)
 
 TEST_F(TestStandardFilter, ge)
 {
-    EXPECT_EQ(2, eval_n(parse("(nth 2 (ge 2 (cat 5 2 2)))")));
-    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (ge 2 (cat 5 2 2)))")));
+    EXPECT_EQ(2, eval_n(parse("(nth 2 (ge 2 (cat 1 2 2)))")));
+    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (ge 2 (cat 1 2 2)))")));
 
     EXPECT_THROW(eval_bool(parse("(ge)")), IronBee::einval);
     EXPECT_THROW(eval_bool(parse("(ge 1 2 3)")), IronBee::einval);
     EXPECT_THROW(eval_bool(parse("(ge 'a' 'b')")), IronBee::einval);
+}
+
+TEST_F(TestStandardFilter, lt)
+{
+    EXPECT_EQ(2, eval_n(parse("(nth 2 (lt 3 (cat 5 2 2)))")));
+    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (lt 3 (cat 5 2 2)))")));
+
+    EXPECT_THROW(eval_bool(parse("(lt)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(lt 1 2 3)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(lt 'a' 'b')")), IronBee::einval);
+}
+
+TEST_F(TestStandardFilter, le)
+{
+    EXPECT_EQ(2, eval_n(parse("(nth 2 (le 2 (cat 5 2 2)))")));
+    EXPECT_FALSE(eval_bool(parse("(isLonger 2 (le 2 (cat 5 2 2)))")));
+
+    EXPECT_THROW(eval_bool(parse("(le)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(le 1 2 3)")), IronBee::einval);
+    EXPECT_THROW(eval_bool(parse("(le 'a' 'b')")), IronBee::einval);
 }
 
 TEST_F(TestStandardFilter, typed)
