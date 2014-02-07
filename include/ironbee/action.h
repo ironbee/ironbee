@@ -185,6 +185,15 @@ ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst);
 ib_status_t ib_action_execute(const ib_rule_exec_t *rule_exec,
                               const ib_action_inst_t *act_inst);
 
+/**
+ * Get an action name.
+ *
+ * @param[in] tfn Action to access.
+ *
+ * @return Name of action.
+ **/
+const char *ib_action_name(const ib_action_t *action);
+
 #ifdef __cplusplus
 }
 #endif

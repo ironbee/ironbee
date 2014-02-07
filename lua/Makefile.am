@@ -8,9 +8,13 @@ SUBDIRS = tests
 
 FFI_FILES = \
     $(top_srcdir)/include/ironbee/engine.h \
+    $(top_srcdir)/include/ironbee/engine_types.h \
     $(top_srcdir)/include/ironbee/engine_state.h \
     $(top_srcdir)/include/ironbee/core.h \
     $(top_srcdir)/include/ironbee/config.h \
+    $(top_srcdir)/include/ironbee/operator.h \
+    $(top_srcdir)/include/ironbee/transformation.h \
+    $(top_srcdir)/include/ironbee/action.h \
     $(top_srcdir)/include/ironbee/context.h \
     $(top_srcdir)/include/ironbee/rule_defs.h \
     $(top_srcdir)/include/ironbee/rule_engine.h \

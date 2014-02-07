@@ -743,6 +743,51 @@ ib_status_t ib_config_registered_directives(
     return ib_hash_get_all(ib->dirmap, list);
 }
 
+ib_status_t ib_config_registered_transformations(
+    ib_engine_t *ib,
+    ib_list_t   *list
+)
+{
+    assert(ib != NULL);
+    assert(list != NULL);
+
+    return ib_hash_get_all(ib->tfns, list);
+}
+
+
+ib_status_t ib_config_registered_operators(
+    ib_engine_t *ib,
+    ib_list_t   *list
+)
+{
+    assert(ib != NULL);
+    assert(list != NULL);
+
+    return ib_hash_get_all(ib->operators, list);
+}
+
+ib_status_t ib_config_registered_stream_operators(
+    ib_engine_t *ib,
+    ib_list_t   *list
+)
+{
+    assert(ib != NULL);
+    assert(list != NULL);
+
+    return ib_hash_get_all(ib->stream_operators, list);
+}
+
+ib_status_t ib_config_registered_actions(
+    ib_engine_t *ib,
+    ib_list_t   *list
+)
+{
+    assert(ib != NULL);
+    assert(list != NULL);
+
+    return ib_hash_get_all(ib->actions, list);
+}
+
 /**
  * Log a debug message followed by the directive and its parameters.
  *

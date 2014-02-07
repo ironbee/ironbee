@@ -172,3 +172,9 @@ ib_status_t ib_action_execute(const ib_rule_exec_t *rule_exec,
 
     return rc;
 }
+
+const char DLL_PUBLIC *ib_action_name(const ib_action_t *action)
+{
+    return action->name;
+}
+

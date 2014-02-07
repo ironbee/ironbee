@@ -604,6 +604,59 @@ ib_status_t ib_config_registered_directives(
 );
 
 /**
+ * Get a list of all registered transformations.
+ *
+ * @param[in] ib Engine
+ * @param[in,out] list List to add transformation records (@ref ib_tfn_t *)
+ *
+ * @returns Status code
+ */
+ib_status_t ib_config_registered_transformations(
+    ib_engine_t *ib,
+    ib_list_t   *list
+);
+
+
+/**
+ * Get a list of all registered operators.
+ *
+ * @param[in] ib Engine
+ * @param[in,out] list List to add operator records (@ref ib_operator_t *)
+ *
+ * @returns Status code
+ */
+ib_status_t ib_config_registered_operators(
+    ib_engine_t *ib,
+    ib_list_t   *list
+);
+
+/**
+ * Get a list of all registered stream operators.
+ *
+ * @param[in] ib Engine
+ * @param[in,out] list List to add stream operator records (@ref ib_operator_t *)
+ *
+ * @returns Status code
+ */
+ib_status_t ib_config_registered_stream_operators(
+    ib_engine_t *ib,
+    ib_list_t   *list
+);
+
+/**
+ * Get a list of all registered actions.
+ *
+ * @param[in] ib Engine
+ * @param[in,out] list List to add action records (@ref ib_action_t *)
+ *
+ * @returns Status code
+ */
+ib_status_t ib_config_registered_actions(
+    ib_engine_t *ib,
+    ib_list_t   *list
+);
+
+/**
  * Process a directive.
  *
  * @param cp Config parser
