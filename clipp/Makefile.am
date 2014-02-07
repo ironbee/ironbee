@@ -63,6 +63,7 @@ clipp_SOURCES = \
     pcap_generator.hpp \
     random_support.hpp \
     raw_generator.hpp \
+    raw_consumer.hpp \
     select_modifier.hpp \
     split_modifier.hpp \
     suricata_generator.hpp \
