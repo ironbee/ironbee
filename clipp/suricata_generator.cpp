@@ -50,8 +50,7 @@ static const string s_default_ip("0.0.0.0");
 static const string s_local_ip("0.0.0.0");
 static const string s_eol("\r\n");
 static const string s_version("HTTP/1.0");
-static const uint32_t s_remote_port = 0;
-static const uint32_t s_local_port  = 0;
+
 // 1 uri
 // 2 user-agent
 // 3 referer
