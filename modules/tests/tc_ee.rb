@@ -23,4 +23,22 @@ class TestEE < Test::Unit::TestCase
     assert_log_match 'CLIPP ANNOUNCE: MATCH=a'
     assert_log_match 'CLIPP ANNOUNCE: MATCH=b'
   end
+
+  # RNS-839
+  def test_ee_module_nothing_to_do
+    clipp(
+      modules: ['ee']
+    ) do
+      transaction do |t|
+        t.request(
+          raw: "GET /"
+        )
+        t.response(
+          raw: "HTTP/1.1 200 OK"
+        )
+      end
+    end
+    assert_no_issues
+    assert_log_no_match /ENOENT/
+  end
 end

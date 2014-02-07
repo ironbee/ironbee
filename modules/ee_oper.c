@@ -706,6 +706,10 @@ ib_status_t ee_tx_finished_handler(ib_engine_t *ib,
     ib_hash_iterator_t *iterator;
 
     rc = ib_tx_get_module_data(tx, m, &hash);
+    if (rc == IB_ENOENT) {
+        /* Nothing to do. */
+        return IB_OK;
+    }
     if (rc != IB_OK || hash == NULL) {
         return rc;
     }
