@@ -1139,7 +1139,7 @@ static ib_status_t act_setvar_execute(
 
     assert(cur_field != NULL);
 
-    rc = ib_var_target_set(expanded_target, tx->mp, tx->var_store, cur_field);
+    rc = ib_var_target_remove_and_set(expanded_target, tx->mp, tx->var_store, cur_field);
     if (rc != IB_OK) {
         ib_rule_log_error(
             rule_exec,

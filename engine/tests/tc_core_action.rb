@@ -110,4 +110,54 @@ class TestAction < Test::Unit::TestCase
     assert_log_match /clipp_print_type \[ival2\]: NUMBER/
 
   end
+
+  def test_setvar_double_increment_bug
+    clipp({
+        predicate: true,
+        modhtp: true,
+        modules: ['lua', 'pcre'],
+        default_site_config: "RuleEnable All",
+        config: <<-EOS
+          RuleEngineLogData event audit
+          RuleEngineLogLevel info
+          #LuaInclude ./test.waggle
+          Rule ARGS @nop "" id:1a rev:1 phase:REQUEST_HEADER "setvar:RCE:%{FIELD_NAME}+=5" "message:escape char %{FIELD_NAME}+=5"
+          Rule ARGS @nop "" id:1b rev:1 phase:REQUEST_HEADER "setvar:RCE:%{FIELD_NAME}+=5" "message:escape char %{FIELD_NAME}+=5"
+          Rule RCE:param1 @clipp_print "param1 value" id:2 rev:1 phase:REQUEST_HEADER
+          Rule RCE:param1 @clipp_print_type "param1 type" id:3 rev:1 phase:REQUEST_HEADER
+          Rule RCE:param2 @clipp_print "param2 value" id:4 rev:1 phase:REQUEST_HEADER
+          Rule RCE:param2 @clipp_print_type "param2 type" id:5 rev:1 phase:REQUEST_HEADER
+        EOS
+    }) do
+      transaction do |t|
+        t.request(
+          raw: "GET /test.php?param1=aaabbb&param2=zzzzzzzzzz HTTP/1.0",
+          headers: {
+            'Host' => '1270.0.1',
+            'Connection' => 'close'
+          }
+        )
+        t.response(
+          raw: "HTTP/1.1 200 OK",
+          headers: {
+            'Host' => '127.0.0.1',
+            'Content-Length' => 2 ,
+            'Connection' => 'close'
+          },
+          body: 'az'
+        )
+      end
+    end
+
+    assert_no_issues
+    assert_log_match /\[param1 value\]: 10/
+    assert_log_match /\[param2 value\]: 10/
+    assert_log_match /\[param1 type\]: NUMBER/
+    assert_log_match /\[param2 type\]: NUMBER/
+
+    assert_log_no_match /(?:.*\[param1 value\]: 10){2,}/m
+    assert_log_no_match /(?:.*\[param2 value\]: 10){2,}/m
+    assert_log_no_match /(?:.*\[param1 type\]: NUMBER){2,}/m
+    assert_log_no_match /(?:.*\[param2 type\]: NUMBER){2,}/m
+  end
 end
