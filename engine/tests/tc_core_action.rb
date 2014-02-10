@@ -115,10 +115,7 @@ class TestAction < Test::Unit::TestCase
     clipp(
         modhtp: true,
         modules: ['pcre'],
-        default_site_config: "RuleEnable All",
-        config: <<-EOS
-          RuleEngineLogData event audit
-          RuleEngineLogLevel info
+        default_site_config: <<-EOS
           Rule ARGS @nop "" id:1a rev:1 phase:REQUEST_HEADER "setvar:RCE:%{FIELD_NAME}+=5"
           Rule ARGS @nop "" id:1b rev:1 phase:REQUEST_HEADER "setvar:RCE:%{FIELD_NAME}+=5"
           Rule RCE:param1 @clipp_print "param1 value" id:2 rev:1 phase:REQUEST_HEADER
@@ -129,20 +126,7 @@ class TestAction < Test::Unit::TestCase
     ) do
       transaction do |t|
         t.request(
-          raw: "GET /test.php?param1=aaabbb&param2=zzzzzzzzzz HTTP/1.0",
-          headers: {
-            'Host' => '1270.0.1',
-            'Connection' => 'close'
-          }
-        )
-        t.response(
-          raw: "HTTP/1.1 200 OK",
-          headers: {
-            'Host' => '127.0.0.1',
-            'Content-Length' => 2 ,
-            'Connection' => 'close'
-          },
-          body: 'az'
+          raw: "GET /test.php?param1=aaabbb&param2=zzzzzzzzzz HTTP/1.0"
         )
       end
     end
