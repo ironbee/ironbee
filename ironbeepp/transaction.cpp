@@ -159,12 +159,20 @@ ParsedRequestLine ConstTransaction::request_line() const
 
 ParsedHeader ConstTransaction::request_header() const
 {
-    return ParsedHeader(ib()->request_header->head);
+    return ParsedHeader(
+        ib()->request_header ?
+        ib()->request_header->head :
+        NULL
+    );
 }
 
 ParsedHeader ConstTransaction::response_header() const
 {
-    return ParsedHeader(ib()->response_header->head);
+    return ParsedHeader(
+        ib()->response_header ?
+        ib()->response_header->head :
+        NULL
+    );
 }
 
 ParsedResponseLine ConstTransaction::response_line() const

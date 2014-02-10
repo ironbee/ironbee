@@ -159,3 +159,17 @@ TEST_F(TestTransaction, create)
     m_engine.ib()->cfg_state = CFG_FINISHED;
     tx.destroy();
 }
+
+TEST_F(TestTransaction, no_headers)
+{
+    ib_tx_t ib_tx;
+
+    ib_tx.request_header = NULL;
+    ib_tx.response_header = NULL;
+
+    Transaction tx(&ib_tx);
+
+    // Important that these don't segfault.
+    EXPECT_FALSE(tx.request_header());
+    EXPECT_FALSE(tx.response_header());
+}
