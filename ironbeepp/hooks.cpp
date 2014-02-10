@@ -64,7 +64,6 @@ ib_status_t header_data(
 {
     assert(ib_engine != NULL);
     /* ib_tx may be NULL */
-    assert(ib_header != NULL);
     assert(cbdata != NULL);
 
     try {
