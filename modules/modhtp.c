@@ -334,13 +334,18 @@ static ib_status_t modhtp_param_iter_callback(
 {
     assert(tx != NULL);
     assert(key != NULL);
-    assert(value != NULL);
     assert(data != NULL);
 
     modhtp_param_iter_data_t *idata = (modhtp_param_iter_data_t *)data;
     const htp_param_t *param = (const htp_param_t *)value;
     ib_field_t *field;
     ib_status_t rc;
+
+    /* The value needs to be non-NULL, however an assert is inappropriate
+     * as this is dependent on libHTP, not IronBee. */
+    if (param == NULL) {
+        return IB_EINVAL;
+    }
 
     /* Ignore if from wrong source */
     if (param->source != idata->source) {
