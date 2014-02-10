@@ -184,12 +184,16 @@ static ib_status_t core_ctxsel_match_host(
 
             /* If this is a "match any" host entry? */
             if (core_host->match_any) {
+                ib_log_debug2_tx(tx, "Host %s matched wildcard.",
+                                 tx->hostname);
                 *match = true;
                 return IB_OK;
             }
 
             /* Check the suffix */
             if ( (host->suffix != NULL) && (len >= core_host->suffix_len) ) {
+                ib_log_debug2_tx(tx, "Host %s matched suffix: %s",
+                                 tx->hostname, host->suffix);
                 const char *suffix = tx->hostname + len - core_host->suffix_len;
                 if (strcasecmp(host->suffix, suffix) == 0) {
                     *match = true;
@@ -201,6 +205,8 @@ static ib_status_t core_ctxsel_match_host(
             if ( (core_host->hostname_len == len) &&
                  (strcasecmp(host->hostname, tx->hostname) == 0) )
             {
+                ib_log_debug2_tx(tx, "Host %s matched full hostname: %s",
+                                 tx->hostname, host->hostname);
                 *match = true;
                 return IB_OK;
             }
@@ -250,6 +256,8 @@ static ib_status_t core_ctxsel_match_location(
 
         /* Is this a "match any" location? */
         if (core_location->match_any) {
+            ib_log_debug2_tx(tx, "Location %s matched root.",
+                             tx->path);
             *match = core_location;
             return IB_OK;
         }
@@ -258,6 +266,8 @@ static ib_status_t core_ctxsel_match_location(
         if ( (core_location->path_len <= len) &&
              (strncmp(location->path, tx->path, core_location->path_len) == 0) )
         {
+            ib_log_debug2_tx(tx, "Location %s matched: %s",
+                             tx->path, location->path);
             *match = core_location;
             return IB_OK;
         }
