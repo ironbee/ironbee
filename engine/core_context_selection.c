@@ -469,6 +469,10 @@ static ib_status_t core_ctxsel_select(
         const char *ctx_type;
         bool match;
 
+        ib_log_debug2(ib, "Looking for matching context against site=%s(%s)",
+                      (site ? site->site.id : "none"),
+                      (site ? site->site.name : "none"));
+
         /*
          * Check if the service matches the connection data.
          */
@@ -478,6 +482,9 @@ static ib_status_t core_ctxsel_select(
                  (service->service.port != conn->local_port) ) {
                 continue;
             }
+            ib_log_debug2(ib, "Connection %s:%d matched service port.",
+                          conn->local_ipstr, conn->local_port);
+
             /* Check that the address matches the service (if specified) */
             if ( (service->service.ipstr != NULL) &&
                  (service->ip_len == ip_len) &&
@@ -485,6 +492,13 @@ static ib_status_t core_ctxsel_select(
             {
                 continue;
             }
+            ib_log_debug2(ib, "Connection %s:%d matched service address: %s",
+                          conn->local_ipstr, conn->local_port,
+                          (service->service.ipstr == NULL ? "*" : service->service.ipstr));
+        }
+        else if ( (service != NULL) && service->match_any) {
+            ib_log_debug2(ib, "Connection %s:%d matched service wildcard: *:*",
+                          conn->local_ipstr, conn->local_port);
         }
 
         /* Check if the hostname matches the transaction data. */
