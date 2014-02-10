@@ -446,6 +446,11 @@ static ib_status_t core_ctxsel_select(
         goto select_main_context;
     }
 
+    if (tx == NULL) {
+        ib_log_debug2(ib, "No transaction: Using main context");
+        goto select_main_context;
+    }
+
     /* Get the length of the IP address string before the main loop */
     ip_len = strlen(conn->local_ipstr);
 
@@ -465,7 +470,7 @@ static ib_status_t core_ctxsel_select(
         bool match;
 
         /*
-         * If there is no service or it's a "match any", match is automatic.
+         * Check if the service matches the connection data.
          */
         if ( (service != NULL) && (! service->match_any) ) {
             /* Check that the port matches the service (if specified) */
@@ -473,7 +478,7 @@ static ib_status_t core_ctxsel_select(
                  (service->service.port != conn->local_port) ) {
                 continue;
             }
-            /* Check that the host name matches the service (if specified) */
+            /* Check that the address matches the service (if specified) */
             if ( (service->service.ipstr != NULL) &&
                  (service->ip_len == ip_len) &&
                  (strcmp(service->service.ipstr, conn->local_ipstr) != 0) )
@@ -482,17 +487,7 @@ static ib_status_t core_ctxsel_select(
             }
         }
 
-        /*
-         * If we're looking for a connection context, there is no hostname or
-         * location, so go with this selector.
-         */
-        if (tx == NULL) {
-            ctx = selector->site->site.context;
-            ctx_type = "site";
-            goto found;
-        }
-
-        /* Check if the hostname matches */
+        /* Check if the hostname matches the transaction data. */
         rc = core_ctxsel_match_host(ib, tx, selector->hosts, &match);
         if (rc != IB_OK) {
             /* todo: What is the right thing to do here? */
@@ -502,7 +497,7 @@ static ib_status_t core_ctxsel_select(
             continue;
         }
 
-        /* Check if the location matches */
+        /* Check if the location matches the transaction data. */
         rc = core_ctxsel_match_location(ib, tx, selector->locations, &location);
         if (rc != IB_OK) {
             /* todo: What is the right thing to do here? */
@@ -512,11 +507,10 @@ static ib_status_t core_ctxsel_select(
             continue;
         }
 
-        /* Everything matches.  Use this selector's context */
+        /* Everything matches.  Use this selector's context. */
         ctx = location->location.context;
         ctx_type = "location";
 
-  found:
         ib_log_debug2(ib, "Selected %s context \"%s\" site=%s(%s)",
                       ctx_type, ib_context_full_get(ctx),
                       (site ? site->site.id : "none"),
