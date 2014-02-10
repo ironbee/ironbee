@@ -282,13 +282,18 @@ static ib_status_t modhtp_field_list_callback(
 {
     assert(tx != NULL);
     assert(key != NULL);
-    assert(vptr != NULL);
     assert(data != NULL);
 
     ib_field_t *flist = (ib_field_t *)data;
     const bstr *value = (const bstr *)vptr;
     ib_field_t *field;
     ib_status_t rc;
+
+    /* The value needs to be non-NULL, however an assert is inappropriate
+     * as this is dependent on libHTP, not IronBee. */
+    if (value == NULL) {
+        return IB_EINVAL;
+    }
 
     /* Create a list field as an alias into htp memory. */
     rc = ib_field_create_bytestr_alias(&field,
