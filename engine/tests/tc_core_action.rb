@@ -112,23 +112,21 @@ class TestAction < Test::Unit::TestCase
   end
 
   def test_setvar_double_increment_bug
-    clipp({
-        predicate: true,
+    clipp(
         modhtp: true,
-        modules: ['lua', 'pcre'],
+        modules: ['pcre'],
         default_site_config: "RuleEnable All",
         config: <<-EOS
           RuleEngineLogData event audit
           RuleEngineLogLevel info
-          #LuaInclude ./test.waggle
-          Rule ARGS @nop "" id:1a rev:1 phase:REQUEST_HEADER "setvar:RCE:%{FIELD_NAME}+=5" "message:escape char %{FIELD_NAME}+=5"
-          Rule ARGS @nop "" id:1b rev:1 phase:REQUEST_HEADER "setvar:RCE:%{FIELD_NAME}+=5" "message:escape char %{FIELD_NAME}+=5"
+          Rule ARGS @nop "" id:1a rev:1 phase:REQUEST_HEADER "setvar:RCE:%{FIELD_NAME}+=5"
+          Rule ARGS @nop "" id:1b rev:1 phase:REQUEST_HEADER "setvar:RCE:%{FIELD_NAME}+=5"
           Rule RCE:param1 @clipp_print "param1 value" id:2 rev:1 phase:REQUEST_HEADER
           Rule RCE:param1 @clipp_print_type "param1 type" id:3 rev:1 phase:REQUEST_HEADER
           Rule RCE:param2 @clipp_print "param2 value" id:4 rev:1 phase:REQUEST_HEADER
           Rule RCE:param2 @clipp_print_type "param2 type" id:5 rev:1 phase:REQUEST_HEADER
         EOS
-    }) do
+    ) do
       transaction do |t|
         t.request(
           raw: "GET /test.php?param1=aaabbb&param2=zzzzzzzzzz HTTP/1.0",
