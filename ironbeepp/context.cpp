@@ -49,15 +49,15 @@ Engine ConstContext::engine() const
 
 ConstSite ConstContext::site() const
 {
-    const ib_site_t *ctx;
+    const ib_site_t *site = NULL;
     ib_status_t rc;
 
-    rc = ib_context_site_get(ib(), &ctx);
-    if (rc != IB_OK) {
+    rc = ib_context_site_get(ib(), &site);
+    if ((rc != IB_OK) || (site == NULL)) {
         // TODO
     }
 
-    return ConstSite(ctx);
+    return ConstSite(site);
 }
 
 // Context
