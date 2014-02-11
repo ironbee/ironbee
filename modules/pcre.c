@@ -1185,29 +1185,30 @@ ib_status_t get_dfa_tx_data(
 }
 
 /**
- * @brief Execute the dfa operator
+ * @brief Execute the dfa stream operator.
  *
  * @param[in] tx Current transaction.
  * @param[in] instance_data Instance data needed for execution.
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
- * @param[in] cbdata Callback data. An @ref ib_module_t.
+ * @param[in] module The module structure.
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
-static ib_status_t dfa_operator_execute(
-    ib_tx_t          *tx,
-    void             *instance_data,
-    const ib_field_t *field,
-    ib_field_t       *capture,
-    ib_num_t         *result,
-    void             *cbdata
+static ib_status_t dfa_operator_execute_common(
+    ib_tx_t           *tx,
+    void              *instance_data,
+    const ib_field_t  *field,
+    ib_field_t        *capture,
+    ib_num_t          *result,
+    const ib_module_t *module,
+    bool              is_phase
 )
 {
     assert(tx            != NULL);
     assert(instance_data != NULL);
-    assert(cbdata        != NULL);
+    assert(module        != NULL);
 
     static const int ovector_sz = 3 * MATCH_MAX;
 
@@ -1224,7 +1225,6 @@ static ib_status_t dfa_operator_execute(
     size_t                   subject_len;
     size_t                   start_offset;
     int                      match_count;
-    const ib_module_t       *module = (const ib_module_t *)cbdata;
     const ib_bytestr_t      *bytestr;
     dfa_workspace_t         *dfa_workspace;
     modpcre_operator_data_t *operator_data =
@@ -1264,8 +1264,11 @@ static ib_status_t dfa_operator_execute(
 
     /* Get the per-tx-per-operator workspace data for this rule data id. */
     ib_rc = get_dfa_tx_data(module, tx, id, &dfa_workspace);
-    if (ib_rc == IB_ENOENT) {
-
+    if (is_phase && ib_rc == IB_OK) {
+        /* Phase rules always clear the restart flag on subsequent runs. */
+        dfa_workspace->options &= (~PCRE_DFA_RESTART);
+    }
+    else if (ib_rc == IB_ENOENT) {
         /* First time we are called, clear the captures. */
         if (capture != NULL) {
             ib_rc = ib_capture_clear(capture);
@@ -1291,6 +1294,7 @@ static ib_status_t dfa_operator_execute(
 
     }
     else if (ib_rc != IB_OK) {
+        /* Not ok, not NOENT, then fail. */
         goto return_rc;
     }
 
@@ -1328,7 +1332,7 @@ static ib_status_t dfa_operator_execute(
             /* If the match is zero in length, turn off restart and
              * do not capture. */
             if (ovector[0] == ovector[1]) {
-                    dfa_workspace->options &= (~PCRE_DFA_RESTART);
+                dfa_workspace->options &= (~PCRE_DFA_RESTART);
             }
             /* If the match is non-zero in length, process the match. */
             else {
@@ -1416,6 +1420,78 @@ static ib_status_t dfa_operator_execute(
 return_rc:
     free(ovector);
     return ib_rc;
+}
+
+/**
+ * @brief Execute the dfa stream operator.
+ *
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data. An @ref ib_module_t.
+ *
+ * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
+ */
+static ib_status_t dfa_phase_operator_execute(
+    ib_tx_t          *tx,
+    void             *instance_data,
+    const ib_field_t *field,
+    ib_field_t       *capture,
+    ib_num_t         *result,
+    void             *cbdata
+)
+{
+    assert(tx            != NULL);
+    assert(instance_data != NULL);
+    assert(cbdata        != NULL);
+
+    return dfa_operator_execute_common(
+        tx,
+        instance_data,
+        field,
+        capture,
+        result,
+        (const ib_module_t *)cbdata,
+        true
+    );
+}
+
+/**
+ * @brief Execute the dfa stream operator.
+ *
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Callback data. An @ref ib_module_t.
+ *
+ * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
+ */
+static ib_status_t dfa_stream_operator_execute(
+    ib_tx_t          *tx,
+    void             *instance_data,
+    const ib_field_t *field,
+    ib_field_t       *capture,
+    ib_num_t         *result,
+    void             *cbdata
+)
+{
+    assert(tx            != NULL);
+    assert(instance_data != NULL);
+    assert(cbdata        != NULL);
+
+    return dfa_operator_execute_common(
+        tx,
+        instance_data,
+        field,
+        capture,
+        result,
+        (const ib_module_t *)cbdata,
+        false
+    );
 }
 
 /* -- Module Routines -- */
@@ -1691,7 +1767,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         IB_OP_CAPABILITY_CAPTURE,
         dfa_operator_create, NULL,
         NULL, NULL,
-        dfa_operator_execute, m
+        dfa_phase_operator_execute, m
     );
     if (rc != IB_OK) {
         return rc;
@@ -1703,7 +1779,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         IB_OP_CAPABILITY_CAPTURE,
         dfa_operator_create, NULL,
         NULL, NULL,
-        dfa_operator_execute, m
+        dfa_stream_operator_execute, m
     );
     if (rc != IB_OK) {
         return rc;
