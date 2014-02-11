@@ -495,8 +495,8 @@ static ib_status_t txlog_logger_format_fn(
     IronBee::ConstModule      module(rec->module);
 
     const std::string siteId =
-        (! conn || ! conn.context() || ! conn.context().site())?
-            "" : conn.context().site().id();
+        (! tx.context() || ! tx.context().site())?
+            "" : tx.context().site().id();
 
     /* Fetch some telemetry from our tx. */
     TxLogData &txlogdata = IronBee::Transaction::remove_const(tx)
