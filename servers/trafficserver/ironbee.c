@@ -1185,7 +1185,9 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
  */
 static int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
-    ib_txn_ctx *data = TSContDataGet(contp);
+    ib_txn_ctx *data;
+    TSDebug("ironbee-in-data", "in_data_event: contp=%p", contp);
+    data = TSContDataGet(contp);
 
     if ( (data == NULL) || (data->tx == NULL) ) {
         TSDebug("ironbee", "\tin_data_event: tx == NULL");
@@ -2426,6 +2428,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* hook an input filter to watch data */
             connp = TSTransformCreate(in_data_event, txnp);
+            TSDebug("ironbee-in-data", "TSTransformCreate contp=%p", connp);
             TSContDataSet(connp, txndata);
             TSHttpTxnHookAdd(txnp, TS_HTTP_REQUEST_TRANSFORM_HOOK, connp);
 
