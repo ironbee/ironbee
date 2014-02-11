@@ -119,9 +119,9 @@ _M.StrRule = function(self, rule_id, rule_version)
 end
 
 -- Return a valid plan against the default database.
-_M.Plan = function()
+_M.Plan = function(self, logger)
     local p = Planner:new()
-    local r = p:plan(_M.DEFAULT_RULE_DB)
+    local r = p:plan(_M.DEFAULT_RULE_DB, logger)
     if r == nil then
         return p.error_message
     else
@@ -218,8 +218,11 @@ end
 
 -- Return the validator if there are any errors or warnings.
 -- Returns the string "OK" otherwise.
-_M.Validate = function(self)
-    local plan = _M.Plan()
+_M.Validate = function(self, logger)
+    if logger == nil then
+        logger = error
+    end
+    local plan = _M:Plan(logger)
     local validator = Validator:new()
     if type(plan) == 'string' then
         error(plan)
