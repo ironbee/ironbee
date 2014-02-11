@@ -466,7 +466,6 @@ static ib_status_t core_ctxsel_select(
         const core_site_t *site = selector->site;
         const core_location_t *location;
         ib_context_t *ctx;
-        const char *ctx_type;
         bool match;
 
         ib_log_debug2(ib, "Looking for matching context against site=%s(%s)",
@@ -482,9 +481,6 @@ static ib_status_t core_ctxsel_select(
                  (service->service.port != conn->local_port) ) {
                 continue;
             }
-            ib_log_debug2(ib, "Connection %s:%d matched service port.",
-                          conn->local_ipstr, conn->local_port);
-
             /* Check that the address matches the service (if specified) */
             if ( (service->service.ipstr != NULL) &&
                  (service->ip_len == ip_len) &&
@@ -492,14 +488,9 @@ static ib_status_t core_ctxsel_select(
             {
                 continue;
             }
-            ib_log_debug2(ib, "Connection %s:%d matched service address: %s",
-                          conn->local_ipstr, conn->local_port,
-                          (service->service.ipstr == NULL ? "*" : service->service.ipstr));
         }
-        else if ( (service != NULL) && service->match_any) {
-            ib_log_debug2(ib, "Connection %s:%d matched service wildcard: *:*",
-                          conn->local_ipstr, conn->local_port);
-        }
+        ib_log_debug2(ib, "Connection %s:%d matched context service.",
+                      conn->local_ipstr, conn->local_port);
 
         /* Check if the hostname matches the transaction data. */
         rc = core_ctxsel_match_host(ib, tx, selector->hosts, &match);
@@ -523,12 +514,12 @@ static ib_status_t core_ctxsel_select(
 
         /* Everything matches.  Use this selector's context. */
         ctx = location->location.context;
-        ctx_type = "location";
 
-        ib_log_debug2(ib, "Selected %s context \"%s\" site=%s(%s)",
-                      ctx_type, ib_context_full_get(ctx),
+        ib_log_debug2(ib, "Selected context \"%s\" site=%s(%s) location=%s",
+                      ib_context_full_get(ctx),
                       (site ? site->site.id : "none"),
-                      (site ? site->site.name : "none"));
+                      (site ? site->site.name : "none"),
+                      location->location.path);
         *pctx = ctx;
         return IB_OK;
     }
