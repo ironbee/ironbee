@@ -309,11 +309,11 @@ void TrustedProxyModule::set_effective_ip(
     TrustedProxyConfig& config =
         module().configuration_data<TrustedProxyConfig>(ctx);
 
-    ib_log_info_tx(tx.ib(), "checking: %s",
+    ib_log_debug_tx(tx.ib(), "checking: %s",
                    tx.connection().remote_ip_string());
     // check actual remote ip against trusted ips
     if (! config.is_trusted(tx.connection().remote_ip_string())) {
-        ib_log_info_tx(tx.ib(), "Remote address '%s' not a trusted proxy.",
+        ib_log_debug_tx(tx.ib(), "Remote address '%s' not a trusted proxy.",
                        tx.connection().remote_ip_string());
         return;
     }
