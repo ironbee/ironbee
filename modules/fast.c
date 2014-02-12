@@ -1524,7 +1524,6 @@ ib_status_t fast_dir_fast_automata(
 
     ib_engine_t         *ib;
     ib_mpool_t          *mp;
-    ib_mpool_t          *cfg_mp;
     fast_runtime_t      *runtime;
     fast_config_t       *config;
     ia_eudoxus_result_t  irc;
@@ -1545,7 +1544,6 @@ ib_status_t fast_dir_fast_automata(
     }
 
     mp     = ib_engine_pool_main_get(ib);
-    cfg_mp = cp->mp;
     config = fast_get_config(ib, cp->cur_ctx);
 
     assert(config != NULL);
