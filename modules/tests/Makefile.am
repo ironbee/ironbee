@@ -108,7 +108,7 @@ endif
 check-programs: $(check_PROGRAMS)
 build: check-programs check-libs
 
-test_module_pcre_SOURCES = test_module_pcre.cpp test_module_dfa.cpp
+test_module_pcre_SOURCES = test_module_pcre.cpp
 
 test_module_ee_oper_SOURCES = test_module_ee_oper.cpp
 test_module_ee_oper_LDADD = $(LDADD) $(top_builddir)/automata/libiaeudoxus.la
