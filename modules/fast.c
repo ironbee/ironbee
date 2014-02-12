@@ -1114,6 +1114,15 @@ ib_status_t fast_ownership(
             sizeof(*index),
             &dummy_value
         );
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib,
+                "fast: Fast rule %s unable to be added to eligible rules: %s",
+                rule->meta.id,
+                ib_status_to_string(rc)
+            );
+            FAST_RETURN(IB_EINVAL);
+        }
     }
 
     /* Claim rule. */
