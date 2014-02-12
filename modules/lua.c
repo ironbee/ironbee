@@ -384,6 +384,7 @@ static ib_status_t modlua_context_destroy(
  *
  * @param[in] ib IronBee engine.
  * @param[in] rule The rule to consider.
+ * @param[in] ctx The context in which the rule is enabled.
  * @param[in] cbdata A pointer to this module's
  *            @ref ib_module_t registered with @a ib.
  *
@@ -393,15 +394,17 @@ static ib_status_t modlua_context_destroy(
  * - Other on error.
  */
 static ib_status_t modlua_ownership_fn(
-    const ib_engine_t *ib,
-    const ib_rule_t   *rule,
-    void              *cbdata
-) NONNULL_ATTRIBUTE(1, 2, 3);
+    const ib_engine_t  *ib,
+    const ib_rule_t    *rule,
+    const ib_context_t *ctx,
+    void               *cbdata
+) NONNULL_ATTRIBUTE(1, 2, 3, 4);
 
 static ib_status_t modlua_ownership_fn(
-    const ib_engine_t *ib,
-    const ib_rule_t   *rule,
-    void              *cbdata
+    const ib_engine_t  *ib,
+    const ib_rule_t    *rule,
+    const ib_context_t *ctx,
+    void               *cbdata
 )
 {
     assert(ib != NULL);
@@ -441,7 +444,6 @@ static ib_status_t modlua_ownership_fn(
 
     if (ib_list_elements(actions) > 0) {
 
-        const ib_context_t *ctx    = rule->ctx;
         const modlua_cfg_t *cfg    = NULL;
         const ib_module_t  *module = (const ib_module_t *)cbdata;
 
@@ -467,53 +469,6 @@ static ib_status_t modlua_ownership_fn(
 cleanup:
     ib_mpool_release(tmpmp);
     return rc;
-}
-
-/**
- * Recursively get all rules to execute from the root context up.
- */
-static ib_status_t modlua_injection_helper(
-    const ib_engine_t    *ib,
-    ib_module_t          *module,
-    const ib_rule_exec_t *rule_exec,
-    ib_context_t         *ctx,
-    ib_list_t            *rule_list
-)
-{
-    assert(ib != NULL);
-    assert(ctx != NULL);
-
-    ib_status_t     rc;
-    modlua_cfg_t   *cfg = NULL;
-    ib_list_node_t *node;
-
-    if (ctx != ib_context_main(ib)) {
-        ib_context_t *parent_ctx = ib_context_parent_get(ctx);
-
-        if (parent_ctx != ctx && parent_ctx != NULL) {
-            rc = modlua_injection_helper(ib, module, rule_exec, parent_ctx, rule_list);
-            if (rc != IB_OK) {
-                return rc;
-            }
-        }
-    }
-
-    rc = ib_context_module_config(ctx, module, &cfg);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot retrieve module configuration.");
-        return rc;
-    }
-
-    /* Copy all Waggle rules that match the current rule phase
-     * into the rule_list which the rule_engine will execute for us. */
-    IB_LIST_LOOP(cfg->waggle_rules, node) {
-        ib_rule_t *rule = (ib_rule_t *)ib_list_node_data(node);
-        if (rule_exec->phase == rule->meta.phase) {
-            ib_list_push(rule_list, rule);
-        }
-    }
-
-    return IB_OK;
 }
 
 /**
@@ -551,16 +506,28 @@ static ib_status_t modlua_injection_fn(
     ib_module_t          *module = (ib_module_t *)cbdata;
     ib_context_t         *ctx    = rule_exec->tx->ctx;
     ib_status_t           rc;
+    modlua_cfg_t   *cfg = NULL;
+    ib_list_node_t *node;
 
-    rc = modlua_injection_helper(
-        ib,
-        module,
-        rule_exec,
-        ctx,
-        rule_list);
+    assert(ib != NULL);
+    assert(ctx != NULL);
 
+    rc = ib_context_module_config(ctx, module, &cfg);
     if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot retrieve module configuration.");
         return rc;
+    }
+
+    /* Copy all Waggle rules that match the current rule phase
+     * into the rule_list which the rule_engine will execute for us. */
+    IB_LIST_LOOP(cfg->waggle_rules, node) {
+        ib_rule_t *rule = (ib_rule_t *)ib_list_node_data(node);
+        if (rule_exec->phase == rule->meta.phase) {
+            rc = ib_list_push(rule_list, rule);
+            if (rc != IB_OK) {
+                return rc;
+            }
+        }
     }
 
     return IB_OK;
