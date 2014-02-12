@@ -1259,14 +1259,16 @@ static bool abort_act_filter(
  *
  * @param[in] ib Engine
  * @param[in] rule Rule being registered
+ * @param[in] ctx Context rule is enabled in
  * @param[in] cbdata Callback data (@ref ib_module_t)
  *
  * @returns IB_DECLINE / Error status
  */
 static ib_status_t abort_rule_ownership(
-    const ib_engine_t *ib,
-    const ib_rule_t   *rule,
-    void              *cbdata
+    const ib_engine_t  *ib,
+    const ib_rule_t    *rule,
+    const ib_context_t *ctx,
+    void               *cbdata
 )
 {
     assert(ib != NULL);
