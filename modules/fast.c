@@ -1431,6 +1431,8 @@ ib_status_t fast_ctx_open(
     ib_status_t rc;
     fast_config_t *cfg = fast_get_config(ib, ctx);
 
+    assert(cfg != NULL);
+
     rc = ib_hash_create(&cfg->rules, ib_engine_pool_main_get(ib));
     if (rc != IB_OK) {
         ib_log_error(
