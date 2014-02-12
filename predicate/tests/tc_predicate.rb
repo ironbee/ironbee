@@ -361,4 +361,21 @@ class TestPredicate < Test::Unit::TestCase
     end
     assert_no_issues
   end
+
+  def test_multiple_context
+    clipp(
+      predicate: 'true',
+      modules: ['htp'],
+      config: 'Action id:1 phase:REQUEST "predicate:(cat 1)" "clipp_announce:MAIN"',
+      default_site_config: <<-EOS
+        RuleEnable all
+        Action id:2 phase:REQUEST "predicate:(cat 2)" "clipp_announce:SITE"
+      EOS
+    ) do
+      transaction {|t| t.request(raw:'GET /')}
+    end
+    assert_no_issues
+    assert_log_match "CLIPP ANNOUNCE: MAIN"
+    assert_log_match "CLIPP ANNOUNCE: SITE"
+  end
 end

@@ -344,13 +344,15 @@ private:
      *
      * @param[in] ib_engine Engine.
      * @param[in] rule      Rule to consider.
+     * @param[in] ib_ctx    Context rule is enabled in.
      * @returns
      * - IB_OK to claim rule.
      * - IB_DECLINED to decline claiming rule.
      **/
     ib_status_t ownership(
-        const ib_engine_t* ib_engine,
-        const ib_rule_t*   rule
+        const ib_engine_t*  ib_engine,
+        const ib_rule_t*    rule,
+        const ib_context_t* ib_ctx
     ) const;
 
     /**
@@ -864,9 +866,10 @@ Delegate::Delegate(IB::Module module) :
         IB::make_c_trampoline<
             ib_status_t(
                 const ib_engine_t*,
-                const ib_rule_t*
+                const ib_rule_t*,
+                const ib_context_t*
             )
-        >(bind(&Delegate::ownership, this, _1, _2));
+        >(bind(&Delegate::ownership, this, _1, _2, _3));
     register_trampoline_data(owner.second);
 
     IB::throw_if_error(
@@ -1195,19 +1198,21 @@ ib_status_t Delegate::action_create(
 }
 
 ib_status_t Delegate::ownership(
-    const ib_engine_t* ib_engine,
-    const ib_rule_t*   rule
+    const ib_engine_t*  ib_engine,
+    const ib_rule_t*    rule,
+    const ib_context_t* ib_ctx
 ) const
 {
     assert(ib_engine);
     assert(rule);
+    assert(ib_ctx);
 
     IB::ConstEngine engine(ib_engine);
+    IB::ConstContext context(ib_ctx);
     try {
         IB::ScopedMemoryPool pool;
         IB::List<ib_action_inst_t*> actions =
             IB::List<ib_action_inst_t*>::create(pool);
-        IB::Context context(rule->ctx);
 
         IB::throw_if_error(
             ib_rule_search_action(
@@ -1242,8 +1247,12 @@ ib_status_t Delegate::ownership(
 
         // Need to keep our own list of roots as it is a subset of all roots
         // in the graph.
+        // Const cast is because of current ambiguity as to whether modules
+        // can access their own per-context data given a const context.
         PerContext& per_context
-            = module().configuration_data<PerContext>(context);
+            = module().configuration_data<PerContext>(
+                IB::Context::remove_const(context)
+              );
         per_context.add_rule(parse_tree, rule);
     }
     catch (...) {
@@ -1265,20 +1274,9 @@ ib_status_t Delegate::injection(
         IB::List<const ib_rule_t*> rule_list(ib_rule_list);
         IB::ConstTransaction tx(rule_exec->tx);
 
-        // The top, parent-less, context is the engine context and we do
-        // not have per-context data for it.  So stop just before that.
-        // It is necessary to inject parent contexts as rules are not provided
-        // for ownership until context close, thus child contexts are created
-        // with no predicate rules.
-        for (
-            IB::Context ctx = tx.context();
-            ctx.parent();
-            ctx = ctx.parent()
-        ) {
-            PerContext& per_context =
-                module().configuration_data<PerContext>(ctx);
-            per_context.inject(ctx, rule_exec, rule_list);
-        }
+        PerContext& per_context =
+            module().configuration_data<PerContext>(tx.context());
+        per_context.inject(tx.context(), rule_exec, rule_list);
     }
     catch (...) {
         return IB::convert_exception(module().engine());
