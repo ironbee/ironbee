@@ -1,3 +1,5 @@
+require '../../clipp/clipp_test'
+
 class TestFast < Test::Unit::TestCase
   include CLIPPTest
 
@@ -108,5 +110,33 @@ class TestFast < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: rmessage/
     assert_log_match /CLIPP ANNOUNCE: rheader/
+  end
+
+  def test_not_enabled
+    clipp(
+      :input_hashes => [make_request('foobar')],
+      :config => CONFIG + "\n" + "Include \"#{Dir.pwd}/fast_rules.txt\""
+    )
+    assert_no_issues
+    assert_log_no_match /CLIPP ANNOUNCE: foobar/
+  end
+
+  def test_enabled
+    clipp(
+      :input_hashes => [make_request('foobar')],
+      :config => CONFIG + "\n" + "Include \"#{Dir.pwd}/fast_rules.txt\"",
+      :default_site_config => "RuleEnable all"
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: foobar/
+  end
+
+  def test_not_enabled2
+    clipp(
+      :input_hashes => [make_request('foobar')],
+      :config => CONFIG + "\n" + "<Site foo>\nSiteId 7188b230-763a-0131-3b81-001f5b320164\nHostname foo\nInclude \"#{Dir.pwd}/fast_rules.txt\"\n</Site>"
+    )
+    assert_no_issues
+    assert_log_no_match /CLIPP ANNOUNCE: foobar/
   end
 end

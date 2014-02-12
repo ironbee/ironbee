@@ -94,13 +94,12 @@ struct fast_runtime_t
 
 /**
  * Module configuration data.
- *
- * Currently there is no configuration data as the fast module is context
- * independent.  That is, nothing about it varies across configuration
- * context.
  */
 struct fast_config_t
 {
+    /** Rules in this context */
+    ib_hash_t *rules;
+
     /** Runtime data */
     fast_runtime_t *runtime;
 };
@@ -119,6 +118,9 @@ struct fast_search_t
 
     /** Rule execution context. */
     const ib_rule_exec_t *rule_exec;
+
+    /** Rules eligible to be added. */
+    const ib_hash_t *rules;
 
     /** List to add eligible rules to. */
     ib_list_t *rule_list;
@@ -256,20 +258,21 @@ const char *fast_eudoxus_error(
 /**
  * Access configuration data.
  *
- * @param[in] ib IronBee engine.
+ * @param[in] ib  IronBee engine.
+ * @param[in] ctx Context to fetch for.
  * @return
  * - configuration on success.
  * - NULL on failure.
  */
 static
 fast_config_t *fast_get_config(
-    ib_engine_t *ib
+    const ib_engine_t  *ib,
+    const ib_context_t *ctx
 )
 {
     assert(ib != NULL);
 
     ib_module_t   *module;
-    ib_context_t  *context;
     ib_status_t    rc;
     fast_config_t *config;
 
@@ -278,12 +281,7 @@ fast_config_t *fast_get_config(
         return NULL;
     }
 
-    context = ib_context_main(ib);
-    if (context == NULL) {
-        return NULL;
-    }
-
-    rc = ib_context_module_config(context, module, &config);
+    rc = ib_context_module_config(ctx, module, &config);
     if (rc != IB_OK) {
         return NULL;
     }
@@ -292,22 +290,31 @@ fast_config_t *fast_get_config(
 }
 
 /**
- * Access configuration data, read-only.
+ * Access configuration data from a module, read-only.
  *
- * @param[in] ib IronBee engine.
+ * @param[in] m   Module.
+ * @param[in] ctx Context to fetch for.
  * @return
  * - configuration on success.
  * - NULL on failure.
  */
 static
-const fast_config_t *fast_get_config_const(
-    const ib_engine_t *ib
+const fast_config_t *fast_get_config_module(
+    const ib_module_t  *m,
+    const ib_context_t *ctx
 )
 {
-    assert(ib != NULL);
+    assert(m != NULL);
+    assert(ctx != NULL);
 
-    /* Interpreting const engine to mean const config. */
-    return fast_get_config((ib_engine_t *)ib);
+    ib_status_t rc;
+    const fast_config_t *cfg = NULL;
+
+    rc = ib_context_module_config(ctx, m, &cfg);
+    if (rc != IB_OK) {
+        return NULL;
+    }
+    return cfg;
 }
 
 /**
@@ -926,14 +933,9 @@ ia_eudoxus_command_t fast_eudoxus_callback(
     rule = search->runtime->index[index];
 
     if (rule == NULL) {
-        /* Rule is in automata but not claimed. In that case, the rule will
-         * be evaluated by the rule eudoxus is usual, so this is not a fatal
-         * error. */
-        ib_log_warning(
-            search->rule_exec->ib,
-            "Found rule in automata that is not in index.  "
-            "Index likely out of date."
-        );
+        /* Rule is in automata but not claimed.  This can occur when fast
+         * rules are present but enabled anywhere.
+         */
         return IA_EUDOXUS_CMD_CONTINUE;
     }
 
@@ -942,15 +944,23 @@ ia_eudoxus_command_t fast_eudoxus_callback(
         return IA_EUDOXUS_CMD_CONTINUE;
     }
 
-    /* Check context. */
-    {
-        const ib_context_t *ctx = search->rule_exec->tx->ctx;
-        while (ctx != NULL && rule->ctx != ctx) {
-            ctx = ib_context_parent_get(ctx);
-        }
-        if (ctx == NULL) {
-            return IA_EUDOXUS_CMD_CONTINUE;
-        }
+    /* Check context, i.e., is in eligible rules */
+    rc = ib_hash_get_ex(
+        search->rules,
+        NULL,
+        output,
+        output_length
+    );
+    if (rc == IB_ENOENT) {
+        return IA_EUDOXUS_CMD_CONTINUE;
+    }
+    else if (rc != IB_OK) {
+        ib_log_error(
+            search->rule_exec->ib,
+            "Unexpected return code from eligible rules check: %s",
+            ib_status_to_string(rc)
+        );
+        return IA_EUDOXUS_CMD_ERROR;
     }
 
     /* Check/mark if already added. */
@@ -1005,6 +1015,7 @@ ia_eudoxus_command_t fast_eudoxus_callback(
  *
  * @param[in] ib     IronBee engine.
  * @param[in] rule   Rule to evaluate claim.
+ * @param[in] ctx    Context @a rule is enabled in.
  * @param[in] cbdata Runtime.
  *
  * @returns
@@ -1016,9 +1027,10 @@ ia_eudoxus_command_t fast_eudoxus_callback(
  *   the loaded automata.
  */
 ib_status_t fast_ownership(
-    const ib_engine_t *ib,
-    const ib_rule_t   *rule,
-    void              *cbdata
+    const ib_engine_t  *ib,
+    const ib_rule_t    *rule,
+    const ib_context_t *ctx,
+    void               *cbdata
 )
 {
 /* These macros are local to this function. */
@@ -1034,11 +1046,17 @@ ib_status_t fast_ownership(
     assert(ib   != NULL);
     assert(rule != NULL);
 
+    fast_config_t *cfg = fast_get_config(ib, ctx);
+
+    assert(cfg != NULL);
+    assert(cfg->rules != NULL);
+
     fast_runtime_t *runtime = (fast_runtime_t *)cbdata;
 
     assert(runtime        != NULL);
     assert(runtime->index != NULL);
     assert(runtime->by_id != NULL);
+    assert(runtime == cfg->runtime);
 
     ib_status_t  rc;
     ib_list_t   *actions;
@@ -1087,6 +1105,17 @@ ib_status_t fast_ownership(
     }
     FAST_CHECK_RC("Error accessing by_id hash.");
 
+    /* Mark as eligible in this context. */
+    {
+        void *dummy_value;
+        rc = ib_hash_set_ex(
+            cfg->rules, /* per context hash */
+            (const char *)index,
+            sizeof(*index),
+            &dummy_value
+        );
+    }
+
     /* Claim rule. */
     runtime->index[*index] = rule;
     FAST_RETURN(IB_OK);
@@ -1113,7 +1142,7 @@ done:
  * @param[in] ib          IronBee engine.
  * @param[in] rule_exec   Current rule execution context.
  * @param[in] rule_list   List to add injected rules to; updated.
- * @param[in] cbdata      Runtime.
+ * @param[in] cbdata      Module.
  * @param[in] bytestrings Bytestrings to feed.
  * @param[in] collections Collections to feed.
  * @return
@@ -1137,8 +1166,10 @@ ib_status_t fast_rule_injection(
     assert(rule_exec->tx->var_store != NULL);
     assert(rule_list                != NULL);
 
-    const fast_runtime_t *runtime = (const fast_runtime_t *)cbdata;
-
+    const ib_module_t *m = (const ib_module_t *)(cbdata);
+    const fast_config_t *cfg = fast_get_config_module(m, rule_exec->tx->ctx);
+    assert(cfg != NULL);
+    const fast_runtime_t *runtime = cfg->runtime;
     assert(runtime          != NULL);
     assert(runtime->eudoxus != NULL);
     assert(runtime->index   != NULL);
@@ -1176,6 +1207,7 @@ ib_status_t fast_rule_injection(
     fast_search_t search = {
         .runtime   = runtime,
         .rule_exec = rule_exec,
+        .rules     = cfg->rules,
         .rule_list = rule_list,
         .rule_set  = rule_set
     };
@@ -1225,7 +1257,7 @@ done:
  * @param[in] ib        IronBee engine.
  * @param[in] rule_exec Current rule execution context.
  * @param[in] rule_list List to add injected rules to; updated.
- * @param[in] cbdata    Runtime.
+ * @param[in] cbdata    Module.
  * @return
  * - IB_OK on success.
  * - IB_EINVAL on IronAutomata failure; will emit log message.
@@ -1239,7 +1271,10 @@ ib_status_t fast_rule_injection_request_header(
     void                 *cbdata
 )
 {
-    const fast_specs_t *specs = fast_get_config_const(ib)->runtime->specs;
+    const fast_specs_t *specs = fast_get_config_module(
+        (const ib_module_t *)cbdata,
+        rule_exec->tx->ctx
+    )->runtime->specs;
     assert(specs != NULL);
     return fast_rule_injection(
         ib,
@@ -1257,7 +1292,7 @@ ib_status_t fast_rule_injection_request_header(
  * @param[in] ib        IronBee engine.
  * @param[in] rule_exec Current rule execution context.
  * @param[in] rule_list List to add injected rules to; updated.
- * @param[in] cbdata    Runtime.
+ * @param[in] cbdata    Module.
  * @return
  * - IB_OK on success.
  * - IB_EINVAL on IronAutomata failure; will emit log message.
@@ -1271,7 +1306,10 @@ ib_status_t fast_rule_injection_request_body(
     void                 *cbdata
 )
 {
-    const fast_specs_t *specs = fast_get_config_const(ib)->runtime->specs;
+    const fast_specs_t *specs = fast_get_config_module(
+        (const ib_module_t *)cbdata,
+        rule_exec->tx->ctx
+    )->runtime->specs;
     assert(specs != NULL);
     return fast_rule_injection(
         ib,
@@ -1289,7 +1327,7 @@ ib_status_t fast_rule_injection_request_body(
  * @param[in] ib        IronBee engine.
  * @param[in] rule_exec Current rule execution context.
  * @param[in] rule_list List to add injected rules to; updated.
- * @param[in] cbdata    Runtime.
+ * @param[in] cbdata    Module.
  * @return
  * - IB_OK on success.
  * - IB_EINVAL on IronAutomata failure; will emit log message.
@@ -1303,7 +1341,10 @@ ib_status_t fast_rule_injection_response_header(
     void                 *cbdata
 )
 {
-    const fast_specs_t *specs = fast_get_config_const(ib)->runtime->specs;
+    const fast_specs_t *specs = fast_get_config_module(
+        (const ib_module_t *)cbdata,
+        rule_exec->tx->ctx
+    )->runtime->specs;
     assert(specs != NULL);
 
     return fast_rule_injection(
@@ -1322,7 +1363,7 @@ ib_status_t fast_rule_injection_response_header(
  * @param[in] ib        IronBee engine.
  * @param[in] rule_exec Current rule execution context.
  * @param[in] rule_list List to add injected rules to; updated.
- * @param[in] cbdata    Runtime.
+ * @param[in] cbdata    Module.
  * @return
  * - IB_OK on success.
  * - IB_EINVAL on IronAutomata failure; will emit log message.
@@ -1336,7 +1377,10 @@ ib_status_t fast_rule_injection_response_body(
     void                 *cbdata
 )
 {
-    const fast_specs_t *specs = fast_get_config_const(ib)->runtime->specs;
+    const fast_specs_t *specs = fast_get_config_module(
+        (const ib_module_t *)cbdata,
+        rule_exec->tx->ctx
+    )->runtime->specs;
     assert(specs != NULL);
 
     return fast_rule_injection(
@@ -1347,6 +1391,48 @@ ib_status_t fast_rule_injection_response_body(
         specs->response_body_bytestrings,
         specs->response_body_collections
     );
+}
+
+/**
+ * Called on context open.
+ *
+ * On open of each context, will initialize a hash to contain which rules
+ * are in this context.
+ *
+ * @param[in] ib  Engine.
+ * @param[in] ctx Context.
+ * @param[in] event Unused.
+ * @param[in] cbdata Unused.
+ * @return
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - As fast_convert_specs()
+ **/
+static
+ib_status_t fast_ctx_open(
+    ib_engine_t           *ib,
+    ib_context_t          *ctx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(ctx != NULL);
+
+    ib_status_t rc;
+    fast_config_t *cfg = fast_get_config(ib, ctx);
+
+    rc = ib_hash_create(&cfg->rules, ib_engine_pool_main_get(ib));
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "fast: Error creating rule hash for context %s: %s",
+            ib_context_name_get(ctx),
+            ib_status_to_string(rc)
+        );
+        return rc;
+    }
+    return IB_OK;
 }
 
 /**
@@ -1376,7 +1462,7 @@ ib_status_t fast_ctx_close(
     assert(ctx != NULL);
 
     if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
-        fast_config_t *cfg = fast_get_config(ib);
+        fast_config_t *cfg = fast_get_config(ib, ctx);
 
         cfg->runtime->specs = (fast_specs_t *)ib_mpool_alloc(
             ib_engine_pool_main_get(ib),
@@ -1446,6 +1532,7 @@ ib_status_t fast_dir_fast_automata(
     const uint8_t       *data;
     size_t               data_size;
     uint32_t             index_size;
+    ib_module_t         *module;
 
     ib     = cp->ib;
     if (cp->cur_ctx != ib_context_main(ib)) {
@@ -1459,7 +1546,7 @@ ib_status_t fast_dir_fast_automata(
 
     mp     = ib_engine_pool_main_get(ib);
     cfg_mp = cp->mp;
-    config = fast_get_config(ib);
+    config = fast_get_config(ib, cp->cur_ctx);
 
     assert(config != NULL);
 
@@ -1470,6 +1557,17 @@ ib_status_t fast_dir_fast_automata(
             p1
         );
         return IB_EINVAL;
+    }
+
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(
+            cp,
+            "fast: %s: Unable to get my own module: %s",
+            p1,
+            ib_status_to_string(rc)
+        );
+        return rc;
     }
 
     /* Create Runtime */
@@ -1534,7 +1632,7 @@ ib_status_t fast_dir_fast_automata(
     }
 
     /* Create by_id */
-    rc = ib_hash_create(&runtime->by_id, cfg_mp);
+    rc = ib_hash_create(&runtime->by_id, mp);
     FAST_CHECK_RC("Error creating hash");
 
     /* Load index */
@@ -1559,7 +1657,7 @@ ib_status_t fast_dir_fast_automata(
     }
     {
         uint32_t *indices =
-            ib_mpool_calloc(cfg_mp, index_size, sizeof(uint32_t));
+            ib_mpool_calloc(mp, index_size, sizeof(uint32_t));
         if (indices == NULL) {
             return IB_EALLOC;
         }
@@ -1595,28 +1693,28 @@ ib_status_t fast_dir_fast_automata(
         ib,
         MODULE_NAME_STR,
         IB_PHASE_REQUEST_HEADER,
-        fast_rule_injection_request_header, runtime
+        fast_rule_injection_request_header, module
     );
     FAST_CHECK_RC("Error registering injection for request header phase.");
     rc = ib_rule_register_injection_fn(
         ib,
         MODULE_NAME_STR,
         IB_PHASE_REQUEST,
-        fast_rule_injection_request_body, runtime
+        fast_rule_injection_request_body, module
     );
     FAST_CHECK_RC("Error registering injection for request header phase.");
     rc = ib_rule_register_injection_fn(
         ib,
         MODULE_NAME_STR,
         IB_PHASE_RESPONSE_HEADER,
-        fast_rule_injection_response_header, runtime
+        fast_rule_injection_response_header, module
     );
     FAST_CHECK_RC("Error registering injection for response header phase.");
     rc = ib_rule_register_injection_fn(
         ib,
         MODULE_NAME_STR,
         IB_PHASE_RESPONSE,
-        fast_rule_injection_response_body, runtime
+        fast_rule_injection_response_body, module
     );
     FAST_CHECK_RC("Error registering injection for response header phase.");
 
@@ -1637,6 +1735,10 @@ ib_status_t fast_dir_fast_automata(
     );
     FAST_CHECK_RC("Error registering action");
 
+    /* Register context open hook to setup per-context data. */
+    rc = ib_hook_context_register(ib, context_open_event,
+                                  fast_ctx_open, NULL);
+    FAST_CHECK_RC("Error registering context close.");
     /* Register context close hook to convert specs once all vars are
      * registered. */
     rc = ib_hook_context_register(ib, context_close_event,
@@ -1663,7 +1765,13 @@ ib_status_t fast_fini(
     void        *cbdata
 )
 {
-    fast_config_t *config = fast_get_config(ib);
+    fast_config_t *config = NULL;
+    const ib_context_t *ctx = ib_context_main(ib);
+    if (ctx == NULL) {
+        return IB_OK;
+    }
+
+    config = fast_get_config(ib, ctx);
     if (
         config                   == NULL ||
         config->runtime          == NULL ||
@@ -1683,7 +1791,7 @@ ib_status_t fast_fini(
  * This static will *only* be passed to IronBee as part of module
  * definition.  It will never be read or written by any code in this file.
  */
-static fast_config_t g_fast_config = {NULL};
+static fast_config_t g_fast_config = {NULL, NULL};
 
 #ifndef DOXYGEN_SKIP
 static IB_DIRMAP_INIT_STRUCTURE(fast_directive_map) = {
