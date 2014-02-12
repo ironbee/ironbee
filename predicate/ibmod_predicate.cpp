@@ -700,7 +700,18 @@ void PerContext::add_rule(P::node_p root, const ib_rule_t* rule)
     assert(root);
     assert(rule);
 
-    size_t index = delegate()->graph().add_root(root);
+    size_t index;
+    P::node_p known_root = delegate()->graph().known(root);
+    if (
+        known_root &&
+        delegate()->graph().is_root(known_root)
+    ) {
+        // Already added to graph, probably because of another context.
+        index = *delegate()->graph().root_indices(known_root).begin();
+    }
+    else {
+        index = delegate()->graph().add_root(root);
+    }
     m_rules_by_index[index].push_back(rule);
 }
 
