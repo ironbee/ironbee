@@ -1262,6 +1262,13 @@ static ib_status_t dfa_operator_execute_common(
         goto return_rc;
     }
 
+    if (subject_len == 0 || subject == NULL) {
+        ib_log_debug_tx(tx, "Subject is empty for DFA op. No match.");
+        *result = 0;
+        ib_rc = IB_OK;
+        goto return_rc;
+    }
+
     /* Get the per-tx-per-operator workspace data for this rule data id. */
     ib_rc = get_dfa_tx_data(module, tx, id, &dfa_workspace);
     if (is_phase && ib_rc == IB_OK) {
