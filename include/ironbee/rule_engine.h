@@ -231,8 +231,12 @@ typedef struct {
  * in its stead, via the injection function (ib_rule_injection_fn_t and
  * ib_rule_register_injection_fn).
  *
+ * This function may be called multiple times for a given rule: once for
+ * every context the rule is enabled in.
+ *
  * @param[in] ib IronBee engine
  * @param[in] rule Rule being registered
+ * @param[in] ctx The context rule is enabled in.
  * @param[in] cbdata Registration function callback data
  *
  * @returns Status code:
@@ -241,9 +245,10 @@ typedef struct {
  *   - IB_Exx Other error.
  */
 typedef ib_status_t (* ib_rule_ownership_fn_t)(
-    const ib_engine_t          *ib,
-    const ib_rule_t            *rule,
-    void                       *cbdata
+    const ib_engine_t  *ib,
+    const ib_rule_t    *rule,
+    const ib_context_t *ctx,
+    void               *cbdata
 );
 
 /**
@@ -268,10 +273,10 @@ typedef ib_status_t (* ib_rule_ownership_fn_t)(
  *   - IB_Exx Other error
  */
 typedef ib_status_t (* ib_rule_injection_fn_t)(
-    const ib_engine_t          *ib,
-    const ib_rule_exec_t       *rule_exec,
-    ib_list_t                  *rule_list,
-    void                       *cbdata
+    const ib_engine_t    *ib,
+    const ib_rule_exec_t *rule_exec,
+    ib_list_t            *rule_list,
+    void                 *cbdata
 );
 
 /**

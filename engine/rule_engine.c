@@ -3952,7 +3952,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
                 (const ib_rule_ownership_cb_t *)onode->data;
             ib_status_t orc;
 
-            orc = cb->fn(ib, rule, cb->data);
+            orc = cb->fn(ib, rule, ctx, cb->data);
             if (orc == IB_OK) {
                 ib_log_debug2(ib,
                               "Ownership callback \"%s\" has taken ownership "

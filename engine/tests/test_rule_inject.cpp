@@ -117,9 +117,10 @@ static ib_status_t store_fn(const ib_rule_exec_t *rule_exec,
 
 /* Ownership function, adds inject rules to the m_injections list */
 static ib_status_t ownership_fn(
-    const ib_engine_t    *ib,
-    const ib_rule_t      *rule,
-    void                 *cbdata)
+    const ib_engine_t  *ib,
+    const ib_rule_t    *rule,
+    const ib_context_t *ctx,
+    void               *cbdata)
 {
     ib_status_t rc;
     size_t count = 0;
