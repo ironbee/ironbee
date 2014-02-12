@@ -1,0 +1,73 @@
+-- Normalize the execute operator $().
+PUtil.Define(
+    "NormalizeExecuteOperator",
+    { "input" },
+    P.StringReplaceRx( [=[[\)\(\}\{]]=] , "" , P.StringReplaceRx( [=[\$\([^\)]*\)]=] , ";$1;",  P.Ref("input") ) )
+)
+
+-- remove characters ignored by bash or cmd
+PUtil.Define(
+    "RemoveIgnoredChar",
+    { "input" },
+    P.StringReplaceRx( [=[[\^\,\@\=\'\"\*]]=] , "" ,  P.Ref("input") )
+)
+
+-- Normalize "internal field separator" $ifs.
+PUtil.Define(
+    "NormalizeIFS",
+    { "input" },
+    P.StringReplaceRx( [=[\$ifs]=] , " " , P.Ref("input") )
+)
+
+-- Normalize white spaces.
+PUtil.Define(
+    "NormalizeWhitespace",
+    { "input" },
+    P.StringReplaceRx( [=[\s+]=] , " " , P.Ref("input") )
+)
+
+-- Normalize Command separators.
+-- attack:
+-- (i`foo`d) will execute "id" but filter sees i;foo;d
+-- thats why we add a score for execution operator detection
+PUtil.Define(
+    "NormalizeCommandSeparator",
+    { "input" },
+    P.StringReplaceRx( [=[\s*\;+\s*]=] , ";" , P.StringReplaceRx( [=[(?:\\n|[\`\|\&\>\<])]=] , ";" , P.Ref("input") ) )
+)
+
+-- Apply classic decodings to the analysed value
+PUtil.Define(
+    "DecodeCommand",
+    { "input" },
+    P.Transformation( 'trim' , P.Transformation( 'urlDecode' ,  P.Transformation( 'lowercase' , P.Ref("input") ) ) )
+)
+
+
+-- A command sequence is the string separated by semicolumn.
+-- This function must be appliad only on already normalized value.
+--
+PUtil.Define(
+    "ExtractCommandSequence",
+    { "input" },
+    P.Operator( 'dfa' , [=[([^;]++)]=] , P.Ref("input") ):pushName():flatten()
+)
+
+
+-- RCE normalization
+local function rce_normalize ( value )
+    return P.P(P.NormalizeCommandSeparator( P.NormalizeWhitespace( P.NormalizeIFS( P.NormalizeExecuteOperator( P.RemoveIgnoredChar( P.DecodeCommand( value) ) ) ) ) ) )
+end
+
+
+
+
+Rule("qrs/LFi/1",1):
+    phase('REQUEST'):
+    predicate( P.ExtractCommandSequence(rce_normalize( P.Field("ARGS") ) ) ):
+    action('set_predicate_vars'):
+    action('setvar:RCE:%{PREDICATE_VALUE_NAME}+=5'):
+    action('event'):
+    message('escape char. %{PREDICATE_VALUE_NAME} %{PREDICATE_VALUE}'):
+    tag('cat/LFi')
+
