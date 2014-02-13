@@ -44,11 +44,16 @@ Validator.new = function(self)
 end
 
 local phases = {
-    REQUEST_HEADER  = 1,
-    REQUEST         = 1,
-    RESPONSE_HEADER = 1,
-    RESPONSE        = 1,
-    POSTPROCESS     = 1
+    REQUEST_HEADER          = 1,
+    REQUEST_HEADER_PROCESS  = 1,
+    REQUEST                 = 1,
+    REQUEST_PROCESS         = 1,
+    RESPONSE_HEADER         = 1,
+    RESPONSE_HEADER_PROCESS = 1,
+    RESPONSE                = 1,
+    RESPONSE_PROCESS        = 1,
+    POSTPROCESS             = 1,
+    LOGGING                 = 1
 }
 
 -- These are fields that the validator should assume exist.

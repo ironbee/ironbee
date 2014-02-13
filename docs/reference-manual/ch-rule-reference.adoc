@@ -1231,7 +1231,7 @@ This message is used by the `event` action when logging the event.
 |===============================================================================
 |Description|The runtime phase at which the rule should execute.
 |       Type|Metadata
-|     Syntax|`phase:REQUEST_HEADER \| REQUEST \| RESPONSE_HEADER \| RESPONSE \| POSTPROCESS`
+|     Syntax|`phase:phase-name`
 |Cardinality|1
 |     Module|core
 |    Version|0.4
@@ -1244,15 +1244,27 @@ following phases:
   Invoked after the entire HTTP request headers has been read, but
   before reading the HTTP request body (if any). Most rules should not
   use this phase, opting for the `REQUEST` phase instead.
+`REQUEST_HEADER_PROCESS`::
+  Invoked after the REQUEST_HEADER phase to allow for processing the phase,
+  such as invoking blocking rules.
 `REQUEST`::
   Invoked after receiving the entire HTTP request, which may involve
   request body and request trailers, but it will run even when neither
   is present.
+`REQUEST_PROCESS`::
+  Invoked after the REQUEST phase to allow for processing the phase,
+  such as invoking blocking rules.
 `RESPONSE_HEADER`::
   Invoked after receiving the HTTP entire response header.
+`RESPONSE_HEADER_PROCESS`::
+  Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
+  such as invoking blocking rules.
 `RESPONSE`::
   Invoked after receiving the HTTP response body (if any) and response
   trailers (if any).
+`RESPONSE_PROCESS`::
+  Invoked after the RESPONSE phase to allow for processing the phase,
+  such as invoking blocking rules.
 `POSTPROCESS`::
   Invoked after the entire transaction has been processed. This phase is
   for logging and tracking data between transactions, such as storing

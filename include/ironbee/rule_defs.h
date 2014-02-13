@@ -41,9 +41,13 @@ typedef enum {
     IB_PHASE_INVALID = -1,           /**< Invalid; used to terminate list */
     IB_PHASE_NONE,                   /**< No phase */
     IB_PHASE_REQUEST_HEADER,         /**< Request header available. */
+    IB_PHASE_REQUEST_HEADER_PROCESS, /**< Process request header phase. */
     IB_PHASE_REQUEST,                /**< Request body available. */
+    IB_PHASE_REQUEST_PROCESS,        /**< Process request phase. */
     IB_PHASE_RESPONSE_HEADER,        /**< Response header available. */
+    IB_PHASE_RESPONSE_HEADER_PROCESS,/**< Process response header phase. */
     IB_PHASE_RESPONSE,               /**< Response body available. */
+    IB_PHASE_RESPONSE_PROCESS,       /**< Process response phase. */
     IB_PHASE_POSTPROCESS,            /**< Post-processing phase. */
     IB_PHASE_LOGGING,                /**< Logging phase. */
     IB_PHASE_REQUEST_HEADER_STREAM,  /**< Stream: Req. header available. */

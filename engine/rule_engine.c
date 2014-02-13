@@ -156,6 +156,19 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
+        IB_PHASE_REQUEST_HEADER_PROCESS,
+        IB_STATE_HOOK_TX,
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_REQUEST ),
+        "REQUEST_HEADER_PROCESS",
+        "Request Header Process",
+        IB_OP_CAPABILITY_NONE,
+        handle_request_header_event
+    },
+    {
+        false,
         IB_PHASE_REQUEST,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
@@ -164,6 +177,19 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_REQUEST ),
         "REQUEST",
         "Request",
+        IB_OP_CAPABILITY_NONE,
+        handle_request_event
+    },
+    {
+        false,
+        IB_PHASE_REQUEST_PROCESS,
+        IB_STATE_HOOK_TX,
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_REQUEST ),
+        "REQUEST_PROCESS",
+        "Request Process",
         IB_OP_CAPABILITY_NONE,
         handle_request_event
     },
@@ -182,6 +208,19 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     },
     {
         false,
+        IB_PHASE_RESPONSE_HEADER_PROCESS,
+        IB_STATE_HOOK_TX,
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_RESPONSE ),
+        "RESPONSE_HEADER_PROCESS",
+        "Response Header Process",
+        IB_OP_CAPABILITY_NONE,
+        handle_response_header_event
+    },
+    {
+        false,
         IB_PHASE_RESPONSE,
         IB_STATE_HOOK_TX,
         ( PHASE_FLAG_IS_VALID |
@@ -190,6 +229,19 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_RESPONSE ),
         "RESPONSE",
         "Response",
+        IB_OP_CAPABILITY_NONE,
+        handle_response_event
+    },
+    {
+        false,
+        IB_PHASE_RESPONSE_PROCESS,
+        IB_STATE_HOOK_TX,
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_RESPONSE ),
+        "RESPONSE_PROCESS",
+        "Response Process",
         IB_OP_CAPABILITY_NONE,
         handle_response_event
     },
@@ -309,9 +361,13 @@ static phase_lookup_t phase_lookup_table[] =
 {
     /* Standard phases */
     { "REQUEST_HEADER",          false, IB_PHASE_REQUEST_HEADER },
+    { "REQUEST_HEADER_PROCESS",  false, IB_PHASE_REQUEST_HEADER_PROCESS },
     { "REQUEST",                 false, IB_PHASE_REQUEST },
+    { "REQUEST_PROCESS",         false, IB_PHASE_REQUEST_PROCESS },
     { "RESPONSE_HEADER",         false, IB_PHASE_RESPONSE_HEADER },
+    { "RESPONSE_HEADER_PROCESS", false, IB_PHASE_RESPONSE_HEADER_PROCESS },
     { "RESPONSE",                false, IB_PHASE_RESPONSE },
+    { "RESPONSE_PROCESS",        false, IB_PHASE_RESPONSE_PROCESS },
     { "POSTPROCESS",             false, IB_PHASE_POSTPROCESS },
     /* Stream inspection phases */
     { "REQUEST_HEADER_STREAM",   true,  IB_PHASE_REQUEST_HEADER_STREAM },

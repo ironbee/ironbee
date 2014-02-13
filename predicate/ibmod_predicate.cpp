@@ -139,15 +139,20 @@ const char* c_trace_directive = "PredicateTrace";
  * a configuration time error.
  *
  * @warning Adding a phase to this list not sufficient to make predicate work
- *          in that phase.  All predicate calls much function meaningfully in
+ *          in that phase.  All predicate calls must function meaningfully in
  *          that phase as well.
  **/
 const ib_rule_phase_num_t c_phases[] = {
     IB_PHASE_NONE, /* Special: Executed in every phase. */
     IB_PHASE_REQUEST_HEADER,
+    IB_PHASE_REQUEST_HEADER_PROCESS,
     IB_PHASE_REQUEST,
+    IB_PHASE_REQUEST_PROCESS,
     IB_PHASE_RESPONSE_HEADER,
-    IB_PHASE_RESPONSE
+    IB_PHASE_RESPONSE_HEADER_PROCESS,
+    IB_PHASE_RESPONSE,
+    IB_PHASE_RESPONSE_PROCESS,
+    IB_PHASE_POSTPROCESS
 };
 //! Number of phases in c_phases.
 const size_t c_num_phases = sizeof(c_phases) / sizeof(ib_rule_phase_num_t);
