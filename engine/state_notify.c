@@ -64,6 +64,7 @@ static ib_status_t ib_state_notify_null(
             ib_log_notice(ib, "Hook returned error for \"%s\": %s",
                           ib_state_event_name(event),
                           ib_status_to_string(rc));
+            return rc;
         }
     }
 
@@ -100,6 +101,7 @@ static ib_status_t ib_state_notify_context(
             ib_log_notice(ib, "Hook returned error for \"%s\": %s",
                           ib_state_event_name(event),
                            ib_status_to_string(rc));
+            return rc;
         }
     }
 
