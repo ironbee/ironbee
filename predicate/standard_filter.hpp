@@ -35,19 +35,22 @@ namespace IronBee {
 namespace Predicate {
 namespace Standard {
 
-/**
- * Output elements of second child that are equal to first (simple) child.
- **/
-class Eq :
-    public MapCall
+/// @cond Impl
+namespace Impl {
+	
+class FilterBase : 
+	public MapCall
 {
 public:
-    //! See Call::name()
-    virtual std::string name() const;
-
     //! See Node::validate().
     virtual bool validate(NodeReporter reporter) const;
-
+	
+    //! See Node::eval_calculate().
+    virtual void eval_calculate(
+        GraphEvalState& graph_eval_state,
+        EvalContext     context
+    ) const;
+		
 protected:
     //! See MapCall::value_calculate()
     virtual Value value_calculate(
@@ -55,47 +58,48 @@ protected:
         GraphEvalState& graph_eval_state,
         EvalContext     context
     ) const;
+	
+	//! Pass the filter?  Child must implement.
+	virtual bool pass_filter(Value f, Value v) const = 0;
+};
 
-    //! See Node::eval_calculate().
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
+};
+/// @endcond
+/**
+ * Output elements of second child that are equal to first (simple) child.
+ **/
+class Eq :
+    public Impl::FilterBase
+{
+public:
+    //! See Call::name()
+    virtual std::string name() const;
+
+protected:
+	//! See Impl::FilterBase::pass_filter()
+	virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
  * Output elements of second child that are not equal to first (simple) child.
  **/
 class Ne :
-    public MapCall
+    public Impl::FilterBase
 {
 public:
     //! See Call::name()
     virtual std::string name() const;
 
-    //! See Node::validate().
-    virtual bool validate(NodeReporter reporter) const;
-
 protected:
-    //! See MapCall::value_calculate()
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-    //! See Node::eval_calculate().
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
+	//! See Impl::FilterBase::pass_filter()
+	virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
  * Output elements of second child that the (simple) first child is less than.
  **/
 class Lt :
-    public MapCall
+    public Impl::FilterBase
 {
 public:
     //! See Call::name()
@@ -105,18 +109,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-    //! See MapCall::value_calculate()
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-    //! See Node::eval_calculate().
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
+	//! See Impl::FilterBase::pass_filter()
+	virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -124,7 +118,7 @@ protected:
  * or equal to.
  **/
 class Le :
-    public MapCall
+    public Impl::FilterBase
 {
 public:
     //! See Call::name()
@@ -134,18 +128,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-    //! See MapCall::value_calculate()
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-    //! See Node::eval_calculate().
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
+	//! See Impl::FilterBase::pass_filter()
+	virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -153,7 +137,7 @@ protected:
  * than.
  **/
 class Gt :
-    public MapCall
+    public Impl::FilterBase
 {
 public:
     //! See Call::name()
@@ -163,18 +147,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-    //! See MapCall::value_calculate()
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-    //! See Node::eval_calculate().
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
+	//! See Impl::FilterBase::pass_filter()
+	virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -182,7 +156,7 @@ protected:
  * than or equal to.
  **/
 class Ge :
-    public MapCall
+    public Impl::FilterBase
 {
 public:
     //! See Call::name()
@@ -192,18 +166,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-    //! See MapCall::value_calculate()
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-    //! See Node::eval_calculate().
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
+	//! See Impl::FilterBase::pass_filter()
+	virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
@@ -251,7 +215,7 @@ private:
  * Output elements of second child with name described by first child.
  **/
 class Named :
-    public MapCall
+    public Impl::FilterBase
 {
 public:
     //! See Call::name()
@@ -261,25 +225,15 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-    //! See MapCall::value_calculate()
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-    //! See Node::eval_calculate().
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
+	//! See Impl::FilterBase::pass_filter()
+	virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**
  * Case insensitive version of Named.
  **/
 class NamedI :
-    public MapCall
+    public Impl::FilterBase
 {
 public:
     //! See Call::name()
@@ -289,18 +243,8 @@ public:
     virtual bool validate(NodeReporter reporter) const;
 
 protected:
-    //! See MapCall::value_calculate()
-    virtual Value value_calculate(
-        Value           v,
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
-
-    //! See Node::eval_calculate().
-    virtual void eval_calculate(
-        GraphEvalState& graph_eval_state,
-        EvalContext     context
-    ) const;
+	//! See Impl::FilterBase::pass_filter()
+	virtual bool pass_filter(Value f, Value v) const;
 };
 
 /**

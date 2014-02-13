@@ -80,7 +80,7 @@ bool value_equal(Value a, Value b)
 }
 
 bool value_less(Value a, Value b)
-{
+{	
     if ((! a && ! b) || (a == b)) {
         return false;
     }
@@ -89,6 +89,13 @@ bool value_less(Value a, Value b)
         return false;
     }
 
+	if (b.type() != Value::NUMBER && b.type() != Value::FLOAT) {
+        BOOST_THROW_EXCEPTION(
+            einval() << errinfo_what(
+                "Unsupported value type for RHS " + value_to_string(b)
+            )
+        );
+	}
     switch (a.type()) {
         case Value::NUMBER:
             return a.value_as_number() < b.value_as_number();
@@ -96,46 +103,68 @@ bool value_less(Value a, Value b)
             return a.value_as_float() < b.value_as_float();
         default:
             BOOST_THROW_EXCEPTION(
-                einval() << errinfo_what(
-                    "Unsupported value type for " +
-                    boost::lexical_cast<string>(a)
-                )
+	            einval() << errinfo_what(
+	                "Unsupported value type for LHS " + value_to_string(a)
+	            )
             );
     }
 }
 
 }
 
-string Eq::name() const
-{
-    return "eq";
-}
+namespace Impl {
 
-void Eq::eval_calculate(
+void FilterBase::eval_calculate(
     GraphEvalState& graph_eval_state,
     EvalContext     context
 ) const
 {
-    map_calculate(children().back(), graph_eval_state, context);
+	node_p filter = children().front();
+	node_p input = children().back();
+	
+	graph_eval_state.eval(filter, context);
+	if (graph_eval_state.is_finished(filter->index())) {
+	    map_calculate(
+			input,
+			graph_eval_state, 
+			context, 
+			true,  
+			false
+		);
+		if (graph_eval_state.is_finished(input->index())) {
+			graph_eval_state[index()].finish();
+		}
+	}
+}	
+
+bool Impl::FilterBase::validate(NodeReporter reporter) const
+{
+    bool result = true;
+    result = Validate::n_children(reporter, 2) && result;
+
+    return result;
 }
 
-Value Eq::value_calculate(
+Value FilterBase::value_calculate(
     Value           v,
     GraphEvalState& graph_eval_state,
     EvalContext     context
 ) const
 {
-    Value f = literal_value(children().front());
-    return value_equal(f, v) ? v : Value();
+    Value f = simple_value(graph_eval_state[children().front()->index()]);
+    return pass_filter(f, v) ? v : Value();
+}
+	
+}; // Impl
+
+string Eq::name() const
+{
+    return "eq";
 }
 
-bool Eq::validate(NodeReporter reporter) const
+bool Eq::pass_filter(Value f, Value v) const
 {
-    bool result = true;
-    result = Validate::n_children(reporter, 2) && result;
-    result = Validate::nth_child_is_literal(reporter, 0) && result;
-
-    return result;
+	return value_equal(f, v);
 }
 
 string Ne::name() const
@@ -143,24 +172,9 @@ string Ne::name() const
     return "ne";
 }
 
-void Ne::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
+bool Ne::pass_filter(Value f, Value v) const
 {
-    map_calculate(children().back(), graph_eval_state, context);
-}
-
-Value Ne::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    Value f = literal_value(children().front());
-    return (! value_equal(f, v)) ? v : Value();
-}
-
-bool Ne::validate(NodeReporter reporter) const
-{
-    bool result = true;
-    result = Validate::n_children(reporter, 2) && result;
-    result = Validate::nth_child_is_literal(reporter, 0) && result;
-
-    return result;
+	return ! value_equal(f, v);
 }
 
 string Lt::name() const
@@ -168,23 +182,16 @@ string Lt::name() const
     return "lt";
 }
 
-void Lt::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
+bool Lt::pass_filter(Value f, Value v) const
 {
-    map_calculate(children().back(), graph_eval_state, context);
-}
-
-Value Lt::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    Value f = literal_value(children().front());
-    return value_less(v, f) ? v : Value();
+	return value_less(v, f);
 }
 
 bool Lt::validate(NodeReporter reporter) const
 {
-    bool result = true;
-    result = Validate::n_children(reporter, 2) && result;
-    result = Validate::nth_child_is_literal(reporter, 0) && result;
-    if (! children().empty()) {
+    bool result = Impl::FilterBase::validate(reporter);
+	
+    if (! children().empty() && children().front()->is_literal()) {
         Value::type_e type = literal_value(children().front()).type();
         if (type != Value::FLOAT && type != Value::NUMBER) {
             reporter.error("Lt only supports numeric results.");
@@ -200,23 +207,10 @@ string Le::name() const
     return "le";
 }
 
-void Le::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    map_calculate(children().back(), graph_eval_state, context);
-}
-
-Value Le::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    Value f = literal_value(children().front());
-    return (value_less(v, f) || value_equal(f, v)) ? v : Value();
-}
-
 bool Le::validate(NodeReporter reporter) const
 {
-    bool result = true;
-    result = Validate::n_children(reporter, 2) && result;
-    result = Validate::nth_child_is_literal(reporter, 0) && result;
-    if (! children().empty()) {
+    bool result = Impl::FilterBase::validate(reporter);
+    if (! children().empty() && children().front()->is_literal()) {
         Value::type_e type = literal_value(children().front()).type();
         if (type != Value::FLOAT && type != Value::NUMBER) {
             reporter.error("Le only supports numeric results.");
@@ -227,28 +221,26 @@ bool Le::validate(NodeReporter reporter) const
     return result;
 }
 
+bool Le::pass_filter(Value f, Value v) const
+{
+	return value_less(v, f) || value_equal(f, v);
+}
+
+
 string Gt::name() const
 {
     return "gt";
 }
 
-void Gt::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
+bool Gt::pass_filter(Value f, Value v) const
 {
-    map_calculate(children().back(), graph_eval_state, context);
-}
-
-Value Gt::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    Value f = literal_value(children().front());
-    return (! value_less(v, f) && ! value_equal(f, v)) ? v : Value();
+    return (! value_less(v, f) && ! value_equal(f, v));
 }
 
 bool Gt::validate(NodeReporter reporter) const
 {
-    bool result = true;
-    result = Validate::n_children(reporter, 2) && result;
-    result = Validate::nth_child_is_literal(reporter, 0) && result;
-    if (! children().empty()) {
+    bool result = Impl::FilterBase::validate(reporter);
+    if (! children().empty() && children().front()->is_literal()) {
         Value::type_e type = literal_value(children().front()).type();
         if (type != Value::FLOAT && type != Value::NUMBER) {
             reporter.error("Gt only supports numeric results.");
@@ -264,26 +256,18 @@ string Ge::name() const
     return "ge";
 }
 
-void Ge::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
+bool Ge::pass_filter(Value f, Value v) const
 {
-    map_calculate(children().back(), graph_eval_state, context);
-}
-
-Value Ge::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    Value f = literal_value(children().front());
-    return (! value_less(v, f)) ? v : Value();
+    return (! value_less(v, f));
 }
 
 bool Ge::validate(NodeReporter reporter) const
 {
-    bool result = true;
-    result = Validate::n_children(reporter, 2) && result;
-    result = Validate::nth_child_is_literal(reporter, 0) && result;
-    if (! children().empty()) {
+    bool result = Impl::FilterBase::validate(reporter);
+    if (! children().empty() && children().front()->is_literal()) {
         Value::type_e type = literal_value(children().front()).type();
         if (type != Value::FLOAT && type != Value::NUMBER) {
-            reporter.error("Ge only supports numeric results.");
+            reporter.error("Gt only supports numeric results.");
             return false;
         }
     }
@@ -380,29 +364,29 @@ string Named::name() const
     return "named";
 }
 
-void Named::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
+bool Named::pass_filter(Value f, Value v) const
 {
-    map_calculate(children().back(), graph_eval_state, context);
-}
-
-Value Named::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    ConstByteString name =
-        literal_value(children().front()).value_as_byte_string();
-    if (
-        v.name_length() == name.length() &&
+	if (f.type() != Value::BYTE_STRING) {
+		BOOST_THROW_EXCEPTION(
+			einval() << errinfo_what(
+				"named requires string filter, got " + value_to_string(f)
+			)
+		);
+	}
+	ConstByteString name = f.value_as_byte_string();
+	
+	return         
+		v.name_length() == name.length() &&
         equal(name.const_data(), name.const_data() + name.length(), v.name())
-    ) {
-        return v;
-    }
-    return Value();
+		;
 }
 
 bool Named::validate(NodeReporter reporter) const
 {
-    bool result = true;
-    result = Validate::n_children(reporter, 2) && result;
-    result = Validate::nth_child_is_string(reporter, 0) && result;
+    bool result = Impl::FilterBase::validate(reporter);
+	if (! children().empty() && children().front()->is_literal()) {
+	    result = Validate::nth_child_is_string(reporter, 0) && result;
+	}
 
     return result;
 }
@@ -410,11 +394,6 @@ bool Named::validate(NodeReporter reporter) const
 string NamedI::name() const
 {
     return "namedi";
-}
-
-void NamedI::eval_calculate(GraphEvalState& graph_eval_state, EvalContext context) const
-{
-    map_calculate(children().back(), graph_eval_state, context);
 }
 
 namespace {
@@ -426,28 +405,32 @@ bool namedi_caseless_compare(char a, char b)
 
 }
 
-Value NamedI::value_calculate(Value v, GraphEvalState& graph_eval_state, EvalContext context) const
+bool NamedI::pass_filter(Value f, Value v) const
 {
-    ConstByteString name =
-        literal_value(children().front()).value_as_byte_string();
-    if (
+	if (f.type() != Value::BYTE_STRING) {
+		BOOST_THROW_EXCEPTION(
+			einval() << errinfo_what(
+				"namedi requires string filter, got " + value_to_string(f)
+			)
+		);
+	}
+    ConstByteString name = f.value_as_byte_string();
+	return
         v.name_length() == name.length() &&
         equal(
             name.const_data(), name.const_data() + name.length(),
             v.name(),
             namedi_caseless_compare
         )
-    ) {
-        return v;
-    }
-    return Value();
+		;
 }
 
 bool NamedI::validate(NodeReporter reporter) const
 {
-    bool result = true;
-    result = Validate::n_children(reporter, 2) && result;
-    result = Validate::nth_child_is_string(reporter, 0) && result;
+    bool result = Impl::FilterBase::validate(reporter);
+	if (! children().empty() && children().front()->is_literal()) {
+	    result = Validate::nth_child_is_string(reporter, 0) && result;
+	}
 
     return result;
 }

@@ -337,6 +337,19 @@
 <dd><strong>Call Method</strong></dd>
 </dl>
 
+<p><strong><code>(pushName v)</code></strong></p>
+
+<dl>
+<dt>Result</dt>
+<dd><code>v</code> except that for each list value of <code>v</code>, the subvalues of that list will now have the same name as the list. I.e., it pushes the name of a parent list to its children.</dd>
+
+<dt>Finished</dt>
+<dd><code>v</code> is finished.</dd>
+
+<dt>Notes</dt>
+<dd>Useful with <code>flatten</code> to flatten a valuelist but preserve the names of the lists, e.g., <code>(flatten (pushName v))</code>.</dd>
+</dl>
+
 <p><strong><code>(cat ...)</code></strong></p>
 
 <dl>
@@ -619,7 +632,27 @@
 
 <h2 id="filters">Filters</h2>
 
-<p>All of these functions are of the following form:</p>
+<p>Most of these functions are one of the following forms:</p>
+
+<p><strong><code>(X f v)</code></strong></p>
+
+<dl>
+<dt>Result</dt>
+<dd><code>[]</code> while <code>f</code> is not finished.</dd>
+
+<dd><code>[...]</code> where <code>...</code> is the values of <code>v</code> that match the filter described by <code>f</code>.</dd>
+
+<dt>Finished</dt>
+<dd><code>f</code> and <code>v</code> are finished.</dd>
+
+<dt>Front End</dt>
+<dd><strong>Call Method</strong></dd>
+
+<dt>Notes</dt>
+<dd><code>f</code> must have a simple value.</dd>
+
+<dd>These are known as <em>dynamic</em> filters.</dd>
+</dl>
 
 <p><strong><code>(X F v)</code></strong></p>
 
@@ -632,9 +665,12 @@
 
 <dt>Front End</dt>
 <dd><strong>Call Method</strong></dd>
+
+<dt>Notes</dt>
+<dd>These are known as <em>static</em> filters.</dd>
 </dl>
 
-<p><strong><code>(eq F v)</code></strong></p>
+<p><strong><code>(eq f v)</code></strong></p>
 
 <dl>
 <dt>Filter</dt>
@@ -646,7 +682,7 @@
 <dd>Lists are currently never equal.</dd>
 </dl>
 
-<p><strong><code>(ne F v)</code></strong></p>
+<p><strong><code>(ne f v)</code></strong></p>
 
 <dl>
 <dt>Filter</dt>
@@ -658,34 +694,34 @@
 
 <p><strong>Warning on <code>lt</code>, <code>le</code>, <code>gt</code>, <code>ge</code></strong></p>
 
-<p>Filters based on asymmetric operators are tricky. Should <code>(lt F v)</code> be elements of <code>v</code> that are less than <code>F</code> or greater than <code>F</code> (as <code>F</code> appears on the left). After much debate, the latter was chosen to facilitate more natural any-of-the-following expressions. For example, <code>(gt 100 (length (sub 'Host' (var 'REQUEST_HEADERS'))))</code> should express the notion of a long &#8216;Host&#8217; header, not a small one, and should be true if any &#8216;Host&#8217; header is long in the case of multiples.</p>
+<p>Filters based on asymmetric operators are tricky. Should <code>(lt f v)</code> be elements of <code>v</code> that are less than <code>f</code> or greater than <code>f</code> (as <code>f</code> appears on the left). After much debate, the former was chosen to facilitate more natural any-of-the-following expressions. For example, <code>(gt 100 (length (sub 'Host' (var 'REQUEST_HEADERS'))))</code> should express the notion of a long &#8216;Host&#8217; header, not a small one, and should be true if any &#8216;Host&#8217; header is long in the case of multiples.</p>
 
-<p><strong><code>(lt F v)</code></strong></p>
+<p><strong><code>(lt f v)</code></strong></p>
 
 <dl>
 <dt>Filter</dt>
-<dd>Number or float and filter is less than.</dd>
+<dd>Number or float and less than filter.</dd>
 </dl>
 
-<p><strong><code>(le F v)</code></strong></p>
+<p><strong><code>(le f v)</code></strong></p>
 
 <dl>
 <dt>Filter</dt>
-<dd>Number or float and filter less than or equal.</dd>
+<dd>Number or float and less than or equal to filter.</dd>
 </dl>
 
-<p><strong><code>(gt F v)</code></strong></p>
+<p><strong><code>(gt f v)</code></strong></p>
 
 <dl>
 <dt>Filter</dt>
-<dd>Number or float and filter greater than.</dd>
+<dd>Number or float and greater than filter.</dd>
 </dl>
 
-<p><strong><code>(ge F v)</code></strong></p>
+<p><strong><code>(ge f v)</code></strong></p>
 
 <dl>
 <dt>Filter</dt>
-<dd>Number or float and filter greater than or equal.</dd>
+<dd>Number or float and greater than or equal to filter.</dd>
 </dl>
 
 <p><strong><code>(typed F v)</code></strong></p>
@@ -698,25 +734,25 @@
 <dd><code>F</code> must be one of &#8216;number&#8217;, &#8216;float&#8217;, &#8216;list&#8217;, &#8216;string&#8217;.</dd>
 </dl>
 
-<p><strong><code>(named F v)</code></strong></p>
+<p><strong><code>(named f v)</code></strong></p>
 
 <dl>
 <dt>Filter</dt>
 <dd>Has name equal to value of filter.</dd>
 </dl>
 
-<p><strong><code>(namedi F v)</code></strong></p>
+<p><strong><code>(namedi f v)</code></strong></p>
 
 <dl>
 <dt>Filter</dt>
 <dd>Has name equal to value of filter, case insensitive.</dd>
 </dl>
 
-<p>** <code>(sub F v)</code>**</p>
+<p>** <code>(sub f v)</code>**</p>
 
 <dl>
 <dt>Synonym</dt>
-<dd><code>(namedi F v)</code></dd>
+<dd><code>(namedi f v)</code></dd>
 </dl>
 
 <p><strong><code>(namedRx F v)</code></strong></p>

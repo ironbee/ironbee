@@ -518,7 +518,23 @@ Front End
 Filters
 -------
 
-All of these functions are of the following form:
+Most of these functions are one of the following forms:
+
+**`(X f v)`**
+
+Result
+: `[]` while `f` is not finished.
+: `[...]` where `...` is the values of `v` that match the filter described by `f`.
+
+Finished
+: `f` and `v` are finished.
+
+Front End
+: **Call Method**
+
+Notes
+: `f` must have a simple value.
+: These are known as *dynamic* filters.
 
 **`(X F v)`**
 
@@ -531,7 +547,10 @@ Finished
 Front End
 : **Call Method**
 
-**`(eq F v)`**
+Notes
+: These are known as *static* filters.
+
+**`(eq f v)`**
 
 Filter
 : Equal in type and value to filter.
@@ -540,7 +559,7 @@ Notes
 : Floating point equality is tricky and unlike to be what you want.  A `near` filter may be added in the future.
 : Lists are currently never equal.
 
-**`(ne F v)`**
+**`(ne f v)`**
 
 Filter
 : Not equal in type or value to filter.
@@ -550,24 +569,24 @@ Notes
 
 **Warning on `lt`, `le`, `gt`, `ge`**
 
-Filters based on asymmetric operators are tricky.  Should `(lt F v)` be elements of `v` that are less than `F` or greater than `F` (as `F` appears on the left).  After much debate, the former was chosen to facilitate more natural any-of-the-following expressions.  For example, `(gt 100 (length (sub 'Host' (var 'REQUEST_HEADERS'))))` should express the notion of a long 'Host' header, not a small one, and should be true if any 'Host' header is long in the case of multiples.
+Filters based on asymmetric operators are tricky.  Should `(lt f v)` be elements of `v` that are less than `f` or greater than `f` (as `f` appears on the left).  After much debate, the former was chosen to facilitate more natural any-of-the-following expressions.  For example, `(gt 100 (length (sub 'Host' (var 'REQUEST_HEADERS'))))` should express the notion of a long 'Host' header, not a small one, and should be true if any 'Host' header is long in the case of multiples.
 
-**`(lt F v)`**
+**`(lt f v)`**
 
 Filter
 : Number or float and less than filter.
 
-**`(le F v)`**
+**`(le f v)`**
 
 Filter
 : Number or float and less than or equal to filter.
 
-**`(gt F v)`**
+**`(gt f v)`**
 
 Filter
 : Number or float and greater than filter.
 
-**`(ge F v)`**
+**`(ge f v)`**
 
 Filter
 : Number or float and greater than or equal to filter.
@@ -580,20 +599,20 @@ Filter
 Notes
 : `F` must be one of 'number', 'float', 'list', 'string'.
 
-**`(named F v)`**
+**`(named f v)`**
 
 Filter
 : Has name equal to value of filter.
 
-**`(namedi F v)`**
+**`(namedi f v)`**
 
 Filter
 : Has name equal to value of filter, case insensitive.
 
-** `(sub F v)`**
+** `(sub f v)`**
 
 Synonym
-: `(namedi F v)`
+: `(namedi f v)`
 
 **`(namedRx F v)`**
 
