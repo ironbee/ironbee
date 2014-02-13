@@ -88,11 +88,10 @@ typedef enum {
 #define IB_RULE_FLAG_MARK     (1 << 6)  /**< Mark used in list building */
 #define IB_RULE_FLAG_CAPTURE  (1 << 7)  /**< Enable result capture */
 #define IB_RULE_FLAG_CHAIN    (IB_RULE_FLAG_CHPARENT|IB_RULE_FLAG_CHCHILD)
-#define IB_RULE_FLAG_FORCE_EN (1 << 8)  /**< Force enable (for action) */
-#define IB_RULE_FLAG_NO_TGT   (1 << 9)  /**< Rule has no targets (for action) */
-#define IB_RULE_FLAG_ACTION   (IB_RULE_FLAG_FORCE_EN|IB_RULE_FLAG_NO_TGT)
-#define IB_RULE_FLAG_FIELDS   (1 << 10) /**< Create FIELD_xxx fields */
-#define IB_RULE_FLAG_TRACE    (1 << 11) /**< Trace rule */
+#define IB_RULE_FLAG_NO_TGT   (1 << 8)  /**< Rule has no targets */
+#define IB_RULE_FLAG_ACTION   (IB_RULE_FLAG_NO_TGT)
+#define IB_RULE_FLAG_FIELDS   (1 << 9) /**< Create FIELD_xxx fields */
+#define IB_RULE_FLAG_TRACE    (1 << 10) /**< Trace rule */
 
 /**
  * Rule execution flags

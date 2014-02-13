@@ -41,8 +41,8 @@ _M._VERSION     = "1.0"
 local IB_RULEMD_FLAG_EXPAND_MSG = 1
 local IB_RULEMD_FLAG_EXPAND_DATA = 2
 
--- (IB_RULE_FLAG_FORCE_EN|IB_RULE_FLAG_NO_TGT) or (256 + 512)
-local IB_RULE_FLAG_ACTION = 768
+-- (IB_RULE_FLAG_NO_TGT) or (256)
+local IB_RULE_FLAG_ACTION = 256
 
 -- Setup the configuration DLS, run the function provided, tear down the DSL.
 --

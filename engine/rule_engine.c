@@ -3830,9 +3830,7 @@ static ib_status_t rule_engine_ctx_close(ib_engine_t *ib,
             return IB_EALLOC;
         }
         ctx_rule->rule = rule;
-        if ( (! ib_flags_all(rule->flags, IB_RULE_FLAG_MAIN_CTX)) ||
-                ib_flags_all(rule->flags, IB_RULE_FLAG_FORCE_EN) )
-        {
+        if (! ib_flags_all(rule->flags, IB_RULE_FLAG_MAIN_CTX)) {
             ctx_rule->flags = IB_RULECTX_FLAG_ENABLED;
             ib_flags_set(rule->flags, IB_RULE_FLAG_MARK);
         }

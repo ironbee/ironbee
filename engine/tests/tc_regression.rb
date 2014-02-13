@@ -276,4 +276,30 @@ Content-Length: 1234
     assert_no_issues
     assert_log_match /TX EVENT: tx_finished_event/
   end
+
+  def test_main_action
+    clipp(
+      config: 'Action id:1 phase:REQUEST clipp_announce:bad',
+      default_site_config: 'Action id:2 phase:REQUEST clipp_announce:good'
+    ) do 
+      transaction {|t| t.request(raw: 'GET /')}
+    end
+    assert_no_issues
+    assert_log_no_match(/CLIPP ANNOUNCE: bad/)
+    assert_log_match(/CLIPP ANNOUNCE: good/)
+  end
+  
+  def test_main_rule
+    clipp(
+      modhtp: true,
+      config: 'Rule NULL @nop "" id:1 phase:REQUEST clipp_announce:bad',
+      default_site_config: 'Rule NULL @nop "" id:2 phase:REQUEST clipp_announce:good'
+    ) do 
+      transaction {|t| t.request(raw: 'GET /')}
+    end
+    assert_no_issues
+    assert_log_no_match(/CLIPP ANNOUNCE: bad/)
+    assert_log_match(/CLIPP ANNOUNCE: good/)
+  end
+
 end
