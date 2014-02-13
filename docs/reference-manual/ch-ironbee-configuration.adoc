@@ -55,6 +55,45 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
 The following is a reference for all IronBee directives where the
 context refers to the possible locations within the configuration file.
 
+Action
+~~~~~~
+
+*Description:* Loads a rule that will always execute its actions and,
+in most contexts, enable the rule for execution in that context.
+
+*Syntax:* `Action id:1234 rev:1 phase:THE_PHASE ...`
+
+*Default:* None
+
+*Context:* Any
+
+*Cardinality:* 0..n
+
+*Module:* rules
+
+*Version:* 0.4
+
+This is shorthand and functionally equivilant to a rule with no targets
+and an operator that always returns true. Internally this is represented as
+follows.
+
+-----------------------------------------------
+# These are equivilents
+Rule NULL @nop "" ...
+Action ...
+-----------------------------------------------
+
+-----------------------------------------------
+*Note*
+
+Loading a rule will, in most contexts, also enable the rule to be
+executed in that context. However, the main configuration context is
+special. Loading a rule in the main configuration context will _NOT_
+enable the rule, but just load it into memory so that it can be shared
+by other contexts. You must explicitly use `RuleEnable` in another
+context to enable the rule.
+-----------------------------------------------
+
 AuditEngine
 ~~~~~~~~~~~
 
@@ -1096,10 +1135,7 @@ Rule
 *Description:* Loads a rule and, in most contexts, enable the rule for
 execution in that context.
 
-*Syntax:* `Rule 
-                 @
-                
-                `
+*Syntax:* `Rule TARGET @operator "param" id:1234 rev:1 phase:THE_PHASE ...`
 
 *Default:* None
 
