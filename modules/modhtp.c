@@ -316,7 +316,6 @@ static ib_status_t modhtp_field_list_callback(
         return IB_OK;
     }
 
-    /* Always return IB_OK */
     return IB_OK;
 }
 
@@ -348,7 +347,7 @@ static ib_status_t modhtp_param_iter_callback(
 
     /* The value needs to be non-NULL, however an assert is inappropriate
      * as this is dependent on libHTP, not IronBee. */
-    if (param == NULL) {
+    if ((param == NULL) || (param->value == NULL)) {
         return IB_EINVAL;
     }
 
@@ -378,7 +377,6 @@ static ib_status_t modhtp_param_iter_callback(
         return IB_OK;
     }
 
-    /* Always return IB_OK */
     ++(idata->count);
     return IB_OK;
 }
