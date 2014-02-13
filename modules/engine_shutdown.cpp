@@ -187,7 +187,7 @@ private:
         IronBee::Transaction tx) const
     {
         if (get_mode() != RUNNING) {
-            ib_log_error(
+            ib_log_debug(
                 ib.ib(),
                 "New transaction started after shutdown req.");
         }
@@ -232,7 +232,7 @@ private:
         IronBee::Connection conn) const
     {
         if (get_mode() != RUNNING) {
-            ib_log_error(
+            ib_log_debug(
                 ib.ib(),
                 "New connection started after shutdown req.");
         }
