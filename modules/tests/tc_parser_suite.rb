@@ -1,8 +1,8 @@
 require 'test/unit'
 
-PSPARSE = File.join(ENV['abs_builddir'], 'psparse')
+psparse = File.join(ENV['abs_builddir'], 'psparse')
 
-if ! File.exists?(PSPARSE) # May not be part of build.
+if ! File.exists?(psparse) # May not be part of build.
   puts "No psparse; Skipping tests."
 
 else
@@ -30,7 +30,7 @@ else
         STDOUT.reopen(w)
         STDERR.reopen(w)
 
-        exec(PSPARSE, parser)
+        exec(psparse, parser)
       end
 
       w.close
