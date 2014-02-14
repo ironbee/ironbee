@@ -47,7 +47,8 @@ class RawConsumerDelegate :
 public:
     explicit
     RawConsumerDelegate(const string& output_path) :
-        m_output_path(output_path)
+        m_output_path(output_path),
+        m_info(NULL)
     {
         // nop
     }
