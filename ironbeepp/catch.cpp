@@ -72,7 +72,7 @@ ib_status_t convert_exception(
         }
         catch (const error& e) {
             string message;
-            int level = 1;
+            int level = static_cast<ib_logger_level_t>(IB_LOG_ERROR);
 
             message = string(ib_status_to_string(status)) + ": ";
             if (boost::get_error_info<errinfo_what>(e)) {
