@@ -134,8 +134,47 @@ IB_MODULE_DECLARE();
 /**
  * Several max constants
  */
-static const size_t max_fmt = 128;          /**< Format buffer size */
-static const size_t max_path_element = 64;  /**< Max size of a path element */
+static const size_t MAX_FMT = 128;          /**< Format buffer size */
+static const size_t MAX_LEADING_SPACES = 16;/**< Max # of leading spaces */
+static const size_t MAX_METHOD = 32;        /**< Max HTTP method */
+static const size_t MAX_PROTOCOL = 32;      /**< Max HTTP protocol */
+static const size_t MAX_STATUS = 32;        /**< Max response status */
+static const size_t MAX_PATH_ELEMENT = 32;  /**< Max size of a path element */
+static const size_t MAX_FIELD_NAME = 48;    /**< Max field name for printing */
+static const size_t MAX_FIELD_SIZE = 256;   /**< Max field value for printing */
+static const size_t MAX_BS_LEN = 1024;      /**< Max escaped byte string */
+static const size_t MIN_BS_LEN = 5;         /**< Min escaped byte string */
+
+/**
+ * TxDump bytestring format result flags
+ */
+#define TXDUMP_BS_NULL    (1 <<  0) /* NULL bytestring? */
+#define TXDUMP_BS_CROPPED (1 <<  1) /* Final string cropped? */
+#define TXDUMP_BS_ESCAPED (1 <<  2) /* Was escaping required? */
+
+/**
+ * Flag -> string format.
+ *
+ * @note If you add to this list, make sure that FLAGBUF_SIZE (below)
+ * is sufficiently large to hold the maximum combination of these.
+ */
+static IB_STRVAL_MAP(bytestring_flags_map) = {
+    IB_STRVAL_PAIR("NULL", TXDUMP_BS_NULL),
+    IB_STRVAL_PAIR("CROPPED", TXDUMP_BS_CROPPED),
+    IB_STRVAL_PAIR("JSON", TXDUMP_BS_ESCAPED),
+    IB_STRVAL_PAIR_LAST,
+};
+static const size_t FLAGBUF_SIZE = 24;  /* See note above */
+
+/**
+ * TxDump quote mode
+ */
+enum txdump_qmode_t {
+    QUOTE_ALWAYS,         /**< Always quote the result string */
+    QUOTE_NEVER,          /**< Never quote the result string */
+    QUOTE_AUTO,           /**< Quote only if escaping required */
+};
+typedef enum txdump_qmode_t txdump_qmode_t;
 
 /**
  * TxDump enable flags
@@ -231,7 +270,7 @@ static txdump_config_t txdump_config = {
  *
  * @param[in] tx IronBee Transaction
  * @param[in] txdump Log parameters
- * @param[in] nspaces Number of leading spaces (max = 32)
+ * @param[in] nspaces Number of leading spaces (max = MAX_LEADING_SPACES)
  * @param[in] fmt printf-style format string
  * @param[in] ap Variable args list
  */
@@ -252,29 +291,29 @@ static void txdump_va(
 {
     assert(tx != NULL);
     assert(txdump != NULL);
-    assert(nspaces < max_fmt);
     assert(fmt != NULL);
 
-    char fmtbuf[max_fmt+1];
-
     /* Limit # of leading spaces */
-    if (nspaces > 32) {
-        nspaces = 32;
+    if (nspaces > MAX_LEADING_SPACES) {
+        nspaces = MAX_LEADING_SPACES;
     }
 
-    /* Initialize the space buffer */
-    for (size_t n = 0;  n < nspaces;  ++n) {
-        fmtbuf[n] = ' ';
+    /* Prefix fmt with spaces if required. Replaces fmt. */
+    if (nspaces != 0) {
+        char *fmttmp = ib_mpool_alloc(tx->mp, strlen(fmt) + nspaces + 1);
+        if (fmttmp != NULL) {
+            memset(fmttmp, ' ', nspaces); /* Write prefix. */
+            strcpy(fmttmp+nspaces, fmt);  /* Copy fmt string. */
+            fmt = fmttmp;                 /* Replace fmt. */
+        }
     }
-    fmtbuf[nspaces] = '\0';
-    strcat(fmtbuf, fmt);
 
     if (txdump->fp != NULL) {
-        vfprintf(txdump->fp, fmtbuf, ap);
+        vfprintf(txdump->fp, fmt, ap);
         fputs("\n", txdump->fp);
     }
     else {
-        ib_log_tx_vex(tx, txdump->level, NULL, NULL, 0, fmtbuf, ap);
+        ib_log_tx_vex(tx, txdump->level, NULL, NULL, 0, fmt, ap);
     }
 }
 
@@ -283,7 +322,7 @@ static void txdump_va(
  *
  * @param[in] tx IronBee Transaction
  * @param[in] txdump Log data
- * @param[in] nspaces Number of leading spaces to insert (max = 32)
+ * @param[in] nspaces Number of leading spaces to insert (max = MAX_LEADING_SPACES)
  * @param[in] fmt printf-style format string
  */
 static void txdump_v(
@@ -328,77 +367,233 @@ static ib_status_t txdump_flush(
 }
 
 /**
+ * Get string of bytestring flags
+ *
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] rc Error status
+ * @param[in] flags Bytestring format flags
+ *
+ * @returns Pointer to flags string
+ */
+static const char *format_flags(
+    ib_mpool_t  *mp,
+    ib_status_t  rc,
+    ib_flags_t   flags
+)
+{
+    assert(mp != NULL);
+    size_t             count = 0;
+    const ib_strval_t *rec;
+    char              *buf;
+
+    /* If there's nothing to report, do nothing */
+    if ( (rc == IB_OK) && (flags == 0) ) {
+        return "";
+    }
+    buf = ib_mpool_alloc(mp, FLAGBUF_SIZE+1);
+    if (buf == NULL) {
+        return " [?]";
+    }
+    if (rc != IB_OK) {
+        snprintf(buf, FLAGBUF_SIZE, " [%s]", ib_status_to_string(rc));
+        return buf;
+    }
+
+    /* Build up the string */
+    IB_STRVAL_LOOP(bytestring_flags_map, rec) {
+        if (ib_flags_all(flags, rec->val)) {
+            if (count == 0) {
+                strcpy(buf, " [");
+            }
+            else {
+                strcat(buf, ",");
+            }
+
+            /* Copy in the string itself */
+            strcat(buf, rec->str);
+            ++count;
+        }
+    }
+
+    /* Terminate the buffer */
+    if (count != 0) {
+        strcat(buf, "]");
+    }
+    else {
+        *buf = '\0';
+    }
+    return buf;
+}
+
+/**
+ * Escape and format a bytestring, extended version
+ *
+ * @param[in] tx IronBee Transaction
+ * @param[in] txdump Log data
+ * @param[in] bsptr Pointer to bytestring data (can be NULL)
+ * @param[in] bslen Length of data in @a bsptr
+ * @param[in] qmode Quoting mode
+ * @param[in] maxlen Maximum string length (clipped at MIN_BS_LEN to MAX_BS_LEN)
+ * @param[out] pflagbuf Pointer to buffer for flags (or NULL)
+ * @param[out] pescaped Pointer to escaped buffer
+ *
+ * @returns status code
+ */
+static ib_status_t format_bs_ex(
+    const ib_tx_t   *tx,
+    const txdump_t  *txdump,
+    const uint8_t   *bsptr,
+    size_t           bslen,
+    txdump_qmode_t   qmode,
+    size_t           maxlen,
+    const char     **pflagbuf,
+    const char     **pescaped
+)
+{
+    assert(txdump != NULL);
+    assert(pescaped != NULL);
+
+    ib_status_t    rc = IB_OK;
+    char          *buf;
+    size_t         slen;
+    size_t         offset;
+    size_t         size;
+    const char    *empty = (qmode == QUOTE_ALWAYS) ? "\"\"" : "";
+    bool           is_printable = true;
+    bool           crop = false;
+    bool           quotes;
+    ib_flags_t     json_result;
+    ib_flags_t     flags = 0;
+
+    /* If the data is NULL, no need to escape */
+    if (bsptr == NULL) {
+        flags |= TXDUMP_BS_NULL;
+        *pescaped = empty;
+        goto done;
+    }
+
+    /* Make sure that maxlen is sane */
+    if (maxlen > MAX_BS_LEN) {
+        maxlen = MAX_BS_LEN;
+    }
+    else if (maxlen < MIN_BS_LEN) {
+        maxlen = MIN_BS_LEN;
+    }
+
+    /* See if all of the characters are printable */
+    for (offset = 0;  offset < bslen;  ++offset) {
+        uint8_t c = *(bsptr + offset);
+        if (iscntrl(c) ||  !isprint(c) ) {
+            is_printable = false;
+            break;
+        }
+    }
+
+    /* Handle the case in which is all printable */
+    if (is_printable) {
+        quotes = (qmode == QUOTE_ALWAYS);
+        crop = bslen > maxlen;
+        slen = (crop ? maxlen : bslen);
+        size = slen + (quotes ? 2 : 0);
+
+        /* Allocate buffer, Leave room for \0 */
+        buf = ib_mpool_alloc(tx->mp, size+1);
+        if (buf == NULL) {
+            *pescaped = empty;
+            rc = IB_EALLOC;
+            goto done;
+        }
+
+        /* Build the final string in the escaped buffer */
+        if (quotes) {
+            *buf = '\"';
+            memcpy(buf+1, bsptr, slen);
+            *(buf+slen+1) = '\"';
+            *(buf+slen+2) = '\0';
+        }
+        else {
+            strncpy(buf, (const char *)bsptr, slen);
+            *(buf+slen) = '\0';
+        }
+        if (crop) {
+            flags |= TXDUMP_BS_CROPPED;
+        }
+        *pescaped = buf;
+        goto done;
+    }
+
+    /* Escape the string */
+    quotes = (qmode != QUOTE_NEVER);
+    rc = ib_string_escape_json_ex(tx->mp,
+                                  bsptr, bslen,
+                                  true,       /* Save room for nul byte */
+                                  quotes,
+                                  &buf,
+                                  &size,
+                                  &json_result);
+    if (rc != IB_OK) {
+        *pescaped = empty;
+        goto done;
+    }
+    flags |= TXDUMP_BS_ESCAPED;
+
+    /* Crop if required */
+    slen = (quotes ? size - 2 : size);
+    crop = slen > maxlen;
+    if (crop) {
+        flags |= TXDUMP_BS_CROPPED;
+        if (quotes) {
+            *(buf+maxlen+1) = '\"';
+            *(buf+maxlen+2) = '\0';
+        }
+        else {
+            *(buf+maxlen) = '\0';
+        }
+    }
+    *pescaped = buf;
+
+done:
+    if (pflagbuf != NULL) {
+        *pflagbuf = format_flags(tx->mp, rc, flags);
+    }
+    return rc;
+}
+
+/**
  * Escape and format a bytestring
  *
  * @param[in] tx IronBee Transaction
  * @param[in] txdump Log data
  * @param[in] bs Byte string to log
- * @param[in] quotes Add surrounding quotes?
- * @param[in] maxlen Maximum string length (min = 6, 0 = none)
+ * @param[in] qmode Quoting mode
+ * @param[in] maxlen Maximum string length (clipped at MIN_BS_LEN to MAX_BS_LEN)
+ * @param[out] pflagbuf Pointer to buffer for flags (or NULL)
+ * @param[out] pescaped Pointer to escaped buffer
  *
- * @returns buffer
+ * @returns status code
  */
-static const char *format_bs(
-    const ib_tx_t      *tx,
-    const txdump_t     *txdump,
-    const ib_bytestr_t *bs,
-    bool                quotes,
-    size_t              maxlen
+static ib_status_t format_bs(
+    const ib_tx_t       *tx,
+    const txdump_t      *txdump,
+    const ib_bytestr_t  *bs,
+    txdump_qmode_t       qmode,
+    size_t               maxlen,
+    const char         **pflagbuf,
+    const char         **pescaped
 )
 {
     assert(txdump != NULL);
     assert(bs != NULL);
-    assert( (maxlen == 0) || (maxlen > 6) );
+    assert(pescaped != NULL);
 
-    ib_status_t    rc;
-    const uint8_t *bsptr = NULL;
-    char          *escaped;
-    size_t         len;
-    size_t         size;
-    const char    *empty = quotes ? "\"\"" : "";
-    char          *cur;
+    ib_status_t rc;
 
-    /* Handle NULL bytestring */
-    if (bs != NULL) {
-        bsptr = ib_bytestr_const_ptr(bs);
-    }
-
-    /* If the data is NULL, no need to escape */
-    if (bsptr == NULL) {
-        return "<None>";
-    }
-
-    /* Escape the string */
-    rc = ib_util_hex_escape_alloc(tx->mp,
-                                  ib_bytestr_length(bs), 5,
-                                  &escaped, &size);
-    if (rc != IB_OK) {
-        return empty;
-    }
-    cur = escaped;
-    if (quotes) {
-        *escaped = '\"';
-        ++cur;
-        *cur = '\0';
-    }
-    len = ib_util_hex_escape_buf(bsptr, ib_bytestr_length(bs), cur, size-5);
-    cur += len;
-
-    /* Handle zero length case */
-    if (len == 0) {
-        return empty;
-    }
-
-    /* Add '...' if we need to crop the buffer */
-    if ( (maxlen > 0) && (len > maxlen) ) {
-        cur = escaped + (maxlen - 3);
-        strcpy(cur, "...");
-    }
-    if (quotes) {
-        strcat(cur, "\"");
-    }
-
-    return escaped;
+    rc = format_bs_ex(tx, txdump,
+                      (bs == NULL) ? NULL : ib_bytestr_const_ptr(bs),
+                      (bs == NULL) ? 0    : ib_bytestr_length(bs),
+                      qmode, maxlen,
+                      pflagbuf, pescaped);
+    return rc;
 }
 
 /**
@@ -406,10 +601,10 @@ static const char *format_bs(
  *
  * @param[in] tx IronBee transaction
  * @param[in] txdump TxDump data
- * @param[in] nspaces Number of leading spaces (max = 32)
+ * @param[in] nspaces Number of leading spaces (max = MAX_LEADING_SPACES)
  * @param[in] label Label string
  * @param[in] bs Byte string to log
- * @param[in] maxlen Maximum string length
+ * @param[in] maxlen Maximum string length (clipped at MIN_BS_LEN to MAX_BS_LEN)
  *
  * @returns void
  */
@@ -428,10 +623,11 @@ static void txdump_bs(
     assert(bs != NULL);
 
     const char *buf;
+    const char *flagbuf;
 
-    buf = format_bs(tx, txdump, bs, true, maxlen);
+    format_bs(tx, txdump, bs, QUOTE_ALWAYS, maxlen, &flagbuf, &buf);
     if (buf != NULL) {
-        txdump_v(tx, txdump, nspaces, "%s = %s", label, buf);
+        txdump_v(tx, txdump, nspaces, "%s = %s%s", label, buf, flagbuf);
     }
 }
 
@@ -442,20 +638,20 @@ static void txdump_bs(
  *
  * @param[in] tx IronBee transaction
  * @param[in] txdump TxDump data
- * @param[in] nspaces Number of leading spaces (max = 32)
+ * @param[in] nspaces Number of leading spaces (max = MAX_LEADING_SPACES)
  * @param[in] label Label string
  * @param[in] field Field to log
- * @param[in] maxlen Maximum string length
+ * @param[in] maxlen Maximum string length (clipped at MIN_BS_LEN to MAX_BS_LEN)
  *
  * @returns void
  */
 static void txdump_field(
-    const ib_tx_t     *tx,
-    const txdump_t    *txdump,
-    size_t             nspaces,
-    const char        *label,
-    const ib_field_t  *field,
-    size_t             maxlen
+    const ib_tx_t    *tx,
+    const txdump_t   *txdump,
+    size_t            nspaces,
+    const char       *label,
+    const ib_field_t *field,
+    size_t            maxlen
 )
 {
     ib_status_t rc;
@@ -467,9 +663,9 @@ static void txdump_field(
         return;
     }
 
+    /* Dump the field based on it's type */
     switch (field->type) {
-
-    case IB_FTYPE_GENERIC :      /**< Generic data */
+    case IB_FTYPE_GENERIC :      /* Generic data */
     {
         void *v;
         rc = ib_field_value(field, ib_ftype_generic_out(&v));
@@ -479,7 +675,7 @@ static void txdump_field(
         break;
     }
 
-    case IB_FTYPE_NUM :          /**< Numeric (Integer) value */
+    case IB_FTYPE_NUM :          /* Numeric (Integer) value */
     {
         ib_num_t n;
         rc = ib_field_value(field, ib_ftype_num_out(&n));
@@ -489,7 +685,7 @@ static void txdump_field(
         break;
     }
 
-    case IB_FTYPE_TIME :         /** Time value */
+    case IB_FTYPE_TIME :         /* Time value */
     {
         ib_time_t t;
 
@@ -505,7 +701,7 @@ static void txdump_field(
         break;
     }
 
-    case IB_FTYPE_FLOAT :        /**< Floating point value */
+    case IB_FTYPE_FLOAT :        /* Floating point value */
     {
         ib_float_t  v;
         rc = ib_field_value(field, ib_ftype_float_out(&v));
@@ -516,23 +712,10 @@ static void txdump_field(
     }
 
     case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
-    {
-        const char *s;
-        rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
-        if (rc == IB_OK) {
-            if (maxlen > 0) {
-                txdump_v(tx, txdump, nspaces,
-                         "%s = \"%.*s...\"", label, (int)maxlen, s);
-            }
-            else {
-                txdump_v(tx, txdump, nspaces,
-                         "%s = \"%s\"", label, s);
-            }
-        }
+        assert(0 && "NULSTR var detected!");
         break;
-    }
 
-    case IB_FTYPE_BYTESTR :      /**< Byte string value */
+    case IB_FTYPE_BYTESTR :      /* Byte string value */
     {
         const ib_bytestr_t *bs;
         rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
@@ -542,7 +725,7 @@ static void txdump_field(
         break;
     }
 
-    case IB_FTYPE_LIST :         /**< List */
+    case IB_FTYPE_LIST :         /* List */
     {
         const ib_list_t *lst;
         rc = ib_field_value(field, ib_ftype_list_out(&lst));
@@ -554,11 +737,11 @@ static void txdump_field(
         break;
     }
 
-    case IB_FTYPE_SBUFFER :
+    case IB_FTYPE_SBUFFER :      /* Stream buffer */
         txdump_v(tx, txdump, nspaces, "%s = sbuffer", label);
         break;
 
-    default:
+    default:                     /* Other */
         txdump_v(tx, txdump, nspaces,
                  "Unknown field type (%d)", field->type);
     }
@@ -569,7 +752,7 @@ static void txdump_field(
  *
  * @param[in] tx IronBee transaction
  * @param[in] txdump TxDump data
- * @param[in] nspaces Number of leading spaces (max = 30)
+ * @param[in] nspaces Number of leading spaces (max = MAX_LEADING_SPACES-2)
  * @param[in] label Label string
  * @param[in] header Header to log
  *
@@ -596,9 +779,16 @@ static void txdump_header(
 
     txdump_v(tx, txdump, nspaces, "%s", label);
     for (node = header->head; node != NULL; node = node->next) {
-        const char *name  = format_bs(tx, txdump, node->name, false, 24);
-        const char *value = format_bs(tx, txdump, node->value, true, 64);
-        txdump_v(tx, txdump, nspaces+2, "%s = %s", name, value);
+        const char *nbuf;
+        const char *nflags;
+        const char *vbuf;
+        const char *vflags;
+        format_bs(tx, txdump, node->name, QUOTE_AUTO, MAX_FIELD_NAME,
+                  &nflags, &nbuf);
+        format_bs(tx, txdump, node->value, QUOTE_ALWAYS, MAX_BS_LEN,
+                  &vflags, &vbuf);
+        txdump_v(tx, txdump, nspaces+2,
+                 "%s%s = %s%s", nbuf, nflags, vbuf, vflags);
     }
 }
 
@@ -606,31 +796,33 @@ static void txdump_header(
  * Build a path by appending the field name to an existing path.
  *
  * @param[in] tx IronBee transaction
+ * @param[in] txdump TxDump data
  * @param[in] path Base path
  * @param[in] field Field whose name to append
  *
  * @returns Pointer to newly allocated path string
  */
 static const char *build_path(
-    const ib_tx_t      *tx,
-    const char         *path,
-    const ib_field_t   *field
+    const ib_tx_t    *tx,
+    const txdump_t   *txdump,
+    const char       *path,
+    const ib_field_t *field
 )
 {
     size_t   pathlen;
     size_t   fullpath_len;
     size_t   tmplen;
-    char    *fullpath;
     ssize_t  nlen = (ssize_t)field->nlen;
     bool     truncated = false;
+    char    *fullpath;
 
     if ( (nlen <= 0) || (field->name == NULL) ) {
         nlen = 0;
     }
-    else if (nlen > (ssize_t)max_path_element) {
+    else if (nlen > (ssize_t)MAX_PATH_ELEMENT) {
         size_t i;
         const char *p;
-        for (i = 0, p=field->name; isprint(*p) && (i < max_path_element); ++i) {
+        for (i = 0, p=field->name; isprint(*p) && (i < MAX_PATH_ELEMENT); ++i) {
             /* Do nothing */
         }
         nlen = i;
@@ -646,7 +838,9 @@ static const char *build_path(
     pathlen = strlen(path);
     fullpath_len = pathlen + (pathlen > 0 ? 2 : 1) + nlen + (truncated ? 3 : 0);
     fullpath = (char *)ib_mpool_alloc(tx->mp, fullpath_len);
-    assert(fullpath != NULL);
+    if (fullpath == NULL) {
+        return "";
+    }
 
     /* Copy in the base path */
     strcpy(fullpath, path);
@@ -691,7 +885,15 @@ static ib_status_t txdump_list(
     /* Loop through the list & log everything */
     IB_LIST_LOOP_CONST(lst, node) {
         const ib_field_t *field = (const ib_field_t *)node->data;
-        const char *fullpath = NULL;
+        const char *fullpath;
+        const char *escaped;
+
+        /* Build the path, escape it */
+        fullpath = build_path(tx, txdump, path, field);
+        format_bs_ex(tx, txdump,
+                     (const uint8_t *)fullpath, strlen(fullpath),
+                     QUOTE_AUTO, MAX_FIELD_NAME,
+                     NULL, &escaped);
 
         switch (field->type) {
         case IB_FTYPE_GENERIC:
@@ -699,8 +901,7 @@ static ib_status_t txdump_list(
         case IB_FTYPE_FLOAT:
         case IB_FTYPE_TIME:
         case IB_FTYPE_BYTESTR:
-            fullpath = build_path(tx, path, field);
-            txdump_field(tx, txdump, nspaces, fullpath, field, 0);
+            txdump_field(tx, txdump, nspaces, escaped, field, MAX_FIELD_SIZE);
             break;
 
         case IB_FTYPE_NULSTR:
@@ -716,8 +917,7 @@ static ib_status_t txdump_list(
                 return rc;
             }
 
-            fullpath = build_path(tx, path, field);
-            txdump_field(tx, txdump, nspaces, fullpath, field, 0);
+            txdump_field(tx, txdump, nspaces, escaped, field, MAX_FIELD_SIZE);
             txdump_list(tx, txdump, nspaces+2, fullpath, v);
             break;
         }
@@ -792,10 +992,10 @@ static void txdump_reqline(
         return;
     }
     txdump_v(tx, txdump, nspaces, "Request Line:");
-    txdump_bs(tx, txdump, nspaces+2, "Raw", line->raw, 256);
-    txdump_bs(tx, txdump, nspaces+2, "Method", line->method, 32);
-    txdump_bs(tx, txdump, nspaces+2, "URI", line->uri, 256);
-    txdump_bs(tx, txdump, nspaces+2, "Protocol", line->protocol, 32);
+    txdump_bs(tx, txdump, nspaces+2, "Raw", line->raw, MAX_FIELD_SIZE);
+    txdump_bs(tx, txdump, nspaces+2, "Method", line->method, MAX_METHOD);
+    txdump_bs(tx, txdump, nspaces+2, "URI", line->uri, MAX_FIELD_SIZE);
+    txdump_bs(tx, txdump, nspaces+2, "Protocol", line->protocol, MAX_PROTOCOL);
 }
 
 /**
@@ -803,7 +1003,7 @@ static void txdump_reqline(
  *
  * @param[in] tx IronBee Transaction
  * @param[in] txdump TxDump data
- * @param[in] nspaces Number of leading spaces (max = 30)
+ * @param[in] nspaces Number of leading spaces
  * @param[in] line Response line to dump
  */
 static void txdump_resline(
@@ -822,10 +1022,10 @@ static void txdump_resline(
     }
 
     txdump_v(tx, txdump, nspaces, "Response Line:");
-    txdump_bs(tx, txdump, nspaces+2, "Raw", line->raw, 256);
-    txdump_bs(tx, txdump, nspaces+2, "Protocol", line->protocol, 32);
-    txdump_bs(tx, txdump, nspaces+2, "Status", line->status, 32);
-    txdump_bs(tx, txdump, nspaces+2, "Message", line->msg, 256);
+    txdump_bs(tx, txdump, nspaces+2, "Raw", line->raw, MAX_FIELD_SIZE);
+    txdump_bs(tx, txdump, nspaces+2, "Protocol", line->protocol, MAX_PROTOCOL);
+    txdump_bs(tx, txdump, nspaces+2, "Status", line->status, MAX_STATUS);
+    txdump_bs(tx, txdump, nspaces+2, "Message", line->msg, MAX_FIELD_SIZE);
 }
 
 /**
@@ -971,7 +1171,7 @@ static ib_status_t txdump_tx(
             rc = ib_var_source_get(source, &field, tx->var_store);
         }
         if (rc == IB_OK) {
-            txdump_field(tx, txdump, 4, "ARGS", field, 0);
+            txdump_field(tx, txdump, 4, "ARGS", field, MAX_FIELD_SIZE);
 
             rc = ib_field_value(field, ib_ftype_list_out(&lst));
             if ( (rc != IB_OK) || (lst == NULL) ) {
@@ -1692,7 +1892,16 @@ static ib_status_t txdump_init(
 {
     assert(ib != NULL);
     assert(module != NULL);
-    ib_status_t rc;
+
+    ib_status_t        rc;
+    size_t             flagbuf_len = 3;
+    const ib_strval_t *rec;
+
+    /* Sanity check that FLAGBUF_SIZE is sufficiently large */
+    IB_STRVAL_LOOP(bytestring_flags_map, rec) {
+        flagbuf_len += (strlen(rec->str) + 1);
+    }
+    assert(FLAGBUF_SIZE > flagbuf_len);
 
     /* Register the TxDump directive */
     rc = ib_config_register_directive(ib,
