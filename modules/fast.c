@@ -1459,6 +1459,7 @@ ib_status_t fast_ctx_open(
  * @return
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
+ * - IB_EOTHER on unexpected failure.
  * - As fast_convert_specs()
  **/
 static
@@ -1474,7 +1475,9 @@ ib_status_t fast_ctx_close(
 
     if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
         fast_config_t *cfg = fast_get_config(ib, ctx);
-
+        if (cfg == NULL) {
+            return IB_EOTHER;
+        }
         cfg->runtime->specs = (fast_specs_t *)ib_mpool_alloc(
             ib_engine_pool_main_get(ib),
             sizeof(*(cfg->runtime->specs))
