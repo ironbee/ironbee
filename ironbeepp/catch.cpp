@@ -94,7 +94,7 @@ ib_status_t convert_exception(
                 if (! message.empty()) {
                     ib_cfg_log(cp->ib(), ib_level, "%s", message.c_str());
                 }
-                ib_cfg_log_debug(
+                ib_cfg_log_info(
                     cp->ib(),
                     "%s",
                     diagnostic_information(e).c_str()
@@ -107,7 +107,7 @@ ib_status_t convert_exception(
                 if (! message.empty()) {
                     ib_log_tx(tx->ib(), ib_level, "%s", message.c_str());
                 }
-                ib_log_debug_tx(
+                ib_log_info_tx(
                     tx->ib(),
                     "%s",
                     diagnostic_information(e).c_str()
@@ -117,7 +117,7 @@ ib_status_t convert_exception(
                 if (! message.empty()) {
                     ib_log(engine, ib_level, "%s", message.c_str());
                 }
-                ib_log_debug(
+                ib_log_info(
                     engine,
                     "%s",
                     diagnostic_information(e).c_str()
@@ -127,7 +127,7 @@ ib_status_t convert_exception(
                 if (! message.empty()) {
                     ib_util_log_error("%s", message.c_str());
                 }
-                ib_util_log_debug("%s", diagnostic_information(e).c_str());
+                ib_util_log_error("%s", diagnostic_information(e).c_str());
             }
         }
         catch (const boost::exception& e) {
@@ -143,12 +143,12 @@ ib_status_t convert_exception(
 
             if (engine) {
                 ib_log_error(engine, "%s", message.c_str());
-                ib_log_debug(engine, "%s",
+                ib_log_info(engine, "%s",
                     diagnostic_information(e).c_str()
                 );
             } else {
                 ib_util_log_error("%s", message.c_str());
-                ib_util_log_debug("%s", diagnostic_information(e).c_str());
+                ib_util_log_error("%s", diagnostic_information(e).c_str());
             }
         }
         catch (const exception& e) {
