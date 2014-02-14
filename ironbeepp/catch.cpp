@@ -74,7 +74,7 @@ ib_status_t convert_exception(
             string message;
             int level = 1;
 
-            message = string(ib_status_to_string(status)) + ":";
+            message = string(ib_status_to_string(status)) + ": ";
             if (boost::get_error_info<errinfo_what>(e)) {
                 message += *boost::get_error_info<errinfo_what>(e);
             }
