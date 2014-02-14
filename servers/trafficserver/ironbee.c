@@ -314,7 +314,7 @@ static ib_direction_data_t ib_direction_client_resp = {
 };
 
 typedef struct {
-    ib_direction_data_t *ibd;
+    const ib_direction_data_t *ibd;
     ib_filter_ctx *data;
 } ibd_ctx;
 
