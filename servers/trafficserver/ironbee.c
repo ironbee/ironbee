@@ -3109,6 +3109,7 @@ void TSPluginInit(int argc, const char *argv[])
     else {
         module_data.log_file = strdup(DEFAULT_LOG);
     }
+    TSContDataSet(cont, NULL);
 
     /* connection initialization & cleanup */
     TSHttpHookAdd(TS_HTTP_SSN_START_HOOK, cont);
