@@ -290,6 +290,7 @@ static void txdump_va(
 )
 {
     assert(tx != NULL);
+    assert(tx->mp != NULL);
     assert(txdump != NULL);
     assert(fmt != NULL);
 
@@ -338,6 +339,10 @@ static void txdump_v(
     const char     *fmt, ...
 )
 {
+    assert(tx != NULL);
+    assert(txdump != NULL);
+    assert(fmt != NULL);
+
     va_list ap;
 
     va_start(ap, fmt);
@@ -437,7 +442,9 @@ static const char *format_flags(
  * @param[out] pflagbuf Pointer to buffer for flags (or NULL)
  * @param[out] pescaped Pointer to escaped buffer
  *
- * @returns status code
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure.
  */
 static ib_status_t format_bs_ex(
     const ib_tx_t   *tx,
@@ -450,20 +457,22 @@ static ib_status_t format_bs_ex(
     const char     **pescaped
 )
 {
+    assert(tx != NULL);
+    assert(tx->mp != NULL);
     assert(txdump != NULL);
     assert(pescaped != NULL);
 
-    ib_status_t    rc = IB_OK;
-    char          *buf;
-    size_t         slen;
-    size_t         offset;
-    size_t         size;
-    const char    *empty = (qmode == QUOTE_ALWAYS) ? "\"\"" : "";
-    bool           is_printable = true;
-    bool           crop = false;
-    bool           quotes;
-    ib_flags_t     json_result;
-    ib_flags_t     flags = 0;
+    ib_status_t  rc = IB_OK;
+    char        *buf;
+    size_t       slen;
+    size_t       offset;
+    size_t       size;
+    const char  *empty = (qmode == QUOTE_ALWAYS) ? "\"\"" : "";
+    bool         is_printable = true;
+    bool         crop = false;
+    bool         quotes;
+    ib_flags_t   json_result;
+    ib_flags_t   flags = 0;
 
     /* If the data is NULL, no need to escape */
     if (bsptr == NULL) {
@@ -570,7 +579,9 @@ done:
  * @param[out] pflagbuf Pointer to buffer for flags (or NULL)
  * @param[out] pescaped Pointer to escaped buffer
  *
- * @returns status code
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure of format_bs_ex().
  */
 static ib_status_t format_bs(
     const ib_tx_t       *tx,
@@ -582,6 +593,7 @@ static ib_status_t format_bs(
     const char         **pescaped
 )
 {
+    assert(tx != NULL);
     assert(txdump != NULL);
     assert(bs != NULL);
     assert(pescaped != NULL);
@@ -754,7 +766,7 @@ static void txdump_field(
  * @param[in] txdump TxDump data
  * @param[in] nspaces Number of leading spaces (max = MAX_LEADING_SPACES-2)
  * @param[in] label Label string
- * @param[in] header Header to log
+ * @param[in] header Header to log. May be NULL.
  *
  * @returns void
  */
@@ -869,7 +881,9 @@ static const char *build_path(
  * @param[in] path Base path
  * @param[in] lst List to log
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - Other on failure of ib_field_value().
  */
 static ib_status_t txdump_list(
     const ib_tx_t    *tx,
@@ -938,10 +952,8 @@ static ib_status_t txdump_list(
  * @param[in] txdump TxDump data
  * @param[in] nspaces Number of leading spaces (max = 30)
  * @param[in] context Context to dump
- *
- * @returns Status code
  */
-static ib_status_t txdump_context(
+static void txdump_context(
     const ib_tx_t      *tx,
     const txdump_t     *txdump,
     size_t              nspaces,
@@ -965,8 +977,6 @@ static ib_status_t txdump_context(
         txdump_v(tx, txdump, nspaces+2, "Location Path = %s",
                  location->path);
     }
-
-    return IB_OK;
 }
 
 /**
@@ -999,12 +1009,12 @@ static void txdump_reqline(
 }
 
 /**
- * Dump a response line
+ * Dump a response line.
  *
- * @param[in] tx IronBee Transaction
- * @param[in] txdump TxDump data
- * @param[in] nspaces Number of leading spaces
- * @param[in] line Response line to dump
+ * @param[in] tx IronBee Transaction.
+ * @param[in] txdump TxDump data.
+ * @param[in] nspaces Number of leading spaces.
+ * @param[in] line Response line to dump. May be NULL.
  */
 static void txdump_resline(
     const ib_tx_t               *tx,
@@ -1037,7 +1047,10 @@ static void txdump_resline(
  * @param[in] tx Transaction object
  * @param[in] txdump TxDump object
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
+ * - Other on var failures.
  */
 static ib_status_t txdump_tx(
     const ib_engine_t *ib,
@@ -1195,7 +1208,7 @@ static ib_status_t txdump_tx(
         if (rc != IB_OK) {
             ib_log_debug_tx(tx, "log_tx: Failed to create tx list: %s",
                             ib_status_to_string(rc));
-            return IB_EUNKNOWN;
+            return rc;
         }
 
         /* Extract the request headers field from the provider instance */
@@ -1268,7 +1281,9 @@ static bool txdump_check_tx(
  * @param[in] event Event type
  * @param[in] cbdata Callback data (TxDump object)
  *
- * @returns Status code
+ * @returns
+ * - IB_OK If @a tx does not need to be dumped or @a tx was dumped successfuly.
+ * - Other on failure of txdump_tx().
  */
 static ib_status_t txdump_tx_event(
     ib_engine_t           *ib,
@@ -1305,7 +1320,7 @@ static ib_status_t txdump_tx_event(
  * @param[in] line Parsed request line
  * @param[in] cbdata Callback data (TxDump object)
  *
- * @returns Status code
+ * @returns This always returns IB_OK.
  */
 static ib_status_t txdump_reqline_event(
     ib_engine_t           *ib,
@@ -1341,7 +1356,7 @@ static ib_status_t txdump_reqline_event(
  * @param[in] line Parsed response line
  * @param[in] cbdata Callback data (TxDump object)
  *
- * @returns Status code
+ * @returns This always returns IB_OK.
  */
 static ib_status_t txdump_resline_event(
     ib_engine_t           *ib,
@@ -1375,7 +1390,9 @@ static ib_status_t txdump_resline_event(
  * @param[in] data C-style string to log
  * @param[in] cbdata Callback data (TxDump object)
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - Other if txdump_tx() failed to dump @a tx.
  */
 static ib_status_t txdump_act_execute(
     const ib_rule_exec_t *rule_exec,
@@ -1383,6 +1400,13 @@ static ib_status_t txdump_act_execute(
     void                 *cbdata
 )
 {
+    assert(rule_exec != NULL);
+    assert(rule_exec->ib != NULL);
+    assert(rule_exec->rule != NULL);
+    assert(rule_exec->tx != NULL);
+    assert(rule_exec->tx->id != NULL);
+    assert(data != NULL);
+
     const txdump_t *txdump = (const txdump_t *)data;
     ib_status_t     rc;
     const ib_tx_t  *tx = rule_exec->tx;
@@ -1399,8 +1423,8 @@ static ib_status_t txdump_act_execute(
  * TxDump event data
  */
 struct txdump_event_t {
-    ib_state_event_type_t event;      /**< Event type */
-    ib_state_hook_type_t  hook_type;  /**< Hook type */
+    ib_state_event_type_t event;     /**< Event type */
+    ib_state_hook_type_t  hook_type; /**< Hook type */
 };
 typedef struct txdump_event_t txdump_event_t;
 
@@ -1408,8 +1432,8 @@ typedef struct txdump_event_t txdump_event_t;
  * TxDump event parsing mapping data
  */
 struct txdump_strval_event_t {
-    const char           *str;        /** String< "key" */
-    const txdump_event_t  data;       /** Data portion */
+    const char           *str;  /**< String< "key" */
+    const txdump_event_t  data; /**< Data portion */
 };
 typedef struct txdump_strval_event_t txdump_strval_event_t;
 
@@ -1506,7 +1530,13 @@ static ib_status_t txdump_parse_event(
  * @param[in] param Parameter string
  * @param[in,out] txdump TxDump object to set the event in
  *
- * @returns: Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_EUNKNOWN if @c stdout or @stderr cannot be used as output streams
+ *   as requested (@a param equals "StdOut" or "StdErr").
+ * - IB_EALLOC On memory allocation errors.
+ * - IB_EINVAL No supported dump destination was requested or
+ *             the file destination requested failed to be opened.
  */
 static ib_status_t txdump_parse_dest(
     ib_engine_t *ib,
@@ -1602,7 +1632,12 @@ static IB_STRVAL_MAP(flags_map) = {
  * @param[in] params List of directive parameters
  * @param[in] cbdata Callback data (module)
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_EINVAL If a parameter is omitted or if an unsupported event type
+ *   is passed as the first parameter.
+ * - IB_EALLOC On allocation errors.
+ * - Other on API failures.
  */
 static ib_status_t txdump_handler(
     ib_cfgparser_t  *cp,
@@ -1754,7 +1789,11 @@ static ib_status_t txdump_handler(
  * @param[in,out] inst Action instance
  * @param[in] cbdata Callback data (unused)
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - IB_EALLOC On allocation errors.
+ * - IB_EINVAL If no destination could be parsed from @a parameters.
+ * - Other on API failures.
  */
 static ib_status_t txdump_act_create(
     ib_engine_t      *ib,
@@ -1840,7 +1879,9 @@ static ib_status_t txdump_act_create(
  * @param[in] length Length of data.
  * @param[in] cbdata Callback data
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - Other on ib_list_copy() or ib_list_copy() failures.
  */
 static ib_status_t txdump_config_copy(
     ib_engine_t *ib,
@@ -1882,7 +1923,9 @@ static ib_status_t txdump_config_copy(
  * @param[in] module Module data.
  * @param[in] cbdata Callback data (unused).
  *
- * @returns Status code
+ * @returns
+ * - IB_OK On success.
+ * - Other if actions or directives cannot be registered.
  */
 static ib_status_t txdump_init(
     ib_engine_t *ib,
