@@ -518,6 +518,19 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_rule_reference">Rule Reference</a></li>
 <li>
 <ul class="sectlevel2">
+<li><a href="#_rule_metadata">Rule Metadata</a></li>
+<li>
+<ul class="sectlevel3">
+<li><a href="#_logdata">logdata</a></li>
+<li><a href="#_confidence">confidence</a></li>
+<li><a href="#_id">id</a></li>
+<li><a href="#_msg">msg</a></li>
+<li><a href="#_phase">phase</a></li>
+<li><a href="#_rev">rev</a></li>
+<li><a href="#_severity">severity</a></li>
+<li><a href="#_tag">tag</a></li>
+</ul>
+</li>
 <li><a href="#_data_fields_2">Data Fields</a></li>
 <li>
 <ul class="sectlevel3">
@@ -564,61 +577,6 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_ua">UA</a></li>
 </ul>
 </li>
-<li><a href="#_operators">Operators</a></li>
-<li>
-<ul class="sectlevel3">
-<li><a href="#_contains">contains</a></li>
-<li><a href="#_dfa">dfa</a></li>
-<li><a href="#_ee_match_any">ee_match_any</a></li>
-<li><a href="#_eq">eq</a></li>
-<li><a href="#_ge">ge</a></li>
-<li><a href="#_gt">gt</a></li>
-<li><a href="#_imatch">imatch</a></li>
-<li><a href="#_ipmatch">ipmatch</a></li>
-<li><a href="#_ipmatch6">ipmatch6</a></li>
-<li><a href="#_is_sqli">is_sqli</a></li>
-<li><a href="#_le">le</a></li>
-<li><a href="#_lt">lt</a></li>
-<li><a href="#_match">match</a></li>
-<li><a href="#_ne">ne</a></li>
-<li><a href="#_pm">pm</a></li>
-<li><a href="#_pmf">pmf</a></li>
-<li><a href="#_rx">rx</a></li>
-<li><a href="#_streq">streq</a></li>
-<li><a href="#_istreq">istreq</a></li>
-</ul>
-</li>
-<li><a href="#_rule_metadata">Rule Metadata</a></li>
-<li>
-<ul class="sectlevel3">
-<li><a href="#_logdata">logdata</a></li>
-<li><a href="#_confidence">confidence</a></li>
-<li><a href="#_id">id</a></li>
-<li><a href="#_msg">msg</a></li>
-<li><a href="#_phase">phase</a></li>
-<li><a href="#_rev">rev</a></li>
-<li><a href="#_severity">severity</a></li>
-<li><a href="#_tag">tag</a></li>
-</ul>
-</li>
-<li><a href="#_rule_modifiers_and_actions">Rule Modifiers and Actions</a></li>
-<li>
-<ul class="sectlevel3">
-<li><a href="#_allow">allow</a></li>
-<li><a href="#_event">event</a></li>
-<li><a href="#_block">block</a></li>
-<li><a href="#_capture_2">capture</a></li>
-<li><a href="#_chain">chain</a></li>
-<li><a href="#_delrequestheader">delRequestHeader</a></li>
-<li><a href="#_delresponseheader">delResponseHeader</a></li>
-<li><a href="#_setflag">setflag</a></li>
-<li><a href="#_setrequestheader">setRequestHeader</a></li>
-<li><a href="#_setresponseheader">setResponseHeader</a></li>
-<li><a href="#_setvar">setvar</a></li>
-<li><a href="#_status">status</a></li>
-<li><a href="#_t">t</a></li>
-</ul>
-</li>
 <li><a href="#_transformation_functions">Transformation Functions</a></li>
 <li>
 <ul class="sectlevel3">
@@ -649,6 +607,48 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_tointeger">toInteger</a></li>
 <li><a href="#_tostring">toString</a></li>
 <li><a href="#_urldecode">urlDecode</a></li>
+</ul>
+</li>
+<li><a href="#_operators">Operators</a></li>
+<li>
+<ul class="sectlevel3">
+<li><a href="#_contains">contains</a></li>
+<li><a href="#_dfa">dfa</a></li>
+<li><a href="#_ee_match_any">ee_match_any</a></li>
+<li><a href="#_eq">eq</a></li>
+<li><a href="#_ge">ge</a></li>
+<li><a href="#_gt">gt</a></li>
+<li><a href="#_imatch">imatch</a></li>
+<li><a href="#_ipmatch">ipmatch</a></li>
+<li><a href="#_ipmatch6">ipmatch6</a></li>
+<li><a href="#_is_sqli">is_sqli</a></li>
+<li><a href="#_le">le</a></li>
+<li><a href="#_lt">lt</a></li>
+<li><a href="#_match">match</a></li>
+<li><a href="#_ne">ne</a></li>
+<li><a href="#_pm">pm</a></li>
+<li><a href="#_pmf">pmf</a></li>
+<li><a href="#_rx">rx</a></li>
+<li><a href="#_streq">streq</a></li>
+<li><a href="#_istreq">istreq</a></li>
+</ul>
+</li>
+<li><a href="#_modifiers_and_actions">Modifiers and Actions</a></li>
+<li>
+<ul class="sectlevel3">
+<li><a href="#_allow">allow</a></li>
+<li><a href="#_event">event</a></li>
+<li><a href="#_block">block</a></li>
+<li><a href="#_capture_2">capture</a></li>
+<li><a href="#_chain">chain</a></li>
+<li><a href="#_delrequestheader">delRequestHeader</a></li>
+<li><a href="#_delresponseheader">delResponseHeader</a></li>
+<li><a href="#_setflag">setflag</a></li>
+<li><a href="#_setrequestheader">setRequestHeader</a></li>
+<li><a href="#_setresponseheader">setResponseHeader</a></li>
+<li><a href="#_setvar">setvar</a></li>
+<li><a href="#_status">status</a></li>
+<li><a href="#_t">t</a></li>
 </ul>
 </li>
 </ul>
@@ -6085,7 +6085,7 @@ file.</p>
 <h2 id="_inspection_2">Inspection</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The whole point of IronBee is to allow for inspecting data. This chapter
+<p>The point of IronBee is to allow for inspecting data. This chapter
 covers the basics of doing just that. Inspecting data is performed
 through rules and modules. Rules are encapsulated logic executed at well
 define points in the transaction lifecycle. Modules, in general, extend
@@ -6888,8 +6888,420 @@ Lua.</p>
 <div class="sect1">
 <h2 id="_rule_reference">Rule Reference</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>Rules are an encapsulated form of logic used in inspect data. They are comprised
+of metadata, such as an ID and revision, take input, execute an operation and
+optionally perform actions.  Input can be manipulated via transformations before
+the operation is executed and actions can be modified through rule modifiers (such
+as specifying a status code or message. The following is a reference to the rule
+components. For a better understanding of how to write rules, see the chapter
+on <a href="#_inspection">Inspection</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_rule_metadata">Rule Metadata</h3>
+<div class="paragraph">
+<p>TODO: General description.</p>
+</div>
+<div class="sect3">
+<h4 id="_logdata">logdata</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add data to be logged with the event.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>logdata:&lt;value&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Log a data fragment as part of the error message.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Rule ARGS @rx pattern \
+        "msg:Test matched" logdata:%{MATCHED_VAR}</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Up to 128 bytes of data will be recorded.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_confidence">confidence</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the confidence of the rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>confidence:&lt;0-100&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Higher confidence rules should have a lower False Positive rate.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_id">id</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unique identifier for a rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>id:&lt;value&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Specifies a unique identifier for a rule. If a later rule re-uses the
+same identifier, then it will overwrite the previous rule.</p>
+</div>
+<div class="paragraph">
+<p>TODO: Explain what the full unique id is (taking context and chains into
+account)</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_msg">msg</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Message associated with the rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>msg:&lt;text&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>This message is used by the <code>event</code> action when logging the event.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_phase">phase</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The runtime phase at which the rule should execute.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>phase:&lt;phase-name&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Rule phase determines when a rule runs. IronBee understands the
+following phases:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">REQUEST_HEADER</dt>
+<dd>
+<p>Invoked after the entire HTTP request headers has been read, but
+before reading the HTTP request body (if any). Most rules should not
+use this phase, opting for the REQUEST phase instead.</p>
+</dd>
+<dt class="hdlist1">REQUEST_HEADER_PROCESS</dt>
+<dd>
+<p>Invoked after the REQUEST_HEADER phase to allow for processing the phase,
+such as invoking blocking rules.</p>
+</dd>
+<dt class="hdlist1">REQUEST</dt>
+<dd>
+<p>Invoked after receiving the entire HTTP request, which may involve
+request body and request trailers, but it will run even when neither
+is present.</p>
+</dd>
+<dt class="hdlist1">REQUEST_PROCESS</dt>
+<dd>
+<p>Invoked after the REQUEST phase to allow for processing the phase,
+such as invoking blocking rules.</p>
+</dd>
+<dt class="hdlist1">RESPONSE_HEADER</dt>
+<dd>
+<p>Invoked after receiving the HTTP entire response header.</p>
+</dd>
+<dt class="hdlist1">RESPONSE_HEADER_PROCESS</dt>
+<dd>
+<p>Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
+such as invoking blocking rules.</p>
+</dd>
+<dt class="hdlist1">RESPONSE</dt>
+<dd>
+<p>Invoked after receiving the HTTP response body (if any) and response
+trailers (if any).</p>
+</dd>
+<dt class="hdlist1">RESPONSE_PROCESS</dt>
+<dd>
+<p>Invoked after the RESPONSE phase to allow for processing the phase,
+such as invoking blocking rules.</p>
+</dd>
+<dt class="hdlist1">POSTPROCESS</dt>
+<dd>
+<p>Invoked after the entire transaction has been processed. This phase is
+for logging and tracking data between transactions, such as storing
+state. Actions cannot affect the transaction in this phase.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_rev">rev</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An integer rule revision.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>rev:n</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>TODO: Explain how this is used in RuleEnable and when overriding Rules
+in sub contexts.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_severity">severity</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the severity of the issue thisrule is trying to protect against.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>severity:&lt;0-100&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>The severity indicates how much impact a successful attack may be, but
+does not indicate the quality of protection this rule may provide. The
+severity is meant to be used as part of a "threat level" indicator. The
+"threat level" is essentially severity x confidence, which balances how
+severe the threat may be with how well this rule might be protecting
+against it.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_tag">tag</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Apply an arbitrary tag name to a rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>tag:&lt;value&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>TODO: Describe where this is used, notably <code>RuleEnable</code>/<code>RuleDisable</code>
+and logged with events.</p>
+</div>
+</div>
+</div>
 <div class="sect2">
 <h3 id="_data_fields_2">Data Fields</h3>
+<div class="paragraph">
+<p>TODO: General description.</p>
+</div>
 <div class="sect3">
 <h4 id="_args">ARGS</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
@@ -8652,7 +9064,762 @@ HTTP request header.</p>
 </div>
 </div>
 <div class="sect2">
+<h3 id="_transformation_functions">Transformation Functions</h3>
+<div class="paragraph">
+<p>TODO: General description.</p>
+</div>
+<div class="sect3">
+<h4 id="_ceil">ceil</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to thenumeric value of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>DEPRECATED: Use <code>iceil</code> instead.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_compresswhitespace">compressWhitespace</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Replaces one or more consecutive whitespace characterswith a single space.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Replaces various whitespace characters with spaces. In addition,
+consecutive whitespace characters will be reduced down to a single
+space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</code>, <code>\n</code>, <code>\r</code>, <code>\v</code>,
+<code>0xa0</code> (non-breaking whitespace).</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_count">count</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection, it returns the number if items in thecollection. Given a scalar, returns 1.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_floor">floor</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to thenumeric value of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>DEPRECATED: Use <code>ifloor</code> instead.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_htmlentitydecode">htmlEntityDecode</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Decodes HTML entities in the data.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>The following forms are supported:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>&amp;#DDDD;</strong> - Numeric code point, where DDDD represents a decimal number
+with any number of digits.</p>
+</li>
+<li>
+<p><strong>&#xHHHH;</strong> - Numeric code point, where HHHH represents a hexadecimal
+number with any number of digits.</p>
+</li>
+<li>
+<p><strong>&name;</strong> - Predefined XML named entities (currently: quot, amp, apos,
+lt, gt).</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>See
+<a href="https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references">https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references</a>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_iceil">iceil</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to the numeric value of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_ifloor">ifloor</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to the numeric value of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_iround">iround</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_length">length</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns the byte length of the value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_lowercase">lowercase</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns the input as all lower case characters.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_max">max</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the maximumvalue.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_min">min</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the minimumvalue.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_name">name</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns the name of the field as the value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_names">names</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns a collection of names from a collection ofname/value pairs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_normalizepath">normalizePath</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a filesystem path, removing back and selfreferences.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_normalizepathwin">normalizePathWin</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a Windows filesystem path, removing back andself references.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_normalizesqli">normalizeSqli</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize potential SQL injection via libinjection.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">libinjection</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>The libinjection ironbee module utilizes Nick Galbreath&#8217;s libinjection
+to implement SQLi detection. This transformation is based on an example
+in libinjection. The libinjection library is available via:
+<a href="http://www.client9.com/projects/libinjection/">http://www.client9.com/projects/libinjection/</a></p>
+</div>
+<div class="paragraph">
+<p>Example Input/Output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Output: foo' or 1=1 union select id,passwd from users --</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_normalizesqlpg">normalizeSqlPg</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize postgres SQL.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">sqltfn</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Normalize Postgres SQL.</p>
+</div>
+<div class="paragraph">
+<p>Example Input/Output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Output: foo' or 1 = 1 union select id,passwd from users</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_removewhitespace">removeWhitespace</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes one or more consecutive whitespace characters.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Similar to <code>compressWhitespace</code>, except removes the characters instead
+of replacing them with a single space.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_round">round</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value ofthe input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>DEPRECATED: Use <code>iround</code> instead.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_trim">trim</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning and endof the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_trimleft">trimLeft</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning of theinput.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_trimright">trimRight</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the end of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_tofloat">toFloat</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a numeric floating point type.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_tointeger">toInteger</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a numeric integral type.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_tostring">toString</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a string type.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_urldecode">urlDecode</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Decodes URL encoded values in the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Implements decoding the encoding used in
+application/x-www-form-urlencoded values (percent encoding with
+additions).</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>%HH;</strong> - Numeric code point, where HH represents a two digit
+hexadecimal number.</p>
+</li>
+<li>
+<p><strong>+</strong> - Represents an ASCII space character (equiv to <code>%20</code>).</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Fields which are parsed from the URI and form parameters are already URL
+Decoded and you should not apply this transformation to these fields
+unless you are trying to inspect multiple levels of encoding.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_operators">Operators</h3>
+<div class="paragraph">
+<p>TODO: General description.</p>
+</div>
 <div class="sect3">
 <h4 id="_contains">contains</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
@@ -9416,404 +10583,10 @@ until the next capture rule is run, when they will all be deleted.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_rule_metadata">Rule Metadata</h3>
-<div class="sect3">
-<h4 id="_logdata">logdata</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Add data to be logged with the event.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>logdata:&lt;value&gt;</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
+<h3 id="_modifiers_and_actions">Modifiers and Actions</h3>
 <div class="paragraph">
-<p>Log a data fragment as part of the error message.</p>
+<p>TODO: General description.</p>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>Rule ARGS @rx pattern \
-        "msg:Test matched" logdata:%{MATCHED_VAR}</pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-Up to 128 bytes of data will be recorded.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_confidence">confidence</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the confidence of the rule.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>confidence:&lt;0-100&gt;</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Higher confidence rules should have a lower False Positive rate.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_id">id</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unique identifier for a rule.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>id:&lt;value&gt;</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Specifies a unique identifier for a rule. If a later rule re-uses the
-same identifier, then it will overwrite the previous rule.</p>
-</div>
-<div class="paragraph">
-<p>TODO: Explain what the full unique id is (taking context and chains into
-account)</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_msg">msg</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Message associated with the rule.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>msg:&lt;text&gt;</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>This message is used by the <code>event</code> action when logging the event.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_phase">phase</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The runtime phase at which the rule should execute.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>phase:&lt;phase-name&gt;</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Rule phase determines when a rule runs. IronBee understands the
-following phases:</p>
-</div>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">REQUEST_HEADER</dt>
-<dd>
-<p>Invoked after the entire HTTP request headers has been read, but
-before reading the HTTP request body (if any). Most rules should not
-use this phase, opting for the REQUEST phase instead.</p>
-</dd>
-<dt class="hdlist1">REQUEST_HEADER_PROCESS</dt>
-<dd>
-<p>Invoked after the REQUEST_HEADER phase to allow for processing the phase,
-such as invoking blocking rules.</p>
-</dd>
-<dt class="hdlist1">REQUEST</dt>
-<dd>
-<p>Invoked after receiving the entire HTTP request, which may involve
-request body and request trailers, but it will run even when neither
-is present.</p>
-</dd>
-<dt class="hdlist1">REQUEST_PROCESS</dt>
-<dd>
-<p>Invoked after the REQUEST phase to allow for processing the phase,
-such as invoking blocking rules.</p>
-</dd>
-<dt class="hdlist1">RESPONSE_HEADER</dt>
-<dd>
-<p>Invoked after receiving the HTTP entire response header.</p>
-</dd>
-<dt class="hdlist1">RESPONSE_HEADER_PROCESS</dt>
-<dd>
-<p>Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
-such as invoking blocking rules.</p>
-</dd>
-<dt class="hdlist1">RESPONSE</dt>
-<dd>
-<p>Invoked after receiving the HTTP response body (if any) and response
-trailers (if any).</p>
-</dd>
-<dt class="hdlist1">RESPONSE_PROCESS</dt>
-<dd>
-<p>Invoked after the RESPONSE phase to allow for processing the phase,
-such as invoking blocking rules.</p>
-</dd>
-<dt class="hdlist1">POSTPROCESS</dt>
-<dd>
-<p>Invoked after the entire transaction has been processed. This phase is
-for logging and tracking data between transactions, such as storing
-state. Actions cannot affect the transaction in this phase.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_rev">rev</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">An integer rule revision.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>rev:n</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>TODO: Explain how this is used in RuleEnable and when overriding Rules
-in sub contexts.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_severity">severity</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the severity of the issue thisrule is trying to protect against.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>severity:&lt;0-100&gt;</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>The severity indicates how much impact a successful attack may be, but
-does not indicate the quality of protection this rule may provide. The
-severity is meant to be used as part of a "threat level" indicator. The
-"threat level" is essentially severity x confidence, which balances how
-severe the threat may be with how well this rule might be protecting
-against it.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_tag">tag</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Apply an arbitrary tag name to a rule.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>tag:&lt;value&gt;</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>TODO: Describe where this is used, notably <code>RuleEnable</code>/<code>RuleDisable</code>
-and logged with events.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_rule_modifiers_and_actions">Rule Modifiers and Actions</h3>
 <div class="sect3">
 <h4 id="_allow">allow</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
@@ -10493,755 +11266,6 @@ Probably should just fail, logging an attempt was made to modify a non-numerical
 </tbody>
 </table>
 
-</div>
-</div>
-<div class="sect2">
-<h3 id="_transformation_functions">Transformation Functions</h3>
-<div class="sect3">
-<h4 id="_ceil">ceil</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to thenumeric value of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>DEPRECATED: Use <code>iceil</code> instead.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_compresswhitespace">compressWhitespace</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Replaces one or more consecutive whitespace characterswith a single space.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Replaces various whitespace characters with spaces. In addition,
-consecutive whitespace characters will be reduced down to a single
-space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</code>, <code>\n</code>, <code>\r</code>, <code>\v</code>,
-<code>0xa0</code> (non-breaking whitespace).</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_count">count</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection, it returns the number if items in thecollection. Given a scalar, returns 1.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_floor">floor</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to thenumeric value of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>DEPRECATED: Use <code>ifloor</code> instead.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_htmlentitydecode">htmlEntityDecode</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Decodes HTML entities in the data.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>The following forms are supported:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>&amp;#DDDD;</strong> - Numeric code point, where DDDD represents a decimal number
-with any number of digits.</p>
-</li>
-<li>
-<p><strong>&#xHHHH;</strong> - Numeric code point, where HHHH represents a hexadecimal
-number with any number of digits.</p>
-</li>
-<li>
-<p><strong>&name;</strong> - Predefined XML named entities (currently: quot, amp, apos,
-lt, gt).</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>See
-<a href="https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references">https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references</a>.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_iceil">iceil</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to the numeric value of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_ifloor">ifloor</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to the numeric value of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_iround">iround</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_length">length</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns the byte length of the value.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_lowercase">lowercase</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns the input as all lower case characters.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_max">max</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the maximumvalue.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_min">min</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the minimumvalue.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_name">name</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns the name of the field as the value.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_names">names</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns a collection of names from a collection ofname/value pairs.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_normalizepath">normalizePath</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a filesystem path, removing back and selfreferences.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_normalizepathwin">normalizePathWin</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a Windows filesystem path, removing back andself references.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_normalizesqli">normalizeSqli</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize potential SQL injection via libinjection.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">libinjection</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>The libinjection ironbee module utilizes Nick Galbreath&#8217;s libinjection
-to implement SQLi detection. This transformation is based on an example
-in libinjection. The libinjection library is available via:
-<a href="http://www.client9.com/projects/libinjection/">http://www.client9.com/projects/libinjection/</a></p>
-</div>
-<div class="paragraph">
-<p>Example Input/Output:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>Output: foo' or 1=1 union select id,passwd from users --</pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_normalizesqlpg">normalizeSqlPg</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize postgres SQL.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">sqltfn</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Normalize Postgres SQL.</p>
-</div>
-<div class="paragraph">
-<p>Example Input/Output:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>Output: foo' or 1 = 1 union select id,passwd from users</pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_removewhitespace">removeWhitespace</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Removes one or more consecutive whitespace characters.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Similar to <code>compressWhitespace</code>, except removes the characters instead
-of replacing them with a single space.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_round">round</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value ofthe input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>DEPRECATED: Use <code>iround</code> instead.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_trim">trim</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning and endof the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_trimleft">trimLeft</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning of theinput.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_trimright">trimRight</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the end of the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_tofloat">toFloat</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a numeric floating point type.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_tointeger">toInteger</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a numeric integral type.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_tostring">toString</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a string type.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_urldecode">urlDecode</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Decodes URL encoded values in the input.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Implements decoding the encoding used in
-application/x-www-form-urlencoded values (percent encoding with
-additions).</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>%HH;</strong> - Numeric code point, where HH represents a two digit
-hexadecimal number.</p>
-</li>
-<li>
-<p><strong>+</strong> - Represents an ASCII space character (equiv to <code>%20</code>).</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Fields which are parsed from the URI and form parameters are already URL
-Decoded and you should not apply this transformation to these fields
-unless you are trying to inspect multiple levels of encoding.</p>
-</div>
 </div>
 </div>
 </div>

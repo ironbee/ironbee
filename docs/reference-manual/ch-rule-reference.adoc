@@ -1,8 +1,176 @@
 Rule Reference
 --------------
 
+Rules are an encapsulated form of logic used in inspect data. They are comprised
+of metadata, such as an ID and revision, take input, execute an operation and
+optionally perform actions.  Input can be manipulated via transformations before
+the operation is executed and actions can be modified through rule modifiers (such
+as specifying a status code or message. The following is a reference to the rule
+components. For a better understanding of how to write rules, see the chapter
+on <<_inspection>>.
+
+Rule Metadata
+~~~~~~~~~~~~~
+
+TODO: General description.
+
+==== logdata
+[cols=">h,<9"]
+|===============================================================================
+|Description|Add data to be logged with the event.
+|       Type|Metadata
+|     Syntax|`logdata:<value>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+Log a data fragment as part of the error message.
+
+-------------------------------------------------
+Rule ARGS @rx pattern \
+        "msg:Test matched" logdata:%{MATCHED_VAR}
+-------------------------------------------------
+
+NOTE: Up to 128 bytes of data will be recorded.
+
+==== confidence
+[cols=">h,<9"]
+|===============================================================================
+|Description|Numeric value indicating the confidence of the rule.
+|       Type|Metadata
+|     Syntax|`confidence:<0-100>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Higher confidence rules should have a lower False Positive rate.
+
+==== id
+[cols=">h,<9"]
+|===============================================================================
+|Description|Unique identifier for a rule.
+|       Type|Metadata
+|     Syntax|`id:<value>`
+|Cardinality|1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Specifies a unique identifier for a rule. If a later rule re-uses the
+same identifier, then it will overwrite the previous rule.
+
+TODO: Explain what the full unique id is (taking context and chains into
+account)
+
+==== msg
+[cols=">h,<9"]
+|===============================================================================
+|Description|Message associated with the rule.
+|       Type|Metadata
+|     Syntax|`msg:<text>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+This message is used by the `event` action when logging the event.
+
+==== phase
+[cols=">h,<9"]
+|===============================================================================
+|Description|The runtime phase at which the rule should execute.
+|       Type|Metadata
+|     Syntax|`phase:<phase-name>`
+|Cardinality|1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Rule phase determines when a rule runs. IronBee understands the
+following phases:
+
+REQUEST_HEADER::
+  Invoked after the entire HTTP request headers has been read, but
+  before reading the HTTP request body (if any). Most rules should not
+  use this phase, opting for the REQUEST phase instead.
+REQUEST_HEADER_PROCESS::
+  Invoked after the REQUEST_HEADER phase to allow for processing the phase,
+  such as invoking blocking rules.
+REQUEST::
+  Invoked after receiving the entire HTTP request, which may involve
+  request body and request trailers, but it will run even when neither
+  is present.
+REQUEST_PROCESS::
+  Invoked after the REQUEST phase to allow for processing the phase,
+  such as invoking blocking rules.
+RESPONSE_HEADER::
+  Invoked after receiving the HTTP entire response header.
+RESPONSE_HEADER_PROCESS::
+  Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
+  such as invoking blocking rules.
+RESPONSE::
+  Invoked after receiving the HTTP response body (if any) and response
+  trailers (if any).
+RESPONSE_PROCESS::
+  Invoked after the RESPONSE phase to allow for processing the phase,
+  such as invoking blocking rules.
+POSTPROCESS::
+  Invoked after the entire transaction has been processed. This phase is
+  for logging and tracking data between transactions, such as storing
+  state. Actions cannot affect the transaction in this phase.
+
+==== rev
+[cols=">h,<9"]
+|===============================================================================
+|Description|An integer rule revision.
+|       Type|Metadata
+|     Syntax|`rev:n`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Explain how this is used in RuleEnable and when overriding Rules
+in sub contexts.
+
+==== severity
+[cols=">h,<9"]
+|===============================================================================
+|Description|Numeric value indicating the severity of the issue thisrule is trying to protect against.
+|       Type|Metadata
+|     Syntax|`severity:<0-100>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+The severity indicates how much impact a successful attack may be, but
+does not indicate the quality of protection this rule may provide. The
+severity is meant to be used as part of a "threat level" indicator. The
+"threat level" is essentially severity x confidence, which balances how
+severe the threat may be with how well this rule might be protecting
+against it.
+
+==== tag
+[cols=">h,<9"]
+|===============================================================================
+|Description|Apply an arbitrary tag name to a rule.
+|       Type|Metadata
+|     Syntax|`tag:<value>`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Describe where this is used, notably `RuleEnable`/`RuleDisable`
+and logged with events.
+
 Data Fields
 ~~~~~~~~~~~
+
+TODO: General description.
 
 ==== ARGS
 [cols=">h,<9"]
@@ -622,8 +790,296 @@ Sub-Fields:
 HTTP request header.
 * *category:* String category deduced from user agent data.
 
+Transformation Functions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: General description.
+
+==== ceil
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value greater than or equal to thenumeric value of the input.
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+DEPRECATED: Use `iceil` instead.
+
+==== compressWhitespace
+[cols=">h,<9"]
+|===============================================================================
+|Description|Replaces one or more consecutive whitespace characterswith a single space.
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+Replaces various whitespace characters with spaces. In addition,
+consecutive whitespace characters will be reduced down to a single
+space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
+`0xa0` (non-breaking whitespace).
+
+==== count
+[cols=">h,<9"]
+|===============================================================================
+|Description|Given a collection, it returns the number if items in thecollection. Given a scalar, returns 1.
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== floor
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value less than or equal to thenumeric value of the input.
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+DEPRECATED: Use `ifloor` instead.
+
+==== htmlEntityDecode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Decodes HTML entities in the data.
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+The following forms are supported:
+
+* *&#DDDD;* - Numeric code point, where DDDD represents a decimal number
+with any number of digits.
+* *&#xHHHH;* - Numeric code point, where HHHH represents a hexadecimal
+number with any number of digits.
+* *&name;* - Predefined XML named entities (currently: quot, amp, apos,
+lt, gt).
+
+See
+https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
+
+==== iceil
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value greater than or equal to the numeric value of the input.
+|     Module|core
+|    Version|0.9
+|===============================================================================
+
+==== ifloor
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value less than or equal to the numeric value of the input.
+|     Module|core
+|    Version|0.9
+|===============================================================================
+
+==== iround
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value closest to the numeric value of the input.
+|     Module|core
+|    Version|0.9
+|===============================================================================
+
+==== length
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns the byte length of the value.
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+==== lowercase
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns the input as all lower case characters.
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== max
+[cols=">h,<9"]
+|===============================================================================
+|Description|Given a collection of numeric data, returns the maximumvalue.
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== min
+[cols=">h,<9"]
+|===============================================================================
+|Description|Given a collection of numeric data, returns the minimumvalue.
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== name
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns the name of the field as the value.
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+==== names
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns a collection of names from a collection ofname/value pairs.
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+==== normalizePath
+[cols=">h,<9"]
+|===============================================================================
+|Description|Normalize a filesystem path, removing back and selfreferences.
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+==== normalizePathWin
+[cols=">h,<9"]
+|===============================================================================
+|Description|Normalize a Windows filesystem path, removing back andself references.
+|     Module|core
+|    Version|0.6
+|===============================================================================
+
+==== normalizeSqli
+[cols=">h,<9"]
+|===============================================================================
+|Description|Normalize potential SQL injection via libinjection.
+|     Module|libinjection
+|    Version|0.7
+|===============================================================================
+
+The libinjection ironbee module utilizes Nick Galbreath's libinjection
+to implement SQLi detection. This transformation is based on an example
+in libinjection. The libinjection library is available via:
+http://www.client9.com/projects/libinjection/
+
+Example Input/Output:
+
+----------------------------------------------------------------------------------
+Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
+----------------------------------------------------------------------------------
+
+--------------------------------------------------------
+Output: foo' or 1=1 union select id,passwd from users --
+--------------------------------------------------------
+
+==== normalizeSqlPg
+[cols=">h,<9"]
+|===============================================================================
+|Description|Normalize postgres SQL.
+|     Module|sqltfn
+|    Version|0.7
+|===============================================================================
+
+Normalize Postgres SQL.
+
+Example Input/Output:
+
+----------------------------------------------------------------------------------
+Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
+----------------------------------------------------------------------------------
+
+--------------------------------------------------------
+Output: foo' or 1 = 1 union select id,passwd from users 
+--------------------------------------------------------
+
+==== removeWhitespace
+[cols=">h,<9"]
+|===============================================================================
+|Description|Removes one or more consecutive whitespace characters.
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+Similar to `compressWhitespace`, except removes the characters instead
+of replacing them with a single space.
+
+==== round
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value closest to the numeric value ofthe input.
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+DEPRECATED: Use `iround` instead.
+
+==== trim
+[cols=">h,<9"]
+|===============================================================================
+|Description|Removes consecutive whitespace from the beginning and endof the input.
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== trimLeft
+[cols=">h,<9"]
+|===============================================================================
+|Description|Removes consecutive whitespace from the beginning of theinput.
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== trimRight
+[cols=">h,<9"]
+|===============================================================================
+|Description|Removes consecutive whitespace from the end of the input.
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+==== toFloat
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert input to a numeric floating point type.
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+==== toInteger
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert input to a numeric integral type.
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+==== toString
+[cols=">h,<9"]
+|===============================================================================
+|Description|Convert input to a string type.
+|     Module|core
+|    Version|0.8
+|===============================================================================
+
+==== urlDecode
+[cols=">h,<9"]
+|===============================================================================
+|Description|Decodes URL encoded values in the input.
+|     Module|core
+|    Version|0.7
+|===============================================================================
+
+Implements decoding the encoding used in
+application/x-www-form-urlencoded values (percent encoding with
+additions).
+
+* *%HH;* - Numeric code point, where HH represents a two digit
+hexadecimal number.
+* *+* - Represents an ASCII space character (equiv to `%20`).
+
+Fields which are parsed from the URI and form parameters are already URL
+Decoded and you should not apply this transformation to these fields
+unless you are trying to inspect multiple levels of encoding.
+
 Operators
 ~~~~~~~~~
+
+TODO: General description.
 
 ==== contains
 [cols=">h,<9"]
@@ -921,164 +1377,10 @@ until the next capture rule is run, when they will all be deleted.
 |    Version|0.7
 |===============================================================================
 
-Rule Metadata
-~~~~~~~~~~~~~
+Modifiers and Actions
+~~~~~~~~~~~~~~~~~~~~~
 
-==== logdata
-[cols=">h,<9"]
-|===============================================================================
-|Description|Add data to be logged with the event.
-|       Type|Metadata
-|     Syntax|`logdata:<value>`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.2
-|===============================================================================
-
-Log a data fragment as part of the error message.
-
--------------------------------------------------
-Rule ARGS @rx pattern \
-        "msg:Test matched" logdata:%{MATCHED_VAR}
--------------------------------------------------
-
-NOTE: Up to 128 bytes of data will be recorded.
-
-==== confidence
-[cols=">h,<9"]
-|===============================================================================
-|Description|Numeric value indicating the confidence of the rule.
-|       Type|Metadata
-|     Syntax|`confidence:<0-100>`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-Higher confidence rules should have a lower False Positive rate.
-
-==== id
-[cols=">h,<9"]
-|===============================================================================
-|Description|Unique identifier for a rule.
-|       Type|Metadata
-|     Syntax|`id:<value>`
-|Cardinality|1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-Specifies a unique identifier for a rule. If a later rule re-uses the
-same identifier, then it will overwrite the previous rule.
-
-TODO: Explain what the full unique id is (taking context and chains into
-account)
-
-==== msg
-[cols=">h,<9"]
-|===============================================================================
-|Description|Message associated with the rule.
-|       Type|Metadata
-|     Syntax|`msg:<text>`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-This message is used by the `event` action when logging the event.
-
-==== phase
-[cols=">h,<9"]
-|===============================================================================
-|Description|The runtime phase at which the rule should execute.
-|       Type|Metadata
-|     Syntax|`phase:<phase-name>`
-|Cardinality|1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-Rule phase determines when a rule runs. IronBee understands the
-following phases:
-
-REQUEST_HEADER::
-  Invoked after the entire HTTP request headers has been read, but
-  before reading the HTTP request body (if any). Most rules should not
-  use this phase, opting for the REQUEST phase instead.
-REQUEST_HEADER_PROCESS::
-  Invoked after the REQUEST_HEADER phase to allow for processing the phase,
-  such as invoking blocking rules.
-REQUEST::
-  Invoked after receiving the entire HTTP request, which may involve
-  request body and request trailers, but it will run even when neither
-  is present.
-REQUEST_PROCESS::
-  Invoked after the REQUEST phase to allow for processing the phase,
-  such as invoking blocking rules.
-RESPONSE_HEADER::
-  Invoked after receiving the HTTP entire response header.
-RESPONSE_HEADER_PROCESS::
-  Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
-  such as invoking blocking rules.
-RESPONSE::
-  Invoked after receiving the HTTP response body (if any) and response
-  trailers (if any).
-RESPONSE_PROCESS::
-  Invoked after the RESPONSE phase to allow for processing the phase,
-  such as invoking blocking rules.
-POSTPROCESS::
-  Invoked after the entire transaction has been processed. This phase is
-  for logging and tracking data between transactions, such as storing
-  state. Actions cannot affect the transaction in this phase.
-
-==== rev
-[cols=">h,<9"]
-|===============================================================================
-|Description|An integer rule revision.
-|       Type|Metadata
-|     Syntax|`rev:n`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-TODO: Explain how this is used in RuleEnable and when overriding Rules
-in sub contexts.
-
-==== severity
-[cols=">h,<9"]
-|===============================================================================
-|Description|Numeric value indicating the severity of the issue thisrule is trying to protect against.
-|       Type|Metadata
-|     Syntax|`severity:<0-100>`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-The severity indicates how much impact a successful attack may be, but
-does not indicate the quality of protection this rule may provide. The
-severity is meant to be used as part of a "threat level" indicator. The
-"threat level" is essentially severity x confidence, which balances how
-severe the threat may be with how well this rule might be protecting
-against it.
-
-==== tag
-[cols=">h,<9"]
-|===============================================================================
-|Description|Apply an arbitrary tag name to a rule.
-|       Type|Metadata
-|     Syntax|`tag:<value>`
-|Cardinality|0..n
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-TODO: Describe where this is used, notably `RuleEnable`/`RuleDisable`
-and logged with events.
-
-Rule Modifiers and Actions
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+TODO: General description.
 
 ==== allow
 [cols=">h,<9"]
@@ -1350,286 +1652,3 @@ NOTE: Probably should just fail, logging an attempt was made to modify a non-num
 |    Version|0.4
 |===============================================================================
 
-Transformation Functions
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-==== ceil
-[cols=">h,<9"]
-|===============================================================================
-|Description|Return the integral value greater than or equal to thenumeric value of the input.
-|     Module|core
-|    Version|0.7
-|===============================================================================
-
-DEPRECATED: Use `iceil` instead.
-
-==== compressWhitespace
-[cols=">h,<9"]
-|===============================================================================
-|Description|Replaces one or more consecutive whitespace characterswith a single space.
-|     Module|core
-|    Version|0.3
-|===============================================================================
-
-Replaces various whitespace characters with spaces. In addition,
-consecutive whitespace characters will be reduced down to a single
-space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
-`0xa0` (non-breaking whitespace).
-
-==== count
-[cols=">h,<9"]
-|===============================================================================
-|Description|Given a collection, it returns the number if items in thecollection. Given a scalar, returns 1.
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-==== floor
-[cols=">h,<9"]
-|===============================================================================
-|Description|Return the integral value less than or equal to thenumeric value of the input.
-|     Module|core
-|    Version|0.7
-|===============================================================================
-
-DEPRECATED: Use `ifloor` instead.
-
-==== htmlEntityDecode
-[cols=">h,<9"]
-|===============================================================================
-|Description|Decodes HTML entities in the data.
-|     Module|core
-|    Version|0.6
-|===============================================================================
-
-The following forms are supported:
-
-* *&#DDDD;* - Numeric code point, where DDDD represents a decimal number
-with any number of digits.
-* *&#xHHHH;* - Numeric code point, where HHHH represents a hexadecimal
-number with any number of digits.
-* *&name;* - Predefined XML named entities (currently: quot, amp, apos,
-lt, gt).
-
-See
-https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
-
-==== iceil
-[cols=">h,<9"]
-|===============================================================================
-|Description|Return the integral value greater than or equal to the numeric value of the input.
-|     Module|core
-|    Version|0.9
-|===============================================================================
-
-==== ifloor
-[cols=">h,<9"]
-|===============================================================================
-|Description|Return the integral value less than or equal to the numeric value of the input.
-|     Module|core
-|    Version|0.9
-|===============================================================================
-
-==== iround
-[cols=">h,<9"]
-|===============================================================================
-|Description|Return the integral value closest to the numeric value of the input.
-|     Module|core
-|    Version|0.9
-|===============================================================================
-
-==== length
-[cols=">h,<9"]
-|===============================================================================
-|Description|Returns the byte length of the value.
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-==== lowercase
-[cols=">h,<9"]
-|===============================================================================
-|Description|Returns the input as all lower case characters.
-|     Module|core
-|    Version|0.2
-|===============================================================================
-
-==== max
-[cols=">h,<9"]
-|===============================================================================
-|Description|Given a collection of numeric data, returns the maximumvalue.
-|     Module|core
-|    Version|0.3
-|===============================================================================
-
-==== min
-[cols=">h,<9"]
-|===============================================================================
-|Description|Given a collection of numeric data, returns the minimumvalue.
-|     Module|core
-|    Version|0.3
-|===============================================================================
-
-==== name
-[cols=">h,<9"]
-|===============================================================================
-|Description|Returns the name of the field as the value.
-|     Module|core
-|    Version|0.6
-|===============================================================================
-
-==== names
-[cols=">h,<9"]
-|===============================================================================
-|Description|Returns a collection of names from a collection ofname/value pairs.
-|     Module|core
-|    Version|0.6
-|===============================================================================
-
-==== normalizePath
-[cols=">h,<9"]
-|===============================================================================
-|Description|Normalize a filesystem path, removing back and selfreferences.
-|     Module|core
-|    Version|0.6
-|===============================================================================
-
-==== normalizePathWin
-[cols=">h,<9"]
-|===============================================================================
-|Description|Normalize a Windows filesystem path, removing back andself references.
-|     Module|core
-|    Version|0.6
-|===============================================================================
-
-==== normalizeSqli
-[cols=">h,<9"]
-|===============================================================================
-|Description|Normalize potential SQL injection via libinjection.
-|     Module|libinjection
-|    Version|0.7
-|===============================================================================
-
-The libinjection ironbee module utilizes Nick Galbreath's libinjection
-to implement SQLi detection. This transformation is based on an example
-in libinjection. The libinjection library is available via:
-http://www.client9.com/projects/libinjection/
-
-Example Input/Output:
-
-----------------------------------------------------------------------------------
-Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
-----------------------------------------------------------------------------------
-
---------------------------------------------------------
-Output: foo' or 1=1 union select id,passwd from users --
---------------------------------------------------------
-
-==== normalizeSqlPg
-[cols=">h,<9"]
-|===============================================================================
-|Description|Normalize postgres SQL.
-|     Module|sqltfn
-|    Version|0.7
-|===============================================================================
-
-Normalize Postgres SQL.
-
-Example Input/Output:
-
-----------------------------------------------------------------------------------
-Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
-----------------------------------------------------------------------------------
-
---------------------------------------------------------
-Output: foo' or 1 = 1 union select id,passwd from users 
---------------------------------------------------------
-
-==== removeWhitespace
-[cols=">h,<9"]
-|===============================================================================
-|Description|Removes one or more consecutive whitespace characters.
-|     Module|core
-|    Version|0.3
-|===============================================================================
-
-Similar to `compressWhitespace`, except removes the characters instead
-of replacing them with a single space.
-
-==== round
-[cols=">h,<9"]
-|===============================================================================
-|Description|Return the integral value closest to the numeric value ofthe input.
-|     Module|core
-|    Version|0.7
-|===============================================================================
-
-DEPRECATED: Use `iround` instead.
-
-==== trim
-[cols=">h,<9"]
-|===============================================================================
-|Description|Removes consecutive whitespace from the beginning and endof the input.
-|     Module|core
-|    Version|0.2
-|===============================================================================
-
-==== trimLeft
-[cols=">h,<9"]
-|===============================================================================
-|Description|Removes consecutive whitespace from the beginning of theinput.
-|     Module|core
-|    Version|0.2
-|===============================================================================
-
-==== trimRight
-[cols=">h,<9"]
-|===============================================================================
-|Description|Removes consecutive whitespace from the end of the input.
-|     Module|core
-|    Version|0.2
-|===============================================================================
-
-==== toFloat
-[cols=">h,<9"]
-|===============================================================================
-|Description|Convert input to a numeric floating point type.
-|     Module|core
-|    Version|0.8
-|===============================================================================
-
-==== toInteger
-[cols=">h,<9"]
-|===============================================================================
-|Description|Convert input to a numeric integral type.
-|     Module|core
-|    Version|0.8
-|===============================================================================
-
-==== toString
-[cols=">h,<9"]
-|===============================================================================
-|Description|Convert input to a string type.
-|     Module|core
-|    Version|0.8
-|===============================================================================
-
-==== urlDecode
-[cols=">h,<9"]
-|===============================================================================
-|Description|Decodes URL encoded values in the input.
-|     Module|core
-|    Version|0.7
-|===============================================================================
-
-Implements decoding the encoding used in
-application/x-www-form-urlencoded values (percent encoding with
-additions).
-
-* *%HH;* - Numeric code point, where HH represents a two digit
-hexadecimal number.
-* *+* - Represents an ASCII space character (equiv to `%20`).
-
-Fields which are parsed from the URI and form parameters are already URL
-Decoded and you should not apply this transformation to these fields
-unless you are trying to inspect multiple levels of encoding.

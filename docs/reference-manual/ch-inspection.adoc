@@ -1,7 +1,7 @@
 Inspection
 ----------
 
-The whole point of IronBee is to allow for inspecting data. This chapter
+The point of IronBee is to allow for inspecting data. This chapter
 covers the basics of doing just that. Inspecting data is performed
 through rules and modules. Rules are encapsulated logic executed at well
 define points in the transaction lifecycle. Modules, in general, extend
