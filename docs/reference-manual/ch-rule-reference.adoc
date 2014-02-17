@@ -266,21 +266,6 @@ be corrected using any available proxy headers (currently `X-Forwarded-For`).
 |    Version|0.4
 |===============================================================================
 
-==== REQUEST_CONTENT_TYPE
-[cols=">h,<9"]
-|===============================================================================
-|Description|Contains the normalized request content type.
-|       Type|String
-|      Scope|Transaction (`REQUEST_HEADERS`)
-|     Module|core
-|    Version|Not implemented yet
-|===============================================================================
-
-Request content type is constructed from the request `Content-Type`
-header. The value is first converted to contain only the content type
-(and exclude any character encoding information), then converted to
-lowercase.
-
 ==== REQUEST_COOKIES
 [cols=">h,<9"]
 |===============================================================================
@@ -290,24 +275,6 @@ lowercase.
 |     Module|core
 |    Version|0.2
 |===============================================================================
-
-==== REQUEST_FILENAME
-[cols=">h,<9"]
-|===============================================================================
-|Description|Request filename, extracted from request URI andnormalized according to the current personality.
-|       Type|String
-|      Scope|Transaction
-|     Module|core
-|    Version|Not implemented yet
-|===============================================================================
-
-Normalization algorithm, with all "features" enabled, is as follows:
-
-.  Decode URL-encoded characters (both `%HH` and `%uHHHH` formats),
-convert to lowercase, compress separators, convert backslashes, and
-terminate NUL.
-.  Convert UTF-8 to single-byte stream using best-fit mapping
-.  Perform RFC 3986 normalization
 
 ==== REQUEST_HEADERS
 [cols=">h,<9"]
@@ -524,31 +491,6 @@ As no URL decoding is performed (this is a raw value), you probably want
 |      Scope|Transaction
 |     Module|core
 |    Version|0.3
-|===============================================================================
-
-==== RESPONSE_CONTENT_TYPE
-[cols=">h,<9"]
-|===============================================================================
-|Description|Contains the normalized response content type.
-|       Type|Scalar
-|      Scope|Transaction (`RESPONSE_HEADERS`)
-|     Module|core
-|    Version|Not implemented yet
-|===============================================================================
-
-Response content type is constructed from the response `Content-Type`
-header. The value is first converted to keep only the content type part
-(and exclude character encoding information, if any), then converted to
-lowercase.
-
-==== RESPONSE_COOKIES
-[cols=">h,<9"]
-|===============================================================================
-|Description|Collection of response cookies (name/value pairs).
-|       Type|Collection
-|      Scope|Transaction
-|     Module|core
-|    Version|Not implemented yet
 |===============================================================================
 
 ==== RESPONSE_HEADERS
@@ -1408,14 +1350,6 @@ and logged with events.
 Transformation Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-==== base64Decode
-[cols=">h,<9"]
-|===============================================================================
-|Description|
-|     Module|core
-|    Version|Not implemented yet.
-|===============================================================================
-
 ==== ceil
 [cols=">h,<9"]
 |===============================================================================
@@ -1423,6 +1357,8 @@ Transformation Functions
 |     Module|core
 |    Version|0.7
 |===============================================================================
+
+DEPRECATED: Use `iceil` instead.
 
 ==== compressWhitespace
 [cols=">h,<9"]
@@ -1453,6 +1389,8 @@ space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
 |    Version|0.7
 |===============================================================================
 
+DEPRECATED: Use `ifloor` instead.
+
 ==== htmlEntityDecode
 [cols=">h,<9"]
 |===============================================================================
@@ -1472,6 +1410,30 @@ lt, gt).
 
 See
 https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
+
+==== iceil
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value greater than or equal to the numeric value of the input.
+|     Module|core
+|    Version|0.9
+|===============================================================================
+
+==== ifloor
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value less than or equal to the numeric value of the input.
+|     Module|core
+|    Version|0.9
+|===============================================================================
+
+==== iround
+[cols=">h,<9"]
+|===============================================================================
+|Description|Return the integral value closest to the numeric value of the input.
+|     Module|core
+|    Version|0.9
+|===============================================================================
 
 ==== length
 [cols=">h,<9"]
@@ -1591,32 +1553,6 @@ Output: foo' or 1 = 1 union select id,passwd from users
 Similar to `compressWhitespace`, except removes the characters instead
 of replacing them with a single space.
 
-==== removeComments
-[cols=">h,<9"]
-|===============================================================================
-|Description|Remove various types of code comments.
-|     Module|core
-|    Version|Not implemented yet.
-|===============================================================================
-
-The following style comments are replaced:
-
-* */* ... */* - C style comments.
-* *// ...* - C++ style comments.
-* *# ...* - Shell style comments.
-* *-- ...* - SQL style comments.
-
-==== replaceComments
-[cols=">h,<9"]
-|===============================================================================
-|Description|Replace various types of code comments with a singlespace character.
-|     Module|core
-|    Version|Not implemented yet.
-|===============================================================================
-
-This is similar to `removeComments`, but instead of removing, replaces
-with a single space character.
-
 ==== round
 [cols=">h,<9"]
 |===============================================================================
@@ -1624,6 +1560,8 @@ with a single space character.
 |     Module|core
 |    Version|0.7
 |===============================================================================
+
+DEPRECATED: Use `iround` instead.
 
 ==== trim
 [cols=">h,<9"]
@@ -1678,7 +1616,7 @@ with a single space character.
 |===============================================================================
 |Description|Decodes URL encoded values in the input.
 |     Module|core
-|    Version|Not implemented yet.
+|    Version|0.7
 |===============================================================================
 
 Implements decoding the encoding used in
@@ -1689,10 +1627,6 @@ additions).
 hexadecimal number.
 * *+* - Represents an ASCII space character (equiv to `%20`).
 
-___________________________________________________________________________________________________________________________________________________________________________________________________________
-*Warning*
-
 Fields which are parsed from the URI and form parameters are already URL
 Decoded and you should not apply this transformation to these fields
 unless you are trying to inspect multiple levels of encoding.
-___________________________________________________________________________________________________________________________________________________________________________________________________________

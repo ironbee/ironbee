@@ -535,9 +535,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_remote_addr">REMOTE_ADDR</a></li>
 <li><a href="#_remote_port">REMOTE_PORT</a></li>
 <li><a href="#_request_body_params">REQUEST_BODY_PARAMS</a></li>
-<li><a href="#_request_content_type">REQUEST_CONTENT_TYPE</a></li>
 <li><a href="#_request_cookies">REQUEST_COOKIES</a></li>
-<li><a href="#_request_filename">REQUEST_FILENAME</a></li>
 <li><a href="#_request_headers">REQUEST_HEADERS</a></li>
 <li><a href="#_request_host">REQUEST_HOST</a></li>
 <li><a href="#_request_line">REQUEST_LINE</a></li>
@@ -555,8 +553,6 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_request_uri_scheme">REQUEST_URI_SCHEME</a></li>
 <li><a href="#_request_uri_query">REQUEST_URI_QUERY</a></li>
 <li><a href="#_request_uri_username">REQUEST_URI_USERNAME</a></li>
-<li><a href="#_response_content_type">RESPONSE_CONTENT_TYPE</a></li>
-<li><a href="#_response_cookies">RESPONSE_COOKIES</a></li>
 <li><a href="#_response_headers">RESPONSE_HEADERS</a></li>
 <li><a href="#_response_line">RESPONSE_LINE</a></li>
 <li><a href="#_response_message">RESPONSE_MESSAGE</a></li>
@@ -621,12 +617,14 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_transformation_functions">Transformation Functions</a></li>
 <li>
 <ul class="sectlevel3">
-<li><a href="#_base64decode">base64Decode</a></li>
 <li><a href="#_ceil">ceil</a></li>
 <li><a href="#_compresswhitespace">compressWhitespace</a></li>
 <li><a href="#_count">count</a></li>
 <li><a href="#_floor">floor</a></li>
 <li><a href="#_htmlentitydecode">htmlEntityDecode</a></li>
+<li><a href="#_iceil">iceil</a></li>
+<li><a href="#_ifloor">ifloor</a></li>
+<li><a href="#_iround">iround</a></li>
 <li><a href="#_length">length</a></li>
 <li><a href="#_lowercase">lowercase</a></li>
 <li><a href="#_max">max</a></li>
@@ -638,8 +636,6 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_normalizesqli">normalizeSqli</a></li>
 <li><a href="#_normalizesqlpg">normalizeSqlPg</a></li>
 <li><a href="#_removewhitespace">removeWhitespace</a></li>
-<li><a href="#_removecomments">removeComments</a></li>
-<li><a href="#_replacecomments">replaceComments</a></li>
 <li><a href="#_round">round</a></li>
 <li><a href="#_trim">trim</a></li>
 <li><a href="#_trimleft">trimLeft</a></li>
@@ -7613,44 +7609,6 @@ be corrected using any available proxy headers (currently <code>X-Forwarded-For<
 
 </div>
 <div class="sect3">
-<h4 id="_request_content_type">REQUEST_CONTENT_TYPE</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Contains the normalized request content type.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Transaction (<code>REQUEST_HEADERS</code>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Request content type is constructed from the request <code>Content-Type</code>
-header. The value is first converted to contain only the content type
-(and exclude any character encoding information), then converted to
-lowercase.</p>
-</div>
-</div>
-<div class="sect3">
 <h4 id="_request_cookies">REQUEST_COOKIES</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
@@ -7681,56 +7639,6 @@ lowercase.</p>
 </tbody>
 </table>
 
-</div>
-<div class="sect3">
-<h4 id="_request_filename">REQUEST_FILENAME</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Request filename, extracted from request URI andnormalized according to the current personality.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Normalization algorithm, with all "features" enabled, is as follows:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Decode URL-encoded characters (both <code>%HH</code> and <code>%uHHHH</code> formats),
-convert to lowercase, compress separators, convert backslashes, and
-terminate NUL.</p>
-</li>
-<li>
-<p>Convert UTF-8 to single-byte stream using best-fit mapping</p>
-</li>
-<li>
-<p>Perform RFC 3986 normalization</p>
-</li>
-</ol>
-</div>
 </div>
 <div class="sect3">
 <h4 id="_request_headers">REQUEST_HEADERS</h4>
@@ -8375,76 +8283,6 @@ As no URL decoding is performed (this is a raw value), you probably want
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
-<h4 id="_response_content_type">RESPONSE_CONTENT_TYPE</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Contains the normalized response content type.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Scalar</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Transaction (<code>RESPONSE_HEADERS</code>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Response content type is constructed from the response <code>Content-Type</code>
-header. The value is first converted to keep only the content type part
-(and exclude character encoding information, if any), then converted to
-lowercase.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_response_cookies">RESPONSE_COOKIES</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Collection of response cookies (name/value pairs).</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet</p></td>
 </tr>
 </tbody>
 </table>
@@ -10652,30 +10490,6 @@ and logged with events.</p>
 <div class="sect2">
 <h3 id="_transformation_functions">Transformation Functions</h3>
 <div class="sect3">
-<h4 id="_base64decode">base64Decode</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet.</p></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-<div class="sect3">
 <h4 id="_ceil">ceil</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
@@ -10698,6 +10512,9 @@ and logged with events.</p>
 </tbody>
 </table>
 
+<div class="paragraph">
+<p>DEPRECATED: Use <code>iceil</code> instead.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_compresswhitespace">compressWhitespace</h4>
@@ -10776,6 +10593,9 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 </tbody>
 </table>
 
+<div class="paragraph">
+<p>DEPRECATED: Use <code>ifloor</code> instead.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_htmlentitydecode">htmlEntityDecode</h4>
@@ -10823,6 +10643,78 @@ lt, gt).</p>
 <p>See
 <a href="https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references">https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references</a>.</p>
 </div>
+</div>
+<div class="sect3">
+<h4 id="_iceil">iceil</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to the numeric value of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_ifloor">ifloor</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to the numeric value of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_iround">iround</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value of the input.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect3">
 <h4 id="_length">length</h4>
@@ -11128,77 +11020,6 @@ of replacing them with a single space.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_removecomments">removeComments</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Remove various types of code comments.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet.</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>The following style comments are replaced:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>/</strong> &#8230; <strong>/</strong> - C style comments.</p>
-</li>
-<li>
-<p><strong>// &#8230;</strong> - C++ style comments.</p>
-</li>
-<li>
-<p><strong># &#8230;</strong> - Shell style comments.</p>
-</li>
-<li>
-<p><strong>-- &#8230;</strong> - SQL style comments.</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_replacecomments">replaceComments</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Replace various types of code comments with a singlespace character.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet.</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>This is similar to <code>removeComments</code>, but instead of removing, replaces
-with a single space character.</p>
-</div>
-</div>
-<div class="sect3">
 <h4 id="_round">round</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
@@ -11221,6 +11042,9 @@ with a single space character.</p>
 </tbody>
 </table>
 
+<div class="paragraph">
+<p>DEPRECATED: Use <code>iround</code> instead.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_trim">trim</h4>
@@ -11384,7 +11208,7 @@ with a single space character.</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
 </table>
@@ -11405,17 +11229,10 @@ hexadecimal number.</p>
 </li>
 </ul>
 </div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Warning</strong></p>
-</div>
 <div class="paragraph">
 <p>Fields which are parsed from the URI and form parameters are already URL
 Decoded and you should not apply this transformation to these fields
 unless you are trying to inspect multiple levels of encoding.</p>
-</div>
-</blockquote>
 </div>
 </div>
 </div>
