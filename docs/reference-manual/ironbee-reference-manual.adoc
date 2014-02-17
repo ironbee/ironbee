@@ -3,6 +3,7 @@ IronBee Reference Manual
 :author: Brian Rectanus
 :revdate: 2010-2014
 :doctype: book
+:stylesheet: ironbee-reference-manual.css
 :encoding: utf-8
 :toc2: right
 :toclevels: 3
