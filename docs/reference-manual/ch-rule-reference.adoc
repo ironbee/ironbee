@@ -629,7 +629,7 @@ Operators
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target contains the given sub-string.
-|     Syntax|`@contains`
+|     Syntax|`contains`
 |      Types|String
 |     Module|core
 |    Version|0.3
@@ -639,7 +639,7 @@ Operators
 [cols=">h,<9"]
 |===============================================================================
 |Description|Deterministic finite atomation matching algorithm (PCRE'salternative matching algorithm).
-|     Syntax|`@dfa`
+|     Syntax|`dfa`
 |      Types|String
 |     Module|pcre
 |    Version|0.4
@@ -669,7 +669,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target matches any value in the namedeudoxus automata.
-|     Syntax|`@ee_match_any`
+|     Syntax|`ee_match_any`
 |      Types|String
 |     Module|ee
 |    Version|0.7
@@ -682,7 +682,7 @@ directive
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically equal to thegiven value.
-|     Syntax|`@eq`
+|     Syntax|`eq`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
@@ -692,7 +692,7 @@ directive
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically greater than orequal to the given value.
-|     Syntax|`@ge`
+|     Syntax|`ge`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
@@ -702,7 +702,7 @@ directive
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically greater thanthe given value.
-|     Syntax|`@gt`
+|     Syntax|`gt`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
@@ -712,7 +712,7 @@ directive
 [cols=">h,<9"]
 |===============================================================================
 |Description|As `match`, but case insensitive.
-|     Syntax|`@imatch `
+|     Syntax|`imatch`
 |      Types|String
 |     Module|core
 |    Version|0.7
@@ -722,7 +722,7 @@ directive
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if a target IPv4 address matches any givenwhitespace separated address in CIDR format.
-|     Syntax|`@ipmatch `
+|     Syntax|`ipmatch`
 |      Types|String
 |     Module|core
 |    Version|0.3
@@ -732,7 +732,7 @@ directive
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if a target IPv6 address matches any givenwhitespace separated address in CIDR format.
-|     Syntax|`@ipmatch6 `
+|     Syntax|`ipmatch6`
 |      Types|String
 |     Module|core
 |    Version|0.3
@@ -742,7 +742,7 @@ directive
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the data is determined to be SQLinjection via the libinjection library.
-|     Syntax|`@is_sqli `
+|     Syntax|`is_sqli`
 |      Types|String
 |     Module|libinjection
 |    Version|0.7
@@ -766,7 +766,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically less than orequal to the given value.
-|     Syntax|`@le`
+|     Syntax|`le`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
@@ -776,7 +776,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically less than thegiven value.
-|     Syntax|`@lt`
+|     Syntax|`lt`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
@@ -786,7 +786,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is any of the given whitespaceseparated words.
-|     Syntax|`@match `
+|     Syntax|`match`
 |      Types|String
 |     Module|core
 |    Version|0.7
@@ -796,7 +796,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is not numerically equal tothe given value.
-|     Syntax|`@ne`
+|     Syntax|`ne`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
@@ -806,7 +806,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 [cols=">h,<9"]
 |===============================================================================
 |Description|Parallel matching using the `Aho-Corasick` algorithm.
-|     Syntax|`@pm `
+|     Syntax|`pm`
 |      Types|String
 |     Module|ac
 |    Version|0.2
@@ -837,7 +837,7 @@ DEPRECATED: The "ac" module is deprecated. Use `rx`, `dfa`, `match`,
 [cols=">h,<9"]
 |===============================================================================
 |Description|Parallel matching with patterns from file.
-|     Syntax|`@pmf`
+|     Syntax|`pmf`
 |      Types|String
 |     Module|ac
 |    Version|0.2
@@ -862,7 +862,7 @@ DEPRECATED: The "ac" module is deprecated. Use `rx`, `dfa`, `match`,
 [cols=">h,<9"]
 |===============================================================================
 |Description|Regular expression (perl compatible regular expression)matching.
-|     Syntax|`@rx`
+|     Syntax|`rx`
 |      Types|String
 |     Module|pcre
 |    Version|0.2
@@ -905,7 +905,7 @@ until the next capture rule is run, when they will all be deleted.
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if target exactly matches the given string.
-|     Syntax|`@streq`
+|     Syntax|`streq`
 |      Types|String
 |     Module|core
 |    Version|0.3
@@ -915,7 +915,7 @@ until the next capture rule is run, when they will all be deleted.
 [cols=">h,<9"]
 |===============================================================================
 |Description|As `streq`, but case insensitive.
-|     Syntax|`@istreq`
+|     Syntax|`istreq`
 |      Types|String
 |     Module|core
 |    Version|0.7
