@@ -588,30 +588,35 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_istreq">istreq</a></li>
 </ul>
 </li>
-<li><a href="#_modifiers">Modifiers</a></li>
+<li><a href="#_rule_metadata">Rule Metadata</a></li>
 <li>
 <ul class="sectlevel3">
-<li><a href="#_allow">allow</a></li>
-<li><a href="#_event">event</a></li>
 <li><a href="#_logdata">logdata</a></li>
-<li><a href="#_block">block</a></li>
-<li><a href="#_capture_2">capture</a></li>
-<li><a href="#_chain">chain</a></li>
 <li><a href="#_confidence">confidence</a></li>
-<li><a href="#_delrequestheader">delRequestHeader</a></li>
-<li><a href="#_delresponseheader">delResponseHeader</a></li>
 <li><a href="#_id">id</a></li>
 <li><a href="#_msg">msg</a></li>
 <li><a href="#_phase">phase</a></li>
 <li><a href="#_rev">rev</a></li>
+<li><a href="#_severity">severity</a></li>
+<li><a href="#_tag">tag</a></li>
+</ul>
+</li>
+<li><a href="#_rule_modifiers_and_actions">Rule Modifiers and Actions</a></li>
+<li>
+<ul class="sectlevel3">
+<li><a href="#_allow">allow</a></li>
+<li><a href="#_event">event</a></li>
+<li><a href="#_block">block</a></li>
+<li><a href="#_capture_2">capture</a></li>
+<li><a href="#_chain">chain</a></li>
+<li><a href="#_delrequestheader">delRequestHeader</a></li>
+<li><a href="#_delresponseheader">delResponseHeader</a></li>
 <li><a href="#_setflag">setflag</a></li>
 <li><a href="#_setrequestheader">setRequestHeader</a></li>
 <li><a href="#_setresponseheader">setResponseHeader</a></li>
 <li><a href="#_setvar">setvar</a></li>
-<li><a href="#_severity">severity</a></li>
 <li><a href="#_status">status</a></li>
 <li><a href="#_t">t</a></li>
-<li><a href="#_tag">tag</a></li>
 </ul>
 </li>
 <li><a href="#_transformation_functions">Transformation Functions</a></li>
@@ -9411,7 +9416,404 @@ until the next capture rule is run, when they will all be deleted.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_modifiers">Modifiers</h3>
+<h3 id="_rule_metadata">Rule Metadata</h3>
+<div class="sect3">
+<h4 id="_logdata">logdata</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add data to be logged with the event.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>logdata:&lt;value&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Log a data fragment as part of the error message.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Rule ARGS @rx pattern \
+        "msg:Test matched" logdata:%{MATCHED_VAR}</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Up to 128 bytes of data will be recorded.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_confidence">confidence</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the confidence of the rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>confidence:&lt;0-100&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Higher confidence rules should have a lower False Positive rate.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_id">id</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unique identifier for a rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>id:&lt;value&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Specifies a unique identifier for a rule. If a later rule re-uses the
+same identifier, then it will overwrite the previous rule.</p>
+</div>
+<div class="paragraph">
+<p>TODO: Explain what the full unique id is (taking context and chains into
+account)</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_msg">msg</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Message associated with the rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>msg:&lt;text&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>This message is used by the <code>event</code> action when logging the event.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_phase">phase</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The runtime phase at which the rule should execute.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>phase:&lt;phase-name&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Rule phase determines when a rule runs. IronBee understands the
+following phases:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">REQUEST_HEADER</dt>
+<dd>
+<p>Invoked after the entire HTTP request headers has been read, but
+before reading the HTTP request body (if any). Most rules should not
+use this phase, opting for the REQUEST phase instead.</p>
+</dd>
+<dt class="hdlist1">REQUEST_HEADER_PROCESS</dt>
+<dd>
+<p>Invoked after the REQUEST_HEADER phase to allow for processing the phase,
+such as invoking blocking rules.</p>
+</dd>
+<dt class="hdlist1">REQUEST</dt>
+<dd>
+<p>Invoked after receiving the entire HTTP request, which may involve
+request body and request trailers, but it will run even when neither
+is present.</p>
+</dd>
+<dt class="hdlist1">REQUEST_PROCESS</dt>
+<dd>
+<p>Invoked after the REQUEST phase to allow for processing the phase,
+such as invoking blocking rules.</p>
+</dd>
+<dt class="hdlist1">RESPONSE_HEADER</dt>
+<dd>
+<p>Invoked after receiving the HTTP entire response header.</p>
+</dd>
+<dt class="hdlist1">RESPONSE_HEADER_PROCESS</dt>
+<dd>
+<p>Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
+such as invoking blocking rules.</p>
+</dd>
+<dt class="hdlist1">RESPONSE</dt>
+<dd>
+<p>Invoked after receiving the HTTP response body (if any) and response
+trailers (if any).</p>
+</dd>
+<dt class="hdlist1">RESPONSE_PROCESS</dt>
+<dd>
+<p>Invoked after the RESPONSE phase to allow for processing the phase,
+such as invoking blocking rules.</p>
+</dd>
+<dt class="hdlist1">POSTPROCESS</dt>
+<dd>
+<p>Invoked after the entire transaction has been processed. This phase is
+for logging and tracking data between transactions, such as storing
+state. Actions cannot affect the transaction in this phase.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_rev">rev</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An integer rule revision.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>rev:n</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>TODO: Explain how this is used in RuleEnable and when overriding Rules
+in sub contexts.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_severity">severity</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the severity of the issue thisrule is trying to protect against.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>severity:&lt;0-100&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>The severity indicates how much impact a successful attack may be, but
+does not indicate the quality of protection this rule may provide. The
+severity is meant to be used as part of a "threat level" indicator. The
+"threat level" is essentially severity x confidence, which balances how
+severe the threat may be with how well this rule might be protecting
+against it.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_tag">tag</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Apply an arbitrary tag name to a rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>tag:&lt;value&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>TODO: Describe where this is used, notably <code>RuleEnable</code>/<code>RuleDisable</code>
+and logged with events.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_rule_modifiers_and_actions">Rule Modifiers and Actions</h3>
 <div class="sect3">
 <h4 id="_allow">allow</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
@@ -9515,63 +9917,6 @@ observation, which could contribute to further inspection.</p>
 <p><strong>alert</strong> - Alert event type denoting a transaction should be logged.</p>
 </li>
 </ul>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_logdata">logdata</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Add data to be logged with the event.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>logdata:</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Log a data fragment as part of the error message.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>Rule ARGS @rx pattern \
-        "msg:Test matched" logdata:%{MATCHED_VAR}</pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-Up to 128 bytes of data will be recorded.
-</td>
-</tr>
-</table>
 </div>
 </div>
 <div class="sect3">
@@ -9774,45 +10119,6 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </div>
 </div>
 <div class="sect3">
-<h4 id="_confidence">confidence</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the confidence of the rule.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>confidence:</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Higher confidence rules should have a lower False Positive rate.</p>
-</div>
-</div>
-<div class="sect3">
 <h4 id="_delrequestheader">delRequestHeader</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
@@ -9883,220 +10189,6 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </tbody>
 </table>
 
-</div>
-<div class="sect3">
-<h4 id="_id">id</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unique identifier for a rule.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>id:</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Specifies a unique identifier for a rule. If a later rule re-uses the
-same identifier, then it will overwrite the previous rule.</p>
-</div>
-<div class="paragraph">
-<p>TODO: Explain what the full unique id is (taking context and chains into
-account)</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_msg">msg</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Message associated with the rule.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>msg:</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>This message is used by the <code>event</code> action when logging the event.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_phase">phase</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The runtime phase at which the rule should execute.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>phase:phase-name</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Rule phase determines when a rule runs. IronBee understands the
-following phases:</p>
-</div>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><code>REQUEST_HEADER</code></dt>
-<dd>
-<p>Invoked after the entire HTTP request headers has been read, but
-before reading the HTTP request body (if any). Most rules should not
-use this phase, opting for the <code>REQUEST</code> phase instead.</p>
-</dd>
-<dt class="hdlist1"><code>REQUEST_HEADER_PROCESS</code></dt>
-<dd>
-<p>Invoked after the REQUEST_HEADER phase to allow for processing the phase,
-such as invoking blocking rules.</p>
-</dd>
-<dt class="hdlist1"><code>REQUEST</code></dt>
-<dd>
-<p>Invoked after receiving the entire HTTP request, which may involve
-request body and request trailers, but it will run even when neither
-is present.</p>
-</dd>
-<dt class="hdlist1"><code>REQUEST_PROCESS</code></dt>
-<dd>
-<p>Invoked after the REQUEST phase to allow for processing the phase,
-such as invoking blocking rules.</p>
-</dd>
-<dt class="hdlist1"><code>RESPONSE_HEADER</code></dt>
-<dd>
-<p>Invoked after receiving the HTTP entire response header.</p>
-</dd>
-<dt class="hdlist1"><code>RESPONSE_HEADER_PROCESS</code></dt>
-<dd>
-<p>Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
-such as invoking blocking rules.</p>
-</dd>
-<dt class="hdlist1"><code>RESPONSE</code></dt>
-<dd>
-<p>Invoked after receiving the HTTP response body (if any) and response
-trailers (if any).</p>
-</dd>
-<dt class="hdlist1"><code>RESPONSE_PROCESS</code></dt>
-<dd>
-<p>Invoked after the RESPONSE phase to allow for processing the phase,
-such as invoking blocking rules.</p>
-</dd>
-<dt class="hdlist1"><code>POSTPROCESS</code></dt>
-<dd>
-<p>Invoked after the entire transaction has been processed. This phase is
-for logging and tracking data between transactions, such as storing
-state. Actions cannot affect the transaction in this phase.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_rev">rev</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">An integer rule revision.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>rev:n</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>TODO: Explain how this is used in RuleEnable and when overriding Rules
-in sub contexts.</p>
-</div>
 </div>
 <div class="sect3">
 <h4 id="_setflag">setflag</h4>
@@ -10331,50 +10423,6 @@ Probably should just fail, logging an attempt was made to modify a non-numerical
 </div>
 </div>
 <div class="sect3">
-<h4 id="_severity">severity</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the severity of the issue thisrule is trying to protect against.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>severity:</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>The severity indicates how much impact a successful attack may be, but
-does not indicate the quality of protection this rule may provide. The
-severity is meant to be used as part of a "threat level" indicator. The
-"threat level" is essentially severity x confidence, which balances how
-severe the threat may be with how well this rule might be protecting
-against it.</p>
-</div>
-</div>
-<div class="sect3">
 <h4 id="_status">status</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
@@ -10445,46 +10493,6 @@ against it.</p>
 </tbody>
 </table>
 
-</div>
-<div class="sect3">
-<h4 id="_tag">tag</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Apply an arbitrary tag name to a rule.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>tag:</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>TODO: Describe where this is used, notably <code>RuleEnable</code>/<code>RuleDisable</code>
-and logged with events.</p>
-</div>
 </div>
 </div>
 <div class="sect2">

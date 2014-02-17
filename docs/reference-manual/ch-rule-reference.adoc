@@ -921,8 +921,164 @@ until the next capture rule is run, when they will all be deleted.
 |    Version|0.7
 |===============================================================================
 
-Modifiers
-~~~~~~~~~
+Rule Metadata
+~~~~~~~~~~~~~
+
+==== logdata
+[cols=">h,<9"]
+|===============================================================================
+|Description|Add data to be logged with the event.
+|       Type|Metadata
+|     Syntax|`logdata:<value>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.2
+|===============================================================================
+
+Log a data fragment as part of the error message.
+
+-------------------------------------------------
+Rule ARGS @rx pattern \
+        "msg:Test matched" logdata:%{MATCHED_VAR}
+-------------------------------------------------
+
+NOTE: Up to 128 bytes of data will be recorded.
+
+==== confidence
+[cols=">h,<9"]
+|===============================================================================
+|Description|Numeric value indicating the confidence of the rule.
+|       Type|Metadata
+|     Syntax|`confidence:<0-100>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Higher confidence rules should have a lower False Positive rate.
+
+==== id
+[cols=">h,<9"]
+|===============================================================================
+|Description|Unique identifier for a rule.
+|       Type|Metadata
+|     Syntax|`id:<value>`
+|Cardinality|1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Specifies a unique identifier for a rule. If a later rule re-uses the
+same identifier, then it will overwrite the previous rule.
+
+TODO: Explain what the full unique id is (taking context and chains into
+account)
+
+==== msg
+[cols=">h,<9"]
+|===============================================================================
+|Description|Message associated with the rule.
+|       Type|Metadata
+|     Syntax|`msg:<text>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+This message is used by the `event` action when logging the event.
+
+==== phase
+[cols=">h,<9"]
+|===============================================================================
+|Description|The runtime phase at which the rule should execute.
+|       Type|Metadata
+|     Syntax|`phase:<phase-name>`
+|Cardinality|1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+Rule phase determines when a rule runs. IronBee understands the
+following phases:
+
+REQUEST_HEADER::
+  Invoked after the entire HTTP request headers has been read, but
+  before reading the HTTP request body (if any). Most rules should not
+  use this phase, opting for the REQUEST phase instead.
+REQUEST_HEADER_PROCESS::
+  Invoked after the REQUEST_HEADER phase to allow for processing the phase,
+  such as invoking blocking rules.
+REQUEST::
+  Invoked after receiving the entire HTTP request, which may involve
+  request body and request trailers, but it will run even when neither
+  is present.
+REQUEST_PROCESS::
+  Invoked after the REQUEST phase to allow for processing the phase,
+  such as invoking blocking rules.
+RESPONSE_HEADER::
+  Invoked after receiving the HTTP entire response header.
+RESPONSE_HEADER_PROCESS::
+  Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
+  such as invoking blocking rules.
+RESPONSE::
+  Invoked after receiving the HTTP response body (if any) and response
+  trailers (if any).
+RESPONSE_PROCESS::
+  Invoked after the RESPONSE phase to allow for processing the phase,
+  such as invoking blocking rules.
+POSTPROCESS::
+  Invoked after the entire transaction has been processed. This phase is
+  for logging and tracking data between transactions, such as storing
+  state. Actions cannot affect the transaction in this phase.
+
+==== rev
+[cols=">h,<9"]
+|===============================================================================
+|Description|An integer rule revision.
+|       Type|Metadata
+|     Syntax|`rev:n`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Explain how this is used in RuleEnable and when overriding Rules
+in sub contexts.
+
+==== severity
+[cols=">h,<9"]
+|===============================================================================
+|Description|Numeric value indicating the severity of the issue thisrule is trying to protect against.
+|       Type|Metadata
+|     Syntax|`severity:<0-100>`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+The severity indicates how much impact a successful attack may be, but
+does not indicate the quality of protection this rule may provide. The
+severity is meant to be used as part of a "threat level" indicator. The
+"threat level" is essentially severity x confidence, which balances how
+severe the threat may be with how well this rule might be protecting
+against it.
+
+==== tag
+[cols=">h,<9"]
+|===============================================================================
+|Description|Apply an arbitrary tag name to a rule.
+|       Type|Metadata
+|     Syntax|`tag:<value>`
+|Cardinality|0..n
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+TODO: Describe where this is used, notably `RuleEnable`/`RuleDisable`
+and logged with events.
+
+Rule Modifiers and Actions
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ==== allow
 [cols=">h,<9"]
@@ -962,26 +1118,6 @@ event will cause an audit log to be generated.
 * *observation* - Default event type denoting a rule made an
 observation, which could contribute to further inspection.
 * *alert* - Alert event type denoting a transaction should be logged.
-
-==== logdata
-[cols=">h,<9"]
-|===============================================================================
-|Description|Add data to be logged with the event.
-|       Type|Metadata
-|     Syntax|`logdata:`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.2
-|===============================================================================
-
-Log a data fragment as part of the error message.
-
--------------------------------------------------
-Rule ARGS @rx pattern \
-        "msg:Test matched" logdata:%{MATCHED_VAR}
--------------------------------------------------
-
-NOTE: Up to 128 bytes of data will be recorded.
 
 ==== block
 [cols=">h,<9"]
@@ -1080,19 +1216,6 @@ Rule &REQUEST_URI_PARAMS @gt 0 "msg:POST with URI parameters." setvar:TX:uri_par
 Rule &REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." event block:phase
 ---------------------------------------------------------------------------------------------------------
 
-==== confidence
-[cols=">h,<9"]
-|===============================================================================
-|Description|Numeric value indicating the confidence of the rule.
-|       Type|Metadata
-|     Syntax|`confidence:`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-Higher confidence rules should have a lower False Positive rate.
-
 ==== delRequestHeader
 [cols=">h,<9"]
 |===============================================================================
@@ -1114,94 +1237,6 @@ Higher confidence rules should have a lower False Positive rate.
 |     Module|core
 |    Version|0.4
 |===============================================================================
-
-==== id
-[cols=">h,<9"]
-|===============================================================================
-|Description|Unique identifier for a rule.
-|       Type|Metadata
-|     Syntax|`id:`
-|Cardinality|1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-Specifies a unique identifier for a rule. If a later rule re-uses the
-same identifier, then it will overwrite the previous rule.
-
-TODO: Explain what the full unique id is (taking context and chains into
-account)
-
-==== msg
-[cols=">h,<9"]
-|===============================================================================
-|Description|Message associated with the rule.
-|       Type|Metadata
-|     Syntax|`msg:`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-This message is used by the `event` action when logging the event.
-
-==== phase
-[cols=">h,<9"]
-|===============================================================================
-|Description|The runtime phase at which the rule should execute.
-|       Type|Metadata
-|     Syntax|`phase:phase-name`
-|Cardinality|1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-Rule phase determines when a rule runs. IronBee understands the
-following phases:
-
-`REQUEST_HEADER`::
-  Invoked after the entire HTTP request headers has been read, but
-  before reading the HTTP request body (if any). Most rules should not
-  use this phase, opting for the `REQUEST` phase instead.
-`REQUEST_HEADER_PROCESS`::
-  Invoked after the REQUEST_HEADER phase to allow for processing the phase,
-  such as invoking blocking rules.
-`REQUEST`::
-  Invoked after receiving the entire HTTP request, which may involve
-  request body and request trailers, but it will run even when neither
-  is present.
-`REQUEST_PROCESS`::
-  Invoked after the REQUEST phase to allow for processing the phase,
-  such as invoking blocking rules.
-`RESPONSE_HEADER`::
-  Invoked after receiving the HTTP entire response header.
-`RESPONSE_HEADER_PROCESS`::
-  Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
-  such as invoking blocking rules.
-`RESPONSE`::
-  Invoked after receiving the HTTP response body (if any) and response
-  trailers (if any).
-`RESPONSE_PROCESS`::
-  Invoked after the RESPONSE phase to allow for processing the phase,
-  such as invoking blocking rules.
-`POSTPROCESS`::
-  Invoked after the entire transaction has been processed. This phase is
-  for logging and tracking data between transactions, such as storing
-  state. Actions cannot affect the transaction in this phase.
-
-==== rev
-[cols=">h,<9"]
-|===============================================================================
-|Description|An integer rule revision.
-|       Type|Metadata
-|     Syntax|`rev:n`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-TODO: Explain how this is used in RuleEnable and when overriding Rules
-in sub contexts.
 
 ==== setflag
 [cols=">h,<9"]
@@ -1293,24 +1328,6 @@ old value was zero.
 
 NOTE: Probably should just fail, logging an attempt was made to modify a non-numerical value.
 
-==== severity
-[cols=">h,<9"]
-|===============================================================================
-|Description|Numeric value indicating the severity of the issue thisrule is trying to protect against.
-|       Type|Metadata
-|     Syntax|`severity:`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-The severity indicates how much impact a successful attack may be, but
-does not indicate the quality of protection this rule may provide. The
-severity is meant to be used as part of a "threat level" indicator. The
-"threat level" is essentially severity x confidence, which balances how
-severe the threat may be with how well this rule might be protecting
-against it.
-
 ==== status
 [cols=">h,<9"]
 |===============================================================================
@@ -1332,20 +1349,6 @@ against it.
 |     Module|core
 |    Version|0.4
 |===============================================================================
-
-==== tag
-[cols=">h,<9"]
-|===============================================================================
-|Description|Apply an arbitrary tag name to a rule.
-|       Type|Metadata
-|     Syntax|`tag:`
-|Cardinality|0..n
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-TODO: Describe where this is used, notably `RuleEnable`/`RuleDisable`
-and logged with events.
 
 Transformation Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
