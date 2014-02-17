@@ -5,27 +5,23 @@ Data Fields
 ~~~~~~~~~~~
 
 ==== ARGS
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|All request parameters combined and normalized.
 |       Type|Collection
 |      Scope|Transaction (`REQUEST_HEADERS`, `REQUEST_BODY`)
 |     Module|core
-|    Version| 0.2
+|    Version|0.2
 |===============================================================================
 
-_________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
-*Note*
-
+[NOTE]
 The `ARGS` collection is currently the same as specifying
 `REQUEST_URL_PARAMS REQUEST_BODY_PARAMS`, but this will change in later
 releases to include normalization based on parser personalities. If you
-do not want normalization, then use `REQUEST_URL_PARAMS
-                            REQUEST_BODY_PARAMS`.
-_________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+do not want normalization, then use `REQUEST_URL_PARAMS REQUEST_BODY_PARAMS`.
 
 ==== AUTH_PASSWORD
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Basic authentication password.
 |       Type|String
@@ -35,7 +31,7 @@ ________________________________________________________________________________
 |===============================================================================
 
 ==== AUTH_TYPE
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Indicator of the authentication method used.
 |       Type|Collection
@@ -48,7 +44,7 @@ This field contains the first token extracted from the `Authorization`
 request header. Typical values are: `Basic`, `Digest`, and `NTLM`.
 
 ==== AUTH_USERNAME
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Basic or Digest authentication username.
 |       Type|String
@@ -58,7 +54,7 @@ request header. Typical values are: `Basic`, `Digest`, and `NTLM`.
 |===============================================================================
 
 ==== CAPTURE
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Transaction collection.
 |       Type|Collection
@@ -71,7 +67,7 @@ This collection contains information for the transaction. Currently
 captured data from operators is stored here in keys "0"-"9".
 
 ==== FIELD
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|An alias to the current field being inspected.
 |       Type|Variable (same type as the aliased field)
@@ -97,7 +93,7 @@ Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
 ---------------------------------------------------------------------------------------------------
 
 ==== FIELD_NAME
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|An alias to the current field name being inspected, notincluding the collection name if it is a sub-field in a collection.
 |       Type|Variable (same type as the aliased field)
@@ -113,7 +109,7 @@ not prepended, so if `ARGS:foo` is being inspected, the value will be
 prepended, then use `FIELD_NAME_FULL`.
 
 ==== FIELD_NAME_FULL
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|An alias to the current field name being inspected,including the collection name if it is a sub-field in a collection.
 |       Type|Variable (same type as the aliased field)
@@ -126,7 +122,7 @@ This field is useful only in field expansions within actions when you
 must have the full name of the field being inspected. See `FIELD_NAME`.
 
 ==== GEOIP
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|If the _geoip_ module is loaded, then a lookup will beperformed on the remote (client) address and the results placed in this collection.
 |       Type|Collection
@@ -135,13 +131,10 @@ must have the full name of the field being inspected. See `FIELD_NAME`.
 |    Version|0.3
 |===============================================================================
 
-______________________________________________________________________________________________________________________________________________________________________________________
-*Note*
-
+[NOTE]
 The address used during lookup is the same as that stored in the
 `REMOTE_ADDR` field, which may be modified from the actual connection
 (TCP) level address by the `user_agent` module.
-______________________________________________________________________________________________________________________________________________________________________________________
 
 Sub-Fields (not all are available prior to GeoIP v1.4.6):
 
@@ -166,7 +159,7 @@ floats yet).
 * *postal_conf:* String postal code confidence (v1.4.6+).
 
 ==== HTP_REQUEST_FLAGS
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Collection of LibHTP request parsing flags.
 |       Type|Collection
@@ -214,7 +207,7 @@ URL.
 * *URLEN_OVERLONG_U* An overlong unicode character detected in URL.
 
 ==== HTP_RESPONSE_FLAGS
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Collection of LibHTP response parsing flags.
 |       Type|Collection
@@ -240,7 +233,7 @@ be set:
 * *STATUS_LINE_INVALID:* An invalid HTTP status code was sent.
 
 ==== REMOTE_ADDR
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Remote (client) IP address, extracted from the TCPconnection. Can be in IPv4 or IPv6 format.
 |       Type|String
@@ -249,16 +242,13 @@ be set:
 |    Version|0.2
 |===============================================================================
 
-_____________________________________________________________________________________________________________________________________________________
-*Note*
-
+[NOTE]
 If the `user_agent` module is also loaded, then the client address will
 be corrected using any available proxy headers (currently
 `X-Forwarded-For`).
-_____________________________________________________________________________________________________________________________________________________
 
 ==== REMOTE_PORT
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Remote (client) port, extracted from the TCP connection.
 |       Type|Numeric
@@ -268,7 +258,7 @@ ________________________________________________________________________________
 |===============================================================================
 
 ==== REQUEST_BODY_PARAMS
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Request parameters transported in request body.
 |       Type|String
@@ -278,7 +268,7 @@ ________________________________________________________________________________
 |===============================================================================
 
 ==== REQUEST_CONTENT_TYPE
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Contains the normalized request content type.
 |       Type|String
@@ -293,7 +283,7 @@ header. The value is first converted to contain only the content type
 lowercase.
 
 ==== REQUEST_COOKIES
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Collection of request cookies (name/value pairs).
 |       Type|Collection
@@ -303,7 +293,7 @@ lowercase.
 |===============================================================================
 
 ==== REQUEST_FILENAME
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Request filename, extracted from request URI andnormalized according to the current personality.
 |       Type|String
@@ -321,7 +311,7 @@ terminate NUL.
 .  Perform RFC 3986 normalization
 
 ==== REQUEST_HEADERS
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Collection of request headers (name/value pairs).
 |       Type|Collection
@@ -331,7 +321,7 @@ terminate NUL.
 |===============================================================================
 
 ==== REQUEST_HOST
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Request hostname information, extracted from the requestand normalized.
 |       Type|String
@@ -354,7 +344,7 @@ Normalization [TODO What RFC should we refer to?]:
 .  [TODO Remove port?]
 
 ==== REQUEST_LINE
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Full, raw, request line.
 |       Type|String
@@ -370,7 +360,7 @@ GET /path/to/page?a=5&q=This+is+a+test. HTTP/1.1
 ------------------------------------------------
 
 ==== REQUEST_METHOD
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Request method.
 |       Type|String
@@ -384,7 +374,7 @@ This field contains the HTTP method used for the request.
 Example: `GET`
 
 ==== REQUEST_PROTOCOL
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Request protocol name and version.
 |       Type|String
@@ -398,7 +388,7 @@ the request line. Transactions that do not specify the protocol (e.g.,
 HTTP prior to 1.0) will have an empty string value.
 
 ==== REQUEST_URI
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Request URI, extracted from request and normalizedaccording to the current personality (see `REQUEST_FILENAME` for more details).
 |       Type|String
@@ -421,7 +411,7 @@ All normalization options:
 * Reduce consecutive forward slashes to a single character
 
 ==== REQUEST_URI_FRAGMENT
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parsed fragment portion of the URI within the requestline.
 |       Type|String
@@ -431,7 +421,7 @@ All normalization options:
 |===============================================================================
 
 ==== REQUEST_URI_HOST
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parsed host portion of the URI within the request line.
 |       Type|String
@@ -444,7 +434,7 @@ This is the hostname specified in the URI. Note that this may be
 different from the normalized host, which is in `REQUEST_HOST`.
 
 ==== REQUEST_URI_PARAMS
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Request parameters transported in query string.
 |       Type|Collection
@@ -454,7 +444,7 @@ different from the normalized host, which is in `REQUEST_HOST`.
 |===============================================================================
 
 ==== REQUEST_URI_PASSWORD
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parsed password portion of the URI within the requestline.
 |       Type|String
@@ -464,7 +454,7 @@ different from the normalized host, which is in `REQUEST_HOST`.
 |===============================================================================
 
 ==== REQUEST_URI_PATH
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parsed and normalized path portion of the URI within therequest line.
 |       Type|String
@@ -474,7 +464,7 @@ different from the normalized host, which is in `REQUEST_HOST`.
 |===============================================================================
 
 ==== REQUEST_URI_PATH_RAW
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parsed (raw) path portion of the URI within the requestline.
 |       Type|String
@@ -483,15 +473,12 @@ different from the normalized host, which is in `REQUEST_HOST`.
 |    Version|0.3
 |===============================================================================
 
-__________________________________________________________________________________________________________________________
-*Note*
-
+[NOTE]
 As no URL decoding is performed (this is a raw value), you probably want
 `REQUEST_URI_PATH_RAW.urlDecode()` in most cases.
-__________________________________________________________________________________________________________________________
 
 ==== REQUEST_URI_PORT
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parsed port portion of the URI within the request line.
 |       Type|String
@@ -501,7 +488,7 @@ ________________________________________________________________________________
 |===============================================================================
 
 ==== REQUEST_URI_RAW
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Raw, unnormalized, request URI from the request line.
 |       Type|String
@@ -511,7 +498,7 @@ ________________________________________________________________________________
 |===============================================================================
 
 ==== REQUEST_URI_SCHEME
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parsed scheme portion of the URI within the request line.
 |       Type|String
@@ -521,7 +508,7 @@ ________________________________________________________________________________
 |===============================================================================
 
 ==== REQUEST_URI_QUERY
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parsed query portion of the URI within the request line.
 |       Type|String
@@ -531,7 +518,7 @@ ________________________________________________________________________________
 |===============================================================================
 
 ==== REQUEST_URI_USERNAME
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parsed username portion of the URI within the requestline.
 |       Type|String
@@ -541,7 +528,7 @@ ________________________________________________________________________________
 |===============================================================================
 
 ==== RESPONSE_CONTENT_TYPE
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Contains the normalized response content type.
 |       Type|Scalar
@@ -556,7 +543,7 @@ header. The value is first converted to keep only the content type part
 lowercase.
 
 ==== RESPONSE_COOKIES
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Collection of response cookies (name/value pairs).
 |       Type|Collection
@@ -566,7 +553,7 @@ lowercase.
 |===============================================================================
 
 ==== RESPONSE_HEADERS
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Collection of response headers (name/value pairs).
 |       Type|Collection
@@ -576,7 +563,7 @@ lowercase.
 |===============================================================================
 
 ==== RESPONSE_LINE
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Full response line.
 |       Type|String
@@ -595,7 +582,7 @@ HTTP/1.1 200 OK
 ---------------
 
 ==== RESPONSE_MESSAGE
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Response status message.
 |       Type|String
@@ -609,7 +596,7 @@ as specified on the response line. Transactions that do not specify a
 response line (e.g., HTTP prior to 1.0) will have an empty string value.
 
 ==== RESPONSE_PROTOCOL
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Response protocol name and version.
 |       Type|String
@@ -623,7 +610,7 @@ response line. Transactions that do not specify a response line (e.g.,
 HTTP prior to 1.0) will have an empty string value.
 
 ==== RESPONSE_STATUS
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Response status code.
 |       Type|String
@@ -637,7 +624,7 @@ Transactions that do not specify a response line (e.g., HTTP prior to
 1.0) will have an empty string value.
 
 ==== SERVER_ADDR
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Server IP address, extracted from the TCP connection. Canbe in IPv4 or IPv6 format.
 |       Type|String
@@ -647,7 +634,7 @@ Transactions that do not specify a response line (e.g., HTTP prior to
 |===============================================================================
 
 ==== SERVER_PORT
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Server port, extracted from the TCP connection.
 |       Type|Numeric
@@ -657,7 +644,7 @@ Transactions that do not specify a response line (e.g., HTTP prior to
 |===============================================================================
 
 ==== TX
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Transaction collection.
 |       Type|Collection
@@ -671,7 +658,7 @@ is a generic place for rules to store transaction data in which other
 rules can monitor.
 
 ==== UA
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|User agent information extracted if the `user_agent`module is loaded.
 |       Type|Collection
@@ -680,13 +667,10 @@ rules can monitor.
 |    Version|0.3
 |===============================================================================
 
-______________________________________________________________________________________________________________________________________________
-*Note*
-
+[NOTE]
 While the `User-Agent` HTTP request header may be used in generating
 these fields, the term "user agent" here refers to the client as a
 whole.
-______________________________________________________________________________________________________________________________________________
 
 Sub-Fields:
 
@@ -701,7 +685,7 @@ Operators
 ~~~~~~~~~
 
 ==== contains
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target contains the given sub-string.
 |     Syntax|`@contains`
@@ -711,7 +695,7 @@ Operators
 |===============================================================================
 
 ==== dfa
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Deterministic finite atomation matching algorithm (PCRE'salternative matching algorithm).
 |     Syntax|`@dfa`
@@ -741,7 +725,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
 -------------------------------------------------------------------------------------------------
 
 ==== ee_match_any
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target matches any value in the namedeudoxus automata.
 |     Syntax|`@ee_match_any`
@@ -754,7 +738,7 @@ The named eudoxus automata must first be loaded with the `LoadEudoxus`
 directive
 
 ==== eq
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically equal to thegiven value.
 |     Syntax|`@eq`
@@ -764,7 +748,7 @@ directive
 |===============================================================================
 
 ==== ge
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically greater than orequal to the given value.
 |     Syntax|`@ge`
@@ -774,7 +758,7 @@ directive
 |===============================================================================
 
 ==== gt
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically greater thanthe given value.
 |     Syntax|`@gt`
@@ -784,7 +768,7 @@ directive
 |===============================================================================
 
 ==== imatch
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|As `match`, but case insensitive.
 |     Syntax|`@imatch `
@@ -794,7 +778,7 @@ directive
 |===============================================================================
 
 ==== ipmatch
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if a target IPv4 address matches any givenwhitespace separated address in CIDR format.
 |     Syntax|`@ipmatch `
@@ -804,7 +788,7 @@ directive
 |===============================================================================
 
 ==== ipmatch6
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if a target IPv6 address matches any givenwhitespace separated address in CIDR format.
 |     Syntax|`@ipmatch6 `
@@ -814,7 +798,7 @@ directive
 |===============================================================================
 
 ==== is_sqli
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the data is determined to be SQLinjection via the libinjection library.
 |     Syntax|`@is_sqli `
@@ -838,7 +822,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 --------------------------------------------------------------------------------------------------------------
 
 ==== le
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically less than orequal to the given value.
 |     Syntax|`@le`
@@ -848,7 +832,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 |===============================================================================
 
 ==== lt
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically less than thegiven value.
 |     Syntax|`@lt`
@@ -858,7 +842,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 |===============================================================================
 
 ==== match
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is any of the given whitespaceseparated words.
 |     Syntax|`@match `
@@ -868,7 +852,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 |===============================================================================
 
 ==== ne
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is not numerically equal tothe given value.
 |     Syntax|`@ne`
@@ -878,7 +862,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 |===============================================================================
 
 ==== pm
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parallel matching using the `Aho-Corasick` algorithm.
 |     Syntax|`@pm `
@@ -904,15 +888,12 @@ the `pm` operator can easily match many times per rule, the `CAPTURE:0`
 value is valid only when used in the same rule. In the following rules,
 `CAPTURE:0` will contain the data fragment of the last `@pm` match.
 
-________________________________________________________________________________________________________
-*Note*
-
+[NOTE]
 DEPRECATED: The "ac" module is deprecated. Use `rx`, `dfa`, `match`,
 `imatch` or `ee_match_any` instead.
-________________________________________________________________________________________________________
 
 ==== pmf
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Parallel matching with patterns from file.
 |     Syntax|`@pmf`
@@ -932,15 +913,12 @@ filenames are resolved from same directory as the configuration file.
 Rule REQUEST_HEADERS:User-Agent @pmf bad_user_agents.dat
 --------------------------------------------------------
 
-________________________________________________________________________________________________________
-*Note*
-
+[NOTE]
 DEPRECATED: The "ac" module is deprecated. Use `rx`, `dfa`, `match`,
 `imatch` or `ee_match_any` instead.
-________________________________________________________________________________________________________
 
 ==== rx
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Regular expression (perl compatible regular expression)matching.
 |     Syntax|`@rx`
@@ -983,7 +961,7 @@ to `CAPTURE:9`. These special `CAPTURE` variables will remain available
 until the next capture rule is run, when they will all be deleted.
 
 ==== streq
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if target exactly matches the given string.
 |     Syntax|`@streq`
@@ -993,7 +971,7 @@ until the next capture rule is run, when they will all be deleted.
 |===============================================================================
 
 ==== istreq
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|As `streq`, but case insensitive.
 |     Syntax|`@istreq`
@@ -1006,7 +984,7 @@ Modifiers
 ~~~~~~~~~
 
 ==== allow
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Mark a transaction as allowed to proceed to a giveninspection point.
 |       Type|Action
@@ -1026,7 +1004,7 @@ execution.
 without further rule execution.
 
 ==== event
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Cause the rule to generate a log event.
 |       Type|Action
@@ -1045,7 +1023,7 @@ observation, which could contribute to further inspection.
 * *alert* - Alert event type denoting a transaction should be logged.
 
 ==== logdata
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Add data to be logged with the event.
 |       Type|Metadata
@@ -1062,10 +1040,10 @@ Rule ARGS @rx pattern \
         "msg:Test matched" logdata:%{MATCHED_VAR}
 -------------------------------------------------
 
-Note: Up to 128 bytes of data will be recorded.
+NOTE: Up to 128 bytes of data will be recorded.
 
 ==== block
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Mark a transaction to be blocked.
 |       Type|Action
@@ -1084,7 +1062,7 @@ further rules may take into account.
 * *immediate* - Block the transaction immediately after rule execution.
 
 ==== capture
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Enable capturing the matching data.
 |       Type|Modifier
@@ -1104,7 +1082,7 @@ expression and the `dfa` operator supports capturing _all matches_, each
 being available as `CAPTURE:0`.
 
 ==== chain
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Chains the next rule, so that the next rule will executeonly if the current operator evaluates true.
 |       Type|Modifier
@@ -1162,7 +1140,7 @@ Rule &REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." 
 ---------------------------------------------------------------------------------------------------------
 
 ==== confidence
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Numeric value indicating the confidence of the rule.
 |       Type|Metadata
@@ -1175,7 +1153,7 @@ Rule &REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." 
 Higher confidence rules should have a lower False Positive rate.
 
 ==== delRequestHeader
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Delete an HTTP header from the request.
 |       Type|Action
@@ -1186,7 +1164,7 @@ Higher confidence rules should have a lower False Positive rate.
 |===============================================================================
 
 ==== delResponseHeader
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Delete an HTTP header from the response.
 |       Type|Action
@@ -1197,7 +1175,7 @@ Higher confidence rules should have a lower False Positive rate.
 |===============================================================================
 
 ==== id
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Unique identifier for a rule.
 |       Type|Metadata
@@ -1214,7 +1192,7 @@ TODO: Explain what the full unique id is (taking context and chains into
 account)
 
 ==== msg
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Message associated with the rule.
 |       Type|Metadata
@@ -1227,7 +1205,7 @@ account)
 This message is used by the `event` action when logging the event.
 
 ==== phase
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|The runtime phase at which the rule should execute.
 |       Type|Metadata
@@ -1271,7 +1249,7 @@ following phases:
   state. Actions cannot affect the transaction in this phase.
 
 ==== rev
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|An integer rule revision.
 |       Type|Metadata
@@ -1285,7 +1263,7 @@ TODO: Explain how this is used in RuleEnable and when overriding Rules
 in sub contexts.
 
 ==== setflag
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Set, or unset, boolean transaction attributes (flags).
 |       Type|Action
@@ -1298,14 +1276,11 @@ in sub contexts.
 Allow setting or unsetting transaction flags. Prefixing with a `!`
 unsets the flag.
 
-______________________________________________________________________________________________________________________________________________________________________________________________________________________________________
-*Note*
-
+[NOTE]
 Currently the `inspectRequestHeader` flag is always set as this is
 required for the site selection process. Additionally, the
 `RequestBuffering` and `ResponseBuffering` directives must be enabled to
 buffer the request or response.
-______________________________________________________________________________________________________________________________________________________________________________________________________________________________________
 
 * *block* - Set if transaction was marked for block.
 * *suspicious* - Set if transaction was marked as suspicious and care
@@ -1320,7 +1295,7 @@ response header (default: unset).
 response body (default: unset).
 
 ==== setRequestHeader
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Set the value of a HTTP request header.
 |       Type|Action
@@ -1331,7 +1306,7 @@ response body (default: unset).
 |===============================================================================
 
 ==== setResponseHeader
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Set the value of an HTTP response header.
 |       Type|Action
@@ -1342,7 +1317,7 @@ response body (default: unset).
 |===============================================================================
 
 ==== setvar
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Set a variable data field.
 |       Type|Action
@@ -1373,11 +1348,12 @@ setvar:tx:score+=5
 ----------------------
 
 An attempt to modify a value of a non-numerical variable will assume the
-old value was zero (NOTE: Probably should just fail, logging an attempt
-was made to modify a non-numerical value).
+old value was zero.
+
+NOTE: Probably should just fail, logging an attempt was made to modify a non-numerical value.
 
 ==== severity
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Numeric value indicating the severity of the issue thisrule is trying to protect against.
 |       Type|Metadata
@@ -1395,7 +1371,7 @@ severe the threat may be with how well this rule might be protecting
 against it.
 
 ==== status
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|The HTTP status code to use for a blocking action.
 |       Type|Modifier
@@ -1406,7 +1382,7 @@ against it.
 |===============================================================================
 
 ==== t
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Apply one or more named transformations to each of thetargets in a rule.
 |       Type|Modifier
@@ -1417,7 +1393,7 @@ against it.
 |===============================================================================
 
 ==== tag
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Apply an arbitrary tag name to a rule.
 |       Type|Metadata
@@ -1434,7 +1410,7 @@ Transformation Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 ==== base64Decode
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|
 |     Module|core
@@ -1442,7 +1418,7 @@ Transformation Functions
 |===============================================================================
 
 ==== ceil
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Return the integral value greater than or equal to thenumeric value of the input.
 |     Module|core
@@ -1450,7 +1426,7 @@ Transformation Functions
 |===============================================================================
 
 ==== compressWhitespace
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Replaces one or more consecutive whitespace characterswith a single space.
 |     Module|core
@@ -1463,7 +1439,7 @@ space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
 `0xa0` (non-breaking whitespace).
 
 ==== count
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Given a collection, it returns the number if items in thecollection. Given a scalar, returns 1.
 |     Module|core
@@ -1471,7 +1447,7 @@ space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
 |===============================================================================
 
 ==== floor
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Return the integral value less than or equal to thenumeric value of the input.
 |     Module|core
@@ -1479,7 +1455,7 @@ space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
 |===============================================================================
 
 ==== htmlEntityDecode
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Decodes HTML entities in the data.
 |     Module|core
@@ -1499,7 +1475,7 @@ See
 https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 
 ==== length
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns the byte length of the value.
 |     Module|core
@@ -1507,7 +1483,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 |===============================================================================
 
 ==== lowercase
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns the input as all lower case characters.
 |     Module|core
@@ -1515,7 +1491,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 |===============================================================================
 
 ==== max
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Given a collection of numeric data, returns the maximumvalue.
 |     Module|core
@@ -1523,7 +1499,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 |===============================================================================
 
 ==== min
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Given a collection of numeric data, returns the minimumvalue.
 |     Module|core
@@ -1531,7 +1507,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 |===============================================================================
 
 ==== name
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns the name of the field as the value.
 |     Module|core
@@ -1539,7 +1515,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 |===============================================================================
 
 ==== names
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Returns a collection of names from a collection ofname/value pairs.
 |     Module|core
@@ -1547,7 +1523,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 |===============================================================================
 
 ==== normalizePath
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Normalize a filesystem path, removing back and selfreferences.
 |     Module|core
@@ -1555,7 +1531,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 |===============================================================================
 
 ==== normalizePathWin
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Normalize a Windows filesystem path, removing back andself references.
 |     Module|core
@@ -1563,7 +1539,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 |===============================================================================
 
 ==== normalizeSqli
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Normalize potential SQL injection via libinjection.
 |     Module|libinjection
@@ -1586,7 +1562,7 @@ Output: foo' or 1=1 union select id,passwd from users --
 --------------------------------------------------------
 
 ==== normalizeSqlPg
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Normalize postgres SQL.
 |     Module|sqltfn
@@ -1606,7 +1582,7 @@ Output: foo' or 1 = 1 union select id,passwd from users
 --------------------------------------------------------
 
 ==== removeWhitespace
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Removes one or more consecutive whitespace characters.
 |     Module|core
@@ -1617,7 +1593,7 @@ Similar to `compressWhitespace`, except removes the characters instead
 of replacing them with a single space.
 
 ==== removeComments
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Remove various types of code comments.
 |     Module|core
@@ -1632,7 +1608,7 @@ The following style comments are replaced:
 * *-- ...* - SQL style comments.
 
 ==== replaceComments
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Replace various types of code comments with a singlespace character.
 |     Module|core
@@ -1643,7 +1619,7 @@ This is similar to `removeComments`, but instead of removing, replaces
 with a single space character.
 
 ==== round
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Return the integral value closest to the numeric value ofthe input.
 |     Module|core
@@ -1651,7 +1627,7 @@ with a single space character.
 |===============================================================================
 
 ==== trim
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Removes consecutive whitespace from the beginning and endof the input.
 |     Module|core
@@ -1659,7 +1635,7 @@ with a single space character.
 |===============================================================================
 
 ==== trimLeft
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Removes consecutive whitespace from the beginning of theinput.
 |     Module|core
@@ -1667,7 +1643,7 @@ with a single space character.
 |===============================================================================
 
 ==== trimRight
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Removes consecutive whitespace from the end of the input.
 |     Module|core
@@ -1675,7 +1651,7 @@ with a single space character.
 |===============================================================================
 
 ==== toFloat
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Convert input to a numeric floating point type.
 |     Module|core
@@ -1683,7 +1659,7 @@ with a single space character.
 |===============================================================================
 
 ==== toInteger
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Convert input to a numeric integral type.
 |     Module|core
@@ -1691,7 +1667,7 @@ with a single space character.
 |===============================================================================
 
 ==== toString
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Convert input to a string type.
 |     Module|core
@@ -1699,7 +1675,7 @@ with a single space character.
 |===============================================================================
 
 ==== urlDecode
-[cols=">s,<9"]
+[cols=">h,<9"]
 |===============================================================================
 |Description|Decodes URL encoded values in the input.
 |     Module|core

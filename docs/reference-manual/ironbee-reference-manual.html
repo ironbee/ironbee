@@ -357,14 +357,12 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 .conum:after { content: attr(data-value); }
 .conum:not([data-value]):empty { display: none; }
 .literalblock > .content > pre, .listingblock > .content > pre { -webkit-border-radius: 0; border-radius: 0; }
-
 </style>
 </head>
 <body class="book toc2 toc-right">
 <div id="header">
 <h1>IronBee Reference Manual</h1>
 <span id="author" class="author">Brian Rectanus</span><br>
-<span id="revnumber">version 0.9.0,</span>
 <span id="revdate">2010-2014</span>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -420,6 +418,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_ironbee_configuration">IronBee Configuration</a></li>
 <li>
 <ul class="sectlevel2">
+<li><a href="#_action">Action</a></li>
 <li><a href="#_auditengine">AuditEngine</a></li>
 <li><a href="#_auditlogbasedir">AuditLogBaseDir</a></li>
 <li><a href="#_auditlogdirmode">AuditLogDirMode</a></li>
@@ -1897,6 +1896,55 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
 <div class="paragraph">
 <p>The following is a reference for all IronBee directives where the
 context refers to the possible locations within the configuration file.</p>
+</div>
+<div class="sect2">
+<h3 id="_action">Action</h3>
+<div class="paragraph">
+<p><strong>Description:</strong> Loads a rule that will always execute its actions and,
+in most contexts, enable the rule for execution in that context.</p>
+</div>
+<div class="paragraph">
+<p><strong>Syntax:</strong> <code>Action id:1234 rev:1 phase:THE_PHASE ...</code></p>
+</div>
+<div class="paragraph">
+<p><strong>Default:</strong> None</p>
+</div>
+<div class="paragraph">
+<p><strong>Context:</strong> Any</p>
+</div>
+<div class="paragraph">
+<p><strong>Cardinality:</strong> 0..n</p>
+</div>
+<div class="paragraph">
+<p><strong>Module:</strong> rules</p>
+</div>
+<div class="paragraph">
+<p><strong>Version:</strong> 0.4</p>
+</div>
+<div class="paragraph">
+<p>This is shorthand and functionally equivilant to a rule with no targets
+and an operator that always returns true. Internally this is represented as
+follows.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre># These are equivilents
+Rule NULL @nop "" ...
+Action ...</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*Note*
+
+Loading a rule will, in most contexts, also enable the rule to be
+executed in that context. However, the main configuration context is
+special. Loading a rule in the main configuration context will _NOT_
+enable the rule, but just load it into memory so that it can be shared
+by other contexts. You must explicitly use `RuleEnable` in another
+context to enable the rule.</pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_auditengine">AuditEngine</h3>
@@ -3392,13 +3440,7 @@ client. Request headers will be sent before the first overflow batch.</p>
 execution in that context.</p>
 </div>
 <div class="paragraph">
-<p><strong>Syntax:</strong> `Rule
-                 @</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>`</pre>
-</div>
+<p><strong>Syntax:</strong> <code>Rule TARGET @operator "param" id:1234 rev:1 phase:THE_PHASE ...</code></p>
 </div>
 <div class="paragraph">
 <p><strong>Default:</strong> None</p>
@@ -6027,41 +6069,42 @@ Lua.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">All request parameters combined and normalized.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction (<code>REQUEST_HEADERS</code>, <code>REQUEST_BODY</code>)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
 </table>
 
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>The <code>ARGS</code> collection is currently the same as specifying
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The <code>ARGS</code> collection is currently the same as specifying
 <code>REQUEST_URL_PARAMS REQUEST_BODY_PARAMS</code>, but this will change in later
 releases to include normalization based on parser personalities. If you
-do not want normalization, then use <code>REQUEST_URL_PARAMS
-                            REQUEST_BODY_PARAMS</code>.</p>
-</div>
-</blockquote>
+do not want normalization, then use <code>REQUEST_URL_PARAMS REQUEST_BODY_PARAMS</code>.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect3">
@@ -6073,23 +6116,23 @@ do not want normalization, then use <code>REQUEST_URL_PARAMS
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Basic authentication password.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -6105,23 +6148,23 @@ do not want normalization, then use <code>REQUEST_URL_PARAMS
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Indicator of the authentication method used.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -6141,23 +6184,23 @@ request header. Typical values are: <code>Basic</code>, <code>Digest</code>, and
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Basic or Digest authentication username.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -6173,23 +6216,23 @@ request header. Typical values are: <code>Basic</code>, <code>Digest</code>, and
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction collection.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -6209,23 +6252,23 @@ captured data from operators is stored here in keys "0"-"9".</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">An alias to the current field being inspected.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Variable (same type as the aliased field)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Rule</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.5</p></td>
 </tr>
 </tbody>
@@ -6259,23 +6302,23 @@ Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">An alias to the current field name being inspected, notincluding the collection name if it is a sub-field in a collection.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Variable (same type as the aliased field)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Rule</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.5</p></td>
 </tr>
 </tbody>
@@ -6298,23 +6341,23 @@ prepended, then use <code>FIELD_NAME_FULL</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">An alias to the current field name being inspected,including the collection name if it is a sub-field in a collection.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Variable (same type as the aliased field)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Rule</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.5</p></td>
 </tr>
 </tbody>
@@ -6334,39 +6377,41 @@ must have the full name of the field being inspected. See <code>FIELD_NAME</code
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">If the <em>geoip</em> module is loaded, then a lookup will beperformed on the remote (client) address and the results placed in this collection.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">geoip</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
 </table>
 
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>The address used during lookup is the same as that stored in the
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The address used during lookup is the same as that stored in the
 <code>REMOTE_ADDR</code> field, which may be modified from the actual connection
-(TCP) level address by the <code>user_agent</code> module.</p>
-</div>
-</blockquote>
+(TCP) level address by the <code>user_agent</code> module.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Sub-Fields (not all are available prior to GeoIP v1.4.6):</p>
@@ -6438,23 +6483,23 @@ floats yet).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection of LibHTP request parsing flags.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">htp</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -6566,23 +6611,23 @@ URL.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection of LibHTP response parsing flags.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">htp</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -6638,39 +6683,41 @@ be set:</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Remote (client) IP address, extracted from the TCPconnection. Can be in IPv4 or IPv6 format.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Connection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
 </table>
 
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>If the <code>user_agent</code> module is also loaded, then the client address will
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+If the <code>user_agent</code> module is also loaded, then the client address will
 be corrected using any available proxy headers (currently
-<code>X-Forwarded-For</code>).</p>
-</div>
-</blockquote>
+<code>X-Forwarded-For</code>).
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect3">
@@ -6682,23 +6729,23 @@ be corrected using any available proxy headers (currently
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Remote (client) port, extracted from the TCP connection.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Connection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -6714,23 +6761,23 @@ be corrected using any available proxy headers (currently
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Request parameters transported in request body.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -6746,23 +6793,23 @@ be corrected using any available proxy headers (currently
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Contains the normalized request content type.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction (<code>REQUEST_HEADERS</code>)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet</p></td>
 </tr>
 </tbody>
@@ -6784,23 +6831,23 @@ lowercase.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection of request cookies (name/value pairs).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction (<code>REQUEST_HEADERS</code>)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -6816,23 +6863,23 @@ lowercase.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Request filename, extracted from request URI andnormalized according to the current personality.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet</p></td>
 </tr>
 </tbody>
@@ -6866,23 +6913,23 @@ terminate NUL.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection of request headers (name/value pairs).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction (<code>REQUEST_HEADERS</code>)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -6898,23 +6945,23 @@ terminate NUL.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Request hostname information, extracted from the requestand normalized.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction (<code>REQUEST_HEADERS</code>)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -6963,23 +7010,23 @@ information in the HTTP <code>Host</code> request header is ignored</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Full, raw, request line.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7003,23 +7050,23 @@ information in the HTTP <code>Host</code> request header is ignored</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Request method.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7041,23 +7088,23 @@ information in the HTTP <code>Host</code> request header is ignored</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Request protocol name and version.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">o.3</p></td>
 </tr>
 </tbody>
@@ -7078,23 +7125,23 @@ HTTP prior to 1.0) will have an empty string value.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Request URI, extracted from request and normalizedaccording to the current personality (see <code>REQUEST_FILENAME</code> for more details).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -7145,23 +7192,23 @@ HTTP prior to 1.0) will have an empty string value.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parsed fragment portion of the URI within the requestline.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7177,23 +7224,23 @@ HTTP prior to 1.0) will have an empty string value.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parsed host portion of the URI within the request line.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7213,23 +7260,23 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Request parameters transported in query string.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction (<code>REQUEST_HEADERS</code>)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -7245,23 +7292,23 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parsed password portion of the URI within the requestline.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7277,23 +7324,23 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parsed and normalized path portion of the URI within therequest line.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7309,38 +7356,40 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parsed (raw) path portion of the URI within the requestline.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
 </table>
 
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>As no URL decoding is performed (this is a raw value), you probably want
-<code>REQUEST_URI_PATH_RAW.urlDecode()</code> in most cases.</p>
-</div>
-</blockquote>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+As no URL decoding is performed (this is a raw value), you probably want
+<code>REQUEST_URI_PATH_RAW.urlDecode()</code> in most cases.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect3">
@@ -7352,23 +7401,23 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parsed port portion of the URI within the request line.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7384,23 +7433,23 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Raw, unnormalized, request URI from the request line.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -7416,23 +7465,23 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parsed scheme portion of the URI within the request line.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7448,23 +7497,23 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parsed query portion of the URI within the request line.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7480,23 +7529,23 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parsed username portion of the URI within the requestline.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7512,23 +7561,23 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Contains the normalized response content type.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Scalar</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction (<code>RESPONSE_HEADERS</code>)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet</p></td>
 </tr>
 </tbody>
@@ -7550,23 +7599,23 @@ lowercase.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection of response cookies (name/value pairs).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet</p></td>
 </tr>
 </tbody>
@@ -7582,23 +7631,23 @@ lowercase.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection of response headers (name/value pairs).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -7614,23 +7663,23 @@ lowercase.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Full response line.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7658,23 +7707,23 @@ lowercase.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Response status message.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7695,23 +7744,23 @@ response line (e.g., HTTP prior to 1.0) will have an empty string value.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Response protocol name and version.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7732,23 +7781,23 @@ HTTP prior to 1.0) will have an empty string value.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Response status code.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7769,23 +7818,23 @@ Transactions that do not specify a response line (e.g., HTTP prior to
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Server IP address, extracted from the TCP connection. Canbe in IPv4 or IPv6 format.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Connection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -7801,23 +7850,23 @@ Transactions that do not specify a response line (e.g., HTTP prior to
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Server port, extracted from the TCP connection.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Connection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -7833,23 +7882,23 @@ Transactions that do not specify a response line (e.g., HTTP prior to
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction collection.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7870,39 +7919,41 @@ rules can monitor.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">User agent information extracted if the `user_agent`module is loaded.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Collection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Scope</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Transaction</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">user_agent</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
 </table>
 
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>While the <code>User-Agent</code> HTTP request header may be used in generating
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+While the <code>User-Agent</code> HTTP request header may be used in generating
 these fields, the term "user agent" here refers to the client as a
-whole.</p>
-</div>
-</blockquote>
+whole.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Sub-Fields:</p>
@@ -7940,23 +7991,23 @@ HTTP request header.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target contains the given sub-string.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@contains</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -7972,23 +8023,23 @@ HTTP request header.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Deterministic finite atomation matching algorithm (PCRE&#8217;salternative matching algorithm).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@dfa</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">pcre</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -8027,23 +8078,23 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target matches any value in the namedeudoxus automata.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@ee_match_any</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ee</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -8063,23 +8114,23 @@ directive</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically equal to thegiven value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@eq</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -8095,23 +8146,23 @@ directive</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically greater than orequal to the given value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@ge</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -8127,23 +8178,23 @@ directive</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically greater thanthe given value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@gt</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -8159,23 +8210,23 @@ directive</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">As <code>match</code>, but case insensitive.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">`@imatch `</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -8191,23 +8242,23 @@ directive</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if a target IPv4 address matches any givenwhitespace separated address in CIDR format.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">`@ipmatch `</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -8223,23 +8274,23 @@ directive</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if a target IPv6 address matches any givenwhitespace separated address in CIDR format.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">`@ipmatch6 `</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -8255,23 +8306,23 @@ directive</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the data is determined to be SQLinjection via the libinjection library.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">`@is_sqli `</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">libinjection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -8305,23 +8356,23 @@ databases is not yet implemented.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically less than orequal to the given value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@le</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -8337,23 +8388,23 @@ databases is not yet implemented.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically less than thegiven value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@lt</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -8369,23 +8420,23 @@ databases is not yet implemented.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is any of the given whitespaceseparated words.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">`@match `</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -8401,23 +8452,23 @@ databases is not yet implemented.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is not numerically equal tothe given value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@ne</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -8433,23 +8484,23 @@ databases is not yet implemented.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parallel matching using the <code>Aho-Corasick</code> algorithm.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">`@pm `</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ac</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -8475,16 +8526,18 @@ the <code>pm</code> operator can easily match many times per rule, the <code>CAP
 value is valid only when used in the same rule. In the following rules,
 <code>CAPTURE:0</code> will contain the data fragment of the last <code>@pm</code> match.</p>
 </div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>DEPRECATED: The "ac" module is deprecated. Use <code>rx</code>, <code>dfa</code>, <code>match</code>,
-<code>imatch</code> or <code>ee_match_any</code> instead.</p>
-</div>
-</blockquote>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+DEPRECATED: The "ac" module is deprecated. Use <code>rx</code>, <code>dfa</code>, <code>match</code>,
+<code>imatch</code> or <code>ee_match_any</code> instead.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect3">
@@ -8496,23 +8549,23 @@ value is valid only when used in the same rule. In the following rules,
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parallel matching with patterns from file.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@pmf</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ac</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -8531,16 +8584,18 @@ filenames are resolved from same directory as the configuration file.</p>
 <pre>Rule REQUEST_HEADERS:User-Agent @pmf bad_user_agents.dat</pre>
 </div>
 </div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>DEPRECATED: The "ac" module is deprecated. Use <code>rx</code>, <code>dfa</code>, <code>match</code>,
-<code>imatch</code> or <code>ee_match_any</code> instead.</p>
-</div>
-</blockquote>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+DEPRECATED: The "ac" module is deprecated. Use <code>rx</code>, <code>dfa</code>, <code>match</code>,
+<code>imatch</code> or <code>ee_match_any</code> instead.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect3">
@@ -8552,23 +8607,23 @@ filenames are resolved from same directory as the configuration file.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Regular expression (perl compatible regular expression)matching.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@rx</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">pcre</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -8633,23 +8688,23 @@ until the next capture rule is run, when they will all be deleted.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if target exactly matches the given string.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@streq</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -8665,23 +8720,23 @@ until the next capture rule is run, when they will all be deleted.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">As <code>streq</code>, but case insensitive.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>@istreq</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Types</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -8700,27 +8755,27 @@ until the next capture rule is run, when they will all be deleted.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Mark a transaction as allowed to proceed to a giveninspection point.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>allow[":phase" | ":request"]</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -8753,27 +8808,27 @@ without further rule execution.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Cause the rule to generate a log event.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>event[":observation" | ":alert"]</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -8805,27 +8860,27 @@ observation, which could contribute to further inspection.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Add data to be logged with the event.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>logdata:</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -8840,8 +8895,17 @@ observation, which could contribute to further inspection.</p>
         "msg:Test matched" logdata:%{MATCHED_VAR}</pre>
 </div>
 </div>
-<div class="paragraph">
-<p>Note: Up to 128 bytes of data will be recorded.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Up to 128 bytes of data will be recorded.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect3">
@@ -8853,27 +8917,27 @@ observation, which could contribute to further inspection.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Mark a transaction to be blocked.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>block[:advisory | :phase | :immediate]</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -8907,27 +8971,27 @@ further rules may take into account.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Enable capturing the matching data.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Modifier</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>capture</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -8953,27 +9017,27 @@ being available as <code>CAPTURE:0</code>.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Chains the next rule, so that the next rule will executeonly if the current operator evaluates true.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Modifier</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>chain</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9052,27 +9116,27 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the confidence of the rule.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>confidence:</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9091,27 +9155,27 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Delete an HTTP header from the request.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>delRequestHeader:</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9127,27 +9191,27 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Delete an HTTP header from the response.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>delResponseHeader:</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9163,27 +9227,27 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Unique identifier for a rule.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>id:</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9207,27 +9271,27 @@ account)</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Message associated with the rule.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>msg:</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9246,27 +9310,27 @@ account)</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The runtime phase at which the rule should execute.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>phase:REQUEST_HEADER | REQUEST | RESPONSE_HEADER | RESPONSE | POSTPROCESS</code></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>phase:phase-name</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9284,20 +9348,40 @@ following phases:</p>
 before reading the HTTP request body (if any). Most rules should not
 use this phase, opting for the <code>REQUEST</code> phase instead.</p>
 </dd>
+<dt class="hdlist1"><code>REQUEST_HEADER_PROCESS</code></dt>
+<dd>
+<p>Invoked after the REQUEST_HEADER phase to allow for processing the phase,
+such as invoking blocking rules.</p>
+</dd>
 <dt class="hdlist1"><code>REQUEST</code></dt>
 <dd>
 <p>Invoked after receiving the entire HTTP request, which may involve
 request body and request trailers, but it will run even when neither
 is present.</p>
 </dd>
+<dt class="hdlist1"><code>REQUEST_PROCESS</code></dt>
+<dd>
+<p>Invoked after the REQUEST phase to allow for processing the phase,
+such as invoking blocking rules.</p>
+</dd>
 <dt class="hdlist1"><code>RESPONSE_HEADER</code></dt>
 <dd>
 <p>Invoked after receiving the HTTP entire response header.</p>
+</dd>
+<dt class="hdlist1"><code>RESPONSE_HEADER_PROCESS</code></dt>
+<dd>
+<p>Invoked after the RESPONSE_HEADER phase to allow for processing the phase,
+such as invoking blocking rules.</p>
 </dd>
 <dt class="hdlist1"><code>RESPONSE</code></dt>
 <dd>
 <p>Invoked after receiving the HTTP response body (if any) and response
 trailers (if any).</p>
+</dd>
+<dt class="hdlist1"><code>RESPONSE_PROCESS</code></dt>
+<dd>
+<p>Invoked after the RESPONSE phase to allow for processing the phase,
+such as invoking blocking rules.</p>
 </dd>
 <dt class="hdlist1"><code>POSTPROCESS</code></dt>
 <dd>
@@ -9317,27 +9401,27 @@ state. Actions cannot affect the transaction in this phase.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">An integer rule revision.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>rev:n</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9357,27 +9441,27 @@ in sub contexts.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set, or unset, boolean transaction attributes (flags).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>setflag:[!]</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
 </tr>
 </tbody>
@@ -9387,18 +9471,20 @@ in sub contexts.</p>
 <p>Allow setting or unsetting transaction flags. Prefixing with a <code>!</code>
 unsets the flag.</p>
 </div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>Currently the <code>inspectRequestHeader</code> flag is always set as this is
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Currently the <code>inspectRequestHeader</code> flag is always set as this is
 required for the site selection process. Additionally, the
 <code>RequestBuffering</code> and <code>ResponseBuffering</code> directives must be enabled to
-buffer the request or response.</p>
-</div>
-</blockquote>
+buffer the request or response.
+</td>
+</tr>
+</table>
 </div>
 <div class="ulist">
 <ul>
@@ -9437,27 +9523,27 @@ response body (default: unset).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set the value of a HTTP request header.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>setRequestHeader:=</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9473,27 +9559,27 @@ response body (default: unset).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set the value of an HTTP response header.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>setResponseHeader:=</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9509,27 +9595,27 @@ response body (default: unset).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set a variable data field.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>setvar:[!][+|-]=</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -9563,8 +9649,19 @@ variable data field or change its value:</p>
 </div>
 <div class="paragraph">
 <p>An attempt to modify a value of a non-numerical variable will assume the
-old value was zero (NOTE: Probably should just fail, logging an attempt
-was made to modify a non-numerical value).</p>
+old value was zero.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Probably should just fail, logging an attempt was made to modify a non-numerical value.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect3">
@@ -9576,27 +9673,27 @@ was made to modify a non-numerical value).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the severity of the issue thisrule is trying to protect against.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>severity:</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9620,27 +9717,27 @@ against it.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The HTTP status code to use for a blocking action.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Modifier</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>status:</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9656,27 +9753,27 @@ against it.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Apply one or more named transformations to each of thetargets in a rule.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Modifier</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>t:</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9692,27 +9789,27 @@ against it.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Apply an arbitrary tag name to a rule.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Metadata</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Syntax</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>tag:</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Cardinality</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9735,15 +9832,15 @@ and logged with events.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet.</p></td>
 </tr>
 </tbody>
@@ -9759,15 +9856,15 @@ and logged with events.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to thenumeric value of the input.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -9783,15 +9880,15 @@ and logged with events.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Replaces one or more consecutive whitespace characterswith a single space.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -9813,15 +9910,15 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection, it returns the number if items in thecollection. Given a scalar, returns 1.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9837,15 +9934,15 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to thenumeric value of the input.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -9861,15 +9958,15 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Decodes HTML entities in the data.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
 </tr>
 </tbody>
@@ -9908,15 +10005,15 @@ lt, gt).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns the byte length of the value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
 </tr>
 </tbody>
@@ -9932,15 +10029,15 @@ lt, gt).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns the input as all lower case characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -9956,15 +10053,15 @@ lt, gt).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the maximumvalue.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -9980,15 +10077,15 @@ lt, gt).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the minimumvalue.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -10004,15 +10101,15 @@ lt, gt).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns the name of the field as the value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
 </tr>
 </tbody>
@@ -10028,15 +10125,15 @@ lt, gt).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns a collection of names from a collection ofname/value pairs.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
 </tr>
 </tbody>
@@ -10052,15 +10149,15 @@ lt, gt).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a filesystem path, removing back and selfreferences.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
 </tr>
 </tbody>
@@ -10076,15 +10173,15 @@ lt, gt).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a Windows filesystem path, removing back andself references.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
 </tr>
 </tbody>
@@ -10100,15 +10197,15 @@ lt, gt).</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Normalize potential SQL injection via libinjection.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">libinjection</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -10143,15 +10240,15 @@ in libinjection. The libinjection library is available via:
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Normalize postgres SQL.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">sqltfn</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -10183,15 +10280,15 @@ in libinjection. The libinjection library is available via:
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Removes one or more consecutive whitespace characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
 </tr>
 </tbody>
@@ -10211,15 +10308,15 @@ of replacing them with a single space.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Remove various types of code comments.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet.</p></td>
 </tr>
 </tbody>
@@ -10254,15 +10351,15 @@ of replacing them with a single space.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Replace various types of code comments with a singlespace character.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet.</p></td>
 </tr>
 </tbody>
@@ -10282,15 +10379,15 @@ with a single space character.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value ofthe input.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
 </tr>
 </tbody>
@@ -10306,15 +10403,15 @@ with a single space character.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning and endof the input.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -10330,15 +10427,15 @@ with a single space character.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning of theinput.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -10354,15 +10451,15 @@ with a single space character.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the end of the input.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
 </tr>
 </tbody>
@@ -10378,15 +10475,15 @@ with a single space character.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a numeric floating point type.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
 </tr>
 </tbody>
@@ -10402,15 +10499,15 @@ with a single space character.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a numeric integral type.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
 </tr>
 </tbody>
@@ -10426,15 +10523,15 @@ with a single space character.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Convert input to a string type.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
 </tr>
 </tbody>
@@ -10450,15 +10547,15 @@ with a single space character.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Decodes URL encoded values in the input.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Module</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Not implemented yet.</p></td>
 </tr>
 </tbody>
@@ -12579,8 +12676,7 @@ in the future</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.9.0<br>
-Last updated 2014-02-01 00:27:04 CST
+Last updated 2014-02-16 23:55:17 CST
 </div>
 </div>
 </body>
