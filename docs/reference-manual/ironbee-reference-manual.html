@@ -445,7 +445,6 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_loadmodule">LoadModule</a></li>
 <li><a href="#_location">Location</a></li>
 <li><a href="#_log">Log</a></li>
-<li><a href="#_loghandler">LogHandler</a></li>
 <li><a href="#_loglevel">LogLevel</a></li>
 <li><a href="#_lualoadmodule">LuaLoadModule</a></li>
 <li><a href="#_luainclude">LuaInclude</a></li>
@@ -1899,28 +1898,43 @@ context refers to the possible locations within the configuration file.</p>
 </div>
 <div class="sect2">
 <h3 id="_action">Action</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Loads a rule that will always execute its actions and,
-in most contexts, enable the rule for execution in that context.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>Action id:1234 rev:1 phase:THE_PHASE ...</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> rules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Loads a rule that will always execute its actions and,in most contexts, enable the rule for execution in that context.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Action id:1234 rev:1 phase:THE_PHASE ...</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">rules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>This is shorthand and functionally equivilant to a rule with no targets
 and an operator that always returns true. Internally this is represented as
@@ -1933,42 +1947,63 @@ Rule NULL @nop "" ...
 Action ...</pre>
 </div>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>*Note*
-
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
 Loading a rule will, in most contexts, also enable the rule to be
 executed in that context. However, the main configuration context is
-special. Loading a rule in the main configuration context will _NOT_
+special. Loading a rule in the main configuration context will <em>NOT</em>
 enable the rule, but just load it into memory so that it can be shared
-by other contexts. You must explicitly use `RuleEnable` in another
-context to enable the rule.</pre>
-</div>
+by other contexts. You must explicitly use <code>RuleEnable</code> in another
+context to enable the rule.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_auditengine">AuditEngine</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the audit log engine.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>AuditEngine On|Off|RelevantOnly</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>RelevantOnly</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.3</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the audit log engine.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AuditEngine On|Off|RelevantOnly</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RelevantOnly</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Setting <code>AuditEngine</code> to <code>RelevantOnly</code>, the default, does not log any
 transactions in itself. Instead, further activity (e.g., a rule match)
@@ -1979,103 +2014,163 @@ large amount of data to be logged.</p>
 </div>
 <div class="sect2">
 <h3 id="_auditlogbasedir">AuditLogBaseDir</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the directory where individual audit log
-entries will be stored. This also serves as the base directory for
-<code>AuditLogIndex</code> if it uses a relative path.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `AuditLogBaseDir `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>"/var/log/ironbee"</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.3</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the directory where individual audit logentries will be stored. This also serves as the base directory for <code>AuditLogIndex</code> if it uses a relative path.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AuditLogBaseDir</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>"/var/log/ironbee"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_auditlogdirmode">AuditLogDirMode</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the directory mode that will be used for new
-directories created during audit logging.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `AuditLogDirMode `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>0700</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the directory mode that will be used for newdirectories created during audit logging.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AuditLogDirMode</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>0700</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_auditlogfilemode">AuditLogFileMode</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the file mode that will be used when creating
-individual audit log files.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `AuditLogFileMode `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>0600</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.6</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the file mode that will be used when creatingindividual audit log files.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AuditLogFileMode</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>0600</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_auditlogindex">AuditLogIndex</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the location of the audit log index file.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>AuditLogIndex None|</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>ironbee-index.log</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the location of the audit log index file.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AuditLogIndex None|&lt;location&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ironbee-index.log</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Relative filenames are based off the <code>AuditLogBaseDir</code> directory and
 specifying <code>None</code> disables the index file entirely.</p>
@@ -2083,29 +2178,43 @@ specifying <code>None</code> disables the index file entirely.</p>
 </div>
 <div class="sect2">
 <h3 id="_auditlogindexformat">AuditLogIndexFormat</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the format of the entries logged in the audit
-log index file.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `AuditLogIndexFormat
-                `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>"%T %h %a %S %s %t %f"</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the format of the entries logged in the auditlog index file.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AuditLogIndexFormat</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>"%T %h %a %S %s %t %f"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="ulist">
 <ul>
 <li>
@@ -2140,27 +2249,43 @@ log index file.</p>
 </div>
 <div class="sect2">
 <h3 id="_auditlogparts">AuditLogParts</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures which parts will be logged to the audit log.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>AuditLogPart  ...</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>default</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures which parts will be logged to the audit log.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AuditLogPart ...</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>default</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>An audit log consist of many parts; <code>AuditLogParts</code> determines which
 parts are recorded by default. The parts are inherited into child
@@ -2187,8 +2312,8 @@ and thus can just specify this part with the + operator:</p>
 <div class="listingblock">
 <div class="content">
 <pre>&lt;Location /some/path&gt;
-        AuditLogParts
-    &lt;/Location&gt;</pre>
+    AuditLogParts
+&lt;/Location&gt;</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2198,8 +2323,8 @@ more, you would write:</p>
 <div class="listingblock">
 <div class="content">
 <pre>&lt;Location /some/path&gt;
-        AuditLogParts
-    &lt;/Location&gt;</pre>
+    AuditLogParts
+&lt;/Location&gt;</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2277,104 +2402,163 @@ parts without bodies)</p>
 </div>
 <div class="sect2">
 <h3 id="_auditlogsubdirformat">AuditLogSubDirFormat</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the directory structure created under the
-<em>AuditLogBaseDir</em> directory. This is a <em>strftime(3)</em> format string
-allowing the directory structure to be created based on date/time.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `AuditLogSubDirFormat
-                `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>403</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the directory structure created under the_AuditLogBaseDir_ directory. This is a <em>strftime(3)</em> format string allowing the directory structure to be created based on date/time.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AuditLogSubDirFormat</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>403</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_defaultblockstatus">DefaultBlockStatus</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the default HTTP status code used for
-blocking.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `DefaultBlockStatus
-                `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>403</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the default HTTP status code used forblocking.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DefaultBlockStatus</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>403</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_geoipdatabasefile">GeoIPDatabaseFile</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the location of the geoip database file.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `GeoIPDatabaseFile `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>/usr/share/geoip/GeoLiteCity.dat</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> geoip</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the location of the geoip database file.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoIPDatabaseFile</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>/usr/share/geoip/GeoLiteCity.dat</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">geoip</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_hostname">Hostname</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Maps hostnames to a Site.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `Hostname `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>*</code> (any)</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Site</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Maps hostnames to a Site.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Hostname</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>*</code> (any)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Site</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>The <code>Hostname</code> directive establishes a mapping between a Site and one or
 more hostnames. To map IP/Port pairs to a Site, see the <code>Service</code>
@@ -2421,27 +2605,43 @@ directive is specified for a site:</p>
 </div>
 <div class="sect2">
 <h3 id="_include">Include</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Includes external file into configuration.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `Include `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.5</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Includes external file into configuration.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Include</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.5</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Allows inclusion of another file into the current configuration file.
 The following line will include the contents of the file <code>sites.conf</code>
@@ -2461,28 +2661,43 @@ will be used to resolve it.</p>
 </div>
 <div class="sect2">
 <h3 id="_includeifexists">IncludeIfExists</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Includes external file into configuration if it exists
-and is accessible.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `IncludeIfExists `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.7</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Includes external file into configuration if it existsand is accessible.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IncludeIfExists</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>As <code>Include</code>, but allows for optional inclusion without causing a
 configuration error if the file does not exist (as would the <code>Include</code>
@@ -2491,33 +2706,43 @@ directive).</p>
 </div>
 <div class="sect2">
 <h3 id="_initcollection">InitCollection</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Initializes a locally scoped collection data field for
-later use and optional persistence.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `InitCollection</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>`</pre>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core, persist</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.7</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Initializes a locally scoped collection data field forlater use and optional persistence.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>InitCollection</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core, persist</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Initializes a collection from the initializer. The initializer format
 depends on the implementation. There are multiple URI formats supported,
@@ -2611,54 +2836,83 @@ Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block
 </div>
 <div class="sect2">
 <h3 id="_initvar">InitVar</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Initializes a locally scoped variable data field for
-later use.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `InitVar
-                `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.6</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Initializes a locally scoped variable data field forlater use.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>InitVar</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_inspectionengineoptions">InspectionEngineOptions</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures options for the inspection engine.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>InspectionEngineOptions
-                    ...</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>default</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.7</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures options for the inspection engine.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>InspectionEngineOptions ...</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>default</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>The inspection engine allows setting options; <code>InspectionEngineOptions</code>
 controls these options. The options are inherited into child contexts
@@ -2746,27 +3000,43 @@ would write:</p>
 </div>
 <div class="sect2">
 <h3 id="_loadeudoxus">LoadEudoxus</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Loads an external Eudoxus Automata into IronBee.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `LoadEudoxus  `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Main</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> ee</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.7</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Loads an external Eudoxus Automata into IronBee.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LoadEudoxus</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Main</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ee</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>This directive will load an external eudoxus automata from <code>file</code> into
 the engine with the given <code>name</code>. Once loaded, the automata can then be
@@ -2785,27 +3055,43 @@ Documentation</a> for more information.</p>
 </div>
 <div class="sect2">
 <h3 id="_loadmodule">LoadModule</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Loads an external module into configuration.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `LoadModule `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Main</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Loads an external module into configuration.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LoadModule</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Main</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>This directive will add an external module to the engine, potentially
 making new directives available to the configuration.</p>
@@ -2813,29 +3099,43 @@ making new directives available to the configuration.</p>
 </div>
 <div class="sect2">
 <h3 id="_location">Location</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Creates a subcontext that can have a different
-configuration.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>&lt;Location
-                &gt;...&lt;/Location&gt;</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Site</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creates a subcontext that can have a differentconfiguration.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;Location path&gt;...&lt;/Location&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Site</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>A sub-context created by this directive initially has identical
 configuration to that of the site it belongs to. Further directives are
@@ -2866,93 +3166,83 @@ most-specific location first, followed by the less specific ones.</p>
 </div>
 <div class="sect2">
 <h3 id="_log">Log</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the location of the log file.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>Log default|</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>default</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_loghandler">LogHandler</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the log handler.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `LogHandler `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>None</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.3</p>
-</div>
-<div class="paragraph">
-<p>DEPRECATED - Do not use. The log handler is now automatically set by the
-servers.</p>
-</div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>The log handler allows the log to be handled by another facility
-(currently the server). For Apache Traffic Server, this should be set to
-<code>"ironbee-ts"</code> and for Apache Web Server, this should be set to
-<code>"mod_ironbee"</code>. Using the log handler overrides the <code>Log</code> directive.</p>
-</div>
-</blockquote>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the location of the log file.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Log &lt;location&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>default</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_loglevel">LogLevel</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the detail level of the entries recorded to
-the log.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `LogLevel `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>4</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the detail level of the entries recorded tothe log.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LogLevel &lt;level&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>warning</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>The following log levels are supported (either numeric or text):</p>
 </div>
@@ -2996,27 +3286,43 @@ the log.</p>
 </div>
 <div class="sect2">
 <h3 id="_lualoadmodule">LuaLoadModule</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Load a Lua module (similar to LoadModule).</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `LuaLoadModule `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Main</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> lua</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.7</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Load a Lua module (similar to LoadModule).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LuaLoadModule</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Main</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">lua</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Example:</p>
 </div>
@@ -3028,27 +3334,43 @@ the log.</p>
 </div>
 <div class="sect2">
 <h3 id="_luainclude">LuaInclude</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Execute a Lua script as a configuration file.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `LuaInclude `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Main</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> lua</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.7</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Execute a Lua script as a configuration file.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LuaInclude</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Main</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">lua</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Example:</p>
 </div>
@@ -3060,52 +3382,83 @@ the log.</p>
 </div>
 <div class="sect2">
 <h3 id="_modulebasepath">ModuleBasePath</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the base path where IronBee modules are
-loaded.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `ModuleBasePath `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> The <code>lib</code> directory under the IronBee install prefix.</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Main</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the base path where IronBee modules areloaded.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ModuleBasePath</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The <code>lib</code> directory under the IronBee install prefix.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Main</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_pcrematchlimit">PcreMatchLimit</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the PCRE library match limit.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `PcreMatchLimit `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> 5000</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Main</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> pcre</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the PCRE library match limit.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>PcreMatchLimit</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5000</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Main</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">pcre</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>From the <code>pcreapi</code> manual: &#8220;The match_limit field provides a means of
 preventing PCRE from using up a vast amount of resources when running
@@ -3116,27 +3469,43 @@ that uses nested unlimited repeats.&#8221;</p>
 </div>
 <div class="sect2">
 <h3 id="_pcrematchlimitrecursion">PcreMatchLimitRecursion</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the PCRE library match limit recursion.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `PcreMatchLimitRecursion `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> 5000</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Main</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> pcre</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the PCRE library match limit recursion.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>PcreMatchLimitRecursion</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5000</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Main</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">pcre</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>From the <code>pcreapi</code> manual: &#8220;The match_limit_recursion field is similar
 to match_limit, but instead of limiting the total number of times that
@@ -3148,28 +3517,43 @@ smaller than match_limit.&#8221;</p>
 </div>
 <div class="sect2">
 <h3 id="_protectionengineoptions">ProtectionEngineOptions</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures options for the protection engine.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>ProtectionEngineOptions
-                    ...</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>default</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures options for the protection engine.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ProtectionEngineOptions ...</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>default</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>The protection engine allows setting options; <code>ProtectionEngineOptions</code>
 controls these options. The options are inherited into child contexts
@@ -3241,92 +3625,140 @@ you would write:</p>
 </div>
 <div class="sect2">
 <h3 id="_requestbuffering">RequestBuffering</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Enable/disable request buffering.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>RequestBuffering On|Off</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>Off</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.6</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enable/disable request buffering.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RequestBuffering On|Off</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Off</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Control request buffering - holding the request during inspection.
 Currently the HTTP header is always buffered, but this must be enabled
 for the request body to be buffered.</p>
 </div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>This may be renamed to <code>RequestBodyBuffering</code> in a future release.</p>
-</div>
-</blockquote>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This may be renamed to <code>RequestBodyBuffering</code> in a future release.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_requestbodybufferlimit">RequestBodyBufferLimit</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the size of the request body buffer.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `RequestBodyBufferLimit
-                `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.9.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the size of the request body buffer.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RequestBodyBufferLimit</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9.0</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_requestbodybufferlimitaction">RequestBodyBufferLimitAction</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures what happens when the buffer is smaller than
-the request body.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>RequestBodyBufferLimitAction FlushAll|FlushPartial</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> FlushPartial</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.9.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures what happens when the buffer is smaller thanthe request body.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RequestBodyBufferLimitAction FlushAll|FlushPartial</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FlushPartial</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>When <code>FlushAll</code> is configured, the transaction with a body larger than
 the buffer will flush the existing buffer, sending it to the backend,
@@ -3338,92 +3770,140 @@ backend. Request headers will be sent before the first overflow batch.</p>
 </div>
 <div class="sect2">
 <h3 id="_responsebuffering">ResponseBuffering</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Enable/disable response buffering.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>ResponseBuffering On|Off</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>Off</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.6</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enable/disable response buffering.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ResponseBuffering On|Off</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Off</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Control response buffering - holding the response during inspection.
 Currently the HTTP header is always buffered, but this must be enabled
 for the response body to be buffered.</p>
 </div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>This may be renamed to <code>ResponseBodyBuffering</code> in a future release.</p>
-</div>
-</blockquote>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This may be renamed to <code>ResponseBodyBuffering</code> in a future release.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_responsebodybufferlimit">ResponseBodyBufferLimit</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the size of the response body buffer.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `ResponseBodyBufferLimit
-                `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.9.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the size of the response body buffer.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ResponseBodyBufferLimit</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9.0</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_responsebodybufferlimitaction">ResponseBodyBufferLimitAction</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures what happens when the buffer is smaller than
-the response body.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>ResponseBodyBufferLimitAction FlushAll|FlushPartial</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> FlushPartial</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.9.0</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures what happens when the buffer is smaller thanthe response body.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ResponseBodyBufferLimitAction FlushAll|FlushPartial</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FlushPartial</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9.0</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>When <code>FlushAll</code> is configured, the transaction with a body larger than
 the buffer will flush the existing buffer, sending it to the client,
@@ -3435,94 +3915,140 @@ client. Request headers will be sent before the first overflow batch.</p>
 </div>
 <div class="sect2">
 <h3 id="_rule">Rule</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Loads a rule and, in most contexts, enable the rule for
-execution in that context.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>Rule TARGET @operator "param" id:1234 rev:1 phase:THE_PHASE ...</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> rules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>Loading a rule will, in most contexts, also enable the rule to be
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Loads a rule and, in most contexts, enable the rule forexecution in that context.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Rule TARGET @operator "param" id:1234 rev:1 phase:THE_PHASE ...</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">rules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Loading a rule will, in most contexts, also enable the rule to be
 executed in that context. However, the main configuration context is
 special. Loading a rule in the main configuration context will <em>NOT</em>
 enable the rule, but just load it into memory so that it can be shared
 by other contexts. You must explicitly use <code>RuleEnable</code> in another
-context to enable the rule.</p>
-</div>
-</blockquote>
+context to enable the rule.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_rulebasepath">RuleBasePath</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the base path where external IronBee rules are
-loaded.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `RuleBasePath `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> The <code>lib</code> directory under the IronBee install prefix.</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Main</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the base path where external IronBee rules areloaded.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RuleBasePath</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The <code>lib</code> directory under the IronBee install prefix.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Main</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_ruledisable">RuleDisable</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Disables a rule from executing in the current
-configuration context.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>RuleDisable "all" | "id:" |
-                    "tag": ...</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> rules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Disables a rule from executing in the currentconfiguration context.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RuleDisable "all" | "id:&lt;id&gt;" | "tag:&lt;tag&gt;" ...</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">rules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Rules can be disabled by id or tag. Any number of id or tag modifiers
 can be specified per directive. All disables are processed after
@@ -3531,29 +4057,43 @@ enables. See the <code>RuleEnable</code> directive for an example.</p>
 </div>
 <div class="sect2">
 <h3 id="_ruleenable">RuleEnable</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Enables a rule for execution in the current configuration
-context.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>RuleEnable "all" | "id:" |
-                    "tag": ...</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> rules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enables a rule for execution in the current configurationcontext.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RuleEnable "all" | "id:&lt;id&gt;" | "tag:&lt;tag&gt;" ...</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">rules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Rules can be disabled by id or tag. Any number of id or tag modifiers
 can be specified per directive. All enables are processed before
@@ -3563,46 +4103,61 @@ disables. For example:</p>
 <div class="content">
 <pre>Include "rules/big_ruleset.conf"
 
-    &lt;Site foo&gt;
-        Hostname foo.example.com
-        RuleEnable id:1234
-        RuleEnable id:3456 tag:SQLi
-        RuleDisable id:5678 tag:experimental tag:heavyweight
-    &lt;/Site&gt;</pre>
+&lt;Site foo&gt;
+    Hostname foo.example.com
+    RuleEnable id:1234
+    RuleEnable id:3456 tag:SQLi
+    RuleDisable id:5678 tag:experimental tag:heavyweight
+&lt;/Site&gt;</pre>
 </div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_ruleenginelogdata">RuleEngineLogData</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the data logged by the rule engine.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>RuleEngineLogData
-                ...</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>none</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.6</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the data logged by the rule engine.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RuleEngineLogData ...</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>The following data type options are supported:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><code>tx</code> - Log the transaction:</p>
+<p><strong>tx</strong> - Log the transaction:</p>
 <div class="listingblock">
 <div class="content">
 <pre>TX_START clientip:port site-hostname
@@ -3612,7 +4167,7 @@ TX_END</pre>
 </div>
 </li>
 <li>
-<p><code>requestLine</code> - Log the HTTP request line:</p>
+<p><strong>requestLine</strong> - Log the HTTP request line:</p>
 <div class="listingblock">
 <div class="content">
 <pre>REQ_LINE method uri version-if-given</pre>
@@ -3620,7 +4175,7 @@ TX_END</pre>
 </div>
 </li>
 <li>
-<p><code>requestHeader</code> - Log the HTTP request header:</p>
+<p><strong>requestHeader</strong> - Log the HTTP request header:</p>
 <div class="listingblock">
 <div class="content">
 <pre>REQ_HEADER name: value</pre>
@@ -3628,7 +4183,7 @@ TX_END</pre>
 </div>
 </li>
 <li>
-<p><code>requestBody</code> - Log the HTTP request body, possibly in multiple
+<p><strong>requestBody</strong> - Log the HTTP request body, possibly in multiple
 chunks:</p>
 <div class="listingblock">
 <div class="content">
@@ -3637,7 +4192,7 @@ chunks:</p>
 </div>
 </li>
 <li>
-<p><code>responseLine</code> - Log the HTTP response line:</p>
+<p><strong>responseLine</strong> - Log the HTTP response line:</p>
 <div class="listingblock">
 <div class="content">
 <pre>RES_LINE version status message</pre>
@@ -3645,7 +4200,7 @@ chunks:</p>
 </div>
 </li>
 <li>
-<p><code>responseHeader</code> - Log the HTTP response header:</p>
+<p><strong>responseHeader</strong> - Log the HTTP response header:</p>
 <div class="listingblock">
 <div class="content">
 <pre>RES_HEADER name: value</pre>
@@ -3653,7 +4208,7 @@ chunks:</p>
 </div>
 </li>
 <li>
-<p><code>responseBody</code> - Log the HTTP response body, possibly in multiple
+<p><strong>responseBody</strong> - Log the HTTP response body, possibly in multiple
 chunks:</p>
 <div class="listingblock">
 <div class="content">
@@ -3662,7 +4217,7 @@ chunks:</p>
 </div>
 </li>
 <li>
-<p><code>phase</code> - Log the phase about to execute:</p>
+<p><strong>phase</strong> - Log the phase about to execute:</p>
 <div class="listingblock">
 <div class="content">
 <pre>PHASE name</pre>
@@ -3670,7 +4225,7 @@ chunks:</p>
 </div>
 </li>
 <li>
-<p><code>rule</code> - Log the rule executing:</p>
+<p><strong>rule</strong> - Log the rule executing:</p>
 <div class="listingblock">
 <div class="content">
 <pre>RULE_START rule-type
@@ -3680,7 +4235,7 @@ RULE_END</pre>
 </div>
 </li>
 <li>
-<p><code>target</code> - Log the target being inspected:</p>
+<p><strong>target</strong> - Log the target being inspected:</p>
 <div class="listingblock">
 <div class="content">
 <pre>TARGET full-target-name {NOT_FOUND|field-type field-name field-value}</pre>
@@ -3688,7 +4243,7 @@ RULE_END</pre>
 </div>
 </li>
 <li>
-<p><code>transformation</code> - Log the transformation being executed:</p>
+<p><strong>transformation</strong> - Log the transformation being executed:</p>
 <div class="listingblock">
 <div class="content">
 <pre>TFN tfn-name(param) {ERROR error}</pre>
@@ -3696,7 +4251,7 @@ RULE_END</pre>
 </div>
 </li>
 <li>
-<p><code>operator</code> - Log the operator being executed:</p>
+<p><strong>operator</strong> - Log the operator being executed:</p>
 <div class="listingblock">
 <div class="content">
 <pre>OP op-name(param) TRUE|FALSE {ERROR error}</pre>
@@ -3704,7 +4259,7 @@ RULE_END</pre>
 </div>
 </li>
 <li>
-<p><code>action</code> - Log the action being executed:</p>
+<p><strong>action</strong> - Log the action being executed:</p>
 <div class="listingblock">
 <div class="content">
 <pre>ACTION action-name(param) {ERROR error}</pre>
@@ -3712,7 +4267,7 @@ RULE_END</pre>
 </div>
 </li>
 <li>
-<p><code>event</code> - Log the event being logged:</p>
+<p><strong>event</strong> - Log the event being logged:</p>
 <div class="listingblock">
 <div class="content">
 <pre>EVENT rule-id type action [confidence/severity] [csv-tags] msg</pre>
@@ -3720,7 +4275,7 @@ RULE_END</pre>
 </div>
 </li>
 <li>
-<p><code>audit</code> - Log the audit log filename being written:</p>
+<p><strong>audit</strong> - Log the audit log filename being written:</p>
 <div class="listingblock">
 <div class="content">
 <pre>AUDIT audit-log-filename</pre>
@@ -3735,24 +4290,24 @@ RULE_END</pre>
 <div class="ulist">
 <ul>
 <li>
-<p><code>request</code> - Alias for: <code>requestLine</code>, <code>requestHeader</code>, <code>requestBody</code></p>
+<p><strong>request</strong> - Alias for: <strong>requestLine</strong>, <strong>requestHeader</strong>, <strong>requestBody</strong></p>
 </li>
 <li>
-<p><code>response</code> - Alias for: <code>responseLine</code>, <code>responseHeader</code>,
-<code>responseBody</code></p>
+<p><strong>response</strong> - Alias for: <strong>responseLine</strong>, <strong>responseHeader</strong>,
+<strong>responseBody</strong></p>
 </li>
 <li>
-<p><code>ruleExec</code> - Alias for: <code>phase</code>, <code>rule</code>, <code>target</code>, <code>transformation</code>,
-<code>operator</code>, <code>action</code>, <code>actionableRulesOnly</code></p>
+<p><strong>ruleExec</strong> - Alias for: <strong>phase</strong>, <strong>rule</strong>, <strong>target</strong>, <strong>transformation</strong>,
+<strong>operator</strong>, <strong>action</strong>, <strong>actionableRulesOnly</strong></p>
 </li>
 <li>
-<p><code>none</code> - Alias for no data options</p>
+<p><strong>none</strong> - Alias for no data options</p>
 </li>
 <li>
-<p><code>all</code> - Alias for all data options</p>
+<p><strong>all</strong> - Alias for all data options</p>
 </li>
 <li>
-<p><code>default</code> - Alias for: <code>none</code></p>
+<p><strong>default</strong> - Alias for: <strong>none</strong></p>
 </li>
 </ul>
 </div>
@@ -3762,7 +4317,7 @@ RULE_END</pre>
 <div class="ulist">
 <ul>
 <li>
-<p><code>actionableRulesOnly</code> - Filter option indicating that only rules that
+<p><strong>actionableRulesOnly</strong> - Filter option indicating that only rules that
 were actionable (actions executed) are logged - any rule specific
 logging are delayed/suppressed until at least one action is executed.</p>
 </li>
@@ -3771,55 +4326,84 @@ logging are delayed/suppressed until at least one action is executed.</p>
 </div>
 <div class="sect2">
 <h3 id="_ruleengineloglevel">RuleEngineLogLevel</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Configures the logging level which the rule engine will
-write logs.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `RuleEngineLogLevel `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>info</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.6</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configures the logging level which the rule engine willwrite logs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RuleEngineLogLevel</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>info</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
 </div>
 <div class="sect2">
 <h3 id="_ruleext">RuleExt</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Creates a rule implemented externally, either by loading
-the rule directly from a file, or referencing a rule that was previously
-declared by a module.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `RuleExt
-                    `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Site, Location</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> rules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creates a rule implemented externally, either by loadingthe rule directly from a file, or referencing a rule that was previously
+declared by a module.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RuleExt</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Site, Location</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">rules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>To load a Lua rule:</p>
 </div>
@@ -3831,32 +4415,43 @@ declared by a module.</p>
 </div>
 <div class="sect2">
 <h3 id="_rulemarker">RuleMarker</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Creates a rule marker (placeholder) which will not be
-executed, but instead should be overridden. The idea is that rule sets
-can include placeholders for optional custom rules which can be
-overridden, but still allow the rule set writer to maintain execution
-order.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>RuleMarker id:
-                        phase:</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> rules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.5</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creates a rule marker (placeholder) which will not beexecuted, but instead should be overridden. The idea is that rule sets can include placeholders for optional custom rules which can be overridden, but still allow the rule set writer to maintain execution order.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RuleMarker id:phase:</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">rules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.5</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>To mark and later replace a rule:</p>
 </div>
@@ -3887,27 +4482,43 @@ rules would execute id:1 then id:3 as id:2 is only a marker
 </div>
 <div class="sect2">
 <h3 id="_sensorid">SensorId</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Unique sensor identifier.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `SensorId `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Main</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unique sensor identifier.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SensorId</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Main</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>TODO: Can we make this directive so that, if not defined, we attempt to
 detect server hostname and use that as ID?</p>
@@ -3915,28 +4526,43 @@ detect server hostname and use that as ID?</p>
 </div>
 <div class="sect2">
 <h3 id="_service">Service</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Maps IP and Port to a site.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>Service
-                    :</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>*:*</code> (any)</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Site</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.6</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Maps IP and Port to a site.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Service &lt;ip&gt;:&lt;port&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>*:*</code> (any)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Site</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.6</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>The <code>Service</code> directive establishes a mapping between a Site and one or
 IP/Port pairs. To map hostnames to a Site, see the <code>Hostname</code> directive.</p>
@@ -3980,33 +4606,43 @@ if no <code>Service</code> directive is specified for a site:</p>
 </div>
 <div class="sect2">
 <h3 id="_site">Site</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> A site is one of the main concepts in the configuration
-in IronBee. The idea is to have an element to correspond to real-life
-web sites. With most web sites there is an one-to-one mapping to domain
-names, but our mapping mechanism is quite flexible: you can have one
-site per domain name, many domain names for a single site, or even have
-one domain name shared among several sites.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>&lt;Site
-                &gt;...&lt;/Site&gt;</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Main</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.1</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A site is one of the main concepts in the configurationin IronBee. The idea is to have an element to correspond to real-life web sites. With most web sites there is an one-to-one mapping to domain names, but our mapping mechanism is quite flexible: you can have one site per domain name, many domain names for a single site, or even have one domain name shared among several sites.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;Site name&gt;...&lt;/Site&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Main</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.1</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>At the highest level, a configuration will contain one or more sites.
 For example:</p>
@@ -4044,27 +4680,43 @@ mapping.</p>
 </div>
 <div class="sect2">
 <h3 id="_siteid">SiteId</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Unique site identifier.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `SiteId `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Site</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> core</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unique site identifier.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SiteId</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Site</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>TODO: Can we make this directive so that, if not defined, we attempt to
 detect site hostname and use that as ID?</p>
@@ -4072,27 +4724,39 @@ detect site hostname and use that as ID?</p>
 </div>
 <div class="sect2">
 <h3 id="_streaminspect">StreamInspect</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Creates a streaming inspection rule, which inspects data
-as it becomes available, outside rule phases.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `StreamInspect
-                    "@"
-                `</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Site, Location</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> rules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.4</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creates a streaming inspection rule, which inspects dataas it becomes available, outside rule phases.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>StreamInspect TARGET @op &lt;param&gt; ...</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Site, Location</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">rules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>Normally, rules run in one of the available phases, which happen at
 strategic points in transaction lifecycle. Phase rules are convenient to
@@ -4135,27 +4799,43 @@ inputs.</p>
 </div>
 <div class="sect2">
 <h3 id="_trustedproxyusexffheader">TrustedProxyUseXFFHeader</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Enable the use of X-Forwarded-For header.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `TrustedProxyUseXFFHeader `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>On</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> trusted_proxy</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.9</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enable the use of X-Forwarded-For header.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TrustedProxyUseXFFHeader On|Off</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>On</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">trusted_proxy</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>If enabled the last address listed in the X-Forwarded-For header as the
 remote address. See <em>TrustedProxyIPs</em> to configure the list of trusted
@@ -4164,28 +4844,43 @@ proxies. The default behaviour is to trust no proxies.</p>
 </div>
 <div class="sect2">
 <h3 id="_trustedproxyips">TrustedProxyIPs</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Specify a list of networks or IP address to trust for
-X-Forwarded-For handlingEnable the use of X-Forwarded-For header.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> <code>TrustedProxyIPs  ...</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>Trust no networks/IP addresses</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> trusted_proxy</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.9</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify a list of networks or IP address to trust forX-Forwarded-For handlingEnable the use of X-Forwarded-For header.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TrustedProxyIPs &lt;cidr&gt; ...</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">trusted_proxy</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>This is a list of IP addresses or CIDR blocks that should be trusted or
 not trusted when handling the X-Forwarded-For header.</p>
@@ -4204,8 +4899,7 @@ treated as trusted.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>          TrustedProxyIPs 192.168.1.0/24
-</pre>
+<pre>TrustedProxyIPs 192.168.1.0/24</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4213,40 +4907,49 @@ treated as trusted.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>          TrustedProxyIPs -10.10.10.10
-</pre>
+<pre>TrustedProxyIPs -10.10.10.10</pre>
 </div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_txdump">TxDump</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Diagnostics directive to dump (log) transaction data for
-debugging purposes.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `TxDump</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>`</pre>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> <code>None</code></p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..1</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> devel</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.7</p>
-</div>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Diagnostics directive to dump (log) transaction data fordebugging purposes.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TxDump</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">devel</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
 <div class="paragraph">
 <p>The event field allows indicating <em>when</em> you want the data to be written
 and is one of:</p>
@@ -4374,41 +5077,59 @@ TxDump PostProcess StdOut All</pre>
 </div>
 <div class="sect2">
 <h3 id="_xrulegeo">XRuleGeo</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Add an extended geo rule.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `XRuleGeo   `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> xrules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8</p>
-</div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>XRules, or extended rules, are rules that implement common operations,
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add an extended geo rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>XRuleGeo</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">xrules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+XRules, or extended rules, are rules that implement common operations,
 such as Access Control Lists (ACLs). These extended rules hide much of
 the complexities of normal rules so that these common operations are
 easier to use. The priority allows conflicts to be resolved - higher
 priority (lower numerical value) rules will override lower priority
-rules.</p>
-</div>
-</blockquote>
+rules.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>An XRuleGeo is used to setup Geo (country) based rules.</p>
@@ -4427,41 +5148,59 @@ rules.</p>
 </div>
 <div class="sect2">
 <h3 id="_xruleipv4">XRuleIpv4</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Add an extended IPv4 rule.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `XRuleIpv4   `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> xrules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8</p>
-</div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>XRules, or extended rules, are rules that implement common operations,
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add an extended IPv4 rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>XRuleIpv4</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">xrules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+XRules, or extended rules, are rules that implement common operations,
 such as Access Control Lists (ACLs). These extended rules hide much of
 the complexities of normal rules so that these common operations are
 easier to use. The priority allows conflicts to be resolved - higher
 priority (lower numerical value) rules will override lower priority
-rules.</p>
-</div>
-</blockquote>
+rules.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>An XRuleIpv4 is used to setup IPv4 based rules.</p>
@@ -4480,71 +5219,71 @@ rules.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><code>priority=N</code> - Set rule priority.</p>
+<p><strong>priority=N</strong> - Set rule priority.</p>
 </li>
 <li>
-<p><code>block</code> - Block the transaction.</p>
+<p><strong>block</strong> - Block the transaction.</p>
 </li>
 <li>
-<p><code>allow</code> - Allow the transaction.</p>
+<p><strong>allow</strong> - Allow the transaction.</p>
 </li>
 <li>
-<p><code>enableBlockingMode</code> - Enable blocking mode for this transaction.</p>
+<p><strong>enableBlockingMode</strong> - Enable blocking mode for this transaction.</p>
 </li>
 <li>
-<p><code>disableBlockingMode</code> - Disable blocking mode for this transaction</p>
+<p><strong>disableBlockingMode</strong> - Disable blocking mode for this transaction</p>
 </li>
 <li>
-<p><code>scaleThreat=X</code> - Scale threat calculation (update
-<code>XRULES:SCALE_THREAT</code>) by floating point multiplier, X, for this
+<p><strong>scaleThreat=X</strong> - Scale threat calculation (update
+<strong>XRULES:SCALE_THREAT</strong>) by floating point multiplier, X, for this
 transaction.</p>
 </li>
 <li>
-<p><code>enableRequestHeaderInspection</code> - Enable request header inspection for
+<p><strong>enableRequestHeaderInspection</strong> - Enable request header inspection for
 this transaction.</p>
 </li>
 <li>
-<p><code>disableRequestHeaderInspection</code> - Disable request header inspection
+<p><strong>disableRequestHeaderInspection</strong> - Disable request header inspection
 for this transaction.</p>
 </li>
 <li>
-<p><code>enableRequestURIInspection</code> - Enable request URI inspection for this
+<p><strong>enableRequestURIInspection</strong> - Enable request URI inspection for this
 transaction.</p>
 </li>
 <li>
-<p><code>disableRequestURIInspection</code> - Disable request URI inspection for
+<p><strong>disableRequestURIInspection</strong> - Disable request URI inspection for
 this transaction.</p>
 </li>
 <li>
-<p><code>enableRequestParamInspection</code> - Enable request parameter inspection
+<p><strong>enableRequestParamInspection</strong> - Enable request parameter inspection
 for this transaction.</p>
 </li>
 <li>
-<p><code>disableRequestParamInspection</code> - Disable request parameter inspection
+<p><strong>disableRequestParamInspection</strong> - Disable request parameter inspection
 for this transaction.</p>
 </li>
 <li>
-<p><code>enableRequestBodyInspection</code> - Enable request body inspection for
+<p><strong>enableRequestBodyInspection</strong> - Enable request body inspection for
 this transaction.</p>
 </li>
 <li>
-<p><code>disableRequestBodyInspection</code> - Disable request body inspection for
+<p><strong>disableRequestBodyInspection</strong> - Disable request body inspection for
 this transaction.</p>
 </li>
 <li>
-<p><code>enableResponseHeaderInspection</code> - Enable response header inspection
+<p><strong>enableResponseHeaderInspection</strong> - Enable response header inspection
 for this transaction.</p>
 </li>
 <li>
-<p><code>disableResponseHeaderInspection</code> - Disable response header inspection
+<p><strong>disableResponseHeaderInspection</strong> - Disable response header inspection
 for this transaction.</p>
 </li>
 <li>
-<p><code>enableResponseBodyInspection</code> - Enable response body inspection for
+<p><strong>enableResponseBodyInspection</strong> - Enable response body inspection for
 this transaction.</p>
 </li>
 <li>
-<p><code>disableResponseBodyInspection</code> - Disable response body inspection for
+<p><strong>disableResponseBodyInspection</strong> - Disable response body inspection for
 this transaction.</p>
 </li>
 </ul>
@@ -4552,41 +5291,59 @@ this transaction.</p>
 </div>
 <div class="sect2">
 <h3 id="_xruleipv6">XRuleIpv6</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Add an extended IPv6 rule.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `XRuleIpv6   `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> xrules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8</p>
-</div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>XRules, or extended rules, are rules that implement common operations,
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add an extended IPv6 rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>XRuleIpv6</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">xrules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+XRules, or extended rules, are rules that implement common operations,
 such as Access Control Lists (ACLs). These extended rules hide much of
 the complexities of normal rules so that these common operations are
 easier to use. The priority allows conflicts to be resolved - higher
 priority (lower numerical value) rules will override lower priority
-rules.</p>
-</div>
-</blockquote>
+rules.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>An XRuleIpv6 is used to setup IPv6 based rules.</p>
@@ -4605,41 +5362,59 @@ rules.</p>
 </div>
 <div class="sect2">
 <h3 id="_xrulepath">XRulePath</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Add an extended path rule.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `XRulePath   `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> xrules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8</p>
-</div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>XRules, or extended rules, are rules that implement common operations,
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add an extended path rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>XRulePath</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">xrules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+XRules, or extended rules, are rules that implement common operations,
 such as Access Control Lists (ACLs). These extended rules hide much of
 the complexities of normal rules so that these common operations are
 easier to use. The priority allows conflicts to be resolved - higher
 priority (lower numerical value) rules will override lower priority
-rules.</p>
-</div>
-</blockquote>
+rules.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>An XRulePath is used to setup URI path based rules.</p>
@@ -4658,41 +5433,59 @@ rules.</p>
 </div>
 <div class="sect2">
 <h3 id="_xrulerequestcontenttype">XRuleRequestContentType</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Add an extended request content type rule.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `XRuleRequestContentType   `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> xrules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8</p>
-</div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>XRules, or extended rules, are rules that implement common operations,
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add an extended request content type rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>XRuleRequestContentType</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">xrules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+XRules, or extended rules, are rules that implement common operations,
 such as Access Control Lists (ACLs). These extended rules hide much of
 the complexities of normal rules so that these common operations are
 easier to use. The priority allows conflicts to be resolved - higher
 priority (lower numerical value) rules will override lower priority
-rules.</p>
-</div>
-</blockquote>
+rules.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>An XRuleRequestContentType is used to setup request contetnt type based
@@ -4712,41 +5505,59 @@ rules.</p>
 </div>
 <div class="sect2">
 <h3 id="_xruleresponsecontenttype">XRuleResponseContentType</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Add an extended IPv6 rule.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `XRuleResponseContentType   `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> xrules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8</p>
-</div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>XRules, or extended rules, are rules that implement common operations,
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add an extended IPv6 rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>XRuleResponseContentType</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">xrules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+XRules, or extended rules, are rules that implement common operations,
 such as Access Control Lists (ACLs). These extended rules hide much of
 the complexities of normal rules so that these common operations are
 easier to use. The priority allows conflicts to be resolved - higher
 priority (lower numerical value) rules will override lower priority
-rules.</p>
-</div>
-</blockquote>
+rules.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>An XRuleResponseContentType is used to setup response content type based
@@ -4766,41 +5577,59 @@ rules.</p>
 </div>
 <div class="sect2">
 <h3 id="_xruletime">XRuleTime</h3>
-<div class="paragraph">
-<p><strong>Description:</strong> Add an extended time rule.</p>
-</div>
-<div class="paragraph">
-<p><strong>Syntax:</strong> `XRuleTime   `</p>
-</div>
-<div class="paragraph">
-<p><strong>Default:</strong> None</p>
-</div>
-<div class="paragraph">
-<p><strong>Context:</strong> Any</p>
-</div>
-<div class="paragraph">
-<p><strong>Cardinality:</strong> 0..n</p>
-</div>
-<div class="paragraph">
-<p><strong>Module:</strong> xrules</p>
-</div>
-<div class="paragraph">
-<p><strong>Version:</strong> 0.8</p>
-</div>
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p><strong>Note</strong></p>
-</div>
-<div class="paragraph">
-<p>XRules, or extended rules, are rules that implement common operations,
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add an extended time rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>XRuleTime</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">xrules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+XRules, or extended rules, are rules that implement common operations,
 such as Access Control Lists (ACLs). These extended rules hide much of
 the complexities of normal rules so that these common operations are
 easier to use. The priority allows conflicts to be resolved - higher
 priority (lower numerical value) rules will override lower priority
-rules.</p>
-</div>
-</blockquote>
+rules.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>An XRuleTime is used to setup date/time based rules.</p>
@@ -4811,19 +5640,19 @@ rules.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><code>!</code> - Invert rule.</p>
+<p><strong>!</strong> - Invert rule.</p>
 </li>
 <li>
-<p><code>DOW</code> - Day of Week (0=Sunday - 6=Saturday).</p>
+<p><strong>DOW</strong> - Day of Week (0=Sunday - 6=Saturday).</p>
 </li>
 <li>
-<p><code>HH</code> - Two digit hour (24-hr format).</p>
+<p><strong>HH</strong> - Two digit hour (24-hr format).</p>
 </li>
 <li>
-<p><code>MM</code> - Two digit minute.</p>
+<p><strong>MM</strong> - Two digit minute.</p>
 </li>
 <li>
-<p><code>[-|+]ZZZZ</code> - Timezone offset from GMT</p>
+<p><strong>[-|+]ZZZZ</strong> - Timezone offset from GMT</p>
 </li>
 </ul>
 </div>
