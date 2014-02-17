@@ -134,7 +134,7 @@ must have the full name of the field being inspected. See `FIELD_NAME`.
 [NOTE]
 The address used during lookup is the same as that stored in the
 `REMOTE_ADDR` field, which may be modified from the actual connection
-(TCP) level address by the `user_agent` module.
+(TCP) level address by the `trusted_proxy` module.
 
 Sub-Fields (not all are available prior to GeoIP v1.4.6):
 
@@ -243,9 +243,8 @@ be set:
 |===============================================================================
 
 [NOTE]
-If the `user_agent` module is also loaded, then the client address will
-be corrected using any available proxy headers (currently
-`X-Forwarded-For`).
+If the `trusted_proxy` module is also loaded, then the client address may
+be corrected using any available proxy headers (currently `X-Forwarded-For`).
 
 ==== REMOTE_PORT
 [cols=">h,<9"]
@@ -660,7 +659,7 @@ rules can monitor.
 ==== UA
 [cols=">h,<9"]
 |===============================================================================
-|Description|User agent information extracted if the `user_agent`module is loaded.
+|Description|User agent information extracted from the request.
 |       Type|Collection
 |      Scope|Transaction
 |     Module|user_agent

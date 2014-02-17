@@ -6408,7 +6408,7 @@ must have the full name of the field being inspected. See <code>FIELD_NAME</code
 <td class="content">
 The address used during lookup is the same as that stored in the
 <code>REMOTE_ADDR</code> field, which may be modified from the actual connection
-(TCP) level address by the <code>user_agent</code> module.
+(TCP) level address by the <code>trusted_proxy</code> module.
 </td>
 </tr>
 </table>
@@ -6712,9 +6712,8 @@ be set:</p>
 <div class="title">Note</div>
 </td>
 <td class="content">
-If the <code>user_agent</code> module is also loaded, then the client address will
-be corrected using any available proxy headers (currently
-<code>X-Forwarded-For</code>).
+If the <code>trusted_proxy</code> module is also loaded, then the client address may
+be corrected using any available proxy headers (currently <code>X-Forwarded-For</code>).
 </td>
 </tr>
 </table>
@@ -7920,7 +7919,7 @@ rules can monitor.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">User agent information extracted if the `user_agent`module is loaded.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">User agent information extracted from the request.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
