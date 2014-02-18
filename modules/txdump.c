@@ -1282,7 +1282,7 @@ static bool txdump_check_tx(
  * @param[in] cbdata Callback data (TxDump object)
  *
  * @returns
- * - IB_OK If @a tx does not need to be dumped or @a tx was dumped successfuly.
+ * - IB_OK If @a tx does not need to be dumped or @a tx was dumped successfully.
  * - Other on failure of txdump_tx().
  */
 static ib_status_t txdump_tx_event(

@@ -1,4 +1,4 @@
-personal_ws-1.1 en 2429 
+personal_ws-1.1 en 2439 
 malloced
 malloc'ed
 libnet
@@ -32,6 +32,7 @@ RequestHeadersData
 ConstVarSource
 bol
 vernum
+HTTPStatusCodeContents
 HttpStatusCodeContents
 RuleEngineDebugLogLevel
 CMD
@@ -383,6 +384,7 @@ IronBeeUtilExpand
 mbolos
 IronBeeRule
 pmp
+FLAGBUF
 cpat
 IronBeeEngineHooks
 BlackBerry
@@ -441,6 +443,7 @@ linelen
 XRuleGeo
 tfn
 nsubs
+FilterBase
 stringReplaceRx
 deleter
 XRule
@@ -871,6 +874,7 @@ ETag
 etag
 IronBeeUtil
 partType
+pescaped
 xy
 pstnsfw
 ntype
@@ -1332,6 +1336,7 @@ isLonger
 IronBeeEngineState
 pcollection
 onEventHandleResponseHeader
+qmode
 ExampleSensorName
 abcdefghijklfoo
 IronBeeEngineManagerLogging
@@ -1718,7 +1723,9 @@ RspHdr
 unindexed
 iphone
 whitespace
+bslen
 PersonalityClearAll
+ErrorPageMap
 ptype
 LuaPackageCPath
 dirname
@@ -1750,6 +1757,7 @@ Cardinality
 abbba
 NodeReporter's
 cpatt
+errorPageMapDirective
 SiteLocation
 dalloc
 PartialValid
@@ -1831,6 +1839,7 @@ TimingInfo
 operatorErrorOnly
 subname
 subgraph
+bsptr
 Postgres
 IronbeeConnection
 getString
@@ -2330,6 +2339,7 @@ parallelization
 ScopedMemoryPools
 IronBeeError
 srclen
+pflagbuf
 aggregators
 ScaleThreat
 Referer
@@ -2365,8 +2375,8 @@ perl's
 sbuffer
 multi
 basetype
-LibHTP
 libhtp
+libHTP
 pcontext
 httpd
 aaa

@@ -1301,7 +1301,7 @@ static ib_status_t dfa_operator_execute_common(
 
     }
     else if (ib_rc != IB_OK) {
-        /* Not ok, not NOENT, then fail. */
+        /* Not ok, not ENOENT, then fail. */
         goto return_rc;
     }
 
