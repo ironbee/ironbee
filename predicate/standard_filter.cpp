@@ -126,9 +126,9 @@ void FilterBase::eval_calculate(
 	if (graph_eval_state.is_finished(filter->index())) {
 	    map_calculate(
 			input,
-			graph_eval_state, 
-			context, 
-			true,  
+			graph_eval_state,
+			context,
+			true,
 			false
 		);
 		if (graph_eval_state.is_finished(input->index())) {
@@ -375,7 +375,7 @@ bool Named::pass_filter(Value f, Value v) const
 	}
 	ConstByteString name = f.value_as_byte_string();
 	
-	return         
+	return
 		v.name_length() == name.length() &&
         equal(name.const_data(), name.const_data() + name.length(), v.name())
 		;

@@ -177,4 +177,3 @@ const char DLL_PUBLIC *ib_action_name(const ib_action_t *action)
 {
     return action->name;
 }
-

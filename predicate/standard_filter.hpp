@@ -38,7 +38,7 @@ namespace Standard {
 /// @cond Impl
 namespace Impl {
 	
-class FilterBase : 
+class FilterBase :
 	public MapCall
 {
 public:
