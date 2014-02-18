@@ -134,7 +134,6 @@ IB_MODULE_DECLARE();
 /**
  * Several max constants
  */
-static const size_t MAX_FMT = 128;          /**< Format buffer size */
 static const size_t MAX_LEADING_SPACES = 16;/**< Max # of leading spaces */
 static const size_t MAX_METHOD = 32;        /**< Max HTTP method */
 static const size_t MAX_PROTOCOL = 32;      /**< Max HTTP protocol */
