@@ -301,7 +301,7 @@ static ib_status_t module_has_callback(
  * - IB_OK On success.
  * - Other on error.
  */
-static ib_status_t modlua_callback_dispatch_base(
+static ib_status_t modlua_callback_dispatch(
     ib_engine_t      *ib,
     modlua_modules_t *ibmod_modules,
     lua_State        *L)
@@ -380,49 +380,6 @@ static ib_status_t modlua_callback_dispatch_base(
     }
 
     return rc;
-}
-
-/**
- * Common code to run the module handler.
- *
- * This requires modlua_callback_setup to have been successfully run.
- *
- * @param[in] ib The IronBee engine. This may not be null.
- * @param[in] event The event type.
- * @param[in] tx The transaction. This may be null.
- * @param[in] conn The connection. This may not be null. We require it to,
- *            at a minimum, find the Lua runtime stack.
- * @param[in] modlua_runtime Lua runtime.
- * @param[in] modlua_modules_cbdata The lua modules and the user's
- *            lua-defined module.
- *
- * @returns
- *   - The result of the module dispatch call.
- *   - IB_E* values may be returned as a result of an internal
- *     module failure. The log file should always be examined
- *     to determine if a Lua module failure or an internal
- *     error is to blame.
- */
-static ib_status_t modlua_callback_dispatch(
-    ib_engine_t           *ib,
-    ib_state_event_type_t  event,
-    ib_tx_t               *tx,
-    ib_conn_t             *conn,
-    modlua_runtime_t      *modlua_runtime,
-    modlua_modules_t      *modlua_modules_cbdata
-)
-{
-    assert(ib                            != NULL);
-    assert(conn                          != NULL);
-    assert(modlua_runtime                != NULL);
-    assert(modlua_runtime->L             != NULL);
-    assert(modlua_modules_cbdata         != NULL);
-    assert(modlua_modules_cbdata->modlua != NULL);
-
-    return modlua_callback_dispatch_base(
-        ib,
-        modlua_modules_cbdata,
-        modlua_runtime->L);
 }
 
 /**
@@ -506,7 +463,7 @@ static ib_status_t modlua_null(
     lua_pushnil(L);                /* Transaction (tx) is nil. */
     lua_pushlightuserdata(L, ctx); /* Configuration context. */
 
-    rc = modlua_callback_dispatch_base(ib, modlua_modules, L);
+    rc = modlua_callback_dispatch(ib, modlua_modules, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failure while executing callback handler.");
         goto exit;
@@ -656,7 +613,7 @@ static ib_status_t modlua_conn(
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, NULL, conn, runtime, mod_cbdata);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -722,7 +679,7 @@ static ib_status_t modlua_tx(
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, runtime, mod_cbdata);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -793,7 +750,7 @@ static ib_status_t modlua_txdata(
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, runtime, mod_cbdata);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -861,7 +818,7 @@ static ib_status_t modlua_header(
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, runtime, mod_cbdata);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -929,7 +886,7 @@ static ib_status_t modlua_reqline(
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, runtime, mod_cbdata);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -996,7 +953,7 @@ static ib_status_t modlua_respline(
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, event, tx, tx->conn, runtime, mod_cbdata);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -1094,7 +1051,7 @@ static ib_status_t modlua_ctx(
     lua_pushnil(L);                /* Transaction (tx) is nil... */
     lua_pushlightuserdata(L, ctx); /* Push configuration context. */
 
-    rc = modlua_callback_dispatch_base(ib, modlua_modules, L);
+    rc = modlua_callback_dispatch(ib, modlua_modules, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failure while executing callback handler.");
         goto exit;
