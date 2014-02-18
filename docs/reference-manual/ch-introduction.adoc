@@ -12,23 +12,21 @@ IronBee Library::
 IronBee Modules::
 
   Extensions to the inspection engine in the form of loadable
-  shared libraries defined by the IronBee configuration.
+  shared libraries enabled through the IronBee configuration.
 
 Server Components::
 
   The server is the executable driving the inspection engine. This
   can be a standard executable, such as the command line tool, or
   in the form of a plugin such as the Apache trafficserver plugin
-  and Apache httpd module.
+  or the Apache httpd module.
 
 Configuration::
 
-  There are two sets of configuration. The IronBee
-  library must be loaded and bootstrapped via the native server
-  configuration (for example, a commandline option, trafficserver
-  plugin configuration or httpd module configuration). In addition,
-  the IronBee Library must be configured via its own configuration
-  file(s).
+  There are two configurations. The IronBee library must be loaded
+  and bootstrapped via the native server configuration. And then,
+  after the IronBee library is loaded, it is be configured via
+  the main IronBee configuration.
 
 Software Installation
 ~~~~~~~~~~~~~~~~~~~~~
@@ -60,18 +58,21 @@ Configuration
 ~~~~~~~~~~~~~
 
 First, the server component must be configured to load the IronBee
-library and its configuration. This is done through the server's native
-configuration and differs for each server. See the <<_configuration_examples>>
-for more specific details in configuring the server component. Once the
-server component is loaded, IronBee configuration consists of one or more
-configuration files which IronBee will read.
+library and point IronBee to its own onfiguration. This is done
+through the server's native configuration and differs for each server.
+See the <<_configuration_examples>> for more specific details in
+configuring the server component. Once the server component is loaded,
+IronBee configuration consists of one or more configuration files which
+IronBee will read. While the server configuration differs between
+the various server types, the IronBee configuration is not server
+specific and can be shared across different server types.
 
 Inspection
 ~~~~~~~~~~
 
 The IronBee library is fed data by the server. This server could be a
-command line tool (see clipp), or through an HTTP web server or proxy.
-IronBee will expose data via fields. A data field specifies a name, type
+command line tool (see clipp), a webserver or HTTP proxy. IronBee will
+expose data via fields. A data field specifies a name, type
 and value which can then be used for inspection via rules. Rules can be
 simple signatures against fields, a chained set of operations, stream
 based matchers, modules or lua scripts. Each rule can inspect
@@ -136,13 +137,13 @@ used as the delimiter.
 Field Transformations
 +++++++++++++++++++++
 
-Field data often may need to be transformed or normalized before it can
-be used. This is accomplished via transformations. These transformations
+Data often needs to be transformed or normalized before it can be used
+effectively. This is accomplished via transformations. Transformations
 can be applied to individual fields or to all fields within a rule. For
-appying transformations to all fields in a rule, see the `t` rule
+appying transformations to all fields in a rule, see the <<_t>> rule
 modifier, which is essentially a shorthand notation for applying the
-same transformation to each individual field. For individual fields,
-this is done via the dot syntax with parens.
+same transformation to each individual field. Individual fields can be
+transformed independently via the dot syntax with parens.
 
 ---------------------
 ARGS.lowercase()
@@ -164,10 +165,17 @@ REQUEST_HEADERS:User-Agent.length()
 REQUEST_HEADERS:Content-Length.toInteger()
 ------------------------------------------
 
+Multiple transformations are also supported through multiple use
+of the `t` rule modifier or by chaining via the dot notation.
+
+----------------------------------
+ARGS.compressWhitespace().length()
+----------------------------------
+
 Field Expansion
 +++++++++++++++
 
-In addition to using fields as input to rules, sometimes there's a need
+In addition to using fields as input to rules, there is often a need
 to use a field in text strings, such as adding raw values for logging
 via the `logdata` rule modifier. This can be achieved using field
 expansion. For example:
@@ -177,11 +185,16 @@ logdata:%{NAME}
 setvar:MY_COLLECTION:%{NAME}=1
 ------------------------------
 
-If the expression resolves to only one variable, the entire `%{NAME}`
-expression will be replaced with the field value.
+If the expression resolves to a scalar value, the entire `%{NAME}`
+expression will be replaced with that value.
 
-CAUTION: What if the field is not a scalar? Perhaps the value could be JSON or
-similar format?
+[NOTE]
+An expanded field is converted to a string representation no matter
+the type of the expanded field. If you require another type, such as integer,
+then you will need to use an intermediate variable (see the <<_setvar>>
+action) and then perform an explicit conversion (see the <<_tointeger>>
+and similar type conversion transformations). Though, this should be a
+rare use case.
 
 Rules
 ^^^^^
@@ -206,9 +219,10 @@ rules include a list of fields containing the data to be inspected, an
 operator with parameter to perform the inspection, and modifiers which
 specify metadata attributes as well as any actions to be taken.
 
-----------------------------------------------------------------------------------------
-Rule REQUEST_HEADERS ARGS @rx "Some.*Pattern" id:1 rev:1 phase:REQUEST event block:phase
-----------------------------------------------------------------------------------------
+-----------------------------------------------
+Rule REQUEST_HEADERS ARGS @rx "Some.*Pattern" \
+    id:1 rev:1 phase:REQUEST event block:phase
+-----------------------------------------------
 
 Basic matching rules will iterate through the list of fields (and
 sub-fields within collections), executing the specified operator and
@@ -244,10 +258,11 @@ matching rules, stream based rules cannot (currently) be transformed and
 allow only a limited set of operators (currently `dfa`, `ee_match_any`
 as of version 0.8).
 
------------------------------------------------------------------------------------------------------------
-StreamInspect REQUEST_BODY_STREAM @dfa "(?i)Content-Disposition(?:[^\r\n]*)attachment|form-data|filename" \
+-----------------------------------------------------------------------------
+StreamInspect REQUEST_BODY_STREAM \
+    @dfa "(?i)Content-Disposition(?:[^\r\n]*)attachment|form-data|filename" \
     id:1 rev:1 "msg:Possible file upload" event
------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 
 External Rules
 ++++++++++++++
@@ -318,13 +333,13 @@ Metadata::
   Rule metadata is specified using the following modifiers.
 
   id;;
-    Globally unique identifier, in the form
-  `vendorPrefix/vendorRuleId`. It is recommended that all rule IDs within
-  a set have at least a common prefix. Additionally, you are encouraged to
-  further delimit by category or type. For example: `qualys/sqli/5`.
+    Globally unique rule identifier. It is recommended that all
+    rule IDs within a set have at least a common prefix, such as
+    `vendorPrefix/vendorRuleId`. Additionally, you are encouraged to
+    further delimit by category or type. For example: `qualys/sqli/5`.
   
   rev;;
-    Revision, which is used to differentiate between two versions
+    Revision, which is used to differentiate between revisions
   of the same rule; it defaults to 1 if not specified.
   
   msg;;
@@ -332,30 +347,29 @@ Metadata::
   generate events must define a message.
   
   tag;;
-    Assigns one or more tags to the rule; tags are used to
-  classify rules and events (as events inherit all tags from the rule that
-  generates them).
+    Assigns a tag to the rule; One or more tags are used to
+  classify rules and events (as events inherit all tags from the
+  rule that generates them).
   
   phase;;
-    Determines when the rule will run (Not available in
-  streaming rules as these are triggered on new data)
+    Determines when the rule will execute (Not available in
+  streaming rules as these are triggered on new data).
   
   severity;;
-    Determines the seriousness of the finding (0-100)
+    Determines the seriousness of the finding (0-100).
   
   confidence;;
-    Determines the confidence the rule has in its logic
-  (0-100)
+    Determines the confidence the rule has in its logic (0-100).
   
 Events
 ^^^^^^
 
 During a transaction, one or more events may be generated (see the
-`event` action). Each event has the following attributes - many of which
-are modified by the rule metadata.
+<<_event>> action). Each event has the following attributes - many of which
+are modified by rule metadata.
 
 Event ID::
-  Uniquely generated (for the transaction) event identifier
+  Uniquely generated (for the transaction) event identifier.
 
 Event Type::
   Type of event. Currently this is one of:
@@ -370,14 +384,14 @@ Rule ID::
   The rule which created the event, if it was generated by a rule.
 
 Field(s)::
-  A optional list of inspected fields which contributed to the event.
+  An optional list of inspected fields which contributed to the event.
 
 Tag(s)::
   An optional list of tags used to classify the event.
 
 Data::
   Arbitrary data associated with the event. This is to be treated as
-  opaque and will be accompanied with a length in bytes.
+  opaque binary data.
 
 Message::
   A text message associated with the event.
@@ -436,9 +450,9 @@ headers, making it easy to perform inspection and reliably block when
 necessary.
 
 The situation is different with request and response bodies, which can
-be quite big. For example, request bodies may carry one or more files;
+be quite large. For example, request bodies may carry one or more files;
 response bodies too often deliver files, and some HTML responses can get
-quite big too. Even when sites do not normally have large request
+quite large as well. Even when sites do not normally have large request
 bodies, they are under the control of attackers, and they may
 intentionally submit large amounts of data in an effort to bypass
 inspection.

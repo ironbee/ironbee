@@ -17,17 +17,16 @@ replaced by something more tailored to your environment.
 
 As a framework, IronBee's goals are as follows:
 
-* Be minimalistic in what is contained in the core engine.
-+
+Be minimalistic in what is contained in the core engine::
+
 The IronBee core engine does essentially nothing but expose an API and
 an event subsystem. There is no rule language, there is no inspection
 and there is only minimal processing of the HTTP transaction cycle.
 Everything else is left to modules. Load only the modules that provide
 functionality that is required.
 
-* Provide an simple API for data acquisition to allow embedding IronBee
-in existing and future products.
-+
+Provide an simple API for data acquisition::
+
 Data acquisition is not a part of the IronBee engine. Instead, the
 engine exposes an API to allow data to be fed to IronBee in various
 ways. Data acquisition is done through server plugins, which must load
@@ -42,8 +41,8 @@ possible:
 ** Nginx
 ** Command Line Utility (clipp)
 
-* Provide an API to allow extension through external modules.
-+
+Provide an API to allow extension through external modules::
+
 To IronBee, modules are everything. Modules utilize the core engine to
 implement additional functionality. Currently modules can be written in
 C, C++ or Lua, but extending this to other languages is possible as
@@ -51,21 +50,17 @@ well. What follows is a list of what has been implemented, but anything
 is possible:
 
 ** Configuration
-
 ** Parsing and exposing fields for inspection and logging
-
 ** Implementing operators, transformations and actions which other
 modules and rules/signatures can utilize
-
 ** Rule/signature languages
-
 ** Inspection modules
-
 ** Content transformation and modification
-
 ** Logging
 
-* Not tie inspection to a fixed rule/signature language, but rather,
+Allow for modular inspection::
+
+Do not tie inspection to a fixed rule/signature language, but rather,
 allow this to be implemented by modules.
 +
 Different types of inspection require different means. Because of this,
@@ -94,8 +89,8 @@ is similar to the ModSecurity Rule Language, but has only a subset of
 functionality. The rule language is limited by design and allows for
 simple pattern matches against data fields to trigger actions.
 
-* Not limit interaction with external systems.
-+
+Allow for interaction with external systems::
+
 Being a framework, IronBee is meant to be embedded and interact with
 other systems. Because of this, IronBee does not dictate how it is
 managed. There is no facility for managing configuration, rules or logs.

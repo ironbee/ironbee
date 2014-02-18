@@ -359,7 +359,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 .literalblock > .content > pre, .listingblock > .content > pre { -webkit-border-radius: 0; border-radius: 0; }
 </style>
 </head>
-<body class="book toc2 toc-right">
+<body class="book toc2 toc-left">
 <div id="header">
 <h1>IronBee Reference Manual</h1>
 <span id="author" class="author">Brian Rectanus</span><br>
@@ -747,28 +747,23 @@ replaced by something more tailored to your environment.</p>
 <div class="paragraph">
 <p>As a framework, IronBee&#8217;s goals are as follows:</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p>Be minimalistic in what is contained in the core engine.</p>
-<div class="paragraph">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Be minimalistic in what is contained in the core engine</dt>
+<dd>
 <p>The IronBee core engine does essentially nothing but expose an API and
 an event subsystem. There is no rule language, there is no inspection
 and there is only minimal processing of the HTTP transaction cycle.
 Everything else is left to modules. Load only the modules that provide
 functionality that is required.</p>
-</div>
-</li>
-<li>
-<p>Provide an simple API for data acquisition to allow embedding IronBee
-in existing and future products.</p>
-<div class="paragraph">
+</dd>
+<dt class="hdlist1">Provide an simple API for data acquisition</dt>
+<dd>
 <p>Data acquisition is not a part of the IronBee engine. Instead, the
 engine exposes an API to allow data to be fed to IronBee in various
 ways. Data acquisition is done through server plugins, which must load
 the IronBee engine and pass it data. This leaves IronBee open to being
 embedded in nearly anything that can pass HTTP data to IronBee.</p>
-</div>
 <div class="paragraph">
 <p>Currently IronBee works with the following, but many others are
 possible:</p>
@@ -789,16 +784,14 @@ possible:</p>
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Provide an API to allow extension through external modules.</p>
-<div class="paragraph">
+</dd>
+<dt class="hdlist1">Provide an API to allow extension through external modules</dt>
+<dd>
 <p>To IronBee, modules are everything. Modules utilize the core engine to
 implement additional functionality. Currently modules can be written in
 C, C++ or Lua, but extending this to other languages is possible as
 well. What follows is a list of what has been implemented, but anything
 is possible:</p>
-</div>
 <div class="ulist">
 <ul>
 <li>
@@ -825,9 +818,10 @@ modules and rules/signatures can utilize</p>
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Not tie inspection to a fixed rule/signature language, but rather,
+</dd>
+<dt class="hdlist1">Allow for modular inspection</dt>
+<dd>
+<p>Do not tie inspection to a fixed rule/signature language, but rather,
 allow this to be implemented by modules.</p>
 <div class="paragraph">
 <p>Different types of inspection require different means. Because of this,
@@ -864,10 +858,9 @@ simple pattern matches against data fields to trigger actions.</p>
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Not limit interaction with external systems.</p>
-<div class="paragraph">
+</dd>
+<dt class="hdlist1">Allow for interaction with external systems</dt>
+<dd>
 <p>Being a framework, IronBee is meant to be embedded and interact with
 other systems. Because of this, IronBee does not dictate how it is
 managed. There is no facility for managing configuration, rules or logs.
@@ -879,9 +872,8 @@ managed. It is certainly possible to replace the file based
 configuration with one that interacts with a database, to manage rules
 from an external system and/or write logs to something other than the
 filesystem.</p>
-</div>
-</li>
-</ul>
+</dd>
+</dl>
 </div>
 <div class="sidebarblock">
 <div class="content">
@@ -925,23 +917,21 @@ following components make up the IronBee framework:</p>
 <dt class="hdlist1">IronBee Modules</dt>
 <dd>
 <p>Extensions to the inspection engine in the form of loadable
-shared libraries defined by the IronBee configuration.</p>
+shared libraries enabled through the IronBee configuration.</p>
 </dd>
 <dt class="hdlist1">Server Components</dt>
 <dd>
 <p>The server is the executable driving the inspection engine. This
 can be a standard executable, such as the command line tool, or
 in the form of a plugin such as the Apache trafficserver plugin
-and Apache httpd module.</p>
+or the Apache httpd module.</p>
 </dd>
 <dt class="hdlist1">Configuration</dt>
 <dd>
-<p>There are two sets of configuration. The IronBee
-library must be loaded and bootstrapped via the native server
-configuration (for example, a commandline option, trafficserver
-plugin configuration or httpd module configuration). In addition,
-the IronBee Library must be configured via its own configuration
-file(s).</p>
+<p>There are two configurations. The IronBee library must be loaded
+and bootstrapped via the native server configuration. And then,
+after the IronBee library is loaded, it is be configured via
+the main IronBee configuration.</p>
 </dd>
 </dl>
 </div>
@@ -982,19 +972,22 @@ building and installing IronBee.</p>
 <h3 id="_configuration">Configuration</h3>
 <div class="paragraph">
 <p>First, the server component must be configured to load the IronBee
-library and its configuration. This is done through the server&#8217;s native
-configuration and differs for each server. See the <a href="#_configuration_examples">Configuration Examples</a>
-for more specific details in configuring the server component. Once the
-server component is loaded, IronBee configuration consists of one or more
-configuration files which IronBee will read.</p>
+library and point IronBee to its own onfiguration. This is done
+through the server&#8217;s native configuration and differs for each server.
+See the <a href="#_configuration_examples">Configuration Examples</a> for more specific details in
+configuring the server component. Once the server component is loaded,
+IronBee configuration consists of one or more configuration files which
+IronBee will read. While the server configuration differs between
+the various server types, the IronBee configuration is not server
+specific and can be shared across different server types.</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_inspection">Inspection</h3>
 <div class="paragraph">
 <p>The IronBee library is fed data by the server. This server could be a
-command line tool (see clipp), or through an HTTP web server or proxy.
-IronBee will expose data via fields. A data field specifies a name, type
+command line tool (see clipp), a webserver or HTTP proxy. IronBee will
+expose data via fields. A data field specifies a name, type
 and value which can then be used for inspection via rules. Rules can be
 simple signatures against fields, a chained set of operations, stream
 based matchers, modules or lua scripts. Each rule can inspect
@@ -1071,13 +1064,13 @@ used as the delimiter.</p>
 <div class="sect4">
 <h5 id="_field_transformations">Field Transformations</h5>
 <div class="paragraph">
-<p>Field data often may need to be transformed or normalized before it can
-be used. This is accomplished via transformations. These transformations
+<p>Data often needs to be transformed or normalized before it can be used
+effectively. This is accomplished via transformations. Transformations
 can be applied to individual fields or to all fields within a rule. For
-appying transformations to all fields in a rule, see the <code>t</code> rule
+appying transformations to all fields in a rule, see the <a href="#_t">t</a> rule
 modifier, which is essentially a shorthand notation for applying the
-same transformation to each individual field. For individual fields,
-this is done via the dot syntax with parens.</p>
+same transformation to each individual field. Individual fields can be
+transformed independently via the dot syntax with parens.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1102,11 +1095,20 @@ REQUEST_HEADERS:User-Agent.length()
 REQUEST_HEADERS:Content-Length.toInteger()</pre>
 </div>
 </div>
+<div class="paragraph">
+<p>Multiple transformations are also supported through multiple use
+of the <code>t</code> rule modifier or by chaining via the dot notation.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>ARGS.compressWhitespace().length()</pre>
+</div>
+</div>
 </div>
 <div class="sect4">
 <h5 id="_field_expansion">Field Expansion</h5>
 <div class="paragraph">
-<p>In addition to using fields as input to rules, sometimes there&#8217;s a need
+<p>In addition to using fields as input to rules, there is often a need
 to use a field in text strings, such as adding raw values for logging
 via the <code>logdata</code> rule modifier. This can be achieved using field
 expansion. For example:</p>
@@ -1118,18 +1120,22 @@ setvar:MY_COLLECTION:%{NAME}=1</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>If the expression resolves to only one variable, the entire <code>%{NAME}</code>
-expression will be replaced with the field value.</p>
+<p>If the expression resolves to a scalar value, the entire <code>%{NAME}</code>
+expression will be replaced with that value.</p>
 </div>
-<div class="admonitionblock caution">
+<div class="admonitionblock note">
 <table>
 <tr>
 <td class="icon">
-<div class="title">Caution</div>
+<div class="title">Note</div>
 </td>
 <td class="content">
-What if the field is not a scalar? Perhaps the value could be JSON or
-similar format?
+An expanded field is converted to a string representation no matter
+the type of the expanded field. If you require another type, such as integer,
+then you will need to use an intermediate variable (see the <a href="#_setvar">setvar</a>
+action) and then perform an explicit conversion (see the <a href="#_tointeger">toInteger</a>
+and similar type conversion transformations). Though, this should be a
+rare use case.
 </td>
 </tr>
 </table>
@@ -1162,7 +1168,8 @@ specify metadata attributes as well as any actions to be taken.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>Rule REQUEST_HEADERS ARGS @rx "Some.*Pattern" id:1 rev:1 phase:REQUEST event block:phase</pre>
+<pre>Rule REQUEST_HEADERS ARGS @rx "Some.*Pattern" \
+    id:1 rev:1 phase:REQUEST event block:phase</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1205,7 +1212,8 @@ as of version 0.8).</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>StreamInspect REQUEST_BODY_STREAM @dfa "(?i)Content-Disposition(?:[^\r\n]*)attachment|form-data|filename" \
+<pre>StreamInspect REQUEST_BODY_STREAM \
+    @dfa "(?i)Content-Disposition(?:[^\r\n]*)attachment|form-data|filename" \
     id:1 rev:1 "msg:Possible file upload" event</pre>
 </div>
 </div>
@@ -1296,14 +1304,14 @@ return 0</pre>
 <dl>
 <dt class="hdlist1">id</dt>
 <dd>
-<p>  Globally unique identifier, in the form
-<code>vendorPrefix/vendorRuleId</code>. It is recommended that all rule IDs within
-a set have at least a common prefix. Additionally, you are encouraged to
+<p>Globally unique rule identifier. It is recommended that all
+rule IDs within a set have at least a common prefix, such as
+<code>vendorPrefix/vendorRuleId</code>. Additionally, you are encouraged to
 further delimit by category or type. For example: <code>qualys/sqli/5</code>.</p>
 </dd>
 <dt class="hdlist1">rev</dt>
 <dd>
-<p>  Revision, which is used to differentiate between two versions
+<p>  Revision, which is used to differentiate between revisions
 of the same rule; it defaults to 1 if not specified.</p>
 </dd>
 <dt class="hdlist1">msg</dt>
@@ -1313,23 +1321,22 @@ generate events must define a message.</p>
 </dd>
 <dt class="hdlist1">tag</dt>
 <dd>
-<p>  Assigns one or more tags to the rule; tags are used to
-classify rules and events (as events inherit all tags from the rule that
-generates them).</p>
+<p>  Assigns a tag to the rule; One or more tags are used to
+classify rules and events (as events inherit all tags from the
+rule that generates them).</p>
 </dd>
 <dt class="hdlist1">phase</dt>
 <dd>
-<p>  Determines when the rule will run (Not available in
-streaming rules as these are triggered on new data)</p>
+<p>  Determines when the rule will execute (Not available in
+streaming rules as these are triggered on new data).</p>
 </dd>
 <dt class="hdlist1">severity</dt>
 <dd>
-<p>Determines the seriousness of the finding (0-100)</p>
+<p>Determines the seriousness of the finding (0-100).</p>
 </dd>
 <dt class="hdlist1">confidence</dt>
 <dd>
-<p>  Determines the confidence the rule has in its logic
-(0-100)</p>
+<p>Determines the confidence the rule has in its logic (0-100).</p>
 </dd>
 </dl>
 </div>
@@ -1342,14 +1349,14 @@ streaming rules as these are triggered on new data)</p>
 <h4 id="_events">Events</h4>
 <div class="paragraph">
 <p>During a transaction, one or more events may be generated (see the
-<code>event</code> action). Each event has the following attributes - many of which
-are modified by the rule metadata.</p>
+<a href="#_event">event</a> action). Each event has the following attributes - many of which
+are modified by rule metadata.</p>
 </div>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">Event ID</dt>
 <dd>
-<p>Uniquely generated (for the transaction) event identifier</p>
+<p>Uniquely generated (for the transaction) event identifier.</p>
 </dd>
 <dt class="hdlist1">Event Type</dt>
 <dd>
@@ -1373,7 +1380,7 @@ are modified by the rule metadata.</p>
 </dd>
 <dt class="hdlist1">Field(s)</dt>
 <dd>
-<p>A optional list of inspected fields which contributed to the event.</p>
+<p>An optional list of inspected fields which contributed to the event.</p>
 </dd>
 <dt class="hdlist1">Tag(s)</dt>
 <dd>
@@ -1382,7 +1389,7 @@ are modified by the rule metadata.</p>
 <dt class="hdlist1">Data</dt>
 <dd>
 <p>Arbitrary data associated with the event. This is to be treated as
-opaque and will be accompanied with a length in bytes.</p>
+opaque binary data.</p>
 </dd>
 <dt class="hdlist1">Message</dt>
 <dd>
@@ -1467,9 +1474,9 @@ necessary.</p>
 </div>
 <div class="paragraph">
 <p>The situation is different with request and response bodies, which can
-be quite big. For example, request bodies may carry one or more files;
+be quite large. For example, request bodies may carry one or more files;
 response bodies too often deliver files, and some HTML responses can get
-quite big too. Even when sites do not normally have large request
+quite large as well. Even when sites do not normally have large request
 bodies, they are under the control of attackers, and they may
 intentionally submit large amounts of data in an effort to bypass
 inspection.</p>
@@ -13353,7 +13360,7 @@ in the future</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-02-16 23:55:17 CST
+Last updated 2014-02-17 03:21:29 CST
 </div>
 </div>
 </body>

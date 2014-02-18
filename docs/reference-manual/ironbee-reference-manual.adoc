@@ -5,7 +5,7 @@ IronBee Reference Manual
 :doctype: book
 :stylesheet: ironbee-reference-manual.css
 :encoding: utf-8
-:toc2: right
+:toc2: left
 :toclevels: 3
 
 include::ch-preface.adoc[]
