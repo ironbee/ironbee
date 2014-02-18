@@ -1089,6 +1089,7 @@ static void modhtp_parser_flag(
                           flagname, ib_status_to_string(rc));
         return;
     }
+    /* TODO: This should be using ib_var_target_remove_and_set() */
     rc = ib_field_list_add(field, listfield);
     if (rc != IB_OK) {
         ib_log_warning_tx(itx,
@@ -1096,6 +1097,9 @@ static void modhtp_parser_flag(
                           flagname, collection, ib_status_to_string(rc));
         return;
     }
+
+    ib_log_debug_tx(itx, "Set HTP parser flag: %s:%s", collection, flagname);
+
     return;
 }
 
@@ -1106,8 +1110,8 @@ static void modhtp_parser_flag(
  * @param[in] collection The name of the collection in which to store the flags
  */
 static void modhtp_set_parser_flags(
-    modhtp_txdata_t  *txdata,
-    const char       *collection)
+    const modhtp_txdata_t *txdata,
+    const char            *collection)
 {
     assert(txdata != NULL);
     assert(collection != NULL);
@@ -2548,6 +2552,8 @@ ib_status_t modhtp_handle_context_tx(
         return irc;
     }
 
+    modhtp_set_parser_flags(txdata, "HTP_REQUEST_FLAGS");
+
     ib_log_debug_tx(itx,
                     "Sending request header finished to LibHTP.");
     return IB_OK;
@@ -2817,6 +2823,8 @@ ib_status_t modhtp_response_header_finished(
     if (irc != IB_OK) {
         return irc;
     }
+
+    modhtp_set_parser_flags(txdata, "HTP_RESPONSE_FLAGS");
 
     /* This is required for parsed data only. */
     if (ib_flags_all(itx->conn->flags, IB_CONN_FDATAIN)) {
