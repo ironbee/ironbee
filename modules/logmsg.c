@@ -162,7 +162,7 @@ static ib_status_t logmsg_init(
                             "logMsg",
                             logmsg_create, NULL,
                             NULL, NULL, /* no destroy function */
-                            logmsg_execute, NULL);
+                            logmsg_execute, module);
     if (rc != IB_OK) {
         return rc;
     }
