@@ -1634,7 +1634,7 @@ See the predicate documentation.
 [cols=">h,<9"]
 |===============================================================================
 |Description|Configure predicate to set custom vars (fields).
-|       Type|Action
+|       Type|Modifier
 |     Syntax|`set_predicate_vars`
 |Cardinality|0..1
 |     Module|predicate
@@ -1680,7 +1680,7 @@ response body (default: unset).
 |===============================================================================
 |Description|Set the value of a HTTP request header.
 |       Type|Action
-|     Syntax|`setRequestHeader:=`
+|     Syntax|`setRequestHeader:<name>=<value>`
 |Cardinality|0..n
 |     Module|core
 |    Version|0.4
@@ -1694,7 +1694,7 @@ NOTE: This functionality is optionally implemented by the server and may not
 |===============================================================================
 |Description|Set the value of an HTTP response header.
 |       Type|Action
-|     Syntax|`setResponseHeader:=`
+|     Syntax|`setResponseHeader:<name>=<value>`
 |Cardinality|0..n
 |     Module|core
 |    Version|0.4
