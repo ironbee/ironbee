@@ -29,6 +29,8 @@ libibutil_la_SOURCES = array.c \
                        lock.c \
                        logformat.c \
                        modsec_compat.c \
+                       mm.c \
+                       mm_mpool.c \
                        mpool.c \
                        path.c \
 				       queue.c \

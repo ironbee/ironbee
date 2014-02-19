@@ -34,6 +34,7 @@ check_PROGRAMS = \
 	test_util_log \
 	test_util_logformat \
 	test_util_misc \
+	test_util_mm \
 	test_util_mpool \
 	test_util_path \
 	test_util_queue \
@@ -145,3 +146,5 @@ test_util_uuid_LDADD = $(LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIBS)
 
 test_util_mpool_SOURCES = test_util_mpool.cpp
 test_util_mpool_LDADD = $(LDADD) -lboost_thread$(BOOST_THREAD_SUFFIX) -lboost_system$(BOOST_SUFFIX)
+
+test_util_mm_SOURCES = test_util_mm.cpp
