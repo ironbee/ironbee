@@ -7176,7 +7176,7 @@ in sub contexts.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the severity of the issue thisrule is trying to protect against.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric value indicating the severity of the issue this rule is trying to protect against.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -7499,7 +7499,7 @@ Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">An alias to the current field name being inspected, notincluding the collection name if it is a sub-field in a collection.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An alias to the current field name being inspected, not including the collection name if it is a sub-field in a collection.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -7538,7 +7538,7 @@ prepended, then use <code>FIELD_NAME_FULL</code>.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">An alias to the current field name being inspected,including the collection name if it is a sub-field in a collection.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An alias to the current field name being inspected, including the collection name if it is a sub-field in a collection.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -7574,7 +7574,7 @@ must have the full name of the field being inspected. See <code>FIELD_NAME</code
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If the <em>geoip</em> module is loaded, then a lookup will beperformed on the remote (client) address and the results placed in this collection.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If the <em>geoip</em> module is loaded, then a lookup will be performed on the remote (client) address and the results placed in this collection.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -7880,7 +7880,7 @@ be set:</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Remote (client) IP address, extracted from the TCPconnection. Can be in IPv4 or IPv6 format.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Remote (client) IP address, extracted from the TCP connection. Can be in IPv4 or IPv6 format.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -8053,7 +8053,7 @@ be corrected using any available proxy headers (currently <code>X-Forwarded-For<
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Request hostname information, extracted from the requestand normalized.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Request hostname information, extracted from the request and normalized.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -8233,7 +8233,7 @@ HTTP prior to 1.0) will have an empty string value.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Request URI, extracted from request and normalizedaccording to the current personality (see <code>REQUEST_FILENAME</code> for more details).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Request URI, extracted from request and normalized according to the current personality.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -8300,7 +8300,7 @@ HTTP prior to 1.0) will have an empty string value.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed fragment portion of the URI within the requestline.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed fragment portion of the URI within the request line.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -8400,7 +8400,7 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed password portion of the URI within the requestline.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed password portion of the URI within the request line.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -8432,7 +8432,7 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed and normalized path portion of the URI within therequest line.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed and normalized path portion of the URI within the request line.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -8464,7 +8464,7 @@ different from the normalized host, which is in <code>REQUEST_HOST</code>.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed (raw) path portion of the URI within the requestline.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed (raw) path portion of the URI within the request line.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -8637,7 +8637,7 @@ As no URL decoding is performed (this is a raw value), you probably want
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed username portion of the URI within the requestline.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parsed username portion of the URI within the request line.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -9032,7 +9032,7 @@ HTTP request header.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to thenumeric value of the input.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value greater than or equal to the numeric value of the input.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9059,7 +9059,7 @@ HTTP request header.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Replaces one or more consecutive whitespace characterswith a single space.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Replaces one or more consecutive whitespace characters with a single space.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9089,7 +9089,7 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection, it returns the number if items in thecollection. Given a scalar, returns 1.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection, it returns the number if items in the collection. Given a scalar, returns 1.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9113,7 +9113,7 @@ space. Whitespace characters are: <code>0x20</code>, <code>\f</code>, <code>\t</
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to thenumeric value of the input.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value less than or equal to the numeric value of the input.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9307,7 +9307,7 @@ lt, gt).</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the maximumvalue.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the maximum value.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9331,7 +9331,7 @@ lt, gt).</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the minimumvalue.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Given a collection of numeric data, returns the minimum value.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9379,7 +9379,7 @@ lt, gt).</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns a collection of names from a collection ofname/value pairs.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns a collection of names from a collection of name/value pairs.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9403,7 +9403,7 @@ lt, gt).</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a filesystem path, removing back and selfreferences.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a filesystem path, removing back and self references.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9427,7 +9427,7 @@ lt, gt).</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a Windows filesystem path, removing back andself references.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Normalize a Windows filesystem path, removing back and self references.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9562,7 +9562,7 @@ of replacing them with a single space.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value ofthe input.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return the integral value closest to the numeric value of the input.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9589,7 +9589,7 @@ of replacing them with a single space.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning and endof the input.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning and end of the input.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9613,7 +9613,7 @@ of replacing them with a single space.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning of theinput.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes consecutive whitespace from the beginning of the input.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
@@ -9907,7 +9907,7 @@ directive</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically equal to thegiven value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically equal to the given value.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -9939,7 +9939,7 @@ directive</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically greater than orequal to the given value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically greater than or equal to the given value.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -9971,7 +9971,7 @@ directive</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically greater thanthe given value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically greater than the given value.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -10035,7 +10035,7 @@ directive</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if a target IPv4 address matches any givenwhitespace separated address in CIDR format.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if a target IPv4 address matches any given whitespace separated address in CIDR format.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -10067,7 +10067,7 @@ directive</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if a target IPv6 address matches any givenwhitespace separated address in CIDR format.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if a target IPv6 address matches any given whitespace separated address in CIDR format.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -10149,7 +10149,7 @@ databases is not yet implemented.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically less than orequal to the given value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically less than or equal to the given value.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -10181,7 +10181,7 @@ databases is not yet implemented.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically less than thegiven value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically less than the given value.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -10213,7 +10213,7 @@ databases is not yet implemented.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is any of the given whitespaceseparated words.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is any of the given whitespace separated words.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -10245,7 +10245,7 @@ databases is not yet implemented.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is not numerically equal tothe given value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is not numerically equal to the given value.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -10277,7 +10277,7 @@ databases is not yet implemented.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Regular expression (perl compatible regular expression)matching.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Regular expression (perl compatible regular expression) matching.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -10431,7 +10431,7 @@ an event.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Mark a transaction as allowed to proceed to a giveninspection point.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Mark a transaction as allowed to proceed to a given inspection point.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -10593,7 +10593,7 @@ collection instead of the <code>CAPTURE</code> collection.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Chains the next rule, so that the next rule will executeonly if the current operator evaluates true.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Chains the next rule, so that the next rule will execute only if the current operator evaluates true.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>

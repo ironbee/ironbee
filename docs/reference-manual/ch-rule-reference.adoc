@@ -138,7 +138,7 @@ in sub contexts.
 ==== severity
 [cols=">h,<9"]
 |===============================================================================
-|Description|Numeric value indicating the severity of the issue thisrule is trying to protect against.
+|Description|Numeric value indicating the severity of the issue this rule is trying to protect against.
 |       Type|Metadata
 |     Syntax|`severity:<0-100>`
 |Cardinality|0..1
@@ -263,7 +263,7 @@ Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
 ==== FIELD_NAME
 [cols=">h,<9"]
 |===============================================================================
-|Description|An alias to the current field name being inspected, notincluding the collection name if it is a sub-field in a collection.
+|Description|An alias to the current field name being inspected, not including the collection name if it is a sub-field in a collection.
 |       Type|Variable (same type as the aliased field)
 |      Scope|Rule
 |     Module|core
@@ -279,7 +279,7 @@ prepended, then use `FIELD_NAME_FULL`.
 ==== FIELD_NAME_FULL
 [cols=">h,<9"]
 |===============================================================================
-|Description|An alias to the current field name being inspected,including the collection name if it is a sub-field in a collection.
+|Description|An alias to the current field name being inspected, including the collection name if it is a sub-field in a collection.
 |       Type|Variable (same type as the aliased field)
 |      Scope|Rule
 |     Module|core
@@ -292,7 +292,7 @@ must have the full name of the field being inspected. See `FIELD_NAME`.
 ==== GEOIP
 [cols=">h,<9"]
 |===============================================================================
-|Description|If the _geoip_ module is loaded, then a lookup will beperformed on the remote (client) address and the results placed in this collection.
+|Description|If the _geoip_ module is loaded, then a lookup will be performed on the remote (client) address and the results placed in this collection.
 |       Type|Collection
 |      Scope|Transaction
 |     Module|geoip
@@ -403,7 +403,7 @@ be set:
 ==== REMOTE_ADDR
 [cols=">h,<9"]
 |===============================================================================
-|Description|Remote (client) IP address, extracted from the TCPconnection. Can be in IPv4 or IPv6 format.
+|Description|Remote (client) IP address, extracted from the TCP connection. Can be in IPv4 or IPv6 format.
 |       Type|String
 |      Scope|Connection
 |     Module|core
@@ -457,7 +457,7 @@ be corrected using any available proxy headers (currently `X-Forwarded-For`).
 ==== REQUEST_HOST
 [cols=">h,<9"]
 |===============================================================================
-|Description|Request hostname information, extracted from the requestand normalized.
+|Description|Request hostname information, extracted from the request and normalized.
 |       Type|String
 |      Scope|Transaction (`REQUEST_HEADERS`)
 |     Module|core
@@ -524,7 +524,7 @@ HTTP prior to 1.0) will have an empty string value.
 ==== REQUEST_URI
 [cols=">h,<9"]
 |===============================================================================
-|Description|Request URI, extracted from request and normalizedaccording to the current personality (see `REQUEST_FILENAME` for more details).
+|Description|Request URI, extracted from request and normalized according to the current personality.
 |       Type|String
 |      Scope|Transaction
 |     Module|core
@@ -547,7 +547,7 @@ All normalization options:
 ==== REQUEST_URI_FRAGMENT
 [cols=">h,<9"]
 |===============================================================================
-|Description|Parsed fragment portion of the URI within the requestline.
+|Description|Parsed fragment portion of the URI within the request line.
 |       Type|String
 |      Scope|Transaction
 |     Module|core
@@ -580,7 +580,7 @@ different from the normalized host, which is in `REQUEST_HOST`.
 ==== REQUEST_URI_PASSWORD
 [cols=">h,<9"]
 |===============================================================================
-|Description|Parsed password portion of the URI within the requestline.
+|Description|Parsed password portion of the URI within the request line.
 |       Type|String
 |      Scope|Transaction
 |     Module|core
@@ -590,7 +590,7 @@ different from the normalized host, which is in `REQUEST_HOST`.
 ==== REQUEST_URI_PATH
 [cols=">h,<9"]
 |===============================================================================
-|Description|Parsed and normalized path portion of the URI within therequest line.
+|Description|Parsed and normalized path portion of the URI within the request line.
 |       Type|String
 |      Scope|Transaction
 |     Module|core
@@ -600,7 +600,7 @@ different from the normalized host, which is in `REQUEST_HOST`.
 ==== REQUEST_URI_PATH_RAW
 [cols=">h,<9"]
 |===============================================================================
-|Description|Parsed (raw) path portion of the URI within the requestline.
+|Description|Parsed (raw) path portion of the URI within the request line.
 |       Type|String
 |      Scope|Transaction
 |     Module|core
@@ -654,7 +654,7 @@ As no URL decoding is performed (this is a raw value), you probably want
 ==== REQUEST_URI_USERNAME
 [cols=">h,<9"]
 |===============================================================================
-|Description|Parsed username portion of the URI within the requestline.
+|Description|Parsed username portion of the URI within the request line.
 |       Type|String
 |      Scope|Transaction
 |     Module|core
@@ -798,7 +798,7 @@ TODO: General description.
 ==== ceil
 [cols=">h,<9"]
 |===============================================================================
-|Description|Return the integral value greater than or equal to thenumeric value of the input.
+|Description|Return the integral value greater than or equal to the numeric value of the input.
 |     Module|core
 |    Version|0.7
 |===============================================================================
@@ -808,7 +808,7 @@ DEPRECATED: Use `iceil` instead.
 ==== compressWhitespace
 [cols=">h,<9"]
 |===============================================================================
-|Description|Replaces one or more consecutive whitespace characterswith a single space.
+|Description|Replaces one or more consecutive whitespace characters with a single space.
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -821,7 +821,7 @@ space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
 ==== count
 [cols=">h,<9"]
 |===============================================================================
-|Description|Given a collection, it returns the number if items in thecollection. Given a scalar, returns 1.
+|Description|Given a collection, it returns the number if items in the collection. Given a scalar, returns 1.
 |     Module|core
 |    Version|0.4
 |===============================================================================
@@ -829,7 +829,7 @@ space. Whitespace characters are: `0x20`, `\f`, `\t`, `\n`, `\r`, `\v`,
 ==== floor
 [cols=">h,<9"]
 |===============================================================================
-|Description|Return the integral value less than or equal to thenumeric value of the input.
+|Description|Return the integral value less than or equal to the numeric value of the input.
 |     Module|core
 |    Version|0.7
 |===============================================================================
@@ -899,7 +899,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 ==== max
 [cols=">h,<9"]
 |===============================================================================
-|Description|Given a collection of numeric data, returns the maximumvalue.
+|Description|Given a collection of numeric data, returns the maximum value.
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -907,7 +907,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 ==== min
 [cols=">h,<9"]
 |===============================================================================
-|Description|Given a collection of numeric data, returns the minimumvalue.
+|Description|Given a collection of numeric data, returns the minimum value.
 |     Module|core
 |    Version|0.3
 |===============================================================================
@@ -923,7 +923,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 ==== names
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns a collection of names from a collection ofname/value pairs.
+|Description|Returns a collection of names from a collection of name/value pairs.
 |     Module|core
 |    Version|0.6
 |===============================================================================
@@ -931,7 +931,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 ==== normalizePath
 [cols=">h,<9"]
 |===============================================================================
-|Description|Normalize a filesystem path, removing back and selfreferences.
+|Description|Normalize a filesystem path, removing back and self references.
 |     Module|core
 |    Version|0.6
 |===============================================================================
@@ -939,7 +939,7 @@ https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references.
 ==== normalizePathWin
 [cols=">h,<9"]
 |===============================================================================
-|Description|Normalize a Windows filesystem path, removing back andself references.
+|Description|Normalize a Windows filesystem path, removing back and self references.
 |     Module|core
 |    Version|0.6
 |===============================================================================
@@ -1001,7 +1001,7 @@ of replacing them with a single space.
 ==== round
 [cols=">h,<9"]
 |===============================================================================
-|Description|Return the integral value closest to the numeric value ofthe input.
+|Description|Return the integral value closest to the numeric value of the input.
 |     Module|core
 |    Version|0.7
 |===============================================================================
@@ -1011,7 +1011,7 @@ DEPRECATED: Use `iround` instead.
 ==== trim
 [cols=">h,<9"]
 |===============================================================================
-|Description|Removes consecutive whitespace from the beginning and endof the input.
+|Description|Removes consecutive whitespace from the beginning and end of the input.
 |     Module|core
 |    Version|0.2
 |===============================================================================
@@ -1019,7 +1019,7 @@ DEPRECATED: Use `iround` instead.
 ==== trimLeft
 [cols=">h,<9"]
 |===============================================================================
-|Description|Removes consecutive whitespace from the beginning of theinput.
+|Description|Removes consecutive whitespace from the beginning of the input.
 |     Module|core
 |    Version|0.2
 |===============================================================================
@@ -1137,7 +1137,7 @@ directive
 ==== eq
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns true if the target is numerically equal to thegiven value.
+|Description|Returns true if the target is numerically equal to the given value.
 |     Syntax|`eq`
 |      Types|Numeric
 |     Module|core
@@ -1147,7 +1147,7 @@ directive
 ==== ge
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns true if the target is numerically greater than orequal to the given value.
+|Description|Returns true if the target is numerically greater than or equal to the given value.
 |     Syntax|`ge`
 |      Types|Numeric
 |     Module|core
@@ -1157,7 +1157,7 @@ directive
 ==== gt
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns true if the target is numerically greater thanthe given value.
+|Description|Returns true if the target is numerically greater than the given value.
 |     Syntax|`gt`
 |      Types|Numeric
 |     Module|core
@@ -1177,7 +1177,7 @@ directive
 ==== ipmatch
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns true if a target IPv4 address matches any givenwhitespace separated address in CIDR format.
+|Description|Returns true if a target IPv4 address matches any given whitespace separated address in CIDR format.
 |     Syntax|`ipmatch`
 |      Types|String
 |     Module|core
@@ -1187,7 +1187,7 @@ directive
 ==== ipmatch6
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns true if a target IPv6 address matches any givenwhitespace separated address in CIDR format.
+|Description|Returns true if a target IPv6 address matches any given whitespace separated address in CIDR format.
 |     Syntax|`ipmatch6`
 |      Types|String
 |     Module|core
@@ -1221,7 +1221,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 ==== le
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns true if the target is numerically less than orequal to the given value.
+|Description|Returns true if the target is numerically less than or equal to the given value.
 |     Syntax|`le`
 |      Types|Numeric
 |     Module|core
@@ -1231,7 +1231,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 ==== lt
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns true if the target is numerically less than thegiven value.
+|Description|Returns true if the target is numerically less than the given value.
 |     Syntax|`lt`
 |      Types|Numeric
 |     Module|core
@@ -1241,7 +1241,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 ==== match
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns true if the target is any of the given whitespaceseparated words.
+|Description|Returns true if the target is any of the given whitespace separated words.
 |     Syntax|`match`
 |      Types|String
 |     Module|core
@@ -1251,7 +1251,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 ==== ne
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns true if the target is not numerically equal tothe given value.
+|Description|Returns true if the target is not numerically equal to the given value.
 |     Syntax|`ne`
 |      Types|Numeric
 |     Module|core
@@ -1261,7 +1261,7 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 ==== rx
 [cols=">h,<9"]
 |===============================================================================
-|Description|Regular expression (perl compatible regular expression)matching.
+|Description|Regular expression (perl compatible regular expression) matching.
 |     Syntax|`rx`
 |      Types|String
 |     Module|pcre
@@ -1332,7 +1332,7 @@ an event.
 ==== allow
 [cols=">h,<9"]
 |===============================================================================
-|Description|Mark a transaction as allowed to proceed to a giveninspection point.
+|Description|Mark a transaction as allowed to proceed to a given inspection point.
 |       Type|Action
 |     Syntax|`allow[":phase" \| ":request"]`
 |Cardinality|0..1
@@ -1398,7 +1398,7 @@ Rule ARGS @rx "(patt)ern" id:1 capture:MY_CAPTURE_COLLECTION
 ==== chain
 [cols=">h,<9"]
 |===============================================================================
-|Description|Chains the next rule, so that the next rule will executeonly if the current operator evaluates true.
+|Description|Chains the next rule, so that the next rule will execute only if the current operator evaluates true.
 |       Type|Modifier
 |     Syntax|`chain`
 |Cardinality|0..1
