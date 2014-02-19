@@ -295,6 +295,8 @@ static ib_status_t module_has_callback(
  *
  * @param[in] ib IronBee engine.
  * @param[in] ibmod_modules The lua module and the user's lua-defined module.
+ * @param[in] additional_args Arguments beyond the first 8 pushed by
+ *            modlua_callback_setup().
  * @param[in] L Lua runtime environment.
  *
  * @returns
@@ -304,6 +306,7 @@ static ib_status_t module_has_callback(
 static ib_status_t modlua_callback_dispatch(
     ib_engine_t      *ib,
     modlua_modules_t *ibmod_modules,
+    int               additional_args,
     lua_State        *L)
 {
     assert(ib != NULL);
@@ -316,7 +319,7 @@ static ib_status_t modlua_callback_dispatch(
     ib_module_t *module = ibmod_modules->module; /* Lua-defined module. */
 
     /* Run dispatcher. */
-    lua_rc = lua_pcall(L, 8, 1, 0);
+    lua_rc = lua_pcall(L, 8 + additional_args, 1, 0);
     switch(lua_rc) {
         case 0:
             /* NOP */
@@ -383,6 +386,97 @@ static ib_status_t modlua_callback_dispatch(
 }
 
 /**
+ * Push the first 8 arguments for the callback dispatch lua function.
+ *
+ * Other arguments are conditional to the particular event type.
+ *
+ * Functions (callback hooks) that use this function should then
+ * modify the table at the top of the stack to include custom
+ * arguments and then call @ref modlua_callback_dispatch.
+ *
+ * The table at the top of the stack will have defined in it:
+ *   - @c ib_engine
+ *   - @c ib_tx (if @a tx is not null)
+ *   - @c ib_conn
+ *   - @c event as an integer
+ *
+ * @param[in] ib The IronBee engine. This may not be null.
+ * @param[in] event The event type.
+ * @param[in] tx The transaction. This may be null.
+ * @param[in] conn The connection. This may be null.
+ * @param[in] modlua_runtime Lua runtime.
+ * @param[in] modlua_modules Both the lua module and the user's
+ *            lua-defined module.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_EOTHER on a Lua runtime error.
+ */
+static ib_status_t modlua_callback_setup(
+    ib_engine_t           *ib,
+    ib_state_event_type_t  event,
+    ib_tx_t               *tx,
+    ib_conn_t             *conn,
+    modlua_runtime_t      *modlua_runtime,
+    modlua_modules_t      *modlua_modules)
+{
+    assert(ib                     != NULL);
+    assert(modlua_runtime         != NULL);
+    assert(modlua_runtime->L      != NULL);
+    assert(modlua_modules         != NULL);
+    assert(modlua_modules->module != NULL);
+
+    /* Pick the best context to use. */
+    ib_context_t *ctx = ib_context_get_context(ib, conn, tx);
+    lua_State    *L   = modlua_runtime->L;
+    ib_status_t   rc;
+
+    /* Push Lua dispatch method to stack. */
+    rc = modlua_push_dispatcher(ib, event, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
+        return rc;
+    }
+
+    /* Push Lua handler onto the table. */
+    rc = modlua_push_lua_handler(ib, modlua_modules, event, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot push modlua event handler to stack.");
+        return rc;
+    }
+
+    lua_pushlightuserdata(L, ib);
+    lua_pushlightuserdata(L, modlua_modules->module);
+    lua_pushinteger(L, event);
+    rc = modlua_push_config_path(ib, ctx, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to push configuration path onto Lua stack.");
+        return rc;
+    }
+
+    /* Push connection. */
+    if (conn != NULL) {
+        lua_pushlightuserdata(L, conn);
+    }
+    else {
+        lua_pushnil(L);
+    }
+
+    /* Push transaction. */
+    if (tx != NULL) {
+        lua_pushlightuserdata(L, tx);
+    }
+    else {
+        lua_pushnil(L);
+    }
+
+    /* Push configuration context used in conn. */
+    lua_pushlightuserdata(L, ctx);
+
+    return IB_OK;
+}
+
+/**
  * Dispatch a null event into a Lua module.
  *
  * @param[in] ib IronBee engine.
@@ -430,40 +524,17 @@ static ib_status_t modlua_null(
 
     rc = modlua_reload_ctx_except_main(ib, modlua_modules->modlua, ctx, L);
     if (rc != IB_OK) {
-        modlua_releasestate(ib, cfg, runtime);
         ib_log_error(ib, "Failed to configure Lua stack.");
         goto exit;
     }
 
-    /* Push Lua dispatch method to stack. */
-    rc = modlua_push_dispatcher(ib, event, L);
+    rc = modlua_callback_setup(ib, event, NULL, NULL, runtime, modlua_modules);
     if (rc != IB_OK) {
-        modlua_releasestate(ib, cfg, runtime);
-        ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
+        ib_log_error(ib, "Failure while setting up arguments for callback.");
         goto exit;
     }
 
-    /* Push Lua handler onto the table. */
-    rc = modlua_push_lua_handler(ib, modlua_modules, event, L);
-    if (rc != IB_OK) {
-        modlua_releasestate(ib, cfg, runtime);
-        ib_log_error(ib, "Cannot push modlua event handler to stack.");
-        goto exit;
-    }
-
-    lua_pushlightuserdata(L, ib);
-    lua_pushlightuserdata(L, modlua_modules->module);
-    lua_pushinteger(L, event);
-    rc = modlua_push_config_path(ib, ctx, L);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot push modlua.config_path to stack.");
-        goto exit;
-    }
-    lua_pushnil(L);                /* Connection (conn) is nil. */
-    lua_pushnil(L);                /* Transaction (tx) is nil. */
-    lua_pushlightuserdata(L, ctx); /* Configuration context. */
-
-    rc = modlua_callback_dispatch(ib, modlua_modules, L);
+    rc = modlua_callback_dispatch(ib, modlua_modules, 0, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failure while executing callback handler.");
         goto exit;
@@ -480,91 +551,6 @@ exit:
 
     return rc;
 }
-
-/**
- * Push the callback dispatcher, callback handler, and argument table.
- *
- * Functions (callback hooks) that use this function should then
- * modify the table at the top of the stack to include custom
- * arguments and then call @ref modlua_callback_dispatch.
- *
- * The table at the top of the stack will have defined in it:
- *   - @c ib_engine
- *   - @c ib_tx (if @a tx is not null)
- *   - @c ib_conn
- *   - @c event as an integer
- *
- * @param[in] ib The IronBee engine. This may not be null.
- * @param[in] event The event type.
- * @param[in] tx The transaction. This may be null.
- * @param[in] conn The connection. This may not be null. We require it to,
- *            at a minimum, find the Lua runtime stack.
- * @param[in] modlua_runtime Lua runtime.
- * @param[in] modlua_modules Both the lua module and the user's
- *            lua-defined module.
- *
- * @returns
- *   - IB_OK on success.
- *   - IB_EOTHER on a Lua runtime error.
- */
-static ib_status_t modlua_callback_setup(
-    ib_engine_t           *ib,
-    ib_state_event_type_t  event,
-    ib_tx_t               *tx,
-    ib_conn_t             *conn,
-    modlua_runtime_t      *modlua_runtime,
-    modlua_modules_t      *modlua_modules
-)
-{
-    assert(ib                     != NULL);
-    assert(conn                   != NULL);
-    assert(modlua_runtime         != NULL);
-    assert(modlua_runtime->L      != NULL);
-    assert(modlua_modules         != NULL);
-    assert(modlua_modules->module != NULL);
-
-    /* Pick the best context to use. */
-    ib_context_t *ctx = ib_context_get_context(ib, conn, tx);
-    ib_status_t   rc;
-    lua_State    *L   = modlua_runtime->L;
-
-    /* Push Lua dispatch method to stack. */
-    rc = modlua_push_dispatcher(ib, event, L);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
-        return rc;
-    }
-
-    /* Push Lua handler onto the table. */
-    rc = modlua_push_lua_handler(ib, modlua_modules, event, L);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot push modlua event handler to stack.");
-        return rc;
-    }
-
-    lua_pushlightuserdata(L, ib);
-    lua_pushlightuserdata(L, modlua_modules->module);
-    lua_pushinteger(L, event);
-    rc = modlua_push_config_path(ib, ctx, L);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to push configuration path onto Lua stack.");
-        return rc;
-    }
-    /* Push connection. */
-    lua_pushlightuserdata(L, conn);
-    /* Push transaction. */
-    if (tx) {
-        lua_pushlightuserdata(L, tx);
-    }
-    else {
-        lua_pushnil(L);
-    }
-    /* Push configuration context used in conn. */
-    lua_pushlightuserdata(L, ctx);
-
-    return IB_OK;
-}
-
 
 /**
  * Dispatch a connection event into a Lua module.
@@ -613,7 +599,7 @@ static ib_status_t modlua_conn(
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, 0, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -679,7 +665,7 @@ static ib_status_t modlua_tx(
 
     /* Custom table setup */
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, 0, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -749,8 +735,10 @@ static ib_status_t modlua_txdata(
     }
 
     /* Custom table setup */
+    lua_pushlightuserdata(runtime->L, (char *)data);
+    lua_pushinteger(runtime->L, data_length);
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, 2, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -817,8 +805,9 @@ static ib_status_t modlua_header(
     }
 
     /* Custom table setup */
+    lua_pushlightuserdata(runtime->L, header);
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, 1, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -885,8 +874,9 @@ static ib_status_t modlua_reqline(
     }
 
     /* Custom table setup */
+    lua_pushlightuserdata(runtime->L, line);
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, 1, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -952,8 +942,9 @@ static ib_status_t modlua_respline(
     }
 
     /* Custom table setup */
+    lua_pushlightuserdata(runtime->L, line);
 
-    rc = modlua_callback_dispatch(ib, mod_cbdata, runtime->L);
+    rc = modlua_callback_dispatch(ib, mod_cbdata, 0, runtime->L);
     if (rc != IB_OK) {
         goto exit;
     }
@@ -1023,35 +1014,13 @@ static ib_status_t modlua_ctx(
         goto exit;
     }
 
-    /* Push Lua dispatch method to stack. */
-    rc = modlua_push_dispatcher(ib, event, L);
+    rc = modlua_callback_setup(ib, event, NULL, NULL, runtime, modlua_modules);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
+        ib_log_error(ib, "Failure while setting up arguments for callback.");
         goto exit;
     }
 
-    /* Push Lua handler onto the table. */
-    rc = modlua_push_lua_handler(ib, modlua_modules, event, L);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot push modlua event handler to stack.");
-        goto exit;
-    }
-
-    /* Push handler arguments... */
-    /* Push ib... */
-    lua_pushlightuserdata(L, ib);             /* Push engine... */
-    lua_pushlightuserdata(L, modlua_modules->module);
-    lua_pushinteger(L, event);                /* Push event type... */
-    rc = modlua_push_config_path(ib, ctx, L); /* Push ctx path table... */
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Cannot push modlua.config_path to stack.");
-        goto exit;
-    }
-    lua_pushnil(L);                /* Connection (conn) is nil... */
-    lua_pushnil(L);                /* Transaction (tx) is nil... */
-    lua_pushlightuserdata(L, ctx); /* Push configuration context. */
-
-    rc = modlua_callback_dispatch(ib, modlua_modules, L);
+    rc = modlua_callback_dispatch(ib, modlua_modules, 0, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failure while executing callback handler.");
         goto exit;

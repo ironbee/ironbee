@@ -445,8 +445,6 @@ local module_config_get = function(ib_ctx, ib_module)
     return nil
 end
 
-
-
 -- Set a Lua module's configuration.
 --
 -- @param[in] cp Configuration parser. An ib_cfgparser_t.
@@ -502,6 +500,46 @@ _M.get_callback = function(ib, module_index, event)
     return handler
 end
 
+-- The HookData object holds data pointers passed to hook callbacks.
+-- Wrappers are also provided to convert pointers, if necessary.
+_M.HookData = {}
+function _M.HookData:new(event, ...)
+    self.__index = self
+
+    local o = { ... }
+
+    -- Header data event. Args.data contains a ib_parsed_header_t*.
+    if event == ffi.C.request_header_data_event  or
+       event == ffi.C.response_header_data_event then
+        o.ib_header_data = ffi.cast("ib_parsed_header_t *", o[1])
+
+    elseif event == ffi.C.request_started_event then
+        o.ib_parsed_req_line = ffi.cast("ib_parsed_req_line_t *", o[1])
+
+    elseif event == ffi.C.response_started_event then
+        o.ib_parsed_resp_line = ffi.cast("ib_parsed_resp_line_t *", o[1])
+
+    elseif event == ffi.C.request_body_data_event then
+        o.ib_request_data     = ffi.cast("const char *", o[1])
+        o.ib_request_data_len = o[2]
+
+    elseif event == ffi.C.response_body_data_event then
+        o.ib_response_data     = ffi.cast("const char *", o[1])
+        o.ib_response_data_len = o[2]
+
+    end
+
+    return setmetatable(o, self)
+end
+
+function _M.HookData:get_response_body_data()
+    return ffi.string(self.ib_response_data, self.ib_response_data_len)
+end
+
+function _M.HookData:get_request_body_data()
+    return ffi.string(self.ib_request_data, self.ib_request_data_len)
+end
+
 -- This function is called by C to dispatch an event to a lua module.
 --
 -- @param[in] handler Function to call. This should take @a args as input.
@@ -526,7 +564,8 @@ _M.dispatch_module = function(
     ctxlst,
     ib_conn,
     ib_tx,
-    ib_ctx)
+    ib_ctx,
+    ...)
 
     ib_engine = ffi.cast("ib_engine_t *", ib_engine)
     ib_module = ffi.cast("ib_module_t *", ib_module)
@@ -547,6 +586,10 @@ _M.dispatch_module = function(
 
     -- Event name.
     args.event_name = intToState[tonumber(args.event)]
+
+    -- Capture extra arguments that may have been passed.
+    -- We examine the event argument to decode these.
+    args.data = _M.HookData:new(event,  ... )
 
     if ib_conn ~= nil then
         -- Connection.
