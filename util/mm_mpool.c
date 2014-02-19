@@ -27,6 +27,7 @@
 
 #include <ironbee/mm_mpool.h>
 
+#include <assert.h>
 
 /** See @ref ib_mm_alloc_fn_t.  Do not call directly. */
 static void *ib_mm_mpool_alloc(
@@ -49,6 +50,8 @@ static void ib_mm_mpool_register_cleanup(
 
 ib_mm_t ib_mm_mpool(ib_mpool_t *mp)
 {
+    assert(mp != NULL);
+
     ib_mm_t mm = {
         &ib_mm_mpool_alloc, mp,
         &ib_mm_mpool_register_cleanup, mp
