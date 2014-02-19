@@ -27,8 +27,6 @@
 
 #include <ironbee/hash.h>
 
-#include <ironbee/mpool.h>
-
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -111,8 +109,8 @@ struct ib_hash_t {
     ib_hash_entry_t    **slots;
     /** Maximum slot index. */
     size_t               max_slot;
-    /** Memory pool. */
-    ib_mpool_t          *pool;
+    /** Memory manager. */
+    ib_mm_t              mm;
     /** Linked list of removed hash entries to use for recycling. */
     ib_hash_entry_t     *free;
     /** Number of entries. */
@@ -276,10 +274,10 @@ ib_status_t ib_hash_find_entry(
     return IB_OK;
 }
 
-ib_hash_iterator_t *ib_hash_iterator_create(ib_mpool_t *mp)
+ib_hash_iterator_t *ib_hash_iterator_create(ib_mm_t mm)
 {
-    return (ib_hash_iterator_t *)ib_mpool_alloc(
-        mp,
+    return (ib_hash_iterator_t *)ib_mm_alloc(
+        mm,
         sizeof(ib_hash_iterator_t)
     );
 }
@@ -375,8 +373,8 @@ ib_status_t ib_hash_resize_slots(
 
     /* Maintain power of 2 slots */
     new_max_slot = 2 * hash->max_slot + 1;
-    new_slots = (ib_hash_entry_t **)ib_mpool_calloc(
-        hash->pool,
+    new_slots = (ib_hash_entry_t **)ib_mm_calloc(
+        hash->mm,
         new_max_slot + 1,
         sizeof(*new_slots)
     );
@@ -518,7 +516,7 @@ int ib_hashequal_nocase(
 
 ib_status_t ib_hash_create_ex(
     ib_hash_t          **hash,
-    ib_mpool_t          *pool,
+    ib_mm_t              mm,
     size_t               size,
     ib_hash_function_t   hash_function,
     void                *hash_cbdata,
@@ -526,7 +524,6 @@ ib_status_t ib_hash_create_ex(
     void                *equal_cbdata
 ) {
     assert(hash != NULL);
-    assert(pool != NULL);
     assert(size > 0);
 
     ib_hash_t *new_hash = NULL;
@@ -551,14 +548,14 @@ ib_status_t ib_hash_create_ex(
         }
     }
 
-    new_hash = (ib_hash_t *)ib_mpool_alloc(pool, sizeof(*new_hash));
+    new_hash = (ib_hash_t *)ib_mm_alloc(mm, sizeof(*new_hash));
     if (new_hash == NULL) {
         *hash = NULL;
         return IB_EALLOC;
     }
 
-    ib_hash_entry_t **slots = (ib_hash_entry_t **)ib_mpool_calloc(
-        pool,
+    ib_hash_entry_t **slots = (ib_hash_entry_t **)ib_mm_calloc(
+        mm,
         size + 1,
         sizeof(*slots)
     );
@@ -573,7 +570,7 @@ ib_status_t ib_hash_create_ex(
     new_hash->equal_cbdata    = equal_cbdata;
     new_hash->max_slot        = size-1;
     new_hash->slots           = slots;
-    new_hash->pool            = pool;
+    new_hash->mm              = mm;
     new_hash->free            = NULL;
     new_hash->size            = 0;
     new_hash->randomizer      = (uint32_t)clock();
@@ -584,15 +581,14 @@ ib_status_t ib_hash_create_ex(
 }
 
 ib_status_t ib_hash_create(
-    ib_hash_t  **hash,
-    ib_mpool_t  *pool
+    ib_hash_t **hash,
+    ib_mm_t     mm
 ) {
     assert(hash != NULL);
-    assert(pool != NULL);
 
     return ib_hash_create_ex(
         hash,
-        pool,
+        mm,
         IB_HASH_INITIAL_SIZE,
         ib_hashfunc_djb2, NULL,
         ib_hashequal_default, NULL
@@ -600,27 +596,26 @@ ib_status_t ib_hash_create(
 }
 
 ib_status_t ib_hash_create_nocase(
-    ib_hash_t  **hash,
-    ib_mpool_t  *pool
+    ib_hash_t **hash,
+    ib_mm_t     mm
 ) {
     assert(hash != NULL);
-    assert(pool != NULL);
 
     return ib_hash_create_ex(
         hash,
-        pool,
+        mm,
         IB_HASH_INITIAL_SIZE,
         ib_hashfunc_djb2_nocase, NULL,
         ib_hashequal_nocase, NULL
     );
 }
 
-ib_mpool_t *ib_hash_pool(
+ib_mm_t ib_hash_mm(
     const ib_hash_t *hash
 ) {
     assert(hash != NULL);
 
-    return hash->pool;
+    return hash->mm;
 }
 
 size_t ib_hash_size(
@@ -782,8 +777,8 @@ ib_status_t ib_hash_set_ex(
                 hash->free = entry->next_entry;
             }
             else {
-                entry = (ib_hash_entry_t *)ib_mpool_alloc(
-                    hash->pool,
+                entry = (ib_hash_entry_t *)ib_mm_alloc(
+                    hash->mm,
                     sizeof(*entry)
                 );
                 if (entry == NULL) {

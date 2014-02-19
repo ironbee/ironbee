@@ -28,7 +28,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/list.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <stdbool.h>
@@ -248,7 +248,7 @@ NONNULL_ATTRIBUTE(1, 3);
  * @sa ib_hash_create()
  *
  * @param[out] hash            The newly created hash table.
- * @param[in]  pool            Memory pool to use.
+ * @param[in]  mm              Memory manager to use.
  * @param[in]  size            The number of slots in the hash table.
  *                             Must be a power of 2.
  * @param[in]  hash_function   Hash function to use, e.g., ib_hashfunc_djb2().
@@ -263,14 +263,14 @@ NONNULL_ATTRIBUTE(1, 3);
  */
 ib_status_t DLL_PUBLIC ib_hash_create_ex(
     ib_hash_t          **hash,
-    ib_mpool_t          *pool,
+    ib_mm_t              mm,
     size_t               size,
     ib_hash_function_t   hash_function,
     void                *hash_cbdata,
     ib_hash_equal_t      equal_predicate,
     void                *equal_cbdata
 )
-NONNULL_ATTRIBUTE(1, 2);
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Create a hash table with ib_hashfunc_djb2(), ib_hashequal_default(), and a
@@ -279,7 +279,7 @@ NONNULL_ATTRIBUTE(1, 2);
  * @sa ib_hash_create_ex()
  *
  * @param[out] hash The newly created hash table.
- * @param[in]  pool Memory pool to use.
+ * @param[in]  mm Memory manager to use.
  *
  * @returns
  * - IB_OK on success.
@@ -287,9 +287,9 @@ NONNULL_ATTRIBUTE(1, 2);
  */
 ib_status_t DLL_PUBLIC ib_hash_create(
     ib_hash_t  **hash,
-    ib_mpool_t  *pool
+    ib_mm_t      mm
 )
-NONNULL_ATTRIBUTE(1, 2);
+NONNULL_ATTRIBUTE(1);
 
 /**
  * Create a hash table with ib_hashfunc_djb2_nocase(), ib_hashequal_nocase()
@@ -298,7 +298,7 @@ NONNULL_ATTRIBUTE(1, 2);
  * @sa ib_hash_create_ex()
  *
  * @param[out] hash The newly created hash table.
- * @param[in]  pool Memory pool to use.
+ * @param[in]  mm Memory manager to use.
  *
  * @returns
  * - IB_OK on success.
@@ -306,9 +306,9 @@ NONNULL_ATTRIBUTE(1, 2);
  */
 ib_status_t DLL_PUBLIC ib_hash_create_nocase(
     ib_hash_t  **hash,
-    ib_mpool_t  *pool
+    ib_mm_t      mm
 )
-NONNULL_ATTRIBUTE(1, 2);
+NONNULL_ATTRIBUTE(1);
 
 /*@}*/
 
@@ -320,13 +320,13 @@ NONNULL_ATTRIBUTE(1, 2);
 /*@{*/
 
 /**
- * Access memory pool of @a hash.
+ * Access memory manager of @a hash.
  *
  * @param[in] hash Hash table.
  *
- * @returns Memory pool of @a hash.
+ * @returns Memory manager of @a hash.
  **/
-ib_mpool_t DLL_PUBLIC *ib_hash_pool(
+ib_mm_t DLL_PUBLIC ib_hash_mm(
     const ib_hash_t *hash
 )
 NONNULL_ATTRIBUTE(1);
@@ -542,13 +542,12 @@ NONNULL_ATTRIBUTE(1, 3);
  * @warning Return iterator is singular and all behavior is undefined except
  *          for calling ib_hash_iterator_first().
  *
- * @param[in] mp Memory pool to use.
+ * @param[in] mm Memory manager to use.
  * @return New iterator or NULL on allocation error.
  **/
 ib_hash_iterator_t DLL_PUBLIC *ib_hash_iterator_create(
-    ib_mpool_t *mp
-)
-NONNULL_ATTRIBUTE(1);
+    ib_mm_t mm
+);
 
 /**
  * Create a hash iterator with malloc.

@@ -28,6 +28,7 @@
 #include <ironbee/build.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <stddef.h>
@@ -65,9 +66,9 @@ extern "C" {
  */
 typedef struct ib_cfgmap_t ib_cfgmap_t;
 struct ib_cfgmap_t {
-    ib_mpool_t         *mp;           /**< Memory pool */
-    ib_hash_t          *hash;         /**< The underlying hash */
-    void               *base;         /**< Pointer to base of config data. */
+    ib_mm_t    mm;   /**< Memory manager */
+    ib_hash_t *hash; /**< The underlying hash */
+    void      *base; /**< Pointer to base of config data. */
 };
 
 /**
@@ -129,12 +130,12 @@ struct ib_cfgmap_init_t {
  * Create a configuration map.
  *
  * @param pcm Address which new map is written
- * @param pool Memory pool to use
+ * @param mm Memory manager to use
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
-                                        ib_mpool_t *pool);
+                                        ib_mm_t mm);
 
 /**
  * Defines a configuration map initialization structure.

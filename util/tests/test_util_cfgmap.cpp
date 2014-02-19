@@ -76,7 +76,7 @@ TEST_F(SimpleFixture, test_init)
     test_config_t  config;
     ib_status_t    rc;
 
-    rc = ib_cfgmap_create(&cfgmap, MemPool());
+    rc = ib_cfgmap_create(&cfgmap, MM());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(cfgmap);
 
@@ -93,7 +93,7 @@ public:
         SimpleFixture::SetUp();
 
         m_cfgmap = NULL;
-        rc = ib_cfgmap_create(&m_cfgmap, MemPool());
+        rc = ib_cfgmap_create(&m_cfgmap, MM());
         if (rc != IB_OK) {
             throw std::runtime_error("Could not create config map.");
         }
