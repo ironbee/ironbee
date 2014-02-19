@@ -26,6 +26,7 @@
 #define __SIMPLE_FIXTURE_H__
 
 #include <ironbee/mpool.h>
+#include <ironbee/mm_mpool.h>
 
 #include "gtest/gtest.h"
 
@@ -93,6 +94,10 @@ public:
     ib_mpool_t *MemPool( void ) const
     {
         return m_pool;
+    }
+    ib_mm_t MM( void ) const
+    {
+        return ib_mm_mpool(m_pool);
     }
     void *MemPoolAlloc(size_t size) const
     {
