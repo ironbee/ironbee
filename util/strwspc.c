@@ -383,7 +383,7 @@ static ib_status_t ws_compress(const uint8_t *data_in,
  * Perform whitespace removal / compression
  *
  * @param[in] op String trim operation
- * @param[in] mp Memory pool
+ * @param[in] mm Memory manager
  * @param[in] minlen Minimum length of a run of whitespace to count
  * @param[in] nul Add NUL byte
  * @param[in] fn_count Function to count whitespace
