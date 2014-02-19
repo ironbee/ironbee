@@ -1258,62 +1258,6 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 |    Version|0.3
 |===============================================================================
 
-==== pm
-[cols=">h,<9"]
-|===============================================================================
-|Description|Parallel matching using the `Aho-Corasick` algorithm.
-|     Syntax|`pm`
-|      Types|String
-|     Module|ac
-|    Version|0.2
-|===============================================================================
-
-Implements a set-based (or parallel) matching function using the
-Aho-Corasick algorithm. The parameter of the operator contains one or
-more matching patterns, separated with whitespace. Set-based matching is
-capable of matching many patterns at the same time, making it efficient
-for cases when the number of patterns is very large (in hundreds and
-thousands).
-
----------------------------------------------------
-Rule REQUEST_HEADERS:User-Agent @pm "one two three"
----------------------------------------------------
-
-If the `capture` modifier is specified on a `@pm` rule, the `CAPTURE:0`
-variable will contain the matched data fragment. Do note that, because
-the `pm` operator can easily match many times per rule, the `CAPTURE:0`
-value is valid only when used in the same rule. In the following rules,
-`CAPTURE:0` will contain the data fragment of the last `@pm` match.
-
-[NOTE]
-DEPRECATED: The "ac" module is deprecated. Use `rx`, `dfa`, `match`,
-`imatch` or `ee_match_any` instead.
-
-==== pmf
-[cols=">h,<9"]
-|===============================================================================
-|Description|Parallel matching with patterns from file.
-|     Syntax|`pmf`
-|      Types|String
-|     Module|ac
-|    Version|0.2
-|===============================================================================
-
-Same as `pm`, but instead of accepting parameters directly, it loads
-them from the file whose filename was supplied. The file is expected to
-contain one pattern per line. To convert a line into a pattern,
-whitespace from the beginning and the end is removed. Empty lines are
-ignored, as are comments, which are lines that begin with `#`. Relative
-filenames are resolved from same directory as the configuration file.
-
---------------------------------------------------------
-Rule REQUEST_HEADERS:User-Agent @pmf bad_user_agents.dat
---------------------------------------------------------
-
-[NOTE]
-DEPRECATED: The "ac" module is deprecated. Use `rx`, `dfa`, `match`,
-`imatch` or `ee_match_any` instead.
-
 ==== rx
 [cols=">h,<9"]
 |===============================================================================

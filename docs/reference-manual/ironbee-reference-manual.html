@@ -627,8 +627,6 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_lt">lt</a></li>
 <li><a href="#_match">match</a></li>
 <li><a href="#_ne">ne</a></li>
-<li><a href="#_pm">pm</a></li>
-<li><a href="#_pmf">pmf</a></li>
 <li><a href="#_rx">rx</a></li>
 <li><a href="#_streq">streq</a></li>
 <li><a href="#_istreq">istreq</a></li>
@@ -10270,129 +10268,6 @@ databases is not yet implemented.</p>
 
 </div>
 <div class="sect3">
-<h4 id="_pm">pm</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Parallel matching using the <code>Aho-Corasick</code> algorithm.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>pm</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ac</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Implements a set-based (or parallel) matching function using the
-Aho-Corasick algorithm. The parameter of the operator contains one or
-more matching patterns, separated with whitespace. Set-based matching is
-capable of matching many patterns at the same time, making it efficient
-for cases when the number of patterns is very large (in hundreds and
-thousands).</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>Rule REQUEST_HEADERS:User-Agent @pm "one two three"</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>If the <code>capture</code> modifier is specified on a <code>@pm</code> rule, the <code>CAPTURE:0</code>
-variable will contain the matched data fragment. Do note that, because
-the <code>pm</code> operator can easily match many times per rule, the <code>CAPTURE:0</code>
-value is valid only when used in the same rule. In the following rules,
-<code>CAPTURE:0</code> will contain the data fragment of the last <code>@pm</code> match.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-DEPRECATED: The "ac" module is deprecated. Use <code>rx</code>, <code>dfa</code>, <code>match</code>,
-<code>imatch</code> or <code>ee_match_any</code> instead.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_pmf">pmf</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Parallel matching with patterns from file.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>pmf</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ac</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>Same as <code>pm</code>, but instead of accepting parameters directly, it loads
-them from the file whose filename was supplied. The file is expected to
-contain one pattern per line. To convert a line into a pattern,
-whitespace from the beginning and the end is removed. Empty lines are
-ignored, as are comments, which are lines that begin with <code>#</code>. Relative
-filenames are resolved from same directory as the configuration file.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>Rule REQUEST_HEADERS:User-Agent @pmf bad_user_agents.dat</pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-DEPRECATED: The "ac" module is deprecated. Use <code>rx</code>, <code>dfa</code>, <code>match</code>,
-<code>imatch</code> or <code>ee_match_any</code> instead.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect3">
 <h4 id="_rx">rx</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
@@ -11159,7 +11034,7 @@ Could replace clipp_announce for a more generic solution.
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Modifier</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
@@ -11284,7 +11159,7 @@ response body (default: unset).</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>setRequestHeader:=</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>setRequestHeader:&lt;name&gt;=&lt;value&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
@@ -11333,7 +11208,7 @@ This functionality is optionally implemented by the server and may not
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>setResponseHeader:=</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>setResponseHeader:&lt;name&gt;=&lt;value&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
@@ -13639,7 +13514,7 @@ in the future</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-02-18 22:25:37 CST
+Last updated 2014-02-19 00:01:58 CST
 </div>
 </div>
 </body>
