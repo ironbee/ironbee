@@ -27,7 +27,7 @@
 #include <ironbee/hash.h>
 
 #include <ironbee/types.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include "test_util_dso.h"
 
@@ -38,7 +38,7 @@ const uint32_t pat2_val = 0xa5a5a5a5;
 struct ib_test_util_dso_data_t
 {
     uint32_t    pat1;
-    ib_mpool_t *mp;
+    ib_mm_t     mm;
     int         num;
     const char *str;
     uint32_t    pat2;
@@ -51,9 +51,6 @@ static ib_status_t check_data(const ib_test_util_dso_data_t *data)
     if (data->pat1 != pat1_val) {
         return IB_EINVAL;
     }
-    if (data->mp == NULL) {
-        return IB_EINVAL;
-    }
     if (data->pat2 != pat2_val) {
         return IB_EINVAL;
     }
@@ -61,20 +58,19 @@ static ib_status_t check_data(const ib_test_util_dso_data_t *data)
 }
 
 static ib_status_t ib_test_util_dso_create(ib_test_util_dso_data_t **data,
-                                           ib_mpool_t *mp,
+                                           ib_mm_t mm,
                                            int num)
 {
     assert(data != NULL);
-    assert(mp != NULL);
 
     ib_test_util_dso_data_t *newdata =
-        (ib_test_util_dso_data_t *)ib_mpool_alloc(mp, sizeof(*newdata));
+        (ib_test_util_dso_data_t *)ib_mm_alloc(mm, sizeof(*newdata));
     if (newdata == NULL) {
         return IB_EALLOC;
     }
     newdata->pat1 = pat1_val;
     newdata->pat2 = pat2_val;
-    newdata->mp = mp;
+    newdata->mm = mm;
     newdata->num = num;
     newdata->str = NULL;
     *data = newdata;
@@ -88,7 +84,6 @@ static ib_status_t ib_test_util_dso_destroy(ib_test_util_dso_data_t *data)
         return rc;
     }
     data->pat1 = 0;
-    data->mp = NULL;
     data->pat2 = 0;
     return IB_OK;
 }
@@ -125,7 +120,7 @@ static ib_status_t ib_test_util_dso_setstr(ib_test_util_dso_data_t *data,
     if (str == NULL) {
         return IB_EINVAL;
     }
-    data->str = ib_mpool_strdup(data->mp, str);
+    data->str = ib_mm_strdup(data->mm, str);
     if (data->str == NULL) {
         return IB_EALLOC;
     }

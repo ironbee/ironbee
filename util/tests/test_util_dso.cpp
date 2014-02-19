@@ -54,7 +54,7 @@ public:
 
     ib_status_t DsoOpen(const char *file)
     {
-        return ib_dso_open(&m_dso, file, MemPool());
+        return ib_dso_open(&m_dso, file, MM());
     }
     ib_status_t DsoClose()
     {
@@ -142,7 +142,7 @@ TEST_F(TestIBUtilDso, test_lib)
     rc = getfns(&fns);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = fns->fn_create(&data, MemPool(), 3);
+    rc = fns->fn_create(&data, MM(), 3);
     ASSERT_EQ(IB_OK, rc);
 
     rc = fns->fn_getnum(data, &num);

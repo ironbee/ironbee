@@ -31,7 +31,7 @@ typedef struct ib_test_util_dso_data_t ib_test_util_dso_data_t;
 
 typedef ib_status_t (* ib_test_dso_create_fn_t)(
     ib_test_util_dso_data_t       **dso_data,
-    ib_mpool_t                     *mp,
+    ib_mm_t                         mm,
     int                             num
 );
 typedef ib_status_t (* ib_test_dso_destroy_fn_t)(

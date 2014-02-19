@@ -27,7 +27,7 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus
@@ -60,7 +60,7 @@ typedef void ib_dso_sym_t;
  *
  * @param[out] pdso DSO handle is stored in @a *dso.
  * @param[in]  file DSO filename.
- * @param[in]  pool Memory pool to use.
+ * @param[in]  mm Memory manager to use.
  *
  * @returns
  * - IB_EINVAL -- Unable to open DSO file.
@@ -70,7 +70,7 @@ typedef void ib_dso_sym_t;
 ib_status_t DLL_PUBLIC ib_dso_open(
     ib_dso_t   **pdso,
     const char  *file,
-    ib_mpool_t  *pool
+    ib_mm_t      mm
 );
 
 

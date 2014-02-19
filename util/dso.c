@@ -36,19 +36,18 @@
  * Dynamic Shared Object (DSO) structure.
  */
 struct ib_dso_t {
-    ib_mpool_t *mp;     /**< Memory pool */
-    void       *handle; /**< Real DSO handle */
+    ib_mm_t  mm;     /**< Memory manager */
+    void    *handle; /**< Real DSO handle */
 };
 
 ib_status_t ib_dso_open(
     ib_dso_t   **dso,
     const char  *file,
-    ib_mpool_t  *pool
+    ib_mm_t      mm
 )
 {
     assert(dso != NULL);
     assert(file != NULL);
-    assert(pool != NULL);
 
     void *handle;
 
@@ -60,13 +59,13 @@ ib_status_t ib_dso_open(
         return IB_EINVAL;
     }
 
-    *dso = ib_mpool_alloc(pool, sizeof(**dso));
+    *dso = ib_mm_alloc(mm, sizeof(**dso));
     if (*dso == NULL) {
         dlclose(handle);
         return IB_EALLOC;
     }
 
-    (*dso)->mp = pool;
+    (*dso)->mm = mm;
     (*dso)->handle = handle;
 
     return IB_OK;
