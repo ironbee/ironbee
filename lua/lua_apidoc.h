@@ -106,7 +106,6 @@
  * return 0
  * @endcode
  *
- *
  * The above module will log that a connection opened event is firing.
  * Notice that when building the module we use @c module whereas when
  * we log inside a callback we use @c ib. This is because @c ib is
@@ -118,6 +117,31 @@
  * But when in a transaction it will polymorphicaly specialize to a
  * @ref IronBeeLuaTxApi "tx" table and provide functions such as
  * @c addEvent.
+ *
+ * Similarly, depending on the callback hook type, the callback data
+ * provided to the Lua Module will be different. Hook callback data is
+ * stored as a @c HookData object in @c ib.data. The table @c ib.data
+ * stores the C pointer values for the addtional data arguments to
+ * hooks as table elements @c [1] and @c [2].  Additionally,
+ * the C pointer is cast to it's expected type.
+ * - request_header_data_event data is cast to a @ref ib_parsed_header_t and
+ *   stored in ``ib.data.ib_header_data``.
+ * - response_header_data_event data is cast to a @ref ib_parsed_header_t and
+ *   stored in ``ib.data.ib_header_data``.
+ * - request_started_event data is cast to a @ref ib_parsed_req_line_t and
+ *   stored in ``ib.data.ib_parsed_req_line``.
+ * - response_started_event data is cast to a @ref ib_parsed_resp_line_t and
+ *   stored in ``ib.data.ib_parsed_resp_line``.
+ * - request_body_data_event data is cast to a ``const char *`` and
+ *   stored in ``ib.data.ib_request_data`` and length in
+ *   ``ib.data.ib_request_data_len``.
+ *   ``ib.data:get_request_body_data()`` will convert the data
+ *   into a Lua string, if the user desires this.
+ * - response_body_data_event data is cast to a ``const char *`` and
+ *   stored in ``ib.data.ib_response_data`` and length in
+ *   ``ib.data.ib_response_data_len``.
+ *   ``ib.data:get_response_body_data()`` will convert the data
+ *   into a Lua string, if the user desires this.
  *
  * @code{.lua}
  * -- Grab the module API instance.
