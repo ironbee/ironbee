@@ -374,13 +374,13 @@ TEST(TestStrVal, test_flags_strtok)
     ASSERT_EQ(IB_OK, rc);
 
     str = "flag-01,+flag-02";
-    rc = ib_flags_strtok(flag_map, mp, str, ",", &flags, &mask);
+    rc = ib_flags_strtok(flag_map, ib_mm_mpool(mp), str, ",", &flags, &mask);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(FLAG_01|FLAG_02, flags);
     ASSERT_EQ(FLAGS_ALL, mask);
 
     str = "flag-set-01,+flag-10,-flag-01";
-    rc = ib_flags_strtok(flag_map, mp, str, ",", &flags, &mask);
+    rc = ib_flags_strtok(flag_map, ib_mm_mpool(mp), str, ",", &flags, &mask);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ( ((FLAG_SET_01|FLAG_10) & (~FLAG_01)), flags);
     ASSERT_EQ(FLAGS_ALL, mask);
@@ -388,7 +388,7 @@ TEST(TestStrVal, test_flags_strtok)
     flags = 0;
     mask = 0;
     str = "+flag-set-02;-flag-01;+flag-04;+flag-10";
-    rc = ib_flags_strtok(flag_map, mp, str, ";", &flags, &mask);
+    rc = ib_flags_strtok(flag_map, ib_mm_mpool(mp), str, ";", &flags, &mask);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ( ((FLAG_SET_02 | FLAG_04 | FLAG_10) & (~FLAG_01)), flags);
     ASSERT_EQ( (FLAG_SET_02|FLAG_04|FLAG_10), mask);
@@ -479,7 +479,7 @@ TEST(TestStrVal, test_flags_oplist)
     ASSERT_EQ(IB_OK, rc);
 
     str = "flag-01,+flag-02";
-    rc = ib_flags_oplist_parse(flag_map, mp, str, ",", oplist);
+    rc = ib_flags_oplist_parse(flag_map, ib_mm_mpool(mp), str, ",", oplist);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_flags_oplist_apply(oplist, &flags, &mask);
     ASSERT_EQ(IB_OK, rc);
@@ -487,7 +487,7 @@ TEST(TestStrVal, test_flags_oplist)
     ASSERT_EQ(FLAGS_ALL, mask);
 
     str = "flag-set-01,+flag-10,-flag-01";
-    rc = ib_flags_oplist_parse(flag_map, mp, str, ",", oplist);
+    rc = ib_flags_oplist_parse(flag_map, ib_mm_mpool(mp), str, ",", oplist);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_flags_oplist_apply(oplist, &flags, &mask);
     ASSERT_EQ(IB_OK, rc);
@@ -497,7 +497,7 @@ TEST(TestStrVal, test_flags_oplist)
     flags = 0;
     mask = 0;
     str = "+flag-set-02;-flag-01;+flag-04;+flag-10";
-    rc = ib_flags_oplist_parse(flag_map, mp, str, ";", oplist);
+    rc = ib_flags_oplist_parse(flag_map, ib_mm_mpool(mp), str, ";", oplist);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_flags_oplist_apply(oplist, &flags, &mask);
     ASSERT_EQ(IB_OK, rc);

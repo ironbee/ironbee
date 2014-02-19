@@ -26,7 +26,7 @@
  */
 
 #include <ironbee/list.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/strval.h>
 #include <ironbee/types.h>
 
@@ -218,7 +218,7 @@ ib_status_t DLL_PUBLIC ib_flags_strlist(
  * ib_flags_strlist() on the list (except that no list is ever constructed).
  *
  * @param[in] map String / value mapping
- * @param[in] mp Memory pool to use for (temporary) allocations
+ * @param[in] mm Memory manager to use for (temporary) allocations
  * @param[in] str @a sep separated string to lookup in @a map
  * @param[in] sep Separator character string (passed to strtok())
  * @param[in,out] pflags Pointer to flags
@@ -231,7 +231,7 @@ ib_status_t DLL_PUBLIC ib_flags_strlist(
  */
 ib_status_t DLL_PUBLIC ib_flags_strtok(
     const ib_strval_t *map,
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const char        *str,
     const char        *sep,
     ib_flags_t        *pflags,
@@ -247,7 +247,7 @@ ib_status_t DLL_PUBLIC ib_flags_strtok(
  * operations at run-time.
  *
  * @param[in] map String / value mapping
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] str @a sep separated string to lookup in @a map
  * @param[in] sep Separator character string (passed to strtok())
  * @param[out] oplist List of (ib_flags_operation_t *)
@@ -259,7 +259,7 @@ ib_status_t DLL_PUBLIC ib_flags_strtok(
  */
 ib_status_t DLL_PUBLIC ib_flags_oplist_parse(
     const ib_strval_t *map,
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const char        *str,
     const char        *sep,
     ib_list_t         *oplist);

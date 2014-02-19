@@ -163,13 +163,13 @@ ib_status_t ib_flags_string(
 
 ib_status_t ib_flags_strtok(
     const ib_strval_t *map,
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const char        *str,
     const char        *sep,
     ib_flags_t        *pflags,
     ib_flags_t        *pmask)
 {
-    if ( (map == NULL) || (mp == NULL) || (str == NULL) || (sep == NULL) ||
+    if ( (map == NULL) || (str == NULL) || (sep == NULL) ||
          (pflags == NULL) || (pmask == NULL) )
     {
         return IB_EINVAL;
@@ -182,7 +182,7 @@ ib_status_t ib_flags_strtok(
     const char *tmp;
 
     /* Make a copy of the string that we can use for strtok */
-    copy = ib_mpool_strdup(mp, str);
+    copy = ib_mm_strdup(mm, str);
     if (copy == NULL) {
         return IB_EALLOC;
     }
@@ -239,7 +239,7 @@ ib_status_t ib_flags_strlist(
 
 ib_status_t ib_flags_oplist_parse(
     const ib_strval_t *map,
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const char        *str,
     const char        *sep,
     ib_list_t         *oplist)
@@ -252,7 +252,7 @@ ib_status_t ib_flags_oplist_parse(
     const char *tmp;
 
     /* Make a copy of the string that we can use for strtok */
-    copy = ib_mpool_strdup(mp, str);
+    copy = ib_mm_strdup(mm, str);
     if (copy == NULL) {
         return IB_EALLOC;
     }
@@ -272,7 +272,7 @@ ib_status_t ib_flags_oplist_parse(
         if (rc != IB_OK) {
             return rc;
         }
-        operation = ib_mpool_alloc(mp, sizeof(*operation));
+        operation = ib_mm_alloc(mm, sizeof(*operation));
         if (operation == NULL) {
             return IB_EALLOC;
         }
