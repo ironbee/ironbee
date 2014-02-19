@@ -374,10 +374,10 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <ul class="sectlevel2">
 <li><a href="#_software_installation">Software Installation</a></li>
 <li><a href="#_configuration">Configuration</a></li>
-<li><a href="#_inspection">Inspection</a></li>
+<li><a href="#_data_inspection">Data Inspection</a></li>
 <li>
 <ul class="sectlevel3">
-<li><a href="#_data_fields">Data Fields</a></li>
+<li><a href="#_input">Input</a></li>
 <li><a href="#_rules">Rules</a></li>
 <li><a href="#_events">Events</a></li>
 <li><a href="#_request_and_response_body_handling">Request and Response Body Handling</a></li>
@@ -492,7 +492,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_developer_module">Developer Module</a></li>
 </ul>
 </li>
-<li><a href="#_inspection_2">Inspection</a></li>
+<li><a href="#_inspection">Inspection</a></li>
 <li>
 <ul class="sectlevel2">
 <li><a href="#_data">Data</a></li>
@@ -503,7 +503,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_persisting_data_with_code_initcollection_code">Persisting Data with <code>InitCollection</code></a></li>
 </ul>
 </li>
-<li><a href="#_rules_2">Rules</a></li>
+<li><a href="#_inspection_rules">Inspection Rules</a></li>
 <li>
 <ul class="sectlevel3">
 <li><a href="#_ironbee_rule_language">IronBee Rule Language</a></li>
@@ -532,7 +532,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_tag">tag</a></li>
 </ul>
 </li>
-<li><a href="#_data_fields_2">Data Fields</a></li>
+<li><a href="#_data_fields">Data Fields</a></li>
 <li>
 <ul class="sectlevel3">
 <li><a href="#_args">ARGS</a></li>
@@ -717,7 +717,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <ul class="sectlevel2">
 <li><a href="#_design_and_implementation">Design and Implementation</a></li>
 <li><a href="#_configuration_3">Configuration</a></li>
-<li><a href="#_rules_3">Rules</a></li>
+<li><a href="#_rules_2">Rules</a></li>
 <li><a href="#_miscellaneous">Miscellaneous</a></li>
 <li><a href="#_features_not_supported_yet">Features Not Supported (Yet)</a></li>
 </ul>
@@ -828,33 +828,41 @@ also a founding member of the Cloud Security Alliance (CSA).</p>
 <div class="sectionbody">
 <div class="paragraph">
 <p>IronBee is a framework and library for web application security
-inspection - for building a Web Application Firewall (WAF). The
-following components make up the IronBee framework:</p>
+inspection - for building a Web Application Firewall (WAF). There
+are several compnents that make up the IronBee framework:</p>
 </div>
 <div class="dlist">
 <dl>
-<dt class="hdlist1">IronBee Library</dt>
+<dt class="hdlist1">IronBee Engine</dt>
 <dd>
-<p>The primary component containing the inspection engine.</p>
+<p>The primary component containing the inspection engine. By itself
+the IronBee Library does not do much more than expose an extensive
+API in the form of a shared library.</p>
 </dd>
 <dt class="hdlist1">IronBee Modules</dt>
 <dd>
-<p>Extensions to the inspection engine in the form of loadable
-shared libraries enabled through the IronBee configuration.</p>
+<p>Extensions to the IronBee Engine loaded through the IronBee
+Engine configuration. Much of IronBee&#8217;s fuctionality is build
+in modules to allow for customizing feature sets and reducing
+bloat.</p>
 </dd>
 <dt class="hdlist1">Server Components</dt>
 <dd>
 <p>The server is the executable driving the inspection engine. This
 can be a standard executable, such as the command line tool, or
 in the form of a plugin such as the Apache trafficserver plugin
-or the Apache httpd module.</p>
+or the Apache httpd module. The server is responsible for driving
+the IronBee Engine by feeding it data, notifying state changes,
+and implementing features such as logging, blocking and content
+modification.</p>
 </dd>
 <dt class="hdlist1">Configuration</dt>
 <dd>
 <p>There are two configurations. The IronBee library must be loaded
-and bootstrapped via the native server configuration. And then,
-after the IronBee library is loaded, it is be configured via
-the main IronBee configuration.</p>
+and bootstrapped via the native server configuration. After the
+IronBee library is loaded, it must be configured via the main
+IronBee configuration, which currently resembles an Apache
+Webserver configuration.</p>
 </dd>
 </dl>
 </div>
@@ -906,7 +914,7 @@ specific and can be shared across different server types.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_inspection">Inspection</h3>
+<h3 id="_data_inspection">Data Inspection</h3>
 <div class="paragraph">
 <p>The IronBee library is fed data by the server. This server could be a
 command line tool (see clipp), a webserver or HTTP proxy. IronBee will
@@ -916,10 +924,14 @@ simple signatures against fields, a chained set of operations, stream
 based matchers, modules or lua scripts. Each rule can inspect
 fields and perform actions.</p>
 </div>
-<div class="sect3">
-<h4 id="_data_fields">Data Fields</h4>
 <div class="paragraph">
-<p>IronBee supports two primary types of data fields:</p>
+<p>For more details on using inspecting data, see the capter on
+<a href="#_inspection">Inspection</a>.</p>
+</div>
+<div class="sect3">
+<h4 id="_input">Input</h4>
+<div class="paragraph">
+<p>IronBee supports two primary types of input in the form of data fields:</p>
 </div>
 <div class="dlist">
 <dl>
@@ -938,7 +950,8 @@ or streams)</p>
 <p>As fields are built from external data (parsed HTTP traffic), field
 names and values can contain any binary data. While the names of fields
 are not restricted, by convention the names of built-in fields are
-written using all uppercase letters.</p>
+written using all uppercase letters. See the <a href="#_data_fields">Data Fields</a> section
+in the <a href="#_rule_reference">Rule Reference</a> for a list of predefined data fields.</p>
 </div>
 <div class="sect4">
 <h5 id="_addressing_fields">Addressing Fields</h5>
@@ -1027,6 +1040,10 @@ of the <code>t</code> rule modifier or by chaining via the dot notation.</p>
 <pre>ARGS.compressWhitespace().length()</pre>
 </div>
 </div>
+<div class="paragraph">
+<p>A list of transformations can be seen in the <a href="#_transformation_functions">Transformation Functions</a>
+section.</p>
+</div>
 </div>
 <div class="sect4">
 <h5 id="_field_expansion">Field Expansion</h5>
@@ -1080,6 +1097,9 @@ but more may be handled in the future. In addition to external rules,
 the rule processing engine and configuration syntax are decoupled,
 allowing modules to be developed to provide alternate custom rules which
 interact with the same rule execution engine.</p>
+</div>
+<div class="paragraph">
+<p>More information can be found in the <a href="#_inspection">Inspection</a> section.</p>
 </div>
 <div class="sect4">
 <h5 id="_basic_matching_rules">Basic Matching Rules</h5>
@@ -6012,7 +6032,7 @@ file.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_inspection_2">Inspection</h2>
+<h2 id="_inspection">Inspection</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>The point of IronBee is to allow for inspecting data. This chapter
@@ -6223,7 +6243,7 @@ done</pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_rules_2">Rules</h3>
+<h3 id="_inspection_rules">Inspection Rules</h3>
 <div class="paragraph">
 <p>Rules are the primary form of inspection in IronBee. IronBee rule
 execution is decoupled from any rule language. Because of this, IronBee
@@ -7228,7 +7248,7 @@ and logged with events.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_data_fields_2">Data Fields</h3>
+<h3 id="_data_fields">Data Fields</h3>
 <div class="paragraph">
 <p>TODO: General description.</p>
 </div>
@@ -13178,7 +13198,7 @@ intact.</p>
 
 </div>
 <div class="sect2">
-<h3 id="_rules_3">Rules</h3>
+<h3 id="_rules_2">Rules</h3>
 <div class="ulist">
 <ul>
 <li>

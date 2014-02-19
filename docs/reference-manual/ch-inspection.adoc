@@ -181,8 +181,8 @@ for file in `find $PERSIST_FS_BASEDIR -type f -name '*.json.*'`; do
 done
 -------------------------------------------------------------------
 
-Rules
-~~~~~
+Inspection Rules
+~~~~~~~~~~~~~~~~
 
 Rules are the primary form of inspection in IronBee. IronBee rule
 execution is decoupled from any rule language. Because of this, IronBee
