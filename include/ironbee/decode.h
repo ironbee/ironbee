@@ -26,7 +26,7 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <stdarg.h>
@@ -89,7 +89,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_ex(
 /**
  * Copy-on-write decode a URL (NUL-string version)
  *
- * @param[in] mp Memory pool for allocations
+ * @param[in] mm Memory Manager for allocations
  * @param[in] data_in Buffer to operate on
  * @param[out] data_out Output data
  * @param[out] result Result flags (IB_STRFLAG_xxx)
@@ -103,7 +103,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_ex(
  * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_cow(
-    ib_mpool_t   *mp,
+    ib_mm_t       mm,
     const char   *data_in,
     char        **data_out,
     ib_flags_t   *result);
@@ -111,7 +111,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow(
 /**
  * Copy-on-write decode a URL (ex version)
  *
- * @param[in] mp Memory pool for allocations
+ * @param[in] mm Memory Manager for allocations
  * @param[in] data_in Buffer to operate on
  * @param[in] dlen_in Length of @a data_in
  * @param[in] nul_byte Reserve extra byte for NUL character?
@@ -128,7 +128,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow(
  * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_cow_ex(
-    ib_mpool_t     *mp,
+    ib_mm_t         mm,
     const uint8_t  *data_in,
     size_t          dlen_in,
     bool            nul_byte,
@@ -176,7 +176,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_ex(
 /**
  * Copy-on-write decode HTML entity (NUL-string version)
  *
- * @param[in] mp Memory pool for allocations
+ * @param[in] mm Memory Manager for allocations
  * @param[in] data_in Buffer to operate on
  * @param[out] data_out Output data
  * @param[out] result Result flags (IB_STRFLAG_xxx)
@@ -189,7 +189,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_ex(
  * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow(
-    ib_mpool_t     *mp,
+    ib_mm_t         mm,
     const char     *data_in,
     char          **data_out,
     ib_flags_t     *result);
@@ -197,7 +197,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow(
 /**
  * Copy-on-write decode HTML entity (ex version)
  *
- * @param[in] mp Memory pool for allocations
+ * @param[in] mm Memory Manager for allocations
  * @param[in] data_in Buffer to operate on
  * @param[in] dlen_in Length of @a buf
  * @param[out] data_out Output data
@@ -213,7 +213,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow(
  * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow_ex(
-    ib_mpool_t     *mp,
+    ib_mm_t         mm,
     const uint8_t  *data_in,
     size_t          dlen_in,
     uint8_t       **data_out,

@@ -241,7 +241,7 @@ TEST_F(TestIBUtilCopyOnWrite, basic)
 
     // Simple case: new buffer, start == buf
     offset = 0;
-    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
+    cur = ib_util_copy_on_write(MM(), BufPtr(), BufPtr(offset), BufSize(),
                                 NULL, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -251,7 +251,7 @@ TEST_F(TestIBUtilCopyOnWrite, basic)
     // Next case: re-use buffer, start == buf
     out_buf_bak = out_buf;
     offset = 0;
-    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
+    cur = ib_util_copy_on_write(MM(), BufPtr(), BufPtr(offset), BufSize(),
                                 out_buf + offset, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -262,7 +262,7 @@ TEST_F(TestIBUtilCopyOnWrite, basic)
     // Next case: re-use buffer, start != buf
     out_buf_bak = out_buf;
     offset = BufSize() / 2;
-    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
+    cur = ib_util_copy_on_write(MM(), BufPtr(), BufPtr(offset), BufSize(),
                                 out_buf + offset, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -286,7 +286,7 @@ TEST_F(TestIBUtilCopyOnWrite, copy_half)
     offset = BufSize() / 2;
 
     // Simple case: new buffer, start != end
-    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
+    cur = ib_util_copy_on_write(MM(), BufPtr(), BufPtr(offset), BufSize(),
                                 NULL, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -297,7 +297,7 @@ TEST_F(TestIBUtilCopyOnWrite, copy_half)
 
     // Next case: re-use buffer, start != end
     out_buf_bak = out_buf;
-    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
+    cur = ib_util_copy_on_write(MM(), BufPtr(), BufPtr(offset), BufSize(),
                                 out_buf + offset, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -323,7 +323,7 @@ TEST_F(TestIBUtilCopyOnWrite, copy_whole)
     offset = BufSize();
 
     // Simple case: new buffer, start == end
-    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
+    cur = ib_util_copy_on_write(MM(), BufPtr(), BufPtr(offset), BufSize(),
                                 NULL, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -334,7 +334,7 @@ TEST_F(TestIBUtilCopyOnWrite, copy_whole)
 
     // Next case: re-use buffer, start == end
     out_buf_bak = out_buf;
-    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
+    cur = ib_util_copy_on_write(MM(), BufPtr(), BufPtr(offset), BufSize(),
                                 out_buf + offset, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -363,7 +363,7 @@ TEST_F(TestIBUtilCopyOnWrite, random)
         offset = (random() % BufSize());
 
         // Simple case: new buffer, random offset
-        cur = ib_util_copy_on_write(MemPool(),
+        cur = ib_util_copy_on_write(MM(),
                                     BufPtr(), BufPtr(offset), BufSize(),
                                     NULL, &out_buf, &out_end);
         ASSERT_NE(UNULL, cur);
@@ -378,7 +378,7 @@ TEST_F(TestIBUtilCopyOnWrite, random)
 
         // Next case: re-use buffer, random offset
         out_buf_bak = out_buf;
-        cur = ib_util_copy_on_write(MemPool(),
+        cur = ib_util_copy_on_write(MM(),
                                     BufPtr(), BufPtr(offset), BufSize(),
                                     out_buf + offset, &out_buf, &out_end);
         ASSERT_NE(UNULL, cur);

@@ -25,7 +25,7 @@
 
 #include <ironbee/decode.h>
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
@@ -46,7 +46,7 @@ ib_status_t ib_util_decode_url(char *data,
     return rc;
 }
 
-ib_status_t ib_util_decode_url_cow(ib_mpool_t *mp,
+ib_status_t ib_util_decode_url_cow(ib_mm_t mm,
                                    const char *data_in,
                                    char **data_out,
                                    ib_flags_t *result)
@@ -54,7 +54,7 @@ ib_status_t ib_util_decode_url_cow(ib_mpool_t *mp,
     ib_status_t rc;
     size_t len;
     uint8_t *out;
-    rc = ib_util_decode_url_cow_ex(mp,
+    rc = ib_util_decode_url_cow_ex(mm,
                                    (uint8_t *)data_in, strlen(data_in), true,
                                    &out, &len, result);
     if (rc == IB_OK) {
@@ -79,7 +79,7 @@ ib_status_t ib_util_decode_html_entity(char *data,
     return rc;
 }
 
-ib_status_t ib_util_decode_html_entity_cow(ib_mpool_t *mp,
+ib_status_t ib_util_decode_html_entity_cow(ib_mm_t mm,
                                            const char *data_in,
                                            char **data_out,
                                            ib_flags_t *result)
@@ -87,7 +87,7 @@ ib_status_t ib_util_decode_html_entity_cow(ib_mpool_t *mp,
     ib_status_t rc;
     size_t len;
     uint8_t *out;
-    rc = ib_util_decode_html_entity_cow_ex(mp,
+    rc = ib_util_decode_html_entity_cow_ex(mm,
                                            (uint8_t *)data_in,
                                            strlen(data_in),
                                            &out, &len,

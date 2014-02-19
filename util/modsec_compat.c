@@ -155,7 +155,7 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
     return IB_OK;
 }
 
-ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
+ib_status_t ib_util_decode_url_cow_ex(ib_mm_t mm,
                                       const uint8_t *data_in,
                                       size_t dlen_in,
                                       bool nul_byte,
@@ -163,7 +163,6 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                                       size_t *dlen_out,
                                       ib_flags_t *result)
 {
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(dlen_out != NULL);
@@ -187,7 +186,7 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
 
                 if (IS_HEX_CHAR(c1) && IS_HEX_CHAR(c2)) {
                     /* Valid encoding - decode it. */
-                    out = ib_util_copy_on_write(mp, data_in, in, size,
+                    out = ib_util_copy_on_write(mm, data_in, in, size,
                                                 out, data_out, NULL);
                     if (out == NULL) {
                         return IB_EALLOC;
@@ -218,7 +217,7 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
         else {
             /* Character is not a percent sign. */
             if (*in == '+') {
-                out = ib_util_copy_on_write(mp, data_in, in, size,
+                out = ib_util_copy_on_write(mm, data_in, in, size,
                                             out, data_out, NULL);
                 if (out == NULL) {
                     return IB_EALLOC;
@@ -422,14 +421,13 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
 }
 
 
-ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
+ib_status_t ib_util_decode_html_entity_cow_ex(ib_mm_t mm,
                                               const uint8_t *data_in,
                                               size_t dlen_in,
                                               uint8_t **data_out,
                                               size_t *dlen_out,
                                               ib_flags_t *result)
 {
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(dlen_out != NULL);
@@ -480,7 +478,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                         if (tmp == NULL) {
                             return IB_EALLOC;
                         }
-                        out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
+                        out = ib_util_copy_on_write(mm, data_in, in, dlen_in,
                                                     out, data_out, &end_out);
                         if (out == NULL) {
                             free(tmp);
@@ -516,7 +514,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                         if (tmp == NULL) {
                             return IB_EALLOC;
                         }
-                        out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
+                        out = ib_util_copy_on_write(mm, data_in, in, dlen_in,
                                                     out, data_out, &end_out);
                         if (out == NULL) {
                             free(tmp);
@@ -581,7 +579,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                     }
                     free(tmp);
 
-                    out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
+                    out = ib_util_copy_on_write(mm, data_in, in, dlen_in,
                                                 out, data_out, &end_out);
                     if (out == NULL) {
                         return IB_EALLOC;

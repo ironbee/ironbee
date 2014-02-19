@@ -26,6 +26,7 @@
  */
 
 #include <ironbee/build.h>
+#include <ironbee/mm.h>
 #include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
@@ -186,7 +187,7 @@ void DLL_PUBLIC ib_util_log_ex(int level,
  * the output @a data_out at the same offset is returned.  See code in
  * util/modsec_compat.c for example usage.
  *
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory Manager to use for allocations
  * @param[in] data_in Input data
  * @param[in] end_in End of data to copy from @a data_in
  * @param[in] size Size of buffer to allocate
@@ -201,7 +202,7 @@ void DLL_PUBLIC ib_util_log_ex(int level,
  * Implemented in: util/util.c
  * Tested in: tests/test_util_misc.cpp
  */
-uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
+uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mm_t mm,
                                           const uint8_t *data_in,
                                           const uint8_t *end_in,
                                           size_t size,

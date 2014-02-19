@@ -132,7 +132,7 @@ void ib_util_log_ex(int level,
 
 /* -- Misc -- */
 
-uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
+uint8_t *ib_util_copy_on_write(ib_mm_t mm,
                                const uint8_t *data_in,
                                const uint8_t *end_in,
                                size_t size,
@@ -140,14 +140,13 @@ uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
                                uint8_t **data_out,
                                const uint8_t **end_out)
 {
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(end_in != NULL);
     assert(end_in >= data_in);
 
     if (*data_out == NULL) {
-        *data_out = ib_mpool_alloc(mp, size);
+        *data_out = ib_mm_alloc(mm, size);
         if (*data_out != NULL) {
             if (end_out != NULL) {
                 *end_out = *data_out + size;

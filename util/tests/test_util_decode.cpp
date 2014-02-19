@@ -28,6 +28,7 @@
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 #include <ironbee/decode.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/mpool.h>
 
 #include "ibtest_textbuf.hpp"
@@ -81,7 +82,7 @@ public:
                            char **data_out,
                            ib_flags_t &result)
     {
-        return ib_util_decode_url_cow(m_mpool, data_in, data_out, &result);
+        return ib_util_decode_url_cow(ib_mm_mpool(m_mpool), data_in, data_out, &result);
     }
     ib_status_t ExecCowEx(const uint8_t *data_in,
                           size_t dlen_in,
@@ -89,7 +90,7 @@ public:
                           size_t &dlen_out,
                           ib_flags_t &result)
     {
-        return ib_util_decode_url_cow_ex(m_mpool,
+        return ib_util_decode_url_cow_ex(ib_mm_mpool(m_mpool),
                                          data_in, dlen_in, false,
                                          data_out, &dlen_out,
                                          &result);
@@ -181,7 +182,7 @@ public:
                            char **data_out,
                            ib_flags_t &result)
     {
-        return ib_util_decode_html_entity_cow(m_mpool, data_in,
+        return ib_util_decode_html_entity_cow(ib_mm_mpool(m_mpool), data_in,
                                               data_out, &result);
     }
     ib_status_t ExecCowEx(const uint8_t *data_in,
@@ -190,7 +191,7 @@ public:
                           size_t &dlen_out,
                           ib_flags_t &result)
     {
-        return ib_util_decode_html_entity_cow_ex(m_mpool,
+        return ib_util_decode_html_entity_cow_ex(ib_mm_mpool(m_mpool),
                                                  data_in, dlen_in,
                                                  data_out, &dlen_out,
                                                  &result);
