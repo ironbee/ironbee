@@ -44,7 +44,7 @@ const size_t  pathsize_full = (pathsize_base + 16);
 class TestIBUtilMkPath : public SimpleFixture
 {
 public:
-    virtual void SetUp(void)
+    virtual void SetUp()
     {
         m_basedir[0] = '\0';
         SimpleFixture::SetUp();

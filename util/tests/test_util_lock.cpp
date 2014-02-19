@@ -96,7 +96,7 @@ public:
         return IB_OK;
     }
 
-    ib_status_t Join(void)
+    ib_status_t Join()
     {
         int         status;
 
@@ -136,7 +136,7 @@ private:
 class TestIBUtilLock : public SimpleFixture
 {
 public:
-    TestIBUtilLock(void) :
+    TestIBUtilLock() :
         m_max_threads(0),
         m_threads(NULL),
         m_lock_enabled(true),
@@ -145,14 +145,14 @@ public:
         TestIBUtilLock::m_self = this;
         TestParams(100, 0.0005, true);
     }
-    ~TestIBUtilLock(void)
+    ~TestIBUtilLock()
     {
         if (m_threads != NULL) {
             delete []m_threads;
         }
     }
 
-    virtual void SetUp(void)
+    virtual void SetUp()
     {
         SimpleFixture::SetUp();
     }
@@ -162,19 +162,19 @@ public:
         DestroyLock( );
     }
 
-    ib_status_t CreateLock( void )
+    ib_status_t CreateLock()
     {
         return ib_lock_init(&m_lock);
     }
-    ib_status_t DestroyLock( void )
+    ib_status_t DestroyLock()
     {
         return ib_lock_destroy(&m_lock);
     }
-    ib_status_t LockLock( void )
+    ib_status_t LockLock()
     {
         return ib_lock_lock(&m_lock);
     }
-    ib_status_t UnlockLock( void )
+    ib_status_t UnlockLock()
     {
         return ib_lock_unlock(&m_lock);
     }
@@ -214,7 +214,7 @@ public:
         return thread->Create(TestIBUtilLock::StartThread);
     }
 
-    ib_status_t CreateAllThreads( void )
+    ib_status_t CreateAllThreads()
     {
         if(m_threads == NULL) {
             throw std::runtime_error("Thread handles not initialized.");

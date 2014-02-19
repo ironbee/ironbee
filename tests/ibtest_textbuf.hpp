@@ -150,31 +150,31 @@ public:
         return SetText( (const uint8_t *)text, len);
     }
 
-    void InvalidateFmt(void) const { m_fmtvalid = false; };
-    bool IsFmtValid(void) const { return m_fmtvalid; };
+    void InvalidateFmt() const { m_fmtvalid = false; };
+    bool IsFmtValid() const { return m_fmtvalid; };
 
     void SetByteStr(bool is_bytestr) { m_bytestr = is_bytestr; };
-    bool IsByteStr(void) const { return m_bytestr; };
-    bool IsNull(void) const { return m_null; };
+    bool IsByteStr() const { return m_bytestr; };
+    bool IsNull() const { return m_null; };
 
-    virtual char *GetBuf(void) const
+    virtual char *GetBuf() const
     {
         return m_null ? NULL : m_buf;
     };
-    virtual uint8_t *GetUBuf(void) const
+    virtual uint8_t *GetUBuf() const
     {
         return m_null ? NULL : (uint8_t *)m_buf;
     }
-    virtual const char *GetStr(void) const
+    virtual const char *GetStr() const
     {
         return GetBuf();
     };
-    virtual const uint8_t *GetText(void) const
+    virtual const uint8_t *GetText() const
     {
         return m_null ? NULL : (uint8_t *)m_buf;
     };
-    virtual size_t GetLen(void) const { return m_len; };
-    virtual const char *GetFmt(void) const
+    virtual size_t GetLen() const { return m_len; };
+    virtual const char *GetFmt() const
     {
         if (! IsFmtValid()) {
             if (m_bytestr) {
@@ -212,7 +212,7 @@ public:
         return !(*this == other);
     };
 
-    const char *BuildFmt(void) const {
+    const char *BuildFmt() const {
         if (m_bytestr) {
             return BuildFmt(m_buf, m_len);
         }

@@ -44,7 +44,7 @@ double TvToSecs(const ib_timeval_t &tv)
     return tv.tv_sec + (tv.tv_usec * 1e-6);
 }
 
-double GetTime(void)
+double GetTime()
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);

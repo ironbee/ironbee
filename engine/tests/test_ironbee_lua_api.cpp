@@ -111,7 +111,7 @@ public:
     }
 
     // Overload the configuration and header generation methods
-    void configureIronBee(void)
+    void configureIronBee()
     {
         configureIronBeeByString(ib_conf);
     }

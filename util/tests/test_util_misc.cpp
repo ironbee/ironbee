@@ -56,7 +56,7 @@ public:
         FreeBuf( );
     };
 
-    virtual void SetUp(void)
+    virtual void SetUp()
     {
         SimpleFixture::SetUp();
     }
@@ -121,7 +121,7 @@ public:
         return (errors == 0);
     }
 
-    void FreeBuf( void )
+    void FreeBuf()
     {
         if (m_buf != NULL) {
             m_buf = NULL;
@@ -129,7 +129,7 @@ public:
     }
 
     uint8_t *BufPtr(size_t offset = 0) { return m_buf + offset; };
-    size_t BufSize(void) { return m_bufsize; };
+    size_t BufSize() { return m_bufsize; };
 
 protected:
     size_t       m_bufsize;
@@ -460,7 +460,7 @@ protected:
         return ret;
     }
 
-    void CloseFds( void )
+    void CloseFds()
     {
         for(int n = 0;  n < NUM_FDS;  ++n) {
             Close((fd_t)n);

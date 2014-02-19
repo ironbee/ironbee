@@ -46,7 +46,7 @@ TEST_F(SimpleFixture, test_create)
 class TestStream : public SimpleFixture
 {
 public :
-    void SetUp( void )
+    void SetUp()
     {
         SimpleFixture::SetUp( );
 
@@ -55,7 +55,7 @@ public :
             throw std::runtime_error("Could not initialize stream.");
         }
     }
-    void TearDown( void )
+    void TearDown()
     {
         SimpleFixture::TearDown( );
     }

@@ -63,7 +63,7 @@ public:
         Close( );
     }
 
-    virtual void ClosedFp(void) { };
+    virtual void ClosedFp() { };
     void Close( )
     {
         if (log_fp != NULL) {
@@ -73,7 +73,7 @@ public:
         }
     }
 
-    const std::string &Cat( void )
+    const std::string &Cat()
     {
         fpos_t pos;
 

@@ -55,7 +55,7 @@ public:
     }
 
     // Memory pool creator / destroyer
-    void CreateMemPool( void ) const
+    void CreateMemPool() const
     {
         if (m_pool == NULL) {
             ib_status_t rc = ib_mpool_create(&m_pool, NULL, NULL);
@@ -64,7 +64,7 @@ public:
             }
         }
     }
-    void DestroyMemPool( void ) const
+    void DestroyMemPool() const
     {
         if (m_pool != NULL) {
             ib_mpool_destroy(m_pool);
@@ -91,11 +91,11 @@ public:
                  "Failed to duplicate string of size %zd", strlen(str)+1);
         return m_error_buf;
     }
-    ib_mpool_t *MemPool( void ) const
+    ib_mpool_t *MemPool() const
     {
         return m_pool;
     }
-    ib_mm_t MM( void ) const
+    ib_mm_t MM() const
     {
         return ib_mm_mpool(m_pool);
     }

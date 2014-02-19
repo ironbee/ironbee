@@ -51,7 +51,7 @@ struct TestIBUtilJsonDecode_t {
 class TestIBUtilJsonDecode : public SimpleFixture
 {
 public:
-    virtual void SetUp(void)
+    virtual void SetUp()
     {
         SimpleFixture::SetUp();
     }

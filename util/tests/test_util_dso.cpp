@@ -56,7 +56,7 @@ public:
     {
         return ib_dso_open(&m_dso, file, MemPool());
     }
-    ib_status_t DsoClose( void )
+    ib_status_t DsoClose()
     {
         ib_status_t rc = IB_OK;
         if (m_dso != NULL) {

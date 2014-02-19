@@ -39,7 +39,7 @@ public:
         configureIronBee();
         performTx();
     }
-    void configureIronBee(void)
+    void configureIronBee()
     {
         BaseTransactionFixture::configureIronBee("EeOperModuleTest.config");
     }

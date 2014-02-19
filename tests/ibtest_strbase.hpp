@@ -64,9 +64,9 @@ public:
     };
 
     // Accessors
-    size_t LineNo(void) const { return m_lineno; };
-    bool IsEnd(void) const { return m_end; };
-    const TextBuf &InBuf(void) const { return m_inbuf; };
+    size_t LineNo() const { return m_lineno; };
+    bool IsEnd() const { return m_end; };
+    const TextBuf &InBuf() const { return m_inbuf; };
 
 private:
     bool               m_end;         // Special case: End marker.
@@ -101,12 +101,12 @@ public:
 class TestSimpleStringManipulation : public ::testing::Test
 {
 public:
-    TestSimpleStringManipulation( void )
+    TestSimpleStringManipulation()
         : m_mpool(NULL)
     {
     };
 
-    virtual void SetUp( void )
+    virtual void SetUp()
     {
         ib_status_t rc = ib_mpool_create(&m_mpool, NULL, NULL);
         if (rc != IB_OK) {
@@ -114,7 +114,7 @@ public:
         }
     }
 
-    virtual void TearDown( void )
+    virtual void TearDown()
     {
         if (m_mpool != NULL) {
             ib_mpool_destroy(m_mpool);
@@ -568,8 +568,8 @@ public:
     }
 
     void SetOp(ib_strop_t op) { m_op = op; };
-    ib_strop_t Op(void) const { return m_op; };
-    const char *OpStr( void ) const { return OpStr(m_op); };
+    ib_strop_t Op() const { return m_op; };
+    const char *OpStr() const { return OpStr(m_op); };
     const char *OpStr( ib_strop_t op ) const
     {
         switch (op) {
@@ -585,9 +585,9 @@ public:
         assert(0);
     }
 
-    virtual const char *FnName(void) const = 0;
-    ib_mpool_t *MemPool( void ) { return m_mpool; };
-    ib_mm_t MM( void ) { return ib_mm_mpool(MemPool()); };
+    virtual const char *FnName() const = 0;
+    ib_mpool_t *MemPool() { return m_mpool; };
+    ib_mm_t MM() { return ib_mm_mpool(MemPool()); };
 
     const char *BoolStr(bool v) const
     {

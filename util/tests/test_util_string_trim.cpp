@@ -63,9 +63,9 @@ public:
           m_lineno(lno), m_cutleft(skip), m_cutright(cut), m_choplen(0) {
     };
 
-    char *GetBuf(void) const { return m_chopbuf; };
-    size_t GetLen(void) const { return m_choplen; };
-    const char *GetFmt(void) const {
+    char *GetBuf() const { return m_chopbuf; };
+    size_t GetLen() const { return m_choplen; };
+    const char *GetFmt() const {
         if (! IsFmtValid()) {
             if (m_bytestr) {
                 BuildFmt(m_chopbuf, m_choplen);
@@ -108,7 +108,7 @@ protected:
 class TestDatum : public BaseTestDatum
 {
 public:
-    TestDatum(void)
+    TestDatum()
         : BaseTestDatum(),
           m_exvalid(false),
           m_exconst(true),
@@ -143,15 +143,15 @@ public:
     };
 
     // Accessors
-    void ClearExpected(void) const { m_exvalid = false; };
+    void ClearExpected() const { m_exvalid = false; };
     void SetByteStr(bool is_bytestr) const {
         m_exout.SetByteStr(is_bytestr);
     };
-    const ExpectedTextBuf &ExpectedOut(void) const {
+    const ExpectedTextBuf &ExpectedOut() const {
         assert (m_exvalid);
         return m_exout;
     };
-    bool ExpectedMod(void) const {
+    bool ExpectedMod() const {
         assert (m_exvalid);
         return m_exmod;
     }
@@ -243,11 +243,11 @@ public:
     }
 
     // Specify these for specific tests
-    virtual bool ChopLeft(void) const = 0;
-    virtual bool ChopRight(void) const = 0;
+    virtual bool ChopLeft() const = 0;
+    virtual bool ChopRight() const = 0;
 
     // Specify these for str/ex versions
-    virtual bool IsByteStr(void) const = 0;
+    virtual bool IsByteStr() const = 0;
 
     // Specify these for str/ex versions
     virtual void CheckResults(const TestDatum &test,
@@ -280,7 +280,7 @@ public:
     {
     }
 
-    virtual bool IsByteStr(void) const { return false; };
+    virtual bool IsByteStr() const { return false; };
 
     virtual void CheckResults(const TestDatum &test,
                               ib_status_t rc,
@@ -316,14 +316,14 @@ public:
         TestIBUtilStrTrim( ib_strtrim_left, FnName() )
     { };
 
-    bool ChopLeft(void) const { return true; };
-    bool ChopRight(void) const { return false; };
+    bool ChopLeft() const { return true; };
+    bool ChopRight() const { return false; };
 
     bool ExpectCowAlias(bool mod) const
     {
         return ExpectCowAliasLeft(mod);
     }
-    const char *FnName(void) const { return "ib_strtrim_left"; };
+    const char *FnName() const { return "ib_strtrim_left"; };
 };
 
 // Right trim tests
@@ -334,14 +334,14 @@ public:
         TestIBUtilStrTrim( ib_strtrim_right, FnName() )
     { };
 
-    bool ChopLeft(void) const { return false; };
-    bool ChopRight(void) const { return true; };
+    bool ChopLeft() const { return false; };
+    bool ChopRight() const { return true; };
 
     bool ExpectCowAlias(bool mod) const
     {
         return ExpectCowAliasRight(mod);
     }
-    const char *FnName(void) const { return "ib_strtrim_right"; };
+    const char *FnName() const { return "ib_strtrim_right"; };
 };
 
 // Left/Right trim tests
@@ -351,14 +351,14 @@ public:
     TestIBUtilStrTrimLr( ) :
         TestIBUtilStrTrim( ib_strtrim_lr, FnName() )
     { };
-    bool ChopLeft(void) const { return true; };
-    bool ChopRight(void) const { return true; };
+    bool ChopLeft() const { return true; };
+    bool ChopRight() const { return true; };
 
     bool ExpectCowAlias(bool mod) const
     {
         return ExpectCowAliasLr(mod);
     }
-    const char *FnName(void) const { return "ib_strtrim_lr"; };
+    const char *FnName() const { return "ib_strtrim_lr"; };
 };
 
 // Base "ex" version of trim tests
@@ -370,7 +370,7 @@ public:
     {
     }
 
-    virtual bool IsByteStr(void) const { return true; };
+    virtual bool IsByteStr() const { return true; };
 
     void CheckResults(const TestDatum &test,
                       ib_status_t rc,
@@ -411,13 +411,13 @@ public:
         TestIBUtilStrTrimEx( ib_strtrim_left_ex, FnName() )
     { };
 
-    bool ChopLeft(void) const { return true; };
-    bool ChopRight(void) const { return false; };
+    bool ChopLeft() const { return true; };
+    bool ChopRight() const { return false; };
     bool ExpectCowAlias(bool mod) const
     {
         return ExpectCowAliasLeft(mod);
     }
-    const char *FnName(void) const { return "ib_strtrim_left_ex"; };
+    const char *FnName() const { return "ib_strtrim_left_ex"; };
 };
 
 // Right (_ex version) trim tests
@@ -428,13 +428,13 @@ public:
         TestIBUtilStrTrimEx( ib_strtrim_right_ex, FnName() )
     { };
 
-    bool ChopLeft(void) const { return false; };
-    bool ChopRight(void) const { return true; };
+    bool ChopLeft() const { return false; };
+    bool ChopRight() const { return true; };
     bool ExpectCowAlias(bool mod) const
     {
         return ExpectCowAliasRight(mod);
     }
-    const char *FnName(void) const { return "ib_strtrim_right_ex"; };
+    const char *FnName() const { return "ib_strtrim_right_ex"; };
 };
 
 // Left/Right (_ex version) trim tests
@@ -445,13 +445,13 @@ public:
         TestIBUtilStrTrimEx( ib_strtrim_lr_ex, FnName() )
     { };
 
-    bool ChopLeft(void) const { return true; };
-    bool ChopRight(void) const { return true; };
+    bool ChopLeft() const { return true; };
+    bool ChopRight() const { return true; };
     bool ExpectCowAlias(bool mod) const
     {
         return ExpectCowAliasLr(mod);
     }
-    const char *FnName(void) const { return "ib_strtrim_lr_ex"; };
+    const char *FnName() const { return "ib_strtrim_lr_ex"; };
 };
 
 static TestDatum str_test_data [ ] =

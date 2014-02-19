@@ -41,7 +41,7 @@ const size_t CallBufSize = BufSize + 32;
 class TestDatum : public BaseTestDatum
 {
 public:
-    TestDatum(void)
+    TestDatum()
         : BaseTestDatum(),
           m_exbuf_remove(BufSize, ""),
           m_exbuf_compress(BufSize, "")
@@ -161,7 +161,7 @@ public:
         TestIBUtilStrWspcStr( ib_str_wspc_remove, FnName() )
     { };
 
-    const char *FnName(void) const { return "ib_str_wspc_remove"; };
+    const char *FnName() const { return "ib_str_wspc_remove"; };
     const TextBuf &ExpectedOut(const TestDatum &test) const {
         return test.ExpectedOutRemove();
     };
@@ -175,7 +175,7 @@ public:
         TestIBUtilStrWspcStr( ib_str_wspc_compress, FnName() )
     { };
 
-    const char *FnName(void) const { return "ib_str_wspc_compress"; };
+    const char *FnName() const { return "ib_str_wspc_compress"; };
     const TextBuf &ExpectedOut(const TestDatum &test) const {
         return test.ExpectedOutCompress();
     };
@@ -225,7 +225,7 @@ public:
         TestIBUtilStrWspcEx( ib_str_wspc_remove_ex, FnName() )
     { };
 
-    const char *FnName(void) const { return "ib_str_wspc_remove_ex"; };
+    const char *FnName() const { return "ib_str_wspc_remove_ex"; };
     const TextBuf &ExpectedOut(const TestDatum &test) const {
         return test.ExpectedOutRemove();
     };
@@ -239,7 +239,7 @@ public:
         TestIBUtilStrWspcEx( ib_str_wspc_compress_ex, FnName() )
     { };
 
-    const char *FnName(void) const { return "ib_str_wspc_compress_ex"; };
+    const char *FnName() const { return "ib_str_wspc_compress_ex"; };
     const TextBuf &ExpectedOut(const TestDatum &test) const {
         return test.ExpectedOutCompress();
     };
