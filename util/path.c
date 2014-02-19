@@ -123,7 +123,7 @@ exit:
     return rc;
 }
 
-char *ib_util_path_join(ib_mpool_t *mp,
+char *ib_util_path_join(ib_mm_t mm,
                         const char *parent,
                         const char *file_path)
 {
@@ -156,7 +156,7 @@ char *ib_util_path_join(ib_mpool_t *mp,
     len += flen;               /* file name */
     len += 1;                  /* NUL */
 
-    out = (char *)ib_mpool_calloc(mp, len, 1);
+    out = (char *)ib_mm_calloc(mm, len, 1);
     if (out == NULL) {
         return NULL;
     }
@@ -170,7 +170,7 @@ char *ib_util_path_join(ib_mpool_t *mp,
     return out;
 }
 
-char *ib_util_relative_file(ib_mpool_t *mp,
+char *ib_util_relative_file(ib_mm_t mm,
                             const char *ref_file,
                             const char *file_path)
 {
@@ -180,12 +180,12 @@ char *ib_util_relative_file(ib_mpool_t *mp,
 
     /* If file_path is absolute, just use it */
     if (*file_path == '/') {
-        tmp = ib_mpool_strdup(mp, file_path);
+        tmp = ib_mm_strdup(mm, file_path);
         return tmp;
     }
 
     /* Make a copy of cur_file because dirname() modifies it's input */
-    refcopy = (char *)ib_mpool_strdup(mp, ref_file);
+    refcopy = (char *)ib_mm_strdup(mm, ref_file);
     if (refcopy == NULL) {
         return NULL;
     }
@@ -193,7 +193,7 @@ char *ib_util_relative_file(ib_mpool_t *mp,
     /* Finally, extract the directory portion of the copy, use it to
      * build the final path. */
     ref_dir = dirname(refcopy);
-    tmp = ib_util_path_join(mp, ref_dir, file_path);
+    tmp = ib_util_path_join(mm, ref_dir, file_path);
     return tmp;
 }
 
@@ -215,13 +215,12 @@ ib_status_t ib_util_normalize_path(char *data,
 }
 
 ib_status_t ib_util_normalize_path_cow(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const char *data_in,
     bool win,
     char **data_out,
     ib_flags_t *result)
 {
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(result != NULL);
@@ -231,7 +230,7 @@ ib_status_t ib_util_normalize_path_cow(
     char *buf;
 
     /* Make a copy of the original */
-    buf = ib_mpool_strdup(mp, data_in);
+    buf = ib_mm_strdup(mm, data_in);
     if (buf == NULL) {
         return IB_EALLOC;
     }
@@ -259,7 +258,7 @@ ib_status_t ib_util_normalize_path_cow(
     return IB_OK;
 }
 
-ib_status_t ib_util_normalize_path_cow_ex(ib_mpool_t *mp,
+ib_status_t ib_util_normalize_path_cow_ex(ib_mm_t mm,
                                           const uint8_t *data_in,
                                           size_t dlen_in,
                                           bool win,
@@ -267,7 +266,6 @@ ib_status_t ib_util_normalize_path_cow_ex(ib_mpool_t *mp,
                                           size_t *dlen_out,
                                           ib_flags_t *result)
 {
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(dlen_out != NULL);
@@ -277,7 +275,7 @@ ib_status_t ib_util_normalize_path_cow_ex(ib_mpool_t *mp,
     uint8_t *buf;
 
     /* Make a copy of the original */
-    buf = ib_mpool_alloc(mp, dlen_in);
+    buf = ib_mm_alloc(mm, dlen_in);
     if (buf == NULL) {
         return IB_EALLOC;
     }

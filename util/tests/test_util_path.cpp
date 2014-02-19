@@ -26,6 +26,8 @@
 
 #include <ironbee/path.h>
 
+#include <ironbee/mm_mpool.h>
+
 #include "gtest/gtest.h"
 
 #include "ibtest_textbuf.hpp"
@@ -149,7 +151,7 @@ TEST_F(TestIBUtilPath, path_join)
 
     for (test = &test_path_join[0]; test->in1 != NULL; ++test) {
         const char *out;
-        out = ib_util_path_join(MemPool(), test->in1, test->in2);
+        out = ib_util_path_join(MM(), test->in1, test->in2);
         EXPECT_STREQ(test->out, out)
             << "Test: in1 = '" << test->in1 << "'"
             << ", in2 = '" << test->in2 << "'";
@@ -163,7 +165,7 @@ TEST_F(TestIBUtilPath, relative_path)
 
     for (test = &test_rel_file[0]; test->in1 != NULL; ++test) {
         const char *out;
-        out = ib_util_relative_file(MemPool(), test->in1, test->in2);
+        out = ib_util_relative_file(MM(), test->in1, test->in2);
         EXPECT_STREQ(test->out, out)
             << "Test: in1 = '" << test->in1 << "'"
             << ", in2 = '" << test->in2 << "'";
@@ -209,7 +211,7 @@ public:
                            char **data_out,
                            ib_flags_t &result)
     {
-        return ib_util_normalize_path_cow(m_mpool, data_in, false,
+        return ib_util_normalize_path_cow(ib_mm_mpool(m_mpool), data_in, false,
                                           data_out, &result);
     }
     ib_status_t ExecCowEx(const uint8_t *data_in,
@@ -218,7 +220,7 @@ public:
                           size_t &dlen_out,
                           ib_flags_t &result)
     {
-        return ib_util_normalize_path_cow_ex(m_mpool,
+        return ib_util_normalize_path_cow_ex(ib_mm_mpool(m_mpool),
                                              data_in, dlen_in, false,
                                              data_out, &dlen_out,
                                              &result);
@@ -373,7 +375,7 @@ public:
                            char **data_out,
                            ib_flags_t &result)
     {
-        return ib_util_normalize_path_cow(m_mpool, data_in, true,
+        return ib_util_normalize_path_cow(ib_mm_mpool(m_mpool), data_in, true,
                                           data_out, &result);
     }
     ib_status_t ExecCowEx(const uint8_t *data_in,
@@ -382,7 +384,7 @@ public:
                           size_t &dlen_out,
                           ib_flags_t &result)
     {
-        return ib_util_normalize_path_cow_ex(m_mpool,
+        return ib_util_normalize_path_cow_ex(ib_mm_mpool(m_mpool),
                                              data_in, dlen_in, true,
                                              data_out, &dlen_out,
                                              &result);

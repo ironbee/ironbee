@@ -26,7 +26,7 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <stdarg.h>
@@ -76,7 +76,7 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(
  * of @a ref_file is joined with @a file_path using ib_util_path_join,
  * and the resulting path is returned.
  *
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory Manager to use for allocations
  * @param[in] ref_file Reference file path
  * @param[in] file_path New file's path
  *
@@ -87,14 +87,14 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(
  * Tested in: tests/test_util_path.cpp
  */
 char DLL_PUBLIC *ib_util_relative_file(
-    ib_mpool_t   *mp,
+    ib_mm_t       mm,
     const char   *ref_file,
     const char   *file_path);
 
 /**
  * Join two path components (similar to os.path.join() in Python)
  *
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory Manager to use for allocations
  * @param[in] parent Parent portion of path
  * @param[in] file_path Child portion of path
  *
@@ -105,7 +105,7 @@ char DLL_PUBLIC *ib_util_relative_file(
  * Tested in: tests/test_util_path.cpp
  */
 char DLL_PUBLIC *ib_util_path_join(
-    ib_mpool_t   *mp,
+    ib_mm_t       mm,
     const char   *parent,
     const char   *file_path);
 
@@ -156,7 +156,7 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path_ex(
 /**
  * Normalize a path (copy-on-write / NUL string version)
  *
- * @param[in] mp Memory pool for allocations
+ * @param[in] mm Memory Manager for allocations
  * @param[in] data_in Buffer to operate on
  * @param[in] win Handle Windows style '\' as well as '/'
  * @param[out] data_out Output data
@@ -171,7 +171,7 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path_ex(
  * Tested in: tests/test_util_path.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path_cow(
-    ib_mpool_t     *mp,
+    ib_mm_t         mm,
     const char     *data_in,
     bool            win,
     char          **data_out,
@@ -180,7 +180,7 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path_cow(
 /**
  * Normalize a path (copy-on-write / ex version)
  *
- * @param[in] mp Memory pool for allocations
+ * @param[in] mm Memory Manager for allocations
  * @param[in] data_in Buffer to operate on
  * @param[in] dlen_in Length of @a data_in
  * @param[in] win Handle Windows style '\' as well as '/'
@@ -197,7 +197,7 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path_cow(
  * Tested in: tests/test_util_path.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path_cow_ex(
-    ib_mpool_t     *mp,
+    ib_mm_t         mm,
     const uint8_t  *data_in,
     size_t          dlen_in,
     bool            win,
