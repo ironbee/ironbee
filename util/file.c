@@ -32,13 +32,12 @@
 #include <sys/stat.h>
 
 ib_status_t ib_file_readall(
-    ib_mpool_t     *mp,
+    ib_mm_t         mm,
     const char     *file,
     const uint8_t **out,
     size_t         *sz
 )
 {
-    assert(mp != NULL);
     assert(file != NULL);
     assert(out != NULL);
     assert(sz != NULL);
@@ -63,7 +62,7 @@ ib_status_t ib_file_readall(
     }
 
     bufsz = stat_data.st_size;
-    buf = ib_mpool_alloc(mp, bufsz);
+    buf = ib_mm_alloc(mm, bufsz);
     if (buf == NULL) {
         close(fd);
         return IB_EALLOC;

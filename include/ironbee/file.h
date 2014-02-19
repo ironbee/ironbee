@@ -26,7 +26,7 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <sys/types.h>
@@ -47,7 +47,7 @@ extern "C" {
 /**
  * Read an entire file.
  *
- * @param[in] mp Memory pool.
+ * @param[in] mm Memory manager.
  * @param[in] file Path to the file.
  * @param[out] out The resultant buffer of bytes.
  * @param[out] sz The size of the buffer.
@@ -59,7 +59,7 @@ extern "C" {
  * - IB_EALLOC On allocation error.
  */
 ib_status_t ib_file_readall(
-    ib_mpool_t     *mp,
+    ib_mm_t         mm,
     const char     *file,
     const uint8_t **out,
     size_t         *sz
