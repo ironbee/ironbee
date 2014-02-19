@@ -638,18 +638,24 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li>
 <ul class="sectlevel3">
 <li><a href="#_allow">allow</a></li>
-<li><a href="#_event">event</a></li>
 <li><a href="#_block">block</a></li>
 <li><a href="#_capture_2">capture</a></li>
 <li><a href="#_chain">chain</a></li>
+<li><a href="#_clipp">clipp</a></li>
+<li><a href="#_clipp_announce">clipp_announce</a></li>
 <li><a href="#_delrequestheader">delRequestHeader</a></li>
 <li><a href="#_delresponseheader">delResponseHeader</a></li>
+<li><a href="#_event">event</a></li>
+<li><a href="#_logmsg">logMsg</a></li>
+<li><a href="#_predicate">predicate</a></li>
+<li><a href="#_set_predicate_vars">set_predicate_vars</a></li>
 <li><a href="#_setflag">setflag</a></li>
 <li><a href="#_setrequestheader">setRequestHeader</a></li>
 <li><a href="#_setresponseheader">setResponseHeader</a></li>
 <li><a href="#_setvar">setvar</a></li>
 <li><a href="#_status">status</a></li>
 <li><a href="#_t">t</a></li>
+<li><a href="#_txdump_2">txDump</a></li>
 </ul>
 </li>
 </ul>
@@ -10535,7 +10541,10 @@ until the next capture rule is run, when they will all be deleted.</p>
 <div class="sect2">
 <h3 id="_modifiers_and_actions">Modifiers and Actions</h3>
 <div class="paragraph">
-<p>TODO: General description.</p>
+<p>Rule modifiers allow configuring certain aspects of the rule. Rule actions allow
+performing some action when a rule fires. Actions can be customized by modifiers,
+such as setting the status code for a block action, or setting the message for
+an event.</p>
 </div>
 <div class="sect3">
 <h4 id="_allow">allow</h4>
@@ -10586,58 +10595,6 @@ execution.</p>
 <li>
 <p><strong>request</strong> - Proceed to the end of the request processing phases
 without further rule execution.</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_event">event</h4>
-<table class="tableblock frame-all grid-all" style="width:100%; ">
-<colgroup>
-<col style="width:10%;">
-<col style="width:90%;"> 
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Cause the rule to generate a log event.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>event[":observation" | ":alert"]</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
-</tr>
-</tbody>
-</table>
-
-<div class="paragraph">
-<p>By default this generates a log event of type "observation", but this
-can be changed to type "alert". Having at least one active alert type
-event will cause an audit log to be generated.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>observation</strong> - Default event type denoting a rule made an
-observation, which could contribute to further inspection.</p>
-</li>
-<li>
-<p><strong>alert</strong> - Alert event type denoting a transaction should be logged.</p>
 </li>
 </ul>
 </div>
@@ -10714,7 +10671,7 @@ further rules may take into account.</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>capture</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>capture[:&lt;name&gt;]</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
@@ -10740,6 +10697,15 @@ collection. For example, the <code>rx</code> operator supports setting the
 additional <code>CAPTURE:1</code> - <code>CAPTURE:9</code> via capturing parens in the regular
 expression and the <code>dfa</code> operator supports capturing <em>all matches</em>, each
 being available as <code>CAPTURE:0</code>.</p>
+</div>
+<div class="paragraph">
+<p>If a <code>name</code> is specified, then the capture is written to the named
+collection instead of the <code>CAPTURE</code> collection.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Rule ARGS @rx "(patt)ern" id:1 capture:MY_CAPTURE_COLLECTION</pre>
+</div>
 </div>
 </div>
 <div class="sect3">
@@ -10842,6 +10808,107 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </div>
 </div>
 <div class="sect3">
+<h4 id="_clipp">clipp</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Clipp defined action to allow filtering content with IronBee rules.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>clipp:&lt;allow | block | break&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">clipp</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>This action is defined by the <code>clipp</code> command line utility. See the <code>clipp</code>
+documentation for more information.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_clipp_announce">clipp_announce</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Clipp defined action to allow logging data.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>clipp_announce:&lt;message&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">clipp</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>This action is defined by the <code>clipp</code> command line utility. It allows printing
+a message to the log which can then be used to do assertions in tests.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example clipp test in Ruby</div>
+<div class="content">
+<pre>def test_args_bar
+  clipp(
+    modhtp: true,
+    default_site_config: =&gt; &lt;&lt;-EOS
+      Rule ARGS @match "bar" id:1 phase:REQUEST_HEADER clipp_announce:A
+    EOS
+  ) do
+    transaction do |t|
+      t.request(
+        raw: "GET /foo?x=bar HTTP/1.1"
+      )
+    end
+  end
+  assert_no_issues
+  assert_log_match /CLIPP ANNOUNCE: A/
+end</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
 <h4 id="_delrequestheader">delRequestHeader</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
@@ -10859,7 +10926,7 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>delRequestHeader:</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>delRequestHeader:&lt;header-name&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
@@ -10876,6 +10943,19 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </tbody>
 </table>
 
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This functionality is optionally implemented by the server and may not
+      be available in all servers.
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_delresponseheader">delResponseHeader</h4>
@@ -10895,7 +10975,7 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>delResponseHeader:</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>delResponseHeader:&lt;header-name&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
@@ -10912,6 +10992,197 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </tbody>
 </table>
 
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This functionality is optionally implemented by the server and may not
+      be available in all servers.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_event">event</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cause the rule to generate a log event.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>event[":observation" | ":alert"]</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.4</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>By default this generates a log event of type "observation", but this
+can be changed to type "alert". Having at least one active alert type
+event will cause an audit log to be generated.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>observation</strong> - Default event type denoting a rule made an
+observation, which could contribute to further inspection.</p>
+</li>
+<li>
+<p><strong>alert</strong> - Alert event type denoting a transaction should be logged.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_logmsg">logMsg</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write a message to the log.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>logMsg:&lt;message&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">logmsg</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Could replace clipp_announce for a more generic solution.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_predicate">predicate</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define a predicate s-expression for the rule.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>predicate:&lt;s-expression&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">predicate</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>See the predicate documentation.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_set_predicate_vars">set_predicate_vars</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Configure predicate to set custom vars (fields).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>set_predicate_vars</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">predicate</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>See the predicate documentation.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_setflag">setflag</h4>
@@ -10931,7 +11202,7 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>setflag:[!]</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>setflag:[!]&lt;flag&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
@@ -11030,6 +11301,19 @@ response body (default: unset).</p>
 </tbody>
 </table>
 
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This functionality is optionally implemented by the server and may not
+      be available in all servers.
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_setresponseheader">setResponseHeader</h4>
@@ -11066,6 +11350,19 @@ response body (default: unset).</p>
 </tbody>
 </table>
 
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This functionality is optionally implemented by the server and may not
+      be available in all servers.
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_setvar">setvar</h4>
@@ -11085,7 +11382,7 @@ response body (default: unset).</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>setvar:[!][+|-]=</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>setvar:[!][+|-]&lt;name&gt;=&lt;value&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
@@ -11163,7 +11460,7 @@ Probably should just fail, logging an attempt was made to modify a non-numerical
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>status:</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>status:&lt;http-status-code&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
@@ -11191,7 +11488,7 @@ Probably should just fail, logging an attempt was made to modify a non-numerical
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Apply one or more named transformations to each of thetargets in a rule.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Apply one or more named transformations to each of the inputs to a rule.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
@@ -11199,7 +11496,7 @@ Probably should just fail, logging an attempt was made to modify a non-numerical
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>t:</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>t:&lt;transformation-functions&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
@@ -11216,6 +11513,45 @@ Probably should just fail, logging an attempt was made to modify a non-numerical
 </tbody>
 </table>
 
+</div>
+<div class="sect3">
+<h4 id="_txdump_2">txDump</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Dump the transaction details to the log for debugging.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>txDump</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Cardinality</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0..n</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">txdump</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Use for debugging when writing rules and diagnosing issues.</p>
+</div>
 </div>
 </div>
 </div>

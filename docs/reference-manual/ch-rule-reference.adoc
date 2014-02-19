@@ -1380,7 +1380,10 @@ until the next capture rule is run, when they will all be deleted.
 Modifiers and Actions
 ~~~~~~~~~~~~~~~~~~~~~
 
-TODO: General description.
+Rule modifiers allow configuring certain aspects of the rule. Rule actions allow
+performing some action when a rule fires. Actions can be customized by modifiers,
+such as setting the status code for a block action, or setting the message for
+an event.
 
 ==== allow
 [cols=">h,<9"]
@@ -1401,25 +1404,6 @@ modifier used:
 execution.
 * *request* - Proceed to the end of the request processing phases
 without further rule execution.
-
-==== event
-[cols=">h,<9"]
-|===============================================================================
-|Description|Cause the rule to generate a log event.
-|       Type|Action
-|     Syntax|`event[":observation" \| ":alert"]`
-|Cardinality|0..1
-|     Module|core
-|    Version|0.4
-|===============================================================================
-
-By default this generates a log event of type "observation", but this
-can be changed to type "alert". Having at least one active alert type
-event will cause an audit log to be generated.
-
-* *observation* - Default event type denoting a rule made an
-observation, which could contribute to further inspection.
-* *alert* - Alert event type denoting a transaction should be logged.
 
 ==== block
 [cols=">h,<9"]
@@ -1445,7 +1429,7 @@ further rules may take into account.
 |===============================================================================
 |Description|Enable capturing the matching data.
 |       Type|Modifier
-|     Syntax|`capture`
+|     Syntax|`capture[:<name>]`
 |Cardinality|0..1
 |     Module|core
 |    Version|0.4
@@ -1459,6 +1443,13 @@ collection. For example, the `rx` operator supports setting the
 additional `CAPTURE:1` - `CAPTURE:9` via capturing parens in the regular
 expression and the `dfa` operator supports capturing _all matches_, each
 being available as `CAPTURE:0`.
+
+If a `name` is specified, then the capture is written to the named
+collection instead of the `CAPTURE` collection.
+
+------------------------------------------------------------
+Rule ARGS @rx "(patt)ern" id:1 capture:MY_CAPTURE_COLLECTION
+------------------------------------------------------------
 
 ==== chain
 [cols=">h,<9"]
@@ -1518,34 +1509,146 @@ Rule &REQUEST_URI_PARAMS @gt 0 "msg:POST with URI parameters." setvar:TX:uri_par
 Rule &REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." event block:phase
 ---------------------------------------------------------------------------------------------------------
 
+==== clipp
+[cols=">h,<9"]
+|===============================================================================
+|Description|Clipp defined action to allow filtering content with IronBee rules.
+|       Type|Action
+|     Syntax|`clipp:<allow \| block \| break>`
+|Cardinality|0..n
+|     Module|clipp
+|    Version|0.4
+|===============================================================================
+
+This action is defined by the `clipp` command line utility. See the `clipp`
+documentation for more information.
+
+==== clipp_announce
+[cols=">h,<9"]
+|===============================================================================
+|Description|Clipp defined action to allow logging data.
+|       Type|Action
+|     Syntax|`clipp_announce:<message>`
+|Cardinality|0..n
+|     Module|clipp
+|    Version|0.4
+|===============================================================================
+
+This action is defined by the `clipp` command line utility. It allows printing
+a message to the log which can then be used to do assertions in tests.
+
+.Example clipp test in Ruby
+-----------------------------------------------------------------------
+def test_args_bar
+  clipp(
+    modhtp: true,
+    default_site_config: => <<-EOS
+      Rule ARGS @match "bar" id:1 phase:REQUEST_HEADER clipp_announce:A
+    EOS
+  ) do 
+    transaction do |t|
+      t.request(
+        raw: "GET /foo?x=bar HTTP/1.1"
+      )
+    end
+  end
+  assert_no_issues
+  assert_log_match /CLIPP ANNOUNCE: A/
+end    
+-----------------------------------------------------------------------
+
 ==== delRequestHeader
 [cols=">h,<9"]
 |===============================================================================
 |Description|Delete an HTTP header from the request.
 |       Type|Action
-|     Syntax|`delRequestHeader:`
+|     Syntax|`delRequestHeader:<header-name>`
 |Cardinality|0..n
 |     Module|core
 |    Version|0.4
 |===============================================================================
+
+NOTE: This functionality is optionally implemented by the server and may not
+      be available in all servers.
 
 ==== delResponseHeader
 [cols=">h,<9"]
 |===============================================================================
 |Description|Delete an HTTP header from the response.
 |       Type|Action
-|     Syntax|`delResponseHeader:`
+|     Syntax|`delResponseHeader:<header-name>`
 |Cardinality|0..n
 |     Module|core
 |    Version|0.4
 |===============================================================================
+
+NOTE: This functionality is optionally implemented by the server and may not
+      be available in all servers.
+
+==== event
+[cols=">h,<9"]
+|===============================================================================
+|Description|Cause the rule to generate a log event.
+|       Type|Action
+|     Syntax|`event[":observation" \| ":alert"]`
+|Cardinality|0..1
+|     Module|core
+|    Version|0.4
+|===============================================================================
+
+By default this generates a log event of type "observation", but this
+can be changed to type "alert". Having at least one active alert type
+event will cause an audit log to be generated.
+
+* *observation* - Default event type denoting a rule made an
+observation, which could contribute to further inspection.
+* *alert* - Alert event type denoting a transaction should be logged.
+
+==== logMsg
+[cols=">h,<9"]
+|===============================================================================
+|Description|Write a message to the log.
+|       Type|Action
+|     Syntax|`logMsg:<message>`
+|Cardinality|0..1
+|     Module|logmsg
+|    Version|0.9
+|===============================================================================
+
+NOTE: Could replace clipp_announce for a more generic solution.
+
+==== predicate
+[cols=">h,<9"]
+|===============================================================================
+|Description|Define a predicate s-expression for the rule.
+|       Type|Action
+|     Syntax|`predicate:<s-expression>`
+|Cardinality|0..1
+|     Module|predicate
+|    Version|0.8
+|===============================================================================
+
+See the predicate documentation.
+
+==== set_predicate_vars
+[cols=">h,<9"]
+|===============================================================================
+|Description|Configure predicate to set custom vars (fields).
+|       Type|Action
+|     Syntax|`set_predicate_vars`
+|Cardinality|0..1
+|     Module|predicate
+|    Version|0.9
+|===============================================================================
+
+See the predicate documentation.
 
 ==== setflag
 [cols=">h,<9"]
 |===============================================================================
 |Description|Set, or unset, boolean transaction attributes (flags).
 |       Type|Action
-|     Syntax|`setflag:[!]`
+|     Syntax|`setflag:[!]<flag>`
 |Cardinality|0..n
 |     Module|core
 |    Version|0.6
@@ -1583,6 +1686,9 @@ response body (default: unset).
 |    Version|0.4
 |===============================================================================
 
+NOTE: This functionality is optionally implemented by the server and may not
+      be available in all servers.
+
 ==== setResponseHeader
 [cols=">h,<9"]
 |===============================================================================
@@ -1594,12 +1700,15 @@ response body (default: unset).
 |    Version|0.4
 |===============================================================================
 
+NOTE: This functionality is optionally implemented by the server and may not
+      be available in all servers.
+
 ==== setvar
 [cols=">h,<9"]
 |===============================================================================
 |Description|Set a variable data field.
 |       Type|Action
-|     Syntax|`setvar:[!][+\|-]=`
+|     Syntax|`setvar:[!][+\|-]<name>=<value>`
 |Cardinality|0..n
 |     Module|core
 |    Version|0.2
@@ -1635,7 +1744,7 @@ NOTE: Probably should just fail, logging an attempt was made to modify a non-num
 |===============================================================================
 |Description|The HTTP status code to use for a blocking action.
 |       Type|Modifier
-|     Syntax|`status:`
+|     Syntax|`status:<http-status-code>`
 |Cardinality|0..1
 |     Module|core
 |    Version|0.4
@@ -1644,11 +1753,24 @@ NOTE: Probably should just fail, logging an attempt was made to modify a non-num
 ==== t
 [cols=">h,<9"]
 |===============================================================================
-|Description|Apply one or more named transformations to each of thetargets in a rule.
+|Description|Apply one or more named transformations to each of the inputs to a rule.
 |       Type|Modifier
-|     Syntax|`t:`
+|     Syntax|`t:<transformation-functions>`
 |Cardinality|0..n
 |     Module|core
 |    Version|0.4
 |===============================================================================
+
+==== txDump
+[cols=">h,<9"]
+|===============================================================================
+|Description|Dump the transaction details to the log for debugging.
+|       Type|Action
+|     Syntax|`txDump`
+|Cardinality|0..n
+|     Module|txdump
+|    Version|0.9
+|===============================================================================
+
+Use for debugging when writing rules and diagnosing issues.
 
