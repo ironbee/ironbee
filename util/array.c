@@ -45,12 +45,12 @@
  * Dynamic array structure.
  */
 struct ib_array_t {
-    ib_mpool_t       *mp;
-    size_t            ninit;
-    size_t            nextents;
-    size_t            nelts;
-    size_t            size;
-    void             *extents;
+    ib_mm_t mm;
+    size_t  ninit;
+    size_t  nextents;
+    size_t  nelts;
+    size_t  size;
+    void    *extents;
 };
 
 /**
@@ -76,7 +76,7 @@ struct ib_array_t {
 #define IB_ARRAY_DATA_INDEX(arr, idx, extent_idx) \
     ((idx) - ((extent_idx) * (arr)->ninit))
 
-ib_status_t ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
+ib_status_t ib_array_create(ib_array_t **parr, ib_mm_t mm,
                             size_t ninit, size_t nextents)
 {
     ib_status_t rc;
@@ -87,27 +87,28 @@ ib_status_t ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
     }
 
     /* Create the structure. */
-    *parr = (ib_array_t *)ib_mpool_alloc(pool, sizeof(**parr));
+    *parr = (ib_array_t *)ib_mm_alloc(mm, sizeof(**parr));
     if (*parr == NULL) {
         rc = IB_EALLOC;
         goto failed;
     }
-    (*parr)->mp = pool;
+    (*parr)->mm = mm;
     (*parr)->ninit = ninit;
     (*parr)->nextents = nextents;
     (*parr)->nelts = 0;
     (*parr)->size = ninit;
 
     /* Create the extents array. */
-    (*parr)->extents = (void *)ib_mpool_calloc(pool,
-                                               nextents, sizeof(void *));
+    (*parr)->extents = (void *)ib_mm_calloc(mm,
+                                            nextents, sizeof(void *));
     if ((*parr)->extents == NULL) {
         rc = IB_EALLOC;
         goto failed;
     }
 
     /* Create the first data array in the first extent slot. */
-    *((void ***)(*parr)->extents) = (void **)ib_mpool_calloc(pool,
+    *((void ***)(*parr)->extents) = (void **)ib_mm_calloc(
+        mm,
         ninit, sizeof(void *)
     );
     if (*((void ***)(*parr)->extents) == NULL) {
@@ -157,9 +158,9 @@ ib_status_t ib_array_setn(ib_array_t *arr, size_t idx, void *val)
          * to double its previous value to make room.
          */
         if (r >= arr->nextents) {
-            void *new_extents = (void *)ib_mpool_calloc(arr->mp,
-                                                        arr->nextents * 2,
-                                                        sizeof(void *));
+            void *new_extents = (void *)ib_mm_calloc(arr->mm,
+                                                     arr->nextents * 2,
+                                                     sizeof(void *));
             if (new_extents == NULL) {
                 return IB_EALLOC;
             }
@@ -168,7 +169,7 @@ ib_status_t ib_array_setn(ib_array_t *arr, size_t idx, void *val)
             arr->nextents *= 2;
         }
 
-        ((void ***)arr->extents)[r] = (void **)ib_mpool_calloc(arr->mp,
+        ((void ***)arr->extents)[r] = (void **)ib_mm_calloc(arr->mm,
             arr->ninit, sizeof(void *)
         );
         arr->size += arr->ninit;

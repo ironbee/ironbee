@@ -26,7 +26,7 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <string.h>
@@ -58,13 +58,13 @@ typedef struct ib_array_t ib_array_t;
  * be reorganized.
  *
  * @param parr Address which new array is written
- * @param pool Memory pool to use
+ * @param mm Memory manager to use
  * @param ninit Initial number of elements
  * @param nextents Initial number of extents
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
+ib_status_t DLL_PUBLIC ib_array_create(ib_array_t **parr, ib_mm_t mm,
                                        size_t ninit, size_t nextents);
 
 /**
