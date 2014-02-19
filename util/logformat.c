@@ -28,7 +28,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/logformat.h>
-#include <ironbee/mm_mpool.h>
 #include <assert.h>
 #include <stdlib.h>
 
@@ -38,21 +37,20 @@ typedef enum {
     STATE_BACKSLASH
 } logformat_state_t;
 
-ib_status_t ib_logformat_create(ib_mpool_t *mp,
+ib_status_t ib_logformat_create(ib_mm_t mm,
                                 ib_logformat_t **lf)
 {
-    assert(mp != NULL);
     assert(lf != NULL);
 
     ib_logformat_t *new;
     ib_status_t rc;
 
-    new = (ib_logformat_t *)ib_mpool_calloc(mp, 1, sizeof(*new));
+    new = (ib_logformat_t *)ib_mm_calloc(mm, 1, sizeof(*new));
     if (new == NULL) {
         return IB_EALLOC;
     }
-    new->mp = mp;
-    rc = ib_list_create(&new->items, ib_mm_mpool(mp));
+    new->mm = mm;
+    rc = ib_list_create(&new->items, mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -67,12 +65,11 @@ static ib_status_t create_item(ib_logformat_t *lf,
                                bool push)
 {
     assert(lf != NULL);
-    assert(lf->mp != NULL);
     assert(iptr != NULL);
     ib_status_t rc = IB_OK;
 
     ib_logformat_item_t *item =
-        (ib_logformat_item_t *)ib_mpool_alloc(lf->mp, sizeof(*item));
+        (ib_logformat_item_t *)ib_mm_alloc(lf->mm, sizeof(*item));
     if (item == NULL) {
         *iptr = NULL;
         return IB_EALLOC;
@@ -92,7 +89,6 @@ static ib_status_t create_item_literal(ib_logformat_t *lf,
                                        const char *end)
 {
     assert(lf != NULL);
-    assert(lf->mp != NULL);
     assert(start != NULL);
     assert(end != NULL);
     assert(end >= start);
@@ -123,7 +119,7 @@ static ib_status_t create_item_literal(ib_logformat_t *lf,
         return rc;
     }
 
-    item->item.literal.buf.str = (char *)ib_mpool_alloc(lf->mp, len+1);
+    item->item.literal.buf.str = (char *)ib_mm_alloc(lf->mm, len+1);
     if (item->item.literal.buf.str == NULL) {
         return IB_EALLOC;
     }
@@ -139,7 +135,6 @@ static ib_status_t create_item_field(ib_logformat_t *lf,
                                      char c)
 {
     assert(lf != NULL);
-    assert(lf->mp != NULL);
 
     ib_status_t rc;
     ib_logformat_item_t *item;
@@ -156,7 +151,6 @@ ib_status_t ib_logformat_parse(ib_logformat_t *lf,
                                const char *format)
 {
     assert(lf != NULL);
-    assert(lf->mp != NULL);
     assert(format != NULL);
 
     ib_status_t rc;
@@ -173,7 +167,7 @@ ib_status_t ib_logformat_parse(ib_logformat_t *lf,
     literal_cur = literal_buf;
 
     /* Store the original format (right now its just for debugging) */
-    lf->format = ib_mpool_strdup(lf->mp, format);
+    lf->format = ib_mm_strdup(lf->mm, format);
     if (lf->format == NULL) {
         rc = IB_EALLOC;
         goto cleanup;

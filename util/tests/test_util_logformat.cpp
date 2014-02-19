@@ -47,9 +47,8 @@ TEST_F(TestIBUtilLogformat, test_create)
 
     ib_logformat_t *lf = NULL;
 
-    rc = ib_logformat_create(MemPool(), &lf);
+    rc = ib_logformat_create(MM(), &lf);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_TRUE(MemPool() == lf->mp);
     ASSERT_TRUE(lf->items);
 }
 
@@ -118,7 +117,7 @@ TEST_F(TestIBUtilLogformat, test_parse_default)
         TX_ID " " LOG_FILE;
     size_t len;
 
-    rc = ib_logformat_create(MemPool(), &lf);
+    rc = ib_logformat_create(MM(), &lf);
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_logformat_parse(lf, IB_LOGFORMAT_DEFAULT);
@@ -230,7 +229,7 @@ TEST_F(TestIBUtilLogformat, test_parse_custom1)
     static const char *formatted = \
         "MyFormat " SITE_ID " " SENSOR_ID " " HOST_NAME " " LOG_FILE " END";
 
-    rc = ib_logformat_create(MemPool(), &lf);
+    rc = ib_logformat_create(MM(), &lf);
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_logformat_parse(lf, "MyFormat %s %S %h %f END");
@@ -251,7 +250,7 @@ TEST_F(TestIBUtilLogformat, test_parse_custom2)
     static const char *formatted = \
         "Start" SITE_ID SENSOR_ID " " HOST_NAME LOG_FILE "End";
 
-    rc = ib_logformat_create(MemPool(), &lf);
+    rc = ib_logformat_create(MM(), &lf);
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_logformat_parse(lf, "Start%s%S %h%fEnd");
@@ -272,7 +271,7 @@ TEST_F(TestIBUtilLogformat, test_parse_custom3)
     static const char *formatted = \
         "Start" SITE_ID " \\ " SENSOR_ID " " HOST_NAME "  \t" LOG_FILE " %End";
 
-    rc = ib_logformat_create(MemPool(), &lf);
+    rc = ib_logformat_create(MM(), &lf);
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_logformat_parse(lf, "Start%s \\\\ %S %h\\n\\r\\t%f %%End");

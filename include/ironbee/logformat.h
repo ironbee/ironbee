@@ -27,7 +27,7 @@
  */
 
 #include <ironbee/list.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <stdbool.h>
@@ -86,7 +86,7 @@ typedef struct ib_logformat_item_t {
 } ib_logformat_item_t;
 
 struct ib_logformat_t {
-    ib_mpool_t  *mp;
+    ib_mm_t      mm;
     char        *format;
     ib_list_t   *items;          /* List of pointers to ib_logformat_item_t */
 };
@@ -110,12 +110,12 @@ typedef ib_status_t (* ib_logformat_fn_t)(
 /**
  * Creates a logformat helper
  *
- * @param mp memory pool to use
+ * @param mm memory manager to use
  * @param lf reference pointer where the new instance will be stored
  *
  * @returns Status code
  */
-ib_status_t ib_logformat_create(ib_mpool_t *mp, ib_logformat_t **lf);
+ib_status_t ib_logformat_create(ib_mm_t mm, ib_logformat_t **lf);
 
 /**
  * Used to parse and store the specified format
