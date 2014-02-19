@@ -27,6 +27,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/list.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <stdarg.h>
@@ -52,7 +53,7 @@ extern "C" {
 /**
  * Decode a JSON encoded buffer into a list of IronBee fields (ex version)
  *
- * @param[in] mpool Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] data_in Input JSON buffer
  * @param[in] dlen_in Length of data in @a data_in
  * @param[out] list_out List of IronBee fields
@@ -63,7 +64,7 @@ extern "C" {
  *  - IB_EINVAL - Decoding errors
  */
 ib_status_t DLL_PUBLIC ib_json_decode_ex(
-    ib_mpool_t     *mpool,
+    ib_mm_t         mm,
     const uint8_t  *data_in,
     size_t          dlen_in,
     ib_list_t      *list_out,
@@ -72,7 +73,7 @@ ib_status_t DLL_PUBLIC ib_json_decode_ex(
 /**
  * Decode a JSON encoded buffer into a list of IronBee fields
  *
- * @param[in] mpool Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] in Input JSON buffer (NUL terminated string)
  * @param[out] list_out List of IronBee fields
  * @param[out] error Pointer to error string (or NULL)
@@ -82,7 +83,7 @@ ib_status_t DLL_PUBLIC ib_json_decode_ex(
  *  - IB_EINVAL - Decoding errors
  */
 ib_status_t DLL_PUBLIC ib_json_decode(
-    ib_mpool_t     *mpool,
+    ib_mm_t         mm,
     const char     *in,
     ib_list_t      *list_out,
     const char    **error);
@@ -90,7 +91,7 @@ ib_status_t DLL_PUBLIC ib_json_decode(
 /**
  * Encode an IronBee list into a JSON buffer
  *
- * @param[in] mpool Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] list List of IB fields to encode
  * @param[in] pretty Enable "pretty" JSON (if supported by library)
  * @param[in] obuf Output buffer (as a nul-terminated string)
@@ -99,7 +100,7 @@ ib_status_t DLL_PUBLIC ib_json_decode(
  * @returns IronBee status code
  */
 ib_status_t ib_json_encode(
-    ib_mpool_t       *mpool,
+    ib_mm_t           mm,
     const ib_list_t  *list,
     bool              pretty,
     char            **obuf,

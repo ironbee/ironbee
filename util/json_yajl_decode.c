@@ -28,7 +28,7 @@
 #include <ironbee/field.h>
 #include <ironbee/json.h>
 #include <ironbee/list.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
@@ -130,7 +130,7 @@ static int decode_number(void *ctx,
     if (rc != IB_OK) {
         goto cleanup;
     }
-    rc = ib_field_from_string_ex(decode->alloc_ctx->mpool,
+    rc = ib_field_from_string_ex(decode->alloc_ctx->mm,
                                  name, nlen, s, len,
                                  &field);
     if (rc != IB_OK) {
@@ -169,11 +169,11 @@ static int decode_string(void *ctx,
     if (rc != IB_OK) {
         goto cleanup;
     }
-    rc = ib_bytestr_dup_mem(&bs, decode->alloc_ctx->mpool, s, len);
+    rc = ib_bytestr_dup_mem(&bs, decode->alloc_ctx->mm, s, len);
     if (rc != IB_OK) {
         goto cleanup;
     }
-    rc = ib_field_create(&field, decode->alloc_ctx->mpool,
+    rc = ib_field_create(&field, decode->alloc_ctx->mm,
                          name, nlen,
                          IB_FTYPE_BYTESTR,
                          ib_ftype_bytestr_in(bs));
@@ -216,7 +216,7 @@ static int decode_start_list(decode_ctx_t *decode,
     ib_list_t *list;
     ib_status_t rc;
 
-    frame = ib_mpool_alloc(decode->alloc_ctx->mpool, sizeof(*frame));
+    frame = ib_mm_alloc(decode->alloc_ctx->mm, sizeof(*frame));
     if (frame == NULL) {
         rc = IB_EALLOC;
         goto cleanup;
@@ -237,11 +237,11 @@ static int decode_start_list(decode_ctx_t *decode,
         if (rc != IB_OK) {
             goto cleanup;
         }
-        rc = ib_list_create(&list, decode->alloc_ctx->mpool);
+        rc = ib_list_create(&list, decode->alloc_ctx->mm);
         if (rc != IB_OK) {
             goto cleanup;
         }
-        rc = ib_field_create(&field, decode->alloc_ctx->mpool,
+        rc = ib_field_create(&field, decode->alloc_ctx->mm,
                              decode->field_name, decode->field_name_len,
                              IB_FTYPE_LIST, ib_ftype_list_in(list));
         if (rc != IB_OK) {
@@ -342,18 +342,17 @@ static yajl_callbacks decode_fns =
 
 /* Decode a JSON buffer, extended version */
 ib_status_t ib_json_decode_ex(
-    ib_mpool_t     *mpool,
+    ib_mm_t         mm,
     const uint8_t  *data_in,
     size_t          dlen_in,
     ib_list_t      *list_out,
     const char    **error
 )
 {
-    assert(mpool != NULL);
     assert(list_out != NULL);
 
     yajl_handle handle;
-    json_yajl_alloc_context_t alloc_ctx = { mpool, IB_OK };
+    json_yajl_alloc_context_t alloc_ctx = { mm, IB_OK };
     decode_ctx_t decode_ctx;
     yajl_status status;
     ib_status_t rc;
@@ -373,7 +372,7 @@ ib_status_t ib_json_decode_ex(
         return IB_OK;
     }
 
-    rc = ib_list_create(&(decode_ctx.stack), mpool);
+    rc = ib_list_create(&(decode_ctx.stack), mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -410,7 +409,7 @@ parse_error:
     if (error != NULL) {
         unsigned char *err = yajl_get_error(handle, 1, data_in, dlen_in);
         if (err != NULL) {
-            *error = ib_mpool_strdup(mpool, (char *)err);
+            *error = ib_mm_strdup(mm, (char *)err);
             yajl_free_error(handle, err);
         }
     }
@@ -425,7 +424,7 @@ parse_error:
 
 /* Decode a JSON buffer */
 ib_status_t ib_json_decode(
-    ib_mpool_t  *mpool,
+    ib_mm_t mm,
     const char  *in,
     ib_list_t   *list_out,
     const char **error
@@ -434,7 +433,7 @@ ib_status_t ib_json_decode(
     assert(list_out != NULL);
 
     size_t len = (in == NULL) ? 0 : strlen(in);
-    return ib_json_decode_ex(mpool,
+    return ib_json_decode_ex(mm,
                              (const uint8_t *)in, len,
                              list_out, error);
 }

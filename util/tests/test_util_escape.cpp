@@ -28,6 +28,7 @@
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 #include <ironbee/mpool.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/list.h>
 #include <ironbee/escape.h>
 
@@ -60,7 +61,7 @@ public:
                            size_t &dlen_out,
                            ib_flags_t &result)
     {
-        return ib_string_escape_json_ex(m_mpool,
+        return ib_string_escape_json_ex(ib_mm_mpool(m_mpool),
                                         data_in, dlen_in,
                                         false, m_quote,
                                         (char **)data_out, &dlen_out,
@@ -73,7 +74,7 @@ public:
                                 ib_flags_t &result)
     {
         size_t dlen_out;
-        return ib_string_escape_json_ex(m_mpool,
+        return ib_string_escape_json_ex(ib_mm_mpool(m_mpool),
                                         data_in, dlen_in,
                                         true, m_quote,
                                         data_out, &dlen_out,
@@ -84,7 +85,7 @@ public:
                             char **data_out,
                             ib_flags_t &result)
     {
-        return ib_string_escape_json(m_mpool,
+        return ib_string_escape_json(ib_mm_mpool(m_mpool),
                                      data_in,
                                      m_quote,
                                      data_out,
@@ -377,7 +378,7 @@ public:
         ib_list_t *slist;
         size_t n;
 
-        rc = ib_list_create(&slist, m_pool);
+        rc = ib_list_create(&slist, ib_mm_mpool(m_pool));
         if (rc != IB_OK) {
             throw std::runtime_error("Error creating string list");
         }

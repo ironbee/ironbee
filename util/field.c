@@ -31,6 +31,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/log.h>
+#include <ironbee/mm.h>
 #include <ironbee/stream.h>
 #include <ironbee/util.h>
 
@@ -95,7 +96,7 @@ const char *ib_field_type_name(
 }
 
 static ib_status_t field_from_string_internal(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const char *name,
     size_t nlen,
     const char *vstr,
@@ -103,7 +104,6 @@ static ib_status_t field_from_string_internal(
     bool vstr_is_nulstr,
     ib_field_t **pfield)
 {
-    assert(mp != NULL);
     assert(name != NULL);
     assert(vstr != NULL);
     assert(pfield != NULL);
@@ -124,7 +124,7 @@ static ib_status_t field_from_string_internal(
             conv = ib_string_to_num_ex(vstr, vlen, 0, &num_val);
         }
         if (conv == IB_OK) {
-            rc = ib_field_create(&field, mp,
+            rc = ib_field_create(&field, mm,
                                  name, nlen,
                                  IB_FTYPE_NUM,
                                  ib_ftype_num_in(&num_val));
@@ -142,7 +142,7 @@ static ib_status_t field_from_string_internal(
             conv = ib_string_to_float_ex(vstr, vlen, &float_val);
         }
         if (conv == IB_OK) {
-            rc = ib_field_create(&field, mp,
+            rc = ib_field_create(&field, mm,
                                  name, nlen,
                                  IB_FTYPE_FLOAT,
                                  ib_ftype_float_in(&float_val));
@@ -153,18 +153,18 @@ static ib_status_t field_from_string_internal(
     /* Finally, assume that it's a string */
     if (*pfield == NULL) {
         if (vstr_is_nulstr) {
-            rc = ib_field_create(&field, mp,
+            rc = ib_field_create(&field, mm,
                                  name, nlen,
                                  IB_FTYPE_NULSTR,
                                  ib_ftype_nulstr_in(vstr));
         }
         else {
             ib_bytestr_t *bs;
-            rc = ib_bytestr_dup_mem(&bs, mp, (const uint8_t *)vstr, vlen);
+            rc = ib_bytestr_dup_mem(&bs, mm, (const uint8_t *)vstr, vlen);
             if (rc != IB_OK) {
                 return rc;
             }
-            rc = ib_field_create(&field, mp,
+            rc = ib_field_create(&field, mm,
                                  name, nlen,
                                  IB_FTYPE_BYTESTR,
                                  ib_ftype_bytestr_in(bs));
@@ -176,27 +176,27 @@ static ib_status_t field_from_string_internal(
 }
 
 ib_status_t ib_field_from_string(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const char *name,
     size_t nlen,
     const char *vstr,
     ib_field_t **pfield)
 {
-    return field_from_string_internal(mp,
+    return field_from_string_internal(mm,
                                       name, nlen,
                                       vstr, 0, true,
                                       pfield);
 }
 
 ib_status_t ib_field_from_string_ex(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     const char *name,
     size_t nlen,
     const char *vstr,
     size_t vlen,
     ib_field_t **pfield)
 {
-    return field_from_string_internal(mp,
+    return field_from_string_internal(mm,
                                       name, nlen,
                                       vstr, vlen, false,
                                       pfield);
@@ -327,7 +327,7 @@ void ib_field_util_log_debug(
 
 ib_status_t ib_field_create(
     ib_field_t **pf,
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *name,
     size_t       nlen,
     ib_ftype_t   type,
@@ -336,7 +336,7 @@ ib_status_t ib_field_create(
 {
     ib_status_t rc;
 
-    rc = ib_field_create_alias(pf, mp, name, nlen, type, NULL);
+    rc = ib_field_create_alias(pf, mm, name, nlen, type, NULL);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -362,7 +362,7 @@ failed:
 
 ib_status_t ib_field_create_no_copy(
     ib_field_t **pf,
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *name,
     size_t       nlen,
     ib_ftype_t   type,
@@ -371,7 +371,7 @@ ib_status_t ib_field_create_no_copy(
 {
     ib_status_t rc;
 
-    rc = ib_field_create_alias(pf, mp, name, nlen, type, NULL);
+    rc = ib_field_create_alias(pf, mm, name, nlen, type, NULL);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -397,7 +397,7 @@ failed:
 
 ib_status_t ib_field_create_alias(
     ib_field_t **pf,
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *name,
     size_t       nlen,
     ib_ftype_t   type,
@@ -408,18 +408,18 @@ ib_status_t ib_field_create_alias(
     char *name_copy;
 
     /* Allocate the field structure. */
-    *pf = (ib_field_t *)ib_mpool_alloc(mp, sizeof(**pf));
+    *pf = (ib_field_t *)ib_mm_alloc(mm, sizeof(**pf));
     if (*pf == NULL) {
         rc = IB_EALLOC;
         goto failed;
     }
-    (*pf)->mp = mp;
+    (*pf)->mm = mm;
     (*pf)->type = type;
     (*pf)->tfn = NULL;
 
     /* Copy the name. */
     (*pf)->nlen = nlen;
-    name_copy = (char *)ib_mpool_alloc(mp, nlen);
+    name_copy = (char *)ib_mm_alloc(mm, nlen);
     if (name_copy == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -427,7 +427,7 @@ ib_status_t ib_field_create_alias(
     memcpy(name_copy, name, nlen);
     (*pf)->name = (const char *)name_copy;
 
-    (*pf)->val = (ib_field_val_t *)ib_mpool_calloc(mp,
+    (*pf)->val = (ib_field_val_t *)ib_mm_calloc(mm,
         1, sizeof(*((*pf)->val))
     );
     if ((*pf)->val == NULL) {
@@ -449,7 +449,7 @@ failed:
 
 ib_status_t ib_field_create_dynamic(
     ib_field_t        **pf,
-    ib_mpool_t         *mp,
+    ib_mm_t             mm,
     const char         *name,
     size_t              nlen,
     ib_ftype_t          type,
@@ -461,7 +461,7 @@ ib_status_t ib_field_create_dynamic(
 {
     ib_status_t rc;
 
-    rc = ib_field_create_alias(pf, mp, name, nlen, type, NULL);
+    rc = ib_field_create_alias(pf, mm, name, nlen, type, NULL);
     if (rc != IB_OK) {
         return rc;
     }
@@ -477,7 +477,7 @@ ib_status_t ib_field_create_dynamic(
 
 ib_status_t ib_field_alias(
     ib_field_t **pf,
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *name,
     size_t       nlen,
     const ib_field_t  *src
@@ -490,7 +490,7 @@ ib_status_t ib_field_alias(
     }
 
     rc = ib_field_create_alias(
-        pf, mp, name, nlen,
+        pf, mm, name, nlen,
         src->type,
         src->val->pval
     );
@@ -509,7 +509,7 @@ failed:
 
 ib_status_t ib_field_copy(
     ib_field_t       **pf,
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const char        *name,
     size_t             nlen,
     const ib_field_t  *src
@@ -519,7 +519,7 @@ ib_status_t ib_field_copy(
 
     if (ib_field_is_dynamic(src)) {
         rc = ib_field_create_dynamic(
-            pf, mp, name, nlen,
+            pf, mm, name, nlen,
             src->type,
             src->val->fn_get,
             src->val->cbdata_get,
@@ -537,7 +537,7 @@ ib_status_t ib_field_copy(
                 goto failed;
             }
             rc = ib_field_create(
-                pf, mp, name, nlen,
+                pf, mm, name, nlen,
                 src->type,
                 ib_ftype_num_in(&v)
             );
@@ -551,7 +551,7 @@ ib_status_t ib_field_copy(
                 goto failed;
             }
             rc = ib_field_create(
-                pf, mp, name, nlen,
+                pf, mm, name, nlen,
                 src->type,
                 ib_ftype_time_in(&v)
             );
@@ -565,7 +565,7 @@ ib_status_t ib_field_copy(
                 goto failed;
             }
             rc = ib_field_create(
-                pf, mp, name, nlen,
+                pf, mm, name, nlen,
                 src->type,
                 ib_ftype_float_in(&v)
             );
@@ -579,7 +579,7 @@ ib_status_t ib_field_copy(
                 goto failed;
             }
             rc = ib_field_create(
-                pf, mp, name, nlen,
+                pf, mm, name, nlen,
                 src->type,
                 v
             );
@@ -602,7 +602,7 @@ failed:
 
 ib_status_t ib_field_create_bytestr_alias(
     ib_field_t    **pf,
-    ib_mpool_t     *mp,
+    ib_mm_t         mm,
     const char     *name,
     size_t          nlen,
     const uint8_t  *val,
@@ -612,13 +612,13 @@ ib_status_t ib_field_create_bytestr_alias(
     ib_status_t rc;
     ib_bytestr_t *bs;
 
-    rc = ib_bytestr_alias_mem(&bs, mp, val, vlen);
+    rc = ib_bytestr_alias_mem(&bs, mm, val, vlen);
     if (rc != IB_OK) {
         goto failed;
     }
 
     rc = ib_field_create_no_copy(
-        pf, mp, name, nlen,
+        pf, mm, name, nlen,
         IB_FTYPE_BYTESTR,
         ib_ftype_bytestr_mutable_in(bs)
     );
@@ -778,7 +778,7 @@ ib_status_t ib_field_setv_ex(
     {
         const ib_bytestr_t *bs = (const ib_bytestr_t *)in_pval;
         if (bs != NULL) {
-            rc = ib_bytestr_dup((ib_bytestr_t **)f->val->pval, f->mp, bs);
+            rc = ib_bytestr_dup((ib_bytestr_t **)f->val->pval, f->mm, bs);
             if (rc != IB_OK) {
                 goto failed;
             }
@@ -794,7 +794,10 @@ ib_status_t ib_field_setv_ex(
             *(ib_list_t **)f->val->pval = l;
         }
         else {
-            rc = ib_list_create((ib_list_t **)f->val->pval, f->mp);
+            rc = ib_list_create(
+                (ib_list_t **)f->val->pval,
+                f->mm
+            );
             if (rc != IB_OK) {
                 goto failed;
             }
@@ -810,7 +813,7 @@ ib_status_t ib_field_setv_ex(
             *(ib_stream_t **)f->val->pval = s;
         }
         else {
-            rc = ib_stream_create((ib_stream_t **)f->val->pval, f->mp);
+            rc = ib_stream_create((ib_stream_t **)f->val->pval, f->mm);
             if (rc != IB_OK) {
                 goto failed;
             }
@@ -821,7 +824,7 @@ ib_status_t ib_field_setv_ex(
     {
         const char *s = (const char *)in_pval;
         if (s != NULL) {
-            *(char **)(f->val->pval) = ib_mpool_strdup(f->mp, s);
+            *(char **)(f->val->pval) = ib_mm_strdup(f->mm, s);
             if (*(void **)(f->val->pval) == NULL) {
                 rc = IB_EALLOC;
                 goto failed;
@@ -1006,14 +1009,13 @@ int ib_field_is_dynamic(const ib_field_t *f)
 }
 
 ib_status_t ib_field_convert(
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const ib_ftype_t   desired_type,
     const ib_field_t  *in_field,
     ib_field_t       **out_field
 )
 {
-    assert(mp);
-    assert(in_field);
+    assert(in_field != NULL);
 
     ib_status_t rc;
 
@@ -1050,7 +1052,7 @@ ib_status_t ib_field_convert(
 
         switch (desired_type) {
         case IB_FTYPE_BYTESTR:
-            rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
+            rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mm, str);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -1095,7 +1097,7 @@ ib_status_t ib_field_convert(
         /* Convert byte str. */
         switch(desired_type) {
         case IB_FTYPE_NULSTR:
-            str = ib_mpool_memdup_to_str(mp, str, sz);
+            str = ib_mm_memdup_to_str(mm, str, sz);
             if (!str) {
                 return rc;
             }
@@ -1137,18 +1139,18 @@ ib_status_t ib_field_convert(
 
         switch (desired_type) {
         case IB_FTYPE_NULSTR:
-            str = ib_time_to_string(mp, tme);
+            str = ib_time_to_string(mm, tme);
             if (! str) {
                 return IB_EINVAL;
             }
             new_field_value = ib_ftype_nulstr_in(str);
             break;
         case IB_FTYPE_BYTESTR:
-            str = ib_time_to_string(mp, tme);
+            str = ib_time_to_string(mm, tme);
             if (! str) {
                 return IB_EINVAL;
             }
-            rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
+            rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mm, str);
             if (rc != IB_OK){
                 return rc;
             }
@@ -1177,18 +1179,18 @@ ib_status_t ib_field_convert(
 
         switch (desired_type) {
         case IB_FTYPE_NULSTR:
-            str = ib_num_to_string(mp, num);
+            str = ib_num_to_string(mm, num);
             if (! str) {
                 return IB_EINVAL;
             }
             new_field_value = ib_ftype_nulstr_in(str);
             break;
         case IB_FTYPE_BYTESTR:
-            str = ib_num_to_string(mp, num);
+            str = ib_num_to_string(mm, num);
             if (! str) {
                 return IB_EINVAL;
             }
-            rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
+            rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mm, str);
             if (rc != IB_OK){
                 return rc;
             }
@@ -1223,18 +1225,18 @@ ib_status_t ib_field_convert(
 
         switch (desired_type) {
         case IB_FTYPE_NULSTR:
-            str = ib_float_to_string(mp, flt);
+            str = ib_float_to_string(mm, flt);
             if (!str) {
                 return IB_EINVAL;
             }
             new_field_value = ib_ftype_nulstr_in(str);
             break;
         case IB_FTYPE_BYTESTR:
-            str = ib_float_to_string(mp, flt);
+            str = ib_float_to_string(mm, flt);
             if (!str) {
                 return IB_EINVAL;
             }
-            rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
+            rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mm, str);
             if (rc != IB_OK){
                 return rc;
             }
@@ -1262,7 +1264,7 @@ ib_status_t ib_field_convert(
 
     rc = ib_field_create(
         out_field,
-        mp,
+        mm,
         in_field->name,
         in_field->nlen,
         desired_type,

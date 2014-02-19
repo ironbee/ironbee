@@ -244,8 +244,8 @@ TEST_F(TestIBUtilHash, test_hash_getall)
 
     static const char combs[] = "abcdefghij";
 
-    ASSERT_EQ(IB_OK, ib_list_create(&list, MemPool()));
-    ASSERT_EQ(IB_OK, ib_list_create(&list2, MemPool()));
+    ASSERT_EQ(IB_OK, ib_list_create(&list, MM()));
+    ASSERT_EQ(IB_OK, ib_list_create(&list2, MM()));
     ASSERT_EQ(IB_OK, ib_hash_create(&hash, MemPool()));
 
     // Insert 1000 keys with value equal to the key used.

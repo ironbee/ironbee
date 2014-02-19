@@ -28,6 +28,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/logformat.h>
+#include <ironbee/mm_mpool.h>
 #include <assert.h>
 #include <stdlib.h>
 
@@ -51,7 +52,7 @@ ib_status_t ib_logformat_create(ib_mpool_t *mp,
         return IB_EALLOC;
     }
     new->mp = mp;
-    rc = ib_list_create(&new->items, mp);
+    rc = ib_list_create(&new->items, ib_mm_mpool(mp));
     if (rc != IB_OK) {
         return rc;
     }

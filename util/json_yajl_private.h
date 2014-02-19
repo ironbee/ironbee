@@ -25,7 +25,7 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus
@@ -34,8 +34,8 @@ extern "C" {
 
 /** JSON/YAJL Common memory allocation context */
 typedef struct {
-    ib_mpool_t     *mpool;          /**< Memory pool to use */
-    ib_status_t     status;         /**< IB status for returning errors */
+    ib_mm_t         mm;     /**< Memory manager to use */
+    ib_status_t     status; /**< IB status for returning errors */
 } json_yajl_alloc_context_t;
 
 /** malloc()-ish clone for YAJL / JSON

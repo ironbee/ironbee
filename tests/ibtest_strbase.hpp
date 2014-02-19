@@ -28,6 +28,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/flags.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/types.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
@@ -586,6 +587,7 @@ public:
 
     virtual const char *FnName(void) const = 0;
     ib_mpool_t *MemPool( void ) { return m_mpool; };
+    ib_mm_t MM( void ) { return ib_mm_mpool(MemPool()); };
 
     const char *BoolStr(bool v) const
     {
@@ -726,7 +728,7 @@ public:
         in = const_cast<char *>(m_inbuf.GetBuf());
         assert(in != NULL);
         assert(m_strmod_fn != NULL);
-        rc = m_strmod_fn(m_op, MemPool(), in, &out, &result);
+        rc = m_strmod_fn(m_op, MM(), in, &out, &result);
         if (rc == IB_OK) {
             m_outbuf.SetStr(out);
         }
@@ -741,7 +743,7 @@ public:
 
         m_inbuf.Set(test.InBuf());
 
-        rc = m_strmod_ex_fn(m_op, MemPool(),
+        rc = m_strmod_ex_fn(m_op, MM(),
                             const_cast<uint8_t *>(m_inbuf.GetText()),
                             m_inbuf.GetLen(),
                             &out, &outlen,

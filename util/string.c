@@ -25,7 +25,6 @@
 
 #include <ironbee/string.h>
 
-#include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
 #include <assert.h>
@@ -373,21 +372,21 @@ size_t ib_unum_buf_size(uint64_t unum)
 }
 
 const char *ib_num_to_string(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     int64_t value
 ) {
     size_t size = ib_num_buf_size(value);
-    char *buf = ib_mpool_alloc(mp, size);
+    char *buf = ib_mm_alloc(mm, size);
     if (buf != NULL) {
         snprintf(buf, size, "%"PRId64, value);
     }
     return buf;
 }
 
-const char *ib_time_to_string(ib_mpool_t *mp, ib_time_t value)
+const char *ib_time_to_string(ib_mm_t mm, ib_time_t value)
 {
     size_t size = ib_num_buf_size(value);
-    char *buf = ib_mpool_alloc(mp, size);
+    char *buf = ib_mm_alloc(mm, size);
     if (buf != NULL) {
         snprintf(buf, size, "%"PRIu64, value);
     }
@@ -395,11 +394,11 @@ const char *ib_time_to_string(ib_mpool_t *mp, ib_time_t value)
 }
 
 const char *ib_unum_to_string(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     uint64_t value
 ) {
     size_t size = ib_unum_buf_size(value);
-    char *buf = ib_mpool_alloc(mp, size);
+    char *buf = ib_mm_alloc(mm, size);
     if (buf != NULL) {
         snprintf(buf, size, "%"PRIu64, value);
     }
@@ -407,10 +406,10 @@ const char *ib_unum_to_string(
 }
 
 const char *ib_float_to_string(
-    ib_mpool_t *mp,
+    ib_mm_t mm,
     long double value
 ) {
-    char *buf = ib_mpool_alloc(mp, 10);
+    char *buf = ib_mm_alloc(mm, 10);
     if (buf != NULL) {
         snprintf(buf, 10, "%Lf", value);
     }

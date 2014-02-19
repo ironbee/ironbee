@@ -30,6 +30,7 @@
 
 #include <ironbee/list.h>
 #include <ironbee/mpool.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/strval.h>
 #include <ironbee/types.h>
 
@@ -404,7 +405,7 @@ TEST(TestStrVal, test_flags_strlist)
 
     rc = ib_mpool_create(&mp, "test", NULL);
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_list_create(&strlist, mp);
+    rc = ib_list_create(&strlist, ib_mm_mpool(mp));
     ASSERT_EQ(IB_OK, rc);
 
     ib_list_clear(strlist);
@@ -474,7 +475,7 @@ TEST(TestStrVal, test_flags_oplist)
 
     rc = ib_mpool_create(&mp, "test", NULL);
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_list_create(&oplist, mp);
+    rc = ib_list_create(&oplist, ib_mm_mpool(mp));
     ASSERT_EQ(IB_OK, rc);
 
     str = "flag-01,+flag-02";

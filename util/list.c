@@ -31,15 +31,15 @@
 
 #include <assert.h>
 
-ib_status_t ib_list_create(ib_list_t **plist, ib_mpool_t *pool)
+ib_status_t ib_list_create(ib_list_t **plist, ib_mm_t mm)
 {
     /* Create the structure. */
-    *plist = (ib_list_t *)ib_mpool_calloc(pool, 1, sizeof(**plist));
+    *plist = (ib_list_t *)ib_mm_calloc(mm, 1, sizeof(**plist));
     if (*plist == NULL) {
         *plist = NULL;
         return IB_EALLOC;
     }
-    (*plist)->mp = pool;
+    (*plist)->mm = mm;
 
     return IB_OK;
 }
@@ -64,17 +64,16 @@ ib_status_t ib_list_copy_nodes(const ib_list_t *src_list,
 }
 
 ib_status_t ib_list_copy(const ib_list_t *src,
-                         ib_mpool_t *mp,
+                         ib_mm_t mm,
                          ib_list_t **pdest)
 {
-    assert(mp != NULL);
     assert(src != NULL);
     assert(pdest != NULL);
 
     ib_status_t  rc;
     ib_list_t   *dest_list;
 
-    rc = ib_list_create(&dest_list, mp);
+    rc = ib_list_create(&dest_list, mm);
     if (rc != IB_OK) {
         return rc;
     }
@@ -90,7 +89,7 @@ ib_status_t ib_list_copy(const ib_list_t *src,
 
 ib_status_t ib_list_push(ib_list_t *list, void *data)
 {
-    ib_list_node_t *node = (ib_list_node_t *)ib_mpool_calloc(list->mp,
+    ib_list_node_t *node = (ib_list_node_t *)ib_mm_calloc(list->mm,
         1, sizeof(*node)
     );
     if (node == NULL) {
@@ -127,7 +126,7 @@ ib_status_t ib_list_pop(ib_list_t *list, void *pdata)
 
 ib_status_t ib_list_unshift(ib_list_t *list, void *data)
 {
-    ib_list_node_t *node = (ib_list_node_t *)ib_mpool_calloc(list->mp,
+    ib_list_node_t *node = (ib_list_node_t *)ib_mm_calloc(list->mm,
         1, sizeof(*node)
     );
     if (node == NULL) {

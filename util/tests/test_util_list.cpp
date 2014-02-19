@@ -24,7 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/util.h>
 #include <ironbee/list.h>
 
@@ -79,7 +79,7 @@ TEST_F(TestIBUtilList, test_list_create_and_destroy)
     ib_list_t *list;
     ib_status_t rc;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -97,7 +97,7 @@ TEST_F(TestIBUtilList, test_list_push_and_pop)
     int v4 = 4;
     int *val;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -162,7 +162,7 @@ TEST_F(TestIBUtilList, test_list_remove_head)
     int init[] = { 0, 1, 2, 3, 4 };
     int *val;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -209,7 +209,7 @@ TEST_F(TestIBUtilList, test_list_remove_tail)
     int init[] = { 0, 1, 2, 3, 4 };
     int *val;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -259,7 +259,7 @@ TEST_F(TestIBUtilList, test_list_unshift_and_shift)
     int v4 = 4;
     int *val;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -331,7 +331,7 @@ TEST_F(TestIBUtilList, test_list_loop)
     ib_status_t rc;
     int init[] = { 0, 1, 2, 3, 4 };
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -348,7 +348,7 @@ TEST_F(TestIBUtilList, test_list_copy_nodes)
     ib_status_t rc;
     int init[] = { 0, 1, 2, 3, 4 };
 
-    rc = ib_list_create(&list1, MemPool());
+    rc = ib_list_create(&list1, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list1 != NULL);
     ASSERT_EQ(0UL, ib_list_elements(list1));
@@ -356,7 +356,7 @@ TEST_F(TestIBUtilList, test_list_copy_nodes)
     populate_list(list1, init, 5);
     check_list(list1, init, 5);
 
-    rc = ib_list_create(&list2, MemPool());
+    rc = ib_list_create(&list2, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list2 != NULL);
 
@@ -375,7 +375,7 @@ TEST_F(TestIBUtilList, test_list_copy)
     ib_status_t rc;
     int init[] = { 0, 1, 2, 3, 4 };
 
-    rc = ib_list_create(&list1, MemPool());
+    rc = ib_list_create(&list1, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list1 != NULL);
     ASSERT_EQ(0UL, ib_list_elements(list1));
@@ -383,7 +383,7 @@ TEST_F(TestIBUtilList, test_list_copy)
     populate_list(list1, init, 5);
     check_list(list1, init, 5);
 
-    rc = ib_list_copy(list1, MemPool(), &list2);
+    rc = ib_list_copy(list1, ib_mm_mpool(MemPool()), &list2);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list2 != NULL);
 
@@ -404,7 +404,7 @@ TEST_F(TestIBUtilList, test_list_loop_safe)
     rc = ib_util_initialize();
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -434,7 +434,7 @@ TEST_F(TestIBUtilList, test_list_loop_reverse)
     int *val;
     int i;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -464,7 +464,7 @@ TEST_F(TestIBUtilList, test_list_loop_reverse_safe)
     int *val;
     int i;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -494,7 +494,7 @@ TEST_F(TestIBUtilList, test_list_loop_remove)
     int *val;
     int i;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -527,7 +527,7 @@ TEST_F(TestIBUtilList, test_list_loop_reverse_remove)
     int *val;
     int i;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, ib_mm_mpool(MemPool()));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));

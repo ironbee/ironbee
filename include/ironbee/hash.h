@@ -28,6 +28,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/list.h>
+#include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
 #include <stdbool.h>

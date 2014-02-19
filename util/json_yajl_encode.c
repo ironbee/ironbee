@@ -219,18 +219,17 @@ static ib_status_t encode_list(
 
 /* Encode an IB list into JSON */
 ib_status_t ib_json_encode(
-    ib_mpool_t       *mpool,
+    ib_mm_t           mm,
     const ib_list_t  *list,
     bool              pretty,
     char            **obuf,
     size_t           *olen)
 {
-    assert(mpool != NULL);
     assert(list != NULL);
     assert(obuf != NULL);
 
     yajl_gen handle;
-    json_yajl_alloc_context_t alloc_ctx = { mpool, IB_OK };
+    json_yajl_alloc_context_t alloc_ctx = { mm, IB_OK };
     ib_status_t rc;
     yajl_gen_status status;
     yajl_alloc_funcs alloc_fns = {

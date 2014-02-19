@@ -76,7 +76,7 @@ static size_t find_nonws_left(const uint8_t *str,
  * or a new allocation.
  *
  * @param[in] op String modification operation
- * @param[in] mp Memory pool
+ * @param[in] mm Memory manager
  * @param[in] copy_on_cow Use copy-on-write semantics?
  * @param[in] flags string-op flags
  * @param[in] data_in Input data
@@ -87,7 +87,7 @@ static size_t find_nonws_left(const uint8_t *str,
  * @result Status code
  */
 static ib_status_t zero_len_ex(ib_strop_t op,
-                               ib_mpool_t *mp,
+                               ib_mm_t mm,
                                bool copy_on_cow,
                                ib_flags_t flags,
                                uint8_t *data_in,
@@ -107,7 +107,7 @@ static ib_status_t zero_len_ex(ib_strop_t op,
         break;
 
     case IB_STROP_COPY:
-        *data_out = ib_mpool_alloc(mp, 0);
+        *data_out = ib_mm_alloc(mm, 0);
         if (*data_out == NULL) {
             return IB_EALLOC;
         }
@@ -127,7 +127,7 @@ static ib_status_t zero_len_ex(ib_strop_t op,
  * or a new allocation.
  *
  * @param[in] op String modification operation
- * @param[in] mp Memory pool
+ * @param[in] mm Memory manager
  * @param[in] copy_on_cow Always treat COW as copy
  * @param[in] flags String-op flags
  * @param[in] str_in Input data
@@ -138,7 +138,7 @@ static ib_status_t zero_len_ex(ib_strop_t op,
  * @result Status code
  */
 static ib_status_t zero_len(ib_strop_t op,
-                            ib_mpool_t *mp,
+                            ib_mm_t mm,
                             bool copy_on_cow,
                             ib_flags_t flags,
                             char *str_in,
@@ -158,7 +158,7 @@ static ib_status_t zero_len(ib_strop_t op,
         break;
 
     case IB_STROP_COPY:
-        *str_out = ib_mpool_strdup(mp, "");
+        *str_out = ib_mm_strdup(mm, "");
         if (*str_out == NULL) {
             return IB_EALLOC;
         }
@@ -176,7 +176,7 @@ static ib_status_t zero_len(ib_strop_t op,
  * Left trim the input string
  *
  * @param[in] op String modification operation
- * @param[in] mp Memory pool
+ * @param[in] mm Memory manager
  * @param[in] str_in Input data
  * @param[in] offset Offset into @a str_in
  * @param[out] str_out Output data
@@ -185,7 +185,7 @@ static ib_status_t zero_len(ib_strop_t op,
  * @result Status code
  */
 static ib_status_t trim_left(ib_strop_t op,
-                             ib_mpool_t *mp,
+                             ib_mm_t mm,
                              char *str_in,
                              size_t offset,
                              char **str_out,
@@ -210,7 +210,7 @@ static ib_status_t trim_left(ib_strop_t op,
         break;
 
     case IB_STROP_COPY:
-        *str_out = ib_mpool_strdup(mp, str_in + offset);
+        *str_out = ib_mm_strdup(mm, str_in + offset);
         if (*str_out == NULL) {
             return IB_EALLOC;
         }
@@ -261,7 +261,7 @@ static size_t find_nonws_right(const uint8_t *str,
  * or a new allocation.
  *
  * @param[in] op String modification operation
- * @param[in] mp Memory pool
+ * @param[in] mm Memory manager
  * @param[in] flags Incoming flags
  * @param[in] data_in Input data
  * @param[in] dlen_in Length of @a data_in
@@ -273,7 +273,7 @@ static size_t find_nonws_right(const uint8_t *str,
  * @result Status code
  */
 static ib_status_t trim_right_ex(ib_strop_t op,
-                                 ib_mpool_t *mp,
+                                 ib_mm_t mm,
                                  ib_flags_t flags,
                                  uint8_t *data_in,
                                  size_t dlen_in,
@@ -297,7 +297,7 @@ static ib_status_t trim_right_ex(ib_strop_t op,
         break;
 
     case IB_STROP_COPY:
-        *data_out = ib_mpool_alloc(mp, *dlen_out);
+        *data_out = ib_mm_alloc(mm, *dlen_out);
         if (*data_out == NULL) {
             return IB_EALLOC;
         }
@@ -318,7 +318,7 @@ static ib_status_t trim_right_ex(ib_strop_t op,
  * Trim whitespace off the right (end) of a string
  *
  * @param[in] op String modification operation
- * @param[in] mp Memory pool
+ * @param[in] mm Memory manager
  * @param[in] flags Incoming flags
  * @param[in] str_in Input string
  * @param[in] len Length of @a str_in to use
@@ -329,7 +329,7 @@ static ib_status_t trim_right_ex(ib_strop_t op,
  * @result Status code
  */
 static ib_status_t trim_right(ib_strop_t op,
-                              ib_mpool_t *mp,
+                              ib_mm_t mm,
                               ib_flags_t flags,
                               char *str_in,
                               size_t len,
@@ -356,7 +356,7 @@ static ib_status_t trim_right(ib_strop_t op,
 
     case IB_STROP_COW:
     case IB_STROP_COPY:
-        out = ib_mpool_alloc(mp, len + 1);
+        out = ib_mm_alloc(mm, len + 1);
         if (out == NULL) {
             return IB_EALLOC;
         }
@@ -376,7 +376,7 @@ static ib_status_t trim_right(ib_strop_t op,
 
 /* Simple ASCII trimLeft function (see string.h). */
 ib_status_t ib_strtrim_left_ex(ib_strop_t op,
-                               ib_mpool_t *mp,
+                               ib_mm_t mm,
                                uint8_t *data_in,
                                size_t dlen_in,
                                uint8_t **data_out,
@@ -386,7 +386,6 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
     size_t offset;
     ib_flags_t flags;
 
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(dlen_out != NULL);
@@ -394,7 +393,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
 
     if (dlen_in == 0) {
         ib_status_t rc =
-            zero_len_ex(op, mp,
+            zero_len_ex(op, mm,
                         false, IB_STRFLAG_NONE,
                         data_in, data_out, dlen_out, result);
         return rc;
@@ -406,7 +405,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
     /* Handle all whitespace separately */
     if (offset == ALL_WHITESPACE) {
         ib_status_t rc =
-            zero_len_ex(op, mp,
+            zero_len_ex(op, mm,
                         false, IB_STRFLAG_MODIFIED,
                         data_in, data_out, dlen_out, result);
         return rc;
@@ -431,7 +430,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
         break;
 
     case IB_STROP_COPY:
-        *data_out = ib_mpool_alloc(mp, *dlen_out);
+        *data_out = ib_mm_alloc(mm, *dlen_out);
         if (*data_out == NULL) {
             return IB_EALLOC;
         }
@@ -450,7 +449,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
 
 /* Simple ASCII trimLeft function (see string.h). */
 ib_status_t ib_strtrim_left(ib_strop_t op,
-                            ib_mpool_t *mp,
+                            ib_mm_t mm,
                             char *str_in,
                             char **str_out,
                             ib_flags_t *result)
@@ -459,14 +458,13 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
     size_t offset;
     ib_status_t rc;
 
-    assert(mp != NULL);
     assert(str_in != NULL);
     assert(str_out != NULL);
     assert(result != NULL);
 
     len = strlen(str_in);
     if (len == 0) {
-        rc = zero_len(op, mp,
+        rc = zero_len(op, mm,
                       false, IB_STRFLAG_NONE,
                       str_in, len,
                       str_out, result);
@@ -478,7 +476,7 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
 
     /* Handle no match separately */
     if (offset == ALL_WHITESPACE) {
-        rc = zero_len(op, mp,
+        rc = zero_len(op, mm,
                       false, IB_STRFLAG_MODIFIED,
                       str_in, len,
                       str_out, result);
@@ -486,13 +484,13 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
     }
 
     /* Perform the actual trim */
-    rc = trim_left(op, mp, str_in, offset, str_out, result);
+    rc = trim_left(op, mm, str_in, offset, str_out, result);
     return rc;
 }
 
 /* Simple ASCII trimRight function (see string.h). */
 ib_status_t ib_strtrim_right_ex(ib_strop_t op,
-                                ib_mpool_t *mp,
+                                ib_mm_t mm,
                                 uint8_t *data_in,
                                 size_t dlen_in,
                                 uint8_t **data_out,
@@ -502,14 +500,13 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
     size_t offset;
     ib_status_t rc;
 
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(dlen_out != NULL);
     assert(result != NULL);
 
     if (dlen_in == 0) {
-        rc = zero_len_ex(op, mp, false, IB_STRFLAG_NONE,
+        rc = zero_len_ex(op, mm, false, IB_STRFLAG_NONE,
                          data_in, data_out, dlen_out, result);
         return rc;
     }
@@ -519,13 +516,13 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
 
     /* Handle all whitespace */
     if (offset == ALL_WHITESPACE) {
-        rc = zero_len_ex(op, mp, false, IB_STRFLAG_MODIFIED,
+        rc = zero_len_ex(op, mm, false, IB_STRFLAG_MODIFIED,
                          data_in, data_out, dlen_out, result);
         return rc;
     }
 
     /* Handle the normal case */
-    rc = trim_right_ex(op, mp,
+    rc = trim_right_ex(op, mm,
                        IB_STRFLAG_NONE,
                        data_in, dlen_in, offset,
                        data_out, dlen_out, result);
@@ -534,7 +531,7 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
 
 /* Simple ASCII trimRight function (see string.h). */
 ib_status_t ib_strtrim_right(ib_strop_t op,
-                             ib_mpool_t *mp,
+                             ib_mm_t mm,
                              char *str_in,
                              char **str_out,
                              ib_flags_t *result)
@@ -543,7 +540,6 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
     size_t len;
     ib_status_t rc;
 
-    assert(mp != NULL);
     assert(str_in != NULL);
     assert(str_out != NULL);
     assert(result != NULL);
@@ -551,7 +547,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
     /* Find the right-most non-space */
     len = strlen(str_in);
     if (len == 0) {
-        rc = zero_len(op, mp,
+        rc = zero_len(op, mm,
                       false, IB_STRFLAG_NONE,
                       str_in, len,
                       str_out, result);
@@ -561,7 +557,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
 
     /* Handle all whitespace */
     if (offset == ALL_WHITESPACE) {
-        rc = zero_len(op, mp,
+        rc = zero_len(op, mm,
                       false, IB_STRFLAG_MODIFIED,
                       str_in, len,
                       str_out, result);
@@ -569,7 +565,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
     }
 
     /* Handle normal case */
-    rc = trim_right(op, mp,
+    rc = trim_right(op, mm,
                     IB_STRFLAG_NONE,
                     str_in, len, offset,
                     str_out, result);
@@ -578,7 +574,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
 
 /* Simple ASCII trim function (see string.h). */
 ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
-                             ib_mpool_t *mp,
+                             ib_mm_t mm,
                              uint8_t *data_in,
                              size_t dlen_in,
                              uint8_t **data_out,
@@ -590,14 +586,13 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
     ib_flags_t flags = IB_STRFLAG_NONE;
     ib_status_t rc;
 
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(dlen_out != NULL);
     assert(result != NULL);
 
     if (dlen_in == 0) {
-        rc = zero_len_ex(op, mp,
+        rc = zero_len_ex(op, mm,
                          false, IB_STRFLAG_NONE,
                          data_in, data_out, dlen_out, result);
         return rc;
@@ -608,7 +603,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
 
     /* Handle all whitespace separately */
     if (loffset == ALL_WHITESPACE) {
-        rc = zero_len_ex(op, mp,
+        rc = zero_len_ex(op, mm,
                          false, IB_STRFLAG_MODIFIED,
                          data_in, data_out, dlen_out, result);
         return rc;
@@ -625,7 +620,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
     roffset = find_nonws_right(data_in, dlen_in);
 
     /* Handle the normal case */
-    rc = trim_right_ex(op, mp,
+    rc = trim_right_ex(op, mm,
                        flags,
                        data_in, dlen_in, roffset,
                        data_out, dlen_out, result);
@@ -634,7 +629,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
 
 /* Simple ASCII trim function (see string.h) */
 ib_status_t ib_strtrim_lr(ib_strop_t op,
-                          ib_mpool_t *mp,
+                          ib_mm_t mm,
                           char *str_in,
                           char **str_out,
                           ib_flags_t *result)
@@ -645,14 +640,13 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
     ib_flags_t flags;
     ib_status_t rc;
 
-    assert(mp != NULL);
     assert(str_in != NULL);
     assert(str_out != NULL);
     assert(result != NULL);
 
     len = strlen(str_in);
     if (len == 0) {
-        rc = zero_len(op, mp,
+        rc = zero_len(op, mm,
                       false, IB_STRFLAG_NONE,
                       str_in, len,
                       str_out, result);
@@ -664,7 +658,7 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
 
     /* Handle no match separately */
     if (loffset == ALL_WHITESPACE) {
-        rc = zero_len(op, mp,
+        rc = zero_len(op, mm,
                       false, IB_STRFLAG_MODIFIED,
                       str_in, len,
                       str_out, result);
@@ -681,7 +675,7 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
 
     /* Handle normal case */
     roffset = find_nonws_right((uint8_t *)str_in, len);
-    rc = trim_right(op, mp,
+    rc = trim_right(op, mm,
                     flags,
                     str_in, len, roffset,
                     str_out, result);

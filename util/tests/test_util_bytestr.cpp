@@ -24,7 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/util.h>
 #include <ironbee/bytestr.h>
 
@@ -45,7 +45,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_create_and_destroy)
     ib_bytestr_t *bs;
     ib_status_t rc;
 
-    rc = ib_bytestr_create(&bs, MemPool(), 10);
+    rc = ib_bytestr_create(&bs, MM(), 10);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
     ASSERT_EQ(0UL, ib_bytestr_length(bs));
@@ -60,7 +60,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_mem)
     uint8_t data[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
     const uint8_t *ptr;
 
-    rc = ib_bytestr_dup_mem(&bs, MemPool(), data, sizeof(data));
+    rc = ib_bytestr_dup_mem(&bs, MM(), data, sizeof(data));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
@@ -78,7 +78,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_nulstr)
     const char data[] = "abcdef";
     const uint8_t *ptr;
 
-    rc = ib_bytestr_dup_nulstr(&bs, MemPool(), data);
+    rc = ib_bytestr_dup_nulstr(&bs, MM(), data);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
@@ -96,7 +96,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_mem)
     uint8_t data[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
     const uint8_t *ptr;
 
-    rc = ib_bytestr_alias_mem(&bs, MemPool(), data, sizeof(data));
+    rc = ib_bytestr_alias_mem(&bs, MM(), data, sizeof(data));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
@@ -116,7 +116,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_nulstr)
     char data[] = "abcdef";
     const uint8_t *ptr;
 
-    rc = ib_bytestr_alias_nulstr(&bs, MemPool(), data);
+    rc = ib_bytestr_alias_nulstr(&bs, MM(), data);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
@@ -140,7 +140,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     const uint8_t data4[] = { 'b', 'a', 'r' };
     const uint8_t *ptr;
 
-    rc = ib_bytestr_dup_nulstr(&bs1, MemPool(), data1);
+    rc = ib_bytestr_dup_nulstr(&bs1, MM(), data1);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs1);
     ASSERT_EQ(6UL, ib_bytestr_length(bs1));
@@ -148,7 +148,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     ptr = ib_bytestr_const_ptr(bs1);
     ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
 
-    rc = ib_bytestr_dup_nulstr(&bs2, MemPool(), data2);
+    rc = ib_bytestr_dup_nulstr(&bs2, MM(), data2);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs2);
     ASSERT_EQ(6UL, ib_bytestr_length(bs2));

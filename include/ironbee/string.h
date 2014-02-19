@@ -27,6 +27,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/field.h>     /* For ib_num_t */
+#include <ironbee/mm.h>     /* For ib_num_t */
 
 #include <stdlib.h>
 #include <string.h>
@@ -70,7 +71,7 @@ typedef enum {
  * Generic string modification function, ex version
  *
  * @param[in] op String modify operation
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
@@ -80,7 +81,7 @@ typedef enum {
  * @result Status code
  */
 typedef ib_status_t (* ib_strmod_ex_fn_t) (ib_strop_t op,
-                                           ib_mpool_t *mp,
+                                           ib_mm_t mm,
                                            uint8_t *data_in,
                                            size_t dlen_in,
                                            uint8_t **data_out,
@@ -91,7 +92,7 @@ typedef ib_status_t (* ib_strmod_ex_fn_t) (ib_strop_t op,
  * Generic string modification function, string version
  *
  * @param[in] op String modify operation
- * @param[in] mp Memory pool for allocations
+ * @param[in] mm Memory manager for allocations
  * @param[in] str_in Data to operate on
  * @param[out] str_out Output data
  * @param[out] result Result flags (@c IB_STRFLAG_xxx)
@@ -99,7 +100,7 @@ typedef ib_status_t (* ib_strmod_ex_fn_t) (ib_strop_t op,
  * @returns Status code.
  */
 typedef ib_status_t (* ib_strmod_fn_t) (ib_strop_t op,
-                                        ib_mpool_t *mp,
+                                        ib_mm_t mm,
                                         char *str_in,
                                         char **str_out,
                                         ib_flags_t *result);
@@ -285,7 +286,7 @@ const char DLL_PUBLIC *ib_strrstr_ex(const char *haystack,
  * Simple ASCII lowercase function.
  *
  * @param[in] op String modify operation
- * @param[in] mp Memory pool for allocations
+ * @param[in] mm Memory manager for allocations
  * @param[in] data_in Data to convert to lower case
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Output data
@@ -297,7 +298,7 @@ const char DLL_PUBLIC *ib_strrstr_ex(const char *haystack,
  * @note For non-ASCII (utf8, etc) you should use case folding.
  */
 ib_status_t ib_strlower_ex(ib_strop_t op,
-                           ib_mpool_t *mp,
+                           ib_mm_t mm,
                            uint8_t *data_in,
                            size_t dlen_in,
                            uint8_t **data_out,
@@ -308,7 +309,7 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
  * Simple ASCII lowercase function.
  *
  * @param[in] op String modify operation
- * @param[in] mp Memory pool for allocations
+ * @param[in] mm Memory manager for allocations
  * @param[in] str_in Data to convert to lower case
  * @param[out] str_out Output data
  * @param[out] result Result flags (@c IB_STRFLAG_xxx)
@@ -318,7 +319,7 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
  * @note For non-ASCII (utf8, etc) you should use case folding.
  */
 ib_status_t ib_strlower(ib_strop_t op,
-                        ib_mpool_t *mp,
+                        ib_mm_t mm,
                         char *str_in,
                         char **str_out,
                         ib_flags_t *result);
@@ -327,7 +328,7 @@ ib_status_t ib_strlower(ib_strop_t op,
  * Simple ASCII trim left function.
  *
  * @param[in] op String modify operation
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
@@ -337,7 +338,7 @@ ib_status_t ib_strlower(ib_strop_t op,
  * @result Status code
  */
 ib_status_t ib_strtrim_left_ex(ib_strop_t op,
-                               ib_mpool_t *mp,
+                               ib_mm_t mm,
                                uint8_t *data_in,
                                size_t dlen_in,
                                uint8_t **data_out,
@@ -348,7 +349,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
  * Simple ASCII trim left function.
  *
  * @param[in] op String trim operation
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] str_in Pointer to input data
  * @param[out] str_out Pointer to output data
  * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
@@ -356,7 +357,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
  * @returns Status code.
  */
 ib_status_t ib_strtrim_left(ib_strop_t op,
-                            ib_mpool_t *mp,
+                            ib_mm_t mm,
                             char *str_in,
                             char **str_out,
                             ib_flags_t *result);
@@ -365,7 +366,7 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
  * Simple ASCII trim right function.
  *
  * @param[in] op String trim operation
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
@@ -375,7 +376,7 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
  * @result Status code
  */
 ib_status_t ib_strtrim_right_ex(ib_strop_t op,
-                                ib_mpool_t *mp,
+                                ib_mm_t mm,
                                 uint8_t *data_in,
                                 size_t dlen_in,
                                 uint8_t **data_out,
@@ -386,7 +387,7 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
  * Simple ASCII trim right function.
  *
  * @param[in] op String trim operation
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] str_in Pointer to input data
  * @param[out] str_out Pointer to output data
  * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
@@ -394,7 +395,7 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
  * @result Status code
  */
 ib_status_t ib_strtrim_right(ib_strop_t op,
-                             ib_mpool_t *mp,
+                             ib_mm_t mm,
                              char *str_in,
                              char **str_out,
                              ib_flags_t *result);
@@ -403,7 +404,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
  * Simple ASCII trim left+right function.
  *
  * @param[in] op String trim operation
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
@@ -413,7 +414,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
  * @result Status code
  */
 ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
-                             ib_mpool_t *mp,
+                             ib_mm_t mm,
                              uint8_t *data_in,
                              size_t dlen_in,
                              uint8_t **data_out,
@@ -424,7 +425,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
  * Simple ASCII trim left+right function.
  *
  * @param[in] op String trim operation
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] str_in Pointer to input data
  * @param[out] str_out Pointer to output data
  * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
@@ -432,7 +433,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
  * @result Status code
  */
 ib_status_t ib_strtrim_lr(ib_strop_t op,
-                          ib_mpool_t *mp,
+                          ib_mm_t mm,
                           char *str_in,
                           char **str_out,
                           ib_flags_t *result);
@@ -441,7 +442,7 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
  * Delete all whitespace from a string (extended version)
  *
  * @param[in] op String trim operation
- * @param[in] mp Memory pool
+ * @param[in] mm Memory manager
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
@@ -451,7 +452,7 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
  * @result Status code
  */
 ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
-                                  ib_mpool_t *mp,
+                                  ib_mm_t mm,
                                   uint8_t *data_in,
                                   size_t dlen_in,
                                   uint8_t **data_out,
@@ -462,7 +463,7 @@ ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
  * Delete all whitespace from a string (NUL terminated string version)
  *
  * @param[in] op String trim operation
- * @param[in] mp Memory pool
+ * @param[in] mm Memory manager
  * @param[in] str_in Pointer to input data
  * @param[out] str_out Pointer to output data
  * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
@@ -470,7 +471,7 @@ ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
  * @result Status code
  */
 ib_status_t ib_str_wspc_remove(ib_strop_t op,
-                               ib_mpool_t *mp,
+                               ib_mm_t mm,
                                char *str_in,
                                char **str_out,
                                ib_flags_t *result);
@@ -479,7 +480,7 @@ ib_status_t ib_str_wspc_remove(ib_strop_t op,
  * Compress whitespace in a string (extended version)
  *
  * @param[in] op String trim operation
- * @param[in] mp Memory pool
+ * @param[in] mm Memory manager
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
@@ -489,7 +490,7 @@ ib_status_t ib_str_wspc_remove(ib_strop_t op,
  * @result Status code
  */
 ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
-                                    ib_mpool_t *mp,
+                                    ib_mm_t mm,
                                     uint8_t *data_in,
                                     size_t dlen_in,
                                     uint8_t **data_out,
@@ -500,7 +501,7 @@ ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
  * Compress whitespace in a string (NUL terminated string version)
  *
  * @param[in] op String trim operation
- * @param[in] mp Memory pool
+ * @param[in] mm Memory manager
  * @param[in] str_in Pointer to input data
  * @param[out] str_out Pointer to output data
  * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
@@ -508,7 +509,7 @@ ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
  * @result Status code
  */
 ib_status_t ib_str_wspc_compress(ib_strop_t op,
-                                 ib_mpool_t *mp,
+                                 ib_mm_t mm,
                                  char *str_in,
                                  char **str_out,
                                  ib_flags_t *result);
@@ -552,12 +553,12 @@ size_t ib_unum_buf_size(uint64_t num);
 /**
  * Get a string representation of a number
  *
- * @param[in] mp The memory pool to use for allocations
+ * @param[in] mm The memory manager to use for allocations
  * @param[in] value The number to operate on
  *
  * @returns The buffer or NULL if allocation fails
  */
-const char *ib_num_to_string(ib_mpool_t *mp,
+const char *ib_num_to_string(ib_mm_t mm,
                              int64_t value);
 
 /**
@@ -566,21 +567,21 @@ const char *ib_num_to_string(ib_mpool_t *mp,
  * The string is the integer representing the number of milliseconds
  * since the epoch.
  *
- * @param[in] mp The memory pool to use for allocations
+ * @param[in] mm The memory manager to use for allocations
  * @param[in] value The number to operate on
  *
  * @returns The buffer or NULL if allocation fails
  */
-const char *ib_time_to_string(ib_mpool_t *mp, ib_time_t value);
+const char *ib_time_to_string(ib_mm_t mm, ib_time_t value);
 /**
  * Get a string representation of a number
  *
- * @param[in] mp The memory pool to use for allocations
+ * @param[in] mm The memory manager to use for allocations
  * @param[in] value The number to operate on
  *
  * @returns The buffer or NULL if allocation fails
  */
-const char *ib_unum_to_string(ib_mpool_t *mp,
+const char *ib_unum_to_string(ib_mm_t mm,
                               uint64_t value);
 
 /**
@@ -588,12 +589,12 @@ const char *ib_unum_to_string(ib_mpool_t *mp,
  *
  * This currently uses a fixed length of 10.
  *
- * @param[in] mp The memory pool to use for allocations.
+ * @param[in] mm The memory manager to use for allocations.
  * @param[in] value The floating point to print.
  *
  * @returns The buffer or NULL if allocation fails
  */
-const char *ib_float_to_string(ib_mpool_t *mp,
+const char *ib_float_to_string(ib_mm_t mm,
                                long double value);
 
 /**

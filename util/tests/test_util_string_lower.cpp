@@ -24,6 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/mm_mpool.h>
 #include <ironbee/types.h>
 #include <ironbee/string.h>
 
@@ -59,7 +60,7 @@ public:
     ib_status_t ExecInplaceNul(char *buf, ib_flags_t &result)
     {
         char *out;
-        return ib_strlower(IB_STROP_INPLACE, m_mpool,
+        return ib_strlower(IB_STROP_INPLACE, ib_mm_mpool(m_mpool),
                            buf, &out, &result);
     }
     ib_status_t ExecInplaceEx(uint8_t *data_in,
@@ -68,7 +69,7 @@ public:
                               ib_flags_t &result)
     {
         uint8_t *data_out;
-        return ib_strlower_ex(IB_STROP_INPLACE, m_mpool,
+        return ib_strlower_ex(IB_STROP_INPLACE, ib_mm_mpool(m_mpool),
                               data_in, dlen_in,
                               &data_out, &dlen_out,
                               &result);
@@ -79,7 +80,7 @@ public:
                             char **data_out,
                             ib_flags_t &result)
     {
-        return ib_strlower(IB_STROP_COPY, m_mpool,
+        return ib_strlower(IB_STROP_COPY, ib_mm_mpool(m_mpool),
                            (char *)data_in, data_out, &result);
     }
     ib_status_t ExecCopyEx(const uint8_t *data_in,
@@ -88,7 +89,7 @@ public:
                            size_t &dlen_out,
                            ib_flags_t &result)
     {
-        return ib_strlower_ex(IB_STROP_COPY, m_mpool,
+        return ib_strlower_ex(IB_STROP_COPY, ib_mm_mpool(m_mpool),
                               (uint8_t *)data_in, dlen_in,
                               data_out, &dlen_out,
                               &result);
@@ -99,7 +100,7 @@ public:
                            char **data_out,
                            ib_flags_t &result)
     {
-        return ib_strlower(IB_STROP_COW, m_mpool,
+        return ib_strlower(IB_STROP_COW, ib_mm_mpool(m_mpool),
                            (char *)data_in, data_out, &result);
     }
     ib_status_t ExecCowEx(const uint8_t *data_in,
@@ -108,7 +109,7 @@ public:
                           size_t &dlen_out,
                           ib_flags_t &result)
     {
-        return ib_strlower_ex(IB_STROP_COW, m_mpool,
+        return ib_strlower_ex(IB_STROP_COW, ib_mm_mpool(m_mpool),
                               (uint8_t *)data_in, dlen_in,
                               data_out, &dlen_out,
                               &result);

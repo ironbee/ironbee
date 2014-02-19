@@ -27,6 +27,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/list.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <string.h>
@@ -70,7 +71,7 @@ typedef enum {
  */
 struct ib_stream_t {
     /// @todo Need a list of recycled sdata
-    ib_mpool_t             *mp;         /**< Stream memory pool */
+    ib_mm_t                 mm;         /**< Stream memory manager */
     size_t                  slen;       /**< Stream length */
     IB_LIST_REQ_FIELDS(ib_sdata_t);     /* Required list fields */
 };
@@ -91,11 +92,11 @@ struct ib_sdata_t {
  * Create a stream buffer.
  *
  * @param pstream Address which new stream is written
- * @param pool Memory pool to use
+ * @param mm Memory manager to use
  *
  * @returns Status code
  */
-ib_status_t ib_stream_create(ib_stream_t **pstream, ib_mpool_t *pool);
+ib_status_t ib_stream_create(ib_stream_t **pstream, ib_mm_t mm);
 
 /**
  * Push stream data into a stream.

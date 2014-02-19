@@ -26,7 +26,7 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/types.h>
 
 #include <string.h>
@@ -85,7 +85,7 @@ struct ib_list_node_t {
  * List structure.
  */
 struct ib_list_t {
-    ib_mpool_t       *mp;
+    ib_mm_t mm;
     IB_LIST_REQ_FIELDS(ib_list_node_t);       /* Required fields */
 };
 /** @endcond */
@@ -375,11 +375,11 @@ struct ib_list_t {
  * Create a list.
  *
  * @param plist Address which new list is written
- * @param pool Memory pool to use
+ * @param mm Memory manager to use
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_list_create(ib_list_t **plist, ib_mpool_t *pool);
+ib_status_t DLL_PUBLIC ib_list_create(ib_list_t **plist, ib_mm_t mm);
 
 /**
  * Insert data at the end of a list.
@@ -591,13 +591,13 @@ ib_status_t DLL_PUBLIC ib_list_copy_nodes(const ib_list_t *src_list,
  * the pointer is copied, with the new list containing a list of aliases.
  *
  * @param[in]  src List of items to copy
- * @param[in]  mp Memory pool
+ * @param[in]  mm Memory manager
  * @param[out] pdest Pointer to new list
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_list_copy(const ib_list_t *src,
-                                    ib_mpool_t *mp,
+                                    ib_mm_t mm,
                                     ib_list_t **pdest);
 
 /** @} IronBeeUtilList */

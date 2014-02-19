@@ -24,7 +24,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/flags.h>
-#include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
@@ -80,7 +79,7 @@ static ib_status_t inplace(ib_flags_t inflags,
 /**
  * ASCII lowercase function with copy-on-write semantics.
  *
- * @param[in] mp Memory pool for allocations
+ * @param[in] mm Memory manager for allocations
  * @param[in] data_in Data to convert to lower case
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Output data
@@ -89,7 +88,7 @@ static ib_status_t inplace(ib_flags_t inflags,
  *
  * @returns Status code.
  */
-static ib_status_t copy_on_write(ib_mpool_t *mp,
+static ib_status_t copy_on_write(ib_mm_t mm,
                                  const uint8_t *data_in,
                                  size_t dlen_in,
                                  uint8_t **data_out,
@@ -101,7 +100,6 @@ static ib_status_t copy_on_write(ib_mpool_t *mp,
     uint8_t *optr;
     uint8_t *obuf;
 
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(result != NULL);
@@ -127,7 +125,7 @@ static ib_status_t copy_on_write(ib_mpool_t *mp,
                 /* Output buffer not previously allocated;
                  * allocate it now, and copy into it */
                 size_t off;
-                obuf = ib_mpool_alloc(mp, dlen_in);
+                obuf = ib_mm_alloc(mm, dlen_in);
                 if (obuf == NULL) {
                     return IB_EALLOC;
                 }
@@ -157,7 +155,7 @@ static ib_status_t copy_on_write(ib_mpool_t *mp,
 
 /* Simple ASCII lowercase function (ex version); see string.h */
 ib_status_t ib_strlower_ex(ib_strop_t op,
-                           ib_mpool_t *mp,
+                           ib_mm_t mm,
                            uint8_t *data_in,
                            size_t dlen_in,
                            uint8_t **data_out,
@@ -166,7 +164,6 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
 {
     ib_status_t rc = IB_OK;
 
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(dlen_out != NULL);
@@ -180,7 +177,7 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
         break;
 
     case IB_STROP_COPY:
-        *data_out = ib_mpool_memdup(mp, data_in, dlen_in);
+        *data_out = ib_mm_memdup(mm, data_in, dlen_in);
         if (*data_out == NULL) {
             return IB_EALLOC;
         }
@@ -189,7 +186,7 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
         break;
 
     case IB_STROP_COW:
-        rc = copy_on_write(mp, data_in, dlen_in, data_out, dlen_out, result);
+        rc = copy_on_write(mm, data_in, dlen_in, data_out, dlen_out, result);
         break;
 
     default:
@@ -201,7 +198,7 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
 
 /* ASCII lowercase function (string version); See string.h */
 ib_status_t ib_strlower(ib_strop_t op,
-                        ib_mpool_t *mp,
+                        ib_mm_t     mm,
                         char *str_in,
                         char **str_out,
                         ib_flags_t *result)
@@ -210,7 +207,6 @@ ib_status_t ib_strlower(ib_strop_t op,
     ib_status_t rc = IB_OK;
     char *out = NULL;
 
-    assert(mp != NULL);
     assert(str_in != NULL);
     assert(str_out != NULL);
     assert(result != NULL);
@@ -223,7 +219,7 @@ ib_status_t ib_strlower(ib_strop_t op,
         break;
 
     case IB_STROP_COPY:
-        out = ib_mpool_strdup(mp, str_in);
+        out = ib_mm_strdup(mm, str_in);
         if (out == NULL) {
             return IB_EALLOC;
         }
@@ -234,12 +230,12 @@ ib_status_t ib_strlower(ib_strop_t op,
     {
 #if ((__GNUC__==4) && (__GNUC_MINOR__<3))
         uint8_t *uint8ptr;
-        rc = copy_on_write(mp,
+        rc = copy_on_write(mm,
                            (uint8_t *)str_in, len+1,
                            &uint8ptr, NULL, result);
         out = (char *)uint8ptr;
 #else
-        rc = copy_on_write(mp,
+        rc = copy_on_write(mm,
                            (uint8_t *)str_in, len+1,
                            (uint8_t **)&out, NULL, result);
 #endif

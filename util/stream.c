@@ -25,16 +25,14 @@
 
 #include <ironbee/stream.h>
 
-#include <ironbee/mpool.h>
-
-ib_status_t ib_stream_create(ib_stream_t **pstream, ib_mpool_t *pool)
+ib_status_t ib_stream_create(ib_stream_t **pstream, ib_mm_t mm)
 {
     /* Create the structure. */
-    *pstream = (ib_stream_t *)ib_mpool_calloc(pool, 1, sizeof(**pstream));
+    *pstream = (ib_stream_t *)ib_mm_calloc(mm, 1, sizeof(**pstream));
     if (*pstream == NULL) {
         return IB_EALLOC;
     }
-    (*pstream)->mp = pool;
+    (*pstream)->mm = mm;
 
     return IB_OK;
 }
@@ -61,8 +59,7 @@ ib_status_t ib_stream_push(ib_stream_t *s,
                            size_t dlen)
 {
     /// @todo take from a resource pool, if available
-    ib_sdata_t *node = (ib_sdata_t *)ib_mpool_calloc(s->mp,
-                                                     1, sizeof(*node));
+    ib_sdata_t *node = (ib_sdata_t *)ib_mm_calloc(s->mm, 1, sizeof(*node));
     if (node == NULL) {
         return IB_EALLOC;
     }

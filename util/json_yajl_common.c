@@ -53,7 +53,7 @@ void *json_yajl_alloc(
     chunk_t *chunk;
     size_t alloc = size + sizeof(*chunk);
 
-    chunk = (chunk_t *)ib_mpool_alloc(alloc_ctx->mpool, size + alloc);
+    chunk = (chunk_t *)ib_mm_alloc(alloc_ctx->mm, size + alloc);
     if (chunk == NULL) {
         alloc_ctx->status = IB_EALLOC;
         return NULL;
@@ -83,7 +83,7 @@ void *json_yajl_realloc(
     }
 
     bytes = size + sizeof(*chunk);
-    new = (chunk_t *)ib_mpool_alloc(alloc_ctx->mpool, bytes);
+    new = (chunk_t *)ib_mm_alloc(alloc_ctx->mm, bytes);
     if (new == NULL) {
         alloc_ctx->status = IB_EALLOC;
         return NULL;

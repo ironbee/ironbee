@@ -26,7 +26,6 @@
 #include <ironbee/escape.h>
 
 #include <ironbee/flags.h>
-#include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
@@ -291,7 +290,7 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
 }
 
 /* Convert a bytestring to a json string with escaping, ex version */
-ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
+ib_status_t ib_string_escape_json_ex(ib_mm_t mm,
                                      const uint8_t *data_in,
                                      size_t dlen_in,
                                      bool add_nul,
@@ -300,7 +299,6 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
                                      size_t *dlen_out,
                                      ib_flags_t *result)
 {
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(result != NULL);
@@ -314,7 +312,7 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
 allocate:
     buflen = mult * dlen_in;
     bufsize = buflen + (add_nul ? 1 : 0) + (quote ? 2 : 0);
-    buf = ib_mpool_alloc(mp, bufsize);
+    buf = ib_mm_alloc(mm, bufsize);
     if (buf == NULL) {
         return IB_EALLOC;
     }
@@ -333,19 +331,18 @@ allocate:
 }
 
 /* Convert a c-string to a json string with escaping */
-ib_status_t ib_string_escape_json(ib_mpool_t *mp,
+ib_status_t ib_string_escape_json(ib_mm_t     mm,
                                   const char *data_in,
                                   bool quote,
                                   char **data_out,
                                   ib_flags_t *result)
 {
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(result != NULL);
 
     ib_status_t rc;
-    rc = ib_string_escape_json_ex(mp,
+    rc = ib_string_escape_json_ex(mm,
                                   (const uint8_t *)data_in, strlen(data_in),
                                   true, quote,
                                   data_out, NULL,
@@ -527,7 +524,7 @@ static size_t ib_util_hex_escape_size(
 }
 
 ib_status_t ib_util_hex_escape_alloc(
-    ib_mpool_t    *mp,
+    ib_mm_t        mm,
     size_t         src_len,
     size_t         pad,
     char         **pbuf,
@@ -537,12 +534,7 @@ ib_status_t ib_util_hex_escape_alloc(
     char   *buf;
 
     /* Allocate the buffer */
-    if (mp == NULL) {
-        buf = malloc(size);
-    }
-    else {
-        buf = ib_mpool_alloc(mp, size);
-    }
+    buf = ib_mm_alloc(mm, size);
     if (buf == NULL) {
         return IB_EALLOC;
     }
@@ -604,7 +596,7 @@ size_t ib_util_hex_escape_buf(
 }
 
 char *ib_util_hex_escape(
-    ib_mpool_t    *mp,
+    ib_mm_t        mm,
     const uint8_t *src,
     size_t         src_len)
 {
@@ -612,7 +604,7 @@ char *ib_util_hex_escape(
     char        *buf;
     size_t       size;
 
-    rc = ib_util_hex_escape_alloc(mp, src_len, 0, &buf, &size);
+    rc = ib_util_hex_escape_alloc(mm, src_len, 0, &buf, &size);
     if (rc != IB_OK) {
         return NULL;
     }

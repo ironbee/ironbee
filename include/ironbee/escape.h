@@ -26,6 +26,7 @@
  */
 
 #include <ironbee/build.h>
+#include <ironbee/mm.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 
@@ -139,7 +140,7 @@ ib_status_t DLL_PUBLIC ib_strlist_escape_json_buf(
 /**
  * Convert a bytestring to a json string with escaping
  *
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] data_in Input data
  * @param[in] dlen_in Length of data in @a data_in
  * @param[in] nul Save room for and append a nul byte?
@@ -155,7 +156,7 @@ ib_status_t DLL_PUBLIC ib_strlist_escape_json_buf(
  * Implemented in: util/escape.c
  * Tested in: tests/test_util_escape.cpp
  */
-ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
+ib_status_t ib_string_escape_json_ex(ib_mm_t mm,
                                      const uint8_t *data_in,
                                      size_t dlen_in,
                                      bool nul,
@@ -167,7 +168,7 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
 /**
  * Convert a c-string to a json string with escaping
  *
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] data_in Input data
  * @param[in] quote Save room for and add quotes?
  * @param[out] data_out Output data
@@ -181,7 +182,7 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
  * Tested in: tests/test_util_escape.cpp
  */
 ib_status_t DLL_PUBLIC ib_string_escape_json(
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *data_in,
     bool         quote,
     char       **data_out,
@@ -191,7 +192,7 @@ ib_status_t DLL_PUBLIC ib_string_escape_json(
  * Allocate a buffer large enough to escape a string of length @a src_len
  * with optional padding of @a pad characters
  *
- * @param[in] mp Memory pool to use for allocations or NULL to use malloc()
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] src_len Source string length
  * @param[in] pad Padding size (can be zero)
  * @param[out] pbuf Pointer to newly allocated buffer
@@ -202,11 +203,12 @@ ib_status_t DLL_PUBLIC ib_string_escape_json(
  *    - IB_EALLOC Allocation error
  */
 ib_status_t DLL_PUBLIC ib_util_hex_escape_alloc(
-    ib_mpool_t    *mp,
+    ib_mm_t        mm,
     size_t         src_len,
     size_t         pad,
     char         **pbuf,
     size_t        *psize);
+
 
 /**
  * Hex-escape a string into a pre-allocated buffer.
@@ -238,7 +240,7 @@ size_t DLL_PUBLIC ib_util_hex_escape_buf(
  *
  * The returned string must be released via free() if @a mp is NULL.
  *
- * @param[in] mp Memory pool to use for allocations (NULL: use malloc())
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] src The source string.
  * @param[in] src_len The length of @a src not including the final NUL.
  *
@@ -251,7 +253,7 @@ size_t DLL_PUBLIC ib_util_hex_escape_buf(
  * Tested in: tests/test_util_hex_escape.cpp
  */
 char DLL_PUBLIC *ib_util_hex_escape(
-    ib_mpool_t      *mp,
+    ib_mm_t          mm,
     const uint8_t   *src,
     size_t           src_len);
 

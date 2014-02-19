@@ -39,7 +39,7 @@ TEST_F(SimpleFixture, test_create)
     ib_status_t  rv;
     ib_stream_t *stream;
 
-    rv = ib_stream_create(&stream, MemPool());
+    rv = ib_stream_create(&stream, MM());
     ASSERT_EQ(IB_OK, rv);
 }
 
@@ -50,7 +50,7 @@ public :
     {
         SimpleFixture::SetUp( );
 
-        ib_status_t rc = ib_stream_create(&m_stream, MemPool());
+        ib_status_t rc = ib_stream_create(&m_stream, MM());
         if (rc != IB_OK) {
             throw std::runtime_error("Could not initialize stream.");
         }
@@ -62,17 +62,17 @@ public :
 
     ib_status_t Push(ib_sdata_type_t type, const char *str, size_t len)
     {
-        return ib_stream_push(m_stream, type, MemPoolStrDup(str), len);
+        return ib_stream_push(m_stream, type, ib_mm_strdup(MM(), str), len);
     }
 
     ib_status_t PushSdata(ib_sdata_type_t type, const char *str, size_t len)
     {
         ib_sdata_t  *sdata;
 
-        sdata = (ib_sdata_t *)MemPoolAlloc(sizeof(*sdata));
+        sdata = (ib_sdata_t *)ib_mm_alloc(MM(), sizeof(*sdata));
         sdata->type = type;
         sdata->dlen = len;
-        sdata->data = MemPoolStrDup(str);
+        sdata->data = ib_mm_strdup(MM(), str);
 
         return ib_stream_push_sdata(m_stream, sdata);
     }

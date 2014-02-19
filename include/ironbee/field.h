@@ -30,7 +30,7 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/clock.h>
 #include <ironbee/list.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/stream.h>
 #include <ironbee/types.h>
 
@@ -214,7 +214,7 @@ typedef struct ib_field_val_t ib_field_val_t;
 /** Field Structure */
 typedef struct ib_field_t ib_field_t;
 struct ib_field_t {
-    ib_mpool_t     *mp;        /**< Memory pool */
+    ib_mm_t         mm;        /**< Memory manager */
     ib_ftype_t      type;      /**< Field type */
     const char     *name;      /**< Field name; not '\0' terminated! */
     size_t          nlen;      /**< Field name length */
@@ -606,7 +606,7 @@ typedef ib_status_t (*ib_field_set_fn_t)(
  * @a in_pval.  This will be fixed in a future version.
  *
  * @param[out] pf      Address to write new field to.
- * @param[in]  mp      Memory pool.
+ * @param[in] mm      Memory manager.
  * @param[in]  name    Field name.
  * @param[in]  nlen    Field name length.
  * @param[in]  type    Field type.
@@ -616,7 +616,7 @@ typedef ib_status_t (*ib_field_set_fn_t)(
  */
 ib_status_t DLL_PUBLIC ib_field_create(
     ib_field_t **pf,
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *name,
     size_t       nlen,
     ib_ftype_t   type,
@@ -631,7 +631,7 @@ ib_status_t DLL_PUBLIC ib_field_create(
  * uses a user provided pointer for where to store the field value.
  *
  * @param[out] pf              Address to write new field to.
- * @param[in]  mp              Memory pool.
+ * @param[in] mm              Memory manager.
  * @param[in]  name            Field name.
  * @param[in]  nlen            Field name length.
  * @param[in]  type            Field type.
@@ -641,7 +641,7 @@ ib_status_t DLL_PUBLIC ib_field_create(
  */
 ib_status_t DLL_PUBLIC ib_field_create_no_copy(
     ib_field_t **pf,
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *name,
     size_t       nlen,
     ib_ftype_t   type,
@@ -662,7 +662,7 @@ ib_status_t DLL_PUBLIC ib_field_create_no_copy(
  * ib_ftype_T_in() functions for this parameter.
  *
  * @param[out] pf           Address to write new field to.
- * @param[in]  mp           Memory pool.
+ * @param[in] mm           Memory manager.
  * @param[in]  name         Field name.
  * @param[in]  nlen         Field name length.
  * @param[in]  type         Field type.
@@ -672,7 +672,7 @@ ib_status_t DLL_PUBLIC ib_field_create_no_copy(
  */
 ib_status_t DLL_PUBLIC ib_field_create_alias(
     ib_field_t **pf,
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *name,
     size_t       nlen,
     ib_ftype_t   type,
@@ -685,7 +685,7 @@ ib_status_t DLL_PUBLIC ib_field_create_alias(
  * Dynamic fields only support non-mutable values.
  *
  * @param[out] pf         Address to write new field to.
- * @param[in]  mp         Memory pool.
+ * @param[in] mm         Memory manager.
  * @param[in]  name       Field name..
  * @param[in]  nlen       Field name length.
  * @param[in]  type       Field type.
@@ -698,7 +698,7 @@ ib_status_t DLL_PUBLIC ib_field_create_alias(
  */
 ib_status_t DLL_PUBLIC ib_field_create_dynamic(
     ib_field_t        **pf,
-    ib_mpool_t         *mp,
+    ib_mm_t             mm,
     const char         *name,
     size_t              nlen,
     ib_ftype_t          type,
@@ -715,7 +715,7 @@ ib_status_t DLL_PUBLIC ib_field_create_dynamic(
  * one will be reflected in the other and in the underlying storage.
  *
  * @param[out] pf   Address to write new field to.
- * @param[in]  mp   Memory pool.
+ * @param[in] mm   Memory manager.
  * @param[in]  name Field name.
  * @param[in]  nlen Field name length.
  * @param[in]  src  Source field.
@@ -724,7 +724,7 @@ ib_status_t DLL_PUBLIC ib_field_create_dynamic(
  */
 ib_status_t DLL_PUBLIC ib_field_alias(
     ib_field_t **pf,
-    ib_mpool_t  *mp,
+    ib_mm_t      mm,
     const char  *name,
     size_t       nlen,
     const ib_field_t  *src
@@ -741,7 +741,7 @@ ib_status_t DLL_PUBLIC ib_field_alias(
  * This may be fixed in the future.
  *
  * @param[out] pf   Address to write new field to.
- * @param[in]  mp   Memory pool.
+ * @param[in] mm   Memory manager.
  * @param[in]  name Field name.
  * @param[in]  nlen Field name length.
  * @param[in]  src  Source field.
@@ -750,7 +750,7 @@ ib_status_t DLL_PUBLIC ib_field_alias(
  */
 ib_status_t DLL_PUBLIC ib_field_copy(
     ib_field_t       **pf,
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const char        *name,
     size_t             nlen,
     const ib_field_t  *src
@@ -763,7 +763,7 @@ ib_status_t DLL_PUBLIC ib_field_copy(
  * and passing it ib_field_create_no_copy().
  *
  * @param[out] pf   Address to write new field to.
- * @param[in]  mp   Memory pool.
+ * @param[in] mm   Memory manager.
  * @param[in]  name Field name.
  * @param[in]  nlen Field name length.
  * @param[in]  val  Value.
@@ -773,7 +773,7 @@ ib_status_t DLL_PUBLIC ib_field_copy(
  */
 ib_status_t DLL_PUBLIC ib_field_create_bytestr_alias(
     ib_field_t    **pf,
-    ib_mpool_t     *mp,
+    ib_mm_t         mm,
     const char     *name,
     size_t          nlen,
     const uint8_t  *val,
@@ -1032,7 +1032,7 @@ const char DLL_PUBLIC *ib_field_type_name(
  * If the desired type matches the in_field type, out_field is set to NULL
  * and IB_OK is returned.
  *
- * @param[in]  mp Memory pool to use.
+ * @param[in]  mm Memory manager to use.
  * @param[in]  desired_type The type to try to convert this to.
  * @param[in]  in_field The input field.
  * @param[out] out_field The output field to write to.
@@ -1044,7 +1044,7 @@ const char DLL_PUBLIC *ib_field_type_name(
  *   - IB_EALLOC Memory allocation error.
  */
 ib_status_t DLL_PUBLIC ib_field_convert(
-    ib_mpool_t        *mp,
+    ib_mm_t            mm,
     const ib_ftype_t   desired_type,
     const ib_field_t  *in_field,
     ib_field_t       **out_field
@@ -1054,7 +1054,7 @@ ib_status_t DLL_PUBLIC ib_field_convert(
  * Convert a string to a field, trying to treat the string as a number if
  * possible.
  *
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mm Memory manager to use for allocations
  * @param[in] name Field name
  * @param[in] nlen Length of @a name
  * @param[in] vstr Value string
@@ -1065,17 +1065,18 @@ ib_status_t DLL_PUBLIC ib_field_convert(
  *  - Errors from @sa ib_field_create().
  */
 ib_status_t DLL_PUBLIC ib_field_from_string(
-    ib_mpool_t *mp,
-    const char *name,
-    size_t nlen,
-    const char *vstr,
-    ib_field_t **pfield);
+    ib_mm_t      mm,
+    const char  *name,
+    size_t       nlen,
+    const char  *vstr,
+    ib_field_t **pfield
+);
 
 /**
  * Convert a string to a field, trying to treat the string as a number if
  * possible (Extended version).
  *
- * @param[in] mp Memory pool to use for allocations
+ * @param[in] mp Memory manager to use for allocations
  * @param[in] name Field name
  * @param[in] nlen Length of @a name
  * @param[in] vstr Value string
@@ -1084,16 +1085,16 @@ ib_status_t DLL_PUBLIC ib_field_from_string(
  *
  * @returns Status code:
  *  - IB_OK All OK
- *  - Errors from @sa ib_field_create().
+ *  - Errors from ib_field_create().
  */
 ib_status_t DLL_PUBLIC ib_field_from_string_ex(
-    ib_mpool_t *mp,
-    const char *name,
-    size_t nlen,
-    const char *vstr,
-    size_t vlen,
-    ib_field_t **pfield);
-
+    ib_mm_t      mm,
+    const char  *name,
+    size_t       nlen,
+    const char  *vstr,
+    size_t       vlen,
+    ib_field_t **pfield
+);
 
 /**
  * @} IronBeeUtilField

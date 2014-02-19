@@ -166,10 +166,10 @@ TEST_F(TestIBUtilJsonDecode, json_decode_basic)
     const char           *error;
     const ib_list_node_t *node;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, MM());
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_json_decode(MemPool(), "", list, &error);
+    rc = ib_json_decode(MM(), "", list, &error);
     if (error != NULL) {
         printf("Error @ \"%s\"", error);
     }
@@ -177,7 +177,7 @@ TEST_F(TestIBUtilJsonDecode, json_decode_basic)
     ASSERT_EQ(0U, ib_list_elements(list));
 
     ib_list_clear(list);
-    rc = ib_json_decode(MemPool(), buf1, list, &error);
+    rc = ib_json_decode(MM(), buf1, list, &error);
     if (error != NULL) {
         printf("Error @ \"%s\"", error);
     }
@@ -185,7 +185,7 @@ TEST_F(TestIBUtilJsonDecode, json_decode_basic)
     ASSERT_EQ(1U, ib_list_elements(list));
 
     ib_list_clear(list);
-    rc = ib_json_decode(MemPool(), buf2, list, &error);
+    rc = ib_json_decode(MM(), buf2, list, &error);
     if (error != NULL) {
         printf("Error @ \"%s\"", error);
     }
@@ -230,10 +230,10 @@ TEST_F(TestIBUtilJsonDecode, json_decode_complex)
     ib_list_t            *list;
     const ib_list_node_t *node;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, MM());
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_json_decode(MemPool(), buf, list, &error);
+    rc = ib_json_decode(MM(), buf, list, &error);
     if (error != NULL) {
         printf("Error @ \"%s\"", error);
     }
@@ -285,10 +285,10 @@ TEST_F(TestIBUtilJsonDecode, json_decode_nested)
     const ib_list_node_t *node;
     const char           *error = NULL;
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, MM());
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_json_decode(MemPool(), buf, list, &error);
+    rc = ib_json_decode(MM(), buf, list, &error);
     if (error != NULL) {
         printf("Error @ \"%s\"", error);
     }
@@ -401,7 +401,7 @@ public:
         ib_num_t          num = value;
         ib_status_t       rc;
 
-        rc = ib_field_create(&field, MemPool(), IB_S2SL(name),
+        rc = ib_field_create(&field, MM(), IB_S2SL(name),
                              IB_FTYPE_NUM, ib_ftype_num_in(&num));
         ASSERT_EQ(IB_OK, rc);
         AddNode(list, field);
@@ -415,7 +415,7 @@ public:
         ib_float_t        fnum = value;
         ib_status_t       rc;
 
-        rc = ib_field_create(&field, MemPool(), IB_S2SL(name),
+        rc = ib_field_create(&field, MM(), IB_S2SL(name),
                              IB_FTYPE_FLOAT, ib_ftype_float_in(&fnum));
         ASSERT_EQ(IB_OK, rc);
         AddNode(list, field);
@@ -428,7 +428,7 @@ public:
         ib_field_t       *field;
         ib_status_t       rc;
 
-        rc = ib_field_create(&field, MemPool(), IB_S2SL(name),
+        rc = ib_field_create(&field, MM(), IB_S2SL(name),
                              IB_FTYPE_NULSTR, ib_ftype_nulstr_in(value));
         ASSERT_EQ(IB_OK, rc);
         AddNode(list, field);
@@ -441,7 +441,7 @@ public:
         ib_field_t       *field;
         ib_status_t       rc;
 
-        rc = ib_field_create(&field, MemPool(), IB_S2SL(name),
+        rc = ib_field_create(&field, MM(), IB_S2SL(name),
                              IB_FTYPE_LIST, ib_ftype_list_in(ilist));
         ASSERT_EQ(IB_OK, rc);
         AddNode(list, field);
@@ -459,7 +459,7 @@ TEST_P(TestIBUtilJsonEncode, json_encode_basic)
     const ib_list_node_t *node;
     bool                  pretty = GetParam();
 
-    rc = ib_list_create(&list, MemPool());
+    rc = ib_list_create(&list, MM());
     ASSERT_EQ(IB_OK, rc);
 
     AddNode(list, "Zero", 0.0);
@@ -470,16 +470,16 @@ TEST_P(TestIBUtilJsonEncode, json_encode_basic)
     AddNode(list, "Five", "five");
     AddNode(list, "Six", "six");
 
-    rc = ib_json_encode(MemPool(), list, pretty, &buf, &buflen);
+    rc = ib_json_encode(MM(), list, pretty, &buf, &buflen);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(buf);
     ASSERT_NE(0U, buflen);
     //puts(buf);
 
-    rc = ib_list_create(&olist, MemPool());
+    rc = ib_list_create(&olist, MM());
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_json_decode(MemPool(), buf, olist, &error);
+    rc = ib_json_decode(MM(), buf, olist, &error);
     if (error != NULL) {
         printf("Error @ \"%s\"", error);
     }
@@ -520,13 +520,13 @@ TEST_P(TestIBUtilJsonEncode, json_encode_complex)
     bool                  pretty = GetParam();
 
     /* Build the IronBee list */
-    ASSERT_EQ(IB_OK, ib_list_create(&list, MemPool()));
+    ASSERT_EQ(IB_OK, ib_list_create(&list, MM()));
     { SCOPED_TRACE("num"); AddNode(list, "num", 1); }
     { SCOPED_TRACE("float"); AddNode(list, "float", 2.0); }
     { SCOPED_TRACE("str"); AddNode(list, "str", "abc"); }
     {
         ib_list_t *list2;
-        ASSERT_EQ(IB_OK, ib_list_create(&list2, MemPool()));
+        ASSERT_EQ(IB_OK, ib_list_create(&list2, MM()));
         { SCOPED_TRACE("one"); AddNode(list2, "one", 1); }
         { SCOPED_TRACE("two"); AddNode(list2, "two", 2); }
         { SCOPED_TRACE("three"); AddNode(list2, "three", 3); }
@@ -535,15 +535,15 @@ TEST_P(TestIBUtilJsonEncode, json_encode_complex)
     }
 
     /* Encode the IronBee list into JSON */
-    rc = ib_json_encode(MemPool(), list, pretty, &buf, &buflen);
+    rc = ib_json_encode(MM(), list, pretty, &buf, &buflen);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(buf);
     ASSERT_NE(0U, buflen);
     //puts(buf);
 
     /* Decode the JSON into an IronBee list & validate the list */
-    ASSERT_EQ(IB_OK, ib_list_create(&olist, MemPool()));
-    rc = ib_json_decode(MemPool(), buf, olist, &error);
+    ASSERT_EQ(IB_OK, ib_list_create(&olist, MM()));
+    rc = ib_json_decode(MM(), buf, olist, &error);
     if (error != NULL) {
         printf("Error @ \"%s\"", error);
     }
@@ -601,13 +601,13 @@ TEST_P(TestIBUtilJsonEncode, json_encode_nested)
 
 
     /* Build the IronBee list */
-    ASSERT_EQ(IB_OK, ib_list_create(&list, MemPool()));
+    ASSERT_EQ(IB_OK, ib_list_create(&list, MM()));
     { SCOPED_TRACE("num"); AddNode(list, "num", 1); }
     { SCOPED_TRACE("float"); AddNode(list, "float", 1.2); }
     { SCOPED_TRACE("str"); AddNode(list, "str", "abc"); }
     {
         ib_list_t *list2;
-        ASSERT_EQ(IB_OK, ib_list_create(&list2, MemPool()));
+        ASSERT_EQ(IB_OK, ib_list_create(&list2, MM()));
         { SCOPED_TRACE(":1"); AddNode(list2, ":1", 1); }
         { SCOPED_TRACE(":2"); AddNode(list2, ":2", 2.0); }
         { SCOPED_TRACE(":3"); AddNode(list2, ":3", "three"); }
@@ -616,7 +616,7 @@ TEST_P(TestIBUtilJsonEncode, json_encode_nested)
     }
     {
         ib_list_t *list2;
-        ASSERT_EQ(IB_OK, ib_list_create(&list2, MemPool()));
+        ASSERT_EQ(IB_OK, ib_list_create(&list2, MM()));
         { SCOPED_TRACE("v1"); AddNode(list2, "v1", 1); }
         { SCOPED_TRACE("v2"); AddNode(list2, "v2", 2.0); }
         { SCOPED_TRACE("v3"); AddNode(list2, "v3", "three"); }
@@ -626,10 +626,10 @@ TEST_P(TestIBUtilJsonEncode, json_encode_nested)
     }
     {
         ib_list_t *list2;
-        ASSERT_EQ(IB_OK, ib_list_create(&list2, MemPool()));
+        ASSERT_EQ(IB_OK, ib_list_create(&list2, MM()));
         {
             ib_list_t *list3;
-            ASSERT_EQ(IB_OK, ib_list_create(&list3, MemPool()));
+            ASSERT_EQ(IB_OK, ib_list_create(&list3, MM()));
             { SCOPED_TRACE("0"); AddNode(list3, ":0", 2); }
             { SCOPED_TRACE("1"); AddNode(list3, ":1", 3); }
             { SCOPED_TRACE("2"); AddNode(list3, ":2", 4); }
@@ -637,7 +637,7 @@ TEST_P(TestIBUtilJsonEncode, json_encode_nested)
         }
         {
             ib_list_t *list3;
-            ASSERT_EQ(IB_OK, ib_list_create(&list3, MemPool()));
+            ASSERT_EQ(IB_OK, ib_list_create(&list3, MM()));
             { SCOPED_TRACE("v1"); AddNode(list3, "v1", 1.0); }
             { SCOPED_TRACE("v2"); AddNode(list3, "v2", "two"); }
             { SCOPED_TRACE("d"); AddNode(list2, "d", list3); }
@@ -647,17 +647,17 @@ TEST_P(TestIBUtilJsonEncode, json_encode_nested)
     }
 
     /* Encode the IronBee list into JSON */
-    rc = ib_json_encode(MemPool(), list, pretty, &buf, &buflen);
+    rc = ib_json_encode(MM(), list, pretty, &buf, &buflen);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(buf);
     ASSERT_NE(0U, buflen);
     //puts(buf);
 
     /* Decode the JSON into an IronBee list & validate the list */
-    rc = ib_list_create(&olist, MemPool());
+    rc = ib_list_create(&olist, MM());
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_json_decode(MemPool(), buf, olist, &error);
+    rc = ib_json_decode(MM(), buf, olist, &error);
     if (error != NULL) {
         printf("Error @ \"%s\"", error);
     }

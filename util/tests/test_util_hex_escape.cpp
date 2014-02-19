@@ -20,28 +20,36 @@
  * @brief IronBee --- Test hex escape code.
  */
 
+#include <ironbee/mm_mpool.h>
+
 #include "ironbee/escape.h"
 #include <gtest/gtest.h>
 
 TEST(TestUtilHexEscape, basic) {
+    ib_mpool_t *mp;
+    ASSERT_EQ(IB_OK, ib_mpool_create(&mp, "", NULL));
+    ib_mm_t mm = ib_mm_mpool(mp);
+
     const uint8_t *S = (const uint8_t *)"escape me: \01\02";
-    char *s = ib_util_hex_escape(NULL, S, strlen((const char *)S));
+    char *s = ib_util_hex_escape(mm, S, strlen((const char *)S));
 
     ASSERT_STREQ("escape me: 0x10x2", s);
-    free(s);
+    ib_mpool_destroy(mp);
 }
 
 TEST(TestUtilHexEscape, corners)
 {
     char *s;
+    ib_mpool_t *mp;
+    ASSERT_EQ(IB_OK, ib_mpool_create(&mp, "", NULL));
+    ib_mm_t mm = ib_mm_mpool(mp);
 
     const uint8_t *S1 = (const uint8_t *)"\x00";
-    s = ib_util_hex_escape(NULL, S1, 1);
+    s = ib_util_hex_escape(mm, S1, 1);
     ASSERT_STREQ("0x0", s);
-    free(s);
 
     const uint8_t *S2 = (const uint8_t *)"\x10\x11\x80\xff";
-    s = ib_util_hex_escape(NULL, S2, 4);
+    s = ib_util_hex_escape(mm, S2, 4);
     ASSERT_STREQ("0x100x110x800xff", s);
-    free(s);
+    ib_mpool_destroy(mp);
 }

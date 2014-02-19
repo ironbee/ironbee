@@ -26,6 +26,7 @@
 #include <ironbee/cfgmap.h>
 
 #include <ironbee/bytestr.h>
+#include <ironbee/mm_mpool.h>
 #include <ironbee/util.h>
 
 ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
@@ -157,7 +158,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
 
             rc = ib_field_create_dynamic(
                 &f,
-                cm->mp,
+                ib_mm_mpool(cm->mp),
                 rec->name, strlen(rec->name),
                 rec->type,
                 ib_cfgmap_handle_get, data,
@@ -181,7 +182,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
             /* Create a field with data that points to the base+offset. */
             rc = ib_field_create_alias(
                 &f,
-                cm->mp,
+                ib_mm_mpool(cm->mp),
                 rec->name, strlen(rec->name),
                 rec->type,
                 val

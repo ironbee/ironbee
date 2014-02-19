@@ -126,7 +126,7 @@ TEST(TestMM, Helpers)
     {
         const char* s = "Hello World";
 
-        void* a = ib_mm_memdup(mm, const_cast<char*>(s), strlen(s));
+        void* a = ib_mm_memdup(mm, s, strlen(s));
 
         ASSERT_TRUE(a);
         EXPECT_EQ(0, memcmp(s, a, strlen(s)));
@@ -137,7 +137,7 @@ TEST(TestMM, Helpers)
 
         void* a = ib_mm_memdup_to_str(
             mm,
-            const_cast<char*>(s), strlen(s)
+            s, strlen(s)
         );
 
         ASSERT_TRUE(a);

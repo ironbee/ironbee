@@ -26,14 +26,14 @@
 
 #include <ironbee/bytestr.h>
 
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 #include <ironbee/string.h>
 
 #include <assert.h>
 #include <stdbool.h>
 
 struct ib_bytestr_t {
-    ib_mpool_t *mp;
+    ib_mm_t     mm;
     ib_flags_t  flags;
     uint8_t    *data;
     size_t      length;
@@ -56,9 +56,9 @@ size_t ib_bytestr_size(
     return bs->size;
 }
 
-ib_mpool_t* ib_bytestr_mpool(const ib_bytestr_t *bs)
+ib_mm_t ib_bytestr_mm(const ib_bytestr_t *bs)
 {
-    return bs->mp;
+    return bs->mm;
 }
 
 uint8_t *ib_bytestr_ptr(
@@ -83,29 +83,28 @@ const uint8_t DLL_PUBLIC *ib_bytestr_const_ptr(
 
 ib_status_t ib_bytestr_create(
     ib_bytestr_t **pdst,
-    ib_mpool_t    *pool,
+    ib_mm_t        mm,
     size_t         size
 ) {
     assert(pdst != NULL);
-    assert(pool != NULL);
 
     ib_status_t rc;
 
     /* Create the structure. */
-    *pdst = (ib_bytestr_t *)ib_mpool_alloc(pool, sizeof(**pdst));
+    *pdst = (ib_bytestr_t *)ib_mm_alloc(mm, sizeof(**pdst));
     if (*pdst == NULL) {
         rc = IB_EALLOC;
         goto failed;
     }
 
     (*pdst)->data   = NULL;
-    (*pdst)->mp     = pool;
+    (*pdst)->mm     = mm;
     (*pdst)->flags  = 0;
     (*pdst)->size   = size;
     (*pdst)->length = 0;
 
     if (size != 0) {
-        (*pdst)->data = (uint8_t *)ib_mpool_alloc(pool, size);
+        (*pdst)->data = (uint8_t *)ib_mm_alloc(mm, size);
         if ((*pdst)->data == NULL) {
             rc = IB_EALLOC;
             goto failed;
@@ -122,16 +121,15 @@ failed:
 
 ib_status_t ib_bytestr_dup(
     ib_bytestr_t       **pdst,
-    ib_mpool_t          *pool,
+    ib_mm_t              mm,
     const ib_bytestr_t  *src
 ) {
     assert(pdst != NULL);
-    assert(pool != NULL);
 
     ib_status_t rc;
     rc = ib_bytestr_dup_mem(
         pdst,
-        pool,
+        mm,
         ib_bytestr_const_ptr(src),
         ib_bytestr_length(src)
     );
@@ -141,18 +139,17 @@ ib_status_t ib_bytestr_dup(
 
 ib_status_t ib_bytestr_dup_mem(
     ib_bytestr_t  **pdst,
-    ib_mpool_t     *pool,
+    ib_mm_t         mm,
     const uint8_t  *data,
     size_t          data_length
 ) {
     assert(pdst != NULL);
-    assert(pool != NULL);
 
     if (data == NULL && data_length != 0) {
         return IB_EINVAL;
     }
 
-    ib_status_t rc = ib_bytestr_create(pdst, pool, data_length);
+    ib_status_t rc = ib_bytestr_create(pdst, mm, data_length);
     if (rc != IB_OK) {
         return rc;
     }
@@ -168,16 +165,15 @@ ib_status_t ib_bytestr_dup_mem(
 
 ib_status_t ib_bytestr_dup_nulstr(
     ib_bytestr_t **pdst,
-    ib_mpool_t *pool,
-    const char *data
+    ib_mm_t        mm,
+    const char    *data
 ) {
     assert(pdst != NULL);
-    assert(pool != NULL);
     assert(data != NULL);
 
     ib_status_t rc = ib_bytestr_dup_mem(
         pdst,
-        pool,
+        mm,
         (uint8_t *)data,
         strlen(data)
     );
@@ -187,12 +183,11 @@ ib_status_t ib_bytestr_dup_nulstr(
 
 ib_status_t ib_bytestr_alias(
     ib_bytestr_t       **pdst,
-    ib_mpool_t          *pool,
+    ib_mm_t              mm,
     const ib_bytestr_t  *src
 )
 {
     assert(pdst != NULL);
-    assert(pool != NULL);
 
     ib_status_t rc;
 
@@ -202,7 +197,7 @@ ib_status_t ib_bytestr_alias(
 
     rc = ib_bytestr_alias_mem(
         pdst,
-        pool,
+        mm,
         ib_bytestr_const_ptr(src),
         src->length
     );
@@ -212,7 +207,7 @@ ib_status_t ib_bytestr_alias(
 
 ib_status_t ib_bytestr_alias_mem(
     ib_bytestr_t   **pdst,
-    ib_mpool_t      *pool,
+    ib_mm_t          mm,
     const uint8_t   *data,
     size_t           data_length
 )
@@ -221,7 +216,7 @@ ib_status_t ib_bytestr_alias_mem(
         return IB_EINVAL;
     }
 
-    ib_status_t rc = ib_bytestr_create(pdst, pool, 0);
+    ib_status_t rc = ib_bytestr_create(pdst, mm, 0);
     if (rc != IB_OK) {
         return rc;
     }
@@ -237,15 +232,16 @@ ib_status_t ib_bytestr_alias_mem(
     return IB_OK;
 }
 
-ib_status_t ib_bytestr_alias_nulstr(ib_bytestr_t **pdst,
-                                    ib_mpool_t *pool,
-                                    const char *data)
+ib_status_t ib_bytestr_alias_nulstr(
+    ib_bytestr_t **pdst,
+    ib_mm_t        mm,
+    const char    *data
+)
 {
     assert(pdst != NULL);
-    assert(pool != NULL);
 
     ib_status_t rc;
-    rc = ib_bytestr_alias_mem(pdst, pool, (uint8_t *)data, strlen(data));
+    rc = ib_bytestr_alias_mem(pdst, mm, (uint8_t *)data, strlen(data));
 
     return rc;
 }
@@ -329,7 +325,7 @@ ib_status_t ib_bytestr_append_mem(
     new_length = dst_length + data_length;
 
     if (new_length > dst->size) {
-        new_data = (uint8_t *)ib_mpool_alloc(dst->mp, new_length);
+        new_data = (uint8_t *)ib_mm_alloc(dst->mm, new_length);
         if (new_data == NULL) {
             return IB_EALLOC;
         }

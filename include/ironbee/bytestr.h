@@ -27,7 +27,7 @@
 
 #include <ironbee/types.h>
 #include <ironbee/build.h>
-#include <ironbee/mpool.h>
+#include <ironbee/mm.h>
 
 #include <string.h>
 
@@ -82,40 +82,40 @@ typedef struct ib_bytestr_t ib_bytestr_t;
  * Create a byte string.
  *
  * @param pdst Address which new bytestring is written
- * @param pool Memory pool
+ * @param mm Memory manager
  * @param size Size allocated for byte string
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_bytestr_create(ib_bytestr_t **pdst,
-                                         ib_mpool_t *pool,
+                                         ib_mm_t mm,
                                          size_t size);
 
 /**
  * Create a byte string as a copy of another byte string.
  *
  * @param pdst Address which new bytestring is written
- * @param pool Memory pool
+ * @param mm Memory manager
  * @param src Byte string to duplicate
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_bytestr_dup(ib_bytestr_t **pdst,
-                                      ib_mpool_t *pool,
+                                      ib_mm_t mm,
                                       const ib_bytestr_t *src);
 
 /**
  * Create a byte string as a copy of a memory address and length.
  *
  * @param pdst Address which new bytestring is written
- * @param pool Memory pool
+ * @param mm Memory manager
  * @param data Memory address which contains the data
  * @param dlen Length of data
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_bytestr_dup_mem(ib_bytestr_t **pdst,
-                                          ib_mpool_t *pool,
+                                          ib_mm_t mm,
                                           const uint8_t *data,
                                           size_t dlen);
 
@@ -123,13 +123,13 @@ ib_status_t DLL_PUBLIC ib_bytestr_dup_mem(ib_bytestr_t **pdst,
  * Create a byte string as a copy of a NUL terminated string.
  *
  * @param pdst Address which new bytestring is written
- * @param pool Memory pool
+ * @param mm Memory manager
  * @param data String to duplicate
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_bytestr_dup_nulstr(ib_bytestr_t **pdst,
-                                             ib_mpool_t *pool,
+                                             ib_mm_t mm,
                                              const char *data);
 
 /**
@@ -140,13 +140,13 @@ ib_status_t DLL_PUBLIC ib_bytestr_dup_nulstr(ib_bytestr_t **pdst,
  * will both reference the same address.
  *
  * @param pdst Address which new bytestring is written
- * @param pool Memory pool
+ * @param mm Memory manager
  * @param src Byte string to alias
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_bytestr_alias(ib_bytestr_t **pdst,
-                                        ib_mpool_t *pool,
+                                        ib_mm_t mm,
                                         const ib_bytestr_t *src);
 
 /**
@@ -157,14 +157,14 @@ ib_status_t DLL_PUBLIC ib_bytestr_alias(ib_bytestr_t **pdst,
  * as they will both reference the same address.
  *
  * @param pdst Address which new bytestring is written
- * @param pool Memory pool
+ * @param mm Memory manager
  * @param data Memory address which contains the data
  * @param dlen Length of data
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_bytestr_alias_mem(ib_bytestr_t **pdst,
-                                            ib_mpool_t *pool,
+                                            ib_mm_t mm,
                                             const uint8_t *data,
                                             size_t dlen);
 
@@ -176,13 +176,13 @@ ib_status_t DLL_PUBLIC ib_bytestr_alias_mem(ib_bytestr_t **pdst,
  * as they will both reference the same address.
  *
  * @param pdst Address which new bytestring is written
- * @param pool Memory pool
+ * @param mm Memory manager
  * @param data String to alias
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_bytestr_alias_nulstr(ib_bytestr_t **pdst,
-                                               ib_mpool_t *pool,
+                                               ib_mm_t mm,
                                                const char *data);
 
 /**
@@ -268,13 +268,13 @@ size_t DLL_PUBLIC ib_bytestr_length(const ib_bytestr_t *bs);
 size_t DLL_PUBLIC ib_bytestr_size(const ib_bytestr_t *bs);
 
 /**
- * Memory pool associated with byte string.
+ * Memory manager associated with byte string.
  *
  * @param bs Byte string.
  *
- * @returns Memory pool associated with @a bs.
+ * @returns Memory manager associated with @a bs.
  */
-ib_mpool_t DLL_PUBLIC *ib_bytestr_mpool(const ib_bytestr_t *bs);
+ib_mm_t DLL_PUBLIC ib_bytestr_mm(const ib_bytestr_t *bs);
 
 /**
  * Raw buffer containing data in a byte string.

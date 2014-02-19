@@ -398,7 +398,7 @@ static ib_status_t ws_compress(const uint8_t *data_in,
  * @result Status code
  */
 static ib_status_t ws_op(ib_strop_t op,
-                         ib_mpool_t *mp,
+                         ib_mm_t mm,
                          size_t minlen,
                          bool nul,
                          count_fn_t fn_count,
@@ -432,7 +432,7 @@ static ib_status_t ws_op(ib_strop_t op,
     case IB_STROP_COPY:
         fn_count(minlen, data_in, dlen_in, &count, &other);
         olen = dlen_in - count;
-        *data_out = ib_mpool_alloc(mp, olen + (nul ? 1 : 0));
+        *data_out = ib_mm_alloc(mm, olen + (nul ? 1 : 0));
         if (*data_out == NULL) {
             return IB_EALLOC;
         }
@@ -456,7 +456,7 @@ static ib_status_t ws_op(ib_strop_t op,
         }
         else {
             olen = dlen_in - count;
-            *data_out = ib_mpool_alloc(mp, olen + (nul ? 1 : 0));
+            *data_out = ib_mm_alloc(mm, olen + (nul ? 1 : 0));
             if (*data_out == NULL) {
                 return IB_EALLOC;
             }
@@ -478,7 +478,7 @@ static ib_status_t ws_op(ib_strop_t op,
 
 /* Delete all whitespace from a string (extended version) */
 ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
-                                  ib_mpool_t *mp,
+                                  ib_mm_t mm,
                                   uint8_t *data_in,
                                   size_t dlen_in,
                                   uint8_t **data_out,
@@ -487,13 +487,12 @@ ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
 {
     ib_status_t rc = IB_OK;
 
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(dlen_out != NULL);
     assert(result != NULL);
 
-    rc = ws_op(op, mp,
+    rc = ws_op(op, mm,
                1, false,
                ws_remove_count, ws_remove_inplace, ws_remove,
                data_in, dlen_in,
@@ -504,7 +503,7 @@ ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
 
 /* Delete all whitespace from a string (NUL terminated string version) */
 ib_status_t ib_str_wspc_remove(ib_strop_t op,
-                               ib_mpool_t *mp,
+                               ib_mm_t mm,
                                char *data_in,
                                char **data_out,
                                ib_flags_t *result)
@@ -516,7 +515,7 @@ ib_status_t ib_str_wspc_remove(ib_strop_t op,
     assert(data_out != NULL);
     assert(result != NULL);
 
-    rc = ws_op(op, mp,
+    rc = ws_op(op, mm,
                1, true,
                ws_remove_count, ws_remove_inplace, ws_remove,
                (uint8_t *)data_in, strlen(data_in),
@@ -527,7 +526,7 @@ ib_status_t ib_str_wspc_remove(ib_strop_t op,
 
 /* Compress whitespace in a string (extended version) */
 ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
-                                    ib_mpool_t *mp,
+                                    ib_mm_t mm,
                                     uint8_t *data_in,
                                     size_t dlen_in,
                                     uint8_t **data_out,
@@ -536,13 +535,12 @@ ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
 {
     ib_status_t rc = IB_OK;
 
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
     assert(dlen_out != NULL);
     assert(result != NULL);
 
-    rc = ws_op(op, mp,
+    rc = ws_op(op, mm,
                2, false,
                ws_compress_count, ws_compress_inplace, ws_compress,
                data_in, dlen_in,
@@ -553,7 +551,7 @@ ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
 
 /* Compress whitespace in a string (NUL terminated string version) */
 ib_status_t ib_str_wspc_compress(ib_strop_t op,
-                                 ib_mpool_t *mp,
+                                 ib_mm_t mm,
                                  char *data_in,
                                  char **data_out,
                                  ib_flags_t *result)
@@ -565,7 +563,7 @@ ib_status_t ib_str_wspc_compress(ib_strop_t op,
     assert(data_out != NULL);
     assert(result != NULL);
 
-    rc = ws_op(op, mp,
+    rc = ws_op(op, mm,
                2, true,
                ws_compress_count, ws_compress_inplace, ws_compress,
                (uint8_t *)data_in, strlen(data_in),
