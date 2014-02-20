@@ -151,7 +151,7 @@ private:
         };
 
         return m_output_path + "/" +
-            event_id + "." + event_info_e_label[which] + "." +
+			event_info_e_label[which] + "." +
             boost::lexical_cast<string>(id) + ".raw";
     }
 
@@ -171,13 +171,14 @@ private:
     ofstream& output(event_info_e which)
     {
         if (m_info->which != which) {
-            m_info->file.reset(
-                new ofstream(
-                    output_path(m_id, m_info->next_id, which).c_str()
-                )
-            );
+			string path = output_path(m_id, m_info->next_id, which);
+            m_info->file.reset(new ofstream(path));
             ++m_info->next_id;
             m_info->which = which;
+			
+			if (! *(m_info->file)) {
+				throw runtime_error("Error opening file: " + path);
+			}
         }
 
         return *(m_info->file);
