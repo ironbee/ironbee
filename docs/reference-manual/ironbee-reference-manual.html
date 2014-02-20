@@ -613,23 +613,42 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_operators">Operators</a></li>
 <li>
 <ul class="sectlevel3">
+<li><a href="#_clipp_print">clipp_print</a></li>
+<li><a href="#_clipp_print_type">clipp_print_type</a></li>
 <li><a href="#_contains">contains</a></li>
 <li><a href="#_dfa">dfa</a></li>
 <li><a href="#_ee_match_any">ee_match_any</a></li>
+<li><a href="#_ee">ee</a></li>
+<li><a href="#_ee_match">ee_match</a></li>
 <li><a href="#_eq">eq</a></li>
+<li><a href="#_exists">exists</a></li>
+<li><a href="#_false">false</a></li>
 <li><a href="#_ge">ge</a></li>
 <li><a href="#_gt">gt</a></li>
 <li><a href="#_imatch">imatch</a></li>
 <li><a href="#_ipmatch">ipmatch</a></li>
 <li><a href="#_ipmatch6">ipmatch6</a></li>
+<li><a href="#_is_float">is_float</a></li>
+<li><a href="#_is_int">is_int</a></li>
+<li><a href="#_is_sbuffer">is_sbuffer</a></li>
 <li><a href="#_is_sqli">is_sqli</a></li>
+<li><a href="#_is_string">is_string</a></li>
+<li><a href="#_is_time">is_time</a></li>
+<li><a href="#_istreq">istreq</a></li>
 <li><a href="#_le">le</a></li>
 <li><a href="#_lt">lt</a></li>
 <li><a href="#_match">match</a></li>
 <li><a href="#_ne">ne</a></li>
+<li><a href="#_nop">nop</a></li>
+<li><a href="#_parseauthority">parseAuthority</a></li>
+<li><a href="#_parsepath">parsePath</a></li>
+<li><a href="#_parserequestline">parseRequestLine</a></li>
+<li><a href="#_parseresponseline">parseResponseLine</a></li>
+<li><a href="#_parseuri">parseURI</a></li>
+<li><a href="#_pcre">pcre</a></li>
 <li><a href="#_rx">rx</a></li>
 <li><a href="#_streq">streq</a></li>
-<li><a href="#_istreq">istreq</a></li>
+<li><a href="#_true">true</a></li>
 </ul>
 </li>
 <li><a href="#_modifiers_and_actions">Modifiers and Actions</a></li>
@@ -8139,10 +8158,8 @@ information in the HTTP <code>Host</code> request header is ignored</p>
 </tbody>
 </table>
 
-<div class="paragraph">
-<p>Example:</p>
-</div>
 <div class="listingblock">
+<div class="title">Example</div>
 <div class="content">
 <pre>GET /path/to/page?a=5&amp;q=This+is+a+test. HTTP/1.1</pre>
 </div>
@@ -8181,9 +8198,6 @@ information in the HTTP <code>Host</code> request header is ignored</p>
 
 <div class="paragraph">
 <p>This field contains the HTTP method used for the request.</p>
-</div>
-<div class="paragraph">
-<p>Example: <code>GET</code></p>
 </div>
 </div>
 <div class="sect3">
@@ -8726,10 +8740,8 @@ As no URL decoding is performed (this is a raw value), you probably want
 <p>Transactions that do not specify a response line (e.g., HTTP prior to
 1.0) will have an empty string value.</p>
 </div>
-<div class="paragraph">
-<p>Example:</p>
-</div>
 <div class="listingblock">
+<div class="title">Example</div>
 <div class="content">
 <pre>HTTP/1.1 200 OK</pre>
 </div>
@@ -9470,15 +9482,14 @@ to implement SQLi detection. This transformation is based on an example
 in libinjection. The libinjection library is available via:
 <a href="http://www.client9.com/projects/libinjection/">http://www.client9.com/projects/libinjection/</a></p>
 </div>
-<div class="paragraph">
-<p>Example Input/Output:</p>
-</div>
 <div class="listingblock">
+<div class="title">Example Input</div>
 <div class="content">
 <pre>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</pre>
 </div>
 </div>
 <div class="listingblock">
+<div class="title">Example Output</div>
 <div class="content">
 <pre>Output: foo' or 1=1 union select id,passwd from users --</pre>
 </div>
@@ -9510,15 +9521,14 @@ in libinjection. The libinjection library is available via:
 <div class="paragraph">
 <p>Normalize Postgres SQL.</p>
 </div>
-<div class="paragraph">
-<p>Example Input/Output:</p>
-</div>
 <div class="listingblock">
+<div class="title">Example Input</div>
 <div class="content">
 <pre>Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --</pre>
 </div>
 </div>
 <div class="listingblock">
+<div class="title">Example Output</div>
 <div class="content">
 <pre>Output: foo' or 1 = 1 union select id,passwd from users</pre>
 </div>
@@ -9772,7 +9782,102 @@ unless you are trying to inspect multiple levels of encoding.</p>
 <div class="sect2">
 <h3 id="_operators">Operators</h3>
 <div class="paragraph">
-<p>TODO: General description.</p>
+<p>Operators execute some operation over the input. Each operator is configured
+with a parameter in a format interpreted by the operator. At runtime the
+the operator is executed with this parameter and a field as input. Rule actions
+are executed depending on the return value (true or false) for the operator.</p>
+</div>
+<div class="sect3">
+<h4 id="_clipp_print">clipp_print</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Print the message followed by the value of the target, then return true.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>clipp_print &lt;message&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Scalar</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">clipp</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Primarily for processing tests and debugging, this operator allows printing out
+the value of the target prefixed by a message. This operator is only available
+when executing under the clipp command line tool.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example of clipp test utilizing clipp_print in Ruby</div>
+<div class="content">
+<pre>def test_setvar_init_float
+  clipp(
+    :input_hashes =&gt; [simple_hash("GET /foobar/a\n")],
+    :config =&gt; """
+      InitVar A 2.toFloat()
+    """,
+    :default_site_config =&gt; &lt;&lt;-EOS
+      Rule A @clipp_print_type "type of A" id:1 rev:1 phase:REQUEST_HEADER
+      Rule A @clipp_print      "val of A"  id:2 rev:1 phase:REQUEST_HEADER
+    EOS
+  )
+  assert_log_match /val of A.*2/
+  assert_log_match /type of A.*FLOAT/
+end</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_clipp_print_type">clipp_print_type</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Print the message followed by the type of the target, then return true.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>clipp_print &lt;message&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">clipp</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.8</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>This is similar to <code>clipp_print</code>, but prints the target type instead of value.
+See the example under <a href="#_clipp_print">clipp_print</a>.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_contains">contains</h4>
@@ -9788,7 +9893,7 @@ unless you are trying to inspect multiple levels of encoding.</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>contains</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>contains &lt;sub-string&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
@@ -9849,10 +9954,8 @@ addition to streaming support, dfa will also find all matches to the
 pattern when the capture modifier is used. TODO: Describe limits on
 regex syntax.</p>
 </div>
-<div class="paragraph">
-<p>Example of capturing multiple matches:</p>
-</div>
 <div class="listingblock">
+<div class="title">Example of capturing multiple matches</div>
 <div class="content">
 <pre># Capture each item in a '&amp;' separated list
 Rule REQUEST_URI_QUERY @dfa "[^&amp;]*" id:1 rev:1 phase:REQUEST_HEADER capture
@@ -9871,11 +9974,11 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target matches any value in the namedeudoxus automata.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Alias for <a href="#_ee">ee</a>.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ee_match_any</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ee_match_any &lt;named-automata&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
@@ -9893,8 +9996,86 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
 </table>
 
 <div class="paragraph">
-<p>The named eudoxus automata must first be loaded with the <code>LoadEudoxus</code>
-directive</p>
+<p>This operator was renamed to <code>ee</code>.</p>
+</div>
+<div class="paragraph">
+<p>DEPRECATED: Use <a href="#_ee">ee</a> instead.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ee">ee</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target matches any value in the named eudoxus automata.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ee &lt;named-automata&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ee</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>The <code>ee</code> operator is the "Eudoxus Executor". If the target matches any pattern
+in the named Eudoxus automata, then the operator returns true. The named eudoxus
+automata must first be loaded with the the <a href="#_loadeudoxus">LoadEudoxus</a> directive.</p>
+</div>
+<div class="paragraph">
+<p>See also <a href="#_ee_match">ee_match</a> which is similar, but must match the entire target.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ee_match">ee_match</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target fully matches any value in the named eudoxus automata.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ee_match &lt;named-automata&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ee</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Similar to <a href="#_match">match</a> and <a href="#_ee">ee</a>, the operator returns true if the target fully
+matches (pattern anchored start to end) in the named eudoxus automata.</p>
 </div>
 </div>
 <div class="sect3">
@@ -9911,7 +10092,7 @@ directive</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>eq</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>eq &lt;value&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
@@ -9928,6 +10109,82 @@ directive</p>
 </tbody>
 </table>
 
+<div class="paragraph">
+<p>The given value will evaluate any field expansions. It is an error if the value is
+not numeric.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_exists">exists</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target exists (is defined).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>exists &lt;value&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">testops</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Primarily used in testing, this operator returns true if the target exists.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_false">false</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Always returns false, ignoring its parameter.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>false "ignored"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">testops</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Primarily used in testing, this operator always returns false, allowing easier
+testing of negated actions (actions that execute on a false return from an
+operator).</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_ge">ge</h4>
@@ -9943,7 +10200,7 @@ directive</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ge</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ge &lt;value&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
@@ -9960,6 +10217,10 @@ directive</p>
 </tbody>
 </table>
 
+<div class="paragraph">
+<p>The given value will evaluate any field expansions. It is an error if the value is
+not numeric.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_gt">gt</h4>
@@ -9975,7 +10236,7 @@ directive</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>gt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>gt &lt;value&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
@@ -9992,6 +10253,10 @@ directive</p>
 </tbody>
 </table>
 
+<div class="paragraph">
+<p>The given value will evaluate any field expansions. It is an error if the value is
+not numeric.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_imatch">imatch</h4>
@@ -10007,7 +10272,7 @@ directive</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>imatch</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>imatch &lt;value1 value2 ... valueN&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
@@ -10039,7 +10304,7 @@ directive</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ipmatch</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ipmatch &lt;cidr1 cidr2 ... cidrN&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
@@ -10071,7 +10336,7 @@ directive</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ipmatch6</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ipmatch6 &lt;cidr1 cidr2 ... cidrN&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
@@ -10088,6 +10353,111 @@ directive</p>
 </tbody>
 </table>
 
+</div>
+<div class="sect3">
+<h4 id="_is_float">is_float</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target type is a float, ignoring its parameter.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>is_float "ignored"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">testops</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Primarily used in testing, this operator allows inspecting target types.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_is_int">is_int</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target type is an integer, ignoring its parameter.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>is_int "ignored"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">testops</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Primarily used in testing, this operator allows inspecting target types.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_is_sbuffer">is_sbuffer</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target type is a stream buffer, ignoring its parameter.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>is_sbuffer "ignored"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">testops</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Primarily used in testing, this operator allows inspecting target types.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_is_sqli">is_sqli</h4>
@@ -10130,17 +10500,15 @@ is_sqli() function. The libinjection library is available via:
 <p>Currently the data-source must be set to "default" as loading external
 databases is not yet implemented.</p>
 </div>
-<div class="paragraph">
-<p>Example:</p>
-</div>
 <div class="listingblock">
+<div class="title">Example</div>
 <div class="content">
 <pre>Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logdata:%{FIELD} event block:phase</pre>
 </div>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_le">le</h4>
+<h4 id="_is_string">is_string</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
 <col style="width:10%;">
@@ -10149,30 +10517,33 @@ databases is not yet implemented.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically less than or equal to the given value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target type is a string, ignoring its parameter.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>le</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>is_float "ignored"</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">testops</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
 </tr>
 </tbody>
 </table>
 
+<div class="paragraph">
+<p>Primarily used in testing, this operator allows inspecting target types.</p>
+</div>
 </div>
 <div class="sect3">
-<h4 id="_lt">lt</h4>
+<h4 id="_is_time">is_time</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
 <col style="width:10%;">
@@ -10181,30 +10552,33 @@ databases is not yet implemented.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically less than the given value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target type is a timeval, ignoring its parameter.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>lt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>is_float "ignored"</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">testops</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
 </tr>
 </tbody>
 </table>
 
+<div class="paragraph">
+<p>Primarily used in testing, this operator allows inspecting target types.</p>
+</div>
 </div>
 <div class="sect3">
-<h4 id="_match">match</h4>
+<h4 id="_istreq">istreq</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
 <col style="width:10%;">
@@ -10213,11 +10587,11 @@ databases is not yet implemented.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is any of the given whitespace separated words.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">As <code>streq</code>, but case insensitive.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>match</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>istreq &lt;value&gt;</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
@@ -10234,6 +10608,117 @@ databases is not yet implemented.</p>
 </tbody>
 </table>
 
+</div>
+<div class="sect3">
+<h4 id="_le">le</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically less than or equal to the given value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>le &lt;value&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>The given value will evaluate any field expansions. It is an error if the value is
+not numeric.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_lt">lt</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is numerically less than the given value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>lt &lt;value&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>The given value will evaluate any field expansions. It is an error if the value is
+not numeric.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_match">match</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the target is any of the given whitespace separated words.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>match &lt;value1 value2 ... valueN&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="listingblock">
+<div class="title">Example</div>
+<div class="content">
+<pre>Rule REQUEST_METHOD !@match "GET HEAD POST" \
+    id:test/1 phase:REQUEST_HEADER "msg:Not a known method" logdata:%{FIELD} event block:phase</pre>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_ne">ne</h4>
@@ -10266,6 +10751,412 @@ databases is not yet implemented.</p>
 </tbody>
 </table>
 
+<div class="paragraph">
+<p>The given value will evaluate any field expansions. It is an error if the value is
+not numeric.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_nop">nop</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No operation performed. Always returns true and ignores its parameter.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nop "ignored"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.3</p></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<div class="sect3">
+<h4 id="_parseauthority">parseAuthority</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse the authority out of a URI, capturing the values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parseAuthority "ignored"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ps</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Part of the parser suite module which can provide lighter weight parsing.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Parsed values in the capture collection</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>username</p>
+</li>
+<li>
+<p>password</p>
+</li>
+<li>
+<p>host</p>
+</li>
+<li>
+<p>port</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+<div class="listingblock">
+<div class="title">Example</div>
+<div class="content">
+<pre>Rule REQUEST_URI_RAW @parseAuthority "" \
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_AUTH
+Rule PARSED_AUTH:password @rx "some patt" \
+    id:2 phase:REQUEST_HEADER "msg:Weak password" event</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_parsepath">parsePath</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse the path out of a URI, capturing the values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parsePath "ignored"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ps</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Part of the parser suite module which can provide lighter weight parsing.</p>
+</div>
+<div class="paragraph">
+<p>The parameter is interpreted as a path and extension separator.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Parsed values in the capture collection</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>directory</p>
+</li>
+<li>
+<p>file</p>
+</li>
+<li>
+<p>base</p>
+</li>
+<li>
+<p>extension</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+<div class="listingblock">
+<div class="title">Example</div>
+<div class="content">
+<pre>Rule REQUEST_URI_RAW @parsePath "/."
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_PATH
+Rule PARSED_PATH:file @rx "some patt" \
+    id:2 phase:REQUEST_HEADER "msg:Bad filename" event</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_parserequestline">parseRequestLine</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse the request line, capturing the values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parseRequestLine "ignored"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ps</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Part of the parser suite module which can provide lighter weight parsing.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Parsed values in the capture collection</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>method</p>
+</li>
+<li>
+<p>uri</p>
+</li>
+<li>
+<p>version</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+<div class="listingblock">
+<div class="title">Example</div>
+<div class="content">
+<pre>Rule REQUEST_LINE @parseRequestLine ""
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_LINE
+Rule PARSED_LINE:method !@imatch "GET HEAD POST" \
+    id:2 phase:REQUEST_HEADER "msg:Bad method" event</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_parseresponseline">parseResponseLine</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse the response line, capturing the values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parseResponseLine "ignored"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ps</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Part of the parser suite module which can provide lighter weight parsing.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Parsed values in the capture collection</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>version</p>
+</li>
+<li>
+<p>status</p>
+</li>
+<li>
+<p>message</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+<div class="listingblock">
+<div class="title">Example</div>
+<div class="content">
+<pre>Rule RESPONSE_LINE @parseResponseLine ""
+    id:1 phase:RESPONSE_HEADER CAPTURE:PARSED_LINE
+Rule PARSED_LINE:message @rx "some patt" \
+    id:2 phase:RESPONSE_HEADER "msg:Bad response" event</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_parseuri">parseURI</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse the URI, capturing the values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parseUri "ignored"</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ps</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Part of the parser suite module which can provide lighter weight parsing.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Parsed values in the capture collection</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>scheme</p>
+</li>
+<li>
+<p>authority</p>
+</li>
+<li>
+<p>path</p>
+</li>
+<li>
+<p>query</p>
+</li>
+<li>
+<p>fragment</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+<div class="listingblock">
+<div class="title">Example</div>
+<div class="content">
+<pre>Rule REQUEST_URI_RAW @parseURI ""
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_URI
+Rule PARSED_URI:path @rx "some patt" \
+    id:2 phase:REQUEST_HEADER "msg:Bad URI path" event</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_pcre">pcre</h4>
+<table class="tableblock frame-all grid-all" style="width:100%; ">
+<colgroup>
+<col style="width:10%;">
+<col style="width:90%;"> 
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">As <code>rx</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>pcre &lt;regex&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">pcre</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2</p></td>
+</tr>
+</tbody>
+</table>
+
+<div class="paragraph">
+<p>Same as the <code>rx</code> operator.</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_rx">rx</h4>
@@ -10308,9 +11199,10 @@ pattern that is passed to the PCRE library without modification.</p>
 <pre>Rule ARGS:userId !@rx "^[0-9]+$"</pre>
 </div>
 </div>
-<div class="paragraph">
-<p>Patterns are compiled with the following settings:</p>
-</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Patterns are compiled with the following settings</dt>
+<dd>
 <div class="ulist">
 <ul>
 <li>
@@ -10325,6 +11217,9 @@ done.</p>
 set.</p>
 </li>
 </ul>
+</div>
+</dd>
+</dl>
 </div>
 <div class="paragraph">
 <p>Using captured substrings to create variables</p>
@@ -10381,7 +11276,7 @@ until the next capture rule is run, when they will all be deleted.</p>
 
 </div>
 <div class="sect3">
-<h4 id="_istreq">istreq</h4>
+<h4 id="_true">true</h4>
 <table class="tableblock frame-all grid-all" style="width:100%; ">
 <colgroup>
 <col style="width:10%;">
@@ -10390,27 +11285,31 @@ until the next capture rule is run, when they will all be deleted.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Description</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">As <code>streq</code>, but case insensitive.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Always returns true, ignoring its parameter.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>istreq</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true "ignored"</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">core</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">testops</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.9</p></td>
 </tr>
 </tbody>
 </table>
 
+<div class="paragraph">
+<p>Primarily used in testing, this operator always returns false, allowing easier
+testing of actions.</p>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -10656,10 +11555,8 @@ in the chain.</p>
 </li>
 </ul>
 </div>
-<div class="paragraph">
-<p>Example:</p>
-</div>
 <div class="listingblock">
+<div class="title">Example</div>
 <div class="content">
 <pre># Start a rule chain, which matches only POST requests. The implicit ID here
 # will be set to "id:1-1".

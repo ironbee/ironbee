@@ -487,8 +487,7 @@ Normalization [TODO What RFC should we refer to?]:
 |    Version|0.3
 |===============================================================================
 
-Example:
-
+.Example
 ------------------------------------------------
 GET /path/to/page?a=5&q=This+is+a+test. HTTP/1.1
 ------------------------------------------------
@@ -504,8 +503,6 @@ GET /path/to/page?a=5&q=This+is+a+test. HTTP/1.1
 |===============================================================================
 
 This field contains the HTTP method used for the request.
-
-Example: `GET`
 
 ==== REQUEST_PROTOCOL
 [cols=">h,<9"]
@@ -684,8 +681,7 @@ As no URL decoding is performed (this is a raw value), you probably want
 Transactions that do not specify a response line (e.g., HTTP prior to
 1.0) will have an empty string value.
 
-Example:
-
+.Example
 ---------------
 HTTP/1.1 200 OK
 ---------------
@@ -957,12 +953,12 @@ to implement SQLi detection. This transformation is based on an example
 in libinjection. The libinjection library is available via:
 http://www.client9.com/projects/libinjection/
 
-Example Input/Output:
-
+.Example Input
 ----------------------------------------------------------------------------------
 Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
 ----------------------------------------------------------------------------------
 
+.Example Output
 --------------------------------------------------------
 Output: foo' or 1=1 union select id,passwd from users --
 --------------------------------------------------------
@@ -977,14 +973,14 @@ Output: foo' or 1=1 union select id,passwd from users --
 
 Normalize Postgres SQL.
 
-Example Input/Output:
-
+.Example Input
 ----------------------------------------------------------------------------------
 Input: foo' /* x */   or 1/* y -- */=/* z */1 union select id,passwd from users --
 ----------------------------------------------------------------------------------
 
+.Example Output
 --------------------------------------------------------
-Output: foo' or 1 = 1 union select id,passwd from users 
+Output: foo' or 1 = 1 union select id,passwd from users
 --------------------------------------------------------
 
 ==== removeWhitespace
@@ -1079,13 +1075,61 @@ unless you are trying to inspect multiple levels of encoding.
 Operators
 ~~~~~~~~~
 
-TODO: General description.
+Operators execute some operation over the input. Each operator is configured
+with a parameter in a format interpreted by the operator. At runtime the
+the operator is executed with this parameter and a field as input. Rule actions
+are executed depending on the return value (true or false) for the operator.
+
+==== clipp_print
+[cols=">h,<9"]
+|===============================================================================
+|Description|Print the message followed by the value of the target, then return true.
+|     Syntax|`clipp_print <message>`
+|      Types|Scalar
+|     Module|clipp
+|    Version|0.8
+|===============================================================================
+
+Primarily for processing tests and debugging, this operator allows printing out
+the value of the target prefixed by a message. This operator is only available
+when executing under the clipp command line tool.
+
+.Example of clipp test utilizing clipp_print in Ruby
+--------------------------------------------------------------------------
+def test_setvar_init_float
+  clipp(
+    :input_hashes => [simple_hash("GET /foobar/a\n")],
+    :config => """
+      InitVar A 2.toFloat()
+    """,
+    :default_site_config => <<-EOS
+      Rule A @clipp_print_type "type of A" id:1 rev:1 phase:REQUEST_HEADER
+      Rule A @clipp_print      "val of A"  id:2 rev:1 phase:REQUEST_HEADER
+    EOS
+  )
+  assert_log_match /val of A.*2/
+  assert_log_match /type of A.*FLOAT/
+end
+--------------------------------------------------------------------------
+
+==== clipp_print_type
+[cols=">h,<9"]
+|===============================================================================
+|Description|Print the message followed by the type of the target, then return true.
+|     Syntax|`clipp_print <message>`
+|      Types|Any
+|     Module|clipp
+|    Version|0.8
+|===============================================================================
+
+This is similar to `clipp_print`, but prints the target type instead of value.
+See the example under <<_clipp_print>>.
 
 ==== contains
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target contains the given sub-string.
-|     Syntax|`contains`
+|     Syntax|`contains <sub-string>`
 |      Types|String
 |     Module|core
 |    Version|0.3
@@ -1112,8 +1156,7 @@ addition to streaming support, dfa will also find all matches to the
 pattern when the capture modifier is used. TODO: Describe limits on
 regex syntax.
 
-Example of capturing multiple matches:
-
+.Example of capturing multiple matches
 -------------------------------------------------------------------------------------------------
 # Capture each item in a '&' separated list
 Rule REQUEST_URI_QUERY @dfa "[^&]*" id:1 rev:1 phase:REQUEST_HEADER capture
@@ -1124,51 +1167,116 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
 ==== ee_match_any
 [cols=">h,<9"]
 |===============================================================================
-|Description|Returns true if the target matches any value in the namedeudoxus automata.
-|     Syntax|`ee_match_any`
+|Description|Alias for <<_ee>>.
+|     Syntax|`ee_match_any <named-automata>`
 |      Types|String
 |     Module|ee
 |    Version|0.7
 |===============================================================================
 
-The named eudoxus automata must first be loaded with the `LoadEudoxus`
-directive
+This operator was renamed to `ee`.
+
+DEPRECATED: Use <<_ee>> instead.
+
+==== ee
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target matches any value in the named eudoxus automata.
+|     Syntax|`ee <named-automata>`
+|      Types|String
+|     Module|ee
+|    Version|0.7
+|===============================================================================
+
+The `ee` operator is the "Eudoxus Executor". If the target matches any pattern
+in the named Eudoxus automata, then the operator returns true. The named eudoxus
+automata must first be loaded with the the <<_loadeudoxus>> directive.
+
+See also <<_ee_match>> which is similar, but must match the entire target.
+
+==== ee_match
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target fully matches any value in the named eudoxus automata.
+|     Syntax|`ee_match <named-automata>`
+|      Types|String
+|     Module|ee
+|    Version|0.7
+|===============================================================================
+
+Similar to <<_match>> and <<_ee>>, the operator returns true if the target fully
+matches (pattern anchored start to end) in the named eudoxus automata.
 
 ==== eq
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically equal to the given value.
-|     Syntax|`eq`
+|     Syntax|`eq <value>`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
 |===============================================================================
+
+The given value will evaluate any field expansions. It is an error if the value is
+not numeric.
+
+==== exists
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target exists (is defined).
+|     Syntax|`exists <value>`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator returns true if the target exists.
+
+==== false
+[cols=">h,<9"]
+|===============================================================================
+|Description|Always returns false, ignoring its parameter.
+|     Syntax|`false "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator always returns false, allowing easier
+testing of negated actions (actions that execute on a false return from an
+operator).
 
 ==== ge
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically greater than or equal to the given value.
-|     Syntax|`ge`
+|     Syntax|`ge <value>`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
 |===============================================================================
+
+The given value will evaluate any field expansions. It is an error if the value is
+not numeric.
 
 ==== gt
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically greater than the given value.
-|     Syntax|`gt`
+|     Syntax|`gt <value>`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
 |===============================================================================
 
+The given value will evaluate any field expansions. It is an error if the value is
+not numeric.
+
 ==== imatch
 [cols=">h,<9"]
 |===============================================================================
 |Description|As `match`, but case insensitive.
-|     Syntax|`imatch`
+|     Syntax|`imatch <value1 value2 ... valueN>`
 |      Types|String
 |     Module|core
 |    Version|0.7
@@ -1178,7 +1286,7 @@ directive
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if a target IPv4 address matches any given whitespace separated address in CIDR format.
-|     Syntax|`ipmatch`
+|     Syntax|`ipmatch <cidr1 cidr2 ... cidrN>`
 |      Types|String
 |     Module|core
 |    Version|0.3
@@ -1188,11 +1296,47 @@ directive
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if a target IPv6 address matches any given whitespace separated address in CIDR format.
-|     Syntax|`ipmatch6`
+|     Syntax|`ipmatch6 <cidr1 cidr2 ... cidrN>`
 |      Types|String
 |     Module|core
 |    Version|0.3
 |===============================================================================
+
+==== is_float
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target type is a float, ignoring its parameter.
+|     Syntax|`is_float "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator allows inspecting target types.
+
+==== is_int
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target type is an integer, ignoring its parameter.
+|     Syntax|`is_int "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator allows inspecting target types.
+
+==== is_sbuffer
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target type is a stream buffer, ignoring its parameter.
+|     Syntax|`is_sbuffer "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator allows inspecting target types.
 
 ==== is_sqli
 [cols=">h,<9"]
@@ -1212,41 +1356,86 @@ http://www.client9.com/projects/libinjection/
 Currently the data-source must be set to "default" as loading external
 databases is not yet implemented.
 
-Example:
-
+.Example
 --------------------------------------------------------------------------------------------------------------
 Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logdata:%{FIELD} event block:phase
 --------------------------------------------------------------------------------------------------------------
+
+==== is_string
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target type is a string, ignoring its parameter.
+|     Syntax|`is_float "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator allows inspecting target types.
+
+==== is_time
+[cols=">h,<9"]
+|===============================================================================
+|Description|Returns true if the target type is a timeval, ignoring its parameter.
+|     Syntax|`is_float "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
+|===============================================================================
+
+Primarily used in testing, this operator allows inspecting target types.
+
+==== istreq
+[cols=">h,<9"]
+|===============================================================================
+|Description|As `streq`, but case insensitive.
+|     Syntax|`istreq <value>`
+|      Types|String
+|     Module|core
+|    Version|0.7
+|===============================================================================
 
 ==== le
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically less than or equal to the given value.
-|     Syntax|`le`
+|     Syntax|`le <value>`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
 |===============================================================================
+
+The given value will evaluate any field expansions. It is an error if the value is
+not numeric.
 
 ==== lt
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is numerically less than the given value.
-|     Syntax|`lt`
+|     Syntax|`lt <value>`
 |      Types|Numeric
 |     Module|core
 |    Version|0.3
 |===============================================================================
 
+The given value will evaluate any field expansions. It is an error if the value is
+not numeric.
+
 ==== match
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the target is any of the given whitespace separated words.
-|     Syntax|`match`
+|     Syntax|`match <value1 value2 ... valueN>`
 |      Types|String
 |     Module|core
 |    Version|0.7
 |===============================================================================
+
+.Example
+----------------------------------------------------------------------------------------------
+Rule REQUEST_METHOD !@match "GET HEAD POST" \
+    id:test/1 phase:REQUEST_HEADER "msg:Not a known method" logdata:%{FIELD} event block:phase
+----------------------------------------------------------------------------------------------
 
 ==== ne
 [cols=">h,<9"]
@@ -1257,6 +1446,162 @@ Rule ARGS @is_sqli default id:test/sqli/1 phase:REQUEST "msg:Detected SQLi" logd
 |     Module|core
 |    Version|0.3
 |===============================================================================
+
+The given value will evaluate any field expansions. It is an error if the value is
+not numeric.
+
+==== nop
+[cols=">h,<9"]
+|===============================================================================
+|Description|No operation performed. Always returns true and ignores its parameter.
+|     Syntax|`nop "ignored"`
+|      Types|Any
+|     Module|core
+|    Version|0.3
+|===============================================================================
+
+==== parseAuthority
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parse the authority out of a URI, capturing the values.
+|     Syntax|`parseAuthority "ignored"`
+|      Types|Any
+|     Module|ps
+|    Version|0.9
+|===============================================================================
+
+Part of the parser suite module which can provide lighter weight parsing.
+
+Parsed values in the capture collection::
+* username
+* password
+* host
+* port
+
+.Example
+-------------------------------------------------------
+Rule REQUEST_URI_RAW @parseAuthority "" \
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_AUTH
+Rule PARSED_AUTH:password @rx "some patt" \
+    id:2 phase:REQUEST_HEADER "msg:Weak password" event
+-------------------------------------------------------
+
+==== parsePath
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parse the path out of a URI, capturing the values.
+|     Syntax|`parsePath "ignored"`
+|      Types|Any
+|     Module|ps
+|    Version|0.9
+|===============================================================================
+
+Part of the parser suite module which can provide lighter weight parsing.
+
+The parameter is interpreted as a path and extension separator.
+
+Parsed values in the capture collection::
+* directory
+* file
+* base
+* extension
+
+.Example
+------------------------------------------------------
+Rule REQUEST_URI_RAW @parsePath "/."
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_PATH
+Rule PARSED_PATH:file @rx "some patt" \
+    id:2 phase:REQUEST_HEADER "msg:Bad filename" event
+------------------------------------------------------
+
+==== parseRequestLine
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parse the request line, capturing the values.
+|     Syntax|`parseRequestLine "ignored"`
+|      Types|Any
+|     Module|ps
+|    Version|0.9
+|===============================================================================
+
+Part of the parser suite module which can provide lighter weight parsing.
+
+Parsed values in the capture collection::
+* method
+* uri
+* version
+
+.Example
+------------------------------------------------------
+Rule REQUEST_LINE @parseRequestLine ""
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_LINE
+Rule PARSED_LINE:method !@imatch "GET HEAD POST" \
+    id:2 phase:REQUEST_HEADER "msg:Bad method" event
+------------------------------------------------------
+
+==== parseResponseLine
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parse the response line, capturing the values.
+|     Syntax|`parseResponseLine "ignored"`
+|      Types|Any
+|     Module|ps
+|    Version|0.9
+|===============================================================================
+
+Part of the parser suite module which can provide lighter weight parsing.
+
+Parsed values in the capture collection::
+* version
+* status
+* message
+
+.Example
+-------------------------------------------------------
+Rule RESPONSE_LINE @parseResponseLine ""
+    id:1 phase:RESPONSE_HEADER CAPTURE:PARSED_LINE
+Rule PARSED_LINE:message @rx "some patt" \
+    id:2 phase:RESPONSE_HEADER "msg:Bad response" event
+-------------------------------------------------------
+
+==== parseURI
+[cols=">h,<9"]
+|===============================================================================
+|Description|Parse the URI, capturing the values.
+|     Syntax|`parseUri "ignored"`
+|      Types|Any
+|     Module|ps
+|    Version|0.9
+|===============================================================================
+
+Part of the parser suite module which can provide lighter weight parsing.
+
+Parsed values in the capture collection::
+* scheme
+* authority
+* path
+* query
+* fragment
+
+.Example
+------------------------------------------------------
+Rule REQUEST_URI_RAW @parseURI ""
+    id:1 phase:REQUEST_HEADER CAPTURE:PARSED_URI
+Rule PARSED_URI:path @rx "some patt" \
+    id:2 phase:REQUEST_HEADER "msg:Bad URI path" event
+------------------------------------------------------
+
+==== pcre
+[cols=">h,<9"]
+|===============================================================================
+|Description|As `rx`
+|     Syntax|`pcre <regex>`
+|      Types|String
+|     Module|pcre
+|    Version|0.2
+|===============================================================================
+
+Same as the `rx` operator.
 
 ==== rx
 [cols=">h,<9"]
@@ -1276,8 +1621,7 @@ pattern that is passed to the PCRE library without modification.
 Rule ARGS:userId !@rx "^[0-9]+$"
 --------------------------------
 
-Patterns are compiled with the following settings:
-
+Patterns are compiled with the following settings::
 * Entire input is treated as a single buffer against which matching is
 done.
 * Patterns are case-sensitive by default.
@@ -1311,15 +1655,18 @@ until the next capture rule is run, when they will all be deleted.
 |    Version|0.3
 |===============================================================================
 
-==== istreq
+==== true
 [cols=">h,<9"]
 |===============================================================================
-|Description|As `streq`, but case insensitive.
-|     Syntax|`istreq`
-|      Types|String
-|     Module|core
-|    Version|0.7
+|Description|Always returns true, ignoring its parameter.
+|     Syntax|`true "ignored"`
+|      Types|Any
+|     Module|testops
+|    Version|0.9
 |===============================================================================
+
+Primarily used in testing, this operator always returns false, allowing easier
+testing of actions.
 
 Modifiers and Actions
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1430,8 +1777,7 @@ tags will be bound to the entire rule chain so that RuleEnable and
 similar will act on the entire rule chain, not just an individual rule
 in the chain.
 
-Example:
-
+.Example
 ---------------------------------------------------------------------------------------------------------
 # Start a rule chain, which matches only POST requests. The implicit ID here
 # will be set to "id:1-1".
@@ -1489,7 +1835,7 @@ def test_args_bar
     default_site_config: => <<-EOS
       Rule ARGS @match "bar" id:1 phase:REQUEST_HEADER clipp_announce:A
     EOS
-  ) do 
+  ) do
     transaction do |t|
       t.request(
         raw: "GET /foo?x=bar HTTP/1.1"
@@ -1498,7 +1844,7 @@ def test_args_bar
   end
   assert_no_issues
   assert_log_match /CLIPP ANNOUNCE: A/
-end    
+end
 -----------------------------------------------------------------------
 
 ==== delRequestHeader
