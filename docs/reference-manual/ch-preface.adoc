@@ -19,49 +19,49 @@ As a framework, IronBee's goals are as follows:
 
 Be minimalistic in what is contained in the core engine::
 
-The IronBee core engine does essentially nothing but expose an API and
-an event subsystem. There is no rule language, there is no inspection
-and there is only minimal processing of the HTTP transaction cycle.
-Everything else is left to modules. Load only the modules that provide
-functionality that is required.
+  The IronBee core engine does essentially nothing but expose an API and
+  an event subsystem. There is no rule language, there is no inspection
+  and there is only minimal processing of the HTTP transaction cycle.
+  Everything else is left to modules. Load only the modules that provide
+  functionality that is required.
 
 Provide an simple API for data acquisition::
 
-Data acquisition is not a part of the IronBee engine. Instead, the
-engine exposes an API to allow data to be fed to IronBee in various
-ways. Data acquisition is done through server plugins, which must load
-the IronBee engine and pass it data. This leaves IronBee open to being
-embedded in nearly anything that can pass HTTP data to IronBee.
+  Data acquisition is not a part of the IronBee engine. Instead, the
+  engine exposes an API to allow data to be fed to IronBee in various
+  ways. Data acquisition is done through server plugins, which must load
+  the IronBee engine and pass it data. This leaves IronBee open to being
+  embedded in nearly anything that can pass HTTP data to IronBee.
 
 Provide an API to allow extension through external modules::
 
-To IronBee, modules are everything. Modules utilize the core engine to
-implement additional functionality. Currently modules can be written in
-C, C++ or Lua, but extending this to other languages is possible as
-well.
+  To IronBee, modules are everything. Modules utilize the core engine to
+  implement additional functionality. Currently modules can be written in
+  C, C++ or Lua, but extending this to other languages is possible as
+  well.
 
 Allow for modular inspection::
 
-Do not tie inspection to a fixed rule/signature language, but rather,
-allow this to be implemented by modules. Different types of inspection
-require different means. Because of this, IronBee only exposes a
-generic rule execution engine, but does not dictate the language in
-which rules are written. Currently, inspection can be performed in a
-variety of ways.
+  Do not tie inspection to a fixed rule/signature language, but rather,
+  allow this to be implemented by modules. Different types of inspection
+  require different means. Because of this, IronBee only exposes a
+  generic rule execution engine, but does not dictate the language in
+  which rules are written. Currently, inspection can be performed in a
+  variety of ways.
 
 Allow for interaction with external systems::
 
-Being a framework, IronBee is meant to be embedded and interact with
-other systems. Because of this, IronBee does not dictate how it is
-managed. There is no facility for managing configuration, rules or logs.
-This is left up to the administrator and/or product that in which
-ironbee is embedded. This does not mean that IronBee does not provide
-some means for these, but rather it does not dictate them. While this
-may seem limiting, it allows for great flexibility in how IronBee is
-managed. It is certainly possible to replace the file based
-configuration with one that interacts with a database, to manage rules
-from an external system and/or write logs to something other than the
-filesystem.
+  Being a framework, IronBee is meant to be embedded and interact with
+  other systems. Because of this, IronBee does not dictate how it is
+  managed. There is no facility for managing configuration, rules or logs.
+  This is left up to the administrator and/or product that in which
+  ironbee is embedded. This does not mean that IronBee does not provide
+  some means for these, but rather it does not dictate them. While this
+  may seem limiting, it allows for great flexibility in how IronBee is
+  managed. It is certainly possible to replace the file based
+  configuration with one that interacts with a database, to manage rules
+  from an external system and/or write logs to something other than the
+  filesystem.
 
 .About Qualys
 ************************************************************************

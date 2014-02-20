@@ -1,9 +1,9 @@
 IronBee Configuration
 ---------------------
 
-The IronBee configuration is loaded from the server container. The
-syntax is similar to the Apache httpd server configuration. The
-following rules apply:
+The IronBee configuration is loaded from the server container.
+The syntax is similar to the Apache httpd server configuration.
+The following rules apply:
 
 * Escape sequences are as in JavaScript (section 7.8.4 in ECMA-262),
 except within PCRE regular expression patterns, where PCRE escaping is

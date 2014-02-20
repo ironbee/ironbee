@@ -1342,7 +1342,7 @@ Primarily used in testing, this operator allows inspecting target types.
 [cols=">h,<9"]
 |===============================================================================
 |Description|Returns true if the data is determined to be SQLinjection via the libinjection library.
-|     Syntax|`is_sqli`
+|     Syntax|`is_sqli <"default" | pattern-set-name>`
 |      Types|String
 |     Module|libinjection
 |    Version|0.7
@@ -1353,8 +1353,9 @@ to implement SQLi detection. This operator is similar to libinjection's
 is_sqli() function. The libinjection library is available via:
 http://www.client9.com/projects/libinjection/
 
-Currently the data-source must be set to "default" as loading external
-databases is not yet implemented.
+The pattern set can be set to "default" to use the default libinjection set, or
+can be changed to use a custom named set mapped via the <<_sqlipatternset>>
+directive.
 
 .Example
 --------------------------------------------------------------------------------------------------------------

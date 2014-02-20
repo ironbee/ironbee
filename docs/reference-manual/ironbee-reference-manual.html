@@ -1804,9 +1804,9 @@ http {
 <h2 id="_ironbee_configuration">IronBee Configuration</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The IronBee configuration is loaded from the server container. The
-syntax is similar to the Apache httpd server configuration. The
-following rules apply:</p>
+<p>The IronBee configuration is loaded from the server container.
+The syntax is similar to the Apache httpd server configuration.
+The following rules apply:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -10473,19 +10473,19 @@ not numeric.</p>
 </tr>
 <tr>
 <td class="tableblock halign-right valign-top"><p class="tableblock header">Syntax</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>is_sqli</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">`is_sqli &lt;"default"</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Types</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">pattern-set-name&gt;`</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Types</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">libinjection</p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Module</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-right valign-top"><p class="tableblock header">Version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.7</p></td>
+<td class="tableblock halign-right valign-top"><p class="tableblock header">libinjection</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Version</p></td>
 </tr>
 </tbody>
 </table>
@@ -10497,8 +10497,9 @@ is_sqli() function. The libinjection library is available via:
 <a href="http://www.client9.com/projects/libinjection/">http://www.client9.com/projects/libinjection/</a></p>
 </div>
 <div class="paragraph">
-<p>Currently the data-source must be set to "default" as loading external
-databases is not yet implemented.</p>
+<p>The pattern set can be set to "default" to use the default libinjection set, or
+can be changed to use a custom named set mapped via the <a href="#_sqlipatternset">[_sqlipatternset]</a>
+directive.</p>
 </div>
 <div class="listingblock">
 <div class="title">Example</div>
