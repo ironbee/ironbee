@@ -345,24 +345,38 @@ static ib_status_t modhtp_param_iter_callback(
     ib_field_t *field;
     ib_status_t rc;
 
-    /* The value needs to be non-NULL, however an assert is inappropriate
-     * as this is dependent on libHTP, not IronBee. */
-    if ((param == NULL) || (param->value == NULL)) {
-        return IB_EINVAL;
-    }
-
     /* Ignore if from wrong source */
     if (param->source != idata->source) {
         return IB_OK;
     }
 
-    /* Create a list field as an alias into htp memory. */
-    rc = ib_field_create_bytestr_alias(&field,
-                                       tx->mp,
-                                       (const char *)bstr_ptr(key),
-                                       bstr_len(key),
-                                       (uint8_t *)bstr_ptr(param->value),
-                                       bstr_len(param->value));
+    /* The param needs to be non-NULL, however an assert is inappropriate
+     * as this is dependent on libHTP, not IronBee. */
+    if (param == NULL) {
+        ib_log_info_tx(tx, "param NULL");
+        return IB_EINVAL;
+    }
+
+    /* Treat a NULL param->value as a zero length buffer. */
+    if (param->value == NULL) {
+        /* Create an empty value. */
+        rc = ib_field_create_bytestr_alias(&field,
+                                           tx->mp,
+                                           (const char *)bstr_ptr(key),
+                                           bstr_len(key),
+                                           (uint8_t *)"",
+                                           0);
+    }
+    else {
+        /* Create a list field as an alias into htp memory. */
+        rc = ib_field_create_bytestr_alias(&field,
+                                           tx->mp,
+                                           (const char *)bstr_ptr(key),
+                                           bstr_len(key),
+                                           (uint8_t *)bstr_ptr(param->value),
+                                           bstr_len(param->value));
+    }
+
     if (rc != IB_OK) {
         ib_log_notice_tx(tx, "Error creating field: %s",
                          ib_status_to_string(rc));
