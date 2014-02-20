@@ -172,7 +172,7 @@ private:
     {
         if (m_info->which != which) {
 			string path = output_path(m_id, m_info->next_id, which);
-            m_info->file.reset(new ofstream(path));
+            m_info->file.reset(new ofstream(path.c_str()));
             ++m_info->next_id;
             m_info->which = which;
 			
