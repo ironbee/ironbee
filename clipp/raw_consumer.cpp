@@ -47,6 +47,7 @@ class RawConsumerDelegate :
 public:
     explicit
     RawConsumerDelegate(const string& output_path) :
+        m_next_event_id(1),
         m_output_path(output_path),
         m_info(NULL)
     {
@@ -87,6 +88,11 @@ public:
         output(REQUEST) << event.data;
     }
 
+    void request_finished(const Input::NullEvent&)
+    {
+        output(REQUEST).close();
+    }
+
     void response_started(const Input::ResponseEvent& event)
     {
         ofstream& out = output(RESPONSE);
@@ -122,16 +128,20 @@ public:
         output(RESPONSE) << event.data;
     }
 
+    void response_finished(const Input::NullEvent&)
+    {
+        output(RESPONSE).close();
+    }
+
     void begin_input(const string& id)
     {
-        m_id = id;
-
-        event_map_t::iterator i = m_event_infos.find(m_id);
+        event_map_t::iterator i = m_event_infos.find(id);
         if (i == m_event_infos.end()) {
             i = m_event_infos.insert(
                 i,
-                make_pair(m_id, event_info_t())
+                make_pair(id, event_info_t(m_next_event_id))
             );
+            ++m_next_event_id;
         }
         m_info = &i->second;
     }
@@ -142,7 +152,7 @@ private:
         REQUEST,
         RESPONSE
     };
-    string output_path(const string& event_id, size_t id, event_info_e which)
+    string output_path(size_t event_id, size_t id, event_info_e which)
     {
         static const string event_info_e_label[] = {
             "none",
@@ -151,19 +161,21 @@ private:
         };
 
         return m_output_path + "/" +
+            boost::lexical_cast<string>(event_id) + "." +
 			event_info_e_label[which] + "." +
             boost::lexical_cast<string>(id) + ".raw";
     }
 
     struct event_info_t
     {
-        event_info_t() :
-            which(NONE), next_id(1)
+        event_info_t(size_t event_id_) :
+            which(NONE), event_id(event_id_), next_id(1)
         {
             // nop
         }
 
         event_info_e which;
+        size_t event_id;
         size_t next_id;
         boost::shared_ptr<ofstream> file;
     };
@@ -171,11 +183,12 @@ private:
     ofstream& output(event_info_e which)
     {
         if (m_info->which != which) {
-			string path = output_path(m_id, m_info->next_id, which);
+			string path =
+                output_path(m_info->event_id, m_info->next_id, which);
             m_info->file.reset(new ofstream(path.c_str()));
             ++m_info->next_id;
             m_info->which = which;
-			
+
 			if (! *(m_info->file)) {
 				throw runtime_error("Error opening file: " + path);
 			}
@@ -184,7 +197,7 @@ private:
         return *(m_info->file);
     }
 
-    string m_id;
+    size_t m_next_event_id;
     string m_output_path;
     event_info_t* m_info;
     typedef map<string, event_info_t> event_map_t;
@@ -196,12 +209,12 @@ private:
 struct RawConsumer::State
 {
     State(const string& path) :
-        output_path(path)
+        delegate(path)
     {
         boost::filesystem::create_directories(path);
     }
 
-    string output_path;
+    RawConsumerDelegate delegate;
 };
 
 RawConsumer::RawConsumer()
@@ -219,9 +232,8 @@ bool RawConsumer::operator()(const Input::input_p& input)
 {
     assert(m_state);
 
-    RawConsumerDelegate delegate(m_state->output_path);
-    delegate.begin_input(input->id);
-    input->connection.dispatch(delegate);
+    m_state->delegate.begin_input(input->id);
+    input->connection.dispatch(m_state->delegate);
 
     return true;
 }

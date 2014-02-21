@@ -515,7 +515,7 @@ single input in unparsed format.
 
 **writeraw**:*path*
 
-This consumer writes all data out to raw files in a directory at *path*.  Files are named after the input id, whether it is a request or response, and a serial number.
+This consumer writes all data out to raw files in a directory at *path*.  Files are named with two serial numbers (for connection and transaction), and whether it is a request or response.
 
 Extending CLIPP
 ---------------
