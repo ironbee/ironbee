@@ -199,6 +199,7 @@ typedef struct log_pipe_writer_data_t {
 
 /**
  * Free messages created by log_pipe_format.
+ *
  * @param[in] logger The logger.
  * @param[in] msg The message to free.
  * @param[in] cbdata Callback data. Unused.
