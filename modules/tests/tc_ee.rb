@@ -11,7 +11,7 @@ class TestEE < Test::Unit::TestCase
       modules: ['htp', 'ee'],
       default_site_config: <<-EOS
         LoadEudoxus "test" "ee_non_streaming.e"
-        Rule ARGS @ee_match_any test id:1 phase:REQUEST_HEADER "clipp_announce:MATCH=%{FIELD_NAME}"
+        Rule ARGS @ee test id:1 phase:REQUEST_HEADER "clipp_announce:MATCH=%{FIELD_NAME}"
       EOS
     ) do
       transaction do |t|
@@ -22,6 +22,44 @@ class TestEE < Test::Unit::TestCase
     # Important that both a and b match.
     assert_log_match 'CLIPP ANNOUNCE: MATCH=a'
     assert_log_match 'CLIPP ANNOUNCE: MATCH=b'
+  end
+
+  def test_ee_match_trie
+    clipp(
+      modules: ['htp', 'ee'],
+      default_site_config: <<-EOS
+        LoadEudoxus "test" "ee_non_streaming.e"
+        Rule ARGS @ee_match test id:1 phase:REQUEST_HEADER "clipp_announce:MATCH=%{FIELD_NAME}"
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /?a=foobaz&b=foobar&c=foo")
+      end
+    end
+    assert_no_issues
+    assert_log_no_match /CLIPP ANNOUNCE: MATCH=a/
+    assert_log_no_match /CLIPP ANNOUNCE: MATCH=b/
+    assert_log_match /CLIPP ANNOUNCE: MATCH=c/
+  end
+
+  def test_ee_match_ac
+    clipp(
+      modules: ['htp', 'ee'],
+      default_site_config: <<-EOS
+        LoadEudoxus "test" "ac_foo.e"
+        Rule ARGS @ee_match test id:1 phase:REQUEST_HEADER "clipp_announce:MATCH=%{FIELD_NAME}"
+      EOS
+    ) do
+      transaction do |t|
+        t.request(raw: "GET /?a=foobaz&b=foobar&c=foo&d=barfoo&e=arf")
+      end
+    end
+    assert_no_issues
+    assert_log_no_match /CLIPP ANNOUNCE: MATCH=a/
+    assert_log_no_match /CLIPP ANNOUNCE: MATCH=b/
+    assert_log_match /CLIPP ANNOUNCE: MATCH=c/
+    assert_log_no_match /CLIPP ANNOUNCE: MATCH=d/
+    assert_log_no_match /CLIPP ANNOUNCE: MATCH=e/
   end
 
   # RNS-839

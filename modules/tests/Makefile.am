@@ -66,6 +66,7 @@ TEST_EXTRAS = \
       error_page.html \
       eudoxus_pattern1.e \
       ee_non_streaming.e \
+      ac_foo.e \
       init_collection_1.json \
       init_collection_2.json \
       PcreModuleTest.test_load_module.config \

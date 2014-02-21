@@ -69,6 +69,7 @@ struct ee_callback_data_t
 {
     ib_tx_t *tx;
     ib_field_t *capture;
+    uint32_t match_len;
 };
 typedef struct ee_callback_data_t ee_callback_data_t;
 
@@ -77,6 +78,8 @@ struct ee_tx_data_t
 {
     /** Eudoxus state */
     ia_eudoxus_state_t *eudoxus_state;
+    /** automata callback data */
+    ee_callback_data_t *ee_cbdata;
     /** Have we reached the end of the automata? */
     bool end_of_automata;
 };
@@ -362,7 +365,7 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
 
     ib_status_t rc;
     uint32_t match_len;
-    const ee_callback_data_t *ee_cbdata = cbdata;
+    ee_callback_data_t *ee_cbdata = cbdata;
     ib_tx_t *tx = ee_cbdata->tx;
     ib_field_t *capture = ee_cbdata->capture;
     ib_bytestr_t *bs;
@@ -371,11 +374,13 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
 
     assert(tx != NULL);
 
+    if (output_length != sizeof(uint32_t)) {
+        return IA_EUDOXUS_CMD_ERROR;
+    }
+    match_len = *(uint32_t *)(output);
+    ee_cbdata->match_len = match_len;
+
     if (capture != NULL) {
-        if (output_length != sizeof(uint32_t)) {
-            return IA_EUDOXUS_CMD_ERROR;
-        }
-        match_len = *(uint32_t *)(output);
         rc = ib_capture_clear(capture);
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Error clearing captures: %s",
@@ -413,7 +418,7 @@ ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
  * @param[in] ctx Current context.
  * @param[in] parameters Automata name.
  * @param[out] instance_data Instance data.
- * @param[in] cbdata Callback data.
+ * @param[in] cbdata Callback data (unused).
  */
 static
 ib_status_t ee_match_any_operator_create(
@@ -476,11 +481,13 @@ ib_status_t ee_match_any_operator_create(
 /**
  * Helper function for stream and non-stream execution.
  *
+ *
+ *
  * @param[in] tx Transaction
  * @param[in] operator_data Operator data.
  * @param[in] data Per-transaction data for this operator instance.
  * @param[in] field Input field.
- * @param[in] capture Where to capture.
+ * @param[in] full_match If true, the full input text must be matched.
  * @param[out] result Result of execution.
  */
 static
@@ -489,7 +496,7 @@ ib_status_t ee_match_any_operator_execute_common(
     ee_operator_data_t *operator_data,
     ee_tx_data_t *data,
     const ib_field_t *field,
-    ib_field_t *capture,
+    bool full_match,
     ib_num_t *result
 )
 {
@@ -539,7 +546,14 @@ ib_status_t ee_match_any_operator_execute_common(
 
     ia_rc = ia_eudoxus_execute(state, (const uint8_t *)input, input_len);
     if (ia_rc == IA_EUDOXUS_STOP) {
-        *result = 1;
+        if (full_match) {
+            if (data->ee_cbdata->match_len == input_len) {
+                *result = 1;
+            }
+        }
+        else {
+            *result = 1;
+        }
         rc = IB_OK;
     }
     else if (ia_rc == IA_EUDOXUS_END) {
@@ -554,9 +568,10 @@ ib_status_t ee_match_any_operator_execute_common(
 }
 
 /**
- * Execute the @c ee_match_any operator.
+ * Common code for @c ee and @c ee_match operators.
  *
- * At first match the operator will stop searching and return true.
+ * At first match the operator will stop searching. If @c full_match is
+ * true, the entire input must be matched for success.
  *
  * The capture option is supported; the matched pattern will be placed in the
  * capture variable if a match occurs.
@@ -565,15 +580,17 @@ ib_status_t ee_match_any_operator_execute_common(
  * @param[in] instance_data Instance data needed for execution.
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[in] full_match If true, the full input text must be matched.
  * @param[out] result The result of the operator 1=true 0=false.
- * @param[in] cbdata Callback data.
+ * @param[in] cbdata Pointer to the module instance (ib_module_t *)
  */
 static
-ib_status_t ee_match_any_operator_execute(
+ib_status_t ee_match_operator_execute_nonstream(
     ib_tx_t *tx,
     void *instance_data,
     const ib_field_t *field,
     ib_field_t *capture,
+    bool full_match,
     ib_num_t *result,
     void *cbdata
 )
@@ -588,8 +605,9 @@ ib_status_t ee_match_any_operator_execute(
     *result = 0;
 
     /* Not streaming, so create data for this use only */
-    ee_callback_data_t local_cbdata = { tx, capture };
+    ee_callback_data_t local_cbdata = { tx, capture, 0 };
     ee_tx_data_t local_data;
+    local_data.ee_cbdata = &local_cbdata;
 
     ia_rc = ia_eudoxus_create_state(&local_data.eudoxus_state,
                                     eudoxus,
@@ -604,8 +622,68 @@ ib_status_t ee_match_any_operator_execute(
     local_data.end_of_automata = false;
 
     return ee_match_any_operator_execute_common(
-        tx, operator_data, &local_data, field, capture, result
+        tx, operator_data, &local_data, field, full_match, result
     );
+}
+
+/**
+ * Execute the @c ee (formerly @c ee_match_any) operator.
+ *
+ * At first match, the operator will stop searching and return true.
+ *
+ * The capture option is supported; the matched pattern will be placed in the
+ * capture variable if a match occurs.
+ *
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Operator instance data needed for execution
+ *                          (ee_operator_data_t).
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Pointer to the module instance (ib_module_t *)
+ */
+static
+ib_status_t ee_match_any_operator_execute(
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t *result,
+    void *cbdata
+)
+{
+    return ee_match_operator_execute_nonstream(
+        tx, instance_data, field, capture, false, result, cbdata);
+}
+
+/**
+ * Execute the @c ee_match operator.
+ *
+ * At first match the operator will stop searching, if it matches the entire
+ * input, it returns true.
+ *
+ * The capture option is supported; the matched pattern will be placed in the
+ * capture variable if a match occurs.
+ *
+ * @param[in] tx Current transaction.
+ * @param[in] instance_data Instance data needed for execution.
+ * @param[in] field The field to operate on.
+ * @param[in] capture If non-NULL, the collection to capture to.
+ * @param[out] result The result of the operator 1=true 0=false.
+ * @param[in] cbdata Pointer to the module instance (ib_module_t *)
+ */
+static
+ib_status_t ee_match_operator_execute(
+    ib_tx_t *tx,
+    void *instance_data,
+    const ib_field_t *field,
+    ib_field_t *capture,
+    ib_num_t *result,
+    void *cbdata
+)
+{
+    return ee_match_operator_execute_nonstream(
+        tx, instance_data, field, capture, true, result, cbdata);
 }
 
 /**
@@ -618,7 +696,7 @@ ib_status_t ee_match_any_operator_execute(
  * @param[in] field The field to operate on.
  * @param[in] capture If non-NULL, the collection to capture to.
  * @param[out] result The result of the operator 1=true 0=false.
- * @param[in] cbdata Callback data.
+ * @param[in] cbdata Pointer to the module instance (ib_module_t *)
  */
 static
 ib_status_t ee_match_any_operator_execute_stream(
@@ -655,6 +733,8 @@ ib_status_t ee_match_any_operator_execute_stream(
         }
         ee_cbdata->tx = tx;
         ee_cbdata->capture = capture;
+        data->ee_cbdata = ee_cbdata;
+
         ia_rc = ia_eudoxus_create_state(&data->eudoxus_state,
                                         eudoxus,
                                         ee_first_match_callback,
@@ -675,7 +755,7 @@ ib_status_t ee_match_any_operator_execute_stream(
     }
 
     return ee_match_any_operator_execute_common(
-        tx, operator_data, data, field, capture, result
+        tx, operator_data, data, field, false, result
     );
 }
 
@@ -777,6 +857,57 @@ ib_status_t ee_module_init(ib_engine_t *ib,
         }
     }
 
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "ee",
+        IB_OP_CAPABILITY_CAPTURE,
+        &ee_match_any_operator_create, NULL,
+        NULL, NULL,
+        &ee_match_any_operator_execute, m
+    );
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Error registering ee_match_any operator: %s",
+            ib_status_to_string(rc));
+        return rc;
+    }
+    rc = ib_operator_stream_create_and_register(
+        NULL,
+        ib,
+        "ee",
+        IB_OP_CAPABILITY_CAPTURE,
+        &ee_match_any_operator_create, NULL,
+        NULL, NULL,
+        &ee_match_any_operator_execute_stream, m
+    );
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Error registering ee_match_any stream operator: %s",
+            ib_status_to_string(rc));
+        return rc;
+    }
+
+    rc = ib_operator_create_and_register(
+        NULL,
+        ib,
+        "ee_match",
+        IB_OP_CAPABILITY_CAPTURE,
+        &ee_match_any_operator_create, NULL,
+        NULL, NULL,
+        &ee_match_operator_execute, m
+    );
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Error registering ee_match_any operator: %s",
+            ib_status_to_string(rc));
+        return rc;
+    }
+
+    // ee_match_any is a deprecated alias for 'ee'
     rc = ib_operator_create_and_register(
         NULL,
         ib,
